@@ -78,7 +78,7 @@ use frame_support::pallet_prelude::*;
 use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
 use mp_digest_log::MADARA_ENGINE_ID;
-use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxStorageSlots, MaxTransactions};
+use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxTransactions};
 use mp_starknet::constants::INITIAL_GAS;
 use mp_starknet::crypto::commitment::{self};
 use mp_starknet::execution::types::{
@@ -101,7 +101,7 @@ use starknet_api::transaction::EventContent;
 use starknet_crypto::FieldElement;
 
 use crate::alloc::string::ToString;
-use crate::types::{ContractStorageKeyWrapper, NonceWrapper, StorageKeyWrapper, StorageSlotWrapper};
+use crate::types::{ContractStorageKeyWrapper, NonceWrapper, StorageKeyWrapper};
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
