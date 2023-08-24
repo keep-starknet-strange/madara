@@ -32,6 +32,7 @@ import {
   TEST_CAIRO_1_SIERRA,
   TEST_CAIRO_1_CASM,
   CAIRO_1_ACCOUNT_CONTRACT,
+  CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH,
 } from "../constants";
 import { InvokeTransaction } from "./types";
 import { numberToHex } from "@polkadot/util";
@@ -488,32 +489,41 @@ describeDevMadara(
         const { suggestedMaxFee } = await account.estimateInvokeFee({
           contractAddress: TEST_CONTRACT_ADDRESS,
           entrypoint: "test_storage_var",
-          calldata: ["0x0"],
+          calldata: [],
         });
-        console.log("=======================================================");
-        console.log(suggestedMaxFee);
-        console.log("=======================================================");
+        expect(suggestedMaxFee > 0n).to.be.equal(true);
       });
 
-      // it("should be possible for an account to estimateDeclareFee", async function () {
-      //   const account = new Account(
-      //     providerRPC,
-      //     ARGENT_CONTRACT_ADDRESS,
-      //     SIGNER_PRIVATE,
-      //   );
+      it("should be possible for an account to estimateDeclareFee", async function () {
+        const account = new Account(
+          providerRPC,
+          ARGENT_CONTRACT_ADDRESS,
+          SIGNER_PRIVATE,
+        );
 
-      //   account.estimateDeclareFee();
-      // });
+        const { suggestedMaxFee } = await account.estimateDeclareFee({
+          contract: TEST_CONTRACT_ADDRESS,
+          casm: TEST_CAIRO_1_CASM,
+        });
+        
+        expect(suggestedMaxFee > 0n).to.be.equal(true);
+      });
 
-      // it("should be possible for an account to estimateAccountDeployFee", async function () {
-      //   const account = new Account(
-      //     providerRPC,
-      //     ARGENT_CONTRACT_ADDRESS,
-      //     SIGNER_PRIVATE,
-      //   );
+      it("should be possible for an account to estimateAccountDeployFee", async function () {
+        const account = new Account(
+          providerRPC,
+          ARGENT_CONTRACT_ADDRESS,
+          SIGNER_PRIVATE,
+        );
 
-      //   account.estimateAccountDeployFee();
-      // });
+        const { suggestedMaxFee } = await account.estimateAccountDeployFee({
+          classHash: CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH,
+          constructorCalldata: ["0x123"],
+          addressSalt: SALT,
+        });
+
+        expect(suggestedMaxFee > 0n).to.be.equal(true);
+      });
     });
 
     describe("addDeclareTransaction", async () => {
