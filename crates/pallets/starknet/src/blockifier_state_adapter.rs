@@ -6,7 +6,6 @@ use blockifier::state::cached_state::{CommitmentStateDiff, ContractStorageKey};
 use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{State, StateReader, StateResult};
 use indexmap::IndexMap;
-use mp_starknet::crypto::commitment::{calculate_class_commitment_leaf_hash, calculate_contract_state_hash};
 use mp_starknet::execution::types::{
     ClassHashWrapper, CompiledClassHashWrapper, ContractAddressWrapper, Felt252Wrapper,
 };
@@ -123,17 +122,6 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
         let contract_storage_key: ContractStorageKeyWrapper = (contract_address, key);
 
         crate::StorageView::<T>::insert(contract_storage_key, value);
-
-        // Update state tries if enabled in the runtime configuration
-        if T::EnableStateRoot::get() {
-            // Store intermediary state updates
-            // As we update this mapping iteratively
-            // We will end up with only the latest storage slot update
-            // TODO: Estimate overhead of this approach
-            crate::PendingStorageChanges::<T>::mutate(contract_address, |storage_slots| {
-                storage_slots.try_push((key, value)).unwrap(); // TODO: unwrap safu ??
-            });
-        }
     }
 
     fn increment_nonce(&mut self, contract_address: ContractAddress) -> StateResult<()> {
@@ -142,20 +130,6 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
         let new_nonce = Felt252Wrapper(current_nonce.0 + FieldElement::ONE);
 
         crate::Nonces::<T>::insert(contract_address, new_nonce);
-
-        // Update state tries if enabled in the runtime configuration
-        if T::EnableStateRoot::get() {
-            // Update contracts trie
-            let mut tree = crate::StarknetStateCommitments::<T>::get().storage_commitment;
-            let class_hash = Pallet::<T>::contract_class_hash_by_address(contract_address).unwrap_or_default();
-            let contract_root = Pallet::<T>::contract_state_root_by_address(contract_address).unwrap_or_default();
-            let hash = calculate_contract_state_hash::<T::SystemHash>(class_hash, contract_root, new_nonce);
-            tree.set(contract_address, hash);
-
-            crate::StarknetStateCommitments::<T>::mutate(|state| {
-                state.storage_commitment = tree;
-            })
-        }
 
         Ok(())
     }
@@ -166,20 +140,6 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
         let class_hash: ClassHashWrapper = class_hash.0.into();
 
         crate::ContractClassHashes::<T>::insert(contract_address, class_hash);
-
-        // Update state tries if enabled in the runtime configuration
-        if T::EnableStateRoot::get() {
-            // Update contracts trie
-            let mut tree = crate::StarknetStateCommitments::<T>::get().storage_commitment;
-            let nonce = Pallet::<T>::nonce(contract_address);
-            let contract_root = Pallet::<T>::contract_state_root_by_address(contract_address).unwrap_or_default();
-            let hash = calculate_contract_state_hash::<T::SystemHash>(class_hash, contract_root, nonce);
-            tree.set(contract_address, hash);
-
-            crate::StarknetStateCommitments::<T>::mutate(|state| {
-                state.storage_commitment = tree;
-            })
-        }
 
         Ok(())
     }
@@ -203,18 +163,6 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
         let compiled_class_hash: CompiledClassHashWrapper = compiled_class_hash.0.into();
 
         crate::CompiledClassHashes::<T>::insert(class_hash, compiled_class_hash);
-
-        // Update state tries if enabled in the runtime configuration
-        if T::EnableStateRoot::get() {
-            // Update classes trie
-            let mut tree = crate::StarknetStateCommitments::<T>::get().class_commitment;
-            let final_hash = calculate_class_commitment_leaf_hash::<T::SystemHash>(compiled_class_hash);
-            tree.set(class_hash, final_hash);
-
-            crate::StarknetStateCommitments::<T>::mutate(|state| {
-                state.class_commitment = tree;
-            })
-        }
 
         Ok(())
     }
