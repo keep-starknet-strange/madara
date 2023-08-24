@@ -71,7 +71,7 @@ describeDevMadara(
 
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        let tx: InvokeTransaction =
+        const tx: InvokeTransaction =
           await providerRPC.getTransactionByBlockIdAndIndex("latest", 0);
 
         expect(tx).to.not.be.undefined;
