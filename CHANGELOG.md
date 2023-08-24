@@ -2,6 +2,9 @@
 
 ## Next release
 
+- ci: add verification if build-spec is working
+- bug: fix build-spec not working by setting the madara-path always and fetching
+  relevant files
 - fix: RPC getClassAt cairo legacy program code encoding
 - ci: added wasm to test
 - docs: added translation of madara beast article.md to portuguese
