@@ -10,7 +10,7 @@ use mp_starknet::crypto::commitment::{calculate_class_commitment_leaf_hash, calc
 use mp_starknet::execution::types::{
     ClassHashWrapper, CompiledClassHashWrapper, ContractAddressWrapper, Felt252Wrapper,
 };
-use mp_starknet::state::StateChanges;
+use mp_starknet::state::{FeeConfig, StateChanges};
 use sp_core::Get;
 use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
@@ -28,6 +28,7 @@ use crate::{Config, Pallet};
 pub struct BlockifierStateAdapter<T: Config> {
     storage_update: BTreeMap<ContractStorageKey, StarkFelt>,
     class_hash_update: usize,
+    compiled_class_hash_update: usize,
     _phantom: PhantomData<T>,
 }
 
@@ -35,16 +36,30 @@ impl<T> StateChanges for BlockifierStateAdapter<T>
 where
     T: Config,
 {
-    fn count_state_changes(&self) -> (usize, usize, usize) {
+    fn count_state_changes(&self) -> (usize, usize, usize, usize) {
         let keys = self.storage_update.keys();
         let n_contract_updated = BTreeSet::from_iter(keys.clone().map(|&(contract_address, _)| contract_address)).len();
-        (n_contract_updated, keys.len(), self.class_hash_update)
+        (n_contract_updated, keys.len(), self.class_hash_update, self.compiled_class_hash_update)
+    }
+}
+
+impl<T> FeeConfig for BlockifierStateAdapter<T>
+where
+    T: Config,
+{
+    fn is_transaction_fee_disabled(&self) -> bool {
+        T::DisableTransactionFee::get()
     }
 }
 
 impl<T: Config> Default for BlockifierStateAdapter<T> {
     fn default() -> Self {
-        Self { storage_update: BTreeMap::default(), class_hash_update: usize::default(), _phantom: PhantomData }
+        Self {
+            storage_update: BTreeMap::default(),
+            class_hash_update: usize::default(),
+            compiled_class_hash_update: usize::default(),
+            _phantom: PhantomData,
+        }
     }
 }
 
@@ -182,6 +197,7 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
         class_hash: ClassHash,
         compiled_class_hash: CompiledClassHash,
     ) -> StateResult<()> {
+        self.compiled_class_hash_update += 1;
         // FIXME 708
         let class_hash: ClassHashWrapper = class_hash.0.into();
         let compiled_class_hash: CompiledClassHashWrapper = compiled_class_hash.0.into();

@@ -22,8 +22,6 @@ pub const STARKNET_CONTRACT_CLASS_HASH: &[u8] = b"ContractClassHashes";
 pub const STARKNET_CONTRACT_CLASS: &[u8] = b"ContractClasses";
 /// Starknet nonce storage item.
 pub const STARKNET_NONCE: &[u8] = b"Nonces";
-/// Starknet chain id storage item.
-pub const STARKNET_CHAIN_ID: &[u8] = b"ChainId";
 /// Starknet storage
 pub const STARKNET_STORAGE: &[u8] = b"StorageView";
 /// Starknet state commitment tries

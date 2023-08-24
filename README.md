@@ -1,13 +1,10 @@
-<!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
 <div align="center">
 <img src="docs/images/deoxys.jpg" height="256" style="border-radius: 15px;">
 </div>
-
 <div align="center">
 <br />
 <!-- markdownlint-restore -->
-<!-- prettier-ignore-end -->
 
 [![GitHub Workflow Status](https://github.com/kasarLabs/deoxys/actions/workflows/test.yml/badge.svg)](https://github.com/kasarLabs/deoxys/actions/workflows/test.yml)
 [![Project license](https://img.shields.io/github/license/kasarLabs/deoxys.svg?style=flat-square)](LICENSE)

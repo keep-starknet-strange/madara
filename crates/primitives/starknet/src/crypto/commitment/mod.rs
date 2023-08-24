@@ -2,6 +2,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 
 use bitvec::vec::BitVec;
+use starknet_api::transaction::TransactionVersion;
 use starknet_crypto::FieldElement;
 
 use super::hash::pedersen::PedersenHasher;
@@ -12,6 +13,7 @@ use crate::traits::hash::HasherT;
 use crate::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction,
 };
+use crate::transaction::utils::calculate_transaction_version_from_u8;
 
 /// Hash of the leaf of the ClassCommitment tree
 pub type ClassCommitmentLeafHash = Felt252Wrapper;
@@ -276,7 +278,7 @@ pub fn calculate_invoke_tx_hash(transaction: InvokeTransaction, chain_id: Felt25
         transaction.calldata.as_slice(),
         transaction.max_fee,
         transaction.nonce,
-        transaction.version,
+        calculate_transaction_version_from_u8(transaction.is_query, transaction.version),
         b"invoke",
         chain_id,
         None,
@@ -294,7 +296,7 @@ pub fn calculate_declare_tx_hash(transaction: DeclareTransaction, chain_id: Felt
         &[transaction.class_hash],
         transaction.max_fee,
         transaction.nonce,
-        transaction.version,
+        calculate_transaction_version_from_u8(transaction.is_query, transaction.version),
         b"declare",
         chain_id,
         transaction.compiled_class_hash,
@@ -316,7 +318,7 @@ pub fn calculate_deploy_account_tx_hash(
         &vec![vec![transaction.account_class_hash, transaction.salt], transaction.calldata.to_vec()].concat(),
         transaction.max_fee,
         transaction.nonce,
-        transaction.version,
+        calculate_transaction_version_from_u8(transaction.is_query, transaction.version),
         b"deploy_account",
         chain_id,
         None,
@@ -330,7 +332,7 @@ pub fn calculate_transaction_hash_common<T>(
     calldata: &[Felt252Wrapper],
     max_fee: Felt252Wrapper,
     nonce: Felt252Wrapper,
-    version: u8,
+    version: TransactionVersion,
     tx_prefix: &[u8],
     chain_id: Felt252Wrapper,
     compiled_class_hash: Option<Felt252Wrapper>,
@@ -344,7 +346,7 @@ where
         .compute_hash_on_elements(&calldata.iter().map(|&val| FieldElement::from(val)).collect::<Vec<FieldElement>>());
     let max_fee = FieldElement::from_bytes_be(&max_fee.into()).unwrap();
     let nonce = FieldElement::from_bytes_be(&nonce.into()).unwrap();
-    let version = FieldElement::from_byte_slice_be(&version.to_be_bytes()).unwrap();
+    let version = FieldElement::from(version.0);
     let tx_prefix = FieldElement::from_byte_slice_be(tx_prefix).unwrap();
 
     let mut elements =
