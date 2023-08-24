@@ -66,6 +66,9 @@ describeDevMadara(
           ),
         );
 
+        // wait 20 secs
+        await new Promise((r) => setTimeout(r, 20000));
+
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         const tx: InvokeTransaction =
