@@ -223,14 +223,6 @@ pub mod pallet {
     pub(super) type Pending<T: Config> =
         StorageValue<_, BoundedVec<(Transaction, TransactionReceiptWrapper), MaxTransactions>, ValueQuery>;
 
-    /// Pending storage slot updates
-    /// STORAGE
-    /// Mapping storage key to storage value.
-    #[pallet::storage]
-    #[pallet::getter(fn pending_storage_changes)]
-    pub(super) type PendingStorageChanges<T: Config> =
-        StorageMap<_, Identity, ContractAddressWrapper, BoundedVec<StorageSlotWrapper, MaxStorageSlots>, ValueQuery>;
-
     /// Current building block's events.
     // TODO: This is redundant information but more performant
     // than removing this and computing events from the tx reciepts.
