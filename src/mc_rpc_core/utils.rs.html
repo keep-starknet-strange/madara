@@ -370,7 +370,13 @@
 <a href="#370" id="370">370</a>
 <a href="#371" id="371">371</a>
 <a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
+<span class="kw">use </span>std::io::Write;
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>anyhow::{anyhow, <span class="prelude-ty">Result</span>};
@@ -433,7 +439,11 @@
 <span class="doccomment">/// Returns a compressed vector of bytes
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>compress(data: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>gzip_encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
-    serde_json::to_writer(<span class="kw-2">&amp;mut </span>gzip_encoder, data)<span class="question-mark">?</span>;
+    <span class="comment">// 2023-08-22: JSON serialization is already done in Blockifier
+    // https://github.com/keep-starknet-strange/blockifier/blob/no_std-support-7578442/crates/blockifier/src/execution/contract_class.rs#L129
+    // https://github.com/keep-starknet-strange/blockifier/blob/no_std-support-7578442/crates/blockifier/src/execution/contract_class.rs#L389
+    // serde_json::to_writer(&amp;mut gzip_encoder, data)?;
+    </span>gzip_encoder.write_all(data)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(gzip_encoder.finish()<span class="question-mark">?</span>)
 }
 

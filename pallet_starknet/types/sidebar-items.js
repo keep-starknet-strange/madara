@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["BuildTransferInvokeTransaction","DeployAccountTransactionOutput","StateCommitments"],"type":["ContractClassMapping","ContractStorageKeyWrapper","MaxTransactionsPendingBlock","NonceWrapper","StateTrie","StorageKeyWrapper","StorageSlotWrapper"]};
+window.SIDEBAR_ITEMS = {"struct":["BuildTransferInvokeTransaction","DeployAccountTransactionOutput"],"type":["ContractClassMapping","ContractStorageKeyWrapper","MaxTransactionsPendingBlock","NonceWrapper","StorageKeyWrapper","StorageSlotWrapper"]};

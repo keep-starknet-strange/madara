@@ -337,6 +337,67 @@
 </span><span class="kw">pub fn </span>run() -&gt; sc_cli::Result&lt;()&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>cli = Cli::from_args();
 
+    <span class="comment">// alias madara_path &lt;&gt; base_path
+    // TODO also alias tmp (tmp generates random base_paths that are not specified within
+    // the command)
+    </span><span class="kw">let </span>madara_path = <span class="kw">match </span>(cli.run.madara_path.clone(), cli.run.run_cmd.shared_params.base_path.clone()) {
+        (<span class="prelude-val">Some</span>(madara_path), <span class="kw">_</span>) =&gt; {
+            cli.run.run_cmd.shared_params.base_path = <span class="prelude-val">Some</span>(madara_path.clone());
+            madara_path.to_str().unwrap().to_string()
+        }
+        (<span class="kw">_</span>, <span class="prelude-val">Some</span>(base_path)) =&gt; {
+            cli.run.madara_path = <span class="prelude-val">Some</span>(base_path.clone());
+            base_path.to_str().unwrap().to_string()
+        }
+        <span class="kw">_ </span>=&gt; {
+            <span class="kw">let </span>home_path = std::env::var(<span class="string">&quot;HOME&quot;</span>).unwrap_or(std::env::var(<span class="string">&quot;USERPROFILE&quot;</span>).unwrap_or(<span class="string">&quot;.&quot;</span>.into()));
+            <span class="kw">let </span>path = <span class="macro">format!</span>(<span class="string">&quot;{}/.madara&quot;</span>, home_path);
+            cli.run.run_cmd.shared_params.base_path = <span class="prelude-val">Some</span>((path.clone()).into());
+            cli.run.madara_path = <span class="prelude-val">Some</span>((path.clone()).into());
+            path
+        }
+    };
+
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(genesis_url) = cli.run.genesis_url.clone() {
+        <span class="comment">// can&#39;t copy extra genesis-assets atm
+        // we can reuse #982 to create the standard to fetch relevant files
+        </span>utils::fetch_from_url(genesis_url, madara_path.clone() + <span class="string">&quot;/configs/genesis-assets&quot;</span>)<span class="question-mark">?</span>;
+    } <span class="kw">else </span>{
+        <span class="comment">// TODO confirm with the CI that we are fetching all and fetch dynamically
+        // Issue #982
+        </span><span class="kw">for </span>file <span class="kw">in </span>constants::GENESIS_ASSETS_FILES {
+            <span class="kw">let </span>src_path = utils::get_project_path();
+            <span class="kw">if let </span><span class="prelude-val">Ok</span>(src_path) = src_path {
+                <span class="kw">let </span>src_path = src_path + <span class="string">&quot;/configs/genesis-assets/&quot; </span>+ file;
+                utils::copy_from_filesystem(src_path, madara_path.clone() + <span class="string">&quot;/genesis-assets&quot;</span>)<span class="question-mark">?</span>;
+            } <span class="kw">else </span>{
+                utils::fetch_from_url(
+                    constants::GENESIS_ASSETS_URL.to_string() + file,
+                    madara_path.clone() + <span class="string">&quot;/genesis-assets&quot;</span>,
+                )<span class="question-mark">?</span>;
+            }
+        }
+    }
+
+    <span class="comment">// TODO confirm with the CI that we are fetching all and fetch dynamically
+    // Issue #982
+    </span><span class="kw">for </span>file <span class="kw">in </span>constants::CAIRO_CONTRACTS_FILES {
+        <span class="kw">let </span>src_path = utils::get_project_path();
+        <span class="kw">if let </span><span class="prelude-val">Ok</span>(src_path) = src_path {
+            <span class="kw">let </span>src_path = src_path + <span class="string">&quot;/configs/cairo-contracts/&quot; </span>+ file;
+            utils::copy_from_filesystem(src_path, madara_path.clone() + <span class="string">&quot;/cairo-contracts&quot;</span>)<span class="question-mark">?</span>;
+        } <span class="kw">else </span>{
+            utils::fetch_from_url(
+                constants::CAIRO_CONTRACTS_URL.to_string() + file,
+                madara_path.clone() + <span class="string">&quot;/cairo-contracts&quot;</span>,
+            )<span class="question-mark">?</span>;
+        }
+    }
+
+    <span class="kw">if let </span>(<span class="prelude-val">Some</span>(chain_spec_url), <span class="prelude-val">None</span>) = (cli.run.chain_spec_url.clone(), cli.run.testnet) {
+        utils::fetch_from_url(chain_spec_url, madara_path.clone() + <span class="string">&quot;/chain-specs&quot;</span>)<span class="question-mark">?</span>;
+    }
+
     <span class="kw">match </span><span class="kw-2">&amp;</span>cli.subcommand {
         <span class="prelude-val">Some</span>(Subcommand::Key(cmd)) =&gt; cmd.run(<span class="kw-2">&amp;</span>cli),
         <span class="prelude-val">Some</span>(Subcommand::BuildSpec(cmd)) =&gt; {
@@ -470,69 +531,8 @@
                 cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
             }
 
-            <span class="comment">// alias madara_path &lt;&gt; base_path
-            // TODO also alias tmp (tmp generates random base_paths that are not specified within
-            // the command)
-            </span><span class="kw">let </span>madara_path = <span class="kw">match </span>(cli.run.madara_path.clone(), cli.run.run_cmd.shared_params.base_path.clone()) {
-                (<span class="prelude-val">Some</span>(madara_path), <span class="kw">_</span>) =&gt; {
-                    cli.run.run_cmd.shared_params.base_path = <span class="prelude-val">Some</span>(madara_path.clone());
-                    madara_path.to_str().unwrap().to_string()
-                }
-                (<span class="kw">_</span>, <span class="prelude-val">Some</span>(base_path)) =&gt; {
-                    cli.run.madara_path = <span class="prelude-val">Some</span>(base_path.clone());
-                    base_path.to_str().unwrap().to_string()
-                }
-                <span class="kw">_ </span>=&gt; {
-                    <span class="kw">let </span>home_path = std::env::var(<span class="string">&quot;HOME&quot;</span>).unwrap_or(std::env::var(<span class="string">&quot;USERPROFILE&quot;</span>).unwrap_or(<span class="string">&quot;.&quot;</span>.into()));
-                    <span class="kw">let </span>path = <span class="macro">format!</span>(<span class="string">&quot;{}/.madara&quot;</span>, home_path);
-                    cli.run.run_cmd.shared_params.base_path = <span class="prelude-val">Some</span>((path.clone()).into());
-                    cli.run.madara_path = <span class="prelude-val">Some</span>((path.clone()).into());
-                    path
-                }
-            };
-
             cli.run.run_cmd.network_params.node_key_params.node_key_file =
                 <span class="prelude-val">Some</span>((madara_path.clone() + <span class="string">&quot;/p2p-key.ed25519&quot;</span>).into());
-
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(genesis_url) = cli.run.genesis_url.clone() {
-                <span class="comment">// can&#39;t copy extra genesis-assets atm
-                // we can reuse #982 to create the standard to fetch relevant files
-                </span>utils::fetch_from_url(genesis_url, madara_path.clone() + <span class="string">&quot;/configs/genesis-assets&quot;</span>)<span class="question-mark">?</span>;
-            } <span class="kw">else </span>{
-                <span class="comment">// TODO confirm with the CI that we are fetching all and fetch dynamically
-                // Issue #982
-                </span><span class="kw">for </span>file <span class="kw">in </span>constants::GENESIS_ASSETS_FILES {
-                    <span class="kw">let </span>src_path = utils::get_project_path();
-                    <span class="kw">if let </span><span class="prelude-val">Ok</span>(src_path) = src_path {
-                        <span class="kw">let </span>src_path = src_path + <span class="string">&quot;/configs/genesis-assets/&quot; </span>+ file;
-                        utils::copy_from_filesystem(src_path, madara_path.clone() + <span class="string">&quot;/genesis-assets&quot;</span>)<span class="question-mark">?</span>;
-                    } <span class="kw">else </span>{
-                        utils::fetch_from_url(
-                            constants::GENESIS_ASSETS_URL.to_string() + file,
-                            madara_path.clone() + <span class="string">&quot;/genesis-assets&quot;</span>,
-                        )<span class="question-mark">?</span>;
-                    }
-                }
-            }
-
-            <span class="comment">// TODO confirm with the CI that we are fetching all and fetch dynamically
-            // Issue #982
-            </span><span class="kw">for </span>file <span class="kw">in </span>constants::CAIRO_CONTRACTS_FILES {
-                <span class="kw">let </span>src_path = utils::get_project_path();
-                <span class="kw">if let </span><span class="prelude-val">Ok</span>(src_path) = src_path {
-                    <span class="kw">let </span>src_path = src_path + <span class="string">&quot;/configs/cairo-contracts/&quot; </span>+ file;
-                    utils::copy_from_filesystem(src_path, madara_path.clone() + <span class="string">&quot;/cairo-contracts&quot;</span>)<span class="question-mark">?</span>;
-                } <span class="kw">else </span>{
-                    utils::fetch_from_url(
-                        constants::CAIRO_CONTRACTS_URL.to_string() + file,
-                        madara_path.clone() + <span class="string">&quot;/cairo-contracts&quot;</span>,
-                    )<span class="question-mark">?</span>;
-                }
-            }
-
-            <span class="kw">if let </span>(<span class="prelude-val">Some</span>(chain_spec_url), <span class="prelude-val">None</span>) = (cli.run.chain_spec_url.clone(), cli.run.testnet) {
-                utils::fetch_from_url(chain_spec_url, madara_path.clone() + <span class="string">&quot;/chain-specs&quot;</span>)<span class="question-mark">?</span>;
-            }
 
             <span class="kw">if let </span><span class="prelude-val">Some</span>(Testnet::Sharingan) = cli.run.testnet {
                 <span class="kw">let </span>src_path = utils::get_project_path();
