@@ -66,19 +66,13 @@ describeDevMadara(
           ),
         );
 
-        let retries = 5;
-        let tx: InvokeTransaction;
-        do {
-          try {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            tx = await providerRPC.getTransactionByBlockIdAndIndex("latest", 0);
-            retries = 0;
-          } catch {
-            await new Promise((r) => setTimeout(r, 1000));
-            retries -= 1;
-          }
-        } while (retries > 0);
+        // wait 10 secs
+        await new Promise((r) => setTimeout(r, 10000));
+
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        let tx: InvokeTransaction =
+          await providerRPC.getTransactionByBlockIdAndIndex("latest", 0);
 
         expect(tx).to.not.be.undefined;
         expect(tx.type).to.be.equal("INVOKE");
