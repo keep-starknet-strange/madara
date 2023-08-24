@@ -502,8 +502,7 @@ describeDevMadara(
         );
 
         const { suggestedMaxFee } = await account.estimateDeclareFee({
-          contract: TEST_CONTRACT_ADDRESS,
-          casm: TEST_CAIRO_1_CASM,
+          contract: ERC20_CONTRACT,
         });
 
         expect(suggestedMaxFee > 0n).to.be.equal(true);
