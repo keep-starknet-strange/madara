@@ -22,9 +22,9 @@ jobs:
           fail-on-cache-miss: true
       - name: Create build-spec (plain)
         run: |
-          target/madara build-spec --chain local > chain-plain.json
+          target/release/madara build-spec --chain local > chain-plain.json
       - name: Create build-spec (raw)
         run: |
-          target/madara build-spec --chain chain-plain.json --raw > chain-raw.json
+          target/release/madara build-spec --chain chain-plain.json --raw > chain-raw.json
 
 # TODO: add remaining commands
