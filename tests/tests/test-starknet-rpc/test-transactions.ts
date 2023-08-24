@@ -505,7 +505,7 @@ describeDevMadara(
           contract: TEST_CONTRACT_ADDRESS,
           casm: TEST_CAIRO_1_CASM,
         });
-        
+
         expect(suggestedMaxFee > 0n).to.be.equal(true);
       });
 
