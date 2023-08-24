@@ -1,0 +1,30 @@
+---
+name: Task - Test Madara Commands
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  build-spec:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          fail-on-cache-miss: true
+      - name: Create build-spec (plain)
+        run: |
+          target/release/madara build-spec --chain local > chain-plain.json
+      - name: Create build-spec (raw)
+        run: |
+          target/release/madara build-spec --chain chain-plain.json --raw > chain-raw.json
+
+# TODO: add remaining commands
