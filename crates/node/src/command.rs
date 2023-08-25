@@ -52,17 +52,127 @@ impl SubstrateCli for Cli {
     }
 }
 
-// fn set_madara_path(cli: SubstrateCli) {
-//
-// }
-//
-// fn set_dev_environment(cli: SubstrateCli) {
-//
-// }
+fn set_madara_path(cli: &mut Cli) {
+    // alias madara_path <> base_path
+    match (cli.run.madara_path.clone(), cli.run.run_cmd.shared_params.base_path.clone()) {
+        (Some(madara_path), _) => {
+            cli.run.run_cmd.shared_params.base_path = Some(madara_path);
+        }
+        (_, Some(base_path)) => {
+            cli.run.madara_path = Some(base_path);
+        }
+        _ => {
+            let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
+            let path = format!("{}/.madara", home_path);
+            cli.run.run_cmd.shared_params.base_path = Some((path.clone()).into());
+            cli.run.madara_path = Some(path.into());
+        }
+    };
+}
+
+fn set_dev_environment(cli: &mut Cli) {
+    // create a reproducible dev environment
+    cli.run.run_cmd.shared_params.dev = false;
+    cli.run.run_cmd.shared_params.chain = Some("dev".to_string());
+
+    cli.run.run_cmd.force_authoring = true;
+    cli.run.run_cmd.alice = true;
+
+    // we can't set `--rpc-cors=all`, so it needs to be set manually if we want to connect with external
+    // hosts
+    cli.run.run_cmd.rpc_external = true;
+    cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
+}
+
+fn set_chain_spec(cli: &mut Cli) -> Result<(), String> {
+    // checks if it should retrieve and enable a specific chain-spec
+    let madara_path = cli.run.madara_path.clone().expect("Failed retrieving madara_path").to_str().unwrap().to_string();
+    let local_path = utils::get_project_path();
+
+    if let (Some(chain_spec_url), None, false) =
+        (cli.run.chain_spec_url.clone(), cli.run.testnet, cli.run.disable_url_fetch)
+    {
+        utils::fetch_from_url(chain_spec_url.clone(), madara_path.clone() + "/chain-specs", cli.run.update_configs)?;
+        let chain_spec = chain_spec_url.split('/').last().expect("Chain spec file name not found");
+        cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/" + chain_spec);
+    } else if let (Some(Testnet::Sharingan), false) = (cli.run.testnet, cli.run.disable_madara_configs) {
+        if let Ok(ref src_path) = local_path {
+            let src_path = src_path.clone() + "/configs/chain-specs/testnet-sharingan-raw.json";
+            utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs", cli.run.update_configs)?;
+        } else if !cli.run.disable_url_fetch {
+            let madara_configs: configs::Configs =
+                serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?)
+                    .expect("Failed to load madara configs");
+            // If testnet flag is specified, right now it's only Sharingan
+            for chain_spec in madara_configs.chain_specs {
+                configs::fetch_and_validate_file(
+                    madara_configs.remote_base_path.clone(),
+                    chain_spec,
+                    madara_path.clone() + "/configs/chain-specs/",
+                    cli.run.update_configs,
+                )?;
+            }
+        }
+
+        cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
+
+        // This should go apply to all testnets when applying a match pattern
+        cli.run.run_cmd.rpc_external = true;
+        cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
+    }
+
+    Ok(())
+}
+
+fn fetch_madara_configs(cli: &mut Cli) -> Result<(), String> {
+    let madara_path = cli.run.madara_path.clone().expect("Failed retrieving madara_path").to_str().unwrap().to_string();
+    let local_path = utils::get_project_path();
+
+    if let Some(configs_url) = cli.run.configs_url.clone() {
+        utils::fetch_from_url(configs_url, madara_path.clone() + "/configs", cli.run.update_configs)?;
+    } else if let Ok(ref src_path) = local_path {
+        let src_path = src_path.clone() + "/configs/index.json";
+        utils::copy_from_filesystem(src_path, madara_path.clone() + "/configs", cli.run.update_configs)?;
+    } else if !cli.run.disable_url_fetch {
+        utils::fetch_from_url(
+            constants::DEFAULT_CONFIGS_URL.to_string(),
+            madara_path.clone() + "/configs",
+            cli.run.update_configs,
+        )?;
+    }
+
+    let madara_configs: configs::Configs =
+        serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?)
+            .expect("Failed to load madara configs");
+    for asset in madara_configs.genesis_assets {
+        if let Ok(ref src_path) = local_path {
+            let src_path = src_path.clone() + "/configs/genesis-assets/" + &asset.name;
+            utils::copy_from_filesystem(
+                src_path,
+                madara_path.clone() + "/configs/genesis-assets",
+                cli.run.update_configs,
+            )?;
+        } else if !cli.run.disable_url_fetch {
+            configs::fetch_and_validate_file(
+                madara_configs.remote_base_path.clone(),
+                asset,
+                madara_path.clone() + "/configs/genesis-assets/",
+                cli.run.update_configs,
+            )?;
+        }
+    }
+
+    Ok(())
+}
 
 /// Parse and run command line arguments
 pub fn run() -> sc_cli::Result<()> {
     let mut cli = Cli::from_args();
+
+    set_madara_path(&mut cli);
+    if !cli.run.disable_madara_configs {
+        fetch_madara_configs(&mut cli)?;
+    }
 
     match &cli.subcommand {
         Some(Subcommand::Key(cmd)) => cmd.run(&cli),
@@ -183,115 +293,20 @@ pub fn run() -> sc_cli::Result<()> {
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
         None => {
-            // create a reproducible dev environment
             if cli.run.run_cmd.shared_params.dev {
-                cli.run.run_cmd.shared_params.dev = false;
-                cli.run.run_cmd.shared_params.chain = Some("dev".to_string());
-
-                cli.run.run_cmd.force_authoring = true;
-                cli.run.run_cmd.alice = true;
-
-                // we can't set `--rpc-cors=all`, so it needs to be set manually if we want to connect with external
-                // hosts
-                cli.run.run_cmd.rpc_external = true;
-                cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
+                set_dev_environment(&mut cli);
             }
 
-            // alias madara_path <> base_path
-            let madara_path = match (cli.run.madara_path.clone(), cli.run.run_cmd.shared_params.base_path.clone()) {
-                (Some(madara_path), _) => {
-                    cli.run.run_cmd.shared_params.base_path = Some(madara_path.clone());
-                    madara_path.to_str().unwrap().to_string()
-                }
-                (_, Some(base_path)) => {
-                    cli.run.madara_path = Some(base_path.clone());
-                    base_path.to_str().unwrap().to_string()
-                }
-                _ => {
-                    let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
-                    let path = format!("{}/.madara", home_path);
-                    cli.run.run_cmd.shared_params.base_path = Some((path.clone()).into());
-                    cli.run.madara_path = Some((path.clone()).into());
-                    path
-                }
-            };
+            let madara_path =
+                cli.run.madara_path.clone().expect("Failed retrieving madara_path").to_str().unwrap().to_string();
 
+            // Set the node_key_file for substrate in the case that it was not manually setted
             if cli.run.run_cmd.network_params.node_key_params.node_key_file.is_none() {
                 cli.run.run_cmd.network_params.node_key_params.node_key_file =
-                    Some((madara_path.clone() + "/p2p-key.ed25519").into());
+                    Some((madara_path + "/p2p-key.ed25519").into());
             }
 
-			if !cli.run.disable_madara_configs {
-        	    let local_path = utils::get_project_path();
-        	    if let Some(configs_url) = cli.run.configs_url.clone() {
-        	        utils::fetch_from_url(configs_url, madara_path.clone() + "/configs", cli.run.update_configs)?;
-        	    } else if let Ok(ref src_path) = local_path {
-        	        let src_path = src_path.clone() + "/configs/index.json";
-        	        utils::copy_from_filesystem(src_path, madara_path.clone() + "/configs", cli.run.update_configs)?;
-        	    } else if !cli.run.disable_url_fetch {
-        	        utils::fetch_from_url(
-        	            constants::DEFAULT_CONFIGS_URL.to_string(),
-        	            madara_path.clone() + "/configs",
-        	            cli.run.update_configs,
-        	        )?;
-        	    }
-
-        	    let madara_configs: configs::Configs =
-        	        serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?)
-        	            .expect("Failed to load madara configs");
-        	    for asset in madara_configs.genesis_assets {
-        	        if let Ok(ref src_path) = local_path {
-        	            let src_path = src_path.clone() + "/configs/genesis-assets/" + &asset.name;
-        	            utils::copy_from_filesystem(
-        	                src_path,
-        	                madara_path.clone() + "/configs/genesis-assets",
-        	                cli.run.update_configs,
-        	            )?;
-        	        } else if !cli.run.disable_url_fetch {
-        	            configs::fetch_and_validate_file(
-        	                madara_configs.remote_base_path.clone(),
-        	                asset,
-        	                madara_path.clone() + "/configs/genesis-assets/",
-        	                cli.run.update_configs,
-        	            )?;
-        	        }
-        	    }
-
-            	if let (Some(chain_spec_url), None) = (cli.run.chain_spec_url.clone(), cli.run.testnet) {
-            	    utils::fetch_from_url(
-            	        chain_spec_url.clone(),
-            	        madara_path.clone() + "/chain-specs",
-            	        cli.run.update_configs,
-            	    )?;
-            	    let chain_spec = chain_spec_url.split('/').last().expect("Chain spec file name not found");
-            	    cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/" + chain_spec);
-            	} else if let (Some(Testnet::Sharingan), false) = (cli.run.testnet, cli.run.disable_url_fetch) {
-            	    if let Ok(ref src_path) = local_path {
-            	        let src_path = src_path.clone() + "/configs/chain-specs/testnet-sharingan-raw.json";
-            	        utils::copy_from_filesystem(
-            	            src_path,
-            	            madara_path.clone() + "/chain-specs",
-            	            cli.run.update_configs,
-            	        )?;
-            	    } else {
-            	        // If testnet flag is specified, right now it's only Sharingan
-            	        for chain_spec in madara_configs.chain_specs {
-            	            configs::fetch_and_validate_file(
-            	                madara_configs.remote_base_path.clone(),
-            	                chain_spec,
-            	                madara_path.clone() + "/configs/chain-specs/",
-            	                cli.run.update_configs,
-            	            )?;
-            	        }
-            	    }
-
-            	    cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
-
-            	    // This should go apply to all testnets when applying a match pattern
-            	    cli.run.run_cmd.rpc_external = true;
-            	    cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
-            	}
-			}
+            set_chain_spec(&mut cli)?;
 
             let runner = cli.create_runner(&cli.run.run_cmd)?;
             runner.run_node_until_exit(|config| async move {

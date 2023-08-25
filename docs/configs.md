@@ -18,6 +18,11 @@ extension for app chains.
   - `--rpc-methods unsafe`
   - We need to enable manually the flag `--rpc-cors all` to accept external
     connections
+- `--disable-madara-configs`: Disable madara default configs. It won't try to
+  fetch configurations from the cargo project path, nor it will try to fetch
+  from the official repo. With this flag enabled, having a
+  `madara-path/configs/genesis-assets/genesis.json`, it will be enough to run
+  madara
 - `--disable-url-fetch`: Disable the automatic url fetching that we use to
   retrieve configuration files
 - `--madara-path`: Changes the default [madara-path](#madara-path) (default:
