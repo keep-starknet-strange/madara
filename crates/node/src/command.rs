@@ -92,30 +92,32 @@ fn set_chain_spec(cli: &mut Cli) -> Result<(), String> {
         utils::fetch_from_url(chain_spec_url.clone(), madara_path.clone() + "/chain-specs", cli.run.update_configs)?;
         let chain_spec = chain_spec_url.split('/').last().expect("Chain spec file name not found");
         cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/" + chain_spec);
-    } else {
-        match (cli.run.testnet, cli.run.disable_url_fetch, cli.run.disable_madara_configs, local_path) {
-            (Some(Testnet::Sharingan), _, false, Ok(ref src_path)) => {
-                let src_path = src_path.clone() + "/configs/chain-specs/testnet-sharingan-raw.json";
-                utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs", cli.run.update_configs)?;
-                cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
-            }
-            (Some(Testnet::Sharingan), false, false, _) => {
-                let madara_configs: configs::Configs =
-                    serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?)
-                        .expect("Failed to load madara configs");
-                // If testnet flag is specified, right now it's only Sharingan
-                for chain_spec in madara_configs.chain_specs {
-                    configs::fetch_and_validate_file(
-                        madara_configs.remote_base_path.clone(),
-                        chain_spec,
-                        madara_path.clone() + "/configs/chain-specs/",
-                        cli.run.update_configs,
-                    )?;
-                }
-                cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
-            }
-            _ => {}
+
+        return Ok(());
+    }
+
+    match (cli.run.testnet, cli.run.disable_url_fetch, cli.run.disable_madara_configs, local_path) {
+        (Some(Testnet::Sharingan), _, false, Ok(ref src_path)) => {
+            let src_path = src_path.clone() + "/configs/chain-specs/testnet-sharingan-raw.json";
+            utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs", cli.run.update_configs)?;
+            cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
         }
+        (Some(Testnet::Sharingan), false, false, _) => {
+            let madara_configs: configs::Configs =
+                serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?)
+                    .expect("Failed to load madara configs");
+            // If testnet flag is specified, right now it's only Sharingan
+            for chain_spec in madara_configs.chain_specs {
+                configs::fetch_and_validate_file(
+                    madara_configs.remote_base_path.clone(),
+                    chain_spec,
+                    madara_path.clone() + "/configs/chain-specs/",
+                    cli.run.update_configs,
+                )?;
+            }
+            cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
+        }
+        _ => {}
     }
 
     if cli.run.run_cmd.shared_params.chain.is_some() {
