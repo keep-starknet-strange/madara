@@ -52,9 +52,13 @@ impl SubstrateCli for Cli {
     }
 }
 
-fn setup_madara_path(cli: SubstrateCli) {
-
-}
+// fn set_madara_path(cli: SubstrateCli) {
+//
+// }
+//
+// fn set_dev_environment(cli: SubstrateCli) {
+//
+// }
 
 /// Parse and run command line arguments
 pub fn run() -> sc_cli::Result<()> {
