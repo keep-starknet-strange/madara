@@ -89,17 +89,18 @@ fn set_chain_spec(cli: &mut Cli) -> Result<(), String> {
     let madara_path = cli.run.madara_path.clone().expect("Failed retrieving madara_path").to_str().unwrap().to_string();
     let local_path = utils::get_project_path();
 
-    if let (Some(chain_spec_url), None, false) =
-        (cli.run.chain_spec_url.clone(), cli.run.testnet, cli.run.disable_url_fetch)
-    {
-        utils::fetch_from_url(chain_spec_url.clone(), madara_path.clone() + "/chain-specs", cli.run.update_configs)?;
-        let chain_spec = chain_spec_url.split('/').last().expect("Chain spec file name not found");
-        cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/" + chain_spec);
-    } else if let (Some(Testnet::Sharingan), false) = (cli.run.testnet, cli.run.disable_madara_configs) {
-        if let Ok(ref src_path) = local_path {
+	match(cli.run.chain_spec_url.clone(), cli.run.testnet, cli.run.disable_url_fetch, cli.run.disable_madara_configs, local_path) {
+		(Some(chain_spec_url), _, _, _, _) => {
+    	    utils::fetch_from_url(chain_spec_url.clone(), madara_path.clone() + "/chain-specs", cli.run.update_configs)?;
+    	    let chain_spec = chain_spec_url.split('/').last().expect("Chain spec file name not found");
+    	    cli.run.run_cmd.shared_params.chain = Some(madara_path.clone() + "/chain-specs/" + chain_spec);
+    	},
+		(None, Some(Testnet::Sharingan), false, false, Ok(ref src_path)) => {
             let src_path = src_path.clone() + "/configs/chain-specs/testnet-sharingan-raw.json";
             utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs", cli.run.update_configs)?;
-        } else if !cli.run.disable_url_fetch {
+    		cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
+		},
+		(None, Some(Testnet::Sharingan), false, false, _) => {
             let madara_configs: configs::Configs =
                 serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?)
                     .expect("Failed to load madara configs");
@@ -112,14 +113,15 @@ fn set_chain_spec(cli: &mut Cli) -> Result<(), String> {
                     cli.run.update_configs,
                 )?;
             }
-        }
+    		cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
+		},
+		_ => { }
+	}
 
-        cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
-
-        // This should go apply to all testnets when applying a match pattern
-        cli.run.run_cmd.rpc_external = true;
-        cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
-    }
+	if cli.run.run_cmd.shared_params.chain.is_some() {
+    	cli.run.run_cmd.rpc_external = true;
+    	cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
+	}
 
     Ok(())
 }
