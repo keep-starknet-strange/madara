@@ -50,6 +50,10 @@ pub struct ExtendedRunCmd {
     #[clap(long)]
     pub disable_url_fetch: bool,
 
+	/// Disable madara default configs
+	#[clap(long)]
+	pub disable_madara_configs: bool,
+
     /// Path to the folder where all configuration files and data are stored
     /// There is an alias for madara_path <> base_path <> tmp
     /// Default: ~/.madara
