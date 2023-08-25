@@ -37,7 +37,7 @@ use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as G
 pub use pallet_starknet;
 use pallet_starknet::pallet::Error as PalletError;
 use pallet_starknet::runtime_api::StarknetTransactionExecutionError;
-use pallet_starknet::types::{NonceWrapper, StateCommitments, StateTrie};
+use pallet_starknet::types::NonceWrapper;
 use pallet_starknet::Call::{declare, deploy_account, invoke};
 use pallet_starknet::Event;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -263,14 +263,6 @@ impl_runtime_apis! {
             Starknet::contract_class_hash_by_address(address)
         }
 
-        fn contract_state_root_by_address(address: ContractAddressWrapper) -> Option<Felt252Wrapper> {
-            Starknet::contract_state_root_by_address(address)
-        }
-
-        fn contract_state_trie_by_address(address: ContractAddressWrapper) -> Option<StateTrie> {
-            Starknet::contract_state_trie_by_address(address)
-        }
-
         fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClass> {
             Starknet::contract_class_by_class_hash(class_hash)
         }
@@ -285,10 +277,6 @@ impl_runtime_apis! {
 
         fn get_hasher() -> Hasher {
             Starknet::get_system_hash().into()
-        }
-
-        fn get_state_commitments() -> StateCommitments {
-            Starknet::starknet_state_commitments()
         }
 
         fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction> {

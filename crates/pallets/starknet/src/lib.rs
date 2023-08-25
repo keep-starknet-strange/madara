@@ -33,7 +33,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::large_enum_variant)]
 
-use mp_starknet::crypto::state::StateCommitment;
 /// Starknet pallet.
 /// Definition of the pallet's runtime storage items, events, errors, and dispatchable
 /// functions.
@@ -79,9 +78,9 @@ use frame_support::pallet_prelude::*;
 use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
 use mp_digest_log::MADARA_ENGINE_ID;
-use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxStorageSlots, MaxTransactions};
+use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxTransactions};
 use mp_starknet::constants::INITIAL_GAS;
-use mp_starknet::crypto::commitment::{self, calculate_contract_state_hash};
+use mp_starknet::crypto::commitment::{self};
 use mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
 };
@@ -98,14 +97,11 @@ use sp_std::result;
 use starknet_api::api_core::{ChainId, ContractAddress};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkFelt;
-use starknet_api::stdlib::collections::HashMap;
 use starknet_api::transaction::EventContent;
 use starknet_crypto::FieldElement;
 
 use crate::alloc::string::ToString;
-use crate::types::{
-    ContractStorageKeyWrapper, NonceWrapper, StateCommitments, StateTrie, StorageKeyWrapper, StorageSlotWrapper,
-};
+use crate::types::{ContractStorageKeyWrapper, NonceWrapper, StorageKeyWrapper};
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
@@ -157,10 +153,6 @@ pub mod pallet {
         /// set how long transactions are kept in the mempool.
         #[pallet::constant]
         type TransactionLongevity: Get<TransactionLongevity>;
-        /// A bool to enable/disable State Root computation
-        /// As this is a very time-consuming process we preferred to let it optional for now
-        /// Not every application needs it but if you need to use it you can enable it
-        type EnableStateRoot: Get<bool>;
         /// A bool to disable transaction fees and make all transactions free
         #[pallet::constant]
         type DisableTransactionFee: Get<bool>;
@@ -174,6 +166,8 @@ pub mod pallet {
         type ProtocolVersion: Get<u8>;
         #[pallet::constant]
         type ChainId: Get<Felt252Wrapper>;
+        #[pallet::constant]
+        type MaxRecursionDepth: Get<u32>;
     }
 
     /// The Starknet pallet hooks.
@@ -228,38 +222,6 @@ pub mod pallet {
     #[pallet::getter(fn pending)]
     pub(super) type Pending<T: Config> =
         StorageValue<_, BoundedVec<(Transaction, TransactionReceiptWrapper), MaxTransactions>, ValueQuery>;
-
-    /// The Starknet pallet storage items.
-    /// STORAGE
-    /// State commitments of the current block.
-    #[pallet::storage]
-    #[pallet::unbounded]
-    #[pallet::getter(fn starknet_state_commitments)]
-    pub(super) type StarknetStateCommitments<T: Config> = StorageValue<_, StateCommitments, ValueQuery>;
-
-    /// The Starknet pallet storage items.
-    /// STORAGE
-    /// Mapping of contract address to state trie.
-    #[pallet::storage]
-    #[pallet::unbounded]
-    #[pallet::getter(fn contract_state_trie_by_address)]
-    pub(super) type ContractTries<T: Config> = StorageMap<_, Identity, ContractAddressWrapper, StateTrie, OptionQuery>;
-
-    /// The Starknet pallet storage items.
-    /// STORAGE
-    /// Mapping of contract address to state root.
-    #[pallet::storage]
-    #[pallet::getter(fn contract_state_root_by_address)]
-    pub(super) type ContractsStateRoots<T: Config> =
-        StorageMap<_, Identity, ContractAddressWrapper, Felt252Wrapper, OptionQuery>;
-
-    /// Pending storage slot updates
-    /// STORAGE
-    /// Mapping storage key to storage value.
-    #[pallet::storage]
-    #[pallet::getter(fn pending_storage_changes)]
-    pub(super) type PendingStorageChanges<T: Config> =
-        StorageMap<_, Identity, ContractAddressWrapper, BoundedVec<StorageSlotWrapper, MaxStorageSlots>, ValueQuery>;
 
     /// Current building block's events.
     // TODO: This is redundant information but more performant
@@ -381,20 +343,6 @@ pub mod pallet {
 
             for (address, class_hash) in self.contracts.iter() {
                 ContractClassHashes::<T>::insert(address, class_hash);
-
-                // Update state tries if enabled in the runtime configuration
-                if T::EnableStateRoot::get() {
-                    // Update contracts trie
-                    let mut tree = crate::StarknetStateCommitments::<T>::get().storage_commitment;
-                    let nonce = Pallet::<T>::nonce(address);
-                    let contract_root = Pallet::<T>::contract_state_root_by_address(address).unwrap_or_default();
-                    let hash = calculate_contract_state_hash::<T::SystemHash>(*class_hash, contract_root, nonce);
-                    tree.set(*address, hash);
-
-                    crate::StarknetStateCommitments::<T>::mutate(|state| {
-                        state.storage_commitment = tree;
-                    })
-                }
             }
 
             for (class_hash, contract_class) in self.contract_classes.iter() {
@@ -403,17 +351,6 @@ pub mod pallet {
 
             for (key, value) in self.storage.iter() {
                 StorageView::<T>::insert(key, value);
-
-                // Update state tries if enabled in the runtime configuration
-                if T::EnableStateRoot::get() {
-                    // Store intermediary state updates
-                    // As we update this mapping iteratively
-                    // We will end up with only the latest storage slot update
-                    // TODO: Estimate overhead of this approach
-                    PendingStorageChanges::<T>::mutate(key.0, |storage_slots| {
-                        storage_slots.try_push((key.1, *value)).unwrap(); // TODO: unwrap safu ??
-                    });
-                }
             }
 
             LastKnownEthBlock::<T>::set(None);
@@ -525,7 +462,6 @@ pub mod pallet {
                 &block_context,
                 TxType::Invoke,
                 T::DisableNonceValidation::get(),
-                None,
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -579,7 +515,7 @@ pub mod pallet {
 
             let transaction: Transaction = transaction.from_declare(chain_id);
             // Check that contract class is not None
-            let contract_class = transaction.contract_class.clone().ok_or(Error::<T>::ContractClassMustBeSpecified)?;
+            transaction.contract_class.clone().ok_or(Error::<T>::ContractClassMustBeSpecified)?;
 
             // Check that the class hash is not None
             let class_hash = transaction.call_entrypoint.class_hash.ok_or(Error::<T>::ClassHashMustBeSpecified)?;
@@ -599,7 +535,6 @@ pub mod pallet {
                 &block_context,
                 TxType::Declare,
                 T::DisableNonceValidation::get(),
-                Some(contract_class),
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -671,7 +606,6 @@ pub mod pallet {
                 &block_context,
                 TxType::DeployAccount,
                 T::DisableNonceValidation::get(),
-                None,
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -735,7 +669,6 @@ pub mod pallet {
                 &block_context,
                 TxType::L1Handler,
                 true,
-                None,
             ) {
                 Ok(v) => {
                     log!(debug, "Successfully consumed a message from L1: {:?}", v);
@@ -900,7 +833,7 @@ impl<T: Config> Pallet<T> {
 
         let chain_id = Self::chain_id_str();
 
-        let vm_resource_fee_cost = HashMap::default();
+        let vm_resource_fee_cost = Default::default();
         // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
         let gas_price = 10;
         BlockContext {
@@ -913,6 +846,7 @@ impl<T: Config> Pallet<T> {
             invoke_tx_max_n_steps: T::InvokeTxMaxNSteps::get(),
             validate_max_n_steps: T::ValidateMaxNSteps::get(),
             gas_price,
+            max_recursion_depth: T::MaxRecursionDepth::get() as usize,
         }
     }
 
@@ -1013,8 +947,7 @@ impl<T: Config> Pallet<T> {
         let parent_block_hash = Self::parent_block_hash(&block_number);
         let pending = Self::pending();
 
-        let global_state_root =
-            if T::EnableStateRoot::get() { Self::compute_and_store_state_root() } else { Felt252Wrapper::default() };
+        let global_state_root = Felt252Wrapper::default();
 
         let sequencer_address = Self::sequencer_address();
         let block_timestamp = Self::block_timestamp();
@@ -1156,7 +1089,6 @@ impl<T: Config> Pallet<T> {
             &Self::get_block_context(),
             transaction.tx_type.clone(),
             T::DisableNonceValidation::get(),
-            transaction.contract_class.clone(),
         ) {
             Ok(v) => {
                 log!(debug, "Successfully estimated fee: {:?}", v);
@@ -1194,58 +1126,6 @@ impl<T: Config> Pallet<T> {
             _ => {}
         };
         Ok(events)
-    }
-
-    /// Compute the global state root and store it in the runtime storage.
-    /// This function is called at the end of each block.
-    /// It iterates through all the pending storage changes and updates the storage trie.
-    /// It then computes the state root and stores it in the runtime storage.
-    ///
-    /// # Returns
-    ///
-    /// The global state root.
-    pub fn compute_and_store_state_root() -> Felt252Wrapper {
-        // Update contracts trie
-        let mut commitments = Self::starknet_state_commitments();
-        let pending_storage_changes = PendingStorageChanges::<T>::drain();
-
-        pending_storage_changes.for_each(|(contract_address, storage_diffs)| {
-            // Retrieve state trie for this contract.
-            // TODO: Investigate what to do in case of failure of the state root computation
-            let mut state_tree = ContractTries::<T>::get(contract_address).unwrap_or_default();
-            // For each smart contract, iterate through storage diffs and update the state trie.
-            storage_diffs.into_iter().for_each(|(storage_key, storage_value)| {
-                state_tree.set(storage_key, storage_value);
-            });
-
-            // We then compute the state root
-            // And update the storage trie
-            let state_root = state_tree.commit();
-
-            // Update the state trie for this contract in runtime storage.
-            ContractTries::<T>::set(contract_address, Some(state_tree.clone()));
-
-            // Update contracts' states root mapping
-            ContractsStateRoots::<T>::set(contract_address, Some(state_root));
-
-            let nonce = Self::nonce(contract_address);
-            let class_hash = Self::contract_class_hash_by_address(contract_address).unwrap_or_default();
-            let hash = calculate_contract_state_hash::<T::SystemHash>(class_hash, state_root, nonce);
-            commitments.storage_commitment.set(contract_address, hash);
-        });
-
-        // Compute the final state root
-        let global_state_root = StateCommitment::<T::SystemHash>::calculate(
-            commitments.storage_commitment.commit(),
-            commitments.class_commitment.commit(),
-        );
-
-        // Finally update the contracts trie in runtime storage.
-        StarknetStateCommitments::<T>::mutate(|state| {
-            state.storage_commitment = commitments.clone().storage_commitment;
-        });
-
-        global_state_root
     }
 
     pub fn chain_id() -> Felt252Wrapper {

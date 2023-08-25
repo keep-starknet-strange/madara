@@ -3,7 +3,7 @@ use starknet_ff::FieldElement;
 use crate::execution::felt252_wrapper::Felt252Wrapper;
 
 /// Initial gas for a transaction
-pub const INITIAL_GAS: u128 = u128::MAX;
+pub const INITIAL_GAS: u64 = u64::MAX;
 
 // Need to use `from_mont` because this needs to be a constant function call
 /// ChainId for Starknet Goerli testnet
