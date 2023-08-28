@@ -11,8 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Retrieve cached build
-        id: cache
+      - name: Cache Cargo registry and git trees
         uses: actions/cache@v3
         with:
           path: |
@@ -21,7 +20,12 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          # scope the cache by branch s.t. it doesn't fall back on base branch if there's a cache miss
+          # see: https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#matching-a-cache-key
+          key:
+            ${{ runner.os }}-cargo-${{
+            GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/} }}-${{
+            hashFiles('**/Cargo.lock') }}
 
       - name: Setup rust toolchain
         if: steps.cache.outputs.cache-hit != 'true'

@@ -4,6 +4,7 @@
 
 - fix: estimate_fee should make sure all transaction have a version being
   2^128 + 1 or 2^128+2 depending on the tx type
+- ci: scope cache by branch and add cache cleanup
 
 ## v0.2.0
 
@@ -26,9 +27,6 @@
 - fix: replace the 0 initial gas value with u128::MAX because view call
   entrypoints were failing
 - chore: remove global state root
-- chore: cairo-contracts compilation scripts & docs are updated, cairo_0
-  contracts recompiled
-- chore: rebase of core deps and 0.12.1
 
 ## v0.1.0
 
