@@ -21,19 +21,11 @@ pub fn fetch_and_validate_file(
     dest_path: String,
     force_fetching: bool,
 ) -> Result<(), String> {
-    let full_url = file
-        .url
-        .or_else(|| {
-            Some(
-                remote_base_path
-                    + &dest_path.split("configs/").collect::<Vec<&str>>()[1]
-                        .split('/')
-                        .collect::<Vec<&str>>()
-                        .join("/")
-                    + &file.name,
-            )
-        })
-        .unwrap();
+    let full_url = file.url.unwrap_or_else(|| {
+        remote_base_path
+            + &dest_path.split("configs/").collect::<Vec<&str>>()[1].split('/').collect::<Vec<&str>>().join("/")
+            + &file.name
+    });
     utils::fetch_from_url(full_url, dest_path.clone(), force_fetching)?;
 
     if let Some(file_hash) = file.md5 {

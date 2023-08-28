@@ -89,7 +89,7 @@ fn set_chain_spec(cli: &mut Cli) -> Result<(), String> {
     let local_path = utils::get_project_path();
 
     if let Some(chain_spec_url) = cli.run.chain_spec_url.clone() {
-        utils::fetch_from_url(chain_spec_url.clone(), madara_path.clone() + "/chain-specs", cli.run.update_configs)?;
+        utils::fetch_from_url(chain_spec_url.clone(), madara_path.clone() + "/chain-specs", cli.run.force_update_config)?;
         let chain_spec = chain_spec_url.split('/').last().expect("Chain spec file name not found");
         cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/" + chain_spec);
 
@@ -99,7 +99,7 @@ fn set_chain_spec(cli: &mut Cli) -> Result<(), String> {
     match (cli.run.testnet, cli.run.disable_url_fetch, cli.run.disable_madara_configs, local_path) {
         (Some(Testnet::Sharingan), _, false, Ok(ref src_path)) => {
             let src_path = src_path.clone() + "/configs/chain-specs/testnet-sharingan-raw.json";
-            utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs", cli.run.update_configs)?;
+            utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs", cli.run.force_update_config)?;
             cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
         }
         (Some(Testnet::Sharingan), false, false, _) => {
@@ -112,7 +112,7 @@ fn set_chain_spec(cli: &mut Cli) -> Result<(), String> {
                     madara_configs.remote_base_path.clone(),
                     chain_spec,
                     madara_path.clone() + "/configs/chain-specs/",
-                    cli.run.update_configs,
+                    cli.run.force_update_config,
                 )?;
             }
             cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
@@ -133,15 +133,15 @@ fn fetch_madara_configs(cli: &mut Cli) -> Result<(), String> {
     let local_path = utils::get_project_path();
 
     if let Some(configs_url) = cli.run.configs_url.clone() {
-        utils::fetch_from_url(configs_url, madara_path.clone() + "/configs", cli.run.update_configs)?;
+        utils::fetch_from_url(configs_url, madara_path.clone() + "/configs", cli.run.force_update_config)?;
     } else if let Ok(ref src_path) = local_path {
         let src_path = src_path.clone() + "/configs/index.json";
-        utils::copy_from_filesystem(src_path, madara_path.clone() + "/configs", cli.run.update_configs)?;
+        utils::copy_from_filesystem(src_path, madara_path.clone() + "/configs", cli.run.force_update_config)?;
     } else if !cli.run.disable_url_fetch {
         utils::fetch_from_url(
             constants::DEFAULT_CONFIGS_URL.to_string(),
             madara_path.clone() + "/configs",
-            cli.run.update_configs,
+            cli.run.force_update_config,
         )?;
     }
 
@@ -155,7 +155,7 @@ fn fetch_madara_configs(cli: &mut Cli) -> Result<(), String> {
             utils::copy_from_filesystem(
                 src_path,
                 madara_path.clone() + "/configs/genesis-assets",
-                cli.run.update_configs,
+                cli.run.force_update_config,
             )?;
         }
     } else if !cli.run.disable_url_fetch {
@@ -164,7 +164,7 @@ fn fetch_madara_configs(cli: &mut Cli) -> Result<(), String> {
                 madara_configs.remote_base_path.clone(),
                 asset,
                 madara_path.clone() + "/configs/genesis-assets/",
-                cli.run.update_configs,
+                cli.run.force_update_config,
             )?;
         }
     }

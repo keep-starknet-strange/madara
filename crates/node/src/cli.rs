@@ -70,7 +70,7 @@ pub struct ExtendedRunCmd {
     /// If the files currently exist in your madara_path, the default behaviour will skip the file
     /// fetching, it's possible to force an update with this flag
     #[clap(long)]
-    pub update_configs: bool,
+    pub force_update_config: bool,
 }
 
 #[allow(clippy::large_enum_variant)]
