@@ -76,7 +76,7 @@ fn dynamic_string_hashing() {
 
     let hasher = PoseidonHasher::hasher();
 
-    let message = format!("Hello, madara!!. It is poseidon hash."); // 37 bytes
+    let message = "Hello, madara!!. It is poseidon hash.".to_string(); // 37 bytes
     let message = message.as_bytes();
     let hash_value = hasher.hash_bytes(message);
 
