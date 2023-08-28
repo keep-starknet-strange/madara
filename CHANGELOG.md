@@ -1,5 +1,8 @@
 # Madara Changelog
 
+- feat: modify the hash_bytes functions in `poseidon` and `pedersen` for dynamic
+  data length
+
 ## Next release
 
 - docs: added translation of madara beast article.md to portuguese
