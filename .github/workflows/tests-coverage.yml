@@ -31,10 +31,14 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           fail-on-cache-miss: true
-      - name: Run test
+      - name: Run test (native)
         run: |-
           cd tests
           npm run test
+      - name: Run test (wasm)
+        run: |-
+          cd tests
+          FORCE_WASM_EXECUTION=true npm run test
 
   coverage:
     # sadly, for now we have to "rebuild" for the coverage

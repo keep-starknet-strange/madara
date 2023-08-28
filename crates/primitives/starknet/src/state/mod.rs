@@ -20,7 +20,7 @@ pub trait StateChanges {
     /// * `usize` - The number of modified contracts in the transaction.
     /// * `usize` - The number of modified storage vars in the transaction.
     /// * `usize` -  The number of newly declared classes.
-    fn count_state_changes(&self) -> (usize, usize, usize);
+    fn count_state_changes(&self) -> (usize, usize, usize, usize);
 }
 
 /// This trait allows to get the fee config for the pallet and accordingly charge the fees

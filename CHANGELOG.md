@@ -5,10 +5,17 @@
 
 ## Next release
 
+- ci: add verification if build-spec is working
+- bug: fix build-spec not working by setting the madara-path always and fetching
+  relevant files
+- fix: RPC getClassAt cairo legacy program code encoding
+- ci: added wasm to test
 - docs: added translation of madara beast article.md to portuguese
 - ci: disable benchmark for pushes and pr's
 - ci: fix docker and binaries build
 - ci: don't enforce changelog on PR's with label `dependencies`
+- feat: rebase of core deps and 0.12.1
+- chore: remove global state root
 
 ## v0.1.0
 
@@ -34,7 +41,7 @@
 - fix: expected event idx in cotinuation tokens in test responses
 - chore: cairo-contracts compilation scripts & docs are updated, cairo_0
   contracts recompiled
-- add-contributors: `0xAsten`
+- add-contributors: `0xAsten`, `m-kus`, `joaopereira12`
 - fix: update RPC URL to use localhost instead of 0.0.0.0 in hurl.config file
 - fix: update the default port for running Madara locally in getting-started.md
   file from 9933 to 9944.
