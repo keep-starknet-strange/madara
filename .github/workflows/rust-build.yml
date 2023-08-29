@@ -23,9 +23,7 @@ jobs:
           # scope the cache by branch s.t. it doesn't fall back on base branch if there's a cache miss
           # see: https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#matching-a-cache-key
           key:
-            ${{ runner.os }}-cargo-${{
-            GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/} }}-${{
-            hashFiles('**/Cargo.lock') }}
+            ${{ runner.os }}-cargo-${{ github.ref_name }}-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Setup rust toolchain
         if: steps.cache.outputs.cache-hit != 'true'
