@@ -163,8 +163,7 @@ fn fetch_madara_configs(cli: &mut Cli) -> Result<(), String> {
 pub fn run() -> sc_cli::Result<()> {
     let mut cli = Cli::from_args();
 
-    let madara_path = cli.run.madara_path.clone().expect("Failed retrieving madara_path");
-    cli.run.run_cmd.shared_params.base_path = Some(madara_path);
+    cli.run.run_cmd.shared_params.base_path = cli.run.madara_path.clone();
 
     if !cli.run.disable_madara_configs {
         fetch_madara_configs(&mut cli)?;
