@@ -2,6 +2,11 @@ use std::path::PathBuf;
 
 use sc_cli::RunCmd;
 
+fn get_default_madara_path() -> String {
+    let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
+    format!("{}/.madara", home_path)
+}
+
 /// Available Sealing methods.
 #[derive(Debug, Copy, Clone, clap::ValueEnum, Default)]
 pub enum Sealing {
@@ -57,9 +62,9 @@ pub struct ExtendedRunCmd {
     pub disable_url_fetch: bool,
 
     /// Path to the folder where all configuration files and data are stored
-    /// There is an alias for madara_path <-> base_path
-    /// Default: ~/.madara
-    #[clap(long)]
+    /// base_path will always be overwritten by madara_path
+    /// in the case you use the --tmp, the base_path will be changed during the runtime
+    #[clap(long, default_value = get_default_madara_path())]
     pub madara_path: Option<PathBuf>,
 
     /// Choose a supported testnet chain which will load some default values

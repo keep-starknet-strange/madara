@@ -58,7 +58,8 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
                         let contract_path = match loader.madara_path.clone() {
                             Some(madara_path) => madara_path + "/configs/" + &path,
                             None => {
-                                let project_path = utils::get_project_path().expect("A Project path should be present in order to load the genesis contracts");
+                                let project_path = utils::get_project_path()
+                                    .expect("A Project path should be present in order to load the genesis contracts");
                                 project_path + "/" + &path
                             }
                         };

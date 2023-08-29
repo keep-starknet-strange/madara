@@ -52,23 +52,6 @@ impl SubstrateCli for Cli {
     }
 }
 
-fn set_madara_path(cli: &mut Cli) {
-    match (cli.run.madara_path.clone(), cli.run.run_cmd.shared_params.base_path.clone()) {
-        (Some(madara_path), _) => {
-            cli.run.run_cmd.shared_params.base_path = Some(madara_path);
-        }
-        (_, Some(base_path)) => {
-            cli.run.madara_path = Some(base_path);
-        }
-        _ => {
-            let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
-            let path = format!("{}/.madara", home_path);
-            cli.run.run_cmd.shared_params.base_path = Some((path.clone()).into());
-            cli.run.madara_path = Some(path.into());
-        }
-    };
-}
-
 fn set_dev_environment(cli: &mut Cli) {
     // create a reproducible dev environment
     cli.run.run_cmd.shared_params.dev = false;
@@ -89,7 +72,11 @@ fn set_chain_spec(cli: &mut Cli) -> Result<(), String> {
     let local_path = utils::get_project_path();
 
     if let Some(chain_spec_url) = cli.run.chain_spec_url.clone() {
-        utils::fetch_from_url(chain_spec_url.clone(), madara_path.clone() + "/chain-specs", cli.run.force_update_config)?;
+        utils::fetch_from_url(
+            chain_spec_url.clone(),
+            madara_path.clone() + "/chain-specs",
+            cli.run.force_update_config,
+        )?;
         let chain_spec = chain_spec_url.split('/').last().expect("Chain spec file name not found");
         cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/" + chain_spec);
 
@@ -176,7 +163,9 @@ fn fetch_madara_configs(cli: &mut Cli) -> Result<(), String> {
 pub fn run() -> sc_cli::Result<()> {
     let mut cli = Cli::from_args();
 
-    set_madara_path(&mut cli);
+    let madara_path = cli.run.madara_path.clone().expect("Failed retrieving madara_path");
+    cli.run.run_cmd.shared_params.base_path = Some(madara_path);
+
     if !cli.run.disable_madara_configs {
         fetch_madara_configs(&mut cli)?;
     }
