@@ -42,3 +42,7 @@ path = "chain_id.rs"
 [[test]]
 name = "starknet_get_storage_at"
 path = "get_storage_at.rs"
+
+[[test]]
+name = "starknet_get_class_hash_at"
+path = "get_class_hash_at.rs"
