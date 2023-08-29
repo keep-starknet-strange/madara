@@ -27,7 +27,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           fail-on-cache-miss: true
       - name: Run benchmark
         run: |
@@ -67,7 +67,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           fail-on-cache-miss: true
       - name: Setup rust toolchain
         if: steps.cache.outputs.cache-hit != 'true'
