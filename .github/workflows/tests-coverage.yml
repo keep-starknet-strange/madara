@@ -29,8 +29,12 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          key:
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
+            github.run_id }}
           fail-on-cache-miss: true
+          restore-keys: |
+            ${{ runner.os }}-cargo
       - name: Run test (native)
         run: |-
           cd tests
@@ -53,8 +57,12 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          key:
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
+            github.run_id }}
           fail-on-cache-miss: true
+          restore-keys: |
+            ${{ runner.os }}-cargo
       - name: Setup build deps
         run: |
           sudo apt-get update
