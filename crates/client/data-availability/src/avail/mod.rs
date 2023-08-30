@@ -12,6 +12,7 @@ use ethers::types::{I256, U256};
 use sp_core::H256;
 use subxt::ext::sp_core::sr25519::Pair;
 
+use crate::utils::get_bytes_from_state_diff;
 use crate::{DaClient, DaMode};
 
 type AvailPairSigner = subxt::tx::PairSigner<AvailConfig, Pair>;
@@ -27,7 +28,7 @@ pub struct AvailClient {
 #[async_trait]
 impl DaClient for AvailClient {
     async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()> {
-        let bytes = self.get_bytes_from_state_diff(state_diff)?;
+        let bytes = get_bytes_from_state_diff(&state_diff);
         let bytes = BoundedVec(bytes);
 
         let submitted_block_hash = self.publish_data(&bytes).await?;
@@ -70,19 +71,6 @@ impl AvailClient {
             .await?;
 
         Ok(events.block_hash())
-    }
-
-    fn get_bytes_from_state_diff(&self, state_diff: Vec<U256>) -> Result<Vec<u8>> {
-        let state_diff_bytes: Vec<u8> = state_diff
-            .iter()
-            .flat_map(|item| {
-                let mut bytes = [0_u8; 32];
-                item.to_big_endian(&mut bytes);
-                bytes.to_vec()
-            })
-            .collect();
-
-        Ok(state_diff_bytes)
     }
 
     async fn verify_bytes_inclusion(&self, block_hash: H256, bytes: &BoundedVec<u8>) -> Result<()> {
