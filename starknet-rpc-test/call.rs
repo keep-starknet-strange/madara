@@ -175,11 +175,22 @@ async fn works_on_mutable_call_without_modifying_storage(#[future] madara: Madar
     );
     let contract_factory = ContractFactory::new(contract_artifact.class_hash().unwrap(), account.clone());
 
-    let deployment = contract_factory.deploy(vec![], FieldElement::ZERO, true);
+    let mut deployment = contract_factory.deploy(vec![], FieldElement::ZERO, true);
+
+    // manually setting fee else estimate_fee will be called and it will fail
+    // as contract is not declared yet (declared in the same block as deployment)
+    deployment = deployment.max_fee(FieldElement::from_hex_be("0x1000000000").unwrap());
+
+    // manually incrementing nonce else as both declare and deploy are in the same block
+    // so automatic nonce calculation will fail
+    let nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account.address()).await.unwrap();
+    deployment = deployment.nonce(nonce + FieldElement::ONE);
 
     // declare and deploy contract
-    madara.create_block_with_txs(vec![Transaction::Declaration(declaration)]).await?;
-    madara.create_block_with_txs(vec![Transaction::Execution(deployment)]).await?;
+    madara
+        .create_block_with_txs(vec![Transaction::Declaration(declaration), Transaction::Execution(deployment)])
+        .await?;
+    // madara.create_block_with_txs(vec![Transaction::Execution(deployment)]).await?;
 
     // address of deployed contract (will always be the same for 0 salt)
     let contract_address =
@@ -214,6 +225,7 @@ async fn works_on_mutable_call_without_modifying_storage(#[future] madara: Madar
     );
     let final_balance = read_balance().await[0];
 
+    // initial and final balance should be same as starknet_call doesn't change storage
     assert_eq!(initial_balance, final_balance);
 
     Ok(())
