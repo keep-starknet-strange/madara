@@ -9,12 +9,9 @@ use starknet_accounts::{Account, SingleOwnerAccount};
 use starknet_core::chain_id;
 use starknet_core::types::{BlockId, BlockTag, StarknetError};
 use starknet_ff::FieldElement;
-use starknet_providers::sequencer::ErrorCode::BlockNotFound;
-use starknet_providers::MaybeUnknownErrorCode::Known;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{
-    ACCOUNT_CONTRACT, ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT, CONTRACT_ADDRESS, MINT_AMOUNT, SIGNER_PRIVATE,
-    TEST_CONTRACT_ADDRESS,
+    ARGENT_CONTRACT_ADDRESS, CONTRACT_ADDRESS, MINT_AMOUNT, SIGNER_PRIVATE, TEST_CONTRACT_ADDRESS,
 };
 use starknet_rpc_test::utils::AccountActions;
 use starknet_rpc_test::{ExecutionStrategy, MadaraClient};
@@ -46,78 +43,51 @@ async fn fail_non_existing_block(#[future] madara: MadaraClient) -> Result<(), a
 
 #[rstest]
 #[tokio::test]
-async fn fail_non_used_contract_address(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+async fn work_ok_non_used_contract_address(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
     let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
-    let res = rpc
-        .get_nonce(
-            BlockId::Tag(BlockTag::Latest),
-            FieldElement::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000001312")
-                .expect("Invalid Contract Address"),
-        )
-        .await;
-
-    dbg!(
-        rpc.get_class_at(
-            BlockId::Tag(BlockTag::Latest),
-            FieldElement::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000001312")
-                .expect("Invalid Contract Address"),
+    assert_eq!(
+        rpc.get_nonce(
+            BlockId::Number(0),
+            FieldElement::from_hex_be("0x4269DEADBEEF").expect("Invalid Contract Address")
         )
         .await
+        .ok(),
+        Some(
+            FieldElement::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000000")
+                .expect("Invalid Nonce")
+        )
     );
-    dbg!(&res);
-
-    match res {
-        Err(err) => match err {
-            ProviderError::StarknetError(starknet_err_w_msg) => match starknet_err_w_msg.code {
-                Known(starknet_err) => {
-                    assert_eq!(starknet_err, StarknetError::BlockNotFound)
-                }
-                _ => panic!("get_nonce error type should be MaybeUnknownErrorCode::Known"),
-            },
-            _ => panic!("get_nonce error should be ProviderError::StarknetError on non-existing block"),
-        },
-        _ => panic!("get_nonce should be an error on non-existing block"),
-    }
 
     Ok(())
 }
 
 #[rstest]
 #[tokio::test]
-async fn fail_non_account_contract(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+async fn work_ok_non_account_contract(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
     let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
-    let res = rpc
-        .get_nonce(
-            BlockId::Tag(BlockTag::Latest),
-            FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).expect("Invalid Contract Address"),
+    assert_eq!(
+        rpc.get_nonce(
+            BlockId::Number(0),
+            FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).expect("Invalid Contract Address")
         )
-        .await;
-
-    dbg!(&res);
-
-    match res {
-        Err(err) => match err {
-            ProviderError::StarknetError(starknet_err_w_msg) => match starknet_err_w_msg.code {
-                Known(starknet_err) => {
-                    assert_eq!(starknet_err, StarknetError::BlockNotFound)
-                }
-                _ => panic!("get_nonce error type should be MaybeUnknownErrorCode::Known"),
-            },
-            _ => panic!("get_nonce error should be ProviderError::StarknetError on non-existing block"),
-        },
-        _ => panic!("get_nonce should be an error on non-existing block"),
-    }
+        .await
+        .ok(),
+        Some(
+            FieldElement::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000000")
+                .expect("Invalid Nonce")
+        )
+    );
 
     Ok(())
 }
 
 #[rstest]
 #[tokio::test]
-async fn happy_path(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+async fn work_ok_account_with_tx(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
     let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
