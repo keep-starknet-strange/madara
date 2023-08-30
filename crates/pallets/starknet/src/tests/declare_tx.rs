@@ -265,13 +265,12 @@ fn given_contract_declare_on_cairo_1_no_validate_account_then_it_works() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
-            is_query: true,
+            is_query: false,
         };
 
         let chain_id = Starknet::chain_id();
         let transaction_hash = calculate_declare_tx_hash(transaction.clone(), chain_id);
         transaction.signature = sign_message_hash(transaction_hash);
-        transaction.is_query = false;
 
         let validate_result = Starknet::validate_unsigned(
             TransactionSource::InBlock,

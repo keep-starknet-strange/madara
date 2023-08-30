@@ -2,6 +2,9 @@
 
 ## Next release
 
+- fix: estimate_fee should make sure all transaction have a version being
+  2^128 + 1 or 2^128+2 depending on the tx type
+
 ## v0.2.0
 
 - add-contributors: `0xAsten`, `m-kus`, `joaopereira12`
@@ -47,5 +50,3 @@
 - feat: add a `genesis_loader` for the node and mocking
 - feat: add `madara_tsukuyomi` as a submodule
 - branding: use new logo in the README
-- fix: estimate_fee should make sure all transaction have a version being
-  2^128 + 1 or 2^128+2 depending on the tx type
