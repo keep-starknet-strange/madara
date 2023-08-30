@@ -190,10 +190,7 @@ impl MadaraClient {
     pub fn get_starknet_client(&self) -> &JsonRpcClient<HttpTransport> {
         &self.starknet_client
     }
-}
 
-// Substrate RPC
-impl MadaraClient {
     pub async fn create_empty_block(&self) -> anyhow::Result<()> {
         let body = json!({
             "method": "engine_createBlock",
