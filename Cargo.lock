@@ -10242,6 +10242,7 @@ dependencies = [
  "anyhow",
  "assert_matches",
  "derive_more",
+ "flate2",
  "lazy_static",
  "reqwest",
  "rstest 0.18.1",
