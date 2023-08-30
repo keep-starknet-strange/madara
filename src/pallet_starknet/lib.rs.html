@@ -1132,6 +1132,10 @@
 <a href="#1132" id="1132">1132</a>
 <a href="#1133" id="1133">1133</a>
 <a href="#1134" id="1134">1134</a>
+<a href="#1135" id="1135">1135</a>
+<a href="#1136" id="1136">1136</a>
+<a href="#1137" id="1137">1137</a>
+<a href="#1138" id="1138">1138</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -2218,6 +2222,10 @@
 
     <span class="doccomment">/// Estimate the fee associated with transaction
     </span><span class="kw">pub fn </span>estimate_fee(transaction: Transaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u64, u64), DispatchError&gt; {
+        <span class="kw">if </span>!transaction.is_query {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(DispatchError::Other(<span class="string">&quot;Cannot estimate_fee with is_query = false&quot;</span>));
+        }
+
         <span class="kw">match </span>transaction.execute(
             <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
             <span class="kw-2">&amp;</span><span class="self">Self</span>::get_block_context(),

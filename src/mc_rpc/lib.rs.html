@@ -929,6 +929,13 @@
 <a href="#929" id="929">929</a>
 <a href="#930" id="930">930</a>
 <a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1457,11 +1464,18 @@
         request: Vec&lt;BroadcastedTransaction&gt;,
         block_id: BlockId,
     ) -&gt; RpcResult&lt;Vec&lt;FeeEstimate&gt;&gt; {
-        <span class="comment">// TODO:
-        //      - modify BroadcastedTransaction to assert versions == &quot;0x100000000000000000000000000000001&quot;
-        //      - to ensure broadcasted query signatures aren&#39;t valid on mainnet
+        <span class="kw">let </span>is_invalid_query_transaction = request.iter().any(|tx| <span class="kw">match </span>tx {
+            BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction::V0(tx_v0)) =&gt; !tx_v0.is_query,
+            BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction::V1(tx_v1)) =&gt; !tx_v1.is_query,
+            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V1(tx_v1)) =&gt; !tx_v1.is_query,
+            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V2(tx_v2)) =&gt; !tx_v2.is_query,
+            BroadcastedTransaction::DeployAccount(deploy_tx) =&gt; !deploy_tx.is_query,
+        });
+        <span class="kw">if </span>is_invalid_query_transaction {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(StarknetRpcApiError::UnsupportedTxVersion.into());
+        }
 
-        </span><span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+        <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
             StarknetRpcApiError::BlockNotFound
         })<span class="question-mark">?</span>;
