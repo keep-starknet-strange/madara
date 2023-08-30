@@ -54,10 +54,7 @@ async fn work_ok_non_used_contract_address(#[future] madara: MadaraClient) -> Re
         )
         .await
         .ok(),
-        Some(
-            FieldElement::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000000")
-                .expect("Invalid Nonce")
-        )
+        Some(FieldElement::ZERO)
     );
 
     Ok(())
@@ -76,10 +73,7 @@ async fn work_ok_non_account_contract(#[future] madara: MadaraClient) -> Result<
         )
         .await
         .ok(),
-        Some(
-            FieldElement::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000000")
-                .expect("Invalid Nonce")
-        )
+        Some(FieldElement::ZERO)
     );
 
     Ok(())
@@ -103,13 +97,7 @@ async fn work_ok_account_with_tx(#[future] madara: MadaraClient) -> Result<(), a
         )])
         .await?;
 
-    assert_eq!(
-        rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account.address(),).await.ok(),
-        Some(
-            FieldElement::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000001")
-                .expect("Invalid Nonce")
-        )
-    );
+    assert_eq!(rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account.address(),).await.ok(), Some(FieldElement::ONE));
 
     Ok(())
 }
