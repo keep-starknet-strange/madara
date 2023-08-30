@@ -28,7 +28,7 @@ rpath = false        # Disables adding rpath to the binary
 authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
 edition = "2021"
 repository = "https://github.com/keep-starknet-strange/madara/"
-version = "0.1.0"
+version = "0.2.0"
 
 [workspace.dependencies]
 # Substrate frame dependencies
@@ -128,7 +128,7 @@ madara-runtime = { path = "crates/runtime" }
 
 # Starknet dependencies
 # Cairo Virtual Machine
-cairo-vm = { git = "https://github.com/keep-starknet-strange/cairo-rs", branch = "no_std-support-with-cairo-1", default-features = false, features = [
+cairo-vm = { git = "https://github.com/keep-starknet-strange/cairo-rs", branch = "no_std-support-21eff70", default-features = false, features = [
   "cairo-1-hints",
   "parity-scale-codec",
 ] }
@@ -136,23 +136,23 @@ starknet-crypto = { version = "0.6.0", default-features = false }
 starknet-core = { version = "0.5.0", default-features = false }
 starknet-ff = { version = "0.3.4", default-features = false }
 
-blockifier = { git = "https://github.com/keep-starknet-strange/blockifier", branch = "no_std-support", default-features = false, features = [
+blockifier = { git = "https://github.com/keep-starknet-strange/blockifier", branch = "no_std-support-7578442", default-features = false, features = [
   "parity-scale-codec",
 ] }
-starknet_api = { git = "https://github.com/keep-starknet-strange/starknet-api", branch = "no_std-support", features = [
+starknet_api = { git = "https://github.com/keep-starknet-strange/starknet-api", branch = "no_std-support-dc83f05", features = [
   "testing",
   "parity-scale-codec",
 ], default-features = false }
 
 # Cairo lang
-cairo-lang-starknet = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support", default-features = false }
-cairo-lang-casm-contract-class = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support", default-features = false }
-cairo-lang-casm = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support", default-features = false }
-cairo-lang-utils = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support", default-features = false }
+cairo-lang-starknet = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support-8bbf530", default-features = false }
+cairo-lang-casm-contract-class = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support-8bbf530", default-features = false }
+cairo-lang-casm = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support-8bbf530", default-features = false }
+cairo-lang-utils = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support-8bbf530", default-features = false }
 
 # Other third party dependencies
-anyhow = "1.0.71"
-flate2 = "1.0.26"
+anyhow = "1.0.75"
+flate2 = "1.0.27"
 scale-codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false }
 scale-info = { version = "2.9.0", default-features = false }
 lazy_static = { version = "1.4.0", default-features = false }
@@ -160,15 +160,15 @@ log = { version = "0.4.20", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 safe-mix = { version = "1.0", default-features = false }
 jsonrpsee = { version = "0.16.2", default-features = false }
-clap = { version = "4.3.21", default-features = false }
+clap = { version = "4.3.23", default-features = false }
 futures = { version = "0.3.28", default-features = false }
 futures-timer = { version = "3.0.2", default-features = false }
 reqwest = { version = "0.11.18", default-features = false }
-serde = { version = "1.0.180", default-features = false }
-serde_json = { version = "1.0.104", default-features = false }
+serde = { version = "1.0.185", default-features = false }
+serde_json = { version = "1.0.105", default-features = false }
 serde_with = { version = "2.3.3", default-features = false }
 bitvec = { version = "1", default-features = false }
-thiserror = "1.0.44"
+thiserror = "1.0.47"
 thiserror-no-std = "2.0.2"
 derive_more = { version = "0.99.17", default-features = false }
 rstest = "0.17.0"

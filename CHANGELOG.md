@@ -2,11 +2,30 @@
 
 ## Next release
 
+## v0.2.0
+
+- add-contributors: `0xAsten`, `m-kus`, `joaopereira12`
+- ci: add verification if build-spec is working
 - ci: added wasm to test
-- docs: added translation of madara beast article.md to portuguese
 - ci: disable benchmark for pushes and pr's
 - ci: fix docker and binaries build
 - ci: don't enforce changelog on PR's with label `dependencies`
+- doc: added translation of madara beast article.md to portuguese and russian
+- doc: app chain template added in README
+- fix: RPC getClassAt cairo legacy program code encoding
+- fix: build-spec not working by setting the madara-path always and fetching
+  relevant files
+- fix: events are emitted in correct sequential order
+- fix: expected event idx in continuation tokens in test responses
+- fix: update RPC URL to use localhost instead of 0.0.0.0 in hurl.config file
+- fix: update the default port for running Madara locally in getting-started.md
+  file from 9933 to 9944.
+- fix: replace the 0 initial gas value with u128::MAX because view call
+  entrypoints were failing
+- chore: remove global state root
+- chore: cairo-contracts compilation scripts & docs are updated, cairo_0
+  contracts recompiled
+- chore: rebase of core deps and 0.12.1
 
 ## v0.1.0
 
@@ -28,13 +47,3 @@
 - feat: add a `genesis_loader` for the node and mocking
 - feat: add `madara_tsukuyomi` as a submodule
 - branding: use new logo in the README
-- fix: events are emitted in correct sequential order
-- fix: expected event idx in cotinuation tokens in test responses
-- chore: cairo-contracts compilation scripts & docs are updated, cairo_0
-  contracts recompiled
-- add-contributors: `0xAsten`, `m-kus`, `joaopereira12`
-- fix: update RPC URL to use localhost instead of 0.0.0.0 in hurl.config file
-- fix: update the default port for running Madara locally in getting-started.md
-  file from 9933 to 9944.
-- dev: replace the 0 initial gas value with u128::MAX because view call
-  entrypoints were failing

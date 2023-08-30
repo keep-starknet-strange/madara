@@ -59,6 +59,67 @@ impl SubstrateCli for Cli {
 pub fn run() -> sc_cli::Result<()> {
     let mut cli = Cli::from_args();
 
+    // alias madara_path <> base_path
+    // TODO also alias tmp (tmp generates random base_paths that are not specified within
+    // the command)
+    let madara_path = match (cli.run.madara_path.clone(), cli.run.run_cmd.shared_params.base_path.clone()) {
+        (Some(madara_path), _) => {
+            cli.run.run_cmd.shared_params.base_path = Some(madara_path.clone());
+            madara_path.to_str().unwrap().to_string()
+        }
+        (_, Some(base_path)) => {
+            cli.run.madara_path = Some(base_path.clone());
+            base_path.to_str().unwrap().to_string()
+        }
+        _ => {
+            let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
+            let path = format!("{}/.madara", home_path);
+            cli.run.run_cmd.shared_params.base_path = Some((path.clone()).into());
+            cli.run.madara_path = Some((path.clone()).into());
+            path
+        }
+    };
+
+    if let Some(genesis_url) = cli.run.genesis_url.clone() {
+        // can't copy extra genesis-assets atm
+        // we can reuse #982 to create the standard to fetch relevant files
+        utils::fetch_from_url(genesis_url, madara_path.clone() + "/configs/genesis-assets")?;
+    } else {
+        // TODO confirm with the CI that we are fetching all and fetch dynamically
+        // Issue #982
+        for file in constants::GENESIS_ASSETS_FILES {
+            let src_path = utils::get_project_path();
+            if let Ok(src_path) = src_path {
+                let src_path = src_path + "/configs/genesis-assets/" + file;
+                utils::copy_from_filesystem(src_path, madara_path.clone() + "/genesis-assets")?;
+            } else {
+                utils::fetch_from_url(
+                    constants::GENESIS_ASSETS_URL.to_string() + file,
+                    madara_path.clone() + "/genesis-assets",
+                )?;
+            }
+        }
+    }
+
+    // TODO confirm with the CI that we are fetching all and fetch dynamically
+    // Issue #982
+    for file in constants::CAIRO_CONTRACTS_FILES {
+        let src_path = utils::get_project_path();
+        if let Ok(src_path) = src_path {
+            let src_path = src_path + "/configs/cairo-contracts/" + file;
+            utils::copy_from_filesystem(src_path, madara_path.clone() + "/cairo-contracts")?;
+        } else {
+            utils::fetch_from_url(
+                constants::CAIRO_CONTRACTS_URL.to_string() + file,
+                madara_path.clone() + "/cairo-contracts",
+            )?;
+        }
+    }
+
+    if let (Some(chain_spec_url), None) = (cli.run.chain_spec_url.clone(), cli.run.testnet) {
+        utils::fetch_from_url(chain_spec_url, madara_path.clone() + "/chain-specs")?;
+    }
+
     match &cli.subcommand {
         Some(Subcommand::Key(cmd)) => cmd.run(&cli),
         Some(Subcommand::BuildSpec(cmd)) => {
@@ -192,69 +253,8 @@ pub fn run() -> sc_cli::Result<()> {
                 cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
             }
 
-            // alias madara_path <> base_path
-            // TODO also alias tmp (tmp generates random base_paths that are not specified within
-            // the command)
-            let madara_path = match (cli.run.madara_path.clone(), cli.run.run_cmd.shared_params.base_path.clone()) {
-                (Some(madara_path), _) => {
-                    cli.run.run_cmd.shared_params.base_path = Some(madara_path.clone());
-                    madara_path.to_str().unwrap().to_string()
-                }
-                (_, Some(base_path)) => {
-                    cli.run.madara_path = Some(base_path.clone());
-                    base_path.to_str().unwrap().to_string()
-                }
-                _ => {
-                    let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
-                    let path = format!("{}/.madara", home_path);
-                    cli.run.run_cmd.shared_params.base_path = Some((path.clone()).into());
-                    cli.run.madara_path = Some((path.clone()).into());
-                    path
-                }
-            };
-
             cli.run.run_cmd.network_params.node_key_params.node_key_file =
                 Some((madara_path.clone() + "/p2p-key.ed25519").into());
-
-            if let Some(genesis_url) = cli.run.genesis_url.clone() {
-                // can't copy extra genesis-assets atm
-                // we can reuse #982 to create the standard to fetch relevant files
-                utils::fetch_from_url(genesis_url, madara_path.clone() + "/configs/genesis-assets")?;
-            } else {
-                // TODO confirm with the CI that we are fetching all and fetch dynamically
-                // Issue #982
-                for file in constants::GENESIS_ASSETS_FILES {
-                    let src_path = utils::get_project_path();
-                    if let Ok(src_path) = src_path {
-                        let src_path = src_path + "/configs/genesis-assets/" + file;
-                        utils::copy_from_filesystem(src_path, madara_path.clone() + "/genesis-assets")?;
-                    } else {
-                        utils::fetch_from_url(
-                            constants::GENESIS_ASSETS_URL.to_string() + file,
-                            madara_path.clone() + "/genesis-assets",
-                        )?;
-                    }
-                }
-            }
-
-            // TODO confirm with the CI that we are fetching all and fetch dynamically
-            // Issue #982
-            for file in constants::CAIRO_CONTRACTS_FILES {
-                let src_path = utils::get_project_path();
-                if let Ok(src_path) = src_path {
-                    let src_path = src_path + "/configs/cairo-contracts/" + file;
-                    utils::copy_from_filesystem(src_path, madara_path.clone() + "/cairo-contracts")?;
-                } else {
-                    utils::fetch_from_url(
-                        constants::CAIRO_CONTRACTS_URL.to_string() + file,
-                        madara_path.clone() + "/cairo-contracts",
-                    )?;
-                }
-            }
-
-            if let (Some(chain_spec_url), None) = (cli.run.chain_spec_url.clone(), cli.run.testnet) {
-                utils::fetch_from_url(chain_spec_url, madara_path.clone() + "/chain-specs")?;
-            }
 
             if let Some(Testnet::Sharingan) = cli.run.testnet {
                 let src_path = utils::get_project_path();

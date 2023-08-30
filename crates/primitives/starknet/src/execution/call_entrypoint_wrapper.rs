@@ -106,7 +106,7 @@ impl CallEntryPointWrapper {
         let execution_resources = &mut ExecutionResources::default();
         let account_context = AccountTransactionContext::default();
         let max_steps = block_context.invoke_tx_max_n_steps;
-        let context = &mut EntryPointExecutionContext::new(block_context, account_context, max_steps);
+        let context = &mut EntryPointExecutionContext::new(block_context, account_context, max_steps as usize);
 
         call_entry_point
             .execute(state, execution_resources, context)
@@ -161,7 +161,11 @@ impl TryInto<CallEntryPoint> for CallEntryPointWrapper {
             // starknet-lib is constantly breaking it's api
             // I hope it's nothing important ¯\_(ツ)_/¯
             code_address: None,
-            initial_gas: self.initial_gas.into(),
+            // initial_gas should come from the RPC call
+            // and should be a u64. If it's not, the error must
+            // be caught on the client side, hence it's safe to
+            // unwrap over here
+            initial_gas: self.initial_gas.try_into().unwrap(),
         };
 
         Ok(entrypoint)

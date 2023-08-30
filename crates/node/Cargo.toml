@@ -105,5 +105,4 @@ runtime-benchmarks = [
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
 # in the near future.
 try-runtime = ["madara-runtime/try-runtime", "try-runtime-cli/try-runtime"]
-madara-state-root = ["madara-runtime/madara-state-root"]
 disable-transaction-fee = ["madara-runtime/disable-transaction-fee"]
