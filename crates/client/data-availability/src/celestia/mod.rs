@@ -29,7 +29,7 @@ impl DaClient for CelestiaClient {
             .header_wait_for_height(submitted_height)
             .await
             .map_err(|e| anyhow::anyhow!("celestia da error: {e}"))?;
-        
+
         self.verify_blob_was_included(submitted_height, blob)
             .await
             .map_err(|e| anyhow::anyhow!("celestia error: {e}"))?;
@@ -48,7 +48,7 @@ impl DaClient for CelestiaClient {
 
 impl CelestiaClient {
     pub fn try_from_config(conf: config::CelestiaConfig) -> Result<Self> {
-        let http_client = new_http(conf.http_provider.clone().as_str(), conf.auth_token.as_deref())?;
+        let http_client = new_http(conf.http_provider.as_str(), conf.auth_token.as_deref())?;
 
         // Convert the input string to bytes
         let bytes = conf.nid.as_bytes();

@@ -277,10 +277,10 @@ pub fn run() -> sc_cli::Result<()> {
             }
 
             let mut da_config: Option<(DaLayer, PathBuf)> = None;
-            if let Some(da_layer) = cli.run.da_layer.clone() {
+            if let Some(da_layer) = cli.run.da_layer {
                 let da_path = std::path::PathBuf::from(madara_path.clone() + "/da-config.json");
                 if !da_path.exists() {
-                    log::info!("{} does not contain DA config", madara_path.clone());
+                    log::info!("{} does not contain DA config", madara_path);
                     return Err("DA config not available".into());
                 }
 

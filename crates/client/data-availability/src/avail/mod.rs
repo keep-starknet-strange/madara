@@ -99,10 +99,7 @@ impl AvailClient {
             .into_iter()
             .filter_map(|chain_block_ext| AppUncheckedExtrinsic::try_from(chain_block_ext).map(|ext| ext.function).ok())
             .find(|call| match call {
-                Call::DataAvailability(da_call) => match da_call {
-                    DaCall::submit_data { data } => data == bytes,
-                    _ => false,
-                },
+                Call::DataAvailability(DaCall::submit_data { data }) => data == bytes,
                 _ => false,
             })
             .ok_or(anyhow::anyhow!("Bytes not found in specified block"))?;

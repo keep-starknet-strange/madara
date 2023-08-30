@@ -77,7 +77,7 @@ impl EthereumClient {
             .map_err(|e| format!("ethereum error: {e}"))?
             .with_chain_id(conf.chain_id);
 
-        let signer = Arc::new(SignerMiddleware::new(provider.clone(), wallet.clone()));
+        let signer = Arc::new(SignerMiddleware::new(provider.clone(), wallet));
 
         let cc_address: Address = conf.core_contracts.parse().map_err(|e| format!("ethereum error: {e}"))?;
 

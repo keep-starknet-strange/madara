@@ -11,6 +11,8 @@ use futures::prelude::*;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi};
 use mc_block_proposer::ProposerFactory;
+use mc_data_availability::avail::config::AvailConfig;
+use mc_data_availability::avail::AvailClient;
 use mc_data_availability::celestia::config::CelestiaConfig;
 use mc_data_availability::celestia::CelestiaClient;
 use mc_data_availability::ethereum::config::EthereumConfig;
@@ -381,38 +383,33 @@ pub fn new_full(
 
     // initialize data availability worker
     if let Some((da_layer, da_path)) = da_layer {
-        match da_layer {
+        let da_client: Box<dyn DaClient + Send + Sync> = match da_layer {
             DaLayer::Celestia => {
                 let celestia_conf = CelestiaConfig::try_from_file(&da_path)?;
-                let da_client = CelestiaClient::try_from_config(celestia_conf.clone())
-                    .map_err(|e| ServiceError::Other(e.to_string()))?;
-                task_manager.spawn_essential_handle().spawn(
-                    "da-worker-update",
-                    Some("madara"),
-                    DataAvailabilityWorker::update_state(da_client.clone(), client.clone(), madara_backend.clone()),
-                );
-                task_manager.spawn_essential_handle().spawn(
-                    "da-worker-prove",
-                    Some("madara"),
-                    DataAvailabilityWorker::prove_current_block(da_client.get_mode(), client.clone(), madara_backend),
-                );
+                Box::new(
+                    CelestiaClient::try_from_config(celestia_conf).map_err(|e| ServiceError::Other(e.to_string()))?,
+                )
             }
             DaLayer::Ethereum => {
                 let ethereum_conf = EthereumConfig::try_from_file(&da_path)?;
-                let da_client = EthereumClient::try_from_config(ethereum_conf.clone())?;
-
-                task_manager.spawn_essential_handle().spawn(
-                    "da-worker-update",
-                    Some("madara"),
-                    DataAvailabilityWorker::update_state(da_client.clone(), client.clone(), madara_backend.clone()),
-                );
-                task_manager.spawn_essential_handle().spawn(
-                    "da-worker-prove",
-                    Some("madara"),
-                    DataAvailabilityWorker::prove_current_block(da_client.get_mode(), client.clone(), madara_backend),
-                );
+                Box::new(EthereumClient::try_from_config(ethereum_conf)?)
             }
-        }
+            DaLayer::Avail => {
+                let avail_conf = AvailConfig::try_from_file(&da_path)?;
+                Box::new(AvailClient::try_from_config(avail_conf).map_err(|e| ServiceError::Other(e.to_string()))?)
+            }
+        };
+
+        task_manager.spawn_essential_handle().spawn(
+            "da-worker-prove",
+            Some("madara"),
+            DataAvailabilityWorker::prove_current_block(da_client.get_mode(), client.clone(), madara_backend.clone()),
+        );
+        task_manager.spawn_essential_handle().spawn(
+            "da-worker-update",
+            Some("madara"),
+            DataAvailabilityWorker::update_state(da_client, client.clone(), madara_backend),
+        );
     };
 
     if role.is_authority() {
