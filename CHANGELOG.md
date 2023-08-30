@@ -2,7 +2,7 @@
 
 ## Next release
 
-- feat: unification of the DA interface 
+- feat: unification of the DA interface
 
 ## v0.2.0
 
