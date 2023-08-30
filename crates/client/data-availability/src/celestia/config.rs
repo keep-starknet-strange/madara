@@ -34,7 +34,7 @@ fn default_http() -> String {
 }
 
 fn default_ws() -> String {
-    format!("http://{DEFAULT_CELESTIA_NODE}")
+    format!("ws://{DEFAULT_CELESTIA_NODE}")
 }
 
 fn default_nid() -> String {
