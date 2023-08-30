@@ -23,7 +23,7 @@ async fn madara() -> MadaraClient {
 
 #[rstest]
 #[tokio::test]
-async fn fail_call_on_non_existing_block(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+async fn fail_non_existing_block(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
     let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
@@ -51,7 +51,7 @@ async fn fail_call_on_non_existing_block(#[future] madara: MadaraClient) -> Resu
 
 #[rstest]
 #[tokio::test]
-async fn fail_call_on_non_existing_entrypoint(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+async fn fail_non_existing_entrypoint(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
     let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
@@ -79,7 +79,7 @@ async fn fail_call_on_non_existing_entrypoint(#[future] madara: MadaraClient) ->
 
 #[rstest]
 #[tokio::test]
-async fn fail_call_on_incorrect_calldata(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+async fn fail_incorrect_calldata(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
     let madara = madara.await;
     let rpc = madara.get_starknet_client();
 

@@ -62,5 +62,5 @@ name= "starknet_get_nonce"
 path = "get_nonce.rs"
 
 [[test]]
-name = "starknete_call"
+name = "starknet_call"
 path = "call.rs"
