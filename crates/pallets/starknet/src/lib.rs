@@ -1084,6 +1084,10 @@ impl<T: Config> Pallet<T> {
 
     /// Estimate the fee associated with transaction
     pub fn estimate_fee(transaction: Transaction) -> Result<(u64, u64), DispatchError> {
+        if !transaction.is_query {
+            return Err(DispatchError::Other("Cannot estimate_fee with is_query = false"));
+        }
+
         match transaction.execute(
             &mut BlockifierStateAdapter::<T>::default(),
             &Self::get_block_context(),
