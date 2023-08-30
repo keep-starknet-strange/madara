@@ -2,6 +2,8 @@
 
 ## Next release
 
+- feat: unification of the DA interface 
+
 ## v0.2.0
 
 - add-contributors: `0xAsten`, `m-kus`, `joaopereira12`
