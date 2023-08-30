@@ -8,7 +8,7 @@ Content-Type: application/json
             "type": "INVOKE",
             "max_fee":"0xDEADB",
             "version":"0x1",
-            "nonce":"0x0",
+            "nonce":"0x1",
             "signature":[
                 "0x0",
                 "0x0"

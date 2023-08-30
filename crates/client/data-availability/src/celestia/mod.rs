@@ -25,12 +25,11 @@ impl DaClient for CelestiaClient {
         let submitted_height = self.publish_data(&blob).await.map_err(|e| anyhow::anyhow!("celestia error: {e}"))?;
 
         // blocking call, awaiting on server side (Celestia Node) that a block with our data is included
-        // not clean split between ws and http endpoints, which is why this call is blocking in the first
-        // place...
         self.http_client
             .header_wait_for_height(submitted_height)
             .await
             .map_err(|e| anyhow::anyhow!("celestia da error: {e}"))?;
+        
         self.verify_blob_was_included(submitted_height, blob)
             .await
             .map_err(|e| anyhow::anyhow!("celestia error: {e}"))?;

@@ -38,6 +38,9 @@ elif [ "$DA_LAYER" = "celestia" ]; then
     CELESTIA_JWT=$(celestia light auth admin --p2p.network arabica-9)
     jq -r '.auth_token = "'$CELESTIA_JWT'"' $MADARA_PATH/da-config.json > $MADARA_PATH/da-config-tmp.json 
     mv $MADARA_PATH/da-config-tmp.json $MADARA_PATH/da-config.json 
+
+    export CELESTIA_NODE_AUTH_TOKEN=$CELESTIA_JWT
+    echo "celestia account balance $(celestia rpc state Balance | jq '.result.amount')"
 elif [ "$DA_LAYER" = "avail" ]; then
     echo "init avail stuff"
 fi
