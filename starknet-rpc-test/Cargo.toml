@@ -45,6 +45,10 @@ name = "starknet_get_storage_at"
 path = "get_storage_at.rs"
 
 [[test]]
+name = "starknet_get_class"
+path = "get_class.rs"
+
+[[test]]
 name = "starknet_get_class_at"
 path = "get_class_at.rs"
 
