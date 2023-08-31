@@ -27,6 +27,8 @@ pub mod constants;
 /// Starknet related utilities
 pub mod utils;
 
+pub mod fixtures;
+
 type TransactionExecution<'a> = Execution<'a, SingleOwnerAccount<&'a JsonRpcClient<HttpTransport>, LocalWallet>>;
 
 lazy_static! {
