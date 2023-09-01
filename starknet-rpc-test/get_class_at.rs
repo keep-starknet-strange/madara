@@ -4,6 +4,7 @@ use std::io::Read;
 
 use assert_matches::assert_matches;
 use flate2::read::GzDecoder;
+use rstest::rstest;
 use starknet_core::types::contract::legacy::{LegacyContractClass, LegacyProgram};
 use starknet_core::types::contract::SierraClass;
 use starknet_core::types::{BlockId, ContractClass, FlattenedSierraClass, StarknetError};
@@ -11,11 +12,13 @@ use starknet_ff::FieldElement;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{CAIRO_1_ACCOUNT_CONTRACT, TEST_CONTRACT_ADDRESS};
-use starknet_rpc_test::{ExecutionStrategy, MadaraClient};
+use starknet_rpc_test::fixtures::madara;
+use starknet_rpc_test::MadaraClient;
 
+#[rstest]
 #[tokio::test]
-async fn fail_non_existing_block() -> Result<(), anyhow::Error> {
-    let madara = MadaraClient::new(ExecutionStrategy::Native).await;
+async fn fail_non_existing_block(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+    let madara = madara.await;
     let rpc = madara.get_starknet_client();
     let test_contract_address = FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).expect("Invalid Contract Address");
 
@@ -32,9 +35,10 @@ async fn fail_non_existing_block() -> Result<(), anyhow::Error> {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn fail_non_existing_contract() -> Result<(), anyhow::Error> {
-    let madara = MadaraClient::new(ExecutionStrategy::Native).await;
+async fn fail_non_existing_contract(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+    let madara = madara.await;
     let rpc = madara.get_starknet_client();
     let unknown_contract_address = FieldElement::from_hex_be("0x4269DEADBEEF").expect("Invalid Contract Address");
 
@@ -51,9 +55,10 @@ async fn fail_non_existing_contract() -> Result<(), anyhow::Error> {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn work_ok_retrieving_class_for_contract_version_0() -> Result<(), anyhow::Error> {
-    let madara = MadaraClient::new(ExecutionStrategy::Native).await;
+async fn work_ok_retrieving_class_for_contract_version_0(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+    let madara = madara.await;
     let rpc = madara.get_starknet_client();
     let test_contract_address = FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).expect("Invalid Contract Address");
 
@@ -82,10 +87,11 @@ async fn work_ok_retrieving_class_for_contract_version_0() -> Result<(), anyhow:
     Ok(())
 }
 
+#[rstest]
 #[ignore]
 #[tokio::test]
-async fn work_ok_retrieving_class_for_contract_version_1() -> Result<(), anyhow::Error> {
-    let madara = MadaraClient::new(ExecutionStrategy::Native).await;
+async fn work_ok_retrieving_class_for_contract_version_1(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+    let madara = madara.await;
     let rpc = madara.get_starknet_client();
     let test_contract_address = FieldElement::from_hex_be(CAIRO_1_ACCOUNT_CONTRACT).expect("Invalid Contract Address");
 

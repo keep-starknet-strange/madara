@@ -17,6 +17,7 @@ starknet-crypto = {workspace = true}
 starknet-providers = {workspace = true}
 starknet-signers = {version = "^0.3.0"}
 starknet-accounts = {version = "^0.4.0"}
+starknet-contract = {version = "^0.4.0"}
 url = "2.2.2"
 tokio = { version = "1.29.1", features = ["rt", "macros", "parking_lot"] }
 lazy_static = "1.4.0"
@@ -59,3 +60,7 @@ path = "get_class_hash_at.rs"
 [[test]]
 name= "starknet_get_nonce"
 path = "get_nonce.rs"
+
+[[test]]
+name = "starknet_call"
+path = "call.rs"
