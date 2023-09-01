@@ -12,7 +12,7 @@ use starknet_ff::FieldElement;
 use starknet_providers::{Provider, ProviderError};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, MINT_AMOUNT, SIGNER_PRIVATE};
 use starknet_rpc_test::utils::AccountActions;
-use starknet_rpc_test::{ExecutionStrategy, MadaraClient};
+use starknet_rpc_test::{ExecutionStrategy, MadaraClient, Transaction};
 use starknet_signers::{LocalWallet, SigningKey};
 
 #[fixture]
@@ -57,14 +57,13 @@ async fn work_ok_with_block_one_tx(#[future] madara: MadaraClient) -> Result<(),
     let signer = LocalWallet::from(SigningKey::from_secret_scalar(FieldElement::from_hex_be(SIGNER_PRIVATE).unwrap()));
     let argent_account_address = FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).expect("Invalid Contract Address");
     let account = SingleOwnerAccount::new(rpc, signer, argent_account_address, chain_id::TESTNET);
+    let execution = account.transfer_tokens(
+        argent_account_address,
+        FieldElement::from_hex_be(MINT_AMOUNT).expect("Invalid Mint Amount"),
+        None,
+    );
 
-    madara
-        .create_block_with_txs(vec![account.transfer_tokens(
-            argent_account_address,
-            FieldElement::from_hex_be(MINT_AMOUNT).expect("Invalid Mint Amount"),
-            None,
-        )])
-        .await?;
+    madara.create_block_with_txs(vec![Transaction::Execution(execution)]).await?;
 
     assert_eq!(rpc.get_block_transaction_count(BlockId::Tag(BlockTag::Latest)).await?, 1);
 
