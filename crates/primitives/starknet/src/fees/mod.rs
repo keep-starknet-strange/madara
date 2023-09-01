@@ -113,7 +113,7 @@ pub fn charge_fee<S: State + StateChanges + FeeConfig>(
     is_query: bool,
 ) -> Result<(Fee, Option<CallInfo>), TransactionExecutionErrorWrapper> {
     let no_fee = Fee::default();
-    if (!is_query && account_tx_context.max_fee == no_fee) || state.is_transaction_fee_disabled() {
+    if !is_query || state.is_transaction_fee_disabled() {
         // Fee charging is not enforced in some tests.
         return Ok((no_fee, None));
     }

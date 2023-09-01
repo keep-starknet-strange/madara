@@ -429,7 +429,7 @@ impl Transaction {
         };
 
         // FIXME 710
-        let mut initial_gas = super::constants::INITIAL_GAS;
+        let mut initial_gas = self.max_fee.try_into().unwrap(); // unwrap safe as >u64 case will be handled at client side
 
         self.validate_tx(state, execution_resources, block_context, &account_context, tx_type, &mut initial_gas)
     }
@@ -556,7 +556,7 @@ impl Transaction {
         self.verify_tx_version(&tx_type)?;
 
         // FIXME 710
-        let mut initial_gas = super::constants::INITIAL_GAS;
+        let mut initial_gas = self.max_fee.try_into().unwrap(); // unwrap safe as >u64 case will be handled at client side
 
         // Going one lower level gives us more flexibility like not validating the tx as we could do
         // it before the tx lands in the mempool.
@@ -850,7 +850,7 @@ impl Default for Transaction {
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
             contract_address_salt: None,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             is_query: false,
         }
     }

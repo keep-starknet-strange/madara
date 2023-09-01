@@ -37,7 +37,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
             sender_address: contract_address,
             calldata: bounded_vec!(),
             nonce: Felt252Wrapper::ZERO,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             signature: bounded_vec!(),
             is_query: false,
         };
@@ -89,7 +89,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         let receipt = &pending.get(0).unwrap().1;
         let expected_receipt = TransactionReceiptWrapper {
             transaction_hash: Felt252Wrapper::from_hex_be(
-                "0x01b8ffedfb222c609b81f301df55c640225abaa6a0715437c89f8edc21bbe5e8",
+                "0x02dfd0ded452658d67535279591c1ed9898431e1eafad7896239f0bfa68493d6",
             )
             .unwrap(),
             actual_fee: Felt252Wrapper::from(53510_u128),
@@ -175,7 +175,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 
         let expected_receipt = TransactionReceiptWrapper {
             transaction_hash: Felt252Wrapper::from_hex_be(
-                "0x0554f9443c06ce406badc7159f2c0da29eac095f8571fe1a6ce44a2076829a52",
+                "0x0730465ceb5da086fd11078a56f15a49ff676c1b541571a6fead0baec39812cf",
             )
             .unwrap(),
             actual_fee: Felt252Wrapper::from(54020_u128),
@@ -211,7 +211,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
                 Felt252Wrapper::ZERO, // Calldata len
             ],
             nonce: Felt252Wrapper::ZERO,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             signature: bounded_vec!(),
             is_query: false,
         };
@@ -237,7 +237,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
                 Felt252Wrapper::ZERO, // Calldata len
             ],
             nonce: Felt252Wrapper::ONE,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             signature: bounded_vec!(),
             is_query: false,
         };
