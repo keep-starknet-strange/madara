@@ -1,14 +1,10 @@
 extern crate starknet_rpc_test;
 
-use rstest::{fixture, rstest};
+use rstest::rstest;
 use starknet_providers::Provider;
 use starknet_rpc_test::constants::SN_GOERLI_CHAIN_ID;
-use starknet_rpc_test::{ExecutionStrategy, MadaraClient};
-
-#[fixture]
-async fn madara() -> MadaraClient {
-    MadaraClient::new(ExecutionStrategy::Native).await
-}
+use starknet_rpc_test::fixtures::madara;
+use starknet_rpc_test::MadaraClient;
 
 #[rstest]
 #[tokio::test]

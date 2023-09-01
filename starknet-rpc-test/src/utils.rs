@@ -1,10 +1,22 @@
 use starknet_accounts::{Account, Call, Execution, SingleOwnerAccount};
+use starknet_core::chain_id;
 use starknet_core::types::FieldElement;
 use starknet_core::utils::get_selector_from_name;
 use starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
-use starknet_signers::LocalWallet;
+use starknet_signers::{LocalWallet, SigningKey};
 
 use crate::constants::FEE_TOKEN_ADDRESS;
+use crate::RpcAccount;
+
+pub fn create_account<'a>(
+    rpc: &'a JsonRpcClient<HttpTransport>,
+    private_key: &str,
+    account_address: &str,
+) -> RpcAccount<'a> {
+    let signer = LocalWallet::from(SigningKey::from_secret_scalar(FieldElement::from_hex_be(private_key).unwrap()));
+    let argent_account_address = FieldElement::from_hex_be(account_address).expect("Invalid Contract Address");
+    SingleOwnerAccount::new(rpc, signer, argent_account_address, chain_id::TESTNET)
+}
 
 pub trait AccountActions {
     fn transfer_tokens(

@@ -10115,6 +10115,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "starknet-contract"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d0d6f81a647694b2cb669ab60e77954b57bf5fbc757f5fcaf0a791c3bd341f04"
+dependencies = [
+ "serde",
+ "serde_json",
+ "serde_with",
+ "starknet-accounts",
+ "starknet-core",
+ "starknet-providers",
+ "thiserror",
+]
+
+[[package]]
 name = "starknet-core"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10268,6 +10283,7 @@ dependencies = [
  "serde_json",
  "starknet-accounts",
  "starknet-core 0.6.0",
+ "starknet-contract",
  "starknet-crypto 0.6.0",
  "starknet-ff",
  "starknet-providers",

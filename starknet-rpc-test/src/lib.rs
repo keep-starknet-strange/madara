@@ -13,8 +13,8 @@ use lazy_static::lazy_static;
 use reqwest::header::CONTENT_TYPE;
 use reqwest::{Client, Response};
 use serde_json::json;
-use starknet_accounts::{Execution, SingleOwnerAccount};
-use starknet_core::types::InvokeTransactionResult;
+use starknet_accounts::{Account, AccountError, Declaration, Execution, SingleOwnerAccount};
+use starknet_core::types::{DeclareTransactionResult, InvokeTransactionResult};
 use starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
 use starknet_providers::Provider;
 use starknet_signers::LocalWallet;
@@ -29,7 +29,37 @@ pub mod utils;
 
 pub mod fixtures;
 
-type TransactionExecution<'a> = Execution<'a, SingleOwnerAccount<&'a JsonRpcClient<HttpTransport>, LocalWallet>>;
+type RpcAccount<'a> = SingleOwnerAccount<&'a JsonRpcClient<HttpTransport>, LocalWallet>;
+type TransactionExecution<'a> = Execution<'a, RpcAccount<'a>>;
+type TransactionDeclaration<'a> = Declaration<'a, RpcAccount<'a>>;
+
+pub enum Transaction<'a> {
+    Execution(TransactionExecution<'a>),
+    Declaration(TransactionDeclaration<'a>),
+}
+
+#[derive(Debug)]
+pub enum TransactionResult {
+    Execution(InvokeTransactionResult),
+    Declaration(DeclareTransactionResult),
+}
+
+impl Transaction<'_> {
+    pub async fn send(
+        &self,
+    ) -> Result<
+        TransactionResult,
+        AccountError<
+            <SingleOwnerAccount<JsonRpcClient<HttpTransport>, LocalWallet> as Account>::SignError,
+            <JsonRpcClient<HttpTransport> as Provider>::Error,
+        >,
+    > {
+        match self {
+            Transaction::Execution(execution) => execution.send().await.map(TransactionResult::Execution),
+            Transaction::Declaration(declaration) => declaration.send().await.map(TransactionResult::Declaration),
+        }
+    }
+}
 
 lazy_static! {
         /// This is to prevent TOCTOU errors; i.e. one background madara node might find one
@@ -86,9 +116,6 @@ fn get_free_port() -> Result<u16, TestError> {
 
 impl MadaraClient {
     async fn init(execution: ExecutionStrategy) -> Result<Self, TestError> {
-        // we keep the reference, otherwise the mutex unlocks immediately
-        let _mutex_guard = FREE_PORT_ATTRIBUTION_MUTEX.lock().await;
-
         let free_port = get_free_port()?;
 
         let manifest_path = Path::new(&env!("CARGO_MANIFEST_DIR"));
@@ -128,6 +155,9 @@ impl MadaraClient {
     }
 
     pub async fn new(execution: ExecutionStrategy) -> Self {
+        // we keep the reference, otherwise the mutex unlocks immediately
+        let _mutex_guard = FREE_PORT_ATTRIBUTION_MUTEX.lock().await;
+
         let madara = Self::init(execution).await.expect("Couldn't start Madara Node");
 
         // Wait until node is ready
@@ -190,10 +220,7 @@ impl MadaraClient {
     pub fn get_starknet_client(&self) -> &JsonRpcClient<HttpTransport> {
         &self.starknet_client
     }
-}
 
-// Substrate RPC
-impl MadaraClient {
     pub async fn create_empty_block(&self) -> anyhow::Result<()> {
         let body = json!({
             "method": "engine_createBlock",
@@ -205,13 +232,13 @@ impl MadaraClient {
         response.status().is_success().then_some(()).ok_or(anyhow!("failed to create a new block"))
     }
 
-    pub async fn create_block_with_txs(&self, transactions: Vec<TransactionExecution<'_>>) -> anyhow::Result<()> {
+    pub async fn create_block_with_txs(&self, transactions: Vec<Transaction<'_>>) -> anyhow::Result<()> {
         let body = json!({
             "method": "engine_createBlock",
             "params": [false, true],
         });
 
-        let mut results: Vec<InvokeTransactionResult> = Vec::new();
+        let mut results: Vec<TransactionResult> = Vec::new();
         for tx in transactions {
             let result = tx.send().await?;
             results.push(result);
