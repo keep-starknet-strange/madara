@@ -10282,6 +10282,7 @@ dependencies = [
  "serde",
  "serde_json",
  "starknet-accounts",
+ "starknet-contract",
  "starknet-core 0.6.0",
  "starknet-contract",
  "starknet-crypto 0.6.0",
