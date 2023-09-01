@@ -1,11 +1,14 @@
 extern crate starknet_rpc_test;
 
+use rstest::rstest;
 use starknet_providers::Provider;
-use starknet_rpc_test::{ExecutionStrategy, MadaraClient};
+use starknet_rpc_test::fixtures::madara;
+use starknet_rpc_test::MadaraClient;
 
+#[rstest]
 #[tokio::test]
-async fn work_ok_up_to_1000() -> Result<(), anyhow::Error> {
-    let madara = MadaraClient::new(ExecutionStrategy::Native).await;
+async fn work_ok_up_to_1000(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+    let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
     assert_eq!(rpc.block_number().await?, 0);
