@@ -555,8 +555,11 @@ impl Transaction {
         // Verify the transaction version.
         self.verify_tx_version(&tx_type)?;
 
-        // FIXME 710
-        let mut initial_gas = self.max_fee.try_into().unwrap(); // unwrap safe as >u64 case will be handled at client side
+        // if it's an estimate fee then use max initial_gas
+        let mut initial_gas = match self.is_query {
+            true => u64::MAX,
+            false => self.max_fee.try_into().unwrap(), // unwrap safe as >u64 case will be handled at client side
+        };
 
         // Going one lower level gives us more flexibility like not validating the tx as we could do
         // it before the tx lands in the mempool.
@@ -687,10 +690,13 @@ impl Transaction {
             &execute_call_info,
             &validate_call_info,
             execution_resources,
-            tx_type,
+            tx_type.clone(),
         )?;
-        let (actual_fee, fee_transfer_call_info) =
-            charge_fee(state, block_context, account_context, &tx_resources, self.is_query)?;
+
+        let (actual_fee, fee_transfer_call_info) = match tx_type {
+            TxType::L1Handler => (Fee::default(), None), // FIXME 712
+            _ => charge_fee(state, block_context, account_context, &tx_resources, self.is_query)?,
+        };
         Ok(TransactionExecutionInfoWrapper {
             validate_call_info,
             execute_call_info,
