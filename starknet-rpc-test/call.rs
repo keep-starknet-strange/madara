@@ -4,7 +4,7 @@ extern crate starknet_rpc_test;
 
 use std::assert_matches::assert_matches;
 
-use rstest::{fixture, rstest};
+use rstest::rstest;
 use starknet_accounts::Account;
 use starknet_contract::ContractFactory;
 use starknet_core::types::contract::SierraClass;
@@ -13,13 +13,9 @@ use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
+use starknet_rpc_test::fixtures::madara;
 use starknet_rpc_test::utils::create_account;
-use starknet_rpc_test::{ExecutionStrategy, MadaraClient, Transaction};
-
-#[fixture]
-async fn madara() -> MadaraClient {
-    MadaraClient::new(ExecutionStrategy::Native).await
-}
+use starknet_rpc_test::{MadaraClient, Transaction};
 
 #[rstest]
 #[tokio::test]
@@ -165,36 +161,33 @@ async fn works_on_mutable_call_without_modifying_storage(#[future] madara: Madar
     let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS);
 
     let contract_artifact: SierraClass = serde_json::from_reader(
-        std::fs::File::open(env!("CARGO_MANIFEST_DIR").to_owned() + "/contracts/HelloStarknet.sierra.json").unwrap(),
+        std::fs::File::open(env!("CARGO_MANIFEST_DIR").to_owned() + "/contracts/Counter.sierra.json").unwrap(),
     )
     .unwrap();
 
-    let declaration = account.declare(
+    let declare_tx = account.declare(
         contract_artifact.clone().flatten().unwrap().into(),
-        FieldElement::from_hex_be("0xdf4d3042eec107abe704619f13d92bbe01a58029311b7a1886b23dcbb4ea87").unwrap(), // compiled class hash
+        FieldElement::from_hex_be("0x0785fa5f2bacf0bfe3bc413be5820a61e1ea63f2ec27ef00331ee9f46ad07603").unwrap(), // compiled class hash
     );
     let contract_factory = ContractFactory::new(contract_artifact.class_hash().unwrap(), account.clone());
 
-    let mut deployment = contract_factory.deploy(vec![], FieldElement::ZERO, true);
+    let mut deploy_tx = contract_factory.deploy(vec![], FieldElement::ZERO, true);
 
     // manually setting fee else estimate_fee will be called and it will fail
     // as contract is not declared yet (declared in the same block as deployment)
-    deployment = deployment.max_fee(FieldElement::from_hex_be("0x1000000000").unwrap());
+    deploy_tx = deploy_tx.max_fee(FieldElement::from_hex_be("0x1000000000").unwrap());
 
     // manually incrementing nonce else as both declare and deploy are in the same block
     // so automatic nonce calculation will fail
     let nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account.address()).await.unwrap();
-    deployment = deployment.nonce(nonce + FieldElement::ONE);
+    deploy_tx = deploy_tx.nonce(nonce + FieldElement::ONE);
 
     // declare and deploy contract
-    madara
-        .create_block_with_txs(vec![Transaction::Declaration(declaration), Transaction::Execution(deployment)])
-        .await?;
-    // madara.create_block_with_txs(vec![Transaction::Execution(deployment)]).await?;
+    madara.create_block_with_txs(vec![Transaction::Declaration(declare_tx), Transaction::Execution(deploy_tx)]).await?;
 
     // address of deployed contract (will always be the same for 0 salt)
     let contract_address =
-        FieldElement::from_hex_be("0x335e244fc6f5752ab93c1c86e9bd714b413d378dc4860732644bc20626c6c51").unwrap();
+        FieldElement::from_hex_be("0x0226d81ce04c3c7081fe05f51b32b75210aad1ea8be8bce566f26d25d5ffb4c3").unwrap();
 
     let read_balance = || async {
         rpc.call(

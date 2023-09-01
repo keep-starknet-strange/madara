@@ -4,7 +4,7 @@ extern crate starknet_rpc_test;
 
 use std::assert_matches::assert_matches;
 
-use rstest::{fixture, rstest};
+use rstest::rstest;
 use starknet_accounts::{Account, SingleOwnerAccount};
 use starknet_core::chain_id;
 use starknet_core::types::{BlockId, BlockTag, StarknetError};
@@ -13,14 +13,10 @@ use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, Starkne
 use starknet_rpc_test::constants::{
     ARGENT_CONTRACT_ADDRESS, CONTRACT_ADDRESS, MINT_AMOUNT, SIGNER_PRIVATE, TEST_CONTRACT_ADDRESS,
 };
+use starknet_rpc_test::fixtures::madara;
 use starknet_rpc_test::utils::AccountActions;
-use starknet_rpc_test::{ExecutionStrategy, MadaraClient, Transaction};
+use starknet_rpc_test::{MadaraClient, Transaction};
 use starknet_signers::{LocalWallet, SigningKey};
-
-#[fixture]
-async fn madara() -> MadaraClient {
-    MadaraClient::new(ExecutionStrategy::Native).await
-}
 
 #[rstest]
 #[tokio::test]

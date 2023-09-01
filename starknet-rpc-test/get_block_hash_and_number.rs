@@ -1,14 +1,17 @@
 extern crate starknet_rpc_test;
 
+use rstest::rstest;
 use starknet_ff::FieldElement;
 use starknet_providers::Provider;
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, MINT_AMOUNT, SIGNER_PRIVATE};
+use starknet_rpc_test::fixtures::madara;
 use starknet_rpc_test::utils::{create_account, AccountActions};
-use starknet_rpc_test::{ExecutionStrategy, MadaraClient, Transaction};
+use starknet_rpc_test::{MadaraClient, Transaction};
 
+#[rstest]
 #[tokio::test]
-async fn work_ok_at_start_and_with_new_blocks() -> Result<(), anyhow::Error> {
-    let madara = MadaraClient::new(ExecutionStrategy::Native).await;
+async fn work_ok_at_start_and_with_new_blocks(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+    let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
     assert_eq!(
@@ -26,13 +29,13 @@ async fn work_ok_at_start_and_with_new_blocks() -> Result<(), anyhow::Error> {
 
     let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS);
 
-    let execution = Transaction::Execution(account.transfer_tokens(
+    let token_transfer_tx = Transaction::Execution(account.transfer_tokens(
         FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).expect("Invalid Contract Address"),
         FieldElement::from_hex_be(MINT_AMOUNT).expect("Invalid Mint Amount"),
         None,
     ));
 
-    madara.create_block_with_txs(vec![execution]).await?;
+    madara.create_block_with_txs(vec![token_transfer_tx]).await?;
     assert_eq!(rpc.block_hash_and_number().await?.block_number, 2);
     assert_eq!(
         rpc.block_hash_and_number().await?.block_hash,
