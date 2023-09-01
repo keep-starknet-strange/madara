@@ -4,7 +4,6 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 pub struct Configs {
     pub remote_base_path: String,
-    pub chain_specs: Vec<File>,
     pub genesis_assets: Vec<File>,
 }
 
@@ -19,14 +18,13 @@ pub fn fetch_and_validate_file(
     remote_base_path: String,
     file: File,
     dest_path: String,
-    force_fetching: bool,
 ) -> Result<(), String> {
     let full_url = file.url.unwrap_or_else(|| {
         remote_base_path
             + &dest_path.split("configs/").collect::<Vec<&str>>()[1].split('/').collect::<Vec<&str>>().join("/")
             + &file.name
     });
-    utils::fetch_from_url(full_url, dest_path.clone(), force_fetching)?;
+    utils::fetch_from_url(full_url, dest_path.clone())?;
 
     if let Some(file_hash) = file.md5 {
         let file_str = utils::read_file_to_string(dest_path + &file.name)?;

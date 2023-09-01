@@ -59,7 +59,7 @@ pub fn get_project_path() -> Result<String, Error> {
     Ok(dir.to_str().ok_or("Failed to get project path")?.to_string())
 }
 
-pub fn copy_from_filesystem(src_path: String, dest_path: String, force_replace: bool) -> Result<(), Error> {
+pub fn copy_from_filesystem(src_path: String, dest_path: String) -> Result<(), Error> {
     log::info!("Trying to copy {} to {} from filesystem", src_path, dest_path);
     let src = std::path::PathBuf::from(src_path.clone());
     if !src.exists() {
@@ -70,27 +70,17 @@ pub fn copy_from_filesystem(src_path: String, dest_path: String, force_replace: 
     let mut dst = std::path::PathBuf::from(dest_path.clone());
     std::fs::create_dir_all(&dst)?;
     dst.push(src.file_name().ok_or("File name not found")?);
-
-    if dst.exists() && !force_replace {
-        log::info!("{} already exists", dest_path);
-        return Ok(());
-    }
     std::fs::copy(src, dst)?;
 
     log::info!("Copied {} to {} from filesystem", src_path, dest_path);
     Ok(())
 }
 
-pub fn fetch_from_url(target: String, dest_path: String, force_replace: bool) -> Result<(), Error> {
+pub fn fetch_from_url(target: String, dest_path: String) -> Result<(), Error> {
     log::info!("Trying to fetch {} to {} from url", target, dest_path);
     let mut dst = std::path::PathBuf::from(dest_path.clone());
     std::fs::create_dir_all(&dst)?;
     dst.push(target.split('/').last().expect("File name not found"));
-
-    if dst.exists() && !force_replace {
-        log::info!("{} already exists", dest_path);
-        return Ok(());
-    }
 
     let response = reqwest::blocking::get(target.clone())?;
 

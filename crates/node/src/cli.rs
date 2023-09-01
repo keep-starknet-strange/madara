@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use sc_cli::RunCmd;
+use crate::constants;
 
 fn get_default_madara_path() -> String {
     let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
@@ -42,24 +43,16 @@ pub struct ExtendedRunCmd {
     pub run_cmd: RunCmd,
 
     /// Load a custom chain-spec from an url
-    #[clap(long)]
-    pub chain_spec_url: Option<String>,
+	/// If you want to load a chain spec that is present in your filesystem, use `--chain=<PATH>`
+    #[clap(long, conflicts_with = "testnet")]
+    pub fetch_chain_spec: Option<String>,
 
-    /// Load a custom index.json file for downloading custom assets
-    /// Check documentation in
-    /// https://github.com/keep-starknet-strange/madara/blob/main/docs/configs.md
-    #[clap(long)]
-    pub configs_url: Option<String>,
-
-    /// Disable madara default configs:
-    /// - Fetching index.json, genesis.json and genesis assets
-    /// - Fetching default chain specs
-    #[clap(long)]
-    pub disable_madara_configs: bool,
-
-    /// Disable automatic url fetching for madara config files
-    #[clap(long)]
-    pub disable_url_fetch: bool,
+    /// Load a index.json file for downloading assets
+    /// The index.json must follow the format of the official index.json
+    /// (https://github.com/d-roak/madara/blob/feat/configs-index/configs/index.json)
+    /// Where the `md5` and `url` fields are optional
+	#[clap(long, default_value = constants::DEFAULT_CONFIGS_URL)]
+	pub fetch_madara_configs: Option<String>,
 
     /// Path to the folder where all configuration files and data are stored
     /// base_path will always be overwritten by madara_path
@@ -68,25 +61,23 @@ pub struct ExtendedRunCmd {
     pub madara_path: Option<PathBuf>,
 
     /// Choose a supported testnet chain which will load some default values
-    /// current supported testnets: sharingan
-    #[clap(long)]
+	/// The testnets will allways be fetched when this flag is passed to search for updates
+    #[clap(long, conflicts_with = "fetch_chain_spec")]
     pub testnet: Option<Testnet>,
-
-    /// If the files currently exist in your madara_path, the default behaviour will skip the file
-    /// fetching, it's possible to force an update with this flag
-    #[clap(long)]
-    pub force_update_config: bool,
 }
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, clap::Subcommand)]
 pub enum Subcommand {
-    /// Key management cli utilities
+    /// Sub-commands concerned with benchmarking.
     #[command(subcommand)]
-    Key(sc_cli::KeySubcommand),
+    Benchmark(frame_benchmarking_cli::BenchmarkCmd),
 
     /// Build a chain specification.
     BuildSpec(sc_cli::BuildSpecCmd),
+
+    /// Db meta columns information.
+    ChainInfo(sc_cli::ChainInfoCmd),
 
     /// Validate blocks.
     CheckBlock(sc_cli::CheckBlockCmd),
@@ -100,15 +91,21 @@ pub enum Subcommand {
     /// Import blocks.
     ImportBlocks(sc_cli::ImportBlocksCmd),
 
+    /// Key management cli utilities
+    #[command(subcommand)]
+    Key(sc_cli::KeySubcommand),
+
     /// Remove the whole chain.
     PurgeChain(sc_cli::PurgeChainCmd),
 
     /// Revert the chain to a previous state.
     Revert(sc_cli::RevertCmd),
 
-    /// Sub-commands concerned with benchmarking.
-    #[command(subcommand)]
-    Benchmark(frame_benchmarking_cli::BenchmarkCmd),
+	// Run madara node
+	Run,
+
+	// Setup madara node
+	Setup,
 
     /// Try some command against runtime state.
     #[cfg(feature = "try-runtime")]
@@ -117,7 +114,4 @@ pub enum Subcommand {
     /// Try some command against runtime state. Note: `try-runtime` feature must be enabled.
     #[cfg(not(feature = "try-runtime"))]
     TryRuntime,
-
-    /// Db meta columns information.
-    ChainInfo(sc_cli::ChainInfoCmd),
 }
