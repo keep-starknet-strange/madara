@@ -173,14 +173,13 @@ async fn works_on_mutable_call_without_modifying_storage(#[future] madara: Madar
 
     let mut deploy_tx = contract_factory.deploy(vec![], FieldElement::ZERO, true);
 
-    // manually setting fee else estimate_fee will be called and it will fail
-    // as contract is not declared yet (declared in the same block as deployment)
-    deploy_tx = deploy_tx.max_fee(FieldElement::from_hex_be("0x1000000000").unwrap());
-
     // manually incrementing nonce else as both declare and deploy are in the same block
     // so automatic nonce calculation will fail
     let nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account.address()).await.unwrap();
-    deploy_tx = deploy_tx.nonce(nonce + FieldElement::ONE);
+
+    // manually setting fee else estimate_fee will be called and it will fail
+    // as contract is not declared yet (declared in the same block as deployment)
+    deploy_tx = deploy_tx.max_fee(FieldElement::from_hex_be("0x1000000000").unwrap()).nonce(nonce + FieldElement::ONE);
 
     // declare and deploy contract
     madara.create_block_with_txs(vec![Transaction::Declaration(declare_tx), Transaction::Execution(deploy_tx)]).await?;
