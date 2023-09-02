@@ -29,6 +29,7 @@
 - chore: cairo-contracts compilation scripts & docs are updated, cairo_0
   contracts recompiled
 - chore: rebase of core deps and 0.12.1
+- fix: initial_gas set to max_fee and fixed fee not being charged when max_fee=0
 
 ## v0.1.0
 
