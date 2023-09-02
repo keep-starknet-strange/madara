@@ -114,7 +114,6 @@ pub fn charge_fee<S: State + StateChanges + FeeConfig>(
 ) -> Result<(Fee, Option<CallInfo>), TransactionExecutionErrorWrapper> {
     let no_fee = Fee::default();
     if state.is_transaction_fee_disabled() {
-        // Fee charging is not enforced in some tests.
         return Ok((no_fee, None));
     }
     let actual_fee = calculate_tx_fee(resources, block_context)
