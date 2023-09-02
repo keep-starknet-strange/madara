@@ -511,7 +511,7 @@ describeDevMadara(
       it("should be possible for an account to estimateAccountDeployFee", async function () {
         const account = new Account(
           providerRPC,
-          "0x064d39e7bbf886361bd8ae14b482a0828a51ffd3e2d0256db867ac21d03fc41d",
+          ARGENT_CONTRACT_ADDRESS,
           SIGNER_PRIVATE,
         );
 
@@ -519,7 +519,7 @@ describeDevMadara(
           classHash: CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH,
           constructorCalldata: ["0x123"],
           addressSalt: SALT,
-          contractAddress:'0x064d39e7bbf886361bd8ae14b482a0828a51ffd3e2d0256db867ac21d03fc41d'
+          contractAddress: ARGENT_CONTRACT_ADDRESS
         });
 
         expect(suggestedMaxFee > 0n).to.be.equal(true);
