@@ -519,7 +519,7 @@ describeDevMadara(
           classHash: CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH,
           constructorCalldata: ["0x123"],
           addressSalt: SALT,
-          contractAddress: ARGENT_CONTRACT_ADDRESS
+          contractAddress: ARGENT_CONTRACT_ADDRESS,
         });
 
         expect(suggestedMaxFee > 0n).to.be.equal(true);
