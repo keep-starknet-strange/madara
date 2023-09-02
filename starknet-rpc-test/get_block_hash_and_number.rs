@@ -39,7 +39,7 @@ async fn work_ok_at_start_and_with_new_blocks(#[future] madara: MadaraClient) ->
     assert_eq!(rpc.block_hash_and_number().await?.block_number, 2);
     assert_eq!(
         rpc.block_hash_and_number().await?.block_hash,
-        FieldElement::from_hex_be("0x035d394a3808b432702261c2d66f1cf2f111dd0c691ad2a8246b86a5088f73fa").unwrap()
+        FieldElement::from_hex_be("0x0400f37d3e6096e173daa5f69049248b9d8cc59ae1f9640f79aee79ca3eb1f24").unwrap()
     );
 
     Ok(())

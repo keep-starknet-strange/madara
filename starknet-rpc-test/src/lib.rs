@@ -13,10 +13,14 @@ use lazy_static::lazy_static;
 use reqwest::header::CONTENT_TYPE;
 use reqwest::{Client, Response};
 use serde_json::json;
-use starknet_accounts::{Account, AccountError, Declaration, Execution, SingleOwnerAccount};
-use starknet_core::types::{DeclareTransactionResult, InvokeTransactionResult};
-use starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
+use starknet_accounts::{
+    Account, AccountDeployment, AccountError, AccountFactoryError, Declaration, Execution, LegacyDeclaration,
+    OpenZeppelinAccountFactory, SingleOwnerAccount,
+};
+use starknet_core::types::{DeclareTransactionResult, DeployAccountTransactionResult, InvokeTransactionResult};
+use starknet_providers::jsonrpc::{HttpTransport, HttpTransportError, JsonRpcClient, JsonRpcClientError};
 use starknet_providers::Provider;
+use starknet_signers::local_wallet::SignError;
 use starknet_signers::LocalWallet;
 use thiserror::Error;
 use tokio::sync::Mutex;
@@ -32,31 +36,54 @@ pub mod fixtures;
 type RpcAccount<'a> = SingleOwnerAccount<&'a JsonRpcClient<HttpTransport>, LocalWallet>;
 type TransactionExecution<'a> = Execution<'a, RpcAccount<'a>>;
 type TransactionDeclaration<'a> = Declaration<'a, RpcAccount<'a>>;
+type TransactionLegacyDeclaration<'a> = LegacyDeclaration<'a, RpcAccount<'a>>;
+type TransactionAccountDeployment<'a> =
+    AccountDeployment<'a, OpenZeppelinAccountFactory<LocalWallet, &'a JsonRpcClient<HttpTransport>>>;
 
 pub enum Transaction<'a> {
     Execution(TransactionExecution<'a>),
     Declaration(TransactionDeclaration<'a>),
+    LegacyDeclaration(TransactionLegacyDeclaration<'a>),
+    AccountDeployment(TransactionAccountDeployment<'a>),
 }
 
 #[derive(Debug)]
 pub enum TransactionResult {
     Execution(InvokeTransactionResult),
     Declaration(DeclareTransactionResult),
+    AccountDeployment(DeployAccountTransactionResult),
 }
 
-impl Transaction<'_> {
-    pub async fn send(
-        &self,
-    ) -> Result<
-        TransactionResult,
+#[derive(thiserror::Error, Debug)]
+pub enum SendTransactionError {
+    #[error(transparent)]
+    AccountError(
         AccountError<
             <SingleOwnerAccount<JsonRpcClient<HttpTransport>, LocalWallet> as Account>::SignError,
             <JsonRpcClient<HttpTransport> as Provider>::Error,
         >,
-    > {
+    ),
+    #[error(transparent)]
+    AccountFactoryError(AccountFactoryError<SignError, JsonRpcClientError<HttpTransportError>>),
+}
+
+impl Transaction<'_> {
+    pub async fn send(&self) -> Result<TransactionResult, SendTransactionError> {
         match self {
-            Transaction::Execution(execution) => execution.send().await.map(TransactionResult::Execution),
-            Transaction::Declaration(declaration) => declaration.send().await.map(TransactionResult::Declaration),
+            Transaction::Execution(execution) => {
+                execution.send().await.map(TransactionResult::Execution).map_err(SendTransactionError::AccountError)
+            }
+            Transaction::Declaration(declaration) => {
+                declaration.send().await.map(TransactionResult::Declaration).map_err(SendTransactionError::AccountError)
+            }
+            Transaction::LegacyDeclaration(declaration) => {
+                declaration.send().await.map(TransactionResult::Declaration).map_err(SendTransactionError::AccountError)
+            }
+            Transaction::AccountDeployment(deployment) => deployment
+                .send()
+                .await
+                .map(TransactionResult::AccountDeployment)
+                .map_err(SendTransactionError::AccountFactoryError),
         }
     }
 }

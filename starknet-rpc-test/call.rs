@@ -7,14 +7,13 @@ use std::assert_matches::assert_matches;
 use rstest::rstest;
 use starknet_accounts::Account;
 use starknet_contract::ContractFactory;
-use starknet_core::types::contract::SierraClass;
 use starknet_core::types::{BlockId, BlockTag, FunctionCall, StarknetError};
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::utils::create_account;
+use starknet_rpc_test::utils::{create_account, AccountActions};
 use starknet_rpc_test::{MadaraClient, Transaction};
 
 #[rstest]
@@ -160,16 +159,9 @@ async fn works_on_mutable_call_without_modifying_storage(#[future] madara: Madar
     madara.create_empty_block().await?;
     let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS);
 
-    let contract_artifact: SierraClass = serde_json::from_reader(
-        std::fs::File::open(env!("CARGO_MANIFEST_DIR").to_owned() + "/contracts/Counter.sierra.json").unwrap(),
-    )
-    .unwrap();
-
-    let declare_tx = account.declare(
-        contract_artifact.clone().flatten().unwrap().into(),
-        FieldElement::from_hex_be("0x0785fa5f2bacf0bfe3bc413be5820a61e1ea63f2ec27ef00331ee9f46ad07603").unwrap(), // compiled class hash
-    );
-    let contract_factory = ContractFactory::new(contract_artifact.class_hash().unwrap(), account.clone());
+    let (declare_tx, class_hash, _) =
+        account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
+    let contract_factory = ContractFactory::new(class_hash, account.clone());
 
     // manually setting fee else estimate_fee will be called and it will fail
     // as contract is not declared yet (declared in the same block as deployment)
