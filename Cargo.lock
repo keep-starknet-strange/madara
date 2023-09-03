@@ -3741,7 +3741,7 @@ dependencies = [
  "rustls-native-certs",
  "tokio",
  "tokio-rustls 0.23.4",
- "webpki-roots",
+ "webpki-roots 0.22.6",
 ]
 
 [[package]]
@@ -3999,7 +3999,7 @@ dependencies = [
  "socket2 0.5.3",
  "widestring",
  "windows-sys 0.48.0",
- "winreg 0.50.0",
+ "winreg",
 ]
 
 [[package]]
@@ -4085,7 +4085,7 @@ dependencies = [
  "tokio-rustls 0.23.4",
  "tokio-util",
  "tracing",
- "webpki-roots",
+ "webpki-roots 0.22.6",
 ]
 
 [[package]]
@@ -4735,7 +4735,7 @@ dependencies = [
  "rw-stream-sink",
  "soketto",
  "url",
- "webpki-roots",
+ "webpki-roots 0.22.6",
 ]
 
 [[package]]
@@ -4959,7 +4959,7 @@ dependencies = [
 
 [[package]]
 name = "madara"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "blockifier",
@@ -5019,7 +5019,7 @@ dependencies = [
 
 [[package]]
 name = "madara-runtime"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blockifier",
  "frame-benchmarking",
@@ -5099,7 +5099,7 @@ dependencies = [
 
 [[package]]
 name = "mc-block-proposer"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "futures",
  "futures-timer",
@@ -5124,7 +5124,7 @@ dependencies = [
 
 [[package]]
 name = "mc-db"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "kvdb-rocksdb",
  "log",
@@ -5138,7 +5138,7 @@ dependencies = [
 
 [[package]]
 name = "mc-mapping-sync"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "futures",
  "futures-timer",
@@ -5158,7 +5158,7 @@ dependencies = [
 
 [[package]]
 name = "mc-rpc"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blockifier",
  "frame-support",
@@ -5191,7 +5191,7 @@ dependencies = [
 
 [[package]]
 name = "mc-rpc-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "blockifier",
@@ -5220,7 +5220,7 @@ dependencies = [
 
 [[package]]
 name = "mc-storage"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blockifier",
  "frame-support",
@@ -5423,7 +5423,7 @@ dependencies = [
 
 [[package]]
 name = "mp-digest-log"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "assert_matches",
  "mp-starknet",
@@ -5433,7 +5433,7 @@ dependencies = [
 
 [[package]]
 name = "mp-starknet"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "bitvec",
@@ -6129,7 +6129,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-starknet"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blockifier",
  "frame-benchmarking",
@@ -7176,9 +7176,9 @@ checksum = "4bf2521270932c3c7bed1a59151222bd7643c79310f2916f01925e1e16255698"
 
 [[package]]
 name = "reqwest"
-version = "0.11.18"
+version = "0.11.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cde824a14b7c14f85caff81225f411faacc04a2013f41670f41443742b1c1c55"
+checksum = "3e9ad3fe7488d7e34558a2033d45a0c90b72d97b4f80705666fea71472e2e6a1"
 dependencies = [
  "base64 0.21.2",
  "bytes",
@@ -7209,8 +7209,8 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
- "webpki-roots",
- "winreg 0.10.1",
+ "webpki-roots 0.25.2",
+ "winreg",
 ]
 
 [[package]]
@@ -11605,6 +11605,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "webpki-roots"
+version = "0.25.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14247bb57be4f377dfb94c72830b8ce8fc6beac03cf4bf7b9732eadd414123fc"
+
+[[package]]
 name = "webrtc"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12062,15 +12068,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "81fac9742fd1ad1bd9643b991319f72dd031016d44b77039a26977eb667141e7"
 dependencies = [
  "memchr",
-]
-
-[[package]]
-name = "winreg"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80d0f4e272c85def139476380b12f9ac60926689dd2e01d4923222f40580869d"
-dependencies = [
- "winapi",
 ]
 
 [[package]]
