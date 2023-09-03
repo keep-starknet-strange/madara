@@ -1,13 +1,13 @@
 [package]
 name = "mc-block-proposer"
-version = "0.1.0"
+version.workspace = true
+edition.workspace = true
 description = "Starknet block proposer implementation."
 authors = [
   "Abdelhamid Bakhta <https://github.com/abdelhamidbakhta>",
   "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
-edition = "2021"
 license = "MIT"
 publish = false
 repository = "https://github.com/keep-starknet-strange/madara"
@@ -19,7 +19,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 codec = { package = "parity-scale-codec", version = "3.2.2" }
 futures = "0.3.21"
 futures-timer = "3.0.1"
-log = "0.4.19"
+log = "0.4.20"
 prometheus-endpoint = { workspace = true }
 sc-block-builder = { workspace = true }
 sc-client-api = { workspace = true }

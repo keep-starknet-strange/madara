@@ -6,7 +6,6 @@ use blockifier::execution::contract_class::ContractClass;
 use frame_support::{Identity, StorageHasher};
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
 use mp_starknet::storage::StarknetStorageSchemaVersion;
-use mp_starknet::transaction::types::EventWrapper;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use pallet_starknet::types::{NonceWrapper, StateCommitments, StateTrie};
 use sc_client_api::{Backend, HeaderBackend, StorageProvider};
@@ -80,10 +79,6 @@ pub trait StorageOverride<B: BlockT>: Send + Sync {
     ) -> Option<ContractClass>;
     /// Returns the nonce for a provided contract address and block hash.
     fn nonce(&self, block_hash: B::Hash, address: ContractAddressWrapper) -> Option<NonceWrapper>;
-    /// Returns the events for a provided block hash.
-    fn events(&self, block_hash: B::Hash) -> Option<Vec<EventWrapper>>;
-    /// Returns the storage value for a provided key and block hash.
-    fn chain_id(&self, block_hash: B::Hash) -> Option<Felt252Wrapper>;
     /// Returns the state commitments for a provider block hash
     fn state_commitments(&self, block_hash: B::Hash) -> Option<StateCommitments>;
     /// Returns the state root at a provided contract address for the provided block.
@@ -202,30 +197,6 @@ where
     /// * `Some(nonce)` - The nonce for the provided contract address and block hash
     fn nonce(&self, block_hash: <B as BlockT>::Hash, contract_address: ContractAddressWrapper) -> Option<NonceWrapper> {
         self.client.runtime_api().nonce(block_hash, contract_address).ok()
-    }
-
-    /// Return the events for a provided block hash.
-    ///
-    /// # Arguments
-    ///
-    /// * `block_hash` - The block hash
-    ///
-    /// # Returns
-    /// * `Some(events)` - The events for the provided block hash
-    fn events(&self, block_hash: <B as BlockT>::Hash) -> Option<Vec<EventWrapper>> {
-        self.client.runtime_api().events(block_hash).ok()
-    }
-
-    /// Return the chain id for a provided block hash.
-    ///
-    /// # Arguments
-    ///
-    /// * `block_hash` - The block hash
-    ///
-    /// # Returns
-    /// * `Some(chain_id)` - The chain id for the provided block hash
-    fn chain_id(&self, block_hash: <B as BlockT>::Hash) -> Option<Felt252Wrapper> {
-        self.client.runtime_api().chain_id(block_hash).ok()
     }
 
     /// Return the state commitments for a provided block hash

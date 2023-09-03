@@ -3,6 +3,7 @@ use frame_support::traits::Hooks;
 use mp_starknet::sequencer_address::{DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY};
 use starknet_crypto::FieldElement;
 
+use super::mock::default_mock::*;
 use super::mock::*;
 
 pub const GOOD_SEQUENCER_ADDRESS: [u8; 32] =
@@ -13,7 +14,7 @@ pub const BAD_SEQUENCER_ADDRESS: [u8; 24] =
 
 #[test]
 fn sequencer_address_is_set_to_default_when_not_provided() {
-    let mut ext = new_test_ext();
+    let mut ext = new_test_ext::<MockRuntime>();
     ext.execute_with(|| {
         basic_test_setup(0);
         assert_eq!(
@@ -25,7 +26,7 @@ fn sequencer_address_is_set_to_default_when_not_provided() {
 
 #[test]
 fn sequencer_address_is_set_to_default_when_provided_in_bad_format() {
-    let mut ext = new_test_ext();
+    let mut ext = new_test_ext::<MockRuntime>();
     ext.execute_with(|| {
         basic_test_setup(0);
         sp_io::offchain_index::set(SEQ_ADDR_STORAGE_KEY, &BAD_SEQUENCER_ADDRESS);
@@ -38,7 +39,7 @@ fn sequencer_address_is_set_to_default_when_provided_in_bad_format() {
 
 #[test]
 fn sequencer_address_is_set_correctly() {
-    let mut ext = new_test_ext();
+    let mut ext = new_test_ext::<MockRuntime>();
     ext.execute_with(|| {
         basic_test_setup(0);
         sp_io::offchain_index::set(SEQ_ADDR_STORAGE_KEY, &GOOD_SEQUENCER_ADDRESS);
@@ -54,7 +55,7 @@ fn sequencer_address_is_set_correctly() {
 
 #[test]
 fn sequencer_address_is_set_only_once_per_block() {
-    let mut ext = new_test_ext();
+    let mut ext = new_test_ext::<MockRuntime>();
     ext.execute_with(|| {
         basic_test_setup(0);
         assert!(!Starknet::seq_addr_update());
@@ -76,7 +77,7 @@ fn sequencer_address_is_set_only_once_per_block() {
 
 #[test]
 fn sequencer_address_has_not_been_updated() {
-    let mut ext = new_test_ext();
+    let mut ext = new_test_ext::<MockRuntime>();
     ext.execute_with(|| {
         basic_test_setup(0);
         sp_io::offchain_index::set(SEQ_ADDR_STORAGE_KEY, &GOOD_SEQUENCER_ADDRESS);
@@ -91,7 +92,7 @@ fn sequencer_address_has_not_been_updated() {
 
 #[test]
 fn on_finalize_hook_takes_storage_update() {
-    let mut ext = new_test_ext();
+    let mut ext = new_test_ext::<MockRuntime>();
     ext.execute_with(|| {
         System::set_block_number(1);
         assert!(Starknet::seq_addr_update());
@@ -102,7 +103,7 @@ fn on_finalize_hook_takes_storage_update() {
 
 #[test]
 fn inherent_updates_storage() {
-    let mut ext = new_test_ext();
+    let mut ext = new_test_ext::<MockRuntime>();
     ext.execute_with(|| {
         let none_origin = RuntimeOrigin::none();
 

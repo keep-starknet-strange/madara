@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::io::Write;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
@@ -61,7 +62,11 @@ pub fn to_rpc_contract_class(contract_class: BlockifierContractClass) -> Result<
 /// Returns a compressed vector of bytes
 pub(crate) fn compress(data: &[u8]) -> Result<Vec<u8>> {
     let mut gzip_encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
-    serde_json::to_writer(&mut gzip_encoder, data)?;
+    // 2023-08-22: JSON serialization is already done in Blockifier
+    // https://github.com/keep-starknet-strange/blockifier/blob/no_std-support-7578442/crates/blockifier/src/execution/contract_class.rs#L129
+    // https://github.com/keep-starknet-strange/blockifier/blob/no_std-support-7578442/crates/blockifier/src/execution/contract_class.rs#L389
+    // serde_json::to_writer(&mut gzip_encoder, data)?;
+    gzip_encoder.write_all(data)?;
     Ok(gzip_encoder.finish()?)
 }
 
@@ -236,6 +241,7 @@ pub fn to_declare_transaction(
                 }))),
                 class_hash: legacy_contract_class.class_hash()?.into(),
                 compiled_class_hash: None,
+                is_query: declare_tx_v1.is_query,
             })
         }
         BroadcastedDeclareTransaction::V2(declare_tx_v2) => {
@@ -266,6 +272,7 @@ pub fn to_declare_transaction(
                 contract_class: BlockifierContractClass::V1(contract_class),
                 compiled_class_hash: Some(Felt252Wrapper::from(declare_tx_v2.compiled_class_hash)),
                 class_hash: declare_tx_v2.contract_class.class_hash().into(),
+                is_query: declare_tx_v2.is_query,
             })
         }
     }

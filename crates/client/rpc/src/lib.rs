@@ -37,6 +37,7 @@ use sp_blockchain::HeaderBackend;
 use sp_core::H256;
 use sp_runtime::generic::BlockId as SPBlockId;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
+use sp_runtime::DispatchError;
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
@@ -237,16 +238,15 @@ where
 
         let calldata = request.calldata.iter().map(|x| Felt252Wrapper::from(*x)).collect();
 
-        let result = runtime_api
+        let call: Result<Vec<Felt252Wrapper>, sp_runtime::DispatchError> = runtime_api
             .call(substrate_block_hash, request.contract_address.into(), request.entry_point_selector.into(), calldata)
             .map_err(|e| {
                 error!("Request parameters error: {e}");
                 StarknetRpcApiError::InternalServerError
-            })?
-            .map_err(|e| {
-                error!("Failed to call function: {:#?}", e);
-                StarknetRpcApiError::ContractError
             })?;
+
+        let result = convert_error(self.client.clone(), substrate_block_hash, call)?;
+
         Ok(result.iter().map(|x| format!("{:#x}", x.0)).collect())
     }
 
@@ -439,9 +439,8 @@ where
     /// Returns the chain id.
     fn chain_id(&self) -> RpcResult<Felt> {
         let best_block_hash = self.client.info().best_hash;
-
-        let chain_id = self.overrides.for_block_hash(self.client.as_ref(), best_block_hash).chain_id(best_block_hash);
-        Ok(Felt(chain_id.ok_or(StarknetRpcApiError::InternalServerError)?.into()))
+        let chain_id = self.client.runtime_api().chain_id(best_block_hash);
+        Ok(Felt(chain_id.map_err(|_| StarknetRpcApiError::InternalServerError)?.into()))
     }
 
     /// Add an Invoke Transaction to invoke a contract function
@@ -1029,5 +1028,24 @@ where
             error!("Failed to convert transaction: {:?}", dispatch_error);
             Err(StarknetRpcApiError::InternalServerError)
         }
+    }
+}
+
+fn convert_error<C, B, T>(
+    client: Arc<C>,
+    best_block_hash: <B as BlockT>::Hash,
+    call: Result<T, DispatchError>,
+) -> Result<T, StarknetRpcApiError>
+where
+    B: BlockT,
+    C: ProvideRuntimeApi<B>,
+    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
+{
+    match call {
+        Ok(val) => Ok(val),
+        Err(e) => match client.runtime_api().convert_error(best_block_hash, e) {
+            Ok(starknet_error) => Err(starknet_error.into()),
+            Err(_) => Err(StarknetRpcApiError::InternalServerError),
+        },
     }
 }

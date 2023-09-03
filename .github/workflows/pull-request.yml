@@ -7,13 +7,24 @@ on:
     branches: [main]
 
 jobs:
+  changelog:
+    name: Enforce CHANGELOG
+    uses: ./.github/workflows/changelog.yml
+
   linters:
     name: Run linters
     uses: ./.github/workflows/linters.yml
+    needs: changelog
 
   rust_build:
     name: Build Rust project
     uses: ./.github/workflows/rust-build.yml
+    needs: changelog
+
+  madara_commands:
+    name: Test Madara commands
+    uses: ./.github/workflows/madara-commands.yml
+    needs: rust_build
 
   linters_cargo:
     name: Run Cargo linters
@@ -25,14 +36,14 @@ jobs:
     uses: ./.github/workflows/tests-coverage.yml
     needs: [rust_build]
 
-  benchmark:
-    name: Run benchmarks
-    uses: ./.github/workflows/benchmarks.yml
-    needs: [rust_build, tests]
-    permissions:
-      # deployments permission to deploy GitHub pages website
-      deployments: write
-      # contents permission to update benchmark contents in gh-pages branch
-      contents: write
-      # post on the pull-request page
-      pull-requests: write
+  # benchmark:
+  #   name: Run benchmarks
+  #   uses: ./.github/workflows/benchmarks.yml
+  #   needs: [rust_build, tests]
+  #   permissions:
+  #     # deployments permission to deploy GitHub pages website
+  #     deployments: write
+  #     # contents permission to update benchmark contents in gh-pages branch
+  #     contents: write
+  #     # post on the pull-request page
+  #     pull-requests: write

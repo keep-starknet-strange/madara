@@ -17,6 +17,7 @@ use starknet_api::transaction::{Calldata, ContractAddressSalt, Fee};
 use starknet_api::StarknetApiError;
 use thiserror_no_std::Error;
 
+use crate::constants::INITIAL_GAS;
 use crate::crypto::commitment::{
     calculate_declare_tx_hash, calculate_deploy_account_tx_hash, calculate_invoke_tx_hash,
 };
@@ -177,6 +178,8 @@ pub struct DeclareTransaction {
     pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
     /// Max fee.
     pub max_fee: Felt252Wrapper,
+    /// If set to `true`, uses a query-only transaction version that's invalid for execution
+    pub is_query: bool,
 }
 
 impl DeclareTransaction {
@@ -196,12 +199,13 @@ impl DeclareTransaction {
                 BoundedVec::default(),
                 self.sender_address,
                 self.sender_address,
-                Felt252Wrapper::from(0_u8), // FIXME 710
+                INITIAL_GAS.into(),
                 self.compiled_class_hash,
             ),
             contract_class: Some(self.contract_class),
             contract_address_salt: None,
             max_fee: self.max_fee,
+            is_query: self.is_query,
         }
     }
 }
@@ -234,6 +238,8 @@ pub struct DeployAccountTransaction {
     pub account_class_hash: Felt252Wrapper,
     /// Max fee.
     pub max_fee: Felt252Wrapper,
+    /// If set to `true`, uses a query-only transaction version that's invalid for execution
+    pub is_query: bool,
 }
 
 impl DeployAccountTransaction {
@@ -271,12 +277,13 @@ impl DeployAccountTransaction {
                 self.calldata,
                 sender_address,
                 sender_address,
-                Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas
+                INITIAL_GAS.into(),
                 None,
             ),
             contract_class: None,
             contract_address_salt: Some(self.salt.into()),
             max_fee: self.max_fee,
+            is_query: self.is_query,
         })
     }
 }
@@ -319,6 +326,7 @@ impl TryFrom<Transaction> for DeclareTransaction {
             compiled_class_hash: casm_class_hash,
             class_hash: value.call_entrypoint.class_hash.ok_or(TransactionConversionError::MissingClassHash)?,
             max_fee: value.max_fee,
+            is_query: value.is_query,
         })
     }
 }
@@ -349,6 +357,8 @@ pub struct InvokeTransaction {
     pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
     /// Max fee.
     pub max_fee: Felt252Wrapper,
+    /// If set to `true`, uses a query-only transaction version that's invalid for execution
+    pub is_query: bool,
 }
 
 impl From<Transaction> for InvokeTransaction {
@@ -360,6 +370,7 @@ impl From<Transaction> for InvokeTransaction {
             nonce: value.nonce,
             calldata: value.call_entrypoint.calldata,
             max_fee: value.max_fee,
+            is_query: value.is_query,
         }
     }
 }
@@ -381,12 +392,13 @@ impl InvokeTransaction {
                 self.calldata,
                 self.sender_address,
                 self.sender_address,
-                Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas
+                INITIAL_GAS.into(),
                 None,
             ),
             contract_class: None,
             contract_address_salt: None,
             max_fee: self.max_fee,
+            is_query: self.is_query,
         }
     }
 }
@@ -424,6 +436,8 @@ pub struct Transaction {
     pub contract_address_salt: Option<U256>,
     /// Max fee.
     pub max_fee: Felt252Wrapper,
+    /// If set to `true`, uses a query-only transaction version that's invalid for execution
+    pub is_query: bool,
 }
 
 impl TryFrom<Transaction> for DeployAccountTransaction {
@@ -439,6 +453,7 @@ impl TryFrom<Transaction> for DeployAccountTransaction {
             salt: salt_as_felt_wrapper,
             account_class_hash: value.call_entrypoint.class_hash.ok_or(TransactionConversionError::MissingClassHash)?,
             max_fee: value.max_fee,
+            is_query: value.is_query,
         })
     }
 }
@@ -531,6 +546,9 @@ pub enum EventError {
     /// Too many events
     #[error("Too many events")]
     TooManyEvents,
+    /// Inconsistent ordering
+    #[error("Inconsistent ordering")]
+    InconsistentOrdering,
 }
 
 /// Error enum wrapper for state diffs.
@@ -636,6 +654,7 @@ mod reexport_private_types {
                     )
                     .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CalldataConversionError)?,
                     max_fee: Felt252Wrapper::from(invoke_tx_v1.max_fee),
+                    is_query: invoke_tx_v1.is_query,
                 }),
             }
         }
@@ -675,6 +694,7 @@ mod reexport_private_types {
                 account_class_hash: account_class_hash.into(),
                 nonce,
                 max_fee,
+                is_query: tx.is_query,
             })
         }
     }

@@ -43,6 +43,7 @@ fn generate_dummy_transactions() -> BoundedVec<Transaction, MaxTransactions> {
             contract_class: None,
             contract_address_salt: None,
             max_fee: Felt252Wrapper::from_dec_str("1000").unwrap(),
+            is_query: false,
         },
         Transaction {
             tx_type: TxType::Invoke,
@@ -55,6 +56,7 @@ fn generate_dummy_transactions() -> BoundedVec<Transaction, MaxTransactions> {
             contract_class: None,
             contract_address_salt: None,
             max_fee: Felt252Wrapper::from_dec_str("1000").unwrap(),
+            is_query: false,
         },
     ]
     .try_into()
