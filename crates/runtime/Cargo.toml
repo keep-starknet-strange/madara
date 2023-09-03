@@ -105,7 +105,6 @@ try-runtime = [
   "pallet-starknet/try-runtime",
 ]
 default = ["std"]
-madara-state-root = []
 disable-transaction-fee = []
 runtime-benchmarks = [
   "frame-benchmarking/runtime-benchmarks",

@@ -4959,7 +4959,7 @@ dependencies = [
 
 [[package]]
 name = "madara"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "blockifier",
@@ -5020,7 +5020,7 @@ dependencies = [
 
 [[package]]
 name = "madara-runtime"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blockifier",
  "frame-benchmarking",
@@ -5100,7 +5100,7 @@ dependencies = [
 
 [[package]]
 name = "mc-block-proposer"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "futures",
  "futures-timer",
@@ -5125,7 +5125,7 @@ dependencies = [
 
 [[package]]
 name = "mc-db"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "kvdb-rocksdb",
  "log",
@@ -5139,7 +5139,7 @@ dependencies = [
 
 [[package]]
 name = "mc-mapping-sync"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "futures",
  "futures-timer",
@@ -5159,7 +5159,7 @@ dependencies = [
 
 [[package]]
 name = "mc-rpc"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blockifier",
  "frame-support",
@@ -5192,7 +5192,7 @@ dependencies = [
 
 [[package]]
 name = "mc-rpc-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "blockifier",
@@ -5221,7 +5221,7 @@ dependencies = [
 
 [[package]]
 name = "mc-storage"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blockifier",
  "frame-support",
@@ -5430,7 +5430,7 @@ dependencies = [
 
 [[package]]
 name = "mp-digest-log"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "assert_matches",
  "mp-starknet",
@@ -5440,7 +5440,7 @@ dependencies = [
 
 [[package]]
 name = "mp-starknet"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "bitvec",
@@ -6136,7 +6136,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-starknet"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blockifier",
  "frame-benchmarking",

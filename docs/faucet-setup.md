@@ -66,26 +66,11 @@ from any of the genesis accounts using RPC calls. The genesis account private
 key for address `0x2` is available in
 `crates/pallets/starknet/src/tests/constants.rs`.
 
-Things to keep in mind:
-
-1. Madara doesn't support version `0x100000000000000000000000000000001` for
-   `estimateFee` which is the default version used by starknetjs. This causes
-   the `starknet_estimateFee` RPC call to fail with the following error
-
-   ```bash
-   Failed to parse JSON-RPC params as object: Invalid params in the call: unknown variant `0x100000000000000000000000000000001`, expected `0x0` or `0x1` at line 1 column 603
-   ```
-
-   An issue has been created for this which can be tracked
-   [here](https://github.com/keep-starknet-strange/madara/issues/646).
-
-   In order to fix this, we manually change the version to `0x1` for
-   `estimateFee` and then invoke the transaction.
-
-2. Account `0x1` on Madara doesn't support multicall so `account.execute` from
-   starknetjs fails. You can either invoke the transfer transaction as shown
-   [here](https://github.com/keep-starknet-strange/madara/blob/c916046adf9d7ea52131442090fae654ba6b234d/tests/util/starknet.ts#L241)
-   or use an account like `0x2` which is based on Argent and supports multicall.
+Keep in mind that account `0x1` on Madara doesn't support multicall so
+`account.execute` from starknetjs fails. You can either invoke the transfer
+transaction as shown
+[here](https://github.com/keep-starknet-strange/madara/blob/c916046adf9d7ea52131442090fae654ba6b234d/tests/util/starknet.ts#L241)
+or use an account like `0x2` which is based on Argent and supports multicall.
 
 **Example code for collecting tokens from `0x2` using starknetjs**
 
