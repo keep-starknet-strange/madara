@@ -32,6 +32,9 @@ pub struct Cli {
     #[clap(flatten)]
     pub run: ExtendedRunCmd,
 
+	#[clap(flatten)]
+	pub setup: SetupCmd,
+
     /// Choose sealing method.
     #[arg(long, value_enum, ignore_case = true)]
     pub sealing: Option<Sealing>,
@@ -47,13 +50,6 @@ pub struct ExtendedRunCmd {
     #[clap(long, conflicts_with = "testnet")]
     pub fetch_chain_spec: Option<String>,
 
-    /// Load a index.json file for downloading assets
-    /// The index.json must follow the format of the official index.json
-    /// (https://github.com/d-roak/madara/blob/feat/configs-index/configs/index.json)
-    /// Where the `md5` and `url` fields are optional
-	#[clap(long, default_value = constants::DEFAULT_CONFIGS_URL)]
-	pub fetch_madara_configs: Option<String>,
-
     /// Path to the folder where all configuration files and data are stored
     /// base_path will always be overwritten by madara_path
     /// in the case you use the --tmp, the base_path will be changed during the runtime
@@ -64,6 +60,16 @@ pub struct ExtendedRunCmd {
 	/// The testnets will allways be fetched when this flag is passed to search for updates
     #[clap(long, conflicts_with = "fetch_chain_spec")]
     pub testnet: Option<Testnet>,
+}
+
+#[derive(Debug, clap::Args)]
+pub struct SetupCmd {
+    /// Load a index.json file for downloading assets
+    /// The index.json must follow the format of the official index.json
+    /// (https://github.com/d-roak/madara/blob/feat/configs-index/configs/index.json)
+    /// Where the `md5` and `url` fields are optional
+	#[clap(long, default_value = constants::DEFAULT_CONFIGS_URL)]
+	pub fetch_madara_configs: Option<String>,
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -102,10 +108,10 @@ pub enum Subcommand {
     Revert(sc_cli::RevertCmd),
 
 	// Run madara node
-	Run,
+	Run(ExtendedRunCmd),
 
 	// Setup madara node
-	Setup,
+	Setup(SetupCmd),
 
     /// Try some command against runtime state.
     #[cfg(feature = "try-runtime")]

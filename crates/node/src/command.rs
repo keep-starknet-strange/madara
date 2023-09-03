@@ -111,7 +111,7 @@ fn fetch_madara_configs(cli: &mut Cli) -> Result<(), String> {
     let madara_path = cli.run.madara_path.clone().expect("Failed retrieving madara_path").to_str().unwrap().to_string();
     let local_path = utils::get_project_path();
 
-	match (cli.run.fetch_madara_configs.clone(), local_path) {
+	match (cli.setup.fetch_madara_configs.clone(), local_path) {
 		//TODO match string for default configs value
 		(_, Ok(ref src_path)) => {
 			let index_path = src_path.clone() + "/configs/index.json";
@@ -154,13 +154,6 @@ pub fn run() -> sc_cli::Result<()> {
     let mut cli = Cli::from_args();
 
     cli.run.run_cmd.shared_params.base_path = cli.run.madara_path.clone();
-
-	/*
-	 * Use within the setup subcommand
-    if !cli.run.disable_madara_configs {
-        fetch_madara_configs(&mut cli)?;
-    }
-	*/
 
     match &cli.subcommand {
         Some(Subcommand::Key(cmd)) => cmd.run(&cli),
@@ -280,10 +273,9 @@ pub fn run() -> sc_cli::Result<()> {
             let runner = cli.create_runner(cmd)?;
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
-		Some(Subcommand::Run) => {
+		Some(Subcommand::Run(_)) => {
             let madara_path =
                 cli.run.madara_path.clone().expect("Failed retrieving madara_path").to_str().unwrap().to_string();
-			// TODO Validate if node runned setup
 
             // Set the node_key_file for substrate in the case that it was not manually setted
             if cli.run.run_cmd.network_params.node_key_params.node_key_file.is_none() {
@@ -308,7 +300,7 @@ pub fn run() -> sc_cli::Result<()> {
                 service::new_full(config, cli.sealing).map_err(sc_cli::Error::Service)
             })
 		}
-		Some(Subcommand::Setup) => {
+		Some(Subcommand::Setup(_)) => {
         	fetch_madara_configs(&mut cli)?;
 			Ok(())
 		}

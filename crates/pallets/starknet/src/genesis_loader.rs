@@ -63,7 +63,7 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
                                 project_path + "/" + &path
                             }
                         };
-                        (hash, get_contract_class(&utils::read_file_to_string(contract_path).unwrap(), version))
+                        (hash, get_contract_class(&utils::read_file_to_string(contract_path).expect("Some contract is missing in the config folder. Try to run `madara setup` before opening an issue."), version))
                     }
                     ContractClass::Class(class) => (hash, class),
                 }
