@@ -31,12 +31,15 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           fail-on-cache-miss: true
+      - name: Setup madara
+        run: |
+          target/release/madara setup
       - name: Run test (native)
-        run: |-
+        run: |
           cd tests
           npm run test
       - name: Run test (wasm)
-        run: |-
+        run: |
           cd tests
           FORCE_WASM_EXECUTION=true npm run test
 

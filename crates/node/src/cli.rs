@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use sc_cli::RunCmd;
+
 use crate::constants;
 
 fn get_default_madara_path() -> String {
@@ -32,8 +33,8 @@ pub struct Cli {
     #[clap(flatten)]
     pub run: ExtendedRunCmd,
 
-	#[clap(flatten)]
-	pub setup: SetupCmd,
+    #[clap(flatten)]
+    pub setup: SetupCmd,
 
     /// Choose sealing method.
     #[arg(long, value_enum, ignore_case = true)]
@@ -46,7 +47,7 @@ pub struct ExtendedRunCmd {
     pub run_cmd: RunCmd,
 
     /// Load a custom chain-spec from an url
-	/// If you want to load a chain spec that is present in your filesystem, use `--chain=<PATH>`
+    /// If you want to load a chain spec that is present in your filesystem, use `--chain=<PATH>`
     #[clap(long, conflicts_with = "testnet")]
     pub fetch_chain_spec: Option<String>,
 
@@ -57,7 +58,7 @@ pub struct ExtendedRunCmd {
     pub madara_path: Option<PathBuf>,
 
     /// Choose a supported testnet chain which will load some default values
-	/// The testnets will allways be fetched when this flag is passed to search for updates
+    /// The testnets will allways be fetched when this flag is passed to search for updates
     #[clap(long, conflicts_with = "fetch_chain_spec")]
     pub testnet: Option<Testnet>,
 }
@@ -68,8 +69,8 @@ pub struct SetupCmd {
     /// The index.json must follow the format of the official index.json
     /// (https://github.com/d-roak/madara/blob/feat/configs-index/configs/index.json)
     /// Where the `md5` and `url` fields are optional
-	#[clap(long, default_value = constants::DEFAULT_CONFIGS_URL)]
-	pub fetch_madara_configs: Option<String>,
+    #[clap(long, default_value = constants::DEFAULT_CONFIGS_URL)]
+    pub fetch_madara_configs: Option<String>,
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -107,11 +108,11 @@ pub enum Subcommand {
     /// Revert the chain to a previous state.
     Revert(sc_cli::RevertCmd),
 
-	// Run madara node
-	Run(ExtendedRunCmd),
+    // Run madara node
+    Run(ExtendedRunCmd),
 
-	// Setup madara node
-	Setup(SetupCmd),
+    // Setup madara node
+    Setup(SetupCmd),
 
     /// Try some command against runtime state.
     #[cfg(feature = "try-runtime")]

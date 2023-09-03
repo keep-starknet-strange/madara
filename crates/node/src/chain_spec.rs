@@ -127,7 +127,8 @@ fn testnet_genesis(
     _enable_println: bool,
 ) -> GenesisConfig {
     let genesis = madara_path.clone() + "/configs/genesis-assets/genesis.json";
-    let genesis = utils::read_file_to_string(genesis).expect("Failed to read genesis file. Please run `madara setup` before opening an issue.");
+    let genesis = utils::read_file_to_string(genesis)
+        .expect("Failed to read genesis file. Please run `madara setup` before opening an issue.");
     let mut genesis: GenesisLoader = serde_json::from_str(&genesis).expect("Failed loading genesis");
     genesis.set_madara_path(madara_path);
     let starknet_genesis: madara_runtime::pallet_starknet::GenesisConfig<_> = genesis.into();

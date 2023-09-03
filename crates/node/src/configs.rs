@@ -14,11 +14,7 @@ pub struct File {
     pub url: Option<String>,
 }
 
-pub fn fetch_and_validate_file(
-    remote_base_path: String,
-    file: File,
-    dest_path: String,
-) -> Result<(), String> {
+pub fn fetch_and_validate_file(remote_base_path: String, file: File, dest_path: String) -> Result<(), String> {
     let full_url = file.url.unwrap_or_else(|| {
         remote_base_path
             + &dest_path.split("configs/").collect::<Vec<&str>>()[1].split('/').collect::<Vec<&str>>().join("/")

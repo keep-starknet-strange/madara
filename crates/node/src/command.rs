@@ -78,8 +78,8 @@ fn set_testnet(cli: &mut Cli, testnet: Testnet) -> Result<(), String> {
             cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
         }
         (Testnet::Sharingan, _) => {
-			utils::fetch_from_url(
-				constants::SHARINGAN_CHAIN_SPEC_URL.to_string(),
+            utils::fetch_from_url(
+                constants::SHARINGAN_CHAIN_SPEC_URL.to_string(),
                 madara_path.clone() + "/configs/chain-specs/",
             )?;
             cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
@@ -97,54 +97,48 @@ fn set_testnet(cli: &mut Cli, testnet: Testnet) -> Result<(), String> {
 fn set_chain_spec(cli: &mut Cli, chain_spec_url: String) -> Result<(), String> {
     let madara_path = cli.run.madara_path.clone().expect("Failed retrieving madara_path").to_str().unwrap().to_string();
 
-    utils::fetch_from_url(
-        chain_spec_url.clone(),
-        madara_path.clone() + "/chain-specs",
-    )?;
+    utils::fetch_from_url(chain_spec_url.clone(), madara_path.clone() + "/chain-specs")?;
     let chain_spec = chain_spec_url.split('/').last().expect("Chain spec file name not found");
     cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/" + chain_spec);
 
-	Ok(())
+    Ok(())
 }
 
 fn fetch_madara_configs(cli: &mut Cli) -> Result<(), String> {
     let madara_path = cli.run.madara_path.clone().expect("Failed retrieving madara_path").to_str().unwrap().to_string();
     let local_path = utils::get_project_path();
 
-	match (cli.setup.fetch_madara_configs.clone(), local_path) {
-		//TODO match string for default configs value
-		(_, Ok(ref src_path)) => {
-			let index_path = src_path.clone() + "/configs/index.json";
-			utils::copy_from_filesystem(index_path.clone(), madara_path.clone() + "/configs")?;
+    match (cli.setup.fetch_madara_configs.clone(), local_path) {
+        // TODO match string for default configs value
+        (_, Ok(ref src_path)) => {
+            let index_path = src_path.clone() + "/configs/index.json";
+            utils::copy_from_filesystem(index_path, madara_path.clone() + "/configs")?;
 
-    		let madara_configs: configs::Configs =
-    		    serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?)
-    		        .expect("Failed to load madara configs");
-        	for asset in madara_configs.genesis_assets {
-        	    let src_path = src_path.clone() + "/configs/genesis-assets/" + &asset.name;
-        	    utils::copy_from_filesystem(
-        	        src_path,
-        	        madara_path.clone() + "/configs/genesis-assets",
-        	    )?;
-        	}
-		}
-		(Some(configs_url), _) => {
-        	utils::fetch_from_url(configs_url, madara_path.clone() + "/configs")?;
+            let madara_configs: configs::Configs =
+                serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?)
+                    .expect("Failed to load madara configs");
+            for asset in madara_configs.genesis_assets {
+                let src_path = src_path.clone() + "/configs/genesis-assets/" + &asset.name;
+                utils::copy_from_filesystem(src_path, madara_path.clone() + "/configs/genesis-assets")?;
+            }
+        }
+        (Some(configs_url), _) => {
+            utils::fetch_from_url(configs_url, madara_path.clone() + "/configs")?;
 
-    		let madara_configs: configs::Configs =
-    		    serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?)
-    		        .expect("Failed to load madara configs");
+            let madara_configs: configs::Configs =
+                serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?)
+                    .expect("Failed to load madara configs");
 
-        	for asset in madara_configs.genesis_assets {
-        	    configs::fetch_and_validate_file(
-        	        madara_configs.remote_base_path.clone(),
-        	        asset,
-        	        madara_path.clone() + "/configs/genesis-assets/",
-        	    )?;
-        	}
-		}
-		_ => {}
-	}
+            for asset in madara_configs.genesis_assets {
+                configs::fetch_and_validate_file(
+                    madara_configs.remote_base_path.clone(),
+                    asset,
+                    madara_path.clone() + "/configs/genesis-assets/",
+                )?;
+            }
+        }
+        _ => {}
+    }
 
     Ok(())
 }
@@ -273,7 +267,7 @@ pub fn run() -> sc_cli::Result<()> {
             let runner = cli.create_runner(cmd)?;
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
-		Some(Subcommand::Run(_)) => {
+        Some(Subcommand::Run(_)) => {
             let madara_path =
                 cli.run.madara_path.clone().expect("Failed retrieving madara_path").to_str().unwrap().to_string();
 
@@ -287,23 +281,23 @@ pub fn run() -> sc_cli::Result<()> {
                 set_dev_environment(&mut cli);
             }
 
-    		if let Some(chain_spec_url) = cli.run.fetch_chain_spec.clone() {
-				set_chain_spec(&mut cli, chain_spec_url)?;
-			}
+            if let Some(chain_spec_url) = cli.run.fetch_chain_spec.clone() {
+                set_chain_spec(&mut cli, chain_spec_url)?;
+            }
 
-			if let Some(testnet) = cli.run.testnet {
-				set_testnet(&mut cli, testnet)?;
-			}
+            if let Some(testnet) = cli.run.testnet {
+                set_testnet(&mut cli, testnet)?;
+            }
 
             let runner = cli.create_runner(&cli.run.run_cmd)?;
             runner.run_node_until_exit(|config| async move {
                 service::new_full(config, cli.sealing).map_err(sc_cli::Error::Service)
             })
-		}
-		Some(Subcommand::Setup(_)) => {
-        	fetch_madara_configs(&mut cli)?;
-			Ok(())
-		}
-        _ => Err("You need to specify some subcommand. E.g. `madara run`".into())
+        }
+        Some(Subcommand::Setup(_)) => {
+            fetch_madara_configs(&mut cli)?;
+            Ok(())
+        }
+        _ => Err("You need to specify some subcommand. E.g. `madara run`".into()),
     }
 }
