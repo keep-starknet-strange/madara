@@ -912,6 +912,10 @@
 <a href="#912" id="912">912</a>
 <a href="#913" id="913">913</a>
 <a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::sync::Arc;
@@ -1684,7 +1688,11 @@
                             nonce,
                             class_hash,
                             sender_address,
-                            compiled_class_hash: class_hash,
+                            compiled_class_hash: value
+                                .call_entrypoint
+                                .compiled_class_hash
+                                .ok_or(RPCTransactionConversionError::MissingInformation)<span class="question-mark">?
+                                </span>.<span class="number">0</span>,
                         }))),
                         <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(RPCTransactionConversionError::UnknownVersion),
                     }
