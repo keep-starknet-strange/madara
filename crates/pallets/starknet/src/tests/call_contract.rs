@@ -5,11 +5,13 @@ use sp_core::ConstU32;
 use sp_runtime::BoundedVec;
 
 use super::constants::TOKEN_CONTRACT_CLASS_HASH;
+use super::mock::default_mock::*;
 use super::mock::*;
+use crate::tests::utils::build_get_balance_contract_call;
 
 #[test]
 fn given_call_contract_call_works() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(1);
 
         let origin = RuntimeOrigin::none();
@@ -40,7 +42,8 @@ fn given_call_contract_call_works() {
             signature: bounded_vec!(),
             nonce: Felt252Wrapper::ZERO,
             calldata: constructor_calldata,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
+			is_query: false
         };
 
         assert_ok!(Starknet::invoke(origin, deploy_transaction));
@@ -49,12 +52,8 @@ fn given_call_contract_call_works() {
             Felt252Wrapper::from_hex_be("00dc58c1280862c95964106ef9eba5d9ed8c0c16d05883093e4540f22b829dff").unwrap();
 
         // Call balanceOf
-        let balance_of_selector =
-            Felt252Wrapper::from_hex_be("0x02e4263afad30923c891518314c3c95dbe830a16874e8abc5777a9a20b54c76e").unwrap();
-        let calldata = bounded_vec![
-            sender_account // owner address
-        ];
-        let res = Starknet::call_contract(expected_erc20_address, balance_of_selector, calldata);
+		let call_args = build_get_balance_contract_call(sender_account, expected_erc20_address);
+        let res = Starknet::call_contract(call_args.0,call_args.1,call_args.2);
         assert_ok!(res.clone());
         pretty_assertions::assert_eq!(
             res.unwrap(),

@@ -1,13 +1,13 @@
 [package]
 name = "madara-runtime"
-version = "0.1.0-alpha"
+version.workspace = true
+edition.workspace = true
 description = "Madara runtime."
 authors = [
   "Abdelhamid Bakhta <@abdelhamidbakhta>",
   "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
-edition = "2021"
 license = "MIT"
 publish = false
 repository = "https://github.com/keep-starknet-strange/madara"
@@ -55,6 +55,7 @@ pallet-starknet = { workspace = true }
 mp-starknet = { workspace = true, default-features = false }
 # Starknet dependencies
 blockifier = { workspace = true, default-features = false }
+starknet-ff = { workspace = true, default-features = false }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }
@@ -104,7 +105,7 @@ try-runtime = [
   "pallet-starknet/try-runtime",
 ]
 default = ["std"]
-madara-state-root = []
+disable-transaction-fee = []
 runtime-benchmarks = [
   "frame-benchmarking/runtime-benchmarks",
   "frame-support/runtime-benchmarks",

@@ -4,9 +4,11 @@ use lazy_static::lazy_static;
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::{EventWrapper, InvokeTransaction};
 
+use super::mock::default_mock::*;
 use super::mock::*;
 use crate::tests::constants::TOKEN_CONTRACT_CLASS_HASH;
-use crate::tests::utils::get_contract_class;
+use crate::tests::utils::{build_transfer_invoke_transaction, get_contract_class};
+use crate::types::BuildTransferInvokeTransaction;
 use crate::Event;
 
 lazy_static! {
@@ -15,7 +17,7 @@ lazy_static! {
 
 #[test]
 fn given_erc20_transfer_when_invoke_then_it_works() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(1);
         let origin = RuntimeOrigin::none();
         let sender_account = get_account_address(AccountType::V0(AccountTypeV0Inner::NoValidate));
@@ -40,8 +42,9 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 sender_account  // recipient
             ],
             nonce: Felt252Wrapper::ZERO,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
 
         let expected_erc20_address =
@@ -49,6 +52,11 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
 
         assert_ok!(Starknet::invoke(origin.clone(), deploy_transaction));
         let events = System::events();
+        // Expected events:
+        // ERC20 -> Transfer
+        // NoValidateAccount -> ContractDeployed
+        // FeeToken -> Transfer
+
         // Check transaction event (deployment)
         pretty_assertions::assert_eq!(
             Event::<MockRuntime>::StarknetEvent(EventWrapper {
@@ -80,7 +88,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 ),
                 from_address: sender_account,
             }),
-            events[events.len() - 3].event.clone().try_into().unwrap(),
+            events[1].event.clone().try_into().unwrap(),
         );
         let expected_fee_transfer_event = Event::StarknetEvent(EventWrapper {
             keys: bounded_vec![
@@ -104,22 +112,14 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         );
         // TODO: use dynamic values to craft invoke transaction
         // Transfer some token
-        let transfer_transaction = InvokeTransaction {
-            version: 1,
+        let transfer_transaction = build_transfer_invoke_transaction(BuildTransferInvokeTransaction {
             sender_address: sender_account,
-            calldata: bounded_vec![
-                expected_erc20_address, // Token address
-                Felt252Wrapper::from_hex_be("0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e")
-                    .unwrap(), // transfer selector
-                Felt252Wrapper::THREE,  // Calldata len
-                Felt252Wrapper::from(16u128), // recipient
-                Felt252Wrapper::from(15u128), // initial supply low
-                Felt252Wrapper::ZERO,   // initial supply high
-            ],
+            token_address: expected_erc20_address,
+            recipient: Felt252Wrapper::from(16u128),
+            amount_low: Felt252Wrapper::from(15u128),
+            amount_high: Felt252Wrapper::ZERO,
             nonce: Felt252Wrapper::ONE,
-            max_fee: Felt252Wrapper::from(u128::MAX),
-            signature: bounded_vec!(),
-        };
+        });
 
         // Also asserts that the deployment has been saved.
         assert_ok!(Starknet::invoke(origin, transfer_transaction));
@@ -166,6 +166,10 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         );
 
         let events = System::events();
+        // Expected events: (added on top of the past ones)
+        // ERC20 -> Transfer
+        // FeeToken -> Transfer
+
         // Check regular event.
         let expected_event = Event::StarknetEvent(EventWrapper {
             keys: bounded_vec![

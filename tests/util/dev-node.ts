@@ -82,19 +82,17 @@ export async function startMadaraDevNode(
     "--reserved-only",
     "--no-grandpa",
     "--no-prometheus",
-    "--force-authoring",
-    "--rpc-cors=all",
-    "--alice",
     "--dev",
+    "--rpc-cors=all",
+    "--rpc-methods=unsafe",
+    "--tx-ban-seconds=0",
     "--sealing=manual",
-    "--in-peers=0",
-    "--out-peers=1",
     `-l${MADARA_LOG}`,
     `--port=${p2pPort}`,
     `--rpc-port=${rpcPort}`,
-    "--tmp",
-    "--rpc-methods=unsafe",
+    `--madara-path=/tmp/${p2pPort}`,
   ];
+
   if (WASM_RUNTIME_OVERRIDES != "") {
     args.push(`--wasm-runtime-overrides=${WASM_RUNTIME_OVERRIDES}`);
     // For tracing tests now we require to enable archive block pruning.
@@ -151,7 +149,7 @@ export async function startMadaraDevNode(
         console.log(chunk.toString());
       }
       binaryLogs.push(chunk);
-      if (chunk.toString().match(/Substrate Node/)) {
+      if (chunk.toString().match(/Madara Node/)) {
         clearTimeout(timer);
         if (!DISPLAY_LOG) {
           runningNode.stderr.off("data", onData);
@@ -251,7 +249,7 @@ export async function startMadaraForkedNode(rpcPort: number): Promise<{
         console.log(chunk.toString());
       }
       binaryLogs.push(chunk);
-      if (chunk.toString().match(/Substrate Node/)) {
+      if (chunk.toString().match(/Madara Node/)) {
         clearTimeout(timer);
         if (!DISPLAY_LOG) {
           runningNode.stderr.off("data", onData);

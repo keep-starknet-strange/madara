@@ -1,21 +1,29 @@
 use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::transaction::types::{InvokeTransaction, Transaction};
+use mp_starknet::transaction::types::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction};
 use sp_core::bounded_vec;
+use sp_runtime::BoundedVec;
 
-use self::mock::Starknet;
+use self::mock::default_mock::Starknet;
+use self::mock::{get_account_address, get_storage_key, AccountType};
 use self::utils::get_contract_class;
+use crate::tests::mock::account_helper;
+use crate::tests::utils::sign_message_hash;
+use crate::{Config, StorageView};
 
 mod account_helper;
 mod call_contract;
 mod declare_tx;
 mod deploy_account_tx;
 mod erc20;
+mod events;
+mod fees_disabled;
 mod invoke_tx;
 mod l1_message;
+mod nonce_validation;
 mod query_tx;
 mod sequencer_address;
-mod state_root;
 
+mod block;
 mod constants;
 mod message;
 mod mock;
@@ -42,7 +50,8 @@ pub fn get_invoke_dummy() -> Transaction {
         calldata,
         nonce,
         signature,
-        max_fee: Felt252Wrapper::from(u128::MAX),
+        max_fee: Felt252Wrapper::from(u64::MAX),
+        is_query: false,
     }
     .from_invoke(Starknet::chain_id())
 }
@@ -72,7 +81,8 @@ fn get_invoke_argent_dummy() -> Transaction {
         calldata,
         nonce,
         signature,
-        max_fee: Felt252Wrapper::from(u128::MAX),
+        max_fee: Felt252Wrapper::from(u64::MAX),
+        is_query: false,
     }
     .from_invoke(Starknet::chain_id())
 }
@@ -102,7 +112,8 @@ fn get_invoke_braavos_dummy() -> Transaction {
         calldata,
         nonce,
         signature,
-        max_fee: Felt252Wrapper::from(u128::MAX),
+        max_fee: Felt252Wrapper::from(u64::MAX),
+        is_query: false,
     }
     .from_invoke(Starknet::chain_id())
 }
@@ -128,7 +139,8 @@ fn get_invoke_emit_event_dummy() -> Transaction {
         calldata,
         nonce,
         signature,
-        max_fee: Felt252Wrapper::from(u128::MAX),
+        max_fee: Felt252Wrapper::from(u64::MAX),
+        is_query: false,
     }
     .from_invoke(Starknet::chain_id())
 }
@@ -154,7 +166,8 @@ fn get_invoke_nonce_dummy() -> Transaction {
         calldata,
         nonce,
         signature,
-        max_fee: Felt252Wrapper::from(u128::MAX),
+        max_fee: Felt252Wrapper::from(u64::MAX),
+        is_query: false,
     }
     .from_invoke(Starknet::chain_id())
 }
@@ -178,7 +191,8 @@ fn get_storage_read_write_dummy() -> Transaction {
         calldata,
         nonce,
         signature,
-        max_fee: Felt252Wrapper::from(u128::MAX),
+        max_fee: Felt252Wrapper::from(u64::MAX),
+        is_query: false,
     }
     .from_invoke(Starknet::chain_id());
 
@@ -190,8 +204,8 @@ fn get_storage_read_write_dummy() -> Transaction {
 // ref: https://github.com/OpenZeppelin/cairo-contracts/blob/main/src/openzeppelin/account/IAccount.cairo
 fn get_invoke_openzeppelin_dummy() -> Transaction {
     let signature = bounded_vec!(
-        Felt252Wrapper::from_hex_be("0x01ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca").unwrap(),
-        Felt252Wrapper::from_hex_be("0x004f0481f89eae56dec538294bde0bf84bba526517dd9ff7dcb2a22628ee4d9e").unwrap(),
+        Felt252Wrapper::from_hex_be("0x028ef1ae6c37314bf9df65663db1cf68f95d67c4b4cf7f6590654933a84912b0").unwrap(),
+        Felt252Wrapper::from_hex_be("0x0625aae99c58b18e5161c719fef0f99579c6468ca6c1c866f9b2b968a5447e4").unwrap(),
     );
     let sender_address =
         Felt252Wrapper::from_hex_be("0x06e2616a2dceff4355997369246c25a78e95093df7a49e5ca6a06ce1544ffd50").unwrap();
@@ -212,7 +226,66 @@ fn get_invoke_openzeppelin_dummy() -> Transaction {
         calldata,
         nonce,
         signature,
-        max_fee: Felt252Wrapper::from(u128::MAX),
+        max_fee: Felt252Wrapper::from(u64::MAX),
+        is_query: false,
     }
     .from_invoke(Starknet::chain_id())
+}
+
+/// Returns a dummy declare transaction for the given account type.
+/// The declared class hash is a ERC20 contract, class hash calculated
+/// with starkli.
+pub fn get_declare_dummy(account_type: AccountType) -> DeclareTransaction {
+    let account_addr = get_account_address(account_type);
+
+    let erc20_class = get_contract_class("ERC20.json", 0);
+    let erc20_class_hash =
+        Felt252Wrapper::from_hex_be("0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
+
+    DeclareTransaction {
+        sender_address: account_addr,
+        contract_class: erc20_class,
+        version: 1,
+        class_hash: erc20_class_hash,
+        compiled_class_hash: None,
+        nonce: Felt252Wrapper::ZERO,
+        max_fee: Felt252Wrapper::from(u64::MAX),
+        signature: bounded_vec!(),
+        is_query: false,
+    }
+}
+
+/// Returns a dummy deploy account transaction for the given salt and account type
+pub fn get_deploy_account_dummy(salt: Felt252Wrapper, account_type: AccountType) -> DeployAccountTransaction {
+    let (_, account_class_hash, calldata) = account_helper(salt, account_type);
+
+    DeployAccountTransaction {
+        account_class_hash,
+        salt,
+        version: 1,
+        calldata: BoundedVec::try_from(
+            calldata
+                .clone()
+                .into_iter()
+                .map(|e| Felt252Wrapper::from_hex_be(e).unwrap())
+                .collect::<Vec<Felt252Wrapper>>(),
+        )
+        .unwrap(),
+        nonce: Felt252Wrapper::ZERO,
+        max_fee: Felt252Wrapper::from(u64::MAX),
+        signature: bounded_vec!(),
+        is_query: false,
+    }
+}
+
+/// Sets the balance of the given address to infinite.
+pub fn set_infinite_tokens<T: Config>(address: Felt252Wrapper) {
+    StorageView::<T>::insert(
+        get_storage_key(&Starknet::fee_token_address(), "ERC20_balances", &[address], 0),
+        Felt252Wrapper::from(u128::MAX),
+    );
+    StorageView::<T>::insert(
+        get_storage_key(&Starknet::fee_token_address(), "ERC20_balances", &[address], 1),
+        Felt252Wrapper::from(u128::MAX),
+    );
 }

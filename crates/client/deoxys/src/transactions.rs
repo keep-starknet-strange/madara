@@ -41,7 +41,8 @@ pub fn declare_tx_to_starknet_tx(declare_transaction : DeclareTransaction) -> Tr
                 call_entrypoint: call_entry_point,
                 contract_class: Option::<ContractClass>::default(),
                 contract_address_salt: Option::<U256>::default(),
-                max_fee: Felt252Wrapper::try_from(declare_transactionv0v1.max_fee.0.as_be_bytes()).unwrap()
+                max_fee: Felt252Wrapper::try_from(declare_transactionv0v1.max_fee.0.as_be_bytes()).unwrap(),
+                ..Transaction::default()
             };
             tx
         }
@@ -82,7 +83,8 @@ pub fn declare_tx_to_starknet_tx(declare_transaction : DeclareTransaction) -> Tr
                 call_entrypoint: call_entry_point,
                 contract_class: Option::<ContractClass>::default(),
                 contract_address_salt: Option::<U256>::default(),
-                max_fee: Felt252Wrapper::try_from(declare_transactionv0v1.max_fee.0.as_be_bytes()).unwrap()
+                max_fee: Felt252Wrapper::try_from(declare_transactionv0v1.max_fee.0.as_be_bytes()).unwrap(),
+                ..Transaction::default()
             };
             tx
         }
@@ -123,7 +125,8 @@ pub fn declare_tx_to_starknet_tx(declare_transaction : DeclareTransaction) -> Tr
                 call_entrypoint: call_entry_point,
                 contract_class: Option::<ContractClass>::default(),
                 contract_address_salt: Option::<U256>::default(),
-                max_fee: Felt252Wrapper::try_from(declare_transactionv2.max_fee.0.as_be_bytes()).unwrap()
+                max_fee: Felt252Wrapper::try_from(declare_transactionv2.max_fee.0.as_be_bytes()).unwrap(),
+                ..Transaction::default()
             };
             tx
         }
@@ -176,7 +179,8 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : InvokeTransaction) -> Trans
                 call_entrypoint: call_entry_point,
                 contract_class: Option::<ContractClass>::default(),
                 contract_address_salt: Option::<U256>::default(),
-                max_fee: Felt252Wrapper::try_from(invoke_transaction_v0.max_fee.0.as_be_bytes()).unwrap()
+                max_fee: Felt252Wrapper::try_from(invoke_transaction_v0.max_fee.0.as_be_bytes()).unwrap(),
+                ..Transaction::default()
             };
             tx
         }
@@ -223,7 +227,8 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : InvokeTransaction) -> Trans
                 call_entrypoint: call_entry_point,
                 contract_class: Option::<ContractClass>::default(),
                 contract_address_salt: Option::<U256>::default(),
-                max_fee: Felt252Wrapper::try_from(invoke_transaction_v1.max_fee.0.as_be_bytes()).unwrap()
+                max_fee: Felt252Wrapper::try_from(invoke_transaction_v1.max_fee.0.as_be_bytes()).unwrap(),
+                ..Transaction::default()
             };
             tx
         }
@@ -266,7 +271,7 @@ pub fn deploy_account_tx_to_starknet_tx(mut deploy_account_transaction : DeployA
 		Some(ClassHashWrapper::ZERO)
     );
 
-    let tx = Transaction {
+    let tx: Transaction = Transaction {
         tx_type: TxType::DeployAccount,
         version: unsafe {
             *deploy_account_transaction.version.0.as_mut_ptr()
@@ -278,7 +283,8 @@ pub fn deploy_account_tx_to_starknet_tx(mut deploy_account_transaction : DeployA
         call_entrypoint: call_entry_point,
         contract_class: Option::<ContractClass>::default(),
         contract_address_salt: Some(U256::try_from(deploy_account_transaction.contract_address_salt.0.as_be_bytes()).unwrap()),
-        max_fee: Felt252Wrapper::try_from(deploy_account_transaction.max_fee.0.as_be_bytes()).unwrap()
+        max_fee: Felt252Wrapper::try_from(deploy_account_transaction.max_fee.0.as_be_bytes()).unwrap(),
+        is_query: todo!(),
     };
     tx
 }
@@ -318,7 +324,8 @@ pub fn l1handler_tx_to_starknet_tx(mut l1hander_transaction : L1HandlerTransacti
         call_entrypoint: call_entry_point,
         contract_class: Option::<ContractClass>::default(),
         contract_address_salt: Option::<U256>::default(),
-        max_fee: Felt252Wrapper::ONE
+        max_fee: Felt252Wrapper::ONE,
+        is_query: todo!(),
     };
     tx
 }

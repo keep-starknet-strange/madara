@@ -11,6 +11,7 @@ use starknet_core::utils::get_selector_from_name;
 use starknet_crypto::FieldElement;
 
 use super::constants::{BLOCKIFIER_ACCOUNT_ADDRESS, MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS, TEST_CONTRACT_ADDRESS};
+use super::mock::default_mock::*;
 use super::mock::*;
 use super::utils::sign_message_hash;
 use crate::message::Message;
@@ -22,7 +23,7 @@ use crate::{Error, Event, StorageView};
 
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
@@ -36,8 +37,9 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
             sender_address: contract_address,
             calldata: bounded_vec!(),
             nonce: Felt252Wrapper::ZERO,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
 
         assert_err!(Starknet::invoke(none_origin, transaction), Error::<MockRuntime>::AccountNotDeployed);
@@ -46,7 +48,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
 
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_fails_invalid_tx_version() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
@@ -59,7 +61,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_invalid_tx_version() {
 
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
@@ -87,7 +89,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         let receipt = &pending.get(0).unwrap().1;
         let expected_receipt = TransactionReceiptWrapper {
             transaction_hash: Felt252Wrapper::from_hex_be(
-                "0x01b8ffedfb222c609b81f301df55c640225abaa6a0715437c89f8edc21bbe5e8",
+                "0x02dfd0ded452658d67535279591c1ed9898431e1eafad7896239f0bfa68493d6",
             )
             .unwrap(),
             actual_fee: Felt252Wrapper::from(53510_u128),
@@ -115,7 +117,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
 
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
@@ -173,7 +175,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 
         let expected_receipt = TransactionReceiptWrapper {
             transaction_hash: Felt252Wrapper::from_hex_be(
-                "0x0554f9443c06ce406badc7159f2c0da29eac095f8571fe1a6ce44a2076829a52",
+                "0x0730465ceb5da086fd11078a56f15a49ff676c1b541571a6fead0baec39812cf",
             )
             .unwrap(),
             actual_fee: Felt252Wrapper::from(54020_u128),
@@ -187,7 +189,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
         let emit_contract_address = Felt252Wrapper::from_hex_be(MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS).unwrap();
@@ -209,8 +211,9 @@ fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
                 Felt252Wrapper::ZERO, // Calldata len
             ],
             nonce: Felt252Wrapper::ZERO,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
 
         let none_origin = RuntimeOrigin::none();
@@ -234,8 +237,9 @@ fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
                 Felt252Wrapper::ZERO, // Calldata len
             ],
             nonce: Felt252Wrapper::ONE,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
 
         let none_origin = RuntimeOrigin::none();
@@ -254,7 +258,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
 
 #[test]
 fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
@@ -279,7 +283,7 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
 
 #[test]
 fn test_verify_nonce() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
         let tx = get_invoke_dummy().into();
@@ -296,7 +300,7 @@ fn test_verify_nonce() {
 
 #[test]
 fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_then_it_works() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
@@ -314,7 +318,7 @@ fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_then_it_works() {
 
 #[test]
 fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_with_incorrect_signature_then_it_fails() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
@@ -335,7 +339,7 @@ fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_with_incorrect_si
 
 #[test]
 fn given_hardcoded_contract_run_invoke_on_argent_account_then_it_works() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
@@ -354,7 +358,7 @@ fn given_hardcoded_contract_run_invoke_on_argent_account_then_it_works() {
 
 #[test]
 fn given_hardcoded_contract_run_invoke_on_argent_account_with_incorrect_signature_then_it_fails() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
@@ -376,7 +380,7 @@ fn given_hardcoded_contract_run_invoke_on_argent_account_with_incorrect_signatur
 
 #[test]
 fn given_hardcoded_contract_run_invoke_on_braavos_account_then_it_works() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
@@ -395,7 +399,7 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_then_it_works() {
 
 #[test]
 fn given_hardcoded_contract_run_invoke_on_braavos_account_with_incorrect_signature_then_it_fails() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
@@ -417,7 +421,7 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_with_incorrect_signatu
 
 #[test]
 fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
@@ -448,7 +452,7 @@ fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails
 
 #[test]
 fn test_verify_tx_longevity() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
         let transaction: InvokeTransaction = get_invoke_dummy().into();
@@ -462,7 +466,7 @@ fn test_verify_tx_longevity() {
 
 #[test]
 fn test_verify_no_require_tag() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
         let transaction: InvokeTransaction = get_invoke_dummy().into();
@@ -485,7 +489,7 @@ fn test_verify_no_require_tag() {
 
 #[test]
 fn test_verify_require_tag() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
         let transaction: InvokeTransaction = get_invoke_nonce_dummy().into();

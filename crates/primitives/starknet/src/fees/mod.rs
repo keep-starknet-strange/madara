@@ -10,6 +10,7 @@ use blockifier::execution::entry_point::{
 };
 use blockifier::fee::gas_usage::calculate_tx_gas_usage;
 use blockifier::fee::os_usage::get_additional_os_resources;
+use blockifier::state::cached_state::StateChangesCount;
 use blockifier::state::state_api::State;
 use blockifier::transaction::objects::AccountTransactionContext;
 use starknet_api::api_core::EntryPointSelector;
@@ -20,6 +21,7 @@ use starknet_api::transaction::{Calldata, Fee};
 
 use super::state::StateChanges;
 use crate::alloc::string::ToString;
+use crate::state::FeeConfig;
 use crate::transaction::types::{TransactionExecutionErrorWrapper, TxType};
 
 /// Number of storage updates for the fee transfer tx.
@@ -50,7 +52,8 @@ pub fn get_transaction_resources<S: State + StateChanges>(
     execution_resources: &mut ExecutionResources,
     tx_type: TxType,
 ) -> Result<BTreeMap<String, usize>, TransactionExecutionErrorWrapper> {
-    let (n_modified_contracts, n_modified_keys, n_class_updates) = state.count_state_changes();
+    let (n_modified_contracts, n_modified_keys, n_class_hash_updates, n_compiled_class_hash_updates) =
+        state.count_state_changes();
     let non_optional_call_infos: Vec<&CallInfo> =
         vec![execute_call_info, validate_call_info].into_iter().flatten().collect();
     let mut l2_to_l1_payloads_length = vec![];
@@ -63,14 +66,17 @@ pub fn get_transaction_resources<S: State + StateChanges>(
     }
     let l1_gas_usage = calculate_tx_gas_usage(
         &l2_to_l1_payloads_length,
-        n_modified_contracts,
-        n_modified_keys + usize::from(FEE_TRANSFER_N_STORAGE_CHANGES_TO_CHARGE),
+        StateChangesCount {
+            n_modified_contracts,
+            n_storage_updates: n_modified_keys + usize::from(FEE_TRANSFER_N_STORAGE_CHANGES_TO_CHARGE),
+            n_class_hash_updates,
+            n_compiled_class_hash_updates,
+        },
         None,
-        n_class_updates,
     );
     // Add additional Cairo resources needed for the OS to run the transaction.
     let total_vm_usage = &execution_resources.vm_resources
-        + &get_additional_os_resources(execution_resources.syscall_counter.clone(), tx_type.into())
+        + &get_additional_os_resources(&execution_resources.syscall_counter.clone(), tx_type.into())
             .map_err(|_| TransactionExecutionErrorWrapper::FeeComputationError)?;
     let total_vm_usage = total_vm_usage.filter_unused_builtins();
     let mut tx_resources = BTreeMap::from([
@@ -99,20 +105,25 @@ pub fn get_transaction_resources<S: State + StateChanges>(
 ///
 /// [TransactionExecutionErrorWrapper] if any step of the fee transfer computation/transaction
 /// fails.
-pub fn charge_fee<S: State + StateChanges>(
+pub fn charge_fee<S: State + StateChanges + FeeConfig>(
     state: &mut S,
     block_context: &BlockContext,
     account_tx_context: AccountTransactionContext,
     resources: &BTreeMap<String, usize>,
+    is_query: bool,
 ) -> Result<(Fee, Option<CallInfo>), TransactionExecutionErrorWrapper> {
     let no_fee = Fee::default();
-    if account_tx_context.max_fee == no_fee {
-        // Fee charging is not enforced in some tests.
+    if state.is_transaction_fee_disabled() {
         return Ok((no_fee, None));
     }
-
     let actual_fee = calculate_tx_fee(resources, block_context)
         .map_err(|_| TransactionExecutionErrorWrapper::FeeComputationError)?;
+
+    // even if the user doesn't have enough balance
+    // estimate fee shouldn't fail
+    if is_query {
+        return Ok((actual_fee, None));
+    }
     let fee_transfer_call_info = execute_fee_transfer(state, block_context, account_tx_context, actual_fee)?;
 
     Ok((actual_fee, Some(fee_transfer_call_info)))
@@ -125,21 +136,19 @@ fn execute_fee_transfer(
     account_tx_context: AccountTransactionContext,
     actual_fee: Fee,
 ) -> Result<CallInfo, TransactionExecutionErrorWrapper> {
-    // TODO: use real value.
-    // FIXME: https://github.com/keep-starknet-strange/madara/issues/331
-    let max_fee = Fee(u128::MAX);
+    let max_fee = account_tx_context.max_fee;
     if actual_fee > max_fee {
         return Err(TransactionExecutionErrorWrapper::FeeTransferError { max_fee, actual_fee });
     }
     // TODO: This is what's done in the blockifier but this should be improved.
     // FIXME: https://github.com/keep-starknet-strange/madara/issues/332
     // The least significant 128 bits of the amount transferred.
-    let lsb_amount = StarkFelt::from(actual_fee.0 as u64);
+    let lsb_amount = StarkFelt::from(actual_fee.0);
     // The most significant 128 bits of the amount transferred.
     let msb_amount = StarkFelt::from(0_u64);
 
     // The fee-token contract is a Cairo 0 contract, hence the initial gas is irrelevant.
-    let initial_gas = super::constants::INITIAL_GAS_COST.into();
+    let initial_gas = super::constants::INITIAL_GAS;
 
     let storage_address = block_context.fee_token_address;
     let fee_transfer_call = CallEntryPoint {
@@ -166,7 +175,7 @@ fn execute_fee_transfer(
     };
 
     let max_steps = block_context.invoke_tx_max_n_steps;
-    let mut context = EntryPointExecutionContext::new(block_context.clone(), account_tx_context, max_steps);
+    let mut context = EntryPointExecutionContext::new(block_context.clone(), account_tx_context, max_steps as usize);
 
     fee_transfer_call
         .execute(state, &mut ExecutionResources::default(), &mut context)

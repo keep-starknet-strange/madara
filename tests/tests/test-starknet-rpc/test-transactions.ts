@@ -32,6 +32,7 @@ import {
   TEST_CAIRO_1_SIERRA,
   TEST_CAIRO_1_CASM,
   CAIRO_1_ACCOUNT_CONTRACT,
+  CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH,
 } from "../constants";
 import { InvokeTransaction } from "./types";
 import { numberToHex } from "@polkadot/util";
@@ -133,7 +134,6 @@ describeDevMadara(
           undefined,
           {
             nonce: ARGENT_CONTRACT_NONCE.value,
-            maxFee: "123456",
           },
         );
         ARGENT_CONTRACT_NONCE.value += 1;
@@ -180,7 +180,6 @@ describeDevMadara(
           undefined,
           {
             nonce: ARGENT_CONTRACT_NONCE.value,
-            maxFee: "123456",
           },
         );
         ARGENT_CONTRACT_NONCE.value += 1;
@@ -193,6 +192,56 @@ describeDevMadara(
           "latest",
         );
         expect(toHex(balance)).to.be.equal("0x2a");
+      });
+
+      it("should fail on invalid nonce", async function () {
+        const invalid_nonce = { value: ARGENT_CONTRACT_NONCE.value + 1 };
+
+        // ERC20_balances(0x1111).low = 0x72943352085ed3fbe3b8ff53a6aef9da8d893ccdab99bd5223d765f1a22735f
+        let balance = await providerRPC.getStorageAt(
+          FEE_TOKEN_ADDRESS,
+          "0x72943352085ed3fbe3b8ff53a6aef9da8d893ccdab99bd5223d765f1a22735f",
+          "latest",
+        );
+
+        expect(toHex(balance)).to.be.equal("0x0");
+
+        await rpcTransfer(
+          providerRPC,
+          invalid_nonce,
+          TEST_CONTRACT_ADDRESS,
+          MINT_AMOUNT,
+        ),
+          await jumpBlocks(context, 1);
+
+        // ERC20_balances(0x1111).low = 0x72943352085ed3fbe3b8ff53a6aef9da8d893ccdab99bd5223d765f1a22735f
+        balance = await providerRPC.getStorageAt(
+          FEE_TOKEN_ADDRESS,
+          "0x72943352085ed3fbe3b8ff53a6aef9da8d893ccdab99bd5223d765f1a22735f",
+          "latest",
+        );
+        expect(toHex(balance)).to.be.equal("0x0");
+
+        // This transaction is send in order to clear the pending transactions (sending a correct nonce triggers the pending
+        // transaction in the pool)
+        await rpcTransfer(
+          providerRPC,
+          ARGENT_CONTRACT_NONCE,
+          TEST_CONTRACT_ADDRESS,
+          MINT_AMOUNT,
+        ),
+          await jumpBlocks(context, 1);
+
+        // ERC20_balances(0x1111).low = 0x72943352085ed3fbe3b8ff53a6aef9da8d893ccdab99bd5223d765f1a22735f
+        balance = await providerRPC.getStorageAt(
+          FEE_TOKEN_ADDRESS,
+          "0x72943352085ed3fbe3b8ff53a6aef9da8d893ccdab99bd5223d765f1a22735f",
+          "latest",
+        );
+        // The balance should be == MINT_AMOUNT * 2
+        expect(toHex(balance)).to.be.equal("0x2");
+        // Increment the nonce since we sent one transaction which wasn't accounted for
+        ARGENT_CONTRACT_NONCE.value += 1;
       });
     });
 
@@ -225,7 +274,7 @@ describeDevMadara(
 
         const invocationDetails = {
           nonce: "0x0",
-          maxFee: "0x1111111111111111111111",
+          maxFee: "0x11111111111111",
           version: "0x1",
         };
 
@@ -266,9 +315,6 @@ describeDevMadara(
       });
     });
 
-    // TODO:
-    //    - once starknet-rs supports query tx version
-    //    - test w/ account.estimateInvokeFee, account.estimateDeclareFee, account.estimateAccountDeployFee
     describe("estimateFee", async () => {
       it("should estimate fee", async function () {
         const tx = {
@@ -288,7 +334,6 @@ describeDevMadara(
 
         const txDetails = {
           nonce: nonce,
-          version: "0x1",
         };
 
         const invocation: AccountInvocationItem = {
@@ -306,6 +351,44 @@ describeDevMadara(
 
         expect(fee_estimates[0].overall_fee > 0n).to.be.equal(true);
         expect(fee_estimates[0].gas_consumed > 0n).to.be.equal(true);
+      });
+
+      it("should fail estimate fee if version is 1", async function () {
+        const tx = {
+          contractAddress: ACCOUNT_CONTRACT,
+          calldata: [
+            TEST_CONTRACT_ADDRESS,
+            "0x36fa6de2810d05c3e1a0ebe23f60b9c2f4629bbead09e5a9704e1c5632630d5",
+            "0x0",
+          ],
+          signature: [],
+        };
+
+        const nonce = await providerRPC.getNonceForAddress(
+          ACCOUNT_CONTRACT,
+          "latest",
+        );
+
+        const txDetails = {
+          nonce: nonce,
+          version: 1,
+        };
+
+        const invocation: AccountInvocationItem = {
+          type: "INVOKE_FUNCTION",
+          ...tx,
+          ...txDetails,
+        };
+
+        await expect(
+          providerRPC.getEstimateFeeBulk([invocation], {
+            blockIdentifier: "latest",
+          }),
+        )
+          .to.eventually.be.rejectedWith(
+            "61: The transaction version is not supported",
+          )
+          .and.be.an.instanceOf(LibraryError);
       });
 
       it("should raise if contract does not exist", async function () {
@@ -367,7 +450,6 @@ describeDevMadara(
 
         const txDetails = {
           nonce: nonce,
-          version: "0x1",
         };
 
         const invocation: AccountInvocationItem = {
@@ -396,6 +478,52 @@ describeDevMadara(
 
         expect(fee_estimates.length == 0).to.be.equal(true);
       });
+
+      it("should be possible for an account to estimateInvokeFee", async function () {
+        const account = new Account(
+          providerRPC,
+          ARGENT_CONTRACT_ADDRESS,
+          SIGNER_PRIVATE,
+        );
+
+        const { suggestedMaxFee } = await account.estimateInvokeFee({
+          contractAddress: TEST_CONTRACT_ADDRESS,
+          entrypoint: "test_storage_var",
+          calldata: [],
+        });
+        expect(suggestedMaxFee > 0n).to.be.equal(true);
+      });
+
+      it("should be possible for an account to estimateDeclareFee", async function () {
+        const account = new Account(
+          providerRPC,
+          ARGENT_CONTRACT_ADDRESS,
+          SIGNER_PRIVATE,
+        );
+
+        const { suggestedMaxFee } = await account.estimateDeclareFee({
+          contract: ERC20_CONTRACT,
+        });
+
+        expect(suggestedMaxFee > 0n).to.be.equal(true);
+      });
+
+      it("should be possible for an account to estimateAccountDeployFee", async function () {
+        const account = new Account(
+          providerRPC,
+          ARGENT_CONTRACT_ADDRESS,
+          SIGNER_PRIVATE,
+        );
+
+        const { suggestedMaxFee } = await account.estimateAccountDeployFee({
+          classHash: CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH,
+          constructorCalldata: ["0x123"],
+          addressSalt: SALT,
+          contractAddress: ARGENT_CONTRACT_ADDRESS,
+        });
+
+        expect(suggestedMaxFee > 0n).to.be.equal(true);
+      });
     });
 
     describe("addDeclareTransaction", async () => {
@@ -414,7 +542,7 @@ describeDevMadara(
             classHash: classHash,
             contract: ERC20_CONTRACT,
           },
-          { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" },
+          { nonce: ARGENT_CONTRACT_NONCE.value },
         );
         ARGENT_CONTRACT_NONCE.value += 1;
         await jumpBlocks(context, 1);
@@ -449,8 +577,6 @@ describeDevMadara(
           },
           {
             nonce: CAIRO_1_NO_VALIDATE_ACCOUNT.value,
-            version: 1,
-            maxFee: "123456",
           },
         );
         CAIRO_1_NO_VALIDATE_ACCOUNT.value += 1;
@@ -488,8 +614,6 @@ describeDevMadara(
             },
             {
               nonce: ARGENT_CONTRACT_NONCE.value,
-              version: 1,
-              maxFee: "123456",
             },
           ),
         ).to.be.rejectedWith("51: Class already declared");
@@ -541,7 +665,7 @@ describeDevMadara(
             classHash: classHash,
             contract: ERC721_CONTRACT,
           },
-          { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" },
+          { nonce: ARGENT_CONTRACT_NONCE.value },
         );
 
         const txs = await providerRPC.getPendingTransactions();
