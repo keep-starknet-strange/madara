@@ -191,6 +191,7 @@
     EntryPointExecutionErrorWrapper, EntryPointExecutionResultWrapper, EntryPointTypeWrapper,
 };
 <span class="kw">use </span><span class="kw">super</span>::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
+<span class="kw">use </span><span class="kw">crate</span>::alloc::string::ToString;
 
 <span class="doccomment">/// Max number of calldata / tx.
 </span><span class="attr">#[cfg(not(test))]
@@ -334,11 +335,10 @@
             // starknet-lib is constantly breaking it&#39;s api
             // I hope it&#39;s nothing important ¯\_(ツ)_/¯
             </span>code_address: <span class="prelude-val">None</span>,
-            <span class="comment">// initial_gas should come from the RPC call
-            // and should be a u64. If it&#39;s not, the error must
-            // be caught on the client side, hence it&#39;s safe to
-            // unwrap over here
-            </span>initial_gas: <span class="self">self</span>.initial_gas.try_into().unwrap(),
+            initial_gas: <span class="self">self
+                </span>.initial_gas
+                .try_into()
+                .map_err(|<span class="kw">_</span>| StarknetApiError::OutOfRange { string: <span class="self">self</span>.initial_gas.<span class="number">0</span>.to_string() })<span class="question-mark">?</span>,
         };
 
         <span class="prelude-val">Ok</span>(entrypoint)

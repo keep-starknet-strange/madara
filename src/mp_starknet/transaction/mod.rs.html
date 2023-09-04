@@ -866,6 +866,15 @@
 <a href="#866" id="866">866</a>
 <a href="#867" id="867">867</a>
 <a href="#868" id="868">868</a>
+<a href="#869" id="869">869</a>
+<a href="#870" id="870">870</a>
+<a href="#871" id="871">871</a>
+<a href="#872" id="872">872</a>
+<a href="#873" id="873">873</a>
+<a href="#874" id="874">874</a>
+<a href="#875" id="875">875</a>
+<a href="#876" id="876">876</a>
+<a href="#877" id="877">877</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 /// Constants related to transactions.
 </span><span class="kw">pub mod </span>constants;
@@ -1296,8 +1305,8 @@
             }
         };
 
-        <span class="comment">// FIXME 710
-        </span><span class="kw">let </span><span class="kw-2">mut </span>initial_gas = <span class="kw">super</span>::constants::INITIAL_GAS;
+        <span class="kw">let </span><span class="kw-2">mut </span>initial_gas =
+            <span class="self">self</span>.max_fee.try_into().map_err(|<span class="kw">_</span>| StarknetApiError::OutOfRange { string: <span class="self">self</span>.max_fee.<span class="number">0</span>.to_string() })<span class="question-mark">?</span>;
 
         <span class="self">self</span>.validate_tx(state, execution_resources, block_context, <span class="kw-2">&amp;</span>account_context, tx_type, <span class="kw-2">&amp;mut </span>initial_gas)
     }
@@ -1423,8 +1432,14 @@
         <span class="comment">// Verify the transaction version.
         </span><span class="self">self</span>.verify_tx_version(<span class="kw-2">&amp;</span>tx_type)<span class="question-mark">?</span>;
 
-        <span class="comment">// FIXME 710
-        </span><span class="kw">let </span><span class="kw-2">mut </span>initial_gas = <span class="kw">super</span>::constants::INITIAL_GAS;
+        <span class="comment">// if it&#39;s an estimate fee then use max initial_gas
+        </span><span class="kw">let </span><span class="kw-2">mut </span>initial_gas = <span class="kw">match </span><span class="self">self</span>.is_query {
+            <span class="bool-val">true </span>=&gt; u64::MAX,
+            <span class="bool-val">false </span>=&gt; <span class="self">self
+                </span>.max_fee
+                .try_into()
+                .map_err(|<span class="kw">_</span>| StarknetApiError::OutOfRange { string: <span class="self">self</span>.max_fee.<span class="number">0</span>.to_string() })<span class="question-mark">?</span>,
+        };
 
         <span class="comment">// Going one lower level gives us more flexibility like not validating the tx as we could do
         // it before the tx lands in the mempool.
@@ -1555,10 +1570,13 @@
             <span class="kw-2">&amp;</span>execute_call_info,
             <span class="kw-2">&amp;</span>validate_call_info,
             execution_resources,
-            tx_type,
+            tx_type.clone(),
         )<span class="question-mark">?</span>;
-        <span class="kw">let </span>(actual_fee, fee_transfer_call_info) =
-            charge_fee(state, block_context, account_context, <span class="kw-2">&amp;</span>tx_resources, <span class="self">self</span>.is_query)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>(actual_fee, fee_transfer_call_info) = <span class="kw">match </span>tx_type {
+            TxType::L1Handler =&gt; (Fee::default(), <span class="prelude-val">None</span>), <span class="comment">// FIXME 712
+            </span><span class="kw">_ </span>=&gt; charge_fee(state, block_context, account_context, <span class="kw-2">&amp;</span>tx_resources, <span class="self">self</span>.is_query)<span class="question-mark">?</span>,
+        };
         <span class="prelude-val">Ok</span>(TransactionExecutionInfoWrapper {
             validate_call_info,
             execute_call_info,
@@ -1718,7 +1736,7 @@
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: <span class="prelude-val">None</span>,
             contract_address_salt: <span class="prelude-val">None</span>,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             is_query: <span class="bool-val">false</span>,
         }
     }

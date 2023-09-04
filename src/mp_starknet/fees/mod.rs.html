@@ -262,6 +262,8 @@
 <a href="#262" id="262">262</a>
 <a href="#263" id="263">263</a>
 <a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::{BTreeMap, BTreeSet};
 <span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::vec;
@@ -377,13 +379,15 @@
     is_query: bool,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(Fee, <span class="prelude-ty">Option</span>&lt;CallInfo&gt;), TransactionExecutionErrorWrapper&gt; {
     <span class="kw">let </span>no_fee = Fee::default();
-    <span class="kw">if </span>(!is_query &amp;&amp; account_tx_context.max_fee == no_fee) || state.is_transaction_fee_disabled() {
-        <span class="comment">// Fee charging is not enforced in some tests.
-        </span><span class="kw">return </span><span class="prelude-val">Ok</span>((no_fee, <span class="prelude-val">None</span>));
+    <span class="kw">if </span>state.is_transaction_fee_disabled() {
+        <span class="kw">return </span><span class="prelude-val">Ok</span>((no_fee, <span class="prelude-val">None</span>));
     }
     <span class="kw">let </span>actual_fee = calculate_tx_fee(resources, block_context)
         .map_err(|<span class="kw">_</span>| TransactionExecutionErrorWrapper::FeeComputationError)<span class="question-mark">?</span>;
-    <span class="kw">if </span>is_query {
+
+    <span class="comment">// even if the user doesn&#39;t have enough balance
+    // estimate fee shouldn&#39;t fail
+    </span><span class="kw">if </span>is_query {
         <span class="kw">return </span><span class="prelude-val">Ok</span>((actual_fee, <span class="prelude-val">None</span>));
     }
     <span class="kw">let </span>fee_transfer_call_info = execute_fee_transfer(state, block_context, account_tx_context, actual_fee)<span class="question-mark">?</span>;
