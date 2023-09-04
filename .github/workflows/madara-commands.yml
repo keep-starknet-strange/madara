@@ -23,7 +23,8 @@ jobs:
             github.run_id }}
           fail-on-cache-miss: true
           restore-keys: |
-            ${{ runner.os }}-cargo
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
+            github.run_id }}
       - name: Create build-spec (plain)
         run: |
           target/release/madara build-spec --chain local > chain-plain.json
