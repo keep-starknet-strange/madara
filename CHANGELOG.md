@@ -4,6 +4,7 @@
 
 - fix: estimate_fee should make sure all transaction have a version being
   2^128 + 1 or 2^128+2 depending on the tx type
+- fix: initial_gas set to max_fee and fixed fee not being charged when max_fee=0
 
 ## v0.2.0
 
@@ -29,7 +30,6 @@
 - chore: cairo-contracts compilation scripts & docs are updated, cairo_0
   contracts recompiled
 - chore: rebase of core deps and 0.12.1
-- fix: initial_gas set to max_fee and fixed fee not being charged when max_fee=0
 
 ## v0.1.0
 

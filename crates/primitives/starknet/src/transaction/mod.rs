@@ -428,8 +428,8 @@ impl Transaction {
             }
         };
 
-        // FIXME 710
-        let mut initial_gas = self.max_fee.try_into().unwrap(); // unwrap safe as >u64 case will be handled at client side
+        let mut initial_gas =
+            self.max_fee.try_into().map_err(|_| StarknetApiError::OutOfRange { string: self.max_fee.0.to_string() })?;
 
         self.validate_tx(state, execution_resources, block_context, &account_context, tx_type, &mut initial_gas)
     }
@@ -558,7 +558,10 @@ impl Transaction {
         // if it's an estimate fee then use max initial_gas
         let mut initial_gas = match self.is_query {
             true => u64::MAX,
-            false => self.max_fee.try_into().unwrap(), // unwrap safe as >u64 case will be handled at client side
+            false => self
+                .max_fee
+                .try_into()
+                .map_err(|_| StarknetApiError::OutOfRange { string: self.max_fee.0.to_string() })?,
         };
 
         // Going one lower level gives us more flexibility like not validating the tx as we could do
