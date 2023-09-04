@@ -11,7 +11,7 @@ use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, MINT_AMOUNT, SIGNER_PRIVATE, TEST_CONTRACT_CLASS_HASH};
 use starknet_rpc_test::utils::AccountActions;
-use starknet_rpc_test::{ExecutionStrategy, MadaraClient};
+use starknet_rpc_test::{ExecutionStrategy, MadaraClient, Transaction as TransactionEnum};
 use starknet_signers::{LocalWallet, SigningKey};
 
 #[tokio::test]
@@ -76,7 +76,9 @@ async fn work_ok_by_compare_with_get_block_with_tx() -> Result<(), anyhow::Error
     let execution_2 = execution_2.nonce(FieldElement::ONE);
     let execution_2 = execution_2.max_fee(FieldElement::from_hex_be("0xDEADB").expect("Invalid Fee Amount"));
 
-    madara.create_block_with_txs(vec![execution_1, execution_2]).await?;
+    madara
+        .create_block_with_txs(vec![TransactionEnum::Execution(execution_1), TransactionEnum::Execution(execution_2)])
+        .await?;
 
     let tx_1 = rpc.get_transaction_by_block_id_and_index(BlockId::Tag(BlockTag::Latest), 0).await?;
     let tx_2 = rpc.get_transaction_by_block_id_and_index(BlockId::Tag(BlockTag::Latest), 1).await?;
