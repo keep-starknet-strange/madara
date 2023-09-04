@@ -73,13 +73,14 @@ async fn work_ok_by_compare_with_get_block_with_tx(#[future] madara: MadaraClien
         None,
     );
 
-    let execution_2 = account.transfer_tokens(
-        FieldElement::from_hex_be(TEST_CONTRACT_CLASS_HASH).expect("Invalid Contract Address"),
-        FieldElement::from_hex_be(MINT_AMOUNT).expect("Invalid Mint Amount"),
-        None,
-    );
-    let execution_2 = execution_2.nonce(FieldElement::ONE);
-    let execution_2 = execution_2.max_fee(FieldElement::from_hex_be("0xDEADB").expect("Invalid Fee Amount"));
+    let execution_2 = account
+        .transfer_tokens(
+            FieldElement::from_hex_be(TEST_CONTRACT_CLASS_HASH).expect("Invalid Contract Address"),
+            FieldElement::from_hex_be(MINT_AMOUNT).expect("Invalid Mint Amount"),
+            None,
+        )
+        .nonce(FieldElement::ONE)
+        .max_fee(FieldElement::from_hex_be("0xDEADB").unwrap());
 
     madara
         .create_block_with_txs(vec![TransactionEnum::Execution(execution_1), TransactionEnum::Execution(execution_2)])
