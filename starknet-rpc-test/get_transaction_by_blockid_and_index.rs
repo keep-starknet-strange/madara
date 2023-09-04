@@ -1,6 +1,7 @@
 extern crate starknet_rpc_test;
 
 use assert_matches::assert_matches;
+use rstest::rstest;
 use starknet_accounts::SingleOwnerAccount;
 use starknet_core::chain_id;
 use starknet_core::types::{
@@ -10,13 +11,15 @@ use starknet_ff::FieldElement;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, MINT_AMOUNT, SIGNER_PRIVATE, TEST_CONTRACT_CLASS_HASH};
+use starknet_rpc_test::fixtures::madara;
 use starknet_rpc_test::utils::AccountActions;
-use starknet_rpc_test::{ExecutionStrategy, MadaraClient, Transaction as TransactionEnum};
+use starknet_rpc_test::{MadaraClient, Transaction as TransactionEnum};
 use starknet_signers::{LocalWallet, SigningKey};
 
+#[rstest]
 #[tokio::test]
-async fn fail_non_existing_block() -> Result<(), anyhow::Error> {
-    let madara = MadaraClient::new(ExecutionStrategy::Native).await;
+async fn fail_non_existing_block(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+    let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
     assert_matches!(
@@ -32,9 +35,10 @@ MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::BlockNotFou
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn fail_out_of_block_index() -> Result<(), anyhow::Error> {
-    let madara = MadaraClient::new(ExecutionStrategy::Native).await;
+async fn fail_out_of_block_index(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+    let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
     assert_matches!(
@@ -51,9 +55,10 @@ async fn fail_out_of_block_index() -> Result<(), anyhow::Error> {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn work_ok_by_compare_with_get_block_with_tx() -> Result<(), anyhow::Error> {
-    let madara = MadaraClient::new(ExecutionStrategy::Native).await;
+async fn work_ok_by_compare_with_get_block_with_tx(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+    let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
     let signer = LocalWallet::from(SigningKey::from_secret_scalar(FieldElement::from_hex_be(SIGNER_PRIVATE).unwrap()));
