@@ -124,7 +124,7 @@ fn build_test_case() -> Vec<TestCase<'static>> {
 #[case::filter_with_no_filters(build_test_case()[7].clone())]
 #[case::filter_with_no_events(build_test_case()[8].clone())]
 fn filter_events_by_test_case(#[case] params: TestCase) {
-	#[allow(clippy::iter_skip_zero)]
+    #[allow(clippy::iter_skip_zero)]
     let (filtered_events, continuation_token) = filter_events_by_params(
         params.events.into_iter().skip(0),
         params.filter_address,
