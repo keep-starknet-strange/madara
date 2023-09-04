@@ -996,6 +996,24 @@ impl<T: Config> Pallet<T> {
     ///
     /// * `block_number` - The block number.
     fn store_block(block_number: u64) {
+        let block;
+		if frame_system::Pallet::<T>::digest().logs().len() == 1 {
+			match &frame_system::Pallet::<T>::digest().logs()[0] {
+				DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID ,encoded_data) => {
+
+					block = mp_starknet::block::Block::decode(&mut encoded_data.as_slice()).unwrap();
+					// Save the block number <> hash mapping.
+					let blockhash = Felt252Wrapper::try_from(block.header().extra_data.unwrap()).unwrap();
+					BlockHash::<T>::insert(block_number, blockhash);
+					Pending::<T>::kill();
+					PendingEvents::<T>::kill();
+					let digest = DigestItem::Consensus(MADARA_ENGINE_ID, mp_digest_log::Log::Block(block).encode());
+					frame_system::Pallet::<T>::deposit_log(digest);
+				}
+				_ => { log!(info, "Block not found in store_block") },
+
+			}
+		} else {
         let parent_block_hash = Self::parent_block_hash(&block_number);
         let pending = Self::pending();
 
@@ -1049,6 +1067,7 @@ impl<T: Config> Pallet<T> {
 
         let digest = DigestItem::Consensus(MADARA_ENGINE_ID, mp_digest_log::Log::Block(block).encode());
         frame_system::Pallet::<T>::deposit_log(digest);
+        }
     }
 
     /// Emit events from the call info.
