@@ -113,12 +113,14 @@ pub fn charge_fee<S: State + StateChanges + FeeConfig>(
     is_query: bool,
 ) -> Result<(Fee, Option<CallInfo>), TransactionExecutionErrorWrapper> {
     let no_fee = Fee::default();
-    if (!is_query && account_tx_context.max_fee == no_fee) || state.is_transaction_fee_disabled() {
-        // Fee charging is not enforced in some tests.
+    if state.is_transaction_fee_disabled() {
         return Ok((no_fee, None));
     }
     let actual_fee = calculate_tx_fee(resources, block_context)
         .map_err(|_| TransactionExecutionErrorWrapper::FeeComputationError)?;
+
+    // even if the user doesn't have enough balance
+    // estimate fee shouldn't fail
     if is_query {
         return Ok((actual_fee, None));
     }

@@ -31,7 +31,7 @@ fn internal_and_external_events_are_emitted_in_the_right_order() {
                 Felt252Wrapper::ZERO, // Calldata len
             ],
             nonce: Felt252Wrapper::ZERO,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             signature: bounded_vec!(),
             is_query: false,
         };
