@@ -770,7 +770,11 @@ mod reexport_private_types {
                             nonce,
                             class_hash,
                             sender_address,
-                            compiled_class_hash: class_hash,
+                            compiled_class_hash: value
+                                .call_entrypoint
+                                .compiled_class_hash
+                                .ok_or(RPCTransactionConversionError::MissingInformation)?
+                                .0,
                         }))),
                         _ => Err(RPCTransactionConversionError::UnknownVersion),
                     }

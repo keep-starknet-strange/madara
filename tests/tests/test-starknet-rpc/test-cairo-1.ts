@@ -122,6 +122,7 @@ describeDevMadara(
           {
             nonce: CAIRO_1_NO_VALIDATE_ACCOUNT.value,
             version: 1,
+            maxFee: "12345678",
           },
         );
         CAIRO_1_NO_VALIDATE_ACCOUNT.value += 1;
@@ -152,6 +153,7 @@ describeDevMadara(
           {
             nonce: CAIRO_1_NO_VALIDATE_ACCOUNT.value,
             version: 1,
+            maxFee: "12345678",
           },
         );
         await jumpBlocks(context, 1);

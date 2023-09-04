@@ -32,7 +32,7 @@ jsonrpsee = { workspace = true, features = [
 ], default-features = true }
 mp-digest-log = { workspace = true }
 mp-starknet = { workspace = true, default-features = true }
-num-bigint = { version = "0.4.3", default-features = false }
+num-bigint = { version = "0.4.4", default-features = false }
 serde = { workspace = true, default-features = true }
 serde_json = { workspace = true }
 serde_with = { workspace = true }
