@@ -4,10 +4,9 @@ use std::sync::Arc;
 use blockifier::execution::contract_class::ContractClass;
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
 use mp_starknet::storage::{
-    PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_CONTRACT_STATE_ROOT,
-    STARKNET_CONTRACT_STATE_TRIES, STARKNET_NONCE, STARKNET_STATE_COMMITMENTS, STARKNET_STORAGE,
+    PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_NONCE, STARKNET_STORAGE,
 };
-use pallet_starknet::types::{NonceWrapper, StateCommitments, StateTrie};
+use pallet_starknet::types::NonceWrapper;
 // Substrate
 use sc_client_api::backend::{Backend, StorageProvider};
 use scale_codec::{Decode, Encode};
@@ -103,18 +102,6 @@ where
         )
     }
 
-    fn contract_state_trie_by_address(
-        &self,
-        block_hash: <B as BlockT>::Hash,
-        address: ContractAddressWrapper,
-    ) -> Option<StateTrie> {
-        let storage_contract_class_hash_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CONTRACT_STATE_TRIES);
-        self.query_storage::<StateTrie>(
-            block_hash,
-            &StorageKey(storage_key_build(storage_contract_class_hash_prefix, &self.encode_storage_key(&address))),
-        )
-    }
-
     fn contract_class_by_class_hash(
         &self,
         block_hash: <B as BlockT>::Hash,
@@ -141,27 +128,5 @@ where
             Some(nonce) => Some(nonce),
             None => Some(NonceWrapper::default()),
         }
-    }
-
-    fn state_commitments(&self, block_hash: <B as BlockT>::Hash) -> Option<StateCommitments> {
-        let state_key = storage_prefix_build(PALLET_STARKNET, STARKNET_STATE_COMMITMENTS);
-        let commitments = self.query_storage::<StateCommitments>(block_hash, &StorageKey(state_key));
-
-        match commitments {
-            Some(commitments) => Some(commitments),
-            None => Some(StateCommitments::default()),
-        }
-    }
-
-    fn contract_state_root_by_address(
-        &self,
-        block_hash: <B as BlockT>::Hash,
-        address: ContractAddressWrapper,
-    ) -> Option<ClassHashWrapper> {
-        let storage_contract_state_root_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CONTRACT_STATE_ROOT);
-        self.query_storage::<ClassHashWrapper>(
-            block_hash,
-            &StorageKey(storage_key_build(storage_contract_state_root_prefix, &self.encode_storage_key(&address))),
-        )
     }
 }

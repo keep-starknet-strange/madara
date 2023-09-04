@@ -15,8 +15,6 @@ use serde_with::serde_as;
 mod constants;
 pub mod utils;
 
-pub mod types;
-
 use starknet_core::serde::unsigned_field_element::UfeHex;
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
@@ -25,8 +23,6 @@ use starknet_core::types::{
     InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt,
     StateUpdate, SyncStatusType, Transaction,
 };
-
-use crate::types::{RpcGetProofInput, RpcGetProofOutput};
 
 #[serde_as]
 #[derive(Serialize, Deserialize)]
@@ -140,9 +136,4 @@ pub trait StarknetRpcApi {
     /// Returns the receipt of a transaction by transaction hash.
     #[method(name = "getTransactionReceipt")]
     fn get_transaction_receipt(&self, transaction_hash: FieldElement) -> RpcResult<MaybePendingTransactionReceipt>;
-
-    /// Returns all the necessary data to trustlessly verify storage slots for a particular
-    /// contract.
-    #[method(name = "getProof")]
-    fn get_proof(&self, get_proof_input: RpcGetProofInput) -> RpcResult<RpcGetProofOutput>;
 }
