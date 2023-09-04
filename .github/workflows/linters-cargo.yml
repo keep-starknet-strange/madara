@@ -27,6 +27,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
             github.run_id }}
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+            ${{ runner.os }}-cargo
       - name: Setup build deps
         run: |
           sudo apt-get update

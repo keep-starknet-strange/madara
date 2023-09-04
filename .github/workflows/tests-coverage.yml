@@ -33,9 +33,6 @@ jobs:
             ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
             github.run_id }}
           fail-on-cache-miss: true
-          restore-keys: |
-            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
-            github.run_id }}
       - name: Run test (native)
         run: |-
           cd tests
@@ -62,9 +59,6 @@ jobs:
             ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
             github.run_id }}
           fail-on-cache-miss: true
-          restore-keys: |
-            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
-            github.run_id }}
       - name: Setup build deps
         run: |
           sudo apt-get update
@@ -77,5 +71,4 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           files: codecov.json
-          # FIXME: usually we have errors on the upload
           fail_ci_if_error: false

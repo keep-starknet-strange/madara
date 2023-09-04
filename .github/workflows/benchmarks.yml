@@ -31,9 +31,6 @@ jobs:
             ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
             github.run_id }}
           fail-on-cache-miss: true
-          restore-keys: |
-            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
-            github.run_id }}
       - name: Run benchmark
         run: |
           cd benchmarking
