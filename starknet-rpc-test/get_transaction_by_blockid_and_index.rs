@@ -5,7 +5,8 @@ use rstest::rstest;
 use starknet_accounts::SingleOwnerAccount;
 use starknet_core::chain_id;
 use starknet_core::types::{
-    BlockId, BlockTag, DeclareTransaction, InvokeTransaction, MaybePendingBlockWithTxs, StarknetError, Transaction,
+    BlockId, BlockTag, DeclareTransaction, InvokeTransaction, InvokeTransactionV1, MaybePendingBlockWithTxs,
+    StarknetError, Transaction,
 };
 use starknet_ff::FieldElement;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
@@ -89,12 +90,30 @@ async fn work_ok_by_compare_with_get_block_with_tx(#[future] madara: MadaraClien
     let tx_1 = rpc.get_transaction_by_block_id_and_index(BlockId::Tag(BlockTag::Latest), 0).await?;
     let tx_2 = rpc.get_transaction_by_block_id_and_index(BlockId::Tag(BlockTag::Latest), 1).await?;
 
+    // Known tx1 and tx2 are InvokeTransactionV1
+    assert!(matches!(tx_1, Transaction::Invoke(InvokeTransaction::V1(_))));
+    assert!(matches!(tx_2, Transaction::Invoke(InvokeTransaction::V1(_))));
+
+    let tx_1_obj = get_transaction_obj(&tx_1).expect("Invalid Transaction");
+    let tx_2_obj = get_transaction_obj(&tx_2).expect("Invalid Transaction");
+
+    assert_eq!(tx_1_obj.nonce, FieldElement::ZERO);
+    assert_eq!(tx_1_obj.sender_address, argent_account_address);
+
+    assert_eq!(tx_2_obj.nonce, FieldElement::ONE);
+    assert_eq!(tx_2_obj.sender_address, argent_account_address);
+    assert_eq!(tx_2_obj.max_fee, FieldElement::from_hex_be("0xDEADB").unwrap());
+
     let block_with_txs = rpc.get_block_with_txs(BlockId::Tag(BlockTag::Latest)).await?;
 
-    assert_eq!(get_transaction_hash(&tx_1), get_transaction_hash_from_block_with_txs(&block_with_txs, 0));
-    assert_eq!(get_transaction_hash(&tx_2), get_transaction_hash_from_block_with_txs(&block_with_txs, 1));
+    assert_eq!(Some(&tx_1_obj.transaction_hash), get_transaction_hash_from_block_with_txs(&block_with_txs, 0));
+    assert_eq!(Some(&tx_2_obj.transaction_hash), get_transaction_hash_from_block_with_txs(&block_with_txs, 1));
 
     Ok(())
+}
+
+fn get_transaction_obj(tx: &Transaction) -> Option<&InvokeTransactionV1> {
+    if let Transaction::Invoke(InvokeTransaction::V1(v1_tx)) = tx { Some(&v1_tx) } else { None }
 }
 
 fn get_transaction_hash(tx: &Transaction) -> Option<&FieldElement> {
