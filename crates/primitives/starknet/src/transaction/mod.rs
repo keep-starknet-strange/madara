@@ -428,8 +428,8 @@ impl Transaction {
             }
         };
 
-        // FIXME 710
-        let mut initial_gas = super::constants::INITIAL_GAS;
+        let mut initial_gas =
+            self.max_fee.try_into().map_err(|_| StarknetApiError::OutOfRange { string: self.max_fee.0.to_string() })?;
 
         self.validate_tx(state, execution_resources, block_context, &account_context, tx_type, &mut initial_gas)
     }
@@ -555,8 +555,14 @@ impl Transaction {
         // Verify the transaction version.
         self.verify_tx_version(&tx_type)?;
 
-        // FIXME 710
-        let mut initial_gas = super::constants::INITIAL_GAS;
+        // if it's an estimate fee then use max initial_gas
+        let mut initial_gas = match self.is_query {
+            true => u64::MAX,
+            false => self
+                .max_fee
+                .try_into()
+                .map_err(|_| StarknetApiError::OutOfRange { string: self.max_fee.0.to_string() })?,
+        };
 
         // Going one lower level gives us more flexibility like not validating the tx as we could do
         // it before the tx lands in the mempool.
@@ -687,10 +693,13 @@ impl Transaction {
             &execute_call_info,
             &validate_call_info,
             execution_resources,
-            tx_type,
+            tx_type.clone(),
         )?;
-        let (actual_fee, fee_transfer_call_info) =
-            charge_fee(state, block_context, account_context, &tx_resources, self.is_query)?;
+
+        let (actual_fee, fee_transfer_call_info) = match tx_type {
+            TxType::L1Handler => (Fee::default(), None), // FIXME 712
+            _ => charge_fee(state, block_context, account_context, &tx_resources, self.is_query)?,
+        };
         Ok(TransactionExecutionInfoWrapper {
             validate_call_info,
             execute_call_info,
@@ -850,7 +859,7 @@ impl Default for Transaction {
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
             contract_address_salt: None,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             is_query: false,
         }
     }
