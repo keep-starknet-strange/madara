@@ -50,7 +50,7 @@ pub fn get_invoke_dummy() -> Transaction {
         calldata,
         nonce,
         signature,
-        max_fee: Felt252Wrapper::from(u128::MAX),
+        max_fee: Felt252Wrapper::from(u64::MAX),
         is_query: false,
     }
     .from_invoke(Starknet::chain_id())
@@ -81,7 +81,7 @@ fn get_invoke_argent_dummy() -> Transaction {
         calldata,
         nonce,
         signature,
-        max_fee: Felt252Wrapper::from(u128::MAX),
+        max_fee: Felt252Wrapper::from(u64::MAX),
         is_query: false,
     }
     .from_invoke(Starknet::chain_id())
@@ -112,7 +112,7 @@ fn get_invoke_braavos_dummy() -> Transaction {
         calldata,
         nonce,
         signature,
-        max_fee: Felt252Wrapper::from(u128::MAX),
+        max_fee: Felt252Wrapper::from(u64::MAX),
         is_query: false,
     }
     .from_invoke(Starknet::chain_id())
@@ -139,7 +139,7 @@ fn get_invoke_emit_event_dummy() -> Transaction {
         calldata,
         nonce,
         signature,
-        max_fee: Felt252Wrapper::from(u128::MAX),
+        max_fee: Felt252Wrapper::from(u64::MAX),
         is_query: false,
     }
     .from_invoke(Starknet::chain_id())
@@ -166,7 +166,7 @@ fn get_invoke_nonce_dummy() -> Transaction {
         calldata,
         nonce,
         signature,
-        max_fee: Felt252Wrapper::from(u128::MAX),
+        max_fee: Felt252Wrapper::from(u64::MAX),
         is_query: false,
     }
     .from_invoke(Starknet::chain_id())
@@ -191,7 +191,7 @@ fn get_storage_read_write_dummy() -> Transaction {
         calldata,
         nonce,
         signature,
-        max_fee: Felt252Wrapper::from(u128::MAX),
+        max_fee: Felt252Wrapper::from(u64::MAX),
         is_query: false,
     }
     .from_invoke(Starknet::chain_id());
@@ -204,8 +204,8 @@ fn get_storage_read_write_dummy() -> Transaction {
 // ref: https://github.com/OpenZeppelin/cairo-contracts/blob/main/src/openzeppelin/account/IAccount.cairo
 fn get_invoke_openzeppelin_dummy() -> Transaction {
     let signature = bounded_vec!(
-        Felt252Wrapper::from_hex_be("0x01ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca").unwrap(),
-        Felt252Wrapper::from_hex_be("0x004f0481f89eae56dec538294bde0bf84bba526517dd9ff7dcb2a22628ee4d9e").unwrap(),
+        Felt252Wrapper::from_hex_be("0x028ef1ae6c37314bf9df65663db1cf68f95d67c4b4cf7f6590654933a84912b0").unwrap(),
+        Felt252Wrapper::from_hex_be("0x0625aae99c58b18e5161c719fef0f99579c6468ca6c1c866f9b2b968a5447e4").unwrap(),
     );
     let sender_address =
         Felt252Wrapper::from_hex_be("0x06e2616a2dceff4355997369246c25a78e95093df7a49e5ca6a06ce1544ffd50").unwrap();
@@ -226,7 +226,7 @@ fn get_invoke_openzeppelin_dummy() -> Transaction {
         calldata,
         nonce,
         signature,
-        max_fee: Felt252Wrapper::from(u128::MAX),
+        max_fee: Felt252Wrapper::from(u64::MAX),
         is_query: false,
     }
     .from_invoke(Starknet::chain_id())
@@ -249,7 +249,7 @@ pub fn get_declare_dummy(account_type: AccountType) -> DeclareTransaction {
         class_hash: erc20_class_hash,
         compiled_class_hash: None,
         nonce: Felt252Wrapper::ZERO,
-        max_fee: Felt252Wrapper::from(u128::MAX),
+        max_fee: Felt252Wrapper::from(u64::MAX),
         signature: bounded_vec!(),
         is_query: false,
     }
@@ -272,7 +272,7 @@ pub fn get_deploy_account_dummy(salt: Felt252Wrapper, account_type: AccountType)
         )
         .unwrap(),
         nonce: Felt252Wrapper::ZERO,
-        max_fee: Felt252Wrapper::from(u128::MAX),
+        max_fee: Felt252Wrapper::from(u64::MAX),
         signature: bounded_vec!(),
         is_query: false,
     }
