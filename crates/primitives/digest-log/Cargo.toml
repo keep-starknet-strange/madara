@@ -9,7 +9,7 @@ repository = { workspace = true }
 
 [dependencies]
 mp-starknet = { workspace = true }
-scale-codec = { workspace = true }
+scale-codec = { package = "parity-scale-codec", workspace = true }
 # Substrate
 sp-runtime = { workspace = true }
 

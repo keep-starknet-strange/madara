@@ -51,7 +51,7 @@ reqwest = { workspace = true, optional = true, features = [
   "blocking",
   "rustls-tls",
 ] }
-scale-codec = { workspace = true, features = [
+scale-codec = { package = "parity-scale-codec", workspace = true, features = [
   "derive",
 ] }
 scale-info = { workspace = true, features = ["derive"] }
