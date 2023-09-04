@@ -315,6 +315,7 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
         overrides,
         sync_service: sync_service.clone(),
         starting_block,
+        // TODO: cache, add instantiation of Data cache task here
     };
 
     let rpc_extensions_builder = {
@@ -328,6 +329,7 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
                 pool: pool.clone(),
                 graph: graph.clone(),
                 deny_unsafe,
+                // TODO: cache, propagate task through here
                 starknet: starknet_rpc_params.clone(),
                 command_sink: if sealing.is_some() { Some(command_sink.clone()) } else { None },
             };

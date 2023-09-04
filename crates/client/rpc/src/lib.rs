@@ -84,6 +84,7 @@ impl<A: ChainApi, B: BlockT, BE, C, P, H> Starknet<A, B, BE, C, P, H> {
         starting_block: <<B>::Header as HeaderT>::Number,
         hasher: Arc<H>,
     ) -> Self {
+        // TODO: cache, add new property to refer to when accessing data through the cache
         Self { client, backend, overrides, pool, graph, sync_service, starting_block, hasher, _marker: PhantomData }
     }
 }
