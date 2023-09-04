@@ -5,7 +5,7 @@ use crate::{Config, GenesisConfig};
 
 // Configure a mock runtime to test the pallet.
 macro_rules! mock_runtime {
-    ($mock_runtime:ident, $enable_state_root:expr, $disable_transaction_fee:expr, $disable_nonce_validation: expr) => {
+    ($mock_runtime:ident, $disable_transaction_fee:expr, $disable_nonce_validation: expr) => {
 		pub mod $mock_runtime {
 			use frame_support::parameter_types;
 			use frame_support::traits::{ConstU16, ConstU64};
@@ -74,7 +74,6 @@ macro_rules! mock_runtime {
 				pub const TransactionLongevity: u64 = u64::MAX;
 				pub const InvokeTxMaxNSteps: u32 = 1_000_000;
 				pub const ValidateMaxNSteps: u32 = 1_000_000;
-				pub const EnableStateRoot: bool = $enable_state_root;
 				pub const DisableTransactionFee: bool = $disable_transaction_fee;
                 pub const DisableNonceValidation: bool = $disable_nonce_validation;
 				pub const ProtocolVersion: u8 = 0;
@@ -90,7 +89,6 @@ macro_rules! mock_runtime {
 				type TransactionLongevity = TransactionLongevity;
 				type InvokeTxMaxNSteps = InvokeTxMaxNSteps;
 				type ValidateMaxNSteps = ValidateMaxNSteps;
-				type EnableStateRoot = EnableStateRoot;
 				type DisableTransactionFee = DisableTransactionFee;
                 type DisableNonceValidation = DisableNonceValidation;
 				type ProtocolVersion = ProtocolVersion;
@@ -135,7 +133,6 @@ pub fn new_test_ext<T: Config>() -> sp_io::TestExternalities {
     t.into()
 }
 
-mock_runtime!(default_mock, false, false, false);
-mock_runtime!(state_root_mock, true, false, false);
-mock_runtime!(fees_disabled_mock, false, true, false);
-mock_runtime!(no_nonce_validation_mock, false, true, true);
+mock_runtime!(default_mock, false, false);
+mock_runtime!(fees_disabled_mock, true, false);
+mock_runtime!(no_nonce_validation_mock, true, true);

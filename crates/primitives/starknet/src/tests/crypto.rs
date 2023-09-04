@@ -105,7 +105,7 @@ fn test_ref_merkle_tree() {
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
             contract_address_salt: None,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             is_query: false,
         },
         Transaction {
@@ -118,7 +118,7 @@ fn test_ref_merkle_tree() {
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
             contract_address_salt: None,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             is_query: false,
         },
     ];
