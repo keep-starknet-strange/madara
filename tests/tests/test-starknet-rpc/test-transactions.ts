@@ -274,7 +274,7 @@ describeDevMadara(
 
         const invocationDetails = {
           nonce: "0x0",
-          maxFee: "0x1111111111111111111111",
+          maxFee: "0x11111111111111",
           version: "0x1",
         };
 
@@ -519,6 +519,7 @@ describeDevMadara(
           classHash: CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH,
           constructorCalldata: ["0x123"],
           addressSalt: SALT,
+          contractAddress: ARGENT_CONTRACT_ADDRESS,
         });
 
         expect(suggestedMaxFee > 0n).to.be.equal(true);
