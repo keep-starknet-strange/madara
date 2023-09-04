@@ -42,7 +42,7 @@ derive_more = { workspace = true, features = ["constructor"] }
 flate2 = { workspace = true, optional = true }
 hex = { version = "0.4.3", default-features = false }
 lazy_static = { workspace = true }
-scale-codec = { package = "parity-scale-codec", workspace = true, features = [
+scale-codec = { workspace = true, features = [
   "derive",
   "max-encoded-len",
   "bit-vec",

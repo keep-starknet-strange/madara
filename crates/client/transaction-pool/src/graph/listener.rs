@@ -64,7 +64,7 @@ impl<H: hash::Hash + traits::Member + Serialize, C: ChainApi> Listener<H, C> {
     ///
     /// The watcher can be used to subscribe to life-cycle events of that extrinsic.
     pub fn create_watcher(&mut self, hash: H) -> watcher::Watcher<H, ExtrinsicHash<C>> {
-        let sender = self.watchers.entry(hash.clone()).or_insert_with(watcher::Sender::default);
+        let sender = self.watchers.entry(hash.clone()).or_default();
         sender.new_watcher(hash)
     }
 
@@ -108,7 +108,7 @@ impl<H: hash::Hash + traits::Member + Serialize, C: ChainApi> Listener<H, C> {
     pub fn pruned(&mut self, block_hash: BlockHash<C>, tx: &H) {
         debug!(target: LOG_TARGET, "[{:?}] Pruned at {:?}", tx, block_hash);
         // Get the transactions included in the given block hash.
-        let txs = self.finality_watchers.entry(block_hash).or_insert(vec![]);
+        let txs = self.finality_watchers.entry(block_hash).or_default();
         txs.push(tx.clone());
         // Current transaction is the last one included.
         let tx_index = txs.len() - 1;

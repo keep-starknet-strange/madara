@@ -838,7 +838,6 @@ mod reexport_private_types {
         ) -> RPCMaybePendingTransactionReceipt {
             let transaction_hash = self.transaction_hash.into();
             let actual_fee = self.actual_fee.into();
-            let status = status;
             let block_hash = block_hash_and_number.0;
             let block_number = block_hash_and_number.1;
             let events = self.events.iter().map(|e| (*e).clone().into()).collect();

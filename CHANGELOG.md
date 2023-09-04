@@ -2,7 +2,9 @@
 
 ## Next release
 
-- upgrade: bump rustc nightly version to 1.72 date
+- feat: use resolver 2 for cargo in the workspace
+- upgrade: restructure code for rust latest version
+- upgrade: bump rustc nightly version to 1.74 date
 - ci: add verification if build-spec is working
 - bug: fix build-spec not working by setting the madara-path always and fetching
   relevant files

@@ -372,7 +372,7 @@ impl Transaction {
             TxType::DeployAccount => {
                 let deploy_account_tx: DeployAccountTransaction =
                     self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
-                let validate_calldata = vec![
+                let validate_calldata = [
                     vec![deploy_account_tx.class_hash().0, deploy_account_tx.contract_address_salt().0],
                     (*deploy_account_tx.constructor_calldata().0).clone(),
                 ]
