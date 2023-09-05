@@ -72,3 +72,7 @@ path = "get_block_with_tx_hashes.rs"
 [[test]]
 name = "starknet_get_block_with_txs"
 path = "get_block_with_txs.rs"
+
+[[test]]
+name= "starknet_get_transaction_by_blockid_and_index"
+path = "get_transaction_by_blockid_and_index.rs"
