@@ -50,6 +50,13 @@ jsonrpsee = { workspace = true, default-features = true, features = [
   "macros",
 ] }
 log = { workspace = true, default-features = true }
+prometheus = { version = "0.13.1", default-features = false }
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", workspace = true }
+# TODO: cache, define if this is needed
+scale-codec = { package = "parity-scale-codec", workspace = true, features = [
+  "derive",
+] }
+schnellru = "0.2.1"
 serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }
 

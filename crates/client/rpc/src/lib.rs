@@ -2,6 +2,7 @@
 //!
 //! It uses the madara client and backend in order to answer queries.
 
+mod cache;
 mod constants;
 mod errors;
 mod events;

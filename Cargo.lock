@@ -5174,11 +5174,14 @@ dependencies = [
  "mc-transaction-pool",
  "mp-starknet",
  "pallet-starknet",
+ "parity-scale-codec",
  "pretty_assertions",
+ "prometheus",
  "rstest",
  "sc-client-api",
  "sc-network-sync",
  "sc-transaction-pool-api",
+ "schnellru",
  "serde_json",
  "sp-api",
  "sp-arithmetic",
@@ -5188,6 +5191,7 @@ dependencies = [
  "starknet-core",
  "starknet-ff",
  "starknet_api",
+ "substrate-prometheus-endpoint",
  "thiserror",
 ]
 
