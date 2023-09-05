@@ -24,8 +24,9 @@ pub struct AvailConfig {
     pub mode: DaMode,
 }
 
-impl AvailConfig {
-    pub fn try_from_file(path: &PathBuf) -> Result<Self, String> {
+impl TryFrom<&PathBuf> for AvailConfig {
+    type Error = String;
+    fn try_from(path: &PathBuf) -> Result<Self, Self::Error> {
         let file = File::open(path).map_err(|e| format!("error opening da config: {e}"))?;
         serde_json::from_reader(file).map_err(|e| format!("error parsing da config: {e}"))
     }

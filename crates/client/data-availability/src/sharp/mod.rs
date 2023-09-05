@@ -47,6 +47,7 @@ pub fn submit_pie(pie: &str) -> Result<CairoJobResponse> {
     let _payload: serde_json::Value = serde_json::from_value(data).unwrap();
 
     // CAREFUL NOT TO OVERWHELM SHARP DUE TO SHORT BLOCK TIMES
+    // TODO: uncomment w/ Validity DaMode impl
     // let resp = reqwest::blocking::Client::new().post(LAMBDA_URL).json(&payload).send().unwrap();
 
     // match resp.status() {
@@ -67,7 +68,8 @@ pub struct CairoStatusResponse {
 }
 
 // Fetch Cairo Job Status from SHARP
-pub fn _get_status(job_key: &str) -> Result<CairoStatusResponse> {
+// TODO: function will be needed in Validity DaMode impl
+fn _get_status(job_key: &str) -> Result<CairoStatusResponse> {
     let data = serde_json::json!({ "cairo_job_key": job_key });
     let data = serde_json::json!({ "action": "get_status", "request": data });
     let payload: serde_json::Value = serde_json::from_value(data).unwrap();

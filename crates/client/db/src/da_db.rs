@@ -16,7 +16,7 @@ pub struct DaDb<B: BlockT> {
     pub(crate) _marker: PhantomData<B>,
 }
 
-// TODO: business logic for last proven and purge
+// TODO: purge old cairo job keys
 impl<B: BlockT> DaDb<B> {
     pub fn state_diff(&self, block_hash: &B::Hash) -> Result<Vec<U256>, String> {
         match self.db.get(crate::columns::DA, &block_hash.encode()) {

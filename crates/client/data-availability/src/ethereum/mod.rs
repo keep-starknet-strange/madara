@@ -23,8 +23,6 @@ pub struct EthereumClient {
 #[async_trait]
 impl DaClient for EthereumClient {
     async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()> {
-        println!("State diff: {:?}", state_diff);
-
         abigen!(
             STARKNET,
             r#"[
@@ -63,8 +61,10 @@ impl DaClient for EthereumClient {
     }
 }
 
-impl EthereumClient {
-    pub fn try_from_config(conf: config::EthereumConfig) -> Result<Self, String> {
+impl TryFrom<config::EthereumConfig> for EthereumClient {
+    type Error = String;
+
+    fn try_from(conf: config::EthereumConfig) -> Result<Self, Self::Error> {
         if !is_valid_http_endpoint(&conf.http_provider) {
             return Err(format!("invalid http endpoint, received {}", &conf.http_provider));
         }

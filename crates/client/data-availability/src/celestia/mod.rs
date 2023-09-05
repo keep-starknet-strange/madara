@@ -47,18 +47,6 @@ impl DaClient for CelestiaClient {
 }
 
 impl CelestiaClient {
-    pub fn try_from_config(conf: config::CelestiaConfig) -> Result<Self> {
-        let http_client = new_http(conf.http_provider.as_str(), conf.auth_token.as_deref())?;
-
-        // Convert the input string to bytes
-        let bytes = conf.nid.as_bytes();
-
-        // Create a new Namespace from these bytes
-        let nid = Namespace::new_v0(bytes).unwrap();
-
-        Ok(Self { http_client, nid, mode: conf.mode })
-    }
-
     async fn publish_data(&self, blob: &Blob) -> Result<u64> {
         self.http_client.blob_submit(&[blob.clone()]).await.map_err(|e| anyhow::anyhow!("could not submit blob {e}"))
     }
@@ -80,5 +68,22 @@ impl CelestiaClient {
         let received_blob = self.http_client.blob_get(submitted_height, self.nid, blob.commitment).await.unwrap();
         received_blob.validate()?;
         Ok(())
+    }
+}
+
+impl TryFrom<config::CelestiaConfig> for CelestiaClient {
+    type Error = anyhow::Error;
+
+    fn try_from(conf: config::CelestiaConfig) -> Result<Self, Self::Error> {
+        let http_client = new_http(conf.http_provider.as_str(), conf.auth_token.as_deref())
+            .map_err(|e| anyhow::anyhow!("could not init http client: {e}"))?;
+
+        // Convert the input string to bytes
+        let bytes = conf.nid.as_bytes();
+
+        // Create a new Namespace from these bytes
+        let nid = Namespace::new_v0(bytes).map_err(|e| anyhow::anyhow!("could not init namespace: {e}"))?;
+
+        Ok(Self { http_client, nid, mode: conf.mode })
     }
 }

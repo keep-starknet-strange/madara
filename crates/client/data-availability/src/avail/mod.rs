@@ -37,7 +37,7 @@ impl DaClient for AvailClient {
         Ok(())
     }
 
-    // State Diff can be published w/o verification of last state for the time being
+    // state diff can be published w/o verification of last state for the time being
     // may change in subsequent DaMode implementations
     async fn last_published_state(&self) -> Result<I256> {
         Ok(I256::from(1))
@@ -49,18 +49,6 @@ impl DaClient for AvailClient {
 }
 
 impl AvailClient {
-    pub fn try_from_config(conf: config::AvailConfig) -> Result<Self> {
-        let signer = signer_from_seed(conf.seed.as_str())?;
-
-        let app_id = AppId(conf.app_id);
-
-        let ws_client =
-            futures::executor::block_on(async { build_client(conf.ws_provider.as_str(), conf.validate_codegen).await })
-                .map_err(|e| anyhow::anyhow!("could not initialize ws endpoint {e}"))?;
-
-        Ok(Self { ws_client, app_id, signer, mode: conf.mode })
-    }
-
     async fn publish_data(&self, bytes: &BoundedVec<u8>) -> Result<H256> {
         let data_transfer = AvailApi::tx().data_availability().submit_data(bytes.clone());
         let extrinsic_params = AvailExtrinsicParams::new_with_app_id(self.app_id);
@@ -95,6 +83,22 @@ impl AvailClient {
             .ok_or(anyhow::anyhow!("Bytes not found in specified block"))?;
 
         Ok(())
+    }
+}
+
+impl TryFrom<config::AvailConfig> for AvailClient {
+    type Error = anyhow::Error;
+
+    fn try_from(conf: config::AvailConfig) -> Result<Self, Self::Error> {
+        let signer = signer_from_seed(conf.seed.as_str())?;
+
+        let app_id = AppId(conf.app_id);
+
+        let ws_client =
+            futures::executor::block_on(async { build_client(conf.ws_provider.as_str(), conf.validate_codegen).await })
+                .map_err(|e| anyhow::anyhow!("could not initialize ws endpoint {e}"))?;
+
+        Ok(Self { ws_client, app_id, signer, mode: conf.mode })
     }
 }
 

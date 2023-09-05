@@ -276,16 +276,21 @@ pub fn run() -> sc_cli::Result<()> {
                 cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
             }
 
-            let mut da_config: Option<(DaLayer, PathBuf)> = None;
-            if let Some(da_layer) = cli.run.da_layer {
-                let da_path = std::path::PathBuf::from(madara_path.clone() + "/da-config.json");
-                if !da_path.exists() {
-                    log::info!("{} does not contain DA config", madara_path);
-                    return Err("DA config not available".into());
-                }
+            let da_config: Option<(DaLayer, PathBuf)> = match cli.run.da_layer {
+                Some(da_layer) => {
+                    let da_path = std::path::PathBuf::from(madara_path.clone() + "/da-config.json");
+                    if !da_path.exists() {
+                        log::info!("{} does not contain DA config", madara_path);
+                        return Err("DA config not available".into());
+                    }
 
-                da_config = Some((da_layer, da_path));
-            }
+                    Some((da_layer, da_path))
+                }
+                None => {
+                    log::info!("madara initialized w/o da layer");
+                    None
+                },
+            };
 
             let runner = cli.create_runner(&cli.run.run_cmd)?;
             runner.run_node_until_exit(|config| async move {

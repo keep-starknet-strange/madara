@@ -385,18 +385,16 @@ pub fn new_full(
     if let Some((da_layer, da_path)) = da_layer {
         let da_client: Box<dyn DaClient + Send + Sync> = match da_layer {
             DaLayer::Celestia => {
-                let celestia_conf = CelestiaConfig::try_from_file(&da_path)?;
-                Box::new(
-                    CelestiaClient::try_from_config(celestia_conf).map_err(|e| ServiceError::Other(e.to_string()))?,
-                )
+                let celestia_conf = CelestiaConfig::try_from(&da_path)?;
+                Box::new(CelestiaClient::try_from(celestia_conf).map_err(|e| ServiceError::Other(e.to_string()))?)
             }
             DaLayer::Ethereum => {
-                let ethereum_conf = EthereumConfig::try_from_file(&da_path)?;
-                Box::new(EthereumClient::try_from_config(ethereum_conf)?)
+                let ethereum_conf = EthereumConfig::try_from(&da_path)?;
+                Box::new(EthereumClient::try_from(ethereum_conf)?)
             }
             DaLayer::Avail => {
-                let avail_conf = AvailConfig::try_from_file(&da_path)?;
-                Box::new(AvailClient::try_from_config(avail_conf).map_err(|e| ServiceError::Other(e.to_string()))?)
+                let avail_conf = AvailConfig::try_from(&da_path)?;
+                Box::new(AvailClient::try_from(avail_conf).map_err(|e| ServiceError::Other(e.to_string()))?)
             }
         };
 

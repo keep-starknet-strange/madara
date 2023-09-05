@@ -53,11 +53,12 @@ where
     C: BlockchainEvents<B> + 'static,
 {
     pub async fn prove_current_block(da_mode: DaMode, client: Arc<C>, madara_backend: Arc<mc_db::Backend<B>>) {
-        let mut storage_event_st = client.storage_changes_notification_stream(None, None).unwrap();
+        let mut storage_event_st = client
+            .storage_changes_notification_stream(None, None)
+            .expect("node has been initialized to prove state change, but can't read from notification stream");
 
         while let Some(storage_event) = storage_event_st.next().await {
             // Locate and encode the storage change
-            let mut _deployed_contracts: Vec<String> = Vec::new();
             let mut nonces: HashMap<&[u8], &[u8]> = HashMap::new();
             let mut storage_diffs: HashMap<&[u8], StorageWrites> = HashMap::new();
 
@@ -100,10 +101,18 @@ where
             match da_mode {
                 DaMode::Validity => {
                     // Submit the StarkNet OS PIE
-                    if let Ok(job_resp) = sharp::submit_pie("test") {
+                    // TODO: Validity Impl
+                    // run the Starknet OS with the Cairo VM
+                    // extract the PIE from the Cairo VM run
+                    // pass the PIE to `submit_pie` and zip/base64 internal
+                    if let Ok(job_resp) = sharp::submit_pie("TODO") {
                         log::info!("Job Submitted: {}", job_resp.cairo_job_key);
                         // Store the cairo job key
-                        let _res = madara_backend.da().update_cairo_job(&storage_event.block, job_resp.cairo_job_key);
+                        if let Err(db_err) =
+                            madara_backend.da().update_cairo_job(&storage_event.block, job_resp.cairo_job_key)
+                        {
+                            log::error!("db err: {db_err}");
+                        };
                     }
                 }
                 _ => {
@@ -120,7 +129,6 @@ where
     C: ProvideRuntimeApi<B>,
     C: BlockchainEvents<B> + 'static,
 {
-    // pub async fn update_state(client: Arc<C>, madara_backend: Arc<mc_db::Backend<B>>) {
     pub async fn update_state(
         da_client: Box<dyn DaClient + Send + Sync>,
         client: Arc<C>,
