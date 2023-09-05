@@ -18,6 +18,7 @@ use super::entrypoint_wrapper::{
     EntryPointExecutionErrorWrapper, EntryPointExecutionResultWrapper, EntryPointTypeWrapper,
 };
 use super::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
+use crate::alloc::string::ToString;
 
 /// Max number of calldata / tx.
 #[cfg(not(test))]
@@ -161,11 +162,10 @@ impl TryInto<CallEntryPoint> for CallEntryPointWrapper {
             // starknet-lib is constantly breaking it's api
             // I hope it's nothing important ¯\_(ツ)_/¯
             code_address: None,
-            // initial_gas should come from the RPC call
-            // and should be a u64. If it's not, the error must
-            // be caught on the client side, hence it's safe to
-            // unwrap over here
-            initial_gas: self.initial_gas.try_into().unwrap(),
+            initial_gas: self
+                .initial_gas
+                .try_into()
+                .map_err(|_| StarknetApiError::OutOfRange { string: self.initial_gas.0.to_string() })?,
         };
 
         Ok(entrypoint)

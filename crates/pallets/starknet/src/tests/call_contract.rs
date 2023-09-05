@@ -42,7 +42,7 @@ fn given_call_contract_call_works() {
             signature: bounded_vec!(),
             nonce: Felt252Wrapper::ZERO,
             calldata: constructor_calldata,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
 			is_query: false
         };
 

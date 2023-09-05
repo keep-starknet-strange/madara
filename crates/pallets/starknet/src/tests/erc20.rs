@@ -42,7 +42,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 sender_account  // recipient
             ],
             nonce: Felt252Wrapper::ZERO,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             signature: bounded_vec!(),
             is_query: false,
         };

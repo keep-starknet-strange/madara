@@ -30,7 +30,7 @@ fn given_contract_declare_tx_works_once_not_twice() {
             compiled_class_hash: None,
             contract_class: erc20_class,
             nonce: Felt252Wrapper::ZERO,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             signature: bounded_vec!(),
             is_query: false,
         };
@@ -64,7 +64,7 @@ fn given_contract_declare_tx_fails_sender_not_deployed() {
             class_hash: erc20_class_hash,
             compiled_class_hash: None,
             nonce: Felt252Wrapper::ZERO,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             signature: bounded_vec!(),
             is_query: false,
         };
@@ -95,7 +95,7 @@ fn given_contract_declare_tx_fails_wrong_tx_version() {
             class_hash: erc20_class_hash,
             compiled_class_hash: None,
             nonce: Felt252Wrapper::ZERO,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             signature: bounded_vec!(),
             is_query: false,
         };
@@ -263,7 +263,7 @@ fn given_contract_declare_on_cairo_1_no_validate_account_then_it_works() {
             class_hash: hello_starknet_class_hash,
             compiled_class_hash: Some(hello_starknet_compiled_class_hash),
             nonce: Felt252Wrapper::ZERO,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             signature: bounded_vec!(),
             is_query: false,
         };

@@ -526,9 +526,16 @@ where
         request: Vec<BroadcastedTransaction>,
         block_id: BlockId,
     ) -> RpcResult<Vec<FeeEstimate>> {
-        // TODO:
-        //      - modify BroadcastedTransaction to assert versions == "0x100000000000000000000000000000001"
-        //      - to ensure broadcasted query signatures aren't valid on mainnet
+        let is_invalid_query_transaction = request.iter().any(|tx| match tx {
+            BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction::V0(tx_v0)) => !tx_v0.is_query,
+            BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction::V1(tx_v1)) => !tx_v1.is_query,
+            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V1(tx_v1)) => !tx_v1.is_query,
+            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V2(tx_v2)) => !tx_v2.is_query,
+            BroadcastedTransaction::DeployAccount(deploy_tx) => !deploy_tx.is_query,
+        });
+        if is_invalid_query_transaction {
+            return Err(StarknetRpcApiError::UnsupportedTxVersion.into());
+        }
 
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
