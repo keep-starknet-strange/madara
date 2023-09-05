@@ -52,7 +52,6 @@ jsonrpsee = { workspace = true, default-features = true, features = [
 log = { workspace = true, default-features = true }
 prometheus = { version = "0.13.1", default-features = false }
 prometheus-endpoint = { package = "substrate-prometheus-endpoint", workspace = true }
-# TODO: cache, define if this is needed
 scale-codec = { package = "parity-scale-codec", workspace = true, features = [
   "derive",
 ] }
