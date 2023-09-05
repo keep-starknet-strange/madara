@@ -37,6 +37,8 @@ impl DaClient for AvailClient {
         Ok(())
     }
 
+    // State Diff can be published w/o verification of last state for the time being
+    // may change in subsequent DaMode implementations
     async fn last_published_state(&self) -> Result<I256> {
         Ok(I256::from(1))
     }

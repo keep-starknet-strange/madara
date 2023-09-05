@@ -18,7 +18,7 @@ pub struct CelestiaConfig {
     pub nid: String,
     #[serde(default)]
     pub auth_token: Option<String>,
-    #[serde(default = "default_mode")]
+    #[serde(default)]
     pub mode: DaMode,
 }
 
@@ -41,17 +41,13 @@ fn default_nid() -> String {
     DEFAULT_NID.to_string()
 }
 
-fn default_mode() -> DaMode {
-    DaMode::default()
-}
-
 impl Default for CelestiaConfig {
     fn default() -> Self {
         Self {
             http_provider: default_http(),
             ws_provider: default_ws(),
             nid: default_nid(),
-            mode: default_mode(),
+            mode: DaMode::default(),
             auth_token: None,
         }
     }

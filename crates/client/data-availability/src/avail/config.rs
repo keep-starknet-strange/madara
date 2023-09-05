@@ -20,7 +20,7 @@ pub struct AvailConfig {
     pub validate_codegen: bool,
     #[serde(default = "default_seed")]
     pub seed: String,
-    #[serde(default = "default_mode")]
+    #[serde(default)]
     pub mode: DaMode,
 }
 
@@ -47,16 +47,12 @@ fn default_seed() -> String {
     DEFAULT_AVAIL_SEED.to_string()
 }
 
-fn default_mode() -> DaMode {
-    DaMode::default()
-}
-
 impl Default for AvailConfig {
     fn default() -> Self {
         Self {
             ws_provider: default_ws(),
             app_id: default_app_id(),
-            mode: default_mode(),
+            mode: DaMode::default(),
             validate_codegen: default_validate_codegen(),
             seed: default_seed(),
         }

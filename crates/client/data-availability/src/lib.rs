@@ -130,6 +130,7 @@ where
 
         while let Some(notification) = notification_st.next().await {
             // Query last written state
+            // TODO: this value will be used to ensure the correct state diff is being written in Validity mode
             let _last_published_state = match da_client.last_published_state().await {
                 Ok(last_published_state) => last_published_state,
                 Err(e) => {

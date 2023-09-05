@@ -20,7 +20,7 @@ pub struct EthereumConfig {
     pub sequencer_key: String,
     #[serde(default = "default_chain_id")]
     pub chain_id: u64,
-    #[serde(default = "default_mode")]
+    #[serde(default)]
     pub mode: DaMode,
 }
 
@@ -47,15 +47,11 @@ fn default_chain_id() -> u64 {
     DEFAULT_CHAIN_ID
 }
 
-fn default_mode() -> DaMode {
-    DaMode::default()
-}
-
 impl Default for EthereumConfig {
     fn default() -> Self {
         Self {
             http_provider: default_http(),
-            mode: default_mode(),
+            mode: DaMode::default(),
             core_contracts: default_core_contracts(),
             sequencer_key: default_sequencer_key(),
             chain_id: default_chain_id(),
