@@ -67,11 +67,11 @@ describeDevMadara("Starknet RPC - Block Test", (context) => {
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           ARGENT_CONTRACT_ADDRESS,
-          MINT_AMOUNT
+          MINT_AMOUNT,
         ),
         {
           finalize: true,
-        }
+        },
       );
 
       const transactionCount = await providerRPC.getTransactionCount("latest");
@@ -92,7 +92,7 @@ describeDevMadara("Starknet RPC - Block Test", (context) => {
     it("should increase after a transaction", async function () {
       let nonce = await providerRPC.getNonceForAddress(
         ARGENT_CONTRACT_ADDRESS,
-        "latest"
+        "latest",
       );
 
       await context.createBlock(
@@ -100,13 +100,13 @@ describeDevMadara("Starknet RPC - Block Test", (context) => {
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           ARGENT_CONTRACT_ADDRESS,
-          MINT_AMOUNT
-        )
+          MINT_AMOUNT,
+        ),
       );
 
       nonce = await providerRPC.getNonceForAddress(
         ARGENT_CONTRACT_ADDRESS,
-        "latest"
+        "latest",
       );
 
       expect(nonce).to.not.be.undefined;
@@ -126,10 +126,10 @@ describeDevMadara("Starknet RPC - Block Test", (context) => {
       // starknet current and highest block number should be equal to
       // the current block with this test setup
       expect(parseInt(status["current_block_num"])).to.be.equal(
-        current_block["block_number"]
+        current_block["block_number"],
       );
       expect(parseInt(status["highest_block_num"])).to.be.equal(
-        current_block["block_number"]
+        current_block["block_number"],
       );
 
       // the starknet block hash for number 0 starts with "0x31eb" with this test setup
@@ -137,10 +137,10 @@ describeDevMadara("Starknet RPC - Block Test", (context) => {
       // starknet current and highest block number should be equal to
       // the current block with this test setup
       expect(status["current_block_hash"]).to.be.equal(
-        current_block["block_hash"]
+        current_block["block_hash"],
       );
       expect(status["highest_block_hash"]).to.be.equal(
-        current_block["block_hash"]
+        current_block["block_hash"],
       );
     });
   });
@@ -153,9 +153,8 @@ describeDevMadara("Starknet RPC - Block Test", (context) => {
       });
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      const latestBlock: Block = await providerRPC.getBlockWithTxHashes(
-        "latest"
-      );
+      const latestBlock: Block =
+        await providerRPC.getBlockWithTxHashes("latest");
       expect(latestBlock).to.not.be.undefined;
       expect(latestBlock.status).to.be.equal("ACCEPTED_ON_L2");
       expect(latestBlock.transactions.length).to.be.equal(0);
@@ -167,15 +166,14 @@ describeDevMadara("Starknet RPC - Block Test", (context) => {
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           ARGENT_CONTRACT_ADDRESS,
-          MINT_AMOUNT
-        )
+          MINT_AMOUNT,
+        ),
       );
 
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      const blockWithTxHashes: Block = await providerRPC.getBlockWithTxHashes(
-        "latest"
-      );
+      const blockWithTxHashes: Block =
+        await providerRPC.getBlockWithTxHashes("latest");
       expect(blockWithTxHashes).to.not.be.undefined;
       expect(blockWithTxHashes.status).to.be.equal("ACCEPTED_ON_L2");
       expect(blockWithTxHashes.transactions.length).to.be.equal(1);
@@ -209,15 +207,15 @@ describeDevMadara("Starknet RPC - Block Test", (context) => {
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           ARGENT_CONTRACT_ADDRESS,
-          MINT_AMOUNT
-        )
+          MINT_AMOUNT,
+        ),
       );
 
       const blockHash = await providerRPC.getBlockHashAndNumber();
       await jumpBlocks(context, 10);
 
       const blockWithTxHashes = await providerRPC.getBlockWithTxs(
-        blockHash.block_hash
+        blockHash.block_hash,
       );
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
@@ -237,7 +235,7 @@ describeDevMadara("Starknet RPC - Block Test", (context) => {
           ARGENT_CONTRACT_ADDRESS,
           MINT_AMOUNT,
           0,
-        ].map(toHex)
+        ].map(toHex),
       );
     });
 
@@ -253,7 +251,7 @@ describeDevMadara("Starknet RPC - Block Test", (context) => {
     it("should support 'pending' block id", async function () {
       const nonce = await providerRPC.getNonceForAddress(
         ARGENT_CONTRACT_ADDRESS,
-        "pending"
+        "pending",
       );
       expect(nonce).to.not.be.undefined;
     });
@@ -261,7 +259,7 @@ describeDevMadara("Starknet RPC - Block Test", (context) => {
     it("should support 'latest' block id", async function () {
       const nonce = await providerRPC.getNonceForAddress(
         ARGENT_CONTRACT_ADDRESS,
-        "latest"
+        "latest",
       );
       expect(nonce).to.not.be.undefined;
     });
