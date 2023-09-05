@@ -7,6 +7,7 @@
 - fix: initial_gas set to max_fee and fixed fee not being charged when max_fee=0
 - fix: correct value of compiled_class_hash in RPCTransaction
 - ci: scope cache by branch and add cache cleanup
+- feat: bump starknet-core to 0.6.0 and remove InvokeV0
 
 ## v0.2.0
 
