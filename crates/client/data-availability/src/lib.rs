@@ -28,12 +28,34 @@ pub enum DaLayer {
     Avail,
 }
 
+/// Data availability modes in which Madara can be initialized.
+///
+/// Default only mode currently implemented is Validium.
 #[derive(Debug, Copy, Clone, PartialEq, Deserialize, Default)]
 pub enum DaMode {
+    /// Full Validity Rollup
+    ///
+    /// Generates a Cairo execution trace of the StarknetOS
+    /// run for the given block as it is applied to the current Madara state.
+    /// Once this execution trace is proved to the L1 Verifier(i.e. [Ethereum](https://goerli.etherscan.io/address/0x8f97970aC5a9aa8D130d35146F5b59c4aef57963))
+    /// the relevant [state diff](https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/on-chain-data) can be written and validated against the on-chain
+    /// proof verification of the block propogation.
     #[serde(rename = "validity")]
     Validity,
+    /// Hybrid Volition
+    ///
+    /// Volitions allow applications and users to interoperate between on-chain data and off-chain
+    /// da. Although full specs are not currently available, this mode will entail generating
+    /// a StarknetOS execution trace for data elected to be on-chain and interaction w/ the prover
+    /// will be necessary.
     #[serde(rename = "volition")]
     Volition,
+    /// Sovereign Validium
+    ///
+    /// Validium state diffs are untethered to an accompanying validity proof therefore
+    /// they can simply be published to any da solution available. As this solution does not
+    /// require an execution trace to be proved we can simply parse the state diff from the
+    /// storage changes of the block.
     #[serde(rename = "validium")]
     #[default]
     Validium,

@@ -289,7 +289,7 @@ pub fn run() -> sc_cli::Result<()> {
                 None => {
                     log::info!("madara initialized w/o da layer");
                     None
-                },
+                }
             };
 
             let runner = cli.create_runner(&cli.run.run_cmd)?;
