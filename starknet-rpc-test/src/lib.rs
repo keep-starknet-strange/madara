@@ -4,7 +4,7 @@ use std::cell::Cell;
 use std::fmt::Debug;
 use std::net::TcpListener;
 use std::path::Path;
-use std::process::{Child, Command, Stdio};
+use std::process::{Child, Command};
 
 use anyhow::anyhow;
 use constants::{MAX_PORT, MIN_PORT};
@@ -152,8 +152,8 @@ impl MadaraClient {
 
         let child_handle = Command::new("cargo")
 		// Silence Madara stdout and stderr
-		.stdout(Stdio::null())
-		.stderr(Stdio::null())
+		// .stdout(Stdio::null())
+		// .stderr(Stdio::null())
 		.args([
 			"run",
 			"--release",
