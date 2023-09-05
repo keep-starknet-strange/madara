@@ -41,7 +41,7 @@ async fn works_with_correct_block(#[future] madara: MadaraClient) -> Result<(), 
     let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
-    let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS);
+    let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     madara
         .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(
             FieldElement::from_hex_be("0x1234").unwrap(),

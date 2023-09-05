@@ -27,7 +27,7 @@ async fn work_ok_at_start_and_with_new_blocks(#[future] madara: MadaraClient) ->
     );
     assert_eq!(rpc.block_hash_and_number().await?.block_number, 1);
 
-    let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS);
+    let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
 
     let token_transfer_tx = Transaction::Execution(account.transfer_tokens(
         FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).expect("Invalid Contract Address"),

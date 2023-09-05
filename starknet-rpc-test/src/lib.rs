@@ -4,7 +4,7 @@ use std::cell::Cell;
 use std::fmt::Debug;
 use std::net::TcpListener;
 use std::path::Path;
-use std::process::{Child, Command, Stdio};
+use std::process::{Child, Command};
 
 use anyhow::anyhow;
 use constants::{MAX_PORT, MIN_PORT};
@@ -152,8 +152,8 @@ impl MadaraClient {
 
         let child_handle = Command::new("cargo")
 		// Silence Madara stdout and stderr
-		.stdout(Stdio::null())
-		.stderr(Stdio::null())
+		// .stdout(Stdio::null())
+		// .stderr(Stdio::null())
 		.args([
 			"run",
 			"--release",
@@ -163,7 +163,7 @@ impl MadaraClient {
 			&format!("--execution={execution}"),
 			"--chain=dev",
 			"--tmp",
-			&format!("--rpc-port={free_port}"),
+			&format!("--rpc-port={free_port}")
 			])
 			.spawn()
 			.expect("Could not start background madara node");
@@ -259,21 +259,24 @@ impl MadaraClient {
         response.status().is_success().then_some(()).ok_or(anyhow!("failed to create a new block"))
     }
 
-    pub async fn create_block_with_txs(&self, transactions: Vec<Transaction<'_>>) -> anyhow::Result<()> {
+    pub async fn create_block_with_txs(
+        &self,
+        transactions: Vec<Transaction<'_>>,
+    ) -> anyhow::Result<Vec<Result<TransactionResult, SendTransactionError>>> {
         let body = json!({
             "method": "engine_createBlock",
             "params": [false, true],
         });
 
-        let mut results: Vec<TransactionResult> = Vec::new();
+        let mut results = Vec::new();
         for tx in transactions {
-            let result = tx.send().await?;
+            let result = tx.send().await;
             results.push(result);
         }
 
         let response = self.call_rpc(body).await?;
         // TODO: read actual error from response
-        response.status().is_success().then_some(()).ok_or(anyhow!("failed to create a new block"))
+        response.status().is_success().then_some(results).ok_or(anyhow!("failed to create a new block"))
     }
 
     pub async fn create_block_with_parent(&self, parent_hash: &str) -> anyhow::Result<()> {
