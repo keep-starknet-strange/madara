@@ -58,5 +58,21 @@ name = "starknet_get_class_hash_at"
 path = "get_class_hash_at.rs"
 
 [[test]]
+name= "starknet_get_nonce"
+path = "get_nonce.rs"
+
+[[test]]
+name = "starknet_call"
+path = "call.rs"
+
+[[test]]
+name = "starknet_get_block_with_tx_hashes"
+path = "get_block_with_tx_hashes.rs"
+
+[[test]]
+name = "starknet_get_block_with_txs"
+path = "get_block_with_txs.rs"
+
+[[test]]
 name= "starknet_get_transaction_by_blockid_and_index"
 path = "get_transaction_by_blockid_and_index.rs"
