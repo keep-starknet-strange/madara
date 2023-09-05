@@ -5,8 +5,7 @@ use rstest::rstest;
 use starknet_accounts::SingleOwnerAccount;
 use starknet_core::chain_id;
 use starknet_core::types::{
-    BlockId, BlockTag, DeclareTransaction, InvokeTransaction, InvokeTransactionV1, MaybePendingBlockWithTxs,
-    StarknetError, Transaction,
+    BlockId, BlockTag, InvokeTransaction, InvokeTransactionV1, MaybePendingBlockWithTxs, StarknetError, Transaction,
 };
 use starknet_ff::FieldElement;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
@@ -24,14 +23,12 @@ async fn fail_non_existing_block(#[future] madara: MadaraClient) -> Result<(), a
     let rpc = madara.get_starknet_client();
 
     assert_matches!(
-        rpc
-        .get_transaction_by_block_id_and_index(
-            BlockId::Number(1),
-            0
-        )
-        .await,
-        Err(StarknetProviderError(StarknetErrorWithMessage { code:
-MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::BlockNotFound     );
+        rpc.get_transaction_by_block_id_and_index(BlockId::Number(1), 0).await,
+        Err(StarknetProviderError(StarknetErrorWithMessage {
+            code: MaybeUnknownErrorCode::Known(StarknetError::BlockNotFound),
+            ..
+        }))
+    );
 
     Ok(())
 }
@@ -43,15 +40,12 @@ async fn fail_out_of_block_index(#[future] madara: MadaraClient) -> Result<(), a
     let rpc = madara.get_starknet_client();
 
     assert_matches!(
-            rpc
-            .get_transaction_by_block_id_and_index(
-                BlockId::Tag(BlockTag::Latest),
-                0
-            )
-            .await,
-            Err(StarknetProviderError(StarknetErrorWithMessage { code:
-    MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::InvalidTransactionIndex
-        );
+        rpc.get_transaction_by_block_id_and_index(BlockId::Tag(BlockTag::Latest), 0).await,
+        Err(StarknetProviderError(StarknetErrorWithMessage {
+            code: MaybeUnknownErrorCode::Known(StarknetError::InvalidTransactionIndex),
+            ..
+        }))
+    );
 
     Ok(())
 }
@@ -90,18 +84,16 @@ async fn work_ok_by_compare_with_get_block_with_tx(#[future] madara: MadaraClien
     let tx_1 = rpc.get_transaction_by_block_id_and_index(BlockId::Tag(BlockTag::Latest), 0).await?;
     let tx_2 = rpc.get_transaction_by_block_id_and_index(BlockId::Tag(BlockTag::Latest), 1).await?;
 
-    let block_with_txs = rpc.get_block_with_txs(BlockId::Tag(BlockTag::Latest)).await?;
-
-    assert_matches!(tx_1, Transaction::Invoke(InvokeTransaction::V1(InvokeTransactionV1 {
+    let tx_1_hash = assert_matches!(tx_1, Transaction::Invoke(InvokeTransaction::V1(InvokeTransactionV1 {
         nonce,
         sender_address,
         transaction_hash,
         ..
      })) if nonce == FieldElement::ZERO 
-            && sender_address == argent_account_address
-            && Some(&transaction_hash) == get_transaction_hash_from_block_with_txs(&block_with_txs, 0));
+            && sender_address == argent_account_address 
+            => transaction_hash);
 
-    assert_matches!(tx_2, Transaction::Invoke(InvokeTransaction::V1(InvokeTransactionV1 {
+    let tx_2_hash = assert_matches!(tx_2, Transaction::Invoke(InvokeTransaction::V1(InvokeTransactionV1 {
         nonce,
         sender_address,
         max_fee,
@@ -109,31 +101,37 @@ async fn work_ok_by_compare_with_get_block_with_tx(#[future] madara: MadaraClien
         ..
         })) if nonce == FieldElement::ONE 
             && sender_address == argent_account_address
-            && max_fee == FieldElement::from_hex_be("0xDEADB").unwrap()
-            && Some(&transaction_hash) == get_transaction_hash_from_block_with_txs(&block_with_txs, 1));
+            && max_fee == FieldElement::from_hex_be("0xDEADB").unwrap() 
+            => transaction_hash);
+
+    let block_with_txs = rpc.get_block_with_txs(BlockId::Tag(BlockTag::Latest)).await?;
+
+    assert_matches!(get_transaction_from_block_with_txs(&block_with_txs, 0), Transaction::Invoke(InvokeTransaction::V1(InvokeTransactionV1 {
+        nonce,
+        sender_address,
+        transaction_hash,
+        ..
+        })) if nonce == &FieldElement::ZERO 
+            && sender_address == &argent_account_address
+            && transaction_hash == &tx_1_hash);
+
+    assert_matches!(get_transaction_from_block_with_txs(&block_with_txs, 1), Transaction::Invoke(InvokeTransaction::V1(InvokeTransactionV1 {
+        nonce,
+        sender_address,
+        max_fee,
+        transaction_hash,
+        ..
+        })) if nonce == &FieldElement::ONE
+            && sender_address == &argent_account_address
+            && max_fee == &FieldElement::from_hex_be("0xDEADB").unwrap()
+            && transaction_hash == &tx_2_hash);
 
     Ok(())
 }
 
-fn get_transaction_hash(tx: &Transaction) -> Option<&FieldElement> {
-    match tx {
-        Transaction::Invoke(InvokeTransaction::V0(v0_tx)) => Some(&v0_tx.transaction_hash),
-        Transaction::L1Handler(l1_handler_tx) => Some(&l1_handler_tx.transaction_hash),
-        Transaction::Declare(DeclareTransaction::V0(v0_tx)) => Some(&v0_tx.transaction_hash),
-        Transaction::Declare(DeclareTransaction::V1(v1_tx)) => Some(&v1_tx.transaction_hash),
-        Transaction::Declare(DeclareTransaction::V2(v2_tx)) => Some(&v2_tx.transaction_hash),
-        Transaction::Invoke(InvokeTransaction::V1(v1_tx)) => Some(&v1_tx.transaction_hash),
-        Transaction::Deploy(deploy_tx) => Some(&deploy_tx.transaction_hash),
-        Transaction::DeployAccount(deploy_account_tx) => Some(&deploy_account_tx.transaction_hash),
-    }
-}
-
-fn get_transaction_hash_from_block_with_txs(
-    block_with_txs: &MaybePendingBlockWithTxs,
-    index: usize,
-) -> Option<&FieldElement> {
+fn get_transaction_from_block_with_txs(block_with_txs: &MaybePendingBlockWithTxs, index: usize) -> &Transaction {
     match block_with_txs {
-        MaybePendingBlockWithTxs::Block(b) => get_transaction_hash(&b.transactions[index]),
-        MaybePendingBlockWithTxs::PendingBlock(pb) => get_transaction_hash(&pb.transactions[index]),
+        MaybePendingBlockWithTxs::Block(b) => &b.transactions[index],
+        MaybePendingBlockWithTxs::PendingBlock(pb) => &pb.transactions[index],
     }
 }
