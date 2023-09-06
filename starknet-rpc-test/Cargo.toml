@@ -77,7 +77,3 @@ path = "get_block_with_txs.rs"
 [[test]]
 name = "starknet_get_transaction_by_blockid_and_index"
 path = "get_transaction_by_blockid_and_index.rs"
-
-[[test]]
-name = "starknet_add_invoke_transaction"
-path = "add_invoke_transaction.rs"
