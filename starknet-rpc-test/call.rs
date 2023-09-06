@@ -5,7 +5,7 @@ extern crate starknet_rpc_test;
 use std::assert_matches::assert_matches;
 
 use rstest::rstest;
-use starknet_accounts::Account;
+use starknet_accounts::{Account, Execution};
 use starknet_contract::ContractFactory;
 use starknet_core::types::{BlockId, BlockTag, FunctionCall, StarknetError};
 use starknet_core::utils::get_selector_from_name;
@@ -157,7 +157,7 @@ async fn works_on_mutable_call_without_modifying_storage(#[future] madara: Madar
     let rpc = madara.get_starknet_client();
 
     madara.create_empty_block().await?;
-    let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS);
+    let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
 
     let (declare_tx, class_hash, _) =
         account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
@@ -171,7 +171,8 @@ async fn works_on_mutable_call_without_modifying_storage(#[future] madara: Madar
     // so automatic nonce calculation will fail
     let nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account.address()).await.unwrap() + FieldElement::ONE;
 
-    let deploy_tx = contract_factory.deploy(vec![], FieldElement::ZERO, true).max_fee(max_fee).nonce(nonce);
+    let deploy_tx =
+        Execution::from(&contract_factory.deploy(vec![], FieldElement::ZERO, true).max_fee(max_fee).nonce(nonce));
 
     // declare and deploy contract
     madara.create_block_with_txs(vec![Transaction::Declaration(declare_tx), Transaction::Execution(deploy_tx)]).await?;

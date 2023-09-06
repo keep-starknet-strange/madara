@@ -5,16 +5,14 @@ extern crate starknet_rpc_test;
 use std::assert_matches::assert_matches;
 
 use rstest::rstest;
-use starknet_accounts::SingleOwnerAccount;
-use starknet_core::chain_id;
+use starknet_accounts::Account;
 use starknet_core::types::{BlockId, BlockTag};
 use starknet_ff::FieldElement;
 use starknet_providers::{Provider, ProviderError};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, MINT_AMOUNT, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::utils::AccountActions;
+use starknet_rpc_test::utils::{create_account, AccountActions};
 use starknet_rpc_test::{MadaraClient, Transaction};
-use starknet_signers::{LocalWallet, SigningKey};
 
 #[rstest]
 #[tokio::test]
@@ -50,11 +48,9 @@ async fn work_ok_with_block_one_tx(#[future] madara: MadaraClient) -> Result<(),
     let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
-    let signer = LocalWallet::from(SigningKey::from_secret_scalar(FieldElement::from_hex_be(SIGNER_PRIVATE).unwrap()));
-    let argent_account_address = FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).expect("Invalid Contract Address");
-    let account = SingleOwnerAccount::new(rpc, signer, argent_account_address, chain_id::TESTNET);
+    let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let token_transfer_tx = account.transfer_tokens(
-        argent_account_address,
+        account.address(),
         FieldElement::from_hex_be(MINT_AMOUNT).expect("Invalid Mint Amount"),
         None,
     );

@@ -2,8 +2,7 @@ extern crate starknet_rpc_test;
 
 use assert_matches::assert_matches;
 use rstest::rstest;
-use starknet_accounts::SingleOwnerAccount;
-use starknet_core::chain_id;
+use starknet_accounts::Account;
 use starknet_core::types::{
     BlockId, BlockTag, InvokeTransaction, InvokeTransactionV1, MaybePendingBlockWithTxs, StarknetError, Transaction,
 };
@@ -12,9 +11,8 @@ use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, MINT_AMOUNT, SIGNER_PRIVATE, TEST_CONTRACT_CLASS_HASH};
 use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::utils::AccountActions;
+use starknet_rpc_test::utils::{create_account, AccountActions};
 use starknet_rpc_test::{MadaraClient, Transaction as TransactionEnum};
-use starknet_signers::{LocalWallet, SigningKey};
 
 #[rstest]
 #[tokio::test]
@@ -56,9 +54,8 @@ async fn work_ok_by_compare_with_get_block_with_tx(#[future] madara: MadaraClien
     let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
-    let signer = LocalWallet::from(SigningKey::from_secret_scalar(FieldElement::from_hex_be(SIGNER_PRIVATE).unwrap()));
-    let argent_account_address = FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).expect("Invalid Contract Address");
-    let account = SingleOwnerAccount::new(rpc, signer, argent_account_address, chain_id::TESTNET);
+    let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    let argent_account_address = account.address();
 
     madara.create_empty_block().await?;
 
@@ -89,8 +86,8 @@ async fn work_ok_by_compare_with_get_block_with_tx(#[future] madara: MadaraClien
         sender_address,
         transaction_hash,
         ..
-     })) if nonce == FieldElement::ZERO 
-            && sender_address == argent_account_address 
+     })) if nonce == FieldElement::ZERO
+            && sender_address == argent_account_address
             => transaction_hash);
 
     let tx_2_hash = assert_matches!(tx_2, Transaction::Invoke(InvokeTransaction::V1(InvokeTransactionV1 {
@@ -99,9 +96,9 @@ async fn work_ok_by_compare_with_get_block_with_tx(#[future] madara: MadaraClien
         max_fee,
         transaction_hash,
         ..
-        })) if nonce == FieldElement::ONE 
+        })) if nonce == FieldElement::ONE
             && sender_address == argent_account_address
-            && max_fee == FieldElement::from_hex_be("0xDEADB").unwrap() 
+            && max_fee == FieldElement::from_hex_be("0xDEADB").unwrap()
             => transaction_hash);
 
     let block_with_txs = rpc.get_block_with_txs(BlockId::Tag(BlockTag::Latest)).await?;
@@ -111,7 +108,7 @@ async fn work_ok_by_compare_with_get_block_with_tx(#[future] madara: MadaraClien
         sender_address,
         transaction_hash,
         ..
-        })) if nonce == &FieldElement::ZERO 
+        })) if nonce == &FieldElement::ZERO
             && sender_address == &argent_account_address
             && transaction_hash == &tx_1_hash);
 

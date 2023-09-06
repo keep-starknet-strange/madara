@@ -16,7 +16,9 @@ use starknet_core::types::{
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
-use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
+use starknet_rpc_test::constants::{
+    ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE, SIGNER_PRIVATE,
+};
 use starknet_rpc_test::fixtures::madara;
 use starknet_rpc_test::utils::{assert_equal_blocks_with_txs, create_account, AccountActions};
 use starknet_rpc_test::{MadaraClient, Transaction};
@@ -47,7 +49,7 @@ async fn works_with_invoke_txn(#[future] madara: MadaraClient) -> Result<(), any
     let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
-    let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS);
+    let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let recipient = FieldElement::from_hex_be("0x1234").unwrap();
     madara
         .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(
@@ -84,7 +86,7 @@ async fn works_with_invoke_txn(#[future] madara: MadaraClient) -> Result<(), any
                     "0x00581e60706c38d474ef27099f5e3f9506c63211340f7ca1849abe382c33123f",
                 )
                 .unwrap(),
-                max_fee: FieldElement::from_hex_be("0xFFFFFFFFFFFF").unwrap(),
+                max_fee: FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap(),
                 signature: vec![
                     FieldElement::from_hex_be("0x053804f9408e2487cc3f8c9ab5fdce261ed9bc43c95630be6ed9f276803ecb90")
                         .unwrap(),
@@ -119,16 +121,15 @@ async fn works_with_deploy_account_txn(#[future] madara: MadaraClient) -> Result
 
     let signer = LocalWallet::from(SigningKey::from_secret_scalar(FieldElement::from_hex_be("0x123").unwrap()));
 
-    let class_hash =
-        FieldElement::from_hex_be("0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276").unwrap();
+    let class_hash = FieldElement::from_hex_be(CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH).unwrap();
     let contract_address_salt = FieldElement::ONE;
 
     let oz_factory = OpenZeppelinAccountFactory::new(class_hash, chain_id::TESTNET, signer, rpc).await.unwrap();
 
-    let max_fee = FieldElement::from_hex_be("0xFFFFFFFFFFFF").unwrap();
+    let max_fee = FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap();
     let account_deploy_txn = oz_factory.deploy(contract_address_salt).max_fee(max_fee);
 
-    let funding_account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS);
+    let funding_account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let account_address = account_deploy_txn.address();
 
     madara
@@ -166,7 +167,7 @@ async fn works_with_deploy_account_txn(#[future] madara: MadaraClient) -> Result
                         "0x0770319fa9fda65e97216fac7cde986406874518deb2337e7f60ea91daa49611",
                     )
                     .unwrap(),
-                    max_fee: FieldElement::from_hex_be("0xFFFFFFFFFFFF").unwrap(),
+                    max_fee: FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap(),
                     signature: vec![
                         FieldElement::from_hex_be("0x031adb83ec6f5b559f1195f3f4d2460976ee5e1a0b1cc28acee3ae18f4bca245")
                             .unwrap(),
@@ -220,14 +221,14 @@ async fn works_with_declare_txn(#[future] madara: MadaraClient) -> Result<(), an
     let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
-    let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS);
+    let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let (declare_tx, class_hash, compiled_class_hash) =
         account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
     let (mut declare_tx_legacy, class_hash_legacy) = account.declare_legacy_contract("./contracts/ERC20.json");
 
     // manually setting fee else estimate_fee will be called and it will fail
     // as the nonce has not been updated yet
-    let max_fee = FieldElement::from_hex_be("0xFFFFFFFFFFFF").unwrap();
+    let max_fee = FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap();
 
     // manually incrementing nonce else as fetching nonce will get 0 as
     // the both txns are in the same block

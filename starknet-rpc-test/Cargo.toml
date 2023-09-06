@@ -5,19 +5,20 @@ edition = "2021"
 
 
 [dependencies]
+
 anyhow = "1.0.72"
 derive_more = "0.99.17"
 reqwest = "0.11.18"
 serde = { version = "1.0.179", features = ["derive"] }
 serde_json = "1.0.104"
-thiserror = {workspace= true}
-starknet-ff = {workspace = true}
-starknet-core = {workspace = true}
-starknet-crypto = {workspace = true}
-starknet-providers = {workspace = true}
-starknet-signers = {version = "^0.3.0"}
-starknet-accounts = {version = "^0.4.0"}
-starknet-contract = {version = "^0.4.0"}
+starknet-ff = { workspace = true }
+starknet-core = { workspace = true }
+starknet-crypto = { workspace = true }
+starknet-providers = { workspace = true }
+starknet-signers = { version = "^0.4.0" }
+starknet-accounts = { version = "^0.5.0" }
+starknet-contract = { version = "^0.5.0" }
+thiserror = { workspace = true }
 url = "2.2.2"
 tokio = { version = "1.29.1", features = ["rt", "macros", "parking_lot"] }
 lazy_static = "1.4.0"
@@ -58,7 +59,7 @@ name = "starknet_get_class_hash_at"
 path = "get_class_hash_at.rs"
 
 [[test]]
-name= "starknet_get_nonce"
+name = "starknet_get_nonce"
 path = "get_nonce.rs"
 
 [[test]]
@@ -74,5 +75,5 @@ name = "starknet_get_block_with_txs"
 path = "get_block_with_txs.rs"
 
 [[test]]
-name= "starknet_get_transaction_by_blockid_and_index"
+name = "starknet_get_transaction_by_blockid_and_index"
 path = "get_transaction_by_blockid_and_index.rs"
