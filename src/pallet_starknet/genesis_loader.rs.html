@@ -153,7 +153,23 @@
 <a href="#153" id="153">153</a>
 <a href="#154" id="154">154</a>
 <a href="#155" id="155">155</a>
-</pre><pre class="rust"><code><span class="kw">use </span>std::string::String;
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+</pre><pre class="rust"><code><span class="kw">use </span>std::fmt;
+<span class="kw">use </span>std::string::String;
 <span class="kw">use </span>std::vec::Vec;
 
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass <span class="kw">as </span>StarknetContractClass;
@@ -172,13 +188,27 @@
 #[derive(Serialize, Deserialize, Copy, Clone)]
 </span><span class="kw">pub struct </span>HexFelt(<span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>)] </span><span class="kw">pub </span>FieldElement);
 
+<span class="kw">impl </span>fmt::LowerHex <span class="kw">for </span>HexFelt {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        <span class="kw">let </span>val = <span class="self">self</span>.<span class="number">0</span>;
+
+        fmt::LowerHex::fmt(<span class="kw-2">&amp;</span>val, f)
+    }
+}
+
+<span class="kw">impl </span>From&lt;Felt252Wrapper&gt; <span class="kw">for </span>HexFelt {
+    <span class="kw">fn </span>from(felt: Felt252Wrapper) -&gt; HexFelt {
+        HexFelt(felt.<span class="number">0</span>)
+    }
+}
+
 <span class="kw">type </span>ClassHash = HexFelt;
 <span class="kw">type </span>ContractAddress = HexFelt;
 <span class="kw">type </span>StorageKey = HexFelt;
 <span class="kw">type </span>ContractStorageKey = (ContractAddress, StorageKey);
 <span class="kw">type </span>StorageValue = HexFelt;
 
-<span class="attr">#[derive(Deserialize, Serialize)]
+<span class="attr">#[derive(Deserialize, Serialize, Clone)]
 </span><span class="kw">pub struct </span>GenesisLoader {
     <span class="kw">pub </span>madara_path: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="kw">pub </span>contract_classes: Vec&lt;(ClassHash, ContractClass)&gt;,
@@ -188,7 +218,7 @@
     <span class="kw">pub </span>seq_addr_updated: bool,
 }
 
-<span class="attr">#[derive(Deserialize, Serialize)]
+<span class="attr">#[derive(Deserialize, Serialize, Clone)]
 #[serde(untagged)]
 </span><span class="kw">pub enum </span>ContractClass {
     Path { path: String, version: u8 },
