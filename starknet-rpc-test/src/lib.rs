@@ -152,8 +152,8 @@ impl MadaraClient {
 
         let child_handle = Command::new("cargo")
 		// Silence Madara stdout and stderr
-		// .stdout(Stdio::null())
-		// .stderr(Stdio::null())
+		.stdout(Stdio::null())
+		.stderr(Stdio::null())
 		.args([
 			"run",
 			"--release",
