@@ -4,7 +4,7 @@ use std::cell::Cell;
 use std::fmt::Debug;
 use std::net::TcpListener;
 use std::path::Path;
-use std::process::{Child, Command};
+use std::process::{Child, Command, Stdio};
 
 use anyhow::anyhow;
 use constants::{MAX_PORT, MIN_PORT};
