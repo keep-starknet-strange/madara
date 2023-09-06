@@ -24,15 +24,14 @@ impl HasherT for PoseidonHasher {
         const CHUNK_SIZE: usize = 31;
         let chunks = data.chunks(CHUNK_SIZE);
 
-        let mut data_vectors: Vec<Felt252Wrapper> = Vec::with_capacity(chunks.len());
+        let mut field_element_vector: Vec<FieldElement> = Vec::with_capacity(chunks.len());
 
         for chunk in chunks {
             // Convert the buffer to a FieldElement and then to a Felt252Wrapper.
-            let field_element = FieldElement::from_byte_slice_be(chunk).unwrap();
-            data_vectors.push(Felt252Wrapper(field_element))
+            field_element_vector.push(FieldElement::from_byte_slice_be(chunk).unwrap())
         }
 
-        self.compute_hash_on_wrappers(&data_vectors)
+        Felt252Wrapper(poseidon_hash_many(&field_element_vector))
     }
 
     /// Hashes a slice of field elements using the Poseidon hash function.
