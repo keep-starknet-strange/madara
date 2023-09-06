@@ -8,7 +8,7 @@
 //! the [`FieldElement`] type from starknet-ff.
 
 use alloc::string::String;
-use core::fmt;
+
 
 use cairo_vm::felt::Felt252;
 use scale_codec::{Decode, Encode, EncodeLike, Error, Input, MaxEncodedLen, Output};

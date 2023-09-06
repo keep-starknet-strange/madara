@@ -1,11 +1,11 @@
 use std::path::PathBuf;
 
-use madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Runtime, SystemConfig, WASM_BINARY};
+use madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
 use mp_starknet::execution::types::Felt252Wrapper;
 use pallet_starknet::genesis_loader::{GenesisLoader, HexFelt};
 use pallet_starknet::utils;
 use sc_service::ChainType;
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::storage::Storage;
@@ -93,9 +93,6 @@ pub fn development_config(enable_manual_seal: Option<bool>, madara_path: PathBuf
 // accounts with addresses 0x1 and 0x4 are NO VALIDATE accounts (don't require PK)
 // accounts with addresses 0x2 and 0x3 have the same PK
 pub fn print_development_accounts(genesis_loader: GenesisLoader) {
-    // let genesis_config: madara_runtime::pallet_starknet::GenesisConfig<Runtime> =
-    // genesis_loader.into();
-    // let no_validate_account_address = genesis_config.contracts[0].0.0;
     let no_validate_account_address = genesis_loader.contracts[0].0.0;
     let argent_account_address = genesis_loader.contracts[1].0.0;
     let oz_account_address = genesis_loader.contracts[2].0.0;
