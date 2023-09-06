@@ -4,18 +4,14 @@ use std::vec;
 
 use assert_matches::assert_matches;
 use rstest::rstest;
-use starknet_accounts::{Account, AccountFactory, ExecutionEncoding, OpenZeppelinAccountFactory, SingleOwnerAccount};
-use starknet_core::chain_id;
-use starknet_core::types::{InvokeTransactionResult, StarknetError};
+use starknet_accounts::Account;
+use starknet_core::types::{BlockId, BlockTag, InvokeTransactionResult, StarknetError};
 use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
-use starknet_rpc_test::constants::{
-    ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE, SIGNER_PRIVATE,
-};
+use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::madara;
 use starknet_rpc_test::utils::{create_account, read_erc20_balance, AccountActions};
 use starknet_rpc_test::{MadaraClient, SendTransactionError, Transaction, TransactionResult};
-use starknet_signers::{LocalWallet, SigningKey};
 
 #[rstest]
 #[tokio::test]
@@ -74,26 +70,30 @@ async fn works_with_storage_change(#[future] madara: MadaraClient) -> Result<(),
 
     assert_eq!(txs.len(), 1);
 
-    let invoke_tx_result = txs.remove(0).unwrap();
+    let invoke_tx_result = txs.remove(0);
     match invoke_tx_result {
-        TransactionResult::Execution(InvokeTransactionResult { transaction_hash }) => {
+        Ok(TransactionResult::Execution(InvokeTransactionResult { transaction_hash })) => {
             assert_eq!(
                 transaction_hash,
                 FieldElement::from_hex_be("0x062ab35d456761550b667f14633d182d250285cac50991f3b0eb24c4c3be6979")
                     .unwrap()
             )
         }
-        _ => panic!("Unexpected transaction result"),
+        _ => panic!("Expected invoke transaction result"),
     }
     assert_eq!(final_balance[1], initial_balance[1]); // higher 128 bits are equal
     assert_eq!(final_balance[0] - initial_balance[0], FieldElement::ONE); // lower 128 bits differ by one
+
+    // included in block
+    let included_txs = rpc.get_block_transaction_count(BlockId::Tag(BlockTag::Latest)).await?;
+    assert_eq!(included_txs, 1);
 
     Ok(())
 }
 
 #[rstest]
 #[tokio::test]
-async fn fail_execution_step_with_no_strage_change(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+async fn fail_execution_step_with_no_storage_change(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
     // we will try to transfer all the funds of the funding account
     // so the transaction will fail in the execution step as we won't have
     // funds to pay the fees
@@ -125,6 +125,10 @@ async fn fail_execution_step_with_no_strage_change(#[future] madara: MadaraClien
 
     assert!(invoke_tx_result.is_ok()); // the transaction was sent successfully
     assert_eq!(final_balance, initial_balance);
+
+    // doesn't get included in block
+    let included_txs = rpc.get_block_transaction_count(BlockId::Tag(BlockTag::Latest)).await?;
+    assert_eq!(included_txs, 0);
 
     Ok(())
 }

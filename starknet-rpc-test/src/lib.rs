@@ -4,7 +4,7 @@ use std::cell::Cell;
 use std::fmt::Debug;
 use std::net::TcpListener;
 use std::path::Path;
-use std::process::{Child, Command};
+use std::process::{Child, Command, Stdio};
 
 use anyhow::anyhow;
 use constants::{MAX_PORT, MIN_PORT};
@@ -34,11 +34,11 @@ pub mod utils;
 pub mod fixtures;
 
 type RpcAccount<'a> = SingleOwnerAccount<&'a JsonRpcClient<HttpTransport>, LocalWallet>;
+pub type RpcOzAccountFactory<'a> = OpenZeppelinAccountFactory<LocalWallet, &'a JsonRpcClient<HttpTransport>>;
 type TransactionExecution<'a> = Execution<'a, RpcAccount<'a>>;
 type TransactionDeclaration<'a> = Declaration<'a, RpcAccount<'a>>;
 type TransactionLegacyDeclaration<'a> = LegacyDeclaration<'a, RpcAccount<'a>>;
-type TransactionAccountDeployment<'a> =
-    AccountDeployment<'a, OpenZeppelinAccountFactory<LocalWallet, &'a JsonRpcClient<HttpTransport>>>;
+type TransactionAccountDeployment<'a> = AccountDeployment<'a, RpcOzAccountFactory<'a>>;
 
 pub enum Transaction<'a> {
     Execution(TransactionExecution<'a>),
@@ -152,8 +152,8 @@ impl MadaraClient {
 
         let child_handle = Command::new("cargo")
 		// Silence Madara stdout and stderr
-		// .stdout(Stdio::null())
-		// .stderr(Stdio::null())
+		.stdout(Stdio::null())
+		.stderr(Stdio::null())
 		.args([
 			"run",
 			"--release",

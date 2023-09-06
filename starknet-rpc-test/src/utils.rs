@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use starknet_accounts::{Account, Call, SingleOwnerAccount};
+use starknet_accounts::{Account, AccountFactory, Call, OpenZeppelinAccountFactory, SingleOwnerAccount};
 use starknet_core::chain_id;
 use starknet_core::types::contract::legacy::LegacyContractClass;
 use starknet_core::types::contract::{CompiledClass, SierraClass};
@@ -14,7 +14,10 @@ use starknet_providers::Provider;
 use starknet_signers::{LocalWallet, SigningKey};
 
 use crate::constants::{FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE};
-use crate::{RpcAccount, TransactionDeclaration, TransactionExecution, TransactionLegacyDeclaration};
+use crate::{
+    RpcAccount, RpcOzAccountFactory, TransactionAccountDeployment, TransactionDeclaration, TransactionExecution,
+    TransactionLegacyDeclaration,
+};
 
 pub fn create_account<'a>(
     rpc: &'a JsonRpcClient<HttpTransport>,
@@ -47,6 +50,23 @@ pub async fn read_erc20_balance<'a>(
     )
     .await
     .unwrap()
+}
+
+pub async fn build_oz_account_factory<'a>(
+    rpc: &'a JsonRpcClient<HttpTransport>,
+    private_key: &str,
+    class_hash: FieldElement,
+) -> RpcOzAccountFactory<'a> {
+    let signer = LocalWallet::from(SigningKey::from_secret_scalar(FieldElement::from_hex_be(private_key).unwrap()));
+    OpenZeppelinAccountFactory::new(class_hash, chain_id::TESTNET, signer, rpc).await.unwrap()
+}
+
+pub fn build_deploy_account_tx<'a>(
+    oz_factory: &'a RpcOzAccountFactory,
+    contract_address_salt: FieldElement,
+) -> TransactionAccountDeployment<'a> {
+    let max_fee = FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap();
+    oz_factory.deploy(contract_address_salt).max_fee(max_fee)
 }
 
 pub trait AccountActions {

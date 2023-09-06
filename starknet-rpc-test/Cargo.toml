@@ -81,3 +81,11 @@ path = "get_transaction_by_blockid_and_index.rs"
 [[test]]
 name = "starknet_add_invoke_transaction"
 path = "add_invoke_transaction.rs"
+
+[[test]]
+name = "starknet_add_declare_transaction"
+path = "add_declare_transaction.rs"
+
+[[test]]
+name = "starknet_add_deploy_account_transaction"
+path = "add_deploy_account_transaction.rs"
