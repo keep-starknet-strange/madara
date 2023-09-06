@@ -103,10 +103,10 @@ pub fn print_development_accounts(genesis_loader: &GenesisLoader) {
             .unwrap()
             .into();
     log::info!("🧪 Using the following development accounts:");
-    log::info!("{}", format!("🧪 NO VALIDATE with address: {no_validate_account_address:#x} and no pk"));
-    log::info!("{}", format!("🧪 ARGENT with address: {argent_account_address:#x} and pk: {argent_pk:#x}",));
-    log::info!("{}", format!("🧪 OZ with address: {oz_account_address:#x} and pk: {argent_pk:#x}"));
-    log::info!("{}", format!("🧪 CAIRO 1 with address: {cairo_1_no_validate_account_address:#x} and no pk"));
+    log::info!("🧪 NO VALIDATE with address: {no_validate_account_address:#x} and no pk");
+    log::info!("🧪 ARGENT with address: {argent_account_address:#x} and pk: {argent_pk:#x}");
+    log::info!("🧪 OZ with address: {oz_account_address:#x} and pk: {argent_pk:#x}");
+    log::info!("🧪 CAIRO 1 with address: {cairo_1_no_validate_account_address:#x} and no pk");
 }
 
 pub fn local_testnet_config(madara_path: PathBuf) -> Result<ChainSpec, String> {

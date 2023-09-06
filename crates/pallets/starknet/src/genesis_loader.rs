@@ -1,4 +1,3 @@
-use core::fmt::LowerHex;
 use std::fmt;
 use std::string::String;
 use std::vec::Vec;
@@ -11,7 +10,6 @@ use serde_with::serde_as;
 use starknet_core::serde::unsigned_field_element::UfeHex;
 use starknet_crypto::FieldElement;
 
-use crate::genesis_loader::fmt::Formatter;
 use crate::types::ContractStorageKeyWrapper;
 use crate::{utils, GenesisConfig};
 
@@ -20,8 +18,8 @@ use crate::{utils, GenesisConfig};
 #[derive(Serialize, Deserialize, Copy, Clone)]
 pub struct HexFelt(#[serde_as(as = "UfeHex")] pub FieldElement);
 
-impl LowerHex for HexFelt {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+impl fmt::LowerHex for HexFelt {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let val = self.0;
 
         fmt::LowerHex::fmt(&val, f)

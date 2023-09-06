@@ -9,7 +9,6 @@
 
 use alloc::string::String;
 
-
 use cairo_vm::felt::Felt252;
 use scale_codec::{Decode, Encode, EncodeLike, Error, Input, MaxEncodedLen, Output};
 use scale_info::build::Fields;
