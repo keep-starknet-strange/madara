@@ -1,6 +1,5 @@
 //! Pedersen hash module.
 use alloc::vec::Vec;
-use core::cmp;
 
 use starknet_core::crypto::compute_hash_on_elements;
 use starknet_crypto::{pedersen_hash, FieldElement};
@@ -22,22 +21,15 @@ impl HasherT for PedersenHasher {
     /// The hash of the data.
     fn hash_bytes(&self, data: &[u8]) -> Felt252Wrapper {
         // Calculate the number of 31-byte chunks we'll need, rounding up.
-        // (1 byte is used padding to prevent the value of field from being greater than modular)
-        // TODO: It is need a way to truncate bytes to fit into values smaller than modular (optimization)
-        let chunks = (data.len() + 30) / 31;
-
+        // (1 byte is used padding to prevent the value of field from being greater than the field's
+        // modulus) TODO: It is need a way to truncate bytes to fit into values smaller than modular
+        // (for optimization)
+        const CHUNK_SIZE: usize = 31;
         let mut hash_value = FieldElement::ZERO;
 
-        for i in 0..chunks {
-            let start = i * 31;
-            let end = cmp::min(start + 31, data.len());
-
-            // Create a buffer for our 32-byte chunk.
-            let mut buffer = [0u8; 32];
-            buffer[1..end - start + 1].copy_from_slice(&data[start..end]);
-
+        for chunk in data.chunks(CHUNK_SIZE) {
             // Convert the buffer to a FieldElement and then to a Felt252Wrapper.
-            let field_element = FieldElement::from_bytes_be(&buffer).unwrap();
+            let field_element = FieldElement::from_byte_slice_be(chunk).unwrap();
             hash_value = pedersen_hash(&hash_value, &field_element);
         }
 
@@ -97,7 +89,25 @@ fn dynamic_string_hashing() {
     assert_eq!(
         hash_value,
         Felt252Wrapper(
-            FieldElement::from_str("0x05a76d229982b7175a4da818ceec34c08690af7db687fa036838beccc87e7ed1").unwrap()
+            FieldElement::from_str("0x03501abfd0e0606ecab6702213a03294b81837e4d48232df3c39a62b88cc6f73").unwrap()
+        )
+    );
+}
+
+#[test]
+fn short_string_hashing() {
+    use core::str::FromStr;
+
+    let hasher = PedersenHasher::hasher();
+
+    let message = "madara".to_string();
+    let message = message.as_bytes();
+    let hash_value = hasher.hash_bytes(message);
+
+    assert_eq!(
+        hash_value,
+        Felt252Wrapper(
+            FieldElement::from_str("0x04b1b68d0622d978edcef1071b697f003896a8f432d4d5523a2f72ec812591f8").unwrap()
         )
     );
 }

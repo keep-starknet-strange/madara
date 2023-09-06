@@ -1,6 +1,5 @@
 //! Poseidon hash module.
 use alloc::vec::Vec;
-use core::cmp;
 
 use starknet_crypto::{poseidon_hash, poseidon_hash_many, FieldElement};
 
@@ -22,20 +21,14 @@ impl HasherT for PoseidonHasher {
         // Calculate the number of 31-byte chunks we'll need, rounding up.
         // (1 byte is used padding to prevent the value of field from being greater than modular)
         // TODO: It is need a way to truncate bytes to fit into values smaller than modular(optimization)
-        let chunks = (data.len() + 30) / 31;
+        const CHUNK_SIZE: usize = 31;
+        let chunks = data.chunks(CHUNK_SIZE);
 
-        let mut data_vectors: Vec<Felt252Wrapper> = Vec::with_capacity(chunks);
+        let mut data_vectors: Vec<Felt252Wrapper> = Vec::with_capacity(chunks.len());
 
-        for i in 0..chunks {
-            let start = i * 31;
-            let end = cmp::min(start + 31, data.len());
-
-            // Create a buffer for our 32-byte chunk.
-            let mut buffer = [0u8; 32];
-            buffer[1..end - start + 1].copy_from_slice(&data[start..end]);
-
+        for chunk in chunks {
             // Convert the buffer to a FieldElement and then to a Felt252Wrapper.
-            let field_element = FieldElement::from_bytes_be(&buffer).unwrap();
+            let field_element = FieldElement::from_byte_slice_be(chunk).unwrap();
             data_vectors.push(Felt252Wrapper(field_element))
         }
 
@@ -83,7 +76,25 @@ fn dynamic_string_hashing() {
     assert_eq!(
         hash_value,
         Felt252Wrapper(
-            FieldElement::from_str("0x029b80231608c1cfcd7ff4aa3e7148fae5c16bf3c6e1b61a1034de7c0ac8469a").unwrap()
+            FieldElement::from_str("0x05f6f93cec36381735e390c14a9cf3118801f2958a1b3a17d32906b9cbd75b78").unwrap()
+        )
+    );
+}
+
+#[test]
+fn short_string_hashing() {
+    use core::str::FromStr;
+
+    let hasher = PoseidonHasher::hasher();
+
+    let message = "madara".to_string();
+    let message = message.as_bytes();
+    let hash_value = hasher.hash_bytes(message);
+
+    assert_eq!(
+        hash_value,
+        Felt252Wrapper(
+            FieldElement::from_str("0x055cda6c81d938e0c009e96b81fac1ffbf00e3100b80ed891faf8b9bdf410fff").unwrap()
         )
     );
 }
