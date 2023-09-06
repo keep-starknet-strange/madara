@@ -2,12 +2,12 @@
 
 ## Next release
 
+- feat: bump starknet-core to 0.6.0 and remove InvokeV0
 - fix: estimate_fee should make sure all transaction have a version being
   2^128 + 1 or 2^128+2 depending on the tx type
 - fix: initial_gas set to max_fee and fixed fee not being charged when max_fee=0
 - fix: correct value of compiled_class_hash in RPCTransaction
 - ci: scope cache by branch and add cache cleanup
-- feat: bump starknet-core to 0.6.0 and remove InvokeV0
 
 ## v0.2.0
 
