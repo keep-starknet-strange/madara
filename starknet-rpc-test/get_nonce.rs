@@ -83,7 +83,7 @@ async fn work_ok_account_with_tx(#[future] madara: MadaraClient) -> Result<(), a
 
     madara
         .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(
-            FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(),
+            account.address(),
             FieldElement::from_hex_be(MINT_AMOUNT).expect("Invalid Mint Amount"),
             None,
         ))])
