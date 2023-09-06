@@ -157,7 +157,7 @@ export function deploy(
       "0x0000000000000000000000000000000000000000000000000000000000000001", // deploy from zero
     ],
     max_fee:
-      "0x000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+      "0x0000000000000000000000000000000000000000000000000FFFFFFFFFFFFFFF",
   };
 
   const extrisinc_deploy = api.tx.starknet.invoke(tx_deploy);
@@ -260,6 +260,8 @@ export function transfer(
       transferAmount,
       "0x0000000000000000000000000000000000000000000000000000000000000000",
     ],
+    max_fee:
+      "0x0000000000000000000000000000000000000000000000000FFFFFFFFFFFFFFF",
   };
 
   const extrisinc_transfer = api.tx.starknet.invoke(tx_transfer);
@@ -318,6 +320,8 @@ export function mintERC721(
       tokenID,
       "0x0000000000000000000000000000000000000000000000000000000000000000",
     ],
+    max_fee:
+      "0x0000000000000000000000000000000000000000000000000FFFFFFFFFFFFFFF",
   };
 
   return api.tx.starknet.invoke(tx_mint);
@@ -355,6 +359,8 @@ export function deployTokenContractUDC(
       "0x000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", // Initial supply high
       "0x0000000000000000000000000000000000000000000000000000000000001111", // recipient
     ],
+    max_fee:
+      "0x0000000000000000000000000000000000000000000000000FFFFFFFFFFFFFFF",
   };
 
   const extrisinc_udc_deploy = api.tx.starknet.invoke(tx_udc_deploy);
