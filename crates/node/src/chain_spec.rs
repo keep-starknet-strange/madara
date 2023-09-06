@@ -62,7 +62,7 @@ pub fn development_config(enable_manual_seal: Option<bool>, madara_path: PathBuf
         ChainType::Development,
         move || {
             // Logging the development account
-            print_development_accounts(genesis_loader.clone());
+            print_development_accounts(&genesis_loader);
 
             DevGenesisExt {
                 genesis_config: testnet_genesis(
@@ -92,7 +92,7 @@ pub fn development_config(enable_manual_seal: Option<bool>, madara_path: PathBuf
 // helper to print development accounts info
 // accounts with addresses 0x1 and 0x4 are NO VALIDATE accounts (don't require PK)
 // accounts with addresses 0x2 and 0x3 have the same PK
-pub fn print_development_accounts(genesis_loader: GenesisLoader) {
+pub fn print_development_accounts(genesis_loader: &GenesisLoader) {
     let no_validate_account_address = genesis_loader.contracts[0].0.0;
     let argent_account_address = genesis_loader.contracts[1].0.0;
     let oz_account_address = genesis_loader.contracts[2].0.0;
