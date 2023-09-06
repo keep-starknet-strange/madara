@@ -14,6 +14,7 @@ use sp_io::hashing::twox_128;
 use sp_runtime::traits::Block as BlockT;
 
 mod schema_v1_override;
+use mp_starknet::block::Block as StarknetBlock;
 use starknet_core::types::FieldElement;
 
 pub use self::schema_v1_override::SchemaV1Override;
@@ -79,6 +80,8 @@ pub trait StorageOverride<B: BlockT>: Send + Sync {
     ) -> Option<ContractClass>;
     /// Returns the nonce for a provided contract address and block hash.
     fn nonce(&self, block_hash: B::Hash, address: ContractAddressWrapper) -> Option<NonceWrapper>;
+
+    fn get_block_by_hash(&self, block_hash: <B as BlockT>::Hash) -> Option<StarknetBlock>;
 }
 
 /// Returns the storage prefix given the pallet module name and the storage name
@@ -186,5 +189,10 @@ where
     /// * `Some(nonce)` - The nonce for the provided contract address and block hash
     fn nonce(&self, block_hash: <B as BlockT>::Hash, contract_address: ContractAddressWrapper) -> Option<NonceWrapper> {
         self.client.runtime_api().nonce(block_hash, contract_address).ok()
+    }
+
+    // TODO: cache, document and find way to implement block fetch from runtime API
+    fn get_block_by_hash(&self, block_hash: <B as BlockT>::Hash) -> Option<StarknetBlock> {
+        self.client.runtime_api().get_block_by_hash(block_hash).ok()?
     }
 }

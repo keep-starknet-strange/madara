@@ -27,6 +27,7 @@ pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
 use frame_system::EventRecord;
+use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::crypto::hash::Hasher;
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper, StorageKeyWrapper};
 use mp_starknet::transaction::types::{
@@ -288,6 +289,11 @@ impl_runtime_apis! {
                 RuntimeCall::Starknet( deploy_account { transaction }) => transaction.from_deploy(chain_id).ok(),
                 _ => None
             }).collect::<Vec<Transaction>>()
+        }
+
+        fn get_block_by_hash() -> Option<StarknetBlock> {
+            // TODO: cache, get block from pallet starknet
+            Some(StarknetBlock::default())
         }
     }
 

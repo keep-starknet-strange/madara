@@ -11,6 +11,7 @@ use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi};
 use mc_block_proposer::ProposerFactory;
 use mc_mapping_sync::MappingSyncWorker;
+use mc_rpc::cache::StarknetDataCacheTask;
 use mc_storage::overrides_handle;
 use mc_transaction_pool::FullPool;
 use mp_starknet::sequencer_address::{
@@ -312,10 +313,15 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
     let starknet_rpc_params = StarknetDeps {
         client: client.clone(),
         madara_backend: madara_backend.clone(),
-        overrides,
+        overrides: overrides.clone(),
         sync_service: sync_service.clone(),
         starting_block,
-        // TODO: cache, add instantiation of Data cache task here
+        data_cache: Arc::new(StarknetDataCacheTask::new(
+            task_manager.spawn_handle(),
+            overrides,
+            (None, Some(100)),
+            prometheus_registry.clone(),
+        )),
     };
 
     let rpc_extensions_builder = {

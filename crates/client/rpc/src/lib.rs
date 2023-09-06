@@ -2,7 +2,7 @@
 //!
 //! It uses the madara client and backend in order to answer queries.
 
-mod cache;
+pub mod cache;
 mod constants;
 mod errors;
 mod events;
@@ -21,6 +21,7 @@ pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use mc_transaction_pool::{ChainApi, Pool};
 use mp_starknet::execution::types::Felt252Wrapper;
+use mp_starknet::storage::StarknetStorageSchemaVersion;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
 use mp_starknet::transaction::types::{
@@ -46,11 +47,12 @@ use starknet_core::types::{
     Transaction, TransactionStatus,
 };
 
+use crate::cache::StarknetDataCacheTask;
 use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
 use crate::types::RpcEventFilter;
 
 /// A Starknet RPC server for Madara
-pub struct Starknet<A: ChainApi, B: BlockT, BE, C, P, H> {
+pub struct Starknet<A: ChainApi, B: BlockT, BE, C: HeaderBackend<B>, P, H> {
     client: Arc<C>,
     backend: Arc<mc_db::Backend<B>>,
     overrides: Arc<OverrideHandle<B>>,
@@ -59,6 +61,7 @@ pub struct Starknet<A: ChainApi, B: BlockT, BE, C, P, H> {
     sync_service: Arc<SyncingService<B>>,
     starting_block: <<B>::Header as HeaderT>::Number,
     hasher: Arc<H>,
+    data_cache: Arc<StarknetDataCacheTask<B>>,
     _marker: PhantomData<(B, BE)>,
 }
 
@@ -74,7 +77,7 @@ pub struct Starknet<A: ChainApi, B: BlockT, BE, C, P, H> {
 // # Returns
 // * `Self` - The actual Starknet struct
 #[allow(clippy::too_many_arguments)]
-impl<A: ChainApi, B: BlockT, BE, C, P, H> Starknet<A, B, BE, C, P, H> {
+impl<A: ChainApi, B: BlockT, BE, C: HeaderBackend<B>, P, H> Starknet<A, B, BE, C, P, H> {
     pub fn new(
         client: Arc<C>,
         backend: Arc<mc_db::Backend<B>>,
@@ -84,9 +87,21 @@ impl<A: ChainApi, B: BlockT, BE, C, P, H> Starknet<A, B, BE, C, P, H> {
         sync_service: Arc<SyncingService<B>>,
         starting_block: <<B>::Header as HeaderT>::Number,
         hasher: Arc<H>,
+        data_cache: Arc<StarknetDataCacheTask<B>>,
     ) -> Self {
         // TODO: cache, add new property to refer to when accessing data through the cache
-        Self { client, backend, overrides, pool, graph, sync_service, starting_block, hasher, _marker: PhantomData }
+        Self {
+            client,
+            backend,
+            overrides,
+            pool,
+            graph,
+            sync_service,
+            starting_block,
+            hasher,
+            data_cache,
+            _marker: PhantomData,
+        }
     }
 }
 
@@ -387,13 +402,15 @@ where
     }
 
     /// Returns the specified block with transaction hashes.
-    fn get_block_with_tx_hashes(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxHashes> {
+    async fn get_block_with_tx_hashes(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxHashes> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        let schema = mc_storage::onchain_storage_schema(self.client.as_ref(), substrate_block_hash);
+
+        let block = self.data_cache.get_block_by_block_hash(schema, substrate_block_hash).await.unwrap_or_default();
 
         let transactions = block.transactions_hashes().into_iter().map(FieldElement::from).collect();
         let blockhash = block.header().hash(*self.hasher);

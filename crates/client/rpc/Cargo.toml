@@ -33,6 +33,7 @@ sp-arithmetic = { workspace = true, default-features = true }
 sp-blockchain = { workspace = true, default-features = true }
 sp-core = { workspace = true, default-features = true }
 sp-runtime = { workspace = true, default-features = true }
+sc-service = { workspace = true }
 # Substrate client
 sc-client-api = { workspace = true, default-features = true }
 sc-network-sync = { workspace = true }
@@ -44,6 +45,7 @@ starknet-core = { workspace = true }
 starknet-ff = { workspace = true }
 starknet_api = { workspace = true, default-features = false }
 # Others
+futures = { workspace = true }
 hex = { workspace = true, default-features = true }
 jsonrpsee = { workspace = true, default-features = true, features = [
   "server",
@@ -58,6 +60,7 @@ scale-codec = { package = "parity-scale-codec", workspace = true, features = [
 schnellru = "0.2.1"
 serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }
+tokio = "1.32.0"
 
 [dev-dependencies]
 rstest = { workspace = true }

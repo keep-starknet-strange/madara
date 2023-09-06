@@ -6,6 +6,7 @@
 #![allow(clippy::extra_unused_type_parameters)]
 
 use blockifier::execution::contract_class::ContractClass;
+use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::crypto::hash::Hasher;
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper, StorageKeyWrapper};
 use mp_starknet::transaction::types::{EventWrapper, Transaction, TxType};
@@ -55,6 +56,8 @@ sp_api::decl_runtime_apis! {
         /// the runtime itself, accomplished through the extrinsic_filter method. This enables the
         /// client to operate seamlessly while abstracting the extrinsic complexity.
         fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction>;
+        // TODO: cache, document
+        fn get_block_by_hash() -> Option<StarknetBlock>;
     }
 
     pub trait ConvertTransactionRuntimeApi {

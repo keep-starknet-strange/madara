@@ -70,7 +70,7 @@ pub trait StarknetRpcApi {
 
     /// Get block information with transaction hashes given the block id
     #[method(name = "getBlockWithTxHashes")]
-    fn get_block_with_tx_hashes(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxHashes>;
+    async fn get_block_with_tx_hashes(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxHashes>;
 
     /// Get the nonce associated with the given address at the given block
     #[method(name = "getNonce")]
