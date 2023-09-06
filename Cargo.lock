@@ -9876,9 +9876,9 @@ checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 
 [[package]]
 name = "starknet-core"
-version = "0.5.1"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91f89c79b641618de8aa9668d74c6b6634659ceca311c6318a35c025f9d4d969"
+checksum = "b796a32a7400f7d85e95d3900b5cee7a392b2adbf7ad16093ed45ec6f8d85de6"
 dependencies = [
  "base64 0.21.2",
  "flate2",
