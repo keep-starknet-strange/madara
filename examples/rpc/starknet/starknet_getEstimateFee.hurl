@@ -7,7 +7,7 @@ Content-Type: application/json
         "request": {
             "type": "INVOKE",
             "max_fee":"0x0",
-            "version":"0x1",
+            "version":"0x100000000000000000000000000000001",
             "nonce":"0x0",
             "signature":[],
             "sender_address":"0x0000000000000000000000000000000000000000000000000000000000000001",

@@ -72,6 +72,23 @@ fueling growth within the Starknet ecosystem.
 - [Madara Tsukuyomi](https://github.com/keep-starknet-strange/madara-tsukuyomi):
   The source code of the Madara Desktop App. A friendly GUI to start a Madara
   node and interact with it.
+- [App Chain Template](<(https://github.com/keep-starknet-strange/madara-app-chain-template)>):
+  A ready to use template that allows you to easily start an app chain.
+
+## 📣 Building App Chains
+
+> Do NOT fork this repo and build your app chain on top unless completely
+> necessary. By adding changes using forking, you will have to periodically
+> rebase (and solve conflicts) to remain updated with the latest version of
+> Madara.
+
+One of the main features of Madara is to allow users to start their app chains
+that support Cairo contracts and Starknet like blocks. Hence, to make it easy
+for users to build a custom app chain, we have created an
+[app-chain-template](https://github.com/keep-starknet-strange/madara-app-chain-template)
+which imports Madara as a pallet. This removes all the boilerplate code and
+allows you to focus on code only relevant to your app chain. Moreover, updating
+Madara is as simple as updating the pallet version.
 
 ## 🌟 Features
 
