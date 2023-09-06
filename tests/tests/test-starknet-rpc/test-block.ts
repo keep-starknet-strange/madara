@@ -122,7 +122,7 @@ describeDevMadara("Starknet RPC - Block Test", (context) => {
       const current_block = await providerRPC.getBlockHashAndNumber();
 
       // starknet starting block number should be 0 with this test setup
-      expect(status["starting_block_num"]).to.be.equal("0x0");
+      expect(status["starting_block_num"]).to.be.equal(0);
       // starknet current and highest block number should be equal to
       // the current block with this test setup
       expect(parseInt(status["current_block_num"])).to.be.equal(

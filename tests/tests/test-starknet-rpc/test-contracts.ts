@@ -31,10 +31,7 @@ function stringToArrayBuffer(s: string): Uint8Array {
 }
 function decompressProgram(base64: CompressedProgram) {
   if (Array.isArray(base64)) return base64;
-  const decompressed = encode.arrayBufferToString(
-    ungzip(atobUniversal(base64)),
-  );
-  return json.parse(decompressed);
+  return encode.arrayBufferToString(ungzip(atobUniversal(base64)));
 }
 
 describeDevMadara("Starknet RPC - Contracts Test", (context) => {
@@ -145,9 +142,7 @@ describeDevMadara("Starknet RPC - Contracts Test", (context) => {
         ERC20_CONTRACT.entry_points_by_type,
       );
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const program = json.parse(
-        encode.arrayBufferToString(decompressProgram(contract_class.program)),
-      );
+      const program = json.parse(decompressProgram(contract_class.program));
       // starknet js parses the values in the identifiers as negative numbers (maybe it's in madara).
       // FIXME: https://github.com/keep-starknet-strange/madara/issues/664
       // expect(program).to.deep.equal(ERC20_CONTRACT.program);

@@ -14,13 +14,11 @@ use std::sync::Arc;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
-use mc_rpc_core::types::{ContractData, RpcGetProofInput, RpcGetProofOutput};
 pub use mc_rpc_core::utils::*;
 use mc_rpc_core::Felt;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use mc_transaction_pool::{ChainApi, Pool};
-use mp_starknet::crypto::merkle_patricia_tree::merkle_tree::ProofNode;
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
@@ -30,6 +28,7 @@ use mp_starknet::transaction::types::{
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
+use sc_transaction_pool_api::error::{Error as PoolError, IntoPoolError};
 use sc_transaction_pool_api::{InPoolTransaction, TransactionPool, TransactionSource};
 use sp_api::{ApiError, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
@@ -37,6 +36,7 @@ use sp_blockchain::HeaderBackend;
 use sp_core::H256;
 use sp_runtime::generic::BlockId as SPBlockId;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
+use sp_runtime::transaction_validity::InvalidTransaction;
 use sp_runtime::DispatchError;
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
@@ -44,10 +44,10 @@ use starknet_core::types::{
     DeclareTransactionResult, DeployAccountTransactionResult, EmittedEvent, EventFilterWithPage, EventsPage,
     FeeEstimate, FieldElement, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes,
     MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateDiff, StateUpdate, SyncStatus, SyncStatusType,
-    Transaction, TransactionStatus,
+    Transaction, TransactionFinalityStatus,
 };
 
-use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS, MAX_STORAGE_PROOF_KEYS_BY_QUERY};
+use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
 use crate::types::RpcEventFilter;
 
 /// A Starknet RPC server for Madara
@@ -528,9 +528,15 @@ where
         request: Vec<BroadcastedTransaction>,
         block_id: BlockId,
     ) -> RpcResult<Vec<FeeEstimate>> {
-        // TODO:
-        //      - modify BroadcastedTransaction to assert versions == "0x100000000000000000000000000000001"
-        //      - to ensure broadcasted query signatures aren't valid on mainnet
+        let is_invalid_query_transaction = request.iter().any(|tx| match tx {
+            BroadcastedTransaction::Invoke(invoke_tx) => !invoke_tx.is_query,
+            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V1(tx_v1)) => !tx_v1.is_query,
+            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V2(tx_v2)) => !tx_v2.is_query,
+            BroadcastedTransaction::DeployAccount(deploy_tx) => !deploy_tx.is_query,
+        });
+        if is_invalid_query_transaction {
+            return Err(StarknetRpcApiError::UnsupportedTxVersion.into());
+        }
 
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
@@ -860,133 +866,16 @@ where
             .into_iter()
             .find(|receipt| receipt.transaction_hash == transaction_hash.into())
             .map(|receipt| {
-                receipt
-                    .clone()
-                    .into_maybe_pending_transaction_receipt(TransactionStatus::AcceptedOnL2, (block_hash, block_number))
+                receipt.clone().into_maybe_pending_transaction_receipt(
+                    TransactionFinalityStatus::AcceptedOnL2,
+                    (block_hash, block_number),
+                )
             });
 
         match find_receipt {
             Some(receipt) => Ok(receipt),
             None => Err(StarknetRpcApiError::TxnHashNotFound.into()),
         }
-    }
-
-    /// This endpoint aims to do the same as [EIP-1186](https://eips.ethereum.org/EIPS/eip-1186)
-    /// It should provide all the data necessary for someone to verify some storage
-    /// within a starknet smart contract thanks to its merkle proof.
-    ///
-    /// It takes advantages from the facts that the whole state is built as 2 tries:
-    /// 1. The contracts trie : stores state data of the contracts based on their address
-    /// 2. The classes trie : associates class hashes with classes
-    ///
-    /// More information on Starknet's state [here](https://docs.starknet.io/documentation/architecture_and_concepts/State/starknet-state/)
-    ///
-    /// A storage proof is *just* a merkle proof of the subtree which you can find the root within
-    /// the contracts trie
-    ///
-    /// This implementation is highly inspired by previous work on [pathfinder](https://github.com/eqlabs/pathfinder/pull/726)
-    fn get_proof(&self, get_proof_input: RpcGetProofInput) -> RpcResult<RpcGetProofOutput> {
-        if get_proof_input.keys.len() > MAX_STORAGE_PROOF_KEYS_BY_QUERY {
-            error!(
-                "Too many keys requested! limit: {:?},
-				requested: {:?}",
-                MAX_STORAGE_PROOF_KEYS_BY_QUERY,
-                get_proof_input.keys.len() as u32
-            );
-            return Err(StarknetRpcApiError::ProofLimitExceeded.into());
-        }
-
-        let substrate_block_hash =
-            self.substrate_block_hash_from_starknet_block(get_proof_input.block_id).map_err(|e| {
-                error!("'{e}'");
-                StarknetRpcApiError::BlockNotFound
-            })?;
-
-        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
-
-        let global_state_root = block.header().global_state_root;
-
-        let mut state_commitments = self
-            .overrides
-            .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .state_commitments(substrate_block_hash)
-            .ok_or_else(|| {
-                error!("Failed to retrieve state commitments");
-                StarknetRpcApiError::InternalServerError
-            })?;
-
-        let class_commitment: FieldElement = state_commitments.class_commitment.commit().into();
-        let storage_commitment: FieldElement = state_commitments.storage_commitment.commit().into();
-
-        let (state_commitment, class_commitment) = if class_commitment == FieldElement::ZERO {
-            (None, None)
-        } else {
-            (Some(global_state_root.0), Some(class_commitment))
-        };
-
-        // Generate a proof for this contract. If the contract does not exist, this will
-        // be a "non membership" proof.
-        let contract_proof =
-            state_commitments.storage_commitment.get_proof(Felt252Wrapper(get_proof_input.contract_address));
-
-        let contract_state_hash =
-            match state_commitments.storage_commitment.get(Felt252Wrapper(get_proof_input.contract_address)) {
-                Some(contract_state_hash) => contract_state_hash,
-                None => {
-                    // Contract not found: return the proof of non membership that we generated earlier.
-                    return Ok(RpcGetProofOutput {
-                        state_commitment,
-                        class_commitment,
-                        contract_proof,
-                        contract_data: None,
-                    });
-                }
-            };
-
-        // In theory we got some state hash in the tree that means the contract's state
-        // has been committed already so it exists and no error should be thrown.
-        // If an error is still thrown it's fine and handy for debugging.
-
-        let class_hash = self
-            .overrides
-            .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .contract_class_hash_by_address(substrate_block_hash, get_proof_input.contract_address.into())
-            .ok_or_else(|| {
-                error!("Failed to retrieve contract class hash at '{0}'", get_proof_input.contract_address);
-                StarknetRpcApiError::ContractNotFound
-            })?;
-
-        let nonce = self
-            .overrides
-            .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .nonce(substrate_block_hash, get_proof_input.contract_address.into())
-            .ok_or_else(|| {
-                error!("Failed to get nonce at '{0}'", get_proof_input.contract_address);
-                StarknetRpcApiError::ContractNotFound
-            })?;
-
-        let mut contract_state_trie = self
-            .overrides
-            .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .contract_state_trie_by_address(substrate_block_hash, get_proof_input.contract_address.into())
-            .ok_or_else(|| {
-                error!("Failed to get contract state trie at '{0}'", get_proof_input.contract_address);
-                StarknetRpcApiError::ContractNotFound
-            })?;
-
-        let storage_proofs: Vec<Vec<ProofNode>> =
-            get_proof_input.keys.iter().map(|k| contract_state_trie.get_proof(Felt252Wrapper(*k))).collect();
-
-        let contract_data = ContractData {
-            class_hash: class_hash.into(),
-            nonce: nonce.into(),
-            root: contract_state_trie.commit().into(),
-            // Currently, this is defined as 0. Might change in the future
-            contract_state_hash_version: FieldElement::ZERO,
-            storage_proofs,
-        };
-
-        Ok(RpcGetProofOutput { state_commitment, class_commitment, contract_proof, contract_data: Some(contract_data) })
     }
 }
 
@@ -1002,7 +891,10 @@ where
 {
     pool.submit_one(&SPBlockId::hash(best_block_hash), TX_SOURCE, extrinsic).await.map_err(|e| {
         error!("Failed to submit extrinsic: {:?}", e);
-        StarknetRpcApiError::InternalServerError
+        match e.into_pool_error() {
+            Ok(PoolError::InvalidTransaction(InvalidTransaction::BadProof)) => StarknetRpcApiError::ValidationFailure,
+            _ => StarknetRpcApiError::InternalServerError,
+        }
     })
 }
 

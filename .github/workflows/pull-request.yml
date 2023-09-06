@@ -21,6 +21,11 @@ jobs:
     uses: ./.github/workflows/rust-build.yml
     needs: changelog
 
+  madara_commands:
+    name: Test Madara commands
+    uses: ./.github/workflows/madara-commands.yml
+    needs: rust_build
+
   linters_cargo:
     name: Run Cargo linters
     uses: ./.github/workflows/linters-cargo.yml
