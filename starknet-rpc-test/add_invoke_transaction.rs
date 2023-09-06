@@ -4,7 +4,7 @@ use std::vec;
 
 use assert_matches::assert_matches;
 use rstest::rstest;
-use starknet_accounts::{AccountFactory, ExecutionEncoding, OpenZeppelinAccountFactory, SingleOwnerAccount};
+use starknet_accounts::{Account, AccountFactory, ExecutionEncoding, OpenZeppelinAccountFactory, SingleOwnerAccount};
 use starknet_core::chain_id;
 use starknet_core::types::{InvokeTransactionResult, StarknetError};
 use starknet_ff::FieldElement;
@@ -52,65 +52,6 @@ async fn fail_validation_step(#[future] madara: MadaraClient) -> Result<(), anyh
 
 #[rstest]
 #[tokio::test]
-async fn fail_execution_step(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    // we will transfer 1 wei from the funding account to recipient_one
-    // then we will transfer 1 wei from recipient_one to recipient_two
-    // since recipient_one won't have funds to pay the fees, the transaction will fail
-
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
-
-    let funding_account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
-
-    // deplpoying recipient_one
-    let class_hash = FieldElement::from_hex_be(CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH).unwrap();
-    let signer = LocalWallet::from(SigningKey::from_secret_scalar(FieldElement::from_hex_be("0x123").unwrap()));
-    let oz_factory = OpenZeppelinAccountFactory::new(class_hash, chain_id::TESTNET, signer.clone(), rpc).await.unwrap();
-    let max_fee: FieldElement = FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap();
-    let account_deploy_txn = oz_factory.deploy(FieldElement::ONE).max_fee(max_fee);
-    let recipeint_one = account_deploy_txn.address();
-    madara
-        .create_block_with_txs(vec![
-            Transaction::Execution(funding_account.transfer_tokens(recipeint_one, max_fee, None)),
-            Transaction::AccountDeployment(account_deploy_txn),
-        ])
-        .await?;
-    let recipient_one_account =
-        SingleOwnerAccount::new(rpc, signer, recipeint_one, chain_id::TESTNET, ExecutionEncoding::New);
-
-    let recipient_two = FieldElement::from_hex_be("0x456").unwrap();
-    let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
-
-    // sending funds to recipient_one (will pass)
-    madara
-        .create_block_with_txs(vec![Transaction::Execution(funding_account.transfer_tokens(
-            recipeint_one,
-            FieldElement::ONE,
-            None,
-        ))])
-        .await?;
-
-    let initial_balance_recipient_two = read_erc20_balance(rpc, fee_token_address, recipient_two).await;
-    // sending funds to recipient_one (should fail)
-    let mut txs = madara
-        .create_block_with_txs(vec![Transaction::Execution(recipient_one_account.transfer_tokens(
-            recipient_two,
-            FieldElement::ONE,
-            None,
-        ))])
-        .await?;
-
-    let final_balance_recipient_two = read_erc20_balance(rpc, fee_token_address, recipient_two).await;
-
-    assert_eq!(txs.len(), 1);
-    assert!(txs.remove(0).is_err());
-    assert_eq!(final_balance_recipient_two, initial_balance_recipient_two); // recipient_two balance doesn't change
-
-    Ok(())
-}
-
-#[rstest]
-#[tokio::test]
 async fn works_with_storage_change(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
     let madara = madara.await;
     let rpc = madara.get_starknet_client();
@@ -146,6 +87,44 @@ async fn works_with_storage_change(#[future] madara: MadaraClient) -> Result<(),
     }
     assert_eq!(final_balance[1], initial_balance[1]); // higher 128 bits are equal
     assert_eq!(final_balance[0] - initial_balance[0], FieldElement::ONE); // lower 128 bits differ by one
+
+    Ok(())
+}
+
+#[rstest]
+#[tokio::test]
+async fn fail_execution_step_with_no_strage_change(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+    // we will try to transfer all the funds of the funding account
+    // so the transaction will fail in the execution step as we won't have
+    // funds to pay the fees
+
+    let madara = madara.await;
+    let rpc = madara.get_starknet_client();
+
+    let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
+
+    let funding_account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    let funding_account_balance = read_erc20_balance(rpc, fee_token_address, funding_account.address()).await;
+
+    let recipient_account = FieldElement::from_hex_be("0x123").unwrap();
+    let initial_balance = read_erc20_balance(rpc, fee_token_address, recipient_account).await;
+
+    let mut txs = madara
+        .create_block_with_txs(vec![Transaction::Execution(funding_account.transfer_tokens_u256(
+            recipient_account,
+            [funding_account_balance[0], funding_account_balance[1]], // send all the available funds
+            None,
+        ))])
+        .await?;
+
+    let final_balance = read_erc20_balance(rpc, fee_token_address, recipient_account).await;
+
+    assert_eq!(txs.len(), 1);
+
+    let invoke_tx_result = txs.remove(0);
+
+    assert!(invoke_tx_result.is_ok()); // the transaction was sent successfully
+    assert_eq!(final_balance, initial_balance);
 
     Ok(())
 }

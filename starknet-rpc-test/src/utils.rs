@@ -50,6 +50,13 @@ pub async fn read_erc20_balance<'a>(
 }
 
 pub trait AccountActions {
+    fn transfer_tokens_u256(
+        &self,
+        recipient: FieldElement,
+        transfer_amount: [FieldElement; 2],
+        nonce: Option<u64>,
+    ) -> TransactionExecution;
+
     fn transfer_tokens(
         &self,
         recipient: FieldElement,
@@ -67,10 +74,10 @@ pub trait AccountActions {
 }
 
 impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalWallet> {
-    fn transfer_tokens(
+    fn transfer_tokens_u256(
         &self,
         recipient: FieldElement,
-        transfer_amount: FieldElement,
+        transfer_amount: [FieldElement; 2],
         nonce: Option<u64>,
     ) -> TransactionExecution {
         let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
@@ -78,7 +85,7 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
         let calls = vec![Call {
             to: fee_token_address,
             selector: get_selector_from_name("transfer").unwrap(),
-            calldata: vec![recipient, transfer_amount, FieldElement::ZERO],
+            calldata: vec![recipient, transfer_amount[0], transfer_amount[1]],
         }];
 
         // starknet-rs calls estimateFee with incorrect version which throws an error
@@ -89,6 +96,15 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
             Some(_nonce) => self.execute(calls).max_fee(max_fee),
             None => self.execute(calls).max_fee(max_fee),
         }
+    }
+
+    fn transfer_tokens(
+        &self,
+        recipient: FieldElement,
+        transfer_amount: FieldElement,
+        nonce: Option<u64>,
+    ) -> TransactionExecution {
+        self.transfer_tokens_u256(recipient, [transfer_amount, FieldElement::ZERO], nonce)
     }
 
     fn declare_contract(
