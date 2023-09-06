@@ -936,6 +936,11 @@
 <a href="#936" id="936">936</a>
 <a href="#937" id="937">937</a>
 <a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -966,6 +971,7 @@
 <span class="kw">use </span>pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>sc_network_sync::SyncingService;
+<span class="kw">use </span>sc_transaction_pool_api::error::{Error <span class="kw">as </span>PoolError, IntoPoolError};
 <span class="kw">use </span>sc_transaction_pool_api::{InPoolTransaction, TransactionPool, TransactionSource};
 <span class="kw">use </span>sp_api::{ApiError, ProvideRuntimeApi};
 <span class="kw">use </span>sp_arithmetic::traits::UniqueSaturatedInto;
@@ -973,6 +979,7 @@
 <span class="kw">use </span>sp_core::H256;
 <span class="kw">use </span>sp_runtime::generic::BlockId <span class="kw">as </span>SPBlockId;
 <span class="kw">use </span>sp_runtime::traits::{Block <span class="kw">as </span>BlockT, Header <span class="kw">as </span>HeaderT};
+<span class="kw">use </span>sp_runtime::transaction_validity::InvalidTransaction;
 <span class="kw">use </span>sp_runtime::DispatchError;
 <span class="kw">use </span>starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
@@ -980,7 +987,7 @@
     DeclareTransactionResult, DeployAccountTransactionResult, EmittedEvent, EventFilterWithPage, EventsPage,
     FeeEstimate, FieldElement, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes,
     MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateDiff, StateUpdate, SyncStatus, SyncStatusType,
-    Transaction, TransactionStatus,
+    Transaction, TransactionFinalityStatus,
 };
 
 <span class="kw">use </span><span class="kw">crate</span>::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
@@ -1465,8 +1472,7 @@
         block_id: BlockId,
     ) -&gt; RpcResult&lt;Vec&lt;FeeEstimate&gt;&gt; {
         <span class="kw">let </span>is_invalid_query_transaction = request.iter().any(|tx| <span class="kw">match </span>tx {
-            BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction::V0(tx_v0)) =&gt; !tx_v0.is_query,
-            BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction::V1(tx_v1)) =&gt; !tx_v1.is_query,
+            BroadcastedTransaction::Invoke(invoke_tx) =&gt; !invoke_tx.is_query,
             BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V1(tx_v1)) =&gt; !tx_v1.is_query,
             BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V2(tx_v2)) =&gt; !tx_v2.is_query,
             BroadcastedTransaction::DeployAccount(deploy_tx) =&gt; !deploy_tx.is_query,
@@ -1803,9 +1809,10 @@
             .into_iter()
             .find(|receipt| receipt.transaction_hash == transaction_hash.into())
             .map(|receipt| {
-                receipt
-                    .clone()
-                    .into_maybe_pending_transaction_receipt(TransactionStatus::AcceptedOnL2, (block_hash, block_number))
+                receipt.clone().into_maybe_pending_transaction_receipt(
+                    TransactionFinalityStatus::AcceptedOnL2,
+                    (block_hash, block_number),
+                )
             });
 
         <span class="kw">match </span>find_receipt {
@@ -1827,7 +1834,10 @@
 {
     pool.submit_one(<span class="kw-2">&amp;</span>SPBlockId::hash(best_block_hash), TX_SOURCE, extrinsic).<span class="kw">await</span>.map_err(|e| {
         <span class="macro">error!</span>(<span class="string">&quot;Failed to submit extrinsic: {:?}&quot;</span>, e);
-        StarknetRpcApiError::InternalServerError
+        <span class="kw">match </span>e.into_pool_error() {
+            <span class="prelude-val">Ok</span>(PoolError::InvalidTransaction(InvalidTransaction::BadProof)) =&gt; StarknetRpcApiError::ValidationFailure,
+            <span class="kw">_ </span>=&gt; StarknetRpcApiError::InternalServerError,
+        }
     })
 }
 

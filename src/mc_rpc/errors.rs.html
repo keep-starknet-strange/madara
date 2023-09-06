@@ -64,6 +64,8 @@
 <a href="#64" id="64">64</a>
 <a href="#65" id="65">65</a>
 <a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
 </pre><pre class="rust"><code><span class="kw">use </span>jsonrpsee::types::error::{CallError, ErrorObject};
 <span class="kw">use </span>pallet_starknet::runtime_api::StarknetTransactionExecutionError;
 
@@ -103,6 +105,8 @@
     </span>InvalidContractClass = <span class="number">50</span>,
     <span class="attr">#[error(<span class="string">&quot;Class already declared&quot;</span>)]
     </span>ClassAlreadyDeclared = <span class="number">51</span>,
+    <span class="attr">#[error(<span class="string">&quot;Account validation failed&quot;</span>)]
+    </span>ValidationFailure = <span class="number">55</span>,
     <span class="attr">#[error(<span class="string">&quot;The transaction version is not supported&quot;</span>)]
     </span>UnsupportedTxVersion = <span class="number">61</span>,
     <span class="attr">#[error(<span class="string">&quot;Internal server error&quot;</span>)]

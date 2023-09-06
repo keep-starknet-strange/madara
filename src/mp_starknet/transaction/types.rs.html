@@ -908,14 +908,6 @@
 <a href="#908" id="908">908</a>
 <a href="#909" id="909">909</a>
 <a href="#910" id="910">910</a>
-<a href="#911" id="911">911</a>
-<a href="#912" id="912">912</a>
-<a href="#913" id="913">913</a>
-<a href="#914" id="914">914</a>
-<a href="#915" id="915">915</a>
-<a href="#916" id="916">916</a>
-<a href="#917" id="917">917</a>
-<a href="#918" id="918">918</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::sync::Arc;
@@ -1499,13 +1491,13 @@
         BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, DeclareTransaction <span class="kw">as </span>RPCDeclareTransaction,
         DeclareTransactionReceipt <span class="kw">as </span>RPCDeclareTransactionReceipt, DeclareTransactionV1 <span class="kw">as </span>RPCDeclareTransactionV1,
         DeclareTransactionV2 <span class="kw">as </span>RPCDeclareTransactionV2, DeployAccountTransaction <span class="kw">as </span>RPCDeployAccountTransaction,
-        DeployAccountTransactionReceipt <span class="kw">as </span>RPCDeployAccountTransactionReceipt, Event <span class="kw">as </span>RPCEvent, FieldElement,
-        InvokeTransaction <span class="kw">as </span>RPCInvokeTransaction, InvokeTransactionReceipt <span class="kw">as </span>RPCInvokeTransactionReceipt,
-        InvokeTransactionV0 <span class="kw">as </span>RPCInvokeTransactionV0, InvokeTransactionV1 <span class="kw">as </span>RPCInvokeTransactionV1,
+        DeployAccountTransactionReceipt <span class="kw">as </span>RPCDeployAccountTransactionReceipt, Event <span class="kw">as </span>RPCEvent, ExecutionResult,
+        FieldElement, InvokeTransaction <span class="kw">as </span>RPCInvokeTransaction,
+        InvokeTransactionReceipt <span class="kw">as </span>RPCInvokeTransactionReceipt, InvokeTransactionV1 <span class="kw">as </span>RPCInvokeTransactionV1,
         L1HandlerTransaction <span class="kw">as </span>RPCL1HandlerTransaction, L1HandlerTransactionReceipt <span class="kw">as </span>RPCL1HandlerTransactionReceipt,
         MaybePendingTransactionReceipt <span class="kw">as </span>RPCMaybePendingTransactionReceipt, StarknetError,
-        Transaction <span class="kw">as </span>RPCTransaction, TransactionReceipt <span class="kw">as </span>RPCTransactionReceipt,
-        TransactionStatus <span class="kw">as </span>RPCTransactionStatus,
+        Transaction <span class="kw">as </span>RPCTransaction, TransactionFinalityStatus <span class="kw">as </span>RPCTransactionStatus,
+        TransactionReceipt <span class="kw">as </span>RPCTransactionReceipt,
     };
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -1556,25 +1548,22 @@
     <span class="kw">impl </span>TryFrom&lt;BroadcastedInvokeTransaction&gt; <span class="kw">for </span>InvokeTransaction {
         <span class="kw">type </span>Error = BroadcastedTransactionConversionErrorWrapper;
         <span class="kw">fn </span>try_from(tx: BroadcastedInvokeTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;InvokeTransaction, <span class="self">Self</span>::Error&gt; {
-            <span class="kw">match </span>tx {
-                BroadcastedInvokeTransaction::V0(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(StarknetError::FailedToReceiveTransaction.into()),
-                BroadcastedInvokeTransaction::V1(invoke_tx_v1) =&gt; <span class="prelude-val">Ok</span>(InvokeTransaction {
-                    version: <span class="number">1_u8</span>,
-                    signature: BoundedVec::try_from(
-                        invoke_tx_v1.signature.iter().map(|x| (<span class="kw-2">*</span>x).into()).collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;(),
-                    )
-                    .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::SignatureConversionError)<span class="question-mark">?</span>,
+            <span class="prelude-val">Ok</span>(InvokeTransaction {
+                version: <span class="number">1_u8</span>,
+                signature: BoundedVec::try_from(
+                    tx.signature.iter().map(|x| (<span class="kw-2">*</span>x).into()).collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;(),
+                )
+                .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::SignatureConversionError)<span class="question-mark">?</span>,
 
-                    sender_address: invoke_tx_v1.sender_address.into(),
-                    nonce: Felt252Wrapper::from(invoke_tx_v1.nonce),
-                    calldata: BoundedVec::try_from(
-                        invoke_tx_v1.calldata.iter().map(|x| (<span class="kw-2">*</span>x).into()).collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;(),
-                    )
-                    .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::CalldataConversionError)<span class="question-mark">?</span>,
-                    max_fee: Felt252Wrapper::from(invoke_tx_v1.max_fee),
-                    is_query: invoke_tx_v1.is_query,
-                }),
-            }
+                sender_address: tx.sender_address.into(),
+                nonce: Felt252Wrapper::from(tx.nonce),
+                calldata: BoundedVec::try_from(
+                    tx.calldata.iter().map(|x| (<span class="kw-2">*</span>x).into()).collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;(),
+                )
+                .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::CalldataConversionError)<span class="question-mark">?</span>,
+                max_fee: Felt252Wrapper::from(tx.max_fee),
+                is_query: tx.is_query,
+            })
         }
     }
 
@@ -1698,15 +1687,6 @@
                     }
                 }
                 TxType::Invoke =&gt; <span class="kw">match </span>value.version {
-                    <span class="number">0 </span>=&gt; <span class="prelude-val">Ok</span>(RPCTransaction::Invoke(RPCInvokeTransaction::V0(RPCInvokeTransactionV0 {
-                        transaction_hash,
-                        max_fee,
-                        signature,
-                        nonce,
-                        contract_address,
-                        entry_point_selector: entry_point_selector<span class="question-mark">?</span>.<span class="number">0</span>,
-                        calldata,
-                    }))),
                     <span class="number">1 </span>=&gt; <span class="prelude-val">Ok</span>(RPCTransaction::Invoke(RPCInvokeTransaction::V1(RPCInvokeTransactionV1 {
                         transaction_hash,
                         max_fee,
@@ -1760,7 +1740,7 @@
         ) -&gt; RPCMaybePendingTransactionReceipt {
             <span class="kw">let </span>transaction_hash = <span class="self">self</span>.transaction_hash.into();
             <span class="kw">let </span>actual_fee = <span class="self">self</span>.actual_fee.into();
-            <span class="kw">let </span>status = status;
+            <span class="kw">let </span>finality_status = status;
             <span class="kw">let </span>block_hash = block_hash_and_number.<span class="number">0</span>;
             <span class="kw">let </span>block_number = block_hash_and_number.<span class="number">1</span>;
             <span class="kw">let </span>events = <span class="self">self</span>.events.iter().map(|e| (<span class="kw-2">*</span>e).clone().into()).collect();
@@ -1774,13 +1754,14 @@
                         RPCDeployAccountTransactionReceipt {
                             transaction_hash,
                             actual_fee,
-                            status,
+                            finality_status,
                             block_hash,
                             block_number,
                             messages_sent,
                             events,
                             <span class="comment">// TODO: from where can I get this one?
                             </span>contract_address: FieldElement::ZERO,
+                            execution_result: ExecutionResult::Succeeded,
                         },
                     ))
                 }
@@ -1788,33 +1769,36 @@
                     RPCDeclareTransactionReceipt {
                         transaction_hash,
                         actual_fee,
-                        status,
+                        finality_status,
                         block_hash,
                         block_number,
                         messages_sent,
                         events,
+                        execution_result: ExecutionResult::Succeeded,
                     },
                 )),
                 TxType::Invoke =&gt; RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::Invoke(
                     RPCInvokeTransactionReceipt {
                         transaction_hash,
                         actual_fee,
-                        status,
+                        finality_status,
                         block_hash,
                         block_number,
                         messages_sent,
                         events,
+                        execution_result: ExecutionResult::Succeeded,
                     },
                 )),
                 TxType::L1Handler =&gt; RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::L1Handler(
                     RPCL1HandlerTransactionReceipt {
                         transaction_hash,
                         actual_fee,
-                        status,
+                        finality_status,
                         block_hash,
                         block_number,
                         messages_sent,
                         events,
+                        execution_result: ExecutionResult::Succeeded,
                     },
                 )),
             }
