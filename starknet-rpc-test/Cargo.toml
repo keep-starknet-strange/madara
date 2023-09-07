@@ -97,3 +97,11 @@ path = "pending_transactions.rs"
 [[test]]
 name = "starknet_get_transaction_by_hash"
 path = "get_transaction_by_hash.rs"
+
+[[test]]
+name = "starknet_get_transaction_receipt"
+path = "get_transaction_receipt.rs"
+
+[[test]]
+name = "starknet_get_events"
+path = "get_events.rs"

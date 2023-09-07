@@ -5,8 +5,8 @@ use starknet_core::chain_id;
 use starknet_core::types::contract::legacy::LegacyContractClass;
 use starknet_core::types::contract::{CompiledClass, SierraClass};
 use starknet_core::types::{
-    BlockId, BlockTag, BlockWithTxHashes, BlockWithTxs, DeclareTransaction, FieldElement, FunctionCall,
-    InvokeTransaction, Transaction,
+    BlockId, BlockTag, BlockWithTxHashes, BlockWithTxs, DeclareTransaction, EmittedEvent, Event, FieldElement,
+    FunctionCall, InvokeTransaction, MsgToL1, Transaction,
 };
 use starknet_core::utils::get_selector_from_name;
 use starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
@@ -260,5 +260,35 @@ pub fn assert_equal_transactions(tx1: &Transaction, tx2: &Transaction) {
             assert_eq!(tx1.class_hash, tx2.class_hash);
         }
         _ => unimplemented!("transaction either deprecated or will be deprecated in the future"),
+    }
+}
+
+pub fn assert_eq_msg_to_l1(l1: Vec<MsgToL1>, l2: Vec<MsgToL1>) {
+    assert_eq!(l1.len(), l2.len());
+    for (m1, m2) in l1.iter().zip(l2.iter()) {
+        assert_eq!(m1.from_address, m2.from_address);
+        assert_eq!(m1.payload, m2.payload);
+        assert_eq!(m1.to_address, m2.to_address);
+    }
+}
+
+pub fn assert_eq_event(l1: Vec<Event>, l2: Vec<Event>) {
+    assert_eq!(l1.len(), l2.len());
+    for (e1, e2) in l1.iter().zip(l2.iter()) {
+        assert_eq!(e1.data, e2.data);
+        assert_eq!(e1.from_address, e2.from_address);
+        assert_eq!(e1.keys, e2.keys);
+    }
+}
+
+pub fn assert_eq_emitted_event(l1: Vec<EmittedEvent>, l2: Vec<EmittedEvent>) {
+    assert_eq!(l1.len(), l2.len());
+    for (e1, e2) in l1.iter().zip(l2.iter()) {
+        assert_eq!(e1.data, e2.data);
+        assert_eq!(e1.from_address, e2.from_address);
+        assert_eq!(e1.keys, e2.keys);
+        assert_eq!(e1.block_hash, e2.block_hash);
+        assert_eq!(e1.block_number, e2.block_number);
+        assert_eq!(e1.transaction_hash, e2.transaction_hash);
     }
 }
