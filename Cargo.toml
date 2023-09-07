@@ -133,7 +133,7 @@ cairo-vm = { git = "https://github.com/keep-starknet-strange/cairo-rs", branch =
   "parity-scale-codec",
 ] }
 starknet-crypto = { version = "0.6.0", default-features = false }
-starknet-core = { version = "0.5.0", default-features = false }
+starknet-core = { version = "0.6.0", default-features = false }
 starknet-ff = { version = "0.3.4", default-features = false }
 
 blockifier = { git = "https://github.com/keep-starknet-strange/blockifier", branch = "no_std-support-7578442", default-features = false, features = [
