@@ -105,7 +105,7 @@ fn test_ref_merkle_tree() {
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
             contract_address_salt: None,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             is_query: false,
         },
         Transaction {
@@ -118,7 +118,7 @@ fn test_ref_merkle_tree() {
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
             contract_address_salt: None,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             is_query: false,
         },
     ];
@@ -181,18 +181,18 @@ fn test_event_hash() {
 
 #[test]
 fn test_pedersen_hash() {
-    let pedersen_hasher = PedersenHasher::default();
+    let pedersen_hasher = PedersenHasher;
     let hash_result = pedersen_hasher.hash_bytes(&test_data());
-    let expected_hash = hash(Hasher::Pedersen(PedersenHasher::default()), &test_data());
+    let expected_hash = hash(Hasher::Pedersen(PedersenHasher), &test_data());
 
     assert_eq!(hash_result, expected_hash);
 }
 
 #[test]
 fn test_poseidon_hash() {
-    let poseidon = PoseidonHasher::default();
+    let poseidon = PoseidonHasher;
     let hash_result = poseidon.hash_bytes(&test_data());
-    let expected_hash = hash(Hasher::Poseidon(PoseidonHasher::default()), &test_data());
+    let expected_hash = hash(Hasher::Poseidon(PoseidonHasher), &test_data());
 
     assert_eq!(hash_result, expected_hash);
 }
@@ -299,7 +299,7 @@ fn test_pedersen_hash_elements_zero() {
     let elements = vec![Felt252Wrapper::ZERO, Felt252Wrapper::ONE];
 
     let expected_hash = compute_hash_on_elements(&[FieldElement::ZERO, FieldElement::ONE]);
-    assert_eq!(PedersenHasher::default().compute_hash_on_wrappers(&elements), expected_hash.into());
+    assert_eq!(PedersenHasher.compute_hash_on_wrappers(&elements), expected_hash.into());
 }
 
 #[test]
@@ -307,7 +307,7 @@ fn test_pedersen_hash_elements_empty() {
     let elements = vec![];
 
     assert_eq!(
-        PedersenHasher::default().compute_hash_on_wrappers(&elements),
+        PedersenHasher.compute_hash_on_wrappers(&elements),
         Felt252Wrapper::from_hex_be(PEDERSEN_ZERO_HASH).unwrap()
     );
 }
