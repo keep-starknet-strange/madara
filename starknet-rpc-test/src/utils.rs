@@ -113,7 +113,7 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
 
         // TODO: add support for nonce with raw execution e.g https://github.com/0xSpaceShard/starknet-devnet-rs/blob/main/crates/starknet/src/starknet/add_invoke_transaction.rs#L10
         match nonce {
-            Some(_nonce) => self.execute(calls).max_fee(max_fee),
+            Some(nonce) => self.execute(calls).max_fee(max_fee).nonce(nonce.into()),
             None => self.execute(calls).max_fee(max_fee),
         }
     }

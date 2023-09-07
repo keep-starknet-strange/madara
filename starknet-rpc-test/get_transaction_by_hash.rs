@@ -1,8 +1,10 @@
 extern crate starknet_rpc_test;
 
+use assert_matches::assert_matches;
 use rstest::rstest;
+use starknet_core::types::StarknetError;
 use starknet_ff::FieldElement;
-use starknet_providers::Provider;
+use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::madara;
 use starknet_rpc_test::utils::{create_account, AccountActions};
@@ -45,7 +47,13 @@ async fn fail_invalid_transaction_hash(#[future] madara: MadaraClient) -> Result
     let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
-    assert!(rpc.get_transaction_by_hash(FieldElement::ZERO).await.is_err());
+    assert_matches!(
+        rpc.get_transaction_by_hash(FieldElement::from_hex_be("0x123").unwrap()).await,
+        Err(ProviderError::StarknetError(StarknetErrorWithMessage {
+            code: MaybeUnknownErrorCode::Known(StarknetError::TransactionHashNotFound),
+            message: _
+        }))
+    );
 
     Ok(())
 }
