@@ -17,15 +17,17 @@ async fn work_valid_transaction_hash(#[future] madara: MadaraClient) -> Result<(
     let rpc = madara.get_starknet_client();
 
     let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
-    let txs = madara
+    let mut txs = madara
         .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(
             FieldElement::from_hex_be("0x123").unwrap(),
             FieldElement::ONE,
             None,
         ))])
-        .await;
+        .await?;
 
-    let rpc_response = match txs.unwrap().remove(0).unwrap() {
+    assert_eq!(txs.len(), 1);
+
+    let rpc_response = match txs.remove(0).unwrap() {
         TransactionResult::Execution(rpc_response) => rpc_response,
         _ => panic!("expected execution result"),
     };

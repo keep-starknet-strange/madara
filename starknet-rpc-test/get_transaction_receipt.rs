@@ -45,11 +45,12 @@ async fn work_with_invoke_transaction(#[future] madara: MadaraClient) -> Result<
     let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let recepient = FieldElement::from_hex_be("0x123").unwrap();
     let transfer_amount = FieldElement::ONE;
-    let txs = madara
+    let mut txs = madara
         .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(recepient, transfer_amount, None))])
-        .await;
+        .await?;
 
-    let rpc_response = match txs.unwrap().remove(0).unwrap() {
+    assert_eq!(txs.len(), 1);
+    let rpc_response = match txs.remove(0).unwrap() {
         TransactionResult::Execution(rpc_response) => rpc_response,
         _ => panic!("expected execution result"),
     };
@@ -134,16 +135,13 @@ async fn work_with_declare_transaction(#[future] madara: MadaraClient) -> Result
 
     declare_tx_legacy = declare_tx_legacy.nonce(nonce).max_fee(max_fee);
 
-    let txs = madara
+    let mut txs = madara
         .create_block_with_txs(vec![
             Transaction::Declaration(declare_tx),
             Transaction::LegacyDeclaration(declare_tx_legacy),
         ])
-        .await;
+        .await?;
 
-    assert!(txs.is_ok());
-
-    let mut txs = txs.unwrap();
     assert_eq!(txs.len(), 2);
 
     let rpc_response_declare = match txs.remove(0).unwrap() {
@@ -265,9 +263,9 @@ async fn work_with_deploy_account_transaction(#[future] madara: MadaraClient) ->
             .is_ok()
     );
 
-    let txs = madara.create_block_with_txs(vec![Transaction::AccountDeployment(account_deploy_txn)]).await;
+    let mut txs = madara.create_block_with_txs(vec![Transaction::AccountDeployment(account_deploy_txn)]).await?;
 
-    let rpc_response = match txs.unwrap().remove(0).unwrap() {
+    let rpc_response = match txs.remove(0).unwrap() {
         TransactionResult::AccountDeployment(rpc_response) => rpc_response,
         _ => panic!("expected execution result"),
     };

@@ -22,7 +22,7 @@ async fn fail_validation_step(#[future] madara: MadaraClient) -> Result<(), anyh
     // using incorrect private key to generate the wrong signature
     let account = create_account(rpc, "0x1234", ARGENT_CONTRACT_ADDRESS, true);
 
-    let mut txs = madara
+    let txs = madara
         .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(
             FieldElement::from_hex_be("0x123").unwrap(),
             FieldElement::ONE,
@@ -32,14 +32,14 @@ async fn fail_validation_step(#[future] madara: MadaraClient) -> Result<(), anyh
 
     assert_eq!(txs.len(), 1);
 
-    let invoke_tx_result = txs.remove(0);
+    let invoke_tx_result = txs[0].as_ref().unwrap_err();
     assert_matches!(
-        invoke_tx_result.err(),
-        Some(SendTransactionError::AccountError(starknet_accounts::AccountError::Provider(
-            ProviderError::StarknetError(StarknetErrorWithMessage {
+        invoke_tx_result,
+        SendTransactionError::AccountError(starknet_accounts::AccountError::Provider(ProviderError::StarknetError(
+            StarknetErrorWithMessage {
                 code: MaybeUnknownErrorCode::Known(StarknetError::ValidationFailure),
                 message: _
-            })
+            }
         )))
     );
 
@@ -109,7 +109,7 @@ async fn fail_execution_step_with_no_storage_change(#[future] madara: MadaraClie
     let recipient_account = FieldElement::from_hex_be("0x123").unwrap();
     let initial_balance = read_erc20_balance(rpc, fee_token_address, recipient_account).await;
 
-    let mut txs = madara
+    let txs = madara
         .create_block_with_txs(vec![Transaction::Execution(funding_account.transfer_tokens_u256(
             recipient_account,
             U256 { low: funding_account_balance[0], high: funding_account_balance[1] }, // send all the available funds
@@ -121,7 +121,7 @@ async fn fail_execution_step_with_no_storage_change(#[future] madara: MadaraClie
 
     assert_eq!(txs.len(), 1);
 
-    let invoke_tx_result = txs.remove(0);
+    let invoke_tx_result = txs[0].as_ref();
 
     assert!(invoke_tx_result.is_ok()); // the transaction was sent successfully
     assert_eq!(final_balance, initial_balance);

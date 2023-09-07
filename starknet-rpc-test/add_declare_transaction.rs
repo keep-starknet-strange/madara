@@ -24,18 +24,17 @@ async fn fail_validation_step(#[future] madara: MadaraClient) -> Result<(), anyh
     let (declare_tx, _, _) =
         account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
 
-    let mut txs = madara.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
-
+    let txs = madara.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
     assert_eq!(txs.len(), 1);
 
-    let invoke_tx_result = txs.remove(0);
+    let declare_tx_result = txs[0].as_ref().unwrap_err();
     assert_matches!(
-        invoke_tx_result.err(),
-        Some(SendTransactionError::AccountError(starknet_accounts::AccountError::Provider(
-            ProviderError::StarknetError(StarknetErrorWithMessage {
+        declare_tx_result,
+        SendTransactionError::AccountError(starknet_accounts::AccountError::Provider(ProviderError::StarknetError(
+            StarknetErrorWithMessage {
                 code: MaybeUnknownErrorCode::Known(StarknetError::ValidationFailure),
                 message: _
-            })
+            }
         )))
     );
 
@@ -65,11 +64,9 @@ async fn fail_execution_step_with_no_storage_change(#[future] madara: MadaraClie
         .await?;
 
     // declaring contract
-    let mut txs = madara.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
-
+    let txs = madara.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
     assert_eq!(txs.len(), 1);
-    let declare_tx_result = txs.remove(0);
-    assert!(declare_tx_result.is_ok());
+    assert!(txs[0].as_ref().is_ok());
 
     // transaction failed during execution, no change in storage
     assert!(rpc.get_class(BlockId::Tag(BlockTag::Latest), expected_class_hash).await.is_err());
@@ -127,11 +124,10 @@ async fn fails_already_declared(#[future] madara: MadaraClient) -> Result<(), an
     let (declare_tx, _, _) =
         account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
 
-    let mut txs = madara.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
+    let txs = madara.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
 
     assert_eq!(txs.len(), 1);
-    let declare_tx_result = txs.remove(0);
-    assert!(declare_tx_result.is_ok());
+    assert!(txs[0].as_ref().is_ok());
 
     // second declaration fails
     let (declare_tx, _, _) =

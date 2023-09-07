@@ -20,11 +20,10 @@ async fn transfer_tokens(
     transfer_amount: FieldElement,
 ) -> (FieldElement, FieldElement) {
     let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
-    let txs = madara
+    let mut txs = madara
         .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(recipient, transfer_amount, None))])
-        .await;
-    assert!(txs.is_ok());
-    let mut txs = txs.unwrap();
+        .await
+        .unwrap();
     assert_eq!(txs.len(), 1);
     let transaction_hash = match txs.remove(0).unwrap() {
         TransactionResult::Execution(response) => response.transaction_hash,

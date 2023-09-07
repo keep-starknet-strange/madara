@@ -26,11 +26,10 @@ async fn fail_execution_step_with_no_storage_change(#[future] madara: MadaraClie
     let account_address = account_deploy_txn.address();
 
     // as the account isn't funded, this should fail
-    let mut txs = madara.create_block_with_txs(vec![Transaction::AccountDeployment(account_deploy_txn)]).await?;
+    let txs = madara.create_block_with_txs(vec![Transaction::AccountDeployment(account_deploy_txn)]).await?;
 
     assert_eq!(txs.len(), 1);
-    let account_deploy_tx_result = txs.remove(0);
-    assert!(account_deploy_tx_result.is_ok());
+    assert!(txs[0].as_ref().is_ok());
 
     // transaction fails, nothing at class hash
     assert!(rpc.get_class_hash_at(BlockId::Tag(BlockTag::Latest), account_address).await.is_err());
