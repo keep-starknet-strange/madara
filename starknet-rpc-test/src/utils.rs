@@ -19,6 +19,11 @@ use crate::{
     TransactionLegacyDeclaration,
 };
 
+pub struct U256 {
+    pub high: FieldElement,
+    pub low: FieldElement,
+}
+
 pub fn create_account<'a>(
     rpc: &'a JsonRpcClient<HttpTransport>,
     private_key: &str,
@@ -73,7 +78,7 @@ pub trait AccountActions {
     fn transfer_tokens_u256(
         &self,
         recipient: FieldElement,
-        transfer_amount: [FieldElement; 2],
+        transfer_amount: U256,
         nonce: Option<u64>,
     ) -> TransactionExecution;
 
@@ -97,7 +102,7 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
     fn transfer_tokens_u256(
         &self,
         recipient: FieldElement,
-        transfer_amount: [FieldElement; 2],
+        transfer_amount: U256,
         nonce: Option<u64>,
     ) -> TransactionExecution {
         let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
@@ -105,7 +110,7 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
         let calls = vec![Call {
             to: fee_token_address,
             selector: get_selector_from_name("transfer").unwrap(),
-            calldata: vec![recipient, transfer_amount[0], transfer_amount[1]],
+            calldata: vec![recipient, transfer_amount.low, transfer_amount.high],
         }];
 
         // starknet-rs calls estimateFee with incorrect version which throws an error
@@ -124,7 +129,7 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
         transfer_amount: FieldElement,
         nonce: Option<u64>,
     ) -> TransactionExecution {
-        self.transfer_tokens_u256(recipient, [transfer_amount, FieldElement::ZERO], nonce)
+        self.transfer_tokens_u256(recipient, U256 { high: FieldElement::ZERO, low: transfer_amount }, nonce)
     }
 
     fn declare_contract(

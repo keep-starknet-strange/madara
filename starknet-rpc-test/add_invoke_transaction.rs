@@ -10,7 +10,7 @@ use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::utils::{create_account, read_erc20_balance, AccountActions};
+use starknet_rpc_test::utils::{create_account, read_erc20_balance, AccountActions, U256};
 use starknet_rpc_test::{MadaraClient, SendTransactionError, Transaction, TransactionResult};
 
 #[rstest]
@@ -112,7 +112,7 @@ async fn fail_execution_step_with_no_storage_change(#[future] madara: MadaraClie
     let mut txs = madara
         .create_block_with_txs(vec![Transaction::Execution(funding_account.transfer_tokens_u256(
             recipient_account,
-            [funding_account_balance[0], funding_account_balance[1]], // send all the available funds
+            U256 { low: funding_account_balance[0], high: funding_account_balance[1] }, // send all the available funds
             None,
         ))])
         .await?;
