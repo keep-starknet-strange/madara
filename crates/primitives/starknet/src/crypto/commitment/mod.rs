@@ -315,7 +315,7 @@ pub fn calculate_deploy_account_tx_hash(
 ) -> Felt252Wrapper {
     calculate_transaction_hash_common::<PedersenHasher>(
         address,
-        &vec![vec![transaction.account_class_hash, transaction.salt], transaction.calldata.to_vec()].concat(),
+        &[vec![transaction.account_class_hash, transaction.salt], transaction.calldata.to_vec()].concat(),
         transaction.max_fee,
         transaction.nonce,
         calculate_transaction_version_from_u8(transaction.is_query, transaction.version),
