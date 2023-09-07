@@ -21,7 +21,7 @@ pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use mc_transaction_pool::{ChainApi, Pool};
 use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::storage::StarknetStorageSchemaVersion;
+
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
 use mp_starknet::transaction::types::{

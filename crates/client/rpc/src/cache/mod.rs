@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use mc_rpc_core::utils::get_block_by_block_hash;
+
 use mc_storage::{OverrideHandle, StorageOverride};
 use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::storage::StarknetStorageSchemaVersion;
 use sc_service::SpawnTaskHandle;
-use sp_blockchain::HeaderBackend;
+
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use tokio::sync::{mpsc, oneshot};
 
