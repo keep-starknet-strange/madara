@@ -11,8 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Retrieve cached build
-        id: cache
+      - name: Cache Cargo registry and git trees
         uses: actions/cache@v3
         with:
           path: |
@@ -21,7 +20,14 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          key:
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
+            github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
+            github.run_id }}
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+            ${{ runner.os }}-cargo
 
       - name: Setup rust toolchain
         if: steps.cache.outputs.cache-hit != 'true'

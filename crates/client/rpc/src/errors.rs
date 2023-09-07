@@ -37,6 +37,8 @@ pub enum StarknetRpcApiError {
     InvalidContractClass = 50,
     #[error("Class already declared")]
     ClassAlreadyDeclared = 51,
+    #[error("Account validation failed")]
+    ValidationFailure = 55,
     #[error("The transaction version is not supported")]
     UnsupportedTxVersion = 61,
     #[error("Internal server error")]

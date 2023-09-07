@@ -44,12 +44,9 @@ export async function rpcTransfer(
   recipient: string,
   transferAmount: string,
   maxFee?: number,
+  originAddress: string = ARGENT_CONTRACT_ADDRESS,
 ): Promise<InvokeFunctionResponse> {
-  const account = new Account(
-    providerRPC,
-    ARGENT_CONTRACT_ADDRESS,
-    SIGNER_PRIVATE,
-  );
+  const account = new Account(providerRPC, originAddress, SIGNER_PRIVATE);
 
   const invokeResponse = account.execute(
     {
