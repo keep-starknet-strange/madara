@@ -2,6 +2,9 @@
 
 ## Next release
 
+- feat: use resolver 2 for cargo in the workspace
+- upgrade: restructure code for rust latest version
+- upgrade: bump rustc nightly version to 1.74 date
 - feat: bump starknet-core to 0.6.0 and remove InvokeV0
 - fix: estimate_fee should make sure all transaction have a version being
   2^128 + 1 or 2^128+2 depending on the tx type
