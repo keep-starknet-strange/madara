@@ -459,7 +459,7 @@ impl<B: ChainApi> ValidatedPool<B> {
         });
         // Fire `pruned` notifications for collected hashes and make sure to include
         // `known_imported_hashes` since they were just imported as part of the block.
-        let hashes = hashes.chain(known_imported_hashes.into_iter());
+        let hashes = hashes.chain(known_imported_hashes);
         self.fire_pruned(at, hashes)?;
 
         // perform regular cleanup of old transactions in the pool

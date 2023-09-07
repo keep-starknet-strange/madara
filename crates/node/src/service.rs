@@ -631,7 +631,7 @@ type ChainOpsResult = Result<
     ServiceError,
 >;
 
-pub fn new_chain_ops(mut config: &mut Configuration) -> ChainOpsResult {
+pub fn new_chain_ops(config: &mut Configuration) -> ChainOpsResult {
     config.keystore = sc_service::config::KeystoreConfig::InMemory;
     let sc_service::PartialComponents { client, backend, import_queue, task_manager, other, .. } =
         new_partial::<_>(config, build_aura_grandpa_import_queue)?;

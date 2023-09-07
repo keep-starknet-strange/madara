@@ -59,7 +59,7 @@ sp-api = { workspace = true }
 sp-block-builder = { workspace = true }
 sp-blockchain = { workspace = true }
 # Substrate client dependencies
-prometheus-endpoint = { package = "substrate-prometheus-endpoint", workspace = true }
+prometheus-endpoint = { workspace = true }
 sc-rpc-api = { workspace = true }
 # Substrate frame dependencies
 # no substrate frame pallet dependencies for now
