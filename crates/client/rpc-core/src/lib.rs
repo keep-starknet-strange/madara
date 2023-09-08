@@ -37,11 +37,11 @@ pub trait StarknetRpcApi {
 
     /// Get the most recent accepted block hash and number
     #[method(name = "blockHashAndNumber")]
-    fn block_hash_and_number(&self) -> RpcResult<BlockHashAndNumber>;
+    async fn block_hash_and_number(&self) -> RpcResult<BlockHashAndNumber>;
 
     /// Get the number of transactions in a block given a block id
     #[method(name = "getBlockTransactionCount")]
-    fn get_block_transaction_count(&self, block_id: BlockId) -> RpcResult<u128>;
+    async fn get_block_transaction_count(&self, block_id: BlockId) -> RpcResult<u128>;
 
     /// Get the value of the storage at the given address and key, at the given block id
     #[method(name = "getStorageAt")]
@@ -78,7 +78,7 @@ pub trait StarknetRpcApi {
 
     /// Get block information with full transactions given the block id
     #[method(name = "getBlockWithTxs")]
-    fn get_block_with_txs(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxs>;
+    async fn get_block_with_txs(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxs>;
 
     /// Get the chain id
     #[method(name = "chainId")]
@@ -108,11 +108,11 @@ pub trait StarknetRpcApi {
 
     /// Get the details of a transaction by a given block id and index
     #[method(name = "getTransactionByBlockIdAndIndex")]
-    fn get_transaction_by_block_id_and_index(&self, block_id: BlockId, index: usize) -> RpcResult<Transaction>;
+    async fn get_transaction_by_block_id_and_index(&self, block_id: BlockId, index: usize) -> RpcResult<Transaction>;
 
     /// Get the information about the result of executing the requested block
     #[method(name = "getStateUpdate")]
-    fn get_state_update(&self, block_id: BlockId) -> RpcResult<StateUpdate>;
+    async fn get_state_update(&self, block_id: BlockId) -> RpcResult<StateUpdate>;
 
     /// Returns the transactions in the transaction pool, recognized by this sequencer
     #[method(name = "pendingTransactions")]
@@ -131,9 +131,12 @@ pub trait StarknetRpcApi {
 
     /// Returns the information about a transaction by transaction hash.
     #[method(name = "getTransactionByHash")]
-    fn get_transaction_by_hash(&self, transaction_hash: FieldElement) -> RpcResult<Transaction>;
+    async fn get_transaction_by_hash(&self, transaction_hash: FieldElement) -> RpcResult<Transaction>;
 
     /// Returns the receipt of a transaction by transaction hash.
     #[method(name = "getTransactionReceipt")]
-    fn get_transaction_receipt(&self, transaction_hash: FieldElement) -> RpcResult<MaybePendingTransactionReceipt>;
+    async fn get_transaction_receipt(
+        &self,
+        transaction_hash: FieldElement,
+    ) -> RpcResult<MaybePendingTransactionReceipt>;
 }

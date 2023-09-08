@@ -7,7 +7,6 @@ use std::vec::IntoIter;
 
 use jsonrpsee::core::RpcResult;
 use log::error;
-use mc_rpc_core::utils::get_block_by_block_hash;
 use mc_transaction_pool::ChainApi;
 use mp_starknet::block::Block;
 use mp_starknet::execution::types::Felt252Wrapper;
@@ -45,7 +44,7 @@ where
     ///
     /// * `(transaction_receipts: Vec<TransactionReceiptWrapper>, block: Block)` - A tuple of the
     ///   block transaction receipts with events in block_id and an instance of Block
-    pub fn get_block_receipts(
+    pub async fn get_block_receipts(
         &self,
         block_id: u64,
     ) -> Result<(Vec<TransactionReceiptWrapper>, Block), StarknetRpcApiError> {
@@ -55,7 +54,9 @@ where
                 StarknetRpcApiError::BlockNotFound
             })?;
 
-        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
+        let schema = mc_storage::onchain_storage_schema(self.client.as_ref(), substrate_block_hash);
+
+        let block = self.data_cache.get_block_by_block_hash(schema, substrate_block_hash).await.ok_or_else(|| {
             error!("Failed to retrieve block");
             StarknetRpcApiError::BlockNotFound
         })?;
@@ -74,7 +75,7 @@ where
     /// # Returns
     ///
     /// * `EventsPage` - The filtered events with continuation token
-    pub fn filter_events(&self, filter: RpcEventFilter) -> RpcResult<EventsPage> {
+    pub async fn filter_events(&self, filter: RpcEventFilter) -> RpcResult<EventsPage> {
         let mut filtered_events = vec![];
 
         // get filter values
@@ -90,7 +91,7 @@ where
 
         // Iterate on block range
         while current_block <= to_block {
-            let (trx_receipts, block) = self.get_block_receipts(current_block)?;
+            let (trx_receipts, block) = self.get_block_receipts(current_block).await?;
             // check if continuation_token.receipt_n correct
             if (trx_receipts.len() as u64) < continuation_token.receipt_n {
                 return Err(StarknetRpcApiError::InvalidContinuationToken.into());

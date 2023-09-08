@@ -21,7 +21,6 @@ pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use mc_transaction_pool::{ChainApi, Pool};
 use mp_starknet::execution::types::Felt252Wrapper;
-
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
 use mp_starknet::transaction::types::{
@@ -89,7 +88,6 @@ impl<A: ChainApi, B: BlockT, BE, C: HeaderBackend<B>, P, H> Starknet<A, B, BE, C
         hasher: Arc<H>,
         data_cache: Arc<StarknetDataCacheTask<B>>,
     ) -> Self {
-        // TODO: cache, add new property to refer to when accessing data through the cache
         Self {
             client,
             backend,
@@ -124,10 +122,12 @@ where
     BE: Backend<B>,
     H: HasherT + ThreadSafeCopy,
 {
-    pub fn current_block_hash(&self) -> Result<H256, ApiError> {
+    pub async fn current_block_hash(&self) -> Result<H256, ApiError> {
         let substrate_block_hash = self.client.info().best_hash;
 
-        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        let schema = mc_storage::onchain_storage_schema(self.client.as_ref(), substrate_block_hash);
+
+        let block = self.data_cache.get_block_by_block_hash(schema, substrate_block_hash).await.unwrap_or_default();
 
         Ok(block.header().hash(*self.hasher).into())
     }
@@ -159,7 +159,7 @@ where
     /// # Returns
     ///
     /// * `u64` - The substrate block number
-    fn substrate_block_number_from_starknet_block(&self, block_id: BlockId) -> Result<u64, String> {
+    async fn substrate_block_number_from_starknet_block(&self, block_id: BlockId) -> Result<u64, String> {
         // Short circuit on block number
         if let BlockId::Number(x) = block_id {
             return Ok(x);
@@ -167,10 +167,44 @@ where
 
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id)?;
 
-        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)
+        let schema = mc_storage::onchain_storage_schema(self.client.as_ref(), substrate_block_hash);
+
+        let block = self
+            .data_cache
+            .get_block_by_block_hash(schema, substrate_block_hash)
+            .await
             .ok_or("Failed to retrieve the substrate block number".to_string())?;
 
         Ok(block.header().block_number)
+    }
+
+    /// Takes a block number from a Header, and if the block exists, returns it converted to an
+    /// unsigned integer, along its hash.
+    /// Returns an RPC error if the block does not exist.
+    async fn substrate_block_unsigned_and_hash_from_block_number(
+        &self,
+        block_number: <<B>::Header as HeaderT>::Number,
+    ) -> Result<(u64, FieldElement), StarknetRpcApiError> {
+        let block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(block_number);
+        // get a starknet block from the starting substrate block number
+        let substrate_block_hash =
+            self.substrate_block_hash_from_starknet_block(BlockId::Number(block_num)).map_err(|e| {
+                error!("'{e}'");
+                StarknetRpcApiError::BlockNotFound
+            })?;
+
+        let block_schema = mc_storage::onchain_storage_schema(self.client.as_ref(), substrate_block_hash);
+
+        let block = self
+            .data_cache
+            .get_block_by_block_hash(block_schema, substrate_block_hash)
+            .await
+            .ok_or(StarknetRpcApiError::BlockNotFound)?;
+
+        // Convert block numbers and hashes to the respective type required by the `syncing` endpoint.
+        let block_hash = block.header().hash(*self.hasher).0;
+
+        Ok((block_num, block_hash))
     }
 }
 
@@ -194,9 +228,9 @@ where
         self.current_block_number()
     }
 
-    fn block_hash_and_number(&self) -> RpcResult<BlockHashAndNumber> {
+    async fn block_hash_and_number(&self) -> RpcResult<BlockHashAndNumber> {
         let block_number = self.current_block_number()?;
-        let block_hash = self.current_block_hash().map_err(|e| {
+        let block_hash = self.current_block_hash().await.map_err(|e| {
             error!("Failed to retrieve the current block hash: {}", e);
             StarknetRpcApiError::NoBlocks
         })?;
@@ -207,13 +241,15 @@ where
         })
     }
 
-    fn get_block_transaction_count(&self, block_id: BlockId) -> RpcResult<u128> {
+    async fn get_block_transaction_count(&self, block_id: BlockId) -> RpcResult<u128> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        let schema = mc_storage::onchain_storage_schema(self.client.as_ref(), substrate_block_hash);
+
+        let block = self.data_cache.get_block_by_block_hash(schema, substrate_block_hash).await.unwrap_or_default();
 
         Ok(block.header().transaction_count)
     }
@@ -329,46 +365,24 @@ where
                 let best_number = self.client.info().best_number;
                 let highest_number = best_seen_block.unwrap_or(best_number);
 
-                // get a starknet block from the starting substrate block number
-                let starting_block = madara_backend_client::starknet_block_from_substrate_hash(
-                    self.client.as_ref(),
-                    self.starting_block,
-                );
+                let (starting_block_num, starting_block_hash) =
+                    self.substrate_block_unsigned_and_hash_from_block_number(self.starting_block).await?;
 
-                // get a starknet block from the current substrate block number
-                let current_block =
-                    madara_backend_client::starknet_block_from_substrate_hash(self.client.as_ref(), best_number);
+                let (current_block_num, current_block_hash) =
+                    self.substrate_block_unsigned_and_hash_from_block_number(best_number).await?;
 
-                // get a starknet block from the highest substrate block number
-                let highest_block =
-                    madara_backend_client::starknet_block_from_substrate_hash(self.client.as_ref(), highest_number);
+                let (highest_block_num, highest_block_hash) =
+                    self.substrate_block_unsigned_and_hash_from_block_number(highest_number).await?;
 
-                if starting_block.is_ok() && current_block.is_ok() && highest_block.is_ok() {
-                    // Convert block numbers and hashes to the respective type required by the `syncing` endpoint.
-                    let starting_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(self.starting_block);
-                    let starting_block_hash = starting_block?.header().hash(*self.hasher).0;
-
-                    let current_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(best_number);
-                    let current_block_hash = current_block?.header().hash(*self.hasher).0;
-
-                    let highest_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(highest_number);
-                    let highest_block_hash = highest_block?.header().hash(*self.hasher).0;
-
-                    // Build the `SyncStatus` struct with the respective syn information
-                    Ok(SyncStatusType::Syncing(SyncStatus {
-                        starting_block_num,
-                        starting_block_hash,
-                        current_block_num,
-                        current_block_hash,
-                        highest_block_num,
-                        highest_block_hash,
-                    }))
-                } else {
-                    // If there was an error when getting a starknet block, then we return `false`,
-                    // as per the endpoint specification
-                    log::error!("Failed to load Starknet block");
-                    Ok(SyncStatusType::NotSyncing)
-                }
+                // Build the `SyncStatus` struct with the respective syn information
+                Ok(SyncStatusType::Syncing(SyncStatus {
+                    starting_block_num,
+                    starting_block_hash,
+                    current_block_num,
+                    current_block_hash,
+                    highest_block_num,
+                    highest_block_hash,
+                }))
             }
             Err(_) => {
                 // If there was an error when getting a starknet block, then we return `false`,
@@ -588,13 +602,15 @@ where
     }
 
     // Returns the details of a transaction by a given block id and index
-    fn get_transaction_by_block_id_and_index(&self, block_id: BlockId, index: usize) -> RpcResult<Transaction> {
+    async fn get_transaction_by_block_id_and_index(&self, block_id: BlockId, index: usize) -> RpcResult<Transaction> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        let schema = mc_storage::onchain_storage_schema(self.client.as_ref(), substrate_block_hash);
+
+        let block = self.data_cache.get_block_by_block_hash(schema, substrate_block_hash).await.unwrap_or_default();
 
         let transaction = block.transactions().get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
         Ok(Transaction::try_from(transaction.clone()).map_err(|e| {
@@ -604,13 +620,15 @@ where
     }
 
     /// Get block information with full transactions given the block id
-    fn get_block_with_txs(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxs> {
+    async fn get_block_with_txs(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxs> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        let schema = mc_storage::onchain_storage_schema(self.client.as_ref(), substrate_block_hash);
+
+        let block = self.data_cache.get_block_by_block_hash(schema, substrate_block_hash).await.unwrap_or_default();
 
         let block_with_txs = BlockWithTxs {
             // TODO: Get status from block
@@ -637,13 +655,15 @@ where
     }
 
     /// Get the information about the result of executing the requested block
-    fn get_state_update(&self, block_id: BlockId) -> RpcResult<StateUpdate> {
+    async fn get_state_update(&self, block_id: BlockId) -> RpcResult<StateUpdate> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        let schema = mc_storage::onchain_storage_schema(self.client.as_ref(), substrate_block_hash);
+
+        let block = self.data_cache.get_block_by_block_hash(schema, substrate_block_hash).await.unwrap_or_default();
 
         let old_root = if block.header().block_number > 0 {
             let parent_block_hash = (TryInto::<FieldElement>::try_into(block.header().parent_block_hash)).unwrap();
@@ -653,8 +673,10 @@ where
                     StarknetRpcApiError::BlockNotFound
                 })?;
 
+            let schema = mc_storage::onchain_storage_schema(self.client.as_ref(), substrate_block_hash);
+
             let parent_block =
-                get_block_by_block_hash(self.client.as_ref(), substrate_parent_block_hash).unwrap_or_default();
+                self.data_cache.get_block_by_block_hash(schema, substrate_parent_block_hash).await.unwrap_or_default();
             parent_block.header().global_state_root.into()
         } else {
             FieldElement::default()
@@ -731,12 +753,13 @@ where
 
         // Get the substrate block numbers for the requested range
         let latest_block =
-            self.substrate_block_number_from_starknet_block(BlockId::Tag(BlockTag::Latest)).map_err(|e| {
+            self.substrate_block_number_from_starknet_block(BlockId::Tag(BlockTag::Latest)).await.map_err(|e| {
                 error!("'{e}'");
                 StarknetRpcApiError::BlockNotFound
             })?;
         let from_block = self
             .substrate_block_number_from_starknet_block(filter.event_filter.from_block.unwrap_or(BlockId::Number(0)))
+            .await
             .map_err(|e| {
                 error!("'{e}'");
                 StarknetRpcApiError::BlockNotFound
@@ -745,6 +768,7 @@ where
             .substrate_block_number_from_starknet_block(
                 filter.event_filter.to_block.unwrap_or(BlockId::Tag(BlockTag::Latest)),
             )
+            .await
             .map_err(|e| {
                 error!("'{e}'");
                 StarknetRpcApiError::BlockNotFound
@@ -758,7 +782,7 @@ where
         let to_block = if latest_block > to_block { to_block } else { latest_block };
         let filter = RpcEventFilter { from_block, to_block, from_address, keys, chunk_size, continuation_token };
 
-        self.filter_events(filter)
+        self.filter_events(filter).await
     }
 
     /// Submit a new declare transaction to be added to the chain
@@ -814,7 +838,7 @@ where
     /// # Arguments
     ///
     /// * `transaction_hash` - Transaction hash corresponding to the transaction.
-    fn get_transaction_by_hash(&self, transaction_hash: FieldElement) -> RpcResult<Transaction> {
+    async fn get_transaction_by_hash(&self, transaction_hash: FieldElement) -> RpcResult<Transaction> {
         let block_hash_from_db = self
             .backend
             .mapping()
@@ -829,7 +853,9 @@ where
             None => return Err(StarknetRpcApiError::TxnHashNotFound.into()),
         };
 
-        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        let schema = mc_storage::onchain_storage_schema(self.client.as_ref(), substrate_block_hash);
+
+        let block = self.data_cache.get_block_by_block_hash(schema, substrate_block_hash).await.unwrap_or_default();
 
         let find_tx = block
             .transactions()
@@ -854,7 +880,10 @@ where
     /// # Arguments
     ///
     /// * `transaction_hash` - Transaction hash corresponding to the transaction.
-    fn get_transaction_receipt(&self, transaction_hash: FieldElement) -> RpcResult<MaybePendingTransactionReceipt> {
+    async fn get_transaction_receipt(
+        &self,
+        transaction_hash: FieldElement,
+    ) -> RpcResult<MaybePendingTransactionReceipt> {
         let block_hash_from_db = self
             .backend
             .mapping()
@@ -873,8 +902,9 @@ where
             }
         };
 
-        let block: mp_starknet::block::Block =
-            get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        let schema = mc_storage::onchain_storage_schema(self.client.as_ref(), substrate_block_hash);
+
+        let block = self.data_cache.get_block_by_block_hash(schema, substrate_block_hash).await.unwrap_or_default();
         let block_header = block.header();
         let block_hash = block_header.hash(*self.hasher).into();
         let block_number = block_header.block_number;
