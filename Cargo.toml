@@ -1,4 +1,5 @@
 [workspace]
+resolver = "2"
 members = [
   "crates/node",
   "crates/runtime",
@@ -132,7 +133,7 @@ cairo-vm = { git = "https://github.com/keep-starknet-strange/cairo-rs", branch =
   "parity-scale-codec",
 ] }
 starknet-crypto = { version = "0.6.0", default-features = false }
-starknet-core = { version = "0.5.0", default-features = false }
+starknet-core = { version = "0.6.0", default-features = false }
 starknet-ff = { version = "0.3.4", default-features = false }
 
 blockifier = { git = "https://github.com/keep-starknet-strange/blockifier", branch = "no_std-support-7578442", default-features = false, features = [
@@ -159,15 +160,15 @@ log = { version = "0.4.20", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 safe-mix = { version = "1.0", default-features = false }
 jsonrpsee = { version = "0.16.3", default-features = false }
-clap = { version = "4.3.23", default-features = false }
+clap = { version = "4.4.2", default-features = false }
 futures = { version = "0.3.28", default-features = false }
 futures-timer = { version = "3.0.2", default-features = false }
 reqwest = { version = "0.11.20", default-features = false }
-serde = { version = "1.0.185", default-features = false }
+serde = { version = "1.0.188", default-features = false }
 serde_json = { version = "1.0.105", default-features = false }
 serde_with = { version = "2.3.3", default-features = false }
 bitvec = { version = "1", default-features = false }
-thiserror = "1.0.47"
+thiserror = "1.0.48"
 thiserror-no-std = "2.0.2"
 derive_more = { version = "0.99.17", default-features = false }
 rstest = "0.17.0"

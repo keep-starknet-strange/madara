@@ -46,10 +46,10 @@ pub const FEE_TRANSFER_N_STORAGE_CHANGES_TO_CHARGE: u8 = FEE_TRANSFER_N_STORAGE_
 ///
 /// [TransactionExecutionErrorWrapper] if a step of the execution resources computation fails.
 pub fn get_transaction_resources<S: State + StateChanges>(
-    state: &mut S,
+    state: &S,
     execute_call_info: &Option<CallInfo>,
     validate_call_info: &Option<CallInfo>,
-    execution_resources: &mut ExecutionResources,
+    execution_resources: &ExecutionResources,
     tx_type: TxType,
 ) -> Result<BTreeMap<String, usize>, TransactionExecutionErrorWrapper> {
     let (n_modified_contracts, n_modified_keys, n_class_hash_updates, n_compiled_class_hash_updates) =

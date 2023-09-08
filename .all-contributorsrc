@@ -371,6 +371,13 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/77340776?v=4",
       "profile": "https://www.linkedin.com/in/jo%C3%A3o-pereira-91a087230/",
       "contributions": ["doc"]
+    },
+    {
+      "login": "kasteph",
+      "name": "kasteph",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3408478?v=4",
+      "profile": "https://github.com/kasteph",
+      "contributions": ["code"]
     }
   ],
   "contributorsPerLine": 7,

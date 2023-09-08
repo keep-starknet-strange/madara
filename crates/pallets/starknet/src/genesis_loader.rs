@@ -1,3 +1,4 @@
+use std::fmt;
 use std::string::String;
 use std::vec::Vec;
 
@@ -17,13 +18,27 @@ use crate::{utils, GenesisConfig};
 #[derive(Serialize, Deserialize, Copy, Clone)]
 pub struct HexFelt(#[serde_as(as = "UfeHex")] pub FieldElement);
 
+impl fmt::LowerHex for HexFelt {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let val = self.0;
+
+        fmt::LowerHex::fmt(&val, f)
+    }
+}
+
+impl From<Felt252Wrapper> for HexFelt {
+    fn from(felt: Felt252Wrapper) -> HexFelt {
+        HexFelt(felt.0)
+    }
+}
+
 type ClassHash = HexFelt;
 type ContractAddress = HexFelt;
 type StorageKey = HexFelt;
 type ContractStorageKey = (ContractAddress, StorageKey);
 type StorageValue = HexFelt;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct GenesisLoader {
     pub madara_path: Option<String>,
     pub contract_classes: Vec<(ClassHash, ContractClass)>,
@@ -33,7 +48,7 @@ pub struct GenesisLoader {
     pub seq_addr_updated: bool,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 #[serde(untagged)]
 pub enum ContractClass {
     Path { path: String, version: u8 },
