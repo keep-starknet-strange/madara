@@ -6,8 +6,6 @@ use schnellru::{ByMemoryUsage, LruMap, Unlimited};
 pub struct LRUCache<K, V> {
     /// Cache name.
     name: &'static str,
-    /// Maximum allocated memory size.
-    max_allocated_size: Option<usize>,
     /// Maximum values size.
     max_values_size: Option<usize>,
     /// Values current size.
@@ -89,7 +87,6 @@ impl<K: Eq + core::hash::Hash, V: Encode> LRUCache<K, V> {
             } else {
                 EnumInnerCache::Unlimited(LruMap::new(Unlimited))
             },
-            max_allocated_size,
             max_values_size,
             values_size: 0,
             metrics,

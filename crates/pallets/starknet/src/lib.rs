@@ -295,6 +295,10 @@ pub mod pallet {
     #[pallet::getter(fn seq_addr_update)]
     pub type SeqAddrUpdate<T: Config> = StorageValue<_, bool, ValueQuery>;
 
+    #[pallet::storage]
+    #[pallet::getter(fn current_block)]
+    pub type CurrentBlock<T: Config> = StorageValue<_, StarknetBlock>;
+
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
@@ -990,6 +994,9 @@ impl<T: Config> Pallet<T> {
         // Save the block number <> hash mapping.
         let blockhash = block.header().hash(T::SystemHash::hasher());
         BlockHash::<T>::insert(block_number, blockhash);
+
+        // Save current block in our storage, to ease data retrieval
+        CurrentBlock::<T>::put(block.clone());
 
         // Kill pending storage.
         Pending::<T>::kill();

@@ -191,8 +191,15 @@ where
         self.client.runtime_api().nonce(block_hash, contract_address).ok()
     }
 
-    // TODO: cache, document and find way to implement block fetch from runtime API
+    /// Return the block data for a given block hash.
+    ///
+    /// # Arguments
+    ///
+    /// * `block_hash` - The block hash
+    ///
+    /// # Returns
+    /// * `Some(block)` - The block for the given block hash
     fn get_block_by_hash(&self, block_hash: <B as BlockT>::Hash) -> Option<StarknetBlock> {
-        self.client.runtime_api().get_block_by_hash(block_hash).ok()?
+        self.client.runtime_api().current_block(block_hash).ok()?
     }
 }

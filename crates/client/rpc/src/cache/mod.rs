@@ -1,13 +1,11 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-
 use mc_storage::{OverrideHandle, StorageOverride};
 use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::storage::StarknetStorageSchemaVersion;
 use sc_service::SpawnTaskHandle;
-
-use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
+use sp_runtime::traits::Block as BlockT;
 use tokio::sync::{mpsc, oneshot};
 
 use crate::cache::lru_cache::LRUCache;

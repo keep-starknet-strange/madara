@@ -291,9 +291,8 @@ impl_runtime_apis! {
             }).collect::<Vec<Transaction>>()
         }
 
-        fn get_block_by_hash() -> Option<StarknetBlock> {
-            // TODO: cache, get block from pallet starknet
-            Some(StarknetBlock::default())
+        fn current_block() -> Option<StarknetBlock> {
+            Starknet::current_block()
         }
     }
 
