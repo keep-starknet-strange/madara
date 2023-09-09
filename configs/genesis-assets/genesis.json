@@ -64,20 +64,6 @@
     [
       "0x0372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4",
       {
-        "path": "cairo-contracts/test.json",
-        "version": 0
-      }
-    ],
-    [
-      "0x0372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4",
-      {
-        "path": "cairo-contracts/ERC20.json",
-        "version": 0
-      }
-    ],
-    [
-      "0x0372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4",
-      {
         "path": "cairo-contracts/ERC20.json",
         "version": 0
       }
