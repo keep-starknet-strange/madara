@@ -1,6 +1,6 @@
 # Madara Changelog
 
-- chore: add real class hash values top genesis config
+- chore: add real class hash values for genesis config
 
 ## Next release
 
