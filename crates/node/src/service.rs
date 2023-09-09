@@ -319,7 +319,7 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
         data_cache: Arc::new(StarknetDataCacheTask::new(
             task_manager.spawn_handle(),
             overrides,
-            (None, Some(100)),
+            100,
             prometheus_registry.clone(),
         )),
     };

@@ -36,7 +36,7 @@ impl<B: BlockT> StarknetDataCacheTask<B> {
     pub fn new(
         spawn_handle: SpawnTaskHandle,
         overrides: Arc<OverrideHandle<B>>,
-        cache_max_sizes: (Option<usize>, Option<usize>),
+        cache_max_allocated_size: usize,
         prometheus_registry: Option<prometheus_endpoint::Registry>,
     ) -> Self {
         let (task_tx, mut task_rx) = mpsc::channel(100);
@@ -46,8 +46,7 @@ impl<B: BlockT> StarknetDataCacheTask<B> {
         outer_spawn_handle.spawn("StarknetDataCacheTask", None, async move {
             let mut blocks_cache = LRUCache::<B::Hash, StarknetBlock>::new(
                 "blocks_cache",
-                cache_max_sizes.0,
-                cache_max_sizes.1,
+                cache_max_allocated_size,
                 prometheus_registry.clone(),
             );
 
