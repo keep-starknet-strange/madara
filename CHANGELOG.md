@@ -1,6 +1,7 @@
 # Madara Changelog
 
 - chore: add real class hash values top genesis config
+
 ## Next release
 
 - feat: use resolver 2 for cargo in the workspace
