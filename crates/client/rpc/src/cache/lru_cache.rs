@@ -107,13 +107,6 @@ impl LRUCacheByteLimitedMetrics {
                 )?,
                 registry,
             )?,
-            values_size: prometheus_endpoint::register(
-                prometheus_endpoint::Gauge::new(
-                    format!("madara_starknet_{}_size", cache_name),
-                    format!("Total values size in starknet {} data cache.", cache_name),
-                )?,
-                registry,
-            )?,
         })
     }
 }

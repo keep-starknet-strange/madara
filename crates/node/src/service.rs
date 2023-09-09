@@ -245,7 +245,11 @@ where
 }
 
 /// Builds a new service for a full client.
-pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskManager, ServiceError> {
+pub fn new_full(
+    config: Configuration,
+    starknet_log_block_cache_size: usize,
+    sealing: Option<Sealing>,
+) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
 
@@ -319,7 +323,7 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
         data_cache: Arc::new(StarknetDataCacheTask::new(
             task_manager.spawn_handle(),
             overrides,
-            100,
+            starknet_log_block_cache_size,
             prometheus_registry.clone(),
         )),
     };

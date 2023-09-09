@@ -47,6 +47,9 @@ pub struct ExtendedRunCmd {
 
     #[clap(long)]
     pub genesis_url: Option<String>,
+
+    #[clap(long, default_value = "200")]
+    pub starknet_log_block_cache_size: usize,
 }
 
 #[allow(clippy::large_enum_variant)]
