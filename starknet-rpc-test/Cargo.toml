@@ -105,3 +105,7 @@ path = "get_transaction_receipt.rs"
 [[test]]
 name = "starknet_get_events"
 path = "get_events.rs"
+
+[[test]]
+name = "starknet_get_state_update"
+path = "get_state_update.rs"
