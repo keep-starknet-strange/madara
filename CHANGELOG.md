@@ -17,7 +17,7 @@
 
 ## v0.2.0
 
-- add-contributors: `0xAsten`, `m-kus`, `joaopereira12`
+- add-contributors: `0xAsten`, `m-kus`, `joaopereira12`, `kasteph`
 - ci: add verification if build-spec is working
 - ci: added wasm to test
 - ci: disable benchmark for pushes and pr's
