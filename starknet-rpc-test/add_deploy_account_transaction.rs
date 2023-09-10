@@ -19,9 +19,12 @@ async fn fail_execution_step_with_no_storage_change(#[future] madara: MadaraClie
     let rpc = madara.get_starknet_client();
 
     // deploy account
-    let oz_factory =
-        build_oz_account_factory(rpc, "0x123", FieldElement::from_hex_be(CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH).unwrap())
-            .await;
+    let oz_factory = build_oz_account_factory(
+        rpc,
+        SIGNER_PRIVATE,
+        FieldElement::from_hex_be(CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH).unwrap(),
+    )
+    .await;
     let account_deploy_txn = build_deploy_account_tx(&oz_factory, FieldElement::ONE);
     let account_address = account_deploy_txn.address();
 
