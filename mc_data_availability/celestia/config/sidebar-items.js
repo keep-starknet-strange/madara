@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_CELESTIA_NODE","DEFAULT_NID"],"struct":["CelestiaConfig"]};

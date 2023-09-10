@@ -92,8 +92,13 @@
 <a href="#92" id="92">92</a>
 <a href="#93" id="93">93</a>
 <a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
 
+<span class="kw">use </span>mc_data_availability::DaLayer;
 <span class="kw">use </span>sc_cli::RunCmd;
 
 <span class="doccomment">/// Available Sealing methods.
@@ -141,6 +146,9 @@
 
     <span class="attr">#[clap(long)]
     </span><span class="kw">pub </span>genesis_url: <span class="prelude-ty">Option</span>&lt;String&gt;,
+
+    <span class="attr">#[clap(long)]
+    </span><span class="kw">pub </span>da_layer: <span class="prelude-ty">Option</span>&lt;DaLayer&gt;,
 }
 
 <span class="attr">#[allow(clippy::large_enum_variant)]

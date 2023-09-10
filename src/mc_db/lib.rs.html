@@ -105,6 +105,17 @@
 <a href="#105" id="105">105</a>
 <a href="#106" id="106">106</a>
 <a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A database backend storing data about madara chain
 //!
 //! # Usefulness
@@ -120,6 +131,7 @@
 
 </span><span class="kw">mod </span>mapping_db;
 <span class="kw">pub use </span>mapping_db::MappingCommitment;
+<span class="kw">mod </span>da_db;
 <span class="kw">mod </span>db_opening_utils;
 <span class="kw">mod </span>meta_db;
 
@@ -127,6 +139,7 @@
 <span class="kw">use </span>std::path::{Path, PathBuf};
 <span class="kw">use </span>std::sync::{Arc, Mutex};
 
+<span class="kw">use </span>da_db::DaDb;
 <span class="kw">use </span>mapping_db::MappingDb;
 <span class="kw">use </span>meta_db::MetaDb;
 <span class="kw">use </span>sc_client_db::DatabaseSource;
@@ -143,16 +156,18 @@
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>columns {
-    <span class="kw">pub const </span>NUM_COLUMNS: u32 = <span class="number">4</span>;
+    <span class="kw">pub const </span>NUM_COLUMNS: u32 = <span class="number">5</span>;
 
     <span class="kw">pub const </span>META: u32 = <span class="number">0</span>;
     <span class="kw">pub const </span>BLOCK_MAPPING: u32 = <span class="number">1</span>;
     <span class="kw">pub const </span>TRANSACTION_MAPPING: u32 = <span class="number">2</span>;
     <span class="kw">pub const </span>SYNCED_MAPPING: u32 = <span class="number">3</span>;
+    <span class="kw">pub const </span>DA: u32 = <span class="number">4</span>;
 }
 
 <span class="kw">pub mod </span>static_keys {
     <span class="kw">pub const </span>CURRENT_SYNCING_TIPS: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;CURRENT_SYNCING_TIPS&quot;</span>;
+    <span class="kw">pub const </span>LAST_PROVED_BLOCK: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;LAST_PROVED_BLOCK&quot;</span>;
 }
 
 <span class="doccomment">/// The Madara client database backend
@@ -163,6 +178,7 @@
 </span><span class="kw">pub struct </span>Backend&lt;B: BlockT&gt; {
     meta: Arc&lt;MetaDb&lt;B&gt;&gt;,
     mapping: Arc&lt;MappingDb&lt;B&gt;&gt;,
+    da: Arc&lt;DaDb&lt;B&gt;&gt;,
 }
 
 <span class="doccomment">/// Returns the Starknet database directory.
@@ -199,6 +215,7 @@
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             mapping: Arc::new(MappingDb { db: db.clone(), write_lock: Arc::new(Mutex::new(())), _marker: PhantomData }),
             meta: Arc::new(MetaDb { db: db.clone(), _marker: PhantomData }),
+            da: Arc::new(DaDb { db: db.clone(), _marker: PhantomData }),
         })
     }
 
@@ -210,6 +227,11 @@
     <span class="doccomment">/// Return the meta database manager
     </span><span class="kw">pub fn </span>meta(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Arc&lt;MetaDb&lt;B&gt;&gt; {
         <span class="kw-2">&amp;</span><span class="self">self</span>.meta
+    }
+
+    <span class="doccomment">/// Return the da database manager
+    </span><span class="kw">pub fn </span>da(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Arc&lt;DaDb&lt;B&gt;&gt; {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.da
     }
 }
 </code></pre></div></section></main></body></html>

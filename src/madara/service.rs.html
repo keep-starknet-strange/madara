@@ -596,9 +596,51 @@
 <a href="#596" id="596">596</a>
 <a href="#597" id="597">597</a>
 <a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
+<a href="#610" id="610">610</a>
+<a href="#611" id="611">611</a>
+<a href="#612" id="612">612</a>
+<a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
+<a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
+<a href="#621" id="621">621</a>
+<a href="#622" id="622">622</a>
+<a href="#623" id="623">623</a>
+<a href="#624" id="624">624</a>
+<a href="#625" id="625">625</a>
+<a href="#626" id="626">626</a>
+<a href="#627" id="627">627</a>
+<a href="#628" id="628">628</a>
+<a href="#629" id="629">629</a>
+<a href="#630" id="630">630</a>
+<a href="#631" id="631">631</a>
+<a href="#632" id="632">632</a>
+<a href="#633" id="633">633</a>
+<a href="#634" id="634">634</a>
+<a href="#635" id="635">635</a>
+<a href="#636" id="636">636</a>
+<a href="#637" id="637">637</a>
+<a href="#638" id="638">638</a>
+<a href="#639" id="639">639</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
+<span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::time::Duration;
 
@@ -608,6 +650,13 @@
 <span class="kw">use </span>madara_runtime::opaque::Block;
 <span class="kw">use </span>madara_runtime::{<span class="self">self</span>, Hash, RuntimeApi};
 <span class="kw">use </span>mc_block_proposer::ProposerFactory;
+<span class="kw">use </span>mc_data_availability::avail::config::AvailConfig;
+<span class="kw">use </span>mc_data_availability::avail::AvailClient;
+<span class="kw">use </span>mc_data_availability::celestia::config::CelestiaConfig;
+<span class="kw">use </span>mc_data_availability::celestia::CelestiaClient;
+<span class="kw">use </span>mc_data_availability::ethereum::config::EthereumConfig;
+<span class="kw">use </span>mc_data_availability::ethereum::EthereumClient;
+<span class="kw">use </span>mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker};
 <span class="kw">use </span>mc_mapping_sync::MappingSyncWorker;
 <span class="kw">use </span>mc_storage::overrides_handle;
 <span class="kw">use </span>mc_transaction_pool::FullPool;
@@ -842,7 +891,11 @@
 }
 
 <span class="doccomment">/// Builds a new service for a full client.
-</span><span class="kw">pub fn </span>new_full(config: Configuration, sealing: <span class="prelude-ty">Option</span>&lt;Sealing&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;TaskManager, ServiceError&gt; {
+</span><span class="kw">pub fn </span>new_full(
+    config: Configuration,
+    sealing: <span class="prelude-ty">Option</span>&lt;Sealing&gt;,
+    da_layer: <span class="prelude-ty">Option</span>&lt;(DaLayer, PathBuf)&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;TaskManager, ServiceError&gt; {
     <span class="kw">let </span>build_import_queue =
         <span class="kw">if </span>sealing.is_some() { build_manual_seal_import_queue } <span class="kw">else </span>{ build_aura_grandpa_import_queue };
 
@@ -959,13 +1012,42 @@
             Duration::new(<span class="number">6</span>, <span class="number">0</span>),
             client.clone(),
             backend.clone(),
-            madara_backend,
+            madara_backend.clone(),
             <span class="number">3</span>,
             <span class="number">0</span>,
             hasher,
         )
         .for_each(|()| future::ready(())),
     );
+
+    <span class="comment">// initialize data availability worker
+    </span><span class="kw">if let </span><span class="prelude-val">Some</span>((da_layer, da_path)) = da_layer {
+        <span class="kw">let </span>da_client: Box&lt;<span class="kw">dyn </span>DaClient + Send + Sync&gt; = <span class="kw">match </span>da_layer {
+            DaLayer::Celestia =&gt; {
+                <span class="kw">let </span>celestia_conf = CelestiaConfig::try_from(<span class="kw-2">&amp;</span>da_path)<span class="question-mark">?</span>;
+                Box::new(CelestiaClient::try_from(celestia_conf).map_err(|e| ServiceError::Other(e.to_string()))<span class="question-mark">?</span>)
+            }
+            DaLayer::Ethereum =&gt; {
+                <span class="kw">let </span>ethereum_conf = EthereumConfig::try_from(<span class="kw-2">&amp;</span>da_path)<span class="question-mark">?</span>;
+                Box::new(EthereumClient::try_from(ethereum_conf)<span class="question-mark">?</span>)
+            }
+            DaLayer::Avail =&gt; {
+                <span class="kw">let </span>avail_conf = AvailConfig::try_from(<span class="kw-2">&amp;</span>da_path)<span class="question-mark">?</span>;
+                Box::new(AvailClient::try_from(avail_conf).map_err(|e| ServiceError::Other(e.to_string()))<span class="question-mark">?</span>)
+            }
+        };
+
+        task_manager.spawn_essential_handle().spawn(
+            <span class="string">&quot;da-worker-prove&quot;</span>,
+            <span class="prelude-val">Some</span>(<span class="string">&quot;madara&quot;</span>),
+            DataAvailabilityWorker::prove_current_block(da_client.get_mode(), client.clone(), madara_backend.clone()),
+        );
+        task_manager.spawn_essential_handle().spawn(
+            <span class="string">&quot;da-worker-update&quot;</span>,
+            <span class="prelude-val">Some</span>(<span class="string">&quot;madara&quot;</span>),
+            DataAvailabilityWorker::update_state(da_client, client.clone(), madara_backend),
+        );
+    };
 
     <span class="kw">if </span>role.is_authority() {
         <span class="comment">// manual-seal authorship
