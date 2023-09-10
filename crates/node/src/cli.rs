@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use mc_data_availability::DaLayer;
 use sc_cli::RunCmd;
 
 /// Available Sealing methods.
@@ -50,6 +51,9 @@ pub struct ExtendedRunCmd {
 
     #[clap(long, default_value = "200")]
     pub starknet_log_block_cache_size: usize,
+
+    #[clap(long)]
+    pub da_layer: Option<DaLayer>,
 }
 
 #[allow(clippy::large_enum_variant)]
