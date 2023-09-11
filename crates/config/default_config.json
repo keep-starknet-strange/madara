@@ -1,0 +1,146 @@
+{
+  "base_layer.node_url": {
+    "description": "Ethereum node URL. A schema to match to Infura node: https://mainnet.infura.io/v3/<your_api_key>, but any other node can be used.",
+    "required_type": "String"
+  },
+  "base_layer.starknet_contract_address": {
+    "description": "Starknet contract address in ethereum.",
+    "value": "0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4"
+  },
+  "central.concurrent_requests": {
+    "description": "Maximum number of concurrent requests to Starknet feeder-gateway for getting a type of data (for example, blocks).",
+    "value": 10
+  },
+  "central.http_headers": {
+    "description": "'k1:v1 k2:v2 ...' headers for SN-client.",
+    "value": ""
+  },
+  "central.max_classes_to_download": {
+    "description": "Maximum number of classes to download at a given time.",
+    "value": 20
+  },
+  "central.max_state_updates_to_download": {
+    "description": "Maximum number of state updates to download at a given time.",
+    "value": 20
+  },
+  "central.max_state_updates_to_store_in_memory": {
+    "description": "Maximum number of state updates to store in memory at a given time.",
+    "value": 20
+  },
+  "central.retry_config.max_retries": {
+    "description": "Maximum number of retries before the node stops retrying.",
+    "value": 10
+  },
+  "central.retry_config.retry_base_millis": {
+    "description": "Base waiting time after a failed request. After that, the time increases exponentially.",
+    "value": 30
+  },
+  "central.retry_config.retry_max_delay_millis": {
+    "description": "Max waiting time after a failed request.",
+    "value": 30000
+  },
+  "central.url": {
+    "description": "Starknet feeder-gateway URL. It should match chain_id.",
+    "value": "https://alpha-mainnet.starknet.io/"
+  },
+  "chain_id": {
+    "description": "The chain to follow. For more details see https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#chain-id.",
+    "value": "SN_MAIN"
+  },
+  "collect_metrics": {
+    "description": "If true, collect metrics for the node.",
+    "value": false
+  },
+  "monitoring_gateway.collect_metrics": {
+    "description": "If true, collect and return metrics in the monitoring gateway.",
+    "pointer_target": "collect_metrics"
+  },
+  "monitoring_gateway.server_address": {
+    "description": "node's monitoring server.",
+    "value": "0.0.0.0:8081"
+  },
+  "rpc.chain_id": {
+    "description": "The chain to follow. For more details see https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#chain-id.",
+    "pointer_target": "chain_id"
+  },
+  "rpc.collect_metrics": {
+    "description": "If true, collect metrics for the rpc.",
+    "pointer_target": "collect_metrics"
+  },
+  "rpc.execution_config.config_file_name": {
+    "description": "Name of the ExecutionConfig configuration file.",
+    "value": "config/execution_config/default_config.json"
+  },
+  "rpc.max_events_chunk_size": {
+    "description": "Maximum chunk size supported by the node in get_events requests.",
+    "value": 1000
+  },
+  "rpc.max_events_keys": {
+    "description": "Maximum number of keys supported by the node in get_events requests.",
+    "value": 100
+  },
+  "rpc.server_address": {
+    "description": "IP:PORT of the node`s JSON-RPC server.",
+    "value": "0.0.0.0:8080"
+  },
+  "rpc.starknet_gateway_retry_config.max_retries": {
+    "description": "For communicating with Starknet gateway, maximum number of retries before the node stops retrying.",
+    "value": 5
+  },
+  "rpc.starknet_gateway_retry_config.retry_base_millis": {
+    "description": "For communicating with Starknet gateway, base waiting time after a failed request. After that, the time increases exponentially.",
+    "value": 50
+  },
+  "rpc.starknet_gateway_retry_config.retry_max_delay_millis": {
+    "description": "For communicating with Starknet gateway, max waiting time after a failed request.",
+    "value": 1000
+  },
+  "rpc.starknet_url": {
+    "description": "URL for communicating with Starknet in write_api methods.",
+    "value": "https://alpha-mainnet.starknet.io/"
+  },
+  "storage.db_config.chain_id": {
+    "description": "The chain to follow. For more details see https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#chain-id.",
+    "pointer_target": "chain_id"
+  },
+  "storage.db_config.growth_step": {
+    "description": "The growth step in bytes, must be greater than zero to allow the database to grow.",
+    "value": 67108864
+  },
+  "storage.db_config.max_size": {
+    "description": "The maximum size of the node's storage in bytes.",
+    "value": 1099511627776
+  },
+  "storage.db_config.min_size": {
+    "description": "The minimum size of the node's storage in bytes.",
+    "value": 1048576
+  },
+  "storage.db_config.path_prefix": {
+    "description": "Prefix of the path of the node's storage directory, the storage file path will be <path_prefix>/<chain_id>. The path is not created automatically.",
+    "value": "./data"
+  },
+  "sync.#is_none": {
+    "description": "Flag for an optional field",
+    "value": false
+  },
+  "sync.base_layer_propagation_sleep_duration": {
+    "description": "Time in seconds to poll the base layer to get the latest proved block.",
+    "value": 10
+  },
+  "sync.block_propagation_sleep_duration": {
+    "description": "Time in seconds before checking for a new block after the node is synchronized.",
+    "value": 2
+  },
+  "sync.blocks_max_stream_size": {
+    "description": "Max amount of blocks to download in a stream.",
+    "value": 1000
+  },
+  "sync.recoverable_error_sleep_duration": {
+    "description": "Waiting time in seconds before restarting synchronization after a recoverable error.",
+    "value": 3
+  },
+  "sync.state_updates_max_stream_size": {
+    "description": "Max amount of state updates to download in a stream.",
+    "value": 1000
+  }
+}

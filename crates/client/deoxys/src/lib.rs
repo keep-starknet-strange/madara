@@ -6,6 +6,7 @@ use mp_starknet::block::{Block, Header, MaxTransactions};
 use reqwest::header::{HeaderMap, CONTENT_TYPE};
 use serde_json::json;
 use sp_core::bounded_vec::BoundedVec;
+use starknet_api::core::ChainId;
 use starknet_client::RetryConfig;
 use starknet_client::reader::{StarknetFeederGatewayClient, StarknetReader};
 use starknet_gateway_types::reply::{MaybePendingBlock, transaction as EnumTransaction};
@@ -25,6 +26,8 @@ use std::fs::read_to_string;
 use std::path::Path;
 use std::string::String;
 use starknet_client;
+use std::path::PathBuf;
+use validator::Validate;
 
 pub fn read_resource_file(path_in_resource_dir: &str) -> String {
     let path = Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap())
@@ -246,7 +249,52 @@ async fn call_rpc(rpc_port: u16) -> Result<reqwest::StatusCode, reqwest::Error> 
 //     }
 // }
 
+const DEFAULT_CONFIG_FILE: &str = "config/execution_config/default_config.json";
+
+pub struct ExecutionConfig {
+    pub config_file_name: PathBuf,
+}
+
+impl Default for ExecutionConfig {
+    fn default() -> Self {
+        ExecutionConfig { config_file_name: PathBuf::from(DEFAULT_CONFIG_FILE) }
+    }
+}
+
+pub struct RpcConfig {
+    // #[validate(custom = "validate_ascii")]
+    pub chain_id: ChainId,
+    pub server_address: String,
+    pub max_events_chunk_size: usize,
+    pub max_events_keys: usize,
+    pub collect_metrics: bool,
+    pub starknet_url: String,
+    pub starknet_gateway_retry_config: RetryConfig,
+    pub execution_config: ExecutionConfig,
+}
+
+impl Default for RpcConfig {
+    fn default() -> Self {
+        RpcConfig {
+            chain_id: ChainId("SN_MAIN".to_string()),
+            server_address: String::from("0.0.0.0:9944"),
+            max_events_chunk_size: 1000,
+            max_events_keys: 100,
+            collect_metrics: false,
+            starknet_url: String::from("https://alpha-mainnet.starknet.io/"),
+            starknet_gateway_retry_config: RetryConfig {
+                retry_base_millis: 50,
+                retry_max_delay_millis: 1000,
+                max_retries: 5,
+            },
+            execution_config: ExecutionConfig::default(),
+        }
+    }
+}
+
 pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
+    let rpc_config = RpcConfig::default();
+
     let retry_config = RetryConfig {
         retry_base_millis: 30,
         retry_max_delay_millis: 30000,
@@ -254,19 +302,16 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
     };
 
     let starknet_client = StarknetFeederGatewayClient::new(
-        &mockito::server_url(), // Adjust this as needed
-        None,
+        &rpc_config.starknet_url,
+        None, // This assumes the second parameter remains as None, adjust if otherwise.
         NODE_VERSION,
         retry_config
-    )
-    .unwrap();
+    ).unwrap();
     let mut i = 0u64;
+    // If this raw_block is only for mocking purposes, consider removing it.
     let raw_block = read_resource_file("/Users/antiyro/Documents/Projet/Kasar/deoxys/crates/client/deoxys/src/block.json");
     loop {
-        let mock_block = mock("GET", &format!("/feeder_gateway/get_block?{BLOCK_NUMBER_QUERY}={i}")[..])
-            .with_status(200)
-            .with_body(&raw_block)
-            .create();
+        // No mock creation here, directly fetch the block from the Starknet client
         let block = starknet_client.block(BlockNumber(i)).await;
         println!("{:?}", block);
         match block {
@@ -296,9 +341,9 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
                 time::sleep(time::Duration::from_secs(2)).await;
             }
         }
-        mock_block.assert();
     }
 }
+
 
 #[cfg(test)]
 mod tests {

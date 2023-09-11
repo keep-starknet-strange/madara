@@ -17,6 +17,12 @@ use mp_starknet::block::{Block as StarknetBlock };
 use mp_starknet::sequencer_address::{
     InherentDataProvider as SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
 };
+use parity_scale_codec::{Encode, Decode};
+use starknet_api::block::{BlockHash, BlockNumber, GasPrice, BlockStatus, BlockTimestamp};
+use starknet_api::core::{ContractAddress, GlobalRoot};
+use starknet_api::hash::StarkHash;
+use starknet_api::serde_utils::{BytesAsHex, PrefixedBytesAsHex};
+use starknet_api::transaction::{Transaction, TransactionHash, TransactionOutput, TransactionReceipt};
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use prometheus_endpoint::Registry;
 use sc_client_api::{Backend, BlockBackend, BlockchainEvents, HeaderBackend};
@@ -40,6 +46,7 @@ use sp_inherents::InherentData;
 use lazy_static::lazy_static;
 // Deoxys
 use mc_deoxys::{fetch_block, BlockQueue, create_block_queue};
+use starknet_core::serde;
 use tokio::time::sleep;
 
 use crate::cli::Sealing;
@@ -58,7 +65,24 @@ use serde::Serialize;
 use std::io;
 const BLOCK_NUMBER_QUERY: &str = "blockNumber";
 
-
+#[derive(Debug, PartialEq, Encode, Decode)]
+pub struct StarknetBlockWrapper {
+    pub block_hash: BlockHash,
+    pub block_number: BlockNumber,
+    pub gas_price: GasPrice,
+    pub parent_block_hash: BlockHash,
+    #[serde(default)]
+    pub sequencer_address: ContractAddress,
+    pub state_root: GlobalRoot,
+    pub status: BlockStatus,
+    #[serde(default)]
+    pub timestamp: BlockTimestamp,
+    pub transactions: Vec<Transaction>,
+    pub transaction_receipts: Vec<TransactionReceipt>,
+    // Default since old blocks don't include this field.
+    #[serde(default)]
+    pub starknet_version: String,
+}
 
 impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
     /// Only enable the benchmarking host functions when we actually want to benchmark.
@@ -598,8 +622,8 @@ where
             println!("Synced block {:?}", starknet_block);
             println!("Synced block {:?}", starknet_block.block_number);
             let serialized_block = serialize_to_bytes(&starknet_block).unwrap();
-    
-            let block_digest_item: DigestItem = sp_runtime::DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID, serialized_block);
+            
+            let block_digest_item: DigestItem = sp_runtime::DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID, Encode::encode(&starknet_block));
             Ok(Digest { logs: vec![block_digest_item] })
         }
 

@@ -6805,6 +6805,7 @@ dependencies = [
  "mp-digest-log",
  "mp-starknet",
  "pallet-starknet",
+ "parity-scale-codec",
  "sc-cli",
  "sc-client-api",
  "sc-consensus",
@@ -6835,6 +6836,7 @@ dependencies = [
  "sp-timestamp",
  "sp-trie",
  "starknet-core",
+ "starknet_api 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "starknet_client",
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
@@ -6989,6 +6991,7 @@ dependencies = [
  "starknet_api 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "starknet_client",
  "tokio",
+ "validator",
 ]
 
 [[package]]
@@ -8294,9 +8297,9 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec"
-version = "3.6.3"
+version = "3.6.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "756d439303e94fae44f288ba881ad29670c65b0c4b0e05674ca81061bb65f2c5"
+checksum = "f88eaac72ead1b9bd4ce747d577dbd2ad31fb0a56a9a20c611bf27bd1b97fbed"
 dependencies = [
  "arrayvec 0.7.4",
  "bitvec 1.0.1",
@@ -8309,9 +8312,9 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec-derive"
-version = "3.6.3"
+version = "3.6.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d884d78fcf214d70b1e239fcd1c6e5e95aa3be1881918da2e488cc946c7a476"
+checksum = "33bdcd446e9400b6ad9fc85b4aea68846c258b07c3efb994679ae82707b133f0"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -9037,9 +9040,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.65"
+version = "1.0.66"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92de25114670a878b1261c79c9f8f729fb97e95bac93f6312f583c60dd6a1dfe"
+checksum = "18fb31db3f9bddb2ea821cde30a9f70117e3f119938b5ee630b7403aa6e2ead9"
 dependencies = [
  "unicode-ident",
 ]
@@ -9219,9 +9222,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.30"
+version = "1.0.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5907a1b7c277254a8b15170f6e7c97cfa60ee7872a3217663bb81151e48184bb"
+checksum = "5267fca4496028628a95160fc423a33e8b2e6af8a5302579e322e4b520293cae"
 dependencies = [
  "proc-macro2",
 ]
