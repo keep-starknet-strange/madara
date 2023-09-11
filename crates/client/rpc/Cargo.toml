@@ -27,6 +27,7 @@ mp-starknet = { workspace = true }
 # Substate primitives
 frame-support = { workspace = true }
 frame-system = { workspace = true }
+sc-service = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
 sp-api = { workspace = true, default-features = true }
 sp-arithmetic = { workspace = true, default-features = true }
@@ -44,14 +45,22 @@ starknet-core = { workspace = true }
 starknet-ff = { workspace = true }
 starknet_api = { workspace = true, default-features = false }
 # Others
+futures = { workspace = true }
 hex = { workspace = true, default-features = true }
 jsonrpsee = { workspace = true, default-features = true, features = [
   "server",
   "macros",
 ] }
 log = { workspace = true, default-features = true }
+prometheus = { version = "0.13.1", default-features = false }
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", workspace = true }
+scale-codec = { package = "parity-scale-codec", workspace = true, features = [
+  "derive",
+] }
+schnellru = "0.2.1"
 serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }
+tokio = "1.32.0"
 
 [dev-dependencies]
 rstest = { workspace = true }

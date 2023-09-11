@@ -75,6 +75,7 @@ where
             starknet_params.sync_service,
             starknet_params.starting_block,
             hasher,
+            starknet_params.data_cache,
         )
         .into_rpc(),
     )?;

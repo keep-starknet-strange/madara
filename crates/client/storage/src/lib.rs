@@ -1,6 +1,6 @@
 //! Storage overrides readers
 //!
-//! In order for the client to access on pallets chain data data it has to read from the storage.
+//! In order for the client to access on pallets chain data, it has to read from the storage.
 //! This can be achieve either through the pallet runtime API or by indexing the storage directly.
 //! The `OverrideHandle` make it possible to use the later, more efficient way, while keeping the
 //! first one as a fallback.

@@ -294,7 +294,8 @@ pub fn run() -> sc_cli::Result<()> {
 
             let runner = cli.create_runner(&cli.run.run_cmd)?;
             runner.run_node_until_exit(|config| async move {
-                service::new_full(config, cli.sealing, da_config).map_err(sc_cli::Error::Service)
+                service::new_full(config, cli.sealing, da_config, cli.run.starknet_log_block_cache_size)
+                    .map_err(sc_cli::Error::Service)
             })
         }
     }

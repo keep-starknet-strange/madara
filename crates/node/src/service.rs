@@ -19,6 +19,7 @@ use mc_data_availability::ethereum::config::EthereumConfig;
 use mc_data_availability::ethereum::EthereumClient;
 use mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker};
 use mc_mapping_sync::MappingSyncWorker;
+use mc_rpc::cache::StarknetDataCacheTask;
 use mc_storage::overrides_handle;
 use mc_transaction_pool::FullPool;
 use mp_starknet::sequencer_address::{
@@ -256,6 +257,7 @@ pub fn new_full(
     config: Configuration,
     sealing: Option<Sealing>,
     da_layer: Option<(DaLayer, PathBuf)>,
+    starknet_log_block_cache_size: usize,
 ) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
@@ -324,9 +326,15 @@ pub fn new_full(
     let starknet_rpc_params = StarknetDeps {
         client: client.clone(),
         madara_backend: madara_backend.clone(),
-        overrides,
+        overrides: overrides.clone(),
         sync_service: sync_service.clone(),
         starting_block,
+        data_cache: Arc::new(StarknetDataCacheTask::new(
+            task_manager.spawn_handle(),
+            overrides,
+            starknet_log_block_cache_size,
+            prometheus_registry.clone(),
+        )),
     };
 
     let rpc_extensions_builder = {

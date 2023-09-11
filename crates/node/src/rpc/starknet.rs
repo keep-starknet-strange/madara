@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use mc_db::Backend;
+use mc_rpc::cache::StarknetDataCacheTask;
 use mc_storage::OverrideHandle;
 use sc_network_sync::SyncingService;
 use sp_api::BlockT;
@@ -18,6 +19,8 @@ pub struct StarknetDeps<C, B: BlockT> {
     pub sync_service: Arc<SyncingService<B>>,
     /// The starting block for the syncing.
     pub starting_block: <<B>::Header as HeaderT>::Number,
+    /// Cache for Starknet data
+    pub data_cache: Arc<StarknetDataCacheTask<B>>,
 }
 
 impl<C, B: BlockT> Clone for StarknetDeps<C, B> {
@@ -28,6 +31,7 @@ impl<C, B: BlockT> Clone for StarknetDeps<C, B> {
             overrides: self.overrides.clone(),
             sync_service: self.sync_service.clone(),
             starting_block: self.starting_block,
+            data_cache: self.data_cache.clone(),
         }
     }
 }

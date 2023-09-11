@@ -6289,6 +6289,7 @@ dependencies = [
  "blockifier",
  "frame-support",
  "frame-system",
+ "futures",
  "hex",
  "jsonrpsee 0.16.3",
  "log",
@@ -6298,11 +6299,15 @@ dependencies = [
  "mc-transaction-pool",
  "mp-starknet",
  "pallet-starknet",
+ "parity-scale-codec",
  "pretty_assertions",
+ "prometheus",
  "rstest",
  "sc-client-api",
  "sc-network-sync",
+ "sc-service",
  "sc-transaction-pool-api",
+ "schnellru",
  "serde_json",
  "sp-api",
  "sp-arithmetic 6.0.0",
@@ -6312,7 +6317,9 @@ dependencies = [
  "starknet-core",
  "starknet-ff",
  "starknet_api",
+ "substrate-prometheus-endpoint",
  "thiserror",
+ "tokio",
 ]
 
 [[package]]

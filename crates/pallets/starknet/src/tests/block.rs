@@ -30,17 +30,20 @@ fn store_block_no_pending_transactions_works() {
         // check digest saved
         // check saved digest is correct, 0 transactions
         let digest = frame_system::Pallet::<MockRuntime>::digest();
-        let block = find_starknet_block(&digest).unwrap();
+        let digest_block = find_starknet_block(&digest).unwrap();
         assert_ok!(ensure_log(&digest));
-        assert_eq!(0, block.transactions().len());
-        assert_eq!(0, block.transaction_receipts().len());
+        assert_eq!(0, digest_block.transactions().len());
+        assert_eq!(0, digest_block.transaction_receipts().len());
 
         // check BlockHash correct
-        let blockhash = block.header().hash(<default_mock::MockRuntime as pallet::Config>::SystemHash::hasher());
+        let blockhash = digest_block.header().hash(<default_mock::MockRuntime as pallet::Config>::SystemHash::hasher());
         assert_eq!(blockhash, Starknet::block_hash(BLOCK_NUMBER));
         // check pending storage killed
         assert_eq!(0, Starknet::pending().len());
         assert_eq!(0, Starknet::pending_events().len());
+        // Assert we store the block in its storage value
+        let current_block = Starknet::current_block().unwrap();
+        assert_eq!(digest_block, current_block);
     });
 }
 
@@ -74,17 +77,20 @@ fn store_block_with_pending_transactions_works() {
         // check digest saved
         // check saved digest is correct, transactions included
         let digest = frame_system::Pallet::<MockRuntime>::digest();
-        let block = find_starknet_block(&digest).unwrap();
+        let digest_block = find_starknet_block(&digest).unwrap();
         assert_ok!(ensure_log(&digest));
-        assert_eq!(2, block.transactions().len());
-        assert_eq!(2, block.transaction_receipts().len());
+        assert_eq!(2, digest_block.transactions().len());
+        assert_eq!(2, digest_block.transaction_receipts().len());
 
         // check BlockHash correct
-        let blockhash = block.header().hash(<default_mock::MockRuntime as pallet::Config>::SystemHash::hasher());
+        let blockhash = digest_block.header().hash(<default_mock::MockRuntime as pallet::Config>::SystemHash::hasher());
         assert_eq!(blockhash, Starknet::block_hash(BLOCK_NUMBER));
         // check pending storage killed
         assert_eq!(0, Starknet::pending().len());
         assert_eq!(0, Starknet::pending_events().len());
+        // Assert we store the block in its storage value
+        let current_block = Starknet::current_block().unwrap();
+        assert_eq!(digest_block, current_block);
     });
 }
 

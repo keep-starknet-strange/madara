@@ -2,9 +2,11 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 use blockifier::execution::contract_class::ContractClass;
+use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
 use mp_starknet::storage::{
-    PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_NONCE, STARKNET_STORAGE,
+    PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_CURRENT_BLOCK, STARKNET_NONCE,
+    STARKNET_STORAGE,
 };
 use pallet_starknet::types::NonceWrapper;
 // Substrate
@@ -128,5 +130,13 @@ where
             Some(nonce) => Some(nonce),
             None => Some(NonceWrapper::default()),
         }
+    }
+
+    fn get_block_by_hash(&self, block_hash: <B as BlockT>::Hash) -> Option<StarknetBlock> {
+        self.query_storage::<StarknetBlock>(
+            block_hash,
+            &StorageKey(storage_prefix_build(PALLET_STARKNET, STARKNET_CURRENT_BLOCK)),
+        )
+        .map(Into::into)
     }
 }
