@@ -348,7 +348,6 @@ pub fn new_full(
                 pool: pool.clone(),
                 graph: graph.clone(),
                 deny_unsafe,
-                // TODO: cache, propagate task through here
                 starknet: starknet_rpc_params.clone(),
                 command_sink: if sealing.is_some() { Some(command_sink.clone()) } else { None },
             };

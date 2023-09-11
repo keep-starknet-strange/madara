@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::ops::Deref;
 use std::sync::Arc;
 
 use mc_storage::{OverrideHandle, StorageOverride};
@@ -12,8 +13,6 @@ use crate::cache::lru_cache::LRUCache;
 
 mod lru_cache;
 
-type WaitList<Hash, T> = HashMap<Hash, Vec<oneshot::Sender<Option<T>>>>;
-
 enum StarknetDataCacheMessage<B: BlockT> {
     RequestBlockByHash {
         block_hash: B::Hash,
@@ -22,7 +21,7 @@ enum StarknetDataCacheMessage<B: BlockT> {
     },
     FetchedBlockByHash {
         block_hash: B::Hash,
-        block: Option<StarknetBlock>,
+        block: Box<Option<StarknetBlock>>,
     },
 }
 
@@ -31,6 +30,19 @@ enum StarknetDataCacheMessage<B: BlockT> {
 /// Storing them in an LRU cache will allow to reduce database accesses
 /// when many subsequent requests are related to the same blocks.
 pub struct StarknetDataCacheTask<B: BlockT>(mpsc::Sender<StarknetDataCacheMessage<B>>);
+
+/// Represents the metadata of the block we are looking for.
+struct BlockMetadata<B: BlockT> {
+    hash: B::Hash,
+    schema: StarknetStorageSchemaVersion,
+}
+
+/// Represent a pair of a cache and a data waitlist, used to communicate information between our
+/// internal methods.
+struct CacheWaitlist<B: BlockT, T> {
+    cache: LRUCache<<B as BlockT>::Hash, T>,
+    wait_list: HashMap<<B as BlockT>::Hash, Vec<oneshot::Sender<Option<T>>>>,
+}
 
 impl<B: BlockT> StarknetDataCacheTask<B> {
     pub fn new(
@@ -44,13 +56,14 @@ impl<B: BlockT> StarknetDataCacheTask<B> {
         let outer_spawn_handle = spawn_handle.clone();
 
         outer_spawn_handle.spawn("StarknetDataCacheTask", None, async move {
-            let mut blocks_cache = LRUCache::<B::Hash, StarknetBlock>::new(
-                "blocks_cache",
-                cache_max_allocated_size,
-                prometheus_registry.clone(),
-            );
-
-            let mut awaiting_blocks = HashMap::<B::Hash, Vec<oneshot::Sender<Option<StarknetBlock>>>>::new();
+            let mut block_cache_wait_list = CacheWaitlist {
+                cache: LRUCache::<B::Hash, StarknetBlock>::new(
+                    "blocks_cache",
+                    cache_max_allocated_size,
+                    prometheus_registry.clone(),
+                ),
+                wait_list: HashMap::<B::Hash, Vec<oneshot::Sender<Option<StarknetBlock>>>>::new(),
+            };
 
             // Handle all incoming messages.
             // Exits when there are no more senders.
@@ -61,25 +74,27 @@ impl<B: BlockT> StarknetDataCacheTask<B> {
                 match message {
                     RequestBlockByHash { block_hash, schema, response_tx } => Self::request_current(
                         &spawn_handle,
-                        &mut blocks_cache,
-                        &mut awaiting_blocks,
+                        &mut block_cache_wait_list,
                         Arc::clone(&overrides),
-                        block_hash,
-                        schema,
+                        BlockMetadata { hash: block_hash, schema },
                         response_tx,
                         task_tx.clone(),
-                        move |handler| FetchedBlockByHash { block_hash, block: handler.get_block_by_hash(block_hash) },
+                        move |handler| FetchedBlockByHash {
+                            block_hash,
+                            block: Box::new(handler.get_block_by_hash(block_hash)),
+                        },
                     ),
                     FetchedBlockByHash { block_hash, block } => {
-                        if let Some(wait_list) = awaiting_blocks.remove(&block_hash) {
+                        if let Some(wait_list) = block_cache_wait_list.wait_list.remove(&block_hash) {
                             for sender in wait_list {
-                                let _ = sender.send(block.clone());
+                                let _ = sender.send(block.deref().clone());
                             }
                         }
 
-                        if let Some(block) = block {
-                            // TODO: cache, log if insert fails ?
-                            blocks_cache.insert(block_hash, block);
+                        if let Some(block) = block.deref() {
+                            if !block_cache_wait_list.cache.insert(block_hash, block.clone()) {
+                                log::warn!("Could not insert block {:} in cache", block_hash)
+                            }
                         }
                     }
                 }
@@ -91,11 +106,9 @@ impl<B: BlockT> StarknetDataCacheTask<B> {
 
     fn request_current<T, F>(
         spawn_handle: &SpawnTaskHandle,
-        cache: &mut LRUCache<B::Hash, T>,
-        wait_list: &mut WaitList<B::Hash, T>,
+        cache_wait_list: &mut CacheWaitlist<B, T>,
         overrides: Arc<OverrideHandle<B>>,
-        block_hash: B::Hash,
-        schema: StarknetStorageSchemaVersion,
+        block_metadata: BlockMetadata<B>,
         response_tx: oneshot::Sender<Option<T>>,
         task_tx: mpsc::Sender<StarknetDataCacheMessage<B>>,
         handler_call: F,
@@ -105,7 +118,7 @@ impl<B: BlockT> StarknetDataCacheTask<B> {
         F: Send + 'static,
     {
         // Data is cached, we respond immediately.
-        if let Some(data) = cache.get(&block_hash).cloned() {
+        if let Some(data) = cache_wait_list.cache.get(&block_metadata.hash).cloned() {
             let _ = response_tx.send(Some(data));
             return;
         }
@@ -113,17 +126,17 @@ impl<B: BlockT> StarknetDataCacheTask<B> {
         // Another request already triggered caching but the
         // response is not known yet, we add the sender to the waiting
         // list.
-        if let Some(waiting) = wait_list.get_mut(&block_hash) {
+        if let Some(waiting) = cache_wait_list.wait_list.get_mut(&block_metadata.hash) {
             waiting.push(response_tx);
             return;
         }
 
         // Data is neither cached nor already requested, so we start fetching
         // the data.
-        wait_list.insert(block_hash, vec![response_tx]);
+        cache_wait_list.wait_list.insert(block_metadata.hash, vec![response_tx]);
 
         spawn_handle.spawn("StarknetDataCacheTask Worker", None, async move {
-            let handler = overrides.schemas.get(&schema).unwrap_or(&overrides.fallback);
+            let handler = overrides.schemas.get(&block_metadata.schema).unwrap_or(&overrides.fallback);
 
             let message = handler_call(handler);
             let _ = task_tx.send(message).await;

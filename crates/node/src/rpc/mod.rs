@@ -66,7 +66,6 @@ where
 
     module.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())?;
     module.merge(
-        // TODO: cache, pass new parameter for cache here
         Starknet::new(
             client,
             starknet_params.madara_backend,
