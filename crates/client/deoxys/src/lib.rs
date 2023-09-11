@@ -262,17 +262,16 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
     .unwrap();
     let mut i = 0u64;
     let raw_block = read_resource_file("/Users/antiyro/Documents/Projet/Kasar/deoxys/crates/client/deoxys/src/block.json");
-    let mock_block = mock("GET", &format!("/feeder_gateway/get_block?{BLOCK_NUMBER_QUERY}={i}")[..])
-        .with_status(200)
-        .with_body(&raw_block)
-        .create();
-    println!("this is i: {:?}", starknet_client.block(BlockNumber(i)).await.unwrap().unwrap());
-    mock_block.assert();
     loop {
-        let result = starknet_client.block(BlockNumber(i)).await.unwrap().unwrap();
-        match result {
-            Ok(Result) => {
-                let starknet_block = maybe_pending_block.unwrap();
+        let mock_block = mock("GET", &format!("/feeder_gateway/get_block?{BLOCK_NUMBER_QUERY}={i}")[..])
+            .with_status(200)
+            .with_body(&raw_block)
+            .create();
+        let block = starknet_client.block(BlockNumber(i)).await;
+        println!("{:?}", block);
+        match block {
+            Ok(block) => {
+                let starknet_block = block.unwrap();
                 println!("maybe_pending_block: {:?}", starknet_block);
                 // Lock the mutex, push to the queue, and then immediately unlock
                 {
@@ -291,13 +290,13 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
                         // You could also add a delay here if needed
                     }
                 }
-
             },
             Err(error) => {
                 eprintln!("Error retrieving block: {:?}", error);
                 time::sleep(time::Duration::from_secs(2)).await;
             }
         }
+        mock_block.assert();
     }
 }
 
