@@ -190,5 +190,6 @@ stark_poseidon = { git = "https://github.com/KasarLabs/pathfinder", branch = "ma
 tokio = "1.24.2"
 assert_matches = "1.5.0"
 starknet-gateway-types = { git = "https://github.com/KasarLabs/pathfinder", branch = "main"}
-starknet-gateway-client = { git = "https://github.com/KasarLabs/pathfinder", branch = "main"}
+starknet_client = { git = "https://github.com/starkware-libs/papyrus", branch = "main"}
 starknet-gateway-test-fixtures = { git = "https://github.com/KasarLabs/pathfinder", branch = "main"}
+mockito = "0.31.0"

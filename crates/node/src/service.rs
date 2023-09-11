@@ -40,6 +40,7 @@ use sp_inherents::InherentData;
 use lazy_static::lazy_static;
 // Deoxys
 use mc_deoxys::{fetch_block, BlockQueue, create_block_queue};
+use tokio::time::sleep;
 
 use crate::cli::Sealing;
 use crate::genesis_block::MadaraGenesisBlockBuilder;
@@ -47,6 +48,17 @@ use crate::rpc::StarknetDeps;
 use crate::starknet::{db_config_dir, MadaraBackend};
 // Our native executor instance.
 pub struct ExecutorDispatch;
+
+use mockito::mock;
+use std::env;
+use std::fs::read_to_string;
+use std::path::Path;
+use std::string::String;
+use serde::Serialize;
+use std::io;
+const BLOCK_NUMBER_QUERY: &str = "blockNumber";
+
+
 
 impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
     /// Only enable the benchmarking host functions when we actually want to benchmark.
@@ -568,6 +580,18 @@ where
 		_client: Arc<C>,
 	}
 
+    pub fn read_resource_file(path_in_resource_dir: &str) -> String {
+        let path = Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap())
+            .join(path_in_resource_dir);
+        println!("this is path: {:?}", path);
+        return read_to_string(path.to_str().unwrap()).unwrap();
+    }
+
+
+    fn serialize_to_bytes<T: Serialize>(data: &T) -> io::Result<Vec<u8>> {
+        bincode::serialize(data).map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
+    }
+
 	impl<B, C> ConsensusDataProvider<B> for QueryBlockConsensusDataProvider<C>
 		where
 		B: BlockT,
@@ -576,10 +600,14 @@ where
 		type Proof = ();
 
 		fn create_digest(&self, _parent: &B::Header, _inherents: &InherentData) -> Result<Digest, Error> {
+            let block_query = format!("/feeder_gateway/get_block?{BLOCK_NUMBER_QUERY}={}", 20);
             let mut queue_guard = QUEUE.lock().unwrap();
-            let starknet_block = queue_guard.pop_front().unwrap_or_else(StarknetBlock::default);
-            println!("Synced block {:?}", starknet_block.header().block_number);
-            let block_digest_item: DigestItem = sp_runtime::DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID, Encode::encode(&starknet_block));
+            let starknet_block = queue_guard.pop_front().unwrap();
+            println!("Synced block {:?}", starknet_block);
+            println!("Synced block {:?}", starknet_block.block_number);
+            let serialized_block = serialize_to_bytes(&starknet_block).unwrap();
+    
+            let block_digest_item: DigestItem = sp_runtime::DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID, serialized_block);
             Ok(Digest { logs: vec![block_digest_item] })
         }
 

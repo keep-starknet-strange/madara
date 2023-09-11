@@ -87,6 +87,10 @@ mp-starknet = { workspace = true }
 pallet-starknet = { workspace = true }
 starknet-core = { workspace = true }
 
+starknet_client = { workspace = true }
+bincode = "1.3"
+mockito = { workspace = true }
+
 # CLI-specific dependencies
 try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 

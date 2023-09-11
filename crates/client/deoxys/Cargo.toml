@@ -19,7 +19,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 sp-core = {workspace = true, features=["std"] }
 mp-starknet = { workspace = true, features=["std"] }
 starknet-gateway-types = { workspace = true }
-starknet-gateway-client = { workspace = true }
+starknet_client = { workspace = true }
 log = { version = "0.4.14" }
 env_logger = "0.9.0"
 pathfinder-common = { workspace = true }
@@ -30,3 +30,9 @@ serde_json = { workspace = true }
 blockifier = { workspace = true, default-features = false, features = [
   "testing",
 ] }
+mockito = { workspace = true }
+starknet_api = "0.4.1"
+# test_utils = { path = "./test_utils", optional = true }
+
+[dev-dependencies]
+# test_utils = { path = "./test_utils" }
