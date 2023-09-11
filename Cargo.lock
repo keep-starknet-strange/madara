@@ -4980,7 +4980,7 @@ dependencies = [
  "jsonrpsee-core 0.16.3",
  "jsonrpsee-http-client 0.16.3",
  "jsonrpsee-proc-macros 0.16.3",
- "jsonrpsee-server",
+ "jsonrpsee-server 0.16.3",
  "jsonrpsee-types 0.16.3",
  "jsonrpsee-wasm-client",
  "jsonrpsee-ws-client 0.16.3",
@@ -4996,6 +4996,7 @@ dependencies = [
  "jsonrpsee-core 0.20.0",
  "jsonrpsee-http-client 0.20.0",
  "jsonrpsee-proc-macros 0.20.0",
+ "jsonrpsee-server 0.20.0",
  "jsonrpsee-types 0.20.0",
  "jsonrpsee-ws-client 0.20.0",
  "tracing",
@@ -5089,9 +5090,12 @@ dependencies = [
  "futures-util",
  "hyper",
  "jsonrpsee-types 0.20.0",
+ "parking_lot 0.12.1",
+ "rand 0.8.5",
  "rustc-hash",
  "serde",
  "serde_json",
+ "soketto",
  "thiserror",
  "tokio",
  "tracing",
@@ -5177,6 +5181,29 @@ dependencies = [
  "serde",
  "serde_json",
  "soketto",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tower",
+ "tracing",
+]
+
+[[package]]
+name = "jsonrpsee-server"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5fc6357836b1d7b1367fe6d9a9b8d6e5488d1f1db985dfca4cb4ceaa9f37679e"
+dependencies = [
+ "futures-util",
+ "http",
+ "hyper",
+ "jsonrpsee-core 0.20.0",
+ "jsonrpsee-types 0.20.0",
+ "route-recognizer",
+ "serde",
+ "serde_json",
+ "soketto",
+ "thiserror",
  "tokio",
  "tokio-stream",
  "tokio-util",
@@ -6051,7 +6078,7 @@ dependencies = [
  "frame-system",
  "futures",
  "hex",
- "jsonrpsee 0.16.3",
+ "jsonrpsee 0.20.0",
  "log",
  "madara-runtime",
  "mc-block-proposer",
@@ -6290,7 +6317,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
- "jsonrpsee 0.16.3",
+ "jsonrpsee 0.20.0",
  "log",
  "mc-db",
  "mc-rpc-core",
@@ -6329,7 +6356,7 @@ dependencies = [
  "flate2",
  "frame-support",
  "hex",
- "jsonrpsee 0.16.3",
+ "jsonrpsee 0.20.0",
  "mp-digest-log",
  "mp-starknet",
  "num-bigint",
@@ -8745,6 +8772,12 @@ dependencies = [
  "libc",
  "librocksdb-sys",
 ]
+
+[[package]]
+name = "route-recognizer"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "afab94fb28594581f62d981211a9a4d53cc8130bbcbbb89a0440d9b8e81a7746"
 
 [[package]]
 name = "rpassword"
@@ -13304,7 +13337,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.7",
- "rand 0.8.5",
+ "rand 0.7.3",
  "static_assertions",
 ]
 
