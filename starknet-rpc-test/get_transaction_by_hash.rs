@@ -7,7 +7,7 @@ use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::utils::{create_account, AccountActions};
+use starknet_rpc_test::utils::{assert_poll, create_account, AccountActions};
 use starknet_rpc_test::{MadaraClient, Transaction, TransactionResult};
 
 #[rstest]
@@ -32,13 +32,11 @@ async fn work_valid_transaction_hash(#[future] madara: MadaraClient) -> Result<(
         _ => panic!("expected execution result"),
     };
 
-    // there is a delay between the transaction being available at the client
+    // 1. There is a delay between the transaction being available at the client
     // and the sealing of the block, hence sleeping for 100ms
-    tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-
-    // not validating the fields inside the transaction as
+    // 2. Not validating the fields inside the transaction as
     // that is covered in get_block_with_txs
-    assert!(rpc.get_transaction_by_hash(rpc_response.transaction_hash).await.is_ok());
+    assert_poll(|| async { rpc.get_transaction_by_hash(rpc_response.transaction_hash).await.is_ok() }, 100, 20).await;
 
     Ok(())
 }

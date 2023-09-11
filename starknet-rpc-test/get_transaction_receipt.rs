@@ -17,8 +17,8 @@ use starknet_rpc_test::constants::{
 };
 use starknet_rpc_test::fixtures::madara;
 use starknet_rpc_test::utils::{
-    assert_eq_event, assert_eq_msg_to_l1, build_deploy_account_tx, build_oz_account_factory, create_account,
-    AccountActions,
+    assert_eq_event, assert_eq_msg_to_l1, assert_poll, build_deploy_account_tx, build_oz_account_factory,
+    create_account, AccountActions,
 };
 use starknet_rpc_test::{MadaraClient, Transaction, TransactionResult};
 
@@ -31,7 +31,7 @@ async fn get_transaction_receipt(
 ) -> TransactionReceiptResult {
     // there is a delay between the transaction being available at the client
     // and the sealing of the block, hence sleeping for 100ms
-    tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+    assert_poll(|| async { rpc.get_transaction_receipt(transaction_hash).await.is_ok() }, 100, 20).await;
 
     rpc.get_transaction_receipt(transaction_hash).await
 }

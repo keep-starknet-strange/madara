@@ -1,3 +1,4 @@
+use std::future::Future;
 use std::sync::Arc;
 
 use starknet_accounts::{Account, AccountFactory, Call, OpenZeppelinAccountFactory, SingleOwnerAccount};
@@ -291,4 +292,20 @@ pub fn assert_eq_emitted_event(l1: Vec<EmittedEvent>, l2: Vec<EmittedEvent>) {
         assert_eq!(e1.block_number, e2.block_number);
         assert_eq!(e1.transaction_hash, e2.transaction_hash);
     }
+}
+
+pub async fn assert_poll<F, Fut>(f: F, polling_time_ms: u64, max_poll_count: u32)
+where
+    F: Fn() -> Fut,
+    Fut: Future<Output = bool>,
+{
+    for _poll_count in 0..max_poll_count {
+        if f().await {
+            return; // The provided function returned true, exit safely.
+        }
+
+        tokio::time::sleep(tokio::time::Duration::from_millis(polling_time_ms)).await;
+    }
+
+    panic!("Max poll count exceeded.");
 }
