@@ -580,14 +580,6 @@ where
 		_client: Arc<C>,
 	}
 
-    pub fn read_resource_file(path_in_resource_dir: &str) -> String {
-        let path = Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap())
-            .join(path_in_resource_dir);
-        println!("this is path: {:?}", path);
-        return read_to_string(path.to_str().unwrap()).unwrap();
-    }
-
-
     fn serialize_to_bytes<T: Serialize>(data: &T) -> io::Result<Vec<u8>> {
         bincode::serialize(data).map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
     }
@@ -600,7 +592,7 @@ where
 		type Proof = ();
 
 		fn create_digest(&self, _parent: &B::Header, _inherents: &InherentData) -> Result<Digest, Error> {
-            let block_query = format!("/feeder_gateway/get_block?{BLOCK_NUMBER_QUERY}={}", 20);
+            println!("create_digest");
             let mut queue_guard = QUEUE.lock().unwrap();
             let starknet_block = queue_guard.pop_front().unwrap();
             println!("Synced block {:?}", starknet_block);

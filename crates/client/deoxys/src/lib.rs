@@ -260,15 +260,20 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
         retry_config
     )
     .unwrap();
-
     let mut i = 0u64;
-
+    let raw_block = read_resource_file("/Users/antiyro/Documents/Projet/Kasar/deoxys/crates/client/deoxys/src/block.json");
+    let mock_block = mock("GET", &format!("/feeder_gateway/get_block?{BLOCK_NUMBER_QUERY}={i}")[..])
+        .with_status(200)
+        .with_body(&raw_block)
+        .create();
+    println!("this is i: {:?}", starknet_client.block(BlockNumber(i)).await.unwrap().unwrap());
+    mock_block.assert();
     loop {
-        let block_query = format!("/feeder_gateway/get_block?{BLOCK_NUMBER_QUERY}={}", i);
-        let result = starknet_client.block(BlockNumber(i)).await;
+        let result = starknet_client.block(BlockNumber(i)).await.unwrap().unwrap();
         match result {
-            Ok(maybe_pending_block) => {
+            Ok(Result) => {
                 let starknet_block = maybe_pending_block.unwrap();
+                println!("maybe_pending_block: {:?}", starknet_block);
                 // Lock the mutex, push to the queue, and then immediately unlock
                 {
                     let mut queue_guard: std::sync::MutexGuard<'_, VecDeque<starknet_client::reader::Block>> = queue.lock().unwrap();
@@ -329,7 +334,7 @@ mod tests {
     async fn test_process_block() {
         let _m = mockito::mock("GET", "/feeder_gateway/get_block?BLOCK_NUMBER_QUERY=0")
             .with_status(200)
-            .with_body(&read_resource_file("./block.json"))
+            .with_body(&read_resource_file("src/block.json"))
             .create();
 
         // Define the queue and port
@@ -368,18 +373,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_fetch_block_v2() {
-        let _m = mockito::mock("GET", "/feeder_gateway/get_block?BLOCK_NUMBER_QUERY=0")
-        .with_status(200)
-        .with_body(&read_resource_file("src/block.json"))
-        .create();
     
     // Define the queue and port
-        let queue = create_block_queue();
+        let queue: Arc<Mutex<VecDeque<starknet_client::reader::Block>>> = create_block_queue();
         let rpc_port = 9944; // Replace with the desired port
 
         fetch_block(queue, rpc_port).await;
-
-        _m.assert();
     }
 
 
