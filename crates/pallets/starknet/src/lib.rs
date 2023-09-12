@@ -1001,7 +1001,14 @@ impl<T: Config> Pallet<T> {
 			match &frame_system::Pallet::<T>::digest().logs()[0] {
 				DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID ,encoded_data) => {
 
-					block = mp_starknet::block::Block::decode(&mut encoded_data.as_slice()).unwrap();
+					block = match mp_starknet::block::Block::decode(&mut encoded_data.as_slice()) {
+                        Ok(b) => b,
+                        Err(e) => {
+                            log!(error, "Failed to decode block: {:?}", e);
+                            return;
+                        }
+                    };
+                    
 					// Save the block number <> hash mapping.
 					let blockhash = Felt252Wrapper::try_from(block.header().extra_data.unwrap()).unwrap();
 					BlockHash::<T>::insert(block_number, blockhash);

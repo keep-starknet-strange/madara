@@ -17,7 +17,6 @@ use mp_starknet::block::{Block as StarknetBlock };
 use mp_starknet::sequencer_address::{
     InherentDataProvider as SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
 };
-use parity_scale_codec::{Encode, Decode};
 use starknet_api::block::{BlockHash, BlockNumber, GasPrice, BlockStatus, BlockTimestamp};
 use starknet_api::core::{ContractAddress, GlobalRoot};
 use starknet_api::hash::StarkHash;
@@ -61,28 +60,8 @@ use std::env;
 use std::fs::read_to_string;
 use std::path::Path;
 use std::string::String;
-use serde::Serialize;
 use std::io;
 const BLOCK_NUMBER_QUERY: &str = "blockNumber";
-
-#[derive(Debug, PartialEq, Encode, Decode)]
-pub struct StarknetBlockWrapper {
-    pub block_hash: BlockHash,
-    pub block_number: BlockNumber,
-    pub gas_price: GasPrice,
-    pub parent_block_hash: BlockHash,
-    #[serde(default)]
-    pub sequencer_address: ContractAddress,
-    pub state_root: GlobalRoot,
-    pub status: BlockStatus,
-    #[serde(default)]
-    pub timestamp: BlockTimestamp,
-    pub transactions: Vec<Transaction>,
-    pub transaction_receipts: Vec<TransactionReceipt>,
-    // Default since old blocks don't include this field.
-    #[serde(default)]
-    pub starknet_version: String,
-}
 
 impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
     /// Only enable the benchmarking host functions when we actually want to benchmark.
@@ -604,10 +583,6 @@ where
 		_client: Arc<C>,
 	}
 
-    fn serialize_to_bytes<T: Serialize>(data: &T) -> io::Result<Vec<u8>> {
-        bincode::serialize(data).map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
-    }
-
 	impl<B, C> ConsensusDataProvider<B> for QueryBlockConsensusDataProvider<C>
 		where
 		B: BlockT,
@@ -618,12 +593,11 @@ where
 		fn create_digest(&self, _parent: &B::Header, _inherents: &InherentData) -> Result<Digest, Error> {
             println!("create_digest");
             let mut queue_guard = QUEUE.lock().unwrap();
-            let starknet_block = queue_guard.pop_front().unwrap();
+            let starknet_block: mp_starknet::block::Block = queue_guard.pop_front().unwrap();
             println!("Synced block {:?}", starknet_block);
             println!("Synced block {:?}", starknet_block.block_number);
-            let serialized_block = serialize_to_bytes(&starknet_block).unwrap();
-            
-            let block_digest_item: DigestItem = sp_runtime::DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID, Encode::encode(&starknet_block));
+
+            let block_digest_item: DigestItem = sp_runtime::DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID, starknet_block.encode());
             Ok(Digest { logs: vec![block_digest_item] })
         }
 
