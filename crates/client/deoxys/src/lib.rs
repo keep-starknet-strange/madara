@@ -1,16 +1,20 @@
 use mp_starknet::sequencer_address;
 use mp_starknet::transaction::types::{Transaction, TxType, TransactionReceiptWrapper, EventWrapper};
 use pathfinder_lib::state::block_hash::{TransactionCommitmentFinalHashType, calculate_transaction_commitment, calculate_event_commitment};
+use reqwest::StatusCode;
 use sp_core::{U256, ConstU32};
 use mp_starknet::execution::types::{ Felt252Wrapper, ContractAddressWrapper };
-use mp_starknet::block::{Block, Header, MaxTransactions};
+use mp_starknet::block::{Block, Header, MaxTransactions, BlockStatus};
 use reqwest::header::{HeaderMap, CONTENT_TYPE};
 use serde_json::json;
 use sp_core::bounded_vec::BoundedVec;
 use starknet_api::core::ChainId;
+use starknet_api::transaction::{TransactionOutput, TransactionOffsetInBlock, TransactionHash, Event, Fee, TransactionExecutionStatus, DeclareTransactionOutput, DeployTransactionOutput, DeployAccountTransactionOutput, InvokeTransactionOutput, MessageToL1, L1HandlerTransactionOutput, DeployTransaction, DeployAccountTransaction, L1HandlerTransaction};
 use starknet_client::RetryConfig;
+use starknet_client::reader::objects::transaction::{TransactionType, L1ToL2Message, ExecutionResources, IntermediateDeclareTransaction, IntermediateInvokeTransaction};
 use starknet_client::reader::{StarknetFeederGatewayClient, StarknetReader};
-use starknet_gateway_types::reply::{MaybePendingBlock, transaction as EnumTransaction};
+use starknet_gateway_types::reply::transaction::L2ToL1Message;
+use starknet_gateway_types::reply::{MaybePendingBlock, transaction as EnumTransaction, Status};
 use transactions::{deploy_account_tx_to_starknet_tx, declare_tx_to_starknet_tx, invoke_tx_to_starknet_tx, l1handler_tx_to_starknet_tx};
 use std::sync::{mpsc, Arc, Mutex};
 use std::collections::VecDeque;
@@ -19,7 +23,7 @@ use log::info;
 use pathfinder_common::{BlockId};
 // use crate::test_utils::retry::get_test_config;
 use tokio::time;
-
+use serde::{Deserialize, Serialize};
 use mockito::mock;
 use starknet_api::block::BlockNumber;
 use std::env;
@@ -53,6 +57,7 @@ pub fn create_block_queue() -> BlockQueue {
 pub fn get_header(block: starknet_client::reader::Block) -> Header  {
     let parent_block_hash = Felt252Wrapper::try_from(block.parent_block_hash.0.bytes());
     let block_number = block.block_number.0;
+    // let status = BlockStatus::default();
     let global_state_root = Felt252Wrapper::try_from(block.state_root.0.bytes());
     let sequencer_address = ContractAddressWrapper::default();
     let block_timestamp = block.timestamp.0;
@@ -65,6 +70,7 @@ pub fn get_header(block: starknet_client::reader::Block) -> Header  {
     let starknet_header = Header::new(
         parent_block_hash.unwrap(),
         block_number.into(),
+        // status,
         global_state_root.unwrap(),
         sequencer_address,
         block_timestamp,
@@ -78,10 +84,82 @@ pub fn get_header(block: starknet_client::reader::Block) -> Header  {
     starknet_header
 }
 
+#[derive(Debug, Default, Deserialize, Serialize, Clone, Eq, PartialEq)]
+pub struct TransactionReceipt {
+    pub transaction_index: TransactionOffsetInBlock,
+    pub transaction_hash: TransactionHash,
+    // #[serde(default)]
+    pub l1_to_l2_consumed_message: L1ToL2Message,
+    pub l2_to_l1_messages: Vec<L2ToL1Message>,
+    pub events: Vec<Event>,
+    // #[serde(default)]
+    pub execution_resources: ExecutionResources,
+    pub actual_fee: Fee,
+    // #[serde(default)]
+    pub execution_status: TransactionExecutionStatus,
+}
+
+pub fn get_txs(block: starknet_client::reader::Block) -> BoundedVec<mp_starknet::transaction::types::Transaction, MaxTransactions> {
+    let mut transactions_vec: BoundedVec<mp_starknet::transaction::types::Transaction, MaxTransactions> = BoundedVec::new();
+
+    for transaction in &block.transactions {
+        let converted_transaction = match transaction {
+            TransactionType::Declare(decl) => mp_starknet::transaction::types::Transaction::Declare(IntermediateDeclareTransaction {
+                class_hash: todo!(),
+                compiled_class_hash: todo!(),
+                sender_address: todo!(),
+                nonce: todo!(),
+                max_fee: todo!(),
+                version: todo!(),
+                transaction_hash: todo!(),
+                signature: todo!(),
+            }),
+            TransactionType::Deploy(deploy) => mp_starknet::transaction::types::Transaction::Deploy(DeployTransaction {
+                version: todo!(),
+                class_hash: todo!(),
+                contract_address_salt: todo!(),
+                constructor_calldata: todo!(),
+            }),
+            TransactionType::DeployAccount(deploy_acc) => mp_starknet::transaction::types::Transaction::DeployAccount(DeployAccountTransaction {
+                contract_address_salt: todo!(),
+                class_hash: todo!(),
+                constructor_calldata: todo!(),
+                nonce: todo!(),
+                max_fee: todo!(),
+                signature: todo!(),
+                version: todo!(),
+            }),
+            TransactionType::InvokeFunction(invoke) => mp_starknet::transaction::types::Transaction::Invoke(IntermediateInvokeTransaction {
+                calldata: todo!(),
+                sender_address: todo!(),
+                entry_point_selector: todo!(),
+                nonce: todo!(),
+                max_fee: todo!(),
+                signature: todo!(),
+                transaction_hash: todo!(),
+                version: todo!(),
+            }),
+            TransactionType::L1Handler(l1_handler) => mp_starknet::transaction::types::Transaction::L1Handler(L1HandlerTransaction {
+                version: todo!(),
+                nonce: todo!(),
+                contract_address: todo!(),
+                entry_point_selector: todo!(),
+                calldata: todo!(),
+            }),
+        };
+
+        transactions_vec.push(converted_transaction).unwrap_or_else(|_| panic!("Exceeded max transactions"));
+    }
+
+    transactions_vec
+}
+
+
+
 // This function converts a block received from the gateway into a StarkNet block
 pub fn from_gateway_to_starknet_block(block: starknet_client::reader::Block) -> Block {
-    let transactions_vec: BoundedVec<Transaction, MaxTransactions> = BoundedVec::new();
-    let transaction_receipts_vec: BoundedVec<TransactionReceiptWrapper, MaxTransactions> = BoundedVec::new();
+    let mut transactions_vec: BoundedVec<Transaction, MaxTransactions> = get_txs(block.clone());
+    let mut transaction_receipts_vec: BoundedVec<TransactionReceiptWrapper, MaxTransactions> = BoundedVec::new();
     Block::new(
         get_header(block.clone()),
         transactions_vec,
@@ -222,13 +300,11 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
 
     let starknet_client = StarknetFeederGatewayClient::new(
         &rpc_config.starknet_url,
-        None, // This assumes the second parameter remains as None, adjust if otherwise.
+        None,
         NODE_VERSION,
         retry_config
     ).unwrap();
     let mut i = 0u64;
-    // If this raw_block is only for mocking purposes, consider removing it.
-    let raw_block = read_resource_file("/Users/antiyro/Documents/Projet/Kasar/deoxys/crates/client/deoxys/src/block.json");
     loop {
         // No mock creation here, directly fetch the block from the Starknet client
         let block = starknet_client.block(BlockNumber(i)).await;

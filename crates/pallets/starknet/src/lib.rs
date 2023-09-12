@@ -78,7 +78,7 @@ use frame_support::pallet_prelude::*;
 use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
 use mp_digest_log::MADARA_ENGINE_ID;
-use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxTransactions};
+use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxTransactions, BlockStatus};
 use mp_starknet::constants::INITIAL_GAS;
 use mp_starknet::crypto::commitment::{self};
 use mp_starknet::execution::types::{
@@ -1023,7 +1023,7 @@ impl<T: Config> Pallet<T> {
 		} else {
         let parent_block_hash = Self::parent_block_hash(&block_number);
         let pending = Self::pending();
-
+        let status: BlockStatus = BlockStatus::default();
         let global_state_root = Felt252Wrapper::default();
 
         let sequencer_address = Self::sequencer_address();
@@ -1049,6 +1049,7 @@ impl<T: Config> Pallet<T> {
             StarknetHeader::new(
                 parent_block_hash,
                 block_number,
+                // status,
                 global_state_root,
                 sequencer_address,
                 block_timestamp,

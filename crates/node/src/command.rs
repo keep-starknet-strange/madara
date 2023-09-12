@@ -8,7 +8,7 @@ use crate::cli::{Cli, Subcommand, Testnet};
 use crate::{chain_spec, constants, service};
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
-        "Madara Node".into()
+        "Deoxys Node".into()
     }
 
     fn impl_version() -> String {

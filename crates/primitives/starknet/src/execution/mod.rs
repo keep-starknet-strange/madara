@@ -3,8 +3,9 @@
 use alloc::collections::BTreeMap;
 
 use frame_support::BoundedBTreeMap;
+use scale_codec::{Encode, Decode};
 use serde::de::Error as DeserializationError;
-use serde::{Deserialize, Deserializer, Serializer};
+use serde::{Deserialize, Deserializer, Serializer, Serialize};
 use sp_core::Get;
 
 /// Call Entrypoint Wrapper related types

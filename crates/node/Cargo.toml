@@ -4,6 +4,7 @@ version.workspace = true
 edition.workspace = true
 description = "Madara node."
 authors = [
+  "Antiyro <@kasarLabs>",
   "Abdelhamid Bakhta <@keep-starknet-strange>",
   "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]

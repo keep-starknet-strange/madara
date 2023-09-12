@@ -1,4 +1,6 @@
 use blockifier::block_context::BlockContext;
+use scale_codec::{Encode, Decode, MaxEncodedLen};
+use scale_info::TypeInfo;
 use sp_core::U256;
 use starknet_api::api_core::{ChainId, ContractAddress};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
@@ -6,6 +8,37 @@ use starknet_api::hash::StarkFelt;
 
 use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use crate::traits::hash::HasherT;
+use serde::{Deserialize, Serialize};
+
+
+#[derive(
+    Debug, Copy, Clone, Eq, PartialEq, Hash, Deserialize, Serialize, PartialOrd, Ord, Default, Encode, Decode, TypeInfo, MaxEncodedLen
+)]
+pub enum BlockStatus {
+    #[serde(rename(deserialize = "ABORTED", serialize = "ABORTED"))]
+    Aborted,
+    #[serde(rename(deserialize = "ACCEPTED_ON_L1", serialize = "ACCEPTED_ON_L1"))]
+    AcceptedOnL1,
+    #[serde(rename(deserialize = "ACCEPTED_ON_L2", serialize = "ACCEPTED_ON_L2"))]
+    #[default]
+    AcceptedOnL2,
+    #[serde(rename(deserialize = "PENDING", serialize = "PENDING"))]
+    Pending,
+    #[serde(rename(deserialize = "REVERTED", serialize = "REVERTED"))]
+    Reverted,
+}
+
+impl From<BlockStatus> for starknet_api::block::BlockStatus {
+    fn from(status: BlockStatus) -> Self {
+        match status {
+            BlockStatus::Aborted => starknet_api::block::BlockStatus::Rejected,
+            BlockStatus::AcceptedOnL1 => starknet_api::block::BlockStatus::AcceptedOnL1,
+            BlockStatus::AcceptedOnL2 => starknet_api::block::BlockStatus::AcceptedOnL2,
+            BlockStatus::Pending => starknet_api::block::BlockStatus::Pending,
+            BlockStatus::Reverted => starknet_api::block::BlockStatus::Rejected,
+        }
+    }
+}
 
 #[derive(
     Clone,
@@ -25,6 +58,8 @@ pub struct Header {
     pub parent_block_hash: Felt252Wrapper,
     /// The number (height) of this block.
     pub block_number: u64,
+    /// The status of this block.
+    // pub status: BlockStatus,
     /// The state commitment after this block.
     pub global_state_root: Felt252Wrapper,
     /// The Starknet address of the sequencer who created this block.
@@ -52,6 +87,7 @@ impl Header {
     pub fn new(
         parent_block_hash: Felt252Wrapper,
         block_number: u64,
+        // status: BlockStatus,
         global_state_root: Felt252Wrapper,
         sequencer_address: ContractAddressWrapper,
         block_timestamp: u64,
@@ -65,6 +101,7 @@ impl Header {
         Self {
             parent_block_hash,
             block_number,
+            // status,
             global_state_root,
             sequencer_address,
             block_timestamp,
