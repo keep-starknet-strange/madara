@@ -42,7 +42,7 @@ const BLOCK_NUMBER_QUERY: &str = "blockNumber";
 
 mod transactions;
 // Your block queue type
-pub type BlockQueue = Arc<Mutex<VecDeque<starknet_client::reader::Block>>>;
+pub type BlockQueue = Arc<Mutex<VecDeque<Block>>>;
 
 // Function to create a new block queue
 pub fn create_block_queue() -> BlockQueue {
@@ -50,10 +50,43 @@ pub fn create_block_queue() -> BlockQueue {
 }
 
 // This function converts a block received from the gateway into a StarkNet block
+pub fn get_header(block: starknet_client::reader::Block) -> Header  {
+    let parent_block_hash = Felt252Wrapper::try_from(block.parent_block_hash.0.bytes());
+    let block_number = block.block_number.0;
+    let global_state_root = Felt252Wrapper::try_from(block.state_root.0.bytes());
+    let sequencer_address = ContractAddressWrapper::default();
+    let block_timestamp = block.timestamp.0;
+    let transaction_count = block.transactions.len() as u128;
+    let transaction_commitment = Felt252Wrapper::default();
+    let event_count = block.transaction_receipts.len() as u128;
+    let event_commitment = Felt252Wrapper::default();   
+    let protocol_version = Some(0u8);
+    let extra_data: U256 = Felt252Wrapper::try_from(block.block_hash.0.bytes()).unwrap().into();
+    let starknet_header = Header::new(
+        parent_block_hash.unwrap(),
+        block_number.into(),
+        global_state_root.unwrap(),
+        sequencer_address,
+        block_timestamp,
+        transaction_count,
+        transaction_commitment,
+        event_count,
+        event_commitment,
+        protocol_version.unwrap(),
+        Some(extra_data),
+    );
+    starknet_header
+}
 
 // This function converts a block received from the gateway into a StarkNet block
-pub fn from_gateway_to_starknet_block(_block: starknet_client::reader::Block) -> Block {
-        
+pub fn from_gateway_to_starknet_block(block: starknet_client::reader::Block) -> Block {
+    let transactions_vec: BoundedVec<Transaction, MaxTransactions> = BoundedVec::new();
+    let transaction_receipts_vec: BoundedVec<TransactionReceiptWrapper, MaxTransactions> = BoundedVec::new();
+    Block::new(
+        get_header(block.clone()),
+        transactions_vec,
+        transaction_receipts_vec
+    )
 }
 
 
@@ -202,11 +235,11 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
         println!("{:?}", block);
         match block {
             Ok(block) => {
-                let starknet_block = block.unwrap();
+                let starknet_block = from_gateway_to_starknet_block(block.unwrap());
                 println!("maybe_pending_block: {:?}", starknet_block);
                 // Lock the mutex, push to the queue, and then immediately unlock
                 {
-                    let mut queue_guard: std::sync::MutexGuard<'_, VecDeque<starknet_client::reader::Block>> = queue.lock().unwrap();
+                    let mut queue_guard: std::sync::MutexGuard<'_, VecDeque<Block>> = queue.lock().unwrap();
                     queue_guard.push_back(starknet_block);
                 } // MutexGuard is dropped here
                 match call_rpc(rpc_port).await {

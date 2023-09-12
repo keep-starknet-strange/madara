@@ -595,9 +595,9 @@ where
             let mut queue_guard = QUEUE.lock().unwrap();
             let starknet_block: mp_starknet::block::Block = queue_guard.pop_front().unwrap();
             println!("Synced block {:?}", starknet_block);
-            println!("Synced block {:?}", starknet_block.block_number);
+            println!("Synced block {:?}", starknet_block.header().block_number);
 
-            let block_digest_item: DigestItem = sp_runtime::DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID, starknet_block.encode());
+            let block_digest_item: DigestItem = sp_runtime::DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID, Encode::encode(&starknet_block));
             Ok(Digest { logs: vec![block_digest_item] })
         }
 
