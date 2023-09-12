@@ -19,7 +19,7 @@ enum CacheAction {
 }
 
 impl<K: Eq + core::hash::Hash, V: Encode> LRUCache<K, V> {
-    /// Instantiate a new cache with a give name and size limit. If a prometheus registry is passed,
+    /// Instantiate a new cache with a given name and size limit. If a prometheus registry is passed,
     /// then we register our cache metrics.
     pub fn new(
         cache_name: &'static str,
