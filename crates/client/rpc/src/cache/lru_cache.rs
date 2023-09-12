@@ -131,7 +131,7 @@ mod tests {
         assert!(cache.insert(2, "b"));
         assert!(cache.insert(3, "c"));
         // Memory allocation will try to reach 280 bytes, blocked by our limiter. Insertion should be
-        // succesful but first item should be removed from cache.
+        // successful but first item should be removed from cache.
         assert!(cache.insert(4, "d"));
         let memory_usage_step_2 = cache.inner.memory_usage();
         assert!(cache.get(&4).is_some());
