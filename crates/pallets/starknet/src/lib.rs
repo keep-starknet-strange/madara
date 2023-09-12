@@ -61,8 +61,6 @@ mod offchain_worker;
 #[cfg(test)]
 mod tests;
 
-pub use pallet::*;
-
 #[macro_use]
 pub extern crate alloc;
 use alloc::str::from_utf8_unchecked;
@@ -249,7 +247,7 @@ pub mod pallet {
     /// Safe to use `Identity` as the key is already a hash.
     #[pallet::storage]
     #[pallet::getter(fn contract_class_by_class_hash)]
-    pub(super) type ContractClasses<T: Config> = StorageMap<_, Identity, ClassHashWrapper, ContractClass, OptionQuery>;
+    pub type ContractClasses<T: Config> = StorageMap<_, Identity, ClassHashWrapper, ContractClass, OptionQuery>;
 
     /// Mapping from Starknet Sierra class hash to  Casm compiled contract class.
     /// Safe to use `Identity` as the key is already a hash.

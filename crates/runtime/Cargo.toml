@@ -51,6 +51,7 @@ frame-system-benchmarking = { workspace = true, optional = true }
 # Madara Local Dependencies
 # Madara Pallets
 pallet-starknet = { workspace = true }
+pallet-async-contracts = { workspace = true }
 # Madara Primitives
 mp-starknet = { workspace = true, default-features = false }
 # Starknet dependencies
@@ -64,6 +65,7 @@ substrate-wasm-builder = { workspace = true }
 std = [
   # Madara pallets
   "pallet-starknet/std",
+  "pallet-async-contracts/std",
   # Frame dependencies
   "frame-try-runtime?/std",
   "frame-system-benchmarking?/std",

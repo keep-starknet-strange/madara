@@ -11,6 +11,7 @@ pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
 use mp_starknet::constants::SN_GOERLI_CHAIN_ID;
+pub use pallet_async_contracts;
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -47,6 +48,10 @@ impl pallet_starknet::Config for Runtime {
     type ProtocolVersion = ProtocolVersion;
     type ChainId = ChainId;
     type MaxRecursionDepth = MaxRecursionDepth;
+}
+
+impl pallet_async_contracts::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
 }
 
 /// --------------------------------------

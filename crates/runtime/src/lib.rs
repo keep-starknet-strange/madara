@@ -32,6 +32,7 @@ use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Fe
 use mp_starknet::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction, TxType,
 };
+pub use pallet_async_contracts;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
@@ -70,6 +71,7 @@ construct_runtime!(
         Grandpa: pallet_grandpa,
         // Include Starknet pallet.
         Starknet: pallet_starknet,
+        AsyncContracts: pallet_async_contracts,
     }
 );
 

@@ -109,6 +109,7 @@ pallet-timestamp = { default-features = false, git = "https://github.com/parityt
 
 # Madara pallets
 pallet-starknet = { path = "crates/pallets/starknet", default-features = false }
+pallet-async-contracts = { path = "crates/pallets/async_contracts", default-features = false }
 
 # Madara primtitives
 mp-starknet = { path = "crates/primitives/starknet", default-features = false }

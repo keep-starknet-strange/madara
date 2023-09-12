@@ -1,0 +1,39 @@
+[package]
+name = "pallet-async-contracts"
+version.workspace = true
+edition.workspace = true
+description = "Pallet to execute Starknet contracts asynchronously."
+homepage = "https://github.com/keep-starknet-strange/madara"
+license = "MIT"
+publish = false
+repository = "https://github.com/keep-starknet-strange/madara"
+
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+# Madara primitives
+mp-starknet = { workspace = true, default-features = false }
+pallet-starknet = { workspace = true, default-features = false }
+
+# Substrate frame
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+
+# Other third party dependencies
+scale-codec = { package = "parity-scale-codec", workspace = true, features = [
+  "derive",
+] }
+scale-info = { workspace = true, features = ["derive"] }
+serde = { workspace = true, features = ["derive"] }
+
+[features]
+default = ["std"]
+std = [
+  # Substrate
+  "frame-support/std",
+  "frame-system/std",
+  "scale-info/std",
+  "scale-codec/std",
+]
