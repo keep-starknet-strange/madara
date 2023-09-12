@@ -13,6 +13,7 @@
 - ci: scope cache by branch and add cache cleanup
 - feat: print development accounts at node startup
 - test: add test to check tx signed by OZ account can be signed with Argent pk
+- feat: async contract pallet
 
 ## v0.2.0
 
