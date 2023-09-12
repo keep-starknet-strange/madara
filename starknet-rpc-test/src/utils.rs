@@ -1,12 +1,13 @@
+use std::future::Future;
 use std::sync::Arc;
 
-use starknet_accounts::{Account, Call, SingleOwnerAccount};
+use starknet_accounts::{Account, AccountFactory, Call, OpenZeppelinAccountFactory, SingleOwnerAccount};
 use starknet_core::chain_id;
 use starknet_core::types::contract::legacy::LegacyContractClass;
 use starknet_core::types::contract::{CompiledClass, SierraClass};
 use starknet_core::types::{
-    BlockId, BlockTag, BlockWithTxHashes, BlockWithTxs, DeclareTransaction, FieldElement, FunctionCall,
-    InvokeTransaction, Transaction,
+    BlockId, BlockTag, BlockWithTxHashes, BlockWithTxs, DeclareTransaction, EmittedEvent, Event, FieldElement,
+    FunctionCall, InvokeTransaction, MsgToL1, Transaction,
 };
 use starknet_core::utils::get_selector_from_name;
 use starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
@@ -14,7 +15,15 @@ use starknet_providers::Provider;
 use starknet_signers::{LocalWallet, SigningKey};
 
 use crate::constants::{FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE};
-use crate::{RpcAccount, TransactionDeclaration, TransactionExecution, TransactionLegacyDeclaration};
+use crate::{
+    RpcAccount, RpcOzAccountFactory, TransactionAccountDeployment, TransactionDeclaration, TransactionExecution,
+    TransactionLegacyDeclaration,
+};
+
+pub struct U256 {
+    pub high: FieldElement,
+    pub low: FieldElement,
+}
 
 pub fn create_account<'a>(
     rpc: &'a JsonRpcClient<HttpTransport>,
@@ -49,7 +58,31 @@ pub async fn read_erc20_balance<'a>(
     .unwrap()
 }
 
+pub async fn build_oz_account_factory<'a>(
+    rpc: &'a JsonRpcClient<HttpTransport>,
+    private_key: &str,
+    class_hash: FieldElement,
+) -> RpcOzAccountFactory<'a> {
+    let signer = LocalWallet::from(SigningKey::from_secret_scalar(FieldElement::from_hex_be(private_key).unwrap()));
+    OpenZeppelinAccountFactory::new(class_hash, chain_id::TESTNET, signer, rpc).await.unwrap()
+}
+
+pub fn build_deploy_account_tx<'a>(
+    oz_factory: &'a RpcOzAccountFactory,
+    contract_address_salt: FieldElement,
+) -> TransactionAccountDeployment<'a> {
+    let max_fee = FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap();
+    oz_factory.deploy(contract_address_salt).max_fee(max_fee)
+}
+
 pub trait AccountActions {
+    fn transfer_tokens_u256(
+        &self,
+        recipient: FieldElement,
+        transfer_amount: U256,
+        nonce: Option<u64>,
+    ) -> TransactionExecution;
+
     fn transfer_tokens(
         &self,
         recipient: FieldElement,
@@ -67,10 +100,10 @@ pub trait AccountActions {
 }
 
 impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalWallet> {
-    fn transfer_tokens(
+    fn transfer_tokens_u256(
         &self,
         recipient: FieldElement,
-        transfer_amount: FieldElement,
+        transfer_amount: U256,
         nonce: Option<u64>,
     ) -> TransactionExecution {
         let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
@@ -78,7 +111,7 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
         let calls = vec![Call {
             to: fee_token_address,
             selector: get_selector_from_name("transfer").unwrap(),
-            calldata: vec![recipient, transfer_amount, FieldElement::ZERO],
+            calldata: vec![recipient, transfer_amount.low, transfer_amount.high],
         }];
 
         // starknet-rs calls estimateFee with incorrect version which throws an error
@@ -86,9 +119,18 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
 
         // TODO: add support for nonce with raw execution e.g https://github.com/0xSpaceShard/starknet-devnet-rs/blob/main/crates/starknet/src/starknet/add_invoke_transaction.rs#L10
         match nonce {
-            Some(_nonce) => self.execute(calls).max_fee(max_fee),
+            Some(nonce) => self.execute(calls).max_fee(max_fee).nonce(nonce.into()),
             None => self.execute(calls).max_fee(max_fee),
         }
+    }
+
+    fn transfer_tokens(
+        &self,
+        recipient: FieldElement,
+        transfer_amount: FieldElement,
+        nonce: Option<u64>,
+    ) -> TransactionExecution {
+        self.transfer_tokens_u256(recipient, U256 { high: FieldElement::ZERO, low: transfer_amount }, nonce)
     }
 
     fn declare_contract(
@@ -220,4 +262,50 @@ pub fn assert_equal_transactions(tx1: &Transaction, tx2: &Transaction) {
         }
         _ => unimplemented!("transaction either deprecated or will be deprecated in the future"),
     }
+}
+
+pub fn assert_eq_msg_to_l1(l1: Vec<MsgToL1>, l2: Vec<MsgToL1>) {
+    assert_eq!(l1.len(), l2.len());
+    for (m1, m2) in l1.iter().zip(l2.iter()) {
+        assert_eq!(m1.from_address, m2.from_address);
+        assert_eq!(m1.payload, m2.payload);
+        assert_eq!(m1.to_address, m2.to_address);
+    }
+}
+
+pub fn assert_eq_event(l1: Vec<Event>, l2: Vec<Event>) {
+    assert_eq!(l1.len(), l2.len());
+    for (e1, e2) in l1.iter().zip(l2.iter()) {
+        assert_eq!(e1.data, e2.data);
+        assert_eq!(e1.from_address, e2.from_address);
+        assert_eq!(e1.keys, e2.keys);
+    }
+}
+
+pub fn assert_eq_emitted_event(l1: Vec<EmittedEvent>, l2: Vec<EmittedEvent>) {
+    assert_eq!(l1.len(), l2.len());
+    for (e1, e2) in l1.iter().zip(l2.iter()) {
+        assert_eq!(e1.data, e2.data);
+        assert_eq!(e1.from_address, e2.from_address);
+        assert_eq!(e1.keys, e2.keys);
+        assert_eq!(e1.block_hash, e2.block_hash);
+        assert_eq!(e1.block_number, e2.block_number);
+        assert_eq!(e1.transaction_hash, e2.transaction_hash);
+    }
+}
+
+pub async fn assert_poll<F, Fut>(f: F, polling_time_ms: u64, max_poll_count: u32)
+where
+    F: Fn() -> Fut,
+    Fut: Future<Output = bool>,
+{
+    for _poll_count in 0..max_poll_count {
+        if f().await {
+            return; // The provided function returned true, exit safely.
+        }
+
+        tokio::time::sleep(tokio::time::Duration::from_millis(polling_time_ms)).await;
+    }
+
+    panic!("Max poll count exceeded.");
 }
