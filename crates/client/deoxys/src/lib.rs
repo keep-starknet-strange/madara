@@ -22,7 +22,7 @@ use std::string::String;
 use starknet_client;
 use std::path::PathBuf;
 
-use crate::transactions::declare_tx_to_starknet_tx;
+use crate::transactions::{declare_tx_to_starknet_tx, deploy_account_tx_to_starknet_tx, invoke_tx_to_starknet_tx, l1handler_tx_to_starknet_tx};
 
 pub fn read_resource_file(path_in_resource_dir: &str) -> String {
     let path = Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap())
@@ -86,9 +86,9 @@ pub fn get_txs(block: starknet_client::reader::Block) -> BoundedVec<mp_starknet:
                     transactions_vec.try_push(tx).unwrap();
                 },
                 starknet_client::reader::objects::transaction::Transaction::DeployAccount(deploy_account_transaction) => {
-                    // // convert declare_transaction to starknet transaction
-                    // let tx = deploy_account_tx_to_starknet_tx(deploy_account_transaction.clone());
-                    // transactions_vec.try_push(tx).unwrap();
+                    // convert declare_transaction to starknet transaction
+                    let tx = deploy_account_tx_to_starknet_tx(deploy_account_transaction.clone());
+                    transactions_vec.try_push(tx).unwrap();
                 },
                 starknet_client::reader::objects::transaction::Transaction::Deploy(deploy_transaction) => {
                     // // convert declare_transaction to starknet transaction
@@ -96,14 +96,14 @@ pub fn get_txs(block: starknet_client::reader::Block) -> BoundedVec<mp_starknet:
                     // transactions_vec.try_push(tx).unwrap();
                 },
                 starknet_client::reader::objects::transaction::Transaction::Invoke(invoke_transaction) => {
-                    // // convert invoke_transaction to starknet transaction
-                    // let tx = invoke_tx_to_starknet_tx(invoke_transaction.clone());
-                    // transactions_vec.try_push(tx).unwrap();
+                    // convert invoke_transaction to starknet transaction
+                    let tx = invoke_tx_to_starknet_tx(invoke_transaction.clone());
+                    transactions_vec.try_push(tx).unwrap();
                 },
                 starknet_client::reader::objects::transaction::Transaction::L1Handler(l1handler_transaction) => {
-                    // // convert declare_transaction to starknet transaction
-                    // let tx = l1handler_tx_to_starknet_tx(l1handler_transaction.clone());
-                    // transactions_vec.try_push(tx).unwrap();
+                    // convert declare_transaction to starknet transaction
+                    let tx = l1handler_tx_to_starknet_tx(l1handler_transaction.clone());
+                    transactions_vec.try_push(tx).unwrap();
                 },
             }
         }
