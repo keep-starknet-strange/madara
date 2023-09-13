@@ -9,7 +9,8 @@ use reqwest::header::{HeaderMap, CONTENT_TYPE};
 use serde_json::json;
 use sp_core::bounded_vec::BoundedVec;
 use starknet_api::core::ChainId;
-use starknet_api::transaction::{TransactionOutput, TransactionOffsetInBlock, TransactionHash, Event, Fee, TransactionExecutionStatus, DeclareTransactionOutput, DeployTransactionOutput, DeployAccountTransactionOutput, InvokeTransactionOutput, MessageToL1, L1HandlerTransactionOutput, DeployTransaction, DeployAccountTransaction, L1HandlerTransaction};
+use starknet_api::hash::StarkFelt;
+use starknet_api::transaction::{TransactionOutput, TransactionOffsetInBlock, TransactionHash, Event, Fee, TransactionExecutionStatus, DeclareTransactionOutput, DeployTransactionOutput, DeployAccountTransactionOutput, InvokeTransactionOutput, MessageToL1, L1HandlerTransactionOutput, DeployTransaction, DeployAccountTransaction, L1HandlerTransaction, TransactionSignature};
 use starknet_client::RetryConfig;
 use starknet_client::reader::objects::transaction::{TransactionType, L1ToL2Message, ExecutionResources, IntermediateDeclareTransaction, IntermediateInvokeTransaction};
 use starknet_client::reader::{StarknetFeederGatewayClient, StarknetReader};
@@ -99,21 +100,32 @@ pub struct TransactionReceipt {
     pub execution_status: TransactionExecutionStatus,
 }
 
+pub fn vec_to_boundeVec(signature: TransactionSignature) -> BoundedVec<Felt252Wrapper, ConstU32<10000>> {
+    let mut bounded_vec: BoundedVec<Felt252Wrapper, ConstU32<10000>> = BoundedVec::new();
+    for signature_element in signature {
+        let element = mp_starknet::execution::Felt252Wrapper::try_from(signature_element);
+        if bounded_vec.len() >= ConstU32<10000> {
+            break;
+        }
+        bounded_vec.push(element);
+    }
+    bounded_vec
+}
+
 pub fn get_txs(block: starknet_client::reader::Block) -> BoundedVec<mp_starknet::transaction::types::Transaction, MaxTransactions> {
     let mut transactions_vec: BoundedVec<mp_starknet::transaction::types::Transaction, MaxTransactions> = BoundedVec::new();
 
     for transaction in &block.transactions {
         let converted_transaction = match transaction {
-            TransactionType::Declare(decl) => mp_starknet::transaction::types::Transaction::Declare(IntermediateDeclareTransaction {
-                class_hash: todo!(),
-                compiled_class_hash: todo!(),
-                sender_address: todo!(),
-                nonce: todo!(),
-                max_fee: todo!(),
-                version: todo!(),
-                transaction_hash: todo!(),
-                signature: todo!(),
-            }),
+            TransactionType::Declare => mp_starknet::transaction::types::TxType::Declare{
+                starknet_api::hash::StarkFelt::try_from(transaction.version) as u8,
+                mp_starknet::execution::Felt252Wrapper::try_from(transaction.sender_address);
+                mp_starknet::execution::Felt252Wrapper::try_from(transaction.compiled_class_hash);
+                mp_starknet::execution::Felt252Wrapper::try_from(transaction.class_hash);
+                mp_starknet::execution::Felt252Wrapper::try_from(transaction.nonce);
+                vec_to_boundeVec(transaction.signature);
+                mp_starknet::execution::Felt252Wrapper::from(transaction.max_fee),
+            },
             TransactionType::Deploy(deploy) => mp_starknet::transaction::types::Transaction::Deploy(DeployTransaction {
                 version: todo!(),
                 class_hash: todo!(),
