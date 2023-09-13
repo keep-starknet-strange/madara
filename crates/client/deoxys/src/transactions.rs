@@ -1,7 +1,10 @@
-use mp_starknet::{transaction::types::{Transaction, MaxArraySize, TxType}, execution::types::{Felt252Wrapper, EntryPointTypeWrapper, ContractAddressWrapper, CallEntryPointWrapper, MaxCalldataSize, ClassHashWrapper}};
+use std::{default, f32::consts::E};
+
+use mp_starknet::{transaction::types::{Transaction, MaxArraySize, TxType}, execution::{types::{Felt252Wrapper, EntryPointTypeWrapper, ContractAddressWrapper, CallEntryPointWrapper, MaxCalldataSize, ClassHashWrapper}, felt252_wrapper}};
 use sp_core::{bounded_vec::BoundedVec, U256};
-use starknet_gateway_types::reply::transaction::{DeclareTransaction, InvokeTransaction, DeployAccountTransaction, L1HandlerTransaction};
 use blockifier::execution::contract_class::ContractClass;
+use starknet_client::reader::objects::transaction::IntermediateInvokeTransaction;
+use starknet_api::hash::StarkFelt;
 
 pub fn declare_tx_to_starknet_tx(declare_transaction : DeclareTransaction) -> Transaction {
     match declare_transaction {
@@ -135,104 +138,39 @@ pub fn declare_tx_to_starknet_tx(declare_transaction : DeclareTransaction) -> Tr
 
 
 
-pub fn invoke_tx_to_starknet_tx(invoke_transaction : InvokeTransaction) -> Transaction {
-    match invoke_transaction {
-        InvokeTransaction::V0(invoke_transaction_v0) => {
-            let mut signature_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
-            for item in invoke_transaction_v0.signature {
-                match signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap()) {
+pub fn invoke_tx_to_starknet_tx(invoke_transaction : IntermediateInvokeTransaction) -> Transaction {
+    /*let mut signature_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
+            for item in invoke_transaction.signature {
+                match signature_vec.try_push(Felt252Wrapper::try_from(item).unwrap()) {
                     Ok(_) => {},
                     Err(_) => {
                         panic!("Signature too long");
                     }
                 }
                 //signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
+            }*/
+    let version_u64: u64 = match Felt252Wrapper::try_from(invoke_transaction.version.0.into()) {
+        Ok(valeur) => {
+            match Felt252Wrapper::try_from(valeur) {
+            Ok(val) => {val},
+            Err(_) => {panic!("Version too long")}
             }
-            let mut calldata_vec: BoundedVec<Felt252Wrapper, MaxCalldataSize> = BoundedVec::new();
-            for item in invoke_transaction_v0.calldata {
-                match calldata_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap()) {
-                    Ok(_) => {},
-                    Err(_) => {
-                        panic!("Calldata too long");
-                    }
-                }
-                //calldata_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
-            }
-
-            let call_entry_point = CallEntryPointWrapper::new(
-                Some(ClassHashWrapper::default()),   //class_hash: Option<ClassHashWrapper>,
-                EntryPointTypeWrapper::External, //entrypoint_type: EntryPointTypeWrapper,
-                Some(Felt252Wrapper::try_from(invoke_transaction_v0.entry_point_selector.0.as_be_bytes()).unwrap()),
-                calldata_vec,
-                ContractAddressWrapper::default(), //storage_address: ContractAddressWrapper,
-                ContractAddressWrapper::default(), //caller_address: ContractAddressWrapper,
-				Felt252Wrapper::ZERO,
-				Some(ClassHashWrapper::ZERO)
-            );
-            let tx = Transaction {
-                tx_type: TxType::Invoke,
-                version: 0u8,
-                hash: Felt252Wrapper::try_from(invoke_transaction_v0.transaction_hash.0.as_be_bytes()).unwrap(),
-                signature: signature_vec,
-                sender_address: Felt252Wrapper::try_from(invoke_transaction_v0.sender_address.get().as_be_bytes()).unwrap(),
-                nonce: ContractAddressWrapper::default(),
-                call_entrypoint: call_entry_point,
-                contract_class: Option::<ContractClass>::default(),
-                contract_address_salt: Option::<U256>::default(),
-                max_fee: Felt252Wrapper::try_from(invoke_transaction_v0.max_fee.0.as_be_bytes()).unwrap(),
-                ..Transaction::default()
-            };
-            tx
-        }
-        InvokeTransaction::V1(invoke_transaction_v1) => {
-            let mut signature_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
-            for item in invoke_transaction_v1.signature {
-                match signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap()) {
-                    Ok(_) => {},
-                    Err(_) => {
-                        panic!("Signature too long");
-                    }
-                }
-                //signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
-            }
-
-            let mut calldata_vec: BoundedVec<Felt252Wrapper, MaxCalldataSize> = BoundedVec::new();
-            for item in invoke_transaction_v1.calldata {
-                match calldata_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap()) {
-                    Ok(_) => {},
-                    Err(_) => {
-                        panic!("Calldata too long");
-                    }
-                }
-                //calldata_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
-            }
-
-            let call_entry_point = CallEntryPointWrapper::new(
-                Some(ClassHashWrapper::default()),   //class_hash: Option<ClassHashWrapper>,
-                EntryPointTypeWrapper::External, //entrypoint_type: EntryPointTypeWrapper,
-                Some(Felt252Wrapper::default()),
-                calldata_vec,
-                ContractAddressWrapper::default(), //storage_address: ContractAddressWrapper,
-                ContractAddressWrapper::default(), //caller_address: ContractAddressWrapper,
-				Felt252Wrapper::ZERO,
-				Some(ClassHashWrapper::ZERO)
-            );
-            let tx = Transaction {
-                tx_type: TxType::Invoke,
-                version: 0u8,
-                hash: Felt252Wrapper::try_from(invoke_transaction_v1.transaction_hash.0.as_be_bytes()).unwrap(),
-                signature: signature_vec,
-                sender_address: Felt252Wrapper::try_from(invoke_transaction_v1.sender_address.get().as_be_bytes()).unwrap(),
-                nonce: ContractAddressWrapper::default(),
-                call_entrypoint: call_entry_point,
-                contract_class: Option::<ContractClass>::default(),
-                contract_address_salt: Option::<U256>::default(),
-                max_fee: Felt252Wrapper::try_from(invoke_transaction_v1.max_fee.0.as_be_bytes()).unwrap(),
-                ..Transaction::default()
-            };
-            tx
-        }
-    }
+        },
+        Err(_) => {panic!("Version too long")}
+    };
+    let tx = Transaction {
+        tx_type: TxType::Invoke,
+        version: default,
+        hash: Felt252Wrapper::try_from(invoke_transaction.transaction_hash.0.as_be_bytes()).unwrap(),
+        signature: default,
+        sender_address: Felt252Wrapper::try_from(invoke_transaction.contract_address.get().as_be_bytes()).unwrap(),
+        nonce: ContractAddressWrapper::try_from(invoke_transaction.nonce.0.as_be_bytes()).unwrap(),
+        call_entrypoint: CallEntryPointWrapper::default(),
+        contract_class: Option::<ContractClass>::default(),
+        contract_address_salt: Option::<U256>::default(),
+        max_fee: Felt252Wrapper::ONE,
+        is_query: todo!(),
+    };
 }
 
 
