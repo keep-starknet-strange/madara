@@ -514,6 +514,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "assert"
+version = "0.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d6ad2cfc66932f8ceee708631eaaf7131d189a2a68610269a6f65b433dd8c844"
+
+[[package]]
 name = "assert-json-diff"
 version = "2.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4303,6 +4309,26 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "enum-iterator"
+version = "1.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7add3873b5dd076766ee79c8e406ad1a472c385476b9e38849f8eec24f1be689"
+dependencies = [
+ "enum-iterator-derive",
+]
+
+[[package]]
+name = "enum-iterator-derive"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eecf8589574ce9b895052fa12d69af7a233f99e6107f5cb8dd1044f2a17bfdcb"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -8263,14 +8289,16 @@ dependencies = [
 
 [[package]]
 name = "papyrus_config"
-version = "0.0.4"
-source = "git+https://github.com/starkware-libs/papyrus?branch=main#ebe3399bf9851e086285d2746790c0ab2185e79d"
+version = "0.2.0"
 dependencies = [
+ "assert_matches",
  "clap",
  "itertools 0.10.5",
+ "lazy_static",
  "serde",
  "serde_json",
  "strum_macros 0.25.2",
+ "tempfile",
  "thiserror",
  "validator",
 ]
@@ -12513,16 +12541,25 @@ dependencies = [
 
 [[package]]
 name = "starknet_client"
-version = "0.0.4"
-source = "git+https://github.com/starkware-libs/papyrus?branch=main#ebe3399bf9851e086285d2746790c0ab2185e79d"
+version = "0.2.0"
 dependencies = [
+ "assert",
+ "assert_matches",
  "async-trait",
+ "cairo-lang-casm 2.2.0",
  "cairo-lang-starknet 2.2.0",
+ "cairo-lang-utils 2.2.0",
+ "enum-iterator",
  "http",
- "indexmap 1.9.3",
+ "indexmap 2.0.0-pre",
  "lazy_static",
+ "mockall",
+ "mockito",
  "os_info",
  "papyrus_config",
+ "pretty_assertions",
+ "rand 0.8.5",
+ "rand_chacha 0.3.1",
  "reqwest",
  "serde",
  "serde_json",

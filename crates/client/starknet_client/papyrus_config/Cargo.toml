@@ -1,0 +1,26 @@
+[package]
+name = "papyrus_config"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+# license-file.workspace = true
+description = "A library for handling node configuration."
+
+[package.metadata.cargo-udeps.ignore]
+development = ["tempfile"]  # Dependency of a doc-test
+
+[dependencies]
+clap = { workspace = true, features = ["env", "string"] }
+itertools.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true, features = ["arbitrary_precision"]}
+strum_macros.workspace = true
+thiserror.workspace = true
+validator = { workspace = true, features = ["derive"] }
+
+[dev-dependencies]
+assert_matches.workspace = true
+itertools.workspace = true
+lazy_static.workspace = true
+tempfile.workspace = true
+# test_utils = { path = "../test_utils" }

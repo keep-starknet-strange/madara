@@ -3,7 +3,7 @@ name = "starknet_client"
 version.workspace = true
 edition.workspace = true
 repository.workspace = true
-license-file.workspace = true
+# license-file.workspace = true
 description = "A client implementation that can communicate with Starknet."
 
 [features]
@@ -12,26 +12,28 @@ testing = [
     "mockall",
     "rand",
     "rand_chacha",
-    "test_utils",
+    # "test_utils",
 ]
 
 [dependencies]
 async-trait.workspace = true
-cairo-lang-starknet.workspace = true
+cairo-lang-starknet = "2.2.0"
+cairo-lang-casm = "2.2.0"
+cairo-lang-utils = "2.2.0"
 enum-iterator = { workspace = true, optional = true }
 http.workspace = true
 indexmap = { workspace = true, features = ["serde"] }
 lazy_static.workspace = true
 mockall = { workspace = true, optional = true }
 os_info.workspace = true
-papyrus_config = { path = "../papyrus_config", version = "0.0.4" }
+papyrus_config = { path = "papyrus_config", version = "0.2.0" }
 rand = { workspace = true, optional = true }
 rand_chacha = { workspace = true, optional = true }
 reqwest = { workspace = true, features = ["json", "blocking"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true, features = ["arbitrary_precision"] }
-starknet_api.workspace = true
-test_utils = { path = "../test_utils", optional = true }
+starknet_api = "0.4.1"
+# test_utils = { path = "test_utils", optional = true }
 thiserror.workspace = true
 tokio = { workspace = true, features = ["full", "sync"] }
 tokio-retry.workspace = true
@@ -47,5 +49,5 @@ mockito.workspace = true
 rand.workspace = true
 rand_chacha.workspace = true
 pretty_assertions.workspace = true
-starknet_api = { workspace = true, features = ["testing"] }
-test_utils = { path = "../test_utils" }
+starknet_api = { version = "0.4.1", features = ["testing"] }
+# test_utils = { path = "test_utils" }
