@@ -75,7 +75,6 @@ pub fn get_header(block: starknet_client::reader::Block) -> Header  {
 }
 
 pub fn get_txs(block: starknet_client::reader::Block) -> BoundedVec<mp_starknet::transaction::types::Transaction, MaxTransactions> {
-    println!("AYAAAAAH");
     let mut transactions_vec: BoundedVec<Transaction, MaxTransactions> = BoundedVec::new();
         for transaction in &block.transactions {
             match transaction {
@@ -207,7 +206,7 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
         NODE_VERSION,
         retry_config
     ).unwrap();
-    let mut i = 2680u64;
+    let mut i = 0u64;
     loop {
         // No mock creation here, directly fetch the block from the Starknet client
         let block = starknet_client.block(BlockNumber(i)).await;
