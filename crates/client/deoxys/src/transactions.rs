@@ -149,18 +149,21 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : IntermediateInvokeTransacti
                 }
                 //signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
             }*/
-    let version_u64: u64 = match Felt252Wrapper::try_from(invoke_transaction.version.0.into()) {
+    let version_byte: [u8; 32] = match Felt252Wrapper::try_from(invoke_transaction.version.0.into()) {
         Ok(valeur) => {
-            match Felt252Wrapper::try_from(valeur) {
-            Ok(val) => {val},
-            Err(_) => {panic!("Version too long")}
-            }
+            Felt252Wrapper::from(valeur).into()
         },
         Err(_) => {panic!("Version too long")}
     };
+    let version_u8: u8 = match version_byte[0] {
+        0 => 0,
+        1 => 1,
+        01 => 2,
+        _ => panic!("Version not supported")
+    };
     let tx = Transaction {
         tx_type: TxType::Invoke,
-        version: default,
+        version: version_u8,
         hash: Felt252Wrapper::try_from(invoke_transaction.transaction_hash.0.as_be_bytes()).unwrap(),
         signature: default,
         sender_address: Felt252Wrapper::try_from(invoke_transaction.contract_address.get().as_be_bytes()).unwrap(),
