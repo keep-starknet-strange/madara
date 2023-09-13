@@ -27,7 +27,7 @@ scale-codec = { workspace = true, default-features = true, features = [
 sp-core = { workspace = true, default-features = true }
 sp-database = { workspace = true, default-features = true }
 sp-runtime = { workspace = true, default-features = true }
-uuid = "1.4.0"
+uuid = "1.4.1"
 
 [features]
 default = ["kvdb-rocksdb", "parity-db"]
