@@ -9,7 +9,7 @@ use sp_core::bounded_vec::BoundedVec;
 use starknet_api::core::ChainId;
 use starknet_client::RetryConfig;
 use starknet_client::reader::{StarknetFeederGatewayClient, StarknetReader};
-use transactions::{l1handler_tx_to_starknet_tx, declare_tx_to_starknet_tx, invoke_tx_to_starknet_tx, deploy_account_tx_to_starknet_tx};
+// use transactions::{l1handler_tx_to_starknet_tx, declare_tx_to_starknet_tx, invoke_tx_to_starknet_tx, deploy_account_tx_to_starknet_tx};
 use std::sync::{ Arc, Mutex};
 use std::collections::VecDeque;
 use log::info;
@@ -21,6 +21,8 @@ use std::path::Path;
 use std::string::String;
 use starknet_client;
 use std::path::PathBuf;
+
+use crate::transactions::declare_tx_to_starknet_tx;
 
 pub fn read_resource_file(path_in_resource_dir: &str) -> String {
     let path = Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap())
@@ -73,33 +75,35 @@ pub fn get_header(block: starknet_client::reader::Block) -> Header  {
 }
 
 pub fn get_txs(block: starknet_client::reader::Block) -> BoundedVec<mp_starknet::transaction::types::Transaction, MaxTransactions> {
+    println!("AYAAAAAH");
     let mut transactions_vec: BoundedVec<Transaction, MaxTransactions> = BoundedVec::new();
         for transaction in &block.transactions {
             match transaction {
                 starknet_client::reader::objects::transaction::Transaction::Declare(declare_transaction) => {
                     // convert declare_transaction to starknet transaction
+                    println!("declare_transaction: {:?}", declare_transaction);
                     let tx = declare_tx_to_starknet_tx(declare_transaction.clone());
                     transactions_vec.try_push(tx).unwrap();
                 },
                 starknet_client::reader::objects::transaction::Transaction::DeployAccount(deploy_account_transaction) => {
-                    // convert declare_transaction to starknet transaction
-                    let tx = deploy_account_tx_to_starknet_tx(deploy_account_transaction.clone());
-                    transactions_vec.try_push(tx).unwrap();
+                    // // convert declare_transaction to starknet transaction
+                    // let tx = deploy_account_tx_to_starknet_tx(deploy_account_transaction.clone());
+                    // transactions_vec.try_push(tx).unwrap();
                 },
                 starknet_client::reader::objects::transaction::Transaction::Deploy(deploy_transaction) => {
-                    // convert declare_transaction to starknet transaction
-                    let tx = deploy_tx_to_starknet_tx(deploy_transaction.clone());
-                    transactions_vec.try_push(tx).unwrap();
+                    // // convert declare_transaction to starknet transaction
+                    // let tx = deploy_tx_to_starknet_tx(deploy_transaction.clone());
+                    // transactions_vec.try_push(tx).unwrap();
                 },
                 starknet_client::reader::objects::transaction::Transaction::Invoke(invoke_transaction) => {
-                    // convert invoke_transaction to starknet transaction
-                    let tx = invoke_tx_to_starknet_tx(invoke_transaction.clone());
-                    transactions_vec.try_push(tx).unwrap();
+                    // // convert invoke_transaction to starknet transaction
+                    // let tx = invoke_tx_to_starknet_tx(invoke_transaction.clone());
+                    // transactions_vec.try_push(tx).unwrap();
                 },
                 starknet_client::reader::objects::transaction::Transaction::L1Handler(l1handler_transaction) => {
-                    // convert declare_transaction to starknet transaction
-                    let tx = l1handler_tx_to_starknet_tx(l1handler_transaction.clone());
-                    transactions_vec.try_push(tx).unwrap();
+                    // // convert declare_transaction to starknet transaction
+                    // let tx = l1handler_tx_to_starknet_tx(l1handler_transaction.clone());
+                    // transactions_vec.try_push(tx).unwrap();
                 },
             }
         }
@@ -203,7 +207,7 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
         NODE_VERSION,
         retry_config
     ).unwrap();
-    let mut i = 0u64;
+    let mut i = 2680u64;
     loop {
         // No mock creation here, directly fetch the block from the Starknet client
         let block = starknet_client.block(BlockNumber(i)).await;
