@@ -1,7 +1,5 @@
 //! StarkNet storage primitives.
 
-use scale_codec::{Decode, Encode};
-
 /// Current version of pallet Starknet's storage schema is stored under this key.
 pub const PALLET_STARKNET_SCHEMA: &[u8] = b":starknet_schema";
 
@@ -26,8 +24,9 @@ pub const STARKNET_NONCE: &[u8] = b"Nonces";
 pub const STARKNET_STORAGE: &[u8] = b"StorageView";
 
 /// The schema version for Pallet Starknet's storage.
-#[derive(Clone, Copy, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Decode, parity_scale_codec::Encode))]
 pub enum StarknetStorageSchemaVersion {
     /// Undefined schema.
     Undefined,

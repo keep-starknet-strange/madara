@@ -23,7 +23,7 @@ mc-db = { workspace = true }
 mc-rpc-core = { workspace = true }
 mc-storage = { workspace = true }
 mc-transaction-pool = { workspace = true }
-mp-starknet = { workspace = true }
+mp-starknet = { workspace = true, features = ["client"] }
 # Substate primitives
 frame-support = { workspace = true }
 frame-system = { workspace = true }

@@ -3,14 +3,12 @@ use std::string::String;
 use std::vec::Vec;
 
 use blockifier::execution::contract_class::ContractClass as StarknetContractClass;
-use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
-use mp_starknet::starknet_serde::get_contract_class;
+use mp_starknet::execution::types::Felt252Wrapper;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use starknet_core::serde::unsigned_field_element::UfeHex;
 use starknet_crypto::FieldElement;
 
-use crate::types::ContractStorageKeyWrapper;
 use crate::{utils, GenesisConfig};
 
 /// A wrapper for FieldElement that implements serde's Serialize and Deserialize for hex strings.
@@ -67,7 +65,7 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
             .contract_classes
             .into_iter()
             .map(|(hash, class)| {
-                let hash = unsafe { std::mem::transmute::<ClassHash, ClassHashWrapper>(hash) };
+                let hash = Felt252Wrapper(hash.0).into();
                 match class {
                     ContractClass::Path { path, version } => {
                         let contract_path = match loader.madara_path.clone() {
@@ -77,7 +75,10 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
                                 project_path + "/" + &path
                             }
                         };
-                        (hash, get_contract_class(&utils::read_file_to_string(contract_path).unwrap(), version))
+                        (
+                            hash,
+                            read_contract_class_from_json(&utils::read_file_to_string(contract_path).unwrap(), version),
+                        )
                     }
                     ContractClass::Class(class) => (hash, class),
                 }
@@ -87,8 +88,8 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
             .contracts
             .into_iter()
             .map(|(address, hash)| {
-                let address = unsafe { std::mem::transmute::<ContractAddress, ContractAddressWrapper>(address) };
-                let hash = unsafe { std::mem::transmute::<ClassHash, ClassHashWrapper>(hash) };
+                let address = Felt252Wrapper(address.0).into();
+                let hash = Felt252Wrapper(hash.0).into();
                 (address, hash)
             })
             .collect::<Vec<_>>();
@@ -96,13 +97,12 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
             .storage
             .into_iter()
             .map(|(key, value)| {
-                let key = unsafe { std::mem::transmute::<ContractStorageKey, ContractStorageKeyWrapper>(key) };
-                let value = unsafe { std::mem::transmute::<StorageValue, Felt252Wrapper>(value) };
+                let key = (Felt252Wrapper(key.0.0).into(), Felt252Wrapper(key.1.0).into());
+                let value = Felt252Wrapper(value.0).into();
                 (key, value)
             })
             .collect::<Vec<_>>();
-        let fee_token_address =
-            unsafe { std::mem::transmute::<ContractAddress, ContractAddressWrapper>(loader.fee_token_address) };
+        let fee_token_address = Felt252Wrapper(loader.fee_token_address.0).into();
 
         GenesisConfig {
             contracts,
@@ -113,6 +113,30 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
             ..Default::default()
         }
     }
+}
+
+/// Create a `ContractClass` from a JSON string
+///
+/// This function takes a JSON string (`json_str`) containing the JSON representation of a
+/// ContractClass
+///
+/// `ContractClassV0` can be read directly from the JSON because the Serde methods have been
+/// implemented in the blockifier
+///
+/// `ContractClassV1` needs to be read in Casm and then converted to Contract Class V1
+pub(crate) fn read_contract_class_from_json(json_str: &str, version: u8) -> StarknetContractClass {
+    if version == 0 {
+        return StarknetContractClass::V0(
+            serde_json::from_str(json_str).expect("`json_str` should be deserializable into the correct ContracClass"),
+        );
+    } else if version == 1 {
+        let casm_contract_class: cairo_lang_casm_contract_class::CasmContractClass =
+            serde_json::from_str(json_str).expect("`json_str` should be deserializable into the CasmContracClass");
+        return StarknetContractClass::V1(
+            casm_contract_class.try_into().expect("the CasmContractClass should produce a valid ContractClassV1"),
+        );
+    }
+    unimplemented!("version {} is not supported to get contract class from JSON", version);
 }
 
 #[cfg(test)]

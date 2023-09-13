@@ -7,14 +7,15 @@
 use bitvec::order::Msb0;
 use bitvec::prelude::BitVec;
 use bitvec::slice::BitSlice;
-use scale_codec::{Decode, Encode};
 use starknet_api::stdlib::collections::HashMap;
 
 use crate::execution::felt252_wrapper::Felt252Wrapper;
 use crate::traits::hash::HasherT;
 
 /// Id of a Node within the tree
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Default, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 pub struct NodeId(pub u64);
 
 impl NodeId {
@@ -26,7 +27,9 @@ impl NodeId {
 }
 
 /// A node in a Binary Merkle-Patricia Tree graph.
-#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 pub enum Node {
     /// A node that has not been fetched from storage yet.
     ///
@@ -41,7 +44,9 @@ pub enum Node {
 }
 
 /// Describes the [Node::Binary] variant.
-#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 pub struct BinaryNode {
     /// The hash of this node. Is [None] if the node
     /// has not yet been committed.
@@ -55,7 +60,9 @@ pub struct BinaryNode {
 }
 
 /// Node that is an edge.
-#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 pub struct EdgeNode {
     /// The hash of this node. Is [None] if the node
     /// has not yet been committed.
@@ -71,7 +78,9 @@ pub struct EdgeNode {
 /// Describes the direction a child of a [BinaryNode] may have.
 ///
 /// Binary nodes have two children, one left and one right.
-#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 pub enum Direction {
     /// Left direction.
     Left,
@@ -176,7 +185,7 @@ impl BinaryNode {
             None => unreachable!("right child not found"),
         };
 
-        self.hash = Some(Felt252Wrapper(H::default().hash_elements(left.0, right.0)));
+        self.hash = Some(Felt252Wrapper(H::hash_elements(left.0, right.0)));
     }
 }
 
@@ -288,7 +297,7 @@ impl EdgeNode {
         length[31] = self.path.len() as u8;
 
         let length = Felt252Wrapper::try_from(&length).unwrap();
-        let hash = Felt252Wrapper(H::default().hash_elements(child.0, path.0) + length.0);
+        let hash = Felt252Wrapper(H::hash_elements(child.0, path.0) + length.0);
         self.hash = Some(hash);
     }
 }

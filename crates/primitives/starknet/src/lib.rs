@@ -1,19 +1,10 @@
 //! Starknet primitives.
 
-#![warn(missing_docs)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[doc(hidden)]
-pub use scale_codec;
-#[doc(hidden)]
-pub use scale_info;
-#[cfg(feature = "std")]
-#[doc(hidden)]
-pub use serde;
-#[doc(hidden)]
-pub use sp_std;
-#[doc(hidden)]
 pub extern crate alloc;
+
 // Include modules.
 /// Starknet transaction constants.
 pub mod constants;
@@ -32,9 +23,6 @@ pub mod storage;
 
 /// Starknet state related functionality.
 pub mod state;
-
-/// Serializations and deserializations.
-pub mod starknet_serde;
 
 /// Starknet primitives traits.
 pub mod traits;

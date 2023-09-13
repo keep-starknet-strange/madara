@@ -3,12 +3,13 @@
 mod header;
 use alloc::vec::Vec;
 
-use frame_support::BoundedVec;
 pub use header::*;
 use sp_core::ConstU32;
 
 use crate::execution::types::Felt252Wrapper;
-use crate::transaction::types::{Transaction, TransactionReceiptWrapper};
+use crate::traits::hash::HasherT;
+use crate::transaction::compute_hash::ComputeTransactionHash;
+use crate::transaction::Transaction;
 
 /// Block transactions max size
 // TODO: add real value (#250)
@@ -18,31 +19,16 @@ pub type MaxTransactions = ConstU32<4294967295>;
 pub type MaxStorageSlots = ConstU32<{ u32::MAX }>;
 
 /// Block Transactions
-pub type BlockTransactions = BoundedVec<Transaction, MaxTransactions>;
-
-/// Block transaction receipts.
-pub type BlockTransactionReceipts = BoundedVec<TransactionReceiptWrapper, MaxTransactions>;
+pub type BlockTransactions = Vec<Transaction>;
 
 /// Starknet block definition.
-#[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    scale_codec::Encode,
-    scale_codec::Decode,
-    scale_info::TypeInfo,
-    Default,
-    scale_codec::MaxEncodedLen,
-)]
-#[cfg_attr(feature = "std", derive(serde::Deserialize))]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 pub struct Block {
     /// The block header.
     header: Header,
     /// The block transactions.
     transactions: BlockTransactions,
-    /// The block transaction receipts.
-    transaction_receipts: BlockTransactionReceipts,
 }
 
 impl Block {
@@ -52,12 +38,8 @@ impl Block {
     ///
     /// * `header` - The block header.
     /// * `transactions` - The block transactions.
-    pub fn new(
-        header: Header,
-        transactions: BlockTransactions,
-        transaction_receipts: BlockTransactionReceipts,
-    ) -> Self {
-        Self { header, transactions, transaction_receipts }
+    pub fn new(header: Header, transactions: BlockTransactions) -> Self {
+        Self { header, transactions }
     }
 
     /// Return a reference to the block header
@@ -70,14 +52,8 @@ impl Block {
         &self.transactions
     }
 
-    /// Returns a reference to all transaction receipts.
-    pub fn transaction_receipts(&self) -> &BlockTransactionReceipts {
-        &self.transaction_receipts
-    }
-
     /// Return a reference to all transaction hashes
-    pub fn transactions_hashes(&self) -> Vec<Felt252Wrapper> {
-        let transactions = &self.transactions;
-        transactions.into_iter().map(|tx| tx.hash).collect()
+    pub fn transactions_hashes<H: HasherT>(&self, chain_id: Felt252Wrapper) -> Vec<Felt252Wrapper> {
+        self.transactions.iter().map(|tx| tx.compute_hash::<H>(chain_id, false)).collect()
     }
 }
