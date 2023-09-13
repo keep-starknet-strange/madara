@@ -1,32 +1,18 @@
-use mp_starknet::sequencer_address;
-use mp_starknet::transaction::types::{Transaction, TxType, TransactionReceiptWrapper, EventWrapper};
-use pathfinder_lib::state::block_hash::{TransactionCommitmentFinalHashType, calculate_transaction_commitment, calculate_event_commitment};
-use reqwest::StatusCode;
-use sp_core::{U256, ConstU32};
+
+use mp_starknet::transaction::types::{Transaction, TransactionReceiptWrapper};
+use sp_core::U256;
 use mp_starknet::execution::types::{ Felt252Wrapper, ContractAddressWrapper };
-use mp_starknet::block::{Block, Header, MaxTransactions, BlockStatus};
+use mp_starknet::block::{Block, Header, MaxTransactions};
 use reqwest::header::{HeaderMap, CONTENT_TYPE};
 use serde_json::json;
 use sp_core::bounded_vec::BoundedVec;
 use starknet_api::core::ChainId;
-use starknet_api::hash::StarkFelt;
-use starknet_api::transaction::{TransactionOutput, TransactionOffsetInBlock, TransactionHash, Event, Fee, TransactionExecutionStatus, DeclareTransactionOutput, DeployTransactionOutput, DeployAccountTransactionOutput, InvokeTransactionOutput, MessageToL1, L1HandlerTransactionOutput, DeployTransaction, DeployAccountTransaction, L1HandlerTransaction, TransactionSignature};
 use starknet_client::RetryConfig;
-use starknet_client::reader::objects::transaction::L1ToL2Message;
 use starknet_client::reader::{StarknetFeederGatewayClient, StarknetReader};
-use starknet_gateway_types::reply::transaction::L2ToL1Message;
-use starknet_gateway_types::reply::{MaybePendingBlock, transaction as EnumTransaction, Status};
-use blockifier::execution::entry_point::ExecutionResources;
-use transactions::{deploy_account_tx_to_starknet_tx, declare_tx_to_starknet_tx, invoke_tx_to_starknet_tx, l1handler_tx_to_starknet_tx};
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{ Arc, Mutex};
 use std::collections::VecDeque;
-use std::thread;
 use log::info;
-use pathfinder_common::{BlockId};
-// use crate::test_utils::retry::get_test_config;
 use tokio::time;
-// use serde::{Deserialize, Serialize};
-use mockito::mock;
 use starknet_api::block::BlockNumber;
 use std::env;
 use std::fs::read_to_string;
@@ -34,7 +20,6 @@ use std::path::Path;
 use std::string::String;
 use starknet_client;
 use std::path::PathBuf;
-use validator::Validate;
 
 pub fn read_resource_file(path_in_resource_dir: &str) -> String {
     let path = Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap())
@@ -86,21 +71,6 @@ pub fn get_header(block: starknet_client::reader::Block) -> Header  {
     starknet_header
 }
 
-#[derive(Debug, Default, Deserialize, Serialize, Clone, Eq, PartialEq)]
-pub struct TransactionReceipt {
-    pub transaction_index: TransactionOffsetInBlock,
-    pub transaction_hash: TransactionHash,
-    // #[serde(default)]
-    pub l1_to_l2_consumed_message: L1ToL2Message,
-    pub l2_to_l1_messages: Vec<L2ToL1Message>,
-    pub events: Vec<Event>,
-    // #[serde(default)]
-    pub execution_resources: ExecutionResources,
-    pub actual_fee: Fee,
-    // #[serde(default)]
-    pub execution_status: TransactionExecutionStatus,
-}
-
 pub fn get_txs(block: starknet_client::reader::Block) -> BoundedVec<mp_starknet::transaction::types::Transaction, MaxTransactions> {
     let mut transactions_vec: BoundedVec<mp_starknet::transaction::types::Transaction, MaxTransactions> = BoundedVec::new();
 
@@ -118,8 +88,6 @@ pub fn get_txs(block: starknet_client::reader::Block) -> BoundedVec<mp_starknet:
     transactions_vec
 }
 
-
-
 // This function converts a block received from the gateway into a StarkNet block
 pub fn from_gateway_to_starknet_block(block: starknet_client::reader::Block) -> Block {
     let mut transactions_vec: BoundedVec<Transaction, MaxTransactions> = get_txs(block.clone());
@@ -130,21 +98,6 @@ pub fn from_gateway_to_starknet_block(block: starknet_client::reader::Block) -> 
         transaction_receipts_vec
     )
 }
-
-
-// pub fn process_blocks(queue: BlockQueue) -> mpsc::Sender<Block> {
-//     let (sender, receiver) = mpsc::channel();
-//     let thread_queue = Arc::clone(&queue);
-
-//     thread::spawn(move || {
-//         while let Ok(block) = receiver.recv() {
-//             let mut queue_lock = thread_queue.lock().unwrap();
-//             queue_lock.push_back(block);
-//         }
-//     });
-
-//     sender
-// }
 
 async fn call_rpc(rpc_port: u16) -> Result<reqwest::StatusCode, reqwest::Error> {
     let client = reqwest::Client::new();
@@ -172,43 +125,6 @@ async fn call_rpc(rpc_port: u16) -> Result<reqwest::StatusCode, reqwest::Error> 
 
     Ok(response.status())
 }
-
-// Fetching blocks from gateway
-// pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
-//     let client: Client = Client::mainnet();
-//     let mut i = 0u64;
-
-//     loop {
-//         let result = client.block(BlockId::Number(BlockNumber::new_or_panic(i).into())).await;
-//         match result {
-//             Ok(maybe_pending_block) => {
-//                 let starknet_block = from_gateway_to_starknet_block(maybe_pending_block);
-//                 // Lock the mutex, push to the queue, and then immediately unlock
-//                 {
-//                     let mut queue_guard = queue.lock().unwrap();
-//                     queue_guard.push_back(starknet_block);
-//                 } // MutexGuard is dropped here
-//                 match call_rpc(rpc_port).await {
-//                     Ok(status) => {
-//                         if status.is_success() {
-//                             info!("[👽] Block #{} synced correctly", i);
-//                             i += 1;
-//                         }
-//                     },
-//                     Err(e) => {
-//                         eprintln!("Error processing RPC call: {:?}", e);
-//                         // You could also add a delay here if needed
-//                     }
-//                 }
-
-//             },
-//             Err(error) => {
-//                 eprintln!("Error retrieving block: {:?}", error);
-//                 time::sleep(time::Duration::from_secs(2)).await;
-//             }
-//         }
-//     }
-// }
 
 const DEFAULT_CONFIG_FILE: &str = "config/execution_config/default_config.json";
 
