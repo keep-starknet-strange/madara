@@ -30,10 +30,23 @@ pub fn declare_tx_to_starknet_tx(declare_transaction: IntermediateDeclareTransac
         Felt252Wrapper::ZERO,
         Some(ClassHashWrapper::ZERO)
     );
+
+    let version_byte: [u8; 32] = match Felt252Wrapper::try_from(declare_transaction.version.0.into()) {
+        Ok(valeur) => {
+            Felt252Wrapper::from(valeur).into()
+        },
+        Err(_) => {panic!("Version too long")}
+    };
+    let version_u8: u8 = match version_byte[0] {
+        0 => 0,
+        1 => 1,
+        01 => 2,
+        _ => panic!("Version not supported")
+    };
     
     Transaction {
         tx_type: TxType::Declare,
-        version: b'1',
+        version: version_u8,
         hash: Felt252Wrapper(declare_transaction.transaction_hash.0.into()),
         signature: signature_vec,
         sender_address: Felt252Wrapper(declare_transaction.sender_address.0.try_into().unwrap().bytes()),
@@ -48,16 +61,29 @@ pub fn declare_tx_to_starknet_tx(declare_transaction: IntermediateDeclareTransac
 
 
 pub fn invoke_tx_to_starknet_tx(invoke_transaction : IntermediateInvokeTransaction) -> Transaction {
-    /*let mut signature_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
-            for item in invoke_transaction.signature {
-                match signature_vec.try_push(Felt252Wrapper::try_from(item).unwrap()) {
-                    Ok(_) => {},
-                    Err(_) => {
-                        panic!("Signature too long");
-                    }
-                }
-                //signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
-            }*/
+    let mut signature_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
+    for item in &invoke_transaction.signature.0 {
+        match signature_vec.try_push(Felt252Wrapper::try_from(item.bytes()).unwrap()) {
+            Ok(_) => {},
+            Err(_) => {
+                panic!("Signature too long");
+            }
+        }
+        signature_vec.try_push(Felt252Wrapper::try_from(item.bytes()).unwrap());
+    }
+    let calldata_vec: BoundedVec<Felt252Wrapper, MaxCalldataSize> = BoundedVec::new();
+
+    let call_entry_point = CallEntryPointWrapper::new(
+        Some(Felt252Wrapper::try_from(invoke_transaction.class_hash.0.bytes()).unwrap()),   //class_hash: Option<ClassHashWrapper>,
+        EntryPointTypeWrapper::External, //entrypoint_type: EntryPointTypeWrapper,
+        Some(Felt252Wrapper::default()),
+        calldata_vec,
+        ContractAddressWrapper::default(), //storage_address: ContractAddressWrapper,
+        ContractAddressWrapper::default(), //caller_address: ContractAddressWrapper,
+        Felt252Wrapper::ZERO,
+        Some(ClassHashWrapper::ZERO)
+    );
+
     let version_byte: [u8; 32] = match Felt252Wrapper::try_from(invoke_transaction.version.0.into()) {
         Ok(valeur) => {
             Felt252Wrapper::from(valeur).into()
@@ -70,19 +96,20 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : IntermediateInvokeTransacti
         01 => 2,
         _ => panic!("Version not supported")
     };
-    let tx = Transaction {
+
+    Transaction {
         tx_type: TxType::Invoke,
         version: version_u8,
-        hash: Felt252Wrapper::try_from(invoke_transaction.transaction_hash.0.as_be_bytes()).unwrap(),
-        signature: default,
-        sender_address: Felt252Wrapper::try_from(invoke_transaction.contract_address.get().as_be_bytes()).unwrap(),
-        nonce: ContractAddressWrapper::try_from(invoke_transaction.nonce.0.as_be_bytes()).unwrap(),
-        call_entrypoint: CallEntryPointWrapper::default(),
+        hash: Felt252Wrapper(invoke_transaction.transaction_hash.0.into()),
+        signature: signature_vec,
+        sender_address: Felt252Wrapper(invoke_transaction.sender_address.0.try_into().unwrap().bytes()),
+        nonce: Felt252Wrapper::try_from(invoke_transaction.nonce.0.bytes()).unwrap(),
+        call_entrypoint: call_entry_point,
         contract_class: Option::<ContractClass>::default(),
         contract_address_salt: Option::<U256>::default(),
-        max_fee: Felt252Wrapper::ONE,
-        is_query: todo!(),
-    };
+        max_fee: Felt252Wrapper::from(invoke_transaction.max_fee.0),
+        is_query: false, // Assuming default value
+    }
 }
 
 pub fn deploy_account_tx_to_starknet_tx(mut deploy_account_transaction : DeployAccountTransaction) -> Transaction {
