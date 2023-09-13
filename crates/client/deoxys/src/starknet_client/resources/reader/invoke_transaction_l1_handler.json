@@ -1,0 +1,13 @@
+{
+    "transaction_hash": "0x5d50b7020f7cf8033fd7d913e489f47edf74fbf3c8ada85be512c7baa6a2eab",
+    "version": "0x0",
+    "contract_address": "0x58b43819bb12aba8ab3fb2e997523e507399a3f48a1e2aa20a5fb7734a0449f",
+    "entry_point_selector": "0xe3f5e9e1456ffa52a3fbc7e8c296631d4cc2120c0be1e2829301c0d8fa026b",
+    "calldata": [
+        "0x5474c49483aa09993090979ade8101ebb4cdce4a",
+        "0xabf8dd8438d1c21e83a8b5e9c1f9b58aaf3ed360",
+        "0x2",
+        "0x4c04fac82913f01a8f01f6e15ff7e834ff2d9a9a1d8e9adffc7bd45692f4f9a"
+    ],
+    "type": "L1_HANDLER"
+}

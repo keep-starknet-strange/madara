@@ -12,10 +12,11 @@ use starknet_api::core::ChainId;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{TransactionOutput, TransactionOffsetInBlock, TransactionHash, Event, Fee, TransactionExecutionStatus, DeclareTransactionOutput, DeployTransactionOutput, DeployAccountTransactionOutput, InvokeTransactionOutput, MessageToL1, L1HandlerTransactionOutput, DeployTransaction, DeployAccountTransaction, L1HandlerTransaction, TransactionSignature};
 use starknet_client::RetryConfig;
-use starknet_client::reader::objects::transaction::{TransactionType, L1ToL2Message, ExecutionResources, IntermediateDeclareTransaction, IntermediateInvokeTransaction};
+use starknet_client::reader::objects::transaction::L1ToL2Message;
 use starknet_client::reader::{StarknetFeederGatewayClient, StarknetReader};
 use starknet_gateway_types::reply::transaction::L2ToL1Message;
 use starknet_gateway_types::reply::{MaybePendingBlock, transaction as EnumTransaction, Status};
+use blockifier::execution::entry_point::ExecutionResources;
 use transactions::{deploy_account_tx_to_starknet_tx, declare_tx_to_starknet_tx, invoke_tx_to_starknet_tx, l1handler_tx_to_starknet_tx};
 use std::sync::{mpsc, Arc, Mutex};
 use std::collections::VecDeque;
@@ -24,7 +25,7 @@ use log::info;
 use pathfinder_common::{BlockId};
 // use crate::test_utils::retry::get_test_config;
 use tokio::time;
-use serde::{Deserialize, Serialize};
+// use serde::{Deserialize, Serialize};
 use mockito::mock;
 use starknet_api::block::BlockNumber;
 use std::env;
@@ -100,67 +101,18 @@ pub struct TransactionReceipt {
     pub execution_status: TransactionExecutionStatus,
 }
 
-pub fn vec_to_boundeVec(signature: TransactionSignature) -> BoundedVec<Felt252Wrapper, ConstU32<10000>> {
-    let mut bounded_vec: BoundedVec<Felt252Wrapper, ConstU32<10000>> = BoundedVec::new();
-    for signature_element in signature {
-        let element = mp_starknet::execution::Felt252Wrapper::try_from(signature_element);
-        if bounded_vec.len() >= ConstU32<10000> {
-            break;
-        }
-        bounded_vec.push(element);
-    }
-    bounded_vec
-}
-
 pub fn get_txs(block: starknet_client::reader::Block) -> BoundedVec<mp_starknet::transaction::types::Transaction, MaxTransactions> {
     let mut transactions_vec: BoundedVec<mp_starknet::transaction::types::Transaction, MaxTransactions> = BoundedVec::new();
 
     for transaction in &block.transactions {
-        let converted_transaction = match transaction {
-            TransactionType::Declare => mp_starknet::transaction::types::TxType::Declare{
-                starknet_api::hash::StarkFelt::try_from(transaction.version) as u8,
-                mp_starknet::execution::Felt252Wrapper::try_from(transaction.sender_address);
-                mp_starknet::execution::Felt252Wrapper::try_from(transaction.compiled_class_hash);
-                mp_starknet::execution::Felt252Wrapper::try_from(transaction.class_hash);
-                mp_starknet::execution::Felt252Wrapper::try_from(transaction.nonce);
-                vec_to_boundeVec(transaction.signature);
-                mp_starknet::execution::Felt252Wrapper::from(transaction.max_fee),
-            },
-            TransactionType::Deploy(deploy) => mp_starknet::transaction::types::Transaction::Deploy(DeployTransaction {
-                version: todo!(),
-                class_hash: todo!(),
-                contract_address_salt: todo!(),
-                constructor_calldata: todo!(),
-            }),
-            TransactionType::DeployAccount(deploy_acc) => mp_starknet::transaction::types::Transaction::DeployAccount(DeployAccountTransaction {
-                contract_address_salt: todo!(),
-                class_hash: todo!(),
-                constructor_calldata: todo!(),
-                nonce: todo!(),
-                max_fee: todo!(),
-                signature: todo!(),
-                version: todo!(),
-            }),
-            TransactionType::InvokeFunction(invoke) => mp_starknet::transaction::types::Transaction::Invoke(IntermediateInvokeTransaction {
-                calldata: todo!(),
-                sender_address: todo!(),
-                entry_point_selector: todo!(),
-                nonce: todo!(),
-                max_fee: todo!(),
-                signature: todo!(),
-                transaction_hash: todo!(),
-                version: todo!(),
-            }),
-            TransactionType::L1Handler(l1_handler) => mp_starknet::transaction::types::Transaction::L1Handler(L1HandlerTransaction {
-                version: todo!(),
-                nonce: todo!(),
-                contract_address: todo!(),
-                entry_point_selector: todo!(),
-                calldata: todo!(),
-            }),
-        };
-
-        transactions_vec.push(converted_transaction).unwrap_or_else(|_| panic!("Exceeded max transactions"));
+        // Here, you can convert the transaction or just print it.
+        // I'll just print it for now.
+        println!("transaction: {:?}", transaction);
+        
+        // If you want to convert and add to transactions_vec, do it here.
+        // Example:
+        // let converted_transaction = ...;
+        // transactions_vec.push(converted_transaction);
     }
 
     transactions_vec

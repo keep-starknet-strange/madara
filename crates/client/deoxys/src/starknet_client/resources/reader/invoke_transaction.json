@@ -1,0 +1,29 @@
+{
+    "sender_address": "0xef934e6c63a9acba42dd644d1a0c1af5df01eeac1b9f82320b53cfacd40890",
+    "entry_point_selector": "0x15d40a3d6ca2ac30f4031e42be28da9b056fef9bb7357ac5e85627ee876e5ad",
+    "calldata": [
+        "0x2",
+        "0x13c56add3ee9699228614221602165185b49f712cae90fc20c608d7ecc1521b",
+        "0x2f0b3c5710379609eb5495f1ecd348cb28167711b73609fe565a72734550354",
+        "0x0",
+        "0x2",
+        "0x69202aeae73af1c685003f68de5edd3eafcc702e3b1125c5e24fe6b6ccbc0e6",
+        "0x2f0b3c5710379609eb5495f1ecd348cb28167711b73609fe565a72734550354",
+        "0x2",
+        "0x2",
+        "0x4",
+        "0x56bc75e2d63100000",
+        "0x0",
+        "0x56bc75e2d63100000",
+        "0x0",
+        "0x1"
+    ],
+    "signature": [
+        "0x5d543c91737a46b9baa7c342e8b58f62ad438037dd63ac56cf0c64de7e6e21e",
+        "0xde8ce74586c27f66b89dc000f973a8efdf044d9b5587666a162e6db4111646"
+    ],
+    "transaction_hash": "0x706deaf73bc99c4a2026a7252f21e3c8db0946ac2221e2abe12a9f3b78192e0",
+    "max_fee": "0x21a3e1b5676f",
+    "type": "INVOKE_FUNCTION",
+    "version": "0x0"
+}

@@ -1,0 +1,14 @@
+{
+    "contract_address": "0x264266d63d373b5287aaa0f62eb1a31a297024bf9572339c15cb84b7fb51939",
+    "contract_address_salt": "0x4c40ae2941a804d6941b1794c00d14bed375d19aab9c477500abbacfa58e7bf",
+    "class_hash": "0x25ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918",
+    "constructor_calldata": [
+        "0x3e327de1c40540b98d05cbcb13552008e36f0ec8d61d46956d2f9752c294328",
+        "0x79dc0da7c54b95f10aa182ad0a46400db63156920adb65eca2654c0945a463",
+        "0x2",
+        "0x4c40ae2941a804d6941b1794c00d14bed375d19aab9c477500abbacfa58e7bf",
+        "0x0"
+    ],
+    "transaction_hash": "0x166ccbbb1356303eba0081511df1a1ed6c59c3a36c4ed842773ab277586c372",
+    "type": "DEPLOY"
+}

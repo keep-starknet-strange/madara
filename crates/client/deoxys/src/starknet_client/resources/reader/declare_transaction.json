@@ -1,0 +1,10 @@
+{
+    "class_hash": "0x5abf9436be774a4d4af00528296700d0181b8cf3cf85ccc556b441ef5876ffe",
+    "sender_address": "0x1",
+    "nonce": "0x0",
+    "max_fee": "0x0",
+    "version": "0x0",
+    "transaction_hash": "0x3ff2070e6723bb9b6414977324f916eb53b51f9691e5d9a4fb67160d048958b",
+    "signature": [],
+    "type": "DECLARE"
+}

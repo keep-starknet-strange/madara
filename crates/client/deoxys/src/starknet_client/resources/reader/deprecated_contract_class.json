@@ -1,0 +1,47 @@
+{
+    "abi": [
+        {
+            "inputs": [
+                {
+                    "name": "implementation",
+                    "type": "felt"
+                }
+            ],
+            "name": "constructor",
+            "outputs": [],
+            "type": "constructor"
+        }
+    ],
+    "entry_points_by_type": {
+        "CONSTRUCTOR": [
+            {
+                "offset": "0x3e",
+                "selector": "0x28ffe4ff0f226a9107253e17a904099aa4f63a02a5621de0576e5aa71bc5194"
+            }
+        ],
+        "EXTERNAL": [
+            {
+                "offset": "0x56",
+                "selector": "0x0"
+            }
+        ],
+        "L1_HANDLER": []
+    },
+    "program": {
+        "builtins": [],
+        "data": [
+            "0x20780017fff7ffd",
+            "0x4",
+            "0x400780017fff7ffd"
+        ],
+        "prime": "0x800000000000011000000000000000000000000000000000000000000000001",
+        "main_scope": "__main__",
+        "identifiers": {},
+        "attributes": [
+            1234
+        ],
+        "debug_info": null,
+        "reference_manager": {},
+        "hints": {}
+    }
+}

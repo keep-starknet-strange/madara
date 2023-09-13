@@ -1,0 +1,53 @@
+{
+    "transaction_index": 1,
+    "transaction_hash": "0x4586cb82c15ec15a123ba42279aae105f2304cbc1f992f8360ab1b1eb0f718",
+    "l1_to_l2_consumed_message": {
+        "from_address": "0xc3511006C04EF1d78af4C8E0e74Ec18A6E64Ff9e",
+        "to_address": "0x73314940630fd6dcda0d772d4c972c4e0a9946bef9dabf4ef84eda8ef542b82",
+        "selector": "0x2d757788a8d8d6f21d1cd40bce38a8222d70654214e96ff95d8086e684fbee5",
+        "payload": [
+            "0x26ee727ad466d4255a76f4676eaec72adb3e30e14461952a2062b3e87cbdc7f",
+            "0xde0b6b3a7640000",
+            "0x0"
+        ],
+        "nonce": "0x26fc3"
+    },
+    "l2_to_l1_messages": [],
+    "events": [
+        {
+            "from_address": "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+            "keys": [
+                "0x99cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9"
+            ],
+            "data": [
+                "0x0",
+                "0x26ee727ad466d4255a76f4676eaec72adb3e30e14461952a2062b3e87cbdc7f",
+                "0xde0b6b3a7640000",
+                "0x0"
+            ]
+        },
+        {
+            "from_address": "0x73314940630fd6dcda0d772d4c972c4e0a9946bef9dabf4ef84eda8ef542b82",
+            "keys": [
+                "0x221e5a5008f7a28564f0eaa32cdeb0848d10657c449aed3e15d12150a7c2db3"
+            ],
+            "data": [
+                "0x26ee727ad466d4255a76f4676eaec72adb3e30e14461952a2062b3e87cbdc7f",
+                "0xde0b6b3a7640000",
+                "0x0"
+            ]
+        }
+    ],
+    "execution_resources": {
+        "n_steps": 673,
+        "builtin_instance_counter": {
+            "pedersen_builtin": 2,
+            "range_check_builtin": 12,
+            "output_builtin": 0,
+            "ecdsa_builtin": 0,
+            "bitwise_builtin": 0
+        },
+        "n_memory_holes": 22
+    },
+    "actual_fee": "0x0"
+}

@@ -1,0 +1,64 @@
+{
+    "transaction_index": 1,
+    "transaction_hash": "0x570ef4df9300824aee9c2bc1f3f1280b96a43dd67a5b4bb19ca2d2450cbad99",
+    "l2_to_l1_messages": [
+        {
+            "from_address": "0x73314940630fd6dcda0d772d4c972c4e0a9946bef9dabf4ef84eda8ef542b82",
+            "to_address": "0xc3511006C04EF1d78af4C8E0e74Ec18A6E64Ff9e",
+            "payload": [
+                "0x0",
+                "0x8821d9ce3b90b4d2f3578b8ac909e2fa9eb6530e",
+                "0x5543df729c0000",
+                "0x0"
+            ]
+        }
+    ],
+    "events": [
+        {
+            "from_address": "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+            "keys": [
+                "0x99cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9"
+            ],
+            "data": [
+                "0x3031a6941b698fd835f6126b8a7b1089cc641d19af2cdfd6fa0167a8a4bf32c",
+                "0x0",
+                "0x5543df729c0000",
+                "0x0"
+            ]
+        },
+        {
+            "from_address": "0x73314940630fd6dcda0d772d4c972c4e0a9946bef9dabf4ef84eda8ef542b82",
+            "keys": [
+                "0x194fc63c49b0f07c8e7a78476844837255213824bd6cb81e0ccfb949921aad1"
+            ],
+            "data": [
+                "0x8821d9ce3b90b4d2f3578b8ac909e2fa9eb6530e",
+                "0x5543df729c0000",
+                "0x0",
+                "0x3031a6941b698fd835f6126b8a7b1089cc641d19af2cdfd6fa0167a8a4bf32c"
+            ]
+        },
+        {
+            "from_address": "0x3031a6941b698fd835f6126b8a7b1089cc641d19af2cdfd6fa0167a8a4bf32c",
+            "keys": [
+                "0x5ad857f66a5b55f1301ff1ed7e098ac6d4433148f0b72ebc4a2945ab85ad53"
+            ],
+            "data": [
+                "0x570ef4df9300824aee9c2bc1f3f1280b96a43dd67a5b4bb19ca2d2450cbad99",
+                "0x0"
+            ]
+        }
+    ],
+    "execution_resources": {
+        "n_steps": 1446,
+        "builtin_instance_counter": {
+            "pedersen_builtin": 2,
+            "range_check_builtin": 35,
+            "bitwise_builtin": 0,
+            "output_builtin": 0,
+            "ecdsa_builtin": 1
+        },
+        "n_memory_holes": 23
+    },
+    "actual_fee": "0x380dd17c8400"
+}
