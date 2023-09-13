@@ -2,7 +2,7 @@
 //!
 //! [`Starknet`]: https://starknet.io/
 
-mod objects;
+pub mod objects;
 #[cfg(test)]
 mod starknet_feeder_gateway_client_test;
 

@@ -1,5 +1,5 @@
 
-use mp_starknet::transaction::types::{Transaction, TransactionReceiptWrapper};
+use mp_starknet::transaction::types::{Transaction, TransactionReceiptWrapper, TxType};
 use sp_core::U256;
 use mp_starknet::execution::types::{ Felt252Wrapper, ContractAddressWrapper };
 use mp_starknet::block::{Block, Header, MaxTransactions};
@@ -75,14 +75,20 @@ pub fn get_txs(block: starknet_client::reader::Block) -> BoundedVec<mp_starknet:
     let mut transactions_vec: BoundedVec<mp_starknet::transaction::types::Transaction, MaxTransactions> = BoundedVec::new();
 
     for transaction in &block.transactions {
-        // Here, you can convert the transaction or just print it.
-        // I'll just print it for now.
-        println!("transaction: {:?}", transaction);
-        
-        // If you want to convert and add to transactions_vec, do it here.
-        // Example:
-        // let converted_transaction = ...;
-        // transactions_vec.push(converted_transaction);
+        let mut transactions_vec: BoundedVec<Transaction, MaxTransactions> = BoundedVec::new();
+        for transaction in &block.transactions {
+            match transaction {
+                starknet_client::reader::objects::transaction::Transaction::Declare(declare_transaction) => {
+                    // convert declare_transaction to starknet transaction
+                    let tx = declare_tx_to_starknet_tx(declare_transaction.clone());
+                    transactions_vec.try_push(tx).unwrap();
+                },
+                starknet_client::reader::objects::transaction::Transaction::DeployAccount(_) => todo!(),
+                starknet_client::reader::objects::transaction::Transaction::Deploy(_) => todo!(),
+                starknet_client::reader::objects::transaction::Transaction::Invoke(_) => todo!(),
+                starknet_client::reader::objects::transaction::Transaction::L1Handler(_) => todo!(),
+            }
+        }
     }
 
     transactions_vec
@@ -188,11 +194,9 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
     loop {
         // No mock creation here, directly fetch the block from the Starknet client
         let block = starknet_client.block(BlockNumber(i)).await;
-        println!("{:?}", block);
         match block {
             Ok(block) => {
                 let starknet_block = from_gateway_to_starknet_block(block.unwrap());
-                println!("maybe_pending_block: {:?}", starknet_block);
                 // Lock the mutex, push to the queue, and then immediately unlock
                 {
                     let mut queue_guard: std::sync::MutexGuard<'_, VecDeque<Block>> = queue.lock().unwrap();
