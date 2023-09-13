@@ -9,6 +9,7 @@ use sp_core::bounded_vec::BoundedVec;
 use starknet_api::core::ChainId;
 use starknet_client::RetryConfig;
 use starknet_client::reader::{StarknetFeederGatewayClient, StarknetReader};
+use transactions::{l1handler_tx_to_starknet_tx, declare_tx_to_starknet_tx, invoke_tx_to_starknet_tx, deploy_account_tx_to_starknet_tx};
 use std::sync::{ Arc, Mutex};
 use std::collections::VecDeque;
 use log::info;
@@ -72,10 +73,7 @@ pub fn get_header(block: starknet_client::reader::Block) -> Header  {
 }
 
 pub fn get_txs(block: starknet_client::reader::Block) -> BoundedVec<mp_starknet::transaction::types::Transaction, MaxTransactions> {
-    let mut transactions_vec: BoundedVec<mp_starknet::transaction::types::Transaction, MaxTransactions> = BoundedVec::new();
-
-    for transaction in &block.transactions {
-        let mut transactions_vec: BoundedVec<Transaction, MaxTransactions> = BoundedVec::new();
+    let mut transactions_vec: BoundedVec<Transaction, MaxTransactions> = BoundedVec::new();
         for transaction in &block.transactions {
             match transaction {
                 starknet_client::reader::objects::transaction::Transaction::Declare(declare_transaction) => {
@@ -83,13 +81,28 @@ pub fn get_txs(block: starknet_client::reader::Block) -> BoundedVec<mp_starknet:
                     let tx = declare_tx_to_starknet_tx(declare_transaction.clone());
                     transactions_vec.try_push(tx).unwrap();
                 },
-                starknet_client::reader::objects::transaction::Transaction::DeployAccount(_) => todo!(),
-                starknet_client::reader::objects::transaction::Transaction::Deploy(_) => todo!(),
-                starknet_client::reader::objects::transaction::Transaction::Invoke(_) => todo!(),
-                starknet_client::reader::objects::transaction::Transaction::L1Handler(_) => todo!(),
+                starknet_client::reader::objects::transaction::Transaction::DeployAccount(deploy_account_transaction) => {
+                    // convert declare_transaction to starknet transaction
+                    let tx = deploy_account_tx_to_starknet_tx(deploy_account_transaction.clone());
+                    transactions_vec.try_push(tx).unwrap();
+                },
+                starknet_client::reader::objects::transaction::Transaction::Deploy(deploy_transaction) => {
+                    // convert declare_transaction to starknet transaction
+                    let tx = deploy_tx_to_starknet_tx(deploy_transaction.clone());
+                    transactions_vec.try_push(tx).unwrap();
+                },
+                starknet_client::reader::objects::transaction::Transaction::Invoke(invoke_transaction) => {
+                    // convert invoke_transaction to starknet transaction
+                    let tx = invoke_tx_to_starknet_tx(invoke_transaction.clone());
+                    transactions_vec.try_push(tx).unwrap();
+                },
+                starknet_client::reader::objects::transaction::Transaction::L1Handler(l1handler_transaction) => {
+                    // convert declare_transaction to starknet transaction
+                    let tx = l1handler_tx_to_starknet_tx(l1handler_transaction.clone());
+                    transactions_vec.try_push(tx).unwrap();
+                },
             }
         }
-    }
 
     transactions_vec
 }
