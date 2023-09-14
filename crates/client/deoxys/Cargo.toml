@@ -31,6 +31,10 @@ blockifier = { workspace = true, default-features = false, features = [
   "testing",
 ] }
 mockito = { workspace = true }
+starknet-ff = { workspace = true, default-features = false, features = [
+  "alloc",
+  "serde",
+] }
 starknet_api = "0.4.1"
 # test_utils = { path = "./test_utils", optional = true }
 validator = { workspace = true, features = ["derive"] }
