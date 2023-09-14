@@ -60,7 +60,7 @@ pub struct ExtendedRunCmd {
 
     /// Choose a supported testnet chain which will load some default values
     /// The testnets will allways be fetched when this flag is passed to search for updates
-    #[clap(long, conflicts_with = "fetch_chain_spec")]
+    #[clap(long, conflicts_with = "fetch_chain_spec", conflicts_with="chain")]
     pub testnet: Option<Testnet>,
 
     /// Choose a supported DA Layer
@@ -76,9 +76,6 @@ pub struct SetupCmd {
     /// Where the `md5` and `url` fields are optional
     #[clap(long, default_value = constants::DEFAULT_CONFIGS_URL)]
     pub fetch_madara_configs: Option<String>,
-
-    #[clap(long)]
-    pub genesis_url: Option<String>,
 }
 
 #[allow(clippy::large_enum_variant)]

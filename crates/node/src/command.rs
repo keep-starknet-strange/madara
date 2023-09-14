@@ -111,7 +111,7 @@ fn fetch_madara_configs(cli: &mut Cli) -> Result<(), String> {
     let madara_path = cli.run.madara_path.clone().expect("Failed retrieving madara_path").to_str().unwrap().to_string();
     let local_path = utils::get_project_path();
 
-    match (cli.setup.fetch_madara_configs.clone(), local_path) {
+    match (&cli.setup.fetch_madara_configs, local_path) {
         // TODO match string for default configs value
         (_, Ok(ref src_path)) => {
             let index_path = src_path.clone() + "/configs/index.json";
@@ -126,7 +126,7 @@ fn fetch_madara_configs(cli: &mut Cli) -> Result<(), String> {
             }
         }
         (Some(configs_url), _) => {
-            utils::fetch_from_url(configs_url, madara_path.clone() + "/configs")?;
+            utils::fetch_from_url(configs_url.to_string(), madara_path.clone() + "/configs")?;
 
             let madara_configs: configs::Configs =
                 serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?)
