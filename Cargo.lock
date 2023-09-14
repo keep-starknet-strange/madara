@@ -7013,6 +7013,7 @@ dependencies = [
  "reqwest",
  "serde_json",
  "sp-core",
+ "starknet-ff",
  "starknet-gateway-types",
  "starknet_api 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "starknet_client",
