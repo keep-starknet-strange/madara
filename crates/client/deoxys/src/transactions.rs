@@ -2,6 +2,8 @@ use mp_starknet::{transaction::types::{Transaction, MaxArraySize, TxType}, execu
 use sp_core::{bounded_vec::BoundedVec, U256, ConstU32};
 use blockifier::execution::contract_class::ContractClass;
 use starknet_client::reader::objects::transaction::{IntermediateInvokeTransaction, IntermediateDeclareTransaction, DeployAccountTransaction, L1HandlerTransaction, DeployTransaction};
+use starknet_ff::FieldElement;
+use starknet_api::{hash, core::PatriciaKey};
 
 pub fn declare_tx_to_starknet_tx(declare_transaction: IntermediateDeclareTransaction) -> Transaction {
 
@@ -66,7 +68,7 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : IntermediateInvokeTransacti
                 panic!("Signature too long");
             }
         }
-        signature_vec.try_push(Felt252Wrapper::try_from(item.bytes()).unwrap());
+        //signature_vec.try_push(Felt252Wrapper::try_from(item.bytes()).unwrap());
     }
     let calldata_vec: BoundedVec<Felt252Wrapper, MaxCalldataSize> = BoundedVec::new();
 
@@ -81,8 +83,8 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : IntermediateInvokeTransacti
         Some(ClassHashWrapper::ZERO)
     );
 
-    let version_invoke = StarkFelt::from(invoke_transaction.version.0);
-    let version_byte: [u8; 32] = match Felt252Wrapper::try_from(invoke_transaction.version.0) {
+    //let version_invoke = StarkFelt::from(invoke_transaction.version.0);
+    let version_byte: [u8; 32] = match Felt252Wrapper::try_from(invoke_transaction.version.0.into()) {
         Ok(valeur) => {
             Felt252Wrapper::from(valeur).into()
         },
@@ -95,14 +97,15 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : IntermediateInvokeTransacti
         _ => panic!("Version not supported")
     };
 
-    let sender_address_tx: ContractAddressWrapper =  Felt252Wrapper::from(invoke_transaction.sender_address.0.into());
+    let sender_address_fe: FieldElement =  FieldElement::from(*PatriciaKey::key(&invoke_transaction.sender_address.0));
+    let sender_address_fw: Felt252Wrapper = Felt252Wrapper(sender_address_fe);
     
     Transaction {
         tx_type: TxType::Invoke,
         version: Some(u8::default()).unwrap(),
         hash: Felt252Wrapper(invoke_transaction.transaction_hash.0.into()),
         signature: signature_vec,
-        sender_address: sender_address_tx,
+        sender_address: sender_address_fw,
         nonce: Felt252Wrapper::default(),//Felt252Wrapper::try_from(invoke_transaction.nonce.0.bytes()).unwrap(),
         call_entrypoint: call_entry_point,
         contract_class: Option::<ContractClass>::default(),
