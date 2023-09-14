@@ -398,8 +398,7 @@ where
         let parent_blockhash = block.header().parent_block_hash;
         let block_with_tx_hashes = BlockWithTxHashes {
             transactions,
-            // TODO: Status hardcoded, get status from block
-            status: BlockStatus::AcceptedOnL2,
+            status: block.header().status.into(),
             block_hash: blockhash.into(),
             parent_hash: parent_blockhash.into(),
             block_number: block.header().block_number,
@@ -594,8 +593,7 @@ where
         let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
         let block_with_txs = BlockWithTxs {
-            // TODO: Get status from block
-            status: BlockStatus::AcceptedOnL2,
+            status: block.header().status.into(),
             block_hash: block.header().hash(*self.hasher).into(),
             parent_hash: block.header().parent_block_hash.into(),
             block_number: block.header().block_number,

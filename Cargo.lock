@@ -12564,6 +12564,7 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "starknet-core",
  "starknet_api 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
  "tokio",

@@ -138,7 +138,7 @@ where
     ) -> Proposer<B, Block, C, A, PR> {
         let parent_hash = parent_header.hash();
 
-        info!("🩸 Starting consensus session on top of parent {:?}", parent_hash);
+        // info!("🩸 Starting consensus session on top of parent {:?}", parent_hash);
 
         let proposer = Proposer::<_, _, _, _, PR> {
             spawn_handle: self.spawn_handle.clone(),
@@ -527,13 +527,13 @@ where
             format!("extrinsics ({})", extrinsics.len(),)
         };
 
-        info!(
-            "🥷 Prepared block for proposing at {} ({} ms) [hash: {:?}; parent_hash: {}; {extrinsics_summary}",
-            block.header().number(),
-            block_took.as_millis(),
-            block.header().hash(),
-            block.header().parent_hash(),
-        );
+        // info!(
+        //     "🥷 Prepared block for proposing at {} ({} ms) [hash: {:?}; parent_hash: {}; {extrinsics_summary}",
+        //     block.header().number(),
+        //     block_took.as_millis(),
+        //     block.header().hash(),
+        //     block.header().parent_hash(),
+        // );
     }
 }
 

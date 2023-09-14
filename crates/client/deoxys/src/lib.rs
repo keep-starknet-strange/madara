@@ -1,14 +1,18 @@
 
+use mp_starknet::crypto::commitment::{calculate_transaction_commitment, calculate_event_commitment};
+use mp_starknet::crypto::hash::pedersen::PedersenHasher;
+use mp_starknet::sequencer_address;
 use mp_starknet::transaction::types::{Transaction, TransactionReceiptWrapper, TxType};
 use sp_core::U256;
 use mp_starknet::execution::types::{ Felt252Wrapper, ContractAddressWrapper };
-use mp_starknet::block::{Block, Header, MaxTransactions};
+use mp_starknet::block::{Block, Header, MaxTransactions, BlockStatus};
 use reqwest::header::{HeaderMap, CONTENT_TYPE};
 use serde_json::json;
 use sp_core::bounded_vec::BoundedVec;
-use starknet_api::core::ChainId;
+use starknet_api::core::{ChainId, PatriciaKey};
 use starknet_client::RetryConfig;
 use starknet_client::reader::{StarknetFeederGatewayClient, StarknetReader};
+use starknet_ff::FieldElement;
 // use transactions::{l1handler_tx_to_starknet_tx, declare_tx_to_starknet_tx, invoke_tx_to_starknet_tx, deploy_account_tx_to_starknet_tx};
 use std::sync::{ Arc, Mutex};
 use std::collections::VecDeque;
@@ -44,24 +48,33 @@ pub fn create_block_queue() -> BlockQueue {
 }
 
 // This function converts a block received from the gateway into a StarkNet block
-pub fn get_header(block: starknet_client::reader::Block) -> Header  {
+pub fn get_header(block: starknet_client::reader::Block, transactions: BoundedVec<Transaction, MaxTransactions>) -> Header  {
     let parent_block_hash = Felt252Wrapper::try_from(block.parent_block_hash.0.bytes());
     let block_number = block.block_number.0;
-    // let status = BlockStatus::default();
     let global_state_root = Felt252Wrapper::try_from(block.state_root.0.bytes());
-    let sequencer_address = ContractAddressWrapper::default();
+    let status = match block.status {
+        starknet_client::reader::objects::block::BlockStatus::Pending => mp_starknet::block::BlockStatus::Pending,
+        starknet_client::reader::objects::block::BlockStatus::AcceptedOnL2 => mp_starknet::block::BlockStatus::AcceptedOnL2,
+        starknet_client::reader::objects::block::BlockStatus::AcceptedOnL1 => mp_starknet::block::BlockStatus::AcceptedOnL1,
+        starknet_client::reader::objects::block::BlockStatus::Reverted => mp_starknet::block::BlockStatus::Reverted,
+        starknet_client::reader::objects::block::BlockStatus::Aborted => mp_starknet::block::BlockStatus::Aborted,
+    };
+    let sequencer_address = Felt252Wrapper(FieldElement::from(*PatriciaKey::key(&block.sequencer_address.0)));
     let block_timestamp = block.timestamp.0;
     let transaction_count = block.transactions.len() as u128;
-    let transaction_commitment = Felt252Wrapper::default();
-    let event_count = block.transaction_receipts.len() as u128;
-    let event_commitment = Felt252Wrapper::default();   
+    let transaction_commitment = calculate_transaction_commitment::<PedersenHasher>(&transactions);
+    let event_count: u128 = block.transaction_receipts
+                .iter()
+                .map(|receipt| receipt.events.len() as u128)
+                .sum();
+    let event_commitment = calculate_transaction_commitment::<PedersenHasher>(&transactions);
     let protocol_version = Some(0u8);
     let extra_data: U256 = Felt252Wrapper::try_from(block.block_hash.0.bytes()).unwrap().into();
     let starknet_header = Header::new(
         parent_block_hash.unwrap(),
         block_number.into(),
-        // status,
         global_state_root.unwrap(),
+        status,
         sequencer_address,
         block_timestamp,
         transaction_count,
@@ -115,7 +128,7 @@ pub fn from_gateway_to_starknet_block(block: starknet_client::reader::Block) -> 
     let mut transactions_vec: BoundedVec<Transaction, MaxTransactions> = get_txs(block.clone());
     let mut transaction_receipts_vec: BoundedVec<TransactionReceiptWrapper, MaxTransactions> = BoundedVec::new();
     Block::new(
-        get_header(block.clone()),
+        get_header(block.clone(), transactions_vec.clone()),
         transactions_vec,
         transaction_receipts_vec
     )
@@ -206,7 +219,7 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
         NODE_VERSION,
         retry_config
     ).unwrap();
-    let mut i = 0u64;
+    let mut i = 1u64;
     loop {
         // No mock creation here, directly fetch the block from the Starknet client
         let block = starknet_client.block(BlockNumber(i)).await;

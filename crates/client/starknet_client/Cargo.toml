@@ -39,6 +39,7 @@ tokio = { workspace = true, features = ["full", "sync"] }
 tokio-retry.workspace = true
 tracing.workspace = true
 url.workspace = true
+starknet-core = { workspace = true }
 
 [dev-dependencies]
 assert.workspace = true

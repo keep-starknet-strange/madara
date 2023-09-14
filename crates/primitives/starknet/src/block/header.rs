@@ -10,6 +10,8 @@ use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use crate::traits::hash::HasherT;
 use serde::{Deserialize, Serialize};
 
+use starknet_core;
+
 
 #[derive(
     Debug, Copy, Clone, Eq, PartialEq, Hash, Deserialize, Serialize, PartialOrd, Ord, Default, Encode, Decode, TypeInfo, MaxEncodedLen
@@ -40,6 +42,18 @@ impl From<BlockStatus> for starknet_api::block::BlockStatus {
     }
 }
 
+impl From<BlockStatus> for starknet_core::types::BlockStatus {
+    fn from(status: BlockStatus) -> Self {
+        match status {
+            BlockStatus::Pending => starknet_core::types::BlockStatus::Pending,
+            BlockStatus::AcceptedOnL2 => starknet_core::types::BlockStatus::AcceptedOnL2,
+            BlockStatus::AcceptedOnL1 => starknet_core::types::BlockStatus::AcceptedOnL1,
+            BlockStatus::Reverted => starknet_core::types::BlockStatus::Rejected, // Assuming Reverted maps to Rejected
+            _ => panic!("Unsupported status conversion"), // Handle any additional statuses or provide a default conversion
+        }
+    }
+}
+
 #[derive(
     Clone,
     Debug,
@@ -58,10 +72,10 @@ pub struct Header {
     pub parent_block_hash: Felt252Wrapper,
     /// The number (height) of this block.
     pub block_number: u64,
-    /// The status of this block.
-    // pub status: BlockStatus,
     /// The state commitment after this block.
     pub global_state_root: Felt252Wrapper,
+    /// The status of this block.
+    pub status: BlockStatus,
     /// The Starknet address of the sequencer who created this block.
     pub sequencer_address: ContractAddressWrapper,
     /// The time the sequencer created this block before executing transactions
@@ -89,6 +103,7 @@ impl Header {
         block_number: u64,
         // status: BlockStatus,
         global_state_root: Felt252Wrapper,
+        status: BlockStatus,
         sequencer_address: ContractAddressWrapper,
         block_timestamp: u64,
         transaction_count: u128,
@@ -101,7 +116,7 @@ impl Header {
         Self {
             parent_block_hash,
             block_number,
-            // status,
+            status,
             global_state_root,
             sequencer_address,
             block_timestamp,
@@ -140,6 +155,7 @@ impl Header {
     /// Compute the hash of the header.
     #[must_use]
     pub fn hash<H: HasherT>(&self, hasher: H) -> Felt252Wrapper {
+        
 		let first_07_block = 833;
 		if self.block_number >= first_07_block {
 			let data: &[Felt252Wrapper] = &[

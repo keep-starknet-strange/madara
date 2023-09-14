@@ -253,14 +253,14 @@ pub mod pallet {
         /// # Arguments
         /// * `n` - The block number.
         fn offchain_worker(n: T::BlockNumber) {
-            log!(info, "Running offchain worker at block {:?}.", n);
+            // log!(info, "Running offchain worker at block {:?}.", n);
 
             match Self::process_l1_messages() {
                 Ok(_) => log!(info, "Successfully executed L1 messages"),
                 Err(err) => match err {
-                    offchain_worker::OffchainWorkerError::NoLastKnownEthBlock => {
-                        log!(info, "No last known Ethereum block number found. Skipping execution of L1 messages.")
-                    }
+                    // offchain_worker::OffchainWorkerError::NoLastKnownEthBlock => {
+                    //     log!(info, "No last known Ethereum block number found. Skipping execution of L1 messages.")
+                    // }
                     _ => log!(error, "Failed to execute L1 messages: {:?}", err),
                 },
             }
@@ -1049,8 +1049,8 @@ impl<T: Config> Pallet<T> {
             StarknetHeader::new(
                 parent_block_hash,
                 block_number,
-                // status,
                 global_state_root,
+                status,
                 sequencer_address,
                 block_timestamp,
                 transaction_count,

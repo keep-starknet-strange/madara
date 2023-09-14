@@ -24,6 +24,7 @@ use crate::reader::objects::transaction::{
     TransactionType,
 };
 use crate::reader::{ReaderClientError, ReaderClientResult};
+use starknet_core;
 
 /// A block as returned by the starknet gateway.
 #[derive(Debug, Default, Deserialize, Serialize, Clone, Eq, PartialEq)]
@@ -233,3 +234,16 @@ impl From<BlockStatus> for starknet_api::block::BlockStatus {
         }
     }
 }
+
+impl From<BlockStatus> for starknet_core::types::BlockStatus {
+    fn from(status: BlockStatus) -> Self {
+        match status {
+            BlockStatus::Pending => starknet_core::types::BlockStatus::Pending,
+            BlockStatus::AcceptedOnL2 => starknet_core::types::BlockStatus::AcceptedOnL2,
+            BlockStatus::AcceptedOnL1 => starknet_core::types::BlockStatus::AcceptedOnL1,
+            BlockStatus::Reverted => starknet_core::types::BlockStatus::Rejected, // Assuming Reverted maps to Rejected
+            _ => panic!("Unsupported status conversion"), // Handle any additional statuses or provide a default conversion
+        }
+    }
+}
+

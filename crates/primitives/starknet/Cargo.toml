@@ -52,6 +52,7 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { version = "1.0.105", default-features = false }
 thiserror-no-std = { workspace = true }
 
+
 [dev-dependencies]
 rand = "0.8.5"
 zstd = { version = "0.12.3", default-features = false }
