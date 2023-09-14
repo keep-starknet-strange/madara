@@ -18,6 +18,7 @@ import {
   ARGENT_ACCOUNT_CLASS_HASH,
   ARGENT_CONTRACT_ADDRESS,
   ARGENT_PROXY_CLASS_HASH,
+  OZ_CONTRACT_ADDRESS,
   ERC721_CONTRACT,
   ERC20_CONTRACT,
   FEE_TOKEN_ADDRESS,
@@ -41,6 +42,8 @@ import { numberToHex } from "@polkadot/util";
 // to abstract the increment
 // eslint-disable-next-line prefer-const
 let ARGENT_CONTRACT_NONCE = { value: 0 };
+// keep "const" since this is not reassigned (yet!)
+const OZ_CONTRACT_NONCE = { value: 0 };
 const CAIRO_1_NO_VALIDATE_ACCOUNT = { value: 0 };
 
 describeDevMadara(
@@ -274,7 +277,7 @@ describeDevMadara(
 
         const invocationDetails = {
           nonce: "0x0",
-          maxFee: "0x1111111111111111111111",
+          maxFee: "0x11111111111111",
           version: "0x1",
         };
 
@@ -519,6 +522,7 @@ describeDevMadara(
           classHash: CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH,
           constructorCalldata: ["0x123"],
           addressSalt: SALT,
+          contractAddress: ARGENT_CONTRACT_ADDRESS,
         });
 
         expect(suggestedMaxFee > 0n).to.be.equal(true);
@@ -912,6 +916,26 @@ describeDevMadara(
         await expect(transaction)
           .to.eventually.be.rejectedWith("25: Transaction hash not found")
           .and.be.an.instanceOf(LibraryError);
+      });
+    });
+
+    describe("test development accounts", () => {
+      it("should approve transaction from OZ account using Argent's pk", async function () {
+        // This method uses SIGNER_PRIVATE which is the pk for Argent account
+        const tx = await context.createBlock(
+          rpcTransfer(
+            providerRPC,
+            OZ_CONTRACT_NONCE,
+            OZ_CONTRACT_ADDRESS,
+            MINT_AMOUNT,
+            undefined,
+            OZ_CONTRACT_ADDRESS,
+          ),
+          { finalize: true },
+        );
+        console.log(tx);
+        const r = await providerRPC.getTransactionByHash(tx.result.hash);
+        expect(r).to.not.be.undefined;
       });
     });
   },

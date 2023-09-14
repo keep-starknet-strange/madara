@@ -1,5 +1,8 @@
+use std::path::PathBuf;
+
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use madara_runtime::Block;
+use mc_data_availability::DaLayer;
 use pallet_starknet::utils;
 use sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
 
@@ -289,9 +292,25 @@ pub fn run() -> sc_cli::Result<()> {
                 set_testnet(&mut cli, testnet)?;
             }
 
+            let da_config: Option<(DaLayer, PathBuf)> = match cli.run.da_layer {
+                Some(da_layer) => {
+                    let da_path = std::path::PathBuf::from(madara_path.clone() + "/da-config.json");
+                    if !da_path.exists() {
+                        log::info!("{} does not contain DA config", madara_path);
+                        return Err("DA config not available".into());
+                    }
+
+                    Some((da_layer, da_path))
+                }
+                None => {
+                    log::info!("madara initialized w/o da layer");
+                    None
+                }
+            };
+
             let runner = cli.create_runner(&cli.run.run_cmd)?;
             runner.run_node_until_exit(|config| async move {
-                service::new_full(config, cli.sealing).map_err(sc_cli::Error::Service)
+                service::new_full(config, cli.sealing, da_config).map_err(sc_cli::Error::Service)
             })
         }
         Some(Subcommand::Setup(_)) => {

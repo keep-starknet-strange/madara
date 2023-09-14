@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use mc_data_availability::DaLayer;
 use sc_cli::RunCmd;
 
 use crate::constants;
@@ -71,6 +72,13 @@ pub struct SetupCmd {
     /// Where the `md5` and `url` fields are optional
     #[clap(long, default_value = constants::DEFAULT_CONFIGS_URL)]
     pub fetch_madara_configs: Option<String>,
+
+    #[clap(long)]
+    pub genesis_url: Option<String>,
+
+    /// Choose a supported DA Layer
+    #[clap(long)]
+    pub da_layer: Option<DaLayer>,
 }
 
 #[allow(clippy::large_enum_variant)]

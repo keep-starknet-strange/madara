@@ -29,7 +29,9 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          key:
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
+            github.run_id }}
           fail-on-cache-miss: true
       - name: Setup madara
         run: |
@@ -56,7 +58,9 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          key:
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
+            github.run_id }}
           fail-on-cache-miss: true
       - name: Setup build deps
         run: |
@@ -70,5 +74,4 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           files: codecov.json
-          # FIXME: usually we have errors on the upload
           fail_ci_if_error: false

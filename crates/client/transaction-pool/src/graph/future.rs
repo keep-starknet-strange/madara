@@ -134,7 +134,7 @@ impl<Hash: hash::Hash + Eq + Clone, Ex> FutureTransactions<Hash, Ex> {
 
         // Add all tags that are missing
         for tag in &tx.missing_tags {
-            let entry = self.wanted_tags.entry(tag.clone()).or_insert_with(HashSet::new);
+            let entry = self.wanted_tags.entry(tag.clone()).or_default();
             entry.insert(tx.transaction.hash.clone());
         }
 

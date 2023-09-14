@@ -246,7 +246,8 @@ Thanks goes to these wonderful people
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ben2077"><img src="https://avatars.githubusercontent.com/u/22720665?v=4?s=100" width="100px;" alt="ben2077"/><br /><sub><b>ben2077</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=ben2077" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/m-kus"><img src="https://avatars.githubusercontent.com/u/44951260?v=4?s=100" width="100px;" alt="Michael Zaikin"/><br /><sub><b>Michael Zaikin</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=m-kus" title="Code">💻</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/jo%C3%A3o-pereira-91a087230/"><img src="https://avatars.githubusercontent.com/u/77340776?v=4?s=100" width="100px;" alt="João Pereira"/><br /><sub><b>João Pereira</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=joaopereira12" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/jo%C3%A3o-pereira-91a087230/"><img src="https://avatars.githubusercontent.com/u/77340776?v=4?s=100" width="100px;" alt="João Pereira"/><br /><sub><b>João Pereira</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=joaopereira12" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/kasteph"><img src="https://avatars.githubusercontent.com/u/3408478?v=4?s=100" width="100px;" alt="kasteph"/><br /><sub><b>kasteph</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=kasteph" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

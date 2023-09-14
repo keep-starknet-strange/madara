@@ -1,4 +1,5 @@
 use frame_support::{assert_err, assert_ok, bounded_vec, BoundedVec};
+use mp_starknet::constants::SN_GOERLI_CHAIN_ID;
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::{DeployAccountTransaction, EventWrapper};
 use sp_runtime::traits::ValidateUnsigned;
@@ -39,7 +40,7 @@ fn given_contract_run_deploy_account_tx_works() {
             )
             .unwrap(),
             nonce: Felt252Wrapper::ZERO,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             signature: bounded_vec!(),
             is_query: false,
         };
@@ -98,7 +99,7 @@ fn given_contract_run_deploy_account_tx_undeclared_then_it_fails() {
             calldata: bounded_vec!(),
             salt: Felt252Wrapper::ZERO,
             nonce: Felt252Wrapper::ZERO,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             signature: bounded_vec!(),
             is_query: false,
         };
@@ -225,7 +226,7 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
         calldata.push(ACCOUNT_PUBLIC_KEY);
 
         let tx_hash =
-            Felt252Wrapper::from_hex_be("0x00de7a5bc4a54852d47b99070ac74baf71d5993a9029dbc45fa1d48f28acb0a4").unwrap();
+            Felt252Wrapper::from_hex_be("0x06a8bb3d81c2ad23db93f01f72f987feac5210a95bc530eabb6abfaa5a769944").unwrap();
 
         let mut signatures: Vec<Felt252Wrapper> = sign_message_hash(tx_hash).into();
         let empty_signatures = [Felt252Wrapper::ZERO; 8];
@@ -244,10 +245,12 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
             )
             .unwrap(),
             nonce: Felt252Wrapper::ZERO,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             signature: signatures.try_into().unwrap(),
             is_query: false,
         };
+        let transaction1 = transaction.clone().from_deploy(SN_GOERLI_CHAIN_ID);
+        println!("this is transaction hash {}", transaction1.unwrap().hash.0);
 
         let address = transaction.clone().from_deploy(Starknet::chain_id()).unwrap().sender_address;
         set_infinite_tokens::<MockRuntime>(address);
@@ -285,7 +288,7 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
             )
             .unwrap(),
             nonce: Felt252Wrapper::ZERO,
-            max_fee: Felt252Wrapper::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u64::MAX),
             signature: [Felt252Wrapper::ZERO; 10].to_vec().try_into().unwrap(),
             is_query: false,
         };
