@@ -110,36 +110,31 @@ fn fetch_madara_configs(cli: &mut Cli) -> Result<(), String> {
     let madara_path = cli.run.madara_path.clone().expect("Failed retrieving madara_path").to_str().unwrap().to_string();
     let local_path = utils::get_project_path();
 
-    match (&cli.setup.fetch_madara_configs, local_path) {
-        // TODO match string for default configs value
-        (_, Ok(ref src_path)) => {
-            let index_path = src_path.clone() + "/configs/index.json";
-            utils::copy_from_filesystem(index_path, madara_path.clone() + "/configs")?;
+    if let Ok(ref src_path) = local_path {
+        let index_path = src_path.clone() + "/configs/index.json";
+        utils::copy_from_filesystem(index_path, madara_path.clone() + "/configs")?;
 
-            let madara_configs: configs::Configs =
-                serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?)
-                    .expect("Failed to load madara configs");
-            for asset in madara_configs.genesis_assets {
-                let src_path = src_path.clone() + "/configs/genesis-assets/" + &asset.name;
-                utils::copy_from_filesystem(src_path, madara_path.clone() + "/configs/genesis-assets")?;
-            }
+        let madara_configs: configs::Configs =
+            serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?)
+                .expect("Failed to load madara configs");
+        for asset in madara_configs.genesis_assets {
+            let src_path = src_path.clone() + "/configs/genesis-assets/" + &asset.name;
+            utils::copy_from_filesystem(src_path, madara_path.clone() + "/configs/genesis-assets")?;
         }
-        (Some(configs_url), _) => {
-            utils::fetch_from_url(configs_url.to_string(), madara_path.clone() + "/configs")?;
+    } else if let Some(configs_url) = &cli.setup.fetch_madara_configs {
+        utils::fetch_from_url(configs_url.to_string(), madara_path.clone() + "/configs")?;
 
-            let madara_configs: configs::Configs =
-                serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?)
-                    .expect("Failed to load madara configs");
+        let madara_configs: configs::Configs =
+            serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?)
+                .expect("Failed to load madara configs");
 
-            for asset in madara_configs.genesis_assets {
-                configs::fetch_and_validate_file(
-                    madara_configs.remote_base_path.clone(),
-                    asset,
-                    madara_path.clone() + "/configs/genesis-assets/",
-                )?;
-            }
+        for asset in madara_configs.genesis_assets {
+            configs::fetch_and_validate_file(
+                madara_configs.remote_base_path.clone(),
+                asset,
+                madara_path.clone() + "/configs/genesis-assets/",
+            )?;
         }
-        _ => {}
     }
 
     Ok(())
