@@ -74,13 +74,12 @@ fn set_testnet(cli: &mut Cli, testnet: Testnet) -> Result<(), String> {
     let madara_path = cli.run.madara_path.clone().expect("Failed retrieving madara_path").to_str().unwrap().to_string();
     let local_path = utils::get_project_path();
 
-    match (testnet, local_path) {
-        (Testnet::Sharingan, Ok(ref src_path)) => {
+    if testnet == Testnet::Sharingan {
+        if let Ok(ref src_path) = local_path {
             let src_path = src_path.clone() + "/configs/chain-specs/testnet-sharingan-raw.json";
             utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs")?;
             cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
-        }
-        (Testnet::Sharingan, _) => {
+        } else {
             utils::fetch_from_url(
                 constants::SHARINGAN_CHAIN_SPEC_URL.to_string(),
                 madara_path.clone() + "/configs/chain-specs/",
