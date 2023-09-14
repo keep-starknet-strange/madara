@@ -36,16 +36,16 @@ pub struct Cli {
 
     #[clap(flatten)]
     pub setup: SetupCmd,
-
-    /// Choose sealing method.
-    #[arg(long, value_enum, ignore_case = true)]
-    pub sealing: Option<Sealing>,
 }
 
 #[derive(Clone, Debug, clap::Args)]
 pub struct ExtendedRunCmd {
     #[clap(flatten)]
     pub run_cmd: RunCmd,
+
+    /// Choose a supported DA Layer
+    #[clap(long)]
+    pub da_layer: Option<DaLayer>,
 
     /// Load a custom chain-spec from an url
     /// If you want to load a chain spec that is present in your filesystem, use `--chain=<PATH>`
@@ -58,14 +58,14 @@ pub struct ExtendedRunCmd {
     #[clap(long, default_value = get_default_madara_path())]
     pub madara_path: Option<PathBuf>,
 
+    /// Choose sealing method.
+    #[arg(long, value_enum, ignore_case = true)]
+    pub sealing: Option<Sealing>,
+
     /// Choose a supported testnet chain which will load some default values
     /// The testnets will allways be fetched when this flag is passed to search for updates
     #[clap(long, conflicts_with = "fetch_chain_spec", conflicts_with = "chain")]
     pub testnet: Option<Testnet>,
-
-    /// Choose a supported DA Layer
-    #[clap(long)]
-    pub da_layer: Option<DaLayer>,
 }
 
 #[derive(Debug, clap::Args)]

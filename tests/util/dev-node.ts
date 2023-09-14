@@ -74,6 +74,7 @@ export async function startMadaraDevNode(
 
   const cmd = BINARY_PATH;
   const args = [
+    "run",
     withWasm ? "--execution=Wasm" : "--execution=Native", // Faster execution using native
     process.env.FORCE_COMPILED_WASM
       ? "--wasm-execution=compiled"
@@ -110,6 +111,7 @@ export async function startMadaraDevNode(
   let runningNode: ChildProcess = null;
   process.once("exit", onProcessExit);
   process.once("SIGINT", onProcessInterrupt);
+  require("child_process").execSync(cmd + " setup");
   runningNode = spawn(cmd, args);
 
   runningNode.once("exit", () => {

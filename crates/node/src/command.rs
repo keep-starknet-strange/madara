@@ -37,7 +37,7 @@ impl SubstrateCli for Cli {
     fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
         Ok(match id {
             "dev" => {
-                let enable_manual_seal = self.sealing.map(|_| true);
+                let enable_manual_seal = self.run.sealing.map(|_| true);
                 Box::new(chain_spec::development_config(
                     enable_manual_seal,
                     self.run.madara_path.clone().expect("Failed retrieving madara_path"),
@@ -305,7 +305,7 @@ pub fn run() -> sc_cli::Result<()> {
 
             let runner = cli.create_runner(&cli.run.run_cmd)?;
             runner.run_node_until_exit(|config| async move {
-                service::new_full(config, cli.sealing, da_config).map_err(sc_cli::Error::Service)
+                service::new_full(config, cli.run.sealing, da_config).map_err(sc_cli::Error::Service)
             })
         }
         Some(Subcommand::Setup(_)) => {
