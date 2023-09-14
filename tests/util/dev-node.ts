@@ -111,6 +111,7 @@ export async function startMadaraDevNode(
   let runningNode: ChildProcess = null;
   process.once("exit", onProcessExit);
   process.once("SIGINT", onProcessInterrupt);
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   require("child_process").execSync(cmd + " setup");
   runningNode = spawn(cmd, args);
 
