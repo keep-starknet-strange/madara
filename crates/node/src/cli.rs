@@ -42,7 +42,7 @@ pub struct Cli {
     pub sealing: Option<Sealing>,
 }
 
-#[derive(Debug, clap::Args)]
+#[derive(Clone, Debug, clap::Args)]
 pub struct ExtendedRunCmd {
     #[clap(flatten)]
     pub run_cmd: RunCmd,

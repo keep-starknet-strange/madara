@@ -56,6 +56,7 @@ impl SubstrateCli for Cli {
 }
 
 fn set_dev_environment(cli: &mut Cli) {
+    println!("Setting up dev environment");
     // create a reproducible dev environment
     cli.run.run_cmd.shared_params.dev = false;
     cli.run.run_cmd.shared_params.chain = Some("dev".to_string());
@@ -264,17 +265,17 @@ pub fn run() -> sc_cli::Result<()> {
             let runner = cli.create_runner(cmd)?;
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
-        Some(Subcommand::Run(_)) => {
+        Some(Subcommand::Run(cmd)) => {
             let madara_path =
                 cli.run.madara_path.clone().expect("Failed retrieving madara_path").to_str().unwrap().to_string();
 
             // Set the node_key_file for substrate in the case that it was not manually setted
-            if cli.run.run_cmd.network_params.node_key_params.node_key_file.is_none() {
+            if cmd.run_cmd.network_params.node_key_params.node_key_file.is_none() {
                 cli.run.run_cmd.network_params.node_key_params.node_key_file =
                     Some((madara_path.clone() + "/p2p-key.ed25519").into());
             }
 
-            if cli.run.run_cmd.shared_params.dev {
+            if cmd.run_cmd.shared_params.dev {
                 set_dev_environment(&mut cli);
             }
 
