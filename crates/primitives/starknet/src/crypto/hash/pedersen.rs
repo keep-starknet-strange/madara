@@ -28,7 +28,10 @@ impl HasherT for PedersenHasher {
         let mut hash_value = FieldElement::ZERO;
 
         for chunk in data.chunks(CHUNK_SIZE) {
-            // Convert the buffer to a FieldElement and then to a Felt252Wrapper.
+            // It is safe to unwrap here because we know that the chunk size is 31 and the value can not
+            // overflow than the field's modulus value. In more detail, the FieldElement Maximum value is 2^251
+            // + 17 * 2^192. So the chunk (31 bytes is 248 bits) is smaller than the maximum value (== 2^248 - 1
+            // < 2^251 + 17 * 2^192). So it is safe to unwrap here.
             let field_element = FieldElement::from_byte_slice_be(chunk).unwrap();
             hash_value = pedersen_hash(&hash_value, &field_element);
         }

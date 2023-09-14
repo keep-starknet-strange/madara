@@ -27,7 +27,10 @@ impl HasherT for PoseidonHasher {
         let mut field_element_vector: Vec<FieldElement> = Vec::with_capacity(chunks.len());
 
         for chunk in chunks {
-            // Convert the buffer to a FieldElement and then to a Felt252Wrapper.
+            // It is safe to unwrap here because we know that the chunk size is 31 and the value can not
+            // overflow than the field's modulus value. In more detail, the FieldElement Maximum value is 2^251
+            // + 17 * 2^192. So the chunk (31 bytes is 248 bits) is smaller than the maximum value (== 2^248 - 1
+            // < 2^251 + 17 * 2^192). So it is safe to unwrap here.
             field_element_vector.push(FieldElement::from_byte_slice_be(chunk).unwrap())
         }
 
