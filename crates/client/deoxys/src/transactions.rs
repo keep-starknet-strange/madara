@@ -84,17 +84,12 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : IntermediateInvokeTransacti
     );
 
     //let version_invoke = StarkFelt::from(invoke_transaction.version.0);
-    let version_byte: [u8; 32] = match Felt252Wrapper::try_from(invoke_transaction.version.0.into()) {
+    let version_fw: Felt252Wrapper = Felt252Wrapper(FieldElement::from(invoke_transaction.version.0));
+    let version_u8: u8 = match u64::try_from(version_fw) {
         Ok(valeur) => {
-            Felt252Wrapper::from(valeur).into()
+            valeur as u8
         },
         Err(_) => {panic!("Version too long")}
-    };
-    let version_u8: u8 = match version_byte[0] {
-        0 => 0,
-        1 => 1,
-        2 => 2,
-        _ => panic!("Version not supported")
     };
 
     let sender_address_fe: FieldElement =  FieldElement::from(*PatriciaKey::key(&invoke_transaction.sender_address.0));
@@ -102,7 +97,7 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : IntermediateInvokeTransacti
     
     Transaction {
         tx_type: TxType::Invoke,
-        version: Some(u8::default()).unwrap(),
+        version: version_u8,
         hash: Felt252Wrapper(invoke_transaction.transaction_hash.0.into()),
         signature: signature_vec,
         sender_address: sender_address_fw,
