@@ -277,7 +277,7 @@ pub fn run() -> sc_cli::Result<()> {
             // Set the node_key_file for substrate in the case that it was not manually setted
             if cli.run.run_cmd.network_params.node_key_params.node_key_file.is_none() {
                 cli.run.run_cmd.network_params.node_key_params.node_key_file =
-                    Some((madara_path + "/p2p-key.ed25519").into());
+                    Some((madara_path.clone() + "/p2p-key.ed25519").into());
             }
 
             if cli.run.run_cmd.shared_params.dev {

@@ -62,6 +62,10 @@ pub struct ExtendedRunCmd {
     /// The testnets will allways be fetched when this flag is passed to search for updates
     #[clap(long, conflicts_with = "fetch_chain_spec")]
     pub testnet: Option<Testnet>,
+
+    /// Choose a supported DA Layer
+    #[clap(long)]
+    pub da_layer: Option<DaLayer>,
 }
 
 #[derive(Debug, clap::Args)]
@@ -75,10 +79,6 @@ pub struct SetupCmd {
 
     #[clap(long)]
     pub genesis_url: Option<String>,
-
-    /// Choose a supported DA Layer
-    #[clap(long)]
-    pub da_layer: Option<DaLayer>,
 }
 
 #[allow(clippy::large_enum_variant)]
