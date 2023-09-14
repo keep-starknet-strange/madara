@@ -581,13 +581,13 @@ mod reexport_private_types {
         BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, DeclareTransaction as RPCDeclareTransaction,
         DeclareTransactionReceipt as RPCDeclareTransactionReceipt, DeclareTransactionV1 as RPCDeclareTransactionV1,
         DeclareTransactionV2 as RPCDeclareTransactionV2, DeployAccountTransaction as RPCDeployAccountTransaction,
-        DeployAccountTransactionReceipt as RPCDeployAccountTransactionReceipt, Event as RPCEvent, FieldElement,
-        InvokeTransaction as RPCInvokeTransaction, InvokeTransactionReceipt as RPCInvokeTransactionReceipt,
-        InvokeTransactionV0 as RPCInvokeTransactionV0, InvokeTransactionV1 as RPCInvokeTransactionV1,
+        DeployAccountTransactionReceipt as RPCDeployAccountTransactionReceipt, Event as RPCEvent, ExecutionResult,
+        FieldElement, InvokeTransaction as RPCInvokeTransaction,
+        InvokeTransactionReceipt as RPCInvokeTransactionReceipt, InvokeTransactionV1 as RPCInvokeTransactionV1,
         L1HandlerTransaction as RPCL1HandlerTransaction, L1HandlerTransactionReceipt as RPCL1HandlerTransactionReceipt,
         MaybePendingTransactionReceipt as RPCMaybePendingTransactionReceipt, StarknetError,
-        Transaction as RPCTransaction, TransactionReceipt as RPCTransactionReceipt,
-        TransactionStatus as RPCTransactionStatus,
+        Transaction as RPCTransaction, TransactionFinalityStatus as RPCTransactionStatus,
+        TransactionReceipt as RPCTransactionReceipt,
     };
 
     use super::*;
@@ -638,25 +638,22 @@ mod reexport_private_types {
     impl TryFrom<BroadcastedInvokeTransaction> for InvokeTransaction {
         type Error = BroadcastedTransactionConversionErrorWrapper;
         fn try_from(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransaction, Self::Error> {
-            match tx {
-                BroadcastedInvokeTransaction::V0(_) => Err(StarknetError::FailedToReceiveTransaction.into()),
-                BroadcastedInvokeTransaction::V1(invoke_tx_v1) => Ok(InvokeTransaction {
-                    version: 1_u8,
-                    signature: BoundedVec::try_from(
-                        invoke_tx_v1.signature.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
-                    )
-                    .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureConversionError)?,
+            Ok(InvokeTransaction {
+                version: 1_u8,
+                signature: BoundedVec::try_from(
+                    tx.signature.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
+                )
+                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureConversionError)?,
 
-                    sender_address: invoke_tx_v1.sender_address.into(),
-                    nonce: Felt252Wrapper::from(invoke_tx_v1.nonce),
-                    calldata: BoundedVec::try_from(
-                        invoke_tx_v1.calldata.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
-                    )
-                    .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CalldataConversionError)?,
-                    max_fee: Felt252Wrapper::from(invoke_tx_v1.max_fee),
-                    is_query: invoke_tx_v1.is_query,
-                }),
-            }
+                sender_address: tx.sender_address.into(),
+                nonce: Felt252Wrapper::from(tx.nonce),
+                calldata: BoundedVec::try_from(
+                    tx.calldata.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
+                )
+                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CalldataConversionError)?,
+                max_fee: Felt252Wrapper::from(tx.max_fee),
+                is_query: tx.is_query,
+            })
         }
     }
 
@@ -780,15 +777,6 @@ mod reexport_private_types {
                     }
                 }
                 TxType::Invoke => match value.version {
-                    0 => Ok(RPCTransaction::Invoke(RPCInvokeTransaction::V0(RPCInvokeTransactionV0 {
-                        transaction_hash,
-                        max_fee,
-                        signature,
-                        nonce,
-                        contract_address,
-                        entry_point_selector: entry_point_selector?.0,
-                        calldata,
-                    }))),
                     1 => Ok(RPCTransaction::Invoke(RPCInvokeTransaction::V1(RPCInvokeTransactionV1 {
                         transaction_hash,
                         max_fee,
@@ -842,7 +830,7 @@ mod reexport_private_types {
         ) -> RPCMaybePendingTransactionReceipt {
             let transaction_hash = self.transaction_hash.into();
             let actual_fee = self.actual_fee.into();
-            let status = status;
+            let finality_status = status;
             let block_hash = block_hash_and_number.0;
             let block_number = block_hash_and_number.1;
             let events = self.events.iter().map(|e| (*e).clone().into()).collect();
@@ -856,13 +844,14 @@ mod reexport_private_types {
                         RPCDeployAccountTransactionReceipt {
                             transaction_hash,
                             actual_fee,
-                            status,
+                            finality_status,
                             block_hash,
                             block_number,
                             messages_sent,
                             events,
                             // TODO: from where can I get this one?
                             contract_address: FieldElement::ZERO,
+                            execution_result: ExecutionResult::Succeeded,
                         },
                     ))
                 }
@@ -870,33 +859,36 @@ mod reexport_private_types {
                     RPCDeclareTransactionReceipt {
                         transaction_hash,
                         actual_fee,
-                        status,
+                        finality_status,
                         block_hash,
                         block_number,
                         messages_sent,
                         events,
+                        execution_result: ExecutionResult::Succeeded,
                     },
                 )),
                 TxType::Invoke => RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::Invoke(
                     RPCInvokeTransactionReceipt {
                         transaction_hash,
                         actual_fee,
-                        status,
+                        finality_status,
                         block_hash,
                         block_number,
                         messages_sent,
                         events,
+                        execution_result: ExecutionResult::Succeeded,
                     },
                 )),
                 TxType::L1Handler => RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::L1Handler(
                     RPCL1HandlerTransactionReceipt {
                         transaction_hash,
                         actual_fee,
-                        status,
+                        finality_status,
                         block_hash,
                         block_number,
                         messages_sent,
                         events,
+                        execution_result: ExecutionResult::Succeeded,
                     },
                 )),
             }

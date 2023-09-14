@@ -61,7 +61,7 @@ impl HasherT for PoseidonHasher {
 
 impl DefaultHasher for PoseidonHasher {
     fn hasher() -> Self {
-        Self::default()
+        Self
     }
 }
 

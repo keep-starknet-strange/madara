@@ -66,7 +66,7 @@ fn generate_dummy_transactions() -> BoundedVec<Transaction, MaxTransactions> {
 #[test]
 fn test_header_hash() {
     let header = generate_dummy_header();
-    let hasher = PedersenHasher::default();
+    let hasher = PedersenHasher;
 
     let expected_hash =
         Felt252Wrapper::from_hex_be("0x029da584545c7f3ebdb0c6aca74f0fba99156b1e31e9524c70b42776e50efda6").unwrap();
@@ -117,7 +117,7 @@ fn test_transactions_hashes_from_hashes() {
 #[test]
 fn test_real_header_hash() {
     // Values taken from alpha-mainnet
-    let hasher = PedersenHasher::default();
+    let hasher = PedersenHasher;
 
     let block_number = 86000;
     let block_timestamp = 1687235884;
