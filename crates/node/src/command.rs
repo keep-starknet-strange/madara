@@ -106,7 +106,7 @@ fn set_chain_spec(cli: &mut Cli, chain_spec_url: String) -> Result<(), String> {
     Ok(())
 }
 
-fn fetch_madara_configs(cli: &mut Cli) -> Result<(), String> {
+fn fetch_madara_configs(cli: &Cli) -> Result<(), String> {
     let madara_path = cli.run.madara_path.clone().expect("Failed retrieving madara_path").to_str().unwrap().to_string();
     let local_path = utils::get_project_path();
 
@@ -308,7 +308,7 @@ pub fn run() -> sc_cli::Result<()> {
             })
         }
         Some(Subcommand::Setup(_)) => {
-            fetch_madara_configs(&mut cli)?;
+            fetch_madara_configs(&cli)?;
             Ok(())
         }
         _ => Err("You need to specify some subcommand. E.g. `madara run`".into()),
