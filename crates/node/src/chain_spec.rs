@@ -146,7 +146,8 @@ pub fn local_testnet_config(madara_path: PathBuf) -> Result<ChainSpec, String> {
 fn load_genesis(madara_path: PathBuf) -> GenesisLoader {
     let madara_path = madara_path.to_str().unwrap().to_string();
     let genesis_path = madara_path.clone() + "/configs/genesis-assets/genesis.json";
-    let genesis = utils::read_file_to_string(genesis_path).expect("Failed to read genesis file. Please run `madara setup` before opening an issue.");
+    let genesis = utils::read_file_to_string(genesis_path)
+        .expect("Failed to read genesis file. Please run `madara setup` before opening an issue.");
     let mut genesis_loader: GenesisLoader = serde_json::from_str(&genesis).expect("Failed loading genesis");
     genesis_loader.set_madara_path(madara_path);
     genesis_loader
