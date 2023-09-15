@@ -1,9 +1,8 @@
 # Madara Changelog
 
-- chore: add real class hash values for genesis config
-
 ## Next release
 
+- chore: add real class hash values for genesis config
 - feat: use resolver 2 for cargo in the workspace
 - upgrade: restructure code for rust latest version
 - upgrade: bump rustc nightly version to 1.74 date

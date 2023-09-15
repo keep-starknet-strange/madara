@@ -41,7 +41,7 @@ The below defines all hardcoded values set in the geneses:
 | 0x05a2b92d9a36509a3d651e7df99144a4ad8301e2caf42465ee6ab0451ae91882 | Test contract class hash                       |
 | 0x0372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4 | ERC20 class hash                               |
 | 0x077cc28ed3c661419fda16bf120fb81f1f8f28617f5543b05a86d63b0926bbf4 | ERC721 class hash                              |
-| 0x077cc28ed3c661419fda16bf120fb81f1f8f28617f5543b05a86d63b0926bbf4 | Universal deployer class hash                  |
+| 0x04569ffd48c2a3d455437c16dc843801fb896b1af845bc8bc7ba83ebc4358b7f | Universal deployer class hash                  |
 
 <!-- markdownlint-disable MD013 -->
 
