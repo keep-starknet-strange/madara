@@ -1,10 +1,13 @@
 import axios from 'axios';
 import { performance } from 'perf_hooks';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
-const ALCHEMY_RPC_URL = 'https://starknet-mainnet.g.alchemy.com/v2/hnj_DGevqpyoyeoEs9Vfx-6qSTHOnaIu';
-const LOCAL_RPC_URL = 'http://localhost:9944';
-const BLOCK_NUMBER = 49;
-const FULL_BLOCK = 100;
+const REMOTE_RPC_URL = process.env.REMOTE_RPC;
+const LOCAL_RPC_URL = process.env.LOCAL_RPC;
+const BLOCK_NUMBER = 10;
+const START_BLOCK = 0;
+const END_BLOCK = 1500;
 
 const requestDataForMethod = (method: string, params: any[]) => ({
     id: 1,
@@ -33,7 +36,7 @@ const compareObjects = (obj1: any, obj2: any, path: string = ''): string => {
 async function benchmarkMethod(method: string, params: any[]): Promise<string> {
     console.log(`\x1b[34mBenchmarking method: ${method}\x1b[0m for block_number: ${params[0].block_number}`);
   
-    const alchemyResponse = await axios.post(ALCHEMY_RPC_URL, requestDataForMethod(method, params));
+    const alchemyResponse = await axios.post(REMOTE_RPC_URL, requestDataForMethod(method, params));
     const localResponse = await axios.post(LOCAL_RPC_URL, requestDataForMethod(method, params));
   
     return compareObjects(alchemyResponse.data, localResponse.data);
@@ -42,7 +45,7 @@ async function benchmarkMethod(method: string, params: any[]): Promise<string> {
 async function checkDifferencesInBlocks() {
     const blocksWithDifferences: number[] = [];
   
-    for (let blockNumber = 0; blockNumber < FULL_BLOCK; blockNumber++) {
+    for (let blockNumber = START_BLOCK; blockNumber < END_BLOCK; blockNumber++) {
         const differences = await benchmarkMethod('starknet_getBlockWithTxHashes', [{ "block_number": blockNumber }]);
       
         if (differences.includes("\x1b[31mDIFFERENCE")) {

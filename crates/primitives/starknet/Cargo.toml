@@ -1,4 +1,4 @@
-[package]
+  [package]
 name = "mp-starknet"
 version.workspace = true
 edition.workspace = true

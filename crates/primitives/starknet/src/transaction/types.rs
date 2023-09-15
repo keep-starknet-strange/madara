@@ -125,6 +125,8 @@ pub enum TxType {
     Declare,
     /// Deploy account transaction.
     DeployAccount,
+    /// Deploy transaction (only for first blocks).
+    Deploy,
     /// Message sent from ethereum.
     L1Handler,
 }
@@ -145,6 +147,7 @@ impl From<TxType> for TransactionType {
             TxType::DeployAccount => Self::DeployAccount,
             TxType::Invoke => Self::InvokeFunction,
             TxType::L1Handler => Self::L1Handler,
+            TxType::Deploy => todo!(),
         }
     }
 }
@@ -807,6 +810,18 @@ mod reexport_private_types {
                     constructor_calldata: calldata,
                     class_hash: class_hash?.0,
                 })),
+                TxType::Deploy => Ok(RPCTransaction::DeployAccount(RPCDeployAccountTransaction {
+                    transaction_hash,
+                    max_fee,
+                    signature,
+                    nonce,
+                    contract_address_salt: Felt252Wrapper::try_from(
+                        value.contract_address_salt.ok_or(RPCTransactionConversionError::MissingInformation)?,
+                    )?
+                    .0,
+                    constructor_calldata: calldata,
+                    class_hash: class_hash?.0,
+                })),
                 TxType::L1Handler => {
                     let nonce = TryInto::try_into(value.nonce).unwrap(); // this panics in case of overflow
                     Ok(RPCTransaction::L1Handler(RPCL1HandlerTransaction {
@@ -848,6 +863,21 @@ mod reexport_private_types {
 
             match self.tx_type {
                 TxType::DeployAccount => {
+                    RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::DeployAccount(
+                        RPCDeployAccountTransactionReceipt {
+                            transaction_hash,
+                            actual_fee,
+                            status,
+                            block_hash,
+                            block_number,
+                            messages_sent,
+                            events,
+                            // TODO: from where can I get this one?
+                            contract_address: FieldElement::ZERO,
+                        },
+                    ))
+                }
+                TxType::Deploy => {
                     RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::DeployAccount(
                         RPCDeployAccountTransactionReceipt {
                             transaction_hash,

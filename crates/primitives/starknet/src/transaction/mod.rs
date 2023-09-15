@@ -351,6 +351,7 @@ impl Transaction {
         match tx_type {
             TxType::Declare => Ok(*constants::VALIDATE_DECLARE_ENTRY_POINT_SELECTOR),
             TxType::DeployAccount => Ok(*constants::VALIDATE_DEPLOY_ENTRY_POINT_SELECTOR),
+            TxType::Deploy => Ok(*constants::VALIDATE_DEPLOY_ENTRY_POINT_SELECTOR),
             TxType::Invoke => Ok(*constants::VALIDATE_ENTRY_POINT_SELECTOR),
             TxType::L1Handler => Err(EntryPointExecutionError::InvalidExecutionInput {
                 input_descriptor: "tx_type".to_string(),
@@ -370,6 +371,16 @@ impl Transaction {
                 Ok(calldata![declare_tx.class_hash().0])
             }
             TxType::DeployAccount => {
+                let deploy_account_tx: DeployAccountTransaction =
+                    self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
+                let validate_calldata = vec![
+                    vec![deploy_account_tx.class_hash().0, deploy_account_tx.contract_address_salt().0],
+                    (*deploy_account_tx.constructor_calldata().0).clone(),
+                ]
+                .concat();
+                Ok(Calldata(validate_calldata.into()))
+            },
+            TxType::Deploy => {
                 let deploy_account_tx: DeployAccountTransaction =
                     self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
                 let validate_calldata = vec![
@@ -423,6 +434,10 @@ impl Transaction {
                 self.get_l1_handler_transaction_context(&tx)
             }
             TxType::DeployAccount => {
+                let tx = self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
+                self.get_deploy_account_transaction_context(&tx)
+            },
+            TxType::Deploy => {
                 let tx = self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
                 self.get_deploy_account_transaction_context(&tx)
             }
@@ -654,6 +669,40 @@ impl Transaction {
                 )
             }
             TxType::DeployAccount => {
+                let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
+                let account_context = self.get_deploy_account_transaction_context(&tx);
+
+                // Create the context.
+                let mut context = EntryPointExecutionContext::new(
+                    block_context.clone(),
+                    account_context.clone(),
+                    block_context.invoke_tx_max_n_steps as usize,
+                );
+
+                // Update nonce
+                if !disable_nonce_validation {
+                    Self::handle_nonce(state, &account_context, self.is_query)?;
+                }
+
+                // Execute.
+                let transaction_execution = tx
+                    .run_execute(state, execution_resources, &mut context, &mut initial_gas)
+                    .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?;
+
+                (
+                    transaction_execution,
+                    self.validate_tx(
+                        state,
+                        execution_resources,
+                        block_context,
+                        &account_context,
+                        &tx_type,
+                        &mut initial_gas,
+                    )?,
+                    account_context,
+                )
+            },
+            TxType::Deploy => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_deploy_account_transaction_context(&tx);
 

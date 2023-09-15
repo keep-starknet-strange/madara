@@ -1,9 +1,12 @@
 import axios from 'axios';
 import { performance } from 'perf_hooks';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
-const ALCHEMY_RPC_URL = 'https://starknet-mainnet.g.alchemy.com/v2/hnj_DGevqpyoyeoEs9Vfx-6qSTHOnaIu';
-const LOCAL_RPC_URL = 'http://localhost:9944';
-const FULL_BLOCK = 100;
+const REMOTE_RPC_URL = process.env.REMOTE_RPC;
+const LOCAL_RPC_URL = process.env.LOCAL_RPC;
+const START_BLOCK = 0;
+const END_BLOCK = 100;
 const TRANSACTIONS = [
 	"0x160d07b065887fec1f898405d12874b742c553d8dfc52e6dc5a8667b4d05e63",
 	"0x79c6fe04996648a8d0620094d35d8929b0d8f8ac1007b4ee65bdb0fd778f530",
@@ -51,7 +54,7 @@ const compareObjects = (obj1: any, obj2: any, path: string = ''): string => {
 async function benchmarkMethod(method: string, params: any[]): Promise<string> {
     console.log(`\x1b[34mBenchmarking method: ${method}\x1b[0m for params: ${JSON.stringify(params)}`);
 
-    const alchemyResponse = await axios.post(ALCHEMY_RPC_URL, requestDataForMethod(method, params));
+    const alchemyResponse = await axios.post(REMOTE_RPC_URL, requestDataForMethod(method, params));
     const localResponse = await axios.post(LOCAL_RPC_URL, requestDataForMethod(method, params));
 
     return compareObjects(alchemyResponse.data, localResponse.data);
