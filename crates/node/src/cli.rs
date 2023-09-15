@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use mc_data_availability::DaLayer;
 use sc_cli::RunCmd;
 
 /// Available Sealing methods.
@@ -47,6 +48,9 @@ pub struct ExtendedRunCmd {
 
     #[clap(long)]
     pub genesis_url: Option<String>,
+
+    #[clap(long)]
+    pub da_layer: Option<DaLayer>,
 }
 
 #[allow(clippy::large_enum_variant)]

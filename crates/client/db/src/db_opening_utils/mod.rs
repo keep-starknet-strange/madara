@@ -42,7 +42,7 @@ fn open_kvdb_rocksdb(path: &Path, create: bool) -> Result<Arc<dyn Database<DbHas
     db_config.create_if_missing = create;
 
     let db = kvdb_rocksdb::Database::open(&db_config, path).map_err(|err| format!("{}", err))?;
-    return Ok(sp_database::as_database(db));
+    Ok(sp_database::as_database(db))
 }
 
 #[cfg(not(feature = "kvdb-rocksdb"))]

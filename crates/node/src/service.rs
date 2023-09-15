@@ -1,6 +1,7 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 use std::cell::RefCell;
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -10,6 +11,13 @@ use futures::prelude::*;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi};
 use mc_block_proposer::ProposerFactory;
+use mc_data_availability::avail::config::AvailConfig;
+use mc_data_availability::avail::AvailClient;
+use mc_data_availability::celestia::config::CelestiaConfig;
+use mc_data_availability::celestia::CelestiaClient;
+use mc_data_availability::ethereum::config::EthereumConfig;
+use mc_data_availability::ethereum::EthereumClient;
+use mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker};
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
 use mc_transaction_pool::FullPool;
@@ -244,7 +252,11 @@ where
 }
 
 /// Builds a new service for a full client.
-pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskManager, ServiceError> {
+pub fn new_full(
+    config: Configuration,
+    sealing: Option<Sealing>,
+    da_layer: Option<(DaLayer, PathBuf)>,
+) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
 
@@ -361,13 +373,42 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
             Duration::new(6, 0),
             client.clone(),
             backend.clone(),
-            madara_backend,
+            madara_backend.clone(),
             3,
             0,
             hasher,
         )
         .for_each(|()| future::ready(())),
     );
+
+    // initialize data availability worker
+    if let Some((da_layer, da_path)) = da_layer {
+        let da_client: Box<dyn DaClient + Send + Sync> = match da_layer {
+            DaLayer::Celestia => {
+                let celestia_conf = CelestiaConfig::try_from(&da_path)?;
+                Box::new(CelestiaClient::try_from(celestia_conf).map_err(|e| ServiceError::Other(e.to_string()))?)
+            }
+            DaLayer::Ethereum => {
+                let ethereum_conf = EthereumConfig::try_from(&da_path)?;
+                Box::new(EthereumClient::try_from(ethereum_conf)?)
+            }
+            DaLayer::Avail => {
+                let avail_conf = AvailConfig::try_from(&da_path)?;
+                Box::new(AvailClient::try_from(avail_conf).map_err(|e| ServiceError::Other(e.to_string()))?)
+            }
+        };
+
+        task_manager.spawn_essential_handle().spawn(
+            "da-worker-prove",
+            Some("madara"),
+            DataAvailabilityWorker::prove_current_block(da_client.get_mode(), client.clone(), madara_backend.clone()),
+        );
+        task_manager.spawn_essential_handle().spawn(
+            "da-worker-update",
+            Some("madara"),
+            DataAvailabilityWorker::update_state(da_client, client.clone(), madara_backend),
+        );
+    };
 
     if role.is_authority() {
         // manual-seal authorship
@@ -590,7 +631,7 @@ type ChainOpsResult = Result<
     ServiceError,
 >;
 
-pub fn new_chain_ops(mut config: &mut Configuration) -> ChainOpsResult {
+pub fn new_chain_ops(config: &mut Configuration) -> ChainOpsResult {
     config.keystore = sc_service::config::KeystoreConfig::InMemory;
     let sc_service::PartialComponents { client, backend, import_queue, task_manager, other, .. } =
         new_partial::<_>(config, build_aura_grandpa_import_queue)?;

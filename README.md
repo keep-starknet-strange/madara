@@ -72,6 +72,23 @@ fueling growth within the Starknet ecosystem.
 - [Madara Tsukuyomi](https://github.com/keep-starknet-strange/madara-tsukuyomi):
   The source code of the Madara Desktop App. A friendly GUI to start a Madara
   node and interact with it.
+- [App Chain Template](<(https://github.com/keep-starknet-strange/madara-app-chain-template)>):
+  A ready to use template that allows you to easily start an app chain.
+
+## 📣 Building App Chains
+
+> Do NOT fork this repo and build your app chain on top unless completely
+> necessary. By adding changes using forking, you will have to periodically
+> rebase (and solve conflicts) to remain updated with the latest version of
+> Madara.
+
+One of the main features of Madara is to allow users to start their app chains
+that support Cairo contracts and Starknet like blocks. Hence, to make it easy
+for users to build a custom app chain, we have created an
+[app-chain-template](https://github.com/keep-starknet-strange/madara-app-chain-template)
+which imports Madara as a pallet. This removes all the boilerplate code and
+allows you to focus on code only relevant to your app chain. Moreover, updating
+Madara is as simple as updating the pallet version.
 
 ## 🌟 Features
 
@@ -229,7 +246,8 @@ Thanks goes to these wonderful people
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ben2077"><img src="https://avatars.githubusercontent.com/u/22720665?v=4?s=100" width="100px;" alt="ben2077"/><br /><sub><b>ben2077</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=ben2077" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/m-kus"><img src="https://avatars.githubusercontent.com/u/44951260?v=4?s=100" width="100px;" alt="Michael Zaikin"/><br /><sub><b>Michael Zaikin</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=m-kus" title="Code">💻</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/jo%C3%A3o-pereira-91a087230/"><img src="https://avatars.githubusercontent.com/u/77340776?v=4?s=100" width="100px;" alt="João Pereira"/><br /><sub><b>João Pereira</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=joaopereira12" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/jo%C3%A3o-pereira-91a087230/"><img src="https://avatars.githubusercontent.com/u/77340776?v=4?s=100" width="100px;" alt="João Pereira"/><br /><sub><b>João Pereira</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=joaopereira12" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/kasteph"><img src="https://avatars.githubusercontent.com/u/3408478?v=4?s=100" width="100px;" alt="kasteph"/><br /><sub><b>kasteph</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=kasteph" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

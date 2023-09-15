@@ -48,7 +48,7 @@ pub fn build_transfer_invoke_transaction(request: BuildTransferInvokeTransaction
             request.amount_high,   // initial supply high
         ],
         nonce: request.nonce,
-        max_fee: Felt252Wrapper::from(u128::MAX),
+        max_fee: Felt252Wrapper::from(u64::MAX),
         signature: bounded_vec!(),
         is_query: false,
     }
