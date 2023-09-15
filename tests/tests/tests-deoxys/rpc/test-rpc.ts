@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { performance } from 'perf_hooks';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
-const ALCHEMY_RPC_URL = 'https://starknet-mainnet.g.alchemy.com/v2/hnj_DGevqpyoyeoEs9Vfx-6qSTHOnaIu';
-const LOCAL_RPC_URL = 'http://localhost:9944';
+const REMOTE_RPC_URL = process.env.REMOTE_RPC;
+const LOCAL_RPC_URL = process.env.LOCAL_RPC;
 
 const requestData = (method: string) => ({
   id: 1,
@@ -44,7 +46,7 @@ const requestDataForMethod = (method: string, params: any[]) => ({
   
     console.log(`\x1b[36mMaking request to Alchemy RPC...\x1b[0m`);
     const startAlchemy = performance.now();
-    const alchemyResponse = await axios.post(ALCHEMY_RPC_URL, requestDataForMethod(method, params));
+    const alchemyResponse = await axios.post(REMOTE_RPC_URL, requestDataForMethod(method, params));
     const endAlchemy = performance.now();
   
     console.log(`\x1b[36mMaking request to Local RPC...\x1b[0m`);

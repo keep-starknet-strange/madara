@@ -5,6 +5,8 @@ use sp_core::U256;
 use starknet_api::api_core::{ChainId, ContractAddress};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkFelt;
+use frame_support::debug;
+
 
 use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use crate::traits::hash::HasherT;
@@ -156,23 +158,24 @@ impl Header {
     #[must_use]
     pub fn hash<H: HasherT>(&self, hasher: H) -> Felt252Wrapper {
         
-		let first_07_block = 833;
-		if self.block_number >= first_07_block {
-			let data: &[Felt252Wrapper] = &[
-				self.block_number.into(),
-				self.global_state_root,
-				self.sequencer_address,
-				self.block_timestamp.into(),
-				self.transaction_count.into(),
-				self.transaction_commitment,
-				self.event_count.into(),
-				self.event_commitment,
-				self.protocol_version.into(),
-				Felt252Wrapper::ZERO,
-				self.parent_block_hash,
-			];
+        let first_07_block = 833u64;
+        if self.block_number >= first_07_block {
+            frame_support::log::info!("block number: {}", self.block_number);
+            let data: &[Felt252Wrapper] = &[
+            self.block_number.into(),
+            self.global_state_root,
+            self.sequencer_address,
+            self.block_timestamp.into(),
+            self.transaction_count.into(),
+            self.transaction_commitment,
+            self.event_count.into(),
+            self.event_commitment,
+            self.protocol_version.into(),
+            Felt252Wrapper::ZERO,
+            self.parent_block_hash,
+        ];
 
-        	<H as HasherT>::compute_hash_on_wrappers(&hasher, data)
+        <H as HasherT>::compute_hash_on_wrappers(&hasher, data)
 		} else {
 			let data: &[Felt252Wrapper] = &[
 				self.block_number.into(),

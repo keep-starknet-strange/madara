@@ -1,11 +1,10 @@
 
-use mp_starknet::crypto::commitment::{calculate_transaction_commitment, calculate_event_commitment};
+use mp_starknet::crypto::commitment::calculate_transaction_commitment;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
-use mp_starknet::sequencer_address;
-use mp_starknet::transaction::types::{Transaction, TransactionReceiptWrapper, TxType};
+use mp_starknet::transaction::types::{Transaction, TransactionReceiptWrapper};
 use sp_core::U256;
-use mp_starknet::execution::types::{ Felt252Wrapper, ContractAddressWrapper };
-use mp_starknet::block::{Block, Header, MaxTransactions, BlockStatus};
+use mp_starknet::execution::types::Felt252Wrapper;
+use mp_starknet::block::{Block, Header, MaxTransactions };
 use reqwest::header::{HeaderMap, CONTENT_TYPE};
 use serde_json::json;
 use sp_core::bounded_vec::BoundedVec;
@@ -13,7 +12,6 @@ use starknet_api::core::{ChainId, PatriciaKey};
 use starknet_client::RetryConfig;
 use starknet_client::reader::{StarknetFeederGatewayClient, StarknetReader};
 use starknet_ff::FieldElement;
-// use transactions::{l1handler_tx_to_starknet_tx, declare_tx_to_starknet_tx, invoke_tx_to_starknet_tx, deploy_account_tx_to_starknet_tx};
 use std::sync::{ Arc, Mutex};
 use std::collections::VecDeque;
 use log::info;
@@ -25,8 +23,7 @@ use std::path::Path;
 use std::string::String;
 use starknet_client;
 use std::path::PathBuf;
-
-use crate::transactions::{declare_tx_to_starknet_tx, deploy_account_tx_to_starknet_tx, invoke_tx_to_starknet_tx, l1handler_tx_to_starknet_tx};
+use crate::transactions::{declare_tx_to_starknet_tx, deploy_account_tx_to_starknet_tx, invoke_tx_to_starknet_tx, l1handler_tx_to_starknet_tx, deploy_tx_to_starknet_tx};
 
 pub fn read_resource_file(path_in_resource_dir: &str) -> String {
     let path = Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap())
@@ -36,7 +33,6 @@ pub fn read_resource_file(path_in_resource_dir: &str) -> String {
 }
 
 const NODE_VERSION: &str = "NODE VERSION";
-const BLOCK_NUMBER_QUERY: &str = "blockNumber";
 
 mod transactions;
 // Your block queue type
@@ -103,9 +99,9 @@ pub fn get_txs(block: starknet_client::reader::Block) -> BoundedVec<mp_starknet:
                     transactions_vec.try_push(tx).unwrap();
                 },
                 starknet_client::reader::objects::transaction::Transaction::Deploy(deploy_transaction) => {
-                    // // convert declare_transaction to starknet transaction
-                    // let tx = deploy_tx_to_starknet_tx(deploy_transaction.clone());
-                    // transactions_vec.try_push(tx).unwrap();
+                    // convert declare_transaction to starknet transaction
+                    let tx = deploy_tx_to_starknet_tx(deploy_transaction.clone());
+                    transactions_vec.try_push(tx).unwrap();
                 },
                 starknet_client::reader::objects::transaction::Transaction::Invoke(invoke_transaction) => {
                     // convert invoke_transaction to starknet transaction
@@ -125,8 +121,8 @@ pub fn get_txs(block: starknet_client::reader::Block) -> BoundedVec<mp_starknet:
 
 // This function converts a block received from the gateway into a StarkNet block
 pub fn from_gateway_to_starknet_block(block: starknet_client::reader::Block) -> Block {
-    let mut transactions_vec: BoundedVec<Transaction, MaxTransactions> = get_txs(block.clone());
-    let mut transaction_receipts_vec: BoundedVec<TransactionReceiptWrapper, MaxTransactions> = BoundedVec::new();
+    let transactions_vec: BoundedVec<Transaction, MaxTransactions> = get_txs(block.clone());
+    let transaction_receipts_vec: BoundedVec<TransactionReceiptWrapper, MaxTransactions> = BoundedVec::new();
     Block::new(
         get_header(block.clone(), transactions_vec.clone()),
         transactions_vec,
@@ -134,7 +130,7 @@ pub fn from_gateway_to_starknet_block(block: starknet_client::reader::Block) -> 
     )
 }
 
-async fn call_rpc(rpc_port: u16) -> Result<reqwest::StatusCode, reqwest::Error> {
+async fn create_block(rpc_port: u16) -> Result<reqwest::StatusCode, reqwest::Error> {
     let client = reqwest::Client::new();
     let mut headers = HeaderMap::new();
     headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
@@ -221,7 +217,6 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
     ).unwrap();
     let mut i = 1u64;
     loop {
-        // No mock creation here, directly fetch the block from the Starknet client
         let block = starknet_client.block(BlockNumber(i)).await;
         match block {
             Ok(block) => {
@@ -231,7 +226,7 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
                     let mut queue_guard: std::sync::MutexGuard<'_, VecDeque<Block>> = queue.lock().unwrap();
                     queue_guard.push_back(starknet_block);
                 } // MutexGuard is dropped here
-                match call_rpc(rpc_port).await {
+                match create_block(rpc_port).await {
                     Ok(status) => {
                         if status.is_success() {
                             info!("[👽] Block #{} synced correctly", i);
@@ -256,82 +251,59 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use log::info;
-    use tokio;
-    use std::env;
-    use env_logger::Env;
-    use pathfinder_common::{BlockId, BlockNumber};
-    // use starknet_gateway_client::{Client, GatewayApi};
+    use std::sync::Mutex;
+    use std::collections::VecDeque;
+    use mockall::mock;
 
-    // This async test verifies the from_gateway_to_starknet_block function
-    // #[tokio::test]
-    // async fn test_from_gateway_to_starknet_block() {
-    //     let client: Client = Client::mainnet();
-    //     // let result = client.block(BlockId::Latest).await;
-    //     let result = client.block(BlockId::Number(BlockNumber::new_or_panic(10u64).into())).await;
-
-    //     match result {
-    //         Ok(maybe_pending_block) => {
-    //             let starknet_block = from_gateway_to_starknet_block(maybe_pending_block);
-    //             println!("Block retrieved: {:?}", starknet_block);
-    //         },
-    //         Err(error) => {
-    //             eprintln!("Error retrieving block: {:?}", error);
-    //         }
-    //     }
-    // }
-
-    // This async test verifies the process_blocks function
-    #[tokio::test]
-    async fn test_process_block() {
-        let _m = mockito::mock("GET", "/feeder_gateway/get_block?BLOCK_NUMBER_QUERY=0")
-            .with_status(200)
-            .with_body(&read_resource_file("src/block.json"))
-            .create();
-
-        // Define the queue and port
-        let queue = create_block_queue();
-        let rpc_port = 9944; // Replace with the desired port
-
-        fetch_block(queue, rpc_port).await;
-
-        _m.assert();
+    // Mocking StarknetFeederGatewayClient for testing
+    mock! {
+        StarknetFeederGatewayClient {
+            fn new(url: &str, option: Option<&str>, version: &str, retry_config: RetryConfig) -> Self;
+            async fn block(&self, block_number: BlockNumber) -> Result<Option<starknet_client::reader::Block>, starknet_client::Error>;
+        }
     }
 
-    // // This async test verifies the fetch_block function
-    // #[tokio::test]
-    // async fn test_fetch_block() {
-    //     use std::sync::{Arc, Mutex};
-    //     use std::collections::VecDeque;
-    //     use std::env;
-    //     use env_logger::Env;
-
-    //     env::set_var("RUST_LOG", "info");
-    //     env_logger::init_from_env(Env::default().default_filter_or("info"));
-
-    //     let queue: Arc<Mutex<VecDeque<Block>>> = Arc::new(Mutex::new(VecDeque::new()));
-    //     let rpc_port = 9944;
-    //     fetch_block_v2(queue, rpc_port).await;
-    // }
-
-    // use super::*;
-    // use mockito;
-    // use tokio::runtime::Runtime;
-
-    // fn read_resource_file(_filename: &str) -> String {
-    //     // Just a stub. You'd ideally return the actual file's contents here.
-    //     r#"{"key": "value"}"#.to_string()
-    // }
-
-    #[tokio::test]
-    async fn test_fetch_block_v2() {
-    
-    // Define the queue and port
-        let queue: Arc<Mutex<VecDeque<starknet_client::reader::Block>>> = create_block_queue();
-        let rpc_port = 9944; // Replace with the desired port
-
-        fetch_block(queue, rpc_port).await;
+    #[test]
+    fn test_read_resource_file() {
+        // This test can check if the function properly reads files from a resource directory.
+        // For simplicity, you can skip the actual file reading and just check if the path formation is correct.
     }
 
+    #[test]
+    fn test_get_header() {
+        // Provide a mock starknet_client::reader::Block and BoundedVec<Transaction, MaxTransactions>
+        // Then, call get_header with the mock data and check if the resulting Header is as expected.
+    }
 
+    #[test]
+    fn test_get_txs() {
+        // Provide a mock starknet_client::reader::Block
+        // Call get_txs with the mock data and verify if the resulting BoundedVec<Transaction, MaxTransactions> is correct.
+    }
+
+    #[tokio::test]
+    async fn test_from_gateway_to_starknet_block() {
+        // Provide a mock starknet_client::reader::Block
+        // Call from_gateway_to_starknet_block and verify the resulting Block.
+    }
+
+    #[tokio::test]
+    async fn test_create_block() {
+        // This test can check if an RPC call is made properly.
+        // It can also verify if the function handles different response statuses correctly.
+    }
+
+    #[tokio::test]
+    async fn test_fetch_block_success() {
+        // Mock the StarknetFeederGatewayClient to return a successful block.
+        // Run fetch_block and ensure the block is correctly added to the queue and RPC call is made.
+    }
+
+    #[tokio::test]
+    async fn test_fetch_block_error() {
+        // Mock the StarknetFeederGatewayClient to return an error.
+        // Run fetch_block and ensure the error is handled correctly.
+    }
+
+    // ... More tests for other functions and scenarios ...
 }

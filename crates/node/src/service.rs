@@ -13,15 +13,9 @@ use mc_block_proposer::ProposerFactory;
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
 use mc_transaction_pool::FullPool;
-use mp_starknet::block::{Block as StarknetBlock };
 use mp_starknet::sequencer_address::{
     InherentDataProvider as SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
 };
-use starknet_api::block::{BlockHash, BlockNumber, GasPrice, BlockStatus, BlockTimestamp};
-use starknet_api::core::{ContractAddress, GlobalRoot};
-use starknet_api::hash::StarkHash;
-use starknet_api::serde_utils::{BytesAsHex, PrefixedBytesAsHex};
-use starknet_api::transaction::{Transaction, TransactionHash, TransactionOutput, TransactionReceipt};
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use prometheus_endpoint::Registry;
 use sc_client_api::{Backend, BlockBackend, BlockchainEvents, HeaderBackend};
@@ -43,10 +37,7 @@ use sp_trie::PrefixedMemoryDB;
 use sp_inherents::InherentData;
 
 use lazy_static::lazy_static;
-// Deoxys
 use mc_deoxys::{fetch_block, BlockQueue, create_block_queue};
-use starknet_core::serde;
-use tokio::time::sleep;
 
 use crate::cli::Sealing;
 use crate::genesis_block::MadaraGenesisBlockBuilder;
@@ -54,14 +45,6 @@ use crate::rpc::StarknetDeps;
 use crate::starknet::{db_config_dir, MadaraBackend};
 // Our native executor instance.
 pub struct ExecutorDispatch;
-
-use mockito::mock;
-use std::env;
-use std::fs::read_to_string;
-use std::path::Path;
-use std::string::String;
-use std::io;
-const BLOCK_NUMBER_QUERY: &str = "blockNumber";
 
 impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
     /// Only enable the benchmarking host functions when we actually want to benchmark.

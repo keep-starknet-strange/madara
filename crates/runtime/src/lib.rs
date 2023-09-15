@@ -298,6 +298,10 @@ impl_runtime_apis! {
                     let tx = DeployAccountTransaction::try_from(transaction).map_err(|_| DispatchError::Other("failed to convert transaction to DeployAccountTransaction"))?;
                     pallet_starknet::Call::deploy_account{transaction: tx}
                 },
+                TxType::Deploy => {
+                    let tx = DeployAccountTransaction::try_from(transaction).map_err(|_| DispatchError::Other("failed to convert transaction to DeployAccountTransaction"))?;
+                    pallet_starknet::Call::deploy_account{transaction: tx}
+                },
                 TxType::Invoke => {
                     let tx = InvokeTransaction::try_from(transaction).map_err(|_| DispatchError::Other("failed to convert transaction to InvokeTransaction"))?;
                     pallet_starknet::Call::invoke{transaction: tx}
