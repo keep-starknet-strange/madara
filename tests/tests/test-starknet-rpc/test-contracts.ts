@@ -15,10 +15,10 @@ import {
   ACCOUNT_CONTRACT,
   ACCOUNT_CONTRACT_CLASS_HASH,
   ERC20_CONTRACT,
-  ERC_20_CONTRACT_CLASS_HASH,
   TEST_CONTRACT,
   TEST_CONTRACT_ADDRESS,
   TEST_CONTRACT_CLASS_HASH,
+  TOKEN_CLASS_HASH,
 } from "../constants";
 
 function atobUniversal(a: string): Uint8Array {
@@ -131,9 +131,9 @@ describeDevMadara("Starknet RPC - Contracts Test", (context) => {
   });
 
   describe("getClass", async () => {
-    it("should return ERC_20 contract at class 0x077cc28ed3c661419fda16bf120fb81f1f8f28617f5543b05a86d63b0926bbf4", async function () {
+    it("should return ERC_20 contract at class 0x10000", async function () {
       const contract_class = (await providerRPC.getClass(
-        ERC_20_CONTRACT_CLASS_HASH,
+        TOKEN_CLASS_HASH,
         "latest"
       )) as LegacyContractClass;
       // https://github.com/keep-starknet-strange/madara/issues/652
