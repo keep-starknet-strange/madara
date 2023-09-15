@@ -56,7 +56,7 @@ async function benchmarkMethod(method: string, params: any[]): Promise<string> {
 async function checkDifferencesInBlocks() {
     const blocksWithDifferences: number[] = [];
 
-    for (let blockNumber = 100; blockNumber < END_BLOCK; blockNumber++) {
+    for (let blockNumber = START_BLOCK; blockNumber < END_BLOCK; blockNumber++) {
         const differences = await benchmarkMethod('starknet_getClassAt', [
 			{
 				"block_number": blockNumber

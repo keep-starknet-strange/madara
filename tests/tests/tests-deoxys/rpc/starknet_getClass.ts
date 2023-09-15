@@ -8,7 +8,7 @@ const LOCAL_RPC_URL = process.env.LOCAL_RPC;
 const LATEST = 'latest';
 const BLOCK_NUMBER = 2001;
 const START_BLOCK = 0;
-const END_BLOCK = 2050;
+const END_BLOCK = 900;
 
 const requestDataForMethod = (method: string, params: any[]) => ({
     id: 1,
@@ -56,7 +56,7 @@ async function benchmarkMethod(method: string, params: any[]): Promise<string> {
 async function checkDifferencesInBlocks() {
     const blocksWithDifferences: number[] = [];
 
-    for (let blockNumber = 1950; blockNumber < END_BLOCK; blockNumber++) {
+    for (let blockNumber = START_BLOCK; blockNumber < END_BLOCK; blockNumber++) {
         const differences = await benchmarkMethod('starknet_getClass', [
 			{
 				"block_number": blockNumber
