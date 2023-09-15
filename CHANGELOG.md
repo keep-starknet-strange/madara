@@ -3,6 +3,7 @@
 ## Next release
 
 - chore: add real class hash values for genesis config
+- feat: unification of the DA interface
 - feat: use resolver 2 for cargo in the workspace
 - upgrade: restructure code for rust latest version
 - upgrade: bump rustc nightly version to 1.74 date
@@ -14,6 +15,7 @@
 - ci: scope cache by branch and add cache cleanup
 - feat: print development accounts at node startup
 - test: add test to check tx signed by OZ account can be signed with Argent pk
+- buid: add rust-analyzer to toolchain components
 
 ## v0.2.0
 

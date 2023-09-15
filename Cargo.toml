@@ -122,6 +122,7 @@ mc-rpc = { path = "crates/client/rpc" }
 mc-rpc-core = { path = "crates/client/rpc-core" }
 mc-block-proposer = { path = "crates/client/block-proposer" }
 mc-transaction-pool = { path = "crates/client/transaction-pool" }
+mc-data-availability = { path = "crates/client/data-availability" }
 
 # Madara runtime
 madara-runtime = { path = "crates/runtime" }
@@ -165,7 +166,7 @@ futures = { version = "0.3.28", default-features = false }
 futures-timer = { version = "3.0.2", default-features = false }
 reqwest = { version = "0.11.20", default-features = false }
 serde = { version = "1.0.188", default-features = false }
-serde_json = { version = "1.0.105", default-features = false }
+serde_json = { version = "1.0.106", default-features = false }
 serde_with = { version = "2.3.3", default-features = false }
 bitvec = { version = "1", default-features = false }
 thiserror = "1.0.48"
