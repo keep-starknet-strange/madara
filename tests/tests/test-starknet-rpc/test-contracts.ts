@@ -15,10 +15,10 @@ import {
   ACCOUNT_CONTRACT,
   ACCOUNT_CONTRACT_CLASS_HASH,
   ERC20_CONTRACT,
+  ERC_20_CONTRACT_CLASS_HASH,
   TEST_CONTRACT,
   TEST_CONTRACT_ADDRESS,
   TEST_CONTRACT_CLASS_HASH,
-  TOKEN_CLASS_HASH,
 } from "../constants";
 
 function atobUniversal(a: string): Uint8Array {
@@ -52,7 +52,7 @@ describeDevMadara("Starknet RPC - Contracts Test", (context) => {
           entrypoint: "return_result",
           calldata: ["0x19"],
         },
-        "latest",
+        "latest"
       );
 
       expect(call.result).to.contain("0x19");
@@ -65,7 +65,7 @@ describeDevMadara("Starknet RPC - Contracts Test", (context) => {
           entrypoint: "return_result_WRONG",
           calldata: ["0x19"],
         },
-        "latest",
+        "latest"
       );
       await expect(callResult)
         .to.eventually.be.rejectedWith("40: Contract error")
@@ -77,12 +77,12 @@ describeDevMadara("Starknet RPC - Contracts Test", (context) => {
     it("should not be undefined", async function () {
       const contract_class = await providerRPC.getClassAt(
         TEST_CONTRACT_ADDRESS,
-        "latest",
+        "latest"
       );
 
       expect(contract_class).to.not.be.undefined;
       expect(contract_class.entry_points_by_type).to.deep.equal(
-        TEST_CONTRACT.entry_points_by_type,
+        TEST_CONTRACT.entry_points_by_type
       );
     });
   });
@@ -91,22 +91,22 @@ describeDevMadara("Starknet RPC - Contracts Test", (context) => {
     it("should return correct class hashes for account and test contract", async function () {
       const account_contract_class_hash = await providerRPC.getClassHashAt(
         ACCOUNT_CONTRACT,
-        "latest",
+        "latest"
       );
 
       expect(account_contract_class_hash).to.not.be.undefined;
       expect(validateAndParseAddress(account_contract_class_hash)).to.be.equal(
-        ACCOUNT_CONTRACT_CLASS_HASH,
+        ACCOUNT_CONTRACT_CLASS_HASH
       );
 
       const test_contract_class_hash = await providerRPC.getClassHashAt(
         TEST_CONTRACT_ADDRESS,
-        "latest",
+        "latest"
       );
 
       expect(test_contract_class_hash).to.not.be.undefined;
       expect(validateAndParseAddress(test_contract_class_hash)).to.be.equal(
-        TEST_CONTRACT_CLASS_HASH,
+        TEST_CONTRACT_CLASS_HASH
       );
     });
 
@@ -114,7 +114,7 @@ describeDevMadara("Starknet RPC - Contracts Test", (context) => {
       // Invalid block id
       const classHash = providerRPC.getClassHashAt(
         TEST_CONTRACT_ADDRESS,
-        "0x123",
+        "0x123"
       );
       await expect(classHash)
         .to.eventually.be.rejectedWith("24: Block not found")
@@ -133,13 +133,13 @@ describeDevMadara("Starknet RPC - Contracts Test", (context) => {
   describe("getClass", async () => {
     it("should return ERC_20 contract at class 0x077cc28ed3c661419fda16bf120fb81f1f8f28617f5543b05a86d63b0926bbf4", async function () {
       const contract_class = (await providerRPC.getClass(
-        TOKEN_CLASS_HASH,
-        "latest",
+        ERC_20_CONTRACT_CLASS_HASH,
+        "latest"
       )) as LegacyContractClass;
       // https://github.com/keep-starknet-strange/madara/issues/652
       // TODO: Compare program as well
       expect(contract_class.entry_points_by_type).to.deep.equal(
-        ERC20_CONTRACT.entry_points_by_type,
+        ERC20_CONTRACT.entry_points_by_type
       );
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const program = json.parse(decompressProgram(contract_class.program));
