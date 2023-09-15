@@ -131,7 +131,7 @@ describeDevMadara("Starknet RPC - Contracts Test", (context) => {
   });
 
   describe("getClass", async () => {
-    it("should return ERC_20 contract at class 0x10000", async function () {
+    it("should return ERC_20 contract at class 0x077cc28ed3c661419fda16bf120fb81f1f8f28617f5543b05a86d63b0926bbf4", async function () {
       const contract_class = (await providerRPC.getClass(
         TOKEN_CLASS_HASH,
         "latest",
