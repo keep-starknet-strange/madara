@@ -16,6 +16,7 @@
 - feat: print development accounts at node startup
 - test: add test to check tx signed by OZ account can be signed with Argent pk
 - buid: add rust-analyzer to toolchain components
+- ci: increase threshold for codecov to 1%
 
 ## v0.2.0
 
