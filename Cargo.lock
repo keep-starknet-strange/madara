@@ -1918,9 +1918,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.4.2"
+version = "4.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a13b88d2c62ff462f88e4a121f17a82c1af05693a2f192b5c38d14de73c19f6"
+checksum = "84ed82781cea27b43c9b106a979fe450a13a31aab0500595fb3fc06616de08e6"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -3753,7 +3753,7 @@ dependencies = [
  "Inflector",
  "array-bytes 4.2.0",
  "chrono",
- "clap 4.4.2",
+ "clap 4.4.3",
  "comfy-table",
  "frame-benchmarking",
  "frame-support",
@@ -6054,7 +6054,7 @@ version = "0.2.0"
 dependencies = [
  "async-trait",
  "blockifier",
- "clap 4.4.2",
+ "clap 4.4.3",
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "frame-system",
@@ -6229,7 +6229,7 @@ dependencies = [
  "avail-subxt",
  "celestia-rpc",
  "celestia-types",
- "clap 4.4.2",
+ "clap 4.4.3",
  "ethers",
  "futures",
  "jsonrpsee 0.20.0",
@@ -6308,7 +6308,7 @@ dependencies = [
  "mp-starknet",
  "pallet-starknet",
  "pretty_assertions",
- "rstest",
+ "rstest 0.17.0",
  "sc-client-api",
  "sc-network-sync",
  "sc-transaction-pool-api",
@@ -8234,7 +8234,7 @@ checksum = "30d3e647e9eb04ddfef78dfee2d5b3fefdf94821c84b710a3d8ebc89ede8b164"
 dependencies = [
  "bytes",
  "heck 0.4.1",
- "itertools 0.10.5",
+ "itertools 0.11.0",
  "log",
  "multimap",
  "once_cell",
@@ -8268,7 +8268,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56075c27b20ae524d00f247b8a4dc333e5784f889fe63099f8e626bc8d73486c"
 dependencies = [
  "anyhow",
- "itertools 0.10.5",
+ "itertools 0.11.0",
  "proc-macro2",
  "quote",
  "syn 2.0.28",
@@ -8774,7 +8774,19 @@ checksum = "de1bb486a691878cd320c2f0d319ba91eeaa2e894066d8b5f8f117c000e9d962"
 dependencies = [
  "futures",
  "futures-timer",
- "rstest_macros",
+ "rstest_macros 0.17.0",
+ "rustc_version 0.4.0",
+]
+
+[[package]]
+name = "rstest"
+version = "0.18.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b96577ca10cb3eade7b337eb46520108a67ca2818a24d0b63f41fd62bc9651c"
+dependencies = [
+ "futures",
+ "futures-timer",
+ "rstest_macros 0.18.1",
  "rustc_version 0.4.0",
 ]
 
@@ -8789,6 +8801,23 @@ dependencies = [
  "quote",
  "rustc_version 0.4.0",
  "syn 1.0.109",
+ "unicode-ident",
+]
+
+[[package]]
+name = "rstest_macros"
+version = "0.18.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "225e674cf31712b8bb15fdbca3ec0c1b9d825c5a24407ff2b7e005fb6a29ba03"
+dependencies = [
+ "cfg-if",
+ "glob",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "relative-path",
+ "rustc_version 0.4.0",
+ "syn 2.0.28",
  "unicode-ident",
 ]
 
@@ -9177,7 +9206,7 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#5e
 dependencies = [
  "array-bytes 4.2.0",
  "chrono",
- "clap 4.4.2",
+ "clap 4.4.3",
  "fdlimit",
  "futures",
  "libp2p-identity 0.1.2",
@@ -9966,7 +9995,7 @@ name = "sc-storage-monitor"
 version = "0.1.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#5e49f6e44820affccaf517fd22af564f4b495d40"
 dependencies = [
- "clap 4.4.2",
+ "clap 4.4.3",
  "fs4",
  "futures",
  "log",
@@ -10555,6 +10584,7 @@ dependencies = [
  "base64 0.13.1",
  "chrono",
  "hex",
+ "indexmap 1.9.3",
  "serde",
  "serde_json",
  "serde_with_macros",
@@ -11928,6 +11958,35 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 
 [[package]]
+name = "starknet-accounts"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "68e97edc480348dca300e5a8234e6c4e6f2f1ac028f2b16fcce294ebe93d07f4"
+dependencies = [
+ "async-trait",
+ "auto_impl",
+ "starknet-core",
+ "starknet-providers",
+ "starknet-signers",
+ "thiserror",
+]
+
+[[package]]
+name = "starknet-contract"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "69b86e3f6b3ca9a5c45271ab10871c99f7dc82fee3199d9f8c7baa2a1829947d"
+dependencies = [
+ "serde",
+ "serde_json",
+ "serde_with",
+ "starknet-accounts",
+ "starknet-core",
+ "starknet-providers",
+ "thiserror",
+]
+
+[[package]]
 name = "starknet-core"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12026,6 +12085,67 @@ dependencies = [
  "getrandom 0.2.10",
  "hex",
  "serde",
+]
+
+[[package]]
+name = "starknet-providers"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c3b136c26b72ff1756f0844e0aa80bab680ceb99d63921826facbb8e7340ff82"
+dependencies = [
+ "async-trait",
+ "auto_impl",
+ "ethereum-types",
+ "flate2",
+ "log",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "starknet-core",
+ "thiserror",
+ "url",
+]
+
+[[package]]
+name = "starknet-rpc-test"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "assert_matches",
+ "derive_more",
+ "flate2",
+ "lazy_static",
+ "reqwest",
+ "rstest 0.18.1",
+ "serde",
+ "serde_json",
+ "starknet-accounts",
+ "starknet-contract",
+ "starknet-core",
+ "starknet-crypto 0.6.0",
+ "starknet-ff",
+ "starknet-providers",
+ "starknet-signers",
+ "thiserror",
+ "tokio",
+ "url",
+]
+
+[[package]]
+name = "starknet-signers"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9386015d2e6dc3df285bfb33a3afd8ad7596c70ed38ab57019de4d2dfc7826f"
+dependencies = [
+ "async-trait",
+ "auto_impl",
+ "crypto-bigint 0.5.2",
+ "eth-keystore",
+ "rand 0.8.5",
+ "starknet-core",
+ "starknet-crypto 0.6.0",
+ "thiserror",
 ]
 
 [[package]]
@@ -13229,7 +13349,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#5e49f6e44820affccaf517fd22af564f4b495d40"
 dependencies = [
  "async-trait",
- "clap 4.4.2",
+ "clap 4.4.3",
  "frame-remote-externalities",
  "frame-try-runtime",
  "hex",
