@@ -1,0 +1,57 @@
+name: Benchmarks - Gomu Gomu no Gatling
+
+on:
+    workflow_dispatch:
+    pull_request:
+      branches: [main]
+  
+      
+jobs:
+  benchmark_job:
+    runs-on: [self-hosted, linux, benchmark]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run Gomu Gomu no Gatling Action
+        uses: keep-starknet-strange/gomu-gomu-no-gatling@main  
+        with:
+          config_path: 'config.yml'  
+
+        # config template
+        #
+        # rpc:
+        #     url: "http://localhost:9944"
+          
+        #   setup:
+        #     erc20_contract:
+        #       v1:
+        #         path: contracts/v2.1.0/openzeppelin_ERC20.sierra.json
+        #         casm_path: contracts/v2.1.0/openzeppelin_ERC20.casm.json
+          
+        #     erc721_contract:
+        #       v1:
+        #         path: contracts/v2.1.0/openzeppelin_ERC721.sierra.json
+        #         casm_path: contracts/v2.1.0/openzeppelin_ERC721.casm.json
+          
+        #     account_contract:
+        #       v1:
+        #         path: contracts/v2.1.0/openzeppelin_Account.sierra.json
+        #         casm_path: contracts/v2.1.0/openzeppelin_Account.casm.json
+          
+        #     fee_token_address: "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"
+        #     num_accounts: 3
+          
+        #   run:
+        #     num_erc20_transfers: 5
+        #     num_erc721_mints: 5
+          
+        #   report:
+        #     num_blocks: 3
+        #     reports_dir: "reports"
+          
+        #   deployer:
+        #     salt: 1
+        #     address: "0x0000000000000000000000000000000000000000000000000000000000000002"
+        #     signing_key: "0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d"
+          
