@@ -56,7 +56,6 @@ impl SubstrateCli for Cli {
 }
 
 fn set_dev_environment(cli: &mut Cli) {
-    println!("Setting up dev environment");
     // create a reproducible dev environment
     cli.run.run_cmd.shared_params.dev = false;
     cli.run.run_cmd.shared_params.chain = Some("dev".to_string());
