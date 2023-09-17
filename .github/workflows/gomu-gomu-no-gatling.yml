@@ -1,4 +1,4 @@
-name: Benchmarks - Gomu Gomu no Gatling
+name: Workflow - Pull Request / Gomu Gomu no Gatling
 
 on:
     workflow_dispatch:
