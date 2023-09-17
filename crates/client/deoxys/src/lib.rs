@@ -148,12 +148,6 @@ async fn create_block(rpc_port: u16) -> Result<reqwest::StatusCode, reqwest::Err
         .json(&payload)
         .send().await?;
 
-    if response.status().is_success() {
-        println!("RPC call succeeded.");
-    } else {
-        println!("RPC call failed with status: {}", response.status());
-    }
-
     Ok(response.status())
 }
 
@@ -221,11 +215,10 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
         match block {
             Ok(block) => {
                 let starknet_block = from_gateway_to_starknet_block(block.unwrap());
-                // Lock the mutex, push to the queue, and then immediately unlock
                 {
                     let mut queue_guard: std::sync::MutexGuard<'_, VecDeque<Block>> = queue.lock().unwrap();
                     queue_guard.push_back(starknet_block);
-                } // MutexGuard is dropped here
+                }
                 match create_block(rpc_port).await {
                     Ok(status) => {
                         if status.is_success() {
@@ -235,7 +228,6 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
                     },
                     Err(e) => {
                         eprintln!("Error processing RPC call: {:?}", e);
-                        // You could also add a delay here if needed
                     }
                 }
             },

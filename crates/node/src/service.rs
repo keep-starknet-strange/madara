@@ -574,11 +574,8 @@ where
 		type Proof = ();
 
 		fn create_digest(&self, _parent: &B::Header, _inherents: &InherentData) -> Result<Digest, Error> {
-            println!("create_digest");
             let mut queue_guard = QUEUE.lock().unwrap();
             let starknet_block: mp_starknet::block::Block = queue_guard.pop_front().unwrap();
-            // println!("Synced block {:?}", starknet_block);
-            // println!("Synced block {:?}", starknet_block.header().block_number);
 
             let block_digest_item: DigestItem = sp_runtime::DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID, Encode::encode(&starknet_block));
             Ok(Digest { logs: vec![block_digest_item] })

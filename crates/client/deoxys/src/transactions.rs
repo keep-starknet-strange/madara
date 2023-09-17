@@ -157,7 +157,7 @@ pub fn deploy_tx_to_starknet_tx(deploy_transaction : DeployTransaction) -> Trans
     }
 }
 
-pub fn deploy_account_tx_to_starknet_tx(mut deploy_account_transaction : DeployAccountTransaction) -> Transaction {
+pub fn deploy_account_tx_to_starknet_tx(deploy_account_transaction : DeployAccountTransaction) -> Transaction {
     let mut signature_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
     for item in &deploy_account_transaction.signature.0 {
         match signature_vec.try_push(Felt252Wrapper::try_from(item.bytes()).unwrap()) {
@@ -207,7 +207,7 @@ pub fn deploy_account_tx_to_starknet_tx(mut deploy_account_transaction : DeployA
     }
 }
 
-pub fn l1handler_tx_to_starknet_tx(mut l1handler_transaction : L1HandlerTransaction) -> Transaction {
+pub fn l1handler_tx_to_starknet_tx(l1handler_transaction : L1HandlerTransaction) -> Transaction {
     let mut signature_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
     // for item in &l1handler_transaction.signature.0 {
     //     match signature_vec.try_push(Felt252Wrapper::try_from(item.bytes()).unwrap()) {
