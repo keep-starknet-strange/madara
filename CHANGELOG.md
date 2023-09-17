@@ -5,6 +5,7 @@
 - ci: disable pr close workflow
 - ci: add ci verification for detecting genesis changes and config hashes
 - feat: better management of custom configurations for genesis assets
+- chore: add real class hash values for genesis config
 - feat: unification of the DA interface
 - feat: use resolver 2 for cargo in the workspace
 - upgrade: restructure code for rust latest version
@@ -18,6 +19,7 @@
 - feat: print development accounts at node startup
 - test: add test to check tx signed by OZ account can be signed with Argent pk
 - buid: add rust-analyzer to toolchain components
+- ci: increase threshold for codecov to 1%
 
 ## v0.2.0
 
