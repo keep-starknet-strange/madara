@@ -39,6 +39,10 @@ type TransactionExecution<'a> = Execution<'a, RpcAccount<'a>>;
 type TransactionDeclaration<'a> = Declaration<'a, RpcAccount<'a>>;
 type TransactionLegacyDeclaration<'a> = LegacyDeclaration<'a, RpcAccount<'a>>;
 type TransactionAccountDeployment<'a> = AccountDeployment<'a, RpcOzAccountFactory<'a>>;
+type StarknetAccountError = AccountError<
+    <SingleOwnerAccount<JsonRpcClient<HttpTransport>, LocalWallet> as Account>::SignError,
+    <JsonRpcClient<HttpTransport> as Provider>::Error,
+>;
 
 pub enum Transaction<'a> {
     Execution(TransactionExecution<'a>),
@@ -57,12 +61,7 @@ pub enum TransactionResult {
 #[derive(thiserror::Error, Debug)]
 pub enum SendTransactionError {
     #[error(transparent)]
-    AccountError(
-        AccountError<
-            <SingleOwnerAccount<JsonRpcClient<HttpTransport>, LocalWallet> as Account>::SignError,
-            <JsonRpcClient<HttpTransport> as Provider>::Error,
-        >,
-    ),
+    AccountError(StarknetAccountError),
     #[error(transparent)]
     AccountFactoryError(AccountFactoryError<SignError, JsonRpcClientError<HttpTransportError>>),
 }

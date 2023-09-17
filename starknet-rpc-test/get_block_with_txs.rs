@@ -7,8 +7,8 @@ use std::assert_matches::assert_matches;
 use anyhow::anyhow;
 use rstest::rstest;
 use starknet_core::types::{
-    BlockId, BlockStatus, BlockTag, BlockWithTxs, DeclareTransaction, DeclareTransactionV1, DeclareTransactionV2,
-    DeployAccountTransaction, InvokeTransaction, InvokeTransactionV1, MaybePendingBlockWithTxs, StarknetError,
+    BlockId, BlockStatus, BlockTag, BlockWithTxs, DeclareTransaction, DeclareTransactionV2, DeployAccountTransaction,
+    InvokeTransaction, InvokeTransactionV1, MaybePendingBlockWithTxs, StarknetError,
     Transaction as StarknetTransaction,
 };
 use starknet_core::utils::get_selector_from_name;

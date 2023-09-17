@@ -41,8 +41,8 @@ pub fn create_account<'a>(
     SingleOwnerAccount::new(rpc, signer, account_address, chain_id::TESTNET, execution_encoding)
 }
 
-pub async fn read_erc20_balance<'a>(
-    rpc: &'a JsonRpcClient<HttpTransport>,
+pub async fn read_erc20_balance(
+    rpc: &JsonRpcClient<HttpTransport>,
     contract_address: FieldElement,
     account_address: FieldElement,
 ) -> Vec<FieldElement> {
@@ -175,7 +175,7 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
 // hence, we compare each field separately
 pub fn assert_equal_blocks_with_tx_hashes(b1: BlockWithTxHashes, b2: BlockWithTxHashes) {
     assert_eq!(b1.transactions, b2.transactions);
-    assert_eq!(b1.status, b1.status);
+    assert_eq!(b1.status, b2.status);
     assert_eq!(b1.block_hash, b2.block_hash);
     assert_eq!(b1.parent_hash, b2.parent_hash);
     assert_eq!(b1.block_number, b2.block_number);
@@ -184,7 +184,7 @@ pub fn assert_equal_blocks_with_tx_hashes(b1: BlockWithTxHashes, b2: BlockWithTx
 }
 
 pub fn assert_equal_blocks_with_txs(b1: BlockWithTxs, b2: BlockWithTxs) {
-    assert_eq!(b1.status, b1.status);
+    assert_eq!(b1.status, b2.status);
     assert_eq!(b1.block_hash, b2.block_hash);
     assert_eq!(b1.parent_hash, b2.parent_hash);
     assert_eq!(b1.block_number, b2.block_number);
