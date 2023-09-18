@@ -284,113 +284,18 @@
 <a href="#284" id="284">284</a>
 <a href="#285" id="285">285</a>
 <a href="#286" id="286">286</a>
-<a href="#287" id="287">287</a>
-<a href="#288" id="288">288</a>
-<a href="#289" id="289">289</a>
-<a href="#290" id="290">290</a>
-<a href="#291" id="291">291</a>
-<a href="#292" id="292">292</a>
-<a href="#293" id="293">293</a>
-<a href="#294" id="294">294</a>
-<a href="#295" id="295">295</a>
-<a href="#296" id="296">296</a>
-<a href="#297" id="297">297</a>
-<a href="#298" id="298">298</a>
-<a href="#299" id="299">299</a>
-<a href="#300" id="300">300</a>
-<a href="#301" id="301">301</a>
-<a href="#302" id="302">302</a>
-<a href="#303" id="303">303</a>
-<a href="#304" id="304">304</a>
-<a href="#305" id="305">305</a>
-<a href="#306" id="306">306</a>
-<a href="#307" id="307">307</a>
-<a href="#308" id="308">308</a>
-<a href="#309" id="309">309</a>
-<a href="#310" id="310">310</a>
-<a href="#311" id="311">311</a>
-<a href="#312" id="312">312</a>
-<a href="#313" id="313">313</a>
-<a href="#314" id="314">314</a>
-<a href="#315" id="315">315</a>
-<a href="#316" id="316">316</a>
-<a href="#317" id="317">317</a>
-<a href="#318" id="318">318</a>
-<a href="#319" id="319">319</a>
-<a href="#320" id="320">320</a>
-<a href="#321" id="321">321</a>
-<a href="#322" id="322">322</a>
-<a href="#323" id="323">323</a>
-<a href="#324" id="324">324</a>
-<a href="#325" id="325">325</a>
-<a href="#326" id="326">326</a>
-<a href="#327" id="327">327</a>
-<a href="#328" id="328">328</a>
-<a href="#329" id="329">329</a>
-<a href="#330" id="330">330</a>
-<a href="#331" id="331">331</a>
-<a href="#332" id="332">332</a>
-<a href="#333" id="333">333</a>
-<a href="#334" id="334">334</a>
-<a href="#335" id="335">335</a>
-<a href="#336" id="336">336</a>
-<a href="#337" id="337">337</a>
-<a href="#338" id="338">338</a>
-<a href="#339" id="339">339</a>
-<a href="#340" id="340">340</a>
-<a href="#341" id="341">341</a>
-<a href="#342" id="342">342</a>
-<a href="#343" id="343">343</a>
-<a href="#344" id="344">344</a>
-<a href="#345" id="345">345</a>
-<a href="#346" id="346">346</a>
-<a href="#347" id="347">347</a>
-<a href="#348" id="348">348</a>
-<a href="#349" id="349">349</a>
-<a href="#350" id="350">350</a>
-<a href="#351" id="351">351</a>
-<a href="#352" id="352">352</a>
-<a href="#353" id="353">353</a>
-<a href="#354" id="354">354</a>
-<a href="#355" id="355">355</a>
-<a href="#356" id="356">356</a>
-<a href="#357" id="357">357</a>
-<a href="#358" id="358">358</a>
-<a href="#359" id="359">359</a>
-<a href="#360" id="360">360</a>
-<a href="#361" id="361">361</a>
-<a href="#362" id="362">362</a>
-<a href="#363" id="363">363</a>
-<a href="#364" id="364">364</a>
-<a href="#365" id="365">365</a>
-<a href="#366" id="366">366</a>
-<a href="#367" id="367">367</a>
-<a href="#368" id="368">368</a>
-<a href="#369" id="369">369</a>
-<a href="#370" id="370">370</a>
-<a href="#371" id="371">371</a>
-<a href="#372" id="372">372</a>
-<a href="#373" id="373">373</a>
-<a href="#374" id="374">374</a>
-<a href="#375" id="375">375</a>
-<a href="#376" id="376">376</a>
-<a href="#377" id="377">377</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>alloc::vec;
-<span class="kw">use </span>alloc::vec::Vec;
+</pre></div><pre class="rust"><code><span class="kw">use </span>alloc::vec::Vec;
 
 <span class="kw">use </span>bitvec::vec::BitVec;
-<span class="kw">use </span>starknet_api::transaction::TransactionVersion;
+<span class="kw">use </span>starknet_api::transaction::Event;
 <span class="kw">use </span>starknet_crypto::FieldElement;
 
-<span class="kw">use </span><span class="kw">super</span>::hash::pedersen::PedersenHasher;
 <span class="kw">use </span><span class="kw">super</span>::merkle_patricia_tree::merkle_tree::{MerkleTree, NodesMapping, ProofNode};
 <span class="kw">use </span><span class="kw">super</span>::merkle_patricia_tree::ref_merkle_tree::RefMerkleTree;
 <span class="kw">use </span><span class="kw">crate</span>::execution::types::Felt252Wrapper;
 <span class="kw">use </span><span class="kw">crate</span>::traits::hash::HasherT;
-<span class="kw">use </span><span class="kw">crate</span>::transaction::types::{
-    DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction,
-};
-<span class="kw">use </span><span class="kw">crate</span>::transaction::utils::calculate_transaction_version_from_u8;
+<span class="kw">use </span><span class="kw">crate</span>::transaction::compute_hash::ComputeTransactionHash;
+<span class="kw">use </span><span class="kw">crate</span>::transaction::Transaction;
 
 <span class="doccomment">/// Hash of the leaf of the ClassCommitment tree
 </span><span class="kw">pub type </span>ClassCommitmentLeafHash = Felt252Wrapper;
@@ -402,17 +307,17 @@
 /// of the index of the transaction / event within the block.
 ///
 /// The tree height is 64 in our case since our set operation takes u64 index values.
-</span><span class="kw">struct </span>CommitmentTree&lt;T: HasherT&gt; {
-    tree: RefMerkleTree&lt;T&gt;,
+</span><span class="kw">struct </span>CommitmentTree&lt;H: HasherT&gt; {
+    tree: RefMerkleTree&lt;H&gt;,
 }
 
-<span class="kw">impl</span>&lt;T: HasherT&gt; Default <span class="kw">for </span>CommitmentTree&lt;T&gt; {
+<span class="kw">impl</span>&lt;H: HasherT&gt; Default <span class="kw">for </span>CommitmentTree&lt;H&gt; {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ tree: RefMerkleTree::empty() }
     }
 }
 
-<span class="kw">impl</span>&lt;T: HasherT&gt; CommitmentTree&lt;T&gt; {
+<span class="kw">impl</span>&lt;H: HasherT&gt; CommitmentTree&lt;H&gt; {
     <span class="doccomment">/// Sets the value of a key in the merkle tree.
     ///
     /// # Arguments
@@ -436,18 +341,20 @@
 /// the commitment trees are of height 251, because the key used is a Field Element.
 ///
 /// The tree height is 251 in our case since our set operation takes Fieldelement index values.
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
-</span><span class="kw">pub struct </span>StateCommitmentTree&lt;T: HasherT&gt; {
-    tree: MerkleTree&lt;T&gt;,
+</span><span class="attr">#[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
+</span><span class="kw">pub struct </span>StateCommitmentTree&lt;H: HasherT&gt; {
+    tree: MerkleTree&lt;H&gt;,
 }
 
-<span class="kw">impl</span>&lt;T: HasherT&gt; Default <span class="kw">for </span>StateCommitmentTree&lt;T&gt; {
+<span class="kw">impl</span>&lt;H: HasherT&gt; Default <span class="kw">for </span>StateCommitmentTree&lt;H&gt; {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ tree: MerkleTree::empty() }
     }
 }
 
-<span class="kw">impl</span>&lt;T: HasherT&gt; StateCommitmentTree&lt;T&gt; {
+<span class="kw">impl</span>&lt;H: HasherT&gt; StateCommitmentTree&lt;H&gt; {
     <span class="doccomment">/// Sets the value of a key in the merkle tree.
     ///
     /// # Arguments
@@ -499,11 +406,12 @@
 /// # Returns
 ///
 /// The transaction commitment, the event commitment and the event count.
-</span><span class="kw">pub fn </span>calculate_commitments&lt;T: HasherT&gt;(
+</span><span class="kw">pub fn </span>calculate_commitments&lt;H: HasherT&gt;(
     transactions: <span class="kw-2">&amp;</span>[Transaction],
-    events: <span class="kw-2">&amp;</span>[EventWrapper],
+    events: <span class="kw-2">&amp;</span>[Event],
+    chain_id: Felt252Wrapper,
 ) -&gt; (Felt252Wrapper, Felt252Wrapper) {
-    (calculate_transaction_commitment::&lt;T&gt;(transactions), calculate_event_commitment::&lt;T&gt;(events))
+    (calculate_transaction_commitment::&lt;H&gt;(transactions, chain_id), calculate_event_commitment::&lt;H&gt;(events))
 }
 
 <span class="doccomment">/// Calculate transaction commitment hash value.
@@ -519,12 +427,15 @@
 /// # Returns
 ///
 /// The merkle root of the merkle tree built from the transactions.
-</span><span class="kw">pub fn </span>calculate_transaction_commitment&lt;T: HasherT&gt;(transactions: <span class="kw-2">&amp;</span>[Transaction]) -&gt; Felt252Wrapper {
-    <span class="kw">let </span><span class="kw-2">mut </span>tree = CommitmentTree::&lt;T&gt;::default();
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>calculate_transaction_commitment&lt;H: HasherT&gt;(
+    transactions: <span class="kw-2">&amp;</span>[Transaction],
+    chain_id: Felt252Wrapper,
+) -&gt; Felt252Wrapper {
+    <span class="kw">let </span><span class="kw-2">mut </span>tree = CommitmentTree::&lt;H&gt;::default();
 
     transactions.iter().enumerate().for_each(|(idx, tx)| {
         <span class="kw">let </span>idx: u64 = idx.try_into().expect(<span class="string">&quot;too many transactions while calculating commitment&quot;</span>);
-        <span class="kw">let </span>final_hash = calculate_transaction_hash_with_signature::&lt;T&gt;(tx);
+        <span class="kw">let </span>final_hash = calculate_transaction_hash_with_signature::&lt;H&gt;(tx, chain_id);
         tree.set(idx, final_hash);
     });
     tree.commit()
@@ -544,10 +455,10 @@
 /// # Returns
 ///
 /// The merkle root of the merkle tree built from the transactions and the number of events.
-</span><span class="kw">pub fn </span>calculate_event_commitment&lt;T: HasherT&gt;(events: <span class="kw-2">&amp;</span>[EventWrapper]) -&gt; Felt252Wrapper {
-    <span class="kw">let </span><span class="kw-2">mut </span>tree = CommitmentTree::&lt;T&gt;::default();
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>calculate_event_commitment&lt;H: HasherT&gt;(events: <span class="kw-2">&amp;</span>[Event]) -&gt; Felt252Wrapper {
+    <span class="kw">let </span><span class="kw-2">mut </span>tree = CommitmentTree::&lt;H&gt;::default();
     events.iter().enumerate().for_each(|(id, event)| {
-        <span class="kw">let </span>final_hash = calculate_event_hash::&lt;T&gt;(event);
+        <span class="kw">let </span>final_hash = calculate_event_hash::&lt;H&gt;(event);
         tree.set(id <span class="kw">as </span>u64, final_hash);
     });
     tree.commit()
@@ -564,12 +475,12 @@
 /// # Returns
 ///
 /// The hash of the class commitment tree leaf.
-</span><span class="kw">pub fn </span>calculate_class_commitment_leaf_hash&lt;T: HasherT&gt;(
+</span><span class="kw">pub fn </span>calculate_class_commitment_leaf_hash&lt;H: HasherT&gt;(
     compiled_class_hash: Felt252Wrapper,
 ) -&gt; ClassCommitmentLeafHash {
     <span class="kw">let </span>contract_class_hash_version = Felt252Wrapper::try_from(<span class="string">&quot;CONTRACT_CLASS_LEAF_V0&quot;</span>.as_bytes()).unwrap(); <span class="comment">// Unwrap safu
 
-    </span><span class="kw">let </span>hash = &lt;T&gt;::default().compute_hash_on_elements(<span class="kw-2">&amp;</span>[contract_class_hash_version.<span class="number">0</span>, compiled_class_hash.<span class="number">0</span>]);
+    </span><span class="kw">let </span>hash = H::compute_hash_on_elements(<span class="kw-2">&amp;</span>[contract_class_hash_version.<span class="number">0</span>, compiled_class_hash.<span class="number">0</span>]);
 
     hash.into()
 }
@@ -586,10 +497,10 @@
 /// # Returns
 ///
 /// The merkle root of the merkle tree built from the classes.
-</span><span class="kw">pub fn </span>calculate_class_commitment_tree_root_hash&lt;T: HasherT&gt;(class_hashes: <span class="kw-2">&amp;</span>[Felt252Wrapper]) -&gt; Felt252Wrapper {
-    <span class="kw">let </span><span class="kw-2">mut </span>tree = StateCommitmentTree::&lt;T&gt;::default();
+</span><span class="kw">pub fn </span>calculate_class_commitment_tree_root_hash&lt;H: HasherT&gt;(class_hashes: <span class="kw-2">&amp;</span>[Felt252Wrapper]) -&gt; Felt252Wrapper {
+    <span class="kw">let </span><span class="kw-2">mut </span>tree = StateCommitmentTree::&lt;H&gt;::default();
     class_hashes.iter().for_each(|class_hash| {
-        <span class="kw">let </span>final_hash = calculate_class_commitment_leaf_hash::&lt;T&gt;(<span class="kw-2">*</span>class_hash);
+        <span class="kw">let </span>final_hash = calculate_class_commitment_leaf_hash::&lt;H&gt;(<span class="kw-2">*</span>class_hash);
         tree.set(<span class="kw-2">*</span>class_hash, final_hash);
     });
     tree.commit()
@@ -607,7 +518,7 @@
 /// # Returns
 ///
 /// The contract state hash.
-</span><span class="kw">pub fn </span>calculate_contract_state_hash&lt;T: HasherT&gt;(
+</span><span class="kw">pub fn </span>calculate_contract_state_hash&lt;H: HasherT&gt;(
     hash: Felt252Wrapper,
     root: Felt252Wrapper,
     nonce: Felt252Wrapper,
@@ -615,7 +526,7 @@
     <span class="kw">const </span>CONTRACT_STATE_HASH_VERSION: Felt252Wrapper = Felt252Wrapper::ZERO;
 
     <span class="comment">// The contract state hash is defined as H(H(H(hash, root), nonce), CONTRACT_STATE_HASH_VERSION)
-    </span><span class="kw">let </span>hash = &lt;T&gt;::default().compute_hash_on_elements(<span class="kw-2">&amp;</span>[hash.<span class="number">0</span>, root.<span class="number">0</span>, nonce.<span class="number">0</span>, CONTRACT_STATE_HASH_VERSION.<span class="number">0</span>]);
+    </span><span class="kw">let </span>hash = H::compute_hash_on_elements(<span class="kw-2">&amp;</span>[hash.<span class="number">0</span>, root.<span class="number">0</span>, nonce.<span class="number">0</span>, CONTRACT_STATE_HASH_VERSION.<span class="number">0</span>]);
 
     <span class="comment">// Compare this with the HashChain construction used in the contract_hash: the number of
     // elements is not hashed to this hash, and this is supposed to be different.
@@ -635,121 +546,28 @@
 /// # Returns
 ///
 /// The transaction hash with signature.
-</span><span class="kw">fn </span>calculate_transaction_hash_with_signature&lt;T&gt;(tx: <span class="kw-2">&amp;</span>Transaction) -&gt; FieldElement
+</span><span class="kw">fn </span>calculate_transaction_hash_with_signature&lt;H: HasherT&gt;(tx: <span class="kw-2">&amp;</span>Transaction, chain_id: Felt252Wrapper) -&gt; FieldElement
 <span class="kw">where
-    </span>T: HasherT,
+    </span>H: HasherT,
 {
-    <span class="kw">let </span>signature_hash = &lt;T&gt;::default().compute_hash_on_elements(
-        <span class="kw-2">&amp;</span>tx.signature.iter().map(|elt| FieldElement::from(<span class="kw-2">*</span>elt)).collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
+    <span class="kw">let </span>signature_hash = H::compute_hash_on_elements(
+        <span class="kw-2">&amp;</span>tx.signature().iter().map(|elt| FieldElement::from(<span class="kw-2">*</span>elt)).collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
     );
-    &lt;T&gt;::default().hash_elements(FieldElement::from(tx.hash), signature_hash)
-}
-<span class="doccomment">/// Computes the transaction hash of an invoke transaction.
-///
-/// # Argument
-///
-/// * `transaction` - The invoke transaction to get the hash of.
-</span><span class="kw">pub fn </span>calculate_invoke_tx_hash(transaction: InvokeTransaction, chain_id: Felt252Wrapper) -&gt; Felt252Wrapper {
-    calculate_transaction_hash_common::&lt;PedersenHasher&gt;(
-        transaction.sender_address,
-        transaction.calldata.as_slice(),
-        transaction.max_fee,
-        transaction.nonce,
-        calculate_transaction_version_from_u8(transaction.is_query, transaction.version),
-        <span class="string">b&quot;invoke&quot;</span>,
-        chain_id,
-        <span class="prelude-val">None</span>,
-    )
-}
-
-<span class="doccomment">/// Computes the transaction hash of a declare transaction.
-///
-/// # Argument
-///
-/// * `transaction` - The declare transaction to get the hash of.
-</span><span class="kw">pub fn </span>calculate_declare_tx_hash(transaction: DeclareTransaction, chain_id: Felt252Wrapper) -&gt; Felt252Wrapper {
-    calculate_transaction_hash_common::&lt;PedersenHasher&gt;(
-        transaction.sender_address,
-        <span class="kw-2">&amp;</span>[transaction.class_hash],
-        transaction.max_fee,
-        transaction.nonce,
-        calculate_transaction_version_from_u8(transaction.is_query, transaction.version),
-        <span class="string">b&quot;declare&quot;</span>,
-        chain_id,
-        transaction.compiled_class_hash,
-    )
-}
-
-<span class="doccomment">/// Computes the transaction hash of a deploy account transaction.
-///
-/// # Argument
-///
-/// * `transaction` - The deploy account transaction to get the hash of.
-</span><span class="kw">pub fn </span>calculate_deploy_account_tx_hash(
-    transaction: DeployAccountTransaction,
-    chain_id: Felt252Wrapper,
-    address: Felt252Wrapper,
-) -&gt; Felt252Wrapper {
-    calculate_transaction_hash_common::&lt;PedersenHasher&gt;(
-        address,
-        <span class="kw-2">&amp;</span>[<span class="macro">vec!</span>[transaction.account_class_hash, transaction.salt], transaction.calldata.to_vec()].concat(),
-        transaction.max_fee,
-        transaction.nonce,
-        calculate_transaction_version_from_u8(transaction.is_query, transaction.version),
-        <span class="string">b&quot;deploy_account&quot;</span>,
-        chain_id,
-        <span class="prelude-val">None</span>,
-    )
-}
-
-<span class="doccomment">/// Computes the transaction hash using a hash function of type T
-</span><span class="attr">#[allow(clippy::too_many_arguments)]
-</span><span class="kw">pub fn </span>calculate_transaction_hash_common&lt;T&gt;(
-    sender_address: Felt252Wrapper,
-    calldata: <span class="kw-2">&amp;</span>[Felt252Wrapper],
-    max_fee: Felt252Wrapper,
-    nonce: Felt252Wrapper,
-    version: TransactionVersion,
-    tx_prefix: <span class="kw-2">&amp;</span>[u8],
-    chain_id: Felt252Wrapper,
-    compiled_class_hash: <span class="prelude-ty">Option</span>&lt;Felt252Wrapper&gt;,
-) -&gt; Felt252Wrapper
-<span class="kw">where
-    </span>T: HasherT,
-{
-    <span class="comment">// All the values are validated before going through this function so it&#39;s safe to unwrap.
-    </span><span class="kw">let </span>sender_address = FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>sender_address.into()).unwrap();
-    <span class="kw">let </span>calldata_hash = &lt;T&gt;::default()
-        .compute_hash_on_elements(<span class="kw-2">&amp;</span>calldata.iter().map(|<span class="kw-2">&amp;</span>val| FieldElement::from(val)).collect::&lt;Vec&lt;FieldElement&gt;&gt;());
-    <span class="kw">let </span>max_fee = FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>max_fee.into()).unwrap();
-    <span class="kw">let </span>nonce = FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>nonce.into()).unwrap();
-    <span class="kw">let </span>version = FieldElement::from(version.<span class="number">0</span>);
-    <span class="kw">let </span>tx_prefix = FieldElement::from_byte_slice_be(tx_prefix).unwrap();
-
-    <span class="kw">let </span><span class="kw-2">mut </span>elements =
-        <span class="macro">vec!</span>[tx_prefix, version, sender_address, FieldElement::ZERO, calldata_hash, max_fee, chain_id.<span class="number">0</span>, nonce];
-    <span class="kw">if let </span><span class="prelude-val">Some</span>(compiled_class_hash) = compiled_class_hash {
-        elements.push(FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>compiled_class_hash.into()).unwrap())
-    }
-
-    <span class="kw">let </span>tx_hash = &lt;T&gt;::default().compute_hash_on_elements(<span class="kw-2">&amp;</span>elements);
-
-    tx_hash.into()
+    H::hash_elements(FieldElement::from(tx.compute_hash::&lt;H&gt;(chain_id, <span class="bool-val">false</span>)), signature_hash)
 }
 
 <span class="doccomment">/// Calculate the hash of an event.
 ///
 /// See the [documentation](https://docs.starknet.io/documentation/architecture_and_concepts/Events/starknet-events/#event_hash)
 /// for details.
-</span><span class="kw">pub fn </span>calculate_event_hash&lt;T: HasherT&gt;(event: <span class="kw-2">&amp;</span>EventWrapper) -&gt; FieldElement {
-    <span class="kw">let </span>hasher = T::default();
-    <span class="kw">let </span>keys_hash = hasher.compute_hash_on_elements(
-        <span class="kw-2">&amp;</span>event.keys.iter().map(|key| FieldElement::from(<span class="kw-2">*</span>key)).collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
+</span><span class="kw">pub fn </span>calculate_event_hash&lt;H: HasherT&gt;(event: <span class="kw-2">&amp;</span>Event) -&gt; FieldElement {
+    <span class="kw">let </span>keys_hash = H::compute_hash_on_elements(
+        <span class="kw-2">&amp;</span>event.content.keys.iter().map(|key| FieldElement::from(key.<span class="number">0</span>)).collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
     );
-    <span class="kw">let </span>data_hash = hasher.compute_hash_on_elements(
-        <span class="kw-2">&amp;</span>event.data.iter().map(|data| FieldElement::from(<span class="kw-2">*</span>data)).collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
+    <span class="kw">let </span>data_hash = H::compute_hash_on_elements(
+        <span class="kw-2">&amp;</span>event.content.data.<span class="number">0</span>.iter().map(|data| FieldElement::from(<span class="kw-2">*</span>data)).collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
     );
-    <span class="kw">let </span>from_address = FieldElement::from(event.from_address);
-    hasher.compute_hash_on_elements(<span class="kw-2">&amp;</span>[from_address, keys_hash, data_hash])
+    <span class="kw">let </span>from_address = FieldElement::from(event.from_address.<span class="number">0.0</span>);
+    H::compute_hash_on_elements(<span class="kw-2">&amp;</span>[from_address, keys_hash, data_hash])
 }
 </code></pre></div></section></main></body></html>

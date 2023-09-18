@@ -27,6 +27,8 @@
 <a href="#27" id="27">27</a>
 <a href="#28" id="28">28</a>
 <a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Common types used in the runtime.
 //! This file is the canonical source of truth for the types used in the runtime.
 
@@ -56,4 +58,6 @@
 </span><span class="kw">pub type </span>InvokeTxMaxNSteps = u32;
 <span class="doccomment">/// The maximum amount of steps allowed for validation. (?)
 </span><span class="kw">pub type </span>ValidateMaxNSteps = u32;
+
+<span class="kw">pub type </span>StarknetHasher = mp_starknet::crypto::hash::pedersen::PedersenHasher;
 </code></pre></div></section></main></body></html>

@@ -102,10 +102,9 @@
 <span class="kw">use </span>futures::channel::mpsc;
 <span class="kw">use </span>jsonrpsee::RpcModule;
 <span class="kw">use </span>madara_runtime::opaque::Block;
-<span class="kw">use </span>madara_runtime::{AccountId, Hash, Index};
+<span class="kw">use </span>madara_runtime::{AccountId, Hash, Index, StarknetHasher};
 <span class="kw">use </span>mc_transaction_pool::{ChainApi, Pool};
-<span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
-<span class="kw">use </span>sc_client_api::{Backend, StorageProvider};
+<span class="kw">use </span>sc_client_api::{Backend, BlockBackend, StorageProvider};
 <span class="kw">use </span>sc_consensus_manual_seal::rpc::EngineCommand;
 <span class="kw">pub use </span>sc_rpc_api::DenyUnsafe;
 <span class="kw">use </span>sc_transaction_pool_api::TransactionPool;
@@ -137,7 +136,11 @@
 <span class="kw">where
     </span>A: ChainApi&lt;Block = Block&gt; + <span class="lifetime">&#39;static</span>,
     C: ProvideRuntimeApi&lt;Block&gt;,
-    C: HeaderBackend&lt;Block&gt; + HeaderMetadata&lt;Block, Error = BlockChainError&gt; + StorageProvider&lt;Block, BE&gt; + <span class="lifetime">&#39;static</span>,
+    C: HeaderBackend&lt;Block&gt;
+        + BlockBackend&lt;Block&gt;
+        + HeaderMetadata&lt;Block, Error = BlockChainError&gt;
+        + StorageProvider&lt;Block, BE&gt;
+        + <span class="lifetime">&#39;static</span>,
     C: Send + Sync + <span class="lifetime">&#39;static</span>,
     C::Api: substrate_frame_rpc_system::AccountNonceApi&lt;Block, AccountId, Index&gt;,
     C::Api: BlockBuilder&lt;Block&gt;,
@@ -153,11 +156,9 @@
     <span class="kw">let </span><span class="kw-2">mut </span>module = RpcModule::new(());
     <span class="kw">let </span>FullDeps { client, pool, deny_unsafe, starknet: starknet_params, command_sink, graph } = deps;
 
-    <span class="kw">let </span>hasher = client.runtime_api().get_hasher(client.info().best_hash)<span class="question-mark">?</span>.into();
-
     module.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())<span class="question-mark">?</span>;
     module.merge(
-        Starknet::new(
+        Starknet::&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, StarknetHasher&gt;::new(
             client,
             starknet_params.madara_backend,
             starknet_params.overrides,
@@ -165,7 +166,6 @@
             graph,
             starknet_params.sync_service,
             starknet_params.starting_block,
-            hasher,
         )
         .into_rpc(),
     )<span class="question-mark">?</span>;

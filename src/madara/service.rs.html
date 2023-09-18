@@ -634,12 +634,10 @@
 <a href="#634" id="634">634</a>
 <a href="#635" id="635">635</a>
 <a href="#636" id="636">636</a>
-<a href="#637" id="637">637</a>
-<a href="#638" id="638">638</a>
-<a href="#639" id="639">639</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
+<span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::time::Duration;
@@ -648,7 +646,7 @@
 <span class="kw">use </span>futures::future;
 <span class="kw">use </span>futures::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>madara_runtime::opaque::Block;
-<span class="kw">use </span>madara_runtime::{<span class="self">self</span>, Hash, RuntimeApi};
+<span class="kw">use </span>madara_runtime::{<span class="self">self</span>, Hash, RuntimeApi, StarknetHasher};
 <span class="kw">use </span>mc_block_proposer::ProposerFactory;
 <span class="kw">use </span>mc_data_availability::avail::config::AvailConfig;
 <span class="kw">use </span>mc_data_availability::avail::AvailClient;
@@ -663,7 +661,6 @@
 <span class="kw">use </span>mp_starknet::sequencer_address::{
     InherentDataProvider <span class="kw">as </span>SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
 };
-<span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
 <span class="kw">use </span>prometheus_endpoint::Registry;
 <span class="kw">use </span>sc_client_api::{Backend, BlockBackend, BlockchainEvents, HeaderBackend};
 <span class="kw">use </span>sc_consensus::BasicQueue;
@@ -674,7 +671,7 @@
 <span class="kw">use </span>sc_service::{new_db_backend, Configuration, TaskManager, WarpSyncParams};
 <span class="kw">use </span>sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
 <span class="kw">use </span>sp_api::offchain::OffchainStorage;
-<span class="kw">use </span>sp_api::{ConstructRuntimeApi, ProvideRuntimeApi, TransactionFor};
+<span class="kw">use </span>sp_api::{ConstructRuntimeApi, TransactionFor};
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityPair <span class="kw">as </span>AuraPair;
 <span class="kw">use </span>sp_offchain::STORAGE_PREFIX;
 <span class="kw">use </span>sp_runtime::traits::BlakeTwo256;
@@ -1001,9 +998,6 @@
         telemetry: telemetry.as_mut(),
     })<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>hasher =
-        client.runtime_api().get_hasher(client.info().best_hash).map_err(|e| ServiceError::Client(e.into()))<span class="question-mark">?</span>.into();
-
     task_manager.spawn_essential_handle().spawn(
         <span class="string">&quot;mc-mapping-sync-worker&quot;</span>,
         <span class="prelude-val">Some</span>(<span class="string">&quot;madara&quot;</span>),
@@ -1015,7 +1009,7 @@
             madara_backend.clone(),
             <span class="number">3</span>,
             <span class="number">0</span>,
-            hasher,
+            PhantomData::&lt;StarknetHasher&gt;,
         )
         .for_each(|()| future::ready(())),
     );

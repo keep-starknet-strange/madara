@@ -57,41 +57,18 @@
 <a href="#57" id="57">57</a>
 <a href="#58" id="58">58</a>
 <a href="#59" id="59">59</a>
-<a href="#60" id="60">60</a>
-<a href="#61" id="61">61</a>
-<a href="#62" id="62">62</a>
-<a href="#63" id="63">63</a>
-<a href="#64" id="64">64</a>
-<a href="#65" id="65">65</a>
-<a href="#66" id="66">66</a>
-<a href="#67" id="67">67</a>
-<a href="#68" id="68">68</a>
-<a href="#69" id="69">69</a>
-<a href="#70" id="70">70</a>
-<a href="#71" id="71">71</a>
-<a href="#72" id="72">72</a>
-<a href="#73" id="73">73</a>
-<a href="#74" id="74">74</a>
-<a href="#75" id="75">75</a>
-<a href="#76" id="76">76</a>
-<a href="#77" id="77">77</a>
-<a href="#78" id="78">78</a>
-<a href="#79" id="79">79</a>
-<a href="#80" id="80">80</a>
-<a href="#81" id="81">81</a>
-<a href="#82" id="82">82</a>
-<a href="#83" id="83">83</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! StarkNet block primitives.
 
 </span><span class="kw">mod </span>header;
 <span class="kw">use </span>alloc::vec::Vec;
 
-<span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">pub use </span>header::<span class="kw-2">*</span>;
 <span class="kw">use </span>sp_core::ConstU32;
 
 <span class="kw">use </span><span class="kw">crate</span>::execution::types::Felt252Wrapper;
-<span class="kw">use </span><span class="kw">crate</span>::transaction::types::{Transaction, TransactionReceiptWrapper};
+<span class="kw">use </span><span class="kw">crate</span>::traits::hash::HasherT;
+<span class="kw">use </span><span class="kw">crate</span>::transaction::compute_hash::ComputeTransactionHash;
+<span class="kw">use </span><span class="kw">crate</span>::transaction::Transaction;
 
 <span class="doccomment">/// Block transactions max size
 </span><span class="comment">// TODO: add real value (#250)
@@ -101,31 +78,16 @@
 </span><span class="kw">pub type </span>MaxStorageSlots = ConstU32&lt;{ u32::MAX }&gt;;
 
 <span class="doccomment">/// Block Transactions
-</span><span class="kw">pub type </span>BlockTransactions = BoundedVec&lt;Transaction, MaxTransactions&gt;;
-
-<span class="doccomment">/// Block transaction receipts.
-</span><span class="kw">pub type </span>BlockTransactionReceipts = BoundedVec&lt;TransactionReceiptWrapper, MaxTransactions&gt;;
+</span><span class="kw">pub type </span>BlockTransactions = Vec&lt;Transaction&gt;;
 
 <span class="doccomment">/// Starknet block definition.
-</span><span class="attr">#[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    scale_codec::Encode,
-    scale_codec::Decode,
-    scale_info::TypeInfo,
-    Default,
-    scale_codec::MaxEncodedLen,
-)]
-#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Deserialize))]
+</span><span class="attr">#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 </span><span class="kw">pub struct </span>Block {
     <span class="doccomment">/// The block header.
     </span>header: Header,
     <span class="doccomment">/// The block transactions.
     </span>transactions: BlockTransactions,
-    <span class="doccomment">/// The block transaction receipts.
-    </span>transaction_receipts: BlockTransactionReceipts,
 }
 
 <span class="kw">impl </span>Block {
@@ -135,12 +97,8 @@
     ///
     /// * `header` - The block header.
     /// * `transactions` - The block transactions.
-    </span><span class="kw">pub fn </span>new(
-        header: Header,
-        transactions: BlockTransactions,
-        transaction_receipts: BlockTransactionReceipts,
-    ) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ header, transactions, transaction_receipts }
+    </span><span class="kw">pub fn </span>new(header: Header, transactions: BlockTransactions) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ header, transactions }
     }
 
     <span class="doccomment">/// Return a reference to the block header
@@ -153,15 +111,9 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>.transactions
     }
 
-    <span class="doccomment">/// Returns a reference to all transaction receipts.
-    </span><span class="kw">pub fn </span>transaction_receipts(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>BlockTransactionReceipts {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.transaction_receipts
-    }
-
     <span class="doccomment">/// Return a reference to all transaction hashes
-    </span><span class="kw">pub fn </span>transactions_hashes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;Felt252Wrapper&gt; {
-        <span class="kw">let </span>transactions = <span class="kw-2">&amp;</span><span class="self">self</span>.transactions;
-        transactions.into_iter().map(|tx| tx.hash).collect()
+    </span><span class="kw">pub fn </span>transactions_hashes&lt;H: HasherT&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper) -&gt; Vec&lt;Felt252Wrapper&gt; {
+        <span class="self">self</span>.transactions.iter().map(|tx| tx.compute_hash::&lt;H&gt;(chain_id, <span class="bool-val">false</span>)).collect()
     }
 }
 </code></pre></div></section></main></body></html>

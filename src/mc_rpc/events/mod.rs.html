@@ -201,15 +201,9 @@
 <a href="#201" id="201">201</a>
 <a href="#202" id="202">202</a>
 <a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a>
-<a href="#206" id="206">206</a>
-<a href="#207" id="207">207</a>
-<a href="#208" id="208">208</a>
 </pre></div><pre class="rust"><code><span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests;
 
-<span class="kw">use </span>std::cmp::Ordering;
 <span class="kw">use </span>std::iter::Skip;
 <span class="kw">use </span>std::vec::IntoIter;
 
@@ -217,31 +211,30 @@
 <span class="kw">use </span>log::error;
 <span class="kw">use </span>mc_rpc_core::utils::get_block_by_block_hash;
 <span class="kw">use </span>mc_transaction_pool::ChainApi;
-<span class="kw">use </span>mp_starknet::block::Block;
 <span class="kw">use </span>mp_starknet::execution::types::Felt252Wrapper;
 <span class="kw">use </span>mp_starknet::traits::hash::HasherT;
-<span class="kw">use </span>mp_starknet::traits::ThreadSafeCopy;
-<span class="kw">use </span>mp_starknet::transaction::types::{EventWrapper, TransactionReceiptWrapper};
+<span class="kw">use </span>mp_starknet::traits::SendSyncStatic;
 <span class="kw">use </span>pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
+<span class="kw">use </span>sc_client_api::BlockBackend;
 <span class="kw">use </span>sp_api::ProvideRuntimeApi;
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
 <span class="kw">use </span>sp_runtime::traits::Block <span class="kw">as </span>BlockT;
-<span class="kw">use </span>starknet_core::types::{BlockId, EventsPage};
+<span class="kw">use </span>starknet_core::types::{BlockId, EmittedEvent, EventsPage};
 <span class="kw">use </span>starknet_ff::FieldElement;
 
 <span class="kw">use </span><span class="kw">crate</span>::errors::StarknetRpcApiError;
-<span class="kw">use </span><span class="kw">crate</span>::types::RpcEventFilter;
-<span class="kw">use crate</span>::{EmittedEvent, Starknet};
+<span class="kw">use </span><span class="kw">crate</span>::types::{ContinuationToken, RpcEventFilter};
+<span class="kw">use </span><span class="kw">crate</span>::Starknet;
 
 <span class="kw">impl</span>&lt;A: ChainApi, B, BE, C, P, H&gt; Starknet&lt;A, B, BE, C, P, H&gt;
 <span class="kw">where
     </span>B: BlockT,
-    C: HeaderBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt; + <span class="lifetime">&#39;static</span>,
+    C: HeaderBackend&lt;B&gt; + BlockBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt; + <span class="lifetime">&#39;static</span>,
     C: ProvideRuntimeApi&lt;B&gt;,
     C::Api: StarknetRuntimeApi&lt;B&gt; + ConvertTransactionRuntimeApi&lt;B&gt;,
     BE: Backend&lt;B&gt;,
-    H: HasherT + ThreadSafeCopy,
+    H: HasherT + SendSyncStatic,
 {
     <span class="doccomment">/// Helper function to get Starknet block details
     ///
@@ -253,24 +246,51 @@
     ///
     /// * `(transaction_receipts: Vec&lt;TransactionReceiptWrapper&gt;, block: Block)` - A tuple of the
     ///   block transaction receipts with events in block_id and an instance of Block
-    </span><span class="kw">pub fn </span>get_block_receipts(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        block_id: u64,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(Vec&lt;TransactionReceiptWrapper&gt;, Block), StarknetRpcApiError&gt; {
+    </span><span class="kw">pub fn </span>get_block_events(<span class="kw-2">&amp;</span><span class="self">self</span>, block_number: u64) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;EmittedEvent&gt;, StarknetRpcApiError&gt; {
         <span class="kw">let </span>substrate_block_hash =
-            <span class="self">self</span>.substrate_block_hash_from_starknet_block(BlockId::Number(block_id)).map_err(|e| {
+            <span class="self">self</span>.substrate_block_hash_from_starknet_block(BlockId::Number(block_number)).map_err(|e| {
                 <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
                 StarknetRpcApiError::BlockNotFound
             })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).ok_or_else(|| {
-            <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve block&quot;</span>);
-            StarknetRpcApiError::BlockNotFound
-        })<span class="question-mark">?</span>;
+        <span class="kw">let </span>block_extrinsics = <span class="self">self
+            </span>.client
+            .block_body(substrate_block_hash)
+            .map_err(|e| {
+                <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
+                StarknetRpcApiError::InternalServerError
+            })<span class="question-mark">?
+            </span>.ok_or(StarknetRpcApiError::BlockNotFound)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>transaction_receipts = block.transaction_receipts().to_owned().into();
+        <span class="kw">let </span>chain_id = <span class="self">self
+            </span>.client
+            .runtime_api()
+            .chain_id(substrate_block_hash)
+            .map_err(|<span class="kw">_</span>| StarknetRpcApiError::InternalServerError)<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>((transaction_receipts, block))
+        <span class="kw">let </span>tx_hash_and_events = <span class="self">self
+            </span>.client
+            .runtime_api()
+            .get_starknet_events_and_their_associated_tx_hash(substrate_block_hash, block_extrinsics, chain_id)
+            .map_err(|<span class="kw">_</span>| StarknetRpcApiError::InternalServerError)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>starknet_block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
+            .ok_or(StarknetRpcApiError::BlockNotFound)<span class="question-mark">?</span>;
+        <span class="kw">let </span>block_hash = starknet_block.header().hash::&lt;H&gt;();
+
+        <span class="kw">let </span>emitted_events = tx_hash_and_events
+            .into_iter()
+            .map(|(tx_hash, event)| EmittedEvent {
+                from_address: Felt252Wrapper::from(event.from_address).<span class="number">0</span>,
+                keys: event.content.keys.into_iter().map(|felt| Felt252Wrapper::from(felt).<span class="number">0</span>).collect(),
+                data: event.content.data.<span class="number">0</span>.into_iter().map(|felt| Felt252Wrapper::from(felt).<span class="number">0</span>).collect(),
+                block_hash: block_hash.<span class="number">0</span>,
+                block_number,
+                transaction_hash: tx_hash.<span class="number">0</span>,
+            })
+            .collect();
+
+        <span class="prelude-val">Ok</span>(emitted_events)
     }
 
     <span class="doccomment">/// Helper function to filter Starknet events provided a RPC event filter
@@ -283,90 +303,62 @@
     ///
     /// * `EventsPage` - The filtered events with continuation token
     </span><span class="kw">pub fn </span>filter_events(<span class="kw-2">&amp;</span><span class="self">self</span>, filter: RpcEventFilter) -&gt; RpcResult&lt;EventsPage&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>filtered_events = <span class="macro">vec!</span>[];
-
         <span class="comment">// get filter values
-        </span><span class="kw">let </span><span class="kw-2">mut </span>current_block = filter.from_block;
+        </span><span class="kw">let </span>continuation_token = filter.continuation_token;
+        <span class="comment">// skip blocks with continuation token block number
+        </span><span class="kw">let </span>from_block = filter.from_block + continuation_token.block_n;
+        <span class="kw">let </span><span class="kw-2">mut </span>current_block = from_block;
         <span class="kw">let </span>to_block = filter.to_block;
         <span class="kw">let </span>from_address = filter.from_address;
         <span class="kw">let </span>keys = filter.keys;
-        <span class="kw">let </span><span class="kw-2">mut </span>continuation_token = filter.continuation_token;
         <span class="kw">let </span>chunk_size = filter.chunk_size;
 
-        <span class="comment">// skip blocks with continuation token block number
-        </span>current_block += continuation_token.block_n;
+        <span class="kw">let </span><span class="kw-2">mut </span>filtered_events = Vec::new();
 
         <span class="comment">// Iterate on block range
         </span><span class="kw">while </span>current_block &lt;= to_block {
-            <span class="kw">let </span>(trx_receipts, block) = <span class="self">self</span>.get_block_receipts(current_block)<span class="question-mark">?</span>;
-            <span class="comment">// check if continuation_token.receipt_n correct
-            </span><span class="kw">if </span>(trx_receipts.len() <span class="kw">as </span>u64) &lt; continuation_token.receipt_n {
-                <span class="kw">return </span><span class="prelude-val">Err</span>(StarknetRpcApiError::InvalidContinuationToken.into());
-            }
+            <span class="kw">let </span>emitted_events = <span class="self">self</span>.get_block_events(current_block)<span class="question-mark">?</span>;
+            <span class="kw">let </span><span class="kw-2">mut </span>unchecked_events = emitted_events.len();
+            <span class="kw">let </span>events = <span class="kw">if </span>current_block == from_block {
+                <span class="comment">// check if continuation_token.event_n is not too big
+                </span><span class="kw">if </span>(unchecked_events <span class="kw">as </span>u64) &lt; continuation_token.event_n {
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(StarknetRpcApiError::InvalidContinuationToken.into());
+                }
+                unchecked_events -= continuation_token.event_n <span class="kw">as </span>usize;
+                emitted_events.into_iter().skip(continuation_token.event_n <span class="kw">as </span>usize)
+            } <span class="kw">else </span>{
+                <span class="attr">#[allow(clippy::iter_skip_zero)]
+                </span>emitted_events.into_iter().skip(<span class="number">0</span>)
+            };
 
-            <span class="kw">let </span>block_hash = block.header().hash(<span class="kw-2">*</span><span class="self">self</span>.hasher).into();
-            <span class="kw">let </span>block_number = block.header().block_number;
+            <span class="kw">let </span><span class="kw-2">mut </span>n_visited = <span class="number">0</span>;
+            <span class="kw">let </span>block_filtered_events = filter_events_by_params(
+                events,
+                from_address,
+                <span class="kw-2">&amp;</span>keys,
+                chunk_size <span class="kw">as </span>usize - filtered_events.len(),
+                <span class="kw-2">&amp;mut </span>n_visited,
+            );
 
-            <span class="comment">// skip transaction receipts
-            </span><span class="kw">for </span>receipt <span class="kw">in </span>trx_receipts.iter().skip(continuation_token.receipt_n <span class="kw">as </span>usize) {
-                <span class="kw">let </span>receipt_events_len: usize = receipt.events.len();
-                <span class="comment">// check if continuation_token.event_n is correct
-                </span><span class="kw">match </span>(receipt_events_len <span class="kw">as </span>u64).cmp(<span class="kw-2">&amp;</span>continuation_token.event_n) {
-                    Ordering::Greater =&gt; (),
-                    Ordering::Less =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(StarknetRpcApiError::InvalidContinuationToken.into()),
-                    Ordering::Equal =&gt; {
-                        continuation_token.receipt_n += <span class="number">1</span>;
-                        continuation_token.event_n = <span class="number">0</span>;
-                        <span class="kw">continue</span>;
+            filtered_events.extend(block_filtered_events);
+
+            <span class="kw">if </span>filtered_events.len() == chunk_size <span class="kw">as </span>usize {
+                <span class="kw">let </span>token = <span class="kw">if </span>current_block &lt; to_block || n_visited &lt; unchecked_events {
+                    <span class="kw">let </span><span class="kw-2">mut </span>event_n = n_visited <span class="kw">as </span>u64;
+                    <span class="kw">if </span>continuation_token.block_n == current_block {
+                        event_n += continuation_token.event_n;
                     }
-                }
+                    <span class="prelude-val">Some</span>(ContinuationToken { block_n: current_block - from_block, event_n }.to_string())
+                } <span class="kw">else </span>{
+                    <span class="prelude-val">None
+                </span>};
 
-                <span class="kw">let </span>receipt_transaction_hash = receipt.transaction_hash;
-                <span class="comment">// skip events
-                </span><span class="kw">let </span>receipt_events = receipt.events.clone().into_iter().skip(continuation_token.event_n <span class="kw">as </span>usize);
-
-                <span class="kw">let </span>(new_filtered_events, continuation_index) = filter_events_by_params(
-                    receipt_events,
-                    from_address,
-                    keys.clone(),
-                    <span class="prelude-val">Some</span>((chunk_size <span class="kw">as </span>usize) - filtered_events.len()),
-                );
-
-                filtered_events.extend(
-                    new_filtered_events
-                        .iter()
-                        .map(|event| EmittedEvent {
-                            from_address: event.from_address.into(),
-                            keys: event.keys.clone().into_iter().map(|key| key.into()).collect(),
-                            data: event.data.clone().into_iter().map(|data| data.into()).collect(),
-                            block_hash,
-                            block_number,
-                            transaction_hash: receipt_transaction_hash.into(),
-                        })
-                        .collect::&lt;Vec&lt;EmittedEvent&gt;&gt;(),
-                );
-
-                <span class="kw">if </span>filtered_events.len() &gt;= chunk_size <span class="kw">as </span>usize {
-                    <span class="kw">let </span>token = <span class="kw">if </span>current_block &lt; to_block
-                        || continuation_token.receipt_n &lt; trx_receipts.len() <span class="kw">as </span>u64 - <span class="number">1
-                        </span>|| continuation_index &lt; receipt_events_len
-                    {
-                        continuation_token.event_n = continuation_index <span class="kw">as </span>u64;
-                        <span class="prelude-val">Some</span>(continuation_token.to_string())
-                    } <span class="kw">else </span>{
-                        <span class="prelude-val">None
-                    </span>};
-                    <span class="kw">return </span><span class="prelude-val">Ok</span>(EventsPage { events: filtered_events, continuation_token: token });
-                }
-
-                continuation_token.receipt_n += <span class="number">1</span>;
-                continuation_token.event_n = <span class="number">0</span>;
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(EventsPage { events: filtered_events, continuation_token: token });
             }
 
             current_block += <span class="number">1</span>;
-            continuation_token.block_n += <span class="number">1</span>;
-            continuation_token.receipt_n = <span class="number">0</span>;
         }
+
         <span class="prelude-val">Ok</span>(EventsPage { events: filtered_events, continuation_token: <span class="prelude-val">None </span>})
     }
 }
@@ -384,34 +376,32 @@
 ///
 /// * `(block_events: Vec&lt;EventWrapper&gt;, continuation_token: usize)` - A tuple of the filtered
 ///   events and the first index which still hasn&#39;t been processed block_id and an instance of Block
-</span><span class="kw">pub fn </span>filter_events_by_params(
-    events: Skip&lt;IntoIter&lt;EventWrapper&gt;&gt;,
+</span><span class="kw">pub fn </span>filter_events_by_params&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>: <span class="lifetime">&#39;a</span>&gt;(
+    events: Skip&lt;IntoIter&lt;EmittedEvent&gt;&gt;,
     address: <span class="prelude-ty">Option</span>&lt;Felt252Wrapper&gt;,
-    keys: Vec&lt;Vec&lt;FieldElement&gt;&gt;,
-    max_results: <span class="prelude-ty">Option</span>&lt;usize&gt;,
-) -&gt; (Vec&lt;EventWrapper&gt;, usize) {
+    keys: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[Vec&lt;FieldElement&gt;],
+    max_results: usize,
+    n_visited: <span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span><span class="kw-2">mut </span>usize,
+) -&gt; Vec&lt;EmittedEvent&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>filtered_events = <span class="macro">vec!</span>[];
-    <span class="kw">let </span><span class="kw-2">mut </span>index = <span class="number">0</span>;
 
     <span class="comment">// Iterate on block events.
     </span><span class="kw">for </span>event <span class="kw">in </span>events {
-        index += <span class="number">1</span>;
-        <span class="kw">let </span>match_from_address = address.map_or(<span class="bool-val">true</span>, |addr| addr == event.from_address);
+        <span class="kw-2">*</span>n_visited += <span class="number">1</span>;
+        <span class="kw">let </span>match_from_address = address.map_or(<span class="bool-val">true</span>, |addr| addr.<span class="number">0 </span>== event.from_address);
         <span class="comment">// Based on https://github.com/starkware-libs/papyrus
         </span><span class="kw">let </span>match_keys = keys
             .iter()
             .enumerate()
-            .all(|(i, keys)| event.keys.len() &gt; i &amp;&amp; (keys.is_empty() || keys.contains(<span class="kw-2">&amp;</span>event.keys[i].into())));
+            .all(|(i, keys)| event.keys.len() &gt; i &amp;&amp; (keys.is_empty() || keys.contains(<span class="kw-2">&amp;</span>event.keys[i])));
 
         <span class="kw">if </span>match_from_address &amp;&amp; match_keys {
             filtered_events.push(event);
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(max_results) = max_results {
-                <span class="kw">if </span>filtered_events.len() &gt;= max_results {
-                    <span class="kw">break</span>;
-                }
+            <span class="kw">if </span>filtered_events.len() &gt;= max_results {
+                <span class="kw">break</span>;
             }
         }
     }
-    (filtered_events, index)
+    filtered_events
 }
 </code></pre></div></section></main></body></html>

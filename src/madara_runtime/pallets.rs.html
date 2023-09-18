@@ -208,7 +208,7 @@
 </span><span class="doccomment">/// Configure the Starknet pallet in pallets/starknet.
 </span><span class="kw">impl </span>pallet_starknet::Config <span class="kw">for </span>Runtime {
     <span class="kw">type </span>RuntimeEvent = RuntimeEvent;
-    <span class="kw">type </span>SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
+    <span class="kw">type </span>SystemHash = StarknetHasher;
     <span class="kw">type </span>TimestampProvider = Timestamp;
     <span class="kw">type </span>UnsignedPriority = UnsignedPriority;
     <span class="kw">type </span>TransactionLongevity = TransactionLongevity;

@@ -432,7 +432,7 @@
             <span class="prelude-val">None </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;subtrees have to be committed first&quot;</span>),
         };
 
-        <span class="self">self</span>.hash = <span class="prelude-val">Some</span>(Felt252Wrapper(H::default().hash_elements(left.<span class="number">0</span>, right.<span class="number">0</span>)));
+        <span class="self">self</span>.hash = <span class="prelude-val">Some</span>(Felt252Wrapper(H::hash_elements(left.<span class="number">0</span>, right.<span class="number">0</span>)));
     }
 }
 
@@ -540,7 +540,7 @@
         </span>length[<span class="number">31</span>] = <span class="self">self</span>.path.len() <span class="kw">as </span>u8;
 
         <span class="kw">let </span>length = Felt252Wrapper::try_from(<span class="kw-2">&amp;</span>length).unwrap();
-        <span class="kw">let </span>hash = Felt252Wrapper(H::default().hash_elements(child.<span class="number">0</span>, path.<span class="number">0</span>) + length.<span class="number">0</span>);
+        <span class="kw">let </span>hash = Felt252Wrapper(H::hash_elements(child.<span class="number">0</span>, path.<span class="number">0</span>) + length.<span class="number">0</span>);
         <span class="self">self</span>.hash = <span class="prelude-val">Some</span>(hash);
     }
 }

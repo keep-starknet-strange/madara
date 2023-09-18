@@ -393,6 +393,71 @@
 <a href="#393" id="393">393</a>
 <a href="#394" id="394">394</a>
 <a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
+<a href="#455" id="455">455</a>
+<a href="#456" id="456">456</a>
+<a href="#457" id="457">457</a>
+<a href="#458" id="458">458</a>
+<a href="#459" id="459">459</a>
+<a href="#460" id="460">460</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don&#39;t support yet validity proofs and state updates to
@@ -421,20 +486,17 @@
 <span class="kw">pub use </span>frame_support::weights::{IdentityFee, Weight};
 <span class="kw">pub use </span>frame_support::{construct_runtime, parameter_types, StorageValue};
 <span class="kw">pub use </span>frame_system::Call <span class="kw">as </span>SystemCall;
-<span class="kw">use </span>frame_system::EventRecord;
-<span class="kw">use </span>mp_starknet::crypto::hash::Hasher;
-<span class="kw">use </span>mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper, StorageKeyWrapper};
-<span class="kw">use </span>mp_starknet::transaction::types::{
-    DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction, TxType,
-};
+<span class="kw">use </span>frame_system::{EventRecord, Phase};
+<span class="kw">use </span>mp_starknet::execution::types::Felt252Wrapper;
+<span class="kw">use </span>mp_starknet::transaction::compute_hash::ComputeTransactionHash;
+<span class="kw">use </span>mp_starknet::transaction::{Transaction, TxType, UserTransaction};
 <span class="kw">use </span>pallet_grandpa::{fg_primitives, AuthorityId <span class="kw">as </span>GrandpaId, AuthorityList <span class="kw">as </span>GrandpaAuthorityList};
 <span class="doccomment">/// Import the StarkNet pallet.
 </span><span class="kw">pub use </span>pallet_starknet;
 <span class="kw">use </span>pallet_starknet::pallet::Error <span class="kw">as </span>PalletError;
 <span class="kw">use </span>pallet_starknet::runtime_api::StarknetTransactionExecutionError;
-<span class="kw">use </span>pallet_starknet::types::NonceWrapper;
-<span class="kw">use </span>pallet_starknet::Call::{declare, deploy_account, invoke};
-<span class="kw">use </span>pallet_starknet::Event;
+<span class="kw">use </span>pallet_starknet::Call::{consume_l1_message, declare, deploy_account, invoke};
+<span class="kw">use </span>pallet_starknet::{Config, Event};
 <span class="kw">pub use </span>pallet_timestamp::Call <span class="kw">as </span>TimestampCall;
 <span class="kw">use </span>sp_api::impl_runtime_apis;
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityId <span class="kw">as </span>AuraId;
@@ -448,6 +510,10 @@
 <span class="kw">pub use </span>sp_runtime::{Perbill, Permill};
 <span class="kw">use </span>sp_std::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>sp_version::RuntimeVersion;
+<span class="kw">use </span>starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
+<span class="kw">use </span>starknet_api::hash::StarkFelt;
+<span class="kw">use </span>starknet_api::state::StorageKey;
+<span class="kw">use </span>starknet_api::transaction::{Calldata, Event <span class="kw">as </span>StarknetEvent, TransactionHash};
 <span class="doccomment">/// Import the types.
 </span><span class="kw">pub use </span>types::<span class="kw-2">*</span>;
 
@@ -633,32 +699,23 @@
 
     <span class="kw">impl </span>pallet_starknet::runtime_api::StarknetRuntimeApi&lt;Block&gt; <span class="kw">for </span>Runtime {
 
-        <span class="kw">fn </span>get_storage_at(address: ContractAddressWrapper, key: StorageKeyWrapper) -&gt; <span class="prelude-ty">Result</span>&lt;Felt252Wrapper, DispatchError&gt; {
+        <span class="kw">fn </span>get_storage_at(address: ContractAddress, key: StorageKey) -&gt; <span class="prelude-ty">Result</span>&lt;StarkFelt, DispatchError&gt; {
             Starknet::get_storage_at(address, key)
         }
 
-        <span class="kw">fn </span>call(address: ContractAddressWrapper, function_selector: Felt252Wrapper, calldata: Vec&lt;Felt252Wrapper&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Felt252Wrapper&gt;, DispatchError&gt; {
+        <span class="kw">fn </span>call(address: ContractAddress, function_selector: EntryPointSelector, calldata: Calldata) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Felt252Wrapper&gt;, DispatchError&gt; {
             Starknet::call_contract(address, function_selector, calldata)
         }
 
-        <span class="kw">fn </span>nonce(address: ContractAddressWrapper) -&gt; NonceWrapper {
+        <span class="kw">fn </span>nonce(address: ContractAddress) -&gt; Nonce{
             Starknet::nonce(address)
         }
 
-        <span class="kw">fn </span>events() -&gt; Vec&lt;EventWrapper&gt; {
-            System::read_events_no_consensus().filter_map(|event| {
-                <span class="kw">match </span><span class="kw-2">*</span>event {
-                    EventRecord { event: RuntimeEvent::Starknet(Event::StarknetEvent(event)), .. } =&gt; <span class="prelude-val">Some</span>(event),
-                    <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-                }
-            }).collect()
-        }
-
-        <span class="kw">fn </span>contract_class_hash_by_address(address: ContractAddressWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;ClassHashWrapper&gt; {
+        <span class="kw">fn </span>contract_class_hash_by_address(address: ContractAddress) -&gt; ClassHash {
             Starknet::contract_class_hash_by_address(address)
         }
 
-        <span class="kw">fn </span>contract_class_by_class_hash(class_hash: ClassHashWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClass&gt; {
+        <span class="kw">fn </span>contract_class_by_class_hash(class_hash: ClassHash) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClass&gt; {
             Starknet::contract_class_by_class_hash(class_hash)
         }
 
@@ -666,45 +723,118 @@
             Starknet::chain_id()
         }
 
-        <span class="kw">fn </span>estimate_fee(transaction: Transaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u64, u64), DispatchError&gt; {
+        <span class="kw">fn </span>estimate_fee(transaction: UserTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u64, u64), DispatchError&gt; {
             Starknet::estimate_fee(transaction)
         }
 
-        <span class="kw">fn </span>get_hasher() -&gt; Hasher {
-            Starknet::get_system_hash().into()
+        <span class="kw">fn </span>get_starknet_events_and_their_associated_tx_hash(block_extrinsics: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;, chain_id: Felt252Wrapper) -&gt; Vec&lt;(Felt252Wrapper, StarknetEvent)&gt; {
+            System::read_events_no_consensus().filter_map(|event_record| {
+                <span class="kw">let </span>(phase, event) = <span class="kw">match </span><span class="kw-2">*</span>event_record {
+                    EventRecord { event: RuntimeEvent::Starknet(Event::StarknetEvent(event)), phase, .. } =&gt; (phase, event),
+                    <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
+                };
+
+                <span class="kw">let </span>index = <span class="kw">match </span>phase {
+                    Phase::ApplyExtrinsic(idx) =&gt; {idx},
+                    <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None
+
+                </span>};
+                <span class="kw">let </span>extrinsic = <span class="kw-2">&amp;</span>block_extrinsics[index <span class="kw">as </span>usize];
+                <span class="kw">let </span>tx_hash = <span class="kw">match </span><span class="kw-2">&amp;</span>extrinsic.function {
+                    RuntimeCall::Starknet( invoke { transaction }) =&gt; transaction.compute_hash::&lt;&lt;Runtime <span class="kw">as </span>Config&gt;::SystemHash&gt;(chain_id, <span class="bool-val">false</span>),
+                    RuntimeCall::Starknet( declare { transaction, .. }) =&gt; transaction.compute_hash::&lt;&lt;Runtime <span class="kw">as </span>Config&gt;::SystemHash&gt;(chain_id, <span class="bool-val">false</span>),
+                    RuntimeCall::Starknet( deploy_account { transaction }) =&gt; transaction.compute_hash::&lt;&lt;Runtime <span class="kw">as </span>Config&gt;::SystemHash&gt;(chain_id, <span class="bool-val">false</span>),
+                    RuntimeCall::Starknet( consume_l1_message { transaction, .. }) =&gt; transaction.compute_hash::&lt;&lt;Runtime <span class="kw">as </span>Config&gt;::SystemHash&gt;(chain_id, <span class="bool-val">false</span>),
+                    <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
+                };
+
+                <span class="prelude-val">Some</span>((tx_hash, event))
+            }).collect()
         }
 
         <span class="kw">fn </span>extrinsic_filter(xts: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;) -&gt; Vec&lt;Transaction&gt; {
-            <span class="kw">let </span>chain_id  = Starknet::chain_id();
-
             xts.into_iter().filter_map(|xt| <span class="kw">match </span>xt.function {
-                RuntimeCall::Starknet( invoke { transaction }) =&gt; <span class="prelude-val">Some</span>(transaction.from_invoke(chain_id)),
-                RuntimeCall::Starknet( declare { transaction }) =&gt; <span class="prelude-val">Some</span>(transaction.from_declare(chain_id)),
-                RuntimeCall::Starknet( deploy_account { transaction }) =&gt; transaction.from_deploy(chain_id).ok(),
+                RuntimeCall::Starknet( invoke { transaction }) =&gt; <span class="prelude-val">Some</span>(Transaction::Invoke(transaction)),
+                RuntimeCall::Starknet( declare { transaction, .. }) =&gt; <span class="prelude-val">Some</span>(Transaction::Declare(transaction)),
+                RuntimeCall::Starknet( deploy_account { transaction }) =&gt; <span class="prelude-val">Some</span>(Transaction::DeployAccount(transaction)),
+                RuntimeCall::Starknet( consume_l1_message { transaction, .. }) =&gt; <span class="prelude-val">Some</span>(Transaction::L1Handler(transaction)),
                 <span class="kw">_ </span>=&gt; <span class="prelude-val">None
             </span>}).collect::&lt;Vec&lt;Transaction&gt;&gt;()
+        }
+
+        <span class="kw">fn </span>get_events_for_tx_hash(extrinsics: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;, chain_id: Felt252Wrapper, tx_hash: Felt252Wrapper) -&gt; <span class="prelude-ty">Option</span>&lt;(TxType, Vec&lt;StarknetEvent&gt;)&gt; {
+            <span class="comment">// Find our tx and it&#39;s index
+            </span><span class="kw">let </span>(tx_index, tx) =  extrinsics.into_iter().enumerate().find(|(<span class="kw">_</span>, xt)| {
+                <span class="kw">let </span>computed_tx_hash = <span class="kw">match </span><span class="kw-2">&amp;</span>xt.function {
+                    RuntimeCall::Starknet( invoke { transaction }) =&gt; transaction.compute_hash::&lt;&lt;Runtime <span class="kw">as </span>Config&gt;::SystemHash&gt;(chain_id, <span class="bool-val">false</span>),
+                    RuntimeCall::Starknet( declare { transaction, .. }) =&gt; transaction.compute_hash::&lt;&lt;Runtime <span class="kw">as </span>Config&gt;::SystemHash&gt;(chain_id, <span class="bool-val">false</span>),
+                    RuntimeCall::Starknet( deploy_account { transaction }) =&gt; transaction.compute_hash::&lt;&lt;Runtime <span class="kw">as </span>Config&gt;::SystemHash&gt;(chain_id, <span class="bool-val">false</span>),
+                    RuntimeCall::Starknet( consume_l1_message { transaction, .. }) =&gt; transaction.compute_hash::&lt;&lt;Runtime <span class="kw">as </span>Config&gt;::SystemHash&gt;(chain_id, <span class="bool-val">false</span>),
+                    <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="bool-val">false
+                </span>};
+
+                computed_tx_hash == tx_hash
+            })<span class="question-mark">?</span>;
+
+            <span class="comment">// Compute it&#39;s tx type
+            </span><span class="kw">let </span>tx_type = <span class="kw">match </span>tx.function {
+                RuntimeCall::Starknet( invoke { .. }) =&gt; TxType::Invoke,
+                RuntimeCall::Starknet( declare { .. }) =&gt; TxType::Declare,
+                RuntimeCall::Starknet( deploy_account { .. }) =&gt; TxType::DeployAccount,
+                RuntimeCall::Starknet( consume_l1_message { .. }) =&gt; TxType::L1Handler,
+                <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;The previous match made sure that at this point tx is one of those starknet calls&quot;</span>),
+            };
+
+
+            <span class="comment">// Skip all the events that are not related to our tx
+            </span><span class="kw">let </span>event_iter = System::read_events_no_consensus().filter_map(|event| {
+                <span class="kw">match </span><span class="kw-2">*</span>event {
+                    EventRecord { event: RuntimeEvent::Starknet(Event::StarknetEvent(event)), phase, .. } =&gt; <span class="prelude-val">Some</span>((phase, event)),
+                    <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+                }
+            }).skip_while(|(phase, <span class="kw">_</span>)| {
+                <span class="kw">let </span>index = <span class="kw">match </span>phase {
+                    Phase::ApplyExtrinsic(idx) =&gt; <span class="kw-2">*</span>idx,
+                    <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="bool-val">true
+                </span>};
+
+                tx_index <span class="kw">as </span>u32 != index
+             });
+
+            <span class="comment">// Collect all the events related to our tx
+            // Event from the same transaction are stored one after another
+            // so we can use take_while rather and early exit rather than filtering
+            </span><span class="kw">let </span>events = event_iter.take_while(|(phase, <span class="kw">_</span>)| {
+                <span class="kw">let </span>index = <span class="kw">match </span>phase {
+                    Phase::ApplyExtrinsic(idx) =&gt; <span class="kw-2">*</span>idx,
+                    <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;The previous iteration made sure at this point phase is of ApplyExtrinsic variant&quot;</span>),
+                };
+
+                tx_index <span class="kw">as </span>u32 == index
+            }).map(|(<span class="kw">_</span>, event)| event).collect();
+
+            <span class="prelude-val">Some</span>((tx_type, events))
+        }
+
+        <span class="kw">fn </span>get_tx_execution_outcome(tx_hash: TransactionHash) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt; {
+           Starknet::tx_revert_error(tx_hash).map(|s| s.into_bytes())
         }
     }
 
     <span class="kw">impl </span>pallet_starknet::runtime_api::ConvertTransactionRuntimeApi&lt;Block&gt; <span class="kw">for </span>Runtime {
-        <span class="kw">fn </span>convert_transaction(transaction: Transaction, tx_type: TxType) -&gt; <span class="prelude-ty">Result</span>&lt;UncheckedExtrinsic, DispatchError&gt; {
-            <span class="kw">let </span>call = <span class="kw">match </span>tx_type {
-                TxType::DeployAccount =&gt; {
-                    <span class="kw">let </span>tx = DeployAccountTransaction::try_from(transaction).map_err(|<span class="kw">_</span>| DispatchError::Other(<span class="string">&quot;failed to convert transaction to DeployAccountTransaction&quot;</span>))<span class="question-mark">?</span>;
-                    pallet_starknet::Call::deploy_account{transaction: tx}
-                },
-                TxType::Invoke =&gt; {
-                    <span class="kw">let </span>tx = InvokeTransaction::try_from(transaction).map_err(|<span class="kw">_</span>| DispatchError::Other(<span class="string">&quot;failed to convert transaction to InvokeTransaction&quot;</span>))<span class="question-mark">?</span>;
-                    pallet_starknet::Call::invoke{transaction: tx}
-                },
-                TxType::Declare =&gt; {
-                    <span class="kw">let </span>tx = DeclareTransaction::try_from(transaction).map_err(|<span class="kw">_</span>| DispatchError::Other(<span class="string">&quot;failed to convert transaction to DeclareTransaction&quot;</span>))<span class="question-mark">?</span>;
-                    pallet_starknet::Call::declare{transaction: tx}
-                },
-                TxType::L1Handler =&gt; {
-                    pallet_starknet::Call::consume_l1_message{transaction}
+        <span class="kw">fn </span>convert_transaction(transaction: UserTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;UncheckedExtrinsic, DispatchError&gt; {
+            <span class="kw">let </span>call = <span class="kw">match </span>transaction {
+                UserTransaction::Declare(tx, contract_class) =&gt; {
+                    pallet_starknet::Call::declare { transaction: tx, contract_class  }
+                }
+                UserTransaction::DeployAccount(tx) =&gt; {
+                    pallet_starknet::Call::deploy_account { transaction: tx  }
+                }
+                UserTransaction::Invoke(tx) =&gt; {
+                    pallet_starknet::Call::invoke { transaction: tx  }
                 }
             };
+
             <span class="prelude-val">Ok</span>(UncheckedExtrinsic::new_unsigned(call.into()))
         }
 

@@ -191,11 +191,10 @@
 <a href="#191" id="191">191</a>
 <a href="#192" id="192">192</a>
 <a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>mc_rpc_core::utils::get_block_by_block_hash;
 <span class="kw">use </span>mp_digest_log::{find_starknet_block, FindLogError};
 <span class="kw">use </span>mp_starknet::traits::hash::HasherT;
-<span class="kw">use </span>mp_starknet::traits::ThreadSafeCopy;
+<span class="kw">use </span>mp_starknet::transaction::compute_hash::ComputeTransactionHash;
 <span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>sp_api::ProvideRuntimeApi;
@@ -203,16 +202,13 @@
 <span class="kw">use </span>sp_core::H256;
 <span class="kw">use </span>sp_runtime::traits::{Block <span class="kw">as </span>BlockT, Header <span class="kw">as </span>HeaderT, Zero};
 
-<span class="kw">fn </span>sync_block&lt;B: BlockT, C, BE, H&gt;(
-    client: <span class="kw-2">&amp;</span>C,
-    backend: <span class="kw-2">&amp;</span>mc_db::Backend&lt;B&gt;,
-    header: <span class="kw-2">&amp;</span>B::Header,
-    hasher: <span class="kw-2">&amp;</span>H,
-) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt;
+<span class="kw">fn </span>sync_block&lt;B: BlockT, C, BE, H&gt;(client: <span class="kw-2">&amp;</span>C, backend: <span class="kw-2">&amp;</span>mc_db::Backend&lt;B&gt;, header: <span class="kw-2">&amp;</span>B::Header) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt;
 <span class="kw">where
     </span>C: HeaderBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt;,
+    C: ProvideRuntimeApi&lt;B&gt;,
+    C::Api: StarknetRuntimeApi&lt;B&gt;,
     BE: Backend&lt;B&gt;,
-    H: HasherT + ThreadSafeCopy,
+    H: HasherT,
 {
     <span class="comment">// Before storing the new block in the Madara backend database, we want to make sure that the
     // wrapped Starknet block it contains is the same that we can find in the storage at this height.
@@ -225,8 +221,8 @@
             </span><span class="kw">let </span>opt_storage_starknet_block = get_block_by_block_hash(client, substrate_block_hash);
             <span class="kw">match </span>opt_storage_starknet_block {
                 <span class="prelude-val">Some</span>(storage_starknet_block) =&gt; {
-                    <span class="kw">let </span>digest_starknet_block_hash = digest_starknet_block.header().hash(<span class="kw-2">*</span>hasher);
-                    <span class="kw">let </span>storage_starknet_block_hash = storage_starknet_block.header().hash(<span class="kw-2">*</span>hasher);
+                    <span class="kw">let </span>digest_starknet_block_hash = digest_starknet_block.header().hash::&lt;H&gt;();
+                    <span class="kw">let </span>storage_starknet_block_hash = storage_starknet_block.header().hash::&lt;H&gt;();
                     <span class="comment">// Ensure the two blocks sources (chain storage and block digest) agree on the block content
                     </span><span class="kw">if </span>digest_starknet_block_hash != storage_starknet_block_hash {
                         <span class="prelude-val">Err</span>(<span class="macro">format!</span>(
@@ -234,14 +230,19 @@
                              db state ({storage_starknet_block_hash:?})&quot;
                         </span>))
                     } <span class="kw">else </span>{
+                        <span class="kw">let </span>chain_id = client
+                            .runtime_api()
+                            .chain_id(substrate_block_hash)
+                            .map_err(|<span class="kw">_</span>| <span class="string">&quot;Failed to fetch chain_id through the runtime api&quot;</span>)<span class="question-mark">?</span>;
+
                         <span class="comment">// Success, we write the Starknet to Substate hashes mapping to db
                         </span><span class="kw">let </span>mapping_commitment = mc_db::MappingCommitment {
                             block_hash: substrate_block_hash,
                             starknet_block_hash: digest_starknet_block_hash.into(),
                             starknet_transaction_hashes: digest_starknet_block
                                 .transactions()
-                                .into_iter()
-                                .map(|tx| H256::from(tx.hash))
+                                .iter()
+                                .map(|tx| H256::from(tx.compute_hash::&lt;H&gt;(chain_id, <span class="bool-val">false</span>)))
                                 .collect(),
                         };
 
@@ -262,12 +263,11 @@
     _client: <span class="kw-2">&amp;</span>C,
     backend: <span class="kw-2">&amp;</span>mc_db::Backend&lt;B&gt;,
     header: <span class="kw-2">&amp;</span>B::Header,
-    hasher: <span class="kw-2">&amp;</span>H,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt;
 <span class="kw">where
     </span>C: HeaderBackend&lt;B&gt;,
     B: BlockT,
-    H: HasherT + ThreadSafeCopy,
+    H: HasherT,
 {
     <span class="kw">let </span>substrate_block_hash = header.hash();
 
@@ -276,7 +276,7 @@
         <span class="prelude-val">Err</span>(FindLogError::NotLog) =&gt; <span class="kw">return </span>backend.mapping().write_none(substrate_block_hash),
         <span class="prelude-val">Err</span>(FindLogError::MultipleLogs) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">&quot;Multiple logs found&quot;</span>.to_string()),
     };
-    <span class="kw">let </span>block_hash = block.header().hash(<span class="kw-2">*</span>hasher);
+    <span class="kw">let </span>block_hash = block.header().hash::&lt;H&gt;();
     <span class="kw">let </span>mapping_commitment = mc_db::MappingCommitment::&lt;B&gt; {
         block_hash: substrate_block_hash,
         starknet_block_hash: block_hash.into(),
@@ -293,14 +293,13 @@
     substrate_backend: <span class="kw-2">&amp;</span>BE,
     madara_backend: <span class="kw-2">&amp;</span>mc_db::Backend&lt;B&gt;,
     sync_from: &lt;B::Header <span class="kw">as </span>HeaderT&gt;::Number,
-    hasher: <span class="kw-2">&amp;</span>H,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;bool, String&gt;
 <span class="kw">where
     </span>C: ProvideRuntimeApi&lt;B&gt;,
     C::Api: StarknetRuntimeApi&lt;B&gt;,
     C: HeaderBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt;,
     BE: Backend&lt;B&gt;,
-    H: HasherT + ThreadSafeCopy,
+    H: HasherT,
 {
     <span class="kw">let </span><span class="kw-2">mut </span>current_syncing_tips = madara_backend.meta().current_syncing_tips()<span class="question-mark">?</span>;
 
@@ -330,12 +329,12 @@
     };
 
     <span class="kw">if </span>operating_header.number() == <span class="kw-2">&amp;</span>Zero::zero() {
-        sync_genesis_block(client, madara_backend, <span class="kw-2">&amp;</span>operating_header, hasher)<span class="question-mark">?</span>;
+        sync_genesis_block::&lt;<span class="kw">_</span>, <span class="kw">_</span>, H&gt;(client, madara_backend, <span class="kw-2">&amp;</span>operating_header)<span class="question-mark">?</span>;
 
         madara_backend.meta().write_current_syncing_tips(current_syncing_tips)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
     } <span class="kw">else </span>{
-        sync_block(client, madara_backend, <span class="kw-2">&amp;</span>operating_header, hasher)<span class="question-mark">?</span>;
+        sync_block::&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, H&gt;(client, madara_backend, <span class="kw-2">&amp;</span>operating_header)<span class="question-mark">?</span>;
 
         current_syncing_tips.push(<span class="kw-2">*</span>operating_header.parent_hash());
         madara_backend.meta().write_current_syncing_tips(current_syncing_tips)<span class="question-mark">?</span>;
@@ -349,19 +348,18 @@
     madara_backend: <span class="kw-2">&amp;</span>mc_db::Backend&lt;B&gt;,
     limit: usize,
     sync_from: &lt;B::Header <span class="kw">as </span>HeaderT&gt;::Number,
-    hasher: <span class="kw-2">&amp;</span>H,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;bool, String&gt;
 <span class="kw">where
     </span>C: ProvideRuntimeApi&lt;B&gt;,
     C::Api: StarknetRuntimeApi&lt;B&gt;,
     C: HeaderBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt;,
     BE: Backend&lt;B&gt;,
-    H: HasherT + ThreadSafeCopy,
+    H: HasherT,
 {
     <span class="kw">let </span><span class="kw-2">mut </span>synced_any = <span class="bool-val">false</span>;
 
     <span class="kw">for _ in </span><span class="number">0</span>..limit {
-        synced_any = synced_any || sync_one_block(client, substrate_backend, madara_backend, sync_from, hasher)<span class="question-mark">?</span>;
+        synced_any = synced_any || sync_one_block::&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, H&gt;(client, substrate_backend, madara_backend, sync_from)<span class="question-mark">?</span>;
     }
 
     <span class="prelude-val">Ok</span>(synced_any)

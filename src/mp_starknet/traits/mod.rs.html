@@ -7,5 +7,5 @@
 </span><span class="kw">pub mod </span>hash;
 
 <span class="doccomment">/// A trait for types that can be shared between threads + copied.
-</span><span class="kw">pub trait </span>ThreadSafeCopy: Send + Sync + Copy + <span class="lifetime">&#39;static </span>{}
+</span><span class="kw">pub trait </span>SendSyncStatic: Send + Sync + <span class="lifetime">&#39;static </span>{}
 </code></pre></div></section></main></body></html>

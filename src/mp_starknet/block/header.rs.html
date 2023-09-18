@@ -109,58 +109,42 @@
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
 <a href="#111" id="111">111</a>
-<a href="#112" id="112">112</a>
-<a href="#113" id="113">113</a>
-<a href="#114" id="114">114</a>
-<a href="#115" id="115">115</a>
-<a href="#116" id="116">116</a>
-<a href="#117" id="117">117</a>
-<a href="#118" id="118">118</a>
-<a href="#119" id="119">119</a>
-<a href="#120" id="120">120</a>
-<a href="#121" id="121">121</a>
-<a href="#122" id="122">122</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>blockifier::block_context::BlockContext;
+</pre></div><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
+
+<span class="kw">use </span>blockifier::block_context::BlockContext;
 <span class="kw">use </span>sp_core::U256;
 <span class="kw">use </span>starknet_api::api_core::{ChainId, ContractAddress};
 <span class="kw">use </span>starknet_api::block::{BlockNumber, BlockTimestamp};
-<span class="kw">use </span>starknet_api::hash::StarkFelt;
+<span class="kw">use </span>starknet_api::hash::StarkHash;
+<span class="kw">use </span>starknet_api::stdlib::collections::HashMap;
 
-<span class="kw">use </span><span class="kw">crate</span>::execution::types::{ContractAddressWrapper, Felt252Wrapper};
+<span class="kw">use </span><span class="kw">crate</span>::execution::types::Felt252Wrapper;
 <span class="kw">use </span><span class="kw">crate</span>::traits::hash::HasherT;
 
-<span class="attr">#[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    scale_codec::Encode,
-    scale_codec::Decode,
-    scale_info::TypeInfo,
-    Default,
-    scale_codec::MaxEncodedLen,
-)]
-#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
+<span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Default)]
+#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+</span><span class="comment">// #[cfg_attr(feature = &quot;scale-info&quot;, derive(scale_info::TypeInfo))]
 </span><span class="doccomment">/// Starknet header definition.
 </span><span class="kw">pub struct </span>Header {
     <span class="doccomment">/// The hash of this block’s parent.
-    </span><span class="kw">pub </span>parent_block_hash: Felt252Wrapper,
+    </span><span class="kw">pub </span>parent_block_hash: StarkHash,
     <span class="doccomment">/// The number (height) of this block.
     </span><span class="kw">pub </span>block_number: u64,
     <span class="doccomment">/// The state commitment after this block.
-    </span><span class="kw">pub </span>global_state_root: Felt252Wrapper,
+    </span><span class="kw">pub </span>global_state_root: StarkHash,
     <span class="doccomment">/// The Starknet address of the sequencer who created this block.
-    </span><span class="kw">pub </span>sequencer_address: ContractAddressWrapper,
+    </span><span class="kw">pub </span>sequencer_address: ContractAddress,
     <span class="doccomment">/// The time the sequencer created this block before executing transactions
     </span><span class="kw">pub </span>block_timestamp: u64,
     <span class="doccomment">/// The number of transactions in a block
     </span><span class="kw">pub </span>transaction_count: u128,
     <span class="doccomment">/// A commitment to the transactions included in the block
-    </span><span class="kw">pub </span>transaction_commitment: Felt252Wrapper,
+    </span><span class="kw">pub </span>transaction_commitment: StarkHash,
     <span class="doccomment">/// The number of events
     </span><span class="kw">pub </span>event_count: u128,
     <span class="doccomment">/// A commitment to the events produced in this block
-    </span><span class="kw">pub </span>event_commitment: Felt252Wrapper,
+    </span><span class="kw">pub </span>event_commitment: StarkHash,
     <span class="doccomment">/// The version of the Starknet protocol used when creating this block
     </span><span class="kw">pub </span>protocol_version: u8,
     <span class="doccomment">/// Extraneous data that might be useful for running transactions
@@ -172,15 +156,15 @@
     </span><span class="attr">#[allow(clippy::too_many_arguments)]
     #[must_use]
     </span><span class="kw">pub fn </span>new(
-        parent_block_hash: Felt252Wrapper,
+        parent_block_hash: StarkHash,
         block_number: u64,
-        global_state_root: Felt252Wrapper,
-        sequencer_address: ContractAddressWrapper,
+        global_state_root: StarkHash,
+        sequencer_address: ContractAddress,
         block_timestamp: u64,
         transaction_count: u128,
-        transaction_commitment: Felt252Wrapper,
+        transaction_commitment: StarkHash,
         event_count: u128,
-        event_commitment: Felt252Wrapper,
+        event_commitment: StarkHash,
         protocol_version: u8,
         extra_data: <span class="prelude-ty">Option</span>&lt;U256&gt;,
     ) -&gt; <span class="self">Self </span>{
@@ -200,19 +184,13 @@
     }
 
     <span class="doccomment">/// Converts to a blockifier BlockContext
-    </span><span class="kw">pub fn </span>into_block_context(<span class="self">self</span>, fee_token_address: ContractAddressWrapper, chain_id: ChainId) -&gt; BlockContext {
-        <span class="comment">// Convert from ContractAddressWrapper to ContractAddress
-        </span><span class="kw">let </span>sequencer_address =
-            ContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.sequencer_address.into()).unwrap()).unwrap();
-        <span class="comment">// Convert from ContractAddressWrapper to ContractAddress
-        </span><span class="kw">let </span>fee_token_address = ContractAddress::try_from(StarkFelt::new(fee_token_address.into()).unwrap()).unwrap();
-
+    </span><span class="kw">pub fn </span>into_block_context(<span class="self">self</span>, fee_token_address: ContractAddress, chain_id: ChainId) -&gt; BlockContext {
         BlockContext {
             chain_id,
             block_number: BlockNumber(<span class="self">self</span>.block_number),
             block_timestamp: BlockTimestamp(<span class="self">self</span>.block_timestamp),
-            sequencer_address,
-            vm_resource_fee_cost: Default::default(),
+            sequencer_address: <span class="self">self</span>.sequencer_address,
+            vm_resource_fee_cost: Arc::new(HashMap::default()),
             fee_token_address,
             invoke_tx_max_n_steps: <span class="number">1000000</span>,
             validate_max_n_steps: <span class="number">1000000</span>,
@@ -224,22 +202,22 @@
 
     <span class="doccomment">/// Compute the hash of the header.
     </span><span class="attr">#[must_use]
-    </span><span class="kw">pub fn </span>hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, hasher: H) -&gt; Felt252Wrapper {
+    </span><span class="kw">pub fn </span>hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Felt252Wrapper {
         <span class="kw">let </span>data: <span class="kw-2">&amp;</span>[Felt252Wrapper] = <span class="kw-2">&amp;</span>[
-            <span class="self">self</span>.block_number.into(), <span class="comment">// TODO: remove unwrap
-            </span><span class="self">self</span>.global_state_root,
-            <span class="self">self</span>.sequencer_address,
+            <span class="self">self</span>.block_number.into(),
+            <span class="self">self</span>.global_state_root.into(),
+            <span class="self">self</span>.sequencer_address.<span class="number">0.0</span>.into(),
             <span class="self">self</span>.block_timestamp.into(),
             <span class="self">self</span>.transaction_count.into(),
-            <span class="self">self</span>.transaction_commitment,
+            <span class="self">self</span>.transaction_commitment.into(),
             <span class="self">self</span>.event_count.into(),
-            <span class="self">self</span>.event_commitment,
+            <span class="self">self</span>.event_commitment.into(),
             <span class="self">self</span>.protocol_version.into(),
             Felt252Wrapper::ZERO,
-            <span class="self">self</span>.parent_block_hash,
+            <span class="self">self</span>.parent_block_hash.into(),
         ];
 
-        &lt;H <span class="kw">as </span>HasherT&gt;::compute_hash_on_wrappers(<span class="kw-2">&amp;</span>hasher, data)
+        H::compute_hash_on_wrappers(data)
     }
 }
 </code></pre></div></section></main></body></html>

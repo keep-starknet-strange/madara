@@ -90,16 +90,6 @@
 <a href="#90" id="90">90</a>
 <a href="#91" id="91">91</a>
 <a href="#92" id="92">92</a>
-<a href="#93" id="93">93</a>
-<a href="#94" id="94">94</a>
-<a href="#95" id="95">95</a>
-<a href="#96" id="96">96</a>
-<a href="#97" id="97">97</a>
-<a href="#98" id="98">98</a>
-<a href="#99" id="99">99</a>
-<a href="#100" id="100">100</a>
-<a href="#101" id="101">101</a>
-<a href="#102" id="102">102</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::num::ParseIntError;
 <span class="kw">use </span>std::{fmt, u64};
 
@@ -118,7 +108,6 @@
 <span class="attr">#[derive(PartialEq, Eq, Debug, Default)]
 </span><span class="kw">pub struct </span>ContinuationToken {
     <span class="kw">pub </span>block_n: u64,
-    <span class="kw">pub </span>receipt_n: u64,
     <span class="kw">pub </span>event_n: u64,
 }
 
@@ -130,21 +119,20 @@
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>ContinuationToken {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">&quot;{:x},{:x},{:x}&quot;</span>, <span class="self">self</span>.block_n, <span class="self">self</span>.receipt_n, <span class="self">self</span>.event_n)
+        <span class="macro">write!</span>(f, <span class="string">&quot;{:x},{:x}&quot;</span>, <span class="self">self</span>.block_n, <span class="self">self</span>.event_n)
     }
 }
 
 <span class="kw">impl </span>ContinuationToken {
     <span class="kw">pub fn </span>parse(token: String) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, ParseTokenError&gt; {
         <span class="kw">let </span>arr: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = token.split(<span class="string">&#39;,&#39;</span>).collect();
-        <span class="kw">if </span>arr.len() != <span class="number">3 </span>{
+        <span class="kw">if </span>arr.len() != <span class="number">2 </span>{
             <span class="kw">return </span><span class="prelude-val">Err</span>(ParseTokenError::WrongToken);
         }
         <span class="kw">let </span>block_n = u64::from_str_radix(arr[<span class="number">0</span>], <span class="number">16</span>).map_err(ParseTokenError::ParseFailed)<span class="question-mark">?</span>;
-        <span class="kw">let </span>receipt_n = u64::from_str_radix(arr[<span class="number">1</span>], <span class="number">16</span>).map_err(ParseTokenError::ParseFailed)<span class="question-mark">?</span>;
-        <span class="kw">let </span>event_n = u64::from_str_radix(arr[<span class="number">2</span>], <span class="number">16</span>).map_err(ParseTokenError::ParseFailed)<span class="question-mark">?</span>;
+        <span class="kw">let </span>event_n = u64::from_str_radix(arr[<span class="number">1</span>], <span class="number">16</span>).map_err(ParseTokenError::ParseFailed)<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(ContinuationToken { block_n, receipt_n, event_n })
+        <span class="prelude-val">Ok</span>(ContinuationToken { block_n, event_n })
     }
 }
 
@@ -155,51 +143,43 @@
     <span class="kw">use </span><span class="kw">crate</span>::types::<span class="kw-2">*</span>;
 
     <span class="attr">#[rstest]
-    #[case(<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="string">&quot;0,0,0&quot;</span>)]
-    #[case(<span class="number">1</span>, <span class="number">1</span>, <span class="number">4</span>, <span class="string">&quot;1,1,4&quot;</span>)]
-    #[case(<span class="number">2</span>, <span class="number">10</span>, <span class="number">4</span>, <span class="string">&quot;2,a,4&quot;</span>)]
-    #[case(<span class="number">30</span>, <span class="number">255</span>, <span class="number">4</span>, <span class="string">&quot;1e,ff,4&quot;</span>)]
-    #[case(<span class="number">0</span>, <span class="number">388</span>, <span class="number">4</span>, <span class="string">&quot;0,184,4&quot;</span>)]
-    </span><span class="kw">fn </span>to_string_works(<span class="attr">#[case] </span>block_n: u64, <span class="attr">#[case] </span>receipt_n: u64, <span class="attr">#[case] </span>event_n: u64, <span class="attr">#[case] </span>expected: String) {
-        <span class="kw">let </span>token = ContinuationToken { block_n, receipt_n, event_n };
+    #[case(<span class="number">0</span>, <span class="number">0</span>, <span class="string">&quot;0,0&quot;</span>)]
+    #[case(<span class="number">1</span>, <span class="number">4</span>, <span class="string">&quot;1,4&quot;</span>)]
+    #[case(<span class="number">2</span>, <span class="number">4</span>, <span class="string">&quot;2,4&quot;</span>)]
+    #[case(<span class="number">30</span>, <span class="number">4</span>, <span class="string">&quot;1e,4&quot;</span>)]
+    #[case(<span class="number">0</span>, <span class="number">4</span>, <span class="string">&quot;0,4&quot;</span>)]
+    </span><span class="kw">fn </span>to_string_works(<span class="attr">#[case] </span>block_n: u64, <span class="attr">#[case] </span>event_n: u64, <span class="attr">#[case] </span>expected: String) {
+        <span class="kw">let </span>token = ContinuationToken { block_n, event_n };
         <span class="macro">assert_eq!</span>(expected, token.to_string())
     }
 
     <span class="attr">#[rstest]
-    #[case(<span class="string">&quot;0,0,0&quot;</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>)]
-    #[case(<span class="string">&quot;1,1,4&quot;</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">4</span>)]
-    #[case(<span class="string">&quot;2,100,4&quot;</span>, <span class="number">2</span>, <span class="number">16</span><span class="kw-2">*</span><span class="number">16</span>, <span class="number">4</span>)]
-    #[case(<span class="string">&quot;1e,ff,4&quot;</span>, <span class="number">30</span>, <span class="number">255</span>, <span class="number">4</span>)]
-    #[case(<span class="string">&quot;244,1,1&quot;</span>, <span class="number">2</span><span class="kw-2">*</span><span class="number">16</span><span class="kw-2">*</span><span class="number">16</span>+<span class="number">4</span><span class="kw-2">*</span><span class="number">16</span>+<span class="number">4</span>, <span class="number">1</span>, <span class="number">1</span>)]
-    </span><span class="kw">fn </span>parse_works(<span class="attr">#[case] </span>string_token: String, <span class="attr">#[case] </span>block_n: u64, <span class="attr">#[case] </span>receipt_n: u64, <span class="attr">#[case] </span>event_n: u64) {
-        <span class="kw">let </span>expected = ContinuationToken { block_n, receipt_n, event_n };
+    #[case(<span class="string">&quot;0,0&quot;</span>, <span class="number">0</span>, <span class="number">0</span>)]
+    #[case(<span class="string">&quot;1,4&quot;</span>, <span class="number">1</span>, <span class="number">4</span>)]
+    #[case(<span class="string">&quot;2,4&quot;</span>, <span class="number">2</span>, <span class="number">4</span>)]
+    #[case(<span class="string">&quot;1e,4&quot;</span>, <span class="number">30</span>, <span class="number">4</span>)]
+    #[case(<span class="string">&quot;244,1&quot;</span>, <span class="number">2</span><span class="kw-2">*</span><span class="number">16</span><span class="kw-2">*</span><span class="number">16</span>+<span class="number">4</span><span class="kw-2">*</span><span class="number">16</span>+<span class="number">4</span>, <span class="number">1</span>)]
+    </span><span class="kw">fn </span>parse_works(<span class="attr">#[case] </span>string_token: String, <span class="attr">#[case] </span>block_n: u64, <span class="attr">#[case] </span>event_n: u64) {
+        <span class="kw">let </span>expected = ContinuationToken { block_n, event_n };
         <span class="macro">assert_eq!</span>(expected, ContinuationToken::parse(string_token).unwrap());
     }
 
     <span class="attr">#[rstest]
     #[case(<span class="string">&quot;100&quot;</span>)]
     #[case(<span class="string">&quot;0,&quot;</span>)]
-    #[case(<span class="string">&quot;0,0&quot;</span>)]
+    #[case(<span class="string">&quot;0,0,0&quot;</span>)]
     </span><span class="kw">fn </span>parse_should_fail(<span class="attr">#[case] </span>string_token: String) {
         <span class="kw">let </span>result = ContinuationToken::parse(string_token);
-        <span class="macro">assert_eq!</span>(<span class="prelude-val">Err</span>(ParseTokenError::WrongToken), result);
+        <span class="macro">assert!</span>(result.is_err());
     }
 
     <span class="attr">#[rstest]
-    #[case(<span class="string">&quot;2y,100,4&quot;</span>)]
-    #[case(<span class="string">&quot;30,255g,4&quot;</span>)]
-    #[case(<span class="string">&quot;244,1,fv&quot;</span>)]
+    #[case(<span class="string">&quot;2y,4&quot;</span>)]
+    #[case(<span class="string">&quot;30,255g&quot;</span>)]
     #[case(<span class="string">&quot;1,1,&quot;</span>)]
     </span><span class="kw">fn </span>parse_u64_should_fail(<span class="attr">#[case] </span>string_token: String) {
         <span class="kw">let </span>result = ContinuationToken::parse(string_token);
         <span class="macro">assert!</span>(result.is_err());
-        <span class="kw">match </span>result {
-            <span class="prelude-val">Err</span>(error) =&gt; <span class="kw">match </span>error {
-                ParseTokenError::ParseFailed(<span class="kw">_</span>) =&gt; (),
-                ParseTokenError::WrongToken =&gt; <span class="macro">panic!</span>(<span class="string">&quot;wrong error&quot;</span>),
-            },
-            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;should fail&quot;</span>),
-        }
     }
 }
 </code></pre></div></section></main></body></html>

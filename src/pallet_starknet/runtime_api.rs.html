@@ -64,6 +64,11 @@
 <a href="#64" id="64">64</a>
 <a href="#65" id="65">65</a>
 <a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Definition of the runtime API for the StarkNet pallet.
 
 </span><span class="comment">// Adding allow unused type parameters to avoid clippy errors
@@ -72,18 +77,19 @@
 </span><span class="attr">#![allow(clippy::extra_unused_type_parameters)]
 
 </span><span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
-<span class="kw">use </span>mp_starknet::crypto::hash::Hasher;
-<span class="kw">use </span>mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper, StorageKeyWrapper};
-<span class="kw">use </span>mp_starknet::transaction::types::{EventWrapper, Transaction, TxType};
+<span class="kw">use </span>mp_starknet::execution::types::Felt252Wrapper;
+<span class="kw">use </span>mp_starknet::transaction::{Transaction, TxType, UserTransaction};
 <span class="kw">use </span>sp_api::BlockT;
 <span class="kw">pub extern crate </span>alloc;
 <span class="kw">use </span>alloc::vec::Vec;
 
 <span class="kw">use </span>sp_runtime::DispatchError;
+<span class="kw">use </span>starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
+<span class="kw">use </span>starknet_api::hash::StarkFelt;
+<span class="kw">use </span>starknet_api::state::StorageKey;
+<span class="kw">use </span>starknet_api::transaction::{Calldata, Event <span class="kw">as </span>StarknetEvent, TransactionHash};
 
-<span class="kw">use </span><span class="kw">crate</span>::types::NonceWrapper;
-
-<span class="attr">#[derive(scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
+<span class="attr">#[derive(parity_scale_codec::Encode, parity_scale_codec::Decode, scale_info::TypeInfo)]
 </span><span class="kw">pub enum </span>StarknetTransactionExecutionError {
     ContractNotFound,
     ClassAlreadyDeclared,
@@ -95,23 +101,19 @@
 <span class="macro">sp_api::decl_runtime_apis! </span>{
     <span class="kw">pub trait </span>StarknetRuntimeApi {
         <span class="doccomment">/// Returns the nonce associated with the given address in the given block
-        </span><span class="kw">fn </span>nonce(contract_address: ContractAddressWrapper) -&gt; NonceWrapper;
-        <span class="doccomment">/// Returns the events associated with the given block
-        </span><span class="kw">fn </span>events() -&gt; Vec&lt;EventWrapper&gt;;
+        </span><span class="kw">fn </span>nonce(contract_address: ContractAddress) -&gt; Nonce;
         <span class="doccomment">/// Returns a storage slot value
-        </span><span class="kw">fn </span>get_storage_at(address: ContractAddressWrapper, key: StorageKeyWrapper) -&gt; <span class="prelude-ty">Result</span>&lt;Felt252Wrapper, DispatchError&gt;;
+        </span><span class="kw">fn </span>get_storage_at(address: ContractAddress, key: StorageKey) -&gt; <span class="prelude-ty">Result</span>&lt;StarkFelt, DispatchError&gt;;
         <span class="doccomment">/// Returns a `Call` response.
-        </span><span class="kw">fn </span>call(address: ContractAddressWrapper, function_selector: Felt252Wrapper, calldata: Vec&lt;Felt252Wrapper&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Felt252Wrapper&gt;, DispatchError&gt;;
+        </span><span class="kw">fn </span>call(address: ContractAddress, function_selector: EntryPointSelector, calldata: Calldata) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Felt252Wrapper&gt;, DispatchError&gt;;
         <span class="doccomment">/// Returns the contract class hash at the given address.
-        </span><span class="kw">fn </span>contract_class_hash_by_address(address: ContractAddressWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;ClassHashWrapper&gt;;
+        </span><span class="kw">fn </span>contract_class_hash_by_address(address: ContractAddress) -&gt; ClassHash;
         <span class="doccomment">/// Returns the contract class for the given class hash.
-        </span><span class="kw">fn </span>contract_class_by_class_hash(class_hash: ClassHashWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClass&gt;;
+        </span><span class="kw">fn </span>contract_class_by_class_hash(class_hash: ClassHash) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClass&gt;;
         <span class="doccomment">/// Returns the chain id.
         </span><span class="kw">fn </span>chain_id() -&gt; Felt252Wrapper;
         <span class="doccomment">/// Returns fee estimate
-        </span><span class="kw">fn </span>estimate_fee(transaction: Transaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u64, u64), DispatchError&gt;;
-        <span class="doccomment">/// Returns the hasher used by the runtime.
-        </span><span class="kw">fn </span>get_hasher() -&gt; Hasher;
+        </span><span class="kw">fn </span>estimate_fee(transaction: UserTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u64, u64), DispatchError&gt;;
         <span class="doccomment">/// Filters extrinsic transactions to return only Starknet transactions
         ///
         /// To support runtime upgrades, the client must be unaware of the specific extrinsic
@@ -121,11 +123,19 @@
         /// the runtime itself, accomplished through the extrinsic_filter method. This enables the
         /// client to operate seamlessly while abstracting the extrinsic complexity.
         </span><span class="kw">fn </span>extrinsic_filter(xts: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;) -&gt; Vec&lt;Transaction&gt;;
+        <span class="kw">fn </span>get_events_for_tx_hash(xts: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;, chain_id: Felt252Wrapper, tx_hash: Felt252Wrapper) -&gt; <span class="prelude-ty">Option</span>&lt;(TxType, Vec&lt;StarknetEvent&gt;)&gt;;
+
+        <span class="doccomment">/// Return the list of StarknetEvent evmitted during this block, along with the hash of the starknet transaction they bellong to
+        ///
+        /// `block_extrinsics` is the list of all the extrinsic executed during this block, it is used in order to match
+        </span><span class="kw">fn </span>get_starknet_events_and_their_associated_tx_hash(block_extrinsics: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;, chain_id: Felt252Wrapper) -&gt; Vec&lt;(Felt252Wrapper, StarknetEvent)&gt;;
+        <span class="doccomment">/// Return the outcome of the tx execution
+        </span><span class="kw">fn </span>get_tx_execution_outcome(tx_hash: TransactionHash) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;;
     }
 
     <span class="kw">pub trait </span>ConvertTransactionRuntimeApi {
         <span class="doccomment">/// Converts the transaction to an UncheckedExtrinsic for submission to the pool.
-        </span><span class="kw">fn </span>convert_transaction(transaction: Transaction, tx_type: TxType) -&gt; <span class="prelude-ty">Result</span>&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic, DispatchError&gt;;
+        </span><span class="kw">fn </span>convert_transaction(transaction: UserTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic, DispatchError&gt;;
         <span class="doccomment">/// Converts the DispatchError to an understandable error for the client
         </span><span class="kw">fn </span>convert_error(error: DispatchError) -&gt; StarknetTransactionExecutionError;
     }

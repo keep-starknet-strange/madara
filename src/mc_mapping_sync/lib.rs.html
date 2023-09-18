@@ -136,7 +136,6 @@
 <a href="#136" id="136">136</a>
 <a href="#137" id="137">137</a>
 <a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A worker syncing the Madara db
 //!
 //! # Role
@@ -149,6 +148,7 @@
 
 </span><span class="kw">mod </span>sync_blocks;
 
+<span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::pin::Pin;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::time::Duration;
@@ -158,7 +158,6 @@
 <span class="kw">use </span>futures_timer::Delay;
 <span class="kw">use </span>log::debug;
 <span class="kw">use </span>mp_starknet::traits::hash::HasherT;
-<span class="kw">use </span>mp_starknet::traits::ThreadSafeCopy;
 <span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>sc_client_api::client::ImportNotifications;
@@ -175,7 +174,7 @@
     client: Arc&lt;C&gt;,
     substrate_backend: Arc&lt;BE&gt;,
     madara_backend: Arc&lt;mc_db::Backend&lt;B&gt;&gt;,
-    hasher: Arc&lt;H&gt;,
+    hasher: PhantomData&lt;H&gt;,
 
     have_next: bool,
     retry_times: usize,
@@ -194,7 +193,7 @@
         frontier_backend: Arc&lt;mc_db::Backend&lt;B&gt;&gt;,
         retry_times: usize,
         sync_from: &lt;B::Header <span class="kw">as </span>HeaderT&gt;::Number,
-        hasher: Arc&lt;H&gt;,
+        hasher: PhantomData&lt;H&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             import_notifications,
@@ -219,7 +218,7 @@
     C::Api: StarknetRuntimeApi&lt;B&gt;,
     C: HeaderBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt;,
     BE: Backend&lt;B&gt;,
-    H: HasherT + ThreadSafeCopy,
+    H: HasherT,
 {
     <span class="kw">type </span>Item = ();
 
@@ -253,13 +252,12 @@
         <span class="kw">if </span>fire {
             <span class="self">self</span>.inner_delay = <span class="prelude-val">None</span>;
 
-            <span class="kw">match </span>sync_blocks::sync_blocks(
+            <span class="kw">match </span>sync_blocks::sync_blocks::&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, H&gt;(
                 <span class="self">self</span>.client.as_ref(),
                 <span class="self">self</span>.substrate_backend.as_ref(),
                 <span class="self">self</span>.madara_backend.as_ref(),
                 <span class="self">self</span>.retry_times,
                 <span class="self">self</span>.sync_from,
-                <span class="self">self</span>.hasher.as_ref(),
             ) {
                 <span class="prelude-val">Ok</span>(have_next) =&gt; {
                     <span class="self">self</span>.have_next = have_next;

@@ -168,19 +168,41 @@
 <a href="#168" id="168">168</a>
 <a href="#169" id="169">169</a>
 <a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::fmt;
 <span class="kw">use </span>std::string::String;
 <span class="kw">use </span>std::vec::Vec;
 
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass <span class="kw">as </span>StarknetContractClass;
-<span class="kw">use </span>mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
-<span class="kw">use </span>mp_starknet::starknet_serde::get_contract_class;
+<span class="kw">use </span>mp_starknet::execution::types::Felt252Wrapper;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>serde_with::serde_as;
 <span class="kw">use </span>starknet_core::serde::unsigned_field_element::UfeHex;
 <span class="kw">use </span>starknet_crypto::FieldElement;
 
-<span class="kw">use </span><span class="kw">crate</span>::types::ContractStorageKeyWrapper;
 <span class="kw">use crate</span>::{utils, GenesisConfig};
 
 <span class="doccomment">/// A wrapper for FieldElement that implements serde&#39;s Serialize and Deserialize for hex strings.
@@ -237,7 +259,7 @@
             .contract_classes
             .into_iter()
             .map(|(hash, class)| {
-                <span class="kw">let </span>hash = <span class="kw">unsafe </span>{ std::mem::transmute::&lt;ClassHash, ClassHashWrapper&gt;(hash) };
+                <span class="kw">let </span>hash = Felt252Wrapper(hash.<span class="number">0</span>).into();
                 <span class="kw">match </span>class {
                     ContractClass::Path { path, version } =&gt; {
                         <span class="kw">let </span>contract_path = <span class="kw">match </span>loader.madara_path.clone() {
@@ -247,7 +269,10 @@
                                 project_path + <span class="string">&quot;/&quot; </span>+ <span class="kw-2">&amp;</span>path
                             }
                         };
-                        (hash, get_contract_class(<span class="kw-2">&amp;</span>utils::read_file_to_string(contract_path).unwrap(), version))
+                        (
+                            hash,
+                            read_contract_class_from_json(<span class="kw-2">&amp;</span>utils::read_file_to_string(contract_path).unwrap(), version),
+                        )
                     }
                     ContractClass::Class(class) =&gt; (hash, class),
                 }
@@ -257,8 +282,8 @@
             .contracts
             .into_iter()
             .map(|(address, hash)| {
-                <span class="kw">let </span>address = <span class="kw">unsafe </span>{ std::mem::transmute::&lt;ContractAddress, ContractAddressWrapper&gt;(address) };
-                <span class="kw">let </span>hash = <span class="kw">unsafe </span>{ std::mem::transmute::&lt;ClassHash, ClassHashWrapper&gt;(hash) };
+                <span class="kw">let </span>address = Felt252Wrapper(address.<span class="number">0</span>).into();
+                <span class="kw">let </span>hash = Felt252Wrapper(hash.<span class="number">0</span>).into();
                 (address, hash)
             })
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
@@ -266,13 +291,12 @@
             .storage
             .into_iter()
             .map(|(key, value)| {
-                <span class="kw">let </span>key = <span class="kw">unsafe </span>{ std::mem::transmute::&lt;ContractStorageKey, ContractStorageKeyWrapper&gt;(key) };
-                <span class="kw">let </span>value = <span class="kw">unsafe </span>{ std::mem::transmute::&lt;StorageValue, Felt252Wrapper&gt;(value) };
+                <span class="kw">let </span>key = (Felt252Wrapper(key.<span class="number">0.0</span>).into(), Felt252Wrapper(key.<span class="number">1.0</span>).into());
+                <span class="kw">let </span>value = Felt252Wrapper(value.<span class="number">0</span>).into();
                 (key, value)
             })
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-        <span class="kw">let </span>fee_token_address =
-            <span class="kw">unsafe </span>{ std::mem::transmute::&lt;ContractAddress, ContractAddressWrapper&gt;(loader.fee_token_address) };
+        <span class="kw">let </span>fee_token_address = Felt252Wrapper(loader.fee_token_address.<span class="number">0</span>).into();
 
         GenesisConfig {
             contracts,
@@ -283,6 +307,30 @@
             ..Default::default()
         }
     }
+}
+
+<span class="doccomment">/// Create a `ContractClass` from a JSON string
+///
+/// This function takes a JSON string (`json_str`) containing the JSON representation of a
+/// ContractClass
+///
+/// `ContractClassV0` can be read directly from the JSON because the Serde methods have been
+/// implemented in the blockifier
+///
+/// `ContractClassV1` needs to be read in Casm and then converted to Contract Class V1
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_contract_class_from_json(json_str: <span class="kw-2">&amp;</span>str, version: u8) -&gt; StarknetContractClass {
+    <span class="kw">if </span>version == <span class="number">0 </span>{
+        <span class="kw">return </span>StarknetContractClass::V0(
+            serde_json::from_str(json_str).expect(<span class="string">&quot;`json_str` should be deserializable into the correct ContracClass&quot;</span>),
+        );
+    } <span class="kw">else if </span>version == <span class="number">1 </span>{
+        <span class="kw">let </span>casm_contract_class: cairo_lang_casm_contract_class::CasmContractClass =
+            serde_json::from_str(json_str).expect(<span class="string">&quot;`json_str` should be deserializable into the CasmContracClass&quot;</span>);
+        <span class="kw">return </span>StarknetContractClass::V1(
+            casm_contract_class.try_into().expect(<span class="string">&quot;the CasmContractClass should produce a valid ContractClassV1&quot;</span>),
+        );
+    }
+    <span class="macro">unimplemented!</span>(<span class="string">&quot;version {} is not supported to get contract class from JSON&quot;</span>, version);
 }
 
 <span class="attr">#[cfg(test)]

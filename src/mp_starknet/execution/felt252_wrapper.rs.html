@@ -470,6 +470,11 @@
 <a href="#470" id="470">470</a>
 <a href="#471" id="471">471</a>
 <a href="#472" id="472">472</a>
+<a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! # Felt252 - FieldElement wrapper.
 //!
 //! Starknet base type is a [`FieldElement`] from starknet-ff crate.
@@ -479,20 +484,20 @@
 //! The [`Felt252Wrapper`] implements the traits for SCALE encoding, and wrap
 //! the [`FieldElement`] type from starknet-ff.
 
-</span><span class="kw">use </span>alloc::string::String;
+</span><span class="kw">use </span>alloc::string::{String, ToString};
 
 <span class="kw">use </span>cairo_vm::felt::Felt252;
-<span class="kw">use </span>scale_codec::{Decode, Encode, EncodeLike, Error, Input, MaxEncodedLen, Output};
-<span class="kw">use </span>scale_info::build::Fields;
-<span class="kw">use </span>scale_info::{Path, Type, TypeInfo};
+<span class="attr">#[cfg(feature = <span class="string">&quot;parity-scale-codec&quot;</span>)]
+</span><span class="kw">use </span>parity_scale_codec::{Decode, Encode, EncodeLike, Error, Input, MaxEncodedLen, Output};
+<span class="attr">#[cfg(feature = <span class="string">&quot;scale-info&quot;</span>)]
+</span><span class="kw">use </span>scale_info::{build::Fields, Path, Type, TypeInfo};
 <span class="kw">use </span>sp_core::{H256, U256};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_ff::{FieldElement, FromByteSliceError, FromStrError};
 <span class="kw">use </span>thiserror_no_std::Error;
 
-<span class="doccomment">///
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, PartialOrd, Ord, Hash, Eq, Copy, serde::Serialize, serde::Deserialize)]
-</span><span class="comment">//#[cfg_attr(feature = &quot;std&quot;, derive(serde::Serialize, serde::Deserialize))]
+<span class="attr">#[derive(Clone, Debug, PartialEq, PartialOrd, Ord, Hash, Eq, Copy)]
+#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
 </span><span class="kw">pub struct </span>Felt252Wrapper(<span class="kw">pub </span>FieldElement);
 
 <span class="kw">impl </span>Felt252Wrapper {
@@ -538,18 +543,16 @@
         <span class="kw">let </span>fe = FieldElement::from_dec_str(value)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="self">Self</span>(fe))
     }
-}
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl </span>Felt252Wrapper {
     <span class="doccomment">/// Decodes the bytes representation in utf-8
     ///
     /// # Errors
     ///
     /// If the bytes are not valid utf-8, returns [`Felt252WrapperError`].
     </span><span class="kw">pub fn </span>from_utf8(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;String, Felt252WrapperError&gt; {
-        <span class="kw">let </span>s =
-            std::str::from_utf8(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>.to_bytes_be()).map_err(|<span class="kw">_</span>| Felt252WrapperError::InvalidCharacter)<span class="question-mark">?</span>.to_string();
+        <span class="kw">let </span>s = alloc::str::from_utf8(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>.to_bytes_be())
+            .map_err(|<span class="kw">_</span>| Felt252WrapperError::InvalidCharacter)<span class="question-mark">?
+            </span>.to_string();
         <span class="prelude-val">Ok</span>(s.trim_start_matches(<span class="string">&#39;\0&#39;</span>).to_string())
     }
 }
@@ -727,6 +730,7 @@
 }
 
 <span class="doccomment">/// SCALE trait.
+</span><span class="attr">#[cfg(feature = <span class="string">&quot;parity-scale-codec&quot;</span>)]
 </span><span class="kw">impl </span>Encode <span class="kw">for </span>Felt252Wrapper {
     <span class="kw">fn </span>encode_to&lt;T: Output + <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, dest: <span class="kw-2">&amp;mut </span>T) {
         dest.write(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>.to_bytes_be());
@@ -734,9 +738,11 @@
 }
 
 <span class="doccomment">/// SCALE trait.
+</span><span class="attr">#[cfg(feature = <span class="string">&quot;parity-scale-codec&quot;</span>)]
 </span><span class="kw">impl </span>EncodeLike <span class="kw">for </span>Felt252Wrapper {}
 
 <span class="doccomment">/// SCALE trait.
+</span><span class="attr">#[cfg(feature = <span class="string">&quot;parity-scale-codec&quot;</span>)]
 </span><span class="kw">impl </span>MaxEncodedLen <span class="kw">for </span>Felt252Wrapper {
     <span class="kw">fn </span>max_encoded_len() -&gt; usize {
         <span class="number">32
@@ -744,6 +750,7 @@
 }
 
 <span class="doccomment">/// SCALE trait.
+</span><span class="attr">#[cfg(feature = <span class="string">&quot;parity-scale-codec&quot;</span>)]
 </span><span class="kw">impl </span>Decode <span class="kw">for </span>Felt252Wrapper {
     <span class="kw">fn </span>decode&lt;I: Input&gt;(input: <span class="kw-2">&amp;mut </span>I) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>buf: [u8; <span class="number">32</span>] = [<span class="number">0</span>; <span class="number">32</span>];
@@ -757,6 +764,7 @@
 }
 
 <span class="doccomment">/// SCALE trait.
+</span><span class="attr">#[cfg(feature = <span class="string">&quot;scale-info&quot;</span>)]
 </span><span class="kw">impl </span>TypeInfo <span class="kw">for </span>Felt252Wrapper {
     <span class="kw">type </span>Identity = <span class="self">Self</span>;
 
@@ -896,6 +904,7 @@
     }
 
     <span class="attr">#[test]
+    #[cfg(feature = <span class="string">&quot;parity-scale-codec&quot;</span>)]
     </span><span class="kw">fn </span>encode_decode_scale() {
         <span class="kw">let </span>felt = Felt252Wrapper::ONE;
         <span class="kw">let </span>encoded = felt.encode();
@@ -909,6 +918,7 @@
     }
 
     <span class="attr">#[test]
+    #[cfg(feature = <span class="string">&quot;parity-scale-codec&quot;</span>)]
     </span><span class="kw">fn </span>vec_encode_decode_scale() {
         <span class="kw">let </span>input = <span class="macro">vec!</span>[
             Felt252Wrapper::ONE,

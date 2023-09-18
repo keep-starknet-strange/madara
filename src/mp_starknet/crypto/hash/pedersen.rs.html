@@ -109,11 +109,6 @@
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
 <a href="#111" id="111">111</a>
-<a href="#112" id="112">112</a>
-<a href="#113" id="113">113</a>
-<a href="#114" id="114">114</a>
-<a href="#115" id="115">115</a>
-<a href="#116" id="116">116</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Pedersen hash module.
 </span><span class="kw">use </span>alloc::vec::Vec;
 
@@ -121,12 +116,17 @@
 <span class="kw">use </span>starknet_crypto::{pedersen_hash, FieldElement};
 
 <span class="kw">use </span><span class="kw">crate</span>::execution::felt252_wrapper::Felt252Wrapper;
-<span class="kw">use </span><span class="kw">crate</span>::traits::hash::{DefaultHasher, HasherT};
+<span class="kw">use </span><span class="kw">crate</span>::traits::hash::HasherT;
+<span class="kw">use </span><span class="kw">crate</span>::traits::SendSyncStatic;
 
 <span class="doccomment">/// The Pedersen hasher.
-</span><span class="attr">#[derive(Clone, Copy, Default, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
-#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
+</span><span class="attr">#[derive(Clone, Copy)]
+#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
 </span><span class="kw">pub struct </span>PedersenHasher;
+
+<span class="kw">impl </span>SendSyncStatic <span class="kw">for </span>PedersenHasher {}
 
 <span class="doccomment">/// The Pedersen hasher implementation.
 </span><span class="kw">impl </span>HasherT <span class="kw">for </span>PedersenHasher {
@@ -135,7 +135,7 @@
     /// * `data` - The data to hash.
     /// # Returns
     /// The hash of the data.
-    </span><span class="kw">fn </span>hash_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[u8]) -&gt; Felt252Wrapper {
+    </span><span class="kw">fn </span>hash_bytes(data: <span class="kw-2">&amp;</span>[u8]) -&gt; Felt252Wrapper {
         <span class="comment">// Calculate the number of 31-byte chunks we&#39;ll need, rounding up.
         // (1 byte is used padding to prevent the value of field from being greater than the field&#39;s
         // modulus) TODO: It is need a way to truncate bytes to fit into values smaller than modular
@@ -164,13 +164,13 @@
     /// # Returns
     ///
     /// The hash of the data.
-    </span><span class="kw">fn </span>compute_hash_on_wrappers(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[Felt252Wrapper]) -&gt; Felt252Wrapper {
+    </span><span class="kw">fn </span>compute_hash_on_wrappers(data: <span class="kw-2">&amp;</span>[Felt252Wrapper]) -&gt; Felt252Wrapper {
         <span class="kw">let </span>hash = compute_hash_on_elements(<span class="kw-2">&amp;</span>data.iter().map(|x| x.<span class="number">0</span>).collect::&lt;Vec&lt;FieldElement&gt;&gt;());
         Felt252Wrapper(hash)
     }
 
     <span class="attr">#[inline(always)]
-    </span><span class="kw">fn </span>hash_elements(<span class="kw-2">&amp;</span><span class="self">self</span>, a: FieldElement, b: FieldElement) -&gt; FieldElement {
+    </span><span class="kw">fn </span>hash_elements(a: FieldElement, b: FieldElement) -&gt; FieldElement {
         pedersen_hash(<span class="kw-2">&amp;</span>a, <span class="kw-2">&amp;</span>b)
     }
 
@@ -184,26 +184,18 @@
     ///
     /// h(h(h(h(0, data\[0\]), data\[1\]), ...), data\[n-1\]), n).
     </span><span class="attr">#[inline]
-    </span><span class="kw">fn </span>compute_hash_on_elements(<span class="kw-2">&amp;</span><span class="self">self</span>, elements: <span class="kw-2">&amp;</span>[FieldElement]) -&gt; FieldElement {
+    </span><span class="kw">fn </span>compute_hash_on_elements(elements: <span class="kw-2">&amp;</span>[FieldElement]) -&gt; FieldElement {
         compute_hash_on_elements(elements)
     }
-}
-
-<span class="kw">impl </span>DefaultHasher <span class="kw">for </span>PedersenHasher {
-    <span class="kw">fn </span>hasher() -&gt; <span class="self">Self </span>{
-        <span class="self">Self
-    </span>}
 }
 
 <span class="attr">#[test]
 </span><span class="kw">fn </span>dynamic_string_hashing() {
     <span class="kw">use </span>core::str::FromStr;
 
-    <span class="kw">let </span>hasher = PedersenHasher::hasher();
-
     <span class="kw">let </span>message = <span class="string">&quot;Hello, madara!!. It is pedersen hash.&quot;</span>.to_string(); <span class="comment">// 37 bytes
     </span><span class="kw">let </span>message = message.as_bytes();
-    <span class="kw">let </span>hash_value = hasher.hash_bytes(message);
+    <span class="kw">let </span>hash_value = PedersenHasher::hash_bytes(message);
 
     <span class="macro">assert_eq!</span>(
         hash_value,
@@ -217,11 +209,9 @@
 </span><span class="kw">fn </span>short_string_hashing() {
     <span class="kw">use </span>core::str::FromStr;
 
-    <span class="kw">let </span>hasher = PedersenHasher::hasher();
-
     <span class="kw">let </span>message = <span class="string">&quot;madara&quot;</span>.to_string();
     <span class="kw">let </span>message = message.as_bytes();
-    <span class="kw">let </span>hash_value = hasher.hash_bytes(message);
+    <span class="kw">let </span>hash_value = PedersenHasher::hash_bytes(message);
 
     <span class="macro">assert_eq!</span>(
         hash_value,

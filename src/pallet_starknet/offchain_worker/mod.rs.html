@@ -73,6 +73,8 @@
 <a href="#73" id="73">73</a>
 <a href="#74" id="74">74</a>
 <a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>types;
 <span class="kw">use </span>alloc::string::{String, ToString};
 <span class="kw">use </span>alloc::vec;
@@ -83,6 +85,7 @@
 <span class="kw">use </span>serde_json::from_slice;
 <span class="kw">use </span>sp_runtime::offchain::http;
 <span class="kw">use </span>sp_runtime::offchain::storage::StorageValueRef;
+<span class="kw">use </span>starknet_api::transaction::Fee;
 <span class="kw">pub use </span>types::<span class="kw-2">*</span>;
 
 <span class="kw">use </span><span class="kw">crate</span>::message::get_messages_events;
@@ -113,7 +116,8 @@
             <span class="comment">// Iterate over the messages and execute them.
             </span>res.result.iter().try_for_each(|message| {
                 <span class="comment">// Execute the message.
-                </span><span class="self">Self</span>::consume_l1_message(OriginFor::&lt;T&gt;::none(), message.try_into_transaction()<span class="question-mark">?</span>)
+                // Fee is required but the blockifier just check it&#39;s not zero
+                </span><span class="self">Self</span>::consume_l1_message(OriginFor::&lt;T&gt;::none(), message.try_into_transaction()<span class="question-mark">?</span>, Fee(<span class="number">1</span>))
                     .map_err(OffchainWorkerError::ConsumeMessageError)
             })<span class="question-mark">?</span>;
         }

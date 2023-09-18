@@ -92,25 +92,19 @@
 <a href="#92" id="92">92</a>
 <a href="#93" id="93">93</a>
 <a href="#94" id="94">94</a>
-<a href="#95" id="95">95</a>
-<a href="#96" id="96">96</a>
-<a href="#97" id="97">97</a>
-<a href="#98" id="98">98</a>
-<a href="#99" id="99">99</a>
-<a href="#100" id="100">100</a>
-<a href="#101" id="101">101</a>
-<a href="#102" id="102">102</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Poseidon hash module.
 </span><span class="kw">use </span>alloc::vec::Vec;
 
 <span class="kw">use </span>starknet_crypto::{poseidon_hash, poseidon_hash_many, FieldElement};
 
 <span class="kw">use </span><span class="kw">crate</span>::execution::felt252_wrapper::Felt252Wrapper;
-<span class="kw">use </span><span class="kw">crate</span>::traits::hash::{DefaultHasher, HasherT};
+<span class="kw">use </span><span class="kw">crate</span>::traits::hash::HasherT;
 
 <span class="doccomment">/// The poseidon hasher.
-</span><span class="attr">#[derive(Clone, Copy, Default, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
-#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
+</span><span class="attr">#[derive(Clone, Copy)]
+#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
 </span><span class="kw">pub struct </span>PoseidonHasher;
 
 <span class="kw">impl </span>HasherT <span class="kw">for </span>PoseidonHasher {
@@ -119,7 +113,7 @@
     /// * `data` - The data to hash.
     /// # Returns
     /// The hash of the data.
-    </span><span class="kw">fn </span>hash_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[u8]) -&gt; Felt252Wrapper {
+    </span><span class="kw">fn </span>hash_bytes(data: <span class="kw-2">&amp;</span>[u8]) -&gt; Felt252Wrapper {
         <span class="comment">// Calculate the number of 31-byte chunks we&#39;ll need, rounding up.
         // (1 byte is used padding to prevent the value of field from being greater than modular)
         // TODO: It is need a way to truncate bytes to fit into values smaller than modular(optimization)
@@ -148,34 +142,26 @@
     /// # Returns
     ///
     /// The hash of the data.
-    </span><span class="kw">fn </span>compute_hash_on_wrappers(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[Felt252Wrapper]) -&gt; Felt252Wrapper {
+    </span><span class="kw">fn </span>compute_hash_on_wrappers(data: <span class="kw-2">&amp;</span>[Felt252Wrapper]) -&gt; Felt252Wrapper {
         <span class="kw">let </span>data = data.iter().map(|x| x.<span class="number">0</span>).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         Felt252Wrapper(poseidon_hash_many(<span class="kw-2">&amp;</span>data))
     }
 
-    <span class="kw">fn </span>hash_elements(<span class="kw-2">&amp;</span><span class="self">self</span>, a: FieldElement, b: FieldElement) -&gt; FieldElement {
+    <span class="kw">fn </span>hash_elements(a: FieldElement, b: FieldElement) -&gt; FieldElement {
         poseidon_hash(a, b)
     }
-    <span class="kw">fn </span>compute_hash_on_elements(<span class="kw-2">&amp;</span><span class="self">self</span>, elements: <span class="kw-2">&amp;</span>[FieldElement]) -&gt; FieldElement {
+    <span class="kw">fn </span>compute_hash_on_elements(elements: <span class="kw-2">&amp;</span>[FieldElement]) -&gt; FieldElement {
         poseidon_hash_many(elements)
     }
-}
-
-<span class="kw">impl </span>DefaultHasher <span class="kw">for </span>PoseidonHasher {
-    <span class="kw">fn </span>hasher() -&gt; <span class="self">Self </span>{
-        <span class="self">Self
-    </span>}
 }
 
 <span class="attr">#[test]
 </span><span class="kw">fn </span>dynamic_string_hashing() {
     <span class="kw">use </span>core::str::FromStr;
 
-    <span class="kw">let </span>hasher = PoseidonHasher::hasher();
-
     <span class="kw">let </span>message = <span class="string">&quot;Hello, madara!!. It is poseidon hash.&quot;</span>.to_string(); <span class="comment">// 37 bytes
     </span><span class="kw">let </span>message = message.as_bytes();
-    <span class="kw">let </span>hash_value = hasher.hash_bytes(message);
+    <span class="kw">let </span>hash_value = PoseidonHasher::hash_bytes(message);
 
     <span class="macro">assert_eq!</span>(
         hash_value,
@@ -189,11 +175,9 @@
 </span><span class="kw">fn </span>short_string_hashing() {
     <span class="kw">use </span>core::str::FromStr;
 
-    <span class="kw">let </span>hasher = PoseidonHasher::hasher();
-
     <span class="kw">let </span>message = <span class="string">&quot;madara&quot;</span>.to_string();
     <span class="kw">let </span>message = message.as_bytes();
-    <span class="kw">let </span>hash_value = hasher.hash_bytes(message);
+    <span class="kw">let </span>hash_value = PoseidonHasher::hash_bytes(message);
 
     <span class="macro">assert_eq!</span>(
         hash_value,

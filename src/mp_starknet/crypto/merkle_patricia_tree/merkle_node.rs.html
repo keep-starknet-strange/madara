@@ -292,6 +292,15 @@
 <a href="#292" id="292">292</a>
 <a href="#293" id="293">293</a>
 <a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Contains constructs for describing the nodes in a Binary Merkle Patricia Tree
 //! used by Starknet.
 //!
@@ -301,14 +310,15 @@
 </span><span class="kw">use </span>bitvec::order::Msb0;
 <span class="kw">use </span>bitvec::prelude::BitVec;
 <span class="kw">use </span>bitvec::slice::BitSlice;
-<span class="kw">use </span>scale_codec::{Decode, Encode};
 <span class="kw">use </span>starknet_api::stdlib::collections::HashMap;
 
 <span class="kw">use </span><span class="kw">crate</span>::execution::felt252_wrapper::Felt252Wrapper;
 <span class="kw">use </span><span class="kw">crate</span>::traits::hash::HasherT;
 
 <span class="doccomment">/// Id of a Node within the tree
-</span><span class="attr">#[derive(Copy, Clone, Debug, PartialEq, Eq, Default, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
+</span><span class="attr">#[derive(Copy, Clone, Debug, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
 </span><span class="kw">pub struct </span>NodeId(<span class="kw">pub </span>u64);
 
 <span class="kw">impl </span>NodeId {
@@ -320,7 +330,9 @@
 }
 
 <span class="doccomment">/// A node in a Binary Merkle-Patricia Tree graph.
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
 </span><span class="kw">pub enum </span>Node {
     <span class="doccomment">/// A node that has not been fetched from storage yet.
     ///
@@ -335,7 +347,9 @@
 }
 
 <span class="doccomment">/// Describes the [Node::Binary] variant.
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
 </span><span class="kw">pub struct </span>BinaryNode {
     <span class="doccomment">/// The hash of this node. Is [None] if the node
     /// has not yet been committed.
@@ -349,7 +363,9 @@
 }
 
 <span class="doccomment">/// Node that is an edge.
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
 </span><span class="kw">pub struct </span>EdgeNode {
     <span class="doccomment">/// The hash of this node. Is [None] if the node
     /// has not yet been committed.
@@ -365,7 +381,9 @@
 <span class="doccomment">/// Describes the direction a child of a [BinaryNode] may have.
 ///
 /// Binary nodes have two children, one left and one right.
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
 </span><span class="kw">pub enum </span>Direction {
     <span class="doccomment">/// Left direction.
     </span>Left,
@@ -470,7 +488,7 @@
             <span class="prelude-val">None </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;right child not found&quot;</span>),
         };
 
-        <span class="self">self</span>.hash = <span class="prelude-val">Some</span>(Felt252Wrapper(H::default().hash_elements(left.<span class="number">0</span>, right.<span class="number">0</span>)));
+        <span class="self">self</span>.hash = <span class="prelude-val">Some</span>(Felt252Wrapper(H::hash_elements(left.<span class="number">0</span>, right.<span class="number">0</span>)));
     }
 }
 
@@ -582,7 +600,7 @@
         </span>length[<span class="number">31</span>] = <span class="self">self</span>.path.len() <span class="kw">as </span>u8;
 
         <span class="kw">let </span>length = Felt252Wrapper::try_from(<span class="kw-2">&amp;</span>length).unwrap();
-        <span class="kw">let </span>hash = Felt252Wrapper(H::default().hash_elements(child.<span class="number">0</span>, path.<span class="number">0</span>) + length.<span class="number">0</span>);
+        <span class="kw">let </span>hash = Felt252Wrapper(H::hash_elements(child.<span class="number">0</span>, path.<span class="number">0</span>) + length.<span class="number">0</span>);
         <span class="self">self</span>.hash = <span class="prelude-val">Some</span>(hash);
     }
 }

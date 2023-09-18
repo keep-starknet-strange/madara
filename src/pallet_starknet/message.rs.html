@@ -82,24 +82,9 @@
 <a href="#82" id="82">82</a>
 <a href="#83" id="83">83</a>
 <a href="#84" id="84">84</a>
-<a href="#85" id="85">85</a>
-<a href="#86" id="86">86</a>
-<a href="#87" id="87">87</a>
-<a href="#88" id="88">88</a>
-<a href="#89" id="89">89</a>
-<a href="#90" id="90">90</a>
-<a href="#91" id="91">91</a>
-<a href="#92" id="92">92</a>
-<a href="#93" id="93">93</a>
-<a href="#94" id="94">94</a>
-<a href="#95" id="95">95</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>frame_support::BoundedVec;
-<span class="kw">use </span>mp_starknet::constants::INITIAL_GAS;
-<span class="kw">use </span>mp_starknet::execution::types::{
-    CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
-};
-<span class="kw">use </span>mp_starknet::transaction::types::Transaction;
-<span class="kw">use </span>scale_codec::{Decode, Encode};
+</pre></div><pre class="rust"><code><span class="kw">use </span>mp_starknet::execution::types::Felt252Wrapper;
+<span class="kw">use </span>mp_starknet::transaction::HandleL1MessageTransaction;
+<span class="kw">use </span>parity_scale_codec::{Decode, Encode};
 <span class="kw">use </span>serde::Deserialize;
 
 <span class="kw">use </span><span class="kw">crate</span>::alloc::format;
@@ -139,19 +124,19 @@
 
 <span class="kw">impl </span>Message {
     <span class="doccomment">/// Converts a `Message` into a transaction object.
-    </span><span class="kw">pub fn </span>try_into_transaction(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Transaction, OffchainWorkerError&gt; {
+    </span><span class="kw">pub fn </span>try_into_transaction(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;HandleL1MessageTransaction, OffchainWorkerError&gt; {
         <span class="comment">// Data at least contains a nonce and at some point the fees.
         </span><span class="kw">if </span><span class="self">self</span>.data.is_empty() {
             <span class="kw">return </span><span class="prelude-val">Err</span>(OffchainWorkerError::EmptyData);
         }
         <span class="comment">// L2 contract to call.
-        </span><span class="kw">let </span>sender_address = <span class="kw">match </span>Felt252Wrapper::from_hex_be(<span class="self">self</span>.topics[<span class="number">2</span>].as_str()) {
+        </span><span class="kw">let </span>contract_address = <span class="kw">match </span>Felt252Wrapper::from_hex_be(<span class="self">self</span>.topics[<span class="number">2</span>].as_str()) {
             <span class="prelude-val">Ok</span>(f) =&gt; f,
             <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(OffchainWorkerError::ToTransactionError),
         };
 
         <span class="comment">// Function of the contract to call.
-        </span><span class="kw">let </span>selector = <span class="kw">match </span>Felt252Wrapper::from_hex_be(<span class="self">self</span>.topics[<span class="number">3</span>].as_str()) {
+        </span><span class="kw">let </span>entry_point_selector = <span class="kw">match </span>Felt252Wrapper::from_hex_be(<span class="self">self</span>.topics[<span class="number">3</span>].as_str()) {
             <span class="prelude-val">Ok</span>(f) =&gt; f,
             <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(OffchainWorkerError::ToTransactionError),
         };
@@ -164,9 +149,11 @@
         // string which is the concatenation of those fields).
         </span><span class="kw">let </span>data_map = char_vec.chunks(<span class="number">64</span>).map(|chunk| chunk.iter().collect::&lt;String&gt;());
         <span class="comment">// L1 message nonce.
-        </span><span class="kw">let </span>nonce =
-            Felt252Wrapper::from_hex_be(<span class="kw-2">&amp;</span>data_map.clone().last().ok_or(OffchainWorkerError::ToTransactionError)<span class="question-mark">?</span>)
-                .map_err(|<span class="kw">_</span>| OffchainWorkerError::ToTransactionError)<span class="question-mark">?</span>;
+        </span><span class="kw">let </span>nonce = u64::from_str_radix(
+            data_map.clone().last().ok_or(OffchainWorkerError::ToTransactionError)<span class="question-mark">?</span>.trim_start_matches(<span class="string">&quot;0x&quot;</span>),
+            <span class="number">16</span>,
+        )
+        .map_err(|<span class="kw">_</span>| OffchainWorkerError::ToTransactionError)<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>calldata: Vec&lt;Felt252Wrapper&gt; = Vec::new();
         <span class="kw">for </span>val <span class="kw">in </span>data_map.take(<span class="self">self</span>.data.len() - <span class="number">2</span>) {
             calldata.push(<span class="kw">match </span>Felt252Wrapper::from_hex_be(val.as_str()) {
@@ -174,18 +161,9 @@
                 <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(OffchainWorkerError::ToTransactionError),
             })
         }
-        <span class="kw">let </span>calldata = BoundedVec::try_from(calldata).map_err(|<span class="kw">_</span>| OffchainWorkerError::ToTransactionError)<span class="question-mark">?</span>;
-        <span class="kw">let </span>call_entrypoint = CallEntryPointWrapper {
-            class_hash: <span class="prelude-val">None</span>,
-            entrypoint_type: EntryPointTypeWrapper::L1Handler,
-            entrypoint_selector: <span class="prelude-val">Some</span>(selector),
-            calldata,
-            storage_address: sender_address,
-            caller_address: ContractAddressWrapper::default(),
-            initial_gas: INITIAL_GAS.into(),
-            compiled_class_hash: <span class="prelude-val">None</span>,
-        };
-        <span class="prelude-val">Ok</span>(Transaction { sender_address, nonce, call_entrypoint, ..Transaction::default() })
+        <span class="kw">let </span>tx = HandleL1MessageTransaction { nonce, contract_address, entry_point_selector, calldata };
+
+        <span class="prelude-val">Ok</span>(tx)
     }
 }
 </code></pre></div></section></main></body></html>

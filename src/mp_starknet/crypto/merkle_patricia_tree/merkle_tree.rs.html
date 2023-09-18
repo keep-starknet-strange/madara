@@ -595,6 +595,17 @@
 <a href="#595" id="595">595</a>
 <a href="#596" id="596">596</a>
 <a href="#597" id="597">597</a>
+<a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! This is a gigantic copy pasta from &lt;https://github.com/eqlabs/pathfinder/tree/main/crates/merkle-tree&gt; Thanks to the equilibrium team and whoever else contributed for the code.
 </span><span class="kw">use </span>alloc::vec::Vec;
 <span class="kw">use </span>core::iter::once;
@@ -602,11 +613,12 @@
 
 <span class="kw">use </span>bitvec::prelude::{BitSlice, BitVec, Msb0};
 <span class="kw">use </span>derive_more::Constructor;
-<span class="kw">use </span>scale_codec::{Decode, Encode, Error, Input, Output};
-<span class="kw">use </span>scale_info::build::Fields;
-<span class="kw">use </span>scale_info::{Path, Type, TypeInfo};
-<span class="kw">use </span>serde::ser::SerializeStructVariant;
-<span class="kw">use </span>serde::Serialize;
+<span class="attr">#[cfg(feature = <span class="string">&quot;parity-scale-codec&quot;</span>)]
+</span><span class="kw">use </span>parity_scale_codec::{Decode, Encode, Error, Input, Output};
+<span class="attr">#[cfg(feature = <span class="string">&quot;scale-info&quot;</span>)]
+</span><span class="kw">use </span>scale_info::{build::Fields, Path, Type, TypeInfo};
+<span class="attr">#[cfg(feature = <span class="string">&quot;serde&quot;</span>)]
+</span><span class="kw">use </span>serde::{ser::SerializeStructVariant, Serialize};
 <span class="kw">use </span>starknet_api::stdlib::collections::HashMap;
 
 <span class="kw">use </span><span class="kw">crate</span>::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, EdgeNode, Node, NodeId};
@@ -619,6 +631,7 @@
 </span><span class="kw">pub struct </span>NodesMapping(<span class="kw">pub </span>HashMap&lt;NodeId, Node&gt;);
 
 <span class="doccomment">/// SCALE trait.
+</span><span class="attr">#[cfg(feature = <span class="string">&quot;parity-scale-codec&quot;</span>)]
 </span><span class="kw">impl </span>Encode <span class="kw">for </span>NodesMapping {
     <span class="kw">fn </span>encode_to&lt;T: Output + <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, dest: <span class="kw-2">&amp;mut </span>T) {
         <span class="comment">// Convert the NodesMapping to Vec&lt;(NodeId, Node)&gt; to be
@@ -629,6 +642,7 @@
     }
 }
 <span class="doccomment">/// SCALE trait.
+</span><span class="attr">#[cfg(feature = <span class="string">&quot;parity-scale-codec&quot;</span>)]
 </span><span class="kw">impl </span>Decode <span class="kw">for </span>NodesMapping {
     <span class="kw">fn </span>decode&lt;I: Input&gt;(input: <span class="kw-2">&amp;mut </span>I) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
         <span class="comment">// Convert the NodesMapping to Vec&lt;(NodeId, Node)&gt; to be
@@ -641,6 +655,7 @@
 }
 
 <span class="doccomment">/// SCALE trait.
+</span><span class="attr">#[cfg(feature = <span class="string">&quot;scale-info&quot;</span>)]
 </span><span class="kw">impl </span>TypeInfo <span class="kw">for </span>NodesMapping {
     <span class="kw">type </span>Identity = <span class="self">Self</span>;
 
@@ -654,7 +669,9 @@
 }
 
 <span class="doccomment">/// Lightweight representation of [BinaryNode]. Only holds left and right hashes.
-</span><span class="attr">#[derive(Debug, Clone, PartialEq, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode)]
+</span><span class="attr">#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(Encode, Decode))]
+#[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(TypeInfo))]
 </span><span class="kw">pub struct </span>BinaryProofNode {
     <span class="doccomment">/// Left hash.
     </span><span class="kw">pub </span>left_hash: Felt252Wrapper,
@@ -663,7 +680,9 @@
 }
 
 <span class="doccomment">/// Ligthtweight representation of [EdgeNode]. Only holds its path and its child&#39;s hash.
-</span><span class="attr">#[derive(Debug, Clone, PartialEq, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode)]
+</span><span class="attr">#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(Encode, Decode))]
+#[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(TypeInfo))]
 </span><span class="kw">pub struct </span>EdgeProofNode {
     <span class="doccomment">/// Path of the node.
     </span><span class="kw">pub </span>path: BitVec&lt;u8, Msb0&gt;,
@@ -689,7 +708,9 @@
 <span class="doccomment">/// [ProofNode] s are lightweight versions of their `Node` counterpart.
 /// They only consist of [BinaryProofNode] and [EdgeProofNode] because `Leaf`
 /// and `Unresolved` nodes should not appear in a proof.
-</span><span class="attr">#[derive(Debug, Clone, PartialEq, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode)]
+</span><span class="attr">#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(Encode, Decode))]
+#[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(TypeInfo))]
 </span><span class="kw">pub enum </span>ProofNode {
     <span class="doccomment">/// Binary node.
     </span>Binary(BinaryProofNode),
@@ -697,20 +718,19 @@
     </span>Edge(EdgeProofNode),
 }
 
-<span class="doccomment">/// Utility struct used for serializing.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-#[derive(Debug, Serialize)]
-</span><span class="kw">struct </span>PathWrapper {
-    value: starknet_ff::FieldElement,
-    len: usize,
-}
-
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">&quot;serde&quot;</span>)]
 </span><span class="kw">impl </span>Serialize <span class="kw">for </span>ProofNode {
     <span class="kw">fn </span>serialize&lt;S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, serializer: S) -&gt; <span class="prelude-ty">Result</span>&lt;S::Ok, S::Error&gt;
     <span class="kw">where
         </span>S: serde::Serializer,
     {
+        <span class="doccomment">/// Utility struct used for serializing.
+        </span><span class="attr">#[derive(Debug, Serialize)]
+        </span><span class="kw">struct </span>PathWrapper {
+            value: starknet_ff::FieldElement,
+            len: usize,
+        }
+
         <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self </span>{
             ProofNode::Binary(bin) =&gt; {
                 <span class="kw">let </span><span class="kw-2">mut </span>state = serializer.serialize_struct_variant(<span class="string">&quot;ProofNode&quot;</span>, <span class="number">0</span>, <span class="string">&quot;Binary&quot;</span>, <span class="number">2</span>)<span class="question-mark">?</span>;
@@ -737,7 +757,9 @@
 /// states.
 ///
 /// For more information on how this functions internally, see [here](super::merkle_node).
-</span><span class="attr">#[derive(Debug, Clone, PartialEq, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode)]
+</span><span class="attr">#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(Encode, Decode))]
+#[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(TypeInfo))]
 </span><span class="kw">pub struct </span>MerkleTree&lt;H: HasherT&gt; {
     root: NodeId,
     nodes: NodesMapping,

@@ -94,7 +94,7 @@
 
 <span class="kw">pub use </span>error::FindLogError;
 <span class="kw">use </span>mp_starknet::block::Block <span class="kw">as </span>StarknetBlock;
-<span class="kw">use </span>scale_codec::{Decode, Encode};
+<span class="kw">use </span>parity_scale_codec::{Decode, Encode};
 <span class="kw">use </span>sp_runtime::generic::{Digest, OpaqueDigestItemId};
 <span class="kw">use </span>sp_runtime::ConsensusEngineId;
 
@@ -104,7 +104,7 @@
 ///
 /// Right now we only expect Madara to log the Starknet block,
 /// but other usecases may appears later on.
-</span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Encode, Decode)]
+</span><span class="attr">#[derive(Debug, Clone, Encode, Decode, PartialEq, Eq)]
 </span><span class="kw">pub enum </span>Log {
     <span class="attr">#[codec(index = <span class="number">0</span>)]
     </span>Block(StarknetBlock),
