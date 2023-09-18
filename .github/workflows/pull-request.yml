@@ -34,7 +34,7 @@ jobs:
   coverage:
     name: Run coverage
     uses: ./.github/workflows/coverage.yml
-    needs: [madara_commands, linters_cargo]
+    needs: rust_build
 
   # benchmark:
   #   name: Run benchmarks
