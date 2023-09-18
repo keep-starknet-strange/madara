@@ -59,7 +59,7 @@ async fn works_with_correct_block(#[future] madara: MadaraClient) -> Result<(), 
         block.clone(),
         BlockWithTxHashes {
             status: BlockStatus::AcceptedOnL2,
-            block_hash: FieldElement::from_hex_be("0x078900eec31cb819620f277029089b8bf158cfb8b63e0332f03f57e0d48ce0c6")
+            block_hash: FieldElement::from_hex_be("0x015e8bc7066c6d98d71c52bd52bb8eb0d1747eaa189c7f90a2a31045edccf2a8")
                 .unwrap(),
             parent_hash: FieldElement::from_hex_be(
                 "0x031ebd02657f940683ae7bddf19716932c56d463fc16662d14031f8635df52ad",
@@ -72,7 +72,7 @@ async fn works_with_correct_block(#[future] madara: MadaraClient) -> Result<(), 
             )
             .unwrap(),
             transactions: vec![
-                FieldElement::from_hex_be("0x00581e60706c38d474ef27099f5e3f9506c63211340f7ca1849abe382c33123f")
+                FieldElement::from_hex_be("0x069d9d0ac1f5a4ad8d8e9a3954da53b5dc8ed239c02ad04492b9e15c50fe6d11")
                     .unwrap(),
             ],
             timestamp: block.timestamp, // timestamps can vary so just using the actual timestamp

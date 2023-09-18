@@ -5,12 +5,17 @@ use starknet_core::crypto::compute_hash_on_elements;
 use starknet_crypto::{pedersen_hash, FieldElement};
 
 use crate::execution::felt252_wrapper::Felt252Wrapper;
-use crate::traits::hash::{DefaultHasher, HasherT};
+use crate::traits::hash::HasherT;
+use crate::traits::SendSyncStatic;
 
 /// The Pedersen hasher.
-#[derive(Clone, Copy, Default, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 pub struct PedersenHasher;
+
+impl SendSyncStatic for PedersenHasher {}
 
 /// The Pedersen hasher implementation.
 impl HasherT for PedersenHasher {
@@ -19,7 +24,7 @@ impl HasherT for PedersenHasher {
     /// * `data` - The data to hash.
     /// # Returns
     /// The hash of the data.
-    fn hash_bytes(&self, data: &[u8]) -> Felt252Wrapper {
+    fn hash_bytes(data: &[u8]) -> Felt252Wrapper {
         // Calculate the number of 31-byte chunks we'll need, rounding up.
         // (1 byte is used padding to prevent the value of field from being greater than the field's
         // modulus) TODO: It is need a way to truncate bytes to fit into values smaller than modular
@@ -48,13 +53,13 @@ impl HasherT for PedersenHasher {
     /// # Returns
     ///
     /// The hash of the data.
-    fn compute_hash_on_wrappers(&self, data: &[Felt252Wrapper]) -> Felt252Wrapper {
+    fn compute_hash_on_wrappers(data: &[Felt252Wrapper]) -> Felt252Wrapper {
         let hash = compute_hash_on_elements(&data.iter().map(|x| x.0).collect::<Vec<FieldElement>>());
         Felt252Wrapper(hash)
     }
 
     #[inline(always)]
-    fn hash_elements(&self, a: FieldElement, b: FieldElement) -> FieldElement {
+    fn hash_elements(a: FieldElement, b: FieldElement) -> FieldElement {
         pedersen_hash(&a, &b)
     }
 
@@ -68,14 +73,8 @@ impl HasherT for PedersenHasher {
     ///
     /// h(h(h(h(0, data\[0\]), data\[1\]), ...), data\[n-1\]), n).
     #[inline]
-    fn compute_hash_on_elements(&self, elements: &[FieldElement]) -> FieldElement {
+    fn compute_hash_on_elements(elements: &[FieldElement]) -> FieldElement {
         compute_hash_on_elements(elements)
-    }
-}
-
-impl DefaultHasher for PedersenHasher {
-    fn hasher() -> Self {
-        Self
     }
 }
 
@@ -83,11 +82,9 @@ impl DefaultHasher for PedersenHasher {
 fn dynamic_string_hashing() {
     use core::str::FromStr;
 
-    let hasher = PedersenHasher::hasher();
-
     let message = "Hello, madara!!. It is pedersen hash.".to_string(); // 37 bytes
     let message = message.as_bytes();
-    let hash_value = hasher.hash_bytes(message);
+    let hash_value = PedersenHasher::hash_bytes(message);
 
     assert_eq!(
         hash_value,
@@ -101,11 +98,9 @@ fn dynamic_string_hashing() {
 fn short_string_hashing() {
     use core::str::FromStr;
 
-    let hasher = PedersenHasher::hasher();
-
     let message = "madara".to_string();
     let message = message.as_bytes();
-    let hash_value = hasher.hash_bytes(message);
+    let hash_value = PedersenHasher::hash_bytes(message);
 
     assert_eq!(
         hash_value,

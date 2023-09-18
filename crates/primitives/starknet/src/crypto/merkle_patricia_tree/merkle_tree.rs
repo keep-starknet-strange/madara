@@ -5,11 +5,12 @@ use core::marker::PhantomData;
 
 use bitvec::prelude::{BitSlice, BitVec, Msb0};
 use derive_more::Constructor;
-use scale_codec::{Decode, Encode, Error, Input, Output};
-use scale_info::build::Fields;
-use scale_info::{Path, Type, TypeInfo};
-use serde::ser::SerializeStructVariant;
-use serde::Serialize;
+#[cfg(feature = "parity-scale-codec")]
+use parity_scale_codec::{Decode, Encode, Error, Input, Output};
+#[cfg(feature = "scale-info")]
+use scale_info::{build::Fields, Path, Type, TypeInfo};
+#[cfg(feature = "serde")]
+use serde::{ser::SerializeStructVariant, Serialize};
 use starknet_api::stdlib::collections::HashMap;
 
 use crate::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, EdgeNode, Node, NodeId};
@@ -22,6 +23,7 @@ use crate::traits::hash::HasherT;
 pub struct NodesMapping(pub HashMap<NodeId, Node>);
 
 /// SCALE trait.
+#[cfg(feature = "parity-scale-codec")]
 impl Encode for NodesMapping {
     fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
         // Convert the NodesMapping to Vec<(NodeId, Node)> to be
@@ -32,6 +34,7 @@ impl Encode for NodesMapping {
     }
 }
 /// SCALE trait.
+#[cfg(feature = "parity-scale-codec")]
 impl Decode for NodesMapping {
     fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
         // Convert the NodesMapping to Vec<(NodeId, Node)> to be
@@ -44,6 +47,7 @@ impl Decode for NodesMapping {
 }
 
 /// SCALE trait.
+#[cfg(feature = "scale-info")]
 impl TypeInfo for NodesMapping {
     type Identity = Self;
 
@@ -57,7 +61,9 @@ impl TypeInfo for NodesMapping {
 }
 
 /// Lightweight representation of [BinaryNode]. Only holds left and right hashes.
-#[derive(Debug, Clone, PartialEq, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode)]
+#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "parity-scale-codec", derive(Encode, Decode))]
+#[cfg_attr(feature = "scale-info", derive(TypeInfo))]
 pub struct BinaryProofNode {
     /// Left hash.
     pub left_hash: Felt252Wrapper,
@@ -66,7 +72,9 @@ pub struct BinaryProofNode {
 }
 
 /// Ligthtweight representation of [EdgeNode]. Only holds its path and its child's hash.
-#[derive(Debug, Clone, PartialEq, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode)]
+#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "parity-scale-codec", derive(Encode, Decode))]
+#[cfg_attr(feature = "scale-info", derive(TypeInfo))]
 pub struct EdgeProofNode {
     /// Path of the node.
     pub path: BitVec<u8, Msb0>,
@@ -92,7 +100,9 @@ fn get_proof_node(node: &Node, nodes: &HashMap<NodeId, Node>) -> ProofNode {
 /// [ProofNode] s are lightweight versions of their `Node` counterpart.
 /// They only consist of [BinaryProofNode] and [EdgeProofNode] because `Leaf`
 /// and `Unresolved` nodes should not appear in a proof.
-#[derive(Debug, Clone, PartialEq, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode)]
+#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "parity-scale-codec", derive(Encode, Decode))]
+#[cfg_attr(feature = "scale-info", derive(TypeInfo))]
 pub enum ProofNode {
     /// Binary node.
     Binary(BinaryProofNode),
@@ -100,20 +110,19 @@ pub enum ProofNode {
     Edge(EdgeProofNode),
 }
 
-/// Utility struct used for serializing.
-#[cfg(feature = "std")]
-#[derive(Debug, Serialize)]
-struct PathWrapper {
-    value: starknet_ff::FieldElement,
-    len: usize,
-}
-
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 impl Serialize for ProofNode {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
+        /// Utility struct used for serializing.
+        #[derive(Debug, Serialize)]
+        struct PathWrapper {
+            value: starknet_ff::FieldElement,
+            len: usize,
+        }
+
         match &self {
             ProofNode::Binary(bin) => {
                 let mut state = serializer.serialize_struct_variant("ProofNode", 0, "Binary", 2)?;
@@ -140,7 +149,9 @@ impl Serialize for ProofNode {
 /// states.
 ///
 /// For more information on how this functions internally, see [here](super::merkle_node).
-#[derive(Debug, Clone, PartialEq, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode)]
+#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "parity-scale-codec", derive(Encode, Decode))]
+#[cfg_attr(feature = "scale-info", derive(TypeInfo))]
 pub struct MerkleTree<H: HasherT> {
     root: NodeId,
     nodes: NodesMapping,
