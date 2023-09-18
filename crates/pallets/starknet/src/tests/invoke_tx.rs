@@ -1,5 +1,5 @@
 use blockifier::abi::abi_utils::get_storage_var_address;
-use frame_support::{assert_err, assert_ok, bounded_vec};
+use frame_support::{assert_err, assert_ok};
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::compute_hash::ComputeTransactionHash;
 use mp_starknet::transaction::{InvokeTransaction, InvokeTransactionV1};
@@ -342,7 +342,7 @@ fn given_hardcoded_contract_run_invoke_on_argent_account_with_incorrect_signatur
         let none_origin = RuntimeOrigin::none();
 
         let mut transaction = get_invoke_argent_dummy();
-        transaction.signature = bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE);
+        transaction.signature = vec![Felt252Wrapper::ONE, Felt252Wrapper::ONE];
 
         let validate_result = Starknet::validate_unsigned(
             TransactionSource::InBlock,
@@ -385,7 +385,7 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_with_incorrect_signatu
         let none_origin = RuntimeOrigin::none();
 
         let mut transaction = get_invoke_braavos_dummy();
-        transaction.signature = bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE);
+        transaction.signature = vec![Felt252Wrapper::ONE, Felt252Wrapper::ONE];
 
         let validate_result = Starknet::validate_unsigned(
             TransactionSource::InBlock,
