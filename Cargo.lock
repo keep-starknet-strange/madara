@@ -6308,7 +6308,7 @@ dependencies = [
  "mp-starknet",
  "pallet-starknet",
  "pretty_assertions",
- "rstest 0.17.0",
+ "rstest",
  "sc-client-api",
  "sc-network-sync",
  "sc-transaction-pool-api",
@@ -6596,7 +6596,7 @@ dependencies = [
  "starknet-ff",
  "starknet_api",
  "thiserror-no-std",
- "zstd 0.12.3+zstd.1.5.2",
+ "zstd 0.12.4",
 ]
 
 [[package]]
@@ -7529,9 +7529,9 @@ dependencies = [
 
 [[package]]
 name = "parity-db"
-version = "0.4.10"
+version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78f19d20a0d2cc52327a88d131fa1c4ea81ea4a04714aedcfeca2dd410049cf8"
+checksum = "ab512a34b3c2c5e465731cc7668edf79208bbe520be03484eeb05e63ed221735"
 dependencies = [
  "blake2",
  "crc32fast",
@@ -8768,40 +8768,14 @@ dependencies = [
 
 [[package]]
 name = "rstest"
-version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de1bb486a691878cd320c2f0d319ba91eeaa2e894066d8b5f8f117c000e9d962"
-dependencies = [
- "futures",
- "futures-timer",
- "rstest_macros 0.17.0",
- "rustc_version 0.4.0",
-]
-
-[[package]]
-name = "rstest"
 version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b96577ca10cb3eade7b337eb46520108a67ca2818a24d0b63f41fd62bc9651c"
 dependencies = [
  "futures",
  "futures-timer",
- "rstest_macros 0.18.1",
+ "rstest_macros",
  "rustc_version 0.4.0",
-]
-
-[[package]]
-name = "rstest_macros"
-version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "290ca1a1c8ca7edb7c3283bd44dc35dd54fdec6253a3912e201ba1072018fca8"
-dependencies = [
- "cfg-if",
- "proc-macro2",
- "quote",
- "rustc_version 0.4.0",
- "syn 1.0.109",
- "unicode-ident",
 ]
 
 [[package]]
@@ -10523,9 +10497,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.106"
+version = "1.0.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2cc66a619ed80bf7a0f6b17dd063a84b88f6dea1813737cf469aef1d081142c2"
+checksum = "6b420ce6e3d8bd882e9b243c6eed35dbc9a6110c9769e74b584e0d68d1f20c65"
 dependencies = [
  "itoa",
  "ryu",
@@ -11379,7 +11353,7 @@ version = "4.1.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#5e49f6e44820affccaf517fd22af564f4b495d40"
 dependencies = [
  "thiserror",
- "zstd 0.12.3+zstd.1.5.2",
+ "zstd 0.12.4",
 ]
 
 [[package]]
@@ -12117,7 +12091,7 @@ dependencies = [
  "flate2",
  "lazy_static",
  "reqwest",
- "rstest 0.18.1",
+ "rstest",
  "serde",
  "serde_json",
  "starknet-accounts",
@@ -13377,7 +13351,7 @@ dependencies = [
  "sp-version",
  "sp-weights 4.0.0",
  "substrate-rpc-client",
- "zstd 0.12.3+zstd.1.5.2",
+ "zstd 0.12.4",
 ]
 
 [[package]]
@@ -13555,9 +13529,9 @@ checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
 
 [[package]]
 name = "url"
-version = "2.4.0"
+version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50bff7831e19200a85b17131d085c25d7811bc4e186efdaf54bbd132994a88cb"
+checksum = "143b538f18257fac9cad154828a57c6bf5157e1aa604d4816b5995bf6de87ae5"
 dependencies = [
  "form_urlencoded",
  "idna 0.4.0",
@@ -14758,9 +14732,9 @@ dependencies = [
 
 [[package]]
 name = "zstd"
-version = "0.12.3+zstd.1.5.2"
+version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76eea132fb024e0e13fd9c2f5d5d595d8a967aa72382ac2f9d39fcc95afd0806"
+checksum = "1a27595e173641171fc74a1232b7b1c7a7cb6e18222c11e9dfb9888fa424c53c"
 dependencies = [
  "zstd-safe 6.0.5+zstd.1.5.4",
 ]

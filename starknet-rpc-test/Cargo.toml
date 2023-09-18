@@ -14,7 +14,7 @@ lazy_static = "1.4.0"
 reqwest = "0.11.18"
 rstest = "0.18.1"
 serde = { version = "1.0.179", features = ["derive"] }
-serde_json = "1.0.104"
+serde_json = "1.0.107"
 starknet-accounts = { workspace = true }
 starknet-contract = { workspace = true }
 starknet-core = { workspace = true }
@@ -24,7 +24,7 @@ starknet-providers = { workspace = true }
 starknet-signers = { workspace = true }
 thiserror = { workspace = true }
 tokio = { version = "1.29.1", features = ["rt", "macros", "parking_lot"] }
-url = "2.2.2"
+url = "2.4.1"
 
 [[test]]
 name = "starknet_get_block_number"
