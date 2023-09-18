@@ -18,7 +18,7 @@ pub const TEST_CONTRACT_ADDRESS_2: &str = "0x200";
 pub const SECURITY_TEST_CONTRACT_ADDRESS: &str = "0x300";
 pub const TEST_ACCOUNT_CONTRACT_ADDRESS: &str = "0x101";
 pub const TEST_FAULTY_ACCOUNT_CONTRACT_ADDRESS: &str = "0x102";
-pub const TEST_SEQUENCER_ADDRESS: &str = "0x1000";
+pub const TEST_SEQUENCER_ADDRESS: &str = "0x05a2b92d9a36509a3d651e7df99144a4ad8301e2caf42465ee6ab0451ae91882";
 pub const TEST_ERC20_CONTRACT_ADDRESS: &str = "0x1001";
 
 // Class hashes.
