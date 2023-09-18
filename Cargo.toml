@@ -171,7 +171,7 @@ futures = { version = "0.3.28", default-features = false }
 futures-timer = { version = "3.0.2", default-features = false }
 reqwest = { version = "0.11.20", default-features = false }
 serde = { version = "1.0.188", default-features = false }
-serde_json = { version = "1.0.106", default-features = false }
+serde_json = { version = "1.0.107", default-features = false }
 serde_with = { version = "2.3.3", default-features = false }
 bitvec = { version = "1", default-features = false }
 thiserror = "1.0.48"
