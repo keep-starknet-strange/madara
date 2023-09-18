@@ -4,12 +4,11 @@ use std::path::PathBuf;
 
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::state::cached_state::CachedState;
+use cairo_lang_casm_contract_class::CasmContractClass;
 use starknet_api::api_core::{ClassHash, ContractAddress, PatriciaKey};
-use starknet_api::hash::{StarkFelt, StarkHash};
-use starknet_api::{patricia_key, stark_felt};
+use starknet_api::hash::StarkFelt;
 
 use crate::block::Block;
-use crate::starknet_serde;
 use crate::state::DictStateReader;
 
 // Addresses.
@@ -43,17 +42,26 @@ impl Block {
 
 pub fn create_test_state() -> CachedState<DictStateReader> {
     let class_hash_to_class = HashMap::from([
-        (ClassHash(stark_felt!(TEST_CLASS_HASH)), get_contract_class(TEST_CONTRACT_PATH, 0)),
-        (ClassHash(stark_felt!(SECURITY_TEST_CLASS_HASH)), get_contract_class(SECURITY_TEST_CONTRACT_PATH, 0)),
+        (ClassHash(StarkFelt::try_from(TEST_CLASS_HASH).unwrap()), get_contract_class(TEST_CONTRACT_PATH, 0)),
+        (
+            ClassHash(StarkFelt::try_from(SECURITY_TEST_CLASS_HASH).unwrap()),
+            get_contract_class(SECURITY_TEST_CONTRACT_PATH, 0),
+        ),
     ]);
 
     // Two instances of a test contract and one instance of another (different) test contract.
     let address_to_class_hash = HashMap::from([
-        (ContractAddress(patricia_key!(TEST_CONTRACT_ADDRESS)), ClassHash(stark_felt!(TEST_CLASS_HASH))),
-        (ContractAddress(patricia_key!(TEST_CONTRACT_ADDRESS_2)), ClassHash(stark_felt!(TEST_CLASS_HASH))),
         (
-            ContractAddress(patricia_key!(SECURITY_TEST_CONTRACT_ADDRESS)),
-            ClassHash(stark_felt!(SECURITY_TEST_CLASS_HASH)),
+            ContractAddress(PatriciaKey(StarkFelt::try_from(TEST_CONTRACT_ADDRESS).unwrap())),
+            ClassHash(StarkFelt::try_from(TEST_CLASS_HASH).unwrap()),
+        ),
+        (
+            ContractAddress(PatriciaKey(StarkFelt::try_from(TEST_CONTRACT_ADDRESS_2).unwrap())),
+            ClassHash(StarkFelt::try_from(TEST_CLASS_HASH).unwrap()),
+        ),
+        (
+            ContractAddress(PatriciaKey(StarkFelt::try_from(SECURITY_TEST_CONTRACT_ADDRESS).unwrap())),
+            ClassHash(StarkFelt::try_from(SECURITY_TEST_CLASS_HASH).unwrap()),
         ),
     ]);
 
@@ -66,5 +74,11 @@ pub fn create_test_state() -> CachedState<DictStateReader> {
 pub fn get_contract_class(contract_path: &str, version: u8) -> ContractClass {
     let path: PathBuf = [contract_path].iter().collect();
     let raw_contract_class = fs::read_to_string(path).unwrap();
-    starknet_serde::get_contract_class(&raw_contract_class, version)
+    if version == 0 {
+        return ContractClass::V0(serde_json::from_str(&raw_contract_class).unwrap());
+    } else if version == 1 {
+        let casm_contract_class: CasmContractClass = serde_json::from_str(&raw_contract_class).unwrap();
+        return ContractClass::V1(casm_contract_class.try_into().unwrap());
+    }
+    unimplemented!("version {} is not supported to get contract class from JSON", version);
 }

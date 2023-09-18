@@ -1,6 +1,7 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 use std::cell::RefCell;
+use std::marker::PhantomData;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
@@ -9,7 +10,7 @@ use futures::channel::mpsc;
 use futures::future;
 use futures::prelude::*;
 use madara_runtime::opaque::Block;
-use madara_runtime::{self, Hash, RuntimeApi};
+use madara_runtime::{self, Hash, RuntimeApi, StarknetHasher};
 use mc_block_proposer::ProposerFactory;
 use mc_data_availability::avail::config::AvailConfig;
 use mc_data_availability::avail::AvailClient;
@@ -24,7 +25,6 @@ use mc_transaction_pool::FullPool;
 use mp_starknet::sequencer_address::{
     InherentDataProvider as SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
 };
-use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use prometheus_endpoint::Registry;
 use sc_client_api::{Backend, BlockBackend, BlockchainEvents, HeaderBackend};
 use sc_consensus::BasicQueue;
@@ -35,7 +35,7 @@ use sc_service::error::Error as ServiceError;
 use sc_service::{new_db_backend, Configuration, TaskManager, WarpSyncParams};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
 use sp_api::offchain::OffchainStorage;
-use sp_api::{ConstructRuntimeApi, ProvideRuntimeApi, TransactionFor};
+use sp_api::{ConstructRuntimeApi, TransactionFor};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_offchain::STORAGE_PREFIX;
 use sp_runtime::traits::BlakeTwo256;
@@ -362,9 +362,6 @@ pub fn new_full(
         telemetry: telemetry.as_mut(),
     })?;
 
-    let hasher =
-        client.runtime_api().get_hasher(client.info().best_hash).map_err(|e| ServiceError::Client(e.into()))?.into();
-
     task_manager.spawn_essential_handle().spawn(
         "mc-mapping-sync-worker",
         Some("madara"),
@@ -376,7 +373,7 @@ pub fn new_full(
             madara_backend.clone(),
             3,
             0,
-            hasher,
+            PhantomData::<StarknetHasher>,
         )
         .for_each(|()| future::ready(())),
     );

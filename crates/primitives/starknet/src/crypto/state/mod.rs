@@ -9,9 +9,9 @@ pub type StorageCommitment = Felt252Wrapper;
 pub type ClassCommitment = Felt252Wrapper;
 
 /// Global Starknet State Commitment
-pub struct StateCommitment<T: HasherT>(Felt252Wrapper, PhantomData<T>);
+pub struct StateCommitment<H: HasherT>(Felt252Wrapper, PhantomData<H>);
 
-impl<T: HasherT> StateCommitment<T> {
+impl<H: HasherT> StateCommitment<H> {
     /// Calculates  global state commitment by combining the storage and class commitment.
     ///
     /// See
@@ -23,11 +23,7 @@ impl<T: HasherT> StateCommitment<T> {
         } else {
             let global_state_version = Felt252Wrapper::try_from("STARKNET_STATE_V0".as_bytes()).unwrap(); // Unwrap is safu here
 
-            let hash = <T>::default().compute_hash_on_elements(&[
-                global_state_version.0,
-                storage_commitment.0,
-                class_commitment.0,
-            ]);
+            let hash = H::compute_hash_on_elements(&[global_state_version.0, storage_commitment.0, class_commitment.0]);
 
             hash.into()
         }

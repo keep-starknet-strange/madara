@@ -12,59 +12,72 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # Substrate
-async-trait = { version = "0.1.73", optional = true }
-frame-support = { workspace = true }
 sp-core = { workspace = true }
 sp-inherents = { workspace = true }
-sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 
 # Starknet
-blockifier = { workspace = true, default-features = false, features = [
-  "testing",
-] }
-cairo-lang-casm = { workspace = true, default-features = false }
+blockifier = { workspace = true }
 cairo-lang-casm-contract-class = { workspace = true }
 cairo-vm = { workspace = true }
-starknet-core = { workspace = true, default-features = false }
-starknet-crypto = { workspace = true, default-features = false, features = [
-  "alloc",
-] }
-starknet-ff = { workspace = true, default-features = false, features = [
-  "alloc",
-  "serde",
-] }
-starknet_api = { workspace = true, default-features = false }
+starknet-core = { workspace = true }
+starknet-crypto = { workspace = true, features = ["alloc"] }
+starknet-ff = { workspace = true, features = ["alloc", "serde"] }
+starknet_api = { workspace = true }
 
 # Other third party dependencies
 bitvec = { workspace = true, features = ["alloc"] }
 derive_more = { workspace = true, features = ["constructor"] }
-flate2 = { workspace = true, optional = true }
-hex = { version = "0.4.3", default-features = false }
 lazy_static = { workspace = true }
-scale-codec = { package = "parity-scale-codec", workspace = true, features = [
-  "derive",
-  "max-encoded-len",
-  "bit-vec",
-] }
-scale-info = { workspace = true, features = ["derive", "bit-vec", "decode"] }
-serde = { workspace = true, features = ["derive"] }
-serde_json = { version = "1.0.107", default-features = false }
 thiserror-no-std = { workspace = true }
 
+# Optional deps
+async-trait = { workspace = true, optional = true }
+cairo-lang-starknet = { workspace = true, optional = true }
+cairo-lang-utils = { workspace = true, optional = true }
+flate2 = { workspace = true, optional = true }
+hex = { workspace = true, optional = true }
+log = { workspace = true }
+num-bigint = { workspace = true, optional = true }
+parity-scale-codec = { workspace = true, features = [
+  "derive",
+  "bit-vec",
+], optional = true }
+scale-info = { workspace = true, features = [
+  "derive",
+  "bit-vec",
+  "decode",
+], optional = true }
+serde = { workspace = true, features = ["derive"], optional = true }
+serde_json = { workspace = true, optional = true }
+
 [dev-dependencies]
-rand = "0.8.5"
-zstd = { version = "0.12.4", default-features = false }
-hex = { workspace = true }
-pretty_assertions = { workspace = true }
+assert_matches = "1.5.0"
 
 [features]
-default = ["std"]
+default = ["std", "client"]
+parity-scale-codec = [
+  "dep:parity-scale-codec",
+  "dep:hex",
+  "dep:async-trait",
+  "starknet_api/parity-scale-codec",
+  "blockifier/parity-scale-codec",
+]
+scale-info = [
+  "dep:scale-info",
+  "starknet_api/scale-info",
+  "blockifier/scale-info",
+]
+serde = ["dep:serde", "dep:serde_json"]
+client = [
+  "std",
+  "dep:flate2",
+  "dep:cairo-lang-starknet",
+  "dep:cairo-lang-utils",
+  "dep:num-bigint",
+  "dep:serde_json",
+]
 std = [
-  "flate2",
-  "scale-codec/std",
-  "scale-info/std",
-  "bitvec/std",
   # Starknet
   "starknet-crypto/std",
   "starknet-ff/std",
@@ -73,11 +86,18 @@ std = [
   "blockifier/std",
   "starknet_api/std",
   # Substrate
-  "frame-support/std",
   "sp-core/std",
   "sp-std/std",
-  "sp-runtime/std",
   "sp-inherents/std",
+  # Other
   "thiserror-no-std/std",
-  "async-trait",
+  "bitvec/std",
+  # Optional deps
+  "serde?/std",
+  "serde_json?/std",
+  "parity-scale-codec?/std",
+  "scale-info?/std",
+  "hex?/std",
+  "cairo-lang-utils?/std",
+  "num-bigint?/std",
 ]
