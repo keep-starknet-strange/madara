@@ -1,10 +1,9 @@
 # Madara Changelog
 
-- feat: modify the hash_bytes functions in `poseidon` and `pedersen` for dynamic
-  data length
-
 ## Next release
 
+- feat: modify the hash_bytes functions in `poseidon` and `pedersen` for dynamic
+  data length
 - chore: add real class hash values for genesis config
 - feat: unification of the DA interface
 - feat: use resolver 2 for cargo in the workspace
