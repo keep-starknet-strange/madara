@@ -54,13 +54,6 @@
         "version": 1
       }
     ],
-<<<<<<< HEAD
-    ["0x1000", { "path": "genesis-assets/test.json", "version": 0 }],
-    ["0x10000", { "path": "genesis-assets/ERC20.json", "version": 0 }],
-    ["0x20000", { "path": "genesis-assets/ERC20.json", "version": 0 }],
-    ["0x80000", { "path": "genesis-assets/ERC721.json", "version": 0 }],
-=======
->>>>>>> upstream/main
     [
       "0x05a2b92d9a36509a3d651e7df99144a4ad8301e2caf42465ee6ab0451ae91882",
       {
