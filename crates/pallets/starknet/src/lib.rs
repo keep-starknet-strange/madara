@@ -432,7 +432,6 @@ pub mod pallet {
         EmitEventError,
         StateDiffError,
         ContractNotFound,
-        ReachedBoundedVecLimit,
         TransactionConversionError,
         SequencerAddressNotValid,
         InvalidContractClassForThisDeclareVersion,

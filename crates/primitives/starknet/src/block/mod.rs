@@ -4,19 +4,11 @@ mod header;
 use alloc::vec::Vec;
 
 pub use header::*;
-use sp_core::ConstU32;
 
 use crate::execution::types::Felt252Wrapper;
 use crate::traits::hash::HasherT;
 use crate::transaction::compute_hash::ComputeTransactionHash;
 use crate::transaction::Transaction;
-
-/// Block transactions max size
-// TODO: add real value (#250)
-pub type MaxTransactions = ConstU32<4294967295>;
-
-/// Maximum number of storage slots per contract
-pub type MaxStorageSlots = ConstU32<{ u32::MAX }>;
 
 /// Block Transactions
 pub type BlockTransactions = Vec<Transaction>;
