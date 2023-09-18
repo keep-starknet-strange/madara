@@ -2,6 +2,7 @@
 
 ## Next release
 
+- fix: change dep of rustdoc on push
 - chore: add real class hash values for genesis config
 - feat: unification of the DA interface
 - feat: use resolver 2 for cargo in the workspace
