@@ -49,12 +49,12 @@ scale-codec = { package = "parity-scale-codec", workspace = true, features = [
 ] }
 scale-info = { workspace = true, features = ["derive", "bit-vec", "decode"] }
 serde = { workspace = true, features = ["derive"] }
-serde_json = { version = "1.0.106", default-features = false }
+serde_json = { version = "1.0.107", default-features = false }
 thiserror-no-std = { workspace = true }
 
 [dev-dependencies]
 rand = "0.8.5"
-zstd = { version = "0.12.3", default-features = false }
+zstd = { version = "0.12.4", default-features = false }
 hex = { workspace = true }
 pretty_assertions = { workspace = true }
 
