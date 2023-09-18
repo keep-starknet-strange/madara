@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ExecutionStrategy","SendTransactionError","TestError","Transaction","TransactionResult"],"mod":["constants","fixtures","utils"],"struct":["MadaraClient"],"type":["RpcOzAccountFactory"]};

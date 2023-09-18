@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["madara"],"struct":["madara"]};

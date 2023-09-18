@@ -65,6 +65,55 @@
 <a href="#65" id="65">65</a>
 <a href="#66" id="66">66</a>
 <a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Pedersen hash module.
 </span><span class="kw">use </span>alloc::vec::Vec;
 
@@ -87,10 +136,23 @@
     /// # Returns
     /// The hash of the data.
     </span><span class="kw">fn </span>hash_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[u8]) -&gt; Felt252Wrapper {
-        <span class="comment">// For now we use the first 31 bytes of the data as the field element, to avoid any panics.
-        // TODO: have proper error handling and think about how to hash efficiently big chunks of data.
-        </span><span class="kw">let </span>field_element = FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>data[..<span class="number">31</span>]).unwrap();
-        Felt252Wrapper(pedersen_hash(<span class="kw-2">&amp;</span>FieldElement::ZERO, <span class="kw-2">&amp;</span>field_element))
+        <span class="comment">// Calculate the number of 31-byte chunks we&#39;ll need, rounding up.
+        // (1 byte is used padding to prevent the value of field from being greater than the field&#39;s
+        // modulus) TODO: It is need a way to truncate bytes to fit into values smaller than modular
+        // (for optimization)
+        </span><span class="kw">const </span>CHUNK_SIZE: usize = <span class="number">31</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>hash_value = FieldElement::ZERO;
+
+        <span class="kw">for </span>chunk <span class="kw">in </span>data.chunks(CHUNK_SIZE) {
+            <span class="comment">// It is safe to unwrap here because we know that the chunk size is 31 and the value can not
+            // overflow than the field&#39;s modulus value. In more detail, the FieldElement Maximum value is 2^251
+            // + 17 * 2^192. So the chunk (31 bytes is 248 bits) is smaller than the maximum value (== 2^248 - 1
+            // &lt; 2^251 + 17 * 2^192). So it is safe to unwrap here.
+            </span><span class="kw">let </span>field_element = FieldElement::from_byte_slice_be(chunk).unwrap();
+            hash_value = pedersen_hash(<span class="kw-2">&amp;</span>hash_value, <span class="kw-2">&amp;</span>field_element);
+        }
+
+        Felt252Wrapper(hash_value)
     }
 
     <span class="doccomment">/// Hashes a slice of field elements using the Pedersen hash function.
@@ -131,5 +193,41 @@
     <span class="kw">fn </span>hasher() -&gt; <span class="self">Self </span>{
         <span class="self">Self
     </span>}
+}
+
+<span class="attr">#[test]
+</span><span class="kw">fn </span>dynamic_string_hashing() {
+    <span class="kw">use </span>core::str::FromStr;
+
+    <span class="kw">let </span>hasher = PedersenHasher::hasher();
+
+    <span class="kw">let </span>message = <span class="string">&quot;Hello, madara!!. It is pedersen hash.&quot;</span>.to_string(); <span class="comment">// 37 bytes
+    </span><span class="kw">let </span>message = message.as_bytes();
+    <span class="kw">let </span>hash_value = hasher.hash_bytes(message);
+
+    <span class="macro">assert_eq!</span>(
+        hash_value,
+        Felt252Wrapper(
+            FieldElement::from_str(<span class="string">&quot;0x03501abfd0e0606ecab6702213a03294b81837e4d48232df3c39a62b88cc6f73&quot;</span>).unwrap()
+        )
+    );
+}
+
+<span class="attr">#[test]
+</span><span class="kw">fn </span>short_string_hashing() {
+    <span class="kw">use </span>core::str::FromStr;
+
+    <span class="kw">let </span>hasher = PedersenHasher::hasher();
+
+    <span class="kw">let </span>message = <span class="string">&quot;madara&quot;</span>.to_string();
+    <span class="kw">let </span>message = message.as_bytes();
+    <span class="kw">let </span>hash_value = hasher.hash_bytes(message);
+
+    <span class="macro">assert_eq!</span>(
+        hash_value,
+        Felt252Wrapper(
+            FieldElement::from_str(<span class="string">&quot;0x04b1b68d0622d978edcef1071b697f003896a8f432d4d5523a2f72ec812591f8&quot;</span>).unwrap()
+        )
+    );
 }
 </code></pre></div></section></main></body></html>
