@@ -35,6 +35,11 @@ jobs:
     uses: ./.github/workflows/linters-cargo.yml
     needs: rust_build
 
+  coverage:
+    name: Run coverage
+    uses: ./.github/workflows/coverage.yml
+    needs: [madara_commands, linters_cargo]
+
   # https://github.com/keep-starknet-strange/madara/issues/1097
   # benchmark:
   #   name: Run benchmarks

@@ -32,6 +32,11 @@ jobs:
   #     # post on the pull-request page
   #     pull-requests: write
 
+  coverage:
+    name: Run coverage
+    uses: ./.github/workflows/coverage.yml
+    needs: [madara_commands, linters_cargo]
+
   rustdoc:
     name: Deploy docs to GitHub Pages
     uses: ./.github/workflows/rustdoc.yml
