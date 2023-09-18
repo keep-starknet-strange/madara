@@ -177,7 +177,7 @@ bitvec = { version = "1", default-features = false }
 thiserror = "1.0.48"
 thiserror-no-std = "2.0.2"
 derive_more = { version = "0.99.17", default-features = false }
-rstest = "0.17.0"
+rstest = "0.18.1"
 pretty_assertions = "1.4.0"
 linked-hash-map = { version = "0.5.6", default-features = false }
 parking_lot = "0.12.1"
