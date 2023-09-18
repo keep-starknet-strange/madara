@@ -2,6 +2,7 @@
 
 ## Next release
 
+- ci: add coverage
 - feat: modify the hash_bytes functions in `poseidon` and `pedersen` for dynamic
   data length
 - chore: add real class hash values for genesis config
