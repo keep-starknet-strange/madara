@@ -20,6 +20,11 @@
 - test: add test to check tx signed by OZ account can be signed with Argent pk
 - buid: add rust-analyzer to toolchain components
 - ci: increase threshold for codecov to 1%
+- test: add `starknet-rpc-test` crate to the workspace
+- test(rpc): add `get_block_number.rs` tests
+- test(rpc): add `get_block_hash_and_number.rs` tests
+- test(rpc): add `get_block_transaction_count.rs` tests
+- test(rpc): add `chain_id.rs` tests
 
 ## v0.2.0
 

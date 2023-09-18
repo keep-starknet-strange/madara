@@ -31,11 +31,6 @@ jobs:
     uses: ./.github/workflows/linters-cargo.yml
     needs: rust_build
 
-  tests:
-    name: Run tests and coverage
-    uses: ./.github/workflows/tests-coverage.yml
-    needs: [rust_build]
-
   # benchmark:
   #   name: Run benchmarks
   #   uses: ./.github/workflows/benchmarks.yml

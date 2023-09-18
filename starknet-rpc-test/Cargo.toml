@@ -1,0 +1,107 @@
+[package]
+name = "starknet-rpc-test"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+
+anyhow = "1.0.72"
+assert_matches = "1.5.0"
+derive_more = "0.99.17"
+flate2 = { workspace = true }
+lazy_static = "1.4.0"
+reqwest = "0.11.18"
+rstest = "0.18.1"
+serde = { version = "1.0.179", features = ["derive"] }
+serde_json = "1.0.107"
+starknet-accounts = { workspace = true }
+starknet-contract = { workspace = true }
+starknet-core = { workspace = true }
+starknet-crypto = { workspace = true }
+starknet-ff = { workspace = true }
+starknet-providers = { workspace = true }
+starknet-signers = { workspace = true }
+thiserror = { workspace = true }
+tokio = { version = "1.29.1", features = ["rt", "macros", "parking_lot"] }
+url = "2.4.1"
+
+[[test]]
+name = "starknet_get_block_number"
+path = "get_block_number.rs"
+
+[[test]]
+name = "starknet_get_block_hash_and_number"
+path = "get_block_hash_and_number.rs"
+
+[[test]]
+name = "starknet_get_block_transaction_count"
+path = "get_block_transaction_count.rs"
+
+[[test]]
+name = "starknet_chain_id"
+path = "chain_id.rs"
+
+[[test]]
+name = "starknet_get_storage_at"
+path = "get_storage_at.rs"
+
+[[test]]
+name = "starknet_get_class"
+path = "get_class.rs"
+
+[[test]]
+name = "starknet_get_class_at"
+path = "get_class_at.rs"
+
+[[test]]
+name = "starknet_get_class_hash_at"
+path = "get_class_hash_at.rs"
+
+[[test]]
+name = "starknet_get_nonce"
+path = "get_nonce.rs"
+
+[[test]]
+name = "starknet_call"
+path = "call.rs"
+
+[[test]]
+name = "starknet_get_block_with_tx_hashes"
+path = "get_block_with_tx_hashes.rs"
+
+[[test]]
+name = "starknet_get_block_with_txs"
+path = "get_block_with_txs.rs"
+
+[[test]]
+name = "starknet_get_transaction_by_blockid_and_index"
+path = "get_transaction_by_blockid_and_index.rs"
+
+[[test]]
+name = "starknet_add_invoke_transaction"
+path = "add_invoke_transaction.rs"
+
+[[test]]
+name = "starknet_add_declare_transaction"
+path = "add_declare_transaction.rs"
+
+[[test]]
+name = "starknet_add_deploy_account_transaction"
+path = "add_deploy_account_transaction.rs"
+
+[[test]]
+name = "starknet_pending_transactions"
+path = "pending_transactions.rs"
+
+[[test]]
+name = "starknet_get_transaction_by_hash"
+path = "get_transaction_by_hash.rs"
+
+[[test]]
+name = "starknet_get_transaction_receipt"
+path = "get_transaction_receipt.rs"
+
+[[test]]
+name = "starknet_get_events"
+path = "get_events.rs"
