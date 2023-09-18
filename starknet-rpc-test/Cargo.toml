@@ -24,7 +24,7 @@ starknet-providers = { workspace = true }
 starknet-signers = { workspace = true }
 thiserror = { workspace = true }
 tokio = { version = "1.29.1", features = ["rt", "macros", "parking_lot"] }
-url = "2.2.2"
+url = "2.4.1"
 
 [[test]]
 name = "starknet_get_block_number"
