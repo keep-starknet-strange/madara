@@ -49,33 +49,17 @@
 <a href="#49" id="49">49</a>
 <a href="#50" id="50">50</a>
 <a href="#51" id="51">51</a>
-<a href="#52" id="52">52</a>
-<a href="#53" id="53">53</a>
-<a href="#54" id="54">54</a>
-<a href="#55" id="55">55</a>
-<a href="#56" id="56">56</a>
-<a href="#57" id="57">57</a>
-<a href="#58" id="58">58</a>
-<a href="#59" id="59">59</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! StarkNet block primitives.
 
 </span><span class="kw">mod </span>header;
 <span class="kw">use </span>alloc::vec::Vec;
 
 <span class="kw">pub use </span>header::<span class="kw-2">*</span>;
-<span class="kw">use </span>sp_core::ConstU32;
 
 <span class="kw">use </span><span class="kw">crate</span>::execution::types::Felt252Wrapper;
 <span class="kw">use </span><span class="kw">crate</span>::traits::hash::HasherT;
 <span class="kw">use </span><span class="kw">crate</span>::transaction::compute_hash::ComputeTransactionHash;
 <span class="kw">use </span><span class="kw">crate</span>::transaction::Transaction;
-
-<span class="doccomment">/// Block transactions max size
-</span><span class="comment">// TODO: add real value (#250)
-</span><span class="kw">pub type </span>MaxTransactions = ConstU32&lt;<span class="number">4294967295</span>&gt;;
-
-<span class="doccomment">/// Maximum number of storage slots per contract
-</span><span class="kw">pub type </span>MaxStorageSlots = ConstU32&lt;{ u32::MAX }&gt;;
 
 <span class="doccomment">/// Block Transactions
 </span><span class="kw">pub type </span>BlockTransactions = Vec&lt;Transaction&gt;;
