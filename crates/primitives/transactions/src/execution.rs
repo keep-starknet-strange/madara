@@ -55,15 +55,11 @@ pub trait GetAccountTransactionContext {
 }
 
 pub trait SimulateTxVersionOffset {
-    fn apply_simulate_tx_version_offset(
-        &self,
-    ) -> TransactionVersion;
+    fn apply_simulate_tx_version_offset(&self) -> TransactionVersion;
 }
 
 impl SimulateTxVersionOffset for TransactionVersion {
-    fn apply_simulate_tx_version_offset(
-        &self,
-    ) -> TransactionVersion {
+    fn apply_simulate_tx_version_offset(&self) -> TransactionVersion {
         Felt252Wrapper(Felt252Wrapper::from(self.0).0 + SIMULATE_TX_VERSION_OFFSET).into()
     }
 }
@@ -578,9 +574,25 @@ impl Execute for L1HandlerTransaction {
 
 #[cfg(test)]
 mod simulate_tx_offset {
+    use blockifier::execution::contract_class::ContractClass;
     use starknet_ff::FieldElement;
 
-    use super::SIMULATE_TX_VERSION_OFFSET;
+    use super::*;
+
+    // Applies the tx offset to a given version. Used only for testing
+    fn apply_simulate_tx_version_offset(version: TransactionVersion, is_query: bool) -> TransactionVersion {
+        if is_query {
+            return version.apply_simulate_tx_version_offset();
+        }
+
+        version
+    }
+
+    // Asserts that the offset is applied correctly to a given version
+    fn eval_simulate_tx_version_offset(original: TransactionVersion, received: TransactionVersion, is_query: bool) {
+        assert_eq!(received, apply_simulate_tx_version_offset(original, is_query));
+    }
+
     #[test]
     fn offset_is_correct() {
         assert_eq!(
@@ -589,6 +601,82 @@ mod simulate_tx_offset {
         );
     }
 
-    // TODO: add test that check that each get_account_transaction_context impl correctly uses this
-    // offset
+    #[test]
+    fn transaction_version_trait_correctly_applies_simulate_tx_version_offset() {
+        let v0 = TransactionVersion(StarkFelt::from(0u8));
+        assert_eq!(v0.clone().apply_simulate_tx_version_offset(), apply_simulate_tx_version_offset(v0.clone(), true));
+
+        let v1 = TransactionVersion(StarkFelt::from(1u8));
+        assert_eq!(v1.clone().apply_simulate_tx_version_offset(), apply_simulate_tx_version_offset(v1.clone(), true));
+    }
+
+    #[test]
+    fn l1_handler_transaction_correctly_applies_simulate_tx_version_offset() {
+        let declare_tx = L1HandlerTransaction {
+            tx: Default::default(),
+            paid_fee_on_l1: Default::default(),
+            tx_hash: Default::default(),
+        };
+
+        let original_version = declare_tx.tx.version;
+
+        let queried_version = declare_tx.get_account_transaction_context(true).version;
+        eval_simulate_tx_version_offset(original_version.clone(), queried_version, true);
+
+        let non_queried_version = declare_tx.get_account_transaction_context(false).version;
+        eval_simulate_tx_version_offset(original_version.clone(), non_queried_version, false);
+    }
+
+    #[test]
+    fn deploy_account_transaction_correctly_applies_simulate_tx_version_offset() {
+        let declare_tx = DeployAccountTransaction {
+            tx: Default::default(),
+            tx_hash: Default::default(),
+            contract_address: Default::default(),
+        };
+
+        let original_version = declare_tx.tx.version;
+
+        let queried_version = declare_tx.get_account_transaction_context(true).version;
+        eval_simulate_tx_version_offset(original_version.clone(), queried_version, true);
+
+        let non_queried_version = declare_tx.get_account_transaction_context(false).version;
+        eval_simulate_tx_version_offset(original_version.clone(), non_queried_version, false);
+    }
+
+    #[test]
+    fn declare_transaction_correctly_applies_simulate_tx_version_offset() {
+        let declare_tx_v0 = DeclareTransaction::new(
+            starknet_api::transaction::DeclareTransaction::V0(Default::default()),
+            Default::default(),
+            ContractClass::V0(Default::default()),
+        )
+        .unwrap();
+
+        // gen TxVersion from v0 manually
+        let original_version_v0 = TransactionVersion(StarkFelt::from(0u8));
+
+        let queried_version = declare_tx_v0.get_account_transaction_context(true).version;
+        eval_simulate_tx_version_offset(original_version_v0.clone(), queried_version, true);
+
+        let non_queried_version = declare_tx_v0.get_account_transaction_context(false).version;
+        eval_simulate_tx_version_offset(original_version_v0.clone(), non_queried_version, false);
+    }
+
+    #[test]
+    fn invoke_transaction_correctly_applies_simulate_tx_version_offset() {
+        let declare_tx_v0 = InvokeTransaction {
+            tx: starknet_api::transaction::InvokeTransaction::V0(Default::default()),
+            tx_hash: Default::default(),
+        };
+
+        // gen TxVersion from v0 manually
+        let original_version_v0 = TransactionVersion(StarkFelt::from(0u8));
+
+        let queried_version = declare_tx_v0.get_account_transaction_context(true).version;
+        eval_simulate_tx_version_offset(original_version_v0.clone(), queried_version, true);
+
+        let non_queried_version = declare_tx_v0.get_account_transaction_context(false).version;
+        eval_simulate_tx_version_offset(original_version_v0.clone(), non_queried_version, false);
+    }
 }
