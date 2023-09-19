@@ -2,6 +2,7 @@
 
 ## Next release
 
+- fix: use specific commit for avail
 - chore: add real class hash values for genesis config
 - feat: unification of the DA interface
 - feat: use resolver 2 for cargo in the workspace
