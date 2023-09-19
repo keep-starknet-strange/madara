@@ -3,7 +3,7 @@ use sp_core::{bounded_vec::BoundedVec, U256};
 use blockifier::execution::contract_class::ContractClass;
 use starknet_client::reader::objects::transaction::{IntermediateInvokeTransaction, IntermediateDeclareTransaction, DeployAccountTransaction, L1HandlerTransaction, DeployTransaction};
 use starknet_ff::FieldElement;
-use starknet_api::{core::PatriciaKey};
+use starknet_api::api_core::PatriciaKey;
 
 pub fn declare_tx_to_starknet_tx(declare_transaction: IntermediateDeclareTransaction) -> Transaction {
 

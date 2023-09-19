@@ -35,7 +35,7 @@ starknet-ff = { workspace = true, default-features = false, features = [
   "alloc",
   "serde",
 ] }
-starknet_api = "0.4.1"
+starknet_api = { workspace = true, default-features = false }
 # test_utils = { path = "./test_utils", optional = true }
 validator = { workspace = true, features = ["derive"] }
 

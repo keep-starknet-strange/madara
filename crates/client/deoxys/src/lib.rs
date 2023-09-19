@@ -1,14 +1,16 @@
 
-use mp_starknet::crypto::commitment::calculate_transaction_commitment;
+use mp_starknet::crypto::commitment::{calculate_transaction_commitment, calculate_event_commitment};
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
-use mp_starknet::transaction::types::{Transaction, TransactionReceiptWrapper};
+use mp_starknet::transaction::types::{Transaction, TransactionReceiptWrapper, EventWrapper, MaxArraySize};
 use sp_core::U256;
-use mp_starknet::execution::types::Felt252Wrapper;
+use mp_starknet::execution::types::{Felt252Wrapper, ContractAddressWrapper};
 use mp_starknet::block::{Block, Header, MaxTransactions };
-use reqwest::header::{HeaderMap, CONTENT_TYPE};
+use reqwest::header::{HeaderMap, CONTENT_TYPE, self};
 use serde_json::json;
 use sp_core::bounded_vec::BoundedVec;
-use starknet_api::core::{ChainId, PatriciaKey};
+use starknet_api::block::BlockNumber;
+use starknet_api::api_core::{ChainId, PatriciaKey};
+use starknet_api::transaction::Event;
 use starknet_client::RetryConfig;
 use starknet_client::reader::{StarknetFeederGatewayClient, StarknetReader};
 use starknet_ff::FieldElement;
@@ -16,7 +18,6 @@ use std::sync::{ Arc, Mutex};
 use std::collections::VecDeque;
 use log::info;
 use tokio::time;
-use starknet_api::block::BlockNumber;
 use std::env;
 use std::fs::read_to_string;
 use std::path::Path;
@@ -63,7 +64,12 @@ pub fn get_header(block: starknet_client::reader::Block, transactions: BoundedVe
                 .iter()
                 .map(|receipt| receipt.events.len() as u128)
                 .sum();
-    let event_commitment = calculate_transaction_commitment::<PedersenHasher>(&transactions);
+    let all_events: Vec<EventWrapper> = block
+        .transaction_receipts
+        .iter()
+        .flat_map(|receipt| receipt.events.iter().map(convert_event_to_wrapper))
+        .collect();
+    let event_commitment = calculate_event_commitment::<PedersenHasher>(&all_events);
     let protocol_version = Some(0u8);
     let extra_data: U256 = Felt252Wrapper::try_from(block.block_hash.0.bytes()).unwrap().into();
     let starknet_header = Header::new(
@@ -119,12 +125,58 @@ pub fn get_txs(block: starknet_client::reader::Block) -> BoundedVec<mp_starknet:
     transactions_vec
 }
 
+fn convert_event_to_wrapper(event: &Event) -> EventWrapper {
+    let mut keys_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
+    for key in &event.content.keys {
+        keys_vec.try_push(Felt252Wrapper(key.0.into())).unwrap();
+    }
+
+    let mut data_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
+    for data_item in &event.content.data.0 {
+        data_vec.try_push(Felt252Wrapper::from(FieldElement::from(*data_item))).unwrap();
+    }
+
+    let from_address_wrapper: ContractAddressWrapper = Felt252Wrapper::from(*PatriciaKey::key(&event.from_address.0));
+    
+    EventWrapper {
+        keys: keys_vec,
+        data: data_vec,
+        from_address: from_address_wrapper,
+    }
+}
+
+pub fn get_txs_receipts(block: starknet_client::reader::Block, transactions: BoundedVec<Transaction, MaxTransactions>) -> BoundedVec<TransactionReceiptWrapper, MaxTransactions> {
+    let mut transaction_receipts_vec: BoundedVec<TransactionReceiptWrapper, MaxTransactions> = BoundedVec::new();
+
+    for (transaction, transaction_receipt) in transactions.iter().zip(&block.transaction_receipts) {
+        let mut events_vec: BoundedVec<EventWrapper, MaxArraySize> = BoundedVec::new();
+        for event in &transaction_receipt.events {
+            let event_wrapper = convert_event_to_wrapper(event);
+            events_vec.try_push(event_wrapper).unwrap();
+        }
+
+        let transaction_receipt_wrapper = TransactionReceiptWrapper {
+            transaction_hash: Felt252Wrapper(transaction_receipt.transaction_hash.0.into()),
+            actual_fee: Felt252Wrapper::from(transaction_receipt.actual_fee.0),
+            tx_type: transaction.tx_type.clone(),
+            events: events_vec,
+        };
+
+        transaction_receipts_vec.try_push(transaction_receipt_wrapper).unwrap();
+    }
+
+    transaction_receipts_vec
+}
+
+
+
 // This function converts a block received from the gateway into a StarkNet block
 pub fn from_gateway_to_starknet_block(block: starknet_client::reader::Block) -> Block {
     let transactions_vec: BoundedVec<Transaction, MaxTransactions> = get_txs(block.clone());
-    let transaction_receipts_vec: BoundedVec<TransactionReceiptWrapper, MaxTransactions> = BoundedVec::new();
+    let transaction_receipts_vec: BoundedVec<TransactionReceiptWrapper, MaxTransactions> = get_txs_receipts(block.clone(), transactions_vec.clone());
+    let header = get_header(block.clone(), transactions_vec.clone());
     Block::new(
-        get_header(block.clone(), transactions_vec.clone()),
+        header,
         transactions_vec,
         transaction_receipts_vec
     )
@@ -246,6 +298,7 @@ mod tests {
     use std::sync::Mutex;
     use std::collections::VecDeque;
     use mockall::mock;
+    use mockito::mock;
 
     // Mocking StarknetFeederGatewayClient for testing
     mock! {
