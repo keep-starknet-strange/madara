@@ -12,7 +12,6 @@ use jsonrpsee::proc_macros::rpc;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 
-mod constants;
 pub mod utils;
 
 use starknet_core::serde::unsigned_field_element::UfeHex;

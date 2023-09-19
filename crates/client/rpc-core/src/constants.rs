@@ -1,3 +1,0 @@
-#[cfg(test)]
-pub const CAIRO_1_NO_VALIDATE_ACCOUNT_COMPILED_CLASS_HASH: &str =
-    "0xdf4d3042eec107abe704619f13d92bbe01a58029311b7a1886b23dcbb4ea87";

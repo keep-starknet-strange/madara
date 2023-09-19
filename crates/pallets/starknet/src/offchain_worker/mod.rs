@@ -8,6 +8,7 @@ use frame_system::pallet_prelude::OriginFor;
 use serde_json::from_slice;
 use sp_runtime::offchain::http;
 use sp_runtime::offchain::storage::StorageValueRef;
+use starknet_api::transaction::Fee;
 pub use types::*;
 
 use crate::message::get_messages_events;
@@ -38,7 +39,8 @@ impl<T: Config> Pallet<T> {
             // Iterate over the messages and execute them.
             res.result.iter().try_for_each(|message| {
                 // Execute the message.
-                Self::consume_l1_message(OriginFor::<T>::none(), message.try_into_transaction()?)
+                // Fee is required but the blockifier just check it's not zero
+                Self::consume_l1_message(OriginFor::<T>::none(), message.try_into_transaction()?, Fee(1))
                     .map_err(OffchainWorkerError::ConsumeMessageError)
             })?;
         }

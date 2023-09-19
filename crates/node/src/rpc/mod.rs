@@ -11,10 +11,9 @@ use std::sync::Arc;
 use futures::channel::mpsc;
 use jsonrpsee::RpcModule;
 use madara_runtime::opaque::Block;
-use madara_runtime::{AccountId, Hash, Index};
+use madara_runtime::{AccountId, Hash, Index, StarknetHasher};
 use mc_transaction_pool::{ChainApi, Pool};
-use pallet_starknet::runtime_api::StarknetRuntimeApi;
-use sc_client_api::{Backend, StorageProvider};
+use sc_client_api::{Backend, BlockBackend, StorageProvider};
 use sc_consensus_manual_seal::rpc::EngineCommand;
 pub use sc_rpc_api::DenyUnsafe;
 use sc_transaction_pool_api::TransactionPool;
@@ -46,7 +45,11 @@ pub fn create_full<A, C, P, BE>(
 where
     A: ChainApi<Block = Block> + 'static,
     C: ProvideRuntimeApi<Block>,
-    C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + StorageProvider<Block, BE> + 'static,
+    C: HeaderBackend<Block>
+        + BlockBackend<Block>
+        + HeaderMetadata<Block, Error = BlockChainError>
+        + StorageProvider<Block, BE>
+        + 'static,
     C: Send + Sync + 'static,
     C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
     C::Api: BlockBuilder<Block>,
@@ -62,11 +65,9 @@ where
     let mut module = RpcModule::new(());
     let FullDeps { client, pool, deny_unsafe, starknet: starknet_params, command_sink, graph } = deps;
 
-    let hasher = client.runtime_api().get_hasher(client.info().best_hash)?.into();
-
     module.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())?;
     module.merge(
-        Starknet::new(
+        Starknet::<_, _, _, _, _, StarknetHasher>::new(
             client,
             starknet_params.madara_backend,
             starknet_params.overrides,
@@ -74,7 +75,6 @@ where
             graph,
             starknet_params.sync_service,
             starknet_params.starting_block,
-            hasher,
         )
         .into_rpc(),
     )?;

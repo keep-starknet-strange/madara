@@ -7,20 +7,20 @@
 //! The [`Felt252Wrapper`] implements the traits for SCALE encoding, and wrap
 //! the [`FieldElement`] type from starknet-ff.
 
-use alloc::string::String;
+use alloc::string::{String, ToString};
 
 use cairo_vm::felt::Felt252;
-use scale_codec::{Decode, Encode, EncodeLike, Error, Input, MaxEncodedLen, Output};
-use scale_info::build::Fields;
-use scale_info::{Path, Type, TypeInfo};
+#[cfg(feature = "parity-scale-codec")]
+use parity_scale_codec::{Decode, Encode, EncodeLike, Error, Input, MaxEncodedLen, Output};
+#[cfg(feature = "scale-info")]
+use scale_info::{build::Fields, Path, Type, TypeInfo};
 use sp_core::{H256, U256};
 use starknet_api::hash::StarkFelt;
 use starknet_ff::{FieldElement, FromByteSliceError, FromStrError};
 use thiserror_no_std::Error;
 
-///
-#[derive(Clone, Debug, PartialEq, PartialOrd, Ord, Hash, Eq, Copy, serde::Serialize, serde::Deserialize)]
-//#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Ord, Hash, Eq, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Felt252Wrapper(pub FieldElement);
 
 impl Felt252Wrapper {
@@ -66,18 +66,16 @@ impl Felt252Wrapper {
         let fe = FieldElement::from_dec_str(value)?;
         Ok(Self(fe))
     }
-}
 
-#[cfg(feature = "std")]
-impl Felt252Wrapper {
     /// Decodes the bytes representation in utf-8
     ///
     /// # Errors
     ///
     /// If the bytes are not valid utf-8, returns [`Felt252WrapperError`].
     pub fn from_utf8(&self) -> Result<String, Felt252WrapperError> {
-        let s =
-            std::str::from_utf8(&self.0.to_bytes_be()).map_err(|_| Felt252WrapperError::InvalidCharacter)?.to_string();
+        let s = alloc::str::from_utf8(&self.0.to_bytes_be())
+            .map_err(|_| Felt252WrapperError::InvalidCharacter)?
+            .to_string();
         Ok(s.trim_start_matches('\0').to_string())
     }
 }
@@ -255,6 +253,7 @@ impl From<Felt252Wrapper> for StarkFelt {
 }
 
 /// SCALE trait.
+#[cfg(feature = "parity-scale-codec")]
 impl Encode for Felt252Wrapper {
     fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
         dest.write(&self.0.to_bytes_be());
@@ -262,9 +261,11 @@ impl Encode for Felt252Wrapper {
 }
 
 /// SCALE trait.
+#[cfg(feature = "parity-scale-codec")]
 impl EncodeLike for Felt252Wrapper {}
 
 /// SCALE trait.
+#[cfg(feature = "parity-scale-codec")]
 impl MaxEncodedLen for Felt252Wrapper {
     fn max_encoded_len() -> usize {
         32
@@ -272,6 +273,7 @@ impl MaxEncodedLen for Felt252Wrapper {
 }
 
 /// SCALE trait.
+#[cfg(feature = "parity-scale-codec")]
 impl Decode for Felt252Wrapper {
     fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
         let mut buf: [u8; 32] = [0; 32];
@@ -285,6 +287,7 @@ impl Decode for Felt252Wrapper {
 }
 
 /// SCALE trait.
+#[cfg(feature = "scale-info")]
 impl TypeInfo for Felt252Wrapper {
     type Identity = Self;
 
@@ -424,6 +427,7 @@ mod felt252_wrapper_tests {
     }
 
     #[test]
+    #[cfg(feature = "parity-scale-codec")]
     fn encode_decode_scale() {
         let felt = Felt252Wrapper::ONE;
         let encoded = felt.encode();
@@ -437,6 +441,7 @@ mod felt252_wrapper_tests {
     }
 
     #[test]
+    #[cfg(feature = "parity-scale-codec")]
     fn vec_encode_decode_scale() {
         let input = vec![
             Felt252Wrapper::ONE,

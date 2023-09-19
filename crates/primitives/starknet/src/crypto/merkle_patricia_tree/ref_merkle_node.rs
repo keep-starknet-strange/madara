@@ -159,7 +159,7 @@ impl BinaryNode {
             None => unreachable!("subtrees have to be committed first"),
         };
 
-        self.hash = Some(Felt252Wrapper(H::default().hash_elements(left.0, right.0)));
+        self.hash = Some(Felt252Wrapper(H::hash_elements(left.0, right.0)));
     }
 }
 
@@ -267,7 +267,7 @@ impl EdgeNode {
         length[31] = self.path.len() as u8;
 
         let length = Felt252Wrapper::try_from(&length).unwrap();
-        let hash = Felt252Wrapper(H::default().hash_elements(child.0, path.0) + length.0);
+        let hash = Felt252Wrapper(H::hash_elements(child.0, path.0) + length.0);
         self.hash = Some(hash);
     }
 }

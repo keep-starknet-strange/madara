@@ -29,7 +29,7 @@ pub const MIN_PORT: u16 = 1025;
 pub const MAX_PORT: u16 = 65_535;
 
 pub const MAX_U256: &str = "0xffffffffffffffffffffffffffffffff";
-pub const MAX_FEE_OVERRIDE: &str = "0xFFFFFFFFFFFF";
+pub const MAX_FEE_OVERRIDE: &str = "0x100000";
 
 // Need to use `from_mont` because this needs to be a constant function call
 /// ChainId for Starknet Goerli testnet

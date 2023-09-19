@@ -67,7 +67,7 @@ async fn works_with_invoke_txn(#[future] madara: MadaraClient) -> Result<(), any
         block.clone(),
         BlockWithTxs {
             status: BlockStatus::AcceptedOnL2,
-            block_hash: FieldElement::from_hex_be("0x078900eec31cb819620f277029089b8bf158cfb8b63e0332f03f57e0d48ce0c6")
+            block_hash: FieldElement::from_hex_be("0x015e8bc7066c6d98d71c52bd52bb8eb0d1747eaa189c7f90a2a31045edccf2a8")
                 .unwrap(),
             parent_hash: FieldElement::from_hex_be(
                 "0x031ebd02657f940683ae7bddf19716932c56d463fc16662d14031f8635df52ad",
@@ -82,14 +82,14 @@ async fn works_with_invoke_txn(#[future] madara: MadaraClient) -> Result<(), any
             timestamp: block.timestamp,
             transactions: vec![StarknetTransaction::Invoke(InvokeTransaction::V1(InvokeTransactionV1 {
                 transaction_hash: FieldElement::from_hex_be(
-                    "0x00581e60706c38d474ef27099f5e3f9506c63211340f7ca1849abe382c33123f",
+                    "0x069d9d0ac1f5a4ad8d8e9a3954da53b5dc8ed239c02ad04492b9e15c50fe6d11",
                 )
                 .unwrap(),
                 max_fee: FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap(),
                 signature: vec![
-                    FieldElement::from_hex_be("0x053804f9408e2487cc3f8c9ab5fdce261ed9bc43c95630be6ed9f276803ecb90")
+                    FieldElement::from_hex_be("0x0611fcebbeffcbe80056f163dba051de342fbf139ece6071663a6f5d1100f4db")
                         .unwrap(),
-                    FieldElement::from_hex_be("0x02823c06c85eaef396f64ac459cc063f026be9dd0b38edd5942566ecc8e3ab63")
+                    FieldElement::from_hex_be("0x02c52a90217e781fd959fe961076d580c07b1bfb8e120576a55f2cb04c699a67")
                         .unwrap(),
                 ],
                 nonce: FieldElement::ZERO,
@@ -144,7 +144,7 @@ async fn works_with_deploy_account_txn(#[future] madara: MadaraClient) -> Result
         block.clone(),
         BlockWithTxs {
             status: BlockStatus::AcceptedOnL2,
-            block_hash: FieldElement::from_hex_be("0x05fb29856b6e0afe6a887453a3f68a9fdb8c0889db90aedfa76fb10d910cd1b2")
+            block_hash: FieldElement::from_hex_be("0x04d16ce836f8c4f15b30669313fd8b2e3d0118a6e9e5ee8a5de44b954056bdd8")
                 .unwrap(),
             parent_hash: FieldElement::from_hex_be(
                 "0x031ebd02657f940683ae7bddf19716932c56d463fc16662d14031f8635df52ad",
@@ -160,14 +160,14 @@ async fn works_with_deploy_account_txn(#[future] madara: MadaraClient) -> Result
             transactions: vec![
                 StarknetTransaction::Invoke(InvokeTransaction::V1(InvokeTransactionV1 {
                     transaction_hash: FieldElement::from_hex_be(
-                        "0x0770319fa9fda65e97216fac7cde986406874518deb2337e7f60ea91daa49611",
+                        "0x03be8055eece65051368768a6b92ae51e1a228edb04ebbd269e3bab555c4ed0e",
                     )
                     .unwrap(),
                     max_fee: FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap(),
                     signature: vec![
-                        FieldElement::from_hex_be("0x031adb83ec6f5b559f1195f3f4d2460976ee5e1a0b1cc28acee3ae18f4bca245")
+                        FieldElement::from_hex_be("0x0676c246cb9d166ee69e20278767837e543a9982641d05e03ca3ea9bdb7629eb")
                             .unwrap(),
-                        FieldElement::from_hex_be("0x011fa58c396b737a68d9daf22a2dc6492ef0fa30fe2365a433176f28628b84d9")
+                        FieldElement::from_hex_be("0x066a8ee0282af011008df1a07bd30b20575b2a7b267a2ca5428eba7c8589b0ef")
                             .unwrap(),
                     ],
                     nonce: FieldElement::ZERO,
@@ -186,14 +186,14 @@ async fn works_with_deploy_account_txn(#[future] madara: MadaraClient) -> Result
                 })),
                 StarknetTransaction::DeployAccount(DeployAccountTransaction {
                     transaction_hash: FieldElement::from_hex_be(
-                        "0x03569747fea4ad0c6e2d16ac69d353057f2d001229db8968533286c684e1a84a",
+                        "0x02105f08ba02511ccef6ff6676a1481645ec33c9e0d9f7d654b0590aa6afb013",
                     )
                     .unwrap(),
                     max_fee,
                     signature: vec![
-                        FieldElement::from_hex_be("0x05600ddda0366a47b8e060602133980bccf435f58fd15b0cce43e62b204a1b07")
+                        FieldElement::from_hex_be("0x06bea565e0ac2450b1765ce3fec2ffd665f88b7c1c809a5713f795ab9641e133")
                             .unwrap(),
-                        FieldElement::from_hex_be("0x01b145ab62e5c88d126396ef337dbd97d48c91374cc8a06eb5458479ccc86a6a")
+                        FieldElement::from_hex_be("0x00d8227bb300a313abb456689776dec594c2807b57824bf1159933e95946d227")
                             .unwrap(),
                     ],
                     nonce: FieldElement::ZERO,
@@ -236,7 +236,7 @@ async fn works_with_declare_txn(#[future] madara: MadaraClient) -> Result<(), an
         block.clone(),
         BlockWithTxs {
             status: BlockStatus::AcceptedOnL2,
-            block_hash: FieldElement::from_hex_be("0x031622c96d67dabe52c0317752d6e6be69a4288e6dcec09a6f8324bee49d4ce5")
+            block_hash: FieldElement::from_hex_be("0x065e90b2a9571d961a874056372238922aeefc54984d78db15f7146797746a0b")
                 .unwrap(),
             parent_hash: FieldElement::from_hex_be(
                 "0x031ebd02657f940683ae7bddf19716932c56d463fc16662d14031f8635df52ad",
@@ -251,14 +251,14 @@ async fn works_with_declare_txn(#[future] madara: MadaraClient) -> Result<(), an
             timestamp: block.timestamp,
             transactions: vec![StarknetTransaction::Declare(DeclareTransaction::V2(DeclareTransactionV2 {
                 transaction_hash: FieldElement::from_hex_be(
-                    "0x01fc4c0d8f82edfd74ef83c5db42203fe4a70243a76e88e0a4a6ade9753d8ec9",
+                    "0x05e0f64e8140019f2657f244dd9fd136d18acc6f52d8a0b85d3f84a110d4c708",
                 )
                 .unwrap(),
                 max_fee,
                 signature: vec![
-                    FieldElement::from_hex_be("0x06c874338b748868b555ad7f9bf1e362d3d23b6e900ef0065a76eebbe1294438")
+                    FieldElement::from_hex_be("0x047a258d089e26d77f4dfcb87ad6e2537ca729c228bc75aeb9d2332cd525a25f")
                         .unwrap(),
-                    FieldElement::from_hex_be("0x025860a19f5bb89068408f12356bb5ff908fd4cb73238feac632bfa880367c5a")
+                    FieldElement::from_hex_be("0x00b3ce21b372da9e878fd5730297589f22f7ad7a0d45520ef41602f001f90c5b")
                         .unwrap(),
                 ],
                 nonce: FieldElement::ZERO,
