@@ -1,8 +1,6 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
-use phf::phf_map;
-
 use blockifier::abi::constants::GAS_USAGE;
 use blockifier::block_context::BlockContext;
 use blockifier::execution::entry_point::{
@@ -14,6 +12,7 @@ use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::{AccountTransactionContext, ResourcesMapping, TransactionExecutionResult};
 use blockifier::transaction::transaction_types::TransactionType;
 use blockifier::transaction::transaction_utils::{calculate_l1_gas_usage, calculate_tx_resources};
+use phf::phf_map;
 use starknet_api::api_core::EntryPointSelector;
 use starknet_api::calldata;
 use starknet_api::deprecated_contract_class::EntryPointType;
@@ -187,10 +186,11 @@ pub fn calculate_l1_gas_by_vm_usage(
     };
 
     // Convert Cairo usage to L1 gas usage.
-    let vm_l1_gas_usage: f64 = vm_resource_usage.0
+    let vm_l1_gas_usage: f64 = vm_resource_usage
+        .0
         .iter()
         .map(|(key, &value)| VM_RESOURCE_FEE_COSTS.get(key.as_str()).unwrap_or(&0.0) * value as f64)
         .fold(f64::NAN, f64::max);
-    
+
     Ok(vm_l1_gas_usage)
 }
