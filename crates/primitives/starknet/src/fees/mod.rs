@@ -3,16 +3,17 @@ use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use blockifier::abi::constants::{GAS_USAGE, N_STEPS_RESOURCE};
+use blockifier::abi::constants::GAS_USAGE;
 use blockifier::block_context::BlockContext;
 use blockifier::execution::entry_point::{
     CallEntryPoint, CallInfo, CallType, EntryPointExecutionContext, ExecutionResources,
 };
-use blockifier::fee::gas_usage::calculate_tx_gas_usage;
-use blockifier::fee::os_usage::get_additional_os_resources;
 use blockifier::state::cached_state::StateChangesCount;
 use blockifier::state::state_api::State;
-use blockifier::transaction::objects::AccountTransactionContext;
+use blockifier::transaction::errors::TransactionExecutionError;
+use blockifier::transaction::objects::{AccountTransactionContext, ResourcesMapping, TransactionExecutionResult};
+use blockifier::transaction::transaction_types::TransactionType;
+use blockifier::transaction::transaction_utils::{calculate_l1_gas_usage, calculate_tx_resources};
 use starknet_api::api_core::EntryPointSelector;
 use starknet_api::calldata;
 use starknet_api::deprecated_contract_class::EntryPointType;
@@ -20,9 +21,7 @@ use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, Fee};
 
 use super::state::StateChanges;
-use crate::alloc::string::ToString;
 use crate::state::FeeConfig;
-use crate::transaction::types::{TransactionExecutionErrorWrapper, TxType};
 
 /// Number of storage updates for the fee transfer tx.
 pub const FEE_TRANSFER_N_STORAGE_CHANGES: u8 = 2; // Sender and sequencer balance update.
@@ -30,100 +29,50 @@ pub const FEE_TRANSFER_N_STORAGE_CHANGES: u8 = 2; // Sender and sequencer balanc
 pub const FEE_TRANSFER_N_STORAGE_CHANGES_TO_CHARGE: u8 = FEE_TRANSFER_N_STORAGE_CHANGES - 1; // Exclude the sequencer balance update, since it's charged once throughout the batch.
 
 /// Gets the transaction resources.
-///
-/// # Arguments
-///
-/// * `state` - State object to get the state changes.
-/// * `execute_call_info` - Call info of the execution of the `__execute__` entrypoint.
-/// * `execution_resources` - Resources used by the execution.
-/// * `tx_type` - Type of the transaction.
-///
-/// # Returns
-///
-/// * [BTreeMap<String, usize>] - Mapping from execution resources to the number of uses.
-///
-/// # Error
-///
-/// [TransactionExecutionErrorWrapper] if a step of the execution resources computation fails.
-pub fn get_transaction_resources<S: State + StateChanges>(
+pub fn compute_transaction_resources<S: State + StateChanges>(
     state: &S,
     execute_call_info: &Option<CallInfo>,
     validate_call_info: &Option<CallInfo>,
     execution_resources: &ExecutionResources,
-    tx_type: TxType,
-) -> Result<BTreeMap<String, usize>, TransactionExecutionErrorWrapper> {
-    let (n_modified_contracts, n_modified_keys, n_class_hash_updates, n_compiled_class_hash_updates) =
+    tx_type: TransactionType,
+    l1_handler_payload_size: Option<usize>,
+) -> TransactionExecutionResult<ResourcesMapping> {
+    let (n_modified_contracts, n_storage_updates, n_class_hash_updates, n_compiled_class_hash_updates) =
         state.count_state_changes();
+    let state_changes_count = StateChangesCount {
+        n_storage_updates,
+        n_class_hash_updates,
+        n_compiled_class_hash_updates,
+        n_modified_contracts,
+    };
     let non_optional_call_infos: Vec<&CallInfo> =
         vec![execute_call_info, validate_call_info].into_iter().flatten().collect();
-    let mut l2_to_l1_payloads_length = vec![];
-    for call_info in non_optional_call_infos {
-        l2_to_l1_payloads_length.extend(
-            call_info
-                .get_sorted_l2_to_l1_payloads_length()
-                .map_err(|err| TransactionExecutionErrorWrapper::UnexpectedHoles(err.to_string()))?,
-        );
-    }
-    let l1_gas_usage = calculate_tx_gas_usage(
-        &l2_to_l1_payloads_length,
-        StateChangesCount {
-            n_modified_contracts,
-            n_storage_updates: n_modified_keys + usize::from(FEE_TRANSFER_N_STORAGE_CHANGES_TO_CHARGE),
-            n_class_hash_updates,
-            n_compiled_class_hash_updates,
-        },
-        None,
-    );
-    // Add additional Cairo resources needed for the OS to run the transaction.
-    let total_vm_usage = &execution_resources.vm_resources
-        + &get_additional_os_resources(&execution_resources.syscall_counter.clone(), tx_type.into())
-            .map_err(|_| TransactionExecutionErrorWrapper::FeeComputationError)?;
-    let total_vm_usage = total_vm_usage.filter_unused_builtins();
-    let mut tx_resources = BTreeMap::from([
-        (GAS_USAGE.to_string(), l1_gas_usage),
-        (N_STEPS_RESOURCE.to_string(), total_vm_usage.n_steps + total_vm_usage.n_memory_holes),
-    ]);
-    tx_resources.extend(total_vm_usage.builtin_instance_counter);
-    Ok(tx_resources)
+
+    let l1_gas_usage = calculate_l1_gas_usage(&non_optional_call_infos, state_changes_count, l1_handler_payload_size)?;
+    let actual_resources = calculate_tx_resources(execution_resources, l1_gas_usage, tx_type)?;
+
+    Ok(actual_resources)
 }
 
 /// Charges the fees for a specific execution resources.
-///
-/// # Arguments
-///
-/// * `state` - State object to get the state changes.
-/// * `block_context` - Block context to get information needed to compute the fees.
-/// * `account_tx_context` - Account context.
-/// * `resources` - Execution resources.
-///
-/// # Returns
-///
-/// * [Fee] - Amount charged for the transaction.
-/// * [`Option<CallInfo>`] - Call info of the fee transfer tx.
-///
-/// # Errors
-///
-/// [TransactionExecutionErrorWrapper] if any step of the fee transfer computation/transaction
-/// fails.
 pub fn charge_fee<S: State + StateChanges + FeeConfig>(
     state: &mut S,
     block_context: &BlockContext,
     account_tx_context: AccountTransactionContext,
-    resources: &BTreeMap<String, usize>,
-    is_query: bool,
-) -> Result<(Fee, Option<CallInfo>), TransactionExecutionErrorWrapper> {
-    let no_fee = Fee::default();
+    resources: &ResourcesMapping,
+) -> TransactionExecutionResult<(Fee, Option<CallInfo>)> {
     if state.is_transaction_fee_disabled() {
-        return Ok((no_fee, None));
+        return Ok((Fee(0), None));
     }
-    let actual_fee = calculate_tx_fee(resources, block_context)
-        .map_err(|_| TransactionExecutionErrorWrapper::FeeComputationError)?;
+
+    let actual_fee = calculate_tx_fee(resources, block_context)?;
 
     // even if the user doesn't have enough balance
     // estimate fee shouldn't fail
-    if is_query {
+    if account_tx_context.version.0 >= StarkFelt::try_from("0x100000000000000000000000000000000").unwrap() {
         return Ok((actual_fee, None));
     }
+
     let fee_transfer_call_info = execute_fee_transfer(state, block_context, account_tx_context, actual_fee)?;
 
     Ok((actual_fee, Some(fee_transfer_call_info)))
@@ -135,10 +84,10 @@ fn execute_fee_transfer(
     block_context: &BlockContext,
     account_tx_context: AccountTransactionContext,
     actual_fee: Fee,
-) -> Result<CallInfo, TransactionExecutionErrorWrapper> {
+) -> TransactionExecutionResult<CallInfo> {
     let max_fee = account_tx_context.max_fee;
     if actual_fee > max_fee {
-        return Err(TransactionExecutionErrorWrapper::FeeTransferError { max_fee, actual_fee });
+        return Err(TransactionExecutionError::FeeTransferError { max_fee, actual_fee });
     }
     // TODO: This is what's done in the blockifier but this should be improved.
     // FIXME: https://github.com/keep-starknet-strange/madara/issues/332
@@ -177,30 +126,11 @@ fn execute_fee_transfer(
     let max_steps = block_context.invoke_tx_max_n_steps;
     let mut context = EntryPointExecutionContext::new(block_context.clone(), account_tx_context, max_steps as usize);
 
-    fee_transfer_call
-        .execute(state, &mut ExecutionResources::default(), &mut context)
-        .map_err(TransactionExecutionErrorWrapper::EntrypointExecution)
+    Ok(fee_transfer_call.execute(state, &mut ExecutionResources::default(), &mut context)?)
 }
 
 /// Computes the fees from the execution resources.
-///
-/// # Arguments
-///
-/// * `resources` - Execution resources to compute the fees from.
-/// * `block_context` - Block context to get information needed to compute the fees.
-///
-/// # Returns
-///
-/// [Fee] - the fees computed for the transaction.
-///
-/// # Error
-///
-/// [TransactionExecutionErrorWrapper] - if the computation of the l1 gas usage fails, returns an
-/// error.
-pub fn calculate_tx_fee(
-    resources: &BTreeMap<String, usize>,
-    block_context: &BlockContext,
-) -> Result<Fee, TransactionExecutionErrorWrapper> {
+pub fn calculate_tx_fee(resources: &ResourcesMapping, block_context: &BlockContext) -> TransactionExecutionResult<Fee> {
     let (l1_gas_usage, vm_resources) = extract_l1_gas_and_vm_usage(resources);
     let l1_gas_by_vm_usage = calculate_l1_gas_by_vm_usage(block_context, &vm_resources)?;
     let total_l1_gas_usage = l1_gas_usage as f64 + l1_gas_by_vm_usage;
@@ -223,12 +153,12 @@ pub fn calculate_tx_fee(
 ///
 /// [usize] - l1 gas usage.
 /// [BTreeMap<String, usize>] - vm resources usage.
-pub fn extract_l1_gas_and_vm_usage(resources: &BTreeMap<String, usize>) -> (usize, BTreeMap<String, usize>) {
-    let mut vm_resource_usage = resources.clone();
+pub fn extract_l1_gas_and_vm_usage(resources: &ResourcesMapping) -> (usize, ResourcesMapping) {
+    let mut vm_resource_usage = resources.0.clone();
     let l1_gas_usage =
         vm_resource_usage.remove(GAS_USAGE).expect("`ResourcesMapping` does not have the key `l1_gas_usage`.");
 
-    (l1_gas_usage, vm_resource_usage)
+    (l1_gas_usage, ResourcesMapping(vm_resource_usage))
 }
 
 /// Calculates the L1 gas consumed when submitting the underlying Cairo program to SHARP.
@@ -236,10 +166,11 @@ pub fn extract_l1_gas_and_vm_usage(resources: &BTreeMap<String, usize>) -> (usiz
 /// a proof is determined similarly - by the (normalized) largest segment.
 pub fn calculate_l1_gas_by_vm_usage(
     _block_context: &BlockContext,
-    vm_resource_usage: &BTreeMap<String, usize>,
-) -> Result<f64, TransactionExecutionErrorWrapper> {
+    vm_resource_usage: &ResourcesMapping,
+) -> TransactionExecutionResult<f64> {
     // TODO: add real values here.
     // FIXME: https://github.com/keep-starknet-strange/madara/issues/330
+    // TODO: this is terible perfomance wise. Use perfect hash map instead
     let vm_resource_fee_costs = BTreeMap::from([
         (String::from("n_steps"), 1_f64),
         (String::from("pedersen_builtin"), 1_f64),
@@ -250,16 +181,16 @@ pub fn calculate_l1_gas_by_vm_usage(
         (String::from("output_builtin"), 1_f64),
         (String::from("ec_op_builtin"), 1_f64),
     ]);
-    let vm_resource_names = BTreeSet::<&String>::from_iter(vm_resource_usage.keys());
+    let vm_resource_names = BTreeSet::<&String>::from_iter(vm_resource_usage.0.keys());
 
     if !vm_resource_names.is_subset(&BTreeSet::from_iter(vm_resource_fee_costs.keys())) {
-        return Err(TransactionExecutionErrorWrapper::FailedToComputeL1GasUsage);
+        return Err(TransactionExecutionError::CairoResourcesNotContainedInFeeCosts);
     };
 
     // Convert Cairo usage to L1 gas usage.
     let vm_l1_gas_usage = vm_resource_fee_costs
         .iter()
-        .map(|(key, resource_val)| (*resource_val) * vm_resource_usage.get(key).cloned().unwrap_or_default() as f64)
+        .map(|(key, resource_val)| (*resource_val) * vm_resource_usage.0.get(key).cloned().unwrap_or_default() as f64)
         .fold(f64::NAN, f64::max);
 
     Ok(vm_l1_gas_usage)

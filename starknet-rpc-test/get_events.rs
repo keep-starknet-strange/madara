@@ -139,9 +139,9 @@ async fn work_one_block_no_filter(#[future] madara: MadaraClient) -> Result<(), 
 
     let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
     let block_hash =
-        FieldElement::from_hex_be("0x06da61828bd573bb29d57a8dbc410684db35a934f90400d559812230c481849e").unwrap();
+        FieldElement::from_hex_be("0x0742520489186d3d79b09e1d14ec7e69d515a3c915e6cfd8fd4ca65299372a45").unwrap();
     let block_number = 1;
-    let expected_fee = FieldElement::from_hex_be("0x1ffe0").unwrap();
+    let expected_fee = FieldElement::from_hex_be("0x1d010").unwrap();
 
     assert_eq_emitted_event(
         events_result.events,
@@ -211,7 +211,7 @@ async fn work_one_block_with_chunk_filter_and_continuation_token(
 
     let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
     let block_hash =
-        FieldElement::from_hex_be("0x06da61828bd573bb29d57a8dbc410684db35a934f90400d559812230c481849e").unwrap();
+        FieldElement::from_hex_be("0x0742520489186d3d79b09e1d14ec7e69d515a3c915e6cfd8fd4ca65299372a45").unwrap();
     let block_number = 1;
 
     assert_eq_emitted_event(
@@ -230,7 +230,7 @@ async fn work_one_block_with_chunk_filter_and_continuation_token(
             transaction_hash,
         }],
     );
-    assert_eq!(events_result.continuation_token, Some("1,0,1".into()));
+    assert_eq!(events_result.continuation_token, Some("1,1".into()));
 
     let events_result = rpc
         .get_events(
@@ -241,7 +241,7 @@ async fn work_one_block_with_chunk_filter_and_continuation_token(
         .await
         .unwrap();
 
-    let expected_fee = FieldElement::from_hex_be("0x1ffe0").unwrap();
+    let expected_fee = FieldElement::from_hex_be("0x1d010").unwrap();
     assert_eq_emitted_event(
         events_result.events,
         vec![
@@ -321,13 +321,13 @@ async fn work_two_blocks_with_block_filter_and_continuation_token(
                 transfer_amount,    // value low
                 FieldElement::ZERO, // value high
             ],
-            block_hash: FieldElement::from_hex_be("0x06da61828bd573bb29d57a8dbc410684db35a934f90400d559812230c481849e")
+            block_hash: FieldElement::from_hex_be("0x0742520489186d3d79b09e1d14ec7e69d515a3c915e6cfd8fd4ca65299372a45")
                 .unwrap(),
             block_number: 1,
             transaction_hash: transaction_hash_1,
         }],
     );
-    assert_eq!(events_result.continuation_token, Some("0,0,1".into()));
+    assert_eq!(events_result.continuation_token, Some("0,1".into()));
 
     // get first event of second block
     let events_result = rpc
@@ -355,14 +355,14 @@ async fn work_two_blocks_with_block_filter_and_continuation_token(
                 transfer_amount,    // value low
                 FieldElement::ZERO, // value high
             ],
-            block_hash: FieldElement::from_hex_be("0x008c91f12887abc725faa7e255f1b8fe1c7be9a2d8652982e13aafcb64b35e11")
+            block_hash: FieldElement::from_hex_be("0x04335858071beb1eeba6b5cea1c9559297a8bef1132ae6a84a41d6c6a951ac3f")
                 .unwrap(),
             block_number: 2,
             transaction_hash: transaction_hash_2,
         }],
     );
 
-    assert_eq!(events_result.continuation_token, Some("0,0,1".into()));
+    assert_eq!(events_result.continuation_token, Some("0,1".into()));
 
     Ok(())
 }
@@ -387,7 +387,7 @@ async fn work_one_block_address_filter(#[future] madara: MadaraClient) -> Result
         .unwrap();
 
     let block_hash =
-        FieldElement::from_hex_be("0x06da61828bd573bb29d57a8dbc410684db35a934f90400d559812230c481849e").unwrap();
+        FieldElement::from_hex_be("0x0742520489186d3d79b09e1d14ec7e69d515a3c915e6cfd8fd4ca65299372a45").unwrap();
     let block_number = 1;
 
     assert_eq_emitted_event(
@@ -432,7 +432,7 @@ async fn work_one_block_key_filter(#[future] madara: MadaraClient) -> Result<(),
         .unwrap();
 
     let block_hash =
-        FieldElement::from_hex_be("0x06da61828bd573bb29d57a8dbc410684db35a934f90400d559812230c481849e").unwrap();
+        FieldElement::from_hex_be("0x0742520489186d3d79b09e1d14ec7e69d515a3c915e6cfd8fd4ca65299372a45").unwrap();
     let block_number = 1;
 
     assert_eq_emitted_event(

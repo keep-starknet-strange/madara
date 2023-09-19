@@ -1,16 +1,20 @@
-use frame_support::{assert_err, assert_ok, bounded_vec, BoundedVec};
-use mp_starknet::constants::SN_GOERLI_CHAIN_ID;
+use frame_support::{assert_err, assert_ok};
 use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::transaction::types::{DeployAccountTransaction, EventWrapper};
+use mp_starknet::transaction::compute_hash::ComputeTransactionHash;
+use mp_starknet::transaction::DeployAccountTransaction;
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::TransactionSource;
+use starknet_api::api_core::ContractAddress;
+use starknet_api::hash::StarkFelt;
+use starknet_api::transaction::{Event as StarknetEvent, EventContent, EventData, EventKey};
+use starknet_crypto::FieldElement;
 
 use super::mock::default_mock::*;
 use super::mock::*;
 use super::utils::sign_message_hash;
 use crate::tests::constants::{ACCOUNT_PUBLIC_KEY, SALT};
 use crate::tests::{get_deploy_account_dummy, set_infinite_tokens};
-use crate::{Error, Event, StorageView};
+use crate::{Config, Error, Event, StorageView};
 
 #[test]
 fn given_contract_run_deploy_account_tx_works() {
@@ -21,43 +25,35 @@ fn given_contract_run_deploy_account_tx_works() {
         // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
         let salt =
             Felt252Wrapper::from_hex_be("0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463").unwrap();
-        let (test_addr, account_class_hash, calldata) =
-            account_helper(salt, AccountType::V0(AccountTypeV0Inner::NoValidate));
+        let (account_class_hash, calldata) = account_helper(AccountType::V0(AccountTypeV0Inner::NoValidate));
 
-        set_infinite_tokens::<MockRuntime>(test_addr);
-
-        let transaction = DeployAccountTransaction {
-            account_class_hash,
-            salt,
-            version: 1,
-            // Calldata is hex so this works fine
-            calldata: BoundedVec::try_from(
-                calldata
-                    .clone()
-                    .into_iter()
-                    .map(|e| Felt252Wrapper::from_hex_be(e).unwrap())
-                    .collect::<Vec<Felt252Wrapper>>(),
-            )
-            .unwrap(),
+        let deploy_tx = DeployAccountTransaction {
             nonce: Felt252Wrapper::ZERO,
-            max_fee: Felt252Wrapper::from(u64::MAX),
-            signature: bounded_vec!(),
-            is_query: false,
+            max_fee: u128::MAX,
+            signature: vec![],
+            contract_address_salt: salt,
+            constructor_calldata: calldata.0.iter().map(|e| Felt252Wrapper::from(*e)).collect(),
+            class_hash: account_class_hash.into(),
         };
 
-        assert_ok!(Starknet::deploy_account(none_origin, transaction));
-        assert_eq!(Starknet::contract_class_hash_by_address(test_addr).unwrap(), account_class_hash);
-        let expected_fee_transfer_event = Event::StarknetEvent(EventWrapper {
-            keys: bounded_vec![
-                Felt252Wrapper::from_hex_be("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9")
-                    .unwrap()
-            ],
-            data: bounded_vec!(
-                test_addr,                                      // From
-                Felt252Wrapper::from_hex_be("0xdead").unwrap(), // To
-                Felt252Wrapper::from_hex_be("0xd552").unwrap(), // Amount low
-                Felt252Wrapper::ZERO,                           // Amount high
-            ),
+        let address = deploy_tx.account_address().into();
+        set_infinite_tokens::<MockRuntime>(&address);
+
+        assert_ok!(Starknet::deploy_account(none_origin, deploy_tx));
+        assert_eq!(Starknet::contract_class_hash_by_address(address), account_class_hash);
+
+        let expected_fee_transfer_event = Event::StarknetEvent(StarknetEvent {
+            content: EventContent {
+                keys: vec![EventKey(
+                    StarkFelt::try_from("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap(),
+                )],
+                data: EventData(vec![
+                    address.0.0,                            // From
+                    StarkFelt::try_from("0xdead").unwrap(), // To
+                    StarkFelt::try_from("0xa582").unwrap(), // Amount low
+                    StarkFelt::from(0u128),                 // Amount high
+                ]),
+            },
             from_address: Starknet::fee_token_address(),
         })
         .into();
@@ -70,17 +66,24 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
-        let transaction = get_deploy_account_dummy(*SALT, AccountType::V0(AccountTypeV0Inner::NoValidate));
-        let account_class_hash = transaction.account_class_hash;
+        let (account_class_hash, calldata) = account_helper(AccountType::V0(AccountTypeV0Inner::NoValidate));
 
-        let (address, _, _) = account_helper(*SALT, AccountType::V0(AccountTypeV0Inner::NoValidate));
+        let deploy_tx = DeployAccountTransaction {
+            max_fee: u128::MAX,
+            signature: vec![],
+            nonce: Felt252Wrapper::ZERO,
+            contract_address_salt: *SALT,
+            constructor_calldata: calldata.0.iter().map(|e| Felt252Wrapper::from(*e)).collect(),
+            class_hash: account_class_hash.into(),
+        };
 
-        set_infinite_tokens::<MockRuntime>(address);
+        let address = deploy_tx.account_address().into();
+        set_infinite_tokens::<MockRuntime>(&address);
 
-        assert_ok!(Starknet::deploy_account(RuntimeOrigin::none(), transaction.clone()));
-        assert_eq!(Starknet::contract_class_hash_by_address(address).unwrap(), account_class_hash);
+        assert_ok!(Starknet::deploy_account(RuntimeOrigin::none(), deploy_tx.clone()));
+        assert_eq!(Starknet::contract_class_hash_by_address(address), account_class_hash);
         assert_err!(
-            Starknet::deploy_account(RuntimeOrigin::none(), transaction),
+            Starknet::deploy_account(RuntimeOrigin::none(), deploy_tx),
             Error::<MockRuntime>::AccountAlreadyDeployed
         );
     });
@@ -94,14 +97,12 @@ fn given_contract_run_deploy_account_tx_undeclared_then_it_fails() {
 
         let account_class_hash = get_account_class_hash(AccountType::V0(AccountTypeV0Inner::Argent));
         let transaction = DeployAccountTransaction {
-            account_class_hash,
-            version: 1,
-            calldata: bounded_vec!(),
-            salt: Felt252Wrapper::ZERO,
+            class_hash: account_class_hash.into(),
+            constructor_calldata: vec![],
+            contract_address_salt: Felt252Wrapper::ZERO,
             nonce: Felt252Wrapper::ZERO,
-            max_fee: Felt252Wrapper::from(u64::MAX),
-            signature: bounded_vec!(),
-            is_query: false,
+            max_fee: u128::MAX,
+            signature: vec![],
         };
 
         assert_err!(
@@ -118,7 +119,8 @@ fn given_contract_run_deploy_account_tx_fails_wrong_tx_version() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let transaction = get_deploy_account_dummy(*SALT, AccountType::V0(AccountTypeV0Inner::Argent));
+        let transaction =
+            get_deploy_account_dummy(Felt252Wrapper::ZERO, *SALT, AccountType::V0(AccountTypeV0Inner::Argent));
 
         assert_err!(
             Starknet::deploy_account(none_origin, transaction),
@@ -134,20 +136,27 @@ fn given_contract_run_deploy_account_openzeppelin_tx_works() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let mut transaction = get_deploy_account_dummy(*SALT, AccountType::V0(AccountTypeV0Inner::Openzeppelin));
-        let account_class_hash = transaction.account_class_hash;
+        let (account_class_hash, calldata) = account_helper(AccountType::V0(AccountTypeV0Inner::Openzeppelin));
 
-        let mp_transaction = transaction.clone().from_deploy(Starknet::chain_id()).unwrap();
+        let mut deploy_tx = DeployAccountTransaction {
+            max_fee: u128::MAX,
+            signature: vec![],
+            nonce: Felt252Wrapper::ZERO,
+            contract_address_salt: *SALT,
+            constructor_calldata: calldata.0.iter().map(|e| Felt252Wrapper::from(*e)).collect(),
+            class_hash: account_class_hash.into(),
+        };
 
-        let tx_hash = mp_transaction.hash;
-        transaction.signature = sign_message_hash(tx_hash);
+        let chain_id = Starknet::chain_id();
+        let tx_hash = deploy_tx.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false);
+        deploy_tx.signature = sign_message_hash(tx_hash);
+        let address = deploy_tx.account_address().into();
 
-        let address = mp_transaction.sender_address;
-        set_infinite_tokens::<MockRuntime>(address);
+        set_infinite_tokens::<MockRuntime>(&address);
         set_signer(address, AccountType::V0(AccountTypeV0Inner::Openzeppelin));
 
-        assert_ok!(Starknet::deploy_account(none_origin, transaction));
-        assert_eq!(Starknet::contract_class_hash_by_address(address).unwrap(), account_class_hash);
+        assert_ok!(Starknet::deploy_account(none_origin, deploy_tx));
+        assert_eq!(Starknet::contract_class_hash_by_address(address), account_class_hash);
     });
 }
 
@@ -157,17 +166,22 @@ fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_
         basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
+        let (account_class_hash, calldata) = account_helper(AccountType::V0(AccountTypeV0Inner::Openzeppelin));
 
-        let mut transaction = get_deploy_account_dummy(*SALT, AccountType::V0(AccountTypeV0Inner::Openzeppelin));
-        transaction.signature = bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE);
+        let mut deploy_tx = DeployAccountTransaction {
+            max_fee: u128::MAX,
+            signature: vec![],
+            nonce: Felt252Wrapper::ZERO,
+            contract_address_salt: *SALT,
+            constructor_calldata: calldata.0.iter().map(|e| Felt252Wrapper::from(*e)).collect(),
+            class_hash: account_class_hash.into(),
+        };
+        deploy_tx.signature = vec![Felt252Wrapper::ONE, Felt252Wrapper::ONE];
 
-        let address = transaction.clone().from_deploy(Starknet::chain_id()).unwrap().sender_address;
+        let address = deploy_tx.account_address().into();
         set_signer(address, AccountType::V0(AccountTypeV0Inner::Openzeppelin));
 
-        assert_err!(
-            Starknet::deploy_account(none_origin, transaction),
-            Error::<MockRuntime>::TransactionExecutionFailed
-        );
+        assert_err!(Starknet::deploy_account(none_origin, deploy_tx), Error::<MockRuntime>::TransactionExecutionFailed);
     });
 }
 
@@ -178,20 +192,27 @@ fn given_contract_run_deploy_account_argent_tx_works() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let mut transaction = get_deploy_account_dummy(*SALT, AccountType::V0(AccountTypeV0Inner::Argent));
-        let account_class_hash = transaction.account_class_hash;
+        let (account_class_hash, calldata) = account_helper(AccountType::V0(AccountTypeV0Inner::Openzeppelin));
 
-        let mp_transaction = transaction.clone().from_deploy(Starknet::chain_id()).unwrap();
+        let mut deploy_tx = DeployAccountTransaction {
+            max_fee: u128::MAX,
+            signature: vec![],
+            nonce: Felt252Wrapper::ZERO,
+            contract_address_salt: *SALT,
+            constructor_calldata: calldata.0.iter().map(|e| Felt252Wrapper::from(*e)).collect(),
+            class_hash: account_class_hash.into(),
+        };
 
-        let tx_hash = mp_transaction.hash;
-        transaction.signature = sign_message_hash(tx_hash);
+        let chain_id = Starknet::chain_id();
+        let tx_hash = deploy_tx.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false);
+        deploy_tx.signature = sign_message_hash(tx_hash);
 
-        let address = mp_transaction.sender_address;
-        set_infinite_tokens::<MockRuntime>(address);
+        let address = deploy_tx.account_address().into();
+        set_infinite_tokens::<MockRuntime>(&address);
         set_signer(address, AccountType::V0(AccountTypeV0Inner::Argent));
 
-        assert_ok!(Starknet::deploy_account(none_origin, transaction));
-        assert_eq!(Starknet::contract_class_hash_by_address(address).unwrap(), account_class_hash);
+        assert_ok!(Starknet::deploy_account(none_origin, deploy_tx));
+        assert_eq!(Starknet::contract_class_hash_by_address(address), account_class_hash);
     });
 }
 
@@ -201,16 +222,23 @@ fn given_contract_run_deploy_account_argent_with_incorrect_signature_then_it_fai
         basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
-        let mut transaction = get_deploy_account_dummy(*SALT, AccountType::V0(AccountTypeV0Inner::Argent));
-        transaction.signature = bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE);
+        let (account_class_hash, calldata) = account_helper(AccountType::V0(AccountTypeV0Inner::Openzeppelin));
 
-        let address = transaction.clone().from_deploy(Starknet::chain_id()).unwrap().sender_address;
+        let mut deploy_tx = DeployAccountTransaction {
+            max_fee: u128::MAX,
+            signature: vec![],
+            nonce: Felt252Wrapper::ZERO,
+            contract_address_salt: *SALT,
+            constructor_calldata: calldata.0.iter().map(|e| Felt252Wrapper::from(*e)).collect(),
+            class_hash: account_class_hash.into(),
+        };
+
+        deploy_tx.signature = vec![Felt252Wrapper::ONE, Felt252Wrapper::ONE];
+        let address = deploy_tx.account_address().into();
+
         set_signer(address, AccountType::V0(AccountTypeV0Inner::Argent));
 
-        assert_err!(
-            Starknet::deploy_account(none_origin, transaction),
-            Error::<MockRuntime>::TransactionExecutionFailed
-        );
+        assert_err!(Starknet::deploy_account(none_origin, deploy_tx), Error::<MockRuntime>::TransactionExecutionFailed);
     });
 }
 
@@ -220,44 +248,35 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
         basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
-        let (_, proxy_class_hash, mut calldata) =
-            account_helper(*SALT, AccountType::V0(AccountTypeV0Inner::BraavosProxy));
-        calldata.push("0x1");
-        calldata.push(ACCOUNT_PUBLIC_KEY);
+        let (proxy_class_hash, calldata) = account_helper(AccountType::V0(AccountTypeV0Inner::BraavosProxy));
+        let mut calldata: Vec<_> = calldata.0.iter().map(|e| Felt252Wrapper::from(*e)).collect();
+        calldata.push(Felt252Wrapper::ONE);
+        calldata.push(Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap());
 
-        let tx_hash =
-            Felt252Wrapper::from_hex_be("0x06a8bb3d81c2ad23db93f01f72f987feac5210a95bc530eabb6abfaa5a769944").unwrap();
-
-        let mut signatures: Vec<Felt252Wrapper> = sign_message_hash(tx_hash).into();
-        let empty_signatures = [Felt252Wrapper::ZERO; 8];
-        signatures.append(&mut empty_signatures.to_vec());
-
-        let transaction = DeployAccountTransaction {
-            account_class_hash: proxy_class_hash,
-            salt: *SALT,
-            version: 1,
-            calldata: BoundedVec::try_from(
-                calldata
-                    .clone()
-                    .into_iter()
-                    .map(|e| Felt252Wrapper::from_hex_be(e).unwrap())
-                    .collect::<Vec<Felt252Wrapper>>(),
-            )
-            .unwrap(),
+        let mut deploy_tx = DeployAccountTransaction {
+            max_fee: u64::MAX as u128,
+            signature: vec![],
             nonce: Felt252Wrapper::ZERO,
-            max_fee: Felt252Wrapper::from(u64::MAX),
-            signature: signatures.try_into().unwrap(),
-            is_query: false,
+            contract_address_salt: *SALT,
+            constructor_calldata: calldata,
+            class_hash: proxy_class_hash.into(),
         };
-        let transaction1 = transaction.clone().from_deploy(SN_GOERLI_CHAIN_ID);
-        println!("this is transaction hash {}", transaction1.unwrap().hash.0);
 
-        let address = transaction.clone().from_deploy(Starknet::chain_id()).unwrap().sender_address;
-        set_infinite_tokens::<MockRuntime>(address);
+        // Braavos has a complicated signature mecanism, they add stuffs around the tx_hash and then sign
+        // the whole thing. This hardcoded value is the expected "thing" that bravos expect you to
+        // sign for this transaction. Roll with it for now
+        let value_to_sign =
+            Felt252Wrapper::from_hex_be("0x06a8bb3d81c2ad23db93f01f72f987feac5210a95bc530eabb6abfaa5a769944").unwrap();
+        let mut signatures = sign_message_hash(value_to_sign);
+        signatures.extend_from_slice(&[Felt252Wrapper::ZERO; 8]);
+        deploy_tx.signature = signatures;
+
+        let address = deploy_tx.account_address().into();
+        set_infinite_tokens::<MockRuntime>(&address);
         set_signer(address, AccountType::V0(AccountTypeV0Inner::Braavos));
 
-        assert_ok!(Starknet::deploy_account(none_origin, transaction));
-        assert_eq!(Starknet::contract_class_hash_by_address(address).unwrap(), proxy_class_hash);
+        assert_ok!(Starknet::deploy_account(none_origin, deploy_tx));
+        assert_eq!(Starknet::contract_class_hash_by_address(address), proxy_class_hash);
     });
 }
 
@@ -267,36 +286,25 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
         basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
-        let (test_addr, proxy_class_hash, mut calldata) =
-            account_helper(*SALT, AccountType::V0(AccountTypeV0Inner::BraavosProxy));
-        calldata.push("0x1");
-        calldata.push(ACCOUNT_PUBLIC_KEY);
+        let (proxy_class_hash, calldata) = account_helper(AccountType::V0(AccountTypeV0Inner::BraavosProxy));
+        let mut calldata = calldata.0.iter().map(|e| Felt252Wrapper::from(*e)).collect::<Vec<_>>();
+        calldata.push(Felt252Wrapper::ZERO);
+        calldata.push(Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap());
 
-        set_infinite_tokens::<MockRuntime>(test_addr);
-        set_signer(test_addr, AccountType::V0(AccountTypeV0Inner::Braavos));
-
-        let transaction = DeployAccountTransaction {
-            account_class_hash: proxy_class_hash,
-            salt: *SALT,
-            version: 1,
-            calldata: BoundedVec::try_from(
-                calldata
-                    .clone()
-                    .into_iter()
-                    .map(|e| Felt252Wrapper::from_hex_be(e).unwrap())
-                    .collect::<Vec<Felt252Wrapper>>(),
-            )
-            .unwrap(),
+        let deploy_tx = DeployAccountTransaction {
+            class_hash: proxy_class_hash.into(),
+            contract_address_salt: *SALT,
+            constructor_calldata: calldata,
             nonce: Felt252Wrapper::ZERO,
-            max_fee: Felt252Wrapper::from(u64::MAX),
-            signature: [Felt252Wrapper::ZERO; 10].to_vec().try_into().unwrap(),
-            is_query: false,
+            max_fee: u128::MAX,
+            signature: [Felt252Wrapper::ZERO; 10].to_vec(),
         };
 
-        assert_err!(
-            Starknet::deploy_account(none_origin, transaction),
-            Error::<MockRuntime>::TransactionExecutionFailed
-        );
+        let address = deploy_tx.account_address().into();
+        set_infinite_tokens::<MockRuntime>(&address);
+        set_signer(address, AccountType::V0(AccountTypeV0Inner::Braavos));
+
+        assert_err!(Starknet::deploy_account(none_origin, deploy_tx), Error::<MockRuntime>::TransactionExecutionFailed);
     });
 }
 
@@ -305,7 +313,8 @@ fn test_verify_tx_longevity() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
-        let transaction = get_deploy_account_dummy(*SALT, AccountType::V0(AccountTypeV0Inner::NoValidate));
+        let transaction =
+            get_deploy_account_dummy(Felt252Wrapper::ZERO, *SALT, AccountType::V0(AccountTypeV0Inner::NoValidate));
 
         let validate_result =
             Starknet::validate_unsigned(TransactionSource::InBlock, &crate::Call::deploy_account { transaction });
@@ -314,15 +323,15 @@ fn test_verify_tx_longevity() {
     });
 }
 
-fn set_signer(address: Felt252Wrapper, account_type: AccountType) {
+fn set_signer(address: ContractAddress, account_type: AccountType) {
     let (var_name, args) = match account_type {
         AccountType::V0(AccountTypeV0Inner::Argent) => ("_signer", vec![]),
-        AccountType::V0(AccountTypeV0Inner::Braavos) => ("Account_signers", vec![Felt252Wrapper::ZERO]),
+        AccountType::V0(AccountTypeV0Inner::Braavos) => ("Account_signers", vec![FieldElement::ZERO]),
         AccountType::V0(AccountTypeV0Inner::Openzeppelin) => ("Account_public_key", vec![]),
         _ => return,
     };
     StorageView::<MockRuntime>::insert(
         get_storage_key(&address, var_name, &args, 0),
-        Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap(),
+        StarkFelt::try_from(ACCOUNT_PUBLIC_KEY).unwrap(),
     );
 }

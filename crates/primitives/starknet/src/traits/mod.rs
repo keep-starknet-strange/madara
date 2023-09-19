@@ -2,4 +2,4 @@
 pub mod hash;
 
 /// A trait for types that can be shared between threads + copied.
-pub trait ThreadSafeCopy: Send + Sync + Copy + 'static {}
+pub trait SendSyncStatic: Send + Sync + 'static {}
