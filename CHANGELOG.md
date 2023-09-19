@@ -2,7 +2,7 @@
 
 ## Next release
 
-- fix: use specific commit for avail
+- fix: use specific commit for avail and celestia
 - fix: change dep of rustdoc on push
 - feat: modify the hash_bytes functions in `poseidon` and `pedersen` for dynamic
   data length

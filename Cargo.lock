@@ -1710,7 +1710,7 @@ dependencies = [
 [[package]]
 name = "celestia-proto"
 version = "0.1.0"
-source = "git+https://github.com/eigerco/celestia-node-rs#157c9ffb7f5f98ed22174f33473075b51e580934"
+source = "git+https://github.com/eigerco/celestia-node-rs?rev=bd6394b66b11065c543ab3f19fd66000a72b6236#bd6394b66b11065c543ab3f19fd66000a72b6236"
 dependencies = [
  "anyhow",
  "prost 0.12.1",
@@ -1723,20 +1723,19 @@ dependencies = [
 [[package]]
 name = "celestia-rpc"
 version = "0.1.0"
-source = "git+https://github.com/eigerco/celestia-node-rs#157c9ffb7f5f98ed22174f33473075b51e580934"
+source = "git+https://github.com/eigerco/celestia-node-rs?rev=bd6394b66b11065c543ab3f19fd66000a72b6236#bd6394b66b11065c543ab3f19fd66000a72b6236"
 dependencies = [
  "celestia-types",
  "http",
  "jsonrpsee 0.20.1",
  "serde",
  "thiserror",
- "tracing",
 ]
 
 [[package]]
 name = "celestia-types"
 version = "0.1.0"
-source = "git+https://github.com/eigerco/celestia-node-rs#157c9ffb7f5f98ed22174f33473075b51e580934"
+source = "git+https://github.com/eigerco/celestia-node-rs?rev=bd6394b66b11065c543ab3f19fd66000a72b6236#bd6394b66b11065c543ab3f19fd66000a72b6236"
 dependencies = [
  "base64 0.21.4",
  "bech32",

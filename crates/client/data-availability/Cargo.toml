@@ -53,5 +53,5 @@ sp-keyring = { workspace = true }
 subxt = "0.29"
 
 # Celestia
-celestia-rpc = { git = "https://github.com/eigerco/celestia-node-rs" }
-celestia-types = { git = "https://github.com/eigerco/celestia-node-rs" }
+celestia-rpc = { git = "https://github.com/eigerco/celestia-node-rs", rev = "bd6394b66b11065c543ab3f19fd66000a72b6236" }
+celestia-types = { git = "https://github.com/eigerco/celestia-node-rs", rev = "bd6394b66b11065c543ab3f19fd66000a72b6236" }
