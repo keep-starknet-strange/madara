@@ -54,11 +54,25 @@ pub trait GetAccountTransactionContext {
     fn get_account_transaction_context(&self, is_query: bool) -> AccountTransactionContext;
 }
 
+pub trait SimulateTxVersionOffset {
+    fn apply_simulate_tx_version_offset(
+        &self,
+    ) -> TransactionVersion;
+}
+
+impl SimulateTxVersionOffset for TransactionVersion {
+    fn apply_simulate_tx_version_offset(
+        &self,
+    ) -> TransactionVersion {
+        Felt252Wrapper(Felt252Wrapper::from(self.0).0 + SIMULATE_TX_VERSION_OFFSET).into()
+    }
+}
+
 impl GetAccountTransactionContext for DeclareTransaction {
     fn get_account_transaction_context(&self, is_query: bool) -> AccountTransactionContext {
         let mut version = self.tx().version();
         if is_query {
-            version = Felt252Wrapper(Felt252Wrapper::from(version.0).0 + SIMULATE_TX_VERSION_OFFSET).into();
+            version = version.apply_simulate_tx_version_offset();
         }
 
         AccountTransactionContext {
@@ -76,7 +90,7 @@ impl GetAccountTransactionContext for DeployAccountTransaction {
     fn get_account_transaction_context(&self, is_query: bool) -> AccountTransactionContext {
         let mut version = self.version();
         if is_query {
-            version = Felt252Wrapper(Felt252Wrapper::from(version.0).0 + SIMULATE_TX_VERSION_OFFSET).into();
+            version = version.apply_simulate_tx_version_offset();
         }
 
         AccountTransactionContext {
@@ -97,7 +111,7 @@ impl GetAccountTransactionContext for InvokeTransaction {
             starknet_api::transaction::InvokeTransaction::V1(_) => TransactionVersion(StarkFelt::from(1u8)),
         };
         if is_query {
-            version = Felt252Wrapper(Felt252Wrapper::from(version.0).0 + SIMULATE_TX_VERSION_OFFSET).into();
+            version = version.apply_simulate_tx_version_offset();
         }
 
         let nonce = match &self.tx {
@@ -125,7 +139,7 @@ impl GetAccountTransactionContext for L1HandlerTransaction {
     fn get_account_transaction_context(&self, is_query: bool) -> AccountTransactionContext {
         let mut version = self.tx.version;
         if is_query {
-            version = Felt252Wrapper(Felt252Wrapper::from(version.0).0 + SIMULATE_TX_VERSION_OFFSET).into();
+            version = version.apply_simulate_tx_version_offset();
         }
 
         AccountTransactionContext {
