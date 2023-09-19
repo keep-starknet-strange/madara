@@ -40,4 +40,9 @@ jobs:
 
       - name: Build the project
         run: |
+          cargo build --workspace
           cargo build --release --workspace
+
+      - name: Cargo test
+        run: |
+          cargo test --workspace
