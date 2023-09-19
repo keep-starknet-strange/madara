@@ -43,6 +43,7 @@ parity-scale-codec = { workspace = true, features = [
   "derive",
   "bit-vec",
 ], optional = true }
+phf = { version = "0.11", default-features = false }
 scale-info = { workspace = true, features = [
   "derive",
   "bit-vec",
@@ -50,7 +51,6 @@ scale-info = { workspace = true, features = [
 ], optional = true }
 serde = { workspace = true, features = ["derive"], optional = true }
 serde_json = { workspace = true, optional = true }
-phf = { version = "0.11", default-features = false }
 
 [dev-dependencies]
 assert_matches = "1.5.0"

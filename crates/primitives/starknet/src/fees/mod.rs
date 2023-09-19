@@ -189,7 +189,7 @@ pub fn calculate_l1_gas_by_vm_usage(
     let vm_l1_gas_usage: f64 = vm_resource_usage
         .0
         .iter()
-        .map(|(key, &value)| VM_RESOURCE_FEE_COSTS.get(key.as_str()).unwrap_or(&0.0) * value as f64)
+        .map(|(key, &value)| VM_RESOURCE_FEE_COSTS.get(key.as_str()).unwrap() * value as f64)
         .fold(f64::NAN, f64::max);
 
     Ok(vm_l1_gas_usage)
