@@ -6,7 +6,7 @@ use pathfinder_lib::state::block_hash::calculate_event_commitment;
 use sp_core::U256;
 use mp_starknet::execution::types::{Felt252Wrapper, ContractAddressWrapper};
 use mp_starknet::block::{Block, Header, MaxTransactions };
-use reqwest::header::{HeaderMap, CONTENT_TYPE};
+use reqwest::header::{HeaderMap, CONTENT_TYPE, self};
 use serde_json::json;
 use sp_core::bounded_vec::BoundedVec;
 use starknet_api::core::{ChainId, PatriciaKey};
@@ -170,8 +170,9 @@ pub fn get_txs_receipts(block: starknet_client::reader::Block, transactions: Bou
 pub fn from_gateway_to_starknet_block(block: starknet_client::reader::Block) -> Block {
     let transactions_vec: BoundedVec<Transaction, MaxTransactions> = get_txs(block.clone());
     let transaction_receipts_vec: BoundedVec<TransactionReceiptWrapper, MaxTransactions> = get_txs_receipts(block.clone(), transactions_vec.clone());
+    let header = get_header(block.clone(), transactions_vec.clone());
     Block::new(
-        get_header(block.clone(), transactions_vec.clone()),
+        header,
         transactions_vec,
         transaction_receipts_vec
     )
