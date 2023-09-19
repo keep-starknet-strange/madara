@@ -3,13 +3,13 @@
     fn <a href="#method.convert_transaction" class="fn">convert_transaction</a>(
         &amp;self,
         __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
-        transaction: UserTransaction
+        transaction: <a class="enum" href="../../mp_starknet/transaction/enum.UserTransaction.html" title="enum mp_starknet::transaction::UserTransaction">UserTransaction</a>
     ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;&lt;Block as BlockT&gt;::Extrinsic, DispatchError&gt;, ApiError&gt; { ... }
 <span class="item-spacer"></span>    fn <a href="#method.convert_transaction_with_context" class="fn">convert_transaction_with_context</a>(
         &amp;self,
         __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
         context: ExecutionContext,
-        transaction: UserTransaction
+        transaction: <a class="enum" href="../../mp_starknet/transaction/enum.UserTransaction.html" title="enum mp_starknet::transaction::UserTransaction">UserTransaction</a>
     ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;&lt;Block as BlockT&gt;::Extrinsic, DispatchError&gt;, ApiError&gt; { ... }
 <span class="item-spacer"></span>    fn <a href="#method.convert_error" class="fn">convert_error</a>(
         &amp;self,
@@ -25,13 +25,13 @@
 }</code></pre><h2 id="provided-methods" class="small-section-header">Provided Methods<a href="#provided-methods" class="anchor">§</a></h2><div class="methods"><details class="toggle method-toggle" open><summary><section id="method.convert_transaction" class="method"><a class="src rightside" href="../../src/pallet_starknet/runtime_api.rs.html#30-71">source</a><h4 class="code-header">fn <a href="#method.convert_transaction" class="fn">convert_transaction</a>(
     &amp;self,
     __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
-    transaction: UserTransaction
+    transaction: <a class="enum" href="../../mp_starknet/transaction/enum.UserTransaction.html" title="enum mp_starknet::transaction::UserTransaction">UserTransaction</a>
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;&lt;Block as BlockT&gt;::Extrinsic, DispatchError&gt;, ApiError&gt;</h4></section></summary><div class="docblock"><p>Converts the transaction to an UncheckedExtrinsic for submission to the pool.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.convert_transaction_with_context" class="method"><a class="src rightside" href="../../src/pallet_starknet/runtime_api.rs.html#30-71">source</a><h4 class="code-header">fn <a href="#method.convert_transaction_with_context" class="fn">convert_transaction_with_context</a>(
     &amp;self,
     __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
     context: ExecutionContext,
-    transaction: UserTransaction
+    transaction: <a class="enum" href="../../mp_starknet/transaction/enum.UserTransaction.html" title="enum mp_starknet::transaction::UserTransaction">UserTransaction</a>
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;&lt;Block as BlockT&gt;::Extrinsic, DispatchError&gt;, ApiError&gt;</h4></section></summary><div class="docblock"><p>Converts the transaction to an UncheckedExtrinsic for submission to the pool.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.convert_error" class="method"><a class="src rightside" href="../../src/pallet_starknet/runtime_api.rs.html#30-71">source</a><h4 class="code-header">fn <a href="#method.convert_error" class="fn">convert_error</a>(
     &amp;self,
