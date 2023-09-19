@@ -12,7 +12,7 @@ use starknet_api::block::{
     BlockTimestamp,
     GasPrice,
 };
-use starknet_api::core::{ContractAddress, GlobalRoot};
+use starknet_api::api_core::{ContractAddress, GlobalRoot};
 #[cfg(doc)]
 use starknet_api::transaction::TransactionOutput as starknet_api_transaction_output;
 use starknet_api::transaction::{TransactionHash, TransactionOffsetInBlock};

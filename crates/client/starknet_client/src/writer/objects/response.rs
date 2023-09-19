@@ -7,7 +7,7 @@
 mod response_test;
 
 use serde::{Deserialize, Serialize};
-use starknet_api::core::{ClassHash, ContractAddress};
+use starknet_api::api_core::{ClassHash, ContractAddress};
 use starknet_api::transaction::TransactionHash;
 
 /// A Starknet error code that reports success.

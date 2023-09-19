@@ -14,7 +14,7 @@ use cairo_lang_starknet::casm_contract_class::CasmContractClass;
 use mockall::automock;
 use serde::{Deserialize, Serialize};
 use starknet_api::block::BlockNumber;
-use starknet_api::core::ClassHash;
+use starknet_api::api_core::ClassHash;
 use starknet_api::deprecated_contract_class::ContractClass as DeprecatedContractClass;
 use starknet_api::transaction::TransactionHash;
 use starknet_api::StarknetApiError;

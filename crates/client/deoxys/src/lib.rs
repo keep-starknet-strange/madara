@@ -1,15 +1,15 @@
 
-use mp_starknet::crypto::commitment::{calculate_transaction_commitment};
+use mp_starknet::crypto::commitment::{calculate_transaction_commitment, calculate_event_commitment};
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::transaction::types::{Transaction, TransactionReceiptWrapper, EventWrapper, MaxArraySize};
-use pathfinder_lib::state::block_hash::calculate_event_commitment;
 use sp_core::U256;
 use mp_starknet::execution::types::{Felt252Wrapper, ContractAddressWrapper};
 use mp_starknet::block::{Block, Header, MaxTransactions };
 use reqwest::header::{HeaderMap, CONTENT_TYPE, self};
 use serde_json::json;
 use sp_core::bounded_vec::BoundedVec;
-use starknet_api::core::{ChainId, PatriciaKey};
+use starknet_api::block::BlockNumber;
+use starknet_api::api_core::{ChainId, PatriciaKey};
 use starknet_api::transaction::Event;
 use starknet_client::RetryConfig;
 use starknet_client::reader::{StarknetFeederGatewayClient, StarknetReader};
@@ -18,7 +18,6 @@ use std::sync::{ Arc, Mutex};
 use std::collections::VecDeque;
 use log::info;
 use tokio::time;
-use starknet_api::block::BlockNumber;
 use std::env;
 use std::fs::read_to_string;
 use std::path::Path;
@@ -65,7 +64,12 @@ pub fn get_header(block: starknet_client::reader::Block, transactions: BoundedVe
                 .iter()
                 .map(|receipt| receipt.events.len() as u128)
                 .sum();
-    let event_commitment = Felt252Wrapper::try_from(calculate_event_commitment(&block.transaction_receipts).unwrap().0.as_be_bytes());
+    let all_events: Vec<EventWrapper> = block
+        .transaction_receipts
+        .iter()
+        .flat_map(|receipt| receipt.events.iter().map(convert_event_to_wrapper))
+        .collect();
+    let event_commitment = calculate_event_commitment::<PedersenHasher>(&all_events);
     let protocol_version = Some(0u8);
     let extra_data: U256 = Felt252Wrapper::try_from(block.block_hash.0.bytes()).unwrap().into();
     let starknet_header = Header::new(
@@ -129,11 +133,11 @@ fn convert_event_to_wrapper(event: &Event) -> EventWrapper {
 
     let mut data_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
     for data_item in &event.content.data.0 {
-        data_vec.try_push(Felt252Wrapper(data_item)).unwrap();
+        data_vec.try_push(Felt252Wrapper::from(FieldElement::from(*data_item))).unwrap();
     }
 
-    let from_address_wrapper: ContractAddressWrapper = Felt252Wrapper(event.from_address.0);
-
+    let from_address_wrapper: ContractAddressWrapper = Felt252Wrapper::from(*PatriciaKey::key(&event.from_address.0));
+    
     EventWrapper {
         keys: keys_vec,
         data: data_vec,
@@ -153,7 +157,7 @@ pub fn get_txs_receipts(block: starknet_client::reader::Block, transactions: Bou
 
         let transaction_receipt_wrapper = TransactionReceiptWrapper {
             transaction_hash: Felt252Wrapper(transaction_receipt.transaction_hash.0.into()),
-            actual_fee: Felt252Wrapper::try_from(transaction_receipt.actual_fee.clone()).unwrap(),
+            actual_fee: Felt252Wrapper::from(transaction_receipt.actual_fee.0),
             tx_type: transaction.tx_type.clone(),
             events: events_vec,
         };
@@ -294,6 +298,7 @@ mod tests {
     use std::sync::Mutex;
     use std::collections::VecDeque;
     use mockall::mock;
+    use mockito::mock;
 
     // Mocking StarknetFeederGatewayClient for testing
     mock! {

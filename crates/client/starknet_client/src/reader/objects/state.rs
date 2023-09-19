@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use starknet_api::block::BlockHash;
-use starknet_api::core::{ClassHash, CompiledClassHash, ContractAddress, GlobalRoot, Nonce};
+use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, GlobalRoot, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::{EntryPoint, EntryPointType, StorageKey};
 

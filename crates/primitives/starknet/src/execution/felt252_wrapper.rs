@@ -14,6 +14,7 @@ use scale_codec::{Decode, Encode, EncodeLike, Error, Input, MaxEncodedLen, Outpu
 use scale_info::build::Fields;
 use scale_info::{Path, Type, TypeInfo};
 use sp_core::{H256, U256};
+use starknet_api::api_core::PatriciaKey;
 use starknet_api::hash::StarkFelt;
 use starknet_ff::{FieldElement, FromByteSliceError, FromStrError};
 use thiserror_no_std::Error;
@@ -240,7 +241,7 @@ impl From<Felt252Wrapper> for Felt252 {
 }
 
 /// [`Felt252Wrapper`] from [`StarkFelt`].
-impl From<StarkFelt> for Felt252Wrapper {
+impl From<starknet_api::hash::StarkFelt> for Felt252Wrapper {
     fn from(value: StarkFelt) -> Self {
         Felt252Wrapper::try_from(value.bytes()).unwrap()
     }
@@ -251,6 +252,12 @@ impl From<Felt252Wrapper> for StarkFelt {
     fn from(felt: Felt252Wrapper) -> Self {
         let buf: [u8; 32] = felt.into();
         StarkFelt::new(buf).unwrap()
+    }
+}
+
+impl From<PatriciaKey> for Felt252Wrapper {
+    fn from(key: PatriciaKey) -> Self {
+        Felt252Wrapper::from(key.0)
     }
 }
 
@@ -294,6 +301,13 @@ impl TypeInfo for Felt252Wrapper {
         Type::builder()
             .path(Path::new("Felt252Wrapper", module_path!()))
             .composite(Fields::unnamed().field(|f| f.ty::<[u8; 32]>().type_name("FieldElement")))
+    }
+}
+
+/// FEE type.
+impl From<starknet_api::transaction::Fee> for Felt252Wrapper {
+    fn from(fee: starknet_api::transaction::Fee) -> Self {
+        Felt252Wrapper::from(fee.0)
     }
 }
 

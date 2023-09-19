@@ -13,7 +13,7 @@ mod transaction_test;
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-use starknet_api::core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
+use starknet_api::api_core::{ClassHash, Nonce, ContractAddress, CompiledClassHash};
 use starknet_api::deprecated_contract_class::{
     ContractClassAbiEntry as DeprecatedContractClassAbiEntry,
     EntryPoint as DeprecatedEntryPoint,

@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
-use starknet_api::core::{
+use starknet_api::api_core::{
     ClassHash,
     CompiledClassHash,
     ContractAddress,
