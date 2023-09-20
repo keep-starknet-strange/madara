@@ -6,7 +6,7 @@ use reqwest::StatusCode;
 use sp_core::U256;
 use mp_starknet::execution::types::{Felt252Wrapper, ContractAddressWrapper};
 use mp_starknet::block::{Block, Header, MaxTransactions };
-use reqwest::header::{HeaderMap, CONTENT_TYPE, self};
+use reqwest::header::{HeaderMap, CONTENT_TYPE, self, HeaderValue};
 use serde_json::{json, Value};
 use sp_core::bounded_vec::BoundedVec;
 use starknet_api::block::BlockNumber;
