@@ -75,8 +75,8 @@
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::sync::Arc;
 
+<span class="kw">use </span>mp_block::Block <span class="kw">as </span>StarknetBlock;
 <span class="kw">use </span>mp_digest_log::{Log, MADARA_ENGINE_ID};
-<span class="kw">use </span>mp_starknet::block::Block <span class="kw">as </span>StarknetBlock;
 <span class="kw">use </span>sc_client_api::backend::Backend;
 <span class="kw">use </span>sc_client_api::BlockImportOperation;
 <span class="kw">use </span>sc_executor::RuntimeVersionOf;

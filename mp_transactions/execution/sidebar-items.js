@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["ValidateExecuteCallInfo"],"trait":["Execute","GetAccountTransactionContext","GetTransactionCalldata","GetTxType","Validate"]};

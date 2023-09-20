@@ -77,8 +77,8 @@
 </span><span class="attr">#![allow(clippy::extra_unused_type_parameters)]
 
 </span><span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
-<span class="kw">use </span>mp_starknet::execution::types::Felt252Wrapper;
-<span class="kw">use </span>mp_starknet::transaction::{Transaction, TxType, UserTransaction};
+<span class="kw">use </span>mp_felt::Felt252Wrapper;
+<span class="kw">use </span>mp_transactions::{Transaction, TxType, UserTransaction};
 <span class="kw">use </span>sp_api::BlockT;
 <span class="kw">pub extern crate </span>alloc;
 <span class="kw">use </span>alloc::vec::Vec;

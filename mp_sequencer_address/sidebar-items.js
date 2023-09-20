@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_SEQUENCER_ADDRESS","INHERENT_IDENTIFIER","SEQ_ADDR_STORAGE_KEY"],"enum":["InherentError"],"struct":["InherentDataProvider"],"trait":["SequencerAddressInherentData"],"type":["InherentType"]};

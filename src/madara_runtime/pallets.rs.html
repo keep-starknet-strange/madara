@@ -173,6 +173,13 @@
 <a href="#173" id="173">173</a>
 <a href="#174" id="174">174</a>
 <a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Configuration of the pallets used in the runtime.
 //! The pallets used in the runtime are configured here.
 //! This file is used to generate the `construct_runtime!` macro.
@@ -185,7 +192,6 @@
 <span class="kw">pub use </span>frame_support::weights::{IdentityFee, Weight};
 <span class="kw">pub use </span>frame_support::{construct_runtime, parameter_types, StorageValue};
 <span class="kw">pub use </span>frame_system::Call <span class="kw">as </span>SystemCall;
-<span class="kw">use </span>mp_starknet::constants::SN_GOERLI_CHAIN_ID;
 <span class="doccomment">/// Import the StarkNet pallet.
 </span><span class="kw">pub use </span>pallet_starknet;
 <span class="kw">pub use </span>pallet_timestamp::Call <span class="kw">as </span>TimestampCall;
@@ -198,6 +204,14 @@
 <span class="kw">use </span>sp_std::marker::PhantomData;
 
 <span class="kw">use crate</span>::<span class="kw-2">*</span>;
+
+<span class="doccomment">/// ChainId for Starknet Goerli testnet
+</span><span class="kw">pub const </span>SN_GOERLI_CHAIN_ID: Felt252Wrapper = Felt252Wrapper(starknet_ff::FieldElement::from_mont([
+    <span class="number">3753493103916128178</span>,
+    <span class="number">18446744073709548950</span>,
+    <span class="number">18446744073709551615</span>,
+    <span class="number">398700013197595345</span>,
+]));
 
 <span class="comment">// Configure FRAME pallets to include in runtime.
 

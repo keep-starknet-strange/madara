@@ -193,8 +193,8 @@
 <a href="#193" id="193">193</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>mc_rpc_core::utils::get_block_by_block_hash;
 <span class="kw">use </span>mp_digest_log::{find_starknet_block, FindLogError};
-<span class="kw">use </span>mp_starknet::traits::hash::HasherT;
-<span class="kw">use </span>mp_starknet::transaction::compute_hash::ComputeTransactionHash;
+<span class="kw">use </span>mp_hashers::HasherT;
+<span class="kw">use </span>mp_transactions::compute_hash::ComputeTransactionHash;
 <span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>sp_api::ProvideRuntimeApi;

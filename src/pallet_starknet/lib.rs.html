@@ -1153,7 +1153,6 @@
 <a href="#1153" id="1153">1153</a>
 <a href="#1154" id="1154">1154</a>
 <a href="#1155" id="1155">1155</a>
-<a href="#1156" id="1156">1156</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1189,8 +1188,7 @@
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 #![allow(clippy::large_enum_variant)]
 
-</span><span class="kw">use </span>mp_starknet::constants::INITIAL_GAS;
-<span class="doccomment">/// Starknet pallet.
+</span><span class="doccomment">/// Starknet pallet.
 /// Definition of the pallet&#39;s runtime storage items, events, errors, and dispatchable
 /// functions.
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
@@ -1239,16 +1237,16 @@
 <span class="kw">use </span>frame_support::pallet_prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>frame_support::traits::Time;
 <span class="kw">use </span>frame_system::pallet_prelude::<span class="kw-2">*</span>;
+<span class="kw">use </span>mp_block::{Block <span class="kw">as </span>StarknetBlock, Header <span class="kw">as </span>StarknetHeader};
 <span class="kw">use </span>mp_digest_log::MADARA_ENGINE_ID;
-<span class="kw">use </span>mp_starknet::block::{Block <span class="kw">as </span>StarknetBlock, Header <span class="kw">as </span>StarknetHeader};
-<span class="kw">use </span>mp_starknet::crypto::commitment;
-<span class="kw">use </span>mp_starknet::execution::types::Felt252Wrapper;
-<span class="kw">use </span>mp_starknet::sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
-<span class="kw">use </span>mp_starknet::state::{FeeConfig, StateChanges};
-<span class="kw">use </span>mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
-<span class="kw">use </span>mp_starknet::traits::hash::HasherT;
-<span class="kw">use </span>mp_starknet::transaction::execution::{Execute, Validate};
-<span class="kw">use </span>mp_starknet::transaction::{
+<span class="kw">use </span>mp_fee::INITIAL_GAS;
+<span class="kw">use </span>mp_felt::Felt252Wrapper;
+<span class="kw">use </span>mp_hashers::HasherT;
+<span class="kw">use </span>mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
+<span class="kw">use </span>mp_state::{FeeConfig, StateChanges};
+<span class="kw">use </span>mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
+<span class="kw">use </span>mp_transactions::execution::{Execute, Validate};
+<span class="kw">use </span>mp_transactions::{
     DeclareTransaction, DeployAccountTransaction, HandleL1MessageTransaction, InvokeTransaction, Transaction,
     UserAndL1HandlerTransaction, UserTransaction,
 };
@@ -2145,7 +2143,7 @@
 
         <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
         <span class="kw">let </span>(transaction_commitment, event_commitment) =
-            commitment::calculate_commitments::&lt;T::SystemHash&gt;(<span class="kw-2">&amp;</span>transactions, <span class="kw-2">&amp;</span>events, chain_id);
+            mp_commitments::calculate_commitments::&lt;T::SystemHash&gt;(<span class="kw-2">&amp;</span>transactions, <span class="kw-2">&amp;</span>events, chain_id);
         <span class="kw">let </span>protocol_version = T::ProtocolVersion::get();
         <span class="kw">let </span>extra_data = <span class="prelude-val">None</span>;
 
