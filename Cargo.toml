@@ -13,6 +13,7 @@ members = [
   "crates/client/mapping-sync",
   "crates/client/storage",
   "crates/client/transaction-pool",
+  "starknet-rpc-test",
 ]
 
 [profile.release]
@@ -135,7 +136,11 @@ cairo-vm = { git = "https://github.com/keep-starknet-strange/cairo-rs", branch =
 ] }
 starknet-crypto = { version = "0.6.0", default-features = false }
 starknet-core = { version = "0.6.0", default-features = false }
+starknet-providers = { version = "0.6.0", default-features = false }
 starknet-ff = { version = "0.3.4", default-features = false }
+starknet-signers = { version = "0.4.0" }
+starknet-accounts = { version = "0.5.0" }
+starknet-contract = { version = "0.5.0" }
 
 blockifier = { git = "https://github.com/keep-starknet-strange/blockifier", branch = "no_std-support-7578442", default-features = false, features = [
   "parity-scale-codec",
@@ -146,7 +151,7 @@ starknet_api = { git = "https://github.com/keep-starknet-strange/starknet-api", 
 ], default-features = false }
 
 # Cairo lang
-cairo-lang-starknet = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support-8bbf530", default-features = false }
+cairo-lang-starknet = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support-8bbf530" }
 cairo-lang-casm-contract-class = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support-8bbf530", default-features = false }
 cairo-lang-casm = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support-8bbf530", default-features = false }
 cairo-lang-utils = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support-8bbf530", default-features = false }
@@ -155,6 +160,7 @@ cairo-lang-utils = { git = "https://github.com/keep-starknet-strange/cairo.git",
 anyhow = "1.0.75"
 flate2 = "1.0.27"
 scale-codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false }
+parity-scale-codec = { version = "3.2.2", default-features = false }
 scale-info = { version = "2.9.0", default-features = false }
 lazy_static = { version = "1.4.0", default-features = false }
 log = { version = "0.4.20", default-features = false }
@@ -166,16 +172,17 @@ futures = { version = "0.3.28", default-features = false }
 futures-timer = { version = "3.0.2", default-features = false }
 reqwest = { version = "0.11.20", default-features = false }
 serde = { version = "1.0.188", default-features = false }
-serde_json = { version = "1.0.106", default-features = false }
+serde_json = { version = "1.0.107", default-features = false }
 serde_with = { version = "2.3.3", default-features = false }
 bitvec = { version = "1", default-features = false }
 thiserror = "1.0.48"
 thiserror-no-std = "2.0.2"
 derive_more = { version = "0.99.17", default-features = false }
-rstest = "0.17.0"
+rstest = "0.18.1"
 pretty_assertions = "1.4.0"
 linked-hash-map = { version = "0.5.6", default-features = false }
 parking_lot = "0.12.1"
 async-trait = "0.1.73"
 indexmap = { git = "https://github.com/bluss/indexmap", rev = "ca5f848e10c31e80aeaad0720d14aa2f6dd6cfb1", default-features = false }
 num-traits = "0.2.16"
+num-bigint = "0.4.4"
