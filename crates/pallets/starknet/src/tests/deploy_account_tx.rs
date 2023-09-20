@@ -11,7 +11,7 @@ use starknet_crypto::FieldElement;
 
 use super::mock::default_mock::*;
 use super::mock::*;
-use super::utils::sign_message_hash;
+use super::utils::{sign_message_hash, sign_message_hash_braavos};
 use crate::tests::constants::{ACCOUNT_PUBLIC_KEY, SALT};
 use crate::tests::{get_deploy_account_dummy, set_infinite_tokens};
 use crate::{Config, Error, Event, StorageView};
@@ -262,14 +262,8 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
             class_hash: proxy_class_hash.into(),
         };
 
-        // Braavos has a complicated signature mecanism, they add stuffs around the tx_hash and then sign
-        // the whole thing. This hardcoded value is the expected "thing" that bravos expect you to
-        // sign for this transaction. Roll with it for now
-        let value_to_sign =
-            Felt252Wrapper::from_hex_be("0x06a8bb3d81c2ad23db93f01f72f987feac5210a95bc530eabb6abfaa5a769944").unwrap();
-        let mut signatures = sign_message_hash(value_to_sign);
-        signatures.extend_from_slice(&[Felt252Wrapper::ZERO; 8]);
-        deploy_tx.signature = signatures;
+        let tx_hash = deploy_tx.compute_hash::<<MockRuntime as Config>::SystemHash>(Starknet::chain_id(), false);
+        deploy_tx.signature = sign_message_hash_braavos::<<MockRuntime as Config>::SystemHash>(tx_hash, Felt252Wrapper::ZERO, &[Felt252Wrapper::ZERO; 7]);
 
         let address = deploy_tx.account_address().into();
         set_infinite_tokens::<MockRuntime>(&address);

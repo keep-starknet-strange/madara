@@ -6,6 +6,7 @@ use std::{env, fs};
 use blockifier::execution::contract_class::ContractClass;
 use mp_felt::Felt252Wrapper;
 use mp_transactions::{InvokeTransaction, InvokeTransactionV1};
+use mp_starknet::traits::hash::HasherT;
 use starknet_api::api_core::EntryPointSelector;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::Calldata;
@@ -26,6 +27,29 @@ pub fn get_contract_class(resource_path: &str, version: u8) -> ContractClass {
     let full_path: PathBuf = [full_path].iter().collect();
     let raw_contract_class = fs::read_to_string(full_path).unwrap();
     read_contract_class_from_json(&raw_contract_class, version)
+}
+
+pub fn sign_message_hash_braavos<H: HasherT>(tx_hash: Felt252Wrapper, actual_impl_hash: Felt252Wrapper, signer_model: &[Felt252Wrapper; 7]) -> Vec<Felt252Wrapper> {
+    // struct SignerModel {
+    //     signer_0: felt,
+    //     signer_1: felt,
+    //     signer_2: felt,
+    //     signer_3: felt,
+    //     type: felt,
+    //     reserved_0: felt,
+    //     reserved_1: felt,
+    // }
+    let mut elements = vec![
+        tx_hash.0,
+        actual_impl_hash.0,
+    ];
+    elements.extend_from_slice(&signer_model.iter().map(|e| e.0).collect::<Vec<FieldElement>>());
+    let braavos_hash = <H>::compute_hash_on_elements(&elements);
+
+    let mut signatures = sign_message_hash(Felt252Wrapper(braavos_hash));
+    signatures.push(actual_impl_hash);
+    signatures.extend_from_slice(signer_model);
+    signatures
 }
 
 pub fn sign_message_hash(hash: Felt252Wrapper) -> Vec<Felt252Wrapper> {
