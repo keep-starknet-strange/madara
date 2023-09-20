@@ -9,9 +9,8 @@ jobs:
   benchmark_job:
     runs-on: [self-hosted, linux, benchmark]
     steps:
-      # Caching Step (based on Task - Test Madara Commands)
-      - name: Cache Cargo
-        uses: actions/cache@v3
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/bin/
@@ -20,17 +19,9 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{ github.run_id }}
-          fail-on-cache-miss: true
-      
-      # Checkout code
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      # Run Madara
+          fail-on-cache-miss: true       
       - name: Run Madara
         run: target/release/madara --dev
-      
-      # Run Gomu Gomu no Gatling Action
       - name: Run Gomu Gomu no Gatling Action
         uses: keep-starknet-strange/gomu-gomu-no-gatling/.github/actions@main
         with:
