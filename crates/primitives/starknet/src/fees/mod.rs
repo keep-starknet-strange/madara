@@ -1,5 +1,3 @@
-use alloc::collections::{BTreeMap, BTreeSet};
-use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
 
@@ -14,6 +12,7 @@ use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::{AccountTransactionContext, ResourcesMapping, TransactionExecutionResult};
 use blockifier::transaction::transaction_types::TransactionType;
 use blockifier::transaction::transaction_utils::{calculate_l1_gas_usage, calculate_tx_resources};
+use phf::phf_map;
 use starknet_api::api_core::EntryPointSelector;
 use starknet_api::calldata;
 use starknet_api::deprecated_contract_class::EntryPointType;
@@ -27,6 +26,19 @@ use crate::state::FeeConfig;
 pub const FEE_TRANSFER_N_STORAGE_CHANGES: u8 = 2; // Sender and sequencer balance update.
 /// Number of storage updates to actually charge for the fee transfer tx.
 pub const FEE_TRANSFER_N_STORAGE_CHANGES_TO_CHARGE: u8 = FEE_TRANSFER_N_STORAGE_CHANGES - 1; // Exclude the sequencer balance update, since it's charged once throughout the batch.
+
+// TODO: add real values here.
+// FIXME: https://github.com/keep-starknet-strange/madara/issues/330
+static VM_RESOURCE_FEE_COSTS: phf::Map<&'static str, f64> = phf_map! {
+    "n_steps" => 1_f64,
+    "pedersen_builtin" => 1_f64,
+    "range_check_builtin" => 1_f64,
+    "ecdsa_builtin" => 1_f64,
+    "bitwise_builtin" => 1_f64,
+    "poseidon_builtin" => 1_f64,
+    "output_builtin" => 1_f64,
+    "ec_op_builtin" => 1_f64,
+};
 
 /// Gets the transaction resources.
 pub fn compute_transaction_resources<S: State + StateChanges>(
@@ -168,29 +180,16 @@ pub fn calculate_l1_gas_by_vm_usage(
     _block_context: &BlockContext,
     vm_resource_usage: &ResourcesMapping,
 ) -> TransactionExecutionResult<f64> {
-    // TODO: add real values here.
-    // FIXME: https://github.com/keep-starknet-strange/madara/issues/330
-    // TODO: this is terible perfomance wise. Use perfect hash map instead
-    let vm_resource_fee_costs = BTreeMap::from([
-        (String::from("n_steps"), 1_f64),
-        (String::from("pedersen_builtin"), 1_f64),
-        (String::from("range_check_builtin"), 1_f64),
-        (String::from("ecdsa_builtin"), 1_f64),
-        (String::from("bitwise_builtin"), 1_f64),
-        (String::from("poseidon_builtin"), 1_f64),
-        (String::from("output_builtin"), 1_f64),
-        (String::from("ec_op_builtin"), 1_f64),
-    ]);
-    let vm_resource_names = BTreeSet::<&String>::from_iter(vm_resource_usage.0.keys());
-
-    if !vm_resource_names.is_subset(&BTreeSet::from_iter(vm_resource_fee_costs.keys())) {
+    // Check if keys in vm_resource_usage are a subset of keys in VM_RESOURCE_FEE_COSTS
+    if vm_resource_usage.0.keys().any(|key| !VM_RESOURCE_FEE_COSTS.contains_key(key.as_str())) {
         return Err(TransactionExecutionError::CairoResourcesNotContainedInFeeCosts);
     };
 
     // Convert Cairo usage to L1 gas usage.
-    let vm_l1_gas_usage = vm_resource_fee_costs
+    let vm_l1_gas_usage: f64 = vm_resource_usage
+        .0
         .iter()
-        .map(|(key, resource_val)| (*resource_val) * vm_resource_usage.0.get(key).cloned().unwrap_or_default() as f64)
+        .map(|(key, &value)| VM_RESOURCE_FEE_COSTS.get(key.as_str()).unwrap() * value as f64)
         .fold(f64::NAN, f64::max);
 
     Ok(vm_l1_gas_usage)

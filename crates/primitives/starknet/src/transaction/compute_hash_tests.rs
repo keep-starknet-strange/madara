@@ -1,5 +1,6 @@
 use alloc::sync::Arc;
 
+use blockifier::execution::contract_class::ContractClass;
 use starknet_api::api_core::{calculate_contract_address, ContractAddress, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::Calldata;
@@ -8,7 +9,11 @@ use starknet_crypto::FieldElement;
 use crate::crypto::hash::pedersen::PedersenHasher;
 use crate::execution::types::Felt252Wrapper;
 use crate::transaction::compute_hash::ComputeTransactionHash;
-use crate::transaction::{DeclareTransactionV1, DeclareTransactionV2, DeployAccountTransaction, InvokeTransactionV1};
+use crate::transaction::{
+    DeclareTransaction, DeclareTransactionV0, DeclareTransactionV1, DeclareTransactionV2, DeployAccountTransaction,
+    HandleL1MessageTransaction, InvokeTransaction, InvokeTransactionV0, InvokeTransactionV1, Transaction,
+    UserTransaction,
+};
 
 #[test]
 fn compute_contract_address_work_like_starknet_api_impl() {
@@ -54,6 +59,47 @@ fn test_deploy_account_tx_hash() {
     let tx_hash = transaction.compute_hash::<PedersenHasher>(chain_id, false);
 
     assert_eq!(tx_hash, expected_tx_hash);
+
+    let generic_transaction = Transaction::DeployAccount(transaction.clone());
+    let tx_hash = generic_transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    assert_eq!(tx_hash, expected_tx_hash);
+
+    let user_transaction = UserTransaction::DeployAccount(transaction);
+    let tx_hash = user_transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    assert_eq!(tx_hash, expected_tx_hash);
+}
+
+#[test]
+fn test_declare_v0_tx_hash() {
+    // Computed with `calculate_declare_transaction_hash` from the cairo lang package
+    let expected_tx_hash =
+        Felt252Wrapper::from_hex_be("0x07cdcb35e703351a74a0e6e8c045ce861eece44f0bca06dbbc569b4d8c0a2ae2").unwrap();
+
+    let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap());
+
+    let transaction = DeclareTransactionV0 {
+        max_fee: 1,
+        signature: vec![],
+        nonce: Felt252Wrapper::ZERO,
+        class_hash: Felt252Wrapper::THREE,
+        sender_address: Felt252Wrapper::from(19911991_u128),
+    };
+
+    let tx_hash = transaction.compute_hash::<PedersenHasher>(chain_id, false);
+
+    assert_eq!(tx_hash, expected_tx_hash);
+
+    let declare_v0_transaction = DeclareTransaction::V0(transaction);
+    let tx_hash = declare_v0_transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    assert_eq!(tx_hash, expected_tx_hash);
+
+    let generic_transaction = Transaction::Declare(declare_v0_transaction.clone());
+    let tx_hash = generic_transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    assert_eq!(tx_hash, expected_tx_hash);
+
+    let user_transaction = UserTransaction::Declare(declare_v0_transaction, ContractClass::V0(Default::default()));
+    let tx_hash = user_transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    assert_eq!(tx_hash, expected_tx_hash);
 }
 
 #[test]
@@ -74,6 +120,18 @@ fn test_declare_v1_tx_hash() {
 
     let tx_hash = transaction.compute_hash::<PedersenHasher>(chain_id, false);
 
+    assert_eq!(tx_hash, expected_tx_hash);
+
+    let declare_v1_transaction = DeclareTransaction::V1(transaction);
+    let tx_hash = declare_v1_transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    assert_eq!(tx_hash, expected_tx_hash);
+
+    let generic_transaction = Transaction::Declare(declare_v1_transaction.clone());
+    let tx_hash = generic_transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    assert_eq!(tx_hash, expected_tx_hash);
+
+    let user_transaction = UserTransaction::Declare(declare_v1_transaction, ContractClass::V0(Default::default()));
+    let tx_hash = user_transaction.compute_hash::<PedersenHasher>(chain_id, false);
     assert_eq!(tx_hash, expected_tx_hash);
 }
 
@@ -97,10 +155,56 @@ fn test_declare_v2_tx_hash() {
     let tx_hash = transaction.compute_hash::<PedersenHasher>(chain_id, false);
 
     assert_eq!(tx_hash, expected_tx_hash);
+
+    let declare_v2_transaction = DeclareTransaction::V2(transaction);
+    let tx_hash = declare_v2_transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    assert_eq!(tx_hash, expected_tx_hash);
+
+    let generic_transaction = Transaction::Declare(declare_v2_transaction.clone());
+    let tx_hash = generic_transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    assert_eq!(tx_hash, expected_tx_hash);
+
+    let user_transaction = UserTransaction::Declare(declare_v2_transaction, ContractClass::V1(Default::default()));
+    let tx_hash = user_transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    assert_eq!(tx_hash, expected_tx_hash);
 }
 
 #[test]
-fn test_invoke_tx_hash() {
+fn test_invoke_tx_v0_hash() {
+    // Computed with `calculate_transaction_hash_common` from the cairo lang package
+    let expected_tx_hash =
+        Felt252Wrapper::from_hex_be("0x054f8e66281306dd43fb035e1bf8b1f7baad8f28390f6de1f337e6be5490f1f7").unwrap();
+
+    let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap());
+
+    let transaction = InvokeTransactionV0 {
+        max_fee: 1,
+        signature: vec![],
+        nonce: Felt252Wrapper::ZERO,
+        contract_address: Default::default(),
+        entry_point_selector: Default::default(),
+        calldata: vec![Felt252Wrapper::ONE, Felt252Wrapper::TWO, Felt252Wrapper::THREE],
+    };
+
+    let tx_hash = transaction.compute_hash::<PedersenHasher>(chain_id, false);
+
+    assert_eq!(tx_hash, expected_tx_hash);
+
+    let invoke_v0_transaction = InvokeTransaction::V0(transaction);
+    let tx_hash = invoke_v0_transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    assert_eq!(tx_hash, expected_tx_hash);
+
+    let generic_transaction = Transaction::Invoke(invoke_v0_transaction.clone());
+    let tx_hash = generic_transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    assert_eq!(tx_hash, expected_tx_hash);
+
+    let user_transaction = UserTransaction::Invoke(invoke_v0_transaction.clone());
+    let tx_hash = user_transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    assert_eq!(tx_hash, expected_tx_hash);
+}
+
+#[test]
+fn test_invoke_tx_v1_hash() {
     // Computed with `calculate_transaction_hash_common` from the cairo lang package
     let expected_tx_hash =
         Felt252Wrapper::from_hex_be("0x062633b1f3d64708df3d0d44706b388f841ed4534346be6ad60336c8eb2f4b3e").unwrap();
@@ -118,6 +222,40 @@ fn test_invoke_tx_hash() {
     let tx_hash = transaction.compute_hash::<PedersenHasher>(chain_id, false);
 
     assert_eq!(tx_hash, expected_tx_hash);
+
+    let invoke_v1_transaction = InvokeTransaction::V1(transaction);
+    let tx_hash = invoke_v1_transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    assert_eq!(tx_hash, expected_tx_hash);
+
+    let generic_transaction = Transaction::Invoke(invoke_v1_transaction.clone());
+    let tx_hash = generic_transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    assert_eq!(tx_hash, expected_tx_hash);
+
+    let user_transaction = UserTransaction::Invoke(invoke_v1_transaction);
+    let tx_hash = user_transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    assert_eq!(tx_hash, expected_tx_hash);
 }
 
-// TODO: Add tests for all the other variants
+#[test]
+fn test_handle_l1_message_tx_hash() {
+    // Computed with `calculate_transaction_hash_common` from the cairo lang package
+    let expected_tx_hash =
+        Felt252Wrapper::from_hex_be("0x023f18bb43e61985fba987824a9b8fdea96276e38e34702c72de4250ba91f518").unwrap();
+
+    let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap());
+
+    let transaction = HandleL1MessageTransaction {
+        nonce: Default::default(),
+        contract_address: Default::default(),
+        entry_point_selector: Default::default(),
+        calldata: Default::default(),
+    };
+
+    let tx_hash = transaction.compute_hash::<PedersenHasher>(chain_id, false);
+
+    assert_eq!(tx_hash, expected_tx_hash);
+
+    let wrapped_transaction = Transaction::L1Handler(transaction.clone());
+    let tx_hash = wrapped_transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    assert_eq!(tx_hash, expected_tx_hash);
+}
