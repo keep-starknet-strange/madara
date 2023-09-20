@@ -8,7 +8,7 @@ on:
 jobs:
   coverage:
     # sadly, for now we have to "rebuild" for the coverage
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-32-cores
     steps:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
