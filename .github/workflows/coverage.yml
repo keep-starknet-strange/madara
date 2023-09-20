@@ -1,5 +1,5 @@
 ---
-name: Task - Integration Tests
+name: Task - Rust Tests & Coverage
 
 on:
   workflow_dispatch:
@@ -25,7 +25,7 @@ jobs:
           fail-on-cache-miss: true
       - uses: taiki-e/install-action@cargo-llvm-cov
       - uses: taiki-e/install-action@nextest
-      - name: Coverage
+      - name: Tests and Coverage
         run: cargo llvm-cov nextest --release --codecov --output-path codecov.json
       - name: Upload coverage to codecov.io
         uses: codecov/codecov-action@v3
