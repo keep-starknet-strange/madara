@@ -1,6 +1,6 @@
 use std::iter::zip;
 
-use mp_starknet::execution::types::Felt252Wrapper;
+use mp_felt::Felt252Wrapper;
 use rstest::*;
 use starknet_core::types::EmittedEvent;
 use starknet_ff::FieldElement;

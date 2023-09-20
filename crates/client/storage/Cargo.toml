@@ -18,7 +18,7 @@ blockifier = { workspace = true, features = ["std"] }
 frame-support = { workspace = true, features = ["std"] }
 frame-system = { workspace = true, features = ["std"] }
 madara-runtime = { workspace = true, features = ["std"] }
-mp-starknet = { workspace = true, features = ["std"] }
+mp-storage = { workspace = true, features = ["std"] }
 pallet-starknet = { workspace = true, features = ["std"] }
 sc-client-api = { workspace = true }
 scale-codec = { workspace = true, features = ["std"] }

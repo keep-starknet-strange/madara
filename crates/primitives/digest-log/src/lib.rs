@@ -20,7 +20,7 @@ mod error;
 mod tests;
 
 pub use error::FindLogError;
-use mp_starknet::block::Block as StarknetBlock;
+use mp_block::Block as StarknetBlock;
 use parity_scale_codec::{Decode, Encode};
 use sp_runtime::generic::{Digest, OpaqueDigestItemId};
 use sp_runtime::ConsensusEngineId;

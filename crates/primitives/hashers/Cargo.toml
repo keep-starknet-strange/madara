@@ -1,0 +1,36 @@
+[package]
+name = "mp-hashers"
+version.workspace = true
+edition.workspace = true
+license = "MIT"
+description = "Starknet hashers"
+authors = { workspace = true }
+repository = { workspace = true }
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+mp-felt = { workspace = true }
+starknet-core = { workspace = true }
+starknet-crypto = { workspace = true, features = ["alloc"] }
+
+# Optional
+parity-scale-codec = { workspace = true, optional = true }
+scale-info = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }
+
+[features]
+default = ["std"]
+std = [
+  "starknet-crypto/std",
+  "starknet-core/std",
+  "mp-felt/std",
+  # Optional
+  "serde?/std",
+  "parity-scale-codec?/std",
+  "scale-info?/std",
+]
+parity-scale-codec = ["dep:parity-scale-codec", "mp-felt/parity-scale-codec"]
+scale-info = ["dep:scale-info", "mp-felt/scale-info"]
+serde = ["dep:serde", "mp-felt/serde"]

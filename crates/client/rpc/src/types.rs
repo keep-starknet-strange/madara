@@ -1,7 +1,7 @@
 use std::num::ParseIntError;
 use std::{fmt, u64};
 
-use mp_starknet::execution::types::Felt252Wrapper;
+use mp_felt::Felt252Wrapper;
 use starknet_ff::FieldElement;
 
 pub struct RpcEventFilter {
