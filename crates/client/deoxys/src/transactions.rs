@@ -113,7 +113,7 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : IntermediateInvokeTransacti
         nonce: Felt252Wrapper::default(),//Felt252Wrapper::try_from(invoke_transaction.nonce.0.bytes()).unwrap(),
         call_entrypoint: call_entry_point,
         contract_class: None,
-        contract_address_salt: None,
+        contract_address_salt: Some(leading_bits(&sender_address_fe.to_bytes_be())),
         max_fee: Felt252Wrapper::from(invoke_transaction.max_fee.0),
         is_query: false, // Assuming default value
     }
