@@ -25,9 +25,19 @@ pub async fn convert_to_contract_class(starknet_class: ClassHash, client: Arc<St
     }
 }
 
+pub fn leading_bits(arr: &[u8; 32]) -> U256 {
+    let mut count = 0;
+    for x in arr {
+        let bits = x.leading_zeros();
+        count += bits;
+        if bits != 8 {
+            break;
+        }
+    }
+    U256::from(count)
+}
 
 pub async fn declare_tx_to_starknet_tx(declare_transaction: IntermediateDeclareTransaction, client: Arc<StarknetFeederGatewayClient>) -> Transaction {
-
     let mut signature_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
     for item in &declare_transaction.signature.0 {
         match signature_vec.try_push(Felt252Wrapper::try_from(item.bytes()).unwrap()) {
@@ -72,7 +82,7 @@ pub async fn declare_tx_to_starknet_tx(declare_transaction: IntermediateDeclareT
         nonce: Felt252Wrapper::try_from(declare_transaction.nonce.0.bytes()).unwrap(),
         call_entrypoint: call_entry_point,
         contract_class: Option::<ContractClass>::default(),
-        contract_address_salt: Option::<U256>::default(),
+        contract_address_salt: Some(leading_bits(&sender_address_fe.to_bytes_be())),
         max_fee: Felt252Wrapper::from(declare_transaction.max_fee.0),
         is_query: false,
     }
@@ -123,8 +133,8 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : IntermediateInvokeTransacti
         sender_address: sender_address_fw,
         nonce: Felt252Wrapper::default(),
         call_entrypoint: call_entry_point,
-        contract_class: Option::<ContractClass>::default(),
-        contract_address_salt: Option::<U256>::default(),
+        contract_class: None,
+        contract_address_salt: Some(leading_bits(&sender_address_fe.to_bytes_be())),
         max_fee: Felt252Wrapper::from(invoke_transaction.max_fee.0),
         is_query: false,
     }
