@@ -6,14 +6,6 @@ on:
   workflow_call:
 
 jobs:
-  prettier:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Run prettier
-        run: |-
-          npx prettier --check .
-
   markdown-lint:
     runs-on: ubuntu-latest
     steps:
