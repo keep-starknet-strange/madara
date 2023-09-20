@@ -263,7 +263,11 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
         };
 
         let tx_hash = deploy_tx.compute_hash::<<MockRuntime as Config>::SystemHash>(Starknet::chain_id(), false);
-        deploy_tx.signature = sign_message_hash_braavos::<<MockRuntime as Config>::SystemHash>(tx_hash, Felt252Wrapper::ZERO, &[Felt252Wrapper::ZERO; 7]);
+        deploy_tx.signature = sign_message_hash_braavos::<<MockRuntime as Config>::SystemHash>(
+            tx_hash,
+            Felt252Wrapper::ZERO,
+            &[Felt252Wrapper::ZERO; 7],
+        );
 
         let address = deploy_tx.account_address().into();
         set_infinite_tokens::<MockRuntime>(&address);
