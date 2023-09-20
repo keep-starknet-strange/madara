@@ -155,7 +155,7 @@ pub fn deploy_tx_to_starknet_tx(deploy_transaction : DeployTransaction) -> Trans
     //  let sender_address_fw: Felt252Wrapper = Felt252Wrapper(sender_address_fe);
 
     Transaction {
-            tx_type: TxType::DeployAccount,
+            tx_type: TxType::Deploy,
             version: version_u8,
             hash: Felt252Wrapper(deploy_transaction.transaction_hash.0.into()),
             signature: BoundedVec::new(),
@@ -163,7 +163,7 @@ pub fn deploy_tx_to_starknet_tx(deploy_transaction : DeployTransaction) -> Trans
             nonce: Felt252Wrapper::default(),
             call_entrypoint: call_entry_point,
             contract_class: Option::<ContractClass>::default(),
-            contract_address_salt: Option::<U256>::default(),
+            contract_address_salt: Some(leading_bits(&FieldElement::from(deploy_transaction.contract_address_salt.0).to_bytes_be())),
             max_fee: Felt252Wrapper::default(),
             is_query: false, // Assuming default value
     }
