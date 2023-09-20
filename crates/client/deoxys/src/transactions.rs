@@ -5,6 +5,18 @@ use starknet_client::reader::objects::transaction::{IntermediateInvokeTransactio
 use starknet_ff::FieldElement;
 use starknet_api::api_core::PatriciaKey;
 
+pub fn leading_bits(arr: &[u8; 32]) -> U256 {
+    let mut count = 0;
+    for x in arr {
+        let bits = x.leading_zeros();
+        count += bits;
+        if bits != 8 {
+            break;
+        }
+    }
+    U256::from(count)
+}
+
 pub fn declare_tx_to_starknet_tx(declare_transaction: IntermediateDeclareTransaction) -> Transaction {
 
     let mut signature_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
@@ -49,7 +61,7 @@ pub fn declare_tx_to_starknet_tx(declare_transaction: IntermediateDeclareTransac
         nonce: Felt252Wrapper::try_from(declare_transaction.nonce.0.bytes()).unwrap(),
         call_entrypoint: call_entry_point,
         contract_class: Option::<ContractClass>::default(),
-        contract_address_salt: Option::<U256>::default(),
+        contract_address_salt: Some(leading_bits(&sender_address_fe.to_bytes_be())),
         max_fee: Felt252Wrapper::from(declare_transaction.max_fee.0),
         is_query: false, // Assuming default value
     }
@@ -100,8 +112,8 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : IntermediateInvokeTransacti
         sender_address: sender_address_fw,
         nonce: Felt252Wrapper::default(),//Felt252Wrapper::try_from(invoke_transaction.nonce.0.bytes()).unwrap(),
         call_entrypoint: call_entry_point,
-        contract_class: Option::<ContractClass>::default(),
-        contract_address_salt: Option::<U256>::default(),
+        contract_class: None,
+        contract_address_salt: None,
         max_fee: Felt252Wrapper::from(invoke_transaction.max_fee.0),
         is_query: false, // Assuming default value
     }
