@@ -23,14 +23,10 @@ jobs:
             ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
             github.run_id }}
           fail-on-cache-miss: true
-      - name: Setup build deps
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
-      - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
+      - uses: taiki-e/install-action@cargo-llvm-cov
+      - uses: taiki-e/install-action@nextest
       - name: Coverage
-        run: cargo llvm-cov --codecov --output-path codecov.json
+        run: cargo llvm-cov nextest --release --codecov --output-path codecov.json
       - name: Upload coverage to codecov.io
         uses: codecov/codecov-action@v3
         with:
