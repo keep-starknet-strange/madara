@@ -22,6 +22,7 @@ jobs:
             ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
             github.run_id }}
           fail-on-cache-miss: true
+      - run: rm -rf /home/ubuntu/.madara/chains/dev
       - name: Run Madara
         run: target/release/madara --dev
       - name: Run Gomu Gomu no Gatling Action
