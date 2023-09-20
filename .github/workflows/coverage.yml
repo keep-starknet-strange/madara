@@ -31,7 +31,7 @@ jobs:
       - uses: taiki-e/install-action@nextest
       - name: Tests and Coverage
         run:
-          cargo llvm-cov nextest --release --codecov --output-path codecov.json
+          cargo llvm-cov nextest --release --test-threads=1 --codecov --output-path codecov.json
       - name: Upload coverage to codecov.io
         uses: codecov/codecov-action@v3
         with:
