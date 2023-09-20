@@ -187,9 +187,9 @@ impl MadaraClient {
 			"--sealing=manual",
 			&format!("--execution={execution}"),
 			"--dev",
+            "--tmp",
 			&format!("--port={p2p_port}"),
 			&format!("--rpc-port={rpc_port}"),
-            &format!("--madara-path=/tmp/{}", p2p_port)
 			])
 			.spawn()
 			.expect("Could not start background madara node");
