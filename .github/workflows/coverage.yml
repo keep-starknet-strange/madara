@@ -19,9 +19,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key:
-            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
-            github.run_id }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{ github.run_id }}
           fail-on-cache-miss: true
       - name: Setup build deps
         run: |
@@ -29,9 +27,14 @@ jobs:
           sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
       - uses: taiki-e/install-action@cargo-llvm-cov
       - uses: taiki-e/install-action@nextest
-      - name: Tests and Coverage
-        run:
-          cargo llvm-cov nextest --release --test-threads=1 --codecov --output-path codecov.json
+      - name: Run Tests and Generate Coverage Data
+        run: |
+          cargo llvm-cov nextest --release --workspace --exclude starknet-rpc-test --output-dir coverage_data_1
+          MADARA_LOG=true cargo llvm-cov nextest --release --package starknet-rpc-test --test-threads=1 --output-dir coverage_data_2
+      - name: Merge Coverage Data and Generate Report
+        run: |
+          cargo llvm-cov merge coverage_data_1 coverage_data_2 --output-dir merged_coverage_data
+          cargo llvm-cov report --output-dir merged_coverage_data --codecov --output-path codecov.json
       - name: Upload coverage to codecov.io
         uses: codecov/codecov-action@v3
         with:
