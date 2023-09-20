@@ -187,52 +187,42 @@ everything is working as expected.
 
 ## Integration tests
 
-Integration tests are located in the `tests` folder, and are written in
-typescript. They are executed using `mocha` and `chai`. We use `starknet.js` to
-interact with the blockchain and test compatibility with Starknet's tooling.
+Integration tests are located in the `starknet-rpc-test` folder, and are written in
+rust using `rstest`. We use `starknet-rs` to interact with the blockchain and test 
+compatibility with Starknet's tooling.
 
 You can find the documentation on this
-[link](https://www.starknetjs.com/docs/api/provider/rpcprovider/).
+[link](https://github.com/xJonathanLEI/starknet-rs).
 
-```typescript
-// tests/tests/test-rpc/test-starknet-rpc.ts
-import "@keep-starknet-strange/madara-api-augment";
+```rust
+#[rstest]
+#[tokio::test]
+async fn fail_non_existing_block(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+    // We retrieve the madara client
+    let madara = madara.await;
 
-import { expect } from "chai";
+    // We get the RPC Provider to interact with the madara node
+    let rpc = madara.get_starknet_client();
+    
+    // Expected values
+    let test_contract_class_hash =
+        FieldElement::from_hex_be(TEST_CONTRACT_CLASS_HASH).expect("Invalid Contract Address");
 
-import { describeDevMadara } from "../../util/setup-dev-tests";
-import { RpcProvider, validateAndParseAddress } from "starknet";
+    // Assertions
+    assert_matches!(
+        rpc
+        .get_class(
+            BlockId::Number(100),
+            test_contract_class_hash,
+        )
+        .await,
+        Err(StarknetProviderError(StarknetErrorWithMessage { code: MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::BlockNotFound
+    );
 
-// `describeDevMadara` will run the node in the background on a random available port and provide you with some context objects.
-describeDevMadara("Starknet RPC", (context) => {
-  let providerRPC: RpcProvider;
-
-  // We initialize the RPC provider to use the local spawned node before all tests.
-  before(async function () {
-    providerRPC = new RpcProvider({
-      nodeUrl: `http://127.0.0.1:${context.rpcPort}/`,
-      retries: 3,
-    });
-  });
-
-  /// ... other tests
-
-  it("my_endpoint", async function () {
-    // You can fetch the current block hash and number
-    let block = await providerRPC.getBlockHashAndNumber();
-    let block_hash = `0x${block.block_hash.slice(2).padStart(64, "0")}`;
-
-    // Call the new endpoint
-    let result = await providerRPC.myEndpoint({
-      some_str: "Madara",
-      some_u64: 1234,
-    });
-
-    // Make some assertions to ensure the right behavior
-    expect(result).to.equal("Let's build the future!");
-  });
-});
+    Ok(())
+}
 ```
+
 
 Recompile madara (with method 1 or 2 depending on your needs), and you should be
 able to target your new endpoint.
