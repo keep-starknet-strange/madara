@@ -239,8 +239,9 @@ able to target your new endpoint.
 
 ### Run your integration tests
 
-To run the tests, simply run `npm run test-seq` in the `tests/` folder. Make
-sure you've ran `npm install` in the `tests/` folder before running the tests.
+To run the tests, simply run `cargo test -p starknet-rpc-test -- test <test_file> -- <test_name> --exact --nocapture`.
+
+For easier debugging make sure to enable the background node's logs with `MADARA_LOG=true`.
 
 ### Test locally
 

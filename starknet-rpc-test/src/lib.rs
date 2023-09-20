@@ -140,19 +140,34 @@ fn get_free_port() -> Result<u16, TestError> {
     Err(TestError::NoFreePorts)
 }
 
+fn get_free_p2p_port() -> Result<u16, TestError> {
+    for port in (MIN_PORT + 1000)..(MAX_PORT - 1000) {
+        // Offset by 1000 to avoid potential conflicts
+        if let Ok(listener) = TcpListener::bind(("127.0.0.1", port)) {
+            return Ok(listener.local_addr().expect("No local addr").port());
+        }
+        // otherwise port is occupied
+    }
+
+    Err(TestError::NoFreePorts)
+}
+
 impl MadaraClient {
     async fn init(execution: ExecutionStrategy) -> Result<Self, TestError> {
         let free_port = get_free_port()?;
+        let free_p2p_port = get_free_p2p_port()?;
 
         let manifest_path = Path::new(&env!("CARGO_MANIFEST_DIR"));
         let repository_root = manifest_path.parent().expect("Failed to get parent directory of CARGO_MANIFEST_DIR");
 
         std::env::set_current_dir(repository_root).expect("Failed to change working directory");
 
+        let madara_log = std::env::var("MADARA_LOG").unwrap_or_else(|_| "false".to_string());
+
         let child_handle = Command::new("cargo")
 		// Silence Madara stdout and stderr
 		.stdout(Stdio::null())
-		.stderr(Stdio::null())
+		.stderr(if madara_log == "true" { Stdio::inherit() } else { Stdio::null() })
 		.args([
 			"run",
 			"--release",
@@ -160,9 +175,11 @@ impl MadaraClient {
 			"--alice",
 			"--sealing=manual",
 			&format!("--execution={execution}"),
-			"--chain=dev",
+			"--dev",
 			"--tmp",
-			&format!("--rpc-port={free_port}")
+			&format!("--port={free_p2p_port}"),
+			&format!("--rpc-port={free_port}"),
+            &format!("--madara-path=/tmp/{}", free_p2p_port)
 			])
 			.spawn()
 			.expect("Could not start background madara node");
