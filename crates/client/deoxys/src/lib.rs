@@ -2,11 +2,12 @@
 use mp_starknet::crypto::commitment::{calculate_transaction_commitment, calculate_event_commitment};
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::transaction::types::{Transaction, TransactionReceiptWrapper, EventWrapper, MaxArraySize};
+use reqwest::StatusCode;
 use sp_core::U256;
 use mp_starknet::execution::types::{Felt252Wrapper, ContractAddressWrapper};
 use mp_starknet::block::{Block, Header, MaxTransactions };
 use reqwest::header::{HeaderMap, CONTENT_TYPE, self};
-use serde_json::json;
+use serde_json::{json, Value};
 use sp_core::bounded_vec::BoundedVec;
 use starknet_api::block::BlockNumber;
 use starknet_api::api_core::{ChainId, PatriciaKey};
@@ -175,6 +176,11 @@ pub fn from_gateway_to_starknet_block(block: starknet_client::reader::Block) -> 
     let transactions_vec: BoundedVec<Transaction, MaxTransactions> = get_txs(block.clone());
     let transaction_receipts_vec: BoundedVec<TransactionReceiptWrapper, MaxTransactions> = get_txs_receipts(block.clone(), transactions_vec.clone());
     let header = get_header(block.clone(), transactions_vec.clone());
+    // if (header.block_number) >= 10 {
+    //     println!("header: {:?}", header);
+    //     println!("transactions_vec: {:?}", transactions_vec);
+    //     println!("transaction_receipts_vec: {:?}", transaction_receipts_vec);
+    // }
     Block::new(
         header,
         transactions_vec,
@@ -182,7 +188,7 @@ pub fn from_gateway_to_starknet_block(block: starknet_client::reader::Block) -> 
     )
 }
 
-async fn create_block(rpc_port: u16) -> Result<reqwest::StatusCode, reqwest::Error> {
+async fn create_block(rpc_port: u16) -> Result<StatusCode, reqwest::Error> {
     let client = reqwest::Client::new();
     let mut headers = HeaderMap::new();
     headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
@@ -201,6 +207,35 @@ async fn create_block(rpc_port: u16) -> Result<reqwest::StatusCode, reqwest::Err
         .send().await?;
 
     Ok(response.status())
+}
+
+async fn get_last_synced_block(rpc_port: u16) -> Result<Option<u64>, reqwest::Error> {
+    let client = reqwest::Client::new();
+    let headers = {
+        let mut h = HeaderMap::new();
+        h.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+        h
+    };
+
+    let url = format!("http://localhost:{}/", rpc_port);
+    let payload = json!({
+        "id": 1,
+        "jsonrpc": "2.0",
+        "method": "chain_getBlock",
+        "params": []
+    });
+
+    let response = client.post(&url)
+        .headers(headers)
+        .json(&payload)
+        .send().await?;
+
+    let body: Value = response.json().await?;
+    
+    body["result"]["block"]["header"]["number"]
+        .as_str()
+        .and_then(|number_hex| u64::from_str_radix(&number_hex[2..], 16).ok())
+        .map_or(Ok(None), |number_decimal| Ok(Some(number_decimal)))
 }
 
 const DEFAULT_CONFIG_FILE: &str = "config/execution_config/default_config.json";
@@ -261,7 +296,8 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
         NODE_VERSION,
         retry_config
     ).unwrap();
-    let mut i = 1u64;
+
+    let mut i = get_last_synced_block(rpc_port).await.unwrap().unwrap() + 1;
     loop {
         let block = starknet_client.block(BlockNumber(i)).await;
         match block {

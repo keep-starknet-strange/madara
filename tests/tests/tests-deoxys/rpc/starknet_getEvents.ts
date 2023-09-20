@@ -5,9 +5,9 @@ dotenv.config();
 
 const REMOTE_RPC_URL = process.env.REMOTE_RPC;
 const LOCAL_RPC_URL = process.env.LOCAL_RPC;
-const BLOCK_NUMBER = 51;
+const BLOCK_NUMBER = 1466;
 const START_BLOCK = 0;
-const END_BLOCK = 151;
+const END_BLOCK = 1470;
 
 const requestDataForMethod = (method: string, params: any[]) => ({
     id: 1,
@@ -55,7 +55,7 @@ async function benchmarkMethod(method: string, params: any): Promise<string> {
 async function checkDifferencesInBlocks() {
     const blocksWithDifferences: number[] = [];
 
-    for (let blockNumber = 51; blockNumber < END_BLOCK; blockNumber++) {
+    for (let blockNumber = 1450; blockNumber < END_BLOCK; blockNumber++) {
         const differences = await benchmarkMethod('starknet_getEvents', {
 			"filter": {
 				"from_block": {
@@ -91,10 +91,10 @@ async function checkDifferencesInBlocks() {
 	const singleCallDifferences = await benchmarkMethod('starknet_getEvents', {
         "filter": {
             "from_block": {
-                "block_number": 40
+                "block_number": 1450
             },
             "to_block": {
-                "block_number": 80
+                "block_number": 1470
             },
             "keys": [
                 [

@@ -51,7 +51,7 @@ pub fn declare_tx_to_starknet_tx(declare_transaction: IntermediateDeclareTransac
         contract_class: Option::<ContractClass>::default(),
         contract_address_salt: Option::<U256>::default(),
         max_fee: Felt252Wrapper::from(declare_transaction.max_fee.0),
-        is_query: false, // Assuming default value
+        is_query: false,
     }
 }
 
@@ -70,8 +70,8 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : IntermediateInvokeTransacti
     let calldata_vec: BoundedVec<Felt252Wrapper, MaxCalldataSize> = BoundedVec::new();
 
     let call_entry_point = CallEntryPointWrapper::new(
-        Some(Felt252Wrapper::default()),   //class_hash: Option<ClassHashWrapper>,
-        EntryPointTypeWrapper::External, //entrypoint_type: EntryPointTypeWrapper,
+        Some(Felt252Wrapper::default()),
+        EntryPointTypeWrapper::External,
         Some(Felt252Wrapper::default()),
         calldata_vec,
         ContractAddressWrapper::default(),
@@ -98,12 +98,12 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : IntermediateInvokeTransacti
         hash: Felt252Wrapper(invoke_transaction.transaction_hash.0.into()),
         signature: signature_vec,
         sender_address: sender_address_fw,
-        nonce: Felt252Wrapper::default(),//Felt252Wrapper::try_from(invoke_transaction.nonce.0.bytes()).unwrap(),
+        nonce: Felt252Wrapper::default(),
         call_entrypoint: call_entry_point,
         contract_class: Option::<ContractClass>::default(),
         contract_address_salt: Option::<U256>::default(),
         max_fee: Felt252Wrapper::from(invoke_transaction.max_fee.0),
-        is_query: false, // Assuming default value
+        is_query: false,
     }
 }
 
