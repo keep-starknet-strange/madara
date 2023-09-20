@@ -6,8 +6,8 @@ dotenv.config();
 const REMOTE_RPC_URL = process.env.REMOTE_RPC;
 const LOCAL_RPC_URL = process.env.LOCAL_RPC;
 const BLOCK_NUMBER = 839;
-const START_BLOCK = 0;
-const END_BLOCK = 900;
+const START_BLOCK = 500;
+const END_BLOCK = 1000;
 
 const requestDataForMethod = (method: string, params: any[]) => ({
     id: 1,
