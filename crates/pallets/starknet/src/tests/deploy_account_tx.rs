@@ -1,7 +1,7 @@
 use frame_support::{assert_err, assert_ok};
-use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::transaction::compute_hash::ComputeTransactionHash;
-use mp_starknet::transaction::DeployAccountTransaction;
+use mp_felt::Felt252Wrapper;
+use mp_transactions::compute_hash::ComputeTransactionHash;
+use mp_transactions::DeployAccountTransaction;
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::TransactionSource;
 use starknet_api::api_core::ContractAddress;

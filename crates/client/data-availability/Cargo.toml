@@ -41,7 +41,6 @@ sp-runtime = { workspace = true }
 
 # Starknet
 mc-db = { workspace = true, default-features = true }
-mp-starknet = { workspace = true, default-features = true }
 starknet_api = { workspace = true, default-features = true }
 
 # Ethereum
@@ -55,3 +54,6 @@ subxt = "0.29"
 # Celestia
 celestia-rpc = { git = "https://github.com/eigerco/celestia-node-rs", rev = "bd6394b66b11065c543ab3f19fd66000a72b6236" }
 celestia-types = { git = "https://github.com/eigerco/celestia-node-rs", rev = "bd6394b66b11065c543ab3f19fd66000a72b6236" }
+
+# Madara
+mp-storage = { workspace = true, default-features = true }

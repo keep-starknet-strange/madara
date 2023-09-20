@@ -1,0 +1,51 @@
+[package]
+name = "mp-block"
+version.workspace = true
+edition.workspace = true
+license = "MIT"
+description = "The starknet block"
+authors = { workspace = true }
+repository = { workspace = true }
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+blockifier = { workspace = true }
+mp-felt = { workspace = true }
+mp-hashers = { workspace = true }
+mp-transactions = { workspace = true }
+sp-core = { workspace = true }
+starknet_api = { workspace = true }
+
+# Optionals
+parity-scale-codec = { workspace = true, features = [
+  "derive",
+], optional = true }
+serde = { workspace = true, features = ["derive"], optional = true }
+
+[dev-dependencies]
+mp-hashers = { workspace = true }
+mp-felt = { workspace = true }
+
+[features]
+default = ["std"]
+std = [
+  "sp-core/std",
+  "mp-felt/std",
+  "mp-transactions/std",
+  "mp-hashers/std",
+  "starknet_api/std",
+  "blockifier/std",
+  # Optionals
+  "parity-scale-codec?/std",
+  "serde?/std",
+]
+parity-scale-codec = [
+  "dep:parity-scale-codec",
+  "mp-felt/parity-scale-codec",
+  "mp-transactions/parity-scale-codec",
+  "starknet_api/parity-scale-codec",
+  "blockifier/parity-scale-codec",
+]
+serde = ["dep:serde", "mp-felt/serde", "mp-transactions/serde"]

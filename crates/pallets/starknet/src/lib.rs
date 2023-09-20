@@ -33,7 +33,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::large_enum_variant)]
 
-use mp_starknet::constants::INITIAL_GAS;
 /// Starknet pallet.
 /// Definition of the pallet's runtime storage items, events, errors, and dispatchable
 /// functions.
@@ -83,16 +82,16 @@ use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
 use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
+use mp_block::{Block as StarknetBlock, Header as StarknetHeader};
 use mp_digest_log::MADARA_ENGINE_ID;
-use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader};
-use mp_starknet::crypto::commitment;
-use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
-use mp_starknet::state::{FeeConfig, StateChanges};
-use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
-use mp_starknet::traits::hash::HasherT;
-use mp_starknet::transaction::execution::{Execute, Validate};
-use mp_starknet::transaction::{
+use mp_fee::INITIAL_GAS;
+use mp_felt::Felt252Wrapper;
+use mp_hashers::HasherT;
+use mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
+use mp_state::{FeeConfig, StateChanges};
+use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
+use mp_transactions::execution::{Execute, Validate};
+use mp_transactions::{
     DeclareTransaction, DeployAccountTransaction, HandleL1MessageTransaction, InvokeTransaction, Transaction,
     UserAndL1HandlerTransaction, UserTransaction,
 };
@@ -989,7 +988,7 @@ impl<T: Config> Pallet<T> {
 
         let chain_id = Self::chain_id();
         let (transaction_commitment, event_commitment) =
-            commitment::calculate_commitments::<T::SystemHash>(&transactions, &events, chain_id);
+            mp_commitments::calculate_commitments::<T::SystemHash>(&transactions, &events, chain_id);
         let protocol_version = T::ProtocolVersion::get();
         let extra_data = None;
 

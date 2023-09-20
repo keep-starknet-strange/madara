@@ -1,5 +1,5 @@
 use mc_rpc_core::utils::get_block_by_block_hash;
-use mp_starknet::block::Block;
+use mp_block::Block;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sp_api::BlockId;
 use sp_blockchain::HeaderBackend;

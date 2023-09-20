@@ -1,5 +1,5 @@
 use frame_support::assert_ok;
-use mp_starknet::execution::types::Felt252Wrapper;
+use mp_felt::Felt252Wrapper;
 use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 

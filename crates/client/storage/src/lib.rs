@@ -11,7 +11,7 @@ mod overrides;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
+use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 pub use overrides::*;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};

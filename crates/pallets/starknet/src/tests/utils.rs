@@ -4,8 +4,8 @@ use std::path::PathBuf;
 use std::{env, fs};
 
 use blockifier::execution::contract_class::ContractClass;
-use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::transaction::{InvokeTransaction, InvokeTransactionV1};
+use mp_felt::Felt252Wrapper;
+use mp_transactions::{InvokeTransaction, InvokeTransactionV1};
 use starknet_api::api_core::EntryPointSelector;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::Calldata;

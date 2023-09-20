@@ -1,6 +1,6 @@
 use frame_support::assert_err;
-use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::transaction::{DeclareTransactionV1, HandleL1MessageTransaction};
+use mp_felt::Felt252Wrapper;
+use mp_transactions::{DeclareTransactionV1, HandleL1MessageTransaction};
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::TransactionSource;
 use starknet_api::transaction::Fee;

@@ -20,7 +20,8 @@ mc-db = { workspace = true }
 mc-rpc-core = { workspace = true }
 mc-storage = { workspace = true }
 mp-digest-log = { workspace = true }
-mp-starknet = { workspace = true }
+mp-hashers = { workspace = true }
+mp-transactions = { workspace = true }
 pallet-starknet = { workspace = true }
 sc-client-api = { workspace = true }
 sp-api = { workspace = true }
