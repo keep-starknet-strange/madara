@@ -89,6 +89,7 @@
 - chore: cairo-contracts compilation scripts & docs are updated, cairo_0
   contracts recompiled
 - chore: rebase of core deps and 0.12.1
+- feat: add func to get braavos hash
 
 ## v0.1.0
 
