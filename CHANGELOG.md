@@ -15,6 +15,7 @@
 - fix: fix sharingan chain spec
 - fix: update madara infra to main branch
 - fix: update `Cargo.lock`
+- feat: add function to get braavos hash
 
 ## v0.3.0
 
