@@ -23,23 +23,16 @@ jobs:
   tests:
     name: Run tests and coverage
     uses: ./.github/workflows/tests-coverage.yml
-    needs: [rust_build]
+    needs: rust_build
 
-  # benchmark:
-  #   name: Run benchmarks
-  #   uses: ./.github/workflows/benchmarks.yml
-  #   needs: [rust_build, tests]
-  #   permissions:
-  #     # deployments permission to deploy GitHub pages website
-  #     deployments: write
-  #     # contents permission to update benchmark contents in gh-pages branch
-  #     contents: write
-  #     # post on the pull-request page
-  #     pull-requests: write
+  benchmark:
+    name: Run benchmarks
+    uses: ./.github/workflows/benchmarks.yml
+    needs: [rust_build, tests]
 
   rustdoc:
     name: Deploy docs to GitHub Pages
     uses: ./.github/workflows/rustdoc.yml
-    needs: tests
+    needs: benchmark
     permissions:
       contents: write

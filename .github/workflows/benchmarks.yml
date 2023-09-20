@@ -10,15 +10,6 @@ jobs:
     runs-on: [self-hosted, linux, benchmark]
     steps:
       - uses: actions/checkout@v3
-        with:
-          clean: false
-      - name: Build tests and install benchmark projects
-        run: |-
-          cd tests
-          npm clean-install
-          npm run build
-          cd ../benchmarking
-          npm i
       - uses: actions/cache@v3
         with:
           path: |
@@ -27,78 +18,11 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key:
-            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
-            github.run_id }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{ github.run_id }}
           fail-on-cache-miss: true
-      - name: Run benchmark
-        run: |
-          cd benchmarking
-          npm run test:ci
-      - name: Compare result
-        uses: benchmark-action/github-action-benchmark@v1
+      - name: Run Madara
+        run: target/release/madara --dev
+      - name: Run Gomu Gomu no Gatling Action
+        uses: keep-starknet-strange/gomu-gomu-no-gatling/.github/actions@main
         with:
-          tool: "customBiggerIsBetter"
-          output-file-path: ./benchmarking/reports/metrics.json
-          alert-threshold: "120%"
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          fail-on-alert: true
-          summary-always: ${{ github.ref == 'refs/heads/main' }}
-          comment-always: false
-          comment-on-alert: false
-          auto-push: ${{ github.ref == 'refs/heads/main' }}
-
-  benchmark-with-state-root:
-    runs-on: [self-hosted, linux, benchmark]
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          clean: false
-      - name: Build tests and install benchmark projects
-        run: |-
-          cd tests
-          npm clean-install
-          npm run build
-          cd ../benchmarking
-          npm i
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key:
-            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
-            github.run_id }}
-          fail-on-cache-miss: true
-          restore-keys: |
-            ${{ runner.os }}-cargo
-      - name: Setup rust toolchain
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: rustup show
-      - name: Setup build deps
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
-      - name: Build the project
-        run: |
-          cargo build --release --workspace
-      - name: Run benchmark
-        run: |
-          cd benchmarking
-          npm run test:ci-state-root:erc20
-      - name: Compare result
-        uses: benchmark-action/github-action-benchmark@v1
-        with:
-          tool: "customBiggerIsBetter"
-          output-file-path: ./benchmarking/reports/metrics-state-root.json
-          alert-threshold: "120%"
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          fail-on-alert: true
-          summary-always: ${{ github.ref == 'refs/heads/main' }}
-          comment-always: false
-          comment-on-alert: false
-          benchmark-data-dir-path: "dev/bench-with-state-root"
-          auto-push: ${{ github.ref == 'refs/heads/main' }}
+          config_path: 'benchmark.yml'
