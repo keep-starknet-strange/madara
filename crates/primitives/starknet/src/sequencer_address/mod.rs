@@ -1,6 +1,3 @@
-use core::array::TryFromSliceError;
-
-use scale_codec::{Decode, Encode};
 use sp_inherents::{InherentData, InherentIdentifier, IsFatalError};
 use thiserror_no_std::Error;
 
@@ -17,7 +14,8 @@ pub const SEQ_ADDR_STORAGE_KEY: &[u8] = b"starknet::seq_addr";
 /// The inherent type for the sequencer address.
 pub type InherentType = [u8; 32];
 
-#[derive(Decode, Encode, Error, sp_runtime::RuntimeDebug)]
+#[derive(Error, sp_core::RuntimeDebug)]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 /// Error types when working with the sequencer address.
 pub enum InherentError {
     /// Submitted address must be `[u8; 32]`.
@@ -45,23 +43,28 @@ impl SequencerAddressInherentData for InherentData {
     }
 }
 
-/// Helper function to convert storage value.
-fn slice_to_arr(slice: &[u8]) -> Result<[u8; 32], TryFromSliceError> {
-    slice.try_into()
-}
+#[cfg(all(feature = "std", feature = "parity-scale-codec"))]
+mod reexport_for_client_only {
+    use alloc::boxed::Box;
+    use core::array::TryFromSliceError;
 
-#[cfg(feature = "std")]
-mod reexport_std_types {
+    use parity_scale_codec::{Decode, Encode};
+
     use super::*;
+    /// Helper function to convert storage value.
+    fn slice_to_arr(slice: &[u8]) -> Result<[u8; 32], TryFromSliceError> {
+        slice.try_into()
+    }
 
     impl InherentError {
         /// Try to create an instance ouf of the given identifier and data.
+        // TODO: Bad name. This let think that it uses the trait TryFrom
         pub fn try_from(id: &InherentIdentifier, mut data: &[u8]) -> Option<Self> {
             if id == &INHERENT_IDENTIFIER { <InherentError as Decode>::decode(&mut data).ok() } else { None }
         }
     }
 
-    #[derive(Copy, Clone, Decode, Encode, sp_runtime::RuntimeDebug)]
+    #[derive(Copy, Clone, Decode, Encode, sp_core::RuntimeDebug)]
     /// The inherent data provider for sequencer address.
     pub struct InherentDataProvider {
         /// The sequencer address field.
@@ -112,5 +115,5 @@ mod reexport_std_types {
     }
 }
 
-#[cfg(feature = "std")]
-pub use reexport_std_types::*;
+#[cfg(all(feature = "std", feature = "parity-scale-codec"))]
+pub use reexport_for_client_only::*;

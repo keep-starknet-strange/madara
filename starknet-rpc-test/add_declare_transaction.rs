@@ -96,7 +96,7 @@ async fn works_with_storage_change(#[future] madara: MadaraClient) -> Result<(),
         Ok(TransactionResult::Declaration(DeclareTransactionResult { transaction_hash, class_hash })) => {
             assert_eq!(
                 transaction_hash,
-                FieldElement::from_hex_be("0x01fc4c0d8f82edfd74ef83c5db42203fe4a70243a76e88e0a4a6ade9753d8ec9")
+                FieldElement::from_hex_be("0x05e0f64e8140019f2657f244dd9fd136d18acc6f52d8a0b85d3f84a110d4c708")
                     .unwrap()
             );
             assert_eq!(class_hash, expected_class_hash);

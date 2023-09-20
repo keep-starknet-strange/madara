@@ -32,15 +32,10 @@ jobs:
   #     # post on the pull-request page
   #     pull-requests: write
 
-  # TODO: Unlock when rust tests are working on main
-  # coverage:
-  #   name: Run coverage
-  #   uses: ./.github/workflows/coverage.yml
-  #   needs: [madara_commands, linters_cargo]
-
+  # TODO change it to benchmark when enabled
   rustdoc:
     name: Deploy docs to GitHub Pages
     uses: ./.github/workflows/rustdoc.yml
-    needs: tests
+    needs: linters_cargo
     permissions:
       contents: write

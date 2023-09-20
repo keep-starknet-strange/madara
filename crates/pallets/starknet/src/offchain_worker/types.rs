@@ -2,7 +2,7 @@ use alloc::string::String;
 use alloc::vec::Vec;
 use core::str::Utf8Error;
 
-use scale_codec::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 use serde::Deserialize;
 use sp_runtime::offchain::http::Error;
 use sp_runtime::offchain::HttpError;
