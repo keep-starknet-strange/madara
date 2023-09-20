@@ -194,10 +194,7 @@
 <a href="#194" id="194">194</a>
 <a href="#195" id="195">195</a>
 <a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>alloc::collections::{BTreeMap, BTreeSet};
-<span class="kw">use </span>alloc::string::String;
-<span class="kw">use </span>alloc::vec;
+</pre></div><pre class="rust"><code><span class="kw">use </span>alloc::vec;
 <span class="kw">use </span>alloc::vec::Vec;
 
 <span class="kw">use </span>blockifier::abi::constants::GAS_USAGE;
@@ -211,6 +208,7 @@
 <span class="kw">use </span>blockifier::transaction::objects::{AccountTransactionContext, ResourcesMapping, TransactionExecutionResult};
 <span class="kw">use </span>blockifier::transaction::transaction_types::TransactionType;
 <span class="kw">use </span>blockifier::transaction::transaction_utils::{calculate_l1_gas_usage, calculate_tx_resources};
+<span class="kw">use </span>phf::phf_map;
 <span class="kw">use </span>starknet_api::api_core::EntryPointSelector;
 <span class="kw">use </span>starknet_api::calldata;
 <span class="kw">use </span>starknet_api::deprecated_contract_class::EntryPointType;
@@ -225,7 +223,20 @@
 </span><span class="doccomment">/// Number of storage updates to actually charge for the fee transfer tx.
 </span><span class="kw">pub const </span>FEE_TRANSFER_N_STORAGE_CHANGES_TO_CHARGE: u8 = FEE_TRANSFER_N_STORAGE_CHANGES - <span class="number">1</span>; <span class="comment">// Exclude the sequencer balance update, since it&#39;s charged once throughout the batch.
 
-</span><span class="doccomment">/// Gets the transaction resources.
+// TODO: add real values here.
+// FIXME: https://github.com/keep-starknet-strange/madara/issues/330
+</span><span class="kw">static </span>VM_RESOURCE_FEE_COSTS: phf::Map&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, f64&gt; = <span class="macro">phf_map! </span>{
+    <span class="string">&quot;n_steps&quot; </span>=&gt; <span class="number">1_f64</span>,
+    <span class="string">&quot;pedersen_builtin&quot; </span>=&gt; <span class="number">1_f64</span>,
+    <span class="string">&quot;range_check_builtin&quot; </span>=&gt; <span class="number">1_f64</span>,
+    <span class="string">&quot;ecdsa_builtin&quot; </span>=&gt; <span class="number">1_f64</span>,
+    <span class="string">&quot;bitwise_builtin&quot; </span>=&gt; <span class="number">1_f64</span>,
+    <span class="string">&quot;poseidon_builtin&quot; </span>=&gt; <span class="number">1_f64</span>,
+    <span class="string">&quot;output_builtin&quot; </span>=&gt; <span class="number">1_f64</span>,
+    <span class="string">&quot;ec_op_builtin&quot; </span>=&gt; <span class="number">1_f64</span>,
+};
+
+<span class="doccomment">/// Gets the transaction resources.
 </span><span class="kw">pub fn </span>compute_transaction_resources&lt;S: State + StateChanges&gt;(
     state: <span class="kw-2">&amp;</span>S,
     execute_call_info: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;CallInfo&gt;,
@@ -365,29 +376,16 @@
     _block_context: <span class="kw-2">&amp;</span>BlockContext,
     vm_resource_usage: <span class="kw-2">&amp;</span>ResourcesMapping,
 ) -&gt; TransactionExecutionResult&lt;f64&gt; {
-    <span class="comment">// TODO: add real values here.
-    // FIXME: https://github.com/keep-starknet-strange/madara/issues/330
-    // TODO: this is terible perfomance wise. Use perfect hash map instead
-    </span><span class="kw">let </span>vm_resource_fee_costs = BTreeMap::from([
-        (String::from(<span class="string">&quot;n_steps&quot;</span>), <span class="number">1_f64</span>),
-        (String::from(<span class="string">&quot;pedersen_builtin&quot;</span>), <span class="number">1_f64</span>),
-        (String::from(<span class="string">&quot;range_check_builtin&quot;</span>), <span class="number">1_f64</span>),
-        (String::from(<span class="string">&quot;ecdsa_builtin&quot;</span>), <span class="number">1_f64</span>),
-        (String::from(<span class="string">&quot;bitwise_builtin&quot;</span>), <span class="number">1_f64</span>),
-        (String::from(<span class="string">&quot;poseidon_builtin&quot;</span>), <span class="number">1_f64</span>),
-        (String::from(<span class="string">&quot;output_builtin&quot;</span>), <span class="number">1_f64</span>),
-        (String::from(<span class="string">&quot;ec_op_builtin&quot;</span>), <span class="number">1_f64</span>),
-    ]);
-    <span class="kw">let </span>vm_resource_names = BTreeSet::&lt;<span class="kw-2">&amp;</span>String&gt;::from_iter(vm_resource_usage.<span class="number">0</span>.keys());
-
-    <span class="kw">if </span>!vm_resource_names.is_subset(<span class="kw-2">&amp;</span>BTreeSet::from_iter(vm_resource_fee_costs.keys())) {
+    <span class="comment">// Check if keys in vm_resource_usage are a subset of keys in VM_RESOURCE_FEE_COSTS
+    </span><span class="kw">if </span>vm_resource_usage.<span class="number">0</span>.keys().any(|key| !VM_RESOURCE_FEE_COSTS.contains_key(key.as_str())) {
         <span class="kw">return </span><span class="prelude-val">Err</span>(TransactionExecutionError::CairoResourcesNotContainedInFeeCosts);
     };
 
     <span class="comment">// Convert Cairo usage to L1 gas usage.
-    </span><span class="kw">let </span>vm_l1_gas_usage = vm_resource_fee_costs
-        .iter()
-        .map(|(key, resource_val)| (<span class="kw-2">*</span>resource_val) * vm_resource_usage.<span class="number">0</span>.get(key).cloned().unwrap_or_default() <span class="kw">as </span>f64)
+    </span><span class="kw">let </span>vm_l1_gas_usage: f64 = vm_resource_usage
+        .<span class="number">0
+        </span>.iter()
+        .map(|(key, <span class="kw-2">&amp;</span>value)| VM_RESOURCE_FEE_COSTS.get(key.as_str()).unwrap() * value <span class="kw">as </span>f64)
         .fold(f64::NAN, f64::max);
 
     <span class="prelude-val">Ok</span>(vm_l1_gas_usage)
