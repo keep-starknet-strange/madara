@@ -37,6 +37,7 @@
   as source of data in the client
 - perf: use perfect hash function in calculate_l1_gas_by_vm_usage
 - chore: add tests for tx hashing
+- fix: rpc tests and background node run
 
 ## v0.2.0
 
