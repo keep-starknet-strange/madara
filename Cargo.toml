@@ -4,8 +4,16 @@ members = [
   "crates/node",
   "crates/runtime",
   "crates/pallets/starknet",
-  "crates/primitives/starknet",
   "crates/primitives/digest-log",
+  "crates/primitives/transactions",
+  "crates/primitives/felt",
+  "crates/primitives/hashers",
+  "crates/primitives/fee",
+  "crates/primitives/state",
+  "crates/primitives/block",
+  "crates/primitives/sequencer-address",
+  "crates/primitives/storage",
+  "crates/primitives/commitments",
   "crates/client/block-proposer",
   "crates/client/db",
   "crates/client/rpc-core",
@@ -112,8 +120,16 @@ pallet-timestamp = { default-features = false, git = "https://github.com/parityt
 pallet-starknet = { path = "crates/pallets/starknet", default-features = false }
 
 # Madara primtitives
-mp-starknet = { path = "crates/primitives/starknet", default-features = false }
 mp-digest-log = { path = "crates/primitives/digest-log", default-features = false }
+mp-block = { path = "crates/primitives/block", default-features = false }
+mp-fee = { path = "crates/primitives/fee", default-features = false }
+mp-felt = { path = "crates/primitives/felt", default-features = false }
+mp-hashers = { path = "crates/primitives/hashers", default-features = false }
+mp-sequencer-address = { path = "crates/primitives/sequencer-address", default-features = false }
+mp-state = { path = "crates/primitives/state", default-features = false }
+mp-storage = { path = "crates/primitives/storage", default-features = false }
+mp-transactions = { path = "crates/primitives/transactions", default-features = false }
+mp-commitments = { path = "crates/primitives/commitments", default-features = false }
 
 # Madara client
 mc-mapping-sync = { path = "crates/client/mapping-sync" }
@@ -186,3 +202,4 @@ async-trait = "0.1.73"
 indexmap = { git = "https://github.com/bluss/indexmap", rev = "ca5f848e10c31e80aeaad0720d14aa2f6dd6cfb1", default-features = false }
 num-traits = "0.2.16"
 num-bigint = "0.4.4"
+phf = { version = "0.11", default-features = false }

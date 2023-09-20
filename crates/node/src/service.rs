@@ -22,7 +22,7 @@ use mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker};
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
 use mc_transaction_pool::FullPool;
-use mp_starknet::sequencer_address::{
+use mp_sequencer_address::{
     InherentDataProvider as SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
 };
 use prometheus_endpoint::Registry;

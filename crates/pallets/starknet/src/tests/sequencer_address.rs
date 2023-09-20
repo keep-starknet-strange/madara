@@ -1,6 +1,6 @@
 use frame_support::assert_ok;
 use frame_support::traits::Hooks;
-use mp_starknet::sequencer_address::{DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY};
+use mp_sequencer_address::{DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY};
 use starknet_api::api_core::{ContractAddress, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 

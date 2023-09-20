@@ -6097,8 +6097,10 @@ dependencies = [
  "mc-rpc",
  "mc-storage",
  "mc-transaction-pool",
+ "mp-block",
  "mp-digest-log",
- "mp-starknet",
+ "mp-felt",
+ "mp-sequencer-address",
  "pallet-starknet",
  "sc-cli",
  "sc-client-api",
@@ -6148,7 +6150,9 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "mp-starknet",
+ "mp-felt",
+ "mp-hashers",
+ "mp-transactions",
  "pallet-aura",
  "pallet-grandpa",
  "pallet-starknet",
@@ -6264,7 +6268,7 @@ dependencies = [
  "lazy_static",
  "log",
  "mc-db",
- "mp-starknet",
+ "mp-storage",
  "reqwest",
  "sc-client-api",
  "serde",
@@ -6310,7 +6314,8 @@ dependencies = [
  "mc-rpc-core",
  "mc-storage",
  "mp-digest-log",
- "mp-starknet",
+ "mp-hashers",
+ "mp-transactions",
  "pallet-starknet",
  "sc-client-api",
  "sp-api",
@@ -6333,7 +6338,10 @@ dependencies = [
  "mc-rpc-core",
  "mc-storage",
  "mc-transaction-pool",
- "mp-starknet",
+ "mp-block",
+ "mp-felt",
+ "mp-hashers",
+ "mp-transactions",
  "pallet-starknet",
  "pretty_assertions",
  "rstest",
@@ -6368,8 +6376,8 @@ dependencies = [
  "frame-support",
  "hex",
  "jsonrpsee 0.16.3",
+ "mp-block",
  "mp-digest-log",
- "mp-starknet",
  "num-bigint",
  "serde",
  "serde_json",
@@ -6391,7 +6399,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "madara-runtime",
- "mp-starknet",
+ "mp-storage",
  "pallet-starknet",
  "parity-scale-codec",
  "sc-client-api",
@@ -6589,22 +6597,116 @@ dependencies = [
 ]
 
 [[package]]
+name = "mp-block"
+version = "0.2.0"
+dependencies = [
+ "blockifier",
+ "mp-felt",
+ "mp-hashers",
+ "mp-transactions",
+ "parity-scale-codec",
+ "serde",
+ "sp-core 7.0.0",
+ "starknet_api",
+]
+
+[[package]]
+name = "mp-commitments"
+version = "0.2.0"
+dependencies = [
+ "bitvec",
+ "derive_more",
+ "mp-felt",
+ "mp-hashers",
+ "mp-transactions",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "starknet-core",
+ "starknet-crypto 0.6.0",
+ "starknet-ff",
+ "starknet_api",
+]
+
+[[package]]
 name = "mp-digest-log"
 version = "0.2.0"
 dependencies = [
  "assert_matches",
- "mp-starknet",
+ "mp-block",
  "parity-scale-codec",
  "sp-runtime 7.0.0",
 ]
 
 [[package]]
-name = "mp-starknet"
+name = "mp-fee"
+version = "0.2.0"
+dependencies = [
+ "blockifier",
+ "mp-state",
+ "phf",
+ "starknet_api",
+]
+
+[[package]]
+name = "mp-felt"
+version = "0.2.0"
+dependencies = [
+ "cairo-vm",
+ "hex",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core 7.0.0",
+ "starknet-ff",
+ "starknet_api",
+ "thiserror-no-std",
+]
+
+[[package]]
+name = "mp-hashers"
+version = "0.2.0"
+dependencies = [
+ "mp-felt",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "starknet-core",
+ "starknet-crypto 0.6.0",
+]
+
+[[package]]
+name = "mp-sequencer-address"
+version = "0.2.0"
+dependencies = [
+ "async-trait",
+ "parity-scale-codec",
+ "sp-core 7.0.0",
+ "sp-inherents",
+ "thiserror-no-std",
+]
+
+[[package]]
+name = "mp-state"
+version = "0.2.0"
+dependencies = [
+ "blockifier",
+ "starknet_api",
+]
+
+[[package]]
+name = "mp-storage"
+version = "0.2.0"
+dependencies = [
+ "parity-scale-codec",
+ "serde",
+]
+
+[[package]]
+name = "mp-transactions"
 version = "0.2.0"
 dependencies = [
  "assert_matches",
- "async-trait",
- "bitvec",
  "blockifier",
  "cairo-lang-casm-contract-class",
  "cairo-lang-starknet",
@@ -6612,23 +6714,20 @@ dependencies = [
  "cairo-vm",
  "derive_more",
  "flate2",
- "hex",
- "lazy_static",
- "log",
+ "mp-fee",
+ "mp-felt",
+ "mp-hashers",
+ "mp-state",
  "num-bigint",
  "parity-scale-codec",
- "phf",
  "scale-info",
  "serde",
  "serde_json",
- "sp-core 7.0.0",
- "sp-inherents",
- "sp-std 5.0.0",
  "starknet-core",
  "starknet-crypto 0.6.0",
  "starknet-ff",
  "starknet_api",
- "thiserror-no-std",
+ "thiserror",
 ]
 
 [[package]]
@@ -7495,8 +7594,16 @@ dependencies = [
  "indexmap 2.0.0-pre",
  "lazy_static",
  "log",
+ "mp-block",
+ "mp-commitments",
  "mp-digest-log",
- "mp-starknet",
+ "mp-fee",
+ "mp-felt",
+ "mp-hashers",
+ "mp-sequencer-address",
+ "mp-state",
+ "mp-storage",
+ "mp-transactions",
  "pallet-timestamp",
  "parity-scale-codec",
  "pretty_assertions",
@@ -7514,6 +7621,7 @@ dependencies = [
  "sp-std 5.0.0",
  "starknet-core",
  "starknet-crypto 0.6.0",
+ "starknet-ff",
  "starknet_api",
  "test-case",
 ]

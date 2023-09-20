@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use ethers::types::U256;
 use lazy_static::lazy_static;
-use mp_starknet::storage::{
+use mp_storage::{
     PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_NONCE, STARKNET_STORAGE,
 };
 use sp_io::hashing::twox_128;

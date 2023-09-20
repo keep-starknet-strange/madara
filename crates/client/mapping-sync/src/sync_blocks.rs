@@ -1,7 +1,7 @@
 use mc_rpc_core::utils::get_block_by_block_hash;
 use mp_digest_log::{find_starknet_block, FindLogError};
-use mp_starknet::traits::hash::HasherT;
-use mp_starknet::transaction::compute_hash::ComputeTransactionHash;
+use mp_hashers::HasherT;
+use mp_transactions::compute_hash::ComputeTransactionHash;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sp_api::ProvideRuntimeApi;
