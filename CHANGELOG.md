@@ -61,6 +61,7 @@
   contracts recompiled
 - chore: rebase of core deps and 0.12.1
 - ci: add gomu gomu no gatling pr benchmark workflow
+
 ## v0.1.0
 
 - ci: rm codespell task and rm .codespellignore

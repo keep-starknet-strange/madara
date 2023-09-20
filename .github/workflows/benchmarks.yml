@@ -18,11 +18,13 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{ github.run_id }}
+          key:
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
+            github.run_id }}
           fail-on-cache-miss: true
       - name: Run Madara
         run: target/release/madara --dev
       - name: Run Gomu Gomu no Gatling Action
         uses: keep-starknet-strange/gomu-gomu-no-gatling/.github/actions@main
         with:
-          config_path: 'benchmark.yml'
+          config_path: "benchmark.yml"
