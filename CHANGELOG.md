@@ -38,6 +38,7 @@
 - perf: use perfect hash function in calculate_l1_gas_by_vm_usage
 - chore: add tests for tx hashing
 - split `primitives` crates into multiple smaller crates
+- chore: add tests for simulate tx offset
 
 ## v0.2.0
 
