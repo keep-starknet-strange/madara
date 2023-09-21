@@ -142,7 +142,7 @@ fn find_available_ports() -> Result<NodePorts, TestError> {
         let mut port = 1024 + index * 20000 + (std::process::id() % 20000) as u16;
 
         while selected_port == 0 && port < ENDING_PORT {
-            if port_is_available(port) {
+            if TcpListener::bind(("127.0.0.1", port)).is_ok() {
                 selected_port = port;
             }
             port += 1;
@@ -156,13 +156,6 @@ fn find_available_ports() -> Result<NodePorts, TestError> {
     }
 
     Ok(NodePorts { rpc_port: available_ports[0], p2p_port: available_ports[1] })
-}
-
-fn port_is_available(port: u16) -> bool {
-    match TcpListener::bind(("127.0.0.1", port)) {
-        Ok(_) => true,
-        Err(_) => false,
-    }
 }
 
 impl MadaraClient {
