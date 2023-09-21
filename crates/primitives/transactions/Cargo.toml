@@ -49,6 +49,10 @@ std = [
   "starknet-ff/std",
   "starknet-core/std",
   "blockifier/std",
+  "mp-state/std",
+  "mp-hashers/std",
+  "mp-felt/std",
+  "mp-fee/std",
   # Optional
   "parity-scale-codec?/std",
   "scale-info?/std",
