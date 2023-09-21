@@ -39,6 +39,8 @@
 - chore: add tests for tx hashing
 - split `primitives` crates into multiple smaller crates
 - chore: add tests for simulate tx offset
+- fix: std feature import in transactions crate
+- chore: improve logging about transaction when nonce is too high
 
 ## v0.2.0
 
