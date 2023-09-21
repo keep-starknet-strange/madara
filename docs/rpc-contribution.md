@@ -188,7 +188,7 @@ everything is working as expected.
 ## Integration tests
 
 Integration tests are located in the `starknet-rpc-test` folder, and are written in
-rust using `rstest`. We use `starknet-rs` to interact with the blockchain and test 
+rust using `rstest`. We use `starknet-rs` to interact with the blockchain and test
 compatibility with Starknet's tooling.
 
 You can find the documentation on this
@@ -222,7 +222,6 @@ async fn fail_non_existing_block(#[future] madara: MadaraClient) -> Result<(), a
     Ok(())
 }
 ```
-
 
 Recompile madara (with method 1 or 2 depending on your needs), and you should be
 able to target your new endpoint.
