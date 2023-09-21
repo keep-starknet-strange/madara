@@ -751,6 +751,18 @@ pub mod pallet {
                         Err(InvalidTransaction::Stale)?;
                     }
 
+                    // A transaction with a nonce higher than the expected nonce is placed in
+                    // the future queue of the transaction pool.
+                    if sender_nonce < *transaction_nonce {
+                        log!(
+                            info,
+                            "Nonce is too high. Expected: {:?}, got: {:?}. This transaction will be placed in the \
+                             transaction pool and executed in the future when the nonce is reached.",
+                            sender_nonce,
+                            transaction_nonce
+                        );
+                    }
+
                     (transaction.sender_address(), sender_nonce, *transaction_nonce)
                 } else {
                     // TODO: create and check L1 messages Nonce
