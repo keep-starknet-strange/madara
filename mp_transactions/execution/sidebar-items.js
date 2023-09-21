@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["ValidateExecuteCallInfo"],"trait":["Execute","GetAccountTransactionContext","GetTransactionCalldata","GetTxType","Validate"]};
+window.SIDEBAR_ITEMS = {"struct":["ValidateExecuteCallInfo"],"trait":["Execute","GetAccountTransactionContext","GetTransactionCalldata","GetTxType","SimulateTxVersionOffset","Validate"]};
