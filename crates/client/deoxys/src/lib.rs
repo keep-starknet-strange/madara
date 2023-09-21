@@ -91,34 +91,34 @@ pub fn get_header(block: starknet_client::reader::Block, transactions: BoundedVe
     starknet_header
 }
 
-pub async fn get_txs(block: starknet_client::reader::Block, client: Arc<StarknetFeederGatewayClient>) -> BoundedVec<mp_starknet::transaction::types::Transaction, MaxTransactions> {
+pub fn get_txs(block: starknet_client::reader::Block) -> BoundedVec<mp_starknet::transaction::types::Transaction, MaxTransactions> {
     let mut transactions_vec: BoundedVec<Transaction, MaxTransactions> = BoundedVec::new();
         for transaction in &block.transactions {
             match transaction {
                 starknet_client::reader::objects::transaction::Transaction::Declare(declare_transaction) => {
                     // convert declare_transaction to starknet transaction
                     println!("declare_transaction: {:?}", declare_transaction);
-                    let tx = declare_tx_to_starknet_tx(declare_transaction.clone(), client.clone()).await;
+                    let tx = declare_tx_to_starknet_tx(declare_transaction.clone());
                     transactions_vec.try_push(tx).unwrap();
                 },
                 starknet_client::reader::objects::transaction::Transaction::DeployAccount(deploy_account_transaction) => {
                     // convert declare_transaction to starknet transaction
-                    let tx = deploy_account_tx_to_starknet_tx(deploy_account_transaction.clone(), client.clone()).await;
+                    let tx = deploy_account_tx_to_starknet_tx(deploy_account_transaction.clone());
                     transactions_vec.try_push(tx).unwrap();
                 },
                 starknet_client::reader::objects::transaction::Transaction::Deploy(deploy_transaction) => {
                     // convert declare_transaction to starknet transaction
-                    let tx = deploy_tx_to_starknet_tx(deploy_transaction.clone(), client.clone()).await;
+                    let tx = deploy_tx_to_starknet_tx(deploy_transaction.clone());
                     transactions_vec.try_push(tx).unwrap();
                 },
                 starknet_client::reader::objects::transaction::Transaction::Invoke(invoke_transaction) => {
                     // convert invoke_transaction to starknet transaction
-                    let tx = invoke_tx_to_starknet_tx(invoke_transaction.clone(), client.clone());
+                    let tx = invoke_tx_to_starknet_tx(invoke_transaction.clone());
                     transactions_vec.try_push(tx).unwrap();
                 },
                 starknet_client::reader::objects::transaction::Transaction::L1Handler(l1handler_transaction) => {
                     // convert declare_transaction to starknet transaction
-                    let tx = l1handler_tx_to_starknet_tx(l1handler_transaction.clone(), client.clone());
+                    let tx = l1handler_tx_to_starknet_tx(l1handler_transaction.clone());
                     transactions_vec.try_push(tx).unwrap();
                 },
             }
@@ -173,8 +173,8 @@ pub fn get_txs_receipts(block: starknet_client::reader::Block, transactions: Bou
 
 
 // This function converts a block received from the gateway into a StarkNet block
-pub async fn from_gateway_to_starknet_block(block: starknet_client::reader::Block, client: Arc<StarknetFeederGatewayClient>) -> Block {
-    let transactions_vec: BoundedVec<Transaction, MaxTransactions> = get_txs(block.clone(), client).await;
+pub async fn from_gateway_to_starknet_block(block: starknet_client::reader::Block) -> Block {
+    let transactions_vec: BoundedVec<Transaction, MaxTransactions> = get_txs(block.clone());
     let transaction_receipts_vec: BoundedVec<TransactionReceiptWrapper, MaxTransactions> = get_txs_receipts(block.clone(), transactions_vec.clone());
     let header = get_header(block.clone(), transactions_vec.clone());
     // if (header.block_number) >= 10 {
@@ -291,19 +291,19 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
         max_retries: 10,
     };
 
-    let starknet_client = Arc::new(StarknetFeederGatewayClient::new(
+    let starknet_client = StarknetFeederGatewayClient::new(
         &rpc_config.starknet_url,
         None,
         NODE_VERSION,
         retry_config
-    ).unwrap());    
+    ).unwrap();    
 
     let mut i = get_last_synced_block(rpc_port).await.unwrap().unwrap() + 1;
     loop {
         let block = starknet_client.block(BlockNumber(i)).await;
         match block {
             Ok(block) => {
-                let starknet_block = from_gateway_to_starknet_block(block.unwrap(), starknet_client.clone()).await;
+                let starknet_block = from_gateway_to_starknet_block(block.unwrap()).await;
                 {
                     let mut queue_guard: std::sync::MutexGuard<'_, VecDeque<Block>> = queue.lock().unwrap();
                     queue_guard.push_back(starknet_block);
