@@ -54,11 +54,21 @@ pub trait GetAccountTransactionContext {
     fn get_account_transaction_context(&self, is_query: bool) -> AccountTransactionContext;
 }
 
+pub trait SimulateTxVersionOffset {
+    fn apply_simulate_tx_version_offset(&self) -> TransactionVersion;
+}
+
+impl SimulateTxVersionOffset for TransactionVersion {
+    fn apply_simulate_tx_version_offset(&self) -> TransactionVersion {
+        Felt252Wrapper(Felt252Wrapper::from(self.0).0 + SIMULATE_TX_VERSION_OFFSET).into()
+    }
+}
+
 impl GetAccountTransactionContext for DeclareTransaction {
     fn get_account_transaction_context(&self, is_query: bool) -> AccountTransactionContext {
         let mut version = self.tx().version();
         if is_query {
-            version = Felt252Wrapper(Felt252Wrapper::from(version.0).0 + SIMULATE_TX_VERSION_OFFSET).into();
+            version = version.apply_simulate_tx_version_offset();
         }
 
         AccountTransactionContext {
@@ -76,7 +86,7 @@ impl GetAccountTransactionContext for DeployAccountTransaction {
     fn get_account_transaction_context(&self, is_query: bool) -> AccountTransactionContext {
         let mut version = self.version();
         if is_query {
-            version = Felt252Wrapper(Felt252Wrapper::from(version.0).0 + SIMULATE_TX_VERSION_OFFSET).into();
+            version = version.apply_simulate_tx_version_offset();
         }
 
         AccountTransactionContext {
@@ -97,7 +107,7 @@ impl GetAccountTransactionContext for InvokeTransaction {
             starknet_api::transaction::InvokeTransaction::V1(_) => TransactionVersion(StarkFelt::from(1u8)),
         };
         if is_query {
-            version = Felt252Wrapper(Felt252Wrapper::from(version.0).0 + SIMULATE_TX_VERSION_OFFSET).into();
+            version = version.apply_simulate_tx_version_offset();
         }
 
         let nonce = match &self.tx {
@@ -125,7 +135,7 @@ impl GetAccountTransactionContext for L1HandlerTransaction {
     fn get_account_transaction_context(&self, is_query: bool) -> AccountTransactionContext {
         let mut version = self.tx.version;
         if is_query {
-            version = Felt252Wrapper(Felt252Wrapper::from(version.0).0 + SIMULATE_TX_VERSION_OFFSET).into();
+            version = version.apply_simulate_tx_version_offset();
         }
 
         AccountTransactionContext {
@@ -564,9 +574,11 @@ impl Execute for L1HandlerTransaction {
 
 #[cfg(test)]
 mod simulate_tx_offset {
+    use blockifier::execution::contract_class::ContractClass;
     use starknet_ff::FieldElement;
 
-    use super::SIMULATE_TX_VERSION_OFFSET;
+    use super::*;
+
     #[test]
     fn offset_is_correct() {
         assert_eq!(
@@ -575,6 +587,85 @@ mod simulate_tx_offset {
         );
     }
 
-    // TODO: add test that check that each get_account_transaction_context impl correctly uses this
-    // offset
+    #[test]
+    fn l1_handler_transaction_correctly_applies_simulate_tx_version_offset() {
+        let l1_handler_tx = L1HandlerTransaction {
+            tx: Default::default(),
+            paid_fee_on_l1: Default::default(),
+            tx_hash: Default::default(),
+        };
+
+        let original_version = l1_handler_tx.tx.version;
+        let queried_version = l1_handler_tx.get_account_transaction_context(true).version;
+
+        assert_eq!(
+            queried_version,
+            Felt252Wrapper(Felt252Wrapper::from(original_version.0).0 + SIMULATE_TX_VERSION_OFFSET).into()
+        );
+
+        let non_queried_version = l1_handler_tx.get_account_transaction_context(false).version;
+        assert_eq!(non_queried_version, original_version);
+    }
+
+    #[test]
+    fn deploy_account_transaction_correctly_applies_simulate_tx_version_offset() {
+        let deploy_account_tx = DeployAccountTransaction {
+            tx: Default::default(),
+            tx_hash: Default::default(),
+            contract_address: Default::default(),
+        };
+
+        let original_version = deploy_account_tx.tx.version;
+
+        let queried_version = deploy_account_tx.get_account_transaction_context(true).version;
+        assert_eq!(
+            queried_version,
+            Felt252Wrapper(Felt252Wrapper::from(original_version.0).0 + SIMULATE_TX_VERSION_OFFSET).into()
+        );
+
+        let non_queried_version = deploy_account_tx.get_account_transaction_context(false).version;
+        assert_eq!(non_queried_version, original_version);
+    }
+
+    #[test]
+    fn declare_transaction_correctly_applies_simulate_tx_version_offset() {
+        let declare_tx_v0 = DeclareTransaction::new(
+            starknet_api::transaction::DeclareTransaction::V0(Default::default()),
+            Default::default(),
+            ContractClass::V0(Default::default()),
+        )
+        .unwrap();
+
+        // gen TxVersion from v0 manually
+        let original_version_v0 = TransactionVersion(StarkFelt::from(0u8));
+
+        let queried_version = declare_tx_v0.get_account_transaction_context(true).version;
+        assert_eq!(
+            queried_version,
+            Felt252Wrapper(Felt252Wrapper::from(original_version_v0.0).0 + SIMULATE_TX_VERSION_OFFSET).into()
+        );
+
+        let non_queried_version = declare_tx_v0.get_account_transaction_context(false).version;
+        assert_eq!(non_queried_version, original_version_v0);
+    }
+
+    #[test]
+    fn invoke_transaction_correctly_applies_simulate_tx_version_offset() {
+        let invoke_tx = InvokeTransaction {
+            tx: starknet_api::transaction::InvokeTransaction::V0(Default::default()),
+            tx_hash: Default::default(),
+        };
+
+        // gen TxVersion from v0 manually
+        let original_version_v0 = TransactionVersion(StarkFelt::from(0u8));
+
+        let queried_version = invoke_tx.get_account_transaction_context(true).version;
+        assert_eq!(
+            queried_version,
+            Felt252Wrapper(Felt252Wrapper::from(original_version_v0.0).0 + SIMULATE_TX_VERSION_OFFSET).into()
+        );
+
+        let non_queried_version = invoke_tx.get_account_transaction_context(false).version;
+        assert_eq!(non_queried_version, original_version_v0);
+    }
 }
