@@ -275,6 +275,47 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
 }
 
 #[test]
+fn given_contract_run_deploy_account_braavos_tx_works_signature() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let none_origin = RuntimeOrigin::none();
+        let (proxy_class_hash, calldata) = account_helper(AccountType::V0(AccountTypeV0Inner::BraavosProxy));
+        let mut calldata: Vec<_> = calldata.0.iter().map(|e| Felt252Wrapper::from(*e)).collect();
+        calldata.push(Felt252Wrapper::ONE);
+        calldata.push(Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap());
+
+        let mut deploy_tx = DeployAccountTransaction {
+            max_fee: u64::MAX as u128,
+            signature: vec![],
+            nonce: Felt252Wrapper::ZERO,
+            contract_address_salt: *SALT,
+            constructor_calldata: calldata,
+            class_hash: proxy_class_hash.into(),
+        };
+
+        let tx_hash = deploy_tx.compute_hash::<<MockRuntime as Config>::SystemHash>(Starknet::chain_id(), false);
+        let signer_model = [
+            Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap(), //  signer_0
+            Felt252Wrapper::ZERO,                                            //  signer_1
+            Felt252Wrapper::ZERO,                                            //  signer_2
+            Felt252Wrapper::ZERO,                                            //  signer_3
+            Felt252Wrapper::ONE,                                             //  type = SIGNER_TYPE_STARK
+            Felt252Wrapper::ZERO,                                            //  reserved_0
+            Felt252Wrapper::ZERO,                                            //  reserved_1
+        ];
+        deploy_tx.signature = sign_message_hash_braavos(tx_hash, Felt252Wrapper::ZERO, &signer_model);
+
+        let address = deploy_tx.account_address().into();
+        set_infinite_tokens::<MockRuntime>(&address);
+        set_signer(address, AccountType::V0(AccountTypeV0Inner::Braavos));
+
+        assert_ok!(Starknet::deploy_account(none_origin, deploy_tx));
+        assert_eq!(Starknet::contract_class_hash_by_address(address), proxy_class_hash);
+    });
+}
+
+#[test]
 fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fails() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);

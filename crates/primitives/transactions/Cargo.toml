@@ -61,6 +61,10 @@ std = [
   "cairo-lang-casm-contract-class?/std",
   "cairo-lang-utils?/std",
   "cairo-vm?/std",
+  "mp-state/std",
+  "mp-hashers/std",
+  "mp-felt/std",
+  "mp-fee/std",
 ]
 client = [
   "std",
