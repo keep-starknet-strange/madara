@@ -234,8 +234,9 @@ To run the tests, simply run `cargo test -p starknet-rpc-test -- test <test_file
 For easier debugging make sure to enable the background node's logs with `MADARA_LOG=true`.
 
 e.g
+
 ```bash
-$ MADARA_LOG=true cargo test --package starknet-rpc-test -- --exact --nocapture --test-threads=1
+MADARA_LOG=true cargo test --package starknet-rpc-test -- --exact --nocapture --test-threads=1
 ```
 
 ### Test locally
