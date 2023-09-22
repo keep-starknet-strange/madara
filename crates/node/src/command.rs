@@ -40,11 +40,11 @@ impl SubstrateCli for Cli {
                 let enable_manual_seal = self.run.sealing.map(|_| true);
                 Box::new(chain_spec::development_config(
                     enable_manual_seal,
-                    self.run.madara_path.clone().expect("Failed retrieving madara_path"),
+                    self.run.madara_path.clone().expect("`madara_path` expected to be set with clap default value"),
                 )?)
             }
             "" | "local" | "madara-local" => Box::new(chain_spec::local_testnet_config(
-                self.run.madara_path.clone().expect("Failed retrieving madara_path"),
+                self.run.madara_path.clone().expect("`madara_path` expected to be set with clap default value"),
             )?),
             path => Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
         })
@@ -69,12 +69,19 @@ fn set_dev_environment(cli: &mut Cli) {
     cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
 }
 
-fn set_testnet(cli: &mut Cli, testnet: Testnet) -> Result<(), String> {
+fn try_set_testnet(cli: &mut Cli) -> Result<(), String> {
     // checks if it should retrieve and enable a specific chain-spec
-    let madara_path = cli.run.madara_path.clone().expect("Failed retrieving madara_path").to_str().unwrap().to_string();
+    let madara_path = cli
+        .run
+        .madara_path
+        .clone()
+        .expect("`madara_path` expected to be set with clap default value")
+        .to_str()
+        .unwrap()
+        .to_string();
     let local_path = utils::get_project_path();
 
-    if testnet == Testnet::Sharingan {
+    if cli.run.testnet == Some(Testnet::Sharingan) {
         if let Ok(ref src_path) = local_path {
             let src_path = src_path.clone() + "/configs/chain-specs/testnet-sharingan-raw.json";
             utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs")?;
@@ -96,18 +103,38 @@ fn set_testnet(cli: &mut Cli, testnet: Testnet) -> Result<(), String> {
     Ok(())
 }
 
-fn set_chain_spec(cli: &mut Cli, chain_spec_url: String) -> Result<(), String> {
-    let madara_path = cli.run.madara_path.clone().expect("Failed retrieving madara_path").to_str().unwrap().to_string();
+fn set_chain_spec(cli: &mut Cli) -> Result<(), String> {
+    let madara_path = cli
+        .run
+        .madara_path
+        .clone()
+        .expect("`madara_path` expected to be set with clap default value")
+        .to_str()
+        .unwrap()
+        .to_string();
 
+    let chain_spec_url = cli
+        .run
+        .fetch_chain_spec
+        .clone()
+        .expect("`chain_spec_url` expected to be setted because it the function is called upon verification");
     utils::fetch_from_url(chain_spec_url.clone(), madara_path.clone() + "/chain-specs")?;
-    let chain_spec = chain_spec_url.split('/').last().expect("Chain spec file name not found");
+    let chain_spec =
+        chain_spec_url.split('/').last().expect("Failed to get chain spec file name from `chain_spec_url`");
     cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/" + chain_spec);
 
     Ok(())
 }
 
 fn fetch_madara_configs(cli: &Cli) -> Result<(), String> {
-    let madara_path = cli.run.madara_path.clone().expect("Failed retrieving madara_path").to_str().unwrap().to_string();
+    let madara_path = cli
+        .run
+        .madara_path
+        .clone()
+        .expect("`madara_path` expected to be set with clap default value")
+        .to_str()
+        .unwrap()
+        .to_string();
     let local_path = utils::get_project_path();
 
     if let Ok(ref src_path) = local_path {
@@ -116,7 +143,7 @@ fn fetch_madara_configs(cli: &Cli) -> Result<(), String> {
 
         let madara_configs: configs::Configs =
             serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?)
-                .expect("Failed to load madara configs");
+                .expect("Failed to serialize index.json string to json");
         for asset in madara_configs.genesis_assets {
             let src_path = src_path.clone() + "/configs/genesis-assets/" + &asset.name;
             utils::copy_from_filesystem(src_path, madara_path.clone() + "/configs/genesis-assets")?;
@@ -126,7 +153,7 @@ fn fetch_madara_configs(cli: &Cli) -> Result<(), String> {
 
         let madara_configs: configs::Configs =
             serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?)
-                .expect("Failed to load madara configs");
+                .expect("Failed to serialize index.json string to json");
 
         for asset in madara_configs.genesis_assets {
             configs::fetch_and_validate_file(
@@ -265,8 +292,14 @@ pub fn run() -> sc_cli::Result<()> {
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
         Some(Subcommand::Run(cmd)) => {
-            let madara_path =
-                cli.run.madara_path.clone().expect("Failed retrieving madara_path").to_str().unwrap().to_string();
+            let madara_path = cli
+                .run
+                .madara_path
+                .clone()
+                .expect("`madara_path` expected to be set with clap default value")
+                .to_str()
+                .unwrap()
+                .to_string();
 
             // Set the node_key_file for substrate in the case that it was not manually setted
             if cmd.run_cmd.network_params.node_key_params.node_key_file.is_none() {
@@ -278,12 +311,12 @@ pub fn run() -> sc_cli::Result<()> {
                 set_dev_environment(&mut cli);
             }
 
-            if let Some(chain_spec_url) = cli.run.fetch_chain_spec.clone() {
-                set_chain_spec(&mut cli, chain_spec_url)?;
+            if cli.run.fetch_chain_spec.is_some() {
+                set_chain_spec(&mut cli)?;
             }
 
-            if let Some(testnet) = cli.run.testnet {
-                set_testnet(&mut cli, testnet)?;
+            if cli.run.testnet.is_some() {
+                try_set_testnet(&mut cli)?;
             }
 
             let da_config: Option<(DaLayer, PathBuf)> = match cli.run.da_layer {

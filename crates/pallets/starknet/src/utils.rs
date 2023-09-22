@@ -80,7 +80,7 @@ pub fn fetch_from_url(target: String, dest_path: String) -> Result<(), Error> {
     log::info!("Trying to fetch {} to {} from url", target, dest_path);
     let mut dst = std::path::PathBuf::from(dest_path);
     std::fs::create_dir_all(&dst)?;
-    dst.push(target.split('/').last().expect("File name not found"));
+    dst.push(target.split('/').last().expect("Failed to get file name from `target` while fetching url"));
 
     let response = reqwest::blocking::get(target.clone())?;
 
