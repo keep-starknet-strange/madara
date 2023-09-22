@@ -14,17 +14,19 @@ publish = false
 repository = "https://github.com/keep-starknet-strange/madara"
 
 [dependencies]
-blockifier = { workspace = true, default-features = false }
-frame-support = { workspace = true }
-frame-system = { workspace = true }
-mp-starknet = { workspace = true, default-features = true }
-pallet-starknet = { workspace = true, default-features = true }
-sc-client-api = { workspace = true, default-features = true }
-scale-codec = { workspace = true, default-features = true }
-sp-api = { workspace = true, default-features = true }
-sp-blockchain = { workspace = true, default-features = true }
-sp-core = { workspace = true, default-features = true }
-sp-io = { workspace = true, default-features = true }
-sp-runtime = { workspace = true, default-features = true }
-sp-storage = { workspace = true, default-features = true }
-starknet-core = { workspace = true }
+blockifier = { workspace = true, features = ["std"] }
+frame-support = { workspace = true, features = ["std"] }
+frame-system = { workspace = true, features = ["std"] }
+madara-runtime = { workspace = true, features = ["std"] }
+mp-storage = { workspace = true, features = ["std"] }
+pallet-starknet = { workspace = true, features = ["std"] }
+sc-client-api = { workspace = true }
+scale-codec = { workspace = true, features = ["std"] }
+sp-api = { workspace = true, features = ["std"] }
+sp-blockchain = { workspace = true }
+sp-core = { workspace = true, features = ["std"] }
+sp-io = { workspace = true, features = ["std"] }
+sp-runtime = { workspace = true, features = ["std"] }
+sp-storage = { workspace = true, features = ["std"] }
+starknet-core = { workspace = true, features = ["std"] }
+starknet_api = { workspace = true, features = ["std"] }

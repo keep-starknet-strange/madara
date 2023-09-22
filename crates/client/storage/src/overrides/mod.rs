@@ -4,17 +4,17 @@ use std::sync::Arc;
 
 use blockifier::execution::contract_class::ContractClass;
 use frame_support::{Identity, StorageHasher};
-use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
-use mp_starknet::storage::StarknetStorageSchemaVersion;
+use mp_storage::StarknetStorageSchemaVersion;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
-use pallet_starknet::types::NonceWrapper;
 use sc_client_api::{Backend, HeaderBackend, StorageProvider};
 use sp_api::ProvideRuntimeApi;
 use sp_io::hashing::twox_128;
 use sp_runtime::traits::Block as BlockT;
+use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
+use starknet_api::hash::StarkFelt;
+use starknet_api::state::StorageKey;
 
 mod schema_v1_override;
-use starknet_core::types::FieldElement;
 
 pub use self::schema_v1_override::SchemaV1Override;
 use crate::onchain_storage_schema;
@@ -59,26 +59,22 @@ pub trait StorageOverride<B: BlockT>: Send + Sync {
     fn get_storage_by_storage_key(
         &self,
         block_hash: B::Hash,
-        address: ContractAddressWrapper,
-        key: FieldElement,
-    ) -> Option<Felt252Wrapper>;
+        address: ContractAddress,
+        key: StorageKey,
+    ) -> Option<StarkFelt>;
 
     /// Return the class hash at the provided address for the provided block.
-    fn contract_class_hash_by_address(
-        &self,
-        block_hash: B::Hash,
-        address: ContractAddressWrapper,
-    ) -> Option<ClassHashWrapper>;
+    fn contract_class_hash_by_address(&self, block_hash: B::Hash, address: ContractAddress) -> Option<ClassHash>;
     /// Return the contract class at the provided address for the provided block.
-    fn contract_class_by_address(&self, block_hash: B::Hash, address: ContractAddressWrapper) -> Option<ContractClass>;
+    fn contract_class_by_address(&self, block_hash: B::Hash, address: ContractAddress) -> Option<ContractClass>;
     /// Return the contract class for a provided class_hash and block hash.
     fn contract_class_by_class_hash(
         &self,
         block_hash: B::Hash,
-        contract_class_hash: ClassHashWrapper,
+        contract_class_hash: ClassHash,
     ) -> Option<ContractClass>;
     /// Returns the nonce for a provided contract address and block hash.
-    fn nonce(&self, block_hash: B::Hash, address: ContractAddressWrapper) -> Option<NonceWrapper>;
+    fn nonce(&self, block_hash: B::Hash, address: ContractAddress) -> Option<Nonce>;
 }
 
 /// Returns the storage prefix given the pallet module name and the storage name
@@ -115,12 +111,12 @@ where
     fn get_storage_by_storage_key(
         &self,
         block_hash: <B as BlockT>::Hash,
-        address: ContractAddressWrapper,
-        key: FieldElement,
-    ) -> Option<Felt252Wrapper> {
+        address: ContractAddress,
+        key: StorageKey,
+    ) -> Option<StarkFelt> {
         let api = self.client.runtime_api();
 
-        match api.get_storage_at(block_hash, address, key.into()) {
+        match api.get_storage_at(block_hash, address, key) {
             Ok(Ok(storage)) => Some(storage),
             Ok(Err(_)) => None,
             Err(_) => None,
@@ -130,15 +126,12 @@ where
     fn contract_class_by_address(
         &self,
         block_hash: <B as BlockT>::Hash,
-        address: ContractAddressWrapper,
+        address: ContractAddress,
     ) -> Option<ContractClass> {
         let api = self.client.runtime_api();
         let contract_class_hash = api.contract_class_hash_by_address(block_hash, address).ok()?;
 
-        match contract_class_hash {
-            None => None,
-            Some(contract_class_hash) => api.contract_class_by_class_hash(block_hash, contract_class_hash).ok()?,
-        }
+        api.contract_class_by_class_hash(block_hash, contract_class_hash).ok()?
     }
 
     // Use the runtime api to fetch the class hash at the provided address for the provided block.
@@ -152,10 +145,10 @@ where
     fn contract_class_hash_by_address(
         &self,
         block_hash: <B as BlockT>::Hash,
-        address: ContractAddressWrapper,
-    ) -> Option<ClassHashWrapper> {
+        address: ContractAddress,
+    ) -> Option<ClassHash> {
         let api = self.client.runtime_api();
-        api.contract_class_hash_by_address(block_hash, address).ok()?
+        api.contract_class_hash_by_address(block_hash, address).ok()
     }
 
     /// Return the contract class for a provided class_hash and block hash.
@@ -170,7 +163,7 @@ where
     fn contract_class_by_class_hash(
         &self,
         block_hash: <B as BlockT>::Hash,
-        contract_class_hash: ClassHashWrapper,
+        contract_class_hash: ClassHash,
     ) -> Option<ContractClass> {
         self.client.runtime_api().contract_class_by_class_hash(block_hash, contract_class_hash).ok()?
     }
@@ -184,7 +177,7 @@ where
     ///
     /// # Returns
     /// * `Some(nonce)` - The nonce for the provided contract address and block hash
-    fn nonce(&self, block_hash: <B as BlockT>::Hash, contract_address: ContractAddressWrapper) -> Option<NonceWrapper> {
+    fn nonce(&self, block_hash: <B as BlockT>::Hash, contract_address: ContractAddress) -> Option<Nonce> {
         self.client.runtime_api().nonce(block_hash, contract_address).ok()
     }
 }

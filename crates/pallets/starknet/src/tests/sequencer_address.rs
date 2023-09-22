@@ -1,7 +1,8 @@
 use frame_support::assert_ok;
 use frame_support::traits::Hooks;
-use mp_starknet::sequencer_address::{DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY};
-use starknet_crypto::FieldElement;
+use mp_sequencer_address::{DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY};
+use starknet_api::api_core::{ContractAddress, PatriciaKey};
+use starknet_api::hash::StarkFelt;
 
 use super::mock::default_mock::*;
 use super::mock::*;
@@ -19,7 +20,7 @@ fn sequencer_address_is_set_to_default_when_not_provided() {
         basic_test_setup(0);
         assert_eq!(
             Starknet::sequencer_address(),
-            FieldElement::from_byte_slice_be(&GOOD_SEQUENCER_ADDRESS).unwrap().into()
+            ContractAddress(PatriciaKey(StarkFelt::new(GOOD_SEQUENCER_ADDRESS).unwrap()))
         );
     });
 }
@@ -32,7 +33,7 @@ fn sequencer_address_is_set_to_default_when_provided_in_bad_format() {
         sp_io::offchain_index::set(SEQ_ADDR_STORAGE_KEY, &BAD_SEQUENCER_ADDRESS);
         assert_eq!(
             Starknet::sequencer_address(),
-            FieldElement::from_byte_slice_be(&DEFAULT_SEQUENCER_ADDRESS).unwrap().into()
+            ContractAddress(PatriciaKey(StarkFelt::new(DEFAULT_SEQUENCER_ADDRESS).unwrap()))
         );
     });
 }
@@ -45,7 +46,7 @@ fn sequencer_address_is_set_correctly() {
         sp_io::offchain_index::set(SEQ_ADDR_STORAGE_KEY, &GOOD_SEQUENCER_ADDRESS);
         assert_eq!(
             Starknet::sequencer_address(),
-            FieldElement::from_byte_slice_be(&GOOD_SEQUENCER_ADDRESS).unwrap().into()
+            ContractAddress(PatriciaKey(StarkFelt::new(GOOD_SEQUENCER_ADDRESS).unwrap()))
         );
     });
     ext.persist_offchain_overlay();
@@ -62,12 +63,12 @@ fn sequencer_address_is_set_only_once_per_block() {
         sp_io::offchain_index::set(SEQ_ADDR_STORAGE_KEY, &GOOD_SEQUENCER_ADDRESS);
         assert_eq!(
             Starknet::sequencer_address(),
-            FieldElement::from_byte_slice_be(&GOOD_SEQUENCER_ADDRESS).unwrap().into()
+            ContractAddress(PatriciaKey(StarkFelt::new(GOOD_SEQUENCER_ADDRESS).unwrap())),
         );
         sp_io::offchain_index::set(SEQ_ADDR_STORAGE_KEY, &DEFAULT_SEQUENCER_ADDRESS);
         assert_eq!(
             Starknet::sequencer_address(),
-            FieldElement::from_byte_slice_be(&GOOD_SEQUENCER_ADDRESS).unwrap().into()
+            ContractAddress(PatriciaKey(StarkFelt::new(GOOD_SEQUENCER_ADDRESS).unwrap())),
         );
     });
     ext.persist_offchain_overlay();
@@ -83,7 +84,7 @@ fn sequencer_address_has_not_been_updated() {
         sp_io::offchain_index::set(SEQ_ADDR_STORAGE_KEY, &GOOD_SEQUENCER_ADDRESS);
         assert_eq!(
             Starknet::sequencer_address(),
-            FieldElement::from_byte_slice_be(&GOOD_SEQUENCER_ADDRESS).unwrap().into()
+            ContractAddress(PatriciaKey(StarkFelt::new(GOOD_SEQUENCER_ADDRESS).unwrap())),
         );
         run_to_block(1);
         assert!(!Starknet::seq_addr_update());

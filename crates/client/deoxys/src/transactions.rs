@@ -10,6 +10,7 @@ use starknet_api::{api_core::{PatriciaKey, ClassHash}, stark_felt, hash::StarkFe
 use std::{env, fs};
 use std::fs::File;
 use std::io::Write;
+use pallet_starknet::genesis_loader::read_contract_class_from_json;
 
 
 use crate::{RpcConfig, NODE_VERSION};
@@ -37,7 +38,7 @@ pub async fn convert_to_contract_class(class_hash: ClassHash) -> Result<Contract
     let mut file = File::create("contract_class_output.txt").map_err(|e| format!("File Error: {:?}", e))?;
     write!(file, "{:?}", contract_class).map_err(|e| format!("Write Error: {:?}", e))?;
 
-    let result = mp_starknet::starknet_serde::get_contract_class(&contract_class, 1u8);
+    let result = read_contract_class_from_json(&contract_class, 1u8);
     Ok(result)
 }
 
@@ -54,7 +55,7 @@ pub fn leading_bits(arr: &[u8; 32]) -> U256 {
     U256::from(count)
 }
 
-pub async fn declare_tx_to_starknet_tx(declare_transaction: IntermediateDeclareTransaction) -> Transaction {
+pub async fn declare_tx_to_starknet_tx(declare_transaction: IntermediateDeclareTransaction) -> mp_transactions::Transaction::DeclareTransaction {
     let mut signature_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
     for item in &declare_transaction.signature.0 {
         match signature_vec.try_push(Felt252Wrapper::try_from(item.bytes()).unwrap()) {

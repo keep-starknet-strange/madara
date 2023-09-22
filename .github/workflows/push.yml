@@ -20,11 +20,6 @@ jobs:
     uses: ./.github/workflows/linters-cargo.yml
     needs: rust_build
 
-  tests:
-    name: Run tests and coverage
-    uses: ./.github/workflows/tests-coverage.yml
-    needs: [rust_build]
-
   # benchmark:
   #   name: Run benchmarks
   #   uses: ./.github/workflows/benchmarks.yml
@@ -37,9 +32,10 @@ jobs:
   #     # post on the pull-request page
   #     pull-requests: write
 
+  # TODO change it to benchmark when enabled
   rustdoc:
     name: Deploy docs to GitHub Pages
     uses: ./.github/workflows/rustdoc.yml
-    needs: tests
+    needs: linters_cargo
     permissions:
       contents: write

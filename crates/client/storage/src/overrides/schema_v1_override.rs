@@ -2,18 +2,18 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 use blockifier::execution::contract_class::ContractClass;
-use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
-use mp_starknet::storage::{
+use mp_storage::{
     PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_NONCE, STARKNET_STORAGE,
 };
-use pallet_starknet::types::NonceWrapper;
 // Substrate
 use sc_client_api::backend::{Backend, StorageProvider};
 use scale_codec::{Decode, Encode};
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
 use sp_storage::StorageKey;
-use starknet_core::types::FieldElement;
+use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
+use starknet_api::hash::StarkFelt;
+use starknet_api::state::StorageKey as StarknetStorageKey;
 
 use super::{storage_key_build, storage_prefix_build, StorageOverride};
 
@@ -57,11 +57,10 @@ where
     fn get_storage_by_storage_key(
         &self,
         block_hash: <B as BlockT>::Hash,
-        address: ContractAddressWrapper,
-        key: FieldElement,
-    ) -> Option<Felt252Wrapper> {
+        address: ContractAddress,
+        key: StarknetStorageKey,
+    ) -> Option<StarkFelt> {
         let storage_storage_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_STORAGE);
-        let key = key.to_bytes_be();
         let key = (address, key);
 
         // check if contract exists
@@ -70,21 +69,21 @@ where
             None => return None,
         }
 
-        let storage = self.query_storage::<Felt252Wrapper>(
+        let storage = self.query_storage::<StarkFelt>(
             block_hash,
             &StorageKey(storage_key_build(storage_storage_prefix, &self.encode_storage_key(&key))),
         );
 
         match storage {
             Some(storage) => Some(storage),
-            None => Some(Felt252Wrapper::default()),
+            None => Some(Default::default()),
         }
     }
 
     fn contract_class_by_address(
         &self,
         block_hash: <B as BlockT>::Hash,
-        address: ContractAddressWrapper,
+        address: ContractAddress,
     ) -> Option<ContractClass> {
         let class_hash = self.contract_class_hash_by_address(block_hash, address)?;
         self.contract_class_by_class_hash(block_hash, class_hash)
@@ -93,10 +92,10 @@ where
     fn contract_class_hash_by_address(
         &self,
         block_hash: <B as BlockT>::Hash,
-        address: ContractAddressWrapper,
-    ) -> Option<ClassHashWrapper> {
+        address: ContractAddress,
+    ) -> Option<ClassHash> {
         let storage_contract_class_hash_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CONTRACT_CLASS_HASH);
-        self.query_storage::<ClassHashWrapper>(
+        self.query_storage::<ClassHash>(
             block_hash,
             &StorageKey(storage_key_build(storage_contract_class_hash_prefix, &self.encode_storage_key(&address))),
         )
@@ -105,7 +104,7 @@ where
     fn contract_class_by_class_hash(
         &self,
         block_hash: <B as BlockT>::Hash,
-        contract_class_hash: ClassHashWrapper,
+        contract_class_hash: ClassHash,
     ) -> Option<ContractClass> {
         let storage_contract_class_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CONTRACT_CLASS);
         self.query_storage::<ContractClass>(
@@ -117,16 +116,16 @@ where
         )
     }
 
-    fn nonce(&self, block_hash: <B as BlockT>::Hash, address: ContractAddressWrapper) -> Option<NonceWrapper> {
+    fn nonce(&self, block_hash: <B as BlockT>::Hash, address: ContractAddress) -> Option<Nonce> {
         let storage_nonce_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_NONCE);
-        let nonce = self.query_storage::<NonceWrapper>(
+        let nonce = self.query_storage::<Nonce>(
             block_hash,
             &StorageKey(storage_key_build(storage_nonce_prefix, &self.encode_storage_key(&address))),
         );
 
         match nonce {
             Some(nonce) => Some(nonce),
-            None => Some(NonceWrapper::default()),
+            None => Some(Nonce::default()),
         }
     }
 }

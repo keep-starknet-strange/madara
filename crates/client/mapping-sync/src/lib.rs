@@ -10,6 +10,7 @@
 
 mod sync_blocks;
 
+use std::marker::PhantomData;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::time::Duration;
@@ -18,8 +19,7 @@ use futures::prelude::*;
 use futures::task::{Context, Poll};
 use futures_timer::Delay;
 use log::debug;
-use mp_starknet::traits::hash::HasherT;
-use mp_starknet::traits::ThreadSafeCopy;
+use mp_hashers::HasherT;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::client::ImportNotifications;
@@ -36,7 +36,7 @@ pub struct MappingSyncWorker<B: BlockT, C, BE, H> {
     client: Arc<C>,
     substrate_backend: Arc<BE>,
     madara_backend: Arc<mc_db::Backend<B>>,
-    hasher: Arc<H>,
+    hasher: PhantomData<H>,
 
     have_next: bool,
     retry_times: usize,
@@ -55,7 +55,7 @@ impl<B: BlockT, C, BE, H> MappingSyncWorker<B, C, BE, H> {
         frontier_backend: Arc<mc_db::Backend<B>>,
         retry_times: usize,
         sync_from: <B::Header as HeaderT>::Number,
-        hasher: Arc<H>,
+        hasher: PhantomData<H>,
     ) -> Self {
         Self {
             import_notifications,
@@ -80,7 +80,7 @@ where
     C::Api: StarknetRuntimeApi<B>,
     C: HeaderBackend<B> + StorageProvider<B, BE>,
     BE: Backend<B>,
-    H: HasherT + ThreadSafeCopy,
+    H: HasherT,
 {
     type Item = ();
 
@@ -114,13 +114,12 @@ where
         if fire {
             self.inner_delay = None;
 
-            match sync_blocks::sync_blocks(
+            match sync_blocks::sync_blocks::<_, _, _, H>(
                 self.client.as_ref(),
                 self.substrate_backend.as_ref(),
                 self.madara_backend.as_ref(),
                 self.retry_times,
                 self.sync_from,
-                self.hasher.as_ref(),
             ) {
                 Ok(have_next) => {
                     self.have_next = have_next;

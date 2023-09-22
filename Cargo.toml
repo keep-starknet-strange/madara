@@ -1,10 +1,19 @@
 [workspace]
+resolver = "2"
 members = [
   "crates/node",
   "crates/runtime",
   "crates/pallets/starknet",
-  "crates/primitives/starknet",
   "crates/primitives/digest-log",
+  "crates/primitives/transactions",
+  "crates/primitives/felt",
+  "crates/primitives/hashers",
+  "crates/primitives/fee",
+  "crates/primitives/state",
+  "crates/primitives/block",
+  "crates/primitives/sequencer-address",
+  "crates/primitives/storage",
+  "crates/primitives/commitments",
   "crates/client/block-proposer",
   "crates/client/db",
   "crates/client/rpc-core",
@@ -14,6 +23,7 @@ members = [
   "crates/client/transaction-pool",
   "crates/client/deoxys",
   "crates/client/starknet_client",
+  "starknet-rpc-test",
 ]
 
 [profile.release]
@@ -112,8 +122,16 @@ pallet-timestamp = { default-features = false, git = "https://github.com/parityt
 pallet-starknet = { path = "crates/pallets/starknet", default-features = false }
 
 # Madara primtitives
-mp-starknet = { path = "crates/primitives/starknet", default-features = false }
 mp-digest-log = { path = "crates/primitives/digest-log", default-features = false }
+mp-block = { path = "crates/primitives/block", default-features = false }
+mp-fee = { path = "crates/primitives/fee", default-features = false }
+mp-felt = { path = "crates/primitives/felt", default-features = false }
+mp-hashers = { path = "crates/primitives/hashers", default-features = false }
+mp-sequencer-address = { path = "crates/primitives/sequencer-address", default-features = false }
+mp-state = { path = "crates/primitives/state", default-features = false }
+mp-storage = { path = "crates/primitives/storage", default-features = false }
+mp-transactions = { path = "crates/primitives/transactions", default-features = false }
+mp-commitments = { path = "crates/primitives/commitments", default-features = false }
 
 # Madara client
 mc-mapping-sync = { path = "crates/client/mapping-sync" }
@@ -123,6 +141,7 @@ mc-rpc = { path = "crates/client/rpc" }
 mc-rpc-core = { path = "crates/client/rpc-core" }
 mc-block-proposer = { path = "crates/client/block-proposer" }
 mc-transaction-pool = { path = "crates/client/transaction-pool" }
+mc-data-availability = { path = "crates/client/data-availability" }
 
 # Madara runtime
 madara-runtime = { path = "crates/runtime" }
@@ -134,8 +153,12 @@ cairo-vm = { git = "https://github.com/keep-starknet-strange/cairo-rs", branch =
   "parity-scale-codec",
 ] }
 starknet-crypto = { version = "0.6.0", default-features = false }
-starknet-core = { version = "0.5.0", default-features = false }
+starknet-core = { version = "0.6.0", default-features = false }
+starknet-providers = { version = "0.6.0", default-features = false }
 starknet-ff = { version = "0.3.4", default-features = false }
+starknet-signers = { version = "0.4.0" }
+starknet-accounts = { version = "0.5.0" }
+starknet-contract = { version = "0.5.0" }
 
 blockifier = { git = "https://github.com/keep-starknet-strange/blockifier", branch = "no_std-support-7578442", default-features = false, features = [
   "parity-scale-codec",
@@ -146,7 +169,7 @@ starknet_api = { git = "https://github.com/keep-starknet-strange/starknet-api", 
 ], default-features = false }
 
 # Cairo lang
-cairo-lang-starknet = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support-8bbf530", default-features = false }
+cairo-lang-starknet = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support-8bbf530" }
 cairo-lang-casm-contract-class = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support-8bbf530", default-features = false }
 cairo-lang-casm = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support-8bbf530", default-features = false }
 cairo-lang-utils = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support-8bbf530", default-features = false }
@@ -155,30 +178,33 @@ cairo-lang-utils = { git = "https://github.com/keep-starknet-strange/cairo.git",
 anyhow = "1.0.75"
 flate2 = "1.0.27"
 scale-codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false }
+parity-scale-codec = { version = "3.2.2", default-features = false }
 scale-info = { version = "2.9.0", default-features = false }
 lazy_static = { version = "1.4.0", default-features = false }
 log = { version = "0.4.20", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 safe-mix = { version = "1.0", default-features = false }
 jsonrpsee = { version = "0.16.3", default-features = false }
-clap = { version = "4.3.23", default-features = false }
+clap = { version = "4.4.2", default-features = false }
 futures = { version = "0.3.28", default-features = false }
 futures-timer = { version = "3.0.2", default-features = false }
 reqwest = { version = "0.11.20", default-features = false }
-serde = { version = "1.0.185", default-features = false }
-serde_json = { version = "1.0.105", default-features = false }
+serde = { version = "1.0.188", default-features = false }
+serde_json = { version = "1.0.107", default-features = false }
 serde_with = { version = "2.3.3", default-features = false }
 bitvec = { version = "1", default-features = false }
 thiserror = "1.0.48"
 thiserror-no-std = "2.0.2"
 derive_more = { version = "0.99.17", default-features = false }
-rstest = "0.17.0"
+rstest = "0.18.1"
 pretty_assertions = "1.4.0"
 linked-hash-map = { version = "0.5.6", default-features = false }
 parking_lot = "0.12.1"
 async-trait = "0.1.73"
 indexmap = { git = "https://github.com/bluss/indexmap", rev = "ca5f848e10c31e80aeaad0720d14aa2f6dd6cfb1", default-features = false }
-num-traits = "0.2.8"
+num-traits = "0.2.16"
+num-bigint = "0.4.4"
+phf = { version = "0.11", default-features = false }
 
 # Deoxys
 mc-deoxys = { path = "crates/client/deoxys" }
@@ -208,7 +234,6 @@ assert = "0.0.4"
 itertools = "0.10.5"
 strum_macros = "0.25.2"
 tempfile = "3.3.0"
-num-bigint = "0.4"
 async-stream = "0.3.3"
 axum = "0.6.12"
 base64 = "0.13.0"
@@ -228,7 +253,6 @@ metrics = "0.21.0"
 once_cell = "1.17.1"
 paste = "1.0.9"
 primitive-types = "0.12.1"
-parity-scale-codec = "3.5.0"
 prometheus-parse = "0.2.4"
 regex = "1.9.0"
 rustc-hex = "2.1.0"
@@ -240,4 +264,3 @@ strum = "0.25.0"
 tokio-stream = "0.1.8"
 tracing-subscriber = "0.3.16"
 tower = "0.4"
-

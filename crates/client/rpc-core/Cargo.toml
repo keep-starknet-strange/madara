@@ -30,9 +30,9 @@ jsonrpsee = { workspace = true, features = [
   "server",
   "macros",
 ], default-features = true }
+mp-block = { workspace = true }
 mp-digest-log = { workspace = true }
-mp-starknet = { workspace = true, default-features = true }
-num-bigint = { version = "0.4.4", default-features = false }
+num-bigint = { workspace = true }
 serde = { workspace = true, default-features = true }
 serde_json = { workspace = true }
 serde_with = { workspace = true }
@@ -41,4 +41,8 @@ sp-blockchain = { workspace = true, default-features = true }
 sp-core = { workspace = true }
 sp-runtime = { workspace = true, default-features = true }
 starknet-core = { workspace = true }
-starknet_api = { workspace = true, default-features = false }
+starknet_api = { workspace = true, default-features = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+assert_matches = "1.5.0"

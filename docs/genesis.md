@@ -38,11 +38,10 @@ The below defines all hardcoded values set in the geneses:
 | 0x07db5c2c2676c2a5bfc892ee4f596b49514e3056a0eee8ad125870b4fb1dd909 | Braavos account call aggregator class hash     |
 | 0x3131fa018d520a037686ce3efddeab8f28895662f019ca3ca18a626650f7d1e  | Proxy class hash                               |
 | 0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd | Openzeppelin account class hash                |
-| 0x1000                                                             | Test contract class hash                       |
-| 0x10000                                                            | ERC20 class hash                               |
-| 0x20000                                                            | ERC20 class hash                               |
-| 0x80000                                                            | ERC721 class hash                              |
-| 0x90000                                                            | Universal deployer class hash                  |
+| 0x05a2b92d9a36509a3d651e7df99144a4ad8301e2caf42465ee6ab0451ae91882 | Test contract class hash                       |
+| 0x0372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4 | ERC20 class hash                               |
+| 0x077cc28ed3c661419fda16bf120fb81f1f8f28617f5543b05a86d63b0926bbf4 | ERC721 class hash                              |
+| 0x04569ffd48c2a3d455437c16dc843801fb896b1af845bc8bc7ba83ebc4358b7f | Universal deployer class hash                  |
 
 <!-- markdownlint-disable MD013 -->
 
@@ -56,11 +55,11 @@ The below defines all hardcoded values set in the geneses:
 | 0x2                                                                | 0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d |
 | 0x3                                                                | 0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd |
 | 0x4                                                                | 0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276  |
-| 0x1111                                                             | 0x1000                                                             |
-| 0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00 | 0x10000                                                            |
-| 0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d02 | 0x80000                                                            |
-| 0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7  | 0x20000                                                            |
-| 0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf | 0x90000                                                            |
+| 0x1111                                                             | 0x05a2b92d9a36509a3d651e7df99144a4ad8301e2caf42465ee6ab0451ae91882 |
+| 0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00 | 0x0372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4 |
+| 0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d02 | 0x077cc28ed3c661419fda16bf120fb81f1f8f28617f5543b05a86d63b0926bbf4 |
+| 0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7  | 0x0372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4 |
+| 0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf | 0x07b3e05f48f0c69e4a65ce5e076a66271a527aff2c34ce1083ec6e1526997a69 |
 
 <!-- markdownlint-disable MD013 -->
 

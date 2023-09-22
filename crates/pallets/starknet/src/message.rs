@@ -1,10 +1,6 @@
-use frame_support::BoundedVec;
-use mp_starknet::constants::INITIAL_GAS;
-use mp_starknet::execution::types::{
-    CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
-};
-use mp_starknet::transaction::types::Transaction;
-use scale_codec::{Decode, Encode};
+use mp_felt::Felt252Wrapper;
+use mp_transactions::HandleL1MessageTransaction;
+use parity_scale_codec::{Decode, Encode};
 use serde::Deserialize;
 
 use crate::alloc::format;
@@ -44,19 +40,19 @@ pub fn get_messages_events(from_block: u64, to_block: u64) -> String {
 
 impl Message {
     /// Converts a `Message` into a transaction object.
-    pub fn try_into_transaction(&self) -> Result<Transaction, OffchainWorkerError> {
+    pub fn try_into_transaction(&self) -> Result<HandleL1MessageTransaction, OffchainWorkerError> {
         // Data at least contains a nonce and at some point the fees.
         if self.data.is_empty() {
             return Err(OffchainWorkerError::EmptyData);
         }
         // L2 contract to call.
-        let sender_address = match Felt252Wrapper::from_hex_be(self.topics[2].as_str()) {
+        let contract_address = match Felt252Wrapper::from_hex_be(self.topics[2].as_str()) {
             Ok(f) => f,
             Err(_) => return Err(OffchainWorkerError::ToTransactionError),
         };
 
         // Function of the contract to call.
-        let selector = match Felt252Wrapper::from_hex_be(self.topics[3].as_str()) {
+        let entry_point_selector = match Felt252Wrapper::from_hex_be(self.topics[3].as_str()) {
             Ok(f) => f,
             Err(_) => return Err(OffchainWorkerError::ToTransactionError),
         };
@@ -69,9 +65,11 @@ impl Message {
         // string which is the concatenation of those fields).
         let data_map = char_vec.chunks(64).map(|chunk| chunk.iter().collect::<String>());
         // L1 message nonce.
-        let nonce =
-            Felt252Wrapper::from_hex_be(&data_map.clone().last().ok_or(OffchainWorkerError::ToTransactionError)?)
-                .map_err(|_| OffchainWorkerError::ToTransactionError)?;
+        let nonce = u64::from_str_radix(
+            data_map.clone().last().ok_or(OffchainWorkerError::ToTransactionError)?.trim_start_matches("0x"),
+            16,
+        )
+        .map_err(|_| OffchainWorkerError::ToTransactionError)?;
         let mut calldata: Vec<Felt252Wrapper> = Vec::new();
         for val in data_map.take(self.data.len() - 2) {
             calldata.push(match Felt252Wrapper::from_hex_be(val.as_str()) {
@@ -79,17 +77,8 @@ impl Message {
                 Err(_) => return Err(OffchainWorkerError::ToTransactionError),
             })
         }
-        let calldata = BoundedVec::try_from(calldata).map_err(|_| OffchainWorkerError::ToTransactionError)?;
-        let call_entrypoint = CallEntryPointWrapper {
-            class_hash: None,
-            entrypoint_type: EntryPointTypeWrapper::L1Handler,
-            entrypoint_selector: Some(selector),
-            calldata,
-            storage_address: sender_address,
-            caller_address: ContractAddressWrapper::default(),
-            initial_gas: INITIAL_GAS.into(),
-            compiled_class_hash: None,
-        };
-        Ok(Transaction { sender_address, nonce, call_entrypoint, ..Transaction::default() })
+        let tx = HandleL1MessageTransaction { nonce, contract_address, entry_point_selector, calldata };
+
+        Ok(tx)
     }
 }

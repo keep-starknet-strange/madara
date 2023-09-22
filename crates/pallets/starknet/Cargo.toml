@@ -15,18 +15,28 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # Madara primitives
-mp-digest-log = { workspace = true, default-features = false }
-mp-starknet = { workspace = true, default-features = false }
+mp-block = { workspace = true }
+mp-commitments = { workspace = true }
+mp-digest-log = { workspace = true }
+mp-fee = { workspace = true }
+mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
+mp-hashers = { workspace = true }
+mp-sequencer-address = { workspace = true, features = ["parity-scale-codec"] }
+mp-state = { workspace = true }
+mp-storage = { workspace = true, features = ["parity-scale-codec"] }
+mp-transactions = { workspace = true, features = ["scale-info"] }
 
-blockifier = { workspace = true, default-features = false, features = [
+blockifier = { workspace = true, features = [
   "testing",
   "parity-scale-codec",
+  "scale-info",
 ] }
-starknet-core = { workspace = true, default-features = false }
-starknet-crypto = { workspace = true, default-features = false, features = [
-  "alloc",
+starknet-core = { workspace = true }
+starknet-crypto = { workspace = true, features = ["alloc"] }
+starknet_api = { workspace = true, features = [
+  "scale-info",
+  "parity-scale-codec",
 ] }
-starknet_api = { workspace = true, default-features = false }
 
 # Substrate frame
 frame-benchmarking = { workspace = true, optional = true }
@@ -44,15 +54,16 @@ sp-std = { workspace = true }
 # Frame pallets
 
 # Other third party dependencies
+cairo-lang-casm-contract-class = { workspace = true, optional = true, features = [
+  "std",
+] }
 hex = { workspace = true }
 indexmap = { workspace = true }
 log = { workspace = true }
+parity-scale-codec = { workspace = true, features = ["derive"] }
 reqwest = { workspace = true, optional = true, features = [
   "blocking",
   "rustls-tls",
-] }
-scale-codec = { package = "parity-scale-codec", workspace = true, features = [
-  "derive",
 ] }
 scale-info = { workspace = true, features = ["derive"] }
 serde = { workspace = true, features = ["derive"] }
@@ -65,6 +76,8 @@ pretty_assertions = { workspace = true }
 test-case = "3.1.0"
 lazy_static = "1.4.0"
 hexlit = "0.5.5"
+assert_matches = "1.5.0"
+starknet-ff = { workspace = true }
 
 [features]
 default = ["std"]
@@ -79,14 +92,13 @@ std = [
   "scale-info/std",
   "pallet-timestamp/std",
   "sp-inherents/std",
-  # Madara
-  "mp-starknet/std",
   # Starknet
   "starknet-crypto/std",
   "blockifier/std",
   # Other third party dependencies
-  "scale-codec/std",
-  "reqwest",
+  "dep:reqwest",
+  "dep:cairo-lang-casm-contract-class",
+  "parity-scale-codec/std",
 ]
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
 try-runtime = ["frame-support/try-runtime"]

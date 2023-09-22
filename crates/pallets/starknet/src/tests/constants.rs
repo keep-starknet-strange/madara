@@ -1,5 +1,5 @@
 use lazy_static::lazy_static;
-use mp_starknet::execution::types::Felt252Wrapper;
+use mp_felt::Felt252Wrapper;
 
 pub const ACCOUNT_PRIVATE_KEY: &str = "0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d";
 pub const ACCOUNT_PUBLIC_KEY: &str = "0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2";

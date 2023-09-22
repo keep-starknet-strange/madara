@@ -6,7 +6,6 @@
 <br />
 <!-- markdownlint-restore -->
 
-[![GitHub Workflow Status](https://github.com/kasarLabs/deoxys/actions/workflows/test.yml/badge.svg)](https://github.com/kasarLabs/deoxys/actions/workflows/test.yml)
 [![Project license](https://img.shields.io/github/license/kasarLabs/deoxys.svg?style=flat-square)](LICENSE)
 [![Pull Requests welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg?style=flat-square)](https://github.com/kasarLabs/deoxys/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
 <a href="https://twitter.com/KasarLabs">

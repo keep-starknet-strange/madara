@@ -23,7 +23,6 @@ mc-db = { workspace = true }
 mc-rpc-core = { workspace = true }
 mc-storage = { workspace = true }
 mc-transaction-pool = { workspace = true }
-mp-starknet = { workspace = true }
 # Substate primitives
 frame-support = { workspace = true }
 frame-system = { workspace = true }
@@ -50,6 +49,10 @@ jsonrpsee = { workspace = true, default-features = true, features = [
   "macros",
 ] }
 log = { workspace = true, default-features = true }
+mp-block = { workspace = true }
+mp-felt = { workspace = true }
+mp-hashers = { workspace = true }
+mp-transactions = { workspace = true, features = ["client"] }
 serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }
 

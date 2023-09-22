@@ -10,7 +10,6 @@ pub use frame_support::weights::constants::{
 pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
-use mp_starknet::constants::SN_GOERLI_CHAIN_ID;
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -24,6 +23,14 @@ use sp_std::marker::PhantomData;
 
 use crate::*;
 
+/// ChainId for Starknet Goerli testnet
+pub const SN_GOERLI_CHAIN_ID: Felt252Wrapper = Felt252Wrapper(starknet_ff::FieldElement::from_mont([
+    3753493103916128178,
+    18446744073709548950,
+    18446744073709551615,
+    398700013197595345,
+]));
+
 // Configure FRAME pallets to include in runtime.
 
 // --------------------------------------
@@ -33,7 +40,7 @@ use crate::*;
 /// Configure the Starknet pallet in pallets/starknet.
 impl pallet_starknet::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
+    type SystemHash = StarknetHasher;
     type TimestampProvider = Timestamp;
     type UnsignedPriority = UnsignedPriority;
     type TransactionLongevity = TransactionLongevity;

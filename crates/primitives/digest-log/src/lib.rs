@@ -20,8 +20,8 @@ mod error;
 mod tests;
 
 pub use error::FindLogError;
-use mp_starknet::block::Block as StarknetBlock;
-use scale_codec::{Decode, Encode};
+use mp_block::Block as StarknetBlock;
+use parity_scale_codec::{Decode, Encode};
 use sp_runtime::generic::{Digest, OpaqueDigestItemId};
 use sp_runtime::ConsensusEngineId;
 
@@ -31,7 +31,7 @@ pub const MADARA_ENGINE_ID: ConsensusEngineId = [b'm', b'a', b'd', b'a'];
 ///
 /// Right now we only expect Madara to log the Starknet block,
 /// but other usecases may appears later on.
-#[derive(Debug, Clone, PartialEq, Eq, Encode, Decode)]
+#[derive(Debug, Clone, Encode, Decode, PartialEq, Eq)]
 pub enum Log {
     #[codec(index = 0)]
     Block(StarknetBlock),

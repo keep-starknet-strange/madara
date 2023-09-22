@@ -5,7 +5,7 @@ use mp_starknet::transaction::types::{Transaction, TransactionReceiptWrapper, Ev
 use reqwest::StatusCode;
 use sp_core::U256;
 use mp_starknet::execution::types::{Felt252Wrapper, ContractAddressWrapper};
-use mp_starknet::block::{Block, Header, MaxTransactions };
+use mp_block::{Block, Header };
 use reqwest::header::{HeaderMap, CONTENT_TYPE, self, HeaderValue};
 use serde_json::{json, Value};
 use sp_core::bounded_vec::BoundedVec;
@@ -46,16 +46,16 @@ pub fn create_block_queue() -> BlockQueue {
 
 
 // This function converts a block received from the gateway into a StarkNet block
-pub fn get_header(block: starknet_client::reader::Block, transactions: BoundedVec<Transaction, MaxTransactions>) -> Header  {
+pub fn get_header(block: starknet_client::reader::Block, transactions: BoundedVec<Transaction, MaxTransactions>) -> mp_block::Header  {
     let parent_block_hash = Felt252Wrapper::try_from(block.parent_block_hash.0.bytes());
     let block_number = block.block_number.0;
     let global_state_root = Felt252Wrapper::try_from(block.state_root.0.bytes());
     let status = match block.status {
-        starknet_client::reader::objects::block::BlockStatus::Pending => mp_starknet::block::BlockStatus::Pending,
-        starknet_client::reader::objects::block::BlockStatus::AcceptedOnL2 => mp_starknet::block::BlockStatus::AcceptedOnL2,
-        starknet_client::reader::objects::block::BlockStatus::AcceptedOnL1 => mp_starknet::block::BlockStatus::AcceptedOnL1,
-        starknet_client::reader::objects::block::BlockStatus::Reverted => mp_starknet::block::BlockStatus::Reverted,
-        starknet_client::reader::objects::block::BlockStatus::Aborted => mp_starknet::block::BlockStatus::Aborted,
+        starknet_client::reader::objects::block::BlockStatus::Pending => starknet_core::types::BlockStatus::Pending,
+        starknet_client::reader::objects::block::BlockStatus::AcceptedOnL2 => starknet_core::types::BlockStatus::AcceptedOnL2,
+        starknet_client::reader::objects::block::BlockStatus::AcceptedOnL1 => starknet_core::types::BlockStatus::AcceptedOnL1,
+        starknet_client::reader::objects::block::BlockStatus::Reverted => starknet_core::types::BlockStatus::Rejected,
+        starknet_client::reader::objects::block::BlockStatus::Aborted => starknet_core::types::BlockStatus::Rejected,
     };
     let sequencer_address = Felt252Wrapper(FieldElement::from(*PatriciaKey::key(&block.sequencer_address.0)));
     let block_timestamp = block.timestamp.0;
@@ -73,11 +73,10 @@ pub fn get_header(block: starknet_client::reader::Block, transactions: BoundedVe
     let event_commitment = calculate_event_commitment::<PedersenHasher>(&all_events);
     let protocol_version = Some(0u8);
     let extra_data: U256 = Felt252Wrapper::try_from(block.block_hash.0.bytes()).unwrap().into();
-    let starknet_header = Header::new(
+    let starknet_header = mp_block::Header::new(
         parent_block_hash.unwrap(),
         block_number.into(),
         global_state_root.unwrap(),
-        status,
         sequencer_address,
         block_timestamp,
         transaction_count,
@@ -90,34 +89,34 @@ pub fn get_header(block: starknet_client::reader::Block, transactions: BoundedVe
     starknet_header
 }
 
-pub async fn get_txs(block: starknet_client::reader::Block) -> BoundedVec<mp_starknet::transaction::types::Transaction, MaxTransactions> {
-    let mut transactions_vec: BoundedVec<Transaction, MaxTransactions> = BoundedVec::new();
+pub async fn get_txs(block: starknet_client::reader::Block) -> mp_block::BlockTransactions {
+    let mut transactions_vec: mp_block::BlockTransactions;
         for transaction in &block.transactions {
             match transaction {
                 starknet_client::reader::objects::transaction::Transaction::Declare(declare_transaction) => {
                     // convert declare_transaction to starknet transaction
                     let tx = declare_tx_to_starknet_tx(declare_transaction.clone()).await;
-                    transactions_vec.try_push(tx).unwrap();
+                    transactions_vec.push(tx);
                 },
                 starknet_client::reader::objects::transaction::Transaction::DeployAccount(deploy_account_transaction) => {
                     // convert declare_transaction to starknet transaction
                     let tx = deploy_account_tx_to_starknet_tx(deploy_account_transaction.clone());
-                    transactions_vec.try_push(tx).unwrap();
+                    transactions_vec.push(tx);
                 },
                 starknet_client::reader::objects::transaction::Transaction::Deploy(deploy_transaction) => {
                     // convert declare_transaction to starknet transaction
                     let tx = deploy_tx_to_starknet_tx(deploy_transaction.clone()).await;
-                    transactions_vec.try_push(tx).unwrap();
+                    transactions_vec.push(tx);
                 },
                 starknet_client::reader::objects::transaction::Transaction::Invoke(invoke_transaction) => {
                     // convert invoke_transaction to starknet transaction
                     let tx = invoke_tx_to_starknet_tx(invoke_transaction.clone());
-                    transactions_vec.try_push(tx).unwrap();
+                    transactions_vec.push(tx);
                 },
                 starknet_client::reader::objects::transaction::Transaction::L1Handler(l1handler_transaction) => {
                     // convert declare_transaction to starknet transaction
                     let tx = l1handler_tx_to_starknet_tx(l1handler_transaction.clone());
-                    transactions_vec.try_push(tx).unwrap();
+                    transactions_vec.push(tx);
                 },
             }
         }
@@ -171,14 +170,13 @@ pub fn get_txs_receipts(block: starknet_client::reader::Block, transactions: Bou
 
 
 // This function converts a block received from the gateway into a StarkNet block
-pub async fn from_gateway_to_starknet_block(block: starknet_client::reader::Block) -> Block {
-    let transactions_vec: BoundedVec<Transaction, MaxTransactions> = get_txs(block.clone()).await;
+pub async fn from_gateway_to_starknet_block(block: starknet_client::reader::Block) -> mp_block::Block {
+    let transactions_vec: mp_block::BlockTransactions = get_txs(block.clone()).await;
     let transaction_receipts_vec: BoundedVec<TransactionReceiptWrapper, MaxTransactions> = get_txs_receipts(block.clone(), transactions_vec.clone());
     let header = get_header(block.clone(), transactions_vec.clone());
-    Block::new(
+    mp_block::Block::new(
         header,
         transactions_vec,
-        transaction_receipts_vec
     )
 }
 

@@ -27,3 +27,5 @@ pub type Hash = sp_core::H256;
 pub type InvokeTxMaxNSteps = u32;
 /// The maximum amount of steps allowed for validation. (?)
 pub type ValidateMaxNSteps = u32;
+
+pub type StarknetHasher = mp_hashers::pedersen::PedersenHasher;

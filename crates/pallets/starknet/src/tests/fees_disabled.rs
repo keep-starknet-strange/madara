@@ -1,6 +1,9 @@
 use frame_support::assert_ok;
-use mp_starknet::execution::types::{ContractAddressWrapper, Felt252Wrapper};
-use mp_starknet::transaction::types::InvokeTransaction;
+use mp_felt::Felt252Wrapper;
+use mp_transactions::InvokeTransaction;
+use starknet_api::api_core::{ContractAddress, EntryPointSelector, PatriciaKey};
+use starknet_api::hash::StarkFelt;
+use starknet_api::transaction::Calldata;
 
 use super::constants::FEE_TOKEN_ADDRESS;
 use super::mock::{default_mock, fees_disabled_mock, *};
@@ -13,7 +16,7 @@ fn given_default_runtime_with_fees_enabled_txn_deducts_fee_token() {
         default_mock::basic_test_setup(2);
         let origin = default_mock::RuntimeOrigin::none();
 
-        let address = get_account_address(AccountType::V0(AccountTypeV0Inner::NoValidate));
+        let address = get_account_address(None, AccountType::V0(AccountTypeV0Inner::NoValidate));
         let (initial_balance_low, initial_balance_high) = get_balance_default_mock(address);
 
         // transfer to zero fee token so that the only change in balance can happen because of fees
@@ -32,7 +35,7 @@ fn given_default_runtime_with_fees_disabled_txn_does_not_deduct_fee_token() {
         fees_disabled_mock::basic_test_setup(2);
         let origin = fees_disabled_mock::RuntimeOrigin::none();
 
-        let address = get_account_address(AccountType::V0(AccountTypeV0Inner::NoValidate));
+        let address = get_account_address(None, AccountType::V0(AccountTypeV0Inner::NoValidate));
         let (initial_balance_low, initial_balance_high) = get_balance_fees_disabled_mock(address);
 
         // transfer to zero fee token so that the only change in balance can happen because of fees
@@ -45,34 +48,39 @@ fn given_default_runtime_with_fees_disabled_txn_does_not_deduct_fee_token() {
     });
 }
 
-fn build_invoke_transaction(address: ContractAddressWrapper) -> InvokeTransaction {
+fn build_invoke_transaction(address: ContractAddress) -> InvokeTransaction {
     build_transfer_invoke_transaction(BuildTransferInvokeTransaction {
-        sender_address: address,
+        sender_address: address.into(),
         token_address: Felt252Wrapper::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(),
-        recipient: address,
+        recipient: address.into(),
         amount_low: Felt252Wrapper::ZERO,
         amount_high: Felt252Wrapper::ZERO,
         nonce: Felt252Wrapper::ZERO,
     })
 }
 
-fn get_balance_default_mock(account_address: ContractAddressWrapper) -> (Felt252Wrapper, Felt252Wrapper) {
-    let get_balance_call = build_get_balance_call(account_address);
-    let result =
-        default_mock::Starknet::call_contract(get_balance_call.0, get_balance_call.1, get_balance_call.2).unwrap();
+fn get_balance_default_mock(account_address: ContractAddress) -> (Felt252Wrapper, Felt252Wrapper) {
+    let (selector, calldata) = build_get_balance_call(account_address);
+    let result = default_mock::Starknet::call_contract(
+        ContractAddress(PatriciaKey(StarkFelt::try_from(FEE_TOKEN_ADDRESS).unwrap())),
+        selector,
+        calldata,
+    )
+    .unwrap();
     (result[0], result[1])
 }
 
-fn get_balance_fees_disabled_mock(account_address: ContractAddressWrapper) -> (Felt252Wrapper, Felt252Wrapper) {
-    let get_balance_call = build_get_balance_call(account_address);
-    let result =
-        fees_disabled_mock::Starknet::call_contract(get_balance_call.0, get_balance_call.1, get_balance_call.2)
-            .unwrap();
+fn get_balance_fees_disabled_mock(account_address: ContractAddress) -> (Felt252Wrapper, Felt252Wrapper) {
+    let (selector, calldata) = build_get_balance_call(account_address);
+    let result = fees_disabled_mock::Starknet::call_contract(
+        ContractAddress(PatriciaKey(StarkFelt::try_from(FEE_TOKEN_ADDRESS).unwrap())),
+        selector,
+        calldata,
+    )
+    .unwrap();
     (result[0], result[1])
 }
 
-fn build_get_balance_call(
-    account_address: ContractAddressWrapper,
-) -> (Felt252Wrapper, Felt252Wrapper, Vec<Felt252Wrapper>) {
-    build_get_balance_contract_call(account_address, Felt252Wrapper::from_hex_be(FEE_TOKEN_ADDRESS).unwrap())
+fn build_get_balance_call(account_address: ContractAddress) -> (EntryPointSelector, Calldata) {
+    build_get_balance_contract_call(account_address.0.0)
 }

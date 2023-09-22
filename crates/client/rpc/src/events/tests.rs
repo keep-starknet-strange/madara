@@ -1,8 +1,8 @@
-use mp_starknet::execution::types::{ContractAddressWrapper, Felt252Wrapper};
-use mp_starknet::transaction::types::EventWrapper;
+use std::iter::zip;
+
+use mp_felt::Felt252Wrapper;
 use rstest::*;
-use sp_core::bounded_vec;
-use sp_runtime::BoundedVec;
+use starknet_core::types::EmittedEvent;
 use starknet_ff::FieldElement;
 
 use crate::events::filter_events_by_params;
@@ -10,12 +10,28 @@ use crate::events::filter_events_by_params;
 #[derive(Debug, Clone)]
 struct TestCase<'a> {
     _name: &'a str,
-    events: Vec<EventWrapper>,
+    events: Vec<EmittedEvent>,
     filter_keys: Vec<Vec<FieldElement>>,
     filter_address: Option<Felt252Wrapper>,
-    max_results: Option<usize>,
-    expected_events: Vec<EventWrapper>,
-    expected_continuation_token: usize,
+    max_results: usize,
+    expected_events: Vec<EmittedEvent>,
+    n_visited: usize,
+}
+
+// This is only exist because EmittedEvent don't impl Eq, PartialEq
+// It will be fixed upstream in the future
+fn assert_emitted_events_are_equals(event1: EmittedEvent, event2: EmittedEvent) {
+    assert_eq!(event1.from_address, event2.from_address);
+    assert_eq!(event1.keys, event2.keys);
+    assert_eq!(event1.data, event2.data);
+    assert_eq!(event1.block_hash, event2.block_hash);
+    assert_eq!(event1.block_number, event2.block_number);
+    assert_eq!(event1.transaction_hash, event2.transaction_hash);
+}
+
+fn assert_vecs_of_emitted_events_are_equals(v1: Vec<EmittedEvent>, v2: Vec<EmittedEvent>) {
+    assert_eq!(v1.len(), v2.len(), "the two Vec should be of equal length");
+    zip(v1, v2).for_each(|(e1, e2)| assert_emitted_events_are_equals(e1, e2))
 }
 
 #[fixture]
@@ -34,81 +50,81 @@ fn build_test_case() -> Vec<TestCase<'static>> {
             events: events.clone(),
             filter_keys: vec![vec![FieldElement::from(1_u32)], vec![], vec![FieldElement::from(3_u32)]],
             filter_address: None,
-            max_results: None,
+            max_results: 100,
             expected_events: vec![event1.clone(), event2.clone(), event5.clone()],
-            expected_continuation_token: 5,
+            n_visited: 5,
         },
         TestCase {
             _name: "filter events by address",
             events: events.clone(),
             filter_keys: vec![],
             filter_address: Some(Felt252Wrapper::from_dec_str("2").unwrap()),
-            max_results: None,
+            max_results: 100,
             expected_events: vec![event2.clone()],
-            expected_continuation_token: 5,
+            n_visited: 5,
         },
         TestCase {
             _name: "filter events by address and keys",
             events: events.clone(),
             filter_keys: vec![vec![FieldElement::from(1_u32)], vec![]],
             filter_address: Some(Felt252Wrapper::from_dec_str("3").unwrap()),
-            max_results: None,
+            max_results: 100,
             expected_events: vec![event5.clone()],
-            expected_continuation_token: 5,
+            n_visited: 5,
         },
         TestCase {
             _name: "filter events by max results where max results is met",
             events: events.clone(),
             filter_keys: vec![vec![FieldElement::from(1_u32)], vec![]],
             filter_address: None,
-            max_results: Some(1),
+            max_results: 1,
             expected_events: vec![event1.clone()],
-            expected_continuation_token: 1,
+            n_visited: 1,
         },
         TestCase {
             _name: "filter events by max results where max results is not met",
             events: events.clone(),
             filter_keys: vec![vec![FieldElement::from(10_u32)], vec![]],
             filter_address: None,
-            max_results: Some(1),
+            max_results: 1,
             expected_events: vec![],
-            expected_continuation_token: 5,
+            n_visited: 5,
         },
         TestCase {
             _name: "filter events where filter_keys.len() < event.keys.len()",
             events: events.clone(),
             filter_keys: vec![vec![FieldElement::from(1_u32)]],
             filter_address: None,
-            max_results: None,
+            max_results: 100,
             expected_events: vec![event1, event2, event4, event5],
-            expected_continuation_token: 5,
+            n_visited: 5,
         },
         TestCase {
             _name: "filter events where filter_keys.len() > event.keys.len()",
             events: events.clone(),
             filter_keys: vec![vec![FieldElement::from(1_u32)], vec![], vec![], vec![]],
             filter_address: None,
-            max_results: None,
+            max_results: 100,
             expected_events: vec![],
-            expected_continuation_token: 5,
+            n_visited: 5,
         },
         TestCase {
             _name: "filter events without any filters",
             events: events.clone(),
             filter_keys: vec![],
             filter_address: None,
-            max_results: None,
+            max_results: 100,
             expected_events: events,
-            expected_continuation_token: 5,
+            n_visited: 5,
         },
         TestCase {
             _name: "filter events without any events",
             events: vec![],
             filter_keys: vec![vec![FieldElement::from(1_u32)], vec![], vec![], vec![]],
             filter_address: None,
-            max_results: None,
+            max_results: 100,
             expected_events: vec![],
-            expected_continuation_token: 0,
+            n_visited: 0,
         },
     ]
 }
@@ -124,21 +140,28 @@ fn build_test_case() -> Vec<TestCase<'static>> {
 #[case::filter_with_no_filters(build_test_case()[7].clone())]
 #[case::filter_with_no_events(build_test_case()[8].clone())]
 fn filter_events_by_test_case(#[case] params: TestCase) {
-    let (filtered_events, continuation_token) = filter_events_by_params(
+    let mut n_visited = 0;
+    #[allow(clippy::iter_skip_zero)]
+    let filtered_events = filter_events_by_params(
         params.events.into_iter().skip(0),
         params.filter_address,
-        params.filter_keys,
+        &params.filter_keys,
         params.max_results,
+        &mut n_visited,
     );
-    pretty_assertions::assert_eq!(filtered_events, params.expected_events);
-    pretty_assertions::assert_eq!(continuation_token, params.expected_continuation_token);
+    assert_vecs_of_emitted_events_are_equals(filtered_events, params.expected_events);
+    pretty_assertions::assert_eq!(n_visited, params.n_visited);
 }
 
-fn build_event_wrapper_for_test(keys: &[&str], address_int: u64) -> EventWrapper {
-    let keys_felt = keys.iter().map(|key| Felt252Wrapper::from_hex_be(key).unwrap()).collect::<Vec<Felt252Wrapper>>();
-    EventWrapper {
-        keys: BoundedVec::try_from(keys_felt).unwrap(),
-        data: bounded_vec!(),
-        from_address: ContractAddressWrapper::from(address_int),
+fn build_event_wrapper_for_test(keys: &[&str], address_int: u64) -> EmittedEvent {
+    let keys = keys.iter().map(|key| FieldElement::from_hex_be(key).unwrap()).collect::<Vec<_>>();
+
+    EmittedEvent {
+        from_address: FieldElement::from(address_int),
+        keys,
+        data: vec![],
+        block_hash: Default::default(),
+        block_number: Default::default(),
+        transaction_hash: Default::default(),
     }
 }

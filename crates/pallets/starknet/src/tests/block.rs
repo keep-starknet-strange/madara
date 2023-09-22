@@ -3,11 +3,9 @@ use std::collections::HashMap;
 
 use frame_support::assert_ok;
 use mp_digest_log::{ensure_log, find_starknet_block};
-use mp_starknet::execution::types::{ContractAddressWrapper, Felt252Wrapper};
-use mp_starknet::sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
-use mp_starknet::traits::hash::DefaultHasher;
-use mp_starknet::transaction::types::InvokeTransaction;
-use starknet_api::api_core::{ChainId, ContractAddress};
+use mp_felt::Felt252Wrapper;
+use mp_sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
+use starknet_api::api_core::{ChainId, ContractAddress, PatriciaKey};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkFelt;
 
@@ -15,7 +13,7 @@ use super::mock::default_mock::*;
 use super::mock::*;
 use crate::tests::constants::FEE_TOKEN_ADDRESS;
 use crate::tests::get_invoke_dummy;
-use crate::{pallet, SeqAddrUpdate, SequencerAddress};
+use crate::{Config, SeqAddrUpdate, SequencerAddress};
 
 #[test]
 fn store_block_no_pending_transactions_works() {
@@ -33,14 +31,14 @@ fn store_block_no_pending_transactions_works() {
         let block = find_starknet_block(&digest).unwrap();
         assert_ok!(ensure_log(&digest));
         assert_eq!(0, block.transactions().len());
-        assert_eq!(0, block.transaction_receipts().len());
 
         // check BlockHash correct
-        let blockhash = block.header().hash(<default_mock::MockRuntime as pallet::Config>::SystemHash::hasher());
+        let blockhash = block.header().hash::<<MockRuntime as Config>::SystemHash>();
         assert_eq!(blockhash, Starknet::block_hash(BLOCK_NUMBER));
         // check pending storage killed
         assert_eq!(0, Starknet::pending().len());
-        assert_eq!(0, Starknet::pending_events().len());
+        assert_eq!(0, Starknet::pending_hashes().len());
+        assert_eq!(0, Starknet::event_count());
     });
 }
 
@@ -53,21 +51,19 @@ fn store_block_with_pending_transactions_works() {
         System::initialize(&BLOCK_NUMBER, &header.hash(), &Default::default());
 
         SeqAddrUpdate::<MockRuntime>::put(true);
-        let default_addr: ContractAddressWrapper =
-            ContractAddressWrapper::try_from(&DEFAULT_SEQUENCER_ADDRESS).unwrap();
+        let default_addr = ContractAddress(PatriciaKey(StarkFelt::new(DEFAULT_SEQUENCER_ADDRESS).unwrap()));
         SequencerAddress::<MockRuntime>::put(default_addr);
 
         // perform transactions
         // first invoke transaction
-        let transaction: InvokeTransaction = get_invoke_dummy().into();
+        let transaction = get_invoke_dummy(Felt252Wrapper::ZERO);
 
-        assert_ok!(Starknet::invoke(RuntimeOrigin::none(), transaction));
+        assert_ok!(Starknet::invoke(RuntimeOrigin::none(), transaction.into()));
 
         // second invoke transaction
-        let mut transaction: InvokeTransaction = get_invoke_dummy().into();
-        transaction.nonce = Felt252Wrapper::ONE;
+        let transaction = get_invoke_dummy(Felt252Wrapper::ONE);
 
-        assert_ok!(Starknet::invoke(RuntimeOrigin::none(), transaction));
+        assert_ok!(Starknet::invoke(RuntimeOrigin::none(), transaction.into()));
 
         // testing store_block
         Starknet::store_block(BLOCK_NUMBER);
@@ -77,14 +73,13 @@ fn store_block_with_pending_transactions_works() {
         let block = find_starknet_block(&digest).unwrap();
         assert_ok!(ensure_log(&digest));
         assert_eq!(2, block.transactions().len());
-        assert_eq!(2, block.transaction_receipts().len());
 
         // check BlockHash correct
-        let blockhash = block.header().hash(<default_mock::MockRuntime as pallet::Config>::SystemHash::hasher());
+        let blockhash = block.header().hash::<<MockRuntime as Config>::SystemHash>();
         assert_eq!(blockhash, Starknet::block_hash(BLOCK_NUMBER));
         // check pending storage killed
         assert_eq!(0, Starknet::pending().len());
-        assert_eq!(0, Starknet::pending_events().len());
+        assert_eq!(0, Starknet::event_count());
     });
 }
 
@@ -97,8 +92,7 @@ fn get_block_context_works() {
         System::initialize(&BLOCK_NUMBER, &header.hash(), &Default::default());
 
         SeqAddrUpdate::<MockRuntime>::put(true);
-        let default_addr: ContractAddressWrapper =
-            ContractAddressWrapper::try_from(&DEFAULT_SEQUENCER_ADDRESS).unwrap();
+        let default_addr = ContractAddress(PatriciaKey(StarkFelt::new(DEFAULT_SEQUENCER_ADDRESS).unwrap()));
         SequencerAddress::<MockRuntime>::put(default_addr);
 
         let block_context = Starknet::get_block_context();
@@ -109,16 +103,10 @@ fn get_block_context_works() {
         // correct chain_id
         assert_eq!(ChainId(Starknet::chain_id_str()), block_context.chain_id);
         // correct sequencer_address
-        assert_eq!(
-            ContractAddress::try_from(StarkFelt::new(default_addr.into()).unwrap()).unwrap(),
-            block_context.sequencer_address
-        );
+        assert_eq!(default_addr, block_context.sequencer_address);
         // correct fee_token_address
         assert_eq!(
-            ContractAddress::try_from(
-                StarkFelt::new(Felt252Wrapper::from_hex_be(FEE_TOKEN_ADDRESS).unwrap().into()).unwrap()
-            )
-            .unwrap(),
+            ContractAddress::try_from(StarkFelt::try_from(FEE_TOKEN_ADDRESS).unwrap()).unwrap(),
             block_context.fee_token_address
         );
         // correct vm_resource_fee_cost

@@ -8,9 +8,8 @@ authors = { workspace = true }
 repository = { workspace = true }
 
 [dependencies]
-mp-starknet = { workspace = true }
-scale-codec = { package = "parity-scale-codec", workspace = true, default-features = false }
-# Substrate
+mp-block = { workspace = true, features = ["parity-scale-codec"] }
+parity-scale-codec = { workspace = true }
 sp-runtime = { workspace = true }
 
 [dev-dependencies]
@@ -18,4 +17,4 @@ assert_matches = "1.5.0"
 
 [features]
 default = ["std"]
-std = ["mp-starknet/std", "scale-codec/std", "sp-runtime/std"]
+std = ["parity-scale-codec/std", "sp-runtime/std", "mp-block/std"]
