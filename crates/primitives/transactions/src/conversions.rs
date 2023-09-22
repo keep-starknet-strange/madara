@@ -9,6 +9,7 @@ use starknet_api::api_core::Nonce;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction as sttx;
 use starknet_api::transaction::{Fee, TransactionVersion};
+use alloc::vec::Vec;
 
 use super::compute_hash::ComputeTransactionHash;
 use super::{
@@ -199,3 +200,48 @@ fn vec_of_felt_to_signature(felts: &[Felt252Wrapper]) -> sttx::TransactionSignat
 fn vec_of_felt_to_calldata(felts: &[Felt252Wrapper]) -> sttx::Calldata {
     sttx::Calldata(Arc::new(felts.iter().map(|&f| f.into()).collect()))
 }
+
+impl From<sttx::DeclareTransactionV0V1> for DeclareTransactionV0 {
+    fn from(remote: sttx::DeclareTransactionV0V1) -> Self {
+        DeclareTransactionV0 {
+            max_fee: remote.max_fee.0,  // This assumes the `Fee` type's internal value can be accessed this way.
+            signature: signature_to_vec_of_felt(&remote.signature),
+            nonce: remote.nonce.into(),
+            class_hash: remote.class_hash.into(),
+            sender_address: remote.sender_address.into(),
+        }
+    }
+}
+
+// Conversion for DeclareTransactionV1
+impl From<sttx::DeclareTransactionV0V1> for DeclareTransactionV1 {
+    fn from(remote: sttx::DeclareTransactionV0V1) -> Self {
+        DeclareTransactionV1 {
+            max_fee: remote.max_fee.0,  // Assuming `Fee` type's inner value can be accessed with `.0`.
+            signature: signature_to_vec_of_felt(&remote.signature),
+            nonce: remote.nonce.into(),
+            class_hash: remote.class_hash.into(),
+            sender_address: remote.sender_address.into(),
+        }
+    }
+}
+
+// Conversion for DeclareTransactionV2
+impl From<sttx::DeclareTransactionV2> for DeclareTransactionV2 {
+    fn from(remote: sttx::DeclareTransactionV2) -> Self {
+        DeclareTransactionV2 {
+            max_fee: remote.max_fee.0,  // Assuming `Fee` type's inner value can be accessed with `.0`.
+            signature: signature_to_vec_of_felt(&remote.signature),
+            nonce: remote.nonce.into(),
+            class_hash: remote.class_hash.into(),
+            compiled_class_hash: remote.compiled_class_hash.into(),
+            sender_address: remote.sender_address.into(),
+        }
+    }
+}
+
+// Utility function to convert `TransactionSignature` into a vector of `Felt252Wrapper`
+fn signature_to_vec_of_felt(sig: &sttx::TransactionSignature) -> Vec<Felt252Wrapper> {
+    sig.0.iter().map(|&f| Felt252Wrapper::from(f)).collect()
+}
+

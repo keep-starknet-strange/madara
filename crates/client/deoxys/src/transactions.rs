@@ -4,7 +4,7 @@ use mp_starknet::{transaction::types::{Transaction, MaxArraySize, TxType}, execu
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sp_core::{bounded_vec::BoundedVec, U256};
 use blockifier::execution::contract_class::{ContractClass, ContractClassV0, ContractClassV1, ContractClassV1Inner};
-use starknet_client::{reader::{objects::transaction::{IntermediateInvokeTransaction, IntermediateDeclareTransaction, DeployAccountTransaction, L1HandlerTransaction, DeployTransaction}, StarknetFeederGatewayClient, StarknetReader, GenericContractClass}, RetryConfig};
+use starknet_client::{reader::{objects::transaction::{IntermediateInvokeTransaction, IntermediateDeclareTransaction, DeployAccountTransaction, L1HandlerTransaction, DeployTransaction}, StarknetFeederGatewayClient, StarknetReader, GenericContractClass, ReaderClientError}, RetryConfig};
 use starknet_ff::FieldElement;
 use starknet_api::{api_core::{PatriciaKey, ClassHash}, stark_felt, hash::StarkFelt};
 use std::{env, fs};
@@ -55,15 +55,46 @@ pub fn leading_bits(arr: &[u8; 32]) -> U256 {
     U256::from(count)
 }
 
-pub async fn declare_tx_to_starknet_tx(declare_transaction: IntermediateDeclareTransaction) -> mp_transactions::Transaction {
-    let starknet_declare_tx = starknet_api::transaction::DeclareTransaction::from(declare_transaction);
-    mp_transactions::Transaction::Declare(starknet_declare_tx)
+pub fn declare_tx_to_starknet_tx(
+    declare_transaction: IntermediateDeclareTransaction,
+) -> Result<mp_transactions::Transaction, ReaderClientError> {
+    
+    // Convert `IntermediateDeclareTransaction` to `starknet_api::transaction::DeclareTransaction`
+    let starknet_declare_tx = starknet_api::transaction::DeclareTransaction::try_from(declare_transaction)?;
+
+    // Convert `starknet_api::transaction::DeclareTransaction` to `mp_transactions::DeclareTransaction`
+    let mp_declare_tx = match starknet_declare_tx {
+        starknet_api::transaction::DeclareTransaction::V0(inner) => {
+            mp_transactions::DeclareTransaction::V0(DeclareTransactionV0::from(inner))
+        },
+        starknet_api::transaction::DeclareTransaction::V1(inner) => {
+            mp_transactions::DeclareTransaction::V1(DeclareTransactionV1::from(inner))
+        },
+        starknet_api::transaction::DeclareTransaction::V2(inner) => {
+            mp_transactions::DeclareTransaction::V2(DeclareTransactionV2::from(inner))
+        },
+    };
+
+    Ok(mp_transactions::Transaction::Declare(mp_declare_tx))
 }
-
-
 
 pub fn invoke_tx_to_starknet_tx(invoke_transaction : IntermediateInvokeTransaction) -> mp_transactions::Transaction {
     
+    let starknet_invoke_tx = starknet_api::transaction::InvokeTransaction::try_from(invoke_transaction)?;
+    
+    mp_transactions::Transaction {
+            tx_type: TxType::Deploy,
+            version: version_u8,
+            hash: Felt252Wrapper(deploy_transaction.transaction_hash.0.into()),
+            signature: BoundedVec::new(), // No signature needed for Deploy txs
+            sender_address: Felt252Wrapper::default(), // No sender address needed for Deploy txs
+            nonce: Felt252Wrapper::default(), // No nonce needed for Deploy txs
+            call_entrypoint: CallEntryPointWrapper::default(),
+            contract_class: contract_class,
+            contract_address_salt: Some(leading_bits(&FieldElement::from(deploy_transaction.contract_address_salt.0).to_bytes_be())),
+            max_fee: Felt252Wrapper::default(),
+            is_query: false,
+    }
 }
 
 pub async fn deploy_tx_to_starknet_tx(deploy_transaction : DeployTransaction) -> Transaction {

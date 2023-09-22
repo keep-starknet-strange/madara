@@ -95,8 +95,8 @@ pub async fn get_txs(block: starknet_client::reader::Block) -> mp_block::BlockTr
             match transaction {
                 starknet_client::reader::objects::transaction::Transaction::Declare(declare_transaction) => {
                     // convert declare_transaction to starknet transaction
-                    let tx = declare_tx_to_starknet_tx(declare_transaction.clone()).await;
-                    transactions_vec.push(tx);
+                    let tx = declare_tx_to_starknet_tx(declare_transaction.clone());
+                    transactions_vec.push(tx.unwrap());
                 },
                 starknet_client::reader::objects::transaction::Transaction::DeployAccount(deploy_account_transaction) => {
                     // convert declare_transaction to starknet transaction
