@@ -43,6 +43,7 @@ mp-block = { workspace = true }
 mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
 mp-transactions = { workspace = true, features = ["client"] }
+mp-commitments = { workspace = true }
 
 [dev-dependencies]
 # test_utils = { path = "./test_utils" }

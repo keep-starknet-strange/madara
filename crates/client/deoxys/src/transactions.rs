@@ -99,34 +99,20 @@ pub fn invoke_tx_to_starknet_tx(
 }
 
 pub async fn deploy_tx_to_starknet_tx(deploy_transaction : DeployTransaction) -> mp_block::BlockTransactions {
-    
+    Ok(mp_transactions::Transaction::DeployAccount(mp_transactions::DeployAccountTransaction::from_starknet(deploy_transaction)).unwrap())
 }
 
 pub fn deploy_account_tx_to_starknet_tx(
     deploy_account_transaction: starknet_api::transaction::DeployAccountTransaction
-) -> Result<mp_block::BlockTransactions, ReaderClientError> {
-    // Convert the starknet transaction to the mp transaction
-    let starknet_deploy_account_tx = mp_transactions::DeployAccountTransaction::from(deploy_account_transaction);
-
-    // You might want to wrap this transaction inside a BlockTransactions variant or structure based on its definition
-    // Assuming BlockTransactions has a variant for DeployAccountTransaction:
-    Ok(mp_transactions::DeployAccountTransaction(starknet_deploy_account_tx))
+) -> Result<mp_transactions::Transaction, ReaderClientError> {
+    let mp_deploy_account_tx = mp_transactions::DeployAccountTransaction::from_starknet(deploy_account_transaction);
+    Ok(mp_transactions::Transaction::DeployAccount(mp_deploy_account_tx))
 }
 
 
-pub fn l1handler_tx_to_starknet_tx(l1handler_transaction : L1HandlerTransaction) -> mp_block::BlockTransactiona {
-   // Try to convert the intermediate representation to the starknet_api representation
-   let starknet_invoke_tx = starknet_api::transaction::InvokeTransaction::try_from(invoke_transaction)?;
-
-   // Convert `starknet_api::transaction::InvokeTransaction` to `mp_transactions::InvokeTransaction`
-   let mp_invoke_tx = match starknet_invoke_tx {
-       starknet_api::transaction::InvokeTransaction::V0(inner) => {
-           mp_transactions::InvokeTransaction::V0(mp_transactions::InvokeTransactionV0::from_starknet(inner))
-       },
-       starknet_api::transaction::InvokeTransaction::V1(inner) => {
-           mp_transactions::InvokeTransaction::V1(mp_transactions::InvokeTransactionV1::from_starknet(inner))
-       }
-   };
-
-   Ok(mp_transactions::Transaction::Invoke(mp_invoke_tx))
+pub fn l1handler_tx_to_starknet_tx(
+    l1handler_transaction: starknet_api::transaction::L1HandlerTransaction
+) -> Result<mp_transactions::Transaction, ReaderClientError> {
+    let mp_l1handler_tx = mp_transactions::HandleL1MessageTransaction::from_starknet(l1handler_transaction);
+    Ok(mp_transactions::Transaction::L1Handler(mp_l1handler_tx))
 }

@@ -1,10 +1,6 @@
-
-use mp_starknet::crypto::commitment::{calculate_transaction_commitment, calculate_event_commitment};
-use mp_starknet::crypto::hash::pedersen::PedersenHasher;
-use mp_starknet::transaction::types::{Transaction, TransactionReceiptWrapper, EventWrapper, MaxArraySize};
+use mp_felt::Felt252Wrapper;
 use reqwest::StatusCode;
 use sp_core::U256;
-use mp_starknet::execution::types::{Felt252Wrapper, ContractAddressWrapper};
 use mp_block::{Block, Header };
 use reqwest::header::{HeaderMap, CONTENT_TYPE, self, HeaderValue};
 use serde_json::{json, Value};
@@ -14,6 +10,7 @@ use starknet_api::api_core::{ChainId, PatriciaKey};
 use starknet_api::transaction::Event;
 use starknet_client::RetryConfig;
 use starknet_client::reader::{StarknetFeederGatewayClient, StarknetReader};
+use starknet_core::chain_id;
 use starknet_ff::FieldElement;
 use std::sync::{ Arc, Mutex};
 use std::collections::VecDeque;
@@ -46,7 +43,7 @@ pub fn create_block_queue() -> BlockQueue {
 
 
 // This function converts a block received from the gateway into a StarkNet block
-pub fn get_header(block: starknet_client::reader::Block, transactions: mp_block::BlockTransactions) -> mp_block::Header  {
+pub fn get_header(block: starknet_client::reader::Block, transactions: mp_block::BlockTransactions, events:) -> mp_block::Header  {
     let parent_block_hash = Felt252Wrapper::try_from(block.parent_block_hash.0.bytes());
     let block_number = block.block_number.0;
     let global_state_root = Felt252Wrapper::try_from(block.state_root.0.bytes());
@@ -60,17 +57,12 @@ pub fn get_header(block: starknet_client::reader::Block, transactions: mp_block:
     let sequencer_address = Felt252Wrapper(FieldElement::from(*PatriciaKey::key(&block.sequencer_address.0)));
     let block_timestamp = block.timestamp.0;
     let transaction_count = block.transactions.len() as u128;
-    let transaction_commitment = calculate_transaction_commitment::<PedersenHasher>(&transactions);
+    let (transaction_commitment, event_commitment) =
+            mp_commitments::calculate_commitments::<T::SystemHash>(&transactions, &events, Felt252Wrapper("SN_MAIN"));
     let event_count: u128 = block.transaction_receipts
                 .iter()
                 .map(|receipt| receipt.events.len() as u128)
                 .sum();
-    let all_events: Vec<EventWrapper> = block
-        .transaction_receipts
-        .iter()
-        .flat_map(|receipt| receipt.events.iter().map(convert_event_to_wrapper))
-        .collect();
-    let event_commitment = calculate_event_commitment::<PedersenHasher>(&all_events);
     let protocol_version = Some(0u8);
     let extra_data: U256 = Felt252Wrapper::try_from(block.block_hash.0.bytes()).unwrap().into();
     let starknet_header = mp_block::Header::new(
@@ -100,13 +92,13 @@ pub async fn get_txs(block: starknet_client::reader::Block) -> mp_block::BlockTr
                 },
                 starknet_client::reader::objects::transaction::Transaction::DeployAccount(deploy_account_transaction) => {
                     // convert declare_transaction to starknet transaction
-                    let tx = deploy_account_tx_to_starknet_tx(deploy_account_transaction.clone());
-                    transactions_vec.push(tx);
+                    let tx = deploy_account_tx_to_starknet_tx(deploy_account_transaction.clone().into());
+                    transactions_vec.push(tx.unwrap());
                 },
                 starknet_client::reader::objects::transaction::Transaction::Deploy(deploy_transaction) => {
                     // convert declare_transaction to starknet transaction
                     let tx = deploy_tx_to_starknet_tx(deploy_transaction.clone()).await;
-                    transactions_vec.push(tx);
+                    transactions_vec.push(tx.unwrap());
                 },
                 starknet_client::reader::objects::transaction::Transaction::Invoke(invoke_transaction) => {
                     // convert invoke_transaction to starknet transaction
@@ -115,8 +107,8 @@ pub async fn get_txs(block: starknet_client::reader::Block) -> mp_block::BlockTr
                 },
                 starknet_client::reader::objects::transaction::Transaction::L1Handler(l1handler_transaction) => {
                     // convert declare_transaction to starknet transaction
-                    let tx = l1handler_tx_to_starknet_tx(l1handler_transaction.clone());
-                    transactions_vec.push(tx);
+                    let tx = l1handler_tx_to_starknet_tx(l1handler_transaction.clone().into());
+                    transactions_vec.push(tx.unwrap());
                 },
             }
         }
@@ -144,35 +136,34 @@ fn convert_event_to_wrapper(event: &Event) -> EventWrapper {
     }
 }
 
-// pub fn get_txs_receipts(block: starknet_client::reader::Block, transactions: BoundedVec<Transaction, MaxTransactions>) -> BoundedVec<TransactionReceiptWrapper, MaxTransactions> {
-//     let mut transaction_receipts_vec: BoundedVec<TransactionReceiptWrapper, MaxTransactions> = BoundedVec::new();
+pub fn get_txs_receipts(block: starknet_client::reader::Block, transactions: BoundedVec<Transaction, MaxTransactions>) -> BoundedVec<TransactionReceiptWrapper, MaxTransactions> {
+    let mut transaction_receipts_vec: BoundedVec<TransactionReceiptWrapper, MaxTransactions> = BoundedVec::new();
 
-//     for (transaction, transaction_receipt) in transactions.iter().zip(&block.transaction_receipts) {
-//         let mut events_vec: BoundedVec<EventWrapper, MaxArraySize> = BoundedVec::new();
-//         for event in &transaction_receipt.events {
-//             let event_wrapper = convert_event_to_wrapper(event);
-//             events_vec.try_push(event_wrapper).unwrap();
-//         }
+    for (transaction, transaction_receipt) in transactions.iter().zip(&block.transaction_receipts) {
+        let mut events_vec: BoundedVec<EventWrapper, MaxArraySize> = BoundedVec::new();
+        for event in &transaction_receipt.events {
+            let event_wrapper = convert_event_to_wrapper(event);
+            events_vec.try_push(event_wrapper).unwrap();
+        }
 
-//         let transaction_receipt_wrapper = TransactionReceiptWrapper {
-//             transaction_hash: Felt252Wrapper(transaction_receipt.transaction_hash.0.into()),
-//             actual_fee: Felt252Wrapper::from(transaction_receipt.actual_fee.0),
-//             tx_type: transaction.tx_type.clone(),
-//             events: events_vec,
-//         };
+        let transaction_receipt_wrapper = TransactionReceiptWrapper {
+            transaction_hash: Felt252Wrapper(transaction_receipt.transaction_hash.0.into()),
+            actual_fee: Felt252Wrapper::from(transaction_receipt.actual_fee.0),
+            tx_type: transaction.tx_type.clone(),
+            events: events_vec,
+        };
 
-//         transaction_receipts_vec.try_push(transaction_receipt_wrapper).unwrap();
-//     }
+        transaction_receipts_vec.try_push(transaction_receipt_wrapper).unwrap();
+    }
 
-//     transaction_receipts_vec
-// }
-
-
+    transaction_receipts_vec
+}
 
 // This function converts a block received from the gateway into a StarkNet block
 pub async fn from_gateway_to_starknet_block(block: starknet_client::reader::Block) -> mp_block::Block {
     let transactions_vec: mp_block::BlockTransactions = get_txs(block.clone()).await;
-    let header = get_header(block.clone(), transactions_vec.clone());
+    let transaction_receipts_vec: mp::BlockTransactions = get_txs_receipts(block.clone(), transactions_vec.clone());
+    let header = get_header(block.clone(), transactions_vec.clone(), transaction_receipts_vec.clone().envents);
     mp_block::Block::new(
         header,
         transactions_vec,
@@ -182,7 +173,7 @@ pub async fn from_gateway_to_starknet_block(block: starknet_client::reader::Bloc
 async fn create_block(rpc_port: u16) -> Result<StatusCode, reqwest::Error> {
     let client = reqwest::Client::new();
     let mut headers = HeaderMap::new();
-    headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
+    headers.insert(CONTENT_TYPE, "application/json ".parse().unwrap());
 
     let url = format!("http://localhost:{}/", rpc_port);
     let payload = json!({

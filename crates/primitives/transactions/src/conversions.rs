@@ -117,6 +117,17 @@ impl InvokeTransactionV0 {
             tx_hash: transaction_hash.into(),
         }
     }
+
+    pub fn from_starknet(inner: starknet_api::transaction::InvokeTransactionV0) -> Self {
+        Self {
+            max_fee: inner.max_fee.0,
+            signature: inner.signature.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),
+            nonce: Default::default(),
+            contract_address: inner.contract_address.into(),
+            entry_point_selector: inner.entry_point_selector.into(),
+            calldata: inner.calldata.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect()
+        }
+    }
 }
 
 impl InvokeTransactionV1 {
@@ -132,6 +143,16 @@ impl InvokeTransactionV1 {
                 sender_address: self.sender_address.into(),
             }),
             tx_hash: transaction_hash.into(),
+        }
+    }
+
+    pub fn from_starknet(inner: starknet_api::transaction::InvokeTransactionV1) -> Self {
+        Self {
+            max_fee: inner.max_fee.0,
+            signature: inner.signature.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),
+            nonce: inner.nonce.into(),
+            sender_address: inner.sender_address.into(),
+            calldata: inner.calldata.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect()
         }
     }
 }
@@ -170,6 +191,17 @@ impl DeployAccountTransaction {
             contract_address: contract_address.into(),
         }
     }
+
+    pub fn from_starknet(inner: starknet_api::transaction::DeployAccountTransaction) -> Self {
+        Self {
+            max_fee: inner.max_fee.0,
+            signature: inner.signature.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),
+            nonce: inner.nonce.into(),
+            contract_address_salt: inner.contract_address_salt.into(),
+            constructor_calldata: inner.constructor_calldata.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),
+            class_hash: inner.class_hash.into()
+        }
+    }
 }
 
 impl HandleL1MessageTransaction {
@@ -190,6 +222,15 @@ impl HandleL1MessageTransaction {
         };
 
         btx::L1HandlerTransaction { tx, paid_fee_on_l1, tx_hash: transaction_hash.into() }
+    }
+
+    pub fn from_starknet(inner: starknet_api::transaction::L1HandlerTransaction) -> Self {
+        Self {
+            nonce: u64::default(), //TO DO - deoxys
+            contract_address: inner.contract_address.into(),
+            entry_point_selector:  inner.entry_point_selector.0.into(),
+            calldata: inner.calldata.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),
+        }
     }
 }
 
@@ -243,30 +284,4 @@ impl From<sttx::DeclareTransactionV2> for DeclareTransactionV2 {
 // Utility function to convert `TransactionSignature` into a vector of `Felt252Wrapper`
 fn signature_to_vec_of_felt(sig: &sttx::TransactionSignature) -> Vec<Felt252Wrapper> {
     sig.0.iter().map(|&f| Felt252Wrapper::from(f)).collect()
-}
-
-
-impl InvokeTransactionV0 {
-    pub fn from_starknet(inner: starknet_api::transaction::InvokeTransactionV0) -> Self {
-        Self {
-            max_fee: inner.max_fee.0,
-            signature: inner.signature.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),
-            nonce: Default::default(),
-            contract_address: inner.contract_address.into(),
-            entry_point_selector: inner.entry_point_selector.into(),
-            calldata: inner.calldata.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect()
-        }
-    }
-}
-
-impl InvokeTransactionV1 {
-    pub fn from_starknet(inner: starknet_api::transaction::InvokeTransactionV1) -> Self {
-        Self {
-            max_fee: inner.max_fee.0,
-            signature: inner.signature.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),
-            nonce: inner.nonce.into(),
-            sender_address: inner.sender_address.into(),
-            calldata: inner.calldata.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect()
-        }
-    }
 }

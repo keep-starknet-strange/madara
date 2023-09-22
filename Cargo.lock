@@ -7120,6 +7120,7 @@ dependencies = [
  "log",
  "mockito",
  "mp-block",
+ "mp-commitments",
  "mp-felt",
  "mp-hashers",
  "mp-transactions",
