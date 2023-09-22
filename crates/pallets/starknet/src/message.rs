@@ -1,5 +1,5 @@
-use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::transaction::HandleL1MessageTransaction;
+use mp_felt::Felt252Wrapper;
+use mp_transactions::HandleL1MessageTransaction;
 use parity_scale_codec::{Decode, Encode};
 use serde::Deserialize;
 

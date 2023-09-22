@@ -1,7 +1,16 @@
 use frame_support::traits::GenesisBuild;
+use mp_felt::Felt252Wrapper;
 
 use crate::genesis_loader::GenesisLoader;
 use crate::{Config, GenesisConfig};
+
+/// ChainId for Starknet Goerli testnet
+pub const SN_GOERLI_CHAIN_ID: Felt252Wrapper = Felt252Wrapper(starknet_ff::FieldElement::from_mont([
+    3753493103916128178,
+    18446744073709548950,
+    18446744073709551615,
+    398700013197595345,
+]));
 
 // Configure a mock runtime to test the pallet.
 macro_rules! mock_runtime {
@@ -15,9 +24,8 @@ macro_rules! mock_runtime {
 			use {crate as pallet_starknet, frame_system as system};
 			use crate::{ SeqAddrUpdate, SequencerAddress};
 			use frame_support::traits::Hooks;
-			use mp_starknet::sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
-            use mp_starknet::execution::types::Felt252Wrapper;
-            use mp_starknet::constants::SN_GOERLI_CHAIN_ID;
+			use mp_sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
+            use mp_felt::Felt252Wrapper;
 			use starknet_api::api_core::{PatriciaKey, ContractAddress};
 			use starknet_api::hash::StarkFelt;
 
@@ -79,13 +87,13 @@ macro_rules! mock_runtime {
 				pub const DisableTransactionFee: bool = $disable_transaction_fee;
                 pub const DisableNonceValidation: bool = $disable_nonce_validation;
 				pub const ProtocolVersion: u8 = 0;
-                pub const ChainId: Felt252Wrapper = SN_GOERLI_CHAIN_ID;
+                pub const ChainId: Felt252Wrapper = crate::tests::mock::SN_GOERLI_CHAIN_ID;
                 pub const MaxRecursionDepth: u32 = 50;
             }
 
 			impl pallet_starknet::Config for MockRuntime {
 				type RuntimeEvent = RuntimeEvent;
-				type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
+				type SystemHash = mp_hashers::pedersen::PedersenHasher;
 				type TimestampProvider = Timestamp;
 				type UnsignedPriority = UnsignedPriority;
 				type TransactionLongevity = TransactionLongevity;

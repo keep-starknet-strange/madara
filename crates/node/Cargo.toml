@@ -82,10 +82,14 @@ mc-mapping-sync = { workspace = true }
 mc-rpc = { workspace = true }
 mc-storage = { workspace = true }
 mc-transaction-pool = { workspace = true }
-mp-digest-log = { workspace = true }
-mp-starknet = { workspace = true }
 pallet-starknet = { workspace = true }
 starknet-core = { workspace = true }
+
+# Primitives
+mp-block = { workspace = true }
+mp-digest-log = { workspace = true }
+mp-felt = { workspace = true }
+mp-sequencer-address = { workspace = true, features = ["client"] }
 
 # CLI-specific dependencies
 try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }

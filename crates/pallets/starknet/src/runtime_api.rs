@@ -6,8 +6,8 @@
 #![allow(clippy::extra_unused_type_parameters)]
 
 use blockifier::execution::contract_class::ContractClass;
-use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::transaction::{Transaction, TxType, UserTransaction};
+use mp_felt::Felt252Wrapper;
+use mp_transactions::{Transaction, TxType, UserTransaction};
 use sp_api::BlockT;
 pub extern crate alloc;
 use alloc::vec::Vec;

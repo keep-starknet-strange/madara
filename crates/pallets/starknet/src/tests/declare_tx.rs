@@ -1,8 +1,8 @@
 use assert_matches::assert_matches;
 use frame_support::{assert_err, assert_ok};
-use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::transaction::compute_hash::ComputeTransactionHash;
-use mp_starknet::transaction::{DeclareTransactionV1, DeclareTransactionV2};
+use mp_felt::Felt252Wrapper;
+use mp_transactions::compute_hash::ComputeTransactionHash;
+use mp_transactions::{DeclareTransactionV1, DeclareTransactionV2};
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError, ValidTransaction};
 use starknet_api::api_core::ClassHash;

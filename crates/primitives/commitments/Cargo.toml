@@ -1,0 +1,46 @@
+[package]
+name = "mp-commitments"
+version.workspace = true
+edition.workspace = true
+license = "MIT"
+description = "Starknet commitment computation logic"
+authors = { workspace = true }
+repository = { workspace = true }
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+bitvec = { workspace = true }
+derive_more = { workspace = true, features = ["constructor"] }
+mp-felt = { workspace = true }
+mp-hashers = { workspace = true }
+mp-transactions = { workspace = true }
+starknet-crypto = { workspace = true }
+starknet_api = { workspace = true }
+
+# Optional
+parity-scale-codec = { workspace = true, features = [
+  "derive",
+], optional = true }
+scale-info = { workspace = true, features = ["derive"], optional = true }
+serde = { workspace = true, features = ["derive"], optional = true }
+starknet-ff = { workspace = true, optional = true }
+
+[dev-dependencies]
+starknet-core = { workspace = true }
+
+
+[features]
+default = ["std"]
+std = [
+  "mp-hashers/std",
+  "mp-transactions/std",
+  "mp-felt/std",
+  "starknet-crypto/std",
+  "bitvec/std",
+  "starknet_api/std",
+]
+parity-scale-codec = ["dep:parity-scale-codec", "mp-felt/parity-scale-codec"]
+scale-info = ["dep:scale-info", "mp-felt/scale-info"]
+serde = ["dep:serde", "dep:starknet-ff", "starknet-ff/serde", "mp-felt/serde"]

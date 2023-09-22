@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 use blockifier::execution::contract_class::ContractClass;
-use mp_starknet::storage::{
+use mp_storage::{
     PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_NONCE, STARKNET_STORAGE,
 };
 // Substrate

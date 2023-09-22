@@ -38,6 +38,12 @@
 - impl tx execution and verification as traits
 - reduce the amount of data stored in the runtime and use the Substrate block to
   as source of data in the client
+- perf: use perfect hash function in calculate_l1_gas_by_vm_usage
+- chore: add tests for tx hashing
+- split `primitives` crates into multiple smaller crates
+- chore: add tests for simulate tx offset
+- fix: std feature import in transactions crate
+- chore: improve logging about transaction when nonce is too high
 
 ## v0.2.0
 

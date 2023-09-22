@@ -1,6 +1,6 @@
-use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::transaction::compute_hash::ComputeTransactionHash;
-use mp_starknet::transaction::InvokeTransactionV1;
+use mp_felt::Felt252Wrapper;
+use mp_transactions::compute_hash::ComputeTransactionHash;
+use mp_transactions::InvokeTransactionV1;
 use starknet_api::transaction::TransactionHash;
 use starknet_core::utils::get_selector_from_name;
 
