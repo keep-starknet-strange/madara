@@ -55,112 +55,15 @@ pub fn leading_bits(arr: &[u8; 32]) -> U256 {
     U256::from(count)
 }
 
-pub async fn declare_tx_to_starknet_tx(declare_transaction: IntermediateDeclareTransaction) -> mp_transactions::Transaction::DeclareTransaction {
-    let mut signature_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
-    for item in &declare_transaction.signature.0 {
-        match signature_vec.try_push(Felt252Wrapper::try_from(item.bytes()).unwrap()) {
-            Ok(_) => {},
-            Err(_) => {
-                panic!("Signature too long");
-            }
-        }
-    }
-    let calldata_vec: BoundedVec<Felt252Wrapper, MaxCalldataSize> = BoundedVec::new();
-
-    let call_entry_point = CallEntryPointWrapper::new(
-        Some(Felt252Wrapper::try_from(declare_transaction.class_hash.0.bytes()).unwrap()),
-        EntryPointTypeWrapper::External,
-        Some(Felt252Wrapper::default()),
-        calldata_vec,
-        ContractAddressWrapper::default(),
-        ContractAddressWrapper::default(),
-        Felt252Wrapper::ZERO,
-        Some(ClassHashWrapper::ZERO)
-    );
-
-    let version_fw: Felt252Wrapper = Felt252Wrapper(FieldElement::from(declare_transaction.version.0));
-    let version_u8: u8 = match u64::try_from(version_fw) {
-        Ok(valeur) => {
-            valeur as u8
-        },
-        Err(_) => {panic!("Version too long")}
-    };
-
-    let sender_address_fe: FieldElement =  FieldElement::from(*PatriciaKey::key(&declare_transaction.sender_address.0));
-    let sender_address_fw: Felt252Wrapper = Felt252Wrapper(sender_address_fe);
-    
-    let contract_class = match convert_to_contract_class(declare_transaction.class_hash).await {
-        Ok(class) => Some(class),
-        Err(e) => {
-            panic!("Failed to convert to contract class: {}", e)
-        }
-    };
-    
-    Transaction {
-        tx_type: TxType::Declare,
-        version: version_u8,
-        hash: Felt252Wrapper(declare_transaction.transaction_hash.0.into()),
-        signature: signature_vec,
-        sender_address: sender_address_fw,
-        nonce: Felt252Wrapper::try_from(declare_transaction.nonce.0.bytes()).unwrap(),
-        call_entrypoint: call_entry_point,
-        contract_class: contract_class,
-        contract_address_salt: Some(leading_bits(&sender_address_fe.to_bytes_be())),
-        max_fee: Felt252Wrapper::from(declare_transaction.max_fee.0),
-        is_query: false,
-    }
+pub async fn declare_tx_to_starknet_tx(declare_transaction: IntermediateDeclareTransaction) -> mp_transactions::Transaction {
+    let starknet_declare_tx = starknet_api::transaction::DeclareTransaction::from(declare_transaction);
+    mp_transactions::Transaction::Declare(starknet_declare_tx)
 }
 
 
-pub fn invoke_tx_to_starknet_tx(invoke_transaction : IntermediateInvokeTransaction) -> Transaction {
-    let mut signature_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
-    for item in &invoke_transaction.signature.0 {
-        match signature_vec.try_push(Felt252Wrapper::try_from(item.bytes()).unwrap()) {
-            Ok(_) => {},
-            Err(_) => {
-                panic!("Signature too long");
-            }
-        }
-        //signature_vec.try_push(Felt252Wrapper::try_from(item.bytes()).unwrap());
-    }
-    let calldata_vec: BoundedVec<Felt252Wrapper, MaxCalldataSize> = BoundedVec::new();
 
-    let call_entry_point = CallEntryPointWrapper::new(
-        Some(Felt252Wrapper::default()),
-        EntryPointTypeWrapper::External,
-        Some(Felt252Wrapper::default()),
-        calldata_vec,
-        ContractAddressWrapper::default(),
-        ContractAddressWrapper::default(),
-        Felt252Wrapper::ZERO,
-        Some(ClassHashWrapper::ZERO)
-    );
-
-    //let version_invoke = StarkFelt::from(invoke_transaction.version.0);
-    let version_fw: Felt252Wrapper = Felt252Wrapper(FieldElement::from(invoke_transaction.version.0));
-    let version_u8: u8 = match u64::try_from(version_fw) {
-        Ok(valeur) => {
-            valeur as u8
-        },
-        Err(_) => {panic!("Version too long")}
-    };
-
-    let sender_address_fe: FieldElement =  FieldElement::from(*PatriciaKey::key(&invoke_transaction.sender_address.0));
-    let sender_address_fw: Felt252Wrapper = Felt252Wrapper(sender_address_fe);
+pub fn invoke_tx_to_starknet_tx(invoke_transaction : IntermediateInvokeTransaction) -> mp_transactions::Transaction {
     
-    Transaction {
-        tx_type: TxType::Invoke,
-        version: version_u8,
-        hash: Felt252Wrapper(invoke_transaction.transaction_hash.0.into()),
-        signature: signature_vec,
-        sender_address: sender_address_fw,
-        nonce: Felt252Wrapper::default(),
-        call_entrypoint: CallEntryPointWrapper::default(),
-        contract_class: Option::<ContractClass>::default(),
-        contract_address_salt: Some(leading_bits(&sender_address_fe.to_bytes_be())),
-        max_fee: Felt252Wrapper::from(invoke_transaction.max_fee.0),
-        is_query: false,
-    }
 }
 
 pub async fn deploy_tx_to_starknet_tx(deploy_transaction : DeployTransaction) -> Transaction {
