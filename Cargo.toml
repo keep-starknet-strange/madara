@@ -38,7 +38,7 @@ rpath = false        # Disables adding rpath to the binary
 authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
 edition = "2021"
 repository = "https://github.com/keep-starknet-strange/madara/"
-version = "0.2.0"
+version = "0.3.0"
 
 [workspace.dependencies]
 # Substrate frame dependencies
