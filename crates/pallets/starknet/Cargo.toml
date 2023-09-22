@@ -60,6 +60,7 @@ cairo-lang-casm-contract-class = { workspace = true, optional = true, features =
 hex = { workspace = true }
 indexmap = { workspace = true }
 log = { workspace = true }
+env_logger = { workspace = true }
 parity-scale-codec = { workspace = true, features = ["derive"] }
 reqwest = { workspace = true, optional = true, features = [
   "blocking",

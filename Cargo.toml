@@ -180,6 +180,7 @@ parity-scale-codec = { version = "3.2.2", default-features = false }
 scale-info = { version = "2.9.0", default-features = false }
 lazy_static = { version = "1.4.0", default-features = false }
 log = { version = "0.4.20", default-features = false }
+env_logger = "0.9.0"
 hex = { version = "0.4.3", default-features = false }
 safe-mix = { version = "1.0", default-features = false }
 jsonrpsee = { version = "0.16.3", default-features = false }

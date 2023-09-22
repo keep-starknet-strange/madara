@@ -52,6 +52,7 @@ pub fn get_project_path() -> Result<String, Error> {
 }
 
 pub fn copy_from_filesystem(src_path: String, dest_path: String) -> Result<(), Error> {
+    let _ = env_logger::try_init();
     log::info!("Trying to copy {} to {} from filesystem", src_path, dest_path);
     let src = std::path::PathBuf::from(src_path.clone());
     if !src.exists() {
@@ -69,6 +70,7 @@ pub fn copy_from_filesystem(src_path: String, dest_path: String) -> Result<(), E
 }
 
 pub fn fetch_from_url(target: String, dest_path: String) -> Result<(), Error> {
+    let _ = env_logger::try_init();
     log::info!("Trying to fetch {} to {} from url", target, dest_path);
     let dst = std::path::PathBuf::from(dest_path);
     std::fs::create_dir_all(&dst)?;

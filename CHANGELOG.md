@@ -1,6 +1,7 @@
 # Madara Changelog
 
 ## Next release
+- bug: setup logs not displaying fix
 
 ## v0.3.0
 
