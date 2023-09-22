@@ -245,3 +245,28 @@ fn signature_to_vec_of_felt(sig: &sttx::TransactionSignature) -> Vec<Felt252Wrap
     sig.0.iter().map(|&f| Felt252Wrapper::from(f)).collect()
 }
 
+
+impl InvokeTransactionV0 {
+    pub fn from_starknet(inner: starknet_api::transaction::InvokeTransactionV0) -> Self {
+        Self {
+            max_fee: inner.max_fee.0,
+            signature: inner.signature.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),
+            nonce: Default::default(),
+            contract_address: inner.contract_address.into(),
+            entry_point_selector: inner.entry_point_selector.into(),
+            calldata: inner.calldata.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect()
+        }
+    }
+}
+
+impl InvokeTransactionV1 {
+    pub fn from_starknet(inner: starknet_api::transaction::InvokeTransactionV1) -> Self {
+        Self {
+            max_fee: inner.max_fee.0,
+            signature: inner.signature.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),
+            nonce: inner.nonce.into(),
+            sender_address: inner.sender_address.into(),
+            calldata: inner.calldata.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect()
+        }
+    }
+}

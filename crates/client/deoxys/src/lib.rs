@@ -46,7 +46,7 @@ pub fn create_block_queue() -> BlockQueue {
 
 
 // This function converts a block received from the gateway into a StarkNet block
-pub fn get_header(block: starknet_client::reader::Block, transactions: BoundedVec<Transaction, MaxTransactions>) -> mp_block::Header  {
+pub fn get_header(block: starknet_client::reader::Block, transactions: mp_block::BlockTransactions) -> mp_block::Header  {
     let parent_block_hash = Felt252Wrapper::try_from(block.parent_block_hash.0.bytes());
     let block_number = block.block_number.0;
     let global_state_root = Felt252Wrapper::try_from(block.state_root.0.bytes());
@@ -111,7 +111,7 @@ pub async fn get_txs(block: starknet_client::reader::Block) -> mp_block::BlockTr
                 starknet_client::reader::objects::transaction::Transaction::Invoke(invoke_transaction) => {
                     // convert invoke_transaction to starknet transaction
                     let tx = invoke_tx_to_starknet_tx(invoke_transaction.clone());
-                    transactions_vec.push(tx);
+                    transactions_vec.push(tx.unwrap());
                 },
                 starknet_client::reader::objects::transaction::Transaction::L1Handler(l1handler_transaction) => {
                     // convert declare_transaction to starknet transaction
@@ -144,35 +144,34 @@ fn convert_event_to_wrapper(event: &Event) -> EventWrapper {
     }
 }
 
-pub fn get_txs_receipts(block: starknet_client::reader::Block, transactions: BoundedVec<Transaction, MaxTransactions>) -> BoundedVec<TransactionReceiptWrapper, MaxTransactions> {
-    let mut transaction_receipts_vec: BoundedVec<TransactionReceiptWrapper, MaxTransactions> = BoundedVec::new();
+// pub fn get_txs_receipts(block: starknet_client::reader::Block, transactions: BoundedVec<Transaction, MaxTransactions>) -> BoundedVec<TransactionReceiptWrapper, MaxTransactions> {
+//     let mut transaction_receipts_vec: BoundedVec<TransactionReceiptWrapper, MaxTransactions> = BoundedVec::new();
 
-    for (transaction, transaction_receipt) in transactions.iter().zip(&block.transaction_receipts) {
-        let mut events_vec: BoundedVec<EventWrapper, MaxArraySize> = BoundedVec::new();
-        for event in &transaction_receipt.events {
-            let event_wrapper = convert_event_to_wrapper(event);
-            events_vec.try_push(event_wrapper).unwrap();
-        }
+//     for (transaction, transaction_receipt) in transactions.iter().zip(&block.transaction_receipts) {
+//         let mut events_vec: BoundedVec<EventWrapper, MaxArraySize> = BoundedVec::new();
+//         for event in &transaction_receipt.events {
+//             let event_wrapper = convert_event_to_wrapper(event);
+//             events_vec.try_push(event_wrapper).unwrap();
+//         }
 
-        let transaction_receipt_wrapper = TransactionReceiptWrapper {
-            transaction_hash: Felt252Wrapper(transaction_receipt.transaction_hash.0.into()),
-            actual_fee: Felt252Wrapper::from(transaction_receipt.actual_fee.0),
-            tx_type: transaction.tx_type.clone(),
-            events: events_vec,
-        };
+//         let transaction_receipt_wrapper = TransactionReceiptWrapper {
+//             transaction_hash: Felt252Wrapper(transaction_receipt.transaction_hash.0.into()),
+//             actual_fee: Felt252Wrapper::from(transaction_receipt.actual_fee.0),
+//             tx_type: transaction.tx_type.clone(),
+//             events: events_vec,
+//         };
 
-        transaction_receipts_vec.try_push(transaction_receipt_wrapper).unwrap();
-    }
+//         transaction_receipts_vec.try_push(transaction_receipt_wrapper).unwrap();
+//     }
 
-    transaction_receipts_vec
-}
+//     transaction_receipts_vec
+// }
 
 
 
 // This function converts a block received from the gateway into a StarkNet block
 pub async fn from_gateway_to_starknet_block(block: starknet_client::reader::Block) -> mp_block::Block {
     let transactions_vec: mp_block::BlockTransactions = get_txs(block.clone()).await;
-    let transaction_receipts_vec: BoundedVec<TransactionReceiptWrapper, MaxTransactions> = get_txs_receipts(block.clone(), transactions_vec.clone());
     let header = get_header(block.clone(), transactions_vec.clone());
     mp_block::Block::new(
         header,
