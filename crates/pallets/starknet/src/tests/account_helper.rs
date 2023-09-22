@@ -1,4 +1,4 @@
-use mp_starknet::execution::types::Felt252Wrapper;
+use mp_felt::Felt252Wrapper;
 
 use super::mock::AccountType;
 use crate::tests::mock::{get_account_address, AccountTypeV0Inner};

@@ -1,8 +1,8 @@
 use std::marker::PhantomData;
 use std::sync::Arc;
 
+use mp_block::Block as StarknetBlock;
 use mp_digest_log::{Log, MADARA_ENGINE_ID};
-use mp_starknet::block::Block as StarknetBlock;
 use sc_client_api::backend::Backend;
 use sc_client_api::BlockImportOperation;
 use sc_executor::RuntimeVersionOf;

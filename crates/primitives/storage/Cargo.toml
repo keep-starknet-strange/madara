@@ -1,0 +1,24 @@
+[package]
+name = "mp-storage"
+version.workspace = true
+edition.workspace = true
+license = "MIT"
+description = "Starknet substrate storage const and types"
+authors = { workspace = true }
+repository = { workspace = true }
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+# Optional
+parity-scale-codec = { workspace = true, features = [
+  "derive",
+], optional = true }
+serde = { workspace = true, optional = true, features = ["derive"] }
+
+[features]
+default = ["std"]
+std = ["serde?/std", "parity-scale-codec?/std"]
+serde = ["dep:serde"]
+parity-scale-codec = ["dep:parity-scale-codec"]

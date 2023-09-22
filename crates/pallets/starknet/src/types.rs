@@ -1,6 +1,6 @@
 //! Starknet pallet custom types.
 use blockifier::execution::contract_class::ContractClass;
-use mp_starknet::execution::types::Felt252Wrapper;
+use mp_felt::Felt252Wrapper;
 use sp_core::ConstU32;
 use sp_std::vec::Vec;
 use starknet_api::api_core::{ClassHash, ContractAddress};

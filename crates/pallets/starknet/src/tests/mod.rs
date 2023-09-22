@@ -1,10 +1,8 @@
 use blockifier::abi::abi_utils::get_erc20_balance_var_addresses;
 use blockifier::state::state_api::State;
-use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::transaction::compute_hash::ComputeTransactionHash;
-use mp_starknet::transaction::{
-    DeclareTransaction, DeclareTransactionV1, DeployAccountTransaction, InvokeTransactionV1,
-};
+use mp_felt::Felt252Wrapper;
+use mp_transactions::compute_hash::ComputeTransactionHash;
+use mp_transactions::{DeclareTransaction, DeclareTransactionV1, DeployAccountTransaction, InvokeTransactionV1};
 use starknet_api::api_core::ContractAddress;
 use starknet_api::hash::StarkFelt;
 

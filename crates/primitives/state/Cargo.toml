@@ -1,0 +1,19 @@
+[package]
+name = "mp-state"
+version.workspace = true
+edition.workspace = true
+license = "MIT"
+description = "Starknet state logic"
+authors = { workspace = true }
+repository = { workspace = true }
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+blockifier = { workspace = true }
+starknet_api = { workspace = true }
+
+[features]
+default = ["std"]
+std = ["blockifier/std", "starknet_api/std"]

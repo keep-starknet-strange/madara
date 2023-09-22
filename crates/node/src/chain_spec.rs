@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
-use mp_starknet::execution::types::Felt252Wrapper;
+use mp_felt::Felt252Wrapper;
 use pallet_starknet::genesis_loader::{GenesisLoader, HexFelt};
 use pallet_starknet::utils;
 use sc_service::ChainType;

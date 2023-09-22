@@ -10,8 +10,8 @@ use cairo_lang_starknet::contract_class::{
 };
 use cairo_lang_starknet::contract_class_into_casm_contract_class::StarknetSierraCompilationError;
 use cairo_lang_utils::bigint::BigUintAsHex;
+use mp_block::Block as StarknetBlock;
 use mp_digest_log::find_starknet_block;
-use mp_starknet::block::Block as StarknetBlock;
 use num_bigint::{BigInt, BigUint, Sign};
 use sp_api::{BlockT, HeaderT};
 use sp_blockchain::HeaderBackend;

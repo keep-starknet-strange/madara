@@ -2,39 +2,40 @@
 
 ## Next release
 
+## v0.3.0
+
+- chore: release v0.3.0
+- chore: big transaction type refactoring
+- chore: split `primitives` crates into multiple smaller crates
+- chore: improve logging about transaction when nonce is too high
+- chore: add real class hash values for genesis config
 - fix: use specific commit for avail and celestia
 - fix: change dep of rustdoc on push
-- feat: modify the hash_bytes functions in `poseidon` and `pedersen` for dynamic
-  data length
-- chore: add real class hash values for genesis config
-- feat: unification of the DA interface
-- feat: use resolver 2 for cargo in the workspace
-- upgrade: restructure code for rust latest version
-- upgrade: bump rustc nightly version to 1.74 date
-- feat: bump starknet-core to 0.6.0 and remove InvokeV0
-- fix: estimate_fee should make sure all transaction have a version being
-  2^128 + 1 or 2^128+2 depending on the tx type
 - fix: initial_gas set to max_fee and fixed fee not being charged when max_fee=0
 - fix: correct value of compiled_class_hash in RPCTransaction
-- ci: scope cache by branch and add cache cleanup
+- fix: std feature import in transactions crate
+- fix: replace all calls to `transmute` by calls `from_raw_parts`
+- fix: estimate_fee should make sure all transaction have a version being
+  2^128 + 1 or 2^128+2 depending on the tx type
+- feat: modify the hash_bytes functions in `poseidon` and `pedersen` for dynamic
+  data length
 - feat: print development accounts at node startup
-- test: add test to check tx signed by OZ account can be signed with Argent pk
+- feat: unification of the DA interface
+- feat: bump starknet-core to 0.6.0 and remove InvokeV0
+- feat: use resolver 2 for cargo in the workspace
+- feat: impl tx execution and verification as traits
+- perf: reduce the amount of data stored in the runtime and use the Substrate
+  block to as source of data in the client
+- perf: use perfect hash function in calculate_l1_gas_by_vm_usage
+- build: restructure code for rust latest version
+- build: bump rustc nightly version to 1.74 date
 - buid: add rust-analyzer to toolchain components
+- ci: scope cache by branch and add cache cleanup
 - ci: increase threshold for codecov to 1%
 - test: add `starknet-rpc-test` crate to the workspace
-- test(rpc): add `get_block_number.rs` tests
-- test(rpc): add `get_block_hash_and_number.rs` tests
-- test(rpc): add `get_block_transaction_count.rs` tests
-- test(rpc): add `chain_id.rs` tests
-- feat: print development accounts at node startup
 - test: add test to check tx signed by OZ account can be signed with Argent pk
-- buid: add rust-analyzer to toolchain components
-- ci: increase threshold for codecov to 1%
-- replace all calls to `transmute` by calls `from_raw_parts`
-- big transaction type refactoring
-- impl tx execution and verification as traits
-- reduce the amount of data stored in the runtime and use the Substrate block to
-  as source of data in the client
+- test: add tests for simulate tx offset
+- test: add tests for tx hashing
 
 ## v0.2.0
 
