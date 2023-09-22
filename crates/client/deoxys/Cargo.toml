@@ -38,6 +38,7 @@ starknet-ff = { workspace = true, default-features = false, features = [
 starknet_api = { workspace = true, default-features = false }
 # test_utils = { path = "./test_utils", optional = true }
 validator = { workspace = true, features = ["derive"] }
+pallet-starknet = { workspace = true }
 
 [dev-dependencies]
 # test_utils = { path = "./test_utils" }

@@ -1,29 +1,46 @@
-use std::sync::Arc;
+use std::{sync::Arc, path::PathBuf};
 
 use mp_starknet::{transaction::types::{Transaction, MaxArraySize, TxType}, execution::{types::{Felt252Wrapper, EntryPointTypeWrapper, ContractAddressWrapper, CallEntryPointWrapper, MaxCalldataSize, ClassHashWrapper}, felt252_wrapper}};
+use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sp_core::{bounded_vec::BoundedVec, U256};
 use blockifier::execution::contract_class::{ContractClass, ContractClassV0, ContractClassV1, ContractClassV1Inner};
-use starknet_client::reader::{objects::transaction::{IntermediateInvokeTransaction, IntermediateDeclareTransaction, DeployAccountTransaction, L1HandlerTransaction, DeployTransaction}, StarknetFeederGatewayClient, StarknetReader, GenericContractClass};
+use starknet_client::{reader::{objects::transaction::{IntermediateInvokeTransaction, IntermediateDeclareTransaction, DeployAccountTransaction, L1HandlerTransaction, DeployTransaction}, StarknetFeederGatewayClient, StarknetReader, GenericContractClass}, RetryConfig};
 use starknet_ff::FieldElement;
 use starknet_api::{api_core::{PatriciaKey, ClassHash}, stark_felt, hash::StarkFelt};
-use starknet_api::state::ContractClass as StarknetContractClass;
+use std::{env, fs};
+use std::fs::File;
+use std::io::Write;
 
-pub async fn convert_to_contract_class(starknet_class: ClassHash, client: StarknetFeederGatewayClient) -> Result<ContractClass, String> {
-    let contract_class = client.class_by_hash(starknet_class)
+
+use crate::{RpcConfig, NODE_VERSION};
+
+pub async fn convert_to_contract_class(class_hash: ClassHash) -> Result<ContractClass, String> {
+    let rpc_config = RpcConfig::default();
+
+    let retry_config = RetryConfig {
+        retry_base_millis: 30,
+        retry_max_delay_millis: 30000,
+        max_retries: 10,
+    };
+
+    let starknet_client = StarknetFeederGatewayClient::new(
+        &rpc_config.starknet_url,
+        None,
+        NODE_VERSION,
+        retry_config
+    ).map_err(|e| format!("Initialization Error: {:?}", e))?;
+
+    let contract_class = starknet_client.raw_class_by_hash(ClassHash(stark_felt!("0x04b752c44a965256e949c2847354013e539f4cf375a614a584f12e532a4d5225")))
         .await
         .map_err(|e| format!("Error: {:?}", e))?;
 
-    match contract_class {
-        Some(GenericContractClass::Cairo0ContractClass(class_v0)) => {
-            let class_v0: ContractClassV0 = class_v0.try_into().map_err(|e| format!("Error: {:?}", e))?;
-            Ok(ContractClass::V0(class_v0))
-        },
-        Some(GenericContractClass::Cairo1ContractClass(class_v1)) => {
-            todo!();
-        }
-        None => todo!(),
-    }
+    let mut file = File::create("contract_class_output.txt").map_err(|e| format!("File Error: {:?}", e))?;
+    write!(file, "{:?}", contract_class).map_err(|e| format!("Write Error: {:?}", e))?;
+
+    let result = mp_starknet::starknet_serde::get_contract_class(&contract_class, 1u8);
+    Ok(result)
 }
+
 
 pub fn leading_bits(arr: &[u8; 32]) -> U256 {
     let mut count = 0;
@@ -37,7 +54,7 @@ pub fn leading_bits(arr: &[u8; 32]) -> U256 {
     U256::from(count)
 }
 
-pub fn declare_tx_to_starknet_tx(declare_transaction: IntermediateDeclareTransaction) -> Transaction {
+pub async fn declare_tx_to_starknet_tx(declare_transaction: IntermediateDeclareTransaction) -> Transaction {
     let mut signature_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
     for item in &declare_transaction.signature.0 {
         match signature_vec.try_push(Felt252Wrapper::try_from(item.bytes()).unwrap()) {
@@ -71,8 +88,13 @@ pub fn declare_tx_to_starknet_tx(declare_transaction: IntermediateDeclareTransac
     let sender_address_fe: FieldElement =  FieldElement::from(*PatriciaKey::key(&declare_transaction.sender_address.0));
     let sender_address_fw: Felt252Wrapper = Felt252Wrapper(sender_address_fe);
     
-    // let contract_class = convert_to_contract_class(declare_transaction.class_hash, client).await;
-
+    let contract_class = match convert_to_contract_class(declare_transaction.class_hash).await {
+        Ok(class) => Some(class),
+        Err(e) => {
+            panic!("Failed to convert to contract class: {}", e)
+        }
+    };
+    
     Transaction {
         tx_type: TxType::Declare,
         version: version_u8,
@@ -81,7 +103,7 @@ pub fn declare_tx_to_starknet_tx(declare_transaction: IntermediateDeclareTransac
         sender_address: sender_address_fw,
         nonce: Felt252Wrapper::try_from(declare_transaction.nonce.0.bytes()).unwrap(),
         call_entrypoint: call_entry_point,
-        contract_class: Option::<ContractClass>::default(),
+        contract_class: contract_class,
         contract_address_salt: Some(leading_bits(&sender_address_fe.to_bytes_be())),
         max_fee: Felt252Wrapper::from(declare_transaction.max_fee.0),
         is_query: false,
@@ -132,29 +154,19 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : IntermediateInvokeTransacti
         signature: signature_vec,
         sender_address: sender_address_fw,
         nonce: Felt252Wrapper::default(),
-        call_entrypoint: call_entry_point,
-        contract_class: None,
+        call_entrypoint: CallEntryPointWrapper::default(),
+        contract_class: Option::<ContractClass>::default(),
         contract_address_salt: Some(leading_bits(&sender_address_fe.to_bytes_be())),
         max_fee: Felt252Wrapper::from(invoke_transaction.max_fee.0),
         is_query: false,
     }
 }
 
-pub fn deploy_tx_to_starknet_tx(deploy_transaction : DeployTransaction) -> Transaction {
-    // let mut signature_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
-    // for item in &deploy_transaction.signature.0 {
-    //     match signature_vec.try_push(Felt252Wrapper::try_from(item.bytes()).unwrap()) {
-    //         Ok(_) => {},
-    //         Err(_) => {
-    //             panic!("Signature too long");
-    //         }
-    //     }
-    //     signature_vec.try_push(Felt252Wrapper::try_from(item.bytes()).unwrap());
-    // }
+pub async fn deploy_tx_to_starknet_tx(deploy_transaction : DeployTransaction) -> Transaction {
     let calldata_vec: BoundedVec<Felt252Wrapper, MaxCalldataSize> = BoundedVec::new();
 
     let call_entry_point = CallEntryPointWrapper::new(
-        Some(Felt252Wrapper::try_from(deploy_transaction.class_hash.0.bytes()).unwrap()),   //class_hash: Option<ClassHashWrapper>,
+        Some(Felt252Wrapper::from(deploy_transaction.class_hash.0)),
         EntryPointTypeWrapper::External, //entrypoint_type: EntryPointTypeWrapper,
         Some(Felt252Wrapper::default()),
         calldata_vec,
@@ -175,17 +187,22 @@ pub fn deploy_tx_to_starknet_tx(deploy_transaction : DeployTransaction) -> Trans
     //  let sender_address_fe: FieldElement =  FieldElement::from(*PatriciaKey::key(&deploy_transaction.sender_address.0));
     //  let sender_address_fw: Felt252Wrapper = Felt252Wrapper(sender_address_fe);
 
-    // let contract_class = convert_to_contract_class(deploy_transaction.class_hash, client).await;
+    let contract_class = match convert_to_contract_class(deploy_transaction.class_hash).await {
+        Ok(class) => Some(class),
+        Err(e) => {
+            panic!("Failed to convert to contract class: {}", e)
+        }
+    };
 
     Transaction {
             tx_type: TxType::Deploy,
             version: version_u8,
             hash: Felt252Wrapper(deploy_transaction.transaction_hash.0.into()),
-            signature: BoundedVec::new(),
-            sender_address: Felt252Wrapper::default(),
-            nonce: Felt252Wrapper::default(),
-            call_entrypoint: call_entry_point,
-            contract_class: Option::<ContractClass>::default(),
+            signature: BoundedVec::new(), // No signature needed for Deploy txs
+            sender_address: Felt252Wrapper::default(), // No sender address needed for Deploy txs
+            nonce: Felt252Wrapper::default(), // No nonce needed for Deploy txs
+            call_entrypoint: CallEntryPointWrapper::default(),
+            contract_class: contract_class,
             contract_address_salt: Some(leading_bits(&FieldElement::from(deploy_transaction.contract_address_salt.0).to_bytes_be())),
             max_fee: Felt252Wrapper::default(),
             is_query: false,

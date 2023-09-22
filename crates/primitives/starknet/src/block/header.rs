@@ -158,7 +158,6 @@ impl Header {
     pub fn hash<H: HasherT>(&self, hasher: H) -> Felt252Wrapper {
         let first_07_block = 833u64;
         if self.block_number >= first_07_block {
-            frame_support::log::info!("block number: {}", self.block_number);
             let data: &[Felt252Wrapper] = &[
                 self.block_number.into(),
                 self.global_state_root,
@@ -173,10 +172,10 @@ impl Header {
                 self.parent_block_hash,
             ];
 
-            // Print each data for debugging
-            for (i, item) in data.iter().enumerate() {
-                frame_support::log::info!("data[{}]: {:?}", i, item);
-            }
+            // // Print each data for debugging
+            // for (i, item) in data.iter().enumerate() {
+            //     frame_support::log::info!("data[{}]: {:?}", i, item);
+            // }
 
             <H as HasherT>::compute_hash_on_wrappers(&hasher, data)
         } else {

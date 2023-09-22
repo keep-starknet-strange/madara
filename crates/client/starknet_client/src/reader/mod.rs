@@ -78,6 +78,10 @@ pub trait StarknetReader {
         &self,
         class_hash: ClassHash,
     ) -> ReaderClientResult<Option<GenericContractClass>>;
+    async fn raw_class_by_hash(
+        &self,
+        class_hash: ClassHash,
+    ) -> Result<String, ReaderClientError>;
     /// Returns a [`CasmContractClass`] corresponding to `class_hash`.
     async fn compiled_class_by_hash(
         &self,
@@ -193,6 +197,19 @@ impl StarknetReader for StarknetFeederGatewayClient {
             KnownStarknetErrorCode::UndeclaredClass,
             format!("Failed to get class with hash {class_hash:?} from starknet server."),
         )
+    }
+
+    #[instrument(skip(self), level = "debug")]
+    async fn raw_class_by_hash(
+        &self,
+        class_hash: ClassHash,
+    ) -> Result<String, ReaderClientError> {
+        let mut url = self.urls.get_contract_by_hash.clone();
+        let class_hash = serde_json::to_string(&class_hash)?;
+        url.query_pairs_mut()
+            .append_pair(CLASS_HASH_QUERY, &class_hash.as_str()[1..class_hash.len() - 1]);
+        let response = self.request_with_retry_url(url).await;
+        response
     }
 
     #[instrument(skip(self), level = "debug")]

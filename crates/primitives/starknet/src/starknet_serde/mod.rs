@@ -389,5 +389,6 @@ pub fn get_contract_class(json_str: &str, version: u8) -> ContractClass {
         let casm_contract_class: CasmContractClass = serde_json::from_str(json_str).unwrap();
         return ContractClass::V1(ContractClassV1::try_from(casm_contract_class).unwrap());
     }
+    
     unimplemented!("version {} is not supported to get contract class from JSON", version);
 }

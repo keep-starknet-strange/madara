@@ -59,7 +59,7 @@ pub mod utils;
 mod offchain_worker;
 
 #[cfg(test)]
-mod tests;
+pub mod tests;
 
 pub use pallet::*;
 

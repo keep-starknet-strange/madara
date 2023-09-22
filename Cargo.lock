@@ -7008,6 +7008,7 @@ dependencies = [
  "log",
  "mockito",
  "mp-starknet",
+ "pallet-starknet",
  "pathfinder",
  "pathfinder-common",
  "reqwest",

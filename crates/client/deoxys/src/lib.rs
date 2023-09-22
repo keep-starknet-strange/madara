@@ -25,12 +25,11 @@ use std::path::Path;
 use std::string::String;
 use starknet_client;
 use std::path::PathBuf;
-use crate::transactions::{declare_tx_to_starknet_tx, deploy_account_tx_to_starknet_tx, invoke_tx_to_starknet_tx, l1handler_tx_to_starknet_tx, deploy_tx_to_starknet_tx};
+use crate::transactions::{declare_tx_to_starknet_tx, deploy_account_tx_to_starknet_tx, invoke_tx_to_starknet_tx, l1handler_tx_to_starknet_tx, deploy_tx_to_starknet_tx, convert_to_contract_class};
 
 pub fn read_resource_file(path_in_resource_dir: &str) -> String {
     let path = Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap())
         .join(path_in_resource_dir);
-    println!("this is path: {:?}", path);
     return read_to_string(path.to_str().unwrap()).unwrap();
 }
 
@@ -91,14 +90,13 @@ pub fn get_header(block: starknet_client::reader::Block, transactions: BoundedVe
     starknet_header
 }
 
-pub fn get_txs(block: starknet_client::reader::Block) -> BoundedVec<mp_starknet::transaction::types::Transaction, MaxTransactions> {
+pub async fn get_txs(block: starknet_client::reader::Block) -> BoundedVec<mp_starknet::transaction::types::Transaction, MaxTransactions> {
     let mut transactions_vec: BoundedVec<Transaction, MaxTransactions> = BoundedVec::new();
         for transaction in &block.transactions {
             match transaction {
                 starknet_client::reader::objects::transaction::Transaction::Declare(declare_transaction) => {
                     // convert declare_transaction to starknet transaction
-                    println!("declare_transaction: {:?}", declare_transaction);
-                    let tx = declare_tx_to_starknet_tx(declare_transaction.clone());
+                    let tx = declare_tx_to_starknet_tx(declare_transaction.clone()).await;
                     transactions_vec.try_push(tx).unwrap();
                 },
                 starknet_client::reader::objects::transaction::Transaction::DeployAccount(deploy_account_transaction) => {
@@ -108,7 +106,7 @@ pub fn get_txs(block: starknet_client::reader::Block) -> BoundedVec<mp_starknet:
                 },
                 starknet_client::reader::objects::transaction::Transaction::Deploy(deploy_transaction) => {
                     // convert declare_transaction to starknet transaction
-                    let tx = deploy_tx_to_starknet_tx(deploy_transaction.clone());
+                    let tx = deploy_tx_to_starknet_tx(deploy_transaction.clone()).await;
                     transactions_vec.try_push(tx).unwrap();
                 },
                 starknet_client::reader::objects::transaction::Transaction::Invoke(invoke_transaction) => {
@@ -174,14 +172,9 @@ pub fn get_txs_receipts(block: starknet_client::reader::Block, transactions: Bou
 
 // This function converts a block received from the gateway into a StarkNet block
 pub async fn from_gateway_to_starknet_block(block: starknet_client::reader::Block) -> Block {
-    let transactions_vec: BoundedVec<Transaction, MaxTransactions> = get_txs(block.clone());
+    let transactions_vec: BoundedVec<Transaction, MaxTransactions> = get_txs(block.clone()).await;
     let transaction_receipts_vec: BoundedVec<TransactionReceiptWrapper, MaxTransactions> = get_txs_receipts(block.clone(), transactions_vec.clone());
     let header = get_header(block.clone(), transactions_vec.clone());
-    // if (header.block_number) >= 10 {
-    //     println!("header: {:?}", header);
-    //     println!("transactions_vec: {:?}", transactions_vec);
-    //     println!("transaction_receipts_vec: {:?}", transaction_receipts_vec);
-    // }
     Block::new(
         header,
         transactions_vec,
@@ -296,7 +289,7 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
         None,
         NODE_VERSION,
         retry_config
-    ).unwrap();    
+    ).unwrap();
 
     let mut i = get_last_synced_block(rpc_port).await.unwrap().unwrap() + 1;
     loop {
