@@ -28,4 +28,4 @@ jobs:
       - name: Run Gomu Gomu no Gatling Action
         uses: keep-starknet-strange/gomu-gomu-no-gatling/.github/actions@main
         with:
-          config_path: "./benchmark.yml"
+          config_path: "/home/ubuntu/actions-runner-bench/_work/madara/madara/benchmark.yml/benchmark.yml"
