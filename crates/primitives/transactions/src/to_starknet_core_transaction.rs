@@ -84,6 +84,19 @@ pub fn to_starknet_core_tx<H: HasherT>(
 
             starknet_core::types::Transaction::DeployAccount(tx)
         }
+        super::Transaction::Deploy(tx) => {
+            let tx_hash = tx.compute_hash::<H>(chain_id, false);
+
+            let tx = starknet_core::types::DeployTransaction {
+                transaction_hash: tx_hash.0,
+                contract_address_salt: tx.contract_address_salt.into(),
+                constructor_calldata: cast_vec_of_felt_252_wrappers(tx.constructor_calldata),
+                class_hash: tx.class_hash.into(),
+                version: 0u64,
+            };
+
+            starknet_core::types::Transaction::Deploy(tx)
+        }
         super::Transaction::Invoke(tx) => {
             let tx_hash = tx.compute_hash::<H>(chain_id, false);
 

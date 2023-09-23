@@ -18,7 +18,7 @@ use alloc::vec::Vec;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::transaction::transaction_types::TransactionType;
 use derive_more::From;
-use starknet_api::transaction::Fee;
+use starknet_api::{transaction::{Fee, TransactionVersion}, api_core::ClassHash};
 use starknet_ff::FieldElement;
 
 const SIMULATE_TX_VERSION_OFFSET: FieldElement =
@@ -72,6 +72,7 @@ pub enum UserTransaction {
 pub enum Transaction {
     Declare(DeclareTransaction),
     DeployAccount(DeployAccountTransaction),
+    Deploy(DeployTransaction),
     Invoke(InvokeTransaction),
     L1Handler(HandleL1MessageTransaction),
 }
@@ -168,6 +169,16 @@ pub struct DeployAccountTransaction {
     pub contract_address_salt: Felt252Wrapper,
     pub constructor_calldata: Vec<Felt252Wrapper>,
     pub class_hash: Felt252Wrapper,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+pub struct DeployTransaction {
+    pub version: TransactionVersion,
+    pub class_hash: Felt252Wrapper,
+    pub contract_address_salt: Felt252Wrapper,
+    pub constructor_calldata: Vec<Felt252Wrapper>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]

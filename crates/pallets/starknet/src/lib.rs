@@ -518,7 +518,7 @@ pub mod pallet {
             SeqAddrUpdate::<T>::put(true);
             Ok(())
         }
-
+        
         /// The invoke transaction is the main transaction type used to invoke contract functions in
         /// Starknet.
         /// See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#invoke_transaction`.

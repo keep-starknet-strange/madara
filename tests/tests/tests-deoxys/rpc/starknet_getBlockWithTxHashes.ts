@@ -3,11 +3,11 @@ import { performance } from 'perf_hooks';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-const REMOTE_RPC_URL = process.env.REMOTE_RPC;
-const LOCAL_RPC_URL = process.env.LOCAL_RPC;
-const BLOCK_NUMBER = 100;
+const REMOTE_RPC_URL = process.env.REMOTE_RPC!;
+const LOCAL_RPC_URL = process.env.LOCAL_RPC!;
+const BLOCK_NUMBER = 10;
 const START_BLOCK = 0;
-const END_BLOCK = 1500;
+const END_BLOCK = 50;
 
 const requestDataForMethod = (method: string, params: any[]) => ({
     id: 1,

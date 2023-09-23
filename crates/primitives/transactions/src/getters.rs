@@ -2,6 +2,8 @@ use alloc::vec::Vec;
 
 use mp_felt::Felt252Wrapper;
 
+use crate::DeployTransaction;
+
 use super::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction, UserTransaction};
 
 impl Transaction {
@@ -10,6 +12,7 @@ impl Transaction {
             Transaction::Declare(tx) => tx.signature().clone(),
             Transaction::DeployAccount(tx) => tx.signature().clone(),
             Transaction::Invoke(tx) => tx.signature().clone(),
+            Transaction::Deploy(_) => Vec::new(),
             Transaction::L1Handler(_) => Vec::new(),
         }
     }
@@ -138,6 +141,24 @@ impl DeployAccountTransaction {
 
     pub fn nonce(&self) -> &Felt252Wrapper {
         &self.nonce
+    }
+
+    pub fn version(&self) -> u8 {
+        1
+    }
+
+    pub fn account_address(&self) -> Felt252Wrapper {
+        Felt252Wrapper(self.get_account_address())
+    }
+
+    pub fn class_hash(&self) -> &Felt252Wrapper {
+        &self.class_hash
+    }
+}
+
+impl DeployTransaction {
+    pub fn calldata(&self) -> &Vec<Felt252Wrapper> {
+        &self.constructor_calldata
     }
 
     pub fn version(&self) -> u8 {

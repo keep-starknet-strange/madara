@@ -11,6 +11,8 @@ use starknet_api::transaction as sttx;
 use starknet_api::transaction::{Fee, TransactionVersion};
 use alloc::vec::Vec;
 
+use crate::DeployTransaction;
+
 use super::compute_hash::ComputeTransactionHash;
 use super::{
     DeclareTransaction, DeclareTransactionV0, DeclareTransactionV1, DeclareTransactionV2, DeployAccountTransaction,
@@ -200,6 +202,17 @@ impl DeployAccountTransaction {
             contract_address_salt: inner.contract_address_salt.into(),
             constructor_calldata: inner.constructor_calldata.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),
             class_hash: inner.class_hash.into()
+        }
+    }
+}
+
+impl DeployTransaction {
+    pub fn from_starknet(inner: starknet_api::transaction::DeployTransaction) -> Self {
+        Self {
+            contract_address_salt: inner.contract_address_salt.into(),
+            constructor_calldata: inner.constructor_calldata.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),
+            class_hash: inner.class_hash.into(),
+            version: inner.version.into(),
         }
     }
 }

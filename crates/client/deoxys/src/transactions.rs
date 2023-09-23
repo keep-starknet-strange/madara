@@ -98,8 +98,11 @@ pub fn invoke_tx_to_starknet_tx(
     Ok(mp_transactions::Transaction::Invoke(mp_invoke_tx))
 }
 
-pub async fn deploy_tx_to_starknet_tx(deploy_transaction : DeployTransaction) -> mp_block::BlockTransactions {
-    Ok(mp_transactions::Transaction::DeployAccount(mp_transactions::DeployAccountTransaction::from_starknet(deploy_transaction)).unwrap())
+pub async fn deploy_tx_to_starknet_tx(
+    deploy_transaction : starknet_api::transaction::DeployTransaction
+) -> Result<mp_transactions::Transaction, ReaderClientError> {
+    let mp_deploy_tx = mp_transactions::DeployTransaction::from_starknet(deploy_transaction);
+    Ok(mp_transactions::Transaction::Deploy(mp_deploy_tx))
 }
 
 pub fn deploy_account_tx_to_starknet_tx(
