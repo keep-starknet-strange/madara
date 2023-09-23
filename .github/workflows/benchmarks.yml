@@ -7,7 +7,7 @@ on:
 
 jobs:
   benchmark:
-    runs-on: [self-hosted, linux, benchmark]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
@@ -22,10 +22,11 @@ jobs:
             ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
             github.run_id }}
           fail-on-cache-miss: true
-      - run: rm -rf /home/ubuntu/.madara/chains/dev
       - name: Run Madara in background
         run: target/release/madara --dev & sleep 15
       - name: Run Gomu Gomu no Gatling Action
         uses: keep-starknet-strange/gomu-gomu-no-gatling/.github/actions@main
         with:
           config_path: "benchmark.yml"
+      - name: Stop Madara
+        run: killall madara
