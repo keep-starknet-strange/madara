@@ -130,6 +130,7 @@ pub async fn from_gateway_to_starknet_block(block: starknet_client::reader::Bloc
         .cloned()
         .collect();
     let header = get_header(block.clone(), transactions_vec.clone(), &all_events);
+    println!("transactions_vec: {:?}", transactions_vec);
     mp_block::Block::new(
         header,
         transactions_vec,
@@ -251,7 +252,6 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
         match block {
             Ok(block) => {
                 let starknet_block = from_gateway_to_starknet_block(block.unwrap()).await;
-                println!("starknet_block: {:?}", starknet_block);
                 {
                     let mut queue_guard: std::sync::MutexGuard<'_, VecDeque<Block>> = queue.lock().unwrap();
                     queue_guard.push_back(starknet_block);

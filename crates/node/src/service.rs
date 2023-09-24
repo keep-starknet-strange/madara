@@ -46,6 +46,7 @@ use sp_offchain::STORAGE_PREFIX;
 use sp_runtime::testing::Digest;
 use sp_runtime::testing::DigestItem;
 use sp_runtime::traits::BlakeTwo256;
+use sp_runtime::traits::Block as BlockT;
 use sp_trie::PrefixedMemoryDB;
 use mc_deoxys::{fetch_block, BlockQueue, create_block_queue};
 use lazy_static::lazy_static;
@@ -264,11 +265,13 @@ where
 lazy_static! {
     static ref QUEUE: BlockQueue = create_block_queue();
 }
+
 /// Builds a new service for a full client.
-pub fn new_full(
+pub async fn new_full(
     config: Configuration,
     sealing: Option<Sealing>,
     da_layer: Option<(DaLayer, PathBuf)>,
+    rpc_port: u16,
 ) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
@@ -436,6 +439,10 @@ pub fn new_full(
 
             network_starter.start_network();
 
+            tokio::spawn(async move {
+                fetch_block(QUEUE.clone(), rpc_port).await;
+            });
+
             log::info!("Manual Seal Ready");
             return Ok(task_manager);
         }
@@ -541,15 +548,15 @@ pub fn new_full(
     }
 
     network_starter.start_network();
+    
     Ok(task_manager)
 }
 
 #[allow(clippy::too_many_arguments)]
-#[allow(clippy::too_many_arguments)]
 fn run_manual_seal_authorship(
     sealing: Sealing,
     client: Arc<FullClient>,
-    transaction_pool: Arc<FullPool<madara_runtime::opaque::Block, FullClient>>,
+    transaction_pool: Arc<FullPool<Block, FullClient>>,
     select_chain: FullSelectChain,
     block_import: BoxBlockImport<FullClient>,
     task_manager: &TaskManager,
@@ -600,18 +607,19 @@ where
         Ok(timestamp)
     };
 
-	struct QueryBlockConsensusDataProvider<C> {
+    struct QueryBlockConsensusDataProvider<C> {
 		_client: Arc<C>,
 	}
 
 	impl<B, C> ConsensusDataProvider<B> for QueryBlockConsensusDataProvider<C>
 		where
-		B: sp_runtime::traits::Block,
+		B: BlockT,
 		C: ProvideRuntimeApi<B> + Send + Sync,{
 		type Transaction = TransactionFor<C, B>;
 		type Proof = ();
 
 		fn create_digest(&self, _parent: &B::Header, _inherents: &InherentData) -> Result<Digest, Error> {
+            println!("create_digest");
             let mut queue_guard = QUEUE.lock().unwrap();
             let starknet_block: mp_block::Block = queue_guard.pop_front().unwrap();
 
@@ -626,6 +634,7 @@ where
 			_inherents: &InherentData,
 			_proof: Self::Proof,
 		) -> Result<(), Error> {
+            println!("append_block_import, {:?}", DigestItem::Other(vec![1]));
 			params.post_digests.push(DigestItem::Other(vec![1]));
 			Ok(())
 		}
@@ -661,6 +670,7 @@ where
     task_manager.spawn_essential_handle().spawn_blocking("manual-seal", None, manual_seal);
     Ok(())
 }
+
 
 type ChainOpsResult = Result<
     (

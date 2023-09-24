@@ -62,6 +62,7 @@ use blockifier::execution::entry_point::{CallEntryPoint, CallType, EntryPointExe
 use blockifier::state::cached_state::ContractStorageKey;
 use blockifier::state::state_api::State;
 use blockifier::transaction::objects::{TransactionExecutionInfo, TransactionExecutionResult};
+use sp_core::U256;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee};
 
@@ -99,7 +100,7 @@ use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
 use sp_std::result;
 use starknet_api::api_core::{ChainId, ClassHash, CompiledClassHash, ContractAddress, EntryPointSelector, Nonce};
-use starknet_api::block::{BlockNumber, BlockTimestamp};
+use starknet_api::block::{BlockNumber, BlockTimestamp, BlockStatus};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::TransactionHash;
@@ -1032,56 +1033,81 @@ impl<T: Config> Pallet<T> {
     ///
     /// * `block_number` - The block number.
     fn store_block(block_number: u64) {
-        let transactions = Self::pending();
-        let transaction_hashes = Self::pending_hashes();
-        assert_eq!(
-            transactions.len(),
-            transaction_hashes.len(),
-            "transactions and transaction hashes should be the same length"
-        );
-        let transaction_count = transactions.len();
+        let block;
+		if frame_system::Pallet::<T>::digest().logs().len() == 1 {
+			match &frame_system::Pallet::<T>::digest().logs()[0] {
+				DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID ,encoded_data) => {
 
-        let parent_block_hash = Self::parent_block_hash(&block_number);
-        let events: Vec<StarknetEvent> = transaction_hashes.iter().flat_map(TxEvents::<T>::take).collect();
+					block = match mp_block::Block::decode(&mut encoded_data.as_slice()) {
+                        Ok(b) => b,
+                        Err(e) => {
+                            log!(error, "Failed to decode block: {:?}", e);
+                            return;
+                        }
+                    };
+                    
+					// Save the block number <> hash mapping.
+					let blockhash = Felt252Wrapper::try_from(block.header().extra_data.unwrap()).unwrap();
+					BlockHash::<T>::insert(block_number, blockhash);
+					Pending::<T>::kill();
+					let digest = DigestItem::Consensus(MADARA_ENGINE_ID, mp_digest_log::Log::Block(block).encode());
+					frame_system::Pallet::<T>::deposit_log(digest);
+				}
+				_ => { log!(info, "Block not found in store_block") },
 
-        let global_state_root = Felt252Wrapper::default();
+			}
+		} else { 
+            let transactions = Self::pending();
+            let transaction_hashes = Self::pending_hashes();
+            assert_eq!(
+                transactions.len(),
+                transaction_hashes.len(),
+                "transactions and transaction hashes should be the same length"
+            );
+            let transaction_count = transactions.len();
 
-        let sequencer_address = Self::sequencer_address();
-        let block_timestamp = Self::block_timestamp();
+            let parent_block_hash = Self::parent_block_hash(&block_number);
+            let events: Vec<StarknetEvent> = transaction_hashes.iter().flat_map(TxEvents::<T>::take).collect();
 
-        let chain_id = Self::chain_id();
-        let (transaction_commitment, event_commitment) =
-            mp_commitments::calculate_commitments::<T::SystemHash>(&transactions, &events, chain_id);
-        let protocol_version = T::ProtocolVersion::get();
-        let extra_data = None;
+            let global_state_root = Felt252Wrapper::default();
 
-        let block = StarknetBlock::new(
-            StarknetHeader::new(
-                parent_block_hash.into(),
-                block_number,
-                global_state_root.into(),
-                sequencer_address,
-                block_timestamp,
-                transaction_count as u128,
-                transaction_commitment.into(),
-                events.len() as u128,
-                event_commitment.into(),
-                protocol_version,
-                extra_data,
-            ),
-            transactions,
-        );
-        // Save the block number <> hash mapping.
-        let blockhash = block.header().hash::<T::SystemHash>();
-        BlockHash::<T>::insert(block_number, blockhash);
+            let sequencer_address = Self::sequencer_address();
+            let block_timestamp = Self::block_timestamp();
 
-        // Kill pending storage.
-        // There is no need to kill `TxEvents` as we used `take` while iterating over it.
-        Pending::<T>::kill();
-        PendingHashes::<T>::kill();
+            let chain_id = Self::chain_id();
+            let (transaction_commitment, event_commitment) =
+                mp_commitments::calculate_commitments::<T::SystemHash>(&transactions, &events, chain_id);
+            let protocol_version = T::ProtocolVersion::get();
+            let extra_data = None;
 
-        let digest = DigestItem::Consensus(MADARA_ENGINE_ID, mp_digest_log::Log::Block(block).encode());
-        frame_system::Pallet::<T>::deposit_log(digest);
+            let block = StarknetBlock::new(
+                StarknetHeader::new(
+                    parent_block_hash.into(),
+                    block_number,
+                    global_state_root.into(),
+                    sequencer_address,
+                    block_timestamp,
+                    transaction_count as u128,
+                    transaction_commitment.into(),
+                    events.len() as u128,
+                    event_commitment.into(),
+                    protocol_version,
+                    extra_data,
+                ),
+                transactions,
+            );
+            // Save the block number <> hash mapping.
+            let blockhash = block.header().hash::<T::SystemHash>();
+            BlockHash::<T>::insert(block_number, blockhash);
+
+            // Kill pending storage.
+            // There is no need to kill `TxEvents` as we used `take` while iterating over it.
+            Pending::<T>::kill();
+            PendingHashes::<T>::kill();
+
+            let digest = DigestItem::Consensus(MADARA_ENGINE_ID, mp_digest_log::Log::Block(block).encode());
+            frame_system::Pallet::<T>::deposit_log(digest);
+        }
     }
 
     /// Emit events from the call info.
