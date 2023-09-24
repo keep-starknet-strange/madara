@@ -11,6 +11,8 @@ use starknet_api::transaction as sttx;
 use starknet_api::transaction::{Fee, TransactionVersion};
 use alloc::vec::Vec;
 
+use frame_support::debug;
+
 use crate::DeployTransaction;
 
 use super::compute_hash::ComputeTransactionHash;
@@ -124,7 +126,6 @@ impl InvokeTransactionV0 {
         Self {
             max_fee: inner.max_fee.0,
             signature: inner.signature.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),
-            nonce: Default::default(),
             contract_address: inner.contract_address.into(),
             entry_point_selector: inner.entry_point_selector.into(),
             calldata: inner.calldata.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect()

@@ -104,7 +104,6 @@ pub fn to_starknet_core_tx<H: HasherT>(
                 super::InvokeTransaction::V0(super::InvokeTransactionV0 {
                     max_fee,
                     signature,
-                    nonce: _,
                     contract_address,
                     entry_point_selector,
                     calldata,
