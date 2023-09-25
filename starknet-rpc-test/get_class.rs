@@ -90,8 +90,6 @@ async fn work_ok_retrieving_class_for_contract_version_0(#[future] madara: Madar
     Ok(())
 }
 
-// TODO: remove "ignore" when https://github.com/keep-starknet-strange/madara/pull/992 is merged
-#[ignore]
 #[rstest]
 #[tokio::test]
 async fn work_ok_retrieving_class_for_contract_version_1(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {

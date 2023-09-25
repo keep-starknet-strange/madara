@@ -34,6 +34,19 @@
 - ci: increase threshold for codecov to 1%
 - test: add `starknet-rpc-test` crate to the workspace
 - test: add test to check tx signed by OZ account can be signed with Argent pk
+- buid: add rust-analyzer to toolchain components
+- ci: increase threshold for codecov to 1%
+- replace all calls to `transmute` by calls `from_raw_parts`
+- big transaction type refactoring
+- impl tx execution and verification as traits
+- reduce the amount of data stored in the runtime and use the Substrate block to
+  as source of data in the client
+- perf: use perfect hash function in calculate_l1_gas_by_vm_usage
+- chore: add tests for tx hashing
+- split `primitives` crates into multiple smaller crates
+- fix: std feature import in transactions crate
+- chore: improve logging about transaction when nonce is too high
+- fix: rpc tests and background node run
 - test: add tests for simulate tx offset
 - test: add tests for tx hashing
 

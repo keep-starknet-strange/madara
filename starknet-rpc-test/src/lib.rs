@@ -7,7 +7,7 @@ use std::path::Path;
 use std::process::{Child, Command, Stdio};
 
 use anyhow::anyhow;
-use constants::{MAX_PORT, MIN_PORT};
+use constants::ENDING_PORT;
 use derive_more::Display;
 use lazy_static::lazy_static;
 use reqwest::header::CONTENT_TYPE;
@@ -121,6 +121,11 @@ pub enum TestError {
     NoFreePorts,
 }
 
+struct NodePorts {
+    rpc_port: u16,
+    p2p_port: u16,
+}
+
 impl Drop for MadaraClient {
     fn drop(&mut self) {
         if let Err(e) = self.process.kill() {
@@ -129,45 +134,60 @@ impl Drop for MadaraClient {
     }
 }
 
-fn get_free_port() -> Result<u16, TestError> {
-    for port in MIN_PORT..=MAX_PORT {
-        if let Ok(listener) = TcpListener::bind(("127.0.0.1", port)) {
-            return Ok(listener.local_addr().expect("No local addr").port());
+fn find_available_ports() -> Result<NodePorts, TestError> {
+    let mut available_ports = Vec::new();
+
+    for index in 0..3 {
+        let mut selected_port = 0;
+        let mut port = 1024 + index * 20000 + (std::process::id() % 20000) as u16;
+
+        while selected_port == 0 && port < ENDING_PORT {
+            if TcpListener::bind(("127.0.0.1", port)).is_ok() {
+                selected_port = port;
+            }
+            port += 1;
         }
-        // otherwise port is occupied
+
+        if selected_port == 0 {
+            return Err(TestError::NoFreePorts);
+        }
+
+        available_ports.push(selected_port);
     }
 
-    Err(TestError::NoFreePorts)
+    Ok(NodePorts { rpc_port: available_ports[0], p2p_port: available_ports[1] })
 }
 
 impl MadaraClient {
     async fn init(execution: ExecutionStrategy) -> Result<Self, TestError> {
-        let free_port = get_free_port()?;
+        let NodePorts { p2p_port, rpc_port } = find_available_ports()?;
 
         let manifest_path = Path::new(&env!("CARGO_MANIFEST_DIR"));
         let repository_root = manifest_path.parent().expect("Failed to get parent directory of CARGO_MANIFEST_DIR");
 
         std::env::set_current_dir(repository_root).expect("Failed to change working directory");
 
+        let madara_log = std::env::var("MADARA_LOG").unwrap_or_else(|_| "false".to_string());
+
         let child_handle = Command::new("cargo")
 		// Silence Madara stdout and stderr
 		.stdout(Stdio::null())
-		.stderr(Stdio::null())
+		.stderr(if madara_log == "true" { Stdio::inherit() } else { Stdio::null() })
 		.args([
 			"run",
 			"--release",
 			"--",
-			"--alice",
 			"--sealing=manual",
 			&format!("--execution={execution}"),
-			"--chain=dev",
-			"--tmp",
-			&format!("--rpc-port={free_port}")
+			"--dev",
+            "--tmp",
+			&format!("--port={p2p_port}"),
+			&format!("--rpc-port={rpc_port}"),
 			])
 			.spawn()
 			.expect("Could not start background madara node");
 
-        let host = &format!("http://localhost:{free_port}");
+        let host = &format!("http://localhost:{rpc_port}");
 
         let starknet_client = JsonRpcClient::new(HttpTransport::new(Url::parse(host).expect("Invalid JSONRPC Url")));
 
@@ -176,7 +196,7 @@ impl MadaraClient {
             client: Client::new(),
             starknet_client,
             rpc_request_count: Default::default(),
-            port: free_port,
+            port: rpc_port,
         })
     }
 
