@@ -61,9 +61,9 @@ fn get_madara_path_string(cli: &Cli) -> String {
         .madara_path
         .clone()
         .expect("`madara_path` expected to be set with clap default value")
-        .to_str()
-        .unwrap()
-        .to_string()
+		.into_os_string()
+		.into_string()
+		.expect("Failed to convert `madara_path` to string")
 }
 
 fn set_dev_environment(cli: &mut Cli) {
