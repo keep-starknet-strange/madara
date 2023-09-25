@@ -299,6 +299,26 @@
 <a href="#299" id="299">299</a>
 <a href="#300" id="300">300</a>
 <a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
 </pre></div><pre class="rust"><code><span class="attr">#![feature(assert_matches)]
 
 </span><span class="kw">use </span>std::cell::Cell;
@@ -308,7 +328,7 @@
 <span class="kw">use </span>std::process::{Child, Command, Stdio};
 
 <span class="kw">use </span>anyhow::anyhow;
-<span class="kw">use </span>constants::{MAX_PORT, MIN_PORT};
+<span class="kw">use </span>constants::ENDING_PORT;
 <span class="kw">use </span>derive_more::Display;
 <span class="kw">use </span>lazy_static::lazy_static;
 <span class="kw">use </span>reqwest::header::CONTENT_TYPE;
@@ -422,6 +442,11 @@
     </span>NoFreePorts,
 }
 
+<span class="kw">struct </span>NodePorts {
+    rpc_port: u16,
+    p2p_port: u16,
+}
+
 <span class="kw">impl </span>Drop <span class="kw">for </span>MadaraClient {
     <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.process.kill() {
@@ -430,45 +455,60 @@
     }
 }
 
-<span class="kw">fn </span>get_free_port() -&gt; <span class="prelude-ty">Result</span>&lt;u16, TestError&gt; {
-    <span class="kw">for </span>port <span class="kw">in </span>MIN_PORT..=MAX_PORT {
-        <span class="kw">if let </span><span class="prelude-val">Ok</span>(listener) = TcpListener::bind((<span class="string">&quot;127.0.0.1&quot;</span>, port)) {
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(listener.local_addr().expect(<span class="string">&quot;No local addr&quot;</span>).port());
-        }
-        <span class="comment">// otherwise port is occupied
-    </span>}
+<span class="kw">fn </span>find_available_ports() -&gt; <span class="prelude-ty">Result</span>&lt;NodePorts, TestError&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>available_ports = Vec::new();
 
-    <span class="prelude-val">Err</span>(TestError::NoFreePorts)
+    <span class="kw">for </span>index <span class="kw">in </span><span class="number">0</span>..<span class="number">3 </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>selected_port = <span class="number">0</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>port = <span class="number">1024 </span>+ index * <span class="number">20000 </span>+ (std::process::id() % <span class="number">20000</span>) <span class="kw">as </span>u16;
+
+        <span class="kw">while </span>selected_port == <span class="number">0 </span>&amp;&amp; port &lt; ENDING_PORT {
+            <span class="kw">if </span>TcpListener::bind((<span class="string">&quot;127.0.0.1&quot;</span>, port)).is_ok() {
+                selected_port = port;
+            }
+            port += <span class="number">1</span>;
+        }
+
+        <span class="kw">if </span>selected_port == <span class="number">0 </span>{
+            <span class="kw">return </span><span class="prelude-val">Err</span>(TestError::NoFreePorts);
+        }
+
+        available_ports.push(selected_port);
+    }
+
+    <span class="prelude-val">Ok</span>(NodePorts { rpc_port: available_ports[<span class="number">0</span>], p2p_port: available_ports[<span class="number">1</span>] })
 }
 
 <span class="kw">impl </span>MadaraClient {
     <span class="kw">async fn </span>init(execution: ExecutionStrategy) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, TestError&gt; {
-        <span class="kw">let </span>free_port = get_free_port()<span class="question-mark">?</span>;
+        <span class="kw">let </span>NodePorts { p2p_port, rpc_port } = find_available_ports()<span class="question-mark">?</span>;
 
         <span class="kw">let </span>manifest_path = Path::new(<span class="kw-2">&amp;</span><span class="macro">env!</span>(<span class="string">&quot;CARGO_MANIFEST_DIR&quot;</span>));
         <span class="kw">let </span>repository_root = manifest_path.parent().expect(<span class="string">&quot;Failed to get parent directory of CARGO_MANIFEST_DIR&quot;</span>);
 
         std::env::set_current_dir(repository_root).expect(<span class="string">&quot;Failed to change working directory&quot;</span>);
 
+        <span class="kw">let </span>madara_log = std::env::var(<span class="string">&quot;MADARA_LOG&quot;</span>).unwrap_or_else(|<span class="kw">_</span>| <span class="string">&quot;false&quot;</span>.to_string());
+
         <span class="kw">let </span>child_handle = Command::new(<span class="string">&quot;cargo&quot;</span>)
 		<span class="comment">// Silence Madara stdout and stderr
 		</span>.stdout(Stdio::null())
-		.stderr(Stdio::null())
+		.stderr(<span class="kw">if </span>madara_log == <span class="string">&quot;true&quot; </span>{ Stdio::inherit() } <span class="kw">else </span>{ Stdio::null() })
 		.args([
 			<span class="string">&quot;run&quot;</span>,
 			<span class="string">&quot;--release&quot;</span>,
 			<span class="string">&quot;--&quot;</span>,
-			<span class="string">&quot;--alice&quot;</span>,
 			<span class="string">&quot;--sealing=manual&quot;</span>,
 			<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;--execution={execution}&quot;</span>),
-			<span class="string">&quot;--chain=dev&quot;</span>,
-			<span class="string">&quot;--tmp&quot;</span>,
-			<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;--rpc-port={free_port}&quot;</span>)
+			<span class="string">&quot;--dev&quot;</span>,
+            <span class="string">&quot;--tmp&quot;</span>,
+			<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;--port={p2p_port}&quot;</span>),
+			<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;--rpc-port={rpc_port}&quot;</span>),
 			])
 			.spawn()
 			.expect(<span class="string">&quot;Could not start background madara node&quot;</span>);
 
-        <span class="kw">let </span>host = <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;http://localhost:{free_port}&quot;</span>);
+        <span class="kw">let </span>host = <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;http://localhost:{rpc_port}&quot;</span>);
 
         <span class="kw">let </span>starknet_client = JsonRpcClient::new(HttpTransport::new(Url::parse(host).expect(<span class="string">&quot;Invalid JSONRPC Url&quot;</span>)));
 
@@ -477,7 +517,7 @@
             client: Client::new(),
             starknet_client,
             rpc_request_count: Default::default(),
-            port: free_port,
+            port: rpc_port,
         })
     }
 
