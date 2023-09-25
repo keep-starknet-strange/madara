@@ -1,7 +1,8 @@
 # Madara Changelog
 
 ## Next release
-- feat: use actual vm resource costs 
+
+- feat: use actual vm resource costs
 
 ## v0.3.0
 
