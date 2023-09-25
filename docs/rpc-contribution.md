@@ -187,9 +187,9 @@ everything is working as expected.
 
 ## Integration tests
 
-Integration tests are located in the `starknet-rpc-test` folder, and are written in
-rust using `rstest`. We use `starknet-rs` to interact with the blockchain and test
-compatibility with Starknet's tooling.
+Integration tests are located in the `starknet-rpc-test` folder, and are written
+in rust using `rstest`. We use `starknet-rs` to interact with the blockchain and
+test compatibility with Starknet's tooling.
 
 You can find the documentation on this
 [link](https://github.com/xJonathanLEI/starknet-rs).
@@ -203,7 +203,7 @@ async fn fail_non_existing_block(#[future] madara: MadaraClient) -> Result<(), a
 
     // We get the RPC Provider to interact with the madara node
     let rpc = madara.get_starknet_client();
-    
+
     // Expected values
     let test_contract_class_hash =
         FieldElement::from_hex_be(TEST_CONTRACT_CLASS_HASH).expect("Invalid Contract Address");
@@ -228,9 +228,11 @@ able to target your new endpoint.
 
 ### Run your integration tests
 
-To run the tests, simply run `cargo test -p starknet-rpc-test -- test <test_file> -- <test_name> --exact --nocapture --test-threads=1`.
+To run the tests, simply run
+`cargo test -p starknet-rpc-test -- test <test_file> -- <test_name> --exact --nocapture --test-threads=1`.
 
-For easier debugging make sure to enable the background node's logs with `MADARA_LOG=true`.
+For easier debugging make sure to enable the background node's logs with
+`MADARA_LOG=true`.
 
 e.g
 
