@@ -9,6 +9,41 @@ use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkHash;
 use starknet_api::stdlib::collections::HashMap;
 
+/// Block status.
+///
+/// The status of the block.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+pub enum BlockStatus {
+    #[cfg_attr(feature = "serde", serde(rename = "PENDING"))]
+    Pending,
+    #[cfg_attr(feature = "serde", serde(rename = "ACCEPTED_ON_L2"))]
+    AcceptedOnL2,
+    #[cfg_attr(feature = "serde", serde(rename = "ACCEPTED_ON_L1"))]
+    AcceptedOnL1,
+    #[cfg_attr(feature = "serde", serde(rename = "REJECTED"))]
+    Rejected,
+}
+
+impl Default for BlockStatus {
+    fn default() -> Self {
+        BlockStatus::AcceptedOnL2
+    }
+}
+
+impl From<BlockStatus> for starknet_core::types::BlockStatus {
+    fn from(status: BlockStatus) -> Self {
+        match status {
+            BlockStatus::Pending => starknet_core::types::BlockStatus::Pending,
+            BlockStatus::AcceptedOnL2 => starknet_core::types::BlockStatus::AcceptedOnL2,
+            BlockStatus::AcceptedOnL1 => starknet_core::types::BlockStatus::AcceptedOnL1,
+            BlockStatus::Rejected => starknet_core::types::BlockStatus::Rejected, // Assuming Reverted maps to Rejected
+            _ => panic!("Unsupported status conversion"), // Handle any additional statuses or provide a default conversion
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
@@ -19,6 +54,8 @@ pub struct Header {
     pub parent_block_hash: StarkHash,
     /// The number (height) of this block.
     pub block_number: u64,
+    /// The status of this block.
+    pub status: BlockStatus,
     /// The state commitment after this block.
     pub global_state_root: StarkHash,
     /// The Starknet address of the sequencer who created this block.
@@ -39,6 +76,7 @@ pub struct Header {
     pub extra_data: Option<U256>,
 }
 
+
 impl Header {
     /// Creates a new header.
     #[allow(clippy::too_many_arguments)]
@@ -46,6 +84,7 @@ impl Header {
     pub fn new(
         parent_block_hash: StarkHash,
         block_number: u64,
+        status: BlockStatus,
         global_state_root: StarkHash,
         sequencer_address: ContractAddress,
         block_timestamp: u64,
@@ -59,6 +98,7 @@ impl Header {
         Self {
             parent_block_hash,
             block_number,
+            status,
             global_state_root,
             sequencer_address,
             block_timestamp,

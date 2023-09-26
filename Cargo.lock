@@ -7539,6 +7539,7 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "sp-core 7.0.0",
+ "starknet-core",
  "starknet_api 0.4.1 (git+https://github.com/keep-starknet-strange/starknet-api?branch=no_std-support-dc83f05)",
 ]
 

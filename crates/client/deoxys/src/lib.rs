@@ -54,12 +54,13 @@ pub fn get_header(block: starknet_client::reader::Block, transactions: mp_block:
     let block_number = block.block_number.0;
     let global_state_root = Felt252Wrapper::try_from(block.state_root.0.bytes());
     let status = match block.status {
-        starknet_client::reader::objects::block::BlockStatus::Pending => starknet_core::types::BlockStatus::Pending,
-        starknet_client::reader::objects::block::BlockStatus::AcceptedOnL2 => starknet_core::types::BlockStatus::AcceptedOnL2,
-        starknet_client::reader::objects::block::BlockStatus::AcceptedOnL1 => starknet_core::types::BlockStatus::AcceptedOnL1,
-        starknet_client::reader::objects::block::BlockStatus::Reverted => starknet_core::types::BlockStatus::Rejected,
-        starknet_client::reader::objects::block::BlockStatus::Aborted => starknet_core::types::BlockStatus::Rejected,
+        starknet_client::reader::objects::block::BlockStatus::Pending => mp_block::BlockStatus::Pending,
+        starknet_client::reader::objects::block::BlockStatus::AcceptedOnL2 => mp_block::BlockStatus::AcceptedOnL2,
+        starknet_client::reader::objects::block::BlockStatus::AcceptedOnL1 => mp_block::BlockStatus::AcceptedOnL1,
+        starknet_client::reader::objects::block::BlockStatus::Reverted => mp_block::BlockStatus::Rejected,
+        starknet_client::reader::objects::block::BlockStatus::Aborted => mp_block::BlockStatus::Rejected,
     };
+    println!("status: {:?}", status);
     let sequencer_address = Felt252Wrapper(FieldElement::from(*PatriciaKey::key(&block.sequencer_address.0)));
     let block_timestamp = block.timestamp.0;
     let transaction_count = block.transactions.len() as u128;
@@ -74,6 +75,7 @@ pub fn get_header(block: starknet_client::reader::Block, transactions: mp_block:
     let starknet_header = mp_block::Header::new(
         StarkFelt::from(parent_block_hash.unwrap()),
         block_number.into(),
+        status.into(),
         StarkFelt::from(global_state_root.unwrap()),
         sequencer_address.into(),
         block_timestamp.into(),
@@ -130,7 +132,6 @@ pub async fn from_gateway_to_starknet_block(block: starknet_client::reader::Bloc
         .cloned()
         .collect();
     let header = get_header(block.clone(), transactions_vec.clone(), &all_events);
-    println!("transactions_vec: {:?}", transactions_vec);
     mp_block::Block::new(
         header,
         transactions_vec,

@@ -83,7 +83,7 @@ use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
 use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
-use mp_block::{Block as StarknetBlock, Header as StarknetHeader};
+use mp_block::{Block as StarknetBlock, Header as StarknetHeader, BlockStatus};
 use mp_digest_log::MADARA_ENGINE_ID;
 use mp_fee::INITIAL_GAS;
 use mp_felt::Felt252Wrapper;
@@ -100,7 +100,7 @@ use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
 use sp_std::result;
 use starknet_api::api_core::{ChainId, ClassHash, CompiledClassHash, ContractAddress, EntryPointSelector, Nonce};
-use starknet_api::block::{BlockNumber, BlockTimestamp, BlockStatus};
+use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::TransactionHash;
@@ -1083,7 +1083,8 @@ impl<T: Config> Pallet<T> {
             let block = StarknetBlock::new(
                 StarknetHeader::new(
                     parent_block_hash.into(),
-                    block_number,
+                    block_number.into(),
+                    BlockStatus::default(),
                     global_state_root.into(),
                     sequencer_address,
                     block_timestamp,

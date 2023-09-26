@@ -52,7 +52,6 @@ where
                                 .map(|tx| H256::from(tx.compute_hash::<H>(chain_id, false)))
                                 .collect(),
                         };
-                        println!("Writing mapping commitment: {:?}", mapping_commitment.starknet_transaction_hashes);
                         backend.mapping().write_hashes(mapping_commitment)
                     }
                 }

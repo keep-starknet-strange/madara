@@ -409,7 +409,7 @@ where
         let block_with_tx_hashes = BlockWithTxHashes {
             transactions,
             // TODO: Status hardcoded, get status from block
-            status: BlockStatus::AcceptedOnL2,
+            status: starknet_core::types::BlockStatus::from(block.header().status),
             block_hash: blockhash.into(),
             parent_hash: parent_blockhash.into(),
             block_number: block.header().block_number,
