@@ -3,7 +3,7 @@ use std::string::String;
 use std::vec::Vec;
 
 use blockifier::execution::contract_class::ContractClass as StarknetContractClass;
-use mp_starknet::execution::types::Felt252Wrapper;
+use mp_felt::Felt252Wrapper;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use starknet_core::serde::unsigned_field_element::UfeHex;

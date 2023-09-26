@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use blockifier::execution::contract_class::ContractClass;
 use frame_support::{Identity, StorageHasher};
-use mp_starknet::storage::StarknetStorageSchemaVersion;
+use mp_storage::StarknetStorageSchemaVersion;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::{Backend, HeaderBackend, StorageProvider};
 use sp_api::ProvideRuntimeApi;

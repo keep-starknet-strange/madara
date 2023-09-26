@@ -19,12 +19,11 @@ use mc_rpc_core::Felt;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use mc_transaction_pool::{ChainApi, Pool};
-use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::traits::hash::HasherT;
-use mp_starknet::traits::SendSyncStatic;
-use mp_starknet::transaction::compute_hash::ComputeTransactionHash;
-use mp_starknet::transaction::to_starknet_core_transaction::to_starknet_core_tx;
-use mp_starknet::transaction::UserTransaction;
+use mp_felt::Felt252Wrapper;
+use mp_hashers::HasherT;
+use mp_transactions::compute_hash::ComputeTransactionHash;
+use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
+use mp_transactions::UserTransaction;
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::BlockBackend;
@@ -108,7 +107,7 @@ where
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     BE: Backend<B>,
-    H: HasherT + SendSyncStatic,
+    H: HasherT + Send + Sync + 'static,
 {
     pub fn current_block_hash(&self) -> Result<H256, ApiError> {
         let substrate_block_hash = self.client.info().best_hash;
@@ -174,7 +173,7 @@ where
     C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
-    H: HasherT + SendSyncStatic,
+    H: HasherT + Send + Sync + 'static,
 {
     fn block_number(&self) -> RpcResult<u64> {
         self.current_block_number()
@@ -849,7 +848,7 @@ where
             }
         };
 
-        let block: mp_starknet::block::Block =
+        let block: mp_block::Block =
             get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
         let block_header = block.header();
         let block_hash = block_header.hash::<H>().into();
@@ -901,7 +900,7 @@ where
         }
 
         let receipt = match tx_type {
-            mp_starknet::transaction::TxType::Declare => TransactionReceipt::Declare(DeclareTransactionReceipt {
+            mp_transactions::TxType::Declare => TransactionReceipt::Declare(DeclareTransactionReceipt {
                 transaction_hash,
                 actual_fee: Default::default(),
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
@@ -911,7 +910,7 @@ where
                 events: events.into_iter().map(event_conversion).collect(),
                 execution_result,
             }),
-            mp_starknet::transaction::TxType::DeployAccount => {
+            mp_transactions::TxType::DeployAccount => {
                 TransactionReceipt::DeployAccount(DeployAccountTransactionReceipt {
                     transaction_hash,
                     actual_fee: Default::default(),
@@ -924,7 +923,7 @@ where
                     execution_result,
                 })
             }
-            mp_starknet::transaction::TxType::Invoke => TransactionReceipt::Invoke(InvokeTransactionReceipt {
+            mp_transactions::TxType::Invoke => TransactionReceipt::Invoke(InvokeTransactionReceipt {
                 transaction_hash,
                 actual_fee: Default::default(),
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
@@ -934,7 +933,7 @@ where
                 events: events.into_iter().map(event_conversion).collect(),
                 execution_result,
             }),
-            mp_starknet::transaction::TxType::L1Handler => TransactionReceipt::L1Handler(L1HandlerTransactionReceipt {
+            mp_transactions::TxType::L1Handler => TransactionReceipt::L1Handler(L1HandlerTransactionReceipt {
                 transaction_hash,
                 actual_fee: Default::default(),
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
