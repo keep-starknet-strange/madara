@@ -2928,9 +2928,9 @@ dependencies = [
 
 [[package]]
 name = "dyn-clone"
-version = "1.0.13"
+version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbfc4744c1b8f2a09adc0e55242f60b1af195d88596bd8700be74418c056c555"
+checksum = "23d2f3407d9a573d666de4b5bdf10569d73ca9478087346697dcbae6244bfbcd"
 
 [[package]]
 name = "ecdsa"
@@ -3103,9 +3103,9 @@ dependencies = [
 
 [[package]]
 name = "enr"
-version = "0.9.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0be7b2ac146c1f99fe245c02d16af0696450d8e06c135db75e10eeb9e642c20d"
+checksum = "fe81b5c06ecfdbc71dd845216f225f53b62a10cb8a16c946836a3467f701d05b"
 dependencies = [
  "base64 0.21.4",
  "bytes",
@@ -3115,7 +3115,6 @@ dependencies = [
  "rand 0.8.5",
  "rlp",
  "serde",
- "serde-hex",
  "sha3",
  "zeroize",
 ]
@@ -6078,7 +6077,7 @@ dependencies = [
 
 [[package]]
 name = "madara"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "blockifier",
@@ -6098,8 +6097,10 @@ dependencies = [
  "mc-rpc",
  "mc-storage",
  "mc-transaction-pool",
+ "mp-block",
  "mp-digest-log",
- "mp-starknet",
+ "mp-felt",
+ "mp-sequencer-address",
  "pallet-starknet",
  "sc-cli",
  "sc-client-api",
@@ -6139,7 +6140,7 @@ dependencies = [
 
 [[package]]
 name = "madara-runtime"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "blockifier",
  "frame-benchmarking",
@@ -6149,7 +6150,9 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "mp-starknet",
+ "mp-felt",
+ "mp-hashers",
+ "mp-transactions",
  "pallet-aura",
  "pallet-grandpa",
  "pallet-starknet",
@@ -6226,7 +6229,7 @@ checksum = "60302e4db3a61da70c0cb7991976248362f30319e88850c487b9b95bbf059e00"
 
 [[package]]
 name = "mc-block-proposer"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "futures",
  "futures-timer",
@@ -6265,7 +6268,7 @@ dependencies = [
  "lazy_static",
  "log",
  "mc-db",
- "mp-starknet",
+ "mp-storage",
  "reqwest",
  "sc-client-api",
  "serde",
@@ -6286,7 +6289,7 @@ dependencies = [
 
 [[package]]
 name = "mc-db"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "ethers",
  "kvdb-rocksdb",
@@ -6302,7 +6305,7 @@ dependencies = [
 
 [[package]]
 name = "mc-mapping-sync"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "futures",
  "futures-timer",
@@ -6311,7 +6314,8 @@ dependencies = [
  "mc-rpc-core",
  "mc-storage",
  "mp-digest-log",
- "mp-starknet",
+ "mp-hashers",
+ "mp-transactions",
  "pallet-starknet",
  "sc-client-api",
  "sp-api",
@@ -6322,7 +6326,7 @@ dependencies = [
 
 [[package]]
 name = "mc-rpc"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "blockifier",
  "frame-support",
@@ -6334,7 +6338,10 @@ dependencies = [
  "mc-rpc-core",
  "mc-storage",
  "mc-transaction-pool",
- "mp-starknet",
+ "mp-block",
+ "mp-felt",
+ "mp-hashers",
+ "mp-transactions",
  "pallet-starknet",
  "pretty_assertions",
  "rstest",
@@ -6355,7 +6362,7 @@ dependencies = [
 
 [[package]]
 name = "mc-rpc-core"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "assert_matches",
@@ -6369,8 +6376,8 @@ dependencies = [
  "frame-support",
  "hex",
  "jsonrpsee 0.16.3",
+ "mp-block",
  "mp-digest-log",
- "mp-starknet",
  "num-bigint",
  "serde",
  "serde_json",
@@ -6386,13 +6393,13 @@ dependencies = [
 
 [[package]]
 name = "mc-storage"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "blockifier",
  "frame-support",
  "frame-system",
  "madara-runtime",
- "mp-starknet",
+ "mp-storage",
  "pallet-starknet",
  "parity-scale-codec",
  "sc-client-api",
@@ -6590,22 +6597,116 @@ dependencies = [
 ]
 
 [[package]]
+name = "mp-block"
+version = "0.3.0"
+dependencies = [
+ "blockifier",
+ "mp-felt",
+ "mp-hashers",
+ "mp-transactions",
+ "parity-scale-codec",
+ "serde",
+ "sp-core 7.0.0",
+ "starknet_api",
+]
+
+[[package]]
+name = "mp-commitments"
+version = "0.3.0"
+dependencies = [
+ "bitvec",
+ "derive_more",
+ "mp-felt",
+ "mp-hashers",
+ "mp-transactions",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "starknet-core",
+ "starknet-crypto 0.6.0",
+ "starknet-ff",
+ "starknet_api",
+]
+
+[[package]]
 name = "mp-digest-log"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "assert_matches",
- "mp-starknet",
+ "mp-block",
  "parity-scale-codec",
  "sp-runtime 7.0.0",
 ]
 
 [[package]]
-name = "mp-starknet"
-version = "0.2.0"
+name = "mp-fee"
+version = "0.3.0"
+dependencies = [
+ "blockifier",
+ "mp-state",
+ "phf",
+ "starknet_api",
+]
+
+[[package]]
+name = "mp-felt"
+version = "0.3.0"
+dependencies = [
+ "cairo-vm",
+ "hex",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core 7.0.0",
+ "starknet-ff",
+ "starknet_api",
+ "thiserror-no-std",
+]
+
+[[package]]
+name = "mp-hashers"
+version = "0.3.0"
+dependencies = [
+ "mp-felt",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "starknet-core",
+ "starknet-crypto 0.6.0",
+]
+
+[[package]]
+name = "mp-sequencer-address"
+version = "0.3.0"
+dependencies = [
+ "async-trait",
+ "parity-scale-codec",
+ "sp-core 7.0.0",
+ "sp-inherents",
+ "thiserror-no-std",
+]
+
+[[package]]
+name = "mp-state"
+version = "0.3.0"
+dependencies = [
+ "blockifier",
+ "starknet_api",
+]
+
+[[package]]
+name = "mp-storage"
+version = "0.3.0"
+dependencies = [
+ "parity-scale-codec",
+ "serde",
+]
+
+[[package]]
+name = "mp-transactions"
+version = "0.3.0"
 dependencies = [
  "assert_matches",
- "async-trait",
- "bitvec",
  "blockifier",
  "cairo-lang-casm-contract-class",
  "cairo-lang-starknet",
@@ -6613,22 +6714,20 @@ dependencies = [
  "cairo-vm",
  "derive_more",
  "flate2",
- "hex",
- "lazy_static",
- "log",
+ "mp-fee",
+ "mp-felt",
+ "mp-hashers",
+ "mp-state",
  "num-bigint",
  "parity-scale-codec",
  "scale-info",
  "serde",
  "serde_json",
- "sp-core 7.0.0",
- "sp-inherents",
- "sp-std 5.0.0",
  "starknet-core",
  "starknet-crypto 0.6.0",
  "starknet-ff",
  "starknet_api",
- "thiserror-no-std",
+ "thiserror",
 ]
 
 [[package]]
@@ -7482,7 +7581,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-starknet"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "assert_matches",
  "blockifier",
@@ -7495,8 +7594,16 @@ dependencies = [
  "indexmap 2.0.0-pre",
  "lazy_static",
  "log",
+ "mp-block",
+ "mp-commitments",
  "mp-digest-log",
- "mp-starknet",
+ "mp-fee",
+ "mp-felt",
+ "mp-hashers",
+ "mp-sequencer-address",
+ "mp-state",
+ "mp-storage",
+ "mp-transactions",
  "pallet-timestamp",
  "parity-scale-codec",
  "pretty_assertions",
@@ -7514,6 +7621,7 @@ dependencies = [
  "sp-std 5.0.0",
  "starknet-core",
  "starknet-crypto 0.6.0",
+ "starknet-ff",
  "starknet_api",
  "test-case",
 ]

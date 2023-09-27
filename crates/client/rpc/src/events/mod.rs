@@ -8,9 +8,8 @@ use jsonrpsee::core::RpcResult;
 use log::error;
 use mc_rpc_core::utils::get_block_by_block_hash;
 use mc_transaction_pool::ChainApi;
-use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::traits::hash::HasherT;
-use mp_starknet::traits::SendSyncStatic;
+use mp_felt::Felt252Wrapper;
+use mp_hashers::HasherT;
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::BlockBackend;
@@ -31,7 +30,7 @@ where
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     BE: Backend<B>,
-    H: HasherT + SendSyncStatic,
+    H: HasherT + Send + Sync + 'static,
 {
     /// Helper function to get Starknet block details
     ///

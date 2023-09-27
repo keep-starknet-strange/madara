@@ -1,8 +1,8 @@
 use blockifier::abi::abi_utils::get_storage_var_address;
 use frame_support::{assert_err, assert_ok};
-use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::transaction::compute_hash::ComputeTransactionHash;
-use mp_starknet::transaction::{InvokeTransaction, InvokeTransactionV1};
+use mp_felt::Felt252Wrapper;
+use mp_transactions::compute_hash::ComputeTransactionHash;
+use mp_transactions::{InvokeTransaction, InvokeTransactionV1};
 use pretty_assertions::assert_eq;
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError, ValidTransaction};

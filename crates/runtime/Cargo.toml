@@ -49,8 +49,11 @@ frame-system-benchmarking = { workspace = true, optional = true }
 # Madara Local Dependencies
 # Madara Pallets
 pallet-starknet = { workspace = true }
+
 # Madara Primitives
-mp-starknet = { workspace = true }
+mp-felt = { workspace = true }
+mp-hashers = { workspace = true }
+mp-transactions = { workspace = true }
 # Starknet dependencies
 blockifier = { workspace = true }
 starknet-ff = { workspace = true }

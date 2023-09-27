@@ -15,12 +15,16 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # Madara primitives
+mp-block = { workspace = true }
+mp-commitments = { workspace = true }
 mp-digest-log = { workspace = true }
-mp-starknet = { workspace = true, features = [
-  "parity-scale-codec",
-  "scale-info",
-  "serde",
-] }
+mp-fee = { workspace = true }
+mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
+mp-hashers = { workspace = true }
+mp-sequencer-address = { workspace = true, features = ["parity-scale-codec"] }
+mp-state = { workspace = true }
+mp-storage = { workspace = true, features = ["parity-scale-codec"] }
+mp-transactions = { workspace = true, features = ["scale-info"] }
 
 blockifier = { workspace = true, features = [
   "testing",
@@ -73,6 +77,7 @@ test-case = "3.1.0"
 lazy_static = "1.4.0"
 hexlit = "0.5.5"
 assert_matches = "1.5.0"
+starknet-ff = { workspace = true }
 
 [features]
 default = ["std"]
@@ -87,8 +92,6 @@ std = [
   "scale-info/std",
   "pallet-timestamp/std",
   "sp-inherents/std",
-  # Madara
-  "mp-starknet/std",
   # Starknet
   "starknet-crypto/std",
   "blockifier/std",
