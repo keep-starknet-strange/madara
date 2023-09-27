@@ -174,6 +174,7 @@
 <a href="#174" id="174">174</a>
 <a href="#175" id="175">175</a>
 <a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
 
 <span class="kw">use </span>madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
@@ -321,8 +322,9 @@
 
 <span class="kw">fn </span>load_genesis(madara_path: PathBuf) -&gt; GenesisLoader {
     <span class="kw">let </span>madara_path = madara_path.to_str().unwrap().to_string();
-    <span class="kw">let </span>genesis_path = madara_path.clone() + <span class="string">&quot;/genesis-assets/genesis.json&quot;</span>;
-    <span class="kw">let </span>genesis = utils::read_file_to_string(genesis_path).expect(<span class="string">&quot;Failed to read genesis file&quot;</span>);
+    <span class="kw">let </span>genesis_path = madara_path.clone() + <span class="string">&quot;/configs/genesis-assets/genesis.json&quot;</span>;
+    <span class="kw">let </span>genesis = utils::read_file_to_string(genesis_path)
+        .expect(<span class="string">&quot;Failed to read genesis file. Please run `madara setup` before opening an issue.&quot;</span>);
     <span class="kw">let </span><span class="kw-2">mut </span>genesis_loader: GenesisLoader = serde_json::from_str(<span class="kw-2">&amp;</span>genesis).expect(<span class="string">&quot;Failed loading genesis&quot;</span>);
     genesis_loader.set_madara_path(madara_path);
     genesis_loader

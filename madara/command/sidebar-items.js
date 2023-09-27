@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["run"]};
+window.SIDEBAR_ITEMS = {"fn":["fetch_madara_configs","get_madara_path_string","run","set_chain_spec","set_dev_environment","try_set_testnet"]};

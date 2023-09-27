@@ -96,10 +96,50 @@
 <a href="#96" id="96">96</a>
 <a href="#97" id="97">97</a>
 <a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
 
 <span class="kw">use </span>mc_data_availability::DaLayer;
 <span class="kw">use </span>sc_cli::RunCmd;
+
+<span class="kw">use </span><span class="kw">crate</span>::constants;
+
+<span class="doccomment">/// Returns the `madara_path` default value ($HOME/.madara) as a string
+</span><span class="kw">fn </span>get_default_madara_path() -&gt; String {
+    <span class="kw">let </span>home_path = std::env::var(<span class="string">&quot;HOME&quot;</span>).unwrap_or(std::env::var(<span class="string">&quot;USERPROFILE&quot;</span>).unwrap_or(<span class="string">&quot;.&quot;</span>.into()));
+    <span class="macro">format!</span>(<span class="string">&quot;{}/.madara&quot;</span>, home_path)
+}
 
 <span class="doccomment">/// Available Sealing methods.
 </span><span class="attr">#[derive(Debug, Copy, Clone, clap::ValueEnum, Default)]
@@ -125,41 +165,62 @@
     <span class="attr">#[clap(flatten)]
     </span><span class="kw">pub </span>run: ExtendedRunCmd,
 
-    <span class="doccomment">/// Choose sealing method.
-    </span><span class="attr">#[arg(long, value_enum, ignore_case = <span class="bool-val">true</span>)]
-    </span><span class="kw">pub </span>sealing: <span class="prelude-ty">Option</span>&lt;Sealing&gt;,
+    <span class="attr">#[clap(flatten)]
+    </span><span class="kw">pub </span>setup: SetupCmd,
 }
 
-<span class="attr">#[derive(Debug, clap::Args)]
+<span class="attr">#[derive(Clone, Debug, clap::Args)]
 </span><span class="kw">pub struct </span>ExtendedRunCmd {
     <span class="attr">#[clap(flatten)]
     </span><span class="kw">pub </span>run_cmd: RunCmd,
 
-    <span class="attr">#[clap(long)]
-    </span><span class="kw">pub </span>testnet: <span class="prelude-ty">Option</span>&lt;Testnet&gt;,
+    <span class="doccomment">/// Choose a supported DA Layer
+    </span><span class="attr">#[clap(long)]
+    </span><span class="kw">pub </span>da_layer: <span class="prelude-ty">Option</span>&lt;DaLayer&gt;,
 
-    <span class="attr">#[clap(long)]
+    <span class="doccomment">/// Load a custom chain-spec from an url
+    /// If you want to load a chain spec that is present in your filesystem, use `--chain=&lt;PATH&gt;`
+    </span><span class="attr">#[clap(long, conflicts_with = <span class="string">&quot;testnet&quot;</span>)]
+    </span><span class="kw">pub </span>fetch_chain_spec: <span class="prelude-ty">Option</span>&lt;String&gt;,
+
+    <span class="doccomment">/// Path to the folder where all configuration files and data are stored
+    /// base_path will always be overwritten by madara_path
+    /// in the case you use the --tmp, the base_path will be changed during the runtime
+    </span><span class="attr">#[clap(long, default_value = get_default_madara_path())]
     </span><span class="kw">pub </span>madara_path: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
 
-    <span class="attr">#[clap(long)]
-    </span><span class="kw">pub </span>chain_spec_url: <span class="prelude-ty">Option</span>&lt;String&gt;,
+    <span class="doccomment">/// Choose sealing method.
+    </span><span class="attr">#[arg(long, value_enum, ignore_case = <span class="bool-val">true</span>)]
+    </span><span class="kw">pub </span>sealing: <span class="prelude-ty">Option</span>&lt;Sealing&gt;,
 
-    <span class="attr">#[clap(long)]
-    </span><span class="kw">pub </span>genesis_url: <span class="prelude-ty">Option</span>&lt;String&gt;,
+    <span class="doccomment">/// Choose a supported testnet chain which will load some default values
+    /// The testnets will allways be fetched when this flag is passed to search for updates
+    </span><span class="attr">#[clap(long, conflicts_with = <span class="string">&quot;fetch_chain_spec&quot;</span>, conflicts_with = <span class="string">&quot;chain&quot;</span>)]
+    </span><span class="kw">pub </span>testnet: <span class="prelude-ty">Option</span>&lt;Testnet&gt;,
+}
 
-    <span class="attr">#[clap(long)]
-    </span><span class="kw">pub </span>da_layer: <span class="prelude-ty">Option</span>&lt;DaLayer&gt;,
+<span class="attr">#[derive(Debug, clap::Args)]
+</span><span class="kw">pub struct </span>SetupCmd {
+    <span class="doccomment">/// Load a index.json file for downloading assets
+    /// The index.json must follow the format of the official index.json
+    /// (https://github.com/d-roak/madara/blob/feat/configs-index/configs/index.json)
+    /// Where the `md5` and `url` fields are optional
+    </span><span class="attr">#[clap(long, default_value = constants::DEFAULT_CONFIGS_URL)]
+    </span><span class="kw">pub </span>fetch_madara_configs: <span class="prelude-ty">Option</span>&lt;String&gt;,
 }
 
 <span class="attr">#[allow(clippy::large_enum_variant)]
 #[derive(Debug, clap::Subcommand)]
 </span><span class="kw">pub enum </span>Subcommand {
-    <span class="doccomment">/// Key management cli utilities
+    <span class="doccomment">/// Sub-commands concerned with benchmarking.
     </span><span class="attr">#[command(subcommand)]
-    </span>Key(sc_cli::KeySubcommand),
+    </span>Benchmark(frame_benchmarking_cli::BenchmarkCmd),
 
     <span class="doccomment">/// Build a chain specification.
     </span>BuildSpec(sc_cli::BuildSpecCmd),
+
+    <span class="doccomment">/// Db meta columns information.
+    </span>ChainInfo(sc_cli::ChainInfoCmd),
 
     <span class="doccomment">/// Validate blocks.
     </span>CheckBlock(sc_cli::CheckBlockCmd),
@@ -173,15 +234,21 @@
     <span class="doccomment">/// Import blocks.
     </span>ImportBlocks(sc_cli::ImportBlocksCmd),
 
+    <span class="doccomment">/// Key management cli utilities
+    </span><span class="attr">#[command(subcommand)]
+    </span>Key(sc_cli::KeySubcommand),
+
     <span class="doccomment">/// Remove the whole chain.
     </span>PurgeChain(sc_cli::PurgeChainCmd),
 
     <span class="doccomment">/// Revert the chain to a previous state.
     </span>Revert(sc_cli::RevertCmd),
 
-    <span class="doccomment">/// Sub-commands concerned with benchmarking.
-    </span><span class="attr">#[command(subcommand)]
-    </span>Benchmark(frame_benchmarking_cli::BenchmarkCmd),
+    <span class="comment">// Run madara node
+    </span>Run(ExtendedRunCmd),
+
+    <span class="comment">// Setup madara node
+    </span>Setup(SetupCmd),
 
     <span class="doccomment">/// Try some command against runtime state.
     </span><span class="attr">#[cfg(feature = <span class="string">&quot;try-runtime&quot;</span>)]
@@ -190,8 +257,5 @@
     <span class="doccomment">/// Try some command against runtime state. Note: `try-runtime` feature must be enabled.
     </span><span class="attr">#[cfg(not(feature = <span class="string">&quot;try-runtime&quot;</span>))]
     </span>TryRuntime,
-
-    <span class="doccomment">/// Db meta columns information.
-    </span>ChainInfo(sc_cli::ChainInfoCmd),
 }
 </code></pre></div></section></main></body></html>
