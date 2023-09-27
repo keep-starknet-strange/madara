@@ -55,6 +55,7 @@ impl SubstrateCli for Cli {
     }
 }
 
+/// Returns the `madara_path` as a string
 fn get_madara_path_string(cli: &Cli) -> String {
     cli.run
         .madara_path
