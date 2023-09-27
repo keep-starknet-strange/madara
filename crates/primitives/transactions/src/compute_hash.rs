@@ -15,6 +15,7 @@ use super::{
 
 const DECLARE_PREFIX: &[u8] = b"declare";
 const DEPLOY_ACCOUNT_PREFIX: &[u8] = b"deploy_account";
+const DEPLOY_PREFIX: &[u8] = b"deploy";
 const INVOKE_PREFIX: &[u8] = b"invoke";
 const L1_HANDLER_PREFIX: &[u8] = b"l1_handler";
 
@@ -58,11 +59,9 @@ impl ComputeTransactionHash for InvokeTransactionV0 {
 impl LegacyComputeTransactionHash for InvokeTransactionV0 {
     fn legacy_compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> Felt252Wrapper {
         let prefix = FieldElement::from_byte_slice_be(INVOKE_PREFIX).unwrap();
-        let version = if is_query { SIMULATE_TX_VERSION_OFFSET } else { FieldElement::ZERO };
         let contract_address = self.contract_address.into();
         let entrypoint_selector = self.entry_point_selector.into();
         let calldata_hash = compute_hash_on_elements(convert_calldata(&self.calldata));
-        let max_fee = FieldElement::from(self.max_fee);
         let chain_id = chain_id.into();
 
         H::compute_hash_on_elements(&[
@@ -224,6 +223,15 @@ impl ComputeTransactionHash for DeployTransaction {
     }
 }
 
+impl LegacyComputeTransactionHash for DeployTransaction {
+    fn legacy_compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> Felt252Wrapper {
+        let chain_id = chain_id.into();
+        let contract_address = self.get_account_address();
+
+        self.legacy_hash_given_contract_address::<H>(chain_id, contract_address, is_query).into()
+    }
+}
+
 impl DeployAccountTransaction {
     pub fn get_account_address(&self) -> FieldElement {
         Self::calculate_contract_address(
@@ -315,24 +323,40 @@ impl DeployTransaction {
         ]) % ADDR_BOUND
     }
 
+    fn concat_slices<T: Clone>(a: &[T], b: &[T]) -> Vec<T> {
+        let mut result = Vec::with_capacity(a.len() + b.len());
+        result.extend_from_slice(a);
+        result.extend_from_slice(b);
+        result
+    }
+
     pub(super) fn compute_hash_given_contract_address<H: HasherT>(
         &self,
         chain_id: FieldElement,
         contract_address: FieldElement,
         is_query: bool,
     ) -> FieldElement {
-        let prefix = FieldElement::from_byte_slice_be(DEPLOY_ACCOUNT_PREFIX).unwrap();
+        let prefix = FieldElement::from_byte_slice_be(DEPLOY_PREFIX).unwrap();
         let version = if is_query { SIMULATE_TX_VERSION_OFFSET + FieldElement::ONE } else { FieldElement::ONE };
-        let entrypoint_selector = FieldElement::ZERO;
-        let mut calldata: Vec<FieldElement> = Vec::with_capacity(self.constructor_calldata.len() + 2);
-        calldata.push(self.class_hash.into());
-        calldata.push(self.contract_address_salt.into());
-        calldata.extend_from_slice(convert_calldata(&self.constructor_calldata));
-        let calldata_hash = compute_hash_on_elements(&calldata);
-        let elements =
-            &[prefix, version, contract_address, entrypoint_selector, calldata_hash, chain_id];
+        let constructor_calldata = convert_calldata(&self.constructor_calldata);
+        let elements_prefix = &[prefix, version, contract_address];
+        let elements_suffix = &[0u64.into(), chain_id];
+        let elements = Self::concat_slices(elements_prefix, &Self::concat_slices(constructor_calldata, elements_suffix));
 
-        H::compute_hash_on_elements(elements)
+        H::compute_hash_on_elements(&elements)
+    }
+
+    pub(super) fn legacy_hash_given_contract_address<H: HasherT>(
+        &self,
+        chain_id: FieldElement,
+        contract_address: FieldElement,
+        is_query: bool,
+    ) -> FieldElement {
+        let prefix = FieldElement::from_byte_slice_be(DEPLOY_PREFIX).unwrap();
+        let constructor_calldata = convert_calldata(&self.constructor_calldata);
+        let elements = &[prefix, contract_address, constructor_calldata, chain_id];
+
+        H::compute_hash_on_elements(&elements)
     }
 }
 
@@ -376,7 +400,7 @@ impl LegacyComputeTransactionHash for Transaction {
         match self {
             Transaction::Declare(tx) => tx.compute_hash::<H>(chain_id, is_query),
             Transaction::DeployAccount(tx) => tx.compute_hash::<H>(chain_id, is_query),
-            Transaction::Deploy(tx) => tx.compute_hash::<H>(chain_id, is_query),
+            Transaction::Deploy(tx) => tx.legacy_compute_hash::<H>(chain_id, is_query),
             Transaction::Invoke(tx) => tx.legacy_compute_hash::<H>(chain_id, is_query),
             Transaction::L1Handler(tx) => tx.compute_hash::<H>(chain_id, is_query),
         }
