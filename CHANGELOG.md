@@ -3,6 +3,9 @@
 ## Next release
 
 - ci: add coverage
+- fix: fix sharingan chain spec
+- fix: update madara infra to main branch
+- fix: update `Cargo.lock`
 
 ## v0.3.0
 
