@@ -141,6 +141,18 @@ production environment, the relative changes and trends over time are what we
 focus on. This way, we can ensure that Madara is always improving, and that we
 maintain a high standard of performance as the project evolves.
 
+One can use flamegraph-rs to generate flamegraphs and look for the performance
+bottlenecks of the system by running the following :
+
+```bash
+./target/release/madara setup
+flamegraph --root --open  -- ./target/release/madara run --dev
+```
+
+In parallel to that, run some transactions against your node (you can use
+[Gomu Gomu no Gatling](https://github.com/keep-starknet-strange/gomu-gomu-no-gatling)
+benchmarker). Once you stop the node, the flamegraph will open in your browser.
+
 ## 🌐 Connect to the dev webapp
 
 Once your Madara node is up and running, you can connect to our Dev Frontend App
