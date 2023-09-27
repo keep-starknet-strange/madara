@@ -147,7 +147,7 @@ pub fn calculate_commitments<H: HasherT>(
 /// # Returns
 ///
 /// The merkle root of the merkle tree built from the transactions.
-pub(crate) fn calculate_transaction_commitment<H: HasherT>(
+pub fn calculate_transaction_commitment<H: HasherT>(
     transactions: &[Transaction],
     chain_id: Felt252Wrapper,
 ) -> Felt252Wrapper {

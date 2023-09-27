@@ -338,12 +338,11 @@ impl DeployTransaction {
     ) -> FieldElement {
         let prefix = FieldElement::from_byte_slice_be(DEPLOY_PREFIX).unwrap();
         let version = if is_query { SIMULATE_TX_VERSION_OFFSET + FieldElement::ONE } else { FieldElement::ONE };
-        let constructor_calldata = convert_calldata(&self.constructor_calldata);
-        let elements_prefix = &[prefix, version, contract_address];
-        let elements_suffix = &[0u64.into(), chain_id];
-        let elements = Self::concat_slices(elements_prefix, &Self::concat_slices(constructor_calldata, elements_suffix));
+        let constructor_calldata = compute_hash_on_elements(convert_calldata(&self.constructor_calldata));
+        let constructor = starknet_keccak(b"constructor");
+        let elements = &[prefix, version, contract_address, constructor, constructor_calldata, FieldElement::ZERO, chain_id];
 
-        H::compute_hash_on_elements(&elements)
+        H::compute_hash_on_elements(elements)
     }
 
     pub(super) fn legacy_hash_given_contract_address<H: HasherT>(

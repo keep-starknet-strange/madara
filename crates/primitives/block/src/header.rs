@@ -131,20 +131,39 @@ impl Header {
     /// Compute the hash of the header.
     #[must_use]
     pub fn hash<H: HasherT>(&self) -> Felt252Wrapper {
-        let data: &[Felt252Wrapper] = &[
-            self.block_number.into(),
-            self.global_state_root.into(),
-            self.sequencer_address.0.0.into(),
-            self.block_timestamp.into(),
-            self.transaction_count.into(),
-            self.transaction_commitment.into(),
-            self.event_count.into(),
-            self.event_commitment.into(),
-            self.protocol_version.into(),
-            Felt252Wrapper::ZERO,
-            self.parent_block_hash.into(),
-        ];
+        if self.block_number >= 833 {
+            let data: &[Felt252Wrapper] = &[
+                self.block_number.into(),
+                self.global_state_root.into(),
+                self.sequencer_address.0.0.into(),
+                self.block_timestamp.into(),
+                self.transaction_count.into(),
+                self.transaction_commitment.into(),
+                self.event_count.into(),
+                self.event_commitment.into(),
+                self.protocol_version.into(),
+                Felt252Wrapper::ZERO,
+                self.parent_block_hash.into(),
+            ];
 
-        H::compute_hash_on_wrappers(data)
+            H::compute_hash_on_wrappers(data)
+        } else {
+            let data: &[Felt252Wrapper] = &[
+				self.block_number.into(),
+				self.global_state_root.into(),
+				Felt252Wrapper::ZERO,
+				Felt252Wrapper::ZERO,
+				self.transaction_count.into(),
+				self.transaction_commitment.into(),
+				Felt252Wrapper::ZERO,
+				Felt252Wrapper::ZERO,
+				Felt252Wrapper::ZERO,
+				Felt252Wrapper::ZERO,
+				Felt252Wrapper::from_hex_be("0x534e5f4d41494e").unwrap(),
+				self.parent_block_hash.into(),
+			];
+
+			H::compute_hash_on_wrappers(data)
+		}
     }
 }
