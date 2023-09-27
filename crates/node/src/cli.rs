@@ -5,6 +5,7 @@ use sc_cli::RunCmd;
 
 use crate::constants;
 
+/// Returns the `madara_path` default value ($HOME/.madara) as a string
 fn get_default_madara_path() -> String {
     let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
     format!("{}/.madara", home_path)
