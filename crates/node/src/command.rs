@@ -112,7 +112,7 @@ fn set_chain_spec(cli: &mut Cli) -> Result<(), String> {
         .run
         .fetch_chain_spec
         .clone()
-        .expect("`chain_spec_url` expected to be setted because it the function is called upon verification");
+        .expect("`chain_spec_url` expected to be set because the function is called upon verification");
     utils::fetch_from_url(chain_spec_url.clone(), madara_path.clone() + "/chain-specs")?;
     let chain_spec =
         chain_spec_url.split('/').last().expect("Failed to get chain spec file name from `chain_spec_url`");
