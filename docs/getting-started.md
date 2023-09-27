@@ -16,16 +16,17 @@ rustup show
 Use Rust's native `cargo` command to build and launch the template node:
 
 ```sh
-cargo run --release -- --dev
+cargo run --release -- setup
+cargo run --release -- run --dev
 ```
 
 The node also supports to use manual seal (to produce block manually through
 RPC). This is also used by the typescript tests:
 
 ```sh
-$ cargo run --release -- --dev --sealing=manual
+$ cargo run --release -- run --dev --sealing=manual
 # Or
-$ cargo run --release -- --dev --sealing=instant
+$ cargo run --release -- run --dev --sealing=instant
 ```
 
 Log level can be specified with `-l` flag. For example, `-ldebug` will show
@@ -33,7 +34,7 @@ debug logs. It can also be specified via the `RUST_LOG` environment variable.
 For example:
 
 ```sh
-RUSTLOG=runtime=info cargo run --release -- --dev
+RUSTLOG=runtime=info cargo run --release -- run --dev
 ```
 
 ### Cargo Build
@@ -80,7 +81,8 @@ This command will start the single-node development chain with non-persistent
 state:
 
 ```bash
-./target/release/madara --dev
+./target/release/madara setup
+./target/release/madara run --dev
 ```
 
 Purge the development chain's state:
@@ -92,7 +94,7 @@ Purge the development chain's state:
 Start the development chain with detailed logging:
 
 ```bash
-RUST_BACKTRACE=1 ./target/release/madara -ldebug --dev
+RUST_BACKTRACE=1 ./target/release/madara run -ldebug --dev
 ```
 
 > Development chain means that the state of our chain will be in a tmp folder
@@ -117,7 +119,7 @@ commands shows how to use a newly created folder as our db base path.
 $ mkdir my-chain-state
 
 // Use of that folder to store the chain state
-$ ./target/release/madara --dev --base-path ./my-chain-state/
+$ ./target/release/madara run --dev --base-path ./my-chain-state/
 
 // Check the folder structure created inside the base path after running the chain
 $ ls ./my-chain-state

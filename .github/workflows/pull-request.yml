@@ -11,15 +11,19 @@ jobs:
     name: Enforce CHANGELOG
     uses: ./.github/workflows/changelog.yml
 
+  configs-verifier:
+    name: Verify configs
+    uses: ./.github/workflows/configs-verifier.yml
+
   linters:
     name: Run linters
     uses: ./.github/workflows/linters.yml
-    needs: changelog
+    needs: [changelog, configs-verifier]
 
   rust_build:
     name: Build Rust project
     uses: ./.github/workflows/rust-build.yml
-    needs: changelog
+    needs: [changelog, configs-verifier]
 
   madara_commands:
     name: Test Madara commands
@@ -31,6 +35,13 @@ jobs:
     uses: ./.github/workflows/linters-cargo.yml
     needs: rust_build
 
+  # TODO: Unlock when rust tests are working on main
+  # coverage:
+  #   name: Run coverage
+  #   uses: ./.github/workflows/coverage.yml
+  #   needs: [madara_commands, linters_cargo]
+
+  # https://github.com/keep-starknet-strange/madara/issues/1097
   # benchmark:
   #   name: Run benchmarks
   #   uses: ./.github/workflows/benchmarks.yml

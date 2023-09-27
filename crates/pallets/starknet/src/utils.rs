@@ -11,6 +11,14 @@ impl From<Error> for sc_cli::Error {
     }
 }
 
+impl From<Error> for String {
+    fn from(err: Error) -> Self {
+        match err {
+            Error::Cli(err) => err.to_string(),
+        }
+    }
+}
+
 impl From<Box<dyn std::error::Error>> for Error {
     fn from(err: Box<dyn std::error::Error>) -> Self {
         Error::Cli(sc_cli::Error::Input(err.to_string()))
@@ -70,12 +78,13 @@ pub fn copy_from_filesystem(src_path: String, dest_path: String) -> Result<(), E
 
 pub fn fetch_from_url(target: String, dest_path: String) -> Result<(), Error> {
     log::info!("Trying to fetch {} to {} from url", target, dest_path);
-    let dst = std::path::PathBuf::from(dest_path);
+    let mut dst = std::path::PathBuf::from(dest_path);
     std::fs::create_dir_all(&dst)?;
+    dst.push(target.split('/').last().expect("Failed to get file name from `target` while fetching url"));
 
     let response = reqwest::blocking::get(target.clone())?;
 
-    let mut file = std::fs::File::create(dst.join(target.split('/').last().ok_or("File name not found")?))?;
+    let mut file = std::fs::File::create(dst)?;
     let bytes = response.bytes()?;
 
     let mut content = std::io::Cursor::new(bytes);
