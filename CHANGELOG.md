@@ -11,7 +11,6 @@
 - chore: split `primitives` crates into multiple smaller crates
 - chore: improve logging about transaction when nonce is too high
 - chore: add real class hash values for genesis config
->>>>>>> upstream/main
 - fix: use specific commit for avail and celestia
 - fix: change dep of rustdoc on push
 - fix: initial_gas set to max_fee and fixed fee not being charged when max_fee=0
