@@ -60,7 +60,6 @@ pub fn get_header(block: starknet_client::reader::Block, transactions: mp_block:
         starknet_client::reader::objects::block::BlockStatus::Reverted => mp_block::BlockStatus::Rejected,
         starknet_client::reader::objects::block::BlockStatus::Aborted => mp_block::BlockStatus::Rejected,
     };
-    println!("status: {:?}", status);
     let sequencer_address = Felt252Wrapper(FieldElement::from(*PatriciaKey::key(&block.sequencer_address.0)));
     let block_timestamp = block.timestamp.0;
     let transaction_count = block.transactions.len() as u128;

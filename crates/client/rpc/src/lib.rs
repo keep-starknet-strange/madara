@@ -402,8 +402,14 @@ where
         let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
         let chain_id = self.chain_id()?;
 
-        let transactions =
-            block.transactions_hashes::<H>(Felt252Wrapper(chain_id.0)).into_iter().map(FieldElement::from).collect();
+        // Check 
+        let transactions_hashes = if block.header().block_number < 833u64 {
+            block.legacy_transactions_hashes::<H>(Felt252Wrapper(chain_id.0))
+        } else {
+            block.transactions_hashes::<H>(Felt252Wrapper(chain_id.0))
+        };
+        
+        let transactions = transactions_hashes.into_iter().map(FieldElement::from).collect();
         let blockhash = block.header().hash::<H>();
         let parent_blockhash = block.header().parent_block_hash;
         let block_with_tx_hashes = BlockWithTxHashes {

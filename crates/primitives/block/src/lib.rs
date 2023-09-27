@@ -11,7 +11,7 @@ use alloc::vec::Vec;
 pub use header::*;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
-use mp_transactions::compute_hash::ComputeTransactionHash;
+use mp_transactions::compute_hash::{ComputeTransactionHash, LegacyComputeTransactionHash};
 use mp_transactions::Transaction;
 use frame_support;
 
@@ -51,7 +51,12 @@ impl Block {
 
     /// Return a reference to all transaction hashes
     pub fn transactions_hashes<H: HasherT>(&self, chain_id: Felt252Wrapper) -> Vec<Felt252Wrapper> {
-        self.transactions.iter().map(|tx| tx.compute_hash::<H>(block_number, chain_id, false)).collect()
+        self.transactions.iter().map(|tx| tx.compute_hash::<H>(chain_id, false)).collect()
+    }
+
+    /// _Generic_ compute transaction hash for older transactions (pre 0.8-ish)
+    pub fn legacy_transactions_hashes<H: HasherT>(&self, chain_id: Felt252Wrapper) -> Vec<Felt252Wrapper> {
+        self.transactions.iter().map(|tx| tx.legacy_compute_hash::<H>(chain_id, false)).collect()
     }
 
 }
