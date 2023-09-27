@@ -20,6 +20,7 @@
 - refacto(pallet/starknet): `GenesisLoader` refactored as `GenesisData` + a
   `base_path` field
 - feat(cli): for `run` param `--dev` now imply `--tmp`, as it is in substrate
+- test(starknet-rpx-test): run all tests against a single madara node
 
 ## v0.4.0
 

@@ -7,14 +7,13 @@ use starknet_ff::FieldElement;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{FEE_TOKEN_ADDRESS, MAX_U256};
-use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::MadaraClient;
+use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 
 #[rstest]
 #[tokio::test]
-async fn fail_non_existing_block(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
+
     let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).expect("Invalid Contract Address");
 
     assert_matches!(
@@ -22,7 +21,7 @@ async fn fail_non_existing_block(#[future] madara: MadaraClient) -> Result<(), a
         .get_storage_at(
             fee_token_address,
             FieldElement::from_hex_be("0x7b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09").unwrap(),
-            BlockId::Number(100),
+            BlockId::Hash(FieldElement::ZERO),
         )
         .await,
         Err(StarknetProviderError(StarknetErrorWithMessage { code: MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::BlockNotFound
@@ -33,9 +32,9 @@ async fn fail_non_existing_block(#[future] madara: MadaraClient) -> Result<(), a
 
 #[rstest]
 #[tokio::test]
-async fn fail_non_existing_contract(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn fail_non_existing_contract(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
+
     let invalid_contract_address =
         FieldElement::from_hex_be("0x051e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00")
             .expect("Invalid Contract Address");
@@ -60,9 +59,8 @@ async fn fail_non_existing_contract(#[future] madara: MadaraClient) -> Result<()
 
 #[rstest]
 #[tokio::test]
-async fn work_ok_at_previous_contract(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn work_ok_at_previous_contract(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
     let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).expect("Invalid Contract Address");
 
@@ -81,9 +79,8 @@ async fn work_ok_at_previous_contract(#[future] madara: MadaraClient) -> Result<
 
 #[rstest]
 #[tokio::test]
-async fn return_0_for_uninitialized_key(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn return_0_for_uninitialized_key(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
     let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).expect("Invalid Contract Address");
 

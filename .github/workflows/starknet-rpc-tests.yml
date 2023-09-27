@@ -1,0 +1,37 @@
+---
+name: Task - Rpc Tests
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  rpc-tests:
+    runs-on: ubuntu-latest
+    env:
+      BINARY_PATH: ../target/release/madara
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key:
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
+            github.run_id }}
+          fail-on-cache-miss: true
+      - name: Setup build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
+      - name: Run rpc test
+        run: |-
+          ./target/release/madara setup
+          ./target/release/madara run --dev --alice --sealing=manual --execution=Native --tmp &
+          sleep 10
+          cd starknet-rpc-test
+          cargo test
