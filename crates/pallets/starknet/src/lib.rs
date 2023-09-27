@@ -732,63 +732,12 @@ pub mod pallet {
             // otherwise we have a nonce error and everything fails.
             // Once we have a real fee market this is where we'll chose the most profitable transaction.
 
-            let chain_id = Self::chain_id();
-            let block_context = Self::get_block_context();
-            let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();
-            let mut execution_resources = ExecutionResources::default();
-            let mut initial_gas = blockifier::abi::constants::INITIAL_GAS_COST;
-
             let transaction = Self::get_call_transaction(call.clone()).map_err(|_| InvalidTransaction::Call)?;
 
             // Check the nonce is correct
-            let (sender_address, sender_nonce, transaction_nonce) =
-                if let UserAndL1HandlerTransaction::User(ref transaction) = transaction {
-                    let sender_address: ContractAddress = transaction.sender_address().into();
-                    let sender_nonce: Felt252Wrapper = Pallet::<T>::nonce(sender_address).into();
-                    let transaction_nonce = transaction.nonce();
+            let (sender_address, sender_nonce, transaction_nonce) = Self::validate_usigned_tx_nonce(&transaction)?;
 
-                    // Reject transaction with an already used Nonce
-                    if sender_nonce > *transaction_nonce {
-                        Err(InvalidTransaction::Stale)?;
-                    }
-
-                    // A transaction with a nonce higher than the expected nonce is placed in
-                    // the future queue of the transaction pool.
-                    if sender_nonce < *transaction_nonce {
-                        log!(
-                            info,
-                            "Nonce is too high. Expected: {:?}, got: {:?}. This transaction will be placed in the \
-                             transaction pool and executed in the future when the nonce is reached.",
-                            sender_nonce,
-                            transaction_nonce
-                        );
-                    }
-
-                    (transaction.sender_address(), sender_nonce, *transaction_nonce)
-                } else {
-                    // TODO: create and check L1 messages Nonce
-                    unimplemented!()
-                };
-
-            // Validate the user transactions
-            if let UserAndL1HandlerTransaction::User(transaction) = transaction {
-                match transaction {
-                    UserTransaction::Declare(tx, contract_class) => tx
-                        .try_into_executable::<T::SystemHash>(chain_id, contract_class, false)
-                        .map_err(|_| InvalidTransaction::BadProof)?
-                        .validate_tx(&mut state, &block_context, &mut execution_resources, &mut initial_gas, false),
-                    // There is no way to validate it before the account is actuallly deployed
-                    UserTransaction::DeployAccount(_) => Ok(None),
-                    UserTransaction::Invoke(tx) => tx.into_executable::<T::SystemHash>(chain_id, false).validate_tx(
-                        &mut state,
-                        &block_context,
-                        &mut execution_resources,
-                        &mut initial_gas,
-                        false,
-                    ),
-                }
-                .map_err(|_| InvalidTransaction::BadProof)?;
-            }
+            Self::validate_unsigned_tx(&transaction)?;
 
             let nonce_for_priority: u64 =
                 transaction_nonce.try_into().map_err(|_| InvalidTransaction::Custom(NONCE_DECODE_FAILURE))?;
@@ -827,6 +776,90 @@ pub mod pallet {
 
 /// The Starknet pallet internal functions.
 impl<T: Config> Pallet<T> {
+    fn validate_usigned_tx_nonce(
+        transaction: &UserAndL1HandlerTransaction,
+    ) -> Result<(Felt252Wrapper, Felt252Wrapper, Felt252Wrapper), InvalidTransaction> {
+        match transaction {
+            UserAndL1HandlerTransaction::User(ref transaction) => {
+                let sender_address: ContractAddress = transaction.sender_address().into();
+                let sender_nonce: Felt252Wrapper = Pallet::<T>::nonce(sender_address).into();
+                let transaction_nonce = transaction.nonce();
+
+                // Reject transaction with an already used Nonce
+                if sender_nonce > *transaction_nonce {
+                    return Err(InvalidTransaction::Stale);
+                }
+
+                // A transaction with a nonce higher than the expected nonce is placed in
+                // the future queue of the transaction pool.
+                if sender_nonce < *transaction_nonce {
+                    log!(
+                        info,
+                        "Nonce is too high. Expected: {:?}, got: {:?}. This transaction will be placed in the \
+                         transaction pool and executed in the future when the nonce is reached.",
+                        sender_nonce,
+                        transaction_nonce
+                    );
+                }
+                Ok((transaction.sender_address(), sender_nonce, *transaction_nonce))
+            }
+            _ => {
+                // TODO: create and check L1 messages Nonce
+                unimplemented!()
+            }
+        }
+    }
+
+    fn validate_unsigned_tx(transaction: &UserAndL1HandlerTransaction) -> Result<(), InvalidTransaction> {
+        match transaction {
+            UserAndL1HandlerTransaction::User(tx) => Self::validate_unsigned_user_tx(tx),
+            UserAndL1HandlerTransaction::L1Handler(tx, fee) => Self::validate_unsigned_l1_tx(tx, fee),
+        }
+    }
+
+    fn validate_unsigned_user_tx(transaction: &UserTransaction) -> Result<(), InvalidTransaction> {
+        let chain_id = Self::chain_id();
+        let block_context = Self::get_block_context();
+        let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();
+        let mut execution_resources = ExecutionResources::default();
+        let mut initial_gas = blockifier::abi::constants::INITIAL_GAS_COST;
+
+        match transaction {
+            UserTransaction::Declare(tx, contract_class) => tx
+                .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), false)
+                .map_err(|_| InvalidTransaction::BadProof)?
+                .validate_tx(&mut state, &block_context, &mut execution_resources, &mut initial_gas, false),
+            // There is no way to validate it before the account is actuallly deployed
+            UserTransaction::DeployAccount(_) => Ok(None),
+            UserTransaction::Invoke(tx) => tx.into_executable::<T::SystemHash>(chain_id, false).validate_tx(
+                &mut state,
+                &block_context,
+                &mut execution_resources,
+                &mut initial_gas,
+                false,
+            ),
+        }
+        .map_or_else(|_error| Err(InvalidTransaction::BadProof), |_res| Ok(()))
+    }
+
+    fn validate_unsigned_l1_tx(transaction: &HandleL1MessageTransaction, fee: &Fee) -> Result<(), InvalidTransaction> {
+        let chain_id = Self::chain_id();
+        let block_context = Self::get_block_context();
+        let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();
+        let mut execution_resources = ExecutionResources::default();
+        let mut initial_gas = blockifier::abi::constants::INITIAL_GAS_COST;
+
+        transaction
+            .into_executable::<T::SystemHash>(chain_id, *fee, false)
+            .validate_tx(&mut state, &block_context, &mut execution_resources, &mut initial_gas, false)
+            .map_or_else(|_error| Err(InvalidTransaction::BadProof), |_res| Ok(()))
+
+        // pub nonce: u64,
+        // pub contract_address: Felt252Wrapper,
+        // pub entry_point_selector: Felt252Wrapper,
+        // pub calldata: Vec<Felt252Wrapper>,
+    }
+
     /// Returns the transaction for the Call
     ///
     /// # Arguments
