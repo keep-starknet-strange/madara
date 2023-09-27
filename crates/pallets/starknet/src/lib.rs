@@ -1033,20 +1033,20 @@ impl<T: Config> Pallet<T> {
     ///
     /// * `block_number` - The block number.
     fn store_block(block_number: u64) {
-        let block;
+        let block: StarknetBlock;
 		if frame_system::Pallet::<T>::digest().logs().len() == 1 {
-			match &frame_system::Pallet::<T>::digest().logs()[0] {
-				DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID ,encoded_data) => {
+            match &frame_system::Pallet::<T>::digest().logs()[0] {
+                DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID ,encoded_data) => {
+                    
 
-					block = match mp_block::Block::decode(&mut encoded_data.as_slice()) {
+					block = match StarknetBlock::decode(&mut encoded_data.as_slice()) {
                         Ok(b) => b,
                         Err(e) => {
                             log!(error, "Failed to decode block: {:?}", e);
                             return;
                         }
                     };
-                    
-					// Save the block number <> hash mapping.
+
 					let blockhash = Felt252Wrapper::try_from(block.header().extra_data.unwrap()).unwrap();
 					BlockHash::<T>::insert(block_number, blockhash);
 					Pending::<T>::kill();
@@ -1056,7 +1056,7 @@ impl<T: Config> Pallet<T> {
 				_ => { log!(info, "Block not found in store_block") },
 
 			}
-		} else { 
+		} else {
             let transactions = Self::pending();
             let transaction_hashes = Self::pending_hashes();
             assert_eq!(

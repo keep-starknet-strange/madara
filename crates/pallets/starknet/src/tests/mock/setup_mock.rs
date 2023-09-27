@@ -6,10 +6,10 @@ use crate::{Config, GenesisConfig};
 
 /// ChainId for Starknet Goerli testnet
 pub const SN_GOERLI_CHAIN_ID: Felt252Wrapper = Felt252Wrapper(starknet_ff::FieldElement::from_mont([
-    3753493103916128178,
-    18446744073709548950,
+    17696389056366564951,
     18446744073709551615,
-    398700013197595345,
+    18446744073709551615,
+    502562008147966918,
 ]));
 
 // Configure a mock runtime to test the pallet.

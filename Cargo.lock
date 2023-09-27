@@ -7100,6 +7100,7 @@ name = "mc-db"
 version = "0.2.0"
 dependencies = [
  "ethers",
+ "frame-support",
  "kvdb-rocksdb",
  "log",
  "parity-db",
@@ -7117,6 +7118,7 @@ version = "0.1.0"
 dependencies = [
  "blockifier 0.1.0-rc2",
  "env_logger 0.9.3",
+ "hex",
  "log",
  "mockito",
  "mp-block",
@@ -7533,6 +7535,7 @@ name = "mp-block"
 version = "0.2.0"
 dependencies = [
  "blockifier 0.1.0-rc2",
+ "frame-support",
  "mp-felt",
  "mp-hashers",
  "mp-transactions",

@@ -6,6 +6,7 @@ use scale_codec::{Decode, Encode};
 use sp_core::H256;
 use sp_database::Database;
 use sp_runtime::traits::Block as BlockT;
+use frame_support;
 
 use crate::DbHash;
 
@@ -92,7 +93,6 @@ impl<B: BlockT> MappingDb<B> {
                 &commitment.block_hash.encode(),
             );
         }
-
         self.db.commit(transaction).map_err(|e| format!("{:?}", e))?;
 
         Ok(())

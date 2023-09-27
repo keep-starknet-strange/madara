@@ -28,6 +28,7 @@ sp-core = { workspace = true, default-features = true }
 sp-database = { workspace = true, default-features = true }
 sp-runtime = { workspace = true, default-features = true }
 uuid = "1.4.1"
+frame-support = { workspace = true }
 
 [features]
 default = ["kvdb-rocksdb", "parity-db"]

@@ -226,11 +226,11 @@ pub enum BlockStatus {
 impl From<BlockStatus> for starknet_api::block::BlockStatus {
     fn from(status: BlockStatus) -> Self {
         match status {
-            BlockStatus::Aborted => starknet_api::block::BlockStatus::Aborted,
+            BlockStatus::Aborted => starknet_api::block::BlockStatus::Rejected,
             BlockStatus::AcceptedOnL1 => starknet_api::block::BlockStatus::AcceptedOnL1,
             BlockStatus::AcceptedOnL2 => starknet_api::block::BlockStatus::AcceptedOnL2,
             BlockStatus::Pending => starknet_api::block::BlockStatus::Pending,
-            BlockStatus::Reverted => starknet_api::block::BlockStatus::Reverted,
+            BlockStatus::Reverted => starknet_api::block::BlockStatus::Rejected,
         }
     }
 }

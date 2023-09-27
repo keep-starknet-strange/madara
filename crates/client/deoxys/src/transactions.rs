@@ -108,21 +108,9 @@ pub async fn deploy_tx_to_starknet_tx(
 
 pub fn deploy_account_tx_to_starknet_tx(
     deploy_account_transaction: starknet_api::transaction::DeployAccountTransaction
-) -> Result<btx::DeployAccountTransaction, ReaderClientError> {
+) -> Result<mp_transactions::Transaction, ReaderClientError> {
     let mp_deploy_account_tx = mp_transactions::DeployAccountTransaction::from_starknet(deploy_account_transaction);
-    btx::DeployAccountTransaction {
-        tx: sttx::DeployAccountTransaction {
-            max_fee: sttx::Fee(mp_deploy_account_tx.max_fee),
-            version: sttx::TransactionVersion(StarkFelt::from(1u128)),
-            signature: vec_of_felt_to_signature(&mp_deploy_account_tx.signature),
-            nonce: mp_deploy_account_tx.nonce.into(),
-            class_hash: mp_deploy_account_tx.class_hash.into(),
-            contract_address_salt: mp_deploy_account_tx.contract_address_salt.into(),
-            constructor_calldata: vec_of_felt_to_calldata(&mp_deploy_account_tx.constructor_calldata),
-        },
-        tx_hash: transaction_hash.into(),
-        contract_address: contract_address.into(),
-    }
+    Ok(mp_transactions::Transaction::DeployAccount(mp_deploy_account_tx))
 }
 
 

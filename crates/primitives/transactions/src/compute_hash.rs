@@ -22,6 +22,10 @@ pub trait ComputeTransactionHash {
     fn compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> Felt252Wrapper;
 }
 
+pub trait LegacyComputeTransactionHash {
+    fn legacy_compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> Felt252Wrapper;
+}
+
 fn convert_calldata(data: &[Felt252Wrapper]) -> &[FieldElement] {
     // Non-copy but less dangerous than transmute
     // https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
@@ -78,9 +82,15 @@ impl ComputeTransactionHash for InvokeTransactionV1 {
 
 impl ComputeTransactionHash for InvokeTransaction {
     fn compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> Felt252Wrapper {
-        match self {
-            InvokeTransaction::V0(tx) => tx.compute_hash::<H>(chain_id, is_query),
-            InvokeTransaction::V1(tx) => tx.compute_hash::<H>(chain_id, is_query),
+        if (self.header.block_number < 833) {
+            match self {
+                InvokeTransaction::V0(tx) => tx.compute_hash::<H>(chain_id, is_query),
+                InvokeTransaction::V1(tx) => tx.compute_hash::<H>(chain_id, is_query),
+            }
+        } else {
+            match self {
+                InvokeTransaction::V0(tx) => tx.legacy_compute_hash::<H>(chain_id, is_query),
+            }
         }
     }
 }
@@ -326,7 +336,7 @@ impl ComputeTransactionHash for HandleL1MessageTransaction {
 }
 
 impl ComputeTransactionHash for Transaction {
-    fn compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> Felt252Wrapper {
+    fn compute_hash<H: HasherT>(&self, block_number: Number chain_id: Felt252Wrapper, is_query: bool) -> Felt252Wrapper {
         match self {
             Transaction::Declare(tx) => tx.compute_hash::<H>(chain_id, is_query),
             Transaction::DeployAccount(tx) => tx.compute_hash::<H>(chain_id, is_query),

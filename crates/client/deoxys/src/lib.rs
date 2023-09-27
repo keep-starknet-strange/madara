@@ -285,6 +285,8 @@ mod tests {
     use std::collections::VecDeque;
     use mockall::mock;
     use mockito::mock;
+    use starknet_ff::FieldElement;
+    use std::convert::TryInto;
 
     // Mocking StarknetFeederGatewayClient for testing
     mock! {
@@ -336,5 +338,28 @@ mod tests {
         // Run fetch_block and ensure the error is handled correctly.
     }
 
-    // ... More tests for other functions and scenarios ...
+    #[test]
+    fn test_into_mont() {
+        // Constructing FieldElement from the hex representation of "SN_MAIN"
+        let sn_main_hex = "00000000000000000000000000000000534e5f4d41494e";
+        let sn_main_bytes = hex::decode(sn_main_hex).expect("Failed to decode hex");
+        let sn_main_u64_array = bytes_to_u64_array(&sn_main_bytes);
+
+        let fe = FieldElement::from_mont(sn_main_u64_array);
+        let mont_representation = fe.into_mont();
+
+        println!("{:?}", mont_representation);
+        // Optionally, add assertions to check the correctness of mont_representation
+    }
+
+    // Helper function to convert a byte slice into [u64; 4]
+    fn bytes_to_u64_array(bytes: &[u8]) -> [u64; 4] {
+        assert_eq!(bytes.len(), 32, "Expected a 32-byte slice");
+
+        let mut array = [0u64; 4];
+        for (i, chunk) in bytes.chunks(8).enumerate() {
+            array[i] = u64::from_be_bytes(chunk.try_into().expect("Failed to convert bytes to u64"));
+        }
+        array
+    }
 }
