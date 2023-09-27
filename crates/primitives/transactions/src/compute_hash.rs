@@ -2,7 +2,7 @@ use alloc::vec::Vec;
 
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
-use starknet_core::crypto::compute_hash_on_elements;
+use starknet_core::{crypto::compute_hash_on_elements, utils::starknet_keccak};
 use starknet_crypto::FieldElement;
 
 use crate::DeployTransaction;
@@ -353,10 +353,11 @@ impl DeployTransaction {
         is_query: bool,
     ) -> FieldElement {
         let prefix = FieldElement::from_byte_slice_be(DEPLOY_PREFIX).unwrap();
-        let constructor_calldata = convert_calldata(&self.constructor_calldata);
-        let elements = &[prefix, contract_address, constructor_calldata, chain_id];
+        let constructor_calldata = compute_hash_on_elements(convert_calldata(&self.constructor_calldata));
+        let constructor = starknet_keccak(b"constructor");
+        let elements = &[prefix, contract_address, constructor, constructor_calldata, chain_id];
 
-        H::compute_hash_on_elements(&elements)
+        H::compute_hash_on_elements(elements)
     }
 }
 
