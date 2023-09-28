@@ -2,6 +2,9 @@
 
 ## Next release
 
+- ci: disable pr close workflow
+- ci: add ci verification for detecting genesis changes and config hashes
+- feat: better management of custom configurations for genesis assets
 - fix: fix sharingan chain spec
 - fix: update madara infra to main branch
 - fix: update `Cargo.lock`

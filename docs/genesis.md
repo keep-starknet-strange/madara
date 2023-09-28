@@ -1,8 +1,8 @@
 # Genesis
 
-The genesis of the chain can be found in the [node]
-(<https://github.com/keep-starknet-strange/madara/tree/main/crates/node/src/genesis_assets>)
-crate. The genesis is defined in the form of a JSON file containing the
+The genesis of the chain can be found in the [configs]
+(<https://github.com/keep-starknet-strange/madara/tree/main/configs/genesis_assets>)
+folder. The genesis is defined in the form of a JSON file containing the
 following:
 
 - contract_classes: list of tuples containing the class hash and the class. The
@@ -10,7 +10,7 @@ following:
   - An object containing a field "path" with the path to the compiled class from
     the root of the repository and a field "version" to indicate which cairo
     version this class belongs to (0 or 1). Example:
-    `{ "path": "./cairo-contracts/build/NoValidateAccount.json", "version": 0 }`
+    `{ "path": "cairo-contracts/NoValidateAccount.json", "version": 0 }`
   - The whole serialized class
 - contracts: list of tuples containing the contract address and the associated
   class hash.

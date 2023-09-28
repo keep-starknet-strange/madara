@@ -1,0 +1,32 @@
+---
+name: Task - Configs Verifier
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  genesis-docs:
+    name: Genesis documentation
+    runs-on: ubuntu-latest
+    if: ${{ github.event.label.name != 'ignore-docs' }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Ensure docs changes
+        run: |
+          if [[ -n $(git diff --name-only origin/main | grep configs/genesis-assets/genesis.json) ]]; then
+            git diff --name-only origin/main | grep docs/genesis.md
+          fi
+
+  configs-hashes:
+    name: Verify genesis-assets hashes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Verify hashes
+        run: |
+          for f in $(find configs/genesis-assets/ -type f -not -path configs/index.json); do
+            cat configs/index.json | grep $(md5sum $f | awk '{print $1}')
+          done

@@ -145,11 +145,13 @@ One can use flamegraph-rs to generate flamegraphs and look for the performance
 bottlenecks of the system by running the following :
 
 ```bash
-flamegraph --root --open  -- ./target/release/madara --dev --pool-limit=100000 --pool-kbytes=500000 --rpc-methods=unsafe --rpc-cors=all --in-peers=0 --out-peers=1 --no-telemetry
+./target/release/madara setup
+flamegraph --root --open  -- ./target/release/madara run --dev
 ```
 
-In parallel to that, run `npm run test` within the `benchmarking` folder. Once
-you stop the node, the flamegraph will open in your browser.
+In parallel to that, run some transactions against your node (you can use
+[Gomu Gomu no Gatling](https://github.com/keep-starknet-strange/gomu-gomu-no-gatling)
+benchmarker). Once you stop the node, the flamegraph will open in your browser.
 
 ## 🌐 Connect to the dev webapp
 
