@@ -102,7 +102,7 @@ use starknet_api::api_core::{ChainId, ClassHash, CompiledClassHash, ContractAddr
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::StarkFelt;
-use starknet_api::transaction::TransactionHash;
+use starknet_api::transaction::{TransactionHash, MessageToL1};
 use starknet_crypto::FieldElement;
 
 use crate::alloc::string::ToString;
@@ -237,6 +237,11 @@ pub mod pallet {
     #[pallet::unbounded]
     #[pallet::getter(fn tx_events)]
     pub(super) type TxEvents<T: Config> = StorageMap<_, Identity, TransactionHash, Vec<StarknetEvent>, ValueQuery>;
+
+    #[pallet::storage]
+    #[pallet::unbounded]
+    #[pallet::getter(fn tx_messages)]
+    pub(super) type TxMessages<T: Config> = StorageMap<_, Identity, TransactionHash, Vec<MessageToL1>, ValueQuery>;
 
     #[pallet::storage]
     #[pallet::unbounded]
@@ -513,8 +518,13 @@ pub mod pallet {
             let tx_hash = transaction.tx_hash;
             Self::emit_and_store_tx_and_fees_events(
                 tx_hash,
-                tx_execution_infos.execute_call_info,
-                tx_execution_infos.fee_transfer_call_info,
+                &tx_execution_infos.execute_call_info,
+                &tx_execution_infos.fee_transfer_call_info,
+            );
+            Self::store_tx_and_fees_messages(
+                tx_hash,
+                &tx_execution_infos.execute_call_info,
+                &tx_execution_infos.fee_transfer_call_info,
             );
 
             Self::store_transaction(tx_hash, Transaction::Invoke(input_transaction), tx_execution_infos.revert_error);
@@ -573,8 +583,13 @@ pub mod pallet {
             let tx_hash = transaction.tx_hash();
             Self::emit_and_store_tx_and_fees_events(
                 tx_hash,
-                tx_execution_infos.execute_call_info,
-                tx_execution_infos.fee_transfer_call_info,
+                &tx_execution_infos.execute_call_info,
+                &tx_execution_infos.fee_transfer_call_info,
+            );
+            Self::store_tx_and_fees_messages(
+                tx_hash,
+                &tx_execution_infos.execute_call_info,
+                &tx_execution_infos.fee_transfer_call_info,
             );
 
             Self::store_transaction(tx_hash, Transaction::Declare(input_transaction), tx_execution_infos.revert_error);
@@ -626,8 +641,13 @@ pub mod pallet {
             let tx_hash = transaction.tx_hash;
             Self::emit_and_store_tx_and_fees_events(
                 tx_hash,
-                tx_execution_infos.execute_call_info,
-                tx_execution_infos.fee_transfer_call_info,
+                &tx_execution_infos.execute_call_info,
+                &tx_execution_infos.fee_transfer_call_info,
+            );
+            Self::store_tx_and_fees_messages(
+                tx_hash,
+                &tx_execution_infos.execute_call_info,
+                &tx_execution_infos.fee_transfer_call_info,
             );
 
             Self::store_transaction(
@@ -679,8 +699,13 @@ pub mod pallet {
             let tx_hash = transaction.tx_hash;
             Self::emit_and_store_tx_and_fees_events(
                 tx_hash,
-                tx_execution_infos.execute_call_info,
-                tx_execution_infos.fee_transfer_call_info,
+                &tx_execution_infos.execute_call_info,
+                &tx_execution_infos.fee_transfer_call_info,
+            );
+            Self::store_tx_and_fees_messages(
+                tx_hash,
+                &tx_execution_infos.execute_call_info,
+                &tx_execution_infos.fee_transfer_call_info,
             );
 
             Self::store_transaction(
@@ -1033,6 +1058,53 @@ impl<T: Config> Pallet<T> {
         frame_system::Pallet::<T>::deposit_log(digest);
     }
 
+    /// Aggregate L2 > L1 messages from the call info.
+    ///
+    /// # Arguments
+    ///
+    /// * `call_info` — A ref to the call info structure.
+    /// * `next_order` — Next expected message order, has to be 0 for a top level invocation
+    ///
+    /// # Returns
+    ///
+    /// Next expected message order
+    fn aggregate_messages_in_call_info(tx_hash: TransactionHash, call_info: &CallInfo, next_order: usize) -> usize {
+        let mut message_idx = 0;
+        let mut inner_call_idx = 0;
+        let mut next_order = next_order;
+
+        loop {
+            // Store current call's messages as long as they have sequential orders
+            if message_idx < call_info.execution.l2_to_l1_messages.len() {
+                let ordered_message = &call_info.execution.l2_to_l1_messages[message_idx];
+                if ordered_message.order == next_order {
+                    let message = MessageToL1 {
+                        from_address: call_info.call.storage_address,
+                        to_address: ordered_message.message.to_address,
+                        payload: ordered_message.message.payload.clone(),
+                    };
+                    TxMessages::<T>::append(tx_hash, message);
+                    next_order += 1;
+                    message_idx += 1;
+                    continue;
+                }
+            }
+
+            // Go deeper to find the continuation of the sequence
+            if inner_call_idx < call_info.inner_calls.len() {
+                next_order =
+                    Self::aggregate_messages_in_call_info(tx_hash, &call_info.inner_calls[inner_call_idx], next_order);
+                inner_call_idx += 1;
+                continue;
+            }
+
+            // At this point we have iterated over all sequential events and visited all internal calls
+            break;
+        }
+
+        next_order
+    }
+
     /// Emit events from the call info.
     ///
     /// # Arguments
@@ -1144,14 +1216,27 @@ impl<T: Config> Pallet<T> {
 
     pub fn emit_and_store_tx_and_fees_events(
         tx_hash: TransactionHash,
-        execute_call_info: Option<CallInfo>,
-        fee_transfer_call_info: Option<CallInfo>,
+        execute_call_info: &Option<CallInfo>,
+        fee_transfer_call_info: &Option<CallInfo>,
     ) {
         if let Some(call_info) = execute_call_info {
-            let _ = Self::emit_events_in_call_info(tx_hash, &call_info, 0);
+            let _ = Self::emit_events_in_call_info(tx_hash, call_info, 0);
         }
         if let Some(call_info) = fee_transfer_call_info {
-            let _ = Self::emit_events_in_call_info(tx_hash, &call_info, 0);
+            let _ = Self::emit_events_in_call_info(tx_hash, call_info, 0);
+        }
+    }
+
+    pub fn store_tx_and_fees_messages(
+        tx_hash: TransactionHash,
+        execute_call_info: &Option<CallInfo>,
+        fee_transfer_call_info: &Option<CallInfo>,
+    ) {
+        if let Some(call_info) = execute_call_info {
+            let _ = Self::aggregate_messages_in_call_info(tx_hash, call_info, 0);
+        }
+        if let Some(call_info) = fee_transfer_call_info {
+            let _ = Self::aggregate_messages_in_call_info(tx_hash, call_info, 0);
         }
     }
 
