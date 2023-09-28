@@ -6612,7 +6612,6 @@ dependencies = [
 name = "mp-chain-id"
 version = "0.3.0"
 dependencies = [
- "blockifier",
  "mp-felt",
  "starknet-ff",
 ]
