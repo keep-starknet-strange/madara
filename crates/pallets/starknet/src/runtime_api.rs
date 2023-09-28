@@ -53,7 +53,7 @@ sp_api::decl_runtime_apis! {
         /// client to operate seamlessly while abstracting the extrinsic complexity.
         fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction>;
         fn get_events_for_tx_hash(xts: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper, tx_hash: Felt252Wrapper) -> Option<(TxType, Vec<StarknetEvent>)>;
-
+       
         /// Return the list of StarknetEvent evmitted during this block, along with the hash of the starknet transaction they bellong to
         ///
         /// `block_extrinsics` is the list of all the extrinsic executed during this block, it is used in order to match
