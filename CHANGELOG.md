@@ -20,6 +20,8 @@
   SN_MAIN
 - ci: disable pr close workflow
 - ci: add ci verification for detecting genesis changes and config hashes
+- test: add e2e test for `estimate_fee`
+
 
 ## v0.3.0
 
