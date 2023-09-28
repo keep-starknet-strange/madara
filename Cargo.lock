@@ -6614,10 +6614,7 @@ version = "0.3.0"
 dependencies = [
  "blockifier",
  "mp-felt",
- "mp-hashers",
- "mp-transactions",
  "starknet-ff",
- "starknet_api",
 ]
 
 [[package]]

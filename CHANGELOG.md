@@ -2,13 +2,13 @@
 
 ## Next release
 
+- refactor: exported chain id constant in mp-chain-id crate and added one for SN_MAIN
 - ci: disable pr close workflow
 - ci: add ci verification for detecting genesis changes and config hashes
 - feat: better management of custom configurations for genesis assets
 - fix: fix sharingan chain spec
 - fix: update madara infra to main branch
 - fix: update `Cargo.lock`
-- fix: exported chain id constant in mp-chain-id crate and added one for SN_MAIN
 
 ## v0.3.0
 
