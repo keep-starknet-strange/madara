@@ -6150,6 +6150,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
+ "mp-chain-id",
  "mp-felt",
  "mp-hashers",
  "mp-transactions",
@@ -6607,6 +6608,18 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "sp-core 7.0.0",
+ "starknet_api",
+]
+
+[[package]]
+name = "mp-chain-id"
+version = "0.3.0"
+dependencies = [
+ "blockifier",
+ "mp-felt",
+ "mp-hashers",
+ "mp-transactions",
+ "starknet-ff",
  "starknet_api",
 ]
 
@@ -7595,6 +7608,7 @@ dependencies = [
  "lazy_static",
  "log",
  "mp-block",
+ "mp-chain-id",
  "mp-commitments",
  "mp-digest-log",
  "mp-fee",

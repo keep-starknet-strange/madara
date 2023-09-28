@@ -25,6 +25,7 @@ mp-sequencer-address = { workspace = true, features = ["parity-scale-codec"] }
 mp-state = { workspace = true }
 mp-storage = { workspace = true, features = ["parity-scale-codec"] }
 mp-transactions = { workspace = true, features = ["scale-info"] }
+mp-chain-id = { workspace = true }
 
 blockifier = { workspace = true, features = [
   "testing",
