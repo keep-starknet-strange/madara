@@ -25,13 +25,12 @@ pub fn compressed_contract_class() -> CompressedLegacyContractClass {
 use crate::constants::ACCOUNT_CONTRACT;
 #[fixture]
 pub fn broadcasted_declare_txn_v1(compressed_contract_class: CompressedLegacyContractClass) -> BroadcastedTransaction {
-    let txn = BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V1(BroadcastedDeclareTransactionV1 {
+    BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V1(BroadcastedDeclareTransactionV1 {
         max_fee: FieldElement::ZERO,
         signature: vec![],
         nonce: FieldElement::ZERO,
         sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap(),
         is_query: true,
         contract_class: compressed_contract_class.into(),
-    }));
-    txn
+    }))
 }
