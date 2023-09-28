@@ -170,7 +170,7 @@ pub struct DeployAccountTransaction {
     pub class_hash: Felt252Wrapper,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, From)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 pub struct HandleL1MessageTransaction {

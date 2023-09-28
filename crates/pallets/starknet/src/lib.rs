@@ -90,7 +90,7 @@ use mp_hashers::HasherT;
 use mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
 use mp_state::{FeeConfig, StateChanges};
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
-use mp_transactions::execution::{Execute, Validate};
+use mp_transactions::execution::Execute;
 use mp_transactions::{
     DeclareTransaction, DeployAccountTransaction, HandleL1MessageTransaction, InvokeTransaction, Transaction,
     UserAndL1HandlerTransaction, UserTransaction,
@@ -776,81 +776,6 @@ pub mod pallet {
 
 /// The Starknet pallet internal functions.
 impl<T: Config> Pallet<T> {
-    fn validate_usigned_tx_nonce(
-        transaction: &UserAndL1HandlerTransaction,
-    ) -> Result<(Felt252Wrapper, Felt252Wrapper, Felt252Wrapper), InvalidTransaction> {
-        let (sender_address, transaction_nonce) = match transaction {
-            UserAndL1HandlerTransaction::User(tx) => (tx.sender_address().into(), *tx.nonce()),
-            UserAndL1HandlerTransaction::L1Handler(tx, _fee) => (ContractAddress::default(), tx.nonce.into()),
-        };
-
-        let sender_nonce: Felt252Wrapper = Pallet::<T>::nonce(sender_address).into();
-
-        // Reject transaction with an already used Nonce
-        if sender_nonce > transaction_nonce {
-            return Err(InvalidTransaction::Stale);
-        }
-
-        // A transaction with a nonce higher than the expected nonce is placed in
-        // the future queue of the transaction pool.
-        if sender_nonce < transaction_nonce {
-            log!(
-                info,
-                "Nonce is too high. Expected: {:?}, got: {:?}. This transaction will be placed in the transaction \
-                 pool and executed in the future when the nonce is reached.",
-                sender_nonce,
-                transaction_nonce
-            );
-        }
-
-        Ok((sender_address.into(), sender_nonce, transaction_nonce))
-    }
-
-    fn validate_unsigned_tx(transaction: &UserAndL1HandlerTransaction) -> Result<(), InvalidTransaction> {
-        match transaction {
-            UserAndL1HandlerTransaction::User(tx) => Self::validate_unsigned_user_tx(tx),
-            UserAndL1HandlerTransaction::L1Handler(tx, fee) => Self::validate_unsigned_l1_tx(tx, fee),
-        }
-    }
-
-    fn validate_unsigned_user_tx(transaction: &UserTransaction) -> Result<(), InvalidTransaction> {
-        let chain_id = Self::chain_id();
-        let block_context = Self::get_block_context();
-        let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();
-        let mut execution_resources = ExecutionResources::default();
-        let mut initial_gas = blockifier::abi::constants::INITIAL_GAS_COST;
-
-        match transaction {
-            UserTransaction::Declare(tx, contract_class) => tx
-                .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), false)
-                .map_err(|_| InvalidTransaction::BadProof)?
-                .validate_tx(&mut state, &block_context, &mut execution_resources, &mut initial_gas, false),
-            // There is no way to validate it before the account is actuallly deployed
-            UserTransaction::DeployAccount(_) => Ok(None),
-            UserTransaction::Invoke(tx) => tx.into_executable::<T::SystemHash>(chain_id, false).validate_tx(
-                &mut state,
-                &block_context,
-                &mut execution_resources,
-                &mut initial_gas,
-                false,
-            ),
-        }
-        .map_or_else(|_error| Err(InvalidTransaction::BadProof), |_res| Ok(()))
-    }
-
-    fn validate_unsigned_l1_tx(transaction: &HandleL1MessageTransaction, fee: &Fee) -> Result<(), InvalidTransaction> {
-        let chain_id = Self::chain_id();
-        let block_context = Self::get_block_context();
-        let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();
-        let mut execution_resources = ExecutionResources::default();
-        let mut initial_gas = blockifier::abi::constants::INITIAL_GAS_COST;
-
-        transaction
-            .into_executable::<T::SystemHash>(chain_id, *fee, false)
-            .validate_tx(&mut state, &block_context, &mut execution_resources, &mut initial_gas, false)
-            .map_or_else(|_error| Err(InvalidTransaction::BadProof), |_res| Ok(()))
-    }
-
     /// Returns the transaction for the Call
     ///
     /// # Arguments
