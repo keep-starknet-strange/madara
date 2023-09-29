@@ -16,6 +16,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 # Madara primitives
 mp-block = { workspace = true }
+mp-chain-id = { workspace = true }
 mp-commitments = { workspace = true }
 mp-digest-log = { workspace = true }
 mp-fee = { workspace = true }
@@ -25,7 +26,6 @@ mp-sequencer-address = { workspace = true, features = ["parity-scale-codec"] }
 mp-state = { workspace = true }
 mp-storage = { workspace = true, features = ["parity-scale-codec"] }
 mp-transactions = { workspace = true, features = ["scale-info"] }
-mp-chain-id = { workspace = true }
 
 blockifier = { workspace = true, features = [
   "testing",

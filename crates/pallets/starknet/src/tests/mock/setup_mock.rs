@@ -1,5 +1,4 @@
 use frame_support::traits::GenesisBuild;
-use mp_felt::Felt252Wrapper;
 
 use crate::genesis_loader::GenesisLoader;
 use crate::{Config, GenesisConfig};

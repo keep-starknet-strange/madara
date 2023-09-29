@@ -19,6 +19,4 @@ starknet-ff = { workspace = true }
 
 [features]
 default = ["std"]
-std = [
-  "mp-felt/std",
-]
+std = ["mp-felt/std"]

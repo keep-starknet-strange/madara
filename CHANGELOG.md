@@ -2,7 +2,8 @@
 
 ## Next release
 
-- refactor: exported chain id constant in mp-chain-id crate and added one for SN_MAIN
+- refactor: exported chain id constant in mp-chain-id crate and added one for
+  SN_MAIN
 - ci: disable pr close workflow
 - ci: add ci verification for detecting genesis changes and config hashes
 - feat: better management of custom configurations for genesis assets
