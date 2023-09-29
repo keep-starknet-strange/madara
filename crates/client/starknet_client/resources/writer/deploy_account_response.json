@@ -1,5 +1,5 @@
 {
-    "code": "TRANSACTION_RECEIVED",
-    "transaction_hash": "0x6d0ea68e3e8e257ff7c6633277fc3ea6a42a57d0d15ada480cbaeec9c6be5d0",
-    "address": "0x219937256cd88844f9fdc9c33a2d6d492e253ae13814c2dc0ecab7f26919d46"
+  "code": "TRANSACTION_RECEIVED",
+  "transaction_hash": "0x6d0ea68e3e8e257ff7c6633277fc3ea6a42a57d0d15ada480cbaeec9c6be5d0",
+  "address": "0x219937256cd88844f9fdc9c33a2d6d492e253ae13814c2dc0ecab7f26919d46"
 }

@@ -3,8 +3,8 @@ name = "mc-deoxys"
 version = "0.1.0"
 description = "Deoxys crate for Madara"
 authors = [
-	"Amine Mrad <https://github.com/sparqet>",
-    "Antiyro <https://github.com/antiyro>",
+  "Amine Mrad <https://github.com/sparqet>",
+  "Antiyro <https://github.com/antiyro>",
 ]
 homepage = "https://github.com/KasarLabs/deoxys"
 edition = "2021"
@@ -16,35 +16,35 @@ repository = "https://github.com/KasarLabs/deoxys"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-sp-core = {workspace = true, features=["std"] }
-starknet-gateway-types = { workspace = true }
-starknet_client = { workspace = true }
-starknet-core = { workspace = true }
-pallet-starknet = { workspace = true }
-log = { version = "0.4.14" }
-env_logger = "0.9.0"
-pathfinder-common = { workspace = true }
-pathfinder = { workspace = true }
-tokio = { workspace = true, features = ["macros", "test-util"] }
-reqwest = { workspace = true }
-serde_json = { workspace = true }
 blockifier = { workspace = true, default-features = false, features = [
   "testing",
 ] }
+env_logger = "0.9.0"
+log = { version = "0.4.14" }
 mockito = { workspace = true }
+pallet-starknet = { workspace = true }
+pathfinder = { workspace = true }
+pathfinder-common = { workspace = true }
+reqwest = { workspace = true }
+serde_json = { workspace = true }
+sp-core = { workspace = true, features = ["std"] }
+starknet-core = { workspace = true }
 starknet-ff = { workspace = true, default-features = false, features = [
   "alloc",
   "serde",
 ] }
+starknet-gateway-types = { workspace = true }
 starknet_api = { workspace = true, default-features = false }
+starknet_client = { workspace = true }
+tokio = { workspace = true, features = ["macros", "test-util"] }
 # test_utils = { path = "./test_utils", optional = true }
-validator = { workspace = true, features = ["derive"] }
+hex = "0.4"
 mp-block = { workspace = true }
+mp-commitments = { workspace = true }
 mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
 mp-transactions = { workspace = true, features = ["client"] }
-mp-commitments = { workspace = true }
-hex = "0.4"
+validator = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
 # test_utils = { path = "./test_utils" }

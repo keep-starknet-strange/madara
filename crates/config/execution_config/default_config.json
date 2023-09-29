@@ -1,23 +1,23 @@
 {
-    "execution_config_segments": {
-      "0": {
-            "fee_contract_address": "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
-            "invoke_tx_max_n_steps": 1000000,
-            "validate_tx_max_n_steps": 1000000,
-            "max_recursion_depth": 50,
-            "step_gas_cost": 100,
-            "initial_gas_cost": 10000000000,
-            "vm_resource_fee_cost": {
-                "n_steps": 0.01,
-                "pedersen_builtin": 0.32,
-                "range_check_builtin": 0.16,
-                "ecdsa_builtin": 20.48,
-                "bitwise_builtin": 0.64,
-                "poseidon_builtin": 0.32,
-                "output_builtin": 1.0,
-                "ec_op_builtin": 10.24,
-                "keccak_builtin": 20.48
-            }
-        }
+  "execution_config_segments": {
+    "0": {
+      "fee_contract_address": "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+      "invoke_tx_max_n_steps": 1000000,
+      "validate_tx_max_n_steps": 1000000,
+      "max_recursion_depth": 50,
+      "step_gas_cost": 100,
+      "initial_gas_cost": 10000000000,
+      "vm_resource_fee_cost": {
+        "n_steps": 0.01,
+        "pedersen_builtin": 0.32,
+        "range_check_builtin": 0.16,
+        "ecdsa_builtin": 20.48,
+        "bitwise_builtin": 0.64,
+        "poseidon_builtin": 0.32,
+        "output_builtin": 1.0,
+        "ec_op_builtin": 10.24,
+        "keccak_builtin": 20.48
+      }
     }
+  }
 }
