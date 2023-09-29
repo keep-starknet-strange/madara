@@ -1,16 +1,7 @@
 use frame_support::traits::GenesisBuild;
-use mp_felt::Felt252Wrapper;
 
 use crate::genesis_loader::GenesisLoader;
 use crate::{Config, GenesisConfig};
-
-/// ChainId for Starknet Goerli testnet
-pub const SN_GOERLI_CHAIN_ID: Felt252Wrapper = Felt252Wrapper(starknet_ff::FieldElement::from_mont([
-    17696389056366564951,
-    18446744073709551615,
-    18446744073709551615,
-    502562008147966918,
-]));
 
 // Configure a mock runtime to test the pallet.
 macro_rules! mock_runtime {
@@ -87,7 +78,7 @@ macro_rules! mock_runtime {
 				pub const DisableTransactionFee: bool = $disable_transaction_fee;
                 pub const DisableNonceValidation: bool = $disable_nonce_validation;
 				pub const ProtocolVersion: u8 = 0;
-                pub const ChainId: Felt252Wrapper = crate::tests::mock::SN_GOERLI_CHAIN_ID;
+                pub const ChainId: Felt252Wrapper = mp_chain_id::SN_GOERLI_CHAIN_ID;
                 pub const MaxRecursionDepth: u32 = 50;
             }
 

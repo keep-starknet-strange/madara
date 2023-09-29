@@ -62,7 +62,6 @@ use blockifier::execution::entry_point::{CallEntryPoint, CallType, EntryPointExe
 use blockifier::state::cached_state::ContractStorageKey;
 use blockifier::state::state_api::State;
 use blockifier::transaction::objects::{TransactionExecutionInfo, TransactionExecutionResult};
-use sp_core::U256;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee};
 

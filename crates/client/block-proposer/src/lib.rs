@@ -11,7 +11,7 @@ use codec::Encode;
 use futures::channel::oneshot;
 use futures::future::{Future, FutureExt};
 use futures::{future, select};
-use log::{debug, error, info, trace, warn};
+use log::{debug, error, trace, warn};
 use prometheus_endpoint::Registry as PrometheusRegistry;
 use sc_block_builder::{BlockBuilderApi, BlockBuilderProvider};
 use sc_client_api::backend;
@@ -520,20 +520,6 @@ where
             metrics.report_end_proposing_reason(end_reason);
             metrics.create_block_proposal_time.observe(propose_with_took.as_secs_f64());
         });
-
-        let extrinsics_summary = if extrinsics.is_empty() {
-            "no extrinsics".to_string()
-        } else {
-            format!("extrinsics ({})", extrinsics.len(),)
-        };
-
-        // info!(
-        //     "🥷 Prepared block for proposing at {} ({} ms) [hash: {:?}; parent_hash: {}; {extrinsics_summary}",
-        //     block.header().number(),
-        //     block_took.as_millis(),
-        //     block.header().hash(),
-        //     block.header().parent_hash(),
-        // );
     }
 }
 

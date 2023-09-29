@@ -1,20 +1,15 @@
 use mp_felt::Felt252Wrapper;
-use mp_hashers::HasherT;
-use pallet_starknet::Config;
 use reqwest::StatusCode;
 use sp_core::U256;
-use mp_block::{Block, Header };
-use reqwest::header::{HeaderMap, CONTENT_TYPE, self, HeaderValue};
+use mp_block::Block;
+use reqwest::header::{HeaderMap, CONTENT_TYPE, HeaderValue};
 use serde_json::{json, Value};
-use sp_core::bounded_vec::BoundedVec;
 use starknet_api::block::BlockNumber;
 use starknet_api::api_core::{ChainId, PatriciaKey};
 use starknet_api::hash::StarkFelt;
-use starknet_api::stark_felt;
 use starknet_api::transaction::Event;
 use starknet_client::RetryConfig;
 use starknet_client::reader::{StarknetFeederGatewayClient, StarknetReader};
-use starknet_core::chain_id;
 use starknet_ff::FieldElement;
 use std::sync::{ Arc, Mutex};
 use std::collections::VecDeque;
@@ -26,8 +21,7 @@ use std::path::Path;
 use std::string::String;
 use starknet_client;
 use std::path::PathBuf;
-use starknet_client::reader::objects::transaction::TransactionReceipt;
-use crate::transactions::{declare_tx_to_starknet_tx, deploy_account_tx_to_starknet_tx, invoke_tx_to_starknet_tx, l1handler_tx_to_starknet_tx, deploy_tx_to_starknet_tx, convert_to_contract_class};
+use crate::transactions::{declare_tx_to_starknet_tx, deploy_account_tx_to_starknet_tx, invoke_tx_to_starknet_tx, l1handler_tx_to_starknet_tx, deploy_tx_to_starknet_tx};
 use mp_hashers::pedersen::PedersenHasher;
 
 pub fn read_resource_file(path_in_resource_dir: &str) -> String {

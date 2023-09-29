@@ -57,7 +57,7 @@ impl ComputeTransactionHash for InvokeTransactionV0 {
 }
 
 impl LegacyComputeTransactionHash for InvokeTransactionV0 {
-    fn legacy_compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> Felt252Wrapper {
+    fn legacy_compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, _is_query: bool) -> Felt252Wrapper {
         let prefix = FieldElement::from_byte_slice_be(INVOKE_PREFIX).unwrap();
         let contract_address = self.contract_address.into();
         let entrypoint_selector = self.entry_point_selector.into();
@@ -323,13 +323,6 @@ impl DeployTransaction {
         ]) % ADDR_BOUND
     }
 
-    fn concat_slices<T: Clone>(a: &[T], b: &[T]) -> Vec<T> {
-        let mut result = Vec::with_capacity(a.len() + b.len());
-        result.extend_from_slice(a);
-        result.extend_from_slice(b);
-        result
-    }
-
     pub(super) fn compute_hash_given_contract_address<H: HasherT>(
         &self,
         chain_id: FieldElement,
@@ -349,7 +342,7 @@ impl DeployTransaction {
         &self,
         chain_id: FieldElement,
         contract_address: FieldElement,
-        is_query: bool,
+        _is_query: bool,
     ) -> FieldElement {
         let prefix = FieldElement::from_byte_slice_be(DEPLOY_PREFIX).unwrap();
         let constructor_calldata = compute_hash_on_elements(convert_calldata(&self.constructor_calldata));

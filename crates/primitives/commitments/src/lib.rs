@@ -14,7 +14,6 @@ use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_transactions::compute_hash::{ComputeTransactionHash, LegacyComputeTransactionHash};
 use mp_transactions::Transaction;
-use starknet_api::block;
 use starknet_api::transaction::Event;
 use starknet_crypto::FieldElement;
 
@@ -283,7 +282,7 @@ where
     let transactions_hashes = if height < 833u64 {
         H::hash_elements(FieldElement::from(tx.legacy_compute_hash::<H>(chain_id, false)), signature_hash)
     } else {
-        H::hash_elements(FieldElement::from(tx.legacy_compute_hash::<H>(chain_id, false)), signature_hash)
+        H::hash_elements(FieldElement::from(tx.compute_hash::<H>(chain_id, false)), signature_hash)
     };
     transactions_hashes
 }
