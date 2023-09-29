@@ -16,3 +16,9 @@ targets = ["x86_64-unknown-linux-gnu"]
 mp-felt = { workspace = true }
 # Starknet dependencies
 starknet-ff = { workspace = true }
+
+[features]
+default = ["std"]
+std = [
+  "mp-felt/std",
+]
