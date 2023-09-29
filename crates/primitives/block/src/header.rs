@@ -39,8 +39,7 @@ impl From<BlockStatus> for starknet_core::types::BlockStatus {
             BlockStatus::Pending => starknet_core::types::BlockStatus::Pending,
             BlockStatus::AcceptedOnL2 => starknet_core::types::BlockStatus::AcceptedOnL2,
             BlockStatus::AcceptedOnL1 => starknet_core::types::BlockStatus::AcceptedOnL1,
-            BlockStatus::Rejected => starknet_core::types::BlockStatus::Rejected, // Assuming Reverted maps to Rejected
-            _ => panic!("Unsupported status conversion"), // Handle any additional statuses or provide a default conversion
+            BlockStatus::Rejected => starknet_core::types::BlockStatus::Rejected,
         }
     }
 }

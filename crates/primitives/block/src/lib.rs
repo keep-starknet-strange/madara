@@ -13,7 +13,6 @@ use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_transactions::compute_hash::{ComputeTransactionHash, LegacyComputeTransactionHash};
 use mp_transactions::Transaction;
-use frame_support;
 
 /// Block Transactions
 pub type BlockTransactions = Vec<Transaction>;

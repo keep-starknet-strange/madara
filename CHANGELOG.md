@@ -2,6 +2,8 @@
 
 ## Next release
 
+- refactor: exported chain id constant in mp-chain-id crate and added one for
+  SN_MAIN
 - fix: cargo update and `main` branch prettier fix
 - ci: disable pr close workflow
 - ci: add ci verification for detecting genesis changes and config hashes

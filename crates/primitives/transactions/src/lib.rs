@@ -18,7 +18,7 @@ use alloc::vec::Vec;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::transaction::transaction_types::TransactionType;
 use derive_more::From;
-use starknet_api::{transaction::{Fee, TransactionVersion}, api_core::ClassHash};
+use starknet_api::transaction::{Fee, TransactionVersion};
 use starknet_ff::FieldElement;
 
 const SIMULATE_TX_VERSION_OFFSET: FieldElement =

@@ -51,6 +51,7 @@ frame-system-benchmarking = { workspace = true, optional = true }
 pallet-starknet = { workspace = true }
 
 # Madara Primitives
+mp-chain-id = { workspace = true }
 mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
 mp-transactions = { workspace = true }

@@ -1,5 +1,3 @@
-use core::default;
-
 use alloc::vec::Vec;
 
 use mp_felt::Felt252Wrapper;

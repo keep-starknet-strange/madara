@@ -11,8 +11,6 @@ use starknet_api::transaction as sttx;
 use starknet_api::transaction::{Fee, TransactionVersion};
 use alloc::vec::Vec;
 
-use frame_support::debug;
-
 use crate::DeployTransaction;
 
 use super::compute_hash::ComputeTransactionHash;
