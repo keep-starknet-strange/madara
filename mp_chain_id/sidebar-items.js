@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SN_GOERLI_CHAIN_ID","SN_MAIN_CHAIN_ID"]};
