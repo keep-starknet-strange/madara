@@ -5012,7 +5012,7 @@ dependencies = [
  "jsonrpsee-core 0.16.3",
  "jsonrpsee-http-client 0.16.3",
  "jsonrpsee-proc-macros 0.16.3",
- "jsonrpsee-server",
+ "jsonrpsee-server 0.16.3",
  "jsonrpsee-types 0.16.3",
  "jsonrpsee-wasm-client",
  "jsonrpsee-ws-client 0.16.3",
@@ -5028,8 +5028,10 @@ dependencies = [
  "jsonrpsee-core 0.20.1",
  "jsonrpsee-http-client 0.20.1",
  "jsonrpsee-proc-macros 0.20.1",
+ "jsonrpsee-server 0.20.1",
  "jsonrpsee-types 0.20.1",
  "jsonrpsee-ws-client 0.20.1",
+ "tokio",
  "tracing",
 ]
 
@@ -5121,9 +5123,12 @@ dependencies = [
  "futures-util",
  "hyper",
  "jsonrpsee-types 0.20.1",
+ "parking_lot 0.12.1",
+ "rand 0.8.5",
  "rustc-hash",
  "serde",
  "serde_json",
+ "soketto",
  "thiserror",
  "tokio",
  "tracing",
@@ -5209,6 +5214,29 @@ dependencies = [
  "serde",
  "serde_json",
  "soketto",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tower",
+ "tracing",
+]
+
+[[package]]
+name = "jsonrpsee-server"
+version = "0.20.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24f4e2f3d223d810e363fb8b5616ec4c6254243ee7f452d05ac281cdc9cf76b2"
+dependencies = [
+ "futures-util",
+ "http",
+ "hyper",
+ "jsonrpsee-core 0.20.1",
+ "jsonrpsee-types 0.20.1",
+ "route-recognizer",
+ "serde",
+ "serde_json",
+ "soketto",
+ "thiserror",
  "tokio",
  "tokio-stream",
  "tokio-util",
@@ -6077,7 +6105,7 @@ dependencies = [
  "frame-system",
  "futures",
  "hex",
- "jsonrpsee 0.16.3",
+ "jsonrpsee 0.20.1",
  "log",
  "madara-runtime",
  "mc-block-proposer",
@@ -6323,7 +6351,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
- "jsonrpsee 0.16.3",
+ "jsonrpsee 0.20.1",
  "log",
  "mc-db",
  "mc-rpc-core",
@@ -6366,7 +6394,7 @@ dependencies = [
  "flate2",
  "frame-support",
  "hex",
- "jsonrpsee 0.16.3",
+ "jsonrpsee 0.20.1",
  "mp-block",
  "mp-digest-log",
  "num-bigint",
@@ -8883,6 +8911,12 @@ dependencies = [
  "libc",
  "librocksdb-sys",
 ]
+
+[[package]]
+name = "route-recognizer"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "afab94fb28594581f62d981211a9a4d53cc8130bbcbbb89a0440d9b8e81a7746"
 
 [[package]]
 name = "rpassword"
@@ -13527,7 +13561,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.7",
- "rand 0.8.5",
+ "rand 0.7.3",
  "static_assertions",
 ]
 
