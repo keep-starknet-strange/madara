@@ -1,6 +1,7 @@
 {
   "abi": [
     {
+<<<<<<< HEAD
       "inputs": [
         {
           "name": "to_address",
@@ -18,17 +19,47 @@
       "name": "send_message_l2_to_l1",
       "outputs": [],
       "type": "function"
+=======
+      "inputs": [],
+      "name": "send_message_l2_to_l1",
+      "outputs": [],
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "name": "from_address",
+          "type": "felt"
+        }
+      ],
+      "name": "send_message_l1_to_l2",
+      "outputs": [],
+      "type": "l1_handler"
+>>>>>>> Test TxMessages storage
     }
   ],
   "entry_points_by_type": {
     "CONSTRUCTOR": [],
     "EXTERNAL": [
       {
+<<<<<<< HEAD
         "offset": "0x13",
         "selector": "0x9139dbd19ca9654d773cd88f31af4c8d583beecc3362fb986dccfef5cf134f"
       }
     ],
     "L1_HANDLER": []
+=======
+        "offset": "0x17",
+        "selector": "0x9139dbd19ca9654d773cd88f31af4c8d583beecc3362fb986dccfef5cf134f"
+      }
+    ],
+    "L1_HANDLER": [
+      {
+        "offset": "0x26",
+        "selector": "0x38fb0bf48fe489ae23d0a1d7f2b7195ec0b94bfeb2f408b13bfd943d8410d72"
+      }
+    ]
+>>>>>>> Test TxMessages storage
   },
   "program": {
     "attributes": [],
@@ -49,6 +80,7 @@
       "0x482680017ffa8000",
       "0x4",
       "0x208b7fff7fff7ffe",
+<<<<<<< HEAD
       "0x480a7ffa7fff8000",
       "0x480a7ffb7fff8000",
       "0x480a7ffc7fff8000",
@@ -80,6 +112,47 @@
       "0x480680017fff8000",
       "0x0",
       "0x48127ffb7fff8000",
+=======
+      "0x1104800180018000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffff5",
+      "0x480a7ffd7fff8000",
+      "0x480680017fff8000",
+      "0x1",
+      "0x480680017fff8000",
+      "0x0",
+      "0x48127ffc7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffff0",
+      "0x208b7fff7fff7ffe",
+      "0x402b7ffd7ffc7ffd",
+      "0x480280007ffb8000",
+      "0x1104800180018000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffff4",
+      "0x40780017fff7fff",
+      "0x1",
+      "0x48127ffe7fff8000",
+      "0x480280017ffb8000",
+      "0x480680017fff8000",
+      "0x0",
+      "0x48127ffc7fff8000",
+      "0x208b7fff7fff7ffe",
+      "0x400780017fff7ffd",
+      "0x1",
+      "0x208b7fff7fff7ffe",
+      "0x482680017ffd8000",
+      "0x1",
+      "0x402a7ffd7ffc7fff",
+      "0x480280007ffd8000",
+      "0x1104800180018000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffffa",
+      "0x40780017fff7fff",
+      "0x1",
+      "0x480280007ffb8000",
+      "0x480280017ffb8000",
+      "0x480680017fff8000",
+      "0x0",
+      "0x48127ffc7fff8000",
+>>>>>>> Test TxMessages storage
       "0x208b7fff7fff7ffe"
     ],
     "debug_info": null,
@@ -118,7 +191,11 @@
           }
         }
       ],
+<<<<<<< HEAD
       "34": [
+=======
+      "27": [
+>>>>>>> Test TxMessages storage
         {
           "accessible_scopes": [
             "__main__",
@@ -130,7 +207,29 @@
           "flow_tracking_data": {
             "ap_tracking": {
               "group": 3,
+<<<<<<< HEAD
               "offset": 19
+=======
+              "offset": 14
+            },
+            "reference_ids": {}
+          }
+        }
+      ],
+      "44": [
+        {
+          "accessible_scopes": [
+            "__main__",
+            "__main__",
+            "__wrappers__",
+            "__wrappers__.send_message_l1_to_l2"
+          ],
+          "code": "memory[ap] = segments.add()",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 5,
+              "offset": 4
+>>>>>>> Test TxMessages storage
             },
             "reference_ids": {}
           }
@@ -142,6 +241,7 @@
         "destination": "starkware.cairo.common.alloc.alloc",
         "type": "alias"
       },
+<<<<<<< HEAD
       "__main__.send_message_l2_to_l1": {
         "decorators": [
           "external"
@@ -161,11 +261,55 @@
             "offset": 1
           },
           "to_address": {
+=======
+      "__main__.send_message_l1_to_l2": {
+        "decorators": [
+          "l1_handler"
+        ],
+        "pc": 35,
+        "type": "function"
+      },
+      "__main__.send_message_l1_to_l2.Args": {
+        "full_name": "__main__.send_message_l1_to_l2.Args",
+        "members": {
+          "from_address": {
+>>>>>>> Test TxMessages storage
             "cairo_type": "felt",
             "offset": 0
           }
         },
+<<<<<<< HEAD
         "size": 3,
+=======
+        "size": 1,
+        "type": "struct"
+      },
+      "__main__.send_message_l1_to_l2.ImplicitArgs": {
+        "full_name": "__main__.send_message_l1_to_l2.ImplicitArgs",
+        "members": {},
+        "size": 0,
+        "type": "struct"
+      },
+      "__main__.send_message_l1_to_l2.Return": {
+        "cairo_type": "()",
+        "type": "type_definition"
+      },
+      "__main__.send_message_l1_to_l2.SIZEOF_LOCALS": {
+        "type": "const",
+        "value": 0
+      },
+      "__main__.send_message_l2_to_l1": {
+        "decorators": [
+          "external"
+        ],
+        "pc": 12,
+        "type": "function"
+      },
+      "__main__.send_message_l2_to_l1.Args": {
+        "full_name": "__main__.send_message_l2_to_l1.Args",
+        "members": {},
+        "size": 0,
+>>>>>>> Test TxMessages storage
         "type": "struct"
       },
       "__main__.send_message_l2_to_l1.ImplicitArgs": {
@@ -191,11 +335,53 @@
         "destination": "starkware.starknet.common.messages.send_message_to_l1",
         "type": "alias"
       },
+<<<<<<< HEAD
+=======
+      "__wrappers__.send_message_l1_to_l2": {
+        "decorators": [
+          "l1_handler"
+        ],
+        "pc": 38,
+        "type": "function"
+      },
+      "__wrappers__.send_message_l1_to_l2.Args": {
+        "full_name": "__wrappers__.send_message_l1_to_l2.Args",
+        "members": {},
+        "size": 0,
+        "type": "struct"
+      },
+      "__wrappers__.send_message_l1_to_l2.ImplicitArgs": {
+        "full_name": "__wrappers__.send_message_l1_to_l2.ImplicitArgs",
+        "members": {},
+        "size": 0,
+        "type": "struct"
+      },
+      "__wrappers__.send_message_l1_to_l2.Return": {
+        "cairo_type": "(syscall_ptr: felt, range_check_ptr: felt, size: felt, retdata: felt*)",
+        "type": "type_definition"
+      },
+      "__wrappers__.send_message_l1_to_l2.SIZEOF_LOCALS": {
+        "type": "const",
+        "value": 0
+      },
+      "__wrappers__.send_message_l1_to_l2.__wrapped_func": {
+        "destination": "__main__.send_message_l1_to_l2",
+        "type": "alias"
+      },
+      "__wrappers__.send_message_l1_to_l2_encode_return.memcpy": {
+        "destination": "starkware.cairo.common.memcpy.memcpy",
+        "type": "alias"
+      },
+>>>>>>> Test TxMessages storage
       "__wrappers__.send_message_l2_to_l1": {
         "decorators": [
           "external"
         ],
+<<<<<<< HEAD
         "pc": 19,
+=======
+        "pc": 23,
+>>>>>>> Test TxMessages storage
         "type": "function"
       },
       "__wrappers__.send_message_l2_to_l1.Args": {
