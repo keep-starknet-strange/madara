@@ -40,7 +40,7 @@ rpath = false        # Disables adding rpath to the binary
 authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
 edition = "2021"
 repository = "https://github.com/keep-starknet-strange/madara/"
-version = "0.2.0"
+version = "0.3.0"
 
 [workspace.dependencies]
 # Substrate frame dependencies
@@ -188,6 +188,7 @@ jsonrpsee = { version = "0.16.3", default-features = false }
 clap = { version = "4.4.2", default-features = false }
 futures = { version = "0.3.28", default-features = false }
 futures-timer = { version = "3.0.2", default-features = false }
+md5 = { version = "0.7.0", default-features = false }
 reqwest = { version = "0.11.20", default-features = false }
 serde = { version = "1.0.188", default-features = false }
 serde_json = { version = "1.0.107", default-features = false }

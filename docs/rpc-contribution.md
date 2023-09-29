@@ -17,8 +17,9 @@ First, go ahead and clone madara on the `main` branch from
 
 There are two ways you can build madara to quickly test it:
 
-1. `cargo build --release`, which will then allow us to start madara running
-   `./target/release/madara`. This will start the sequencer WITHOUT peers.
+1. `cargo build --release`, which will then allow us to setup madara with
+   `./target/release/madara setup`, and then run it with
+   `./target/release/madara run`. This will start the sequencer WITHOUT peers.
    That's not a problem if you just want to test that your RPC method is
    accessible, and to test (de)serialization of your RPC parameters.
 
@@ -187,51 +188,40 @@ everything is working as expected.
 
 ## Integration tests
 
-Integration tests are located in the `tests` folder, and are written in
-typescript. They are executed using `mocha` and `chai`. We use `starknet.js` to
-interact with the blockchain and test compatibility with Starknet's tooling.
+Integration tests are located in the `starknet-rpc-test` folder, and are written
+in rust using `rstest`. We use `starknet-rs` to interact with the blockchain and
+test compatibility with Starknet's tooling.
 
 You can find the documentation on this
-[link](https://www.starknetjs.com/docs/api/provider/rpcprovider/).
+[link](https://github.com/xJonathanLEI/starknet-rs).
 
-```typescript
-// tests/tests/test-rpc/test-starknet-rpc.ts
-import "@keep-starknet-strange/madara-api-augment";
+```rust
+#[rstest]
+#[tokio::test]
+async fn fail_non_existing_block(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+    // We retrieve the madara client
+    let madara = madara.await;
 
-import { expect } from "chai";
+    // We get the RPC Provider to interact with the madara node
+    let rpc = madara.get_starknet_client();
 
-import { describeDevMadara } from "../../util/setup-dev-tests";
-import { RpcProvider, validateAndParseAddress } from "starknet";
+    // Expected values
+    let test_contract_class_hash =
+        FieldElement::from_hex_be(TEST_CONTRACT_CLASS_HASH).expect("Invalid Contract Address");
 
-// `describeDevMadara` will run the node in the background on a random available port and provide you with some context objects.
-describeDevMadara("Starknet RPC", (context) => {
-  let providerRPC: RpcProvider;
+    // Assertions
+    assert_matches!(
+        rpc
+        .get_class(
+            BlockId::Number(100),
+            test_contract_class_hash,
+        )
+        .await,
+        Err(StarknetProviderError(StarknetErrorWithMessage { code: MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::BlockNotFound
+    );
 
-  // We initialize the RPC provider to use the local spawned node before all tests.
-  before(async function () {
-    providerRPC = new RpcProvider({
-      nodeUrl: `http://127.0.0.1:${context.rpcPort}/`,
-      retries: 3,
-    });
-  });
-
-  /// ... other tests
-
-  it("my_endpoint", async function () {
-    // You can fetch the current block hash and number
-    let block = await providerRPC.getBlockHashAndNumber();
-    let block_hash = `0x${block.block_hash.slice(2).padStart(64, "0")}`;
-
-    // Call the new endpoint
-    let result = await providerRPC.myEndpoint({
-      some_str: "Madara",
-      some_u64: 1234,
-    });
-
-    // Make some assertions to ensure the right behavior
-    expect(result).to.equal("Let's build the future!");
-  });
-});
+    Ok(())
+}
 ```
 
 Recompile madara (with method 1 or 2 depending on your needs), and you should be
@@ -239,8 +229,17 @@ able to target your new endpoint.
 
 ### Run your integration tests
 
-To run the tests, simply run `npm run test-seq` in the `tests/` folder. Make
-sure you've ran `npm install` in the `tests/` folder before running the tests.
+To run the tests, simply run
+`cargo test -p starknet-rpc-test -- test <test_file> -- <test_name> --exact --nocapture --test-threads=1`.
+
+For easier debugging make sure to enable the background node's logs with
+`MADARA_LOG=true`.
+
+e.g
+
+```bash
+MADARA_LOG=true cargo test --package starknet-rpc-test -- --exact --nocapture --test-threads=1
+```
 
 ### Test locally
 

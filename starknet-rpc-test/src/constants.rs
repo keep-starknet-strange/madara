@@ -24,9 +24,7 @@ pub const FEE_TOKEN_ADDRESS: &str = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96
 pub const TOKEN_CLASS_HASH: &str = "0x0000000000000000000000000000000000000000000000000000000000010000";
 pub const ARGENT_CONTRACT_ADDRESS: &str = "0x0000000000000000000000000000000000000000000000000000000000000002";
 
-// Taken from https://github.com/0xSpaceShard/starknet-devnet-rs/blob/main/crates/starknet-server/tests/common/mod.rs#L5
-pub const MIN_PORT: u16 = 1025;
-pub const MAX_PORT: u16 = 65_535;
+pub const ENDING_PORT: u16 = 65535;
 
 pub const MAX_U256: &str = "0xffffffffffffffffffffffffffffffff";
 pub const MAX_FEE_OVERRIDE: &str = "0x100000";

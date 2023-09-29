@@ -25,6 +25,7 @@ async-trait = "0.1"
 clap = { workspace = true, features = ["derive"] }
 futures = { workspace = true, features = ["thread-pool"] }
 log = { workspace = true }
+md5 = { workspace = true }
 serde = { workspace = true }
 lazy_static = { workspace = true }
 tokio = { workspace = true }

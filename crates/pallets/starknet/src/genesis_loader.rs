@@ -69,15 +69,22 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
                 match class {
                     ContractClass::Path { path, version } => {
                         let contract_path = match loader.madara_path.clone() {
-                            Some(madara_path) => madara_path + "/" + &path,
+                            Some(madara_path) => madara_path + "/configs/" + &path,
                             None => {
-                                let project_path = utils::get_project_path().expect("Project path not found");
+                                let project_path = utils::get_project_path()
+                                    .expect("A Project path should be present in order to load the genesis contracts");
                                 project_path + "/" + &path
                             }
                         };
                         (
                             hash,
-                            read_contract_class_from_json(&utils::read_file_to_string(contract_path).unwrap(), version),
+                            read_contract_class_from_json(
+                                &utils::read_file_to_string(contract_path).expect(
+                                    "Some contract is missing in the config folder. Try to run `madara setup` before \
+                                     opening an issue.",
+                                ),
+                                version,
+                            ),
                         )
                     }
                     ContractClass::Class(class) => (hash, class),

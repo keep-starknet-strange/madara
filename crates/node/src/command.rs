@@ -8,7 +8,7 @@ use sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
 
 use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
 use crate::cli::{Cli, Subcommand, Testnet};
-use crate::{chain_spec, constants, service};
+use crate::{chain_spec, configs, constants, service};
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
         "Deoxys Node".into()
@@ -37,14 +37,14 @@ impl SubstrateCli for Cli {
     fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
         Ok(match id {
             "dev" => {
-                let enable_manual_seal = self.sealing.map(|_| true);
+                let enable_manual_seal = self.run.sealing.map(|_| true);
                 Box::new(chain_spec::development_config(
                     enable_manual_seal,
-                    self.run.madara_path.clone().expect("Failed retrieving madara_path"),
+                    self.run.madara_path.clone().expect("`madara_path` expected to be set with clap default value"),
                 )?)
             }
             "" | "local" | "madara-local" => Box::new(chain_spec::local_testnet_config(
-                self.run.madara_path.clone().expect("Failed retrieving madara_path"),
+                self.run.madara_path.clone().expect("`madara_path` expected to be set with clap default value"),
             )?),
             path => Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
         })
@@ -55,70 +55,111 @@ impl SubstrateCli for Cli {
     }
 }
 
-/// Parse and run command line arguments
-pub fn run() -> sc_cli::Result<()> {
-    let mut cli = Cli::from_args();
+fn get_madara_path_string(cli: &Cli) -> String {
+    cli.run
+        .madara_path
+        .clone()
+        .expect("`madara_path` expected to be set with clap default value")
+        .into_os_string()
+        .into_string()
+        .expect("Failed to convert `madara_path` to string")
+}
 
-    // alias madara_path <> base_path
-    // TODO also alias tmp (tmp generates random base_paths that are not specified within
-    // the command)
-    let madara_path = match (cli.run.madara_path.clone(), cli.run.run_cmd.shared_params.base_path.clone()) {
-        (Some(madara_path), _) => {
-            cli.run.run_cmd.shared_params.base_path = Some(madara_path.clone());
-            madara_path.to_str().unwrap().to_string()
-        }
-        (_, Some(base_path)) => {
-            cli.run.madara_path = Some(base_path.clone());
-            base_path.to_str().unwrap().to_string()
-        }
-        _ => {
-            let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
-            let path = format!("{}/.madara", home_path);
-            cli.run.run_cmd.shared_params.base_path = Some((path.clone()).into());
-            cli.run.madara_path = Some((path.clone()).into());
-            path
-        }
-    };
+fn set_dev_environment(cli: &mut Cli) {
+    // create a reproducible dev environment
+    cli.run.run_cmd.shared_params.dev = false;
+    cli.run.run_cmd.shared_params.chain = Some("dev".to_string());
 
-    if let Some(genesis_url) = cli.run.genesis_url.clone() {
-        // can't copy extra genesis-assets atm
-        // we can reuse #982 to create the standard to fetch relevant files
-        utils::fetch_from_url(genesis_url, madara_path.clone() + "/configs/genesis-assets")?;
-    } else {
-        // TODO confirm with the CI that we are fetching all and fetch dynamically
-        // Issue #982
-        for file in constants::GENESIS_ASSETS_FILES {
-            let src_path = utils::get_project_path();
-            if let Ok(src_path) = src_path {
-                let src_path = src_path + "/configs/genesis-assets/" + file;
-                utils::copy_from_filesystem(src_path, madara_path.clone() + "/genesis-assets")?;
-            } else {
-                utils::fetch_from_url(
-                    constants::GENESIS_ASSETS_URL.to_string() + file,
-                    madara_path.clone() + "/genesis-assets",
-                )?;
-            }
+    cli.run.run_cmd.force_authoring = true;
+    cli.run.run_cmd.alice = true;
+
+    // we can't set `--rpc-cors=all`, so it needs to be set manually if we want to connect with external
+    // hosts
+    cli.run.run_cmd.rpc_external = true;
+    cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
+}
+
+fn try_set_testnet(cli: &mut Cli) -> Result<(), String> {
+    // checks if it should retrieve and enable a specific chain-spec
+    let madara_path = get_madara_path_string(cli);
+    let local_path = utils::get_project_path();
+
+    if cli.run.testnet == Some(Testnet::Sharingan) {
+        if let Ok(ref src_path) = local_path {
+            let src_path = src_path.clone() + "/configs/chain-specs/testnet-sharingan-raw.json";
+            utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs")?;
+            cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
+        } else {
+            utils::fetch_from_url(
+                constants::SHARINGAN_CHAIN_SPEC_URL.to_string(),
+                madara_path.clone() + "/configs/chain-specs/",
+            )?;
+            cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
         }
     }
 
-    // TODO confirm with the CI that we are fetching all and fetch dynamically
-    // Issue #982
-    for file in constants::CAIRO_CONTRACTS_FILES {
-        let src_path = utils::get_project_path();
-        if let Ok(src_path) = src_path {
-            let src_path = src_path + "/configs/cairo-contracts/" + file;
-            utils::copy_from_filesystem(src_path, madara_path.clone() + "/cairo-contracts")?;
-        } else {
-            utils::fetch_from_url(
-                constants::CAIRO_CONTRACTS_URL.to_string() + file,
-                madara_path.clone() + "/cairo-contracts",
+    if cli.run.run_cmd.shared_params.chain.is_some() {
+        cli.run.run_cmd.rpc_external = true;
+        cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
+    }
+
+    Ok(())
+}
+
+fn set_chain_spec(cli: &mut Cli) -> Result<(), String> {
+    let madara_path = get_madara_path_string(cli);
+    let chain_spec_url = cli
+        .run
+        .fetch_chain_spec
+        .clone()
+        .expect("`chain_spec_url` expected to be set because the function is called upon verification");
+    utils::fetch_from_url(chain_spec_url.clone(), madara_path.clone() + "/chain-specs")?;
+    let chain_spec =
+        chain_spec_url.split('/').last().expect("Failed to get chain spec file name from `chain_spec_url`");
+    cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/" + chain_spec);
+
+    Ok(())
+}
+
+fn fetch_madara_configs(cli: &Cli) -> Result<(), String> {
+    let madara_path = get_madara_path_string(cli);
+    let local_path = utils::get_project_path();
+
+    if let Ok(ref src_path) = local_path {
+        let index_path = src_path.clone() + "/configs/index.json";
+        utils::copy_from_filesystem(index_path, madara_path.clone() + "/configs")?;
+
+        let madara_configs: configs::Configs =
+            serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?)
+                .expect("Failed to serialize index.json string to json");
+        for asset in madara_configs.genesis_assets {
+            let src_path = src_path.clone() + "/configs/genesis-assets/" + &asset.name;
+            utils::copy_from_filesystem(src_path, madara_path.clone() + "/configs/genesis-assets")?;
+        }
+    } else if let Some(configs_url) = &cli.setup.fetch_madara_configs {
+        utils::fetch_from_url(configs_url.to_string(), madara_path.clone() + "/configs")?;
+
+        let madara_configs: configs::Configs =
+            serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?)
+                .expect("Failed to serialize index.json string to json");
+
+        for asset in madara_configs.genesis_assets {
+            configs::fetch_and_validate_file(
+                madara_configs.remote_base_path.clone(),
+                asset,
+                madara_path.clone() + "/configs/genesis-assets/",
             )?;
         }
     }
 
-    if let (Some(chain_spec_url), None) = (cli.run.chain_spec_url.clone(), cli.run.testnet) {
-        utils::fetch_from_url(chain_spec_url, madara_path.clone() + "/chain-specs")?;
-    }
+    Ok(())
+}
+
+/// Parse and run command line arguments
+pub fn run() -> sc_cli::Result<()> {
+    let mut cli = Cli::from_args();
+
+    cli.run.run_cmd.shared_params.base_path = cli.run.madara_path.clone();
 
     match &cli.subcommand {
         Some(Subcommand::Key(cmd)) => cmd.run(&cli),
@@ -238,42 +279,25 @@ pub fn run() -> sc_cli::Result<()> {
             let runner = cli.create_runner(cmd)?;
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
-        None => {
-            // create a reproducible dev environment
-            if cli.run.run_cmd.shared_params.dev {
-                cli.run.run_cmd.shared_params.dev = false;
-                cli.run.run_cmd.shared_params.chain = Some("dev".to_string());
+        Some(Subcommand::Run(cmd)) => {
+            let madara_path = get_madara_path_string(&cli);
 
-                cli.run.run_cmd.force_authoring = true;
-                cli.run.run_cmd.alice = true;
-
-                // we can't set `--rpc-cors=all`, so it needs to be set manually if we want to connect with external
-                // hosts
-                cli.run.run_cmd.rpc_external = true;
-                cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
+            // Set the node_key_file for substrate in the case that it was not manually setted
+            if cmd.run_cmd.network_params.node_key_params.node_key_file.is_none() {
+                cli.run.run_cmd.network_params.node_key_params.node_key_file =
+                    Some((madara_path.clone() + "/p2p-key.ed25519").into());
             }
 
-            cli.run.run_cmd.network_params.node_key_params.node_key_file =
-                Some((madara_path.clone() + "/p2p-key.ed25519").into());
+            if cmd.run_cmd.shared_params.dev {
+                set_dev_environment(&mut cli);
+            }
 
-            if let Some(Testnet::Sharingan) = cli.run.testnet {
-                let src_path = utils::get_project_path();
-                if let Ok(src_path) = src_path {
-                    let src_path = src_path + "/configs/chain-specs/testnet-sharingan-raw.json";
-                    utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs")?;
-                } else {
-                    utils::fetch_from_url(
-                        constants::SHARINGAN_CHAIN_SPEC_URL.to_string(),
-                        madara_path.clone() + "/chain-specs",
-                    )?;
-                }
+            if cli.run.fetch_chain_spec.is_some() {
+                set_chain_spec(&mut cli)?;
+            }
 
-                cli.run.run_cmd.shared_params.chain =
-                    Some(madara_path.clone() + "/chain-specs/testnet-sharingan-raw.json");
-
-                // This should go apply to all testnets when applying a match pattern
-                cli.run.run_cmd.rpc_external = true;
-                cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
+            if cli.run.testnet.is_some() {
+                try_set_testnet(&mut cli)?;
             }
 
             let da_config: Option<(DaLayer, PathBuf)> = match cli.run.da_layer {
@@ -297,5 +321,10 @@ pub fn run() -> sc_cli::Result<()> {
                 service::new_full(config, cli.sealing, da_config, cli.run.run_cmd.rpc_port.unwrap()).await.map_err(sc_cli::Error::Service)
             })
         }
+        Some(Subcommand::Setup(_)) => {
+            fetch_madara_configs(&cli)?;
+            Ok(())
+        }
+        _ => Err("You need to specify some subcommand. E.g. `madara run`".into()),
     }
 }
