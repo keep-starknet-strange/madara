@@ -2,6 +2,7 @@
 
 ## Next release
 
+- fix: cargo update and `main` branch prettier fix
 - ci: disable pr close workflow
 - ci: add ci verification for detecting genesis changes and config hashes
 - feat: better management of custom configurations for genesis assets
