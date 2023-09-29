@@ -36,6 +36,7 @@
 - test: add test to check tx signed by OZ account can be signed with Argent pk
 - test: add tests for simulate tx offset
 - test: add tests for tx hashing
+- fix: bring back messages in transaction receipts
 
 ## v0.2.0
 
