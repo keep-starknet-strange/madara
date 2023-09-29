@@ -1,6 +1,7 @@
 //! Traits for chain ids.
 #![cfg_attr(not(feature = "std"), no_std)]
 
+
 use mp_felt::Felt252Wrapper;
 
 /// ChainId for Starknet Goerli testnet
@@ -18,3 +19,6 @@ pub const SN_MAIN_CHAIN_ID: Felt252Wrapper = Felt252Wrapper(starknet_ff::FieldEl
     18446744073709551615,
     502562008147966918,
 ]));
+
+#[cfg(test)]
+mod tests;
