@@ -60,11 +60,12 @@ pub fn get_header(block: starknet_client::reader::Block, transactions: mp_block:
         starknet_client::reader::objects::block::BlockStatus::Reverted => mp_block::BlockStatus::Rejected,
         starknet_client::reader::objects::block::BlockStatus::Aborted => mp_block::BlockStatus::Rejected,
     };
+    let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_MAIN").unwrap());
     let sequencer_address = Felt252Wrapper(FieldElement::from(*PatriciaKey::key(&block.sequencer_address.0)));
     let block_timestamp = block.timestamp.0;
     let transaction_count = block.transactions.len() as u128;
     let (transaction_commitment, event_commitment) =
-            mp_commitments::calculate_commitments::<PedersenHasher>(&transactions, &events, Felt252Wrapper::from_hex_be("0x534e5f4d41494e").unwrap());
+            mp_commitments::calculate_commitments::<PedersenHasher>(&transactions, &events, chain_id, block_number);
     let event_count: u128 = block.transaction_receipts
                 .iter()
                 .map(|receipt| receipt.events.len() as u128)

@@ -8,6 +8,7 @@ use starknet_api::api_core::{ChainId, ContractAddress};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkHash;
 use starknet_api::stdlib::collections::HashMap;
+use starknet_core::types::FieldElement;
 
 /// Block status.
 ///
@@ -159,9 +160,13 @@ impl Header {
 				Felt252Wrapper::ZERO,
 				Felt252Wrapper::ZERO,
 				Felt252Wrapper::ZERO,
-				Felt252Wrapper::from_hex_be("0x534e5f4d41494e").unwrap(),
+				Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_MAIN").unwrap()),
 				self.parent_block_hash.into(),
 			];
+
+            // for (i, item) in data.iter().enumerate() {
+            //     frame_support::log::info!("data[{}]: {:?}", i, item);
+            // }
 
 			H::compute_hash_on_wrappers(data)
 		}

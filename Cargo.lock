@@ -7552,6 +7552,7 @@ version = "0.2.0"
 dependencies = [
  "bitvec",
  "derive_more",
+ "frame-support",
  "mp-felt",
  "mp-hashers",
  "mp-transactions",
