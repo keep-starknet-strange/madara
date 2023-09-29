@@ -383,9 +383,18 @@
       "login": "ayushtom",
       "name": "Ayush Tomar",
       "avatar_url": "https://avatars.githubusercontent.com/u/41674634?v=4",
-      "profile": ["code"]
+      "profile": "https://github.com/ayushtom",
+      "contributions": ["code"]
+    },
+    {
+      "login": "tchataigner",
+      "name": "tchataigner",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9974198?v=4",
+      "profile": "https://github.com/tchataigner",
+      "contributions": ["code"]
     }
   ],
   "contributorsPerLine": 7,
   "linkToUsage": false
 }
+
