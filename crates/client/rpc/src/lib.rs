@@ -899,7 +899,8 @@ where
             }
         }
 
-        let messages = self.client
+        let messages = self
+            .client
             .runtime_api()
             .get_tx_messages_to_l1(substrate_block_hash, Felt252Wrapper(transaction_hash).into())
             .map_err(|e| {

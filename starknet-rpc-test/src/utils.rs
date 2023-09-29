@@ -90,6 +90,14 @@ pub trait AccountActions {
         nonce: Option<u64>,
     ) -> TransactionExecution;
 
+    fn call_contract(
+        &self,
+        address: FieldElement,
+        method: &str,
+        calldata: Vec<FieldElement>,
+        nonce: Option<u64>,
+    ) -> TransactionExecution;
+
     fn declare_contract(
         &self,
         path_to_sierra: &str,
@@ -131,6 +139,23 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
         nonce: Option<u64>,
     ) -> TransactionExecution {
         self.transfer_tokens_u256(recipient, U256 { high: FieldElement::ZERO, low: transfer_amount }, nonce)
+    }
+
+    fn call_contract(
+        &self,
+        address: FieldElement,
+        method: &str,
+        calldata: Vec<FieldElement>,
+        nonce: Option<u64>,
+    ) -> TransactionExecution {
+        let calls = vec![Call { to: address, selector: get_selector_from_name(method).unwrap(), calldata }];
+
+        let max_fee = FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap();
+
+        match nonce {
+            Some(nonce) => self.execute(calls).max_fee(max_fee).nonce(nonce.into()),
+            None => self.execute(calls).max_fee(max_fee),
+        }
     }
 
     fn declare_contract(

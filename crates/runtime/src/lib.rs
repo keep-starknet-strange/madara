@@ -53,7 +53,7 @@ use sp_version::RuntimeVersion;
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
-use starknet_api::transaction::{Calldata, Event as StarknetEvent, TransactionHash, MessageToL1};
+use starknet_api::transaction::{Calldata, Event as StarknetEvent, MessageToL1, TransactionHash};
 /// Import the types.
 pub use types::*;
 

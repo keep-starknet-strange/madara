@@ -102,7 +102,7 @@ use starknet_api::api_core::{ChainId, ClassHash, CompiledClassHash, ContractAddr
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::StarkFelt;
-use starknet_api::transaction::{TransactionHash, MessageToL1};
+use starknet_api::transaction::{MessageToL1, TransactionHash};
 use starknet_crypto::FieldElement;
 
 use crate::alloc::string::ToString;
