@@ -26,7 +26,7 @@ pub const TOKEN_CLASS_HASH: &str = "0x000000000000000000000000000000000000000000
 pub const ARGENT_CONTRACT_ADDRESS: &str = "0x0000000000000000000000000000000000000000000000000000000000000002";
 
 // Taken from https://github.com/0xSpaceShard/starknet-devnet-rs/blob/main/crates/starknet-server/tests/common/mod.rs#L5
-pub const MIN_PORT: u16 = 1025;
+pub const MIN_PORT: u16 = 49_152;
 pub const MAX_PORT: u16 = 65_535;
 
 pub const MAX_U256: &str = "0xffffffffffffffffffffffffffffffff";

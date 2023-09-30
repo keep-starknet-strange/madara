@@ -271,7 +271,6 @@ async fn fail_invalid_transaction_hash(#[future] madara: MadaraClient) -> Result
 
 #[rstest]
 #[tokio::test]
-#[ignore = "class already declared"]
 async fn work_with_messages_to_l1(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
     let madara = madara.await;
     let rpc = madara.get_starknet_client();
