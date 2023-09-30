@@ -2,6 +2,7 @@
 
 ## Next release
 
+- fix: add setup and run for rpc tests
 - fix: fix clap for run command
 - fix: add `madara_path` flag for setup command
 - fix: add official references to configs files
