@@ -319,6 +319,14 @@
 <a href="#319" id="319">319</a>
 <a href="#320" id="320">320</a>
 <a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
 </pre></div><pre class="rust"><code><span class="attr">#![feature(assert_matches)]
 
 </span><span class="kw">use </span>std::cell::Cell;
@@ -490,6 +498,13 @@
 
         <span class="kw">let </span>madara_log = std::env::var(<span class="string">&quot;MADARA_LOG&quot;</span>).unwrap_or_else(|<span class="kw">_</span>| <span class="string">&quot;false&quot;</span>.to_string());
 
+        Command::new(<span class="string">&quot;cargo&quot;</span>)
+            .stdout(Stdio::null())
+            .stderr(<span class="kw">if </span>madara_log == <span class="string">&quot;true&quot; </span>{ Stdio::inherit() } <span class="kw">else </span>{ Stdio::null() })
+            .args([<span class="string">&quot;run&quot;</span>, <span class="string">&quot;--release&quot;</span>, <span class="string">&quot;--&quot;</span>, <span class="string">&quot;setup&quot;</span>])
+            .spawn()
+            .expect(<span class="string">&quot;Could not setup madara node&quot;</span>);
+
         <span class="kw">let </span>child_handle = Command::new(<span class="string">&quot;cargo&quot;</span>)
 		<span class="comment">// Silence Madara stdout and stderr
 		</span>.stdout(Stdio::null())
@@ -498,6 +513,7 @@
 			<span class="string">&quot;run&quot;</span>,
 			<span class="string">&quot;--release&quot;</span>,
 			<span class="string">&quot;--&quot;</span>,
+			<span class="string">&quot;run&quot;</span>,
 			<span class="string">&quot;--sealing=manual&quot;</span>,
 			<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;--execution={execution}&quot;</span>),
 			<span class="string">&quot;--dev&quot;</span>,
