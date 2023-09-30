@@ -35,18 +35,18 @@ impl SubstrateCli for Cli {
     }
 
     fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
-        Ok(match (id, &self.subcommand) {
-            ("dev", Some(Subcommand::Run(cmd))) => {
-                let enable_manual_seal = cmd.sealing.map(|_| true);
+        Ok(match id {
+            "dev" => {
+                let enable_manual_seal = self.sealing.map(|_| true);
                 Box::new(chain_spec::development_config(
                     enable_manual_seal,
-                    cmd.madara_path.clone().expect("`madara_path` expected to be set with clap default value"),
+                    self.madara_path.clone().expect("`madara_path` expected to be set with clap default value"),
                 )?)
             }
-            ("" | "local" | "madara-local", Some(Subcommand::Run(cmd))) => Box::new(chain_spec::local_testnet_config(
-                cmd.madara_path.clone().expect("`madara_path` expected to be set with clap default value"),
+            "" | "local" | "madara-local" => Box::new(chain_spec::local_testnet_config(
+                self.madara_path.clone().expect("`madara_path` expected to be set with clap default value"),
             )?),
-            (path, _) => Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
+            path => Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
         })
     }
 
@@ -78,9 +78,9 @@ fn set_dev_environment(cmd: &mut ExtendedRunCmd) {
     cmd.run_cmd.rpc_methods = RpcMethods::Unsafe;
 }
 
-fn try_set_testnet(cmd: &mut ExtendedRunCmd) -> Result<(), String> {
+fn try_set_testnet(madara_path: &Option<PathBuf>, cmd: &mut ExtendedRunCmd) -> Result<(), String> {
     // checks if it should retrieve and enable a specific chain-spec
-    let madara_path = get_madara_path_string(&cmd.madara_path);
+    let madara_path = get_madara_path_string(&madara_path);
     let local_path = utils::get_project_path();
 
     if cmd.testnet == Some(Testnet::Sharingan) {
@@ -105,8 +105,8 @@ fn try_set_testnet(cmd: &mut ExtendedRunCmd) -> Result<(), String> {
     Ok(())
 }
 
-fn set_chain_spec(cmd: &mut ExtendedRunCmd) -> Result<(), String> {
-    let madara_path = get_madara_path_string(&cmd.madara_path);
+fn set_chain_spec(madara_path: &Option<PathBuf>, cmd: &mut ExtendedRunCmd) -> Result<(), String> {
+    let madara_path = get_madara_path_string(&madara_path);
     let chain_spec_url = cmd
         .fetch_chain_spec
         .clone()
@@ -119,8 +119,8 @@ fn set_chain_spec(cmd: &mut ExtendedRunCmd) -> Result<(), String> {
     Ok(())
 }
 
-fn fetch_madara_configs(cmd: &SetupCmd) -> Result<(), String> {
-    let madara_path = get_madara_path_string(&cmd.madara_path);
+fn fetch_madara_configs(madara_path: &Option<PathBuf>, cmd: &SetupCmd) -> Result<(), String> {
+    let madara_path = get_madara_path_string(&madara_path);
     let local_path = utils::get_project_path();
 
     if let Ok(ref src_path) = local_path {
@@ -276,8 +276,8 @@ pub fn run() -> sc_cli::Result<()> {
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
         Some(Subcommand::Run(ref mut cmd)) => {
-            cmd.run_cmd.shared_params.base_path = cmd.madara_path.clone();
-            let madara_path = get_madara_path_string(&cmd.madara_path);
+            cmd.run_cmd.shared_params.base_path = cli.madara_path.clone();
+            let madara_path = get_madara_path_string(&cli.madara_path);
 
             // Set the node_key_file for substrate in the case that it was not manually setted
             if cmd.run_cmd.network_params.node_key_params.node_key_file.is_none() {
@@ -290,11 +290,11 @@ pub fn run() -> sc_cli::Result<()> {
             }
 
             if cmd.fetch_chain_spec.is_some() {
-                set_chain_spec(cmd)?;
+                set_chain_spec(&cli.madara_path, cmd)?;
             }
 
             if cmd.testnet.is_some() {
-                try_set_testnet(cmd)?;
+                try_set_testnet(&cli.madara_path, cmd)?;
             }
 
             let da_config: Option<(DaLayer, PathBuf)> = match cmd.da_layer {
@@ -315,7 +315,7 @@ pub fn run() -> sc_cli::Result<()> {
 
             // pre assign variables because of cmd mutable borrow
             let run_cmd: sc_cli::RunCmd = cmd.run_cmd.clone();
-            let sealing = cmd.sealing;
+            let sealing = cli.sealing;
 
             let runner = cli.create_runner(&run_cmd)?;
             runner.run_node_until_exit(|config| async move {
@@ -323,7 +323,7 @@ pub fn run() -> sc_cli::Result<()> {
             })
         }
         Some(Subcommand::Setup(cmd)) => {
-            fetch_madara_configs(&cmd)?;
+            fetch_madara_configs(&cli.madara_path, &cmd)?;
             Ok(())
         }
         _ => Err("You need to specify some subcommand. E.g. `madara run`".into()),
