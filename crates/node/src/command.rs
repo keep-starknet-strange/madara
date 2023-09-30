@@ -7,7 +7,7 @@ use pallet_starknet::utils;
 use sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
 
 use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
-use crate::cli::{Cli, Subcommand, Testnet};
+use crate::cli::{Cli, Subcommand, Testnet, SetupCmd};
 use crate::{chain_spec, configs, constants, service};
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
@@ -55,9 +55,8 @@ impl SubstrateCli for Cli {
     }
 }
 
-fn get_madara_path_string(cli: &Cli) -> String {
-    cli.run
-        .madara_path
+fn get_madara_path_string(madara_path: &Option<PathBuf>) -> String {
+    madara_path
         .clone()
         .expect("`madara_path` expected to be set with clap default value")
         .into_os_string()
@@ -81,7 +80,7 @@ fn set_dev_environment(cli: &mut Cli) {
 
 fn try_set_testnet(cli: &mut Cli) -> Result<(), String> {
     // checks if it should retrieve and enable a specific chain-spec
-    let madara_path = get_madara_path_string(cli);
+    let madara_path = get_madara_path_string(&cli.run.madara_path);
     let local_path = utils::get_project_path();
 
     if cli.run.testnet == Some(Testnet::Sharingan) {
@@ -107,7 +106,7 @@ fn try_set_testnet(cli: &mut Cli) -> Result<(), String> {
 }
 
 fn set_chain_spec(cli: &mut Cli) -> Result<(), String> {
-    let madara_path = get_madara_path_string(cli);
+    let madara_path = get_madara_path_string(&cli.run.madara_path);
     let chain_spec_url = cli
         .run
         .fetch_chain_spec
@@ -121,8 +120,8 @@ fn set_chain_spec(cli: &mut Cli) -> Result<(), String> {
     Ok(())
 }
 
-fn fetch_madara_configs(cli: &Cli) -> Result<(), String> {
-    let madara_path = get_madara_path_string(cli);
+fn fetch_madara_configs(cmd: &SetupCmd) -> Result<(), String> {
+    let madara_path = get_madara_path_string(&cmd.madara_path);
     let local_path = utils::get_project_path();
 
     if let Ok(ref src_path) = local_path {
@@ -136,7 +135,7 @@ fn fetch_madara_configs(cli: &Cli) -> Result<(), String> {
             let src_path = src_path.clone() + "/configs/genesis-assets/" + &asset.name;
             utils::copy_from_filesystem(src_path, madara_path.clone() + "/configs/genesis-assets")?;
         }
-    } else if let Some(configs_url) = &cli.setup.fetch_madara_configs {
+    } else if let Some(configs_url) = &cmd.fetch_madara_configs {
         utils::fetch_from_url(configs_url.to_string(), madara_path.clone() + "/configs")?;
 
         let madara_configs: configs::Configs =
@@ -280,7 +279,7 @@ pub fn run() -> sc_cli::Result<()> {
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
         Some(Subcommand::Run(cmd)) => {
-            let madara_path = get_madara_path_string(&cli);
+            let madara_path = get_madara_path_string(&cmd.madara_path);
 
             // Set the node_key_file for substrate in the case that it was not manually setted
             if cmd.run_cmd.network_params.node_key_params.node_key_file.is_none() {
@@ -311,7 +310,7 @@ pub fn run() -> sc_cli::Result<()> {
                     Some((da_layer, da_path))
                 }
                 None => {
-                    log::info!("madara initialized w/o da layer");
+                    log::info!("Madara initialized w/o DA layer");
                     None
                 }
             };
@@ -321,8 +320,8 @@ pub fn run() -> sc_cli::Result<()> {
                 service::new_full(config, cli.run.sealing, da_config).map_err(sc_cli::Error::Service)
             })
         }
-        Some(Subcommand::Setup(_)) => {
-            fetch_madara_configs(&cli)?;
+        Some(Subcommand::Setup(cmd)) => {
+            fetch_madara_configs(&cmd)?;
             Ok(())
         }
         _ => Err("You need to specify some subcommand. E.g. `madara run`".into()),
