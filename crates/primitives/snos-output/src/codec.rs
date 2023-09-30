@@ -1,6 +1,7 @@
 use alloc::vec::Vec;
 
 use parity_scale_codec::{Decode, Encode, Input, Output};
+use starknet_api::{api_core::{ContractAddress, EthAddress}, hash::StarkFelt};
 
 use crate::{MessageL1ToL2, MessageL2ToL1, StarknetOsOutput};
 
@@ -14,6 +15,13 @@ fn vec_encode_to_byte32_words<E: Encode, T: Output + ?Sized>(items: &Vec<E>, des
     for item in items.iter() {
         item.encode_to(dest); // 32 bytes
     }
+}
+
+fn skip_bytes<I: Input>(input: &mut I, count: usize) -> Result<(), parity_scale_codec::Error> {
+    for _ in 0..count {
+        input.read_byte()?;
+    }
+    Ok(())
 }
 
 impl Encode for MessageL2ToL1 {
@@ -37,7 +45,24 @@ impl Encode for MessageL2ToL1 {
 
 impl Decode for MessageL2ToL1 {
     fn decode<I: Input>(input: &mut I) -> Result<Self, parity_scale_codec::Error> {
-        todo!()
+        let from_address = ContractAddress::decode(input)?;
+
+        skip_bytes(input, 12)?;
+        let to_address = EthAddress::decode(input)?;
+
+        skip_bytes(input, 24)?;
+        let payload_len = u64::decode(input)?;
+
+        let mut payload: Vec<StarkFelt> = Vec::with_capacity(payload_len as usize);
+        for _ in 0..payload_len {
+            payload.push(StarkFelt::decode(input)?);
+        }
+
+        Ok(Self {
+            from_address,
+            to_address,
+            payload
+        })
     }
 }
 
