@@ -34,9 +34,6 @@ pub struct Cli {
 
     #[clap(flatten)]
     pub run: ExtendedRunCmd,
-
-    #[clap(flatten)]
-    pub setup: SetupCmd,
 }
 
 #[derive(Clone, Debug, clap::Args)]
@@ -73,10 +70,16 @@ pub struct ExtendedRunCmd {
 pub struct SetupCmd {
     /// Load a index.json file for downloading assets
     /// The index.json must follow the format of the official index.json
-    /// (https://github.com/d-roak/madara/blob/feat/configs-index/configs/index.json)
+    /// (https://github.com/keep-starknet-strange/madara/blob/main/configs/index.json)
     /// Where the `md5` and `url` fields are optional
     #[clap(long, default_value = constants::DEFAULT_CONFIGS_URL)]
     pub fetch_madara_configs: Option<String>,
+
+    /// Path to the folder where all configuration files and data are stored
+    /// base_path will always be overwritten by madara_path
+    /// in the case you use the --tmp, the base_path will be changed during the runtime
+    #[clap(long, default_value = get_default_madara_path())]
+    pub madara_path: Option<PathBuf>,
 }
 
 #[allow(clippy::large_enum_variant)]
