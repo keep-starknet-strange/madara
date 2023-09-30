@@ -328,6 +328,7 @@
 <a href="#328" id="328">328</a>
 <a href="#329" id="329">329</a>
 <a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
 
 <span class="kw">use </span>frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
@@ -337,7 +338,7 @@
 <span class="kw">use </span>sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
 
 <span class="kw">use </span><span class="kw">crate</span>::benchmarking::{inherent_benchmark_data, RemarkBuilder};
-<span class="kw">use </span><span class="kw">crate</span>::cli::{Cli, Subcommand, Testnet};
+<span class="kw">use </span><span class="kw">crate</span>::cli::{Cli, ExtendedRunCmd, SetupCmd, Subcommand, Testnet};
 <span class="kw">use crate</span>::{chain_spec, configs, constants, service};
 <span class="kw">impl </span>SubstrateCli <span class="kw">for </span>Cli {
     <span class="kw">fn </span>impl_name() -&gt; String {
@@ -367,14 +368,14 @@
     <span class="kw">fn </span>load_spec(<span class="kw-2">&amp;</span><span class="self">self</span>, id: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>sc_service::ChainSpec&gt;, String&gt; {
         <span class="prelude-val">Ok</span>(<span class="kw">match </span>id {
             <span class="string">&quot;dev&quot; </span>=&gt; {
-                <span class="kw">let </span>enable_manual_seal = <span class="self">self</span>.run.sealing.map(|<span class="kw">_</span>| <span class="bool-val">true</span>);
+                <span class="kw">let </span>enable_manual_seal = <span class="self">self</span>.sealing.map(|<span class="kw">_</span>| <span class="bool-val">true</span>);
                 Box::new(chain_spec::development_config(
                     enable_manual_seal,
-                    <span class="self">self</span>.run.madara_path.clone().expect(<span class="string">&quot;`madara_path` expected to be set with clap default value&quot;</span>),
+                    <span class="self">self</span>.madara_path.clone().expect(<span class="string">&quot;`madara_path` expected to be set with clap default value&quot;</span>),
                 )<span class="question-mark">?</span>)
             }
             <span class="string">&quot;&quot; </span>| <span class="string">&quot;local&quot; </span>| <span class="string">&quot;madara-local&quot; </span>=&gt; Box::new(chain_spec::local_testnet_config(
-                <span class="self">self</span>.run.madara_path.clone().expect(<span class="string">&quot;`madara_path` expected to be set with clap default value&quot;</span>),
+                <span class="self">self</span>.madara_path.clone().expect(<span class="string">&quot;`madara_path` expected to be set with clap default value&quot;</span>),
             )<span class="question-mark">?</span>),
             path =&gt; Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))<span class="question-mark">?</span>),
         })
@@ -385,9 +386,8 @@
     }
 }
 
-<span class="kw">fn </span>get_madara_path_string(cli: <span class="kw-2">&amp;</span>Cli) -&gt; String {
-    cli.run
-        .madara_path
+<span class="kw">fn </span>get_madara_path_string(madara_path: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;PathBuf&gt;) -&gt; String {
+    madara_path
         .clone()
         .expect(<span class="string">&quot;`madara_path` expected to be set with clap default value&quot;</span>)
         .into_os_string()
@@ -395,64 +395,63 @@
         .expect(<span class="string">&quot;Failed to convert `madara_path` to string&quot;</span>)
 }
 
-<span class="kw">fn </span>set_dev_environment(cli: <span class="kw-2">&amp;mut </span>Cli) {
+<span class="kw">fn </span>set_dev_environment(cmd: <span class="kw-2">&amp;mut </span>ExtendedRunCmd) {
     <span class="comment">// create a reproducible dev environment
-    </span>cli.run.run_cmd.shared_params.dev = <span class="bool-val">false</span>;
-    cli.run.run_cmd.shared_params.chain = <span class="prelude-val">Some</span>(<span class="string">&quot;dev&quot;</span>.to_string());
+    </span>cmd.run_cmd.shared_params.dev = <span class="bool-val">false</span>;
+    cmd.run_cmd.shared_params.chain = <span class="prelude-val">Some</span>(<span class="string">&quot;dev&quot;</span>.to_string());
 
-    cli.run.run_cmd.force_authoring = <span class="bool-val">true</span>;
-    cli.run.run_cmd.alice = <span class="bool-val">true</span>;
+    cmd.run_cmd.force_authoring = <span class="bool-val">true</span>;
+    cmd.run_cmd.alice = <span class="bool-val">true</span>;
 
     <span class="comment">// we can&#39;t set `--rpc-cors=all`, so it needs to be set manually if we want to connect with external
     // hosts
-    </span>cli.run.run_cmd.rpc_external = <span class="bool-val">true</span>;
-    cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
+    </span>cmd.run_cmd.rpc_external = <span class="bool-val">true</span>;
+    cmd.run_cmd.rpc_methods = RpcMethods::Unsafe;
 }
 
-<span class="kw">fn </span>try_set_testnet(cli: <span class="kw-2">&amp;mut </span>Cli) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+<span class="kw">fn </span>try_set_testnet(madara_path: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;PathBuf&gt;, cmd: <span class="kw-2">&amp;mut </span>ExtendedRunCmd) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
     <span class="comment">// checks if it should retrieve and enable a specific chain-spec
-    </span><span class="kw">let </span>madara_path = get_madara_path_string(cli);
+    </span><span class="kw">let </span>madara_path = get_madara_path_string(madara_path);
     <span class="kw">let </span>local_path = utils::get_project_path();
 
-    <span class="kw">if </span>cli.run.testnet == <span class="prelude-val">Some</span>(Testnet::Sharingan) {
+    <span class="kw">if </span>cmd.testnet == <span class="prelude-val">Some</span>(Testnet::Sharingan) {
         <span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="kw-2">ref </span>src_path) = local_path {
             <span class="kw">let </span>src_path = src_path.clone() + <span class="string">&quot;/configs/chain-specs/testnet-sharingan-raw.json&quot;</span>;
             utils::copy_from_filesystem(src_path, madara_path.clone() + <span class="string">&quot;/chain-specs&quot;</span>)<span class="question-mark">?</span>;
-            cli.run.run_cmd.shared_params.chain = <span class="prelude-val">Some</span>(madara_path + <span class="string">&quot;/chain-specs/testnet-sharingan-raw.json&quot;</span>);
+            cmd.run_cmd.shared_params.chain = <span class="prelude-val">Some</span>(madara_path + <span class="string">&quot;/chain-specs/testnet-sharingan-raw.json&quot;</span>);
         } <span class="kw">else </span>{
             utils::fetch_from_url(
                 constants::SHARINGAN_CHAIN_SPEC_URL.to_string(),
                 madara_path.clone() + <span class="string">&quot;/configs/chain-specs/&quot;</span>,
             )<span class="question-mark">?</span>;
-            cli.run.run_cmd.shared_params.chain = <span class="prelude-val">Some</span>(madara_path + <span class="string">&quot;/chain-specs/testnet-sharingan-raw.json&quot;</span>);
+            cmd.run_cmd.shared_params.chain = <span class="prelude-val">Some</span>(madara_path + <span class="string">&quot;/chain-specs/testnet-sharingan-raw.json&quot;</span>);
         }
     }
 
-    <span class="kw">if </span>cli.run.run_cmd.shared_params.chain.is_some() {
-        cli.run.run_cmd.rpc_external = <span class="bool-val">true</span>;
-        cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
+    <span class="kw">if </span>cmd.run_cmd.shared_params.chain.is_some() {
+        cmd.run_cmd.rpc_external = <span class="bool-val">true</span>;
+        cmd.run_cmd.rpc_methods = RpcMethods::Unsafe;
     }
 
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">fn </span>set_chain_spec(cli: <span class="kw-2">&amp;mut </span>Cli) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
-    <span class="kw">let </span>madara_path = get_madara_path_string(cli);
-    <span class="kw">let </span>chain_spec_url = cli
-        .run
+<span class="kw">fn </span>set_chain_spec(madara_path: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;PathBuf&gt;, cmd: <span class="kw-2">&amp;mut </span>ExtendedRunCmd) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+    <span class="kw">let </span>madara_path = get_madara_path_string(madara_path);
+    <span class="kw">let </span>chain_spec_url = cmd
         .fetch_chain_spec
         .clone()
         .expect(<span class="string">&quot;`chain_spec_url` expected to be set because the function is called upon verification&quot;</span>);
     utils::fetch_from_url(chain_spec_url.clone(), madara_path.clone() + <span class="string">&quot;/chain-specs&quot;</span>)<span class="question-mark">?</span>;
     <span class="kw">let </span>chain_spec =
         chain_spec_url.split(<span class="string">&#39;/&#39;</span>).last().expect(<span class="string">&quot;Failed to get chain spec file name from `chain_spec_url`&quot;</span>);
-    cli.run.run_cmd.shared_params.chain = <span class="prelude-val">Some</span>(madara_path + <span class="string">&quot;/chain-specs/&quot; </span>+ chain_spec);
+    cmd.run_cmd.shared_params.chain = <span class="prelude-val">Some</span>(madara_path + <span class="string">&quot;/chain-specs/&quot; </span>+ chain_spec);
 
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">fn </span>fetch_madara_configs(cli: <span class="kw-2">&amp;</span>Cli) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
-    <span class="kw">let </span>madara_path = get_madara_path_string(cli);
+<span class="kw">fn </span>fetch_madara_configs(madara_path: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;PathBuf&gt;, cmd: <span class="kw-2">&amp;</span>SetupCmd) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+    <span class="kw">let </span>madara_path = get_madara_path_string(madara_path);
     <span class="kw">let </span>local_path = utils::get_project_path();
 
     <span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="kw-2">ref </span>src_path) = local_path {
@@ -466,7 +465,7 @@
             <span class="kw">let </span>src_path = src_path.clone() + <span class="string">&quot;/configs/genesis-assets/&quot; </span>+ <span class="kw-2">&amp;</span>asset.name;
             utils::copy_from_filesystem(src_path, madara_path.clone() + <span class="string">&quot;/configs/genesis-assets&quot;</span>)<span class="question-mark">?</span>;
         }
-    } <span class="kw">else if let </span><span class="prelude-val">Some</span>(configs_url) = <span class="kw-2">&amp;</span>cli.setup.fetch_madara_configs {
+    } <span class="kw">else if let </span><span class="prelude-val">Some</span>(configs_url) = <span class="kw-2">&amp;</span>cmd.fetch_madara_configs {
         utils::fetch_from_url(configs_url.to_string(), madara_path.clone() + <span class="string">&quot;/configs&quot;</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>madara_configs: configs::Configs =
@@ -489,47 +488,45 @@
 </span><span class="kw">pub fn </span>run() -&gt; sc_cli::Result&lt;()&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>cli = Cli::from_args();
 
-    cli.run.run_cmd.shared_params.base_path = cli.run.madara_path.clone();
-
-    <span class="kw">match </span><span class="kw-2">&amp;</span>cli.subcommand {
-        <span class="prelude-val">Some</span>(Subcommand::Key(cmd)) =&gt; cmd.run(<span class="kw-2">&amp;</span>cli),
-        <span class="prelude-val">Some</span>(Subcommand::BuildSpec(cmd)) =&gt; {
+    <span class="kw">match </span>cli.subcommand {
+        <span class="prelude-val">Some</span>(Subcommand::Key(<span class="kw-2">ref </span>cmd)) =&gt; cmd.run(<span class="kw-2">&amp;</span>cli),
+        <span class="prelude-val">Some</span>(Subcommand::BuildSpec(<span class="kw-2">ref </span>cmd)) =&gt; {
             <span class="kw">let </span>runner = cli.create_runner(cmd)<span class="question-mark">?</span>;
             runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
         }
-        <span class="prelude-val">Some</span>(Subcommand::CheckBlock(cmd)) =&gt; {
+        <span class="prelude-val">Some</span>(Subcommand::CheckBlock(<span class="kw-2">ref </span>cmd)) =&gt; {
             <span class="kw">let </span>runner = cli.create_runner(cmd)<span class="question-mark">?</span>;
             runner.async_run(|<span class="kw-2">mut </span>config| {
                 <span class="kw">let </span>(client, <span class="kw">_</span>, import_queue, task_manager, <span class="kw">_</span>) = service::new_chain_ops(<span class="kw-2">&amp;mut </span>config)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>((cmd.run(client, import_queue), task_manager))
             })
         }
-        <span class="prelude-val">Some</span>(Subcommand::ExportBlocks(cmd)) =&gt; {
+        <span class="prelude-val">Some</span>(Subcommand::ExportBlocks(<span class="kw-2">ref </span>cmd)) =&gt; {
             <span class="kw">let </span>runner = cli.create_runner(cmd)<span class="question-mark">?</span>;
             runner.async_run(|<span class="kw-2">mut </span>config| {
                 <span class="kw">let </span>(client, <span class="kw">_</span>, <span class="kw">_</span>, task_manager, <span class="kw">_</span>) = service::new_chain_ops(<span class="kw-2">&amp;mut </span>config)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>((cmd.run(client, config.database), task_manager))
             })
         }
-        <span class="prelude-val">Some</span>(Subcommand::ExportState(cmd)) =&gt; {
+        <span class="prelude-val">Some</span>(Subcommand::ExportState(<span class="kw-2">ref </span>cmd)) =&gt; {
             <span class="kw">let </span>runner = cli.create_runner(cmd)<span class="question-mark">?</span>;
             runner.async_run(|<span class="kw-2">mut </span>config| {
                 <span class="kw">let </span>(client, <span class="kw">_</span>, <span class="kw">_</span>, task_manager, <span class="kw">_</span>) = service::new_chain_ops(<span class="kw-2">&amp;mut </span>config)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>((cmd.run(client, config.chain_spec), task_manager))
             })
         }
-        <span class="prelude-val">Some</span>(Subcommand::ImportBlocks(cmd)) =&gt; {
+        <span class="prelude-val">Some</span>(Subcommand::ImportBlocks(<span class="kw-2">ref </span>cmd)) =&gt; {
             <span class="kw">let </span>runner = cli.create_runner(cmd)<span class="question-mark">?</span>;
             runner.async_run(|<span class="kw-2">mut </span>config| {
                 <span class="kw">let </span>(client, <span class="kw">_</span>, import_queue, task_manager, <span class="kw">_</span>) = service::new_chain_ops(<span class="kw-2">&amp;mut </span>config)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>((cmd.run(client, import_queue), task_manager))
             })
         }
-        <span class="prelude-val">Some</span>(Subcommand::PurgeChain(cmd)) =&gt; {
+        <span class="prelude-val">Some</span>(Subcommand::PurgeChain(<span class="kw-2">ref </span>cmd)) =&gt; {
             <span class="kw">let </span>runner = cli.create_runner(cmd)<span class="question-mark">?</span>;
             runner.sync_run(|config| cmd.run(config.database))
         }
-        <span class="prelude-val">Some</span>(Subcommand::Revert(cmd)) =&gt; {
+        <span class="prelude-val">Some</span>(Subcommand::Revert(<span class="kw-2">ref </span>cmd)) =&gt; {
             <span class="kw">let </span>runner = cli.create_runner(cmd)<span class="question-mark">?</span>;
             runner.async_run(|<span class="kw-2">mut </span>config| {
                 <span class="kw">let </span>(client, backend, <span class="kw">_</span>, task_manager, <span class="kw">_</span>) = service::new_chain_ops(<span class="kw-2">&amp;mut </span>config)<span class="question-mark">?</span>;
@@ -540,7 +537,7 @@
                 <span class="prelude-val">Ok</span>((cmd.run(client, backend, <span class="prelude-val">Some</span>(aux_revert)), task_manager))
             })
         }
-        <span class="prelude-val">Some</span>(Subcommand::Benchmark(cmd)) =&gt; {
+        <span class="prelude-val">Some</span>(Subcommand::Benchmark(<span class="kw-2">ref </span>cmd)) =&gt; {
             <span class="kw">let </span>runner = cli.create_runner(cmd)<span class="question-mark">?</span>;
 
             runner.sync_run(|<span class="kw-2">mut </span>config| {
@@ -605,32 +602,33 @@
         </span><span class="prelude-val">Some</span>(Subcommand::TryRuntime) =&gt; <span class="prelude-val">Err</span>(<span class="string">&quot;TryRuntime wasn&#39;t enabled when building the node. You can enable it \
                                              with `--features try-runtime`.&quot;
             </span>.into()),
-        <span class="prelude-val">Some</span>(Subcommand::ChainInfo(cmd)) =&gt; {
+        <span class="prelude-val">Some</span>(Subcommand::ChainInfo(<span class="kw-2">ref </span>cmd)) =&gt; {
             <span class="kw">let </span>runner = cli.create_runner(cmd)<span class="question-mark">?</span>;
             runner.sync_run(|config| cmd.run::&lt;Block&gt;(<span class="kw-2">&amp;</span>config))
         }
-        <span class="prelude-val">Some</span>(Subcommand::Run(cmd)) =&gt; {
-            <span class="kw">let </span>madara_path = get_madara_path_string(<span class="kw-2">&amp;</span>cli);
+        <span class="prelude-val">Some</span>(Subcommand::Run(<span class="kw-2">ref mut </span>cmd)) =&gt; {
+            cmd.run_cmd.shared_params.base_path = cli.madara_path.clone();
+            <span class="kw">let </span>madara_path = get_madara_path_string(<span class="kw-2">&amp;</span>cli.madara_path);
 
             <span class="comment">// Set the node_key_file for substrate in the case that it was not manually setted
             </span><span class="kw">if </span>cmd.run_cmd.network_params.node_key_params.node_key_file.is_none() {
-                cli.run.run_cmd.network_params.node_key_params.node_key_file =
+                cmd.run_cmd.network_params.node_key_params.node_key_file =
                     <span class="prelude-val">Some</span>((madara_path.clone() + <span class="string">&quot;/p2p-key.ed25519&quot;</span>).into());
             }
 
             <span class="kw">if </span>cmd.run_cmd.shared_params.dev {
-                set_dev_environment(<span class="kw-2">&amp;mut </span>cli);
+                set_dev_environment(cmd);
             }
 
-            <span class="kw">if </span>cli.run.fetch_chain_spec.is_some() {
-                set_chain_spec(<span class="kw-2">&amp;mut </span>cli)<span class="question-mark">?</span>;
+            <span class="kw">if </span>cmd.fetch_chain_spec.is_some() {
+                set_chain_spec(<span class="kw-2">&amp;</span>cli.madara_path, cmd)<span class="question-mark">?</span>;
             }
 
-            <span class="kw">if </span>cli.run.testnet.is_some() {
-                try_set_testnet(<span class="kw-2">&amp;mut </span>cli)<span class="question-mark">?</span>;
+            <span class="kw">if </span>cmd.testnet.is_some() {
+                try_set_testnet(<span class="kw-2">&amp;</span>cli.madara_path, cmd)<span class="question-mark">?</span>;
             }
 
-            <span class="kw">let </span>da_config: <span class="prelude-ty">Option</span>&lt;(DaLayer, PathBuf)&gt; = <span class="kw">match </span>cli.run.da_layer {
+            <span class="kw">let </span>da_config: <span class="prelude-ty">Option</span>&lt;(DaLayer, PathBuf)&gt; = <span class="kw">match </span>cmd.da_layer {
                 <span class="prelude-val">Some</span>(da_layer) =&gt; {
                     <span class="kw">let </span>da_path = std::path::PathBuf::from(madara_path.clone() + <span class="string">&quot;/da-config.json&quot;</span>);
                     <span class="kw">if </span>!da_path.exists() {
@@ -641,18 +639,22 @@
                     <span class="prelude-val">Some</span>((da_layer, da_path))
                 }
                 <span class="prelude-val">None </span>=&gt; {
-                    <span class="macro">log::info!</span>(<span class="string">&quot;madara initialized w/o da layer&quot;</span>);
+                    <span class="macro">log::info!</span>(<span class="string">&quot;Madara initialized w/o DA layer&quot;</span>);
                     <span class="prelude-val">None
                 </span>}
             };
 
-            <span class="kw">let </span>runner = cli.create_runner(<span class="kw-2">&amp;</span>cli.run.run_cmd)<span class="question-mark">?</span>;
+            <span class="comment">// pre assign variables because of cmd mutable borrow
+            </span><span class="kw">let </span>run_cmd: sc_cli::RunCmd = cmd.run_cmd.clone();
+            <span class="kw">let </span>sealing = cli.sealing;
+
+            <span class="kw">let </span>runner = cli.create_runner(<span class="kw-2">&amp;</span>run_cmd)<span class="question-mark">?</span>;
             runner.run_node_until_exit(|config| <span class="kw">async move </span>{
-                service::new_full(config, cli.run.sealing, da_config).map_err(sc_cli::Error::Service)
+                service::new_full(config, sealing, da_config).map_err(sc_cli::Error::Service)
             })
         }
-        <span class="prelude-val">Some</span>(Subcommand::Setup(<span class="kw">_</span>)) =&gt; {
-            fetch_madara_configs(<span class="kw-2">&amp;</span>cli)<span class="question-mark">?</span>;
+        <span class="prelude-val">Some</span>(Subcommand::Setup(cmd)) =&gt; {
+            fetch_madara_configs(<span class="kw-2">&amp;</span>cli.madara_path, <span class="kw-2">&amp;</span>cmd)<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(())
         }
         <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="string">&quot;You need to specify some subcommand. E.g. `madara run`&quot;</span>.into()),

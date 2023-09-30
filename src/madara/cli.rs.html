@@ -122,12 +122,6 @@
 <a href="#122" id="122">122</a>
 <a href="#123" id="123">123</a>
 <a href="#124" id="124">124</a>
-<a href="#125" id="125">125</a>
-<a href="#126" id="126">126</a>
-<a href="#127" id="127">127</a>
-<a href="#128" id="128">128</a>
-<a href="#129" id="129">129</a>
-<a href="#130" id="130">130</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
 
 <span class="kw">use </span>mc_data_availability::DaLayer;
@@ -162,11 +156,15 @@
     <span class="attr">#[command(subcommand)]
     </span><span class="kw">pub </span>subcommand: <span class="prelude-ty">Option</span>&lt;Subcommand&gt;,
 
-    <span class="attr">#[clap(flatten)]
-    </span><span class="kw">pub </span>run: ExtendedRunCmd,
+    <span class="doccomment">/// Path to the folder where all configuration files and data are stored
+    /// base_path will always be overwritten by madara_path
+    /// in the case you use the --tmp, the base_path will be changed during the runtime
+    </span><span class="attr">#[clap(global = <span class="bool-val">true</span>, long, default_value = get_default_madara_path())]
+    </span><span class="kw">pub </span>madara_path: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
 
-    <span class="attr">#[clap(flatten)]
-    </span><span class="kw">pub </span>setup: SetupCmd,
+    <span class="doccomment">/// Choose sealing method.
+    </span><span class="attr">#[clap(global = <span class="bool-val">true</span>, long, value_enum, ignore_case = <span class="bool-val">true</span>)]
+    </span><span class="kw">pub </span>sealing: <span class="prelude-ty">Option</span>&lt;Sealing&gt;,
 }
 
 <span class="attr">#[derive(Clone, Debug, clap::Args)]
@@ -183,16 +181,6 @@
     </span><span class="attr">#[clap(long, conflicts_with = <span class="string">&quot;testnet&quot;</span>)]
     </span><span class="kw">pub </span>fetch_chain_spec: <span class="prelude-ty">Option</span>&lt;String&gt;,
 
-    <span class="doccomment">/// Path to the folder where all configuration files and data are stored
-    /// base_path will always be overwritten by madara_path
-    /// in the case you use the --tmp, the base_path will be changed during the runtime
-    </span><span class="attr">#[clap(long, default_value = get_default_madara_path())]
-    </span><span class="kw">pub </span>madara_path: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
-
-    <span class="doccomment">/// Choose sealing method.
-    </span><span class="attr">#[arg(long, value_enum, ignore_case = <span class="bool-val">true</span>)]
-    </span><span class="kw">pub </span>sealing: <span class="prelude-ty">Option</span>&lt;Sealing&gt;,
-
     <span class="doccomment">/// Choose a supported testnet chain which will load some default values
     /// The testnets will allways be fetched when this flag is passed to search for updates
     </span><span class="attr">#[clap(long, conflicts_with = <span class="string">&quot;fetch_chain_spec&quot;</span>, conflicts_with = <span class="string">&quot;chain&quot;</span>)]
@@ -203,7 +191,7 @@
 </span><span class="kw">pub struct </span>SetupCmd {
     <span class="doccomment">/// Load a index.json file for downloading assets
     /// The index.json must follow the format of the official index.json
-    /// (https://github.com/d-roak/madara/blob/feat/configs-index/configs/index.json)
+    /// (https://github.com/keep-starknet-strange/madara/blob/main/configs/index.json)
     /// Where the `md5` and `url` fields are optional
     </span><span class="attr">#[clap(long, default_value = constants::DEFAULT_CONFIGS_URL)]
     </span><span class="kw">pub </span>fetch_madara_configs: <span class="prelude-ty">Option</span>&lt;String&gt;,
