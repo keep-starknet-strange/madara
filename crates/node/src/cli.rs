@@ -73,7 +73,7 @@ pub struct ExtendedRunCmd {
 pub struct SetupCmd {
     /// Load a index.json file for downloading assets
     /// The index.json must follow the format of the official index.json
-    /// (https://github.com/d-roak/madara/blob/feat/configs-index/configs/index.json)
+    /// (https://github.com/keep-starknet-strange/madara/blob/main/configs/index.json)
     /// Where the `md5` and `url` fields are optional
     #[clap(long, default_value = constants::DEFAULT_CONFIGS_URL)]
     pub fetch_madara_configs: Option<String>,
