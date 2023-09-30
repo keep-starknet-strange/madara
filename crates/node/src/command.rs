@@ -318,7 +318,7 @@ pub fn run() -> sc_cli::Result<()> {
 
             let runner = cli.create_runner(&cli.run.run_cmd)?;
             runner.run_node_until_exit(|config| async move {
-                service::new_full(config, cli.run.sealing, da_config, cli.run.run_cmd.rpc_port.unwrap()).await.map_err(sc_cli::Error::Service)
+                service::new_full(config, cli.run.sealing, da_config, 9944u16).await.map_err(sc_cli::Error::Service)
             })
         }
         Some(Subcommand::Setup(_)) => {
