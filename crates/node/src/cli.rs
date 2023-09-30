@@ -31,9 +31,6 @@ pub enum Testnet {
 pub struct Cli {
     #[command(subcommand)]
     pub subcommand: Option<Subcommand>,
-
-    #[clap(flatten)]
-    pub run: ExtendedRunCmd,
 }
 
 #[derive(Clone, Debug, clap::Args)]

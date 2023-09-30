@@ -7,7 +7,7 @@ use pallet_starknet::utils;
 use sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
 
 use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
-use crate::cli::{Cli, Subcommand, Testnet, SetupCmd};
+use crate::cli::{Cli, Subcommand, Testnet, SetupCmd, ExtendedRunCmd};
 use crate::{chain_spec, configs, constants, service};
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
@@ -35,18 +35,18 @@ impl SubstrateCli for Cli {
     }
 
     fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
-        Ok(match id {
-            "dev" => {
-                let enable_manual_seal = self.run.sealing.map(|_| true);
+        Ok(match (id, &self.subcommand) {
+            ("dev", Some(Subcommand::Run(cmd))) => {
+                let enable_manual_seal = cmd.sealing.map(|_| true);
                 Box::new(chain_spec::development_config(
                     enable_manual_seal,
-                    self.run.madara_path.clone().expect("`madara_path` expected to be set with clap default value"),
+                    cmd.madara_path.clone().expect("`madara_path` expected to be set with clap default value"),
                 )?)
             }
-            "" | "local" | "madara-local" => Box::new(chain_spec::local_testnet_config(
-                self.run.madara_path.clone().expect("`madara_path` expected to be set with clap default value"),
+            ("" | "local" | "madara-local", Some(Subcommand::Run(cmd))) => Box::new(chain_spec::local_testnet_config(
+                cmd.madara_path.clone().expect("`madara_path` expected to be set with clap default value"),
             )?),
-            path => Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
+            (path, _) => Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
         })
     }
 
@@ -64,58 +64,57 @@ fn get_madara_path_string(madara_path: &Option<PathBuf>) -> String {
         .expect("Failed to convert `madara_path` to string")
 }
 
-fn set_dev_environment(cli: &mut Cli) {
+fn set_dev_environment(cmd: &mut ExtendedRunCmd) {
     // create a reproducible dev environment
-    cli.run.run_cmd.shared_params.dev = false;
-    cli.run.run_cmd.shared_params.chain = Some("dev".to_string());
+    cmd.run_cmd.shared_params.dev = false;
+    cmd.run_cmd.shared_params.chain = Some("dev".to_string());
 
-    cli.run.run_cmd.force_authoring = true;
-    cli.run.run_cmd.alice = true;
+    cmd.run_cmd.force_authoring = true;
+    cmd.run_cmd.alice = true;
 
     // we can't set `--rpc-cors=all`, so it needs to be set manually if we want to connect with external
     // hosts
-    cli.run.run_cmd.rpc_external = true;
-    cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
+    cmd.run_cmd.rpc_external = true;
+    cmd.run_cmd.rpc_methods = RpcMethods::Unsafe;
 }
 
-fn try_set_testnet(cli: &mut Cli) -> Result<(), String> {
+fn try_set_testnet(cmd: &mut ExtendedRunCmd) -> Result<(), String> {
     // checks if it should retrieve and enable a specific chain-spec
-    let madara_path = get_madara_path_string(&cli.run.madara_path);
+    let madara_path = get_madara_path_string(&cmd.madara_path);
     let local_path = utils::get_project_path();
 
-    if cli.run.testnet == Some(Testnet::Sharingan) {
+    if cmd.testnet == Some(Testnet::Sharingan) {
         if let Ok(ref src_path) = local_path {
             let src_path = src_path.clone() + "/configs/chain-specs/testnet-sharingan-raw.json";
             utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs")?;
-            cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
+            cmd.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
         } else {
             utils::fetch_from_url(
                 constants::SHARINGAN_CHAIN_SPEC_URL.to_string(),
                 madara_path.clone() + "/configs/chain-specs/",
             )?;
-            cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
+            cmd.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
         }
     }
 
-    if cli.run.run_cmd.shared_params.chain.is_some() {
-        cli.run.run_cmd.rpc_external = true;
-        cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
+    if cmd.run_cmd.shared_params.chain.is_some() {
+        cmd.run_cmd.rpc_external = true;
+        cmd.run_cmd.rpc_methods = RpcMethods::Unsafe;
     }
 
     Ok(())
 }
 
-fn set_chain_spec(cli: &mut Cli) -> Result<(), String> {
-    let madara_path = get_madara_path_string(&cli.run.madara_path);
-    let chain_spec_url = cli
-        .run
+fn set_chain_spec(cmd: &mut ExtendedRunCmd) -> Result<(), String> {
+    let madara_path = get_madara_path_string(&cmd.madara_path);
+    let chain_spec_url = cmd
         .fetch_chain_spec
         .clone()
         .expect("`chain_spec_url` expected to be set because the function is called upon verification");
     utils::fetch_from_url(chain_spec_url.clone(), madara_path.clone() + "/chain-specs")?;
     let chain_spec =
         chain_spec_url.split('/').last().expect("Failed to get chain spec file name from `chain_spec_url`");
-    cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/" + chain_spec);
+    cmd.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/" + chain_spec);
 
     Ok(())
 }
@@ -158,47 +157,45 @@ fn fetch_madara_configs(cmd: &SetupCmd) -> Result<(), String> {
 pub fn run() -> sc_cli::Result<()> {
     let mut cli = Cli::from_args();
 
-    cli.run.run_cmd.shared_params.base_path = cli.run.madara_path.clone();
-
-    match &cli.subcommand {
-        Some(Subcommand::Key(cmd)) => cmd.run(&cli),
-        Some(Subcommand::BuildSpec(cmd)) => {
+    match cli.subcommand {
+        Some(Subcommand::Key(ref cmd)) => cmd.run(&cli),
+        Some(Subcommand::BuildSpec(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
         }
-        Some(Subcommand::CheckBlock(cmd)) => {
+        Some(Subcommand::CheckBlock(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.async_run(|mut config| {
                 let (client, _, import_queue, task_manager, _) = service::new_chain_ops(&mut config)?;
                 Ok((cmd.run(client, import_queue), task_manager))
             })
         }
-        Some(Subcommand::ExportBlocks(cmd)) => {
+        Some(Subcommand::ExportBlocks(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.async_run(|mut config| {
                 let (client, _, _, task_manager, _) = service::new_chain_ops(&mut config)?;
                 Ok((cmd.run(client, config.database), task_manager))
             })
         }
-        Some(Subcommand::ExportState(cmd)) => {
+        Some(Subcommand::ExportState(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.async_run(|mut config| {
                 let (client, _, _, task_manager, _) = service::new_chain_ops(&mut config)?;
                 Ok((cmd.run(client, config.chain_spec), task_manager))
             })
         }
-        Some(Subcommand::ImportBlocks(cmd)) => {
+        Some(Subcommand::ImportBlocks(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.async_run(|mut config| {
                 let (client, _, import_queue, task_manager, _) = service::new_chain_ops(&mut config)?;
                 Ok((cmd.run(client, import_queue), task_manager))
             })
         }
-        Some(Subcommand::PurgeChain(cmd)) => {
+        Some(Subcommand::PurgeChain(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.sync_run(|config| cmd.run(config.database))
         }
-        Some(Subcommand::Revert(cmd)) => {
+        Some(Subcommand::Revert(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.async_run(|mut config| {
                 let (client, backend, _, task_manager, _) = service::new_chain_ops(&mut config)?;
@@ -209,7 +206,7 @@ pub fn run() -> sc_cli::Result<()> {
                 Ok((cmd.run(client, backend, Some(aux_revert)), task_manager))
             })
         }
-        Some(Subcommand::Benchmark(cmd)) => {
+        Some(Subcommand::Benchmark(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
 
             runner.sync_run(|mut config| {
@@ -274,32 +271,33 @@ pub fn run() -> sc_cli::Result<()> {
         Some(Subcommand::TryRuntime) => Err("TryRuntime wasn't enabled when building the node. You can enable it \
                                              with `--features try-runtime`."
             .into()),
-        Some(Subcommand::ChainInfo(cmd)) => {
+        Some(Subcommand::ChainInfo(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
-        Some(Subcommand::Run(cmd)) => {
+        Some(Subcommand::Run(ref mut cmd)) => {
+            cmd.run_cmd.shared_params.base_path = cmd.madara_path.clone();
             let madara_path = get_madara_path_string(&cmd.madara_path);
 
             // Set the node_key_file for substrate in the case that it was not manually setted
             if cmd.run_cmd.network_params.node_key_params.node_key_file.is_none() {
-                cli.run.run_cmd.network_params.node_key_params.node_key_file =
+                cmd.run_cmd.network_params.node_key_params.node_key_file =
                     Some((madara_path.clone() + "/p2p-key.ed25519").into());
             }
 
             if cmd.run_cmd.shared_params.dev {
-                set_dev_environment(&mut cli);
+                set_dev_environment(cmd);
             }
 
-            if cli.run.fetch_chain_spec.is_some() {
-                set_chain_spec(&mut cli)?;
+            if cmd.fetch_chain_spec.is_some() {
+                set_chain_spec(cmd)?;
             }
 
-            if cli.run.testnet.is_some() {
-                try_set_testnet(&mut cli)?;
+            if cmd.testnet.is_some() {
+                try_set_testnet(cmd)?;
             }
 
-            let da_config: Option<(DaLayer, PathBuf)> = match cli.run.da_layer {
+            let da_config: Option<(DaLayer, PathBuf)> = match cmd.da_layer {
                 Some(da_layer) => {
                     let da_path = std::path::PathBuf::from(madara_path.clone() + "/da-config.json");
                     if !da_path.exists() {
@@ -315,9 +313,11 @@ pub fn run() -> sc_cli::Result<()> {
                 }
             };
 
-            let runner = cli.create_runner(&cli.run.run_cmd)?;
+            let run_cmd: sc_cli::RunCmd = cmd.run_cmd.clone().into();
+            let sealing = cmd.sealing.clone();
+            let runner = cli.create_runner(&run_cmd)?;
             runner.run_node_until_exit(|config| async move {
-                service::new_full(config, cli.run.sealing, da_config).map_err(sc_cli::Error::Service)
+                service::new_full(config, sealing.clone(), da_config).map_err(sc_cli::Error::Service)
             })
         }
         Some(Subcommand::Setup(cmd)) => {
