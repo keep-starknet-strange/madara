@@ -7,7 +7,7 @@ use pallet_starknet::utils;
 use sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
 
 use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
-use crate::cli::{Cli, Subcommand, Testnet, SetupCmd, ExtendedRunCmd};
+use crate::cli::{Cli, ExtendedRunCmd, SetupCmd, Subcommand, Testnet};
 use crate::{chain_spec, configs, constants, service};
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
@@ -313,11 +313,13 @@ pub fn run() -> sc_cli::Result<()> {
                 }
             };
 
-            let run_cmd: sc_cli::RunCmd = cmd.run_cmd.clone().into();
-            let sealing = cmd.sealing.clone();
+            // pre assign variables because of cmd mutable borrow
+            let run_cmd: sc_cli::RunCmd = cmd.run_cmd.clone();
+            let sealing = cmd.sealing;
+
             let runner = cli.create_runner(&run_cmd)?;
             runner.run_node_until_exit(|config| async move {
-                service::new_full(config, sealing.clone(), da_config).map_err(sc_cli::Error::Service)
+                service::new_full(config, sealing, da_config).map_err(sc_cli::Error::Service)
             })
         }
         Some(Subcommand::Setup(cmd)) => {
