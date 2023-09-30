@@ -80,7 +80,7 @@ fn set_dev_environment(cmd: &mut ExtendedRunCmd) {
 
 fn try_set_testnet(madara_path: &Option<PathBuf>, cmd: &mut ExtendedRunCmd) -> Result<(), String> {
     // checks if it should retrieve and enable a specific chain-spec
-    let madara_path = get_madara_path_string(&madara_path);
+    let madara_path = get_madara_path_string(madara_path);
     let local_path = utils::get_project_path();
 
     if cmd.testnet == Some(Testnet::Sharingan) {
@@ -106,7 +106,7 @@ fn try_set_testnet(madara_path: &Option<PathBuf>, cmd: &mut ExtendedRunCmd) -> R
 }
 
 fn set_chain_spec(madara_path: &Option<PathBuf>, cmd: &mut ExtendedRunCmd) -> Result<(), String> {
-    let madara_path = get_madara_path_string(&madara_path);
+    let madara_path = get_madara_path_string(madara_path);
     let chain_spec_url = cmd
         .fetch_chain_spec
         .clone()
@@ -120,7 +120,7 @@ fn set_chain_spec(madara_path: &Option<PathBuf>, cmd: &mut ExtendedRunCmd) -> Re
 }
 
 fn fetch_madara_configs(madara_path: &Option<PathBuf>, cmd: &SetupCmd) -> Result<(), String> {
-    let madara_path = get_madara_path_string(&madara_path);
+    let madara_path = get_madara_path_string(madara_path);
     let local_path = utils::get_project_path();
 
     if let Ok(ref src_path) = local_path {
