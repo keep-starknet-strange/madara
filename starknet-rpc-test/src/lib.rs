@@ -169,6 +169,18 @@ impl MadaraClient {
 
         let madara_log = std::env::var("MADARA_LOG").unwrap_or_else(|_| "false".to_string());
 
+        Command::new("cargo")
+		.stdout(Stdio::null())
+		.stderr(if madara_log == "true" { Stdio::inherit() } else { Stdio::null() })
+		.args([
+			"run",
+			"--release",
+			"--",
+			"setup",
+			])
+			.spawn()
+			.expect("Could not setup madara node");
+
         let child_handle = Command::new("cargo")
 		// Silence Madara stdout and stderr
 		.stdout(Stdio::null())
@@ -177,6 +189,7 @@ impl MadaraClient {
 			"run",
 			"--release",
 			"--",
+			"run",
 			"--sealing=manual",
 			&format!("--execution={execution}"),
 			"--dev",
