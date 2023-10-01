@@ -23,10 +23,6 @@ pub trait ComputeTransactionHash {
     fn compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> Felt252Wrapper;
 }
 
-pub trait LegacyComputeTransactionHash {
-    fn legacy_compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> Felt252Wrapper;
-}
-
 fn convert_calldata(data: &[Felt252Wrapper]) -> &[FieldElement] {
     // Non-copy but less dangerous than transmute
     // https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
@@ -68,25 +64,6 @@ impl ComputeTransactionHash for InvokeTransactionV0 {
     }
 }
 
-impl LegacyComputeTransactionHash for InvokeTransactionV0 {
-    fn legacy_compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, _is_query: bool) -> Felt252Wrapper {
-        let prefix = FieldElement::from_byte_slice_be(INVOKE_PREFIX).unwrap();
-        let contract_address = self.contract_address.into();
-        let entrypoint_selector = self.entry_point_selector.into();
-        let calldata_hash = compute_hash_on_elements(convert_calldata(&self.calldata));
-        let chain_id = chain_id.into();
-
-        H::compute_hash_on_elements(&[
-            prefix,
-            contract_address,
-            entrypoint_selector,
-            calldata_hash,
-            chain_id,
-        ])
-        .into()
-    }
-}
-
 impl ComputeTransactionHash for InvokeTransactionV1 {
     fn compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> Felt252Wrapper {
         let prefix = FieldElement::from_byte_slice_be(INVOKE_PREFIX).unwrap();
@@ -116,15 +93,6 @@ impl ComputeTransactionHash for InvokeTransaction {
     fn compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> Felt252Wrapper {
         match self {
             InvokeTransaction::V0(tx) => tx.compute_hash::<H>(chain_id, is_query),
-            InvokeTransaction::V1(tx) => tx.compute_hash::<H>(chain_id, is_query),
-        }
-    }
-}
-
-impl LegacyComputeTransactionHash for InvokeTransaction {
-    fn legacy_compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> Felt252Wrapper {
-        match self {
-            InvokeTransaction::V0(tx) => tx.legacy_compute_hash::<H>(chain_id, is_query),
             InvokeTransaction::V1(tx) => tx.compute_hash::<H>(chain_id, is_query),
         }
     }
@@ -235,15 +203,6 @@ impl ComputeTransactionHash for DeployTransaction {
     }
 }
 
-impl LegacyComputeTransactionHash for DeployTransaction {
-    fn legacy_compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> Felt252Wrapper {
-        let chain_id = chain_id.into();
-        let contract_address = self.get_account_address();
-
-        self.legacy_hash_given_contract_address::<H>(chain_id, contract_address, is_query).into()
-    }
-}
-
 impl DeployAccountTransaction {
     pub fn get_account_address(&self) -> FieldElement {
         Self::calculate_contract_address(
@@ -345,9 +304,26 @@ impl DeployTransaction {
         let version = if is_query { SIMULATE_TX_VERSION_OFFSET + FieldElement::ONE } else { FieldElement::ONE };
         let constructor_calldata = compute_hash_on_elements(convert_calldata(&self.constructor_calldata));
         let constructor = starknet_keccak(b"constructor");
-        let elements = &[prefix, version, contract_address, constructor, constructor_calldata, FieldElement::ZERO, chain_id];
-
-        H::compute_hash_on_elements(elements)
+        if LEGACY_ENV.lock().legacy_mode {        
+            H::compute_hash_on_elements(&[
+                prefix,
+                version,
+                contract_address,
+                constructor,
+                constructor_calldata,
+                FieldElement::ZERO, chain_id
+            ])
+            .into()
+        } else {
+            H::compute_hash_on_elements(&[
+                prefix,
+                contract_address,
+                constructor,
+                constructor_calldata,
+                chain_id
+            ])
+            .into()
+        }
     }
 
     pub(super) fn legacy_hash_given_contract_address<H: HasherT>(
@@ -375,38 +351,30 @@ impl ComputeTransactionHash for HandleL1MessageTransaction {
         let chain_id = chain_id.into();
         let nonce = self.nonce.into();
 
-        H::compute_hash_on_elements(&[
-            prefix,
-            version,
-            contract_address,
-            entrypoint_selector,
-            calldata_hash,
-            chain_id,
-            nonce,
-        ])
-        .into()
-    }
-}
-
-impl LegacyComputeTransactionHash for HandleL1MessageTransaction {
-    fn legacy_compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, _is_query: bool) -> Felt252Wrapper {
-        // Oldest L1 Handler transactions were actually Invokes
-        // which later on were "renamed" to be the former,
-        // yet the hashes remain, hence the prefix
-        let prefix = FieldElement::from_byte_slice_be(INVOKE_PREFIX).unwrap();
-        let contract_address = self.contract_address.into();
-        let entrypoint_selector = self.entry_point_selector.into();
-        let calldata_hash = compute_hash_on_elements(convert_calldata(&self.calldata));
-        let chain_id = chain_id.into();
-
-        H::compute_hash_on_elements(&[
-            prefix,
-            contract_address,
-            entrypoint_selector,
-            calldata_hash,
-            chain_id,
-        ])
-        .into()
+        if LEGACY_ENV.lock().legacy_mode {
+            H::compute_hash_on_elements(&[
+                prefix,
+                version,
+                contract_address,
+                entrypoint_selector,
+                calldata_hash,
+                chain_id,
+                nonce,
+            ])
+            .into()
+        } else {
+            H::compute_hash_on_elements(&[
+                // Oldest L1 Handler transactions were actually Invokes
+                // which later on were "renamed" to be the former,
+                // yet the hashes remain, hence the prefix
+                FieldElement::from_byte_slice_be(INVOKE_PREFIX).unwrap(),
+                contract_address,
+                entrypoint_selector,
+                calldata_hash,
+                chain_id,
+            ])
+            .into()
+        }
     }
 }
 
@@ -418,18 +386,6 @@ impl ComputeTransactionHash for Transaction {
             Transaction::Deploy(tx) => tx.compute_hash::<H>(chain_id, is_query),
             Transaction::Invoke(tx) => tx.compute_hash::<H>(chain_id, is_query),
             Transaction::L1Handler(tx) => tx.compute_hash::<H>(chain_id, is_query),
-        }
-    }
-}
-
-impl LegacyComputeTransactionHash for Transaction {
-    fn legacy_compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> Felt252Wrapper {
-        match self {
-            Transaction::Declare(tx) => tx.compute_hash::<H>(chain_id, is_query),
-            Transaction::DeployAccount(tx) => tx.compute_hash::<H>(chain_id, is_query),
-            Transaction::Deploy(tx) => tx.legacy_compute_hash::<H>(chain_id, is_query),
-            Transaction::Invoke(tx) => tx.legacy_compute_hash::<H>(chain_id, is_query),
-            Transaction::L1Handler(tx) => tx.legacy_compute_hash::<H>(chain_id, is_query),
         }
     }
 }

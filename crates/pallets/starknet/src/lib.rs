@@ -1075,7 +1075,7 @@ impl<T: Config> Pallet<T> {
 
             let chain_id = Self::chain_id();
             let (transaction_commitment, event_commitment) =
-                mp_commitments::calculate_commitments::<T::SystemHash>(&transactions, &events, chain_id, block_number);
+                mp_commitments::calculate_commitments::<T::SystemHash>(&transactions, &events, chain_id);
             let protocol_version = T::ProtocolVersion::get();
             let extra_data = None;
 
