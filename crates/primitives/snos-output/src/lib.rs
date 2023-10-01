@@ -26,6 +26,8 @@ pub struct StarknetOsOutput {
     pub new_state_root: StarkHash,
     /// The number (height) of this block.
     pub block_number: u64,
+    /// The hash of this block.
+    pub block_hash: StarkHash,
     /// The Starknet chain config hash
     pub config_hash: StarkHash,
     /// List of messages sent to L1 in this block
