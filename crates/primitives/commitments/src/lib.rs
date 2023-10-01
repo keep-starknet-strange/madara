@@ -279,7 +279,7 @@ where
     let signature_hash = H::compute_hash_on_elements(
         &tx.signature().iter().map(|elt| FieldElement::from(*elt)).collect::<Vec<FieldElement>>(),
     );
-    let transactions_hashes = if height < 833u64 {
+    let transactions_hashes = if height < 1470u64 {
         H::hash_elements(FieldElement::from(tx.legacy_compute_hash::<H>(chain_id, false)), signature_hash)
     } else {
         H::hash_elements(FieldElement::from(tx.compute_hash::<H>(chain_id, false)), signature_hash)

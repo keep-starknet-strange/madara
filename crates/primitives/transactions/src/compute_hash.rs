@@ -5,7 +5,7 @@ use mp_hashers::HasherT;
 use starknet_core::{crypto::compute_hash_on_elements, utils::starknet_keccak};
 use starknet_crypto::FieldElement;
 
-use crate::DeployTransaction;
+use crate::{DeployTransaction, LEGACY_ENV};
 
 use super::{
     DeclareTransaction, DeclareTransactionV0, DeclareTransactionV1, DeclareTransactionV2, DeployAccountTransaction,
@@ -43,16 +43,28 @@ impl ComputeTransactionHash for InvokeTransactionV0 {
         let max_fee = FieldElement::from(self.max_fee);
         let chain_id = chain_id.into();
 
-        H::compute_hash_on_elements(&[
-            prefix,
-            version,
-            contract_address,
-            entrypoint_selector,
-            calldata_hash,
-            max_fee,
-            chain_id,
-        ])
-        .into()
+        // Check for deprecated environment
+        if LEGACY_ENV.lock().legacy_mode {
+            H::compute_hash_on_elements(&[
+                prefix,
+                version,
+                contract_address,
+                entrypoint_selector,
+                calldata_hash,
+                max_fee,
+                chain_id,
+            ])
+            .into()
+        } else {
+            H::compute_hash_on_elements(&[
+                prefix,
+                contract_address,
+                entrypoint_selector,
+                calldata_hash,
+                chain_id,
+            ])
+            .into()
+        }
     }
 }
 
@@ -376,6 +388,28 @@ impl ComputeTransactionHash for HandleL1MessageTransaction {
     }
 }
 
+impl LegacyComputeTransactionHash for HandleL1MessageTransaction {
+    fn legacy_compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, _is_query: bool) -> Felt252Wrapper {
+        // Oldest L1 Handler transactions were actually Invokes
+        // which later on were "renamed" to be the former,
+        // yet the hashes remain, hence the prefix
+        let prefix = FieldElement::from_byte_slice_be(INVOKE_PREFIX).unwrap();
+        let contract_address = self.contract_address.into();
+        let entrypoint_selector = self.entry_point_selector.into();
+        let calldata_hash = compute_hash_on_elements(convert_calldata(&self.calldata));
+        let chain_id = chain_id.into();
+
+        H::compute_hash_on_elements(&[
+            prefix,
+            contract_address,
+            entrypoint_selector,
+            calldata_hash,
+            chain_id,
+        ])
+        .into()
+    }
+}
+
 impl ComputeTransactionHash for Transaction {
     fn compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> Felt252Wrapper {
         match self {
@@ -395,7 +429,7 @@ impl LegacyComputeTransactionHash for Transaction {
             Transaction::DeployAccount(tx) => tx.compute_hash::<H>(chain_id, is_query),
             Transaction::Deploy(tx) => tx.legacy_compute_hash::<H>(chain_id, is_query),
             Transaction::Invoke(tx) => tx.legacy_compute_hash::<H>(chain_id, is_query),
-            Transaction::L1Handler(tx) => tx.compute_hash::<H>(chain_id, is_query),
+            Transaction::L1Handler(tx) => tx.legacy_compute_hash::<H>(chain_id, is_query),
         }
     }
 }

@@ -7659,6 +7659,7 @@ dependencies = [
  "derive_more",
  "flate2",
  "frame-support",
+ "lazy_static",
  "mp-fee",
  "mp-felt",
  "mp-hashers",
@@ -7668,6 +7669,7 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_json",
+ "spin 0.9.8",
  "starknet-core",
  "starknet-crypto 0.6.0",
  "starknet-ff",
@@ -13404,6 +13406,9 @@ name = "spin"
 version = "0.9.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
+dependencies = [
+ "lock_api",
+]
 
 [[package]]
 name = "spinners"

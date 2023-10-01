@@ -53,7 +53,7 @@ impl Block {
         self.transactions.iter().map(|tx| tx.compute_hash::<H>(chain_id, false)).collect()
     }
 
-    /// _Generic_ compute transaction hash for older transactions (pre 0.8-ish)
+    /// Generic compute transaction hash for older transactions (pre 0.8-ish)
     pub fn legacy_transactions_hashes<H: HasherT>(&self, chain_id: Felt252Wrapper) -> Vec<Felt252Wrapper> {
         self.transactions.iter().map(|tx| tx.legacy_compute_hash::<H>(chain_id, false)).collect()
     }

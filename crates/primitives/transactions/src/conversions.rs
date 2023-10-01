@@ -122,7 +122,7 @@ impl InvokeTransactionV0 {
 
     pub fn from_starknet(inner: starknet_api::transaction::InvokeTransactionV0) -> Self {
         Self {
-            max_fee: inner.max_fee.0,
+            max_fee: inner.max_fee.0.into(),
             signature: inner.signature.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),
             contract_address: inner.contract_address.into(),
             entry_point_selector: inner.entry_point_selector.into(),

@@ -2,6 +2,9 @@
 
 ## Next release
 
+- fix: fix clap for run command
+- fix: add `madara_path` flag for setup command
+- fix: add official references to configs files
 - refactor: exported chain id constant in mp-chain-id crate and added one for
   SN_MAIN
 - fix: cargo update and `main` branch prettier fix
