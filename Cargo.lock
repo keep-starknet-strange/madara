@@ -6693,6 +6693,7 @@ name = "mp-snos-output"
 version = "0.3.0"
 dependencies = [
  "assert_matches",
+ "hex",
  "mp-transactions",
  "parity-scale-codec",
  "scale-info",
