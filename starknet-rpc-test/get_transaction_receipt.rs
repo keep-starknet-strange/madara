@@ -291,7 +291,7 @@ async fn work_with_messages_to_l1(#[future] madara: MadaraClient) -> Result<(), 
 
     // 3. Next, deploying an instance of this class using universal deployer
 
-    let deploy_tx = account.call_contract(
+    let deploy_tx = account.invoke_contract(
         FieldElement::from_hex_be(UDC_ADDRESS).unwrap(),
         "deployContract",
         vec![
@@ -327,7 +327,12 @@ async fn work_with_messages_to_l1(#[future] madara: MadaraClient) -> Result<(), 
 
     // 5. Sending message to L1
 
-    let invoke_tx = account.call_contract(contract_address, "send_message_l2_to_l1", vec![], None);
+    let invoke_tx = account.invoke_contract(
+        contract_address,
+        "send_message_l2_to_l1",
+        vec![FieldElement::ZERO, FieldElement::ONE, FieldElement::TWO],
+        None,
+    );
 
     txs = madara.create_block_with_txs(vec![Transaction::Execution(invoke_tx)]).await?;
 
@@ -345,8 +350,8 @@ async fn work_with_messages_to_l1(#[future] madara: MadaraClient) -> Result<(), 
             assert_eq_msg_to_l1(
                 vec![MsgToL1 {
                     from_address: contract_address,
-                    to_address: FieldElement::ONE, // hardcoded in the contract
-                    payload: vec![],               // no payload
+                    to_address: FieldElement::ZERO,
+                    payload: vec![FieldElement::TWO],
                 }],
                 receipt.messages_sent,
             );

@@ -1,8 +1,9 @@
-use frame_support::{assert_ok, bounded_vec};
+use frame_support::assert_ok;
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::{DeclareTransactionV1, DeployAccountTransaction, InvokeTransactionV1};
-use starknet_api::transaction::TransactionHash;
+use starknet_api::api_core::EthAddress;
+use starknet_api::transaction::{L2ToL1Payload, MessageToL1, TransactionHash};
 
 use super::mock::default_mock::*;
 use super::mock::*;
@@ -18,10 +19,10 @@ const SEND_MESSAGE_CLASS_HASH: &str = "0x024e12108da2b3d3c80c7bc99aacdec97e44519
 // "0x38fb0bf48fe489ae23d0a1d7f2b7195ec0b94bfeb2f408b13bfd943d8410d72";
 const SEND_MESSAGE_TO_L1_SELECTOR: &str = "0x9139dbd19ca9654d773cd88f31af4c8d583beecc3362fb986dccfef5cf134f";
 
-// Troubleshooting:
+// Troubleshooting notes:
 // Add println! to the necessary runtime method (e.g. print CallInfo structs or extended blockifier
-// message) RUST_LOG=runtime=error RUST_BACKTRACE=1 cargo test --package pallet-starknet
-// send_message -- --nocapture
+// message), then run:
+// cargo test --package pallet-starknet send_message -- --nocapture
 
 #[test]
 fn messages_to_l1_are_stored() {
@@ -38,7 +39,7 @@ fn messages_to_l1_are_stored() {
             class_hash,
             nonce: Felt252Wrapper::ZERO,
             max_fee: u128::MAX,
-            signature: bounded_vec!(),
+            signature: vec![],
         };
 
         assert_ok!(Starknet::declare(RuntimeOrigin::none(), declare_tx.into(), contract_class));
@@ -49,7 +50,7 @@ fn messages_to_l1_are_stored() {
 
         let deploy_tx = InvokeTransactionV1 {
             sender_address,
-            calldata: bounded_vec![
+            calldata: vec![
                 sender_address,
                 Felt252Wrapper::from_hex_be(DEPLOY_CONTRACT_SELECTOR).unwrap(),
                 Felt252Wrapper::from(3u128), // Calldata len
@@ -59,21 +60,24 @@ fn messages_to_l1_are_stored() {
             ],
             nonce: Felt252Wrapper::ONE,
             max_fee: u128::MAX,
-            signature: bounded_vec!(),
+            signature: vec![],
         };
 
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), deploy_tx.into()));
 
         let invoke_tx = InvokeTransactionV1 {
             sender_address,
-            calldata: bounded_vec![
+            calldata: vec![
                 contract_address,
                 Felt252Wrapper::from_hex_be(SEND_MESSAGE_TO_L1_SELECTOR).unwrap(),
-                Felt252Wrapper::ZERO, // Calldata len
+                Felt252Wrapper::from(3u128), // Calldata len
+                Felt252Wrapper::ZERO,        // to_address
+                Felt252Wrapper::ONE,         // payload_len
+                Felt252Wrapper::TWO,         // payload
             ],
             nonce: Felt252Wrapper::TWO,
             max_fee: u128::MAX,
-            signature: bounded_vec!(),
+            signature: vec![],
         };
 
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), invoke_tx.clone().into()));
@@ -83,5 +87,13 @@ fn messages_to_l1_are_stored() {
         let messages = Starknet::tx_messages(TransactionHash::from(tx_hash));
 
         assert_eq!(1, messages.len());
+        pretty_assertions::assert_eq!(
+            messages[0],
+            MessageToL1 {
+                from_address: contract_address.into(),
+                to_address: EthAddress([0u8; 20].into()),
+                payload: L2ToL1Payload(vec![Felt252Wrapper::TWO.into()])
+            }
+        );
     });
 }

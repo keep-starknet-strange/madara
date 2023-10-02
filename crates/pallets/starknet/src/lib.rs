@@ -516,17 +516,11 @@ pub mod pallet {
                 })?;
 
             let tx_hash = transaction.tx_hash;
-            Self::emit_and_store_tx_and_fees_events(
+            Self::process_tx_events_and_messages(
                 tx_hash,
                 &tx_execution_infos.execute_call_info,
                 &tx_execution_infos.fee_transfer_call_info,
             );
-            Self::store_tx_and_fees_messages(
-                tx_hash,
-                &tx_execution_infos.execute_call_info,
-                &tx_execution_infos.fee_transfer_call_info,
-            );
-
             Self::store_transaction(tx_hash, Transaction::Invoke(input_transaction), tx_execution_infos.revert_error);
 
             Ok(())
@@ -581,17 +575,11 @@ pub mod pallet {
                 .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
             let tx_hash = transaction.tx_hash();
-            Self::emit_and_store_tx_and_fees_events(
+            Self::process_tx_events_and_messages(
                 tx_hash,
                 &tx_execution_infos.execute_call_info,
                 &tx_execution_infos.fee_transfer_call_info,
             );
-            Self::store_tx_and_fees_messages(
-                tx_hash,
-                &tx_execution_infos.execute_call_info,
-                &tx_execution_infos.fee_transfer_call_info,
-            );
-
             Self::store_transaction(tx_hash, Transaction::Declare(input_transaction), tx_execution_infos.revert_error);
 
             Ok(())
@@ -639,17 +627,11 @@ pub mod pallet {
                 })?;
 
             let tx_hash = transaction.tx_hash;
-            Self::emit_and_store_tx_and_fees_events(
+            Self::process_tx_events_and_messages(
                 tx_hash,
                 &tx_execution_infos.execute_call_info,
                 &tx_execution_infos.fee_transfer_call_info,
             );
-            Self::store_tx_and_fees_messages(
-                tx_hash,
-                &tx_execution_infos.execute_call_info,
-                &tx_execution_infos.fee_transfer_call_info,
-            );
-
             Self::store_transaction(
                 tx_hash,
                 Transaction::DeployAccount(input_transaction),
@@ -697,17 +679,11 @@ pub mod pallet {
                 .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
             let tx_hash = transaction.tx_hash;
-            Self::emit_and_store_tx_and_fees_events(
+            Self::process_tx_events_and_messages(
                 tx_hash,
                 &tx_execution_infos.execute_call_info,
                 &tx_execution_infos.fee_transfer_call_info,
             );
-            Self::store_tx_and_fees_messages(
-                tx_hash,
-                &tx_execution_infos.execute_call_info,
-                &tx_execution_infos.fee_transfer_call_info,
-            );
-
             Self::store_transaction(
                 tx_hash,
                 Transaction::L1Handler(input_transaction),
@@ -1214,29 +1190,18 @@ impl<T: Config> Pallet<T> {
         }
     }
 
-    pub fn emit_and_store_tx_and_fees_events(
+    pub fn process_tx_events_and_messages(
         tx_hash: TransactionHash,
         execute_call_info: &Option<CallInfo>,
         fee_transfer_call_info: &Option<CallInfo>,
     ) {
         if let Some(call_info) = execute_call_info {
-            let _ = Self::emit_events_in_call_info(tx_hash, call_info, 0);
+            Self::emit_events_in_call_info(tx_hash, call_info, 0);
+            Self::aggregate_messages_in_call_info(tx_hash, call_info, 0);
         }
         if let Some(call_info) = fee_transfer_call_info {
-            let _ = Self::emit_events_in_call_info(tx_hash, call_info, 0);
-        }
-    }
-
-    pub fn store_tx_and_fees_messages(
-        tx_hash: TransactionHash,
-        execute_call_info: &Option<CallInfo>,
-        fee_transfer_call_info: &Option<CallInfo>,
-    ) {
-        if let Some(call_info) = execute_call_info {
-            let _ = Self::aggregate_messages_in_call_info(tx_hash, call_info, 0);
-        }
-        if let Some(call_info) = fee_transfer_call_info {
-            let _ = Self::aggregate_messages_in_call_info(tx_hash, call_info, 0);
+            Self::emit_events_in_call_info(tx_hash, call_info, 0);
+            Self::aggregate_messages_in_call_info(tx_hash, call_info, 0);
         }
     }
 

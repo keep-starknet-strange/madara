@@ -90,7 +90,7 @@ pub trait AccountActions {
         nonce: Option<u64>,
     ) -> TransactionExecution;
 
-    fn call_contract(
+    fn invoke_contract(
         &self,
         address: FieldElement,
         method: &str,
@@ -141,7 +141,7 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
         self.transfer_tokens_u256(recipient, U256 { high: FieldElement::ZERO, low: transfer_amount }, nonce)
     }
 
-    fn call_contract(
+    fn invoke_contract(
         &self,
         address: FieldElement,
         method: &str,
