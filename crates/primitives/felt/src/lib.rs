@@ -15,6 +15,7 @@ pub extern crate alloc;
 mod starkware_types_conversions;
 
 use alloc::string::{String, ToString};
+use core::error;
 
 use cairo_vm::felt::Felt252;
 #[cfg(feature = "parity-scale-codec")]
@@ -25,7 +26,6 @@ use sp_core::{H256, U256};
 use starknet_api::hash::StarkFelt;
 use starknet_ff::{FieldElement, FromByteSliceError, FromStrError};
 use thiserror_no_std::Error;
-use core::error;
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Ord, Hash, Eq, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

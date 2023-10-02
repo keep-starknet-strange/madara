@@ -275,7 +275,7 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
 }
 
 #[test]
-fn given_contract_run_deploy_account_braavos_tx_works_signature() {
+fn given_contract_run_deploy_account_braavos_tx_works_whis_hardware_signer() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
@@ -295,14 +295,21 @@ fn given_contract_run_deploy_account_braavos_tx_works_signature() {
         };
 
         let tx_hash = deploy_tx.compute_hash::<<MockRuntime as Config>::SystemHash>(Starknet::chain_id(), false);
+
+        // signer fields are hardware public key generated from some random private key
+        // it's possible to add only one additional secp256r1 signer
         let signer_model = [
-            Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap(), //  signer_0
-            Felt252Wrapper::ZERO,                                            //  signer_1
-            Felt252Wrapper::ZERO,                                            //  signer_2
-            Felt252Wrapper::ZERO,                                            //  signer_3
-            Felt252Wrapper::ONE,                                             //  type = SIGNER_TYPE_STARK
-            Felt252Wrapper::ZERO,                                            //  reserved_0
-            Felt252Wrapper::ZERO,                                            //  reserved_1
+            Felt252Wrapper::from_hex_be("0x23fc01adbb70af88935aeaecde1240ea").unwrap(), /* signer_0= pk_x_uint256
+                                                                                         * low 128 bits */
+            Felt252Wrapper::from_hex_be("0xea0cb2b3f76a88bba0d8dc7556c40df9").unwrap(), /* signer_1= pk_x_uint256
+                                                                                         * high 128 bits */
+            Felt252Wrapper::from_hex_be("0x663b66d81aa5eed14537e814b02745c0").unwrap(), /* signer_2= pk_y_uint256
+                                                                                         * low 128 bits */
+            Felt252Wrapper::from_hex_be("0x76d91b936d094b864af4cfaaeec89fb1").unwrap(), /* signer_3= pk_y_uint256
+                                                                                         * high 128 bits */
+            Felt252Wrapper::TWO,  // type= SIGNER_TYPE_STARK
+            Felt252Wrapper::ZERO, // reserved_0
+            Felt252Wrapper::ZERO, // reserved_1
         ];
         deploy_tx.signature = sign_message_hash_braavos(tx_hash, Felt252Wrapper::ZERO, &signer_model);
 
