@@ -6,7 +6,7 @@ use std::{env, fs};
 use blockifier::execution::contract_class::ContractClass;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::pedersen::PedersenHasher;
-use mp_starknet::traits::hash::HasherT;
+use mp_hashers::HasherT;
 use mp_transactions::{InvokeTransaction, InvokeTransactionV1};
 use starknet_api::api_core::EntryPointSelector;
 use starknet_api::hash::StarkFelt;
