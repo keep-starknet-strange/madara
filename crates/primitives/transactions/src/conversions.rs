@@ -26,7 +26,7 @@ impl DeclareTransactionV0 {
         contract_class: ContractClass,
         is_query: bool,
     ) -> TransactionExecutionResult<btx::DeclareTransaction> {
-        let transaction_hash = self.compute_hash::<H>(chain_id, is_query);
+        let transaction_hash = self.compute_hash::<H>(chain_id, is_query, None);
 
         btx::DeclareTransaction::new(
             sttx::DeclareTransaction::V0(sttx::DeclareTransactionV0V1 {
@@ -49,7 +49,7 @@ impl DeclareTransactionV1 {
         contract_class: ContractClass,
         is_query: bool,
     ) -> TransactionExecutionResult<btx::DeclareTransaction> {
-        let transaction_hash = self.compute_hash::<H>(chain_id, is_query);
+        let transaction_hash = self.compute_hash::<H>(chain_id, is_query, None);
 
         btx::DeclareTransaction::new(
             sttx::DeclareTransaction::V1(sttx::DeclareTransactionV0V1 {
@@ -72,7 +72,7 @@ impl DeclareTransactionV2 {
         contract_class: ContractClass,
         is_query: bool,
     ) -> TransactionExecutionResult<btx::DeclareTransaction> {
-        let transaction_hash = self.compute_hash::<H>(chain_id, is_query);
+        let transaction_hash = self.compute_hash::<H>(chain_id, is_query, None);
 
         btx::DeclareTransaction::new(
             sttx::DeclareTransaction::V2(sttx::DeclareTransactionV2 {
@@ -106,7 +106,7 @@ impl DeclareTransaction {
 
 impl InvokeTransactionV0 {
     pub fn into_executable<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> btx::InvokeTransaction {
-        let transaction_hash = self.compute_hash::<H>(chain_id, is_query);
+        let transaction_hash = self.compute_hash::<H>(chain_id, is_query, None);
 
         btx::InvokeTransaction {
             tx: sttx::InvokeTransaction::V0(sttx::InvokeTransactionV0 {
@@ -133,7 +133,7 @@ impl InvokeTransactionV0 {
 
 impl InvokeTransactionV1 {
     pub fn into_executable<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> btx::InvokeTransaction {
-        let transaction_hash = self.compute_hash::<H>(chain_id, is_query);
+        let transaction_hash = self.compute_hash::<H>(chain_id, is_query, None);
 
         btx::InvokeTransaction {
             tx: sttx::InvokeTransaction::V1(sttx::InvokeTransactionV1 {
@@ -223,7 +223,7 @@ impl HandleL1MessageTransaction {
         paid_fee_on_l1: Fee,
         is_query: bool,
     ) -> btx::L1HandlerTransaction {
-        let transaction_hash = self.compute_hash::<H>(chain_id, is_query);
+        let transaction_hash = self.compute_hash::<H>(chain_id, is_query, None);
 
         let tx = sttx::L1HandlerTransaction {
             version: TransactionVersion(StarkFelt::from(0u8)),
@@ -238,7 +238,7 @@ impl HandleL1MessageTransaction {
 
     pub fn from_starknet(inner: starknet_api::transaction::L1HandlerTransaction) -> Self {
         Self {
-            nonce: u64::default(), //TO DO - deoxys
+            nonce: u64::try_from(inner.nonce.0).unwrap().into(), //TO DO - deoxys
             contract_address: inner.contract_address.into(),
             entry_point_selector:  inner.entry_point_selector.0.into(),
             calldata: inner.calldata.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),

@@ -14,6 +14,7 @@ use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::Transaction;
+use starknet_api::block;
 use starknet_api::transaction::Event;
 use starknet_crypto::FieldElement;
 
@@ -130,8 +131,9 @@ pub fn calculate_commitments<H: HasherT>(
     transactions: &[Transaction],
     events: &[Event],
     chain_id: Felt252Wrapper,
+    block_number: u64,
 ) -> (Felt252Wrapper, Felt252Wrapper) {
-    (calculate_transaction_commitment::<H>(transactions, chain_id), calculate_event_commitment::<H>(events))
+    (calculate_transaction_commitment::<H>(transactions, chain_id, block_number), calculate_event_commitment::<H>(events))
 }
 
 /// Calculate transaction commitment hash value.
@@ -149,13 +151,14 @@ pub fn calculate_commitments<H: HasherT>(
 /// The merkle root of the merkle tree built from the transactions.
 pub fn calculate_transaction_commitment<H: HasherT>(
     transactions: &[Transaction],
-    chain_id: Felt252Wrapper
+    chain_id: Felt252Wrapper,
+    block_number: u64,
 ) -> Felt252Wrapper {
     let mut tree = CommitmentTree::<H>::default();
     
     transactions.iter().enumerate().for_each(|(idx, tx)| {
         let idx: u64 = idx.try_into().expect("too many transactions while calculating commitment");
-        let final_hash = calculate_transaction_hash_with_signature::<H>(tx, chain_id);
+        let final_hash = calculate_transaction_hash_with_signature::<H>(tx, chain_id, block_number);
         tree.set(idx, final_hash);
     });
     tree.commit()
@@ -269,6 +272,7 @@ pub fn calculate_contract_state_hash<H: HasherT>(
 fn calculate_transaction_hash_with_signature<H: HasherT>(
     tx: &Transaction,
     chain_id: Felt252Wrapper,
+    block_number: u64,
 ) -> FieldElement
 where
     H: HasherT,
@@ -276,7 +280,7 @@ where
     let signature_hash = H::compute_hash_on_elements(
         &tx.signature().iter().map(|elt| FieldElement::from(*elt)).collect::<Vec<FieldElement>>(),
     );
-    let transactions_hashes = H::hash_elements(FieldElement::from(tx.compute_hash::<H>(chain_id, false)), signature_hash);
+    let transactions_hashes = H::hash_elements(FieldElement::from(tx.compute_hash::<H>(chain_id, false, Some(block_number))), signature_hash);
     transactions_hashes
 }
 

@@ -281,10 +281,10 @@ impl_runtime_apis! {
                 };
                 let extrinsic = &block_extrinsics[index as usize];
                 let tx_hash = match &extrinsic.function {
-                    RuntimeCall::Starknet( invoke { transaction }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false),
-                    RuntimeCall::Starknet( declare { transaction, .. }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false),
-                    RuntimeCall::Starknet( deploy_account { transaction }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false),
-                    RuntimeCall::Starknet( consume_l1_message { transaction, .. }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false),
+                    RuntimeCall::Starknet( invoke { transaction }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false, None),
+                    RuntimeCall::Starknet( declare { transaction, .. }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false, None),
+                    RuntimeCall::Starknet( deploy_account { transaction }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false, None),
+                    RuntimeCall::Starknet( consume_l1_message { transaction, .. }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false, None),
                     _ => return None,
                 };
 
@@ -306,10 +306,10 @@ impl_runtime_apis! {
             // Find our tx and it's index
             let (tx_index, tx) =  extrinsics.into_iter().enumerate().find(|(_, xt)| {
                 let computed_tx_hash = match &xt.function {
-                    RuntimeCall::Starknet( invoke { transaction }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false),
-                    RuntimeCall::Starknet( declare { transaction, .. }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false),
-                    RuntimeCall::Starknet( deploy_account { transaction }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false),
-                    RuntimeCall::Starknet( consume_l1_message { transaction, .. }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false),
+                    RuntimeCall::Starknet( invoke { transaction }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false, None),
+                    RuntimeCall::Starknet( declare { transaction, .. }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false, None),
+                    RuntimeCall::Starknet( deploy_account { transaction }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false, None),
+                    RuntimeCall::Starknet( consume_l1_message { transaction, .. }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false, None),
                     _ => return false
                 };
 

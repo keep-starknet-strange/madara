@@ -401,7 +401,7 @@ where
 
         let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
         let chain_id = self.chain_id()?;
-        let transactions_hashes = block.transactions_hashes::<H>(Felt252Wrapper(chain_id.0));
+        let transactions_hashes = block.transactions_hashes::<H>(Felt252Wrapper(chain_id.0), Some(block.header().block_number));
         let transactions = transactions_hashes.into_iter().map(FieldElement::from).collect();
         let blockhash = block.header().hash::<H>();
         let parent_blockhash = block.header().parent_block_hash;
@@ -493,7 +493,7 @@ where
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
         Ok(DeclareTransactionResult {
-            transaction_hash: transaction.compute_hash::<H>(chain_id, false).into(),
+            transaction_hash: transaction.compute_hash::<H>(chain_id, false, None).into(),
             class_hash: class_hash.0,
         })
     }
@@ -524,7 +524,7 @@ where
 
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
-        Ok(InvokeTransactionResult { transaction_hash: transaction.compute_hash::<H>(chain_id, false).into() })
+        Ok(InvokeTransactionResult { transaction_hash: transaction.compute_hash::<H>(chain_id, false, None).into() })
     }
 
     /// Add an Deploy Account Transaction
@@ -559,7 +559,7 @@ where
         };
 
         Ok(DeployAccountTransactionResult {
-            transaction_hash: transaction.compute_hash::<H>(chain_id, false).into(),
+            transaction_hash: transaction.compute_hash::<H>(chain_id, false, None).into(),
             contract_address: account_address.into(),
         })
     }
@@ -632,7 +632,7 @@ where
         let transaction = block.transactions().get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
         let chain_id = self.chain_id()?;
 
-        Ok(to_starknet_core_tx::<H>(transaction.clone(), Felt252Wrapper(chain_id.0)))
+        Ok(to_starknet_core_tx::<H>(transaction.clone(), Felt252Wrapper(chain_id.0), block.header().block_number))
     }
 
     /// Get block information with full transactions given the block id
@@ -660,7 +660,7 @@ where
                 .transactions()
                 .iter()
                 .cloned()
-                .map(|tx| to_starknet_core_tx::<H>(tx, Felt252Wrapper(chain_id.0)))
+                .map(|tx| to_starknet_core_tx::<H>(tx, Felt252Wrapper(chain_id.0), block.header().block_number))
                 .collect::<Vec<_>>(),
         };
 
@@ -707,7 +707,7 @@ where
     }
 
     /// Returns the transactions in the transaction pool, recognized by this sequencer
-    async fn pending_transactions(&self) -> RpcResult<Vec<Transaction>> {
+    async fn pending_transactions(&self, block_number: u64) -> RpcResult<Vec<Transaction>> {
         let substrate_block_hash = self.client.info().best_hash;
 
         let mut transactions = vec![];
@@ -729,7 +729,7 @@ where
         })?;
 
         let chain_id = self.chain_id()?;
-        let transactions = transactions.into_iter().map(|tx| to_starknet_core_tx::<H>(tx, chain_id.0.into())).collect();
+        let transactions = transactions.into_iter().map(|tx| to_starknet_core_tx::<H>(tx, chain_id.0.into(), block_number)).collect();
 
         Ok(transactions)
     }
@@ -816,8 +816,8 @@ where
         let find_tx = block
             .transactions()
             .iter()
-            .find(|tx| tx.compute_hash::<H>(chain_id, false).0 == transaction_hash)
-            .map(|tx| to_starknet_core_tx::<H>(tx.clone(), chain_id));
+            .find(|tx| tx.compute_hash::<H>(chain_id, false, Some(block.header().block_number)).0 == transaction_hash)
+            .map(|tx| to_starknet_core_tx::<H>(tx.clone(), chain_id, block.header().block_number));
 
         find_tx.ok_or(StarknetRpcApiError::TxnHashNotFound.into())
     }

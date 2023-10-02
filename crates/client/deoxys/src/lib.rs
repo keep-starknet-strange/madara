@@ -50,7 +50,7 @@ pub fn get_header(block: starknet_client::reader::Block, transactions: mp_block:
     let block_timestamp = block.timestamp.0;
     let transaction_count = block.transactions.len() as u128;
     let (transaction_commitment, event_commitment) =
-            mp_commitments::calculate_commitments::<PedersenHasher>(&transactions, &events, chain_id);
+            mp_commitments::calculate_commitments::<PedersenHasher>(&transactions, &events, chain_id, block_number);
     let event_count: u128 = block.transaction_receipts
                 .iter()
                 .map(|receipt| receipt.events.len() as u128)

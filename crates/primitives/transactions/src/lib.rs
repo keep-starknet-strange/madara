@@ -35,6 +35,7 @@ use mp_felt::Felt252Wrapper;
 /// See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/` for more details.
 
 pub const LEGACY_BLOCK_NUMBER: u64 = 1470;
+pub const LEGACY_L1_HANDLER_BLOCK: u64 = 854;
 
 pub struct LegacyEnv {
     pub legacy_mode: bool,

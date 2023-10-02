@@ -13,6 +13,7 @@ use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::Transaction;
+use starknet_api::block;
 
 /// Block Transactions
 pub type BlockTransactions = Vec<Transaction>;
@@ -49,8 +50,8 @@ impl Block {
     }
 
     /// Return a reference to all transaction hashes
-    pub fn transactions_hashes<H: HasherT>(&self, chain_id: Felt252Wrapper) -> Vec<Felt252Wrapper> {
-        self.transactions.iter().map(|tx| tx.compute_hash::<H>(chain_id, false)).collect()
+    pub fn transactions_hashes<H: HasherT>(&self, chain_id: Felt252Wrapper, block_number: Option<u64>) -> Vec<Felt252Wrapper> {
+        self.transactions.iter().map(|tx| tx.compute_hash::<H>(chain_id, false, block_number)).collect()
     }
 }
 

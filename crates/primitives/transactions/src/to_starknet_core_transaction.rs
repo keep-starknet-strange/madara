@@ -2,6 +2,7 @@ use std::vec::Vec;
 
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
+use starknet_api::block;
 use starknet_crypto::FieldElement;
 
 use super::compute_hash::ComputeTransactionHash;
@@ -16,10 +17,11 @@ fn cast_vec_of_felt_252_wrappers(data: Vec<Felt252Wrapper>) -> Vec<FieldElement>
 pub fn to_starknet_core_tx<H: HasherT>(
     tx: super::Transaction,
     chain_id: Felt252Wrapper,
+    block_number: u64,
 ) -> starknet_core::types::Transaction {
     match tx {
         super::Transaction::Declare(tx) => {
-            let tx_hash = tx.compute_hash::<H>(chain_id, false);
+            let tx_hash = tx.compute_hash::<H>(chain_id, false, Some(block_number));
 
             let tx = match tx {
                 super::DeclareTransaction::V0(super::DeclareTransactionV0 {
@@ -70,7 +72,7 @@ pub fn to_starknet_core_tx<H: HasherT>(
             starknet_core::types::Transaction::Declare(tx)
         }
         super::Transaction::DeployAccount(tx) => {
-            let tx_hash = tx.compute_hash::<H>(chain_id, false);
+            let tx_hash = tx.compute_hash::<H>(chain_id, false, Some(block_number));
 
             let tx = starknet_core::types::DeployAccountTransaction {
                 transaction_hash: tx_hash.0,
@@ -85,7 +87,7 @@ pub fn to_starknet_core_tx<H: HasherT>(
             starknet_core::types::Transaction::DeployAccount(tx)
         }
         super::Transaction::Deploy(tx) => {
-            let tx_hash = tx.compute_hash::<H>(chain_id, false);
+            let tx_hash = tx.compute_hash::<H>(chain_id, false, Some(block_number));
 
             let tx = starknet_core::types::DeployTransaction {
                 transaction_hash: tx_hash.0,
@@ -98,7 +100,7 @@ pub fn to_starknet_core_tx<H: HasherT>(
             starknet_core::types::Transaction::Deploy(tx)
         }
         super::Transaction::Invoke(tx) => {
-            let tx_hash = tx.compute_hash::<H>(chain_id, false);
+            let tx_hash = tx.compute_hash::<H>(chain_id, false, Some(block_number));
 
             let tx = match tx {
                 super::InvokeTransaction::V0(super::InvokeTransactionV0 {
@@ -134,7 +136,7 @@ pub fn to_starknet_core_tx<H: HasherT>(
             starknet_core::types::Transaction::Invoke(tx)
         }
         super::Transaction::L1Handler(tx) => {
-            let tx_hash = tx.compute_hash::<H>(chain_id, false);
+            let tx_hash = tx.compute_hash::<H>(chain_id, false, Some(block_number));
 
             let tx = starknet_core::types::L1HandlerTransaction {
                 transaction_hash: tx_hash.0,
