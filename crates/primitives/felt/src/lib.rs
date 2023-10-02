@@ -15,7 +15,6 @@ pub extern crate alloc;
 mod starkware_types_conversions;
 
 use alloc::string::{String, ToString};
-use core::error;
 
 use cairo_vm::felt::Felt252;
 #[cfg(feature = "parity-scale-codec")]
