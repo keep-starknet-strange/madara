@@ -66,16 +66,16 @@ fn get_madara_path_string(madara_path: &Option<PathBuf>) -> String {
 
 fn set_dev_environment(cmd: &mut ExtendedRunCmd) {
     // create a reproducible dev environment
-    cmd.run_cmd.shared_params.dev = false;
-    cmd.run_cmd.shared_params.chain = Some("dev".to_string());
+    cmd.base.shared_params.dev = false;
+    cmd.base.shared_params.chain = Some("dev".to_string());
 
-    cmd.run_cmd.force_authoring = true;
-    cmd.run_cmd.alice = true;
+    cmd.base.force_authoring = true;
+    cmd.base.alice = true;
 
     // we can't set `--rpc-cors=all`, so it needs to be set manually if we want to connect with external
     // hosts
-    cmd.run_cmd.rpc_external = true;
-    cmd.run_cmd.rpc_methods = RpcMethods::Unsafe;
+    cmd.base.rpc_external = true;
+    cmd.base.rpc_methods = RpcMethods::Unsafe;
 }
 
 fn try_set_testnet(madara_path: &Option<PathBuf>, cmd: &mut ExtendedRunCmd) -> Result<(), String> {
@@ -87,19 +87,19 @@ fn try_set_testnet(madara_path: &Option<PathBuf>, cmd: &mut ExtendedRunCmd) -> R
         if let Ok(ref src_path) = local_path {
             let src_path = src_path.clone() + "/configs/chain-specs/testnet-sharingan-raw.json";
             utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs")?;
-            cmd.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
+            cmd.base.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
         } else {
             utils::fetch_from_url(
                 constants::SHARINGAN_CHAIN_SPEC_URL.to_string(),
                 madara_path.clone() + "/configs/chain-specs/",
             )?;
-            cmd.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
+            cmd.base.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
         }
     }
 
-    if cmd.run_cmd.shared_params.chain.is_some() {
-        cmd.run_cmd.rpc_external = true;
-        cmd.run_cmd.rpc_methods = RpcMethods::Unsafe;
+    if cmd.base.shared_params.chain.is_some() {
+        cmd.base.rpc_external = true;
+        cmd.base.rpc_methods = RpcMethods::Unsafe;
     }
 
     Ok(())
@@ -114,7 +114,7 @@ fn set_chain_spec(madara_path: &Option<PathBuf>, cmd: &mut ExtendedRunCmd) -> Re
     utils::fetch_from_url(chain_spec_url.clone(), madara_path.clone() + "/chain-specs")?;
     let chain_spec =
         chain_spec_url.split('/').last().expect("Failed to get chain spec file name from `chain_spec_url`");
-    cmd.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/" + chain_spec);
+    cmd.base.shared_params.chain = Some(madara_path + "/chain-specs/" + chain_spec);
 
     Ok(())
 }
@@ -276,16 +276,16 @@ pub fn run() -> sc_cli::Result<()> {
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
         Some(Subcommand::Run(ref mut cmd)) => {
-            cmd.run_cmd.shared_params.base_path = cli.madara_path.clone();
+            cmd.base.shared_params.base_path = cli.madara_path.clone();
             let madara_path = get_madara_path_string(&cli.madara_path);
 
             // Set the node_key_file for substrate in the case that it was not manually setted
-            if cmd.run_cmd.network_params.node_key_params.node_key_file.is_none() {
-                cmd.run_cmd.network_params.node_key_params.node_key_file =
+            if cmd.base.network_params.node_key_params.node_key_file.is_none() {
+                cmd.base.network_params.node_key_params.node_key_file =
                     Some((madara_path.clone() + "/p2p-key.ed25519").into());
             }
 
-            if cmd.run_cmd.shared_params.dev {
+            if cmd.base.shared_params.dev {
                 set_dev_environment(cmd);
             }
 
@@ -314,7 +314,7 @@ pub fn run() -> sc_cli::Result<()> {
             };
 
             // pre assign variables because of cmd mutable borrow
-            let run_cmd: sc_cli::RunCmd = cmd.run_cmd.clone();
+            let run_cmd: sc_cli::RunCmd = cmd.base.clone();
             let sealing = cli.sealing;
 
             let runner = cli.create_runner(&run_cmd)?;

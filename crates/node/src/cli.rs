@@ -46,7 +46,7 @@ pub struct Cli {
 #[derive(Clone, Debug, clap::Args)]
 pub struct ExtendedRunCmd {
     #[clap(flatten)]
-    pub run_cmd: RunCmd,
+    pub base: RunCmd,
 
     /// Choose a supported DA Layer
     #[clap(long)]
