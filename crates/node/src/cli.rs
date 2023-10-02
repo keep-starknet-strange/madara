@@ -32,21 +32,24 @@ pub struct Cli {
     #[command(subcommand)]
     pub subcommand: Option<Subcommand>,
 
-    /// Path to the folder where all configuration files and data are stored
-    /// base_path will always be overwritten by madara_path
-    /// in the case you use the --tmp, the base_path will be changed during the runtime
-    #[clap(global = true, long, default_value = get_default_madara_path())]
-    pub madara_path: Option<PathBuf>,
-
-    /// Choose sealing method.
-    #[clap(global = true, long, value_enum, ignore_case = true)]
-    pub sealing: Option<Sealing>,
+    #[clap(flatten)]
+    pub run: ExtendedRunCmd,
 }
 
 #[derive(Clone, Debug, clap::Args)]
 pub struct ExtendedRunCmd {
     #[clap(flatten)]
     pub base: RunCmd,
+
+    /// Path to the folder where all configuration files and data are stored
+    /// base_path will always be overwritten by madara_path
+    /// in the case you use the --tmp, the base_path will be changed during the runtime
+    #[clap(long, default_value = get_default_madara_path())]
+    pub madara_path: Option<PathBuf>,
+
+    /// Choose sealing method.
+    #[clap(long, value_enum, ignore_case = true)]
+    pub sealing: Option<Sealing>,
 
     /// Choose a supported DA Layer
     #[clap(long)]
@@ -107,9 +110,6 @@ pub enum Subcommand {
 
     /// Revert the chain to a previous state.
     Revert(sc_cli::RevertCmd),
-
-    // Run madara node
-    Run(ExtendedRunCmd),
 
     // Setup madara node
     Setup(SetupCmd),
