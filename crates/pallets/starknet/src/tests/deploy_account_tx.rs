@@ -307,7 +307,7 @@ fn given_contract_run_deploy_account_braavos_tx_works_whis_hardware_signer() {
                                                                                          * low 128 bits */
             Felt252Wrapper::from_hex_be("0x76d91b936d094b864af4cfaaeec89fb1").unwrap(), /* signer_3= pk_y_uint256
                                                                                          * high 128 bits */
-            Felt252Wrapper::TWO,  // type= SIGNER_TYPE_STARK
+            Felt252Wrapper::TWO,  // type= SIGNER_TYPE_SECP256R1
             Felt252Wrapper::ZERO, // reserved_0
             Felt252Wrapper::ZERO, // reserved_1
         ];
