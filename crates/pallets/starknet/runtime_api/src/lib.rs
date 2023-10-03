@@ -22,7 +22,7 @@ use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSele
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
-use starknet_api::transaction::{Calldata, Event as StarknetEvent, TransactionHash};
+use starknet_api::transaction::{Calldata, Event as StarknetEvent, MessageToL1, TransactionHash};
 
 #[derive(parity_scale_codec::Encode, parity_scale_codec::Decode, scale_info::TypeInfo)]
 pub enum StarknetTransactionExecutionError {
@@ -74,6 +74,8 @@ sp_api::decl_runtime_apis! {
         fn get_block_context() -> BlockContext;
         /// Return is fee disabled in state
         fn is_transaction_fee_disabled() -> bool;
+        /// Return messages sent to L1 during tx execution
+        fn get_tx_messages_to_l1(tx_hash: TransactionHash) -> Vec<MessageToL1>;
     }
 
     pub trait ConvertTransactionRuntimeApi {

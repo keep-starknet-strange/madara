@@ -35,3 +35,6 @@ cairo_venv
 
 # idea
 .idea
+
+# pyenv
+.python-version
