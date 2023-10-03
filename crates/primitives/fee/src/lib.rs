@@ -33,7 +33,6 @@ pub const FEE_TRANSFER_N_STORAGE_CHANGES: u8 = 2; // Sender and sequencer balanc
 /// Number of storage updates to actually charge for the fee transfer tx.
 pub const FEE_TRANSFER_N_STORAGE_CHANGES_TO_CHARGE: u8 = FEE_TRANSFER_N_STORAGE_CHANGES - 1; // Exclude the sequencer balance update, since it's charged once throughout the batch.
 
-// FIXME: https://github.com/keep-starknet-strange/madara/issues/330
 static VM_RESOURCE_FEE_COSTS: phf::Map<&'static str, f64> = phf_map! {
     "n_steps" => 0.01_f64,
     "pedersen_builtin" => 0.32_f64,
@@ -41,7 +40,6 @@ static VM_RESOURCE_FEE_COSTS: phf::Map<&'static str, f64> = phf_map! {
     "ecdsa_builtin" => 20.48_f64,
     "bitwise_builtin" => 0.64_f64,
     "poseidon_builtin" => 0.32_f64,
-    "output_builtin" => 20.48_f64,
     "ec_op_builtin" => 10.24_f64,
 };
 
