@@ -96,7 +96,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                             StarkFelt::try_from(BLOCKIFIER_ACCOUNT_ADDRESS).unwrap(),
                             StarkFelt::try_from("0x000000000000000000000000000000000000000000000000000000000000dead")
                                 .unwrap(),
-                            StarkFelt::try_from("0x000000000000000000000000000000000000000000000000000000000000a136")
+                            StarkFelt::try_from("0x00000000000000000000000000000000000000000000000000000000000001a4")
                                 .unwrap(),
                             StarkFelt::from(0u128),
                         ]),
