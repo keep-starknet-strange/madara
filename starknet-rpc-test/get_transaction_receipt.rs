@@ -1,11 +1,13 @@
 extern crate starknet_rpc_test;
 
+use std::vec;
+
 use assert_matches::assert_matches;
 use rstest::rstest;
 use starknet_accounts::Account;
 use starknet_core::types::{
-    DeclareTransactionReceipt, Event, ExecutionResult, MaybePendingTransactionReceipt, TransactionFinalityStatus,
-    TransactionReceipt,
+    DeclareTransactionReceipt, Event, ExecutionResult, MaybePendingTransactionReceipt, MsgToL1,
+    TransactionFinalityStatus, TransactionReceipt,
 };
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
@@ -13,6 +15,7 @@ use starknet_providers::jsonrpc::{HttpTransport, HttpTransportError, JsonRpcClie
 use starknet_providers::{JsonRpcClient, Provider, ProviderError};
 use starknet_rpc_test::constants::{
     ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, FEE_TOKEN_ADDRESS, SEQUENCER_ADDRESS, SIGNER_PRIVATE,
+    UDC_ADDRESS,
 };
 use starknet_rpc_test::fixtures::madara;
 use starknet_rpc_test::utils::{
@@ -262,6 +265,99 @@ async fn fail_invalid_transaction_hash(#[future] madara: MadaraClient) -> Result
     let rpc = madara.get_starknet_client();
 
     assert!(rpc.get_transaction_receipt(FieldElement::ZERO).await.is_err());
+
+    Ok(())
+}
+
+#[rstest]
+#[tokio::test]
+async fn work_with_messages_to_l1(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+    let madara = madara.await;
+    let rpc = madara.get_starknet_client();
+
+    // 1. Declaring class for our L2 > L1 contract
+
+    let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    let (declare_tx, _) = account.declare_legacy_contract("../cairo-contracts/build/send_message.json");
+
+    let mut txs = madara.create_block_with_txs(vec![Transaction::LegacyDeclaration(declare_tx)]).await?;
+
+    // 2. Determine class hash
+
+    let class_hash = match txs.remove(0).unwrap() {
+        TransactionResult::Declaration(rpc_response) => rpc_response.class_hash,
+        _ => panic!("expected execution result"),
+    };
+
+    // 3. Next, deploying an instance of this class using universal deployer
+
+    let deploy_tx = account.invoke_contract(
+        FieldElement::from_hex_be(UDC_ADDRESS).unwrap(),
+        "deployContract",
+        vec![
+            class_hash,
+            FieldElement::ZERO, // salt
+            FieldElement::ZERO, // unique
+            FieldElement::ZERO, // calldata len
+        ],
+        None,
+    );
+
+    txs = madara.create_block_with_txs(vec![Transaction::Execution(deploy_tx)]).await?;
+
+    // 4. Now, we need to get the deployed contract address
+
+    let deploy_tx_hash = match txs.remove(0).unwrap() {
+        TransactionResult::Execution(rpc_response) => rpc_response.transaction_hash,
+        _ => panic!("expected execution result"),
+    };
+
+    let deploy_tx_receipt = get_transaction_receipt(rpc, deploy_tx_hash).await?;
+
+    let contract_address = match deploy_tx_receipt {
+        MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) => {
+            // Events:
+            //  UDC::ContractDeployed
+            //  Argent::TransactionExecuted
+            //  FeeToken::Transfer
+            receipt.events[0].data[0]
+        }
+        _ => panic!("expected tx receipt"),
+    };
+
+    // 5. Sending message to L1
+
+    let invoke_tx = account.invoke_contract(
+        contract_address,
+        "send_message_l2_to_l1",
+        vec![FieldElement::ZERO, FieldElement::ONE, FieldElement::TWO],
+        None,
+    );
+
+    txs = madara.create_block_with_txs(vec![Transaction::Execution(invoke_tx)]).await?;
+
+    // 6. Finally, checking that there is a single MessageToL1 in the receipt
+
+    let invoke_tx_hash = match txs.remove(0).unwrap() {
+        TransactionResult::Execution(rpc_response) => rpc_response.transaction_hash,
+        _ => panic!("expected execution result"),
+    };
+
+    let invoke_tx_receipt = get_transaction_receipt(rpc, invoke_tx_hash).await?;
+
+    match invoke_tx_receipt {
+        MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) => {
+            assert_eq_msg_to_l1(
+                vec![MsgToL1 {
+                    from_address: contract_address,
+                    to_address: FieldElement::ZERO,
+                    payload: vec![FieldElement::TWO],
+                }],
+                receipt.messages_sent,
+            );
+        }
+        _ => panic!("expected tx receipt"),
+    };
 
     Ok(())
 }

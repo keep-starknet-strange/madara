@@ -16,7 +16,7 @@ use sp_runtime::DispatchError;
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
-use starknet_api::transaction::{Calldata, Event as StarknetEvent, TransactionHash};
+use starknet_api::transaction::{Calldata, Event as StarknetEvent, MessageToL1, TransactionHash};
 
 #[derive(parity_scale_codec::Encode, parity_scale_codec::Decode, scale_info::TypeInfo)]
 pub enum StarknetTransactionExecutionError {
@@ -60,6 +60,8 @@ sp_api::decl_runtime_apis! {
         fn get_starknet_events_and_their_associated_tx_hash(block_extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper) -> Vec<(Felt252Wrapper, StarknetEvent)>;
         /// Return the outcome of the tx execution
         fn get_tx_execution_outcome(tx_hash: TransactionHash) -> Option<Vec<u8>>;
+        /// Return messages sent to L1 during tx execution
+        fn get_tx_messages_to_l1(tx_hash: TransactionHash) -> Vec<MessageToL1>;
     }
 
     pub trait ConvertTransactionRuntimeApi {

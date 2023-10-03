@@ -7,6 +7,7 @@ pub const CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH: &str =
     "0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276";
 pub const ERC20_CAIRO_0_CONTRACT: &str = "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00";
 pub const SEQUENCER_ADDRESS: &str = "0xdead";
+pub const UDC_ADDRESS: &str = "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf";
 
 // https://github.com/keep-starknet-strange/madara/blob/main/crates/node/src/chain_spec.rs#L185-L186
 pub const ACCOUNT_CONTRACT_CLASS_HASH: &str = "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f";
@@ -25,7 +26,7 @@ pub const TOKEN_CLASS_HASH: &str = "0x000000000000000000000000000000000000000000
 pub const ARGENT_CONTRACT_ADDRESS: &str = "0x0000000000000000000000000000000000000000000000000000000000000002";
 
 // Taken from https://github.com/0xSpaceShard/starknet-devnet-rs/blob/main/crates/starknet-server/tests/common/mod.rs#L5
-pub const MIN_PORT: u16 = 1025;
+pub const MIN_PORT: u16 = 1_025;
 pub const MAX_PORT: u16 = 65_535;
 
 pub const MAX_U256: &str = "0xffffffffffffffffffffffffffffffff";

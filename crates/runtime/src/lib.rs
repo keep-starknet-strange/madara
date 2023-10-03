@@ -53,7 +53,7 @@ use sp_version::RuntimeVersion;
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
-use starknet_api::transaction::{Calldata, Event as StarknetEvent, TransactionHash};
+use starknet_api::transaction::{Calldata, Event as StarknetEvent, MessageToL1, TransactionHash};
 /// Import the types.
 pub use types::*;
 
@@ -354,6 +354,10 @@ impl_runtime_apis! {
             }).map(|(_, event)| event).collect();
 
             Some((tx_type, events))
+        }
+
+        fn get_tx_messages_to_l1(tx_hash: TransactionHash) -> Vec<MessageToL1> {
+            Starknet::tx_messages(tx_hash)
         }
 
         fn get_tx_execution_outcome(tx_hash: TransactionHash) -> Option<Vec<u8>> {
