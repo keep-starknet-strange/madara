@@ -12,27 +12,3 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v3
-
-      - name: Generate a token
-        id: generate_token
-        uses: getsentry/action-github-app-token@v2
-        with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.PRIV_KEY }}
-
-      - name: Cleanup
-        run: |
-          gh extension install actions/gh-actions-cache
-          BRANCH="refs/pull/${{ github.event.pull_request.number }}/merge"
-          echo "Fetching list of cache key"
-          cacheKeysForPR=$(gh actions-cache list -B $BRANCH --key ${{ runner.os }}-cargo- | cut -f 1 )
-          set +e
-          echo "Deleting caches..."
-          for cacheKey in $cacheKeysForPR
-          do
-            echo "Deleting cache $cacheKey"
-            gh actions-cache delete $cacheKey -B $BRANCH --confirm
-          done
-          echo "Done"
-        env:
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}

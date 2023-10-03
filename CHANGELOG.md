@@ -3,6 +3,19 @@
 ## Next release
 
 - feat: use actual vm resource costs
+- fix: add setup and run for rpc tests
+- fix: fix clap for run command
+- fix: add `madara_path` flag for setup command
+- fix: add official references to configs files
+- refactor: exported chain id constant in mp-chain-id crate and added one for
+  SN_MAIN
+- fix: cargo update and `main` branch prettier fix
+- ci: disable pr close workflow
+- ci: add ci verification for detecting genesis changes and config hashes
+- feat: better management of custom configurations for genesis assets
+- fix: fix sharingan chain spec
+- fix: update madara infra to main branch
+- fix: update `Cargo.lock`
 
 ## v0.3.0
 
