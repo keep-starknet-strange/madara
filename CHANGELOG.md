@@ -15,6 +15,7 @@
 - fix: fix sharingan chain spec
 - fix: update madara infra to main branch
 - fix: update `Cargo.lock`
+- fix: ensure logger is initialized for `setup` cli command to produce logging output
 
 ## v0.3.0
 
