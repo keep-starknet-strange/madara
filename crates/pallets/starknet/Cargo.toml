@@ -93,6 +93,7 @@ std = [
   "scale-info/std",
   "pallet-timestamp/std",
   "sp-inherents/std",
+  "mp-sequencer-address/std",
   # Starknet
   "starknet-crypto/std",
   "blockifier/std",
