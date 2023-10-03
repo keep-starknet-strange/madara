@@ -96,6 +96,8 @@ std = [
   # Starknet
   "starknet-crypto/std",
   "blockifier/std",
+  "mp-sequencer-address/std",
+  "mp-felt/std",
   # Other third party dependencies
   "dep:reqwest",
   "dep:cairo-lang-casm-contract-class",

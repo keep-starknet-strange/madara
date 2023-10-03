@@ -2,6 +2,7 @@
 
 ## Next release
 
+- dev: fix rpc test failing
 - feat: use actual vm resource costs
 - fix: add setup and run for rpc tests
 - fix: fix clap for run command
