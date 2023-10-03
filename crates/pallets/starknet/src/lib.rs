@@ -335,13 +335,12 @@ pub mod pallet {
     #[pallet::getter(fn seq_addr_update)]
     pub type SeqAddrUpdate<T: Config> = StorageValue<_, bool, ValueQuery>;
 
-    /// Mapping from Starknet class hash to contract class.
-    /// Safe to use `Identity` as the key is already a hash.
+    /// Information about processed L1 Messages
+    /// Based on Nonce value.
     #[pallet::storage]
     #[pallet::unbounded]
     #[pallet::getter(fn l1_messages)]
-    pub(super) type L1Messages<T: Config> =
-        StorageMap<_, Blake2_128Concat, Felt252Wrapper, TransactionHash, OptionQuery>;
+    pub(super) type L1Messages<T: Config> = StorageMap<_, Blake2_128Concat, Nonce, (), OptionQuery>;
 
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
@@ -678,7 +677,7 @@ pub mod pallet {
             let transaction = input_transaction.into_executable::<T::SystemHash>(chain_id, paid_fee_on_l1, false);
 
             let tx_hash = transaction.tx_hash;
-            let nonce = transaction.tx.nonce.into();
+            let nonce: Nonce = transaction.tx.nonce;
 
             // Ensure that L1 Message has not been executed
             Self::ensure_l1_message_not_executed(&nonce).map_err(|_| Error::<T>::L1MessageAlreadyExecuted)?;
@@ -686,7 +685,7 @@ pub mod pallet {
             // Store infornamtion about message being processed
             // The next instruction executes the message
             // Either successfully  or not
-            L1Messages::<T>::insert(nonce, tx_hash);
+            L1Messages::<T>::insert(nonce, ());
 
             // Execute
             let tx_execution_infos = transaction

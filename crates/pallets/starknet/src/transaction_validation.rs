@@ -85,10 +85,10 @@ impl<T: Config> Pallet<T> {
             UserAndL1HandlerTransaction::L1Handler(tx, _fee) => {
                 let sender_address = ContractAddress::default();
                 let sender_nonce = Pallet::<T>::nonce(sender_address).into();
-                let nonce = tx.nonce.into();
+                let nonce = tx.nonce;
 
-                Self::ensure_l1_message_not_executed(&nonce)?;
-                (sender_address.into(), sender_nonce, nonce)
+                Self::ensure_l1_message_not_executed(&Nonce(StarkFelt::from(nonce)))?;
+                (sender_address.into(), sender_nonce, nonce.into())
             }
         };
 
@@ -127,7 +127,7 @@ impl<T: Config> Pallet<T> {
         .map_or_else(|_error| Err(InvalidTransaction::BadProof), |_res| Ok(()))
     }
 
-    pub fn ensure_l1_message_not_executed(nonce: &Felt252Wrapper) -> Result<(), InvalidTransaction> {
+    pub fn ensure_l1_message_not_executed(nonce: &Nonce) -> Result<(), InvalidTransaction> {
         match L1Messages::<T>::contains_key(nonce) {
             true => Err(InvalidTransaction::Stale),
             false => Ok(()),
