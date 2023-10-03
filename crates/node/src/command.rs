@@ -322,8 +322,9 @@ pub fn run() -> sc_cli::Result<()> {
                 service::new_full(config, sealing, da_config).map_err(sc_cli::Error::Service)
             })
         }
-        Some(Subcommand::Setup(cmd)) => {
-            fetch_madara_configs(&cli.madara_path, &cmd)?;
+        Some(Subcommand::Setup(ref cmd)) => {
+            let _runner = cli.create_runner(cmd)?;
+            fetch_madara_configs(&cli.madara_path, cmd)?;
             Ok(())
         }
         _ => Err("You need to specify some subcommand. E.g. `madara run`".into()),

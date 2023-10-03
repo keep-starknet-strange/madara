@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use mc_data_availability::DaLayer;
-use sc_cli::RunCmd;
+use sc_cli::{CliConfiguration, DatabaseParams, RunCmd, SharedParams};
 
 use crate::constants;
 
@@ -71,6 +71,24 @@ pub struct SetupCmd {
     /// Where the `md5` and `url` fields are optional
     #[clap(long, default_value = constants::DEFAULT_CONFIGS_URL)]
     pub fetch_madara_configs: Option<String>,
+
+    #[allow(missing_docs)]
+    #[clap(flatten)]
+    pub shared_params: SharedParams,
+
+    #[allow(missing_docs)]
+    #[clap(flatten)]
+    pub database_params: DatabaseParams,
+}
+
+impl CliConfiguration for SetupCmd {
+    fn shared_params(&self) -> &SharedParams {
+        &self.shared_params
+    }
+
+    fn database_params(&self) -> Option<&DatabaseParams> {
+        Some(&self.database_params)
+    }
 }
 
 #[allow(clippy::large_enum_variant)]
