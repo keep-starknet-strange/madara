@@ -142,7 +142,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
                             StarkFelt::try_from("0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0")
                                 .unwrap(), // From
                             StarkFelt::try_from("0xdead").unwrap(), // To
-                            StarkFelt::try_from("0xa334").unwrap(), // Amount low
+                            StarkFelt::try_from("0x1a4").unwrap(), // Amount low
                             StarkFelt::from(0u128),                 // Amount high
                         ]),
                     },
