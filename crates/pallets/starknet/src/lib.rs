@@ -335,6 +335,14 @@ pub mod pallet {
     #[pallet::getter(fn seq_addr_update)]
     pub type SeqAddrUpdate<T: Config> = StorageValue<_, bool, ValueQuery>;
 
+    /// Mapping from Starknet class hash to contract class.
+    /// Safe to use `Identity` as the key is already a hash.
+    #[pallet::storage]
+    #[pallet::unbounded]
+    #[pallet::getter(fn l1_messages)]
+    pub(super) type L1Messages<T: Config> =
+        StorageMap<_, Blake2_128Concat, Felt252Wrapper, TransactionHash, OptionQuery>;
+
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
@@ -440,6 +448,7 @@ pub mod pallet {
         SequencerAddressNotValid,
         InvalidContractClassForThisDeclareVersion,
         Unimplemented,
+        L1MessageAlreadyExecuted,
     }
 
     /// The Starknet pallet external functions.
@@ -668,6 +677,17 @@ pub mod pallet {
             let chain_id = Self::chain_id();
             let transaction = input_transaction.into_executable::<T::SystemHash>(chain_id, paid_fee_on_l1, false);
 
+            let tx_hash = transaction.tx_hash;
+            let nonce = transaction.tx.nonce.into();
+
+            // Ensure that L1 Message has not been executed
+            Self::ensure_l1_message_not_executed(&nonce).map_err(|_| Error::<T>::L1MessageAlreadyExecuted)?;
+
+            // Store infornamtion about message being processed
+            // The next instruction executes the message
+            // Either successfully  or not
+            L1Messages::<T>::insert(nonce, tx_hash);
+
             // Execute
             let tx_execution_infos = transaction
                 .execute(
@@ -678,7 +698,6 @@ pub mod pallet {
                 )
                 .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
-            let tx_hash = transaction.tx_hash;
             Self::process_tx_events_and_messages(
                 tx_hash,
                 &tx_execution_infos.execute_call_info,

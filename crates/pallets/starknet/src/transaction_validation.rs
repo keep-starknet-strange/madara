@@ -58,31 +58,41 @@ impl<T: Config> Pallet<T> {
     pub fn validate_usigned_tx_nonce(
         transaction: &UserAndL1HandlerTransaction,
     ) -> Result<(Felt252Wrapper, Felt252Wrapper, Felt252Wrapper), InvalidTransaction> {
-        let (sender_address, transaction_nonce) = match transaction {
-            UserAndL1HandlerTransaction::User(tx) => (tx.sender_address().into(), *tx.nonce()),
-            UserAndL1HandlerTransaction::L1Handler(tx, _fee) => (ContractAddress::default(), tx.nonce.into()),
+        let (sender_address, sender_nonce, transaction_nonce) = match transaction {
+            UserAndL1HandlerTransaction::User(tx) => {
+                let sender_address: ContractAddress = tx.sender_address().into();
+                let sender_nonce: Felt252Wrapper = Pallet::<T>::nonce(sender_address).into();
+                let transaction_nonce = tx.nonce();
+                // Reject transaction with an already used Nonce
+                if sender_nonce > *transaction_nonce {
+                    Err(InvalidTransaction::Stale)?;
+                }
+
+                // A transaction with a nonce higher than the expected nonce is placed in
+                // the future queue of the transaction pool.
+                if sender_nonce < *transaction_nonce {
+                    log!(
+                        info,
+                        "Nonce is too high. Expected: {:?}, got: {:?}. This transaction will be placed in the \
+                         transaction pool and executed in the future when the nonce is reached.",
+                        sender_nonce,
+                        transaction_nonce
+                    );
+                }
+
+                (tx.sender_address(), sender_nonce, *transaction_nonce)
+            }
+            UserAndL1HandlerTransaction::L1Handler(tx, _fee) => {
+                let sender_address = ContractAddress::default();
+                let sender_nonce = Pallet::<T>::nonce(sender_address).into();
+                let nonce = tx.nonce.into();
+
+                Self::ensure_l1_message_not_executed(&nonce)?;
+                (sender_address.into(), sender_nonce, nonce)
+            }
         };
 
-        let sender_nonce: Felt252Wrapper = Pallet::<T>::nonce(sender_address).into();
-
-        // Reject transaction with an already used Nonce
-        if sender_nonce > transaction_nonce {
-            return Err(InvalidTransaction::Stale);
-        }
-
-        // A transaction with a nonce higher than the expected nonce is placed in
-        // the future queue of the transaction pool.
-        if sender_nonce < transaction_nonce {
-            log!(
-                info,
-                "Nonce is too high. Expected: {:?}, got: {:?}. This transaction will be placed in the transaction \
-                 pool and executed in the future when the nonce is reached.",
-                sender_nonce,
-                transaction_nonce
-            );
-        }
-
-        Ok((sender_address.into(), sender_nonce, transaction_nonce))
+        Ok((sender_address, sender_nonce, transaction_nonce))
     }
 
     pub fn validate_unsigned_tx(transaction: &UserAndL1HandlerTransaction) -> Result<(), InvalidTransaction> {
@@ -115,5 +125,12 @@ impl<T: Config> Pallet<T> {
                 .validate_tx(&mut state, &block_context, &mut execution_resources, &mut initial_gas, false),
         }
         .map_or_else(|_error| Err(InvalidTransaction::BadProof), |_res| Ok(()))
+    }
+
+    pub fn ensure_l1_message_not_executed(nonce: &Felt252Wrapper) -> Result<(), InvalidTransaction> {
+        match L1Messages::<T>::contains_key(nonce) {
+            true => Err(InvalidTransaction::Stale),
+            false => Ok(()),
+        }
     }
 }
