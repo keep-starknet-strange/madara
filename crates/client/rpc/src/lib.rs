@@ -1032,6 +1032,23 @@ where
             events_converted.last().unwrap().data[2]
         };
 
+        let messages = self
+            .client
+            .runtime_api()
+            .get_tx_messages_to_l1(substrate_block_hash, Felt252Wrapper(transaction_hash).into())
+            .map_err(|e| {
+                error!("'{e}'");
+                StarknetRpcApiError::InternalServerError
+            })?;
+
+        fn message_conversion(message: starknet_api::transaction::MessageToL1) -> starknet_core::types::MsgToL1 {
+            starknet_core::types::MsgToL1 {
+                from_address: Felt252Wrapper::from(message.from_address).0,
+                to_address: FieldElement::from_byte_slice_be(message.to_address.0.as_bytes()).unwrap(),
+                payload: message.payload.0.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
+            }
+        }
+
         let receipt = match transaction {
             mp_transactions::Transaction::Declare(_) => TransactionReceipt::Declare(DeclareTransactionReceipt {
                 transaction_hash,
@@ -1039,7 +1056,7 @@ where
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
                 block_hash,
                 block_number,
-                messages_sent: Default::default(),
+                messages_sent: messages.into_iter().map(message_conversion).collect(),
                 events: events_converted,
                 execution_result,
             }),
@@ -1050,7 +1067,7 @@ where
                     finality_status: TransactionFinalityStatus::AcceptedOnL2,
                     block_hash,
                     block_number,
-                    messages_sent: Default::default(),
+                    messages_sent: messages.into_iter().map(message_conversion).collect(),
                     events: events_converted,
                     contract_address: tx.get_account_address(),
                     execution_result,
@@ -1062,7 +1079,7 @@ where
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
                 block_hash,
                 block_number,
-                messages_sent: Default::default(),
+                messages_sent: messages.into_iter().map(message_conversion).collect(),
                 events: events_converted,
                 execution_result,
             }),
@@ -1072,7 +1089,7 @@ where
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
                 block_hash,
                 block_number,
-                messages_sent: Default::default(),
+                messages_sent: messages.into_iter().map(message_conversion).collect(),
                 events: events_converted,
                 execution_result,
             }),

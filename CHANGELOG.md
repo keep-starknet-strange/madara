@@ -140,6 +140,7 @@
 - fix: rpc tests and background node run
 - test: add tests for simulate tx offset
 - test: add tests for tx hashing
+- fix: bring back messages in transaction receipts
 
 ## v0.2.0
 
