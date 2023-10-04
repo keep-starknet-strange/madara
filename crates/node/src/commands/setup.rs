@@ -8,21 +8,39 @@ use crate::cli::Cli;
 use crate::configs::FileInfos;
 use crate::{configs, constants};
 
+/// Define a way to retrieve an index.json file
+
+/// The index.json must follow the format of the official index.json
+/// (https://github.com/keep-starknet-strange/madara/blob/main/configs/index.json)
+/// Where the `md5` and `url` fields are optional
 #[derive(Debug, clap::Args)]
-pub struct SetupCmd {
-    /// Load a index.json file for downloading assets
-    /// The index.json must follow the format of the official index.json
-    /// (https://github.com/keep-starknet-strange/madara/blob/main/configs/index.json)
-    /// Where the `md5` and `url` fields are optional
-    #[clap(long, conflicts_with="from_local", default_value = constants::DEFAULT_CONFIGS_URL)]
+#[group(required = true, multiple = false)]
+pub struct SetupSource {
+    /// Download an index.json file for an url
+    #[clap(
+        long,
+        conflicts_with="from_local",
+        value_hint=clap::ValueHint::Url,
+        // This combination of properties allow us to use a default value only if the arg is passed witout value.
+        // If it is not passed at all, no default value is used.
+        // See: https://docs.rs/clap/latest/clap/struct.Arg.html#method.default_missing_value
+        num_args = 0..=1, require_equals=true, default_missing_value = Some(constants::DEFAULT_CONFIGS_URL)
+    )]
     pub from_remote: Option<String>,
 
+    /// Copy an index.json file for an url
     #[clap(long, conflicts_with = "from_remote")]
     pub from_local: Option<String>,
+}
 
+#[derive(Debug, clap::Args)]
+pub struct SetupCmd {
     #[allow(missing_docs)]
     #[clap(flatten)]
     pub shared_params: SharedParams,
+
+    #[clap(flatten)]
+    pub source: SetupSource,
 }
 
 impl CliConfiguration for SetupCmd {
@@ -47,7 +65,7 @@ impl SetupCmd {
         };
         log::info!("Seting up madara config at '{}'", dest_config_dir_path.display());
 
-        if let Some(src_configs_dir_path) = &self.from_local {
+        if let Some(src_configs_dir_path) = &self.source.from_local {
             let src_configs_dir_path = PathBuf::from(src_configs_dir_path);
             let index_file_path = src_configs_dir_path.join("index.json");
             let src_file_content =
@@ -62,7 +80,7 @@ impl SetupCmd {
                     &dest_config_dir_path.join("genesis-assets"),
                 )?;
             }
-        } else if let Some(configs_url) = &self.from_remote {
+        } else if let Some(configs_url) = &self.source.from_remote {
             let configs_url = Url::parse(configs_url)
                 .map_err(|e| Error::Input(format!("invalid input for 'fetch_madara_configs': {}", e)))?;
             println!("Fetching chain config from '{}'", &configs_url);
@@ -82,6 +100,11 @@ impl SetupCmd {
             for asset in madara_configs.genesis_assets {
                 fetch_and_validate_genesis_assets(&base_url, asset, &dest_config_dir_path)?;
             }
+        } else {
+            unreachable!(
+                "clap::Args is derived upon `SetupSource` in a way that guarante that either `from_remote` or \
+                 `from_local` is present"
+            );
         }
 
         Ok(())

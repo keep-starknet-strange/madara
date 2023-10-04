@@ -2,6 +2,18 @@
 
 ## Next release
 
+- feat(cli): `run` is the by default command when running the `madara` bin
+- refacto(cli): `run` and `setup` commands are defined in their own files
+- refacto(cli): `run.testnet` argument removed in favor of the substrate native `chain` arg
+- feat(cli): `run.fetch_chain_spec` argument removed in favor of the substrate native `chain` arg
+- feat(cli): `setup` require a source file, either from an url or a path on the local filesystem
+- chore(cli): use `Url`, `Path` and `PathBuf` types rather than `String`
+- refacto(cli): moved the pallet/chain_spec/utils methods to the node crate
+- feat(cli): `madara_path` arg has been remove, we use the substrate native `base_path` arg instead
+- feat(cli): sharingan chain specs are loaded during the compilation, not downloaded from github
+- refacto(pallet/starknet): `GenesisLoader` refactored as `GenesisData` + a `base_path` field
+- dev: fix rpc test failing
+
 ## v0.4.0
 
 - chore: release v0.4.0

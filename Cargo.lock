@@ -6072,7 +6072,6 @@ dependencies = [
  "async-trait",
  "blockifier",
  "clap 4.4.6",
- "dirs",
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "frame-system",

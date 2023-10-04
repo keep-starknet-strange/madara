@@ -11,6 +11,8 @@ use sp_core::storage::Storage;
 use sp_core::{Pair, Public};
 use sp_state_machine::BasicExternalities;
 
+use crate::constants::{DEV_CHAIN_ID, LOCAL_TESTNET_CHAIN_ID};
+
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
 
@@ -51,15 +53,16 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 
 pub fn development_config(enable_manual_seal: Option<bool>, base_path: BasePath) -> Result<DevChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
+    let chain_id = DEV_CHAIN_ID;
 
     Ok(DevChainSpec::from_genesis(
         // Name
         "Development",
         // ID
-        "dev",
+        chain_id,
         ChainType::Development,
         move || {
-            let genesis_loader = load_genesis(base_path.config_dir("dev"));
+            let genesis_loader = load_genesis(base_path.config_dir(chain_id));
 
             // Logging the development account
             print_development_accounts(&genesis_loader);
@@ -93,7 +96,7 @@ pub fn development_config(enable_manual_seal: Option<bool>, base_path: BasePath)
 // accounts with addresses 0x1 and 0x4 are NO VALIDATE accounts (don't require PK)
 // accounts with addresses 0x2 and 0x3 have the same PK
 pub fn print_development_accounts(genesis_loader: &GenesisLoader) {
-    // TODO: this is only true by luch. It's not enforced by anything
+    // TODO: this is only true by luck. It's not enforced by anything
     let no_validate_account_address = genesis_loader.data().contracts[0].0.0;
     let argent_account_address = genesis_loader.data().contracts[1].0.0;
     let oz_account_address = genesis_loader.data().contracts[2].0.0;
@@ -112,16 +115,17 @@ pub fn print_development_accounts(genesis_loader: &GenesisLoader) {
 
 pub fn local_testnet_config(base_path: BasePath) -> Result<ChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
+    let chain_id = LOCAL_TESTNET_CHAIN_ID;
 
     Ok(ChainSpec::from_genesis(
         // Name
         "Local Testnet",
         // ID
-        "local_testnet",
+        chain_id,
         ChainType::Local,
         move || {
             testnet_genesis(
-                load_genesis(base_path.config_dir("local_testnet")),
+                load_genesis(base_path.config_dir(chain_id)),
                 wasm_binary,
                 // Initial PoA authorities
                 // Intended to be only 2

@@ -6,6 +6,7 @@ use sc_service::BasePath;
 use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
 use crate::cli::{Cli, Subcommand};
 use crate::commands::run_node;
+use crate::constants::{DEV_CHAIN_ID, SHARINGAN_CHAIN_ID};
 use crate::{chain_spec, service};
 
 impl SubstrateCli for Cli {
@@ -35,7 +36,7 @@ impl SubstrateCli for Cli {
 
     fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
         Ok(match id {
-            "dev" => {
+            DEV_CHAIN_ID => {
                 let enable_manual_seal = self.run.sealing.map(|_| true);
                 let base_path = self
                     .run
@@ -47,7 +48,7 @@ impl SubstrateCli for Cli {
                     .unwrap_or_else(|| BasePath::from_project("", "", &<Cli as SubstrateCli>::executable_name()));
                 Box::new(chain_spec::development_config(enable_manual_seal, base_path)?)
             }
-            "sharingan" => Box::new(chain_spec::ChainSpec::from_json_bytes(
+            SHARINGAN_CHAIN_ID => Box::new(chain_spec::ChainSpec::from_json_bytes(
                 &include_bytes!("../../../configs/chain-specs/testnet-sharingan-raw.json")[..],
             )?),
             "" | "local" | "madara-local" => {

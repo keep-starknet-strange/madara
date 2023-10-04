@@ -6,12 +6,6 @@ use sc_cli::{Result, RpcMethods, RunCmd, SubstrateCli};
 use crate::cli::Cli;
 use crate::service;
 
-/// Available testnets.
-#[derive(Debug, Copy, Clone, PartialEq, clap::ValueEnum)]
-pub enum Testnet {
-    Sharingan,
-}
-
 /// Available Sealing methods.
 #[derive(Debug, Copy, Clone, clap::ValueEnum, Default)]
 pub enum Sealing {
