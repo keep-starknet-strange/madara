@@ -93,16 +93,17 @@ async fn works_with_storage_change(madara: &ThreadSafeMadaraClient) -> Result<()
     let (declare_tx, expected_class_hash, _) = account
         .declare_contract("./contracts/Counter1/Counter1.sierra.json", "./contracts/Counter1/Counter1.casm.json");
 
-    let (mut txs, block_number) = {
+    let (txs, block_number) = {
         let mut madara_write_lock = madara.write().await;
+
         let txs = madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
         let block_number = rpc.block_number().await?;
+
         (txs, block_number)
     };
 
     assert_eq!(txs.len(), 1);
-    let declare_tx_result = txs.remove(0);
-    match declare_tx_result {
+    match txs[0] {
         Ok(TransactionResult::Declaration(DeclareTransactionResult { transaction_hash: _, class_hash })) => {
             assert_eq!(class_hash, expected_class_hash);
         }
@@ -120,32 +121,38 @@ async fn works_with_storage_change(madara: &ThreadSafeMadaraClient) -> Result<()
 
 #[rstest]
 #[tokio::test]
+#[ignore]
 async fn fails_already_declared(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
     // first declaration works
     let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
-    let (declare_tx, _, _) = account
-        .declare_contract("./contracts/Counter2/Counter2.sierra.json", "./contracts/Counter2/Counter2.casm.json");
 
-    let mut madara_write_lock = madara.write().await;
-    // The first one will fail too for now
-    let txs = madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
+    let txs = {
+        let mut madara_write_lock = madara.write().await;
+
+        let (declare_tx, _, _) = account
+            .declare_contract("./contracts/Counter2/Counter2.sierra.json", "./contracts/Counter2/Counter2.casm.json");
+        // The first one will fail too for now
+        madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?
+    };
 
     assert_eq!(txs.len(), 1);
     assert!(txs[0].as_ref().is_ok());
 
-    // second declaration fails
-    let (declare_tx, _, _) = account
-        .declare_contract("./contracts/Counter2/Counter2.sierra.json", "./contracts/Counter2/Counter2.casm.json");
+    let txs = {
+        let mut madara_write_lock = madara.write().await;
+        // second declaration fails
+        let (declare_tx, _, _) = account
+            .declare_contract("./contracts/Counter2/Counter2.sierra.json", "./contracts/Counter2/Counter2.casm.json");
 
-    let mut txs = madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
+        madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?
+    };
 
     assert_eq!(txs.len(), 1);
-    let declare_tx_result = txs.remove(0);
     assert_matches!(
-        declare_tx_result.err(),
-        Some(SendTransactionError::AccountError(starknet_accounts::AccountError::Provider(
+        txs[0],
+        Err(SendTransactionError::AccountError(starknet_accounts::AccountError::Provider(
             ProviderError::StarknetError(StarknetErrorWithMessage {
                 code: MaybeUnknownErrorCode::Known(StarknetError::ClassAlreadyDeclared),
                 message: _

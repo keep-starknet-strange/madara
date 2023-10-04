@@ -57,6 +57,8 @@ mp-chain-id = { workspace = true }
 mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
 mp-transactions = { workspace = true }
+mp-block = { workspace = true }
+mp-snos-output = { workspace = true }
 # Starknet dependencies
 blockifier = { workspace = true }
 starknet-ff = { workspace = true }
@@ -69,6 +71,8 @@ substrate-wasm-builder = { workspace = true }
 std = [
   # Madara pallets
   "pallet-starknet/std",
+  # Madara primitives
+  "mp-snos-output/std",
   # Frame dependencies
   "frame-try-runtime?/std",
   "frame-system-benchmarking?/std",

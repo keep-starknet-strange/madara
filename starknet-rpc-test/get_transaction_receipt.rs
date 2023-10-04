@@ -352,16 +352,10 @@ async fn work_with_messages_to_l1(madara: &ThreadSafeMadaraClient) -> Result<(),
 
     let deploy_tx_receipt = get_transaction_receipt(&rpc, deploy_tx_hash).await?;
 
-    let contract_address = match deploy_tx_receipt {
-        MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) => {
-            // Events:
-            //  UDC::ContractDeployed
-            //  Argent::TransactionExecuted
-            //  FeeToken::Transfer
-            receipt.events[0].data[0]
-        }
-        _ => panic!("expected tx receipt"),
-    };
+    let contract_address = assert_matches!(
+        deploy_tx_receipt,
+        MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) => receipt.events[0].data[0]
+    );
 
     // 5. Sending message to L1
 
@@ -384,19 +378,19 @@ async fn work_with_messages_to_l1(madara: &ThreadSafeMadaraClient) -> Result<(),
 
     let invoke_tx_receipt = get_transaction_receipt(&rpc, invoke_tx_hash).await?;
 
-    match invoke_tx_receipt {
-        MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) => {
-            assert_eq_msg_to_l1(
-                vec![MsgToL1 {
-                    from_address: contract_address,
-                    to_address: FieldElement::ZERO,
-                    payload: vec![FieldElement::TWO],
-                }],
-                receipt.messages_sent,
-            );
-        }
-        _ => panic!("expected tx receipt"),
-    };
+    let messages_sent = assert_matches!(
+        invoke_tx_receipt,
+        MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) => receipt.messages_sent
+    );
+
+    assert_eq_msg_to_l1(
+        vec![MsgToL1 {
+            from_address: contract_address,
+            to_address: FieldElement::ZERO,
+            payload: vec![FieldElement::TWO],
+        }],
+        messages_sent,
+    );
 
     Ok(())
 }

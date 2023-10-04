@@ -1,0 +1,86 @@
+use mp_transactions::{HandleL1MessageTransaction, UserAndL1HandlerTransaction};
+use sp_runtime::transaction_validity::InvalidTransaction;
+use starknet_api::api_core::Nonce;
+use starknet_api::hash::StarkFelt;
+use starknet_api::transaction::Fee;
+
+use super::mock::default_mock::*;
+use super::mock::*;
+use crate::L1Messages;
+
+#[test]
+fn should_ensure_l1_message_not_executed_work_properly() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let nonce = Nonce(StarkFelt::from(1u64));
+
+        assert!(Starknet::ensure_l1_message_not_executed(&nonce).is_ok());
+
+        L1Messages::<MockRuntime>::insert(nonce, ());
+
+        assert_eq!(Starknet::ensure_l1_message_not_executed(&nonce), Err(InvalidTransaction::Stale));
+    });
+}
+
+#[test]
+fn should_accept_unused_nonce() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let nonce: u64 = 1;
+        let transaction = HandleL1MessageTransaction {
+            nonce,
+            contract_address: Default::default(),
+            entry_point_selector: Default::default(),
+            calldata: Default::default(),
+        };
+
+        let tx = UserAndL1HandlerTransaction::L1Handler(transaction, Fee(100));
+
+        assert_eq!(
+            Starknet::validate_usigned_tx_nonce(&tx),
+            Ok(crate::transaction_validation::TxPriorityInfo::L1Handler)
+        );
+    });
+}
+
+#[test]
+fn should_reject_used_nonce() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let nonce: u64 = 1;
+        let transaction = HandleL1MessageTransaction {
+            nonce,
+            contract_address: Default::default(),
+            entry_point_selector: Default::default(),
+            calldata: Default::default(),
+        };
+
+        let tx = UserAndL1HandlerTransaction::L1Handler(transaction, Fee(100));
+
+        L1Messages::<MockRuntime>::insert(Nonce(StarkFelt::from(nonce)), ());
+
+        assert_eq!(Starknet::validate_usigned_tx_nonce(&tx), Err(InvalidTransaction::Stale));
+    });
+}
+
+#[test]
+fn should_accept_valid_unsigned_l1_message_tx() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let nonce: u64 = 1;
+        let transaction = HandleL1MessageTransaction {
+            nonce,
+            contract_address: Default::default(),
+            entry_point_selector: Default::default(),
+            calldata: Default::default(),
+        };
+
+        let tx = UserAndL1HandlerTransaction::L1Handler(transaction, Fee(100));
+
+        assert!(Starknet::validate_unsigned_tx(&tx).is_ok());
+    });
+}

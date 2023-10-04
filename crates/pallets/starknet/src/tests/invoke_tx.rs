@@ -459,7 +459,7 @@ fn test_verify_no_require_tag() {
         );
 
         let valid_transaction_expected = ValidTransaction::with_tag_prefix("starknet")
-            .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
+            .priority(u64::MAX)
             .and_provides((transaction.sender_address, transaction.nonce))
             .longevity(TransactionLongevity::get())
             .propagate(true)
@@ -482,7 +482,7 @@ fn test_verify_require_tag() {
         );
 
         let valid_transaction_expected = ValidTransaction::with_tag_prefix("starknet")
-            .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
+            .priority(u64::MAX)
             .and_provides((transaction.sender_address, transaction.nonce))
             .longevity(TransactionLongevity::get())
             .propagate(true)
