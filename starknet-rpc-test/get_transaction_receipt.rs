@@ -284,10 +284,10 @@ async fn work_with_messages_to_l1(#[future] madara: MadaraClient) -> Result<(), 
 
     // 2. Determine class hash
 
-    let class_hash = match txs.remove(0).unwrap() {
-        TransactionResult::Declaration(rpc_response) => rpc_response.class_hash,
-        _ => panic!("expected execution result"),
-    };
+    let class_hash = assert_matches!(
+        txs.remove(0).unwrap(),
+        TransactionResult::Declaration(rpc_response) => rpc_response.class_hash
+    );
 
     // 3. Next, deploying an instance of this class using universal deployer
 
@@ -307,23 +307,17 @@ async fn work_with_messages_to_l1(#[future] madara: MadaraClient) -> Result<(), 
 
     // 4. Now, we need to get the deployed contract address
 
-    let deploy_tx_hash = match txs.remove(0).unwrap() {
-        TransactionResult::Execution(rpc_response) => rpc_response.transaction_hash,
-        _ => panic!("expected execution result"),
-    };
+    let deploy_tx_hash = assert_matches!(
+        txs.remove(0).unwrap(),
+        TransactionResult::Execution(rpc_response) => rpc_response.transaction_hash
+    );
 
     let deploy_tx_receipt = get_transaction_receipt(rpc, deploy_tx_hash).await?;
 
-    let contract_address = match deploy_tx_receipt {
-        MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) => {
-            // Events:
-            //  UDC::ContractDeployed
-            //  Argent::TransactionExecuted
-            //  FeeToken::Transfer
-            receipt.events[0].data[0]
-        }
-        _ => panic!("expected tx receipt"),
-    };
+    let contract_address = assert_matches!(
+        deploy_tx_receipt,
+        MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) => receipt.events[0].data[0]
+    );
 
     // 5. Sending message to L1
 
@@ -338,26 +332,26 @@ async fn work_with_messages_to_l1(#[future] madara: MadaraClient) -> Result<(), 
 
     // 6. Finally, checking that there is a single MessageToL1 in the receipt
 
-    let invoke_tx_hash = match txs.remove(0).unwrap() {
-        TransactionResult::Execution(rpc_response) => rpc_response.transaction_hash,
-        _ => panic!("expected execution result"),
-    };
+    let invoke_tx_hash = assert_matches!(
+        txs.remove(0).unwrap(),
+        TransactionResult::Execution(rpc_response) => rpc_response.transaction_hash
+    );
 
     let invoke_tx_receipt = get_transaction_receipt(rpc, invoke_tx_hash).await?;
 
-    match invoke_tx_receipt {
-        MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) => {
-            assert_eq_msg_to_l1(
-                vec![MsgToL1 {
-                    from_address: contract_address,
-                    to_address: FieldElement::ZERO,
-                    payload: vec![FieldElement::TWO],
-                }],
-                receipt.messages_sent,
-            );
-        }
-        _ => panic!("expected tx receipt"),
-    };
+    let messages_sent = assert_matches!(
+        invoke_tx_receipt,
+        MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) => receipt.messages_sent
+    );
+
+    assert_eq_msg_to_l1(
+        vec![MsgToL1 {
+            from_address: contract_address,
+            to_address: FieldElement::ZERO,
+            payload: vec![FieldElement::TWO],
+        }],
+        messages_sent,
+    );
 
     Ok(())
 }
