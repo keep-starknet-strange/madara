@@ -1,5 +1,9 @@
 //! Transaction validation logic.
+use blockifier::transaction::errors::TransactionExecutionError;
 use frame_support::traits::EnsureOrigin;
+use mp_transactions::execution::Validate;
+
+use super::*;
 
 /// Representation of the origin of a Starknet transaction.
 /// For now, we still don't know how to represent the origin of a Starknet transaction,
@@ -48,5 +52,104 @@ impl<OuterOrigin: Into<Result<RawOrigin, OuterOrigin>> + From<RawOrigin>> Ensure
     #[cfg(feature = "runtime-benchmarks")]
     fn try_successful_origin() -> Result<OuterOrigin, ()> {
         Ok(OuterOrigin::from(RawOrigin::StarknetTransaction))
+    }
+}
+
+#[derive(Debug)]
+pub enum TxPriorityInfo {
+    InvokeV0,
+    L1Handler,
+    RegularTxs { sender_address: Felt252Wrapper, transaction_nonce: Felt252Wrapper },
+}
+
+impl<T: Config> Pallet<T> {
+    pub fn validate_usigned_tx_nonce(
+        transaction: &UserAndL1HandlerTransaction,
+    ) -> Result<TxPriorityInfo, InvalidTransaction> {
+        match transaction {
+            UserAndL1HandlerTransaction::User(tx) => {
+                let sender_address: ContractAddress = tx.sender_address().into();
+                let sender_nonce: Felt252Wrapper = Pallet::<T>::nonce(sender_address).into();
+                let transaction_nonce = match tx.nonce() {
+                    Some(n) => *n,
+                    None => return Ok(TxPriorityInfo::InvokeV0),
+                };
+
+                // Reject transaction with an already used Nonce
+                if sender_nonce > transaction_nonce {
+                    Err(InvalidTransaction::Stale)?;
+                }
+
+                // A transaction with a nonce higher than the expected nonce is placed in
+                // the future queue of the transaction pool.
+                if sender_nonce < transaction_nonce {
+                    log::debug!(
+                        "Nonce is too high. Expected: {:?}, got: {:?}. This transaction will be placed in the \
+                         transaction pool and executed in the future when the nonce is reached.",
+                        sender_nonce,
+                        transaction_nonce
+                    );
+                }
+
+                Ok(TxPriorityInfo::RegularTxs { sender_address: tx.sender_address(), transaction_nonce })
+            }
+            UserAndL1HandlerTransaction::L1Handler(tx, _fee) => {
+                Self::ensure_l1_message_not_executed(&Nonce(StarkFelt::from(tx.nonce)))?;
+                Ok(TxPriorityInfo::L1Handler)
+            }
+        }
+    }
+
+    pub fn validate_unsigned_tx(transaction: &UserAndL1HandlerTransaction) -> Result<(), InvalidTransaction> {
+        let chain_id = Self::chain_id();
+        let block_context = Self::get_block_context();
+        let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();
+        let mut execution_resources = ExecutionResources::default();
+        let mut initial_gas = blockifier::abi::constants::INITIAL_GAS_COST;
+
+        match transaction {
+            UserAndL1HandlerTransaction::User(transaction) => {
+                let validation_result =
+                    match transaction {
+                        // There is no way to validate it before the account is actuallly deployed
+                        UserTransaction::DeployAccount(_) => Ok(None),
+                        UserTransaction::Declare(tx, contract_class) => tx
+                            .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), false)
+                            .map_err(|_| InvalidTransaction::BadProof)?
+                            .validate_tx(&mut state, &block_context, &mut execution_resources, &mut initial_gas, false),
+                        UserTransaction::Invoke(tx) => tx
+                            .into_executable::<T::SystemHash>(chain_id, false)
+                            .validate_tx(&mut state, &block_context, &mut execution_resources, &mut initial_gas, false),
+                    };
+
+                if let Err(TransactionExecutionError::ValidateTransactionError(
+                    EntryPointExecutionError::PreExecutionError(PreExecutionError::UninitializedStorageAddress(
+                        contract_address,
+                    )),
+                )) = validation_result
+                {
+                    let transaction_nonce = transaction.nonce();
+                    let sender_address = transaction.sender_address();
+                    if contract_address.0.0 == sender_address.into() && transaction_nonce == Some(&Felt252Wrapper::ONE)
+                    {
+                        Ok(None)
+                    } else {
+                        validation_result
+                    }
+                } else {
+                    validation_result
+                }
+            }
+            UserAndL1HandlerTransaction::L1Handler(transaction, fee) => transaction
+                .into_executable::<T::SystemHash>(chain_id, *fee, false)
+                .validate_tx(&mut state, &block_context, &mut execution_resources, &mut initial_gas, false),
+        }
+        .map_err(|_| InvalidTransaction::BadProof)?;
+
+        Ok(())
+    }
+
+    pub fn ensure_l1_message_not_executed(nonce: &Nonce) -> Result<(), InvalidTransaction> {
+        if L1Messages::<T>::contains_key(nonce) { Err(InvalidTransaction::Stale) } else { Ok(()) }
     }
 }

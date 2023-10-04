@@ -7,6 +7,7 @@ members = [
   "crates/pallets/starknet",
   "crates/primitives/genesis-config/",
   "crates/primitives/digest-log",
+  "crates/primitives/snos-output",
   "crates/primitives/transactions",
   "crates/primitives/felt",
   "crates/primitives/hashers",
@@ -163,6 +164,7 @@ mp-fee = { path = "crates/primitives/fee", default-features = false }
 mp-felt = { path = "crates/primitives/felt", default-features = false }
 mp-hashers = { path = "crates/primitives/hashers", default-features = false }
 mp-sequencer-address = { path = "crates/primitives/sequencer-address", default-features = false }
+mp-snos-output = { path = "crates/primitives/snos-output", default-features = false }
 mp-state = { path = "crates/primitives/state", default-features = false }
 mp-storage = { path = "crates/primitives/storage", default-features = false }
 mp-transactions = { path = "crates/primitives/transactions", default-features = false }

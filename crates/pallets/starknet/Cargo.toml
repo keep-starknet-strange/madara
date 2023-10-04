@@ -28,6 +28,7 @@ mp-simulations = { workspace = true, features = [
   "parity-scale-codec",
   "serde",
 ] }
+mp-snos-output = { workspace = true, features = ["parity-scale-codec", "scale-info"] }
 mp-state = { workspace = true }
 mp-storage = { workspace = true, features = ["parity-scale-codec"] }
 mp-transactions = { workspace = true, features = ["scale-info"] }
@@ -107,6 +108,7 @@ std = [
   "blockifier/std",
   "mp-felt/std",
   "mp-sequencer-address/std",
+  "mp-snos-output/std",
   # Other third party dependencies
   "dep:reqwest",
   "dep:cairo-lang-casm-contract-class",

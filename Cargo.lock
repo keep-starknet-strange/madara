@@ -6119,10 +6119,12 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
+ "mp-block",
  "mp-chain-id",
  "mp-felt",
  "mp-hashers",
  "mp-simulations",
+ "mp-snos-output",
  "mp-transactions",
  "pallet-aura",
  "pallet-grandpa",
@@ -6727,6 +6729,19 @@ dependencies = [
  "serde",
  "serde_with",
  "starknet-core",
+ "starknet_api",
+]
+
+[[package]]
+name = "mp-snos-output"
+version = "0.6.0"
+dependencies = [
+ "assert_matches",
+ "hex",
+ "mp-transactions",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core 21.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
  "starknet_api",
 ]
 
@@ -7496,6 +7511,7 @@ dependencies = [
  "mp-hashers",
  "mp-sequencer-address",
  "mp-simulations",
+ "mp-snos-output",
  "mp-state",
  "mp-storage",
  "mp-transactions",
@@ -7531,6 +7547,7 @@ dependencies = [
  "hashbrown 0.14.3",
  "mp-felt",
  "mp-simulations",
+ "mp-snos-output",
  "mp-transactions",
  "parity-scale-codec",
  "scale-info",

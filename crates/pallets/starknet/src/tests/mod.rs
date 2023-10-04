@@ -26,6 +26,7 @@ mod no_nonce_validation;
 mod query_tx;
 mod send_message;
 mod sequencer_address;
+mod transaction_validation;
 
 mod block;
 mod constants;
