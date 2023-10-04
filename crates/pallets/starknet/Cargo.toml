@@ -58,6 +58,7 @@ sp-std = { workspace = true }
 cairo-lang-casm-contract-class = { workspace = true, optional = true, features = [
   "std",
 ] }
+derive_more = { workspace = true }
 hex = { workspace = true }
 indexmap = { workspace = true }
 log = { workspace = true }
@@ -79,6 +80,7 @@ lazy_static = "1.4.0"
 hexlit = "0.5.5"
 assert_matches = "1.5.0"
 starknet-ff = { workspace = true }
+project-root = "0.2.2"
 
 [features]
 default = ["std"]

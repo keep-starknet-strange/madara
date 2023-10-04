@@ -6072,6 +6072,7 @@ dependencies = [
  "async-trait",
  "blockifier",
  "clap 4.4.6",
+ "dirs",
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "frame-system",
@@ -6093,6 +6094,7 @@ dependencies = [
  "mp-felt",
  "mp-sequencer-address",
  "pallet-starknet",
+ "reqwest",
  "sc-cli",
  "sc-client-api",
  "sc-consensus",
@@ -6127,6 +6129,7 @@ dependencies = [
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
  "try-runtime-cli",
+ "url",
 ]
 
 [[package]]
@@ -7593,6 +7596,7 @@ dependencies = [
  "assert_matches",
  "blockifier",
  "cairo-lang-casm-contract-class",
+ "derive_more",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -7615,6 +7619,7 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "pretty_assertions",
+ "project-root",
  "reqwest",
  "sc-cli",
  "scale-info",
@@ -8270,6 +8275,12 @@ checksum = "3d433d9f1a3e8c1263d9456598b16fec66f4acc9a74dacffd35c7bb09b3a1328"
 dependencies = [
  "unicode-ident",
 ]
+
+[[package]]
+name = "project-root"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8bccbff07d5ed689c4087d20d7307a52ab6141edeedf487c3876a55b86cf63df"
 
 [[package]]
 name = "prometheus"

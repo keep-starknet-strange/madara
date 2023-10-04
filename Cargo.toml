@@ -206,3 +206,5 @@ indexmap = { git = "https://github.com/bluss/indexmap", rev = "ca5f848e10c31e80a
 num-traits = "0.2.17"
 num-bigint = "0.4.4"
 phf = { version = "0.11", default-features = false }
+url = "2.4.1"
+dirs = "5.0.1"
