@@ -57,8 +57,8 @@ impl<OuterOrigin: Into<Result<RawOrigin, OuterOrigin>> + From<RawOrigin>> Ensure
 impl<T: Config> Pallet<T> {
     pub fn validate_usigned_tx_nonce(
         transaction: &UserAndL1HandlerTransaction,
-    ) -> Result<(Felt252Wrapper, Felt252Wrapper, Felt252Wrapper), InvalidTransaction> {
-        let (sender_address, sender_nonce, transaction_nonce) = match transaction {
+    ) -> Result<(Felt252Wrapper, Option<Felt252Wrapper>, Felt252Wrapper), InvalidTransaction> {
+        match transaction {
             UserAndL1HandlerTransaction::User(tx) => {
                 let sender_address: ContractAddress = tx.sender_address().into();
                 let sender_nonce: Felt252Wrapper = Pallet::<T>::nonce(sender_address).into();
@@ -80,19 +80,13 @@ impl<T: Config> Pallet<T> {
                     );
                 }
 
-                (tx.sender_address(), sender_nonce, *transaction_nonce)
+                Ok((tx.sender_address(), Some(sender_nonce), *transaction_nonce))
             }
             UserAndL1HandlerTransaction::L1Handler(tx, _fee) => {
-                let sender_address = ContractAddress::default();
-                let sender_nonce = Pallet::<T>::nonce(sender_address).into();
-                let nonce = tx.nonce;
-
-                Self::ensure_l1_message_not_executed(&Nonce(StarkFelt::from(nonce)))?;
-                (sender_address.into(), sender_nonce, nonce.into())
+                Self::ensure_l1_message_not_executed(&Nonce(StarkFelt::from(tx.nonce)))?;
+                Ok((ContractAddress::default().into(), None, tx.nonce.into()))
             }
-        };
-
-        Ok((sender_address, sender_nonce, transaction_nonce))
+        }
     }
 
     pub fn validate_unsigned_tx(transaction: &UserAndL1HandlerTransaction) -> Result<(), InvalidTransaction> {
@@ -124,13 +118,12 @@ impl<T: Config> Pallet<T> {
                 .into_executable::<T::SystemHash>(chain_id, *fee, false)
                 .validate_tx(&mut state, &block_context, &mut execution_resources, &mut initial_gas, false),
         }
-        .map_or_else(|_error| Err(InvalidTransaction::BadProof), |_res| Ok(()))
+        .map_err(|_| InvalidTransaction::BadProof)?;
+
+        Ok(())
     }
 
     pub fn ensure_l1_message_not_executed(nonce: &Nonce) -> Result<(), InvalidTransaction> {
-        match L1Messages::<T>::contains_key(nonce) {
-            true => Err(InvalidTransaction::Stale),
-            false => Ok(()),
-        }
+        if L1Messages::<T>::contains_key(nonce) { Err(InvalidTransaction::Stale) } else { Ok(()) }
     }
 }
