@@ -60,7 +60,7 @@ impl SubstrateCli for Cli {
                     .as_ref()
                     .map(BasePath::new)
                     .unwrap_or_else(|| BasePath::from_project("", "", &<Cli as SubstrateCli>::executable_name()));
-                Box::new(chain_spec::local_testnet_config(base_path)?)
+                Box::new(chain_spec::local_testnet_config(base_path, id)?)
             }
             path_or_url => Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path_or_url))?),
         })

@@ -11,7 +11,7 @@ use sp_core::storage::Storage;
 use sp_core::{Pair, Public};
 use sp_state_machine::BasicExternalities;
 
-use crate::constants::{DEV_CHAIN_ID, LOCAL_TESTNET_CHAIN_ID};
+use crate::constants::DEV_CHAIN_ID;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
@@ -113,9 +113,10 @@ pub fn print_development_accounts(genesis_loader: &GenesisLoader) {
     log::info!("🧪 CAIRO 1 with address: {cairo_1_no_validate_account_address:#x} and no pk");
 }
 
-pub fn local_testnet_config(base_path: BasePath) -> Result<ChainSpec, String> {
+pub fn local_testnet_config(base_path: BasePath, chain_id: &str) -> Result<ChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
-    let chain_id = LOCAL_TESTNET_CHAIN_ID;
+
+    let owned_chain_id = chain_id.to_owned();
 
     Ok(ChainSpec::from_genesis(
         // Name
@@ -125,7 +126,7 @@ pub fn local_testnet_config(base_path: BasePath) -> Result<ChainSpec, String> {
         ChainType::Local,
         move || {
             testnet_genesis(
-                load_genesis(base_path.config_dir(chain_id)),
+                load_genesis(base_path.config_dir(&owned_chain_id)),
                 wasm_binary,
                 // Initial PoA authorities
                 // Intended to be only 2
