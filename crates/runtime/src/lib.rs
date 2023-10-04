@@ -28,6 +28,7 @@ pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
 use frame_system::{EventRecord, Phase};
 use mp_felt::Felt252Wrapper;
+use mp_snos_output::{MessageL1ToL2, MessageL2ToL1};
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::{Transaction, UserTransaction};
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
@@ -363,7 +364,40 @@ impl_runtime_apis! {
         }
 
         fn get_tx_execution_outcome(tx_hash: TransactionHash) -> Option<Vec<u8>> {
-           Starknet::tx_revert_error(tx_hash).map(|s| s.into_bytes())
+            Starknet::tx_revert_error(tx_hash).map(|s| s.into_bytes())
+        }
+
+        fn get_starknet_messages(block_extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper) -> (Vec<MessageL2ToL1>, Vec<MessageL1ToL2>) {
+            let mut messages_to_l1: Vec<MessageL2ToL1> = Vec::new();
+            let mut messages_to_l2: Vec<MessageL1ToL2> = Vec::new();
+
+            for xt in block_extrinsics {
+                let tx_hash = match xt.function {
+                    RuntimeCall::Starknet( invoke { transaction }) => {
+                        Some(transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false))
+                    },
+                    RuntimeCall::Starknet( declare { transaction, .. }) => {
+                        Some(transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false))
+                    },
+                    RuntimeCall::Starknet( deploy_account { transaction }) => {
+                        Some(transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false))
+                    },
+                    RuntimeCall::Starknet( consume_l1_message { transaction, .. }) => {
+                        let tx_hash = Some(transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false));
+                        messages_to_l2.push(transaction.into());
+                        tx_hash
+                    },
+                    _ => None
+                };
+                if let Some(tx_hash) = tx_hash {
+                    let tx_hash = TransactionHash(tx_hash.into());
+                    Starknet::tx_messages(tx_hash)
+                        .into_iter()
+                        .for_each(|msg| messages_to_l1.push(msg.into()));
+                }
+            }
+
+            (messages_to_l1, messages_to_l2)
         }
 
         fn get_block_context() -> pallet_starknet::runtime_api::BlockContext {
