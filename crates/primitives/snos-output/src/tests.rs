@@ -16,7 +16,7 @@ fn segment_decode<T: Decode + SnosCodec, I: Read>(input: &mut I) -> Vec<T> {
     let mut items: Vec<T> = Vec::new();
     while segment_len > 0 {
         let item = T::decode(input);
-        segment_len -= item.felt_len();
+        segment_len -= item.size_hint();
         items.push(item);
     }
     items
@@ -123,7 +123,7 @@ fn test_snos_output_codec() {
     let snos_output = StarknetOsOutput::decode(&mut program_output.as_slice());
 
     let mut actual: Vec<u8> = Vec::new();
-    snos_output.as_vec().into_iter().for_each(|felt| actual.extend_from_slice(felt.0.as_slice()));
+    snos_output.into_vec().into_iter().for_each(|felt| actual.extend_from_slice(felt.0.as_slice()));
 
     assert_eq!(program_output, actual);
 }
