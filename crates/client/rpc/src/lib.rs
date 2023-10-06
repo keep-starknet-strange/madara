@@ -909,9 +909,11 @@ where
             })?;
 
         fn message_conversion(message: starknet_api::transaction::MessageToL1) -> starknet_core::types::MsgToL1 {
+            let mut to_address = [0u8; 32];
+            to_address[12..32].copy_from_slice(message.to_address.0.as_bytes());
             starknet_core::types::MsgToL1 {
                 from_address: Felt252Wrapper::from(message.from_address).0,
-                to_address: FieldElement::from_byte_slice_be(message.to_address.0.as_bytes()).unwrap(),
+                to_address: FieldElement::from_bytes_be(&to_address).unwrap(),
                 payload: message.payload.0.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
             }
         }
