@@ -146,6 +146,7 @@ impl Header {
                 self.parent_block_hash.into(),
             ];
 
+            frame_support::log::info!("data: {:?}", data);
             H::compute_hash_on_wrappers(data)
         } else {
             let data: &[Felt252Wrapper] = &[
