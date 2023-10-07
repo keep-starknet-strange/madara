@@ -4,10 +4,12 @@ use assert_matches::assert_matches;
 use rstest::rstest;
 use starknet_core::types::{BlockId, BlockTag, BroadcastedInvokeTransaction, BroadcastedTransaction, StarknetError};
 use starknet_ff::FieldElement;
-use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
-use starknet_rpc_test::fixtures::{broadcasted_declare_txn_v1, madara};
+use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
+use starknet_rpc_test::constants::ACCOUNT_CONTRACT;
+
 use starknet_rpc_test::MadaraClient;
+use starknet_rpc_test::fixtures::{broadcasted_declare_txn_v1, madara};
 
 #[rstest]
 #[tokio::test]
@@ -36,16 +38,42 @@ async fn fail_if_one_txn_cannot_be_executed(#[future] madara: MadaraClient) -> R
 
     madara.create_empty_block().await?;
 
+    let bad_invoke_transaction = BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction {
+        max_fee: FieldElement::default(),
+        nonce: FieldElement::ZERO,
+        sender_address: FieldElement::default(),
+        signature: vec![],
+        calldata: vec![FieldElement::from_hex_be("0x0").unwrap()],
+        is_query: true,
+    });
+
+    // from mainnet tx: 0x000c52079f33dcb44a58904fac3803fd908ac28d6632b67179ee06f2daccb4b5
+    // https://starkscan.co/tx/0x000c52079f33dcb44a58904fac3803fd908ac28d6632b67179ee06f2daccb4b5
+    let ok_invoke_transaction = BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction {
+        max_fee: FieldElement::ZERO,
+        signature: vec![],
+        nonce: FieldElement::ZERO,
+        sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap(),
+        calldata: vec![
+            FieldElement::from_hex_be("5a02acdbf218464be3dd787df7a302f71fab586cad5588410ba88b3ed7b3a21").unwrap(),
+            FieldElement::from_hex_be(
+                "3d7905601c217734671143d457f0db37f7f8883112abd34b92c4abfeafde0c3",
+            )
+                .unwrap(),
+            FieldElement::from_hex_be(
+                "2",
+            )
+                .unwrap(),
+            FieldElement::from_hex_be("e150b6c2db6ed644483b01685571de46d2045f267d437632b508c19f3eb877").unwrap(),
+            FieldElement::from_hex_be("494196e88ce16bff11180d59f3c75e4ba3475d9fba76249ab5f044bcd25add6").unwrap(),
+        ],
+        is_query: true,
+    });
+
     assert_matches!(
         rpc.estimate_fee(&vec![
-            BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction {
-                max_fee: FieldElement::default(),
-                nonce: FieldElement::ZERO,
-                sender_address: FieldElement::default(),
-                signature: vec![],
-                calldata: vec![FieldElement::from_hex_be("0x0").unwrap()],
-                is_query: true,
-            }),
+            bad_invoke_transaction,
+            ok_invoke_transaction,
         ], BlockId::Tag(BlockTag::Latest)).await,
         Err(StarknetProviderError(StarknetErrorWithMessage { code: MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::ContractError
     );
@@ -55,38 +83,45 @@ async fn fail_if_one_txn_cannot_be_executed(#[future] madara: MadaraClient) -> R
 
 #[rstest]
 #[tokio::test]
-async fn returns_same_vec_length_as_txns(
-    #[future] madara: MadaraClient,
-    broadcasted_declare_txn_v1: BroadcastedTransaction,
-) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
-
-    let estimate = rpc
-        .estimate_fee(
-            &vec![broadcasted_declare_txn_v1.clone(), broadcasted_declare_txn_v1],
-            BlockId::Tag(BlockTag::Latest),
-        )
-        .await?;
-
-    assert_eq!(estimate.len(), 2);
-
-    Ok(())
-}
-
-#[rstest]
-#[tokio::test]
 async fn works_ok(
     #[future] madara: MadaraClient,
-    broadcasted_declare_txn_v1: BroadcastedTransaction,
 ) -> Result<(), anyhow::Error> {
     let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
-    let estimate = rpc.estimate_fee(&vec![broadcasted_declare_txn_v1], BlockId::Tag(BlockTag::Latest)).await?;
+    // from mainnet tx: 0x000c52079f33dcb44a58904fac3803fd908ac28d6632b67179ee06f2daccb4b5
+    // https://starkscan.co/tx/0x000c52079f33dcb44a58904fac3803fd908ac28d6632b67179ee06f2daccb4b5
+    let invoke_transaction = BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction {
+        max_fee: FieldElement::ZERO,
+        signature: vec![],
+        nonce: FieldElement::ZERO,
+        sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap(),
+        calldata: vec![
+            FieldElement::from_hex_be("5a02acdbf218464be3dd787df7a302f71fab586cad5588410ba88b3ed7b3a21").unwrap(),
+            FieldElement::from_hex_be(
+                "3d7905601c217734671143d457f0db37f7f8883112abd34b92c4abfeafde0c3",
+            )
+                .unwrap(),
+            FieldElement::from_hex_be(
+                "2",
+            )
+                .unwrap(),
+            FieldElement::from_hex_be("e150b6c2db6ed644483b01685571de46d2045f267d437632b508c19f3eb877").unwrap(),
+            FieldElement::from_hex_be("494196e88ce16bff11180d59f3c75e4ba3475d9fba76249ab5f044bcd25add6").unwrap(),
+        ],
+        is_query: true,
+    });
 
-    assert!(estimate[0].overall_fee > 0);
-    assert!(estimate[0].gas_consumed > 0);
+    let estimate = rpc.estimate_fee(
+        &vec![invoke_transaction.clone(), invoke_transaction], BlockId::Tag(BlockTag::Latest)
+    ).await?;
+
+    assert_eq!(estimate.len(), 2);
+    assert_eq!(estimate[0].overall_fee, 410);
+    assert_eq!(estimate[1].overall_fee, 410);
+    // https://starkscan.co/block/5
+    assert_eq!(estimate[0].gas_consumed, 0);
+    assert_eq!(estimate[1].gas_consumed, 0);
 
     Ok(())
 }
