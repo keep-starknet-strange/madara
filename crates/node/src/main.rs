@@ -14,6 +14,9 @@ mod genesis_block;
 mod rpc;
 mod starknet;
 
+#[cfg(feature = "messaging")]
+mod l1_messages;
+
 fn main() -> sc_cli::Result<()> {
     command::run()
 }

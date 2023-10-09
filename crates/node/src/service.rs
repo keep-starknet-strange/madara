@@ -42,10 +42,15 @@ use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_offchain::STORAGE_PREFIX;
 
 use crate::genesis_block::MadaraGenesisBlockBuilder;
+#[cfg(feature = "messaging")]
+use crate::l1_messages;
 use crate::rpc::StarknetDeps;
 use crate::starknet::{db_config_dir, MadaraBackend};
+
 // Our native executor instance.
 pub struct ExecutorDispatch;
+
+const MADARA_TASK_GROUP: &str = "madara";
 
 impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
     /// Only enable the benchmarking host functions when we actually want to benchmark.
@@ -394,7 +399,7 @@ pub fn new_full(
 
     task_manager.spawn_essential_handle().spawn(
         "mc-mapping-sync-worker",
-        Some("madara"),
+        Some(MADARA_TASK_GROUP),
         MappingSyncWorker::<_, _, _, StarknetHasher>::new(
             client.import_notification_stream(),
             Duration::new(6, 0),
@@ -441,12 +446,12 @@ pub fn new_full(
 
         task_manager.spawn_essential_handle().spawn(
             "da-worker-prove",
-            Some("madara"),
+            Some(MADARA_TASK_GROUP),
             DataAvailabilityWorker::prove_current_block(da_client.get_mode(), client.clone(), madara_backend.clone()),
         );
         task_manager.spawn_essential_handle().spawn(
             "da-worker-update",
-            Some("madara"),
+            Some(MADARA_TASK_GROUP),
             DataAvailabilityWorker::update_state(da_client, client.clone(), madara_backend),
         );
     };
@@ -574,6 +579,13 @@ pub fn new_full(
             sc_consensus_grandpa::run_grandpa_voter(grandpa_config)?,
         );
     }
+
+    #[cfg(feature = "messaging")]
+    task_manager.spawn_essential_handle().spawn(
+        "L1 Messages",
+        Some(MADARA_TASK_GROUP),
+        l1_messages::worker::run_worker(l1_messages::worker::L1MessagesWorkerConfig {}),
+    );
 
     network_starter.start_network();
     Ok(task_manager)
