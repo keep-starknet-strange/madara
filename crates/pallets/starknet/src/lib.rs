@@ -763,17 +763,17 @@ pub mod pallet {
             let mut valid_transaction_builder = ValidTransaction::with_tag_prefix("starknet")
                 .priority(u64::MAX - nonce_for_priority)
                 .and_provides((sender_address, transaction_nonce))
-				.longevity(T::TransactionLongevity::get())
+                .longevity(T::TransactionLongevity::get())
                 .propagate(true);
 
             if let Some(sender_nonce) = sender_nonce {
-					// Enforce waiting for the tx with the previous nonce,
-                    // to be either executed or ordered before in the block
-                    if transaction_nonce > sender_nonce {
-                        valid_transaction_builder = valid_transaction_builder
-                            .and_requires((sender_address, Felt252Wrapper(transaction_nonce.0 - FieldElement::ONE)));
-                    }
+                // Enforce waiting for the tx with the previous nonce,
+                // to be either executed or ordered before in the block
+                if transaction_nonce > sender_nonce {
+                    valid_transaction_builder = valid_transaction_builder
+                        .and_requires((sender_address, Felt252Wrapper(transaction_nonce.0 - FieldElement::ONE)));
                 }
+            }
 
             valid_transaction_builder.build()
         }
