@@ -100,6 +100,8 @@ substrate-build-script-utils = { workspace = true }
 
 [features]
 default = []
+# Include L1 -> L2 messaging
+messaging = []
 # Dependencies that are only required if runtime benchmarking should be build.
 runtime-benchmarks = [
   "madara-runtime/runtime-benchmarks",
