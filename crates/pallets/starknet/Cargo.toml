@@ -28,7 +28,10 @@ mp-simulations = { workspace = true, features = [
   "parity-scale-codec",
   "serde",
 ] }
-mp-snos-output = { workspace = true, features = ["parity-scale-codec", "scale-info"] }
+mp-snos-output = { workspace = true, features = [
+  "parity-scale-codec",
+  "scale-info",
+] }
 mp-state = { workspace = true }
 mp-storage = { workspace = true, features = ["parity-scale-codec"] }
 mp-transactions = { workspace = true, features = ["scale-info"] }

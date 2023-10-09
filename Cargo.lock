@@ -6043,6 +6043,7 @@ dependencies = [
  "async-trait",
  "blockifier",
  "clap 4.4.11",
+ "ethers",
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "frame-system",
@@ -6055,6 +6056,7 @@ dependencies = [
  "mc-data-availability",
  "mc-db",
  "mc-genesis-data-provider",
+ "mc-l1-messages",
  "mc-mapping-sync",
  "mc-rpc",
  "mc-storage",
@@ -6063,8 +6065,10 @@ dependencies = [
  "mp-digest-log",
  "mp-felt",
  "mp-sequencer-address",
+ "mp-transactions",
  "pallet-starknet",
  "pallet-starknet-runtime-api",
+ "parity-scale-codec",
  "reqwest",
  "sc-basic-authorship",
  "sc-cli",
@@ -6100,6 +6104,7 @@ dependencies = [
  "sp-timestamp",
  "sp-trie 22.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
  "starknet-core",
+ "starknet_api",
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
@@ -6278,6 +6283,7 @@ dependencies = [
  "sp-database",
  "sp-runtime 24.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
  "starknet_api",
+ "thiserror",
  "uuid 1.6.1",
 ]
 
@@ -6293,6 +6299,29 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror",
+]
+
+[[package]]
+name = "mc-l1-messages"
+version = "0.1.0"
+dependencies = [
+ "ethers",
+ "log",
+ "mc-db",
+ "mp-felt",
+ "mp-transactions",
+ "pallet-starknet-runtime-api",
+ "rustc-hex",
+ "sc-client-api",
+ "sc-transaction-pool-api",
+ "serde",
+ "serde_json",
+ "sp-api",
+ "sp-core 21.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
+ "sp-runtime 24.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
+ "starknet_api",
+ "thiserror",
+ "url",
 ]
 
 [[package]]
@@ -12788,8 +12817,10 @@ checksum = "212d5dcb2a1ce06d81107c3d0ffa3121fe974b73f068c8282cb1c32328113b6c"
 dependencies = [
  "futures-util",
  "log",
+ "native-tls",
  "rustls 0.21.10",
  "tokio",
+ "tokio-native-tls",
  "tokio-rustls",
  "tungstenite",
  "webpki-roots 0.25.3",
@@ -13162,6 +13193,7 @@ dependencies = [
  "http",
  "httparse",
  "log",
+ "native-tls",
  "rand 0.8.5",
  "rustls 0.21.10",
  "sha1",

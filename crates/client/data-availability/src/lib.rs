@@ -122,7 +122,7 @@ where
     C::Api: StarknetRuntimeApi<B>,
     C: BlockchainEvents<B> + 'static,
     C: HeaderBackend<B>,
-    H: HasherT + Unpin,
+    H: HasherT,
 {
     pub async fn update_state(
         da_client: Box<dyn DaClient + Send + Sync>,

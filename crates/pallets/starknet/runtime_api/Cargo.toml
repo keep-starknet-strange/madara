@@ -12,11 +12,11 @@ mp-simulations = { workspace = true, features = [
   "parity-scale-codec",
   "scale-info",
 ] }
-mp-transactions = { workspace = true, features = [
+mp-snos-output = { workspace = true, features = [
   "parity-scale-codec",
   "scale-info",
 ] }
-mp-snos-output = { workspace = true, features = [
+mp-transactions = { workspace = true, features = [
   "parity-scale-codec",
   "scale-info",
 ] }

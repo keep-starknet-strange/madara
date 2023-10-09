@@ -58,8 +58,8 @@ mp-chain-id = { workspace = true }
 mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
 mp-simulations = { workspace = true }
-mp-transactions = { workspace = true }
 mp-snos-output = { workspace = true }
+mp-transactions = { workspace = true }
 # Starknet dependencies
 blockifier = { workspace = true }
 starknet-core = { workspace = true }

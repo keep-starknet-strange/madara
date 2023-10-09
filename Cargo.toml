@@ -181,6 +181,7 @@ mc-rpc = { path = "crates/client/rpc" }
 mc-rpc-core = { path = "crates/client/rpc-core" }
 mc-data-availability = { path = "crates/client/data-availability" }
 mc-commitment-state-diff = { path = "crates/client/commitment-state-diff" }
+mc-l1-messages = { path = "crates/client/l1-messages" }
 
 # Madara runtime
 madara-runtime = { path = "crates/runtime" }
