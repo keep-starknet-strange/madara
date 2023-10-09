@@ -7,6 +7,7 @@ use starknet_core::types::{
 use starknet_ff::FieldElement;
 
 use crate::{ExecutionStrategy, MadaraClient};
+
 #[fixture]
 pub async fn madara() -> MadaraClient {
     MadaraClient::new(ExecutionStrategy::Native).await
