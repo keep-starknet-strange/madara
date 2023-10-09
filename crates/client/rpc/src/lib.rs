@@ -585,7 +585,8 @@ where
             BroadcastedTransaction::Invoke(invoke_tx) => !invoke_tx.is_query,
             BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V1(tx_v1)) => !tx_v1.is_query,
             BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V2(tx_v2)) => !tx_v2.is_query,
-            BroadcastedTransaction::DeployAccount(deploy_tx) => !deploy_tx.is_query,
+            // Temporarily disabling to enable deploy account with starknet.rs
+            BroadcastedTransaction::DeployAccount(deploy_tx) => true,
         });
         if is_invalid_query_transaction {
             return Err(StarknetRpcApiError::UnsupportedTxVersion.into());
