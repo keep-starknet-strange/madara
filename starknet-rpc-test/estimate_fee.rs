@@ -7,22 +7,32 @@ use starknet_ff::FieldElement;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::ACCOUNT_CONTRACT;
-use starknet_rpc_test::fixtures::{broadcasted_declare_txn_v1, madara};
+use starknet_rpc_test::fixtures::madara;
 use starknet_rpc_test::MadaraClient;
 
 #[rstest]
 #[tokio::test]
-async fn fail_non_existing_block(
-    #[future] madara: MadaraClient,
-    broadcasted_declare_txn_v1: BroadcastedTransaction,
-) -> Result<(), anyhow::Error> {
+async fn fail_non_existing_block(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
     let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
+    let ok_invoke_transaction = BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction {
+        max_fee: FieldElement::ZERO,
+        signature: vec![],
+        nonce: FieldElement::ZERO,
+        sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap(),
+        calldata: vec![
+            FieldElement::from_hex_be("5a02acdbf218464be3dd787df7a302f71fab586cad5588410ba88b3ed7b3a21").unwrap(),
+            FieldElement::from_hex_be("3d7905601c217734671143d457f0db37f7f8883112abd34b92c4abfeafde0c3").unwrap(),
+            FieldElement::from_hex_be("2").unwrap(),
+            FieldElement::from_hex_be("e150b6c2db6ed644483b01685571de46d2045f267d437632b508c19f3eb877").unwrap(),
+            FieldElement::from_hex_be("494196e88ce16bff11180d59f3c75e4ba3475d9fba76249ab5f044bcd25add6").unwrap(),
+        ],
+        is_query: true,
+    });
+
     assert_matches!(
-        rpc.estimate_fee(&vec![
-            broadcasted_declare_txn_v1
-        ], BlockId::Hash(FieldElement::ZERO)).await,
+        rpc.estimate_fee(&vec![ok_invoke_transaction], BlockId::Hash(FieldElement::ZERO)).await,
         Err(StarknetProviderError(StarknetErrorWithMessage { code: MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::BlockNotFound
     );
 
