@@ -6067,7 +6067,7 @@ dependencies = [
 
 [[package]]
 name = "madara"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "async-trait",
  "blockifier",
@@ -6131,7 +6131,7 @@ dependencies = [
 
 [[package]]
 name = "madara-runtime"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blockifier",
  "frame-benchmarking",
@@ -6221,7 +6221,7 @@ checksum = "60302e4db3a61da70c0cb7991976248362f30319e88850c487b9b95bbf059e00"
 
 [[package]]
 name = "mc-block-proposer"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "futures",
  "futures-timer",
@@ -6281,7 +6281,7 @@ dependencies = [
 
 [[package]]
 name = "mc-db"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "ethers",
  "kvdb-rocksdb",
@@ -6297,7 +6297,7 @@ dependencies = [
 
 [[package]]
 name = "mc-mapping-sync"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "futures",
  "futures-timer",
@@ -6318,7 +6318,7 @@ dependencies = [
 
 [[package]]
 name = "mc-rpc"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blockifier",
  "frame-support",
@@ -6354,7 +6354,7 @@ dependencies = [
 
 [[package]]
 name = "mc-rpc-core"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "assert_matches",
@@ -6385,7 +6385,7 @@ dependencies = [
 
 [[package]]
 name = "mc-storage"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blockifier",
  "frame-support",
@@ -6597,7 +6597,7 @@ dependencies = [
 
 [[package]]
 name = "mp-block"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blockifier",
  "mp-felt",
@@ -6611,7 +6611,7 @@ dependencies = [
 
 [[package]]
 name = "mp-chain-id"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "mp-felt",
  "starknet-ff",
@@ -6619,7 +6619,7 @@ dependencies = [
 
 [[package]]
 name = "mp-commitments"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "bitvec",
  "derive_more",
@@ -6637,7 +6637,7 @@ dependencies = [
 
 [[package]]
 name = "mp-digest-log"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "assert_matches",
  "mp-block",
@@ -6647,7 +6647,7 @@ dependencies = [
 
 [[package]]
 name = "mp-fee"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blockifier",
  "mp-state",
@@ -6657,7 +6657,7 @@ dependencies = [
 
 [[package]]
 name = "mp-felt"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "cairo-vm",
  "hex",
@@ -6672,7 +6672,7 @@ dependencies = [
 
 [[package]]
 name = "mp-hashers"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "mp-felt",
  "parity-scale-codec",
@@ -6684,7 +6684,7 @@ dependencies = [
 
 [[package]]
 name = "mp-sequencer-address"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -6695,7 +6695,7 @@ dependencies = [
 
 [[package]]
 name = "mp-state"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blockifier",
  "starknet_api",
@@ -6703,7 +6703,7 @@ dependencies = [
 
 [[package]]
 name = "mp-storage"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "parity-scale-codec",
  "serde",
@@ -6711,7 +6711,7 @@ dependencies = [
 
 [[package]]
 name = "mp-transactions"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "assert_matches",
  "blockifier",
@@ -7588,7 +7588,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-starknet"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "assert_matches",
  "blockifier",
