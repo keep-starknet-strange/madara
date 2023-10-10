@@ -78,6 +78,7 @@ fn override_dev_environment(cmd: &mut ExtendedRunCmd) {
 
     cmd.base.force_authoring = true;
     cmd.base.alice = true;
+    cmd.base.tmp = true;
 
     // we can't set `--rpc-cors=all`, so it needs to be set manually if we want to connect with external
     // hosts

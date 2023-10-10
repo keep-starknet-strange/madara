@@ -18,7 +18,7 @@
   downloaded from github
 - refacto(pallet/starknet): `GenesisLoader` refactored as `GenesisData` + a
   `base_path` field
-- dev: fix rpc test failing
+- feat(cli): for `run` param `--dev` now imply `--tmp`, as it is in substrate
 
 ## v0.4.0
 
