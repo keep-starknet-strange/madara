@@ -102,10 +102,10 @@ impl ComputeTransactionHash for InvokeTransaction {
 impl ComputeTransactionHash for DeclareTransactionV0 {
     fn compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool, block_number: Option<u64>) -> Felt252Wrapper {
         let prefix = FieldElement::from_byte_slice_be(DECLARE_PREFIX).unwrap();
-        let version = if is_query { SIMULATE_TX_VERSION_OFFSET } else { FieldElement::ZERO };
+        let version = FieldElement::ZERO;
         let sender_address = self.sender_address.into();
         let entrypoint_selector = FieldElement::ZERO;
-        let alignment_placeholder = FieldElement::ZERO;
+        let alignment_placeholder = compute_hash_on_elements(&[]);
         let max_fee = FieldElement::from(self.max_fee);
         let chain_id = chain_id.into();
         let class_hash = self.class_hash.into();

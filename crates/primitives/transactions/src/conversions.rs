@@ -40,6 +40,16 @@ impl DeclareTransactionV0 {
             contract_class,
         )
     }
+
+    pub fn from_starknet(inner: starknet_api::transaction::DeclareTransactionV0V1) -> Self {
+        Self {
+            nonce: inner.nonce.0.into(),
+            max_fee: inner.max_fee.0.into(),
+            signature: inner.signature.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),
+            sender_address: inner.sender_address.into(),
+            class_hash: inner.class_hash.into(),
+        }
+    }
 }
 
 impl DeclareTransactionV1 {
@@ -62,6 +72,16 @@ impl DeclareTransactionV1 {
             transaction_hash.into(),
             contract_class,
         )
+    }
+
+    pub fn from_starknet(inner: starknet_api::transaction::DeclareTransactionV0V1) -> Self {
+        Self {
+            nonce: inner.nonce.0.into(),
+            max_fee: inner.max_fee.0.into(),
+            signature: inner.signature.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),
+            sender_address: inner.sender_address.into(),
+            class_hash: inner.class_hash.into(),
+        }
     }
 }
 
@@ -86,6 +106,17 @@ impl DeclareTransactionV2 {
             transaction_hash.into(),
             contract_class,
         )
+    }
+
+    pub fn from_starknet(inner: starknet_api::transaction::DeclareTransactionV2) -> Self {
+        Self {
+            nonce: inner.nonce.0.into(),
+            max_fee: inner.max_fee.0.into(),
+            signature: inner.signature.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),
+            sender_address: inner.sender_address.into(),
+            class_hash: inner.class_hash.into(),
+            compiled_class_hash: inner.compiled_class_hash.into(),
+        }
     }
 }
 
