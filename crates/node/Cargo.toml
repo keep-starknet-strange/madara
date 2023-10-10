@@ -113,3 +113,6 @@ runtime-benchmarks = [
 # in the near future.
 try-runtime = ["madara-runtime/try-runtime", "try-runtime-cli/try-runtime"]
 disable-transaction-fee = ["madara-runtime/disable-transaction-fee"]
+# Load sharingan chain-specs during the compilation
+# This is the way to run a sharingan chain
+sharingan = []

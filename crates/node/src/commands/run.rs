@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use mc_data_availability::DaLayer;
 use sc_cli::{Result, RpcMethods, RunCmd, SubstrateCli};
+use sc_service::BasePath;
 
 use crate::cli::Cli;
 use crate::service;
@@ -28,6 +29,16 @@ pub struct ExtendedRunCmd {
     /// Choose a supported DA Layer
     #[clap(long)]
     pub da_layer: Option<DaLayer>,
+}
+
+impl ExtendedRunCmd {
+    pub fn base_path(&self) -> Result<BasePath> {
+        Ok(self
+            .base
+            .shared_params
+            .base_path()?
+            .unwrap_or_else(|| BasePath::from_project("", "", &<Cli as SubstrateCli>::executable_name())))
+    }
 }
 
 pub fn run_node(mut cli: Cli) -> Result<()> {
@@ -61,6 +72,7 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
 
 fn override_dev_environment(cmd: &mut ExtendedRunCmd) {
     // create a reproducible dev environment
+    // by disabling the default substrate `dev` behaviour
     cmd.base.shared_params.dev = false;
     cmd.base.shared_params.chain = Some("dev".to_string());
 

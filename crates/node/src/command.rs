@@ -1,12 +1,13 @@
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use madara_runtime::Block;
 use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
-use sc_service::BasePath;
 
 use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
 use crate::cli::{Cli, Subcommand};
 use crate::commands::run_node;
-use crate::constants::{DEV_CHAIN_ID, SHARINGAN_CHAIN_ID};
+use crate::constants::DEV_CHAIN_ID;
+#[cfg(feature = "sharingan")]
+use crate::constants::SHARINGAN_CHAIN_ID;
 use crate::{chain_spec, service};
 
 impl SubstrateCli for Cli {
@@ -38,28 +39,15 @@ impl SubstrateCli for Cli {
         Ok(match id {
             DEV_CHAIN_ID => {
                 let enable_manual_seal = self.run.sealing.map(|_| true);
-                let base_path = self
-                    .run
-                    .base
-                    .shared_params
-                    .base_path
-                    .as_ref()
-                    .map(BasePath::new)
-                    .unwrap_or_else(|| BasePath::from_project("", "", &<Cli as SubstrateCli>::executable_name()));
+                let base_path = self.run.base_path().map_err(|e| e.to_string())?;
                 Box::new(chain_spec::development_config(enable_manual_seal, base_path)?)
             }
+            #[cfg(feature = "sharingan")]
             SHARINGAN_CHAIN_ID => Box::new(chain_spec::ChainSpec::from_json_bytes(
                 &include_bytes!("../../../configs/chain-specs/testnet-sharingan-raw.json")[..],
             )?),
             "" | "local" | "madara-local" => {
-                let base_path = self
-                    .run
-                    .base
-                    .shared_params
-                    .base_path
-                    .as_ref()
-                    .map(BasePath::new)
-                    .unwrap_or_else(|| BasePath::from_project("", "", &<Cli as SubstrateCli>::executable_name()));
+                let base_path = self.run.base_path().map_err(|e| e.to_string())?;
                 Box::new(chain_spec::local_testnet_config(base_path, id)?)
             }
             path_or_url => Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path_or_url))?),
