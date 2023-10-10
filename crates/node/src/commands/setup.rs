@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use sc_cli::{CliConfiguration, Error, Result, SharedParams, SubstrateCli};
+use sc_cli::{Error, Result, SubstrateCli};
 use sc_service::BasePath;
 use url::Url;
 
@@ -36,17 +36,27 @@ pub struct SetupSource {
 
 #[derive(Debug, clap::Args)]
 pub struct SetupCmd {
-    #[allow(missing_docs)]
-    #[clap(flatten)]
-    pub shared_params: SharedParams,
+    #[arg(long, value_name = "CHAIN_SPEC")]
+    pub chain: Option<String>,
+
+    /// Specify custom base path.
+    #[arg(long, short = 'd', value_name = "PATH")]
+    pub base_path: Option<PathBuf>,
 
     #[clap(flatten)]
     pub source: SetupSource,
 }
 
-impl CliConfiguration for SetupCmd {
-    fn shared_params(&self) -> &SharedParams {
-        &self.shared_params
+impl SetupCmd {
+    fn chain_id(&self) -> String {
+        match self.chain {
+            Some(ref chain) => chain.clone(),
+            None => "".into(),
+        }
+    }
+
+    fn base_path(&self) -> Option<BasePath> {
+        self.base_path.as_ref().map(|bp| BasePath::from(bp.clone()))
     }
 }
 
@@ -54,12 +64,8 @@ impl SetupCmd {
     pub fn run(&self) -> Result<()> {
         log::info!("setup cmd: {:?}", self);
         let dest_config_dir_path = {
-            let is_dev = self.shared_params().is_dev();
-            let chain_id = self.shared_params().chain_id(is_dev);
-            let base_path = self
-                .base_path()
-                .map_err(|e| e.to_string())?
-                .unwrap_or_else(|| BasePath::from_project("", "", &Cli::executable_name()));
+            let chain_id = self.chain_id();
+            let base_path = self.base_path().unwrap_or_else(|| BasePath::from_project("", "", &Cli::executable_name()));
             base_path.config_dir(&chain_id)
         };
         log::info!("Setting up madara config at '{}'", dest_config_dir_path.display());
