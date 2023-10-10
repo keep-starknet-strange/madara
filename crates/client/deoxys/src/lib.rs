@@ -247,9 +247,6 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
                         if status.is_success() {
                             info!("[👽] Block #{} synced correctly", i);
                             i += 1;
-                            if i > mp_transactions::LEGACY_BLOCK_NUMBER {
-                                mp_transactions::update_legacy();
-                            }  
                         }
                     },
                     Err(e) => {

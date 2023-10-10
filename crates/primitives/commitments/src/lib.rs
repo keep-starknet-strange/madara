@@ -269,7 +269,7 @@ pub fn calculate_contract_state_hash<H: HasherT>(
 /// # Returns
 ///
 /// The transaction hash with signature.
-fn calculate_transaction_hash_with_signature<H: HasherT>(
+pub fn calculate_transaction_hash_with_signature<H: HasherT>(
     tx: &Transaction,
     chain_id: Felt252Wrapper,
     block_number: u64,
@@ -277,10 +277,19 @@ fn calculate_transaction_hash_with_signature<H: HasherT>(
 where
     H: HasherT,
 {
-    let signature_hash = H::compute_hash_on_elements(
-        &tx.signature().iter().map(|elt| FieldElement::from(*elt)).collect::<Vec<FieldElement>>(),
+    let signature_hash = if matches!(tx, Transaction::Invoke(_)) {
+        H::compute_hash_on_elements(
+            &tx.signature().iter().map(|elt| FieldElement::from(*elt)).collect::<Vec<FieldElement>>(),
+        )
+    } else {
+        H::compute_hash_on_elements(&[])
+    };
+
+    let transactions_hashes = H::hash_elements(
+        FieldElement::from(tx.compute_hash::<H>(chain_id, false, Some(block_number))),
+        signature_hash,
     );
-    let transactions_hashes = H::hash_elements(FieldElement::from(tx.compute_hash::<H>(chain_id, false, Some(block_number))), signature_hash);
+
     transactions_hashes
 }
 

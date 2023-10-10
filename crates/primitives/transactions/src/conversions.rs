@@ -238,7 +238,7 @@ impl HandleL1MessageTransaction {
 
     pub fn from_starknet(inner: starknet_api::transaction::L1HandlerTransaction) -> Self {
         Self {
-            nonce: u64::try_from(inner.nonce.0).unwrap().into(), //TO DO - deoxys
+            nonce: u64::try_from(inner.nonce.0).unwrap(),
             contract_address: inner.contract_address.into(),
             entry_point_selector:  inner.entry_point_selector.0.into(),
             calldata: inner.calldata.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),

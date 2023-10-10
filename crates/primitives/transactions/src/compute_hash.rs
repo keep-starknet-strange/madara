@@ -319,7 +319,6 @@ impl DeployTransaction {
             ])
             .into()
         } else {
-            frame_support::log::info!("deprecated");
             H::compute_hash_on_elements(&[
                 prefix,
                 contract_address,
@@ -336,17 +335,14 @@ impl ComputeTransactionHash for HandleL1MessageTransaction {
     fn compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool, block_number: Option<u64>) -> Felt252Wrapper {
         let prefix = FieldElement::from_byte_slice_be(L1_HANDLER_PREFIX).unwrap();
         let invoke_prefix = FieldElement::from_byte_slice_be(INVOKE_PREFIX).unwrap();
-        let version = if is_query { SIMULATE_TX_VERSION_OFFSET } else { FieldElement::ZERO };
+        let version = FieldElement::ZERO;
         let contract_address = self.contract_address.into();
         let entrypoint_selector = self.entry_point_selector.into();
         let calldata_hash = compute_hash_on_elements(convert_calldata(&self.calldata));
         let chain_id = chain_id.into();
         let nonce = self.nonce.into();
 
-        frame_support::log::info!("block_number: {:?}", block_number);
-
-        if block_number < Some(LEGACY_L1_HANDLER_BLOCK) {
-            frame_support::log::info!("V0");
+        if block_number < Some(LEGACY_L1_HANDLER_BLOCK) && block_number != None {
             H::compute_hash_on_elements(&[
                 invoke_prefix,
                 contract_address,
@@ -355,8 +351,7 @@ impl ComputeTransactionHash for HandleL1MessageTransaction {
                 chain_id,
             ])
             .into()
-        } else if block_number < Some(LEGACY_BLOCK_NUMBER) {
-            frame_support::log::info!("V0-deprecated");
+        } else if block_number < Some(LEGACY_BLOCK_NUMBER) && block_number != None {
             H::compute_hash_on_elements(&[
                 prefix,
                 contract_address,
@@ -373,6 +368,7 @@ impl ComputeTransactionHash for HandleL1MessageTransaction {
                 contract_address,
                 entrypoint_selector,
                 calldata_hash,
+                FieldElement::ZERO, // Fees are set to zero on L1 Handler txs
                 chain_id,
                 nonce,
             ])
