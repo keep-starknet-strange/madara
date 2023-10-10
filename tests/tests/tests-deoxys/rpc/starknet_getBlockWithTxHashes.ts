@@ -5,9 +5,9 @@ dotenv.config();
 
 const REMOTE_RPC_URL = process.env.REMOTE_RPC!;
 const LOCAL_RPC_URL = process.env.LOCAL_RPC!;
-const BLOCK_NUMBER = 5000;
-const START_BLOCK = 17000;
-const END_BLOCK = 17100;
+const BLOCK_NUMBER = 17864;
+const START_BLOCK = 16800;
+const END_BLOCK = 17000;
 
 const requestDataForMethod = (method: string, params: any[]) => ({
   id: 1,
@@ -21,6 +21,12 @@ const compareObjects = (obj1: any, obj2: any, path: string = ""): string => {
 
   for (const key in obj1) {
     const currentPath = path ? `${path}.${key}` : key;
+
+    // Skip the block_hash comparison
+    // if (currentPath === "result.block_hash") {
+    //   continue;
+    // }
+
     if (typeof obj1[key] === "object" && obj1[key] !== null) {
       differences += compareObjects(obj1[key], obj2[key], currentPath);
     } else if (obj1[key] !== obj2[key]) {
