@@ -649,7 +649,7 @@ where
 
         let block_with_txs = BlockWithTxs {
             // TODO: Get status from block
-            status: BlockStatus::AcceptedOnL2,
+            status: starknet_core::types::BlockStatus::from(block.header().status),
             block_hash: block.header().hash::<H>().into(),
             parent_hash: block.header().parent_block_hash.into(),
             block_number: block.header().block_number,
