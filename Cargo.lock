@@ -6150,8 +6150,10 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
+ "mp-block",
  "mp-felt",
  "mp-hashers",
+ "mp-snos-output",
  "mp-transactions",
  "pallet-aura",
  "pallet-grandpa",
@@ -6684,6 +6686,19 @@ dependencies = [
  "sp-core 7.0.0",
  "sp-inherents",
  "thiserror-no-std",
+]
+
+[[package]]
+name = "mp-snos-output"
+version = "0.3.0"
+dependencies = [
+ "assert_matches",
+ "hex",
+ "mp-transactions",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core 7.0.0",
+ "starknet_api",
 ]
 
 [[package]]
@@ -7601,6 +7616,7 @@ dependencies = [
  "mp-felt",
  "mp-hashers",
  "mp-sequencer-address",
+ "mp-snos-output",
  "mp-state",
  "mp-storage",
  "mp-transactions",
