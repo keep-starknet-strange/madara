@@ -13,7 +13,7 @@ use starknet_rpc_test::constants::{
     ARGENT_CONTRACT_ADDRESS, CONTRACT_ADDRESS, MINT_AMOUNT, SIGNER_PRIVATE, TEST_CONTRACT_ADDRESS,
 };
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{create_account, AccountActions};
+use starknet_rpc_test::utils::{build_single_owner_account, AccountActions};
 use starknet_rpc_test::Transaction;
 
 #[rstest]
@@ -75,7 +75,7 @@ async fn work_ok_account_with_tx(madara: &ThreadSafeMadaraClient) -> Result<(), 
     let rpc = madara.get_starknet_client().await;
 
     let mut madara_write_lock = madara.write().await;
-    let account = create_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let current_nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account.address()).await?;
 
     madara_write_lock

@@ -8,7 +8,7 @@ use anyhow::anyhow;
 use rstest::rstest;
 use starknet_accounts::Account;
 use starknet_core::types::{
-    BlockId, BlockTag, DeclareTransaction, InvokeTransaction, MaybePendingBlockWithTxs, StarknetError,
+    BlockId, BlockStatus, BlockTag, DeclareTransaction, InvokeTransaction, MaybePendingBlockWithTxs, StarknetError,
     Transaction as StarknetTransaction,
 };
 use starknet_core::utils::get_selector_from_name;
@@ -18,7 +18,9 @@ use starknet_rpc_test::constants::{
     ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE, SIGNER_PRIVATE,
 };
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{build_deploy_account_tx, build_oz_account_factory, create_account, AccountActions};
+use starknet_rpc_test::utils::{
+    build_deploy_account_tx, build_oz_account_factory, build_single_owner_account, AccountActions,
+};
 use starknet_rpc_test::Transaction;
 
 #[rstest]
@@ -45,7 +47,7 @@ async fn works_with_invoke_txn(madara: &ThreadSafeMadaraClient) -> Result<(), an
     let recipient = FieldElement::from_hex_be("0x1234").unwrap();
     let (current_nonce, block) = {
         let mut madara_write_lock = madara.write().await;
-        let account = create_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+        let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
         let nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account.address()).await?;
 
         madara_write_lock
@@ -104,7 +106,7 @@ async fn works_with_deploy_account_txn(madara: &ThreadSafeMadaraClient) -> Resul
         let oz_factory = build_oz_account_factory(&rpc, "0x123", class_hash).await;
         let account_deploy_txn = build_deploy_account_tx(&oz_factory, FieldElement::ONE);
 
-        let funding_account = create_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+        let funding_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
         let account_address = account_deploy_txn.address();
         let deploy_nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account_deploy_txn.address()).await?;
 
@@ -158,7 +160,7 @@ async fn works_with_declare_txn(madara: &ThreadSafeMadaraClient) -> Result<(), a
     let (current_nonce, class_hash, compiled_class_hash, block) = {
         let mut madara_write_lock = madara.write().await;
 
-        let account = create_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+        let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
         let nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account.address()).await?;
         let (declare_tx, class_hash, compiled_class_hash) =
             account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
@@ -174,6 +176,7 @@ async fn works_with_declare_txn(madara: &ThreadSafeMadaraClient) -> Result<(), a
         (nonce, class_hash, compiled_class_hash, block)
     };
 
+    assert_eq!(block.status, BlockStatus::AcceptedOnL2);
     assert_eq!(block.transactions.len(), 1);
     let tx = match &block.transactions[0] {
         StarknetTransaction::Declare(DeclareTransaction::V2(tx)) => tx,

@@ -10,7 +10,7 @@ use starknet_providers::jsonrpc::HttpTransport;
 use starknet_providers::{JsonRpcClient, MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SEQUENCER_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{assert_eq_emitted_event, create_account, AccountActions};
+use starknet_rpc_test::utils::{assert_eq_emitted_event, build_single_owner_account, AccountActions};
 use starknet_rpc_test::{MadaraClient, Transaction, TransactionResult};
 
 async fn transfer_tokens(
@@ -19,7 +19,7 @@ async fn transfer_tokens(
     recipient: FieldElement,
     transfer_amount: FieldElement,
 ) -> (FieldElement, FieldElement) {
-    let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    let account = build_single_owner_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let mut txs = madara_write_lock
         .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(recipient, transfer_amount, None))])
         .await

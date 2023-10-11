@@ -7,14 +7,14 @@ use starknet_ff::FieldElement;
 use starknet_providers::Provider;
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{create_account, AccountActions};
+use starknet_rpc_test::utils::{build_single_owner_account, AccountActions};
 
 #[rstest]
 #[tokio::test]
 async fn works_with_one_pending_transaction(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-    let account = create_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
 
     let mut madara_write_lock = madara.write().await;
     account.transfer_tokens(FieldElement::from_hex_be("0x123").unwrap(), FieldElement::ONE, None).send().await?;
@@ -37,7 +37,7 @@ async fn works_with_500_pending_transactions(madara: &ThreadSafeMadaraClient) ->
     let rpc = madara.get_starknet_client().await;
 
     let mut madara_write_lock = madara.write().await;
-    let account = create_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account.address()).await?;
     let nonce = nonce.to_bytes_be();
     let nonce: u64 = nonce[31] as u64;

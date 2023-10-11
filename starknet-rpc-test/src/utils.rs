@@ -22,7 +22,7 @@ pub struct U256 {
     pub low: FieldElement,
 }
 
-pub fn create_account<'a>(
+pub fn build_single_owner_account<'a>(
     rpc: &'a JsonRpcClient<HttpTransport>,
     private_key: &str,
     account_address: &str,

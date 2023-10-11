@@ -11,7 +11,9 @@ use starknet_rpc_test::constants::{
     ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, MAX_FEE_OVERRIDE, SIGNER_PRIVATE,
 };
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{build_deploy_account_tx, build_oz_account_factory, create_account, AccountActions};
+use starknet_rpc_test::utils::{
+    build_deploy_account_tx, build_oz_account_factory, build_single_owner_account, AccountActions,
+};
 use starknet_rpc_test::{Transaction, TransactionResult};
 
 #[rstest]
@@ -61,7 +63,7 @@ async fn works_with_storage_change(madara: &ThreadSafeMadaraClient) -> Result<()
     let account_deploy_txn = build_deploy_account_tx(&oz_factory, FieldElement::ONE);
     let account_address = account_deploy_txn.address();
 
-    let funding_account = create_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    let funding_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
 
     let (mut txs, block_number) = {
         let mut madara_write_lock = madara.write().await;

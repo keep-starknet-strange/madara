@@ -15,7 +15,7 @@ use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{create_account, AccountActions};
+use starknet_rpc_test::utils::{build_single_owner_account, AccountActions};
 use starknet_rpc_test::Transaction;
 
 #[rstest]
@@ -144,7 +144,7 @@ async fn works_on_mutable_call_without_modifying_storage(madara: &ThreadSafeMada
 
     {
         let mut madara_write_lock = madara.write().await;
-        let account = create_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+        let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
 
         let (declare_tx, class_hash, _) =
             account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
@@ -161,10 +161,12 @@ async fn works_on_mutable_call_without_modifying_storage(madara: &ThreadSafeMada
         let deploy_tx =
             Execution::from(&contract_factory.deploy(vec![], FieldElement::ZERO, true).max_fee(max_fee).nonce(nonce));
 
+        println!("before declare");
         // declare and deploy contract
-        madara_write_lock
-            .create_block_with_txs(vec![Transaction::Declaration(declare_tx), Transaction::Execution(deploy_tx)])
-            .await?;
+        madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
+        println!("before execute");
+        madara_write_lock.create_block_with_txs(vec![Transaction::Execution(deploy_tx)]).await?;
+        println!("after block");
     }
 
     // address of deployed contract (will always be the same for 0 salt)

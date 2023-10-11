@@ -7,7 +7,7 @@ use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{assert_poll, create_account, AccountActions};
+use starknet_rpc_test::utils::{assert_poll, build_single_owner_account, AccountActions};
 use starknet_rpc_test::{Transaction, TransactionResult};
 
 #[rstest]
@@ -16,7 +16,7 @@ async fn work_valid_transaction_hash(madara: &ThreadSafeMadaraClient) -> Result<
     let rpc = madara.get_starknet_client().await;
 
     let mut madara_write_lock = madara.write().await;
-    let account = create_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
 
     let mut txs = madara_write_lock
         .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(

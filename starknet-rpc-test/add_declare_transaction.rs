@@ -10,7 +10,7 @@ use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{create_account, read_erc20_balance, AccountActions, U256};
+use starknet_rpc_test::utils::{build_single_owner_account, read_erc20_balance, AccountActions, U256};
 use starknet_rpc_test::{SendTransactionError, Transaction, TransactionResult};
 
 #[rstest]
@@ -20,7 +20,7 @@ async fn fail_validation_step(madara: &ThreadSafeMadaraClient) -> Result<(), any
 
     let txs = {
         // using incorrect private key to generate the wrong signature
-        let account = create_account(&rpc, "0x1234", ARGENT_CONTRACT_ADDRESS, true);
+        let account = build_single_owner_account(&rpc, "0x1234", ARGENT_CONTRACT_ADDRESS, true);
         let (declare_tx, _, _) =
             account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
 
@@ -50,7 +50,7 @@ async fn fail_validation_step(madara: &ThreadSafeMadaraClient) -> Result<(), any
 async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-    let account = create_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let (declare_tx, expected_class_hash, _) =
         account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
 
@@ -92,7 +92,7 @@ async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraCli
 async fn works_with_storage_change(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-    let account = create_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let (declare_tx, expected_class_hash, _) =
         account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
 
@@ -133,7 +133,7 @@ async fn fails_already_declared(madara: &ThreadSafeMadaraClient) -> Result<(), a
     let rpc = madara.get_starknet_client().await;
 
     // first declaration works
-    let account = create_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let (declare_tx, _, _) =
         account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
 

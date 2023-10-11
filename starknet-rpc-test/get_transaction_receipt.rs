@@ -16,7 +16,7 @@ use starknet_rpc_test::constants::{
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{
     assert_eq_event, assert_eq_msg_to_l1, assert_poll, build_deploy_account_tx, build_oz_account_factory,
-    create_account, AccountActions,
+    build_single_owner_account, AccountActions,
 };
 use starknet_rpc_test::{Transaction, TransactionResult};
 
@@ -44,7 +44,7 @@ async fn work_with_invoke_transaction(madara: &ThreadSafeMadaraClient) -> Result
 
     let mut txs = {
         let mut madara_write_lock = madara.write().await;
-        let account = create_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+        let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
         madara_write_lock
             .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(
                 recepient,
@@ -121,7 +121,7 @@ async fn work_with_declare_transaction(madara: &ThreadSafeMadaraClient) -> Resul
 
     let mut txs = {
         let mut madara_write_lock = madara.write().await;
-        let account = create_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+        let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
         let (declare_tx, _, _) =
             account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
 
@@ -205,7 +205,7 @@ async fn work_with_deploy_account_transaction(madara: &ThreadSafeMadaraClient) -
         let account_address = account_deploy_txn.address();
 
         // add funds to deploy account
-        let funding_account = create_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+        let funding_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
         madara_write_lock
             .create_block_with_txs(vec![Transaction::Execution(funding_account.transfer_tokens(
                 account_address,

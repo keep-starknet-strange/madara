@@ -10,7 +10,7 @@ use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{create_account, read_erc20_balance, AccountActions, U256};
+use starknet_rpc_test::utils::{build_single_owner_account, read_erc20_balance, AccountActions, U256};
 use starknet_rpc_test::{SendTransactionError, Transaction};
 
 #[rstest]
@@ -21,7 +21,7 @@ async fn fail_validation_step(madara: &ThreadSafeMadaraClient) -> Result<(), any
     let txs = {
         let mut madara_write_lock = madara.write().await;
         // using incorrect private key to generate the wrong signature
-        let account = create_account(&rpc, "0x1234", ARGENT_CONTRACT_ADDRESS, true);
+        let account = build_single_owner_account(&rpc, "0x1234", ARGENT_CONTRACT_ADDRESS, true);
 
         madara_write_lock
             .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(
@@ -53,7 +53,7 @@ async fn fail_validation_step(madara: &ThreadSafeMadaraClient) -> Result<(), any
 async fn works_with_storage_change(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-    let funding_account = create_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    let funding_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let recipient_account = FieldElement::from_hex_be("0x123").unwrap();
 
     let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
@@ -98,7 +98,7 @@ async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraCli
 
     let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
 
-    let funding_account = create_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    let funding_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
 
     let (block_number, initial_balance, final_balance, txs) = {
         let mut madara_write_lock = madara.write().await;
