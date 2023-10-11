@@ -1,4 +1,5 @@
 use mp_transactions::{DeclareTransactionV0, DeclareTransactionV1, DeclareTransactionV2};
+use pathfinder_common::transaction::DeclareTransactionV0V1;
 use starknet_client::reader::{objects::transaction::{IntermediateInvokeTransaction, IntermediateDeclareTransaction}, ReaderClientError};
 
 pub fn declare_tx_to_starknet_tx(
@@ -11,13 +12,13 @@ pub fn declare_tx_to_starknet_tx(
     // Convert `starknet_api::transaction::DeclareTransaction` to `mp_transactions::DeclareTransaction`
     let mp_declare_tx = match starknet_declare_tx {
         starknet_api::transaction::DeclareTransaction::V0(inner) => {
-            mp_transactions::DeclareTransaction::V0(DeclareTransactionV0::from(inner))
+            mp_transactions::DeclareTransaction::V0(DeclareTransactionV0::from_starknet(inner))
         },
         starknet_api::transaction::DeclareTransaction::V1(inner) => {
-            mp_transactions::DeclareTransaction::V1(DeclareTransactionV1::from(inner))
+            mp_transactions::DeclareTransaction::V1(DeclareTransactionV1::from_starknet(inner))
         },
         starknet_api::transaction::DeclareTransaction::V2(inner) => {
-            mp_transactions::DeclareTransaction::V2(DeclareTransactionV2::from(inner))
+            mp_transactions::DeclareTransaction::V2(DeclareTransactionV2::from_starknet(inner))
         },
     };
 

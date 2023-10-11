@@ -132,22 +132,24 @@ impl Header {
     #[must_use]
     pub fn hash<H: HasherT>(&self) -> Felt252Wrapper {
         if self.block_number >= 833 {
+            // Computes the block hash for blocks generated after Cairo 0.7.0
             let data: &[Felt252Wrapper] = &[
-                self.block_number.into(),
-                self.global_state_root.into(),
-                self.sequencer_address.0.0.into(),
-                self.block_timestamp.into(),
-                self.transaction_count.into(),
-                self.transaction_commitment.into(),
-                self.event_count.into(),
-                self.event_commitment.into(),
-                self.protocol_version.into(),
-                Felt252Wrapper::ZERO,
-                self.parent_block_hash.into(),
+                self.block_number.into(), // block number
+                self.global_state_root.into(), // global state root
+                self.sequencer_address.into(), // sequencer address
+                self.block_timestamp.into(), // block timestamp
+                self.transaction_count.into(), // number of transactions
+                self.transaction_commitment.into(), // transaction commitment
+                self.event_count.into(), // number of events
+                self.event_commitment.into(), // event commitment
+                Felt252Wrapper::ZERO, // reserved: protocol version
+                Felt252Wrapper::ZERO, // reserved: extra data
+                self.parent_block_hash.into(), // parent block hash
             ];
 
             H::compute_hash_on_wrappers(data)
         } else {
+            // Computes the block hash for blocks generated before Cairo 0.7.0
             let data: &[Felt252Wrapper] = &[
 				self.block_number.into(),
 				self.global_state_root.into(),

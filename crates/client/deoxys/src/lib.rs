@@ -15,25 +15,16 @@ use std::sync::{ Arc, Mutex};
 use std::collections::VecDeque;
 use log::info;
 use tokio::time;
-use std::env;
-use std::fs::read_to_string;
-use std::path::Path;
 use std::string::String;
 use starknet_client;
 use std::path::PathBuf;
 use crate::transactions::{declare_tx_to_starknet_tx, deploy_account_tx_to_starknet_tx, invoke_tx_to_starknet_tx, l1handler_tx_to_starknet_tx, deploy_tx_to_starknet_tx};
 use mp_hashers::pedersen::PedersenHasher;
 
-pub fn read_resource_file(path_in_resource_dir: &str) -> String {
-    let path = Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap())
-        .join(path_in_resource_dir);
-    return read_to_string(path.to_str().unwrap()).unwrap();
-}
-
 const NODE_VERSION: &str = "NODE VERSION";
 
 mod transactions;
-// Your block queue type
+
 pub type BlockQueue = Arc<Mutex<VecDeque<Block>>>;
 
 // Function to create a new block queue
@@ -288,12 +279,6 @@ mod tests {
             fn new(url: &str, option: Option<&str>, version: &str, retry_config: RetryConfig) -> Self;
             async fn block(&self, block_number: BlockNumber) -> Result<Option<starknet_client::reader::Block>, starknet_client::Error>;
         }
-    }
-
-    #[test]
-    fn test_read_resource_file() {
-        // This test can check if the function properly reads files from a resource directory.
-        // For simplicity, you can skip the actual file reading and just check if the path formation is correct.
     }
 
     #[test]

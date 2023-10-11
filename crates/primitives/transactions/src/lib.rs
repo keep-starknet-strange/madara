@@ -13,6 +13,8 @@ pub mod getters;
 #[cfg(feature = "client")]
 pub mod to_starknet_core_transaction;
 
+use spin::Mutex;
+
 use alloc::vec::Vec;
 
 use blockifier::execution::contract_class::ContractClass;
@@ -20,6 +22,7 @@ use blockifier::transaction::transaction_types::TransactionType;
 use derive_more::From;
 use starknet_api::transaction::{Fee, TransactionVersion};
 use starknet_ff::FieldElement;
+use lazy_static::lazy_static;
 
 const SIMULATE_TX_VERSION_OFFSET: FieldElement =
     FieldElement::from_mont([18446744073700081665, 17407, 18446744073709551584, 576460752142434320]);
@@ -27,6 +30,27 @@ const SIMULATE_TX_VERSION_OFFSET: FieldElement =
 /// Functions related to transaction conversions
 // pub mod utils;
 use mp_felt::Felt252Wrapper;
+
+/// Legacy check for deprecated txs
+/// See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/` for more details.
+
+pub const LEGACY_BLOCK_NUMBER: u64 = 1470;
+pub const LEGACY_L1_HANDLER_BLOCK: u64 = 854;
+
+pub struct LegacyEnv {
+    pub legacy_mode: bool,
+}
+
+lazy_static! {
+    pub static ref LEGACY_ENV: Mutex<LegacyEnv> = Mutex::new(LegacyEnv {
+        legacy_mode: true,
+    });
+}
+
+pub fn update_legacy() {
+    let mut env = LEGACY_ENV.lock();
+    env.legacy_mode = false;
+}
 
 /// Wrapper type for transaction execution error.
 /// Different tx types.

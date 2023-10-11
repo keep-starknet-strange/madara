@@ -251,11 +251,11 @@ fn test_handle_l1_message_tx_hash() {
         calldata: Default::default(),
     };
 
-    let tx_hash = transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    let tx_hash = transaction.compute_hash::<PedersenHasher>(chain_id, false, Some(854u64));
 
     assert_eq!(tx_hash, expected_tx_hash);
 
     let wrapped_transaction = Transaction::L1Handler(transaction.clone());
-    let tx_hash = wrapped_transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    let tx_hash = wrapped_transaction.compute_hash::<PedersenHasher>(chain_id, false, Some(854u64));
     assert_eq!(tx_hash, expected_tx_hash);
 }

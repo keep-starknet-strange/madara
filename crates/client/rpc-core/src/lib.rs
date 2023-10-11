@@ -115,7 +115,7 @@ pub trait StarknetRpcApi {
 
     /// Returns the transactions in the transaction pool, recognized by this sequencer
     #[method(name = "pendingTransactions")]
-    async fn pending_transactions(&self) -> RpcResult<Vec<Transaction>>;
+    async fn pending_transactions(&self, block_number: u64) -> RpcResult<Vec<Transaction>>;
 
     /// Returns all events matching the given filter
     #[method(name = "getEvents")]

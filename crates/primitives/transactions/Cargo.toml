@@ -22,6 +22,8 @@ starknet-core = { workspace = true }
 starknet-crypto = { workspace = true, features = ["alloc"] }
 starknet-ff = { workspace = true, features = ["alloc"] }
 starknet_api = { workspace = true }
+lazy_static = { workspace = true }
+spin = "0.9.8"
 
 # Optional (client)
 cairo-lang-casm-contract-class = { workspace = true, optional = true }

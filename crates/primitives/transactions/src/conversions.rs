@@ -26,7 +26,7 @@ impl DeclareTransactionV0 {
         contract_class: ContractClass,
         is_query: bool,
     ) -> TransactionExecutionResult<btx::DeclareTransaction> {
-        let transaction_hash = self.compute_hash::<H>(chain_id, is_query);
+        let transaction_hash = self.compute_hash::<H>(chain_id, is_query, None);
 
         btx::DeclareTransaction::new(
             sttx::DeclareTransaction::V0(sttx::DeclareTransactionV0V1 {
@@ -40,6 +40,16 @@ impl DeclareTransactionV0 {
             contract_class,
         )
     }
+
+    pub fn from_starknet(inner: starknet_api::transaction::DeclareTransactionV0V1) -> Self {
+        Self {
+            nonce: inner.nonce.0.into(),
+            max_fee: inner.max_fee.0.into(),
+            signature: inner.signature.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),
+            sender_address: inner.sender_address.into(),
+            class_hash: inner.class_hash.into(),
+        }
+    }
 }
 
 impl DeclareTransactionV1 {
@@ -49,7 +59,7 @@ impl DeclareTransactionV1 {
         contract_class: ContractClass,
         is_query: bool,
     ) -> TransactionExecutionResult<btx::DeclareTransaction> {
-        let transaction_hash = self.compute_hash::<H>(chain_id, is_query);
+        let transaction_hash = self.compute_hash::<H>(chain_id, is_query, None);
 
         btx::DeclareTransaction::new(
             sttx::DeclareTransaction::V1(sttx::DeclareTransactionV0V1 {
@@ -63,6 +73,16 @@ impl DeclareTransactionV1 {
             contract_class,
         )
     }
+
+    pub fn from_starknet(inner: starknet_api::transaction::DeclareTransactionV0V1) -> Self {
+        Self {
+            nonce: inner.nonce.0.into(),
+            max_fee: inner.max_fee.0.into(),
+            signature: inner.signature.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),
+            sender_address: inner.sender_address.into(),
+            class_hash: inner.class_hash.into(),
+        }
+    }
 }
 
 impl DeclareTransactionV2 {
@@ -72,7 +92,7 @@ impl DeclareTransactionV2 {
         contract_class: ContractClass,
         is_query: bool,
     ) -> TransactionExecutionResult<btx::DeclareTransaction> {
-        let transaction_hash = self.compute_hash::<H>(chain_id, is_query);
+        let transaction_hash = self.compute_hash::<H>(chain_id, is_query, None);
 
         btx::DeclareTransaction::new(
             sttx::DeclareTransaction::V2(sttx::DeclareTransactionV2 {
@@ -86,6 +106,17 @@ impl DeclareTransactionV2 {
             transaction_hash.into(),
             contract_class,
         )
+    }
+
+    pub fn from_starknet(inner: starknet_api::transaction::DeclareTransactionV2) -> Self {
+        Self {
+            nonce: inner.nonce.0.into(),
+            max_fee: inner.max_fee.0.into(),
+            signature: inner.signature.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),
+            sender_address: inner.sender_address.into(),
+            class_hash: inner.class_hash.into(),
+            compiled_class_hash: inner.compiled_class_hash.into(),
+        }
     }
 }
 
@@ -106,7 +137,7 @@ impl DeclareTransaction {
 
 impl InvokeTransactionV0 {
     pub fn into_executable<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> btx::InvokeTransaction {
-        let transaction_hash = self.compute_hash::<H>(chain_id, is_query);
+        let transaction_hash = self.compute_hash::<H>(chain_id, is_query, None);
 
         btx::InvokeTransaction {
             tx: sttx::InvokeTransaction::V0(sttx::InvokeTransactionV0 {
@@ -122,7 +153,7 @@ impl InvokeTransactionV0 {
 
     pub fn from_starknet(inner: starknet_api::transaction::InvokeTransactionV0) -> Self {
         Self {
-            max_fee: inner.max_fee.0,
+            max_fee: inner.max_fee.0.into(),
             signature: inner.signature.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),
             contract_address: inner.contract_address.into(),
             entry_point_selector: inner.entry_point_selector.into(),
@@ -133,7 +164,7 @@ impl InvokeTransactionV0 {
 
 impl InvokeTransactionV1 {
     pub fn into_executable<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> btx::InvokeTransaction {
-        let transaction_hash = self.compute_hash::<H>(chain_id, is_query);
+        let transaction_hash = self.compute_hash::<H>(chain_id, is_query, None);
 
         btx::InvokeTransaction {
             tx: sttx::InvokeTransaction::V1(sttx::InvokeTransactionV1 {
@@ -223,7 +254,7 @@ impl HandleL1MessageTransaction {
         paid_fee_on_l1: Fee,
         is_query: bool,
     ) -> btx::L1HandlerTransaction {
-        let transaction_hash = self.compute_hash::<H>(chain_id, is_query);
+        let transaction_hash = self.compute_hash::<H>(chain_id, is_query, None);
 
         let tx = sttx::L1HandlerTransaction {
             version: TransactionVersion(StarkFelt::from(0u8)),
@@ -238,7 +269,7 @@ impl HandleL1MessageTransaction {
 
     pub fn from_starknet(inner: starknet_api::transaction::L1HandlerTransaction) -> Self {
         Self {
-            nonce: u64::default(), //TO DO - deoxys
+            nonce: u64::try_from(inner.nonce.0).unwrap(),
             contract_address: inner.contract_address.into(),
             entry_point_selector:  inner.entry_point_selector.0.into(),
             calldata: inner.calldata.0.iter().map(|felt| Felt252Wrapper::from(*felt)).collect(),

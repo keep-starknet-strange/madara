@@ -5,9 +5,9 @@ dotenv.config();
 
 const REMOTE_RPC_URL = process.env.REMOTE_RPC!;
 const LOCAL_RPC_URL = process.env.LOCAL_RPC!;
-const BLOCK_NUMBER = 10;
-const START_BLOCK = 0;
-const END_BLOCK = 50;
+const BLOCK_NUMBER = 2809;
+const START_BLOCK = 2099;
+const END_BLOCK = 3000;
 
 const requestDataForMethod = (method: string, params: any[]) => ({
   id: 1,
@@ -21,6 +21,12 @@ const compareObjects = (obj1: any, obj2: any, path: string = ""): string => {
 
   for (const key in obj1) {
     const currentPath = path ? `${path}.${key}` : key;
+
+    // Skip the block_hash comparison
+    // if (currentPath === "result.block_hash") {
+    //   continue;
+    // }
+
     if (typeof obj1[key] === "object" && obj1[key] !== null) {
       differences += compareObjects(obj1[key], obj2[key], currentPath);
     } else if (obj1[key] !== obj2[key]) {
@@ -34,20 +40,20 @@ const compareObjects = (obj1: any, obj2: any, path: string = ""): string => {
 };
 
 async function benchmarkMethod(method: string, params: any[]): Promise<string> {
-  console.log(
-    `\x1b[34mBenchmarking method: ${method}\x1b[0m for block_number: ${params[0].block_number}`,
-  );
+  console.log(`\x1b[34mBenchmarking method: ${method}\x1b[0m for block_number: ${params[0].block_number}`);
 
-  const alchemyResponse = await axios.post(
-    REMOTE_RPC_URL,
-    requestDataForMethod(method, params),
-  );
-  const localResponse = await axios.post(
-    LOCAL_RPC_URL,
-    requestDataForMethod(method, params),
-  );
+  const alchemyResponse = await axios.post(REMOTE_RPC_URL, requestDataForMethod(method, params));
+  const localResponse = await axios.post(LOCAL_RPC_URL, requestDataForMethod(method, params));
 
-  return compareObjects(alchemyResponse.data, localResponse.data);
+  const differences = compareObjects(alchemyResponse.data, localResponse.data);
+
+  if (differences.includes("\x1b[31mDIFFERENCE")) {
+      console.log(`\x1b[31mBlock ${params[0].block_number} has differences.\x1b[0m`);
+  } else {
+      console.log(`\x1b[32mBlock ${params[0].block_number} matches.\x1b[0m`);
+  }
+
+  return differences;
 }
 
 async function checkDifferencesInBlocks() {
@@ -66,10 +72,7 @@ async function checkDifferencesInBlocks() {
   if (blocksWithDifferences.length === 0) {
     console.log("\x1b[32mAll blocks match!\x1b[0m");
   } else {
-    console.log(
-      "\x1b[31mDifferences found in blocks:\x1b[0m",
-      blocksWithDifferences,
-    );
+    console.log("\x1b[31mDifferences found in blocks:\x1b[0m", JSON.stringify(blocksWithDifferences));
   }
 }
 

@@ -619,7 +619,6 @@ where
 		type Proof = ();
 
 		fn create_digest(&self, _parent: &B::Header, _inherents: &InherentData) -> Result<Digest, Error> {
-            println!("create_digest");
             let mut queue_guard = QUEUE.lock().unwrap();
             let starknet_block: mp_block::Block = queue_guard.pop_front().unwrap();
 
@@ -634,7 +633,6 @@ where
 			_inherents: &InherentData,
 			_proof: Self::Proof,
 		) -> Result<(), Error> {
-            println!("append_block_import, {:?}", DigestItem::Other(vec![1]));
 			params.post_digests.push(DigestItem::Other(vec![1]));
 			Ok(())
 		}
