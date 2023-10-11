@@ -30,7 +30,7 @@ jobs:
           sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
       - name: Setup dev chain
         run: |
-          ./target/release/madara setup --chain=dev
+          ./target/release/madara setup --chain=dev --from-remote
       - name: Run rpc native test
         run: |-
           ./target/release/madara --dev --sealing=manual --execution=Native &
