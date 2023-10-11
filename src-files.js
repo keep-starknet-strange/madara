@@ -1,5 +1,5 @@
 var srcIndex = JSON.parse('{\
-"madara":["",[["rpc",[],["mod.rs","starknet.rs"]]],["benchmarking.rs","chain_spec.rs","cli.rs","command.rs","configs.rs","constants.rs","genesis_block.rs","main.rs","service.rs","starknet.rs"]],\
+"madara":["",[["commands",[],["mod.rs","run.rs","setup.rs"]],["rpc",[],["mod.rs","starknet.rs"]]],["benchmarking.rs","chain_spec.rs","cli.rs","command.rs","configs.rs","constants.rs","genesis_block.rs","main.rs","service.rs","starknet.rs"]],\
 "madara_runtime":["",[],["config.rs","lib.rs","opaque.rs","pallets.rs","runtime_tests.rs","types.rs"]],\
 "mc_block_proposer":["",[],["lib.rs"]],\
 "mc_data_availability":["",[["avail",[],["config.rs","mod.rs"]],["celestia",[],["config.rs","mod.rs"]],["ethereum",[],["config.rs","mod.rs"]],["sharp",[],["mod.rs"]]],["lib.rs","utils.rs"]],\
@@ -20,7 +20,7 @@ var srcIndex = JSON.parse('{\
 "mp_state":["",[],["lib.rs"]],\
 "mp_storage":["",[],["lib.rs"]],\
 "mp_transactions":["",[],["compute_hash.rs","conversions.rs","execution.rs","from_broadcasted_transactions.rs","getters.rs","lib.rs","to_starknet_core_transaction.rs"]],\
-"pallet_starknet":["",[["offchain_worker",[],["mod.rs","types.rs"]]],["blockifier_state_adapter.rs","genesis_loader.rs","lib.rs","message.rs","runtime_api.rs","transaction_validation.rs","types.rs","utils.rs"]],\
+"pallet_starknet":["",[["offchain_worker",[],["mod.rs","types.rs"]]],["blockifier_state_adapter.rs","genesis_loader.rs","lib.rs","message.rs","runtime_api.rs","transaction_validation.rs","types.rs"]],\
 "starknet_rpc_test":["",[],["constants.rs","fixtures.rs","lib.rs","utils.rs"]]\
 }');
 createSrcSidebar();

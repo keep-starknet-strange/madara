@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Sealing","Subcommand","Testnet"],"fn":["get_default_madara_path"],"struct":["Cli","ExtendedRunCmd","SetupCmd"]};
+window.SIDEBAR_ITEMS = {"enum":["Subcommand"],"struct":["Cli"]};

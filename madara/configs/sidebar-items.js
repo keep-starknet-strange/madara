@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["fetch_and_validate_file"],"struct":["Configs","File"]};
+window.SIDEBAR_ITEMS = {"struct":["Configs","FileInfos"]};

@@ -192,25 +192,20 @@
 <a href="#192" id="192">192</a>
 <a href="#193" id="193">193</a>
 <a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::fmt;
+<span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::string::String;
 <span class="kw">use </span>std::vec::Vec;
 
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass <span class="kw">as </span>StarknetContractClass;
+<span class="kw">use </span>derive_more::Constructor;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>serde_with::serde_as;
 <span class="kw">use </span>starknet_core::serde::unsigned_field_element::UfeHex;
 <span class="kw">use </span>starknet_crypto::FieldElement;
 
-<span class="kw">use crate</span>::{utils, GenesisConfig};
+<span class="kw">use </span><span class="kw">crate</span>::GenesisConfig;
 
 <span class="doccomment">/// A wrapper for FieldElement that implements serde&#39;s Serialize and Deserialize for hex strings.
 </span><span class="attr">#[serde_as]
@@ -237,14 +232,25 @@
 <span class="kw">type </span>ContractStorageKey = (ContractAddress, StorageKey);
 <span class="kw">type </span>StorageValue = HexFelt;
 
-<span class="attr">#[derive(Deserialize, Serialize, Clone)]
-</span><span class="kw">pub struct </span>GenesisLoader {
-    <span class="kw">pub </span>madara_path: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<span class="attr">#[derive(Deserialize, Serialize)]
+</span><span class="kw">pub struct </span>GenesisData {
     <span class="kw">pub </span>contract_classes: Vec&lt;(ClassHash, ContractClass)&gt;,
     <span class="kw">pub </span>contracts: Vec&lt;(ContractAddress, ClassHash)&gt;,
     <span class="kw">pub </span>storage: Vec&lt;(ContractStorageKey, StorageValue)&gt;,
     <span class="kw">pub </span>fee_token_address: ContractAddress,
     <span class="kw">pub </span>seq_addr_updated: bool,
+}
+
+<span class="attr">#[derive(Constructor)]
+</span><span class="kw">pub struct </span>GenesisLoader {
+    base_path: PathBuf,
+    data: GenesisData,
+}
+
+<span class="kw">impl </span>GenesisLoader {
+    <span class="kw">pub fn </span>data(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>GenesisData {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.data
+    }
 }
 
 <span class="attr">#[derive(Deserialize, Serialize, Clone)]
@@ -254,45 +260,31 @@
     Class(StarknetContractClass),
 }
 
-<span class="kw">impl </span>GenesisLoader {
-    <span class="kw">pub fn </span>set_madara_path(<span class="kw-2">&amp;mut </span><span class="self">self</span>, madara_path: String) {
-        <span class="self">self</span>.madara_path = <span class="prelude-val">Some</span>(madara_path);
-    }
-}
-
 <span class="kw">impl</span>&lt;T: <span class="kw">crate</span>::Config&gt; From&lt;GenesisLoader&gt; <span class="kw">for </span>GenesisConfig&lt;T&gt; {
     <span class="kw">fn </span>from(loader: GenesisLoader) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>contract_classes = loader
+            .data
             .contract_classes
             .into_iter()
             .map(|(hash, class)| {
                 <span class="kw">let </span>hash = Felt252Wrapper(hash.<span class="number">0</span>).into();
                 <span class="kw">match </span>class {
-                    ContractClass::Path { path, version } =&gt; {
-                        <span class="kw">let </span>contract_path = <span class="kw">match </span>loader.madara_path.clone() {
-                            <span class="prelude-val">Some</span>(madara_path) =&gt; madara_path + <span class="string">&quot;/configs/&quot; </span>+ <span class="kw-2">&amp;</span>path,
-                            <span class="prelude-val">None </span>=&gt; {
-                                <span class="kw">let </span>project_path = utils::get_project_path()
-                                    .expect(<span class="string">&quot;A Project path should be present in order to load the genesis contracts&quot;</span>);
-                                project_path + <span class="string">&quot;/&quot; </span>+ <span class="kw-2">&amp;</span>path
-                            }
-                        };
-                        (
-                            hash,
-                            read_contract_class_from_json(
-                                <span class="kw-2">&amp;</span>utils::read_file_to_string(contract_path).expect(
-                                    <span class="string">&quot;Some contract is missing in the config folder. Try to run `madara setup` before \
-                                     opening an issue.&quot;</span>,
-                                ),
-                                version,
+                    ContractClass::Path { path, version } =&gt; (
+                        hash,
+                        read_contract_class_from_json(
+                            <span class="kw-2">&amp;</span>std::fs::read_to_string(loader.base_path.join(path)).expect(
+                                <span class="string">&quot;Some contract is missing in the config folder. Try to run `madara setup` before \
+                                 opening an issue.&quot;</span>,
                             ),
-                        )
-                    }
+                            version,
+                        ),
+                    ),
                     ContractClass::Class(class) =&gt; (hash, class),
                 }
             })
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="kw">let </span>contracts = loader
+            .data
             .contracts
             .into_iter()
             .map(|(address, hash)| {
@@ -302,6 +294,7 @@
             })
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="kw">let </span>storage = loader
+            .data
             .storage
             .into_iter()
             .map(|(key, value)| {
@@ -310,14 +303,14 @@
                 (key, value)
             })
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-        <span class="kw">let </span>fee_token_address = Felt252Wrapper(loader.fee_token_address.<span class="number">0</span>).into();
+        <span class="kw">let </span>fee_token_address = Felt252Wrapper(loader.data.fee_token_address.<span class="number">0</span>).into();
 
         GenesisConfig {
             contracts,
             contract_classes,
             storage,
             fee_token_address,
-            seq_addr_updated: loader.seq_addr_updated,
+            seq_addr_updated: loader.data.seq_addr_updated,
             ..Default::default()
         }
     }
@@ -360,13 +353,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_deserialize_loader() {
         <span class="comment">// When
-        </span><span class="kw">let </span>loader: GenesisLoader = serde_json::from_str(
-            <span class="kw-2">&amp;</span>utils::read_file_to_string(
-                utils::get_project_path().unwrap() + <span class="string">&quot;/crates/pallets/starknet/src/tests/mock/genesis.json&quot;</span>,
-            )
-            .unwrap(),
-        )
-        .unwrap();
+        </span><span class="kw">let </span>loader: GenesisData = serde_json::from_str(<span class="macro">include_str!</span>(<span class="string">&quot;./tests/mock/genesis.json&quot;</span>)).unwrap();
 
         <span class="comment">// Then
         </span><span class="macro">assert_eq!</span>(<span class="number">13</span>, loader.contract_classes.len());
@@ -383,8 +370,7 @@
         <span class="kw">let </span>storage_value = FieldElement::from(<span class="number">4u8</span>).into();
         <span class="kw">let </span>fee_token_address = FieldElement::from(<span class="number">5u8</span>).into();
 
-        <span class="kw">let </span>genesis_loader = GenesisLoader {
-            madara_path: <span class="prelude-val">None</span>,
+        <span class="kw">let </span>genesis_loader = GenesisData {
             contract_classes: <span class="macro">vec!</span>[(class_hash, class)],
             contracts: <span class="macro">vec!</span>[(contract_address, class_hash)],
             storage: <span class="macro">vec!</span>[((contract_address, storage_key), storage_value)],

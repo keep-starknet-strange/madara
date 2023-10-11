@@ -175,19 +175,30 @@
 <a href="#175" id="175">175</a>
 <a href="#176" id="176">176</a>
 <a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
 
 <span class="kw">use </span>madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
-<span class="kw">use </span>pallet_starknet::genesis_loader::{GenesisLoader, HexFelt};
-<span class="kw">use </span>pallet_starknet::utils;
-<span class="kw">use </span>sc_service::ChainType;
+<span class="kw">use </span>pallet_starknet::genesis_loader::{GenesisData, GenesisLoader, HexFelt};
+<span class="kw">use </span>sc_service::{BasePath, ChainType};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityId <span class="kw">as </span>AuraId;
 <span class="kw">use </span>sp_consensus_grandpa::AuthorityId <span class="kw">as </span>GrandpaId;
 <span class="kw">use </span>sp_core::storage::Storage;
 <span class="kw">use </span>sp_core::{Pair, Public};
 <span class="kw">use </span>sp_state_machine::BasicExternalities;
+
+<span class="kw">use </span><span class="kw">crate</span>::constants::DEV_CHAIN_ID;
+
+<span class="kw">pub const </span>GENESIS_ASSETS_DIR: <span class="kw-2">&amp;</span>str = <span class="string">&quot;genesis-assets/&quot;</span>;
+<span class="kw">pub const </span>GENESIS_ASSETS_FILE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;genesis.json&quot;</span>;
 
 <span class="doccomment">/// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 </span><span class="kw">pub type </span>ChainSpec = sc_service::GenericChainSpec&lt;GenesisConfig&gt;;
@@ -227,23 +238,25 @@
     (get_from_seed::&lt;AuraId&gt;(s), get_from_seed::&lt;GrandpaId&gt;(s))
 }
 
-<span class="kw">pub fn </span>development_config(enable_manual_seal: <span class="prelude-ty">Option</span>&lt;bool&gt;, madara_path: PathBuf) -&gt; <span class="prelude-ty">Result</span>&lt;DevChainSpec, String&gt; {
+<span class="kw">pub fn </span>development_config(enable_manual_seal: <span class="prelude-ty">Option</span>&lt;bool&gt;, base_path: BasePath) -&gt; <span class="prelude-ty">Result</span>&lt;DevChainSpec, String&gt; {
     <span class="kw">let </span>wasm_binary = WASM_BINARY.ok_or_else(|| <span class="string">&quot;Development wasm not available&quot;</span>.to_string())<span class="question-mark">?</span>;
-    <span class="kw">let </span>genesis_loader = load_genesis(madara_path);
+    <span class="kw">let </span>chain_id = DEV_CHAIN_ID;
 
     <span class="prelude-val">Ok</span>(DevChainSpec::from_genesis(
         <span class="comment">// Name
         </span><span class="string">&quot;Development&quot;</span>,
         <span class="comment">// ID
-        </span><span class="string">&quot;dev&quot;</span>,
+        </span>chain_id,
         ChainType::Development,
         <span class="kw">move </span>|| {
+            <span class="kw">let </span>genesis_loader = load_genesis(base_path.config_dir(chain_id));
+
             <span class="comment">// Logging the development account
             </span>print_development_accounts(<span class="kw-2">&amp;</span>genesis_loader);
 
             DevGenesisExt {
                 genesis_config: testnet_genesis(
-                    genesis_loader.clone(),
+                    genesis_loader,
                     wasm_binary,
                     <span class="comment">// Initial PoA authorities
                     </span><span class="macro">vec!</span>[authority_keys_from_seed(<span class="string">&quot;Alice&quot;</span>)],
@@ -270,10 +283,11 @@
 // accounts with addresses 0x1 and 0x4 are NO VALIDATE accounts (don&#39;t require PK)
 // accounts with addresses 0x2 and 0x3 have the same PK
 </span><span class="kw">pub fn </span>print_development_accounts(genesis_loader: <span class="kw-2">&amp;</span>GenesisLoader) {
-    <span class="kw">let </span>no_validate_account_address = genesis_loader.contracts[<span class="number">0</span>].<span class="number">0.0</span>;
-    <span class="kw">let </span>argent_account_address = genesis_loader.contracts[<span class="number">1</span>].<span class="number">0.0</span>;
-    <span class="kw">let </span>oz_account_address = genesis_loader.contracts[<span class="number">2</span>].<span class="number">0.0</span>;
-    <span class="kw">let </span>cairo_1_no_validate_account_address = genesis_loader.contracts[<span class="number">3</span>].<span class="number">0.0</span>;
+    <span class="comment">// TODO: this is only true by luck. It&#39;s not enforced by anything
+    </span><span class="kw">let </span>no_validate_account_address = genesis_loader.data().contracts[<span class="number">0</span>].<span class="number">0.0</span>;
+    <span class="kw">let </span>argent_account_address = genesis_loader.data().contracts[<span class="number">1</span>].<span class="number">0.0</span>;
+    <span class="kw">let </span>oz_account_address = genesis_loader.data().contracts[<span class="number">2</span>].<span class="number">0.0</span>;
+    <span class="kw">let </span>cairo_1_no_validate_account_address = genesis_loader.data().contracts[<span class="number">3</span>].<span class="number">0.0</span>;
 
     <span class="kw">let </span>argent_pk: HexFelt =
         Felt252Wrapper::from_hex_be(<span class="string">&quot;0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d&quot;</span>)
@@ -286,19 +300,20 @@
     <span class="macro">log::info!</span>(<span class="string">&quot;🧪 CAIRO 1 with address: {cairo_1_no_validate_account_address:#x} and no pk&quot;</span>);
 }
 
-<span class="kw">pub fn </span>local_testnet_config(madara_path: PathBuf) -&gt; <span class="prelude-ty">Result</span>&lt;ChainSpec, String&gt; {
+<span class="kw">pub fn </span>local_testnet_config(base_path: BasePath, chain_id: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;ChainSpec, String&gt; {
     <span class="kw">let </span>wasm_binary = WASM_BINARY.ok_or_else(|| <span class="string">&quot;Development wasm not available&quot;</span>.to_string())<span class="question-mark">?</span>;
-    <span class="kw">let </span>genesis_loader = load_genesis(madara_path);
+
+    <span class="kw">let </span>owned_chain_id = chain_id.to_owned();
 
     <span class="prelude-val">Ok</span>(ChainSpec::from_genesis(
         <span class="comment">// Name
         </span><span class="string">&quot;Local Testnet&quot;</span>,
         <span class="comment">// ID
-        </span><span class="string">&quot;local_testnet&quot;</span>,
+        </span>chain_id,
         ChainType::Local,
         <span class="kw">move </span>|| {
             testnet_genesis(
-                genesis_loader.clone(),
+                load_genesis(base_path.config_dir(<span class="kw-2">&amp;</span>owned_chain_id)),
                 wasm_binary,
                 <span class="comment">// Initial PoA authorities
                 // Intended to be only 2
@@ -320,14 +335,13 @@
     ))
 }
 
-<span class="kw">fn </span>load_genesis(madara_path: PathBuf) -&gt; GenesisLoader {
-    <span class="kw">let </span>madara_path = madara_path.to_str().unwrap().to_string();
-    <span class="kw">let </span>genesis_path = madara_path.clone() + <span class="string">&quot;/configs/genesis-assets/genesis.json&quot;</span>;
-    <span class="kw">let </span>genesis = utils::read_file_to_string(genesis_path)
+<span class="kw">fn </span>load_genesis(data_path: PathBuf) -&gt; GenesisLoader {
+    <span class="kw">let </span>genesis_path = data_path.join(GENESIS_ASSETS_DIR).join(GENESIS_ASSETS_FILE);
+    <span class="kw">let </span>genesis_file_content = std::fs::read_to_string(genesis_path)
         .expect(<span class="string">&quot;Failed to read genesis file. Please run `madara setup` before opening an issue.&quot;</span>);
-    <span class="kw">let </span><span class="kw-2">mut </span>genesis_loader: GenesisLoader = serde_json::from_str(<span class="kw-2">&amp;</span>genesis).expect(<span class="string">&quot;Failed loading genesis&quot;</span>);
-    genesis_loader.set_madara_path(madara_path);
-    genesis_loader
+    <span class="kw">let </span>genesis_data: GenesisData = serde_json::from_str(<span class="kw-2">&amp;</span>genesis_file_content).expect(<span class="string">&quot;Failed loading genesis&quot;</span>);
+
+    GenesisLoader::new(data_path, genesis_data)
 }
 
 <span class="doccomment">/// Configure initial storage state for FRAME modules.
