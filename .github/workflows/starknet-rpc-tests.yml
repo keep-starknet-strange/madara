@@ -30,15 +30,15 @@ jobs:
           sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
       - name: Run rpc native test
         run: |-
-          ./target/release/madara setup
-          ./target/release/madara run --dev --sealing=manual --execution=Native --tmp &
+          ./target/release/madara setup --chain=dev
+          ./target/release/madara --dev --sealing=manual --execution=Native --tmp &
           while ! echo exit | nc localhost 9944; do sleep 1; done
           cd starknet-rpc-test
           cargo test
       - name: Run rpc wasm test
         run: |-
-          ./target/release/madara setup
-          ./target/release/madara run --dev --sealing=manual --execution=Wasm --tmp &
+          ./target/release/madara setup --chain=dev
+          ./target/release/madara --dev --sealing=manual --execution=Native --tmp &
           while ! echo exit | nc localhost 9944; do sleep 1; done
           cd starknet-rpc-test
           cargo test
