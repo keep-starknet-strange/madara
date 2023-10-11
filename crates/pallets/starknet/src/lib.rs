@@ -90,7 +90,7 @@ use mp_hashers::HasherT;
 use mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
 use mp_state::{FeeConfig, StateChanges};
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
-use mp_transactions::execution::{Execute, Validate};
+use mp_transactions::execution::Execute;
 use mp_transactions::{
     DeclareTransaction, DeployAccountTransaction, HandleL1MessageTransaction, InvokeTransaction, Transaction,
     UserAndL1HandlerTransaction, UserTransaction,
@@ -335,6 +335,13 @@ pub mod pallet {
     #[pallet::getter(fn seq_addr_update)]
     pub type SeqAddrUpdate<T: Config> = StorageValue<_, bool, ValueQuery>;
 
+    /// Information about processed L1 Messages
+    /// Based on Nonce value.
+    #[pallet::storage]
+    #[pallet::unbounded]
+    #[pallet::getter(fn l1_messages)]
+    pub(super) type L1Messages<T: Config> = StorageMap<_, Twox64Concat, Nonce, (), OptionQuery>;
+
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
@@ -440,6 +447,7 @@ pub mod pallet {
         SequencerAddressNotValid,
         InvalidContractClassForThisDeclareVersion,
         Unimplemented,
+        L1MessageAlreadyExecuted,
     }
 
     /// The Starknet pallet external functions.
@@ -668,6 +676,17 @@ pub mod pallet {
             let chain_id = Self::chain_id();
             let transaction = input_transaction.into_executable::<T::SystemHash>(chain_id, paid_fee_on_l1, false);
 
+            let tx_hash = transaction.tx_hash;
+            let nonce: Nonce = transaction.tx.nonce;
+
+            // Ensure that L1 Message has not been executed
+            Self::ensure_l1_message_not_executed(&nonce).map_err(|_| Error::<T>::L1MessageAlreadyExecuted)?;
+
+            // Store infornamtion about message being processed
+            // The next instruction executes the message
+            // Either successfully  or not
+            L1Messages::<T>::insert(nonce, ());
+
             // Execute
             let tx_execution_infos = transaction
                 .execute(
@@ -678,7 +697,6 @@ pub mod pallet {
                 )
                 .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
-            let tx_hash = transaction.tx_hash;
             Self::process_tx_events_and_messages(
                 tx_hash,
                 &tx_execution_infos.execute_call_info,
@@ -732,63 +750,12 @@ pub mod pallet {
             // otherwise we have a nonce error and everything fails.
             // Once we have a real fee market this is where we'll chose the most profitable transaction.
 
-            let chain_id = Self::chain_id();
-            let block_context = Self::get_block_context();
-            let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();
-            let mut execution_resources = ExecutionResources::default();
-            let mut initial_gas = blockifier::abi::constants::INITIAL_GAS_COST;
-
             let transaction = Self::get_call_transaction(call.clone()).map_err(|_| InvalidTransaction::Call)?;
 
             // Check the nonce is correct
-            let (sender_address, sender_nonce, transaction_nonce) =
-                if let UserAndL1HandlerTransaction::User(ref transaction) = transaction {
-                    let sender_address: ContractAddress = transaction.sender_address().into();
-                    let sender_nonce: Felt252Wrapper = Pallet::<T>::nonce(sender_address).into();
-                    let transaction_nonce = transaction.nonce();
+            let (sender_address, sender_nonce, transaction_nonce) = Self::validate_usigned_tx_nonce(&transaction)?;
 
-                    // Reject transaction with an already used Nonce
-                    if sender_nonce > *transaction_nonce {
-                        Err(InvalidTransaction::Stale)?;
-                    }
-
-                    // A transaction with a nonce higher than the expected nonce is placed in
-                    // the future queue of the transaction pool.
-                    if sender_nonce < *transaction_nonce {
-                        log!(
-                            info,
-                            "Nonce is too high. Expected: {:?}, got: {:?}. This transaction will be placed in the \
-                             transaction pool and executed in the future when the nonce is reached.",
-                            sender_nonce,
-                            transaction_nonce
-                        );
-                    }
-
-                    (transaction.sender_address(), sender_nonce, *transaction_nonce)
-                } else {
-                    // TODO: create and check L1 messages Nonce
-                    unimplemented!()
-                };
-
-            // Validate the user transactions
-            if let UserAndL1HandlerTransaction::User(transaction) = transaction {
-                match transaction {
-                    UserTransaction::Declare(tx, contract_class) => tx
-                        .try_into_executable::<T::SystemHash>(chain_id, contract_class, false)
-                        .map_err(|_| InvalidTransaction::BadProof)?
-                        .validate_tx(&mut state, &block_context, &mut execution_resources, &mut initial_gas, false),
-                    // There is no way to validate it before the account is actuallly deployed
-                    UserTransaction::DeployAccount(_) => Ok(None),
-                    UserTransaction::Invoke(tx) => tx.into_executable::<T::SystemHash>(chain_id, false).validate_tx(
-                        &mut state,
-                        &block_context,
-                        &mut execution_resources,
-                        &mut initial_gas,
-                        false,
-                    ),
-                }
-                .map_err(|_| InvalidTransaction::BadProof)?;
-            }
+            Self::validate_unsigned_tx(&transaction)?;
 
             let nonce_for_priority: u64 =
                 transaction_nonce.try_into().map_err(|_| InvalidTransaction::Custom(NONCE_DECODE_FAILURE))?;
@@ -799,11 +766,13 @@ pub mod pallet {
                 .longevity(T::TransactionLongevity::get())
                 .propagate(true);
 
-            // Enforce waiting for the tx with the previous nonce,
-            // to be either executed or ordered before in the block
-            if transaction_nonce > sender_nonce {
-                valid_transaction_builder = valid_transaction_builder
-                    .and_requires((sender_address, Felt252Wrapper(transaction_nonce.0 - FieldElement::ONE)));
+            if let Some(sender_nonce) = sender_nonce {
+                // Enforce waiting for the tx with the previous nonce,
+                // to be either executed or ordered before in the block
+                if transaction_nonce > sender_nonce {
+                    valid_transaction_builder = valid_transaction_builder
+                        .and_requires((sender_address, Felt252Wrapper(transaction_nonce.0 - FieldElement::ONE)));
+                }
             }
 
             valid_transaction_builder.build()

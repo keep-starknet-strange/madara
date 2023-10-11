@@ -26,8 +26,7 @@ impl core::fmt::Display for FeltReaderError {
 ///
 /// Felt segment is sub sequence of field elements within the original felt array.
 /// Felt segments can be recursively embedded.
-/// Felt segment is preceded by its size also encoded as felt, segment size does not include that
-/// felt.
+/// Felt segment is preceded by its size also encoded as felt, not included in segment size.
 pub struct FeltReader<'a> {
     data: &'a [StarkFelt],
     offset: usize,
