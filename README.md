@@ -146,7 +146,7 @@ bottlenecks of the system by running the following :
 
 ```bash
 ./target/release/madara setup
-flamegraph --root --open  -- ./target/release/madara run --dev
+flamegraph --root --open  -- ./target/release/madara --dev
 ```
 
 In parallel to that, run some transactions against your node (you can use

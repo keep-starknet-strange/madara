@@ -227,7 +227,7 @@ If you prefer having Madara compiled locally, you must:
 
 ```bash
 ./target/release/madara setup
-./target/release/madara run --testnet sharingan --telemetry-url 'wss://telemetry.madara.zone/submit 0'
+./target/release/madara --testnet sharingan --telemetry-url 'wss://telemetry.madara.zone/submit 0'
 ```
 
 This will store the data into `$HOME/.madara`.
