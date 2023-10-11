@@ -34,14 +34,16 @@ jobs:
       - name: Run rpc native test
         run: |-
           ./target/release/madara --dev --sealing=manual --execution=Native &
+          NATIVE_RUN_PID=$!
           while ! echo exit | nc localhost 9944; do sleep 1; done
           cd starknet-rpc-test
           cargo test
-          ps aux  |  grep -i ./target/release/madara  |  awk '{print $2}'  |  xargs sudo kill -9
+          kill $NATIVE_RUN_PID
       - name: Run rpc wasm test
         run: |-
           ./target/release/madara --dev --sealing=manual --execution=Wasm &
+          WASM_RUN_PID=$!
           while ! echo exit | nc localhost 9944; do sleep 1; done
           cd starknet-rpc-test
           cargo test
-          ps aux  |  grep -i ./target/release/madara  |  awk '{print $2}'  |  xargs sudo kill -9
+          kill $WASM_RUN_PID
