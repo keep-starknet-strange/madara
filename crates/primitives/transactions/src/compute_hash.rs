@@ -91,7 +91,7 @@ impl ComputeTransactionHash for DeclareTransactionV0 {
         let version = if is_query { SIMULATE_TX_VERSION_OFFSET } else { FieldElement::ZERO };
         let sender_address = self.sender_address.into();
         let entrypoint_selector = FieldElement::ZERO;
-        let alignment_placeholder = FieldElement::ZERO;
+        let alignment_placeholder = compute_hash_on_elements(&[]);
         let max_fee = FieldElement::from(self.max_fee);
         let chain_id = chain_id.into();
         let class_hash = self.class_hash.into();
