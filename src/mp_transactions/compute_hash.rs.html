@@ -378,7 +378,7 @@
         <span class="kw">let </span>version = <span class="kw">if </span>is_query { SIMULATE_TX_VERSION_OFFSET } <span class="kw">else </span>{ FieldElement::ZERO };
         <span class="kw">let </span>sender_address = <span class="self">self</span>.sender_address.into();
         <span class="kw">let </span>entrypoint_selector = FieldElement::ZERO;
-        <span class="kw">let </span>alignment_placeholder = FieldElement::ZERO;
+        <span class="kw">let </span>alignment_placeholder = compute_hash_on_elements(<span class="kw-2">&amp;</span>[]);
         <span class="kw">let </span>max_fee = FieldElement::from(<span class="self">self</span>.max_fee);
         <span class="kw">let </span>chain_id = chain_id.into();
         <span class="kw">let </span>class_hash = <span class="self">self</span>.class_hash.into();
