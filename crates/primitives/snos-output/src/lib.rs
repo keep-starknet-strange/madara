@@ -6,6 +6,7 @@ pub extern crate alloc;
 
 mod codec;
 mod conversions;
+mod felt_reader;
 
 #[cfg(test)]
 mod tests;
