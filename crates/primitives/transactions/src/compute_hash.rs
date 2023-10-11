@@ -127,7 +127,7 @@ impl ComputeTransactionHash for DeclareTransactionV0 {
 impl ComputeTransactionHash for DeclareTransactionV1 {
     fn compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool, block_number: Option<u64>) -> Felt252Wrapper {
         let prefix = FieldElement::from_byte_slice_be(DECLARE_PREFIX).unwrap();
-        let version = if is_query { SIMULATE_TX_VERSION_OFFSET + FieldElement::ONE } else { FieldElement::ONE };
+        let version = FieldElement::ONE;
         let sender_address = self.sender_address.into();
         let entrypoint_selector = FieldElement::ZERO;
         let calldata = compute_hash_on_elements(&[self.class_hash.into()]);
