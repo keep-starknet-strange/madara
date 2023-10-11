@@ -13,7 +13,6 @@ use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::Transaction;
-use starknet_api::block;
 
 /// Block Transactions
 pub type BlockTransactions = Vec<Transaction>;

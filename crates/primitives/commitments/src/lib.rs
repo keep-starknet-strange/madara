@@ -14,7 +14,6 @@ use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::Transaction;
-use starknet_api::block;
 use starknet_api::transaction::Event;
 use starknet_crypto::FieldElement;
 
