@@ -23,10 +23,11 @@ impl core::fmt::Display for FeltReaderError {
 
 /// Analogue of std::io::Cursor but for field elements.
 /// Allows to sequentially read felts and felt segments given a reference to a felt array.
-/// 
+///
 /// Felt segment is sub sequence of field elements within the original felt array.
 /// Felt segments can be recursively embedded.
-/// Felt segment is preceded by its size also encoded as felt, segment size does not include that felt.
+/// Felt segment is preceded by its size also encoded as felt, segment size does not include that
+/// felt.
 pub struct FeltReader<'a> {
     data: &'a [StarkFelt],
     offset: usize,
@@ -52,7 +53,7 @@ impl<'a> FeltReader<'a> {
         Ok(res)
     }
 
-    pub fn read_segment(&mut self) -> Result<FeltReader, FeltReaderError> {
+    pub fn read_segment(&mut self) -> Result<&'a [StarkFelt], FeltReaderError> {
         let segment_size = TryInto::<u64>::try_into(self.read()?).map_err(|_| FeltReaderError::InvalidCast)? as usize;
         let start = self.offset;
 
@@ -62,6 +63,6 @@ impl<'a> FeltReader<'a> {
 
         self.offset += segment_size;
 
-        Ok(FeltReader::new(&self.data[start..start + segment_size]))
+        Ok(&self.data[start..start + segment_size])
     }
 }

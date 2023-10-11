@@ -57,10 +57,10 @@ impl<T: SnosCodec> SnosCodec for Vec<T> {
     }
 
     fn decode(input: &mut FeltReader) -> Result<Self, FeltReaderError> {
-        let mut segment = input.read_segment()?;
+        let mut segment_reader = FeltReader::new(input.read_segment()?);
         let mut elements: Vec<T> = Vec::new();
-        while segment.remaining_len() > 0 {
-            elements.push(T::decode(&mut segment)?);
+        while segment_reader.remaining_len() > 0 {
+            elements.push(T::decode(&mut segment_reader)?);
         }
         Ok(elements)
     }
@@ -78,7 +78,11 @@ impl SnosCodec for MessageL2ToL1 {
     }
 
     fn decode(input: &mut FeltReader) -> Result<Self, FeltReaderError> {
-        Ok(Self { from_address: input.read()?, to_address: input.read()?, payload: Vec::<StarkFelt>::decode(input)? })
+        Ok(Self {
+            from_address: StarkFelt::decode(input)?,
+            to_address: StarkFelt::decode(input)?,
+            payload: Vec::<StarkFelt>::decode(input)?,
+        })
     }
 }
 
@@ -97,10 +101,10 @@ impl SnosCodec for MessageL1ToL2 {
 
     fn decode(input: &mut FeltReader) -> Result<Self, FeltReaderError> {
         Ok(Self {
-            from_address: input.read()?,
-            to_address: input.read()?,
-            nonce: input.read()?,
-            selector: input.read()?,
+            from_address: StarkFelt::decode(input)?,
+            to_address: StarkFelt::decode(input)?,
+            nonce: StarkFelt::decode(input)?,
+            selector: StarkFelt::decode(input)?,
             payload: Vec::<StarkFelt>::decode(input)?,
         })
     }
@@ -124,11 +128,11 @@ impl SnosCodec for StarknetOsOutput {
 
     fn decode(input: &mut FeltReader) -> Result<Self, FeltReaderError> {
         Ok(Self {
-            prev_state_root: input.read()?,
-            new_state_root: input.read()?,
-            block_number: input.read()?,
-            block_hash: input.read()?,
-            config_hash: input.read()?,
+            prev_state_root: StarkFelt::decode(input)?,
+            new_state_root: StarkFelt::decode(input)?,
+            block_number: StarkFelt::decode(input)?,
+            block_hash: StarkFelt::decode(input)?,
+            config_hash: StarkFelt::decode(input)?,
             messages_to_l1: Vec::<MessageL2ToL1>::decode(input)?,
             messages_to_l2: Vec::<MessageL1ToL2>::decode(input)?,
         })
