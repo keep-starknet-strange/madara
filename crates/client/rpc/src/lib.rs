@@ -40,7 +40,7 @@ use sp_runtime::transaction_validity::InvalidTransaction;
 use sp_runtime::DispatchError;
 use starknet_api::transaction::Calldata;
 use starknet_core::types::{
-    BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
+    BlockHashAndNumber, BlockId, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
     DeclareTransactionReceipt, DeclareTransactionResult, DeployAccountTransactionReceipt,
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, ExecutionResult, FeeEstimate, FieldElement,

@@ -1,5 +1,4 @@
 use mp_transactions::{DeclareTransactionV0, DeclareTransactionV1, DeclareTransactionV2};
-use pathfinder_common::transaction::DeclareTransactionV0V1;
 use starknet_client::reader::{objects::transaction::{IntermediateInvokeTransaction, IntermediateDeclareTransaction}, ReaderClientError};
 
 pub fn declare_tx_to_starknet_tx(
