@@ -1,89 +1,10 @@
-use std::io::Read;
-
 use starknet_api::api_core::EthAddress;
 use starknet_api::hash::StarkFelt;
 
 use crate::codec::SnosCodec;
 use crate::conversions::eth_address_to_felt;
-use crate::{MessageL1ToL2, MessageL2ToL1, StarknetOsOutput};
-
-trait Decode {
-    fn decode<I: Read>(input: &mut I) -> Self;
-}
-
-fn segment_decode<T: Decode + SnosCodec, I: Read>(input: &mut I) -> Vec<T> {
-    let mut segment_len = u64::decode(input) as usize;
-    let mut items: Vec<T> = Vec::new();
-    while segment_len > 0 {
-        let item = T::decode(input);
-        segment_len -= item.size_hint();
-        items.push(item);
-    }
-    items
-}
-
-impl Decode for Vec<StarkFelt> {
-    fn decode<I: Read>(input: &mut I) -> Self {
-        let n_items = u64::decode(input);
-        let mut items: Vec<StarkFelt> = Vec::with_capacity(n_items as usize);
-        for _ in 0..n_items {
-            items.push(StarkFelt::decode(input));
-        }
-        items
-    }
-}
-
-impl Decode for u64 {
-    fn decode<I: Read>(input: &mut I) -> Self {
-        let mut bytes = [0u8; 32];
-        input.read_exact(bytes.as_mut_slice()).unwrap();
-        u64::from_be_bytes(bytes[24..].try_into().unwrap())
-    }
-}
-
-impl Decode for StarkFelt {
-    fn decode<I: Read>(input: &mut I) -> Self {
-        let mut bytes = [0u8; 32];
-        input.read_exact(bytes.as_mut_slice()).unwrap();
-        Self(bytes)
-    }
-}
-
-impl Decode for MessageL2ToL1 {
-    fn decode<I: Read>(input: &mut I) -> Self {
-        Self {
-            from_address: StarkFelt::decode(input),
-            to_address: StarkFelt::decode(input),
-            payload: Vec::<StarkFelt>::decode(input),
-        }
-    }
-}
-
-impl Decode for MessageL1ToL2 {
-    fn decode<I: Read>(input: &mut I) -> Self {
-        Self {
-            from_address: StarkFelt::decode(input),
-            to_address: StarkFelt::decode(input),
-            nonce: StarkFelt::decode(input),
-            selector: StarkFelt::decode(input),
-            payload: Vec::<StarkFelt>::decode(input),
-        }
-    }
-}
-
-impl Decode for StarknetOsOutput {
-    fn decode<I: Read>(input: &mut I) -> Self {
-        Self {
-            prev_state_root: StarkFelt::decode(input),
-            new_state_root: StarkFelt::decode(input),
-            block_number: StarkFelt::decode(input),
-            block_hash: StarkFelt::decode(input),
-            config_hash: StarkFelt::decode(input),
-            messages_to_l1: segment_decode(input),
-            messages_to_l2: segment_decode(input),
-        }
-    }
-}
+use crate::felt_reader::FeltReader;
+use crate::StarknetOsOutput;
 
 // Starknet::update_state sample invocation from mainnet
 // https://etherscan.io/tx/0x9a6f9ee53f0b558f466d4340613740b9483e10c230313aa9c31fd0ba80f1a40f
@@ -119,13 +40,16 @@ const SNOS_PROGRAM_OUTPUT_HEX: &str = "\
 
 #[test]
 fn test_snos_output_codec() {
-    let program_output = hex::decode(SNOS_PROGRAM_OUTPUT_HEX).unwrap();
-    let snos_output = StarknetOsOutput::decode(&mut program_output.as_slice());
+    let output_bytes = hex::decode(SNOS_PROGRAM_OUTPUT_HEX).unwrap();
+    let output: Vec<StarkFelt> = output_bytes.chunks(32).map(|chunk| StarkFelt(chunk.try_into().unwrap())).collect();
+    let mut reader = FeltReader::new(&output);
+
+    let snos_output = StarknetOsOutput::decode(&mut reader).unwrap();
 
     let mut actual: Vec<u8> = Vec::new();
-    snos_output.into_vec().into_iter().for_each(|felt| actual.extend_from_slice(felt.0.as_slice()));
+    snos_output.into_encoded_vec().into_iter().for_each(|felt| actual.extend_from_slice(felt.0.as_slice()));
 
-    assert_eq!(program_output, actual);
+    assert_eq!(output_bytes, actual);
 }
 
 #[test]
