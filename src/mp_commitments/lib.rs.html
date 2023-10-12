@@ -456,7 +456,7 @@
     tree.commit()
 }
 
-<span class="doccomment">/// Calculate event commitment hash value.
+<span class="doccomment">/// Calculate transaction commitment hash value.
 ///
 /// The event commitment is the root of the Patricia Merkle tree with height 64
 /// constructed by adding the event hash
@@ -465,11 +465,11 @@
 ///
 /// # Arguments
 ///
-/// * `events` - The events to calculate the commitment from.
+/// * `transactions` - The transactions to get the events from.
 ///
 /// # Returns
 ///
-/// The merkle root of the merkle tree built from the events.
+/// The merkle root of the merkle tree built from the transactions and the number of events.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>calculate_event_commitment&lt;H: HasherT&gt;(events: <span class="kw-2">&amp;</span>[Event]) -&gt; Felt252Wrapper {
     <span class="kw">let </span><span class="kw-2">mut </span>tree = CommitmentTree::&lt;H&gt;::default();
     events.iter().enumerate().for_each(|(id, event)| {
