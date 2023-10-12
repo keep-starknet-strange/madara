@@ -2,6 +2,7 @@
 
 ## Next release
 
+- test(pallet): add function to get braavos hash
 - fix: event commitment documentation typo
 - ci: added testing key generation in the ci
 - fix(starknet-rpc-test): init one request client per runtime
