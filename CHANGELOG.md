@@ -2,6 +2,7 @@
 
 ## Next release
 
+- fix: event commitment documentation typo
 - ci: added testing key generation in the ci
 - fix(starknet-rpc-test): init one request client per runtime
 - test: validate Nonce for unsigned user txs
