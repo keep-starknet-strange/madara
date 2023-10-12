@@ -4,6 +4,8 @@
 
 - fix(transactions): remove `nonce` field from InvokeV0 tx
 - feat(transactions): don't enforce ordering in validate_unsigned for invokeV0
+- test(pallet): add function to get braavos hash
+- fix: event commitment documentation typo
 - ci: added testing key generation in the ci
 - fix(starknet-rpc-test): init one request client per runtime
 - test: validate Nonce for unsigned user txs
