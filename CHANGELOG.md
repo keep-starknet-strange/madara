@@ -3,6 +3,7 @@
 ## Next release
 
 - ci: added testing key generation in the ci
+- test: validate Nonce for unsigned user txs
 - fix: fixed declare V0 placeholder with the hash of an empty list of felts
 - feat(cli): `run` is the by default command when running the `madara` bin
 - refacto(cli): `run` and `setup` commands are defined in their own files
@@ -21,6 +22,7 @@
 - refacto(pallet/starknet): `GenesisLoader` refactored as `GenesisData` + a
   `base_path` field
 - feat(cli): for `run` param `--dev` now imply `--tmp`, as it is in substrate
+- test(starknet-rpx-test): run all tests against a single madara node
 
 ## v0.4.0
 

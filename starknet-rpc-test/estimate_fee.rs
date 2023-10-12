@@ -7,14 +7,12 @@ use starknet_ff::FieldElement;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::ACCOUNT_CONTRACT;
-use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::MadaraClient;
+use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 
 #[rstest]
 #[tokio::test]
-async fn fail_non_existing_block(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
     let ok_invoke_transaction = BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction {
         max_fee: FieldElement::ZERO,
@@ -41,11 +39,8 @@ async fn fail_non_existing_block(#[future] madara: MadaraClient) -> Result<(), a
 
 #[rstest]
 #[tokio::test]
-async fn fail_if_one_txn_cannot_be_executed(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
-
-    madara.create_empty_block().await?;
+async fn fail_if_one_txn_cannot_be_executed(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
     let bad_invoke_transaction = BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction {
         max_fee: FieldElement::default(),
@@ -86,9 +81,8 @@ async fn fail_if_one_txn_cannot_be_executed(#[future] madara: MadaraClient) -> R
 
 #[rstest]
 #[tokio::test]
-async fn works_ok(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
     // from mainnet tx: 0x000c52079f33dcb44a58904fac3803fd908ac28d6632b67179ee06f2daccb4b5
     // https://starkscan.co/tx/0x000c52079f33dcb44a58904fac3803fd908ac28d6632b67179ee06f2daccb4b5
@@ -110,6 +104,7 @@ async fn works_ok(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
     let estimate =
         rpc.estimate_fee(&vec![invoke_transaction.clone(), invoke_transaction], BlockId::Tag(BlockTag::Latest)).await?;
 
+    // TODO: instead execute the tx and check that the actual fee are the same as the estimated ones
     assert_eq!(estimate.len(), 2);
     assert_eq!(estimate[0].overall_fee, 410);
     assert_eq!(estimate[1].overall_fee, 410);

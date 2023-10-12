@@ -9,18 +9,18 @@ use starknet_ff::FieldElement;
 use starknet_providers::jsonrpc::HttpTransport;
 use starknet_providers::{JsonRpcClient, MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SEQUENCER_ADDRESS, SIGNER_PRIVATE};
-use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::utils::{assert_eq_emitted_event, create_account, AccountActions};
+use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_rpc_test::utils::{assert_eq_emitted_event, build_single_owner_account, AccountActions};
 use starknet_rpc_test::{MadaraClient, Transaction, TransactionResult};
 
 async fn transfer_tokens(
     rpc: &JsonRpcClient<HttpTransport>,
-    madara: &MadaraClient,
+    madara_write_lock: &mut async_lock::RwLockWriteGuard<'_, MadaraClient>,
     recipient: FieldElement,
     transfer_amount: FieldElement,
 ) -> (FieldElement, FieldElement) {
-    let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
-    let mut txs = madara
+    let account = build_single_owner_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    let mut txs = madara_write_lock
         .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(recipient, transfer_amount, None))])
         .await
         .unwrap();
@@ -34,9 +34,8 @@ async fn transfer_tokens(
 
 #[rstest]
 #[tokio::test]
-async fn fail_invalid_continuation_token(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn fail_invalid_continuation_token(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
     let events_result = rpc
         .get_events(
@@ -64,9 +63,8 @@ async fn fail_invalid_continuation_token(#[future] madara: MadaraClient) -> Resu
 
 #[rstest]
 #[tokio::test]
-async fn fail_chunk_size_too_big(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn fail_chunk_size_too_big(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
     let events_result = rpc
         .get_events(
@@ -94,9 +92,8 @@ async fn fail_chunk_size_too_big(#[future] madara: MadaraClient) -> Result<(), a
 
 #[rstest]
 #[tokio::test]
-async fn fail_keys_too_big(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn fail_keys_too_big(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
     let events_result = rpc
         .get_events(
@@ -124,70 +121,74 @@ async fn fail_keys_too_big(#[future] madara: MadaraClient) -> Result<(), anyhow:
 
 #[rstest]
 #[tokio::test]
-async fn work_one_block_no_filter(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn work_one_block_no_filter(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
     let recipient = FieldElement::from_hex_be("0x123").unwrap();
     let transfer_amount = FieldElement::ONE;
-    let (transaction_hash, account_address) = transfer_tokens(rpc, &madara, recipient, transfer_amount).await;
+
+    let mut madara_write_lock = madara.write().await;
+    let block_number = rpc.block_number().await?;
+    let (transaction_hash, account_address) =
+        transfer_tokens(&rpc, &mut madara_write_lock, recipient, transfer_amount).await;
 
     let events_result = rpc
-        .get_events(EventFilter { from_block: None, to_block: None, address: None, keys: None }, None, 10)
+        .get_events(EventFilter { from_block: None, to_block: None, address: None, keys: None }, None, 1000)
         .await
         .unwrap();
 
     let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
     let block_hash =
         FieldElement::from_hex_be("0x0742520489186d3d79b09e1d14ec7e69d515a3c915e6cfd8fd4ca65299372a45").unwrap();
-    let block_number = 1;
     let expected_fee = FieldElement::from_hex_be("0x1d010").unwrap();
-
-    assert_eq_emitted_event(
-        events_result.events,
-        vec![
-            EmittedEvent {
-                from_address: fee_token_address,
-                keys: vec![get_selector_from_name("Transfer").unwrap()],
-                data: vec![
-                    account_address,    // from
-                    recipient,          // to
-                    transfer_amount,    // value low
-                    FieldElement::ZERO, // value high
-                ],
-                block_hash,
-                block_number,
-                transaction_hash,
-            },
-            EmittedEvent {
-                from_address: account_address,
-                keys: vec![get_selector_from_name("transaction_executed").unwrap()],
-                data: vec![
-                    transaction_hash,  // txn hash
-                    FieldElement::TWO, // response_len
-                    FieldElement::ONE,
-                    FieldElement::ONE,
-                ],
-                block_hash,
-                block_number,
-                transaction_hash,
-            },
-            EmittedEvent {
-                from_address: fee_token_address,
-                keys: vec![get_selector_from_name("Transfer").unwrap()],
-                data: vec![
-                    account_address,                                       // from
-                    FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(), // to (sequencer address)
-                    expected_fee,                                          // value low
-                    FieldElement::ZERO,                                    // value high
-                ],
-                block_hash,
-                block_number,
-                transaction_hash,
-            },
-        ],
-    );
     assert_eq!(events_result.continuation_token, None);
+
+    assert!(events_result.events.as_slice().windows(3).any(|w| {
+        assert_eq_emitted_event(
+            w,
+            &[
+                EmittedEvent {
+                    from_address: fee_token_address,
+                    keys: vec![get_selector_from_name("Transfer").unwrap()],
+                    data: vec![
+                        account_address,    // from
+                        recipient,          // to
+                        transfer_amount,    // value low
+                        FieldElement::ZERO, // value high
+                    ],
+                    block_hash,
+                    block_number,
+                    transaction_hash,
+                },
+                EmittedEvent {
+                    from_address: account_address,
+                    keys: vec![get_selector_from_name("transaction_executed").unwrap()],
+                    data: vec![
+                        transaction_hash,  // txn hash
+                        FieldElement::TWO, // response_len
+                        FieldElement::ONE,
+                        FieldElement::ONE,
+                    ],
+                    block_hash,
+                    block_number,
+                    transaction_hash,
+                },
+                EmittedEvent {
+                    from_address: fee_token_address,
+                    keys: vec![get_selector_from_name("Transfer").unwrap()],
+                    data: vec![
+                        account_address,                                       // from
+                        FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(), // to (sequencer address)
+                        expected_fee,                                          // value low
+                        FieldElement::ZERO,                                    // value high
+                    ],
+                    block_hash,
+                    block_number,
+                    transaction_hash,
+                },
+            ],
+        )
+    }));
 
     Ok(())
 }
@@ -195,14 +196,16 @@ async fn work_one_block_no_filter(#[future] madara: MadaraClient) -> Result<(), 
 #[rstest]
 #[tokio::test]
 async fn work_one_block_with_chunk_filter_and_continuation_token(
-    #[future] madara: MadaraClient,
+    madara: &ThreadSafeMadaraClient,
 ) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+    let rpc = madara.get_starknet_client().await;
 
     let recipient = FieldElement::from_hex_be("0x123").unwrap();
     let transfer_amount = FieldElement::ONE;
-    let (transaction_hash, account_address) = transfer_tokens(rpc, &madara, recipient, transfer_amount).await;
+    let mut madara_write_lock = madara.write().await;
+    let block_number = rpc.block_number().await?;
+    let (transaction_hash, account_address) =
+        transfer_tokens(&rpc, &mut madara_write_lock, recipient, transfer_amount).await;
 
     let events_result = rpc
         .get_events(EventFilter { from_block: None, to_block: None, address: None, keys: None }, None, 1)
@@ -212,67 +215,52 @@ async fn work_one_block_with_chunk_filter_and_continuation_token(
     let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
     let block_hash =
         FieldElement::from_hex_be("0x0742520489186d3d79b09e1d14ec7e69d515a3c915e6cfd8fd4ca65299372a45").unwrap();
-    let block_number = 1;
 
-    assert_eq_emitted_event(
-        events_result.events,
-        vec![EmittedEvent {
-            from_address: fee_token_address,
-            keys: vec![get_selector_from_name("Transfer").unwrap()],
-            data: vec![
-                account_address,    // from
-                recipient,          // to
-                transfer_amount,    // value low
-                FieldElement::ZERO, // value high
-            ],
-            block_hash,
-            block_number,
-            transaction_hash,
-        }],
-    );
-    assert_eq!(events_result.continuation_token, Some("1,1".into()));
+    assert!(events_result.continuation_token.as_ref().unwrap().ends_with(",1"));
 
     let events_result = rpc
         .get_events(
             EventFilter { from_block: None, to_block: None, address: None, keys: None },
             events_result.continuation_token,
-            10,
+            1000,
         )
         .await
         .unwrap();
 
     let expected_fee = FieldElement::from_hex_be("0x1d010").unwrap();
-    assert_eq_emitted_event(
-        events_result.events,
-        vec![
-            EmittedEvent {
-                from_address: account_address,
-                keys: vec![get_selector_from_name("transaction_executed").unwrap()],
-                data: vec![
-                    transaction_hash,  // txn hash
-                    FieldElement::TWO, // response_len
-                    FieldElement::ONE,
-                    FieldElement::ONE,
-                ],
-                block_hash,
-                block_number,
-                transaction_hash,
-            },
-            EmittedEvent {
-                from_address: fee_token_address,
-                keys: vec![get_selector_from_name("Transfer").unwrap()],
-                data: vec![
-                    account_address,                                       // from
-                    FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(), // to (sequencer address)
-                    expected_fee,                                          // value low
-                    FieldElement::ZERO,                                    // value high
-                ],
-                block_hash,
-                block_number,
-                transaction_hash,
-            },
-        ],
-    );
+    assert!(events_result.events.as_slice().windows(2).any(|w| {
+        assert_eq_emitted_event(
+            w,
+            &[
+                EmittedEvent {
+                    from_address: account_address,
+                    keys: vec![get_selector_from_name("transaction_executed").unwrap()],
+                    data: vec![
+                        transaction_hash,  // txn hash
+                        FieldElement::TWO, // response_len
+                        FieldElement::ONE,
+                        FieldElement::ONE,
+                    ],
+                    block_hash,
+                    block_number,
+                    transaction_hash,
+                },
+                EmittedEvent {
+                    from_address: fee_token_address,
+                    keys: vec![get_selector_from_name("Transfer").unwrap()],
+                    data: vec![
+                        account_address,                                       // from
+                        FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(), // to (sequencer address)
+                        expected_fee,                                          // value low
+                        FieldElement::ZERO,                                    // value high
+                    ],
+                    block_hash,
+                    block_number,
+                    transaction_hash,
+                },
+            ],
+        )
+    }));
 
     Ok(())
 }
@@ -280,25 +268,27 @@ async fn work_one_block_with_chunk_filter_and_continuation_token(
 #[rstest]
 #[tokio::test]
 async fn work_two_blocks_with_block_filter_and_continuation_token(
-    #[future] madara: MadaraClient,
+    madara: &ThreadSafeMadaraClient,
 ) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+    let rpc = madara.get_starknet_client().await;
 
     let recipient = FieldElement::from_hex_be("0x123").unwrap();
     let transfer_amount = FieldElement::ONE;
 
+    let mut madara_write_lock = madara.write().await;
+    let block_number = rpc.block_number().await?;
     // first block
-    let (transaction_hash_1, account_address) = transfer_tokens(rpc, &madara, recipient, transfer_amount).await;
+    let (transaction_hash_1, account_address) =
+        transfer_tokens(&rpc, &mut madara_write_lock, recipient, transfer_amount).await;
     // second block
-    let (transaction_hash_2, _) = transfer_tokens(rpc, &madara, recipient, transfer_amount).await;
+    let (transaction_hash_2, _) = transfer_tokens(&rpc, &mut madara_write_lock, recipient, transfer_amount).await;
 
     // get first event of first block
     let events_result = rpc
         .get_events(
             EventFilter {
-                from_block: Some(BlockId::Number(1)),
-                to_block: Some(BlockId::Number(1)),
+                from_block: Some(BlockId::Number(block_number + 1)),
+                to_block: Some(BlockId::Number(block_number + 1)),
                 address: None,
                 keys: None,
             },
@@ -310,9 +300,9 @@ async fn work_two_blocks_with_block_filter_and_continuation_token(
 
     let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
 
-    assert_eq_emitted_event(
-        events_result.events,
-        vec![EmittedEvent {
+    assert!(assert_eq_emitted_event(
+        &events_result.events,
+        &[EmittedEvent {
             from_address: fee_token_address,
             keys: vec![get_selector_from_name("Transfer").unwrap()],
             data: vec![
@@ -326,15 +316,15 @@ async fn work_two_blocks_with_block_filter_and_continuation_token(
             block_number: 1,
             transaction_hash: transaction_hash_1,
         }],
-    );
+    ));
     assert_eq!(events_result.continuation_token, Some("0,1".into()));
 
     // get first event of second block
     let events_result = rpc
         .get_events(
             EventFilter {
-                from_block: Some(BlockId::Number(2)),
-                to_block: Some(BlockId::Number(2)),
+                from_block: Some(BlockId::Number(block_number + 2)),
+                to_block: Some(BlockId::Number(block_number + 2)),
                 address: None,
                 keys: None,
             },
@@ -344,9 +334,9 @@ async fn work_two_blocks_with_block_filter_and_continuation_token(
         .await
         .unwrap();
 
-    assert_eq_emitted_event(
-        events_result.events,
-        vec![EmittedEvent {
+    assert!(assert_eq_emitted_event(
+        &events_result.events,
+        &[EmittedEvent {
             from_address: fee_token_address,
             keys: vec![get_selector_from_name("Transfer").unwrap()],
             data: vec![
@@ -360,7 +350,7 @@ async fn work_two_blocks_with_block_filter_and_continuation_token(
             block_number: 2,
             transaction_hash: transaction_hash_2,
         }],
-    );
+    ));
 
     assert_eq!(events_result.continuation_token, Some("0,1".into()));
 
@@ -369,19 +359,20 @@ async fn work_two_blocks_with_block_filter_and_continuation_token(
 
 #[rstest]
 #[tokio::test]
-async fn work_one_block_address_filter(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn work_one_block_address_filter(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
     let recipient = FieldElement::from_hex_be("0x123").unwrap();
     let transfer_amount = FieldElement::ONE;
-    let (transaction_hash, account_address) = transfer_tokens(rpc, &madara, recipient, transfer_amount).await;
+    let mut madara_write_lock = madara.write().await;
+    let (transaction_hash, account_address) =
+        transfer_tokens(&rpc, &mut madara_write_lock, recipient, transfer_amount).await;
 
     let events_result = rpc
         .get_events(
             EventFilter { from_block: None, to_block: None, address: Some(account_address), keys: None },
             None,
-            10,
+            1000,
         )
         .await
         .unwrap();
@@ -390,22 +381,25 @@ async fn work_one_block_address_filter(#[future] madara: MadaraClient) -> Result
         FieldElement::from_hex_be("0x0742520489186d3d79b09e1d14ec7e69d515a3c915e6cfd8fd4ca65299372a45").unwrap();
     let block_number = 1;
 
-    assert_eq_emitted_event(
-        events_result.events,
-        vec![EmittedEvent {
-            from_address: account_address,
-            keys: vec![get_selector_from_name("transaction_executed").unwrap()],
-            data: vec![
-                transaction_hash,  // txn hash
-                FieldElement::TWO, // response_len
-                FieldElement::ONE,
-                FieldElement::ONE,
-            ],
-            block_hash,
-            block_number,
-            transaction_hash,
-        }],
-    );
+    assert!(events_result.events.as_slice().windows(1).any(|w| {
+        assert_eq_emitted_event(
+            w,
+            &[EmittedEvent {
+                from_address: account_address,
+                keys: vec![get_selector_from_name("transaction_executed").unwrap()],
+                data: vec![
+                    transaction_hash,  // txn hash
+                    FieldElement::TWO, // response_len
+                    FieldElement::ONE,
+                    FieldElement::ONE,
+                ],
+                block_hash,
+                block_number,
+                transaction_hash,
+            }],
+        )
+    }));
+
     assert_eq!(events_result.continuation_token, None);
 
     Ok(())
@@ -413,20 +407,21 @@ async fn work_one_block_address_filter(#[future] madara: MadaraClient) -> Result
 
 #[rstest]
 #[tokio::test]
-async fn work_one_block_key_filter(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn work_one_block_key_filter(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
     let recipient = FieldElement::from_hex_be("0x123").unwrap();
     let transfer_amount = FieldElement::ONE;
-    let (transaction_hash, account_address) = transfer_tokens(rpc, &madara, recipient, transfer_amount).await;
+    let mut madara_write_lock = madara.write().await;
+    let (transaction_hash, account_address) =
+        transfer_tokens(&rpc, &mut madara_write_lock, recipient, transfer_amount).await;
     let key = get_selector_from_name("transaction_executed").unwrap();
 
     let events_result = rpc
         .get_events(
             EventFilter { from_block: None, to_block: None, address: None, keys: Some(vec![vec![key]]) },
             None,
-            10,
+            1000,
         )
         .await
         .unwrap();
@@ -435,22 +430,24 @@ async fn work_one_block_key_filter(#[future] madara: MadaraClient) -> Result<(),
         FieldElement::from_hex_be("0x0742520489186d3d79b09e1d14ec7e69d515a3c915e6cfd8fd4ca65299372a45").unwrap();
     let block_number = 1;
 
-    assert_eq_emitted_event(
-        events_result.events,
-        vec![EmittedEvent {
-            from_address: account_address,
-            keys: vec![key],
-            data: vec![
-                transaction_hash,  // txn hash
-                FieldElement::TWO, // response_len
-                FieldElement::ONE,
-                FieldElement::ONE,
-            ],
-            block_hash,
-            block_number,
-            transaction_hash,
-        }],
-    );
+    assert!(events_result.events.as_slice().windows(1).any(|w| {
+        assert_eq_emitted_event(
+            w,
+            &[EmittedEvent {
+                from_address: account_address,
+                keys: vec![key],
+                data: vec![
+                    transaction_hash,  // txn hash
+                    FieldElement::TWO, // response_len
+                    FieldElement::ONE,
+                    FieldElement::ONE,
+                ],
+                block_hash,
+                block_number,
+                transaction_hash,
+            }],
+        )
+    }));
     assert_eq!(events_result.continuation_token, None);
 
     Ok(())
