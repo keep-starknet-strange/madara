@@ -22,11 +22,17 @@ jobs:
             ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
             github.run_id }}
           fail-on-cache-miss: true
+      - name: Setup Madara
+        run: target/release/madara setup --chain=dev --from-remote
       - name: Run Madara in background
-        run: target/release/madara --dev & sleep 15
+        id: madara
+        run: |
+          target/release/madara --dev &
+          echo "RUN_PID=$\!" >> "$GITHUB_OUTPUT"
+          while ! echo exit | nc localhost 9944; do sleep 1; done
       - name: Run Gomu Gomu no Gatling Action
         uses: keep-starknet-strange/gomu-gomu-no-gatling/.github/actions@main
         with:
           config_path: "benchmark.yml"
       - name: Stop Madara
-        run: killall madara
+        run: kill "${{ steps.madara.outputs.RUN_PID }}"
