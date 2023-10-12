@@ -11,6 +11,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "cache"
 
       - name: Setup rust toolchain
         if: steps.cache.outputs.cache-hit != 'true'
