@@ -1283,7 +1283,7 @@
 
         <span class="prelude-val">Ok</span>(to_rpc_contract_class(contract_class).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;Failed to convert contract class at &#39;{contract_address}&#39; to RPC contract class: {e}&quot;</span>);
-            StarknetRpcApiError::ContractNotFound
+            StarknetRpcApiError::InvalidContractClass
         })<span class="question-mark">?</span>)
     }
 
@@ -1635,7 +1635,7 @@
     }
 
     <span class="comment">// Returns the details of a transaction by a given block id and index
-    </span><span class="kw">fn </span>get_transaction_by_block_id_and_index(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId, index: usize) -&gt; RpcResult&lt;Transaction&gt; {
+    </span><span class="kw">fn </span>get_transaction_by_block_id_and_index(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId, index: u64) -&gt; RpcResult&lt;Transaction&gt; {
         <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
             StarknetRpcApiError::BlockNotFound
@@ -1643,7 +1643,7 @@
 
         <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
-        <span class="kw">let </span>transaction = block.transactions().get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)<span class="question-mark">?</span>;
+        <span class="kw">let </span>transaction = block.transactions().get(index <span class="kw">as </span>usize).ok_or(StarknetRpcApiError::InvalidTxnIndex)<span class="question-mark">?</span>;
         <span class="kw">let </span>chain_id = <span class="self">self</span>.chain_id()<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(to_starknet_core_tx::&lt;H&gt;(transaction.clone(), Felt252Wrapper(chain_id.<span class="number">0</span>)))

@@ -1162,6 +1162,9 @@
 <a href="#1162" id="1162">1162</a>
 <a href="#1163" id="1163">1163</a>
 <a href="#1164" id="1164">1164</a>
+<a href="#1165" id="1165">1165</a>
+<a href="#1166" id="1166">1166</a>
+<a href="#1167" id="1167">1167</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1947,7 +1950,10 @@
                         <span class="bool-val">false</span>,
                     ),
                 }
-                .map_err(|<span class="kw">_</span>| InvalidTransaction::BadProof)<span class="question-mark">?</span>;
+                .map_err(|e| {
+                    <span class="macro">log::error!</span>(<span class="string">&quot;failed to validate tx: {}&quot;</span>, e);
+                    InvalidTransaction::BadProof
+                })<span class="question-mark">?</span>;
             }
 
             <span class="kw">let </span>nonce_for_priority: u64 =

@@ -70,7 +70,7 @@
 <span class="item-spacer"></span>    fn <a href="#tymethod.get_transaction_by_block_id_and_index" class="fn">get_transaction_by_block_id_and_index</a>(
         &amp;self,
         block_id: BlockId,
-        index: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a>
+        index: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>
     ) -&gt; RpcResult&lt;Transaction&gt;;
 <span class="item-spacer"></span>    fn <a href="#tymethod.get_state_update" class="fn">get_state_update</a>(&amp;self, block_id: BlockId) -&gt; RpcResult&lt;StateUpdate&gt;;
 <span class="item-spacer"></span>    fn <a href="#tymethod.pending_transactions" class="fn">pending_transactions</a>&lt;'life0, 'async_trait&gt;(
@@ -173,7 +173,7 @@ address</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="tymethod.get_transaction_by_block_id_and_index" class="method"><a class="src rightside" href="../src/mc_rpc_core/lib.rs.html#110">source</a><h4 class="code-header">fn <a href="#tymethod.get_transaction_by_block_id_and_index" class="fn">get_transaction_by_block_id_and_index</a>(
     &amp;self,
     block_id: BlockId,
-    index: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a>
+    index: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>
 ) -&gt; RpcResult&lt;Transaction&gt;</h4></section></summary><div class="docblock"><p>Get the details of a transaction by a given block id and index</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="tymethod.get_state_update" class="method"><a class="src rightside" href="../src/mc_rpc_core/lib.rs.html#114">source</a><h4 class="code-header">fn <a href="#tymethod.get_state_update" class="fn">get_state_update</a>(&amp;self, block_id: BlockId) -&gt; RpcResult&lt;StateUpdate&gt;</h4></section></summary><div class="docblock"><p>Get the information about the result of executing the requested block</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="tymethod.pending_transactions" class="method"><a class="src rightside" href="../src/mc_rpc_core/lib.rs.html#118">source</a><h4 class="code-header">fn <a href="#tymethod.pending_transactions" class="fn">pending_transactions</a>&lt;'life0, 'async_trait&gt;(

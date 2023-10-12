@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["madara"],"struct":["madara"]};
+window.SIDEBAR_ITEMS = {"fn":["madara"],"struct":["ThreadSafeMadaraClient","madara"]};

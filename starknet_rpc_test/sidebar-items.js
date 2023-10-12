@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ExecutionStrategy","SendTransactionError","TestError","Transaction","TransactionResult"],"mod":["constants","fixtures","utils"],"struct":["MadaraClient"],"type":["RpcOzAccountFactory"]};
+window.SIDEBAR_ITEMS = {"enum":["SendTransactionError","Transaction","TransactionResult"],"mod":["constants","fixtures","utils"],"struct":["MadaraClient"],"type":["RpcOzAccountFactory"]};

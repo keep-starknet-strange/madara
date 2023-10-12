@@ -6,12 +6,46 @@
 <a href="#6" id="6">6</a>
 <a href="#7" id="7">7</a>
 <a href="#8" id="8">8</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>rstest::fixture;
+<a href="#9" id="9">9</a>
+<a href="#10" id="10">10</a>
+<a href="#11" id="11">11</a>
+<a href="#12" id="12">12</a>
+<a href="#13" id="13">13</a>
+<a href="#14" id="14">14</a>
+<a href="#15" id="15">15</a>
+<a href="#16" id="16">16</a>
+<a href="#17" id="17">17</a>
+<a href="#18" id="18">18</a>
+<a href="#19" id="19">19</a>
+<a href="#20" id="20">20</a>
+<a href="#21" id="21">21</a>
+<a href="#22" id="22">22</a>
+<a href="#23" id="23">23</a>
+<a href="#24" id="24">24</a>
+<a href="#25" id="25">25</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>async_lock::RwLock;
+<span class="kw">use </span>rstest::fixture;
+<span class="kw">use </span>starknet_providers::jsonrpc::HttpTransport;
+<span class="kw">use </span>starknet_providers::JsonRpcClient;
 
-<span class="kw">use crate</span>::{ExecutionStrategy, MadaraClient};
+<span class="kw">use </span><span class="kw">crate</span>::MadaraClient;
+
+<span class="kw">pub struct </span>ThreadSafeMadaraClient(RwLock&lt;MadaraClient&gt;);
 
 <span class="attr">#[fixture]
-</span><span class="kw">pub async fn </span>madara() -&gt; MadaraClient {
-    MadaraClient::new(ExecutionStrategy::Native).<span class="kw">await
-</span>}
+#[once]
+</span><span class="kw">pub fn </span>madara() -&gt; ThreadSafeMadaraClient {
+    ThreadSafeMadaraClient(RwLock::new(MadaraClient::new()))
+}
+
+<span class="kw">impl </span>ThreadSafeMadaraClient {
+    <span class="kw">pub async fn </span>get_starknet_client(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; JsonRpcClient&lt;HttpTransport&gt; {
+        <span class="kw">let </span>inner = <span class="self">self</span>.<span class="number">0</span>.read();
+        inner.<span class="kw">await</span>.get_starknet_client()
+    }
+
+    <span class="kw">pub async fn </span>write(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; async_lock::RwLockWriteGuard&lt;<span class="lifetime">&#39;_</span>, MadaraClient&gt; {
+        <span class="self">self</span>.<span class="number">0</span>.write().<span class="kw">await
+    </span>}
+}
 </code></pre></div></section></main></body></html>
