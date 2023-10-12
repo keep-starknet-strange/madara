@@ -2,6 +2,7 @@
 
 ## Next release
 
+- ci: added testing key generation in the ci
 - feat(cli): `run` is the by default command when running the `madara` bin
 - refacto(cli): `run` and `setup` commands are defined in their own files
 - refacto(cli): `run.testnet` argument removed in favor of the substrate native
