@@ -2,8 +2,9 @@
 
 ## Next release
 
-- ci: added testing key generation in the ci
 - fix(transactions): remove `nonce` field from InvokeV0 tx
+- feat(transactions): don't enforce ordering in validate_unsigned for invokeV0
+- ci: added testing key generation in the ci
 - fix(starknet-rpc-test): init one request client per runtime
 - test: validate Nonce for unsigned user txs
 - fix: fixed declare V0 placeholder with the hash of an empty list of felts

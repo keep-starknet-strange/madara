@@ -799,11 +799,11 @@ pub mod pallet {
 
             let mut valid_transaction_builder = ValidTransaction::with_tag_prefix("starknet")
                 .priority(u64::MAX - nonce_for_priority)
-                .and_provides((sender_address, transaction_nonce))
                 .longevity(T::TransactionLongevity::get())
                 .propagate(true);
 
             if let Some(transaction_nonce) = transaction_nonce {
+                valid_transaction_builder = valid_transaction_builder.and_provides((sender_address, transaction_nonce));
                 // Enforce waiting for the tx with the previous nonce,
                 // to be either executed or ordered before in the block
                 if transaction_nonce > sender_nonce {
