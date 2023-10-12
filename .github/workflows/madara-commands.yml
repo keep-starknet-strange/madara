@@ -35,7 +35,7 @@ jobs:
         id: key-gen
         run: |
           target/release/madara key generate --scheme Sr25519
-          echo "SEED_PHRASE=$(target/release/madara key generate --scheme Sr25519 | sed -n 's/Secret phrase:\s*//p') >> "$GITHUB_OUTPUT"
+          echo "SEED_PHRASE=$(target/release/madara key generate --scheme Sr25519 | sed -n 's/Secret phrase:\s*//p')" >> "$GITHUB_OUTPUT"
       - name: Derive Ed25519 key for Grandpa (Finality)
         run: |
           target/release/madara key inspect --scheme Ed25519 "${{ steps.key-gen.outputs.SEED_PHRASE }}"
