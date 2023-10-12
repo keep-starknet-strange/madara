@@ -180,7 +180,6 @@ fn test_invoke_tx_v0_hash() {
     let transaction = InvokeTransactionV0 {
         max_fee: 1,
         signature: vec![],
-        nonce: Felt252Wrapper::ZERO,
         contract_address: Default::default(),
         entry_point_selector: Default::default(),
         calldata: vec![Felt252Wrapper::ONE, Felt252Wrapper::TWO, Felt252Wrapper::THREE],
