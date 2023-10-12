@@ -84,7 +84,6 @@ impl Transaction<'_> {
 #[derive(Debug)]
 /// A wrapper over the Madara process handle, reqwest client and request counter
 pub struct MadaraClient {
-    client: Client,
     rpc_request_count: Cell<usize>,
     url: Url,
 }
@@ -92,7 +91,7 @@ pub struct MadaraClient {
 impl Default for MadaraClient {
     fn default() -> Self {
         let url = Url::parse(NODE_RPC_URL).expect("Invalid JSONRPC Url");
-        MadaraClient { client: Client::new(), url, rpc_request_count: Default::default() }
+        MadaraClient { url, rpc_request_count: Default::default() }
     }
 }
 
@@ -132,8 +131,7 @@ impl MadaraClient {
 
         let body = serde_json::to_string(&body).expect("the json body must be serializable");
 
-        let response = self
-            .client
+        let response = Client::new()
             .post("http://localhost:9944")
             .header(CONTENT_TYPE, "application/json; charset=utf-8")
             .body(body)
