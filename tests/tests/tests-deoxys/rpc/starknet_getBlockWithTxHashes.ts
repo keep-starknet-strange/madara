@@ -4,10 +4,10 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const REMOTE_RPC_URL = process.env.REMOTE_RPC!;
-const LOCAL_RPC_URL = process.env.LOCAL_RPC!;
-const BLOCK_NUMBER = 2809;
-const START_BLOCK = 2099;
-const END_BLOCK = 3000;
+const LOCAL_RPC_URL = process.env.DEOXYS_RPC!;
+const BLOCK_NUMBER = 5284;
+const START_BLOCK = 4883;
+const END_BLOCK = 5000;
 
 const requestDataForMethod = (method: string, params: any[]) => ({
   id: 1,
@@ -23,9 +23,9 @@ const compareObjects = (obj1: any, obj2: any, path: string = ""): string => {
     const currentPath = path ? `${path}.${key}` : key;
 
     // Skip the block_hash comparison
-    // if (currentPath === "result.block_hash") {
-    //   continue;
-    // }
+    if (currentPath === "result.block_hash") {
+      continue;
+    }
 
     if (typeof obj1[key] === "object" && obj1[key] !== null) {
       differences += compareObjects(obj1[key], obj2[key], currentPath);
