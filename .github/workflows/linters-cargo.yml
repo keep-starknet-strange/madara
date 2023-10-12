@@ -11,24 +11,8 @@ jobs:
     runs-on: ubuntu-latest-32-cores
     steps:
       - uses: actions/checkout@v3
-      - name: Retrieve cached build
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key:
-            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
-            github.run_id }}
-          fail-on-cache-miss: true
-          restore-keys: |
-            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
-            github.run_id }}
-            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
-            ${{ runner.os }}-cargo
+      - uses: Swatinem/rust-cache@v2
+        save-if: false
       - name: Setup build deps
         run: |
           sudo apt-get update
