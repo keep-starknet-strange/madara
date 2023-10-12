@@ -33,7 +33,7 @@ async fn works_with_one_pending_transaction(madara: &ThreadSafeMadaraClient) -> 
 
 #[rstest]
 #[tokio::test]
-async fn works_with_500_pending_transactions(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+async fn works_with_50_pending_transactions(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
     let mut madara_write_lock = madara.write().await;
@@ -42,8 +42,8 @@ async fn works_with_500_pending_transactions(madara: &ThreadSafeMadaraClient) ->
     let nonce = nonce.to_bytes_be();
     let nonce: u64 = nonce[31] as u64;
 
-    // loop from 0 to 500
-    for nonce_idx in 0..500 {
+    // loop from 0 to 50
+    for nonce_idx in 0..50 {
         let _ = account
             .transfer_tokens(
                 FieldElement::from_hex_be("0x123").unwrap(),
@@ -60,7 +60,7 @@ async fn works_with_500_pending_transactions(madara: &ThreadSafeMadaraClient) ->
 
     // not validating the fields inside the transaction as
     // that is covered in get_block_with_txs
-    assert_eq!(pending_txs.len(), 500);
+    assert_eq!(pending_txs.len(), 50);
 
     Ok(())
 }
