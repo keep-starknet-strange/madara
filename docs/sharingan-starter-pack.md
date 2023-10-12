@@ -226,6 +226,7 @@ If you prefer having Madara compiled locally, you must:
    the root of Madara repository:
 
 ```bash
+./target/release/madara setup
 ./target/release/madara --testnet sharingan --telemetry-url 'wss://telemetry.madara.zone/submit 0'
 ```
 

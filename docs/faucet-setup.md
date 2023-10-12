@@ -17,7 +17,8 @@ Follow the steps below to setup a faucet for your local build
 Run an instance of your madara node locally
 
 ```bash
-cargo run --release -- --dev
+cargo run --release -- setup
+cargo run --release -- run --dev
 ```
 
 `--dev`: enforces a development environment needed to make testing easier for

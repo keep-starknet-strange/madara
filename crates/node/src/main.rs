@@ -7,6 +7,8 @@ mod benchmarking;
 mod chain_spec;
 mod cli;
 mod command;
+mod commands;
+mod configs;
 mod constants;
 mod genesis_block;
 mod rpc;

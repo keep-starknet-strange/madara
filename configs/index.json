@@ -1,0 +1,57 @@
+{
+  "remote_base_path": "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/",
+  "genesis_assets": [
+    {
+      "name": "Account.json",
+      "md5": "bbdfc1b69f76e9c2784db6d8b697dc56"
+    },
+    {
+      "name": "AccountBaseImpl.json",
+      "md5": "517db50da627d5cf290aa53c402cea39"
+    },
+    {
+      "name": "ArgentAccount.json",
+      "md5": "fb96b0c9993878c6a5a5cabf8ce9b3c9"
+    },
+    {
+      "name": "CallAggregator.json",
+      "md5": "3f418be1aab5ebd4a591e815af65533a"
+    },
+    {
+      "name": "ERC20.json",
+      "md5": "bb4b9492b9ac173cc8648899f82fb4b5"
+    },
+    {
+      "name": "ERC721.json",
+      "md5": "921c01faed5df5b24a80e52a3b469330"
+    },
+    {
+      "name": "genesis.json",
+      "md5": "06b5c369b9ba1cbf18e0496855ff929c"
+    },
+    {
+      "name": "NoValidateAccount.casm.json",
+      "md5": "a6d73f38cec68964187e7c5a217dcac2"
+    },
+    {
+      "name": "NoValidateAccount.json",
+      "md5": "8049765b03c864c1f743ebcfbac0b721"
+    },
+    {
+      "name": "OpenzeppelinAccount.json",
+      "md5": "afac329e2b9d0525dd0e481591a0e98b"
+    },
+    {
+      "name": "Proxy.json",
+      "md5": "cd2bf3a51f319124f7506327ccd4045d"
+    },
+    {
+      "name": "test.json",
+      "md5": "b022be5ad4dae9599d4fa44467abfbd9"
+    },
+    {
+      "name": "UniversalDeployer.json",
+      "md5": "d917baa8b1455f946d095d467dcdba47"
+    }
+  ]
+}

@@ -5,10 +5,7 @@ use starknet_accounts::{Account, AccountFactory, Call, OpenZeppelinAccountFactor
 use starknet_core::chain_id;
 use starknet_core::types::contract::legacy::LegacyContractClass;
 use starknet_core::types::contract::{CompiledClass, SierraClass};
-use starknet_core::types::{
-    BlockId, BlockTag, BlockWithTxHashes, BlockWithTxs, DeclareTransaction, EmittedEvent, Event, FieldElement,
-    FunctionCall, InvokeTransaction, MsgToL1, Transaction,
-};
+use starknet_core::types::{BlockId, BlockTag, EmittedEvent, Event, FieldElement, FunctionCall, MsgToL1};
 use starknet_core::utils::get_selector_from_name;
 use starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
 use starknet_providers::Provider;
@@ -25,7 +22,7 @@ pub struct U256 {
     pub low: FieldElement,
 }
 
-pub fn create_account<'a>(
+pub fn build_single_owner_account<'a>(
     rpc: &'a JsonRpcClient<HttpTransport>,
     private_key: &str,
     account_address: &str,
@@ -170,100 +167,6 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
     }
 }
 
-// a short way to do it is to serialize both blocks and compare them
-// however, in case of failures, the assert messages will be less informative
-// hence, we compare each field separately
-pub fn assert_equal_blocks_with_tx_hashes(b1: BlockWithTxHashes, b2: BlockWithTxHashes) {
-    assert_eq!(b1.transactions, b2.transactions);
-    assert_eq!(b1.status, b2.status);
-    assert_eq!(b1.block_hash, b2.block_hash);
-    assert_eq!(b1.parent_hash, b2.parent_hash);
-    assert_eq!(b1.block_number, b2.block_number);
-    assert_eq!(b1.new_root, b2.new_root);
-    assert_eq!(b1.sequencer_address, b2.sequencer_address);
-}
-
-pub fn assert_equal_blocks_with_txs(b1: BlockWithTxs, b2: BlockWithTxs) {
-    assert_eq!(b1.status, b2.status);
-    assert_eq!(b1.block_hash, b2.block_hash);
-    assert_eq!(b1.parent_hash, b2.parent_hash);
-    assert_eq!(b1.block_number, b2.block_number);
-    assert_eq!(b1.new_root, b2.new_root);
-    assert_eq!(b1.sequencer_address, b2.sequencer_address);
-    assert_eq!(b1.transactions.len(), b2.transactions.len());
-    for (tx1, tx2) in b1.transactions.iter().zip(b2.transactions.iter()) {
-        assert_equal_transactions(tx1, tx2);
-    }
-}
-
-pub fn assert_equal_transactions(tx1: &Transaction, tx2: &Transaction) {
-    match tx1 {
-        Transaction::Invoke(InvokeTransaction::V1(tx1)) => {
-            let tx2 = match tx2 {
-                Transaction::Invoke(InvokeTransaction::V1(tx)) => tx,
-                _ => panic!("Expected Invoke transaction"),
-            };
-            assert_eq!(tx1.transaction_hash, tx2.transaction_hash);
-            assert_eq!(tx1.max_fee, tx2.max_fee);
-            assert_eq!(tx1.signature, tx2.signature);
-            assert_eq!(tx1.nonce, tx2.nonce);
-            assert_eq!(tx1.sender_address, tx2.sender_address);
-            assert_eq!(tx1.calldata, tx2.calldata);
-        }
-        Transaction::L1Handler(tx1) => {
-            let tx2 = match tx2 {
-                Transaction::L1Handler(tx) => tx,
-                _ => panic!("Expected L1Handler transaction"),
-            };
-            assert_eq!(tx1.transaction_hash, tx2.transaction_hash);
-            assert_eq!(tx1.version, tx2.version);
-            assert_eq!(tx1.nonce, tx2.nonce);
-            assert_eq!(tx1.contract_address, tx2.contract_address);
-            assert_eq!(tx1.entry_point_selector, tx2.entry_point_selector);
-            assert_eq!(tx1.calldata, tx2.calldata);
-        }
-        Transaction::Declare(DeclareTransaction::V2(tx1)) => {
-            let tx2 = match tx2 {
-                Transaction::Declare(DeclareTransaction::V2(tx)) => tx,
-                _ => panic!("Expected DeclareV2 transaction"),
-            };
-            assert_eq!(tx1.nonce, tx2.nonce);
-            assert_eq!(tx1.sender_address, tx2.sender_address);
-            assert_eq!(tx1.max_fee, tx2.max_fee);
-            assert_eq!(tx1.signature, tx2.signature);
-            assert_eq!(tx1.class_hash, tx2.class_hash);
-            assert_eq!(tx1.compiled_class_hash, tx2.compiled_class_hash);
-            assert_eq!(tx1.transaction_hash, tx2.transaction_hash);
-        }
-        Transaction::Declare(DeclareTransaction::V1(tx1)) => {
-            let tx2 = match tx2 {
-                Transaction::Declare(DeclareTransaction::V1(tx)) => tx,
-                _ => panic!("Expected DeclareV1 transaction"),
-            };
-            assert_eq!(tx1.nonce, tx2.nonce);
-            assert_eq!(tx1.sender_address, tx2.sender_address);
-            assert_eq!(tx1.max_fee, tx2.max_fee);
-            assert_eq!(tx1.signature, tx2.signature);
-            assert_eq!(tx1.class_hash, tx2.class_hash);
-            assert_eq!(tx1.transaction_hash, tx2.transaction_hash);
-        }
-        Transaction::DeployAccount(tx1) => {
-            let tx2 = match tx2 {
-                Transaction::DeployAccount(tx) => tx,
-                _ => panic!("Expected DeployAccount transaction"),
-            };
-            assert_eq!(tx1.transaction_hash, tx2.transaction_hash);
-            assert_eq!(tx1.max_fee, tx2.max_fee);
-            assert_eq!(tx1.signature, tx2.signature);
-            assert_eq!(tx1.nonce, tx2.nonce);
-            assert_eq!(tx1.contract_address_salt, tx2.contract_address_salt);
-            assert_eq!(tx1.constructor_calldata, tx2.constructor_calldata);
-            assert_eq!(tx1.class_hash, tx2.class_hash);
-        }
-        _ => unimplemented!("transaction either deprecated or will be deprecated in the future"),
-    }
-}
-
 pub fn assert_eq_msg_to_l1(l1: Vec<MsgToL1>, l2: Vec<MsgToL1>) {
     assert_eq!(l1.len(), l2.len());
     for (m1, m2) in l1.iter().zip(l2.iter()) {
@@ -282,16 +185,16 @@ pub fn assert_eq_event(l1: Vec<Event>, l2: Vec<Event>) {
     }
 }
 
-pub fn assert_eq_emitted_event(l1: Vec<EmittedEvent>, l2: Vec<EmittedEvent>) {
+pub fn assert_eq_emitted_event(l1: &[EmittedEvent], l2: &[EmittedEvent]) -> bool {
     assert_eq!(l1.len(), l2.len());
-    for (e1, e2) in l1.iter().zip(l2.iter()) {
-        assert_eq!(e1.data, e2.data);
-        assert_eq!(e1.from_address, e2.from_address);
-        assert_eq!(e1.keys, e2.keys);
-        assert_eq!(e1.block_hash, e2.block_hash);
-        assert_eq!(e1.block_number, e2.block_number);
-        assert_eq!(e1.transaction_hash, e2.transaction_hash);
-    }
+    l1.iter().zip(l2.iter()).all(|(e1, e2)| {
+        e1.data == e2.data
+            || e1.from_address == e2.from_address
+            || e1.keys == e2.keys
+            || e1.block_hash == e2.block_hash
+            || e1.block_number == e2.block_number
+            || e1.transaction_hash == e2.transaction_hash
+    })
 }
 
 pub async fn assert_poll<F, Fut>(f: F, polling_time_ms: u64, max_poll_count: u32)

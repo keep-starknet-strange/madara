@@ -16,6 +16,7 @@ rustup show
 Use Rust's native `cargo` command to build and launch the template node:
 
 ```sh
+cargo run --release -- setup --chain=dev --from-remote
 cargo run --release -- --dev
 ```
 
@@ -80,6 +81,7 @@ This command will start the single-node development chain with non-persistent
 state:
 
 ```bash
+./target/release/madara setup --chain=dev --from-remote
 ./target/release/madara --dev
 ```
 

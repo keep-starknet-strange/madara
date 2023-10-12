@@ -8,9 +8,8 @@ edition = "2021"
 
 anyhow = "1.0.72"
 assert_matches = "1.5.0"
-derive_more = "0.99.17"
+async-lock = "2.8.0"
 flate2 = { workspace = true }
-lazy_static = "1.4.0"
 reqwest = "0.11.18"
 rstest = "0.18.1"
 serde = { version = "1.0.179", features = ["derive"] }
@@ -105,3 +104,7 @@ path = "get_transaction_receipt.rs"
 [[test]]
 name = "starknet_get_events"
 path = "get_events.rs"
+
+[[test]]
+name = "starknet_estimate_fee"
+path = "estimate_fee.rs"
