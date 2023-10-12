@@ -201,8 +201,6 @@
 <a href="#201" id="201">201</a>
 <a href="#202" id="202">202</a>
 <a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a>
 </pre></div><pre class="rust"><code><span class="attr">#![feature(assert_matches)]
 
 </span><span class="kw">use </span>std::cell::Cell;
@@ -289,7 +287,6 @@
 <span class="attr">#[derive(Debug)]
 </span><span class="doccomment">/// A wrapper over the Madara process handle, reqwest client and request counter
 </span><span class="kw">pub struct </span>MadaraClient {
-    client: Client,
     rpc_request_count: Cell&lt;usize&gt;,
     url: Url,
 }
@@ -297,7 +294,7 @@
 <span class="kw">impl </span>Default <span class="kw">for </span>MadaraClient {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>url = Url::parse(NODE_RPC_URL).expect(<span class="string">&quot;Invalid JSONRPC Url&quot;</span>);
-        MadaraClient { client: Client::new(), url, rpc_request_count: Default::default() }
+        MadaraClient { url, rpc_request_count: Default::default() }
     }
 }
 
@@ -337,8 +334,7 @@
 
         <span class="kw">let </span>body = serde_json::to_string(<span class="kw-2">&amp;</span>body).expect(<span class="string">&quot;the json body must be serializable&quot;</span>);
 
-        <span class="kw">let </span>response = <span class="self">self
-            </span>.client
+        <span class="kw">let </span>response = Client::new()
             .post(<span class="string">&quot;http://localhost:9944&quot;</span>)
             .header(CONTENT_TYPE, <span class="string">&quot;application/json; charset=utf-8&quot;</span>)
             .body(body)
