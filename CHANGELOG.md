@@ -2,6 +2,7 @@
 
 ## Next release
 
+- fix(starknet-rpc-test): init one request client per runtime
 - test: validate Nonce for unsigned user txs
 - fix: fixed declare V0 placeholder with the hash of an empty list of felts
 - feat(cli): `run` is the by default command when running the `madara` bin
@@ -21,7 +22,7 @@
 - refacto(pallet/starknet): `GenesisLoader` refactored as `GenesisData` + a
   `base_path` field
 - feat(cli): for `run` param `--dev` now imply `--tmp`, as it is in substrate
-- test(starknet-rpx-test): run all tests against a single madara node
+- test(starknet-rpc-test): run all tests against a single madara node
 
 ## v0.4.0
 
