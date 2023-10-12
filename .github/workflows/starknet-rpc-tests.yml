@@ -13,7 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: Swatinem/rust-cache@v2
-        save-if: false
+        with:
+          save-if: false
       - name: Setup build deps
         run: |
           sudo apt-get update
