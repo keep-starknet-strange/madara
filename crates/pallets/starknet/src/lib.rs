@@ -43,8 +43,6 @@ pub use pallet::*;
 pub mod blockifier_state_adapter;
 #[cfg(feature = "std")]
 pub mod genesis_loader;
-/// The implementation of the message type.
-pub mod message;
 /// The Starknet pallet's runtime API
 pub mod runtime_api;
 /// Transaction validation logic.
@@ -54,9 +52,6 @@ pub mod types;
 /// Util functions for madara.
 #[cfg(feature = "std")]
 pub mod utils;
-
-/// Everything needed to run the pallet offchain workers
-mod offchain_worker;
 
 use blockifier::execution::entry_point::{CallEntryPoint, CallType, EntryPointExecutionContext};
 use blockifier::state::cached_state::ContractStorageKey;
@@ -197,24 +192,6 @@ pub mod pallet {
         /// Perform a module upgrade.
         fn on_runtime_upgrade() -> Weight {
             Weight::zero()
-        }
-
-        /// Run offchain tasks.
-        /// See: `<https://docs.substrate.io/reference/how-to-guides/offchain-workers/>`
-        /// # Arguments
-        /// * `n` - The block number.
-        fn offchain_worker(n: T::BlockNumber) {
-            log!(info, "Running offchain worker at block {:?}.", n);
-
-            match Self::process_l1_messages() {
-                Ok(_) => log!(info, "Successfully executed L1 messages"),
-                Err(err) => match err {
-                    offchain_worker::OffchainWorkerError::NoLastKnownEthBlock => {
-                        log!(info, "No last known Ethereum block number found. Skipping execution of L1 messages.")
-                    }
-                    _ => log!(error, "Failed to execute L1 messages: {:?}", err),
-                },
-            }
         }
     }
 

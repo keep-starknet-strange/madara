@@ -8,7 +8,7 @@
 use blockifier::execution::contract_class::ContractClass;
 use mp_felt::Felt252Wrapper;
 use mp_snos_output::{MessageL1ToL2, MessageL2ToL1};
-use mp_transactions::{Transaction, TxType, UserTransaction};
+use mp_transactions::{HandleL1MessageTransaction, Transaction, TxType, UserTransaction};
 use sp_api::BlockT;
 pub extern crate alloc;
 use alloc::vec::Vec;
@@ -17,7 +17,7 @@ use sp_runtime::DispatchError;
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
-use starknet_api::transaction::{Calldata, Event as StarknetEvent, MessageToL1, TransactionHash};
+use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash};
 
 #[derive(parity_scale_codec::Encode, parity_scale_codec::Decode, scale_info::TypeInfo)]
 pub enum StarknetTransactionExecutionError {
@@ -70,6 +70,10 @@ sp_api::decl_runtime_apis! {
     pub trait ConvertTransactionRuntimeApi {
         /// Converts the transaction to an UncheckedExtrinsic for submission to the pool.
         fn convert_transaction(transaction: UserTransaction) -> Result<<Block as BlockT>::Extrinsic, DispatchError>;
+
+        /// Converts the L1 Message transaction to an UncheckedExtrinsic for submission to the pool.
+        fn convert_l1_transaction(transaction: HandleL1MessageTransaction, fee: Fee) -> Result<<Block as BlockT>::Extrinsic, DispatchError>;
+
         /// Converts the DispatchError to an understandable error for the client
         fn convert_error(error: DispatchError) -> StarknetTransactionExecutionError;
     }

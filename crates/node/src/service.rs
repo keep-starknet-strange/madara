@@ -43,7 +43,6 @@ use sp_trie::PrefixedMemoryDB;
 
 use crate::cli::Sealing;
 use crate::genesis_block::MadaraGenesisBlockBuilder;
-#[cfg(feature = "messaging")]
 use crate::l1_messages;
 use crate::rpc::StarknetDeps;
 use crate::starknet::{db_config_dir, MadaraBackend};
@@ -435,7 +434,7 @@ pub fn new_full(
         let proposer_factory = ProposerFactory::new(
             task_manager.spawn_handle(),
             client.clone(),
-            transaction_pool,
+            transaction_pool.clone(),
             prometheus_registry.as_ref(),
         );
 
@@ -443,7 +442,7 @@ pub fn new_full(
 
         let aura = sc_consensus_aura::start_aura::<AuraPair, _, _, _, _, _, _, _, _, _, _>(StartAuraParams {
             slot_duration,
-            client,
+            client: client.clone(),
             select_chain,
             block_import,
             proposer_factory,
@@ -532,11 +531,10 @@ pub fn new_full(
         );
     }
 
-    #[cfg(feature = "messaging")]
     task_manager.spawn_essential_handle().spawn(
         "L1 Messages",
         Some(MADARA_TASK_GROUP),
-        l1_messages::worker::run_worker(l1_messages::worker::L1MessagesWorkerConfig {}),
+        l1_messages::worker::run_worker(client, transaction_pool),
     );
 
     network_starter.start_network();
