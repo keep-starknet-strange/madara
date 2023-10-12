@@ -2,7 +2,6 @@ extern crate starknet_rpc_test;
 
 use assert_matches::assert_matches;
 use rstest::rstest;
-use starknet_accounts::Account;
 use starknet_core::types::{
     DeclareTransactionReceipt, Event, ExecutionResult, MaybePendingTransactionReceipt, TransactionFinalityStatus,
     TransactionReceipt,
@@ -14,12 +13,12 @@ use starknet_providers::{JsonRpcClient, Provider, ProviderError};
 use starknet_rpc_test::constants::{
     ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, FEE_TOKEN_ADDRESS, SEQUENCER_ADDRESS, SIGNER_PRIVATE,
 };
-use starknet_rpc_test::fixtures::madara;
+use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{
     assert_eq_event, assert_eq_msg_to_l1, assert_poll, build_deploy_account_tx, build_oz_account_factory,
-    create_account, AccountActions,
+    build_single_owner_account, AccountActions,
 };
-use starknet_rpc_test::{MadaraClient, Transaction, TransactionResult};
+use starknet_rpc_test::{Transaction, TransactionResult};
 
 type TransactionReceiptResult =
     Result<MaybePendingTransactionReceipt, ProviderError<JsonRpcClientError<HttpTransportError>>>;
@@ -37,16 +36,23 @@ async fn get_transaction_receipt(
 
 #[rstest]
 #[tokio::test]
-async fn work_with_invoke_transaction(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn work_with_invoke_transaction(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
-    let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let recepient = FieldElement::from_hex_be("0x123").unwrap();
     let transfer_amount = FieldElement::ONE;
-    let mut txs = madara
-        .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(recepient, transfer_amount, None))])
-        .await?;
+
+    let mut txs = {
+        let mut madara_write_lock = madara.write().await;
+        let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+        madara_write_lock
+            .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(
+                recepient,
+                transfer_amount,
+                None,
+            ))])
+            .await?
+    };
 
     assert_eq!(txs.len(), 1);
     let rpc_response = match txs.remove(0).unwrap() {
@@ -54,21 +60,15 @@ async fn work_with_invoke_transaction(#[future] madara: MadaraClient) -> Result<
         _ => panic!("expected execution result"),
     };
 
-    let invoke_tx_receipt = get_transaction_receipt(rpc, rpc_response.transaction_hash).await;
+    let invoke_tx_receipt = get_transaction_receipt(&rpc, rpc_response.transaction_hash).await;
     let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
-    let expected_fee = FieldElement::from_hex_be("0x1d010").unwrap();
+    let expected_fee = FieldElement::from_hex_be("0xf154").unwrap();
 
     match invoke_tx_receipt {
         Ok(MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt))) => {
             assert_eq!(receipt.transaction_hash, rpc_response.transaction_hash);
             // assert_eq!(receipt.actual_fee, expected_fee); TODO: Fix in RPC
             assert_eq!(receipt.finality_status, TransactionFinalityStatus::AcceptedOnL2);
-            assert_eq!(
-                receipt.block_hash,
-                FieldElement::from_hex_be("0x0742520489186d3d79b09e1d14ec7e69d515a3c915e6cfd8fd4ca65299372a45")
-                    .unwrap()
-            );
-            assert_eq!(receipt.block_number, 1);
             assert_eq_msg_to_l1(receipt.messages_sent, vec![]);
             assert_eq_event(
                 receipt.events,
@@ -77,14 +77,14 @@ async fn work_with_invoke_transaction(#[future] madara: MadaraClient) -> Result<
                         from_address: fee_token_address,
                         keys: vec![get_selector_from_name("Transfer").unwrap()],
                         data: vec![
-                            account.address(),  // from
-                            recepient,          // to
-                            transfer_amount,    // value low
-                            FieldElement::ZERO, // value high
+                            FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(), // from
+                            recepient,                                                   // to
+                            transfer_amount,                                             // value low
+                            FieldElement::ZERO,                                          // value high
                         ],
                     },
                     Event {
-                        from_address: account.address(),
+                        from_address: FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(), // from
                         keys: vec![get_selector_from_name("transaction_executed").unwrap()],
                         data: vec![
                             rpc_response.transaction_hash, // txn hash
@@ -97,10 +97,10 @@ async fn work_with_invoke_transaction(#[future] madara: MadaraClient) -> Result<
                         from_address: fee_token_address,
                         keys: vec![get_selector_from_name("Transfer").unwrap()],
                         data: vec![
-                            account.address(),                                     // from
-                            FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(), // to (sequencer address)
-                            expected_fee,                                          // value low
-                            FieldElement::ZERO,                                    // value high
+                            FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(), // from
+                            FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(),       // to (sequencer address)
+                            expected_fee,                                                // value low
+                            FieldElement::ZERO,                                          // value high
                         ],
                     },
                 ],
@@ -116,15 +116,17 @@ async fn work_with_invoke_transaction(#[future] madara: MadaraClient) -> Result<
 #[rstest]
 #[tokio::test]
 #[ignore = "class already declared"]
-async fn work_with_declare_transaction(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn work_with_declare_transaction(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
-    let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
-    let (declare_tx, _, _) =
-        account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
+    let mut txs = {
+        let mut madara_write_lock = madara.write().await;
+        let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+        let (declare_tx, _, _) =
+            account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
 
-    let mut txs = madara.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
+        madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?
+    };
 
     let rpc_response_declare = match txs.remove(0).unwrap() {
         TransactionResult::Declaration(rpc_response) => rpc_response,
@@ -133,7 +135,7 @@ async fn work_with_declare_transaction(#[future] madara: MadaraClient) -> Result
 
     // not validating the fields inside the transaction as
     // that is covered in get_block_with_txs
-    let declare_tx_receipt = get_transaction_receipt(rpc, rpc_response_declare.transaction_hash).await;
+    let declare_tx_receipt = get_transaction_receipt(&rpc, rpc_response_declare.transaction_hash).await;
 
     let assert_declare_tx_receipt = |d1: TransactionReceiptResult, d2: DeclareTransactionReceipt| {
         let d1 = match d1 {
@@ -155,6 +157,7 @@ async fn work_with_declare_transaction(#[future] madara: MadaraClient) -> Result
     let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
     let expected_fee =
         FieldElement::from_hex_be("0x000000000000000000000000000000000000000000000000000000000000d3ae").unwrap();
+
     assert_declare_tx_receipt(
         declare_tx_receipt,
         DeclareTransactionReceipt {
@@ -172,10 +175,10 @@ async fn work_with_declare_transaction(#[future] madara: MadaraClient) -> Result
                 from_address: fee_token_address,
                 keys: vec![get_selector_from_name("Transfer").unwrap()],
                 data: vec![
-                    account.address(),                                     // from
-                    FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(), // to (sequencer address)
-                    expected_fee,                                          // value low
-                    FieldElement::ZERO,                                    // value high
+                    FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(), // to (sequencer address)
+                    FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(),       // to (sequencer address)
+                    expected_fee,                                                // value low
+                    FieldElement::ZERO,                                          // value high
                 ],
             }],
             execution_result: ExecutionResult::Succeeded,
@@ -187,51 +190,51 @@ async fn work_with_declare_transaction(#[future] madara: MadaraClient) -> Result
 
 #[rstest]
 #[tokio::test]
-async fn work_with_deploy_account_transaction(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn work_with_deploy_account_transaction(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
-    let oz_factory =
-        build_oz_account_factory(rpc, "0x123", FieldElement::from_hex_be(CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH).unwrap())
-            .await;
-    let account_deploy_txn = build_deploy_account_tx(&oz_factory, FieldElement::ONE);
-    let account_address = account_deploy_txn.address();
+    let (mut txs, account_address) = {
+        let mut madara_write_lock = madara.write().await;
+        let oz_factory = build_oz_account_factory(
+            &rpc,
+            "0x456",
+            FieldElement::from_hex_be(CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH).unwrap(),
+        )
+        .await;
+        let account_deploy_txn = build_deploy_account_tx(&oz_factory, FieldElement::ONE);
+        let account_address = account_deploy_txn.address();
 
-    // add funds to deploy account
-    let funding_account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
-    assert!(
-        madara
+        // add funds to deploy account
+        let funding_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+        madara_write_lock
             .create_block_with_txs(vec![Transaction::Execution(funding_account.transfer_tokens(
                 account_address,
-                FieldElement::from_hex_be("0xFFFFFFFFFF").unwrap(),
+                FieldElement::from_hex_be("0x100000").unwrap(),
                 None,
             ))])
-            .await
-            .is_ok()
-    );
+            .await?;
 
-    let mut txs = madara.create_block_with_txs(vec![Transaction::AccountDeployment(account_deploy_txn)]).await?;
+        let txs =
+            madara_write_lock.create_block_with_txs(vec![Transaction::AccountDeployment(account_deploy_txn)]).await?;
 
+        (txs, account_address)
+    };
+
+    assert_eq!(txs.len(), 1);
     let rpc_response = match txs.remove(0).unwrap() {
         TransactionResult::AccountDeployment(rpc_response) => rpc_response,
         _ => panic!("expected execution result"),
     };
 
-    let account_deployment_tx_receipt = get_transaction_receipt(rpc, rpc_response.transaction_hash).await;
+    let account_deployment_tx_receipt = get_transaction_receipt(&rpc, rpc_response.transaction_hash).await;
     let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
-    let expected_fee = FieldElement::from_hex_be("0x10d9c").unwrap();
+    let expected_fee = FieldElement::from_hex_be("0x790e").unwrap();
 
     match account_deployment_tx_receipt {
         Ok(MaybePendingTransactionReceipt::Receipt(TransactionReceipt::DeployAccount(receipt))) => {
             assert_eq!(receipt.transaction_hash, rpc_response.transaction_hash);
             // assert_eq!(receipt.actual_fee, expected_fee); TODO: fix in code
             assert_eq!(receipt.finality_status, TransactionFinalityStatus::AcceptedOnL2);
-            assert_eq!(
-                receipt.block_hash,
-                FieldElement::from_hex_be("0x043c3527516079ca568868dcfa9421e4cfe74df3b153535ef55612c980b4c666")
-                    .unwrap()
-            );
-            assert_eq!(receipt.block_number, 2);
             assert_eq_msg_to_l1(receipt.messages_sent, vec![]);
             assert_eq_event(
                 receipt.events,
@@ -239,7 +242,7 @@ async fn work_with_deploy_account_transaction(#[future] madara: MadaraClient) ->
                     from_address: fee_token_address,
                     keys: vec![get_selector_from_name("Transfer").unwrap()],
                     data: vec![
-                        account_address,                                       // from
+                        account_address,
                         FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(), // to
                         expected_fee,                                          // value low
                         FieldElement::ZERO,                                    // value high
@@ -257,9 +260,8 @@ async fn work_with_deploy_account_transaction(#[future] madara: MadaraClient) ->
 
 #[rstest]
 #[tokio::test]
-async fn fail_invalid_transaction_hash(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn fail_invalid_transaction_hash(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
     assert!(rpc.get_transaction_receipt(FieldElement::ZERO).await.is_err());
 

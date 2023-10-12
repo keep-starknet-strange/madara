@@ -73,7 +73,7 @@ fn test_deploy_account_tx_hash() {
 fn test_declare_v0_tx_hash() {
     // Computed with `calculate_declare_transaction_hash` from the cairo lang package
     let expected_tx_hash =
-        Felt252Wrapper::from_hex_be("0x07cdcb35e703351a74a0e6e8c045ce861eece44f0bca06dbbc569b4d8c0a2ae2").unwrap();
+        Felt252Wrapper::from_hex_be("0x052b849ca86ca1a1ce6ac7e069900a221b5741786bffe023804ef714f7bb46da").unwrap();
 
     let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap());
 

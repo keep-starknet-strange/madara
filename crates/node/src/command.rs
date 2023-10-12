@@ -1,14 +1,15 @@
-use std::path::PathBuf;
-
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use madara_runtime::Block;
-use mc_data_availability::DaLayer;
-use pallet_starknet::utils;
-use sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
+use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
 
 use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
-use crate::cli::{Cli, ExtendedRunCmd, SetupCmd, Subcommand, Testnet};
-use crate::{chain_spec, configs, constants, service};
+use crate::cli::{Cli, Subcommand};
+use crate::commands::run_node;
+use crate::constants::DEV_CHAIN_ID;
+#[cfg(feature = "sharingan")]
+use crate::constants::SHARINGAN_CHAIN_ID;
+use crate::{chain_spec, service};
+
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
         "Madara Node".into()
@@ -36,17 +37,20 @@ impl SubstrateCli for Cli {
 
     fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
         Ok(match id {
-            "dev" => {
-                let enable_manual_seal = self.sealing.map(|_| true);
-                Box::new(chain_spec::development_config(
-                    enable_manual_seal,
-                    self.madara_path.clone().expect("`madara_path` expected to be set with clap default value"),
-                )?)
+            DEV_CHAIN_ID => {
+                let enable_manual_seal = self.run.sealing.map(|_| true);
+                let base_path = self.run.base_path().map_err(|e| e.to_string())?;
+                Box::new(chain_spec::development_config(enable_manual_seal, base_path)?)
             }
-            "" | "local" | "madara-local" => Box::new(chain_spec::local_testnet_config(
-                self.madara_path.clone().expect("`madara_path` expected to be set with clap default value"),
+            #[cfg(feature = "sharingan")]
+            SHARINGAN_CHAIN_ID => Box::new(chain_spec::ChainSpec::from_json_bytes(
+                &include_bytes!("../../../configs/chain-specs/testnet-sharingan-raw.json")[..],
             )?),
-            path => Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
+            "" | "local" | "madara-local" => {
+                let base_path = self.run.base_path().map_err(|e| e.to_string())?;
+                Box::new(chain_spec::local_testnet_config(base_path, id)?)
+            }
+            path_or_url => Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path_or_url))?),
         })
     }
 
@@ -55,107 +59,9 @@ impl SubstrateCli for Cli {
     }
 }
 
-fn get_madara_path_string(madara_path: &Option<PathBuf>) -> String {
-    madara_path
-        .clone()
-        .expect("`madara_path` expected to be set with clap default value")
-        .into_os_string()
-        .into_string()
-        .expect("Failed to convert `madara_path` to string")
-}
-
-fn set_dev_environment(cmd: &mut ExtendedRunCmd) {
-    // create a reproducible dev environment
-    cmd.run_cmd.shared_params.dev = false;
-    cmd.run_cmd.shared_params.chain = Some("dev".to_string());
-
-    cmd.run_cmd.force_authoring = true;
-    cmd.run_cmd.alice = true;
-
-    // we can't set `--rpc-cors=all`, so it needs to be set manually if we want to connect with external
-    // hosts
-    cmd.run_cmd.rpc_external = true;
-    cmd.run_cmd.rpc_methods = RpcMethods::Unsafe;
-}
-
-fn try_set_testnet(madara_path: &Option<PathBuf>, cmd: &mut ExtendedRunCmd) -> Result<(), String> {
-    // checks if it should retrieve and enable a specific chain-spec
-    let madara_path = get_madara_path_string(madara_path);
-    let local_path = utils::get_project_path();
-
-    if cmd.testnet == Some(Testnet::Sharingan) {
-        if let Ok(ref src_path) = local_path {
-            let src_path = src_path.clone() + "/configs/chain-specs/testnet-sharingan-raw.json";
-            utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs")?;
-            cmd.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
-        } else {
-            utils::fetch_from_url(
-                constants::SHARINGAN_CHAIN_SPEC_URL.to_string(),
-                madara_path.clone() + "/configs/chain-specs/",
-            )?;
-            cmd.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
-        }
-    }
-
-    if cmd.run_cmd.shared_params.chain.is_some() {
-        cmd.run_cmd.rpc_external = true;
-        cmd.run_cmd.rpc_methods = RpcMethods::Unsafe;
-    }
-
-    Ok(())
-}
-
-fn set_chain_spec(madara_path: &Option<PathBuf>, cmd: &mut ExtendedRunCmd) -> Result<(), String> {
-    let madara_path = get_madara_path_string(madara_path);
-    let chain_spec_url = cmd
-        .fetch_chain_spec
-        .clone()
-        .expect("`chain_spec_url` expected to be set because the function is called upon verification");
-    utils::fetch_from_url(chain_spec_url.clone(), madara_path.clone() + "/chain-specs")?;
-    let chain_spec =
-        chain_spec_url.split('/').last().expect("Failed to get chain spec file name from `chain_spec_url`");
-    cmd.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/" + chain_spec);
-
-    Ok(())
-}
-
-fn fetch_madara_configs(madara_path: &Option<PathBuf>, cmd: &SetupCmd) -> Result<(), String> {
-    let madara_path = get_madara_path_string(madara_path);
-    let local_path = utils::get_project_path();
-
-    if let Ok(ref src_path) = local_path {
-        let index_path = src_path.clone() + "/configs/index.json";
-        utils::copy_from_filesystem(index_path, madara_path.clone() + "/configs")?;
-
-        let madara_configs: configs::Configs =
-            serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?)
-                .expect("Failed to serialize index.json string to json");
-        for asset in madara_configs.genesis_assets {
-            let src_path = src_path.clone() + "/configs/genesis-assets/" + &asset.name;
-            utils::copy_from_filesystem(src_path, madara_path.clone() + "/configs/genesis-assets")?;
-        }
-    } else if let Some(configs_url) = &cmd.fetch_madara_configs {
-        utils::fetch_from_url(configs_url.to_string(), madara_path.clone() + "/configs")?;
-
-        let madara_configs: configs::Configs =
-            serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?)
-                .expect("Failed to serialize index.json string to json");
-
-        for asset in madara_configs.genesis_assets {
-            configs::fetch_and_validate_file(
-                madara_configs.remote_base_path.clone(),
-                asset,
-                madara_path.clone() + "/configs/genesis-assets/",
-            )?;
-        }
-    }
-
-    Ok(())
-}
-
 /// Parse and run command line arguments
 pub fn run() -> sc_cli::Result<()> {
-    let mut cli = Cli::from_args();
+    let cli = Cli::from_args();
 
     match cli.subcommand {
         Some(Subcommand::Key(ref cmd)) => cmd.run(&cli),
@@ -275,57 +181,7 @@ pub fn run() -> sc_cli::Result<()> {
             let runner = cli.create_runner(cmd)?;
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
-        Some(Subcommand::Run(ref mut cmd)) => {
-            cmd.run_cmd.shared_params.base_path = cli.madara_path.clone();
-            let madara_path = get_madara_path_string(&cli.madara_path);
-
-            // Set the node_key_file for substrate in the case that it was not manually setted
-            if cmd.run_cmd.network_params.node_key_params.node_key_file.is_none() {
-                cmd.run_cmd.network_params.node_key_params.node_key_file =
-                    Some((madara_path.clone() + "/p2p-key.ed25519").into());
-            }
-
-            if cmd.run_cmd.shared_params.dev {
-                set_dev_environment(cmd);
-            }
-
-            if cmd.fetch_chain_spec.is_some() {
-                set_chain_spec(&cli.madara_path, cmd)?;
-            }
-
-            if cmd.testnet.is_some() {
-                try_set_testnet(&cli.madara_path, cmd)?;
-            }
-
-            let da_config: Option<(DaLayer, PathBuf)> = match cmd.da_layer {
-                Some(da_layer) => {
-                    let da_path = std::path::PathBuf::from(madara_path.clone() + "/da-config.json");
-                    if !da_path.exists() {
-                        log::info!("{} does not contain DA config", madara_path);
-                        return Err("DA config not available".into());
-                    }
-
-                    Some((da_layer, da_path))
-                }
-                None => {
-                    log::info!("Madara initialized w/o DA layer");
-                    None
-                }
-            };
-
-            // pre assign variables because of cmd mutable borrow
-            let run_cmd: sc_cli::RunCmd = cmd.run_cmd.clone();
-            let sealing = cli.sealing;
-
-            let runner = cli.create_runner(&run_cmd)?;
-            runner.run_node_until_exit(|config| async move {
-                service::new_full(config, sealing, da_config).map_err(sc_cli::Error::Service)
-            })
-        }
-        Some(Subcommand::Setup(cmd)) => {
-            fetch_madara_configs(&cli.madara_path, &cmd)?;
-            Ok(())
-        }
-        _ => Err("You need to specify some subcommand. E.g. `madara run`".into()),
+        Some(Subcommand::Setup(ref cmd)) => cmd.run(),
+        None => run_node(cli),
     }
 }

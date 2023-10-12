@@ -2,14 +2,8 @@
 
 use std::cell::Cell;
 use std::fmt::Debug;
-use std::net::TcpListener;
-use std::path::Path;
-use std::process::{Child, Command, Stdio};
 
 use anyhow::anyhow;
-use constants::ENDING_PORT;
-use derive_more::Display;
-use lazy_static::lazy_static;
 use reqwest::header::CONTENT_TYPE;
 use reqwest::{Client, Response};
 use serde_json::json;
@@ -22,8 +16,6 @@ use starknet_providers::jsonrpc::{HttpTransport, HttpTransportError, JsonRpcClie
 use starknet_providers::Provider;
 use starknet_signers::local_wallet::SignError;
 use starknet_signers::LocalWallet;
-use thiserror::Error;
-use tokio::sync::Mutex;
 use url::Url;
 
 /// Constants (addresses, contracts...)
@@ -32,6 +24,8 @@ pub mod constants;
 pub mod utils;
 
 pub mod fixtures;
+
+const NODE_RPC_URL: &str = "http://localhost:9944";
 
 type RpcAccount<'a> = SingleOwnerAccount<&'a JsonRpcClient<HttpTransport>, LocalWallet>;
 pub type RpcOzAccountFactory<'a> = OpenZeppelinAccountFactory<LocalWallet, &'a JsonRpcClient<HttpTransport>>;
@@ -87,146 +81,27 @@ impl Transaction<'_> {
     }
 }
 
-lazy_static! {
-        /// This is to prevent TOCTOU errors; i.e. one background madara node might find one
-        /// port to be free, and while it's trying to start listening to it, another instance
-        /// finds that it's free and tries occupying it
-        /// Using the mutex in `get_free_port_listener` might be safer than using no mutex at all,
-        /// but not sufficiently safe
-        static ref FREE_PORT_ATTRIBUTION_MUTEX: Mutex<()> = Mutex::new(());
-}
-
 #[derive(Debug)]
 /// A wrapper over the Madara process handle, reqwest client and request counter
-///
-/// When this struct goes out of scope, it's `Drop` impl
-/// will take care of killing the Madara process.
 pub struct MadaraClient {
-    process: Child,
-    client: Client,
     rpc_request_count: Cell<usize>,
-    starknet_client: JsonRpcClient<HttpTransport>,
-    port: u16,
+    url: Url,
 }
 
-#[derive(Display)]
-pub enum ExecutionStrategy {
-    Native,
-    Wasm,
-}
-
-#[derive(Error, Debug)]
-pub enum TestError {
-    #[error("No free ports")]
-    NoFreePorts,
-}
-
-struct NodePorts {
-    rpc_port: u16,
-    p2p_port: u16,
-}
-
-impl Drop for MadaraClient {
-    fn drop(&mut self) {
-        if let Err(e) = self.process.kill() {
-            eprintln!("Could not kill Madara process: {}", e)
-        }
+impl Default for MadaraClient {
+    fn default() -> Self {
+        let url = Url::parse(NODE_RPC_URL).expect("Invalid JSONRPC Url");
+        MadaraClient { url, rpc_request_count: Default::default() }
     }
-}
-
-fn find_available_ports() -> Result<NodePorts, TestError> {
-    let mut available_ports = Vec::new();
-
-    for index in 0..3 {
-        let mut selected_port = 0;
-        let mut port = 1024 + index * 20000 + (std::process::id() % 20000) as u16;
-
-        while selected_port == 0 && port < ENDING_PORT {
-            if TcpListener::bind(("127.0.0.1", port)).is_ok() {
-                selected_port = port;
-            }
-            port += 1;
-        }
-
-        if selected_port == 0 {
-            return Err(TestError::NoFreePorts);
-        }
-
-        available_ports.push(selected_port);
-    }
-
-    Ok(NodePorts { rpc_port: available_ports[0], p2p_port: available_ports[1] })
 }
 
 impl MadaraClient {
-    async fn init(execution: ExecutionStrategy) -> Result<Self, TestError> {
-        let NodePorts { p2p_port, rpc_port } = find_available_ports()?;
-
-        let manifest_path = Path::new(&env!("CARGO_MANIFEST_DIR"));
-        let repository_root = manifest_path.parent().expect("Failed to get parent directory of CARGO_MANIFEST_DIR");
-
-        std::env::set_current_dir(repository_root).expect("Failed to change working directory");
-
-        let madara_log = std::env::var("MADARA_LOG").unwrap_or_else(|_| "false".to_string());
-
-        Command::new("cargo")
-            .stdout(Stdio::null())
-            .stderr(if madara_log == "true" { Stdio::inherit() } else { Stdio::null() })
-            .args(["run", "--release", "--", "setup"])
-            .spawn()
-            .expect("Could not setup madara node");
-
-        let child_handle = Command::new("cargo")
-		// Silence Madara stdout and stderr
-		.stdout(Stdio::null())
-		.stderr(if madara_log == "true" { Stdio::inherit() } else { Stdio::null() })
-		.args([
-			"run",
-			"--release",
-			"--",
-			"run",
-			"--sealing=manual",
-			&format!("--execution={execution}"),
-			"--dev",
-            "--tmp",
-			&format!("--port={p2p_port}"),
-			&format!("--rpc-port={rpc_port}"),
-			])
-			.spawn()
-			.expect("Could not start background madara node");
-
-        let host = &format!("http://localhost:{rpc_port}");
-
-        let starknet_client = JsonRpcClient::new(HttpTransport::new(Url::parse(host).expect("Invalid JSONRPC Url")));
-
-        Ok(MadaraClient {
-            process: child_handle,
-            client: Client::new(),
-            starknet_client,
-            rpc_request_count: Default::default(),
-            port: rpc_port,
-        })
+    pub fn new() -> Self {
+        Default::default()
     }
 
-    pub async fn new(execution: ExecutionStrategy) -> Self {
-        // we keep the reference, otherwise the mutex unlocks immediately
-        let _mutex_guard = FREE_PORT_ATTRIBUTION_MUTEX.lock().await;
-
-        let madara = Self::init(execution).await.expect("Couldn't start Madara Node");
-
-        // Wait until node is ready
-        loop {
-            match madara.health().await {
-                Ok(is_ready) if is_ready => break,
-                _ => {}
-            }
-        }
-
-        madara
-    }
-
-    pub async fn run_to_block(&self, target_block: u64) -> anyhow::Result<()> {
-        let mut current_block = self.starknet_client.block_number().await?;
+    pub async fn run_to_block(&mut self, target_block: u64) -> anyhow::Result<()> {
+        let mut current_block = self.get_starknet_client().block_number().await?;
 
         if current_block >= target_block {
             return Err(anyhow!("target_block must be in the future"));
@@ -240,7 +115,7 @@ impl MadaraClient {
         Ok(())
     }
 
-    pub async fn create_n_blocks(&self, mut n: u64) -> anyhow::Result<()> {
+    pub async fn create_n_blocks(&mut self, mut n: u64) -> anyhow::Result<()> {
         while n > 0 {
             self.create_empty_block().await?;
             n -= 1;
@@ -256,9 +131,8 @@ impl MadaraClient {
 
         let body = serde_json::to_string(&body).expect("the json body must be serializable");
 
-        let response = self
-            .client
-            .post(&format!("http://localhost:{0}", self.port))
+        let response = Client::new()
+            .post("http://localhost:9944")
             .header(CONTENT_TYPE, "application/json; charset=utf-8")
             .body(body)
             .send()
@@ -271,11 +145,11 @@ impl MadaraClient {
         Ok(response)
     }
 
-    pub fn get_starknet_client(&self) -> &JsonRpcClient<HttpTransport> {
-        &self.starknet_client
+    pub fn get_starknet_client(&self) -> JsonRpcClient<HttpTransport> {
+        JsonRpcClient::new(HttpTransport::new(self.url.clone()))
     }
 
-    pub async fn create_empty_block(&self) -> anyhow::Result<()> {
+    pub async fn create_empty_block(&mut self) -> anyhow::Result<()> {
         let body = json!({
             "method": "engine_createBlock",
             "params": [true, true],
@@ -287,7 +161,7 @@ impl MadaraClient {
     }
 
     pub async fn create_block_with_txs(
-        &self,
+        &mut self,
         transactions: Vec<Transaction<'_>>,
     ) -> anyhow::Result<Vec<Result<TransactionResult, SendTransactionError>>> {
         let body = json!({
@@ -306,7 +180,7 @@ impl MadaraClient {
         response.status().is_success().then_some(results).ok_or(anyhow!("failed to create a new block"))
     }
 
-    pub async fn create_block_with_parent(&self, parent_hash: &str) -> anyhow::Result<()> {
+    pub async fn create_block_with_parent(&mut self, parent_hash: &str) -> anyhow::Result<()> {
         let body = json!({
             "method": "engine_createBlock",
             "params": [json!(true), json!(true), json!(parent_hash)],

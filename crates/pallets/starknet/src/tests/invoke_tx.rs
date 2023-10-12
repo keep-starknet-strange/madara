@@ -5,8 +5,10 @@ use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::{InvokeTransaction, InvokeTransactionV1};
 use pretty_assertions::assert_eq;
 use sp_runtime::traits::ValidateUnsigned;
-use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError, ValidTransaction};
-use starknet_api::api_core::{ContractAddress, PatriciaKey};
+use sp_runtime::transaction_validity::{
+    InvalidTransaction, TransactionSource, TransactionValidityError, ValidTransaction,
+};
+use starknet_api::api_core::{ContractAddress, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Event as StarknetEvent, EventContent, EventData, EventKey, Fee, TransactionHash};
@@ -20,9 +22,9 @@ use super::utils::sign_message_hash;
 use crate::message::Message;
 use crate::tests::{
     get_invoke_argent_dummy, get_invoke_braavos_dummy, get_invoke_dummy, get_invoke_emit_event_dummy,
-    get_invoke_nonce_dummy, get_invoke_openzeppelin_dummy, get_storage_read_write_dummy,
+    get_invoke_nonce_dummy, get_invoke_openzeppelin_dummy, get_storage_read_write_dummy, set_nonce,
 };
-use crate::{Config, Error, Event, StorageView};
+use crate::{Call, Config, Error, Event, StorageView};
 
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
@@ -96,7 +98,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                             StarkFelt::try_from(BLOCKIFIER_ACCOUNT_ADDRESS).unwrap(),
                             StarkFelt::try_from("0x000000000000000000000000000000000000000000000000000000000000dead")
                                 .unwrap(),
-                            StarkFelt::try_from("0x000000000000000000000000000000000000000000000000000000000000a136")
+                            StarkFelt::try_from("0x00000000000000000000000000000000000000000000000000000000000001a4")
                                 .unwrap(),
                             StarkFelt::from(0u128),
                         ]),
@@ -142,7 +144,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
                             StarkFelt::try_from("0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0")
                                 .unwrap(), // From
                             StarkFelt::try_from("0xdead").unwrap(), // To
-                            StarkFelt::try_from("0xa334").unwrap(), // Amount low
+                            StarkFelt::try_from("0x1a4").unwrap(), // Amount low
                             StarkFelt::from(0u128),                 // Amount high
                         ]),
                     },
@@ -489,5 +491,27 @@ fn test_verify_require_tag() {
             .build();
 
         assert_eq!(validate_result.unwrap(), valid_transaction_expected.unwrap())
+    });
+}
+
+#[test]
+fn test_verify_nonce_in_unsigned_tx() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let transaction = get_invoke_dummy(Felt252Wrapper::ZERO);
+
+        let tx_sender = transaction.sender_address.into();
+        let tx_source = TransactionSource::InBlock;
+        let call = Call::invoke { transaction: transaction.into() };
+
+        assert!(Starknet::validate_unsigned(tx_source, &call).is_ok());
+
+        set_nonce::<MockRuntime>(&tx_sender, &Nonce(StarkFelt::from(1u64)));
+
+        assert_eq!(
+            Starknet::validate_unsigned(tx_source, &call),
+            Err(TransactionValidityError::Invalid(InvalidTransaction::Stale))
+        );
     });
 }

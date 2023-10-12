@@ -24,6 +24,31 @@ members = [
   "crates/client/transaction-pool",
   "starknet-rpc-test",
 ]
+# All previous except for `starknet-rpc-test`
+# We don't want `cargo test` to trigger its tests
+default-members = [
+  "crates/node",
+  "crates/runtime",
+  "crates/pallets/starknet",
+  "crates/primitives/digest-log",
+  "crates/primitives/transactions",
+  "crates/primitives/felt",
+  "crates/primitives/hashers",
+  "crates/primitives/fee",
+  "crates/primitives/state",
+  "crates/primitives/block",
+  "crates/primitives/sequencer-address",
+  "crates/primitives/storage",
+  "crates/primitives/commitments",
+  "crates/primitives/chain-id",
+  "crates/client/block-proposer",
+  "crates/client/db",
+  "crates/client/rpc-core",
+  "crates/client/rpc",
+  "crates/client/mapping-sync",
+  "crates/client/storage",
+  "crates/client/transaction-pool",
+]
 
 [profile.release]
 panic = "unwind"
@@ -39,7 +64,7 @@ rpath = false        # Disables adding rpath to the binary
 authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
 edition = "2021"
 repository = "https://github.com/keep-starknet-strange/madara/"
-version = "0.3.0"
+version = "0.4.0"
 
 [workspace.dependencies]
 # Substrate frame dependencies
@@ -189,7 +214,7 @@ clap = { version = "4.4.2", default-features = false }
 futures = { version = "0.3.28", default-features = false }
 futures-timer = { version = "3.0.2", default-features = false }
 md5 = { version = "0.7.0", default-features = false }
-reqwest = { version = "0.11.20", default-features = false }
+reqwest = { version = "0.11.22", default-features = false }
 serde = { version = "1.0.188", default-features = false }
 serde_json = { version = "1.0.107", default-features = false }
 serde_with = { version = "2.3.3", default-features = false }
@@ -203,6 +228,7 @@ linked-hash-map = { version = "0.5.6", default-features = false }
 parking_lot = "0.12.1"
 async-trait = "0.1.73"
 indexmap = { git = "https://github.com/bluss/indexmap", rev = "ca5f848e10c31e80aeaad0720d14aa2f6dd6cfb1", default-features = false }
-num-traits = "0.2.16"
+num-traits = "0.2.17"
 num-bigint = "0.4.4"
 phf = { version = "0.11", default-features = false }
+url = "2.4.1"
