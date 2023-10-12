@@ -2,6 +2,7 @@
 
 ## Next release
 
+- ci: replace ci cache with rust-cache
 - test(pallet): add function to get braavos hash
 - fix: event commitment documentation typo
 - ci: added testing key generation in the ci
