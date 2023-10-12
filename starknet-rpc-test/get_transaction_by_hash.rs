@@ -6,18 +6,19 @@ use starknet_core::types::StarknetError;
 use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE};
-use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::utils::{assert_poll, create_account, AccountActions};
-use starknet_rpc_test::{MadaraClient, Transaction, TransactionResult};
+use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_rpc_test::utils::{assert_poll, build_single_owner_account, AccountActions};
+use starknet_rpc_test::{Transaction, TransactionResult};
 
 #[rstest]
 #[tokio::test]
-async fn work_valid_transaction_hash(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn work_valid_transaction_hash(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
-    let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
-    let mut txs = madara
+    let mut madara_write_lock = madara.write().await;
+    let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+
+    let mut txs = madara_write_lock
         .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(
             FieldElement::from_hex_be("0x123").unwrap(),
             FieldElement::ONE,
@@ -43,9 +44,8 @@ async fn work_valid_transaction_hash(#[future] madara: MadaraClient) -> Result<(
 
 #[rstest]
 #[tokio::test]
-async fn fail_invalid_transaction_hash(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn fail_invalid_transaction_hash(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
     assert_matches!(
         rpc.get_transaction_by_hash(FieldElement::from_hex_be("0x123").unwrap()).await,

@@ -1,5 +1,7 @@
 #![feature(assert_matches)]
 
+mod get_block_hash_and_number;
+
 extern crate starknet_rpc_test;
 
 use std::assert_matches::assert_matches;
@@ -12,17 +14,14 @@ use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
-use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::utils::{create_account, AccountActions};
-use starknet_rpc_test::{MadaraClient, Transaction};
+use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_rpc_test::utils::{build_single_owner_account, AccountActions};
+use starknet_rpc_test::Transaction;
 
 #[rstest]
 #[tokio::test]
-async fn fail_non_existing_block(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
-
-    madara.create_empty_block().await?;
+async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
     assert_matches!(
         rpc.call(
@@ -46,11 +45,8 @@ async fn fail_non_existing_block(#[future] madara: MadaraClient) -> Result<(), a
 
 #[rstest]
 #[tokio::test]
-async fn fail_non_existing_entrypoint(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
-
-    madara.create_empty_block().await?;
+async fn fail_non_existing_entrypoint(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
     assert_matches!(
         rpc.call(
@@ -74,11 +70,8 @@ async fn fail_non_existing_entrypoint(#[future] madara: MadaraClient) -> Result<
 
 #[rstest]
 #[tokio::test]
-async fn fail_incorrect_calldata(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
-
-    madara.create_empty_block().await?;
+async fn fail_incorrect_calldata(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
     assert_matches!(
         rpc.call(
@@ -102,11 +95,8 @@ async fn fail_incorrect_calldata(#[future] madara: MadaraClient) -> Result<(), a
 
 #[rstest]
 #[tokio::test]
-async fn works_on_correct_call_no_calldata(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
-
-    madara.create_empty_block().await?;
+async fn works_on_correct_call_no_calldata(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
     assert_eq!(
         rpc.call(
@@ -127,11 +117,8 @@ async fn works_on_correct_call_no_calldata(#[future] madara: MadaraClient) -> Re
 
 #[rstest]
 #[tokio::test]
-async fn works_on_correct_call_with_calldata(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
-
-    madara.create_empty_block().await?;
+async fn works_on_correct_call_with_calldata(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
     assert!(
         rpc.call(
@@ -152,30 +139,35 @@ async fn works_on_correct_call_with_calldata(#[future] madara: MadaraClient) -> 
 
 #[rstest]
 #[tokio::test]
-async fn works_on_mutable_call_without_modifying_storage(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn works_on_mutable_call_without_modifying_storage(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
-    madara.create_empty_block().await?;
-    let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    {
+        let mut madara_write_lock = madara.write().await;
+        let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
 
-    let (declare_tx, class_hash, _) =
-        account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
-    let contract_factory = ContractFactory::new(class_hash, account.clone());
+        let (declare_tx, class_hash, _) =
+            account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
+        let contract_factory = ContractFactory::new(class_hash, account.clone());
 
-    // manually setting fee else estimate_fee will be called and it will fail
-    // as contract is not declared yet (declared in the same block as deployment)
-    let max_fee = FieldElement::from_hex_be("0x1000000000").unwrap();
+        // manually setting fee else estimate_fee will be called and it will fail
+        // as contract is not declared yet (declared in the same block as deployment)
+        let max_fee = FieldElement::from_hex_be("0x1000000000").unwrap();
 
-    // manually incrementing nonce else as both declare and deploy are in the same block
-    // so automatic nonce calculation will fail
-    let nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account.address()).await.unwrap() + FieldElement::ONE;
+        // manually incrementing nonce else as both declare and deploy are in the same block
+        // so automatic nonce calculation will fail
+        let nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account.address()).await.unwrap() + FieldElement::ONE;
 
-    let deploy_tx =
-        Execution::from(&contract_factory.deploy(vec![], FieldElement::ZERO, true).max_fee(max_fee).nonce(nonce));
+        let deploy_tx =
+            Execution::from(&contract_factory.deploy(vec![], FieldElement::ZERO, true).max_fee(max_fee).nonce(nonce));
 
-    // declare and deploy contract
-    madara.create_block_with_txs(vec![Transaction::Declaration(declare_tx), Transaction::Execution(deploy_tx)]).await?;
+        println!("before declare");
+        // declare and deploy contract
+        madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
+        println!("before execute");
+        madara_write_lock.create_block_with_txs(vec![Transaction::Execution(deploy_tx)]).await?;
+        println!("after block");
+    }
 
     // address of deployed contract (will always be the same for 0 salt)
     let contract_address =

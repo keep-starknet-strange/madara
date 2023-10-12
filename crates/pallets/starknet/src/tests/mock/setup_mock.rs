@@ -1,16 +1,7 @@
 use frame_support::traits::GenesisBuild;
-use mp_felt::Felt252Wrapper;
 
-use crate::genesis_loader::GenesisLoader;
+use crate::genesis_loader::{GenesisData, GenesisLoader};
 use crate::{Config, GenesisConfig};
-
-/// ChainId for Starknet Goerli testnet
-pub const SN_GOERLI_CHAIN_ID: Felt252Wrapper = Felt252Wrapper(starknet_ff::FieldElement::from_mont([
-    3753493103916128178,
-    18446744073709548950,
-    18446744073709551615,
-    398700013197595345,
-]));
 
 // Configure a mock runtime to test the pallet.
 macro_rules! mock_runtime {
@@ -87,7 +78,7 @@ macro_rules! mock_runtime {
 				pub const DisableTransactionFee: bool = $disable_transaction_fee;
                 pub const DisableNonceValidation: bool = $disable_nonce_validation;
 				pub const ProtocolVersion: u8 = 0;
-                pub const ChainId: Felt252Wrapper = crate::tests::mock::SN_GOERLI_CHAIN_ID;
+                pub const ChainId: Felt252Wrapper = mp_chain_id::SN_GOERLI_CHAIN_ID;
                 pub const MaxRecursionDepth: u32 = 50;
             }
 
@@ -135,8 +126,9 @@ macro_rules! mock_runtime {
 pub fn new_test_ext<T: Config>() -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::default().build_storage::<T>().unwrap();
 
-    let genesis: GenesisLoader = serde_json::from_str(std::include_str!("./genesis.json")).unwrap();
-    let genesis: GenesisConfig<T> = genesis.into();
+    let genesis_data: GenesisData = serde_json::from_str(std::include_str!("./genesis.json")).unwrap();
+    let genesis_loader = GenesisLoader::new(project_root::get_project_root().unwrap(), genesis_data);
+    let genesis: GenesisConfig<T> = genesis_loader.into();
 
     genesis.assimilate_storage(&mut t).unwrap();
 

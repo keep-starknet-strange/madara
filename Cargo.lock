@@ -280,7 +280,7 @@ version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cab112f0a86d568ea0e627cc1d6be74a1e9cd55214684db5561995f6dad897c6"
 dependencies = [
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
 ]
 
 [[package]]
@@ -302,7 +302,7 @@ dependencies = [
  "derivative",
  "hashbrown 0.13.2",
  "itertools 0.10.5",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "zeroize",
 ]
 
@@ -318,7 +318,7 @@ dependencies = [
  "ark-std 0.3.0",
  "derivative",
  "num-bigint",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "paste",
  "rustc_version 0.3.3",
  "zeroize",
@@ -338,7 +338,7 @@ dependencies = [
  "digest 0.10.7",
  "itertools 0.10.5",
  "num-bigint",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "paste",
  "rustc_version 0.4.0",
  "zeroize",
@@ -371,7 +371,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db2fd794a08ccb318058009eefdf15bcaaaaf6f8161eb3345f907222bac38b20"
 dependencies = [
  "num-bigint",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "quote",
  "syn 1.0.109",
 ]
@@ -383,7 +383,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7abe79b0e4288889c4574159ab790824d0033b9fdcb2a112a3182fac2e514565"
 dependencies = [
  "num-bigint",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "proc-macro2",
  "quote",
  "syn 1.0.109",
@@ -452,7 +452,7 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1df2c09229cbc5a028b1d70e00fdb2acee28b1055dfb5ca73eea49c5a25c4e7c"
 dependencies = [
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "rand 0.8.5",
 ]
 
@@ -462,7 +462,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94893f1e0c6eeab764ade8dc4c0db24caf4fe7cbbaafc0eba0a9030f447b5185"
 dependencies = [
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "rand 0.8.5",
 ]
 
@@ -524,7 +524,7 @@ dependencies = [
  "asn1-rs-impl",
  "displaydoc",
  "nom",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "rusticata-macros",
  "thiserror",
  "time",
@@ -540,7 +540,7 @@ dependencies = [
  "asn1-rs-impl",
  "displaydoc",
  "nom",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "rusticata-macros",
  "thiserror",
  "time",
@@ -811,7 +811,7 @@ checksum = "a6773ddc0eafc0e509fb60e48dff7f450f8e674a0686ae8605e8d9901bd5eefa"
 dependencies = [
  "num-bigint",
  "num-integer",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "serde",
 ]
 
@@ -1024,7 +1024,7 @@ dependencies = [
  "log",
  "num-bigint",
  "num-integer",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "parity-scale-codec",
  "phf",
  "scale-info",
@@ -1166,7 +1166,7 @@ dependencies = [
  "lazy_static",
  "num-bigint",
  "num-integer",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "parity-scale-codec",
  "serde",
 ]
@@ -1180,7 +1180,7 @@ dependencies = [
  "hashbrown 0.14.1",
  "indoc",
  "num-bigint",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "parity-scale-codec",
  "parity-scale-codec-derive",
  "serde",
@@ -1303,7 +1303,7 @@ dependencies = [
  "itertools 0.10.5",
  "log",
  "num-bigint",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "once_cell",
  "salsa",
  "smol_str",
@@ -1323,7 +1323,7 @@ dependencies = [
  "itertools 0.10.5",
  "log",
  "num-bigint",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "salsa",
  "smol_str",
  "unescaper",
@@ -1389,7 +1389,7 @@ dependencies = [
  "itertools 0.10.5",
  "log",
  "num-bigint",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "once_cell",
  "salsa",
  "smol_str",
@@ -1408,7 +1408,7 @@ dependencies = [
  "lalrpop",
  "lalrpop-util",
  "num-bigint",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "regex",
  "salsa",
  "serde",
@@ -1486,7 +1486,7 @@ dependencies = [
  "itertools 0.10.5",
  "log",
  "num-bigint",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "thiserror",
 ]
 
@@ -1531,7 +1531,7 @@ dependencies = [
  "log",
  "num-bigint",
  "num-integer",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "once_cell",
  "serde",
  "serde_json",
@@ -1549,7 +1549,7 @@ dependencies = [
  "cairo-lang-filesystem",
  "cairo-lang-utils",
  "num-bigint",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "salsa",
  "smol_str",
  "thiserror",
@@ -1576,7 +1576,7 @@ dependencies = [
  "itertools 0.10.5",
  "num-bigint",
  "num-integer",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "parity-scale-codec",
  "serde",
 ]
@@ -1595,7 +1595,7 @@ dependencies = [
  "hashbrown 0.14.1",
  "num-bigint",
  "num-integer",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
 ]
 
 [[package]]
@@ -1629,7 +1629,7 @@ dependencies = [
  "num-bigint",
  "num-integer",
  "num-prime",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "parity-scale-codec",
  "rand 0.8.5",
  "serde",
@@ -1820,7 +1820,7 @@ dependencies = [
  "android-tzdata",
  "iana-time-zone",
  "js-sys",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "serde",
  "wasm-bindgen",
  "windows-targets 0.48.5",
@@ -2653,7 +2653,7 @@ dependencies = [
  "displaydoc",
  "nom",
  "num-bigint",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "rusticata-macros",
 ]
 
@@ -2667,7 +2667,7 @@ dependencies = [
  "displaydoc",
  "nom",
  "num-bigint",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "rusticata-macros",
 ]
 
@@ -3639,7 +3639,7 @@ dependencies = [
  "futures",
  "futures-timer",
  "log",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "scale-info",
@@ -3690,7 +3690,7 @@ version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "98de4bbd547a563b716d8dfa9aad1cb19bfab00f4fa09a6a4ed21dbcf44ce9c4"
 dependencies = [
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
 ]
 
 [[package]]
@@ -4892,7 +4892,7 @@ version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "276ec31bcb4a9ee45f58bec6f9ec700ae4cf4f4f8f2fa7e06cb406bd5ffdd770"
 dependencies = [
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
 ]
 
 [[package]]
@@ -6095,7 +6095,7 @@ dependencies = [
 
 [[package]]
 name = "madara"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "async-trait",
  "blockifier",
@@ -6121,6 +6121,7 @@ dependencies = [
  "mp-felt",
  "mp-sequencer-address",
  "pallet-starknet",
+ "reqwest",
  "sc-cli",
  "sc-client-api",
  "sc-consensus",
@@ -6155,11 +6156,12 @@ dependencies = [
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
  "try-runtime-cli",
+ "url",
 ]
 
 [[package]]
 name = "madara-runtime"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blockifier",
  "frame-benchmarking",
@@ -6169,6 +6171,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
+ "mp-chain-id",
  "mp-felt",
  "mp-hashers",
  "mp-transactions",
@@ -6248,7 +6251,7 @@ checksum = "60302e4db3a61da70c0cb7991976248362f30319e88850c487b9b95bbf059e00"
 
 [[package]]
 name = "mc-block-proposer"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "futures",
  "futures-timer",
@@ -6308,7 +6311,7 @@ dependencies = [
 
 [[package]]
 name = "mc-db"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "ethers",
  "kvdb-rocksdb",
@@ -6324,7 +6327,7 @@ dependencies = [
 
 [[package]]
 name = "mc-mapping-sync"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "futures",
  "futures-timer",
@@ -6345,7 +6348,7 @@ dependencies = [
 
 [[package]]
 name = "mc-rpc"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blockifier",
  "frame-support",
@@ -6381,7 +6384,7 @@ dependencies = [
 
 [[package]]
 name = "mc-rpc-core"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "assert_matches",
@@ -6412,7 +6415,7 @@ dependencies = [
 
 [[package]]
 name = "mc-storage"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blockifier",
  "frame-support",
@@ -6441,7 +6444,7 @@ dependencies = [
  "futures-timer",
  "linked-hash-map",
  "log",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "sc-client-api",
@@ -6624,7 +6627,7 @@ dependencies = [
 
 [[package]]
 name = "mp-block"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blockifier",
  "mp-felt",
@@ -6637,8 +6640,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "mp-chain-id"
+version = "0.4.0"
+dependencies = [
+ "mp-felt",
+ "starknet-ff",
+]
+
+[[package]]
 name = "mp-commitments"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "bitvec",
  "derive_more",
@@ -6656,7 +6667,7 @@ dependencies = [
 
 [[package]]
 name = "mp-digest-log"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "assert_matches",
  "mp-block",
@@ -6666,7 +6677,7 @@ dependencies = [
 
 [[package]]
 name = "mp-fee"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blockifier",
  "mp-state",
@@ -6676,7 +6687,7 @@ dependencies = [
 
 [[package]]
 name = "mp-felt"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "cairo-vm",
  "hex",
@@ -6691,7 +6702,7 @@ dependencies = [
 
 [[package]]
 name = "mp-hashers"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "mp-felt",
  "parity-scale-codec",
@@ -6703,7 +6714,7 @@ dependencies = [
 
 [[package]]
 name = "mp-sequencer-address"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -6714,7 +6725,7 @@ dependencies = [
 
 [[package]]
 name = "mp-state"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blockifier",
  "starknet_api",
@@ -6722,7 +6733,7 @@ dependencies = [
 
 [[package]]
 name = "mp-storage"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "parity-scale-codec",
  "serde",
@@ -6730,7 +6741,7 @@ dependencies = [
 
 [[package]]
 name = "mp-transactions"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "assert_matches",
  "blockifier",
@@ -6901,7 +6912,7 @@ dependencies = [
  "nalgebra-macros",
  "num-complex 0.4.4",
  "num-rational",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "simba",
  "typenum",
 ]
@@ -6953,7 +6964,7 @@ dependencies = [
  "matrixmultiply 0.2.4",
  "num-complex 0.2.4",
  "num-integer",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "rawpointer",
 ]
 
@@ -7086,7 +7097,7 @@ checksum = "608e7659b5c3d7cba262d894801b9ec9d00de989e8a82bd4bef91d08da45cdc0"
 dependencies = [
  "autocfg",
  "num-integer",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "rand 0.8.5",
  "serde",
 ]
@@ -7098,7 +7109,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6b19411a9719e753aff12e5187b74d60d3dc449ec3f4dc21e3989c3f554bc95"
 dependencies = [
  "autocfg",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
 ]
 
 [[package]]
@@ -7107,7 +7118,7 @@ version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ba157ca0885411de85d6ca030ba7e2a83a28636056c7c699b07c8b6f7383214"
 dependencies = [
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
 ]
 
 [[package]]
@@ -7138,7 +7149,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "225d3389fb3509a24c93f5c29eb6bde2586b98d9f016636dff58d7c6f7569cd9"
 dependencies = [
  "autocfg",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
 ]
 
 [[package]]
@@ -7149,7 +7160,7 @@ checksum = "64a5fe11d4135c3bcdf3a95b18b194afa9608a5f6ff034f5d857bc9a27fb0119"
 dependencies = [
  "num-bigint",
  "num-integer",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
 ]
 
 [[package]]
@@ -7164,7 +7175,7 @@ dependencies = [
  "num-bigint",
  "num-integer",
  "num-modular",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "rand 0.8.5",
 ]
 
@@ -7177,7 +7188,7 @@ dependencies = [
  "autocfg",
  "num-bigint",
  "num-integer",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
 ]
 
 [[package]]
@@ -7186,14 +7197,14 @@ version = "0.1.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "92e5113e9fd4cc14ded8e499429f396a20f98c772a47cc8622a736e1ec843c31"
 dependencies = [
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
 ]
 
 [[package]]
 name = "num-traits"
-version = "0.2.16"
+version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f30b0abd723be7e2ffca1272140fac1a2f084c77ec3e123c192b66af1ee9e6c2"
+checksum = "39e3200413f237f41ab11ad6d161bc7239c84dcb631773ccd7de3dfe4b5c267c"
 dependencies = [
  "autocfg",
  "libm",
@@ -7607,11 +7618,12 @@ dependencies = [
 
 [[package]]
 name = "pallet-starknet"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "assert_matches",
  "blockifier",
  "cairo-lang-casm-contract-class",
+ "derive_more",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -7621,6 +7633,7 @@ dependencies = [
  "lazy_static",
  "log",
  "mp-block",
+ "mp-chain-id",
  "mp-commitments",
  "mp-digest-log",
  "mp-fee",
@@ -7633,6 +7646,7 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "pretty_assertions",
+ "project-root",
  "reqwest",
  "sc-cli",
  "scale-info",
@@ -8290,6 +8304,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "project-root"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8bccbff07d5ed689c4087d20d7307a52ab6141edeedf487c3876a55b86cf63df"
+
+[[package]]
 name = "prometheus"
 version = "0.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8335,7 +8355,7 @@ dependencies = [
  "bitflags 1.3.2",
  "byteorder",
  "lazy_static",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "rand_xorshift",
@@ -8785,9 +8805,9 @@ checksum = "c707298afce11da2efef2f600116fa93ffa7a032b5d7b628aa17711ec81383ca"
 
 [[package]]
 name = "reqwest"
-version = "0.11.20"
+version = "0.11.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e9ad3fe7488d7e34558a2033d45a0c90b72d97b4f80705666fea71472e2e6a1"
+checksum = "046cd98826c46c2ac8ddecae268eb5c2e58628688a5fc7a2643704a73faba95b"
 dependencies = [
  "base64 0.21.4",
  "bytes",
@@ -8813,6 +8833,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_urlencoded",
+ "system-configuration",
  "tokio",
  "tokio-native-tls",
  "tokio-rustls 0.24.1",
@@ -9494,7 +9515,7 @@ dependencies = [
  "log",
  "num-bigint",
  "num-rational",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "sc-client-api",
@@ -10233,7 +10254,7 @@ dependencies = [
  "futures-timer",
  "linked-hash-map",
  "log",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "sc-client-api",
@@ -10862,7 +10883,7 @@ checksum = "061507c94fc6ab4ba1c9a0305018408e312e17c041eb63bef8aa726fa33aceae"
 dependencies = [
  "approx",
  "num-complex 0.4.4",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "paste",
  "wide",
 ]
@@ -10874,7 +10895,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "adc4e5204eb1910f40f9cfa375f6f05b68c3abac4b6fd879c8ff5e7ae8a0a085"
 dependencies = [
  "num-bigint",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "thiserror",
  "time",
 ]
@@ -11065,7 +11086,7 @@ version = "6.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#5e49f6e44820affccaf517fd22af564f4b495d40"
 dependencies = [
  "integer-sqrt",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -11080,7 +11101,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb6020576e544c6824a51d651bc8df8e6ab67cd59f1c9ac09868bb81a5199ded"
 dependencies = [
  "integer-sqrt",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -12152,7 +12173,7 @@ dependencies = [
  "hmac 0.12.1",
  "num-bigint",
  "num-integer",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "rfc6979 0.4.0",
  "sha2 0.10.8",
  "starknet-crypto-codegen",
@@ -12172,7 +12193,7 @@ dependencies = [
  "hmac 0.12.1",
  "num-bigint",
  "num-integer",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "rfc6979 0.4.0",
  "sha2 0.10.8",
  "starknet-crypto-codegen",
@@ -12250,9 +12271,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "assert_matches",
- "derive_more",
+ "async-lock",
  "flate2",
- "lazy_static",
  "reqwest",
  "rstest",
  "serde",
@@ -12847,7 +12867,7 @@ dependencies = [
  "ed25519-consensus",
  "flex-error",
  "futures",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "once_cell",
  "prost 0.12.1",
  "prost-types 0.12.1",
@@ -12872,7 +12892,7 @@ dependencies = [
  "bytes",
  "flex-error",
  "num-derive",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
  "prost 0.12.1",
  "prost-types 0.12.1",
  "serde",
@@ -13960,7 +13980,7 @@ dependencies = [
  "libm",
  "memory_units",
  "num-rational",
- "num-traits 0.2.16",
+ "num-traits 0.2.17",
 ]
 
 [[package]]

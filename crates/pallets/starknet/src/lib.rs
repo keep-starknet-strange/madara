@@ -51,9 +51,6 @@ pub mod runtime_api;
 pub mod transaction_validation;
 /// The Starknet pallet's runtime custom types.
 pub mod types;
-/// Util functions for madara.
-#[cfg(feature = "std")]
-pub mod utils;
 
 /// Everything needed to run the pallet offchain workers
 mod offchain_worker;
@@ -786,7 +783,10 @@ pub mod pallet {
                         false,
                     ),
                 }
-                .map_err(|_| InvalidTransaction::BadProof)?;
+                .map_err(|e| {
+                    log::error!("failed to validate tx: {}", e);
+                    InvalidTransaction::BadProof
+                })?;
             }
 
             let nonce_for_priority: u64 =

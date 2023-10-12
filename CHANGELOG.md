@@ -2,13 +2,46 @@
 
 ## Next release
 
-- fix: cargo update and `main` branch prettier fix
-- ci: disable pr close workflow
-- ci: add ci verification for detecting genesis changes and config hashes
+- test: validate Nonce for unsigned user txs
+- fix: fixed declare V0 placeholder with the hash of an empty list of felts
+- feat(cli): `run` is the by default command when running the `madara` bin
+- refacto(cli): `run` and `setup` commands are defined in their own files
+- refacto(cli): `run.testnet` argument removed in favor of the substrate native
+  `chain` arg
+- feat(cli): `run.fetch_chain_spec` argument removed in favor of the substrate
+  native `chain` arg
+- feat(cli): `setup` require a source file, either from an url or a path on the
+  local filesystem
+- chore(cli): use `Url`, `Path` and `PathBuf` types rather than `String`
+- refacto(cli): moved the pallet/chain_spec/utils methods to the node crate
+- feat(cli): `madara_path` arg has been remove, we use the substrate native
+  `base_path` arg instead
+- feat(cli): sharingan chain specs are loaded during the compilation, not
+  downloaded from github
+- refacto(pallet/starknet): `GenesisLoader` refactored as `GenesisData` + a
+  `base_path` field
+- feat(cli): for `run` param `--dev` now imply `--tmp`, as it is in substrate
+- test(starknet-rpx-test): run all tests against a single madara node
+
+## v0.4.0
+
+- chore: release v0.4.0
 - feat: better management of custom configurations for genesis assets
+- feat: use actual vm resource costs
+- fix: add setup and run for rpc tests
+- fix: fix clap for run command
+- fix: add `madara_path` flag for setup command
+- fix: add official references to configs files
+- fix: cargo update and `main` branch prettier fix
 - fix: fix sharingan chain spec
 - fix: update madara infra to main branch
 - fix: update `Cargo.lock`
+- fix: rpc test failing
+- refactor: exported chain id constant in mp-chain-id crate and added one for
+  SN_MAIN
+- ci: disable pr close workflow
+- ci: add ci verification for detecting genesis changes and config hashes
+- test: add e2e test for `estimate_fee`
 
 ## v0.3.0
 

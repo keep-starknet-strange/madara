@@ -107,7 +107,7 @@ pub trait StarknetRpcApi {
 
     /// Get the details of a transaction by a given block id and index
     #[method(name = "getTransactionByBlockIdAndIndex")]
-    fn get_transaction_by_block_id_and_index(&self, block_id: BlockId, index: usize) -> RpcResult<Transaction>;
+    fn get_transaction_by_block_id_and_index(&self, block_id: BlockId, index: u64) -> RpcResult<Transaction>;
 
     /// Get the information about the result of executing the requested block
     #[method(name = "getStateUpdate")]

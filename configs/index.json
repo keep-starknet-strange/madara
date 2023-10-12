@@ -1,5 +1,5 @@
 {
-  "remote_base_path": "https://raw.githubusercontent.com/d-roak/madara/feat/configs-index/configs/",
+  "remote_base_path": "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/",
   "genesis_assets": [
     {
       "name": "Account.json",

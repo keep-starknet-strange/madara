@@ -82,7 +82,7 @@ state:
 
 ```bash
 ./target/release/madara setup
-./target/release/madara run --dev
+./target/release/madara --dev
 ```
 
 Purge the development chain's state:
@@ -94,7 +94,7 @@ Purge the development chain's state:
 Start the development chain with detailed logging:
 
 ```bash
-RUST_BACKTRACE=1 ./target/release/madara run -ldebug --dev
+RUST_BACKTRACE=1 ./target/release/madara -ldebug --dev
 ```
 
 > Development chain means that the state of our chain will be in a tmp folder
@@ -119,7 +119,7 @@ commands shows how to use a newly created folder as our db base path.
 $ mkdir my-chain-state
 
 // Use of that folder to store the chain state
-$ ./target/release/madara run --dev --base-path ./my-chain-state/
+$ ./target/release/madara --dev --base-path ./my-chain-state/
 
 // Check the folder structure created inside the base path after running the chain
 $ ls ./my-chain-state

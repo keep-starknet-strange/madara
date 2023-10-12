@@ -3,8 +3,8 @@ use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::DeployAccountTransaction;
 use sp_runtime::traits::ValidateUnsigned;
-use sp_runtime::transaction_validity::TransactionSource;
-use starknet_api::api_core::ContractAddress;
+use sp_runtime::transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidityError};
+use starknet_api::api_core::{ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Event as StarknetEvent, EventContent, EventData, EventKey};
 use starknet_crypto::FieldElement;
@@ -13,7 +13,7 @@ use super::mock::default_mock::*;
 use super::mock::*;
 use super::utils::sign_message_hash;
 use crate::tests::constants::{ACCOUNT_PUBLIC_KEY, SALT};
-use crate::tests::{get_deploy_account_dummy, set_infinite_tokens};
+use crate::tests::{get_deploy_account_dummy, set_infinite_tokens, set_nonce};
 use crate::{Config, Error, Event, StorageView};
 
 #[test]
@@ -50,7 +50,7 @@ fn given_contract_run_deploy_account_tx_works() {
                 data: EventData(vec![
                     address.0.0,                            // From
                     StarkFelt::try_from("0xdead").unwrap(), // To
-                    StarkFelt::try_from("0xa582").unwrap(), // Amount low
+                    StarkFelt::try_from("0x195a").unwrap(), // Amount low
                     StarkFelt::from(0u128),                 // Amount high
                 ]),
             },
@@ -334,4 +334,27 @@ fn set_signer(address: ContractAddress, account_type: AccountType) {
         get_storage_key(&address, var_name, &args, 0),
         StarkFelt::try_from(ACCOUNT_PUBLIC_KEY).unwrap(),
     );
+}
+
+#[test]
+fn test_verify_nonce_in_unsigned_tx() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let transaction =
+            get_deploy_account_dummy(Felt252Wrapper::ZERO, *SALT, AccountType::V0(AccountTypeV0Inner::NoValidate));
+
+        let tx_sender = transaction.account_address().into();
+        let tx_source = TransactionSource::InBlock;
+        let call = crate::Call::deploy_account { transaction };
+
+        assert!(Starknet::validate_unsigned(tx_source, &call).is_ok());
+
+        set_nonce::<MockRuntime>(&tx_sender, &Nonce(StarkFelt::from(1u64)));
+
+        assert_eq!(
+            Starknet::validate_unsigned(tx_source, &call),
+            Err(TransactionValidityError::Invalid(InvalidTransaction::Stale))
+        );
+    });
 }
