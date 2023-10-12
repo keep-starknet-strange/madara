@@ -7,14 +7,13 @@ use starknet_ff::FieldElement;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{TEST_CONTRACT_ADDRESS, TEST_CONTRACT_CLASS_HASH};
-use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::MadaraClient;
+use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 
 #[rstest]
 #[tokio::test]
-async fn fail_non_existing_block(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
+
     let test_contract_address = FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).expect("Invalid Contract Address");
 
     assert_matches!(
@@ -32,9 +31,9 @@ async fn fail_non_existing_block(#[future] madara: MadaraClient) -> Result<(), a
 
 #[rstest]
 #[tokio::test]
-async fn fail_non_existing_contract(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn fail_non_existing_contract(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
+
     let unknown_contract_address = FieldElement::from_hex_be("0x4269DEADBEEF").expect("Invalid Contract Address");
 
     assert_matches!(
@@ -52,9 +51,9 @@ async fn fail_non_existing_contract(#[future] madara: MadaraClient) -> Result<()
 
 #[rstest]
 #[tokio::test]
-async fn work_ok_retrieving_class_hash(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn work_ok_retrieving_class_hash(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
+
     let test_contract_address = FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).expect("Invalid Contract Address");
 
     assert_eq!(

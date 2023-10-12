@@ -783,7 +783,10 @@ pub mod pallet {
                         false,
                     ),
                 }
-                .map_err(|_| InvalidTransaction::BadProof)?;
+                .map_err(|e| {
+                    log::error!("failed to validate tx: {}", e);
+                    InvalidTransaction::BadProof
+                })?;
             }
 
             let nonce_for_priority: u64 =

@@ -24,6 +24,31 @@ members = [
   "crates/client/transaction-pool",
   "starknet-rpc-test",
 ]
+# All previous except for `starknet-rpc-test`
+# We don't want `cargo test` to trigger its tests
+default-members = [
+  "crates/node",
+  "crates/runtime",
+  "crates/pallets/starknet",
+  "crates/primitives/digest-log",
+  "crates/primitives/transactions",
+  "crates/primitives/felt",
+  "crates/primitives/hashers",
+  "crates/primitives/fee",
+  "crates/primitives/state",
+  "crates/primitives/block",
+  "crates/primitives/sequencer-address",
+  "crates/primitives/storage",
+  "crates/primitives/commitments",
+  "crates/primitives/chain-id",
+  "crates/client/block-proposer",
+  "crates/client/db",
+  "crates/client/rpc-core",
+  "crates/client/rpc",
+  "crates/client/mapping-sync",
+  "crates/client/storage",
+  "crates/client/transaction-pool",
+]
 
 [profile.release]
 panic = "unwind"
