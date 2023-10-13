@@ -143,7 +143,7 @@ impl pallet_grandpa::Config for Runtime {
 /// --------------------------------------
 
 /// Timestamp manipulation.
-/// For instance, we need it to set the timestamp of the Starkknet block.
+/// For instance, we need it to set the timestamp of the Starknet block.
 impl pallet_timestamp::Config for Runtime {
     /// A timestamp: milliseconds since the unix epoch.
     type Moment = u64;
