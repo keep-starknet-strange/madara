@@ -35,6 +35,7 @@ jobs:
       - name: Build the project
         run: |
           cargo build --release --workspace --tests
+          cargo test --no-run
 
       - name: Run integration tests
         run: cargo test --release

@@ -35,6 +35,11 @@ jobs:
     uses: ./.github/workflows/linters-cargo.yml
     needs: rust_build
 
+  tests:
+    name: Run tests
+    uses: ./.github/workflows/tests.yml
+    needs: rust_build
+
   rpc-tests:
     name: Run rpc tests
     uses: ./.github/workflows/starknet-rpc-tests.yml
