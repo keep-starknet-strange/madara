@@ -35,7 +35,6 @@ impl ComputeTransactionHash for InvokeTransactionV0 {
         let calldata_hash = compute_hash_on_elements(convert_calldata(&self.calldata));
         let max_fee = FieldElement::from(self.max_fee);
         let chain_id = chain_id.into();
-        let nonce = FieldElement::from(self.nonce);
 
         H::compute_hash_on_elements(&[
             prefix,
@@ -45,7 +44,6 @@ impl ComputeTransactionHash for InvokeTransactionV0 {
             calldata_hash,
             max_fee,
             chain_id,
-            nonce,
         ])
         .into()
     }
