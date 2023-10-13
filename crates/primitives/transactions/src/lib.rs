@@ -98,7 +98,6 @@ pub enum InvokeTransaction {
 pub struct InvokeTransactionV0 {
     pub max_fee: u128,
     pub signature: Vec<Felt252Wrapper>,
-    pub nonce: Felt252Wrapper,
     pub contract_address: Felt252Wrapper,
     pub entry_point_selector: Felt252Wrapper,
     pub calldata: Vec<Felt252Wrapper>,
