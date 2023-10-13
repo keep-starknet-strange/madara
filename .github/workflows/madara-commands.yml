@@ -10,15 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: target/release/madara
           key:
-            ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
             github.run_id }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-            ${{ runner.os }}-cargo-
+          fail-on-cache-miss: true
       - name: Run setup
         run: |
           target/release/madara setup --chain local --from-remote

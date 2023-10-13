@@ -16,15 +16,13 @@ jobs:
         with:
           shared-key: "cache"
           save-if: false
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: target/release/madara
           key:
-            ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
             github.run_id }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-            ${{ runner.os }}-cargo-
+          fail-on-cache-miss: true
       - name: Setup build deps
         run: |
           sudo apt-get update
