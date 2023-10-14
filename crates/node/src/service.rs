@@ -316,8 +316,6 @@ pub fn new_full(
     let starting_block = client.info().best_number;
 
     // Channel for the rpc handler to communicate with the authorship task.
-    // TODO: commands_stream is is currently unused, but should be used to implement the `sealing`
-    // parameter
     let (command_sink, commands_stream) = mpsc::channel(1000);
 
     let overrides = overrides_handle(client.clone());
