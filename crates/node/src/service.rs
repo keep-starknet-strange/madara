@@ -423,7 +423,11 @@ pub fn new_full(
 
             network_starter.start_network();
 
-            log::info!("Manual Seal Ready");
+            match sealing {
+                Sealing::Manual => log::info!("Manual Seal Ready"),
+                Sealing::Instant => log::info!("Instant Seal Ready"),
+            }
+
             return Ok(task_manager);
         }
 
