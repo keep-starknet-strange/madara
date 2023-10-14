@@ -1,12 +1,12 @@
 ---
-name: Task - Build Rust
+name: Task - Build & Integration Tests
 
 on:
   workflow_dispatch:
   workflow_call:
 
 jobs:
-  rust_build:
+  rust_build_test:
     runs-on: ubuntu-latest-32-cores
     steps:
       - uses: actions/checkout@v3
