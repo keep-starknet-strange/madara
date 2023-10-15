@@ -1,20 +1,31 @@
 use std::path::PathBuf;
 
+use madara_runtime::SealingMode;
 use mc_data_availability::DaLayer;
 use sc_cli::{Result, RpcMethods, RunCmd, SubstrateCli};
 use sc_service::BasePath;
+use serde::{Deserialize, Serialize};
 
 use crate::cli::Cli;
 use crate::service;
 
 /// Available Sealing methods.
-#[derive(Debug, Copy, Clone, clap::ValueEnum, Default)]
+#[derive(Debug, Copy, Clone, clap::ValueEnum, Default, Serialize, Deserialize)]
 pub enum Sealing {
     // Seal using rpc method.
     #[default]
     Manual,
     // Seal when transaction is executed.
     Instant,
+}
+
+impl From<Sealing> for SealingMode {
+    fn from(value: Sealing) -> Self {
+        match value {
+            Sealing::Manual => SealingMode::Manual,
+            Sealing::Instant => SealingMode::Instant,
+        }
+    }
 }
 
 #[derive(Clone, Debug, clap::Args)]

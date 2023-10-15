@@ -6,6 +6,8 @@ pub use frame_support::weights::constants::{
 pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
+use parity_scale_codec::{Decode, Encode};
+use sp_core::RuntimeDebug;
 use sp_runtime::create_runtime_str;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -77,7 +79,17 @@ parameter_types! {
     pub const SS58Prefix: u8 = 42;
 }
 
+/// The current sealing mode being used. This is needed for the runtime to adjust its behavior
+/// accordingly, e.g. suppress Aura validations in `OnTimestampSet` for manual or instant sealing.
+#[derive(Default, PartialEq, Decode, Encode, RuntimeDebug)]
+pub enum SealingMode {
+    #[default]
+    Default,
+    Manual,
+    Instant,
+}
+
 // This storage item will be used to check if we are in the manual sealing mode
 parameter_types! {
-    pub storage EnableManualSeal: bool = false;
+    pub storage Sealing: SealingMode = SealingMode::default();
 }
