@@ -11,15 +11,26 @@ jobs:
     name: Run linters
     uses: ./.github/workflows/linters.yml
 
-  rust_build:
-    name: Build Rust project
-    uses: ./.github/workflows/rust-build.yml
+  rust_build_test:
+    name: Build & Integration Tests
+    uses: ./.github/workflows/rust-build-test.yml
+
+  madara_commands:
+    name: Test Madara commands
+    uses: ./.github/workflows/madara-commands.yml
+    needs: [linters, rust_build_test]
 
   linters_cargo:
     name: Run Cargo linters
     uses: ./.github/workflows/linters-cargo.yml
-    needs: rust_build
+    needs: madara_commands
 
+  rpc-tests:
+    name: Run rpc tests
+    uses: ./.github/workflows/starknet-rpc-tests.yml
+    needs: madara_commands
+
+  # https://github.com/keep-starknet-strange/madara/issues/1097
   # benchmark:
   #   name: Run benchmarks
   #   uses: ./.github/workflows/benchmarks.yml
@@ -32,7 +43,6 @@ jobs:
   #     # post on the pull-request page
   #     pull-requests: write
 
-  # TODO change it to benchmark when enabled
   rustdoc:
     name: Deploy docs to GitHub Pages
     uses: ./.github/workflows/rustdoc.yml
