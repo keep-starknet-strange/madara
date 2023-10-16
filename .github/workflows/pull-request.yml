@@ -20,32 +20,27 @@ jobs:
     uses: ./.github/workflows/linters.yml
     needs: [changelog, configs-verifier]
 
-  rust_build:
-    name: Build Rust project
-    uses: ./.github/workflows/rust-build.yml
+  rust_build_test:
+    name: Build & Integration Tests
+    uses: ./.github/workflows/rust-build-test.yml
     needs: [changelog, configs-verifier]
 
   madara_commands:
     name: Test Madara commands
     uses: ./.github/workflows/madara-commands.yml
-    needs: rust_build
+    needs: [linters, rust_build_test]
 
   linters_cargo:
     name: Run Cargo linters
     uses: ./.github/workflows/linters-cargo.yml
-    needs: rust_build
-
-  tests:
-    name: Run tests
-    uses: ./.github/workflows/tests.yml
-    needs: rust_build
+    needs: madara_commands
 
   rpc-tests:
     name: Run rpc tests
     uses: ./.github/workflows/starknet-rpc-tests.yml
-    needs: rust_build
+    needs: madara_commands
 
   benchmark:
     name: Run benchmarks
     uses: ./.github/workflows/benchmarks.yml
-    needs: rust_build
+    needs: madara_commands
