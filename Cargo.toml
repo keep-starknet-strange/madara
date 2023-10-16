@@ -201,7 +201,7 @@ cairo-lang-utils = { git = "https://github.com/keep-starknet-strange/cairo.git",
 
 # Other third party dependencies
 anyhow = "1.0.75"
-flate2 = "1.0.27"
+flate2 = "1.0.28"
 scale-codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false }
 parity-scale-codec = { version = "3.2.2", default-features = false }
 scale-info = { version = "2.9.0", default-features = false }
