@@ -39,7 +39,7 @@ impl SubstrateCli for Cli {
         Ok(match id {
             DEV_CHAIN_ID => {
                 let base_path = self.run.base_path().map_err(|e| e.to_string())?;
-                Box::new(chain_spec::development_config(self.run.sealing, base_path)?)
+                Box::new(chain_spec::development_config(self.run.clone().into(), base_path)?)
             }
             #[cfg(feature = "sharingan")]
             SHARINGAN_CHAIN_ID => Box::new(chain_spec::ChainSpec::from_json_bytes(

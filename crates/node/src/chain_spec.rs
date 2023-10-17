@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use madara_runtime::{AuraConfig, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
+use madara_runtime::{AuraConfig, GenesisConfig, GrandpaConfig, SealingMode, SystemConfig, WASM_BINARY};
 use mp_felt::Felt252Wrapper;
 use pallet_starknet::genesis_loader::{GenesisData, GenesisLoader, HexFelt};
 use sc_service::{BasePath, ChainType};
@@ -11,7 +11,6 @@ use sp_core::storage::Storage;
 use sp_core::{Pair, Public};
 use sp_state_machine::BasicExternalities;
 
-use crate::commands::Sealing;
 use crate::constants::DEV_CHAIN_ID;
 
 pub const GENESIS_ASSETS_DIR: &str = "genesis-assets/";
@@ -29,7 +28,7 @@ pub struct DevGenesisExt {
     /// Genesis config.
     genesis_config: GenesisConfig,
     /// The sealing mode being used.
-    sealing: Option<Sealing>,
+    sealing: SealingMode,
 }
 
 /// The `sealing` from the `DevGenesisExt` is passed to the runtime via the storage. The runtime
@@ -40,9 +39,7 @@ pub struct DevGenesisExt {
 impl sp_runtime::BuildStorage for DevGenesisExt {
     fn assimilate_storage(&self, storage: &mut Storage) -> Result<(), String> {
         BasicExternalities::execute_with_storage(storage, || {
-            if let Some(sealing) = self.sealing {
-                madara_runtime::Sealing::set(&sealing.into());
-            }
+            madara_runtime::Sealing::set(&self.sealing);
         });
         self.genesis_config.assimilate_storage(storage)
     }
@@ -58,7 +55,7 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
     (get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
 }
 
-pub fn development_config(sealing: Option<Sealing>, base_path: BasePath) -> Result<DevChainSpec, String> {
+pub fn development_config(sealing: SealingMode, base_path: BasePath) -> Result<DevChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
     let chain_id = DEV_CHAIN_ID;
 
@@ -82,7 +79,7 @@ pub fn development_config(sealing: Option<Sealing>, base_path: BasePath) -> Resu
                     vec![authority_keys_from_seed("Alice")],
                     true,
                 ),
-                sealing,
+                sealing: sealing.clone(),
             }
         },
         // Bootnodes

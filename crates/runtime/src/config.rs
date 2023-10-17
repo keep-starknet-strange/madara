@@ -7,6 +7,7 @@ pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
 use parity_scale_codec::{Decode, Encode};
+use serde::{Deserialize, Serialize};
 use sp_core::RuntimeDebug;
 use sp_runtime::create_runtime_str;
 #[cfg(any(feature = "std", test))]
@@ -81,12 +82,31 @@ parameter_types! {
 
 /// The current sealing mode being used. This is needed for the runtime to adjust its behavior
 /// accordingly, e.g. suppress Aura validations in `OnTimestampSet` for manual or instant sealing.
-#[derive(Default, PartialEq, Decode, Encode, RuntimeDebug)]
+#[derive(Default, Clone, PartialEq, Decode, Encode, RuntimeDebug, Deserialize, Serialize)]
 pub enum SealingMode {
     #[default]
     Default,
     Manual,
-    Instant,
+    Instant {
+        finalize: bool,
+    },
+}
+
+impl SealingMode {
+    pub fn is_default(&self) -> bool {
+        matches!(self, SealingMode::Default)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::fmt::Display for SealingMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SealingMode::Default => write!(f, "Default"),
+            SealingMode::Manual => write!(f, "Manual"),
+            SealingMode::Instant { finalize } => write!(f, "Instant (finalize: {})", finalize),
+        }
+    }
 }
 
 // This storage item will be used to check if we are in the manual sealing mode
