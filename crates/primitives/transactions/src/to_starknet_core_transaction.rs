@@ -94,7 +94,7 @@ pub fn to_starknet_core_tx<H: HasherT>(
                 contract_address_salt: tx.contract_address_salt.into(),
                 constructor_calldata: cast_vec_of_felt_252_wrappers(tx.constructor_calldata),
                 class_hash: tx.class_hash.into(),
-                version: 0u64,
+                version: u64::try_from(tx.version.0).unwrap(),
             };
 
             starknet_core::types::Transaction::Deploy(tx)

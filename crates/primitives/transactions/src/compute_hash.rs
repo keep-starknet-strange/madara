@@ -303,11 +303,11 @@ impl DeployTransaction {
         block_number: Option<u64>
     ) -> FieldElement {
         let prefix = FieldElement::from_byte_slice_be(DEPLOY_PREFIX).unwrap();
-        let version = FieldElement::ZERO;
+        let version = self.version.0.into();
         let constructor_calldata = compute_hash_on_elements(convert_calldata(&self.constructor_calldata));
         let constructor = starknet_keccak(b"constructor");
 
-        if block_number >  Some(LEGACY_BLOCK_NUMBER) { 
+        if block_number > Some(LEGACY_BLOCK_NUMBER) { 
             H::compute_hash_on_elements(&[
                 prefix,
                 version,
