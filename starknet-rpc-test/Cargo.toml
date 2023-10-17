@@ -8,12 +8,11 @@ edition = "2021"
 
 anyhow = "1.0.72"
 assert_matches = "1.5.0"
-derive_more = "0.99.17"
+async-lock = "2.8.0"
 flate2 = { workspace = true }
-lazy_static = "1.4.0"
 reqwest = "0.11.18"
 rstest = "0.18.1"
-serde = { version = "1.0.179", features = ["derive"] }
+serde = { version = "1.0.189", features = ["derive"] }
 serde_json = "1.0.107"
 starknet-accounts = { workspace = true }
 starknet-contract = { workspace = true }
@@ -23,7 +22,7 @@ starknet-ff = { workspace = true }
 starknet-providers = { workspace = true }
 starknet-signers = { workspace = true }
 thiserror = { workspace = true }
-tokio = { version = "1.29.1", features = ["rt", "macros", "parking_lot"] }
+tokio = { version = "1.33.0", features = ["rt", "macros", "parking_lot"] }
 url = "2.4.1"
 
 [[test]]
@@ -105,3 +104,7 @@ path = "get_transaction_receipt.rs"
 [[test]]
 name = "starknet_get_events"
 path = "get_events.rs"
+
+[[test]]
+name = "starknet_estimate_fee"
+path = "estimate_fee.rs"

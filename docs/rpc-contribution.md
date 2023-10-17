@@ -19,7 +19,7 @@ There are two ways you can build madara to quickly test it:
 
 1. `cargo build --release`, which will then allow us to setup madara with
    `./target/release/madara setup`, and then run it with
-   `./target/release/madara run`. This will start the sequencer WITHOUT peers.
+   `./target/release/madara`. This will start the sequencer WITHOUT peers.
    That's not a problem if you just want to test that your RPC method is
    accessible, and to test (de)serialization of your RPC parameters.
 

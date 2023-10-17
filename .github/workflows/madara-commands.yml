@@ -12,22 +12,29 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
+          path: target/release/madara
           key:
             ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
             github.run_id }}
           fail-on-cache-miss: true
       - name: Run setup
         run: |
-          target/release/madara setup
+          target/release/madara setup --chain local --from-remote
       - name: Create build-spec (plain)
         run: |
           target/release/madara build-spec --chain local > chain-plain.json
       - name: Create build-spec (raw)
         run: |
           target/release/madara build-spec --chain chain-plain.json --raw > chain-raw.json
+      - name: Generate Sr25519 key for Aura (Leader Election)
+        id: key-gen
+        run: |
+          target/release/madara key generate --scheme Sr25519
+          echo "SEED_PHRASE=$(target/release/madara key generate --scheme Sr25519 | sed -n 's/Secret phrase:\s*//p')" >> "$GITHUB_OUTPUT"
+      - name: Derive Ed25519 key for Grandpa (Finality)
+        run: |
+          target/release/madara key inspect --scheme Ed25519 "${{ steps.key-gen.outputs.SEED_PHRASE }}"
+      - name: Add keys to the node keystore
+        run: |
+          target/release/madara key insert --scheme Sr25519 --suri "${{ steps.key-gen.outputs.SEED_PHRASE }}" --key-type aura
+          target/release/madara key insert --scheme Ed25519 --suri "${{ steps.key-gen.outputs.SEED_PHRASE }}" --key-type gran

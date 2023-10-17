@@ -3,17 +3,17 @@ use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::DeployAccountTransaction;
 use sp_runtime::traits::ValidateUnsigned;
-use sp_runtime::transaction_validity::TransactionSource;
-use starknet_api::api_core::ContractAddress;
+use sp_runtime::transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidityError};
+use starknet_api::api_core::{ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Event as StarknetEvent, EventContent, EventData, EventKey};
 use starknet_crypto::FieldElement;
 
 use super::mock::default_mock::*;
 use super::mock::*;
-use super::utils::sign_message_hash;
+use super::utils::{sign_message_hash, sign_message_hash_braavos};
 use crate::tests::constants::{ACCOUNT_PUBLIC_KEY, SALT};
-use crate::tests::{get_deploy_account_dummy, set_infinite_tokens};
+use crate::tests::{get_deploy_account_dummy, set_infinite_tokens, set_nonce};
 use crate::{Config, Error, Event, StorageView};
 
 #[test]
@@ -50,7 +50,7 @@ fn given_contract_run_deploy_account_tx_works() {
                 data: EventData(vec![
                     address.0.0,                            // From
                     StarkFelt::try_from("0xdead").unwrap(), // To
-                    StarkFelt::try_from("0xa582").unwrap(), // Amount low
+                    StarkFelt::try_from("0x195a").unwrap(), // Amount low
                     StarkFelt::from(0u128),                 // Amount high
                 ]),
             },
@@ -262,14 +262,56 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
             class_hash: proxy_class_hash.into(),
         };
 
-        // Braavos has a complicated signature mecanism, they add stuffs around the tx_hash and then sign
-        // the whole thing. This hardcoded value is the expected "thing" that bravos expect you to
-        // sign for this transaction. Roll with it for now
-        let value_to_sign =
-            Felt252Wrapper::from_hex_be("0x06a8bb3d81c2ad23db93f01f72f987feac5210a95bc530eabb6abfaa5a769944").unwrap();
-        let mut signatures = sign_message_hash(value_to_sign);
-        signatures.extend_from_slice(&[Felt252Wrapper::ZERO; 8]);
-        deploy_tx.signature = signatures;
+        let tx_hash = deploy_tx.compute_hash::<<MockRuntime as Config>::SystemHash>(Starknet::chain_id(), false);
+        deploy_tx.signature = sign_message_hash_braavos(tx_hash, Felt252Wrapper::ZERO, &[Felt252Wrapper::ZERO; 7]);
+
+        let address = deploy_tx.account_address().into();
+        set_infinite_tokens::<MockRuntime>(&address);
+        set_signer(address, AccountType::V0(AccountTypeV0Inner::Braavos));
+
+        assert_ok!(Starknet::deploy_account(none_origin, deploy_tx));
+        assert_eq!(Starknet::contract_class_hash_by_address(address), proxy_class_hash);
+    });
+}
+
+#[test]
+fn given_contract_run_deploy_account_braavos_tx_works_whis_hardware_signer() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let none_origin = RuntimeOrigin::none();
+        let (proxy_class_hash, calldata) = account_helper(AccountType::V0(AccountTypeV0Inner::BraavosProxy));
+        let mut calldata: Vec<_> = calldata.0.iter().map(|e| Felt252Wrapper::from(*e)).collect();
+        calldata.push(Felt252Wrapper::ONE);
+        calldata.push(Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap());
+
+        let mut deploy_tx = DeployAccountTransaction {
+            max_fee: u64::MAX as u128,
+            signature: vec![],
+            nonce: Felt252Wrapper::ZERO,
+            contract_address_salt: *SALT,
+            constructor_calldata: calldata,
+            class_hash: proxy_class_hash.into(),
+        };
+
+        let tx_hash = deploy_tx.compute_hash::<<MockRuntime as Config>::SystemHash>(Starknet::chain_id(), false);
+
+        // signer fields are hardware public key generated from some random private key
+        // it's possible to add only one additional secp256r1 signer
+        let signer_model = [
+            Felt252Wrapper::from_hex_be("0x23fc01adbb70af88935aeaecde1240ea").unwrap(), /* signer_0= pk_x_uint256
+                                                                                         * low 128 bits */
+            Felt252Wrapper::from_hex_be("0xea0cb2b3f76a88bba0d8dc7556c40df9").unwrap(), /* signer_1= pk_x_uint256
+                                                                                         * high 128 bits */
+            Felt252Wrapper::from_hex_be("0x663b66d81aa5eed14537e814b02745c0").unwrap(), /* signer_2= pk_y_uint256
+                                                                                         * low 128 bits */
+            Felt252Wrapper::from_hex_be("0x76d91b936d094b864af4cfaaeec89fb1").unwrap(), /* signer_3= pk_y_uint256
+                                                                                         * high 128 bits */
+            Felt252Wrapper::TWO,  // type= SIGNER_TYPE_SECP256R1
+            Felt252Wrapper::ZERO, // reserved_0
+            Felt252Wrapper::ZERO, // reserved_1
+        ];
+        deploy_tx.signature = sign_message_hash_braavos(tx_hash, Felt252Wrapper::ZERO, &signer_model);
 
         let address = deploy_tx.account_address().into();
         set_infinite_tokens::<MockRuntime>(&address);
@@ -334,4 +376,27 @@ fn set_signer(address: ContractAddress, account_type: AccountType) {
         get_storage_key(&address, var_name, &args, 0),
         StarkFelt::try_from(ACCOUNT_PUBLIC_KEY).unwrap(),
     );
+}
+
+#[test]
+fn test_verify_nonce_in_unsigned_tx() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let transaction =
+            get_deploy_account_dummy(Felt252Wrapper::ZERO, *SALT, AccountType::V0(AccountTypeV0Inner::NoValidate));
+
+        let tx_sender = transaction.account_address().into();
+        let tx_source = TransactionSource::InBlock;
+        let call = crate::Call::deploy_account { transaction };
+
+        assert!(Starknet::validate_unsigned(tx_source, &call).is_ok());
+
+        set_nonce::<MockRuntime>(&tx_sender, &Nonce(StarkFelt::from(1u64)));
+
+        assert_eq!(
+            Starknet::validate_unsigned(tx_source, &call),
+            Err(TransactionValidityError::Invalid(InvalidTransaction::Stale))
+        );
+    });
 }

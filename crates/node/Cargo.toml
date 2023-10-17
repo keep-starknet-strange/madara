@@ -106,6 +106,8 @@ try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substr
 
 #Deoxys
 mc-deoxys = { workspace = true }
+reqwest = { workspace = true }
+url = { workspace = true }
 
 [build-dependencies]
 substrate-build-script-utils = { workspace = true }
@@ -122,3 +124,6 @@ runtime-benchmarks = [
 # in the near future.
 try-runtime = ["madara-runtime/try-runtime", "try-runtime-cli/try-runtime"]
 disable-transaction-fee = ["madara-runtime/disable-transaction-fee"]
+# Load sharingan chain-specs during the compilation
+# This is the way to run a sharingan chain
+sharingan = []

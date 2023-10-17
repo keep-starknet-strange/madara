@@ -51,10 +51,10 @@ impl UserTransaction {
         }
     }
 
-    pub fn nonce(&self) -> &Felt252Wrapper {
+    pub fn nonce(&self) -> Option<&Felt252Wrapper> {
         match self {
-            UserTransaction::Declare(tx, _) => tx.nonce(),
-            UserTransaction::DeployAccount(tx) => tx.nonce(),
+            UserTransaction::Declare(tx, _) => Some(tx.nonce()),
+            UserTransaction::DeployAccount(tx) => Some(tx.nonce()),
             UserTransaction::Invoke(tx) => tx.nonce(),
         }
     }
@@ -203,10 +203,10 @@ impl InvokeTransaction {
         }
     }
 
-    pub fn nonce(&self) -> &Felt252Wrapper {
+    pub fn nonce(&self) -> Option<&Felt252Wrapper> {
         match self {
-            InvokeTransaction::V0(_) => todo!(),
-            InvokeTransaction::V1(tx) => &tx.nonce,
+            InvokeTransaction::V0(_) => None,
+            InvokeTransaction::V1(tx) => Some(&tx.nonce),
         }
     }
 

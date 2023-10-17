@@ -26,7 +26,7 @@ indexmap = { workspace = true, features = ["serde"] }
 lazy_static.workspace = true
 mockall = { workspace = true, optional = true }
 os_info.workspace = true
-papyrus_config = { path = "papyrus_config", version = "0.3.0" }
+papyrus_config = { path = "papyrus_config", version = "0.4.0" }
 rand = { workspace = true, optional = true }
 rand_chacha = { workspace = true, optional = true }
 reqwest = { workspace = true, features = ["json", "blocking"] }

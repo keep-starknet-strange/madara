@@ -51,7 +51,7 @@ use sp_trie::PrefixedMemoryDB;
 use mc_deoxys::{fetch_block, BlockQueue, create_block_queue};
 use lazy_static::lazy_static;
 
-use crate::cli::Sealing;
+use crate::commands::Sealing;
 use crate::genesis_block::MadaraGenesisBlockBuilder;
 use crate::rpc::StarknetDeps;
 use crate::starknet::{db_config_dir, MadaraBackend};

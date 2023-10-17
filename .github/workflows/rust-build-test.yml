@@ -1,33 +1,27 @@
 ---
-name: Task - Build Rust
+name: Task - Build & Integration Tests
 
 on:
   workflow_dispatch:
   workflow_call:
 
 jobs:
-  rust_build:
+  rust_build_test:
     runs-on: ubuntu-latest-32-cores
     steps:
       - uses: actions/checkout@v3
-
-      - name: Cache Cargo registry and git trees
-        uses: actions/cache@v3
+      - uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
+          shared-key: "cache"
+      - uses: actions/cache@v3
+        with:
+          path: target/release/madara
           key:
             ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
             github.run_id }}
           restore-keys: |
-            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
-            github.run_id }}
             ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
-            ${{ runner.os }}-cargo
+            ${{ runner.os }}-cargo-
 
       - name: Setup rust toolchain
         if: steps.cache.outputs.cache-hit != 'true'
@@ -41,3 +35,6 @@ jobs:
       - name: Build the project
         run: |
           cargo build --release --workspace
+
+      - name: Run integration tests
+        run: cargo test --release
