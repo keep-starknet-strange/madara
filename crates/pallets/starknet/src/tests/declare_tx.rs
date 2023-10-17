@@ -4,14 +4,17 @@ use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::{DeclareTransactionV1, DeclareTransactionV2};
 use sp_runtime::traits::ValidateUnsigned;
-use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError, ValidTransaction};
-use starknet_api::api_core::ClassHash;
+use sp_runtime::transaction_validity::{
+    InvalidTransaction, TransactionSource, TransactionValidityError, ValidTransaction,
+};
+use starknet_api::api_core::{ClassHash, Nonce};
+use starknet_api::hash::StarkFelt;
 use starknet_crypto::FieldElement;
 
 use super::mock::default_mock::*;
 use super::mock::*;
 use super::utils::{get_contract_class, sign_message_hash};
-use crate::tests::get_declare_dummy;
+use crate::tests::{get_declare_dummy, set_nonce};
 use crate::{Config, Error};
 
 #[test]
@@ -362,5 +365,32 @@ fn test_verify_require_tag() {
             .unwrap();
 
         assert_eq!(validate_result, valid_transaction_expected)
+    });
+}
+
+#[test]
+fn test_verify_nonce_in_unsigned_tx() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let transaction = get_declare_dummy(
+            Starknet::chain_id(),
+            Felt252Wrapper::ONE,
+            AccountType::V0(AccountTypeV0Inner::NoValidate),
+        );
+        let erc20_class = get_contract_class("ERC20.json", 0);
+
+        let tx_sender = (*transaction.sender_address()).into();
+        let tx_source = TransactionSource::InBlock;
+        let call = crate::Call::declare { transaction, contract_class: erc20_class };
+
+        assert!(Starknet::validate_unsigned(tx_source, &call).is_ok());
+
+        set_nonce::<MockRuntime>(&tx_sender, &Nonce(StarkFelt::from(2u64)));
+
+        assert_eq!(
+            Starknet::validate_unsigned(tx_source, &call),
+            Err(TransactionValidityError::Invalid(InvalidTransaction::Stale))
+        );
     });
 }

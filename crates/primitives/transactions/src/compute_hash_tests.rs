@@ -73,7 +73,7 @@ fn test_deploy_account_tx_hash() {
 fn test_declare_v0_tx_hash() {
     // Computed with `calculate_declare_transaction_hash` from the cairo lang package
     let expected_tx_hash =
-        Felt252Wrapper::from_hex_be("0x07cdcb35e703351a74a0e6e8c045ce861eece44f0bca06dbbc569b4d8c0a2ae2").unwrap();
+        Felt252Wrapper::from_hex_be("0x052b849ca86ca1a1ce6ac7e069900a221b5741786bffe023804ef714f7bb46da").unwrap();
 
     let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap());
 
@@ -173,14 +173,13 @@ fn test_declare_v2_tx_hash() {
 fn test_invoke_tx_v0_hash() {
     // Computed with `calculate_transaction_hash_common` from the cairo lang package
     let expected_tx_hash =
-        Felt252Wrapper::from_hex_be("0x054f8e66281306dd43fb035e1bf8b1f7baad8f28390f6de1f337e6be5490f1f7").unwrap();
+        Felt252Wrapper::from_hex_be("0x0006a8aca140749156148fa84f432f7f7b7318c119d97dd1808848fc74d1a8a6").unwrap();
 
     let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap());
 
     let transaction = InvokeTransactionV0 {
         max_fee: 1,
         signature: vec![],
-        nonce: Felt252Wrapper::ZERO,
         contract_address: Default::default(),
         entry_point_selector: Default::default(),
         calldata: vec![Felt252Wrapper::ONE, Felt252Wrapper::TWO, Felt252Wrapper::THREE],

@@ -1,14 +1,15 @@
 ---
-name: Task - Linters Cargo
+name: Task - Integration Tests
 
 on:
   workflow_dispatch:
   workflow_call:
 
 jobs:
-  # FIXME: check why this is rebuilding the project every time
-  cargo-lint:
-    runs-on: ubuntu-latest-32-cores
+  integration-tests:
+    runs-on: ubuntu-latest
+    env:
+      BINARY_PATH: ../target/release/madara
     steps:
       - uses: actions/checkout@v3
       - uses: Swatinem/rust-cache@v2
@@ -19,8 +20,5 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
-      - name: Format and clippy
-        run: |
-          cargo fmt -- --check
-          cargo clippy --no-deps -- -D warnings
-          cargo clippy --tests --no-deps -- -D warnings
+      - name: Run crates test
+        run: cargo test --release

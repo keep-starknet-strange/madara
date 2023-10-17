@@ -2,14 +2,16 @@
 
 ## Next release
 
-- fix: fix clap for run command
-- fix: add `madara_path` flag for setup command
-- fix: add official references to configs files
-- refactor: exported chain id constant in mp-chain-id crate and added one for
-  SN_MAIN
-- fix: cargo update and `main` branch prettier fix
-- ci: disable pr close workflow
-- ci: add ci verification for detecting genesis changes and config hashes
+- ci: change jobs order in the workflow
+- ci: run integrations tests in the same runner as build
+- ci: replace ci cache with rust-cache
+- fix(transactions): remove `nonce` field from InvokeV0 tx
+- feat(transactions): don't enforce ordering in validate_unsigned for invokeV0
+- test(pallet): add function to get braavos hash
+- fix: event commitment documentation typo
+- ci: added testing key generation in the ci
+- fix(starknet-rpc-test): init one request client per runtime
+- test: validate Nonce for unsigned user txs
 - fix: fixed declare V0 placeholder with the hash of an empty list of felts
 - feat(cli): `run` is the by default command when running the `madara` bin
 - refacto(cli): `run` and `setup` commands are defined in their own files
@@ -28,6 +30,7 @@
 - refacto(pallet/starknet): `GenesisLoader` refactored as `GenesisData` + a
   `base_path` field
 - feat(cli): for `run` param `--dev` now imply `--tmp`, as it is in substrate
+- test(starknet-rpc-test): run all tests against a single madara node
 
 ## v0.4.0
 

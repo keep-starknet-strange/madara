@@ -16,17 +16,17 @@ rustup show
 Use Rust's native `cargo` command to build and launch the template node:
 
 ```sh
-cargo run --release -- setup
-cargo run --release -- run --dev
+cargo run --release -- setup --chain=dev --from-remote
+cargo run --release -- --dev
 ```
 
 The node also supports to use manual seal (to produce block manually through
 RPC). This is also used by the typescript tests:
 
 ```sh
-$ cargo run --release -- run --dev --sealing=manual
+$ cargo run --release -- --dev --sealing=manual
 # Or
-$ cargo run --release -- run --dev --sealing=instant
+$ cargo run --release -- --dev --sealing=instant
 ```
 
 Log level can be specified with `-l` flag. For example, `-ldebug` will show
@@ -34,7 +34,7 @@ debug logs. It can also be specified via the `RUST_LOG` environment variable.
 For example:
 
 ```sh
-RUSTLOG=runtime=info cargo run --release -- run --dev
+RUSTLOG=runtime=info cargo run --release -- --dev
 ```
 
 ### Cargo Build
@@ -81,7 +81,7 @@ This command will start the single-node development chain with non-persistent
 state:
 
 ```bash
-./target/release/madara setup
+./target/release/madara setup --chain=dev --from-remote
 ./target/release/madara --dev
 ```
 

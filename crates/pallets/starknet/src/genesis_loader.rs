@@ -188,7 +188,7 @@ mod tests {
         let serialized_loader = serde_json::to_string(&genesis_loader).unwrap();
 
         // Then
-        let expected = r#"{"madara_path":null,"contract_classes":[["0x1",{"path":"cairo-contracts/ERC20.json","version":0}]],"contracts":[["0x2","0x1"]],"storage":[[["0x2","0x3"],"0x4"]],"fee_token_address":"0x5","seq_addr_updated":false}"#;
+        let expected = r#"{"contract_classes":[["0x1",{"path":"cairo-contracts/ERC20.json","version":0}]],"contracts":[["0x2","0x1"]],"storage":[[["0x2","0x3"],"0x4"]],"fee_token_address":"0x5","seq_addr_updated":false}"#;
         assert_eq!(expected, serialized_loader);
     }
 }

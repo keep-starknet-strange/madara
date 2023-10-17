@@ -3,7 +3,7 @@ use blockifier::state::state_api::State;
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::{DeclareTransaction, DeclareTransactionV1, DeployAccountTransaction, InvokeTransactionV1};
-use starknet_api::api_core::ContractAddress;
+use starknet_api::api_core::{ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 
 use self::mock::default_mock::{MockRuntime, Starknet};
@@ -11,7 +11,7 @@ use self::mock::{get_account_address, AccountType};
 use crate::blockifier_state_adapter::BlockifierStateAdapter;
 use crate::tests::mock::account_helper;
 use crate::tests::utils::sign_message_hash;
-use crate::Config;
+use crate::{Config, Nonces};
 
 mod account_helper;
 mod call_contract;
@@ -218,4 +218,9 @@ pub fn set_infinite_tokens<T: Config>(contract_address: &ContractAddress) {
 
     state_adapter.set_storage_at(fee_token_address, low_key, StarkFelt::from(u64::MAX as u128));
     state_adapter.set_storage_at(fee_token_address, high_key, StarkFelt::from(u64::MAX as u128));
+}
+
+/// Sets nonce for the given address.
+pub fn set_nonce<T: Config>(address: &ContractAddress, nonce: &Nonce) {
+    Nonces::<T>::insert(address, nonce)
 }
