@@ -15,8 +15,21 @@ pub enum Sealing {
     /// Seal using rpc method.
     #[default]
     Manual,
-    /// Seal when transaction is executed.
+    /// Seal when transaction is executed. This mode does not finalize blocks, if you want to
+    /// finalize blocks use `--sealing=instant-finality`.
     Instant,
+    /// Seal when transaction is executed with finalization.
+    InstantFinality,
+}
+
+impl From<Sealing> for SealingMode {
+    fn from(value: Sealing) -> Self {
+        match value {
+            Sealing::Manual => SealingMode::Manual,
+            Sealing::Instant => SealingMode::Instant { finalize: false },
+            Sealing::InstantFinality => SealingMode::Instant { finalize: true },
+        }
+    }
 }
 
 #[derive(Clone, Debug, clap::Args)]
@@ -27,11 +40,6 @@ pub struct ExtendedRunCmd {
     /// Choose sealing method.
     #[clap(long, value_enum, ignore_case = true)]
     pub sealing: Option<Sealing>,
-
-    // TODO. Move this into `Sealing::Instant` when https://github.com/clap-rs/clap/issues/2621 is resolved.
-    /// Finalize sealed blocks. This flag is ignored if sealing is set to `Manual`.
-    #[clap(long, default_value = "false", default_missing_value = "true")]
-    pub finalize: bool,
 
     /// Choose a supported DA Layer
     #[clap(long)]
@@ -45,19 +53,6 @@ impl ExtendedRunCmd {
             .shared_params
             .base_path()?
             .unwrap_or_else(|| BasePath::from_project("", "", &<Cli as SubstrateCli>::executable_name())))
-    }
-}
-
-impl From<ExtendedRunCmd> for SealingMode {
-    fn from(value: ExtendedRunCmd) -> Self {
-        if let Some(sealing) = value.sealing {
-            match sealing {
-                Sealing::Manual => SealingMode::Manual,
-                Sealing::Instant => SealingMode::Instant { finalize: value.finalize },
-            }
-        } else {
-            SealingMode::Default
-        }
     }
 }
 
@@ -85,7 +80,8 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
     };
 
     runner.run_node_until_exit(|config| async move {
-        service::new_full(config, cli.run.into(), da_config).map_err(sc_cli::Error::Service)
+        let sealing = cli.run.sealing.map(Into::into).unwrap_or_default();
+        service::new_full(config, sealing, da_config).map_err(sc_cli::Error::Service)
     })
 }
 
