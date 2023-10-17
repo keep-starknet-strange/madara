@@ -402,8 +402,7 @@ where
         let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
         let chain_id = self.chain_id()?;
 
-        let transactions =
-            block.transactions_hashes::<H>(Felt252Wrapper(chain_id.0)).into_iter().map(FieldElement::from).collect();
+        let transactions = block.transactions_hashes::<H>(Felt252Wrapper(chain_id.0)).map(FieldElement::from).collect();
         let blockhash = block.header().hash::<H>();
         let parent_blockhash = block.header().parent_block_hash;
         let block_with_tx_hashes = BlockWithTxHashes {
