@@ -41,12 +41,18 @@ pub struct MappingSyncWorker<B: BlockT, C, BE, H> {
     have_next: bool,
     retry_times: usize,
     sync_from: <B::Header as HeaderT>::Number,
+
+    /// Whether more information should be cached when storing the block in the database.
+    cache: bool,
 }
 
 impl<B: BlockT, C, BE, H> Unpin for MappingSyncWorker<B, C, BE, H> {}
 
 #[allow(clippy::too_many_arguments)]
 impl<B: BlockT, C, BE, H> MappingSyncWorker<B, C, BE, H> {
+    /// # Arguments
+    ///
+    /// - `cache`: whether more information should be cached when storing the block in the database.
     pub fn new(
         import_notifications: ImportNotifications<B>,
         timeout: Duration,
@@ -56,6 +62,7 @@ impl<B: BlockT, C, BE, H> MappingSyncWorker<B, C, BE, H> {
         retry_times: usize,
         sync_from: <B::Header as HeaderT>::Number,
         hasher: PhantomData<H>,
+        cache: bool,
     ) -> Self {
         Self {
             import_notifications,
@@ -70,6 +77,8 @@ impl<B: BlockT, C, BE, H> MappingSyncWorker<B, C, BE, H> {
             have_next: true,
             retry_times,
             sync_from,
+
+            cache,
         }
     }
 }
@@ -115,6 +124,7 @@ where
             self.inner_delay = None;
 
             match sync_blocks::sync_blocks::<_, _, _, H>(
+                self.cache,
                 self.client.as_ref(),
                 self.substrate_backend.as_ref(),
                 self.madara_backend.as_ref(),

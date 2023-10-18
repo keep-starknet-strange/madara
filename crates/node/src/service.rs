@@ -252,10 +252,15 @@ where
 }
 
 /// Builds a new service for a full client.
+///
+/// # Arguments
+///
+/// - `cache`: whether more information should be cached when storing the block in the database.
 pub fn new_full(
     config: Configuration,
     sealing: Option<Sealing>,
     da_layer: Option<(DaLayer, PathBuf)>,
+    cache: bool,
 ) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
@@ -374,6 +379,7 @@ pub fn new_full(
             3,
             0,
             PhantomData::<StarknetHasher>,
+            cache,
         )
         .for_each(|()| future::ready(())),
     );

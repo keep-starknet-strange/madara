@@ -29,6 +29,14 @@ pub struct ExtendedRunCmd {
     /// Choose a supported DA Layer
     #[clap(long)]
     pub da_layer: Option<DaLayer>,
+
+    /// When enabled, more information about the blocks and their transaction is cached and stored
+    /// in the database.
+    ///
+    /// This may improve response times for RPCs that require that information, but it also
+    /// increases the memory footprint of the node.
+    #[clap(long, action)]
+    pub cache: bool,
 }
 
 impl ExtendedRunCmd {
@@ -64,9 +72,10 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
         }
     };
     let sealing = cli.run.sealing;
+    let cache = cli.run.cache;
 
     runner.run_node_until_exit(|config| async move {
-        service::new_full(config, sealing, da_config).map_err(sc_cli::Error::Service)
+        service::new_full(config, sealing, da_config, cache).map_err(sc_cli::Error::Service)
     })
 }
 

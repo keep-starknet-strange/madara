@@ -45,6 +45,12 @@ pub(crate) mod columns {
     pub const TRANSACTION_MAPPING: u32 = 2;
     pub const SYNCED_MAPPING: u32 = 3;
     pub const DA: u32 = 4;
+
+    /// This column is used to map starknet block hashes to a list of transaction hashes that are
+    /// contained in the block.
+    ///
+    /// This column should only be accessed if the `--cache` flag is enabled.
+    pub const STARKNET_TRANSACTION_HASHES_CACHE: u32 = 5;
 }
 
 pub mod static_keys {

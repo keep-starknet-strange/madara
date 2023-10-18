@@ -15,6 +15,9 @@ pub struct MappingCommitment<B: BlockT> {
     pub block_hash: B::Hash,
     pub starknet_block_hash: H256,
     pub starknet_transaction_hashes: Vec<H256>,
+
+    /// Indicates whether more information should be cached in the database.
+    pub cache: bool,
 }
 
 /// Allow interaction with the mapping db
@@ -85,11 +88,19 @@ impl<B: BlockT> MappingDb<B> {
 
         transaction.set(crate::columns::SYNCED_MAPPING, &commitment.block_hash.encode(), &true.encode());
 
-        for transaction_hash in commitment.starknet_transaction_hashes.into_iter() {
+        for transaction_hash in commitment.starknet_transaction_hashes.iter() {
             transaction.set(
                 crate::columns::TRANSACTION_MAPPING,
                 &transaction_hash.encode(),
                 &commitment.block_hash.encode(),
+            );
+        }
+
+        if commitment.cache {
+            transaction.set(
+                crate::columns::STARKNET_TRANSACTION_HASHES_CACHE,
+                &commitment.starknet_block_hash.encode(),
+                &commitment.starknet_transaction_hashes.encode(),
             );
         }
 
@@ -109,6 +120,27 @@ impl<B: BlockT> MappingDb<B> {
     pub fn block_hash_from_transaction_hash(&self, transaction_hash: H256) -> Result<Option<B::Hash>, String> {
         match self.db.get(crate::columns::TRANSACTION_MAPPING, &transaction_hash.encode()) {
             Some(raw) => Ok(Some(<B::Hash>::decode(&mut &raw[..]).map_err(|e| format!("{:?}", e))?)),
+            None => Ok(None),
+        }
+    }
+
+    /// Returns the list of transaction hashes for the given block hash.
+    ///
+    /// # Arguments
+    ///
+    /// * `starknet_hash` - the hash of the starknet block to search for.
+    ///
+    /// # Returns
+    ///
+    /// The list of transaction hashes.
+    ///
+    /// This function may return `None` for two separate reasons:
+    ///
+    /// - The cache is disabled.
+    /// - The provided `starknet_hash` is not present in the cache.
+    pub fn cached_transaction_hashes_from_block_hash(&self, starknet_hash: H256) -> Result<Option<Vec<H256>>, String> {
+        match self.db.get(crate::columns::STARKNET_TRANSACTION_HASHES_CACHE, &starknet_hash.encode()) {
+            Some(raw) => Ok(Some(Vec::<H256>::decode(&mut &raw[..]).map_err(|e| format!("{:?}", e))?)),
             None => Ok(None),
         }
     }

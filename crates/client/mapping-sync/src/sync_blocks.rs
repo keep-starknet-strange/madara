@@ -9,7 +9,15 @@ use sp_blockchain::{Backend as _, HeaderBackend};
 use sp_core::H256;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT, Zero};
 
-fn sync_block<B: BlockT, C, BE, H>(client: &C, backend: &mc_db::Backend<B>, header: &B::Header) -> Result<(), String>
+/// # Arguments
+///
+/// - `cache`: whether more information should be cached when storing the block in the database.
+fn sync_block<B: BlockT, C, BE, H>(
+    cache: bool,
+    client: &C,
+    backend: &mc_db::Backend<B>,
+    header: &B::Header,
+) -> Result<(), String>
 where
     C: HeaderBackend<B> + StorageProvider<B, BE>,
     C: ProvideRuntimeApi<B>,
@@ -51,6 +59,7 @@ where
                                 .iter()
                                 .map(|tx| H256::from(tx.compute_hash::<H>(chain_id, false)))
                                 .collect(),
+                            cache,
                         };
 
                         backend.mapping().write_hashes(mapping_commitment)
@@ -66,7 +75,11 @@ where
     }
 }
 
+/// # Arguments
+///
+/// - `cache`: whether more information should be cached when storing the block in the database.
 fn sync_genesis_block<B: BlockT, C, H>(
+    cache: bool,
     _client: &C,
     backend: &mc_db::Backend<B>,
     header: &B::Header,
@@ -88,6 +101,7 @@ where
         block_hash: substrate_block_hash,
         starknet_block_hash: block_hash.into(),
         starknet_transaction_hashes: Vec::new(),
+        cache,
     };
 
     backend.mapping().write_hashes(mapping_commitment)?;
@@ -95,7 +109,11 @@ where
     Ok(())
 }
 
+/// # Arguments
+///
+/// - `cache`: whether more information should be cached when storing the block in the database.
 fn sync_one_block<B: BlockT, C, BE, H>(
+    cache: bool,
     client: &C,
     substrate_backend: &BE,
     madara_backend: &mc_db::Backend<B>,
@@ -136,12 +154,12 @@ where
     };
 
     if operating_header.number() == &Zero::zero() {
-        sync_genesis_block::<_, _, H>(client, madara_backend, &operating_header)?;
+        sync_genesis_block::<_, _, H>(cache, client, madara_backend, &operating_header)?;
 
         madara_backend.meta().write_current_syncing_tips(current_syncing_tips)?;
         Ok(true)
     } else {
-        sync_block::<_, _, _, H>(client, madara_backend, &operating_header)?;
+        sync_block::<_, _, _, H>(cache, client, madara_backend, &operating_header)?;
 
         current_syncing_tips.push(*operating_header.parent_hash());
         madara_backend.meta().write_current_syncing_tips(current_syncing_tips)?;
@@ -149,7 +167,11 @@ where
     }
 }
 
+/// # Arguments
+///
+/// - `cache`: whether more information should be cached when storing the block in the database.
 pub fn sync_blocks<B: BlockT, C, BE, H>(
+    cache: bool,
     client: &C,
     substrate_backend: &BE,
     madara_backend: &mc_db::Backend<B>,
@@ -166,7 +188,8 @@ where
     let mut synced_any = false;
 
     for _ in 0..limit {
-        synced_any = synced_any || sync_one_block::<_, _, _, H>(client, substrate_backend, madara_backend, sync_from)?;
+        synced_any =
+            synced_any || sync_one_block::<_, _, _, H>(cache, client, substrate_backend, madara_backend, sync_from)?;
     }
 
     Ok(synced_any)
