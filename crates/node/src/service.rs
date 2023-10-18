@@ -604,8 +604,8 @@ where
                 create_inherent_data_providers,
             }))
         }
-        SealingMode::Instant { finalize } if finalize => Box::pin(
-            sc_consensus_manual_seal::run_instant_seal_and_finalize(sc_consensus_manual_seal::InstantSealParams {
+        SealingMode::Instant { finalize } => {
+            let instant_seal_params = sc_consensus_manual_seal::InstantSealParams {
                 block_import,
                 env: proposer_factory,
                 client,
@@ -613,18 +613,12 @@ where
                 select_chain,
                 consensus_data_provider: None,
                 create_inherent_data_providers,
-            }),
-        ),
-        SealingMode::Instant { finalize } if !finalize => {
-            Box::pin(sc_consensus_manual_seal::run_instant_seal(sc_consensus_manual_seal::InstantSealParams {
-                block_import,
-                env: proposer_factory,
-                client,
-                pool: transaction_pool,
-                select_chain,
-                consensus_data_provider: None,
-                create_inherent_data_providers,
-            }))
+            };
+            if finalize {
+                Box::pin(sc_consensus_manual_seal::run_instant_seal_and_finalize(instant_seal_params))
+            } else {
+                Box::pin(sc_consensus_manual_seal::run_instant_seal(instant_seal_params))
+            }
         }
         _ => unreachable!("Other sealing modes are not expected in manual-seal."),
     };
