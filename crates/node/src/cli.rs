@@ -44,7 +44,7 @@ pub enum Subcommand {
     /// Revert the chain to a previous state.
     Revert(sc_cli::RevertCmd),
 
-    // Setup madara node
+    /// Setup madara node
     Setup(SetupCmd),
 
     /// Try some command against runtime state.

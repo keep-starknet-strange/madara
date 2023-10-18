@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
+use madara_runtime::{AuraConfig, GenesisConfig, GrandpaConfig, SealingMode, SystemConfig, WASM_BINARY};
 use mp_felt::Felt252Wrapper;
 use pallet_starknet::genesis_loader::{GenesisData, GenesisLoader, HexFelt};
 use sc_service::{BasePath, ChainType};
@@ -27,18 +27,19 @@ pub type DevChainSpec = sc_service::GenericChainSpec<DevGenesisExt>;
 pub struct DevGenesisExt {
     /// Genesis config.
     genesis_config: GenesisConfig,
-    /// The flag that if enable manual-seal mode.
-    enable_manual_seal: Option<bool>,
+    /// The sealing mode being used.
+    sealing: SealingMode,
 }
 
-/// If enable_manual_seal is true, then the runtime storage variable EnableManualSeal will be set to
-/// true. This is just a common way to pass information from the chain spec to the runtime.
+/// The `sealing` from the `DevGenesisExt` is passed to the runtime via the storage. The runtime
+/// can then use this information to adjust accordingly. This is just a common way to pass
+/// information from the chain spec to the runtime.
+///
+/// NOTE: if `sealing` is `None`, then the runtime will use the default sealing mode.
 impl sp_runtime::BuildStorage for DevGenesisExt {
     fn assimilate_storage(&self, storage: &mut Storage) -> Result<(), String> {
         BasicExternalities::execute_with_storage(storage, || {
-            if let Some(enable_manual_seal) = &self.enable_manual_seal {
-                EnableManualSeal::set(enable_manual_seal);
-            }
+            madara_runtime::Sealing::set(&self.sealing);
         });
         self.genesis_config.assimilate_storage(storage)
     }
@@ -54,7 +55,7 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
     (get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
 }
 
-pub fn development_config(enable_manual_seal: Option<bool>, base_path: BasePath) -> Result<DevChainSpec, String> {
+pub fn development_config(sealing: SealingMode, base_path: BasePath) -> Result<DevChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
     let chain_id = DEV_CHAIN_ID;
 
@@ -78,7 +79,7 @@ pub fn development_config(enable_manual_seal: Option<bool>, base_path: BasePath)
                     vec![authority_keys_from_seed("Alice")],
                     true,
                 ),
-                enable_manual_seal,
+                sealing: sealing.clone(),
             }
         },
         // Bootnodes
