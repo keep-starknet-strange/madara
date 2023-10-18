@@ -20,6 +20,7 @@ members = [
   "crates/client/rpc-core",
   "crates/client/rpc",
   "crates/client/mapping-sync",
+  "crates/client/snos-feeder",
   "crates/client/storage",
   "crates/client/transaction-pool",
   "starknet-rpc-test",
@@ -46,6 +47,7 @@ default-members = [
   "crates/client/rpc-core",
   "crates/client/rpc",
   "crates/client/mapping-sync",
+  "crates/client/snos-feeder",
   "crates/client/storage",
   "crates/client/transaction-pool",
 ]

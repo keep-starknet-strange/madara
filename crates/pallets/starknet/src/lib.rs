@@ -864,7 +864,7 @@ impl<T: Config> Pallet<T> {
     /// Creates a [BlockContext] object. The [BlockContext] is needed by the blockifier to execute
     /// properly the transaction. Substrate caches data so it's fine to call multiple times this
     /// function, only the first transaction/block will be "slow" to load these data.
-    fn get_block_context() -> BlockContext {
+    pub fn get_block_context() -> BlockContext {
         let block_number = UniqueSaturatedInto::<u64>::unique_saturated_into(frame_system::Pallet::<T>::block_number());
         let block_timestamp = Self::block_timestamp();
 

@@ -52,6 +52,7 @@ sp-inherents = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
+sp-arithmetic = { workspace = true }
 # Frame pallets
 
 # Other third party dependencies
@@ -71,6 +72,7 @@ scale-info = { workspace = true, features = ["derive"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 serde_with = { workspace = true }
+hashbrown = {workspace = true }
 
 [dev-dependencies]
 pallet-timestamp = { workspace = true }
