@@ -157,6 +157,18 @@ where
 
         Ok(block.header().block_number)
     }
+
+    /// Returns a list of all transaction hashes in the given block.
+    ///
+    /// # Arguments
+    ///
+    /// * `block_hash` - The hash of the block containing the transactions (starknet block).
+    fn get_cached_transaction_hashes(&self, block_hash: H256) -> Option<Vec<H256>> {
+        self.backend.mapping().cached_transaction_hashes_from_block_hash(block_hash).unwrap_or_else(|err| {
+            error!("{err}");
+            None
+        })
+    }
 }
 
 /// Taken from https://github.com/paritytech/substrate/blob/master/client/rpc/src/author/mod.rs#L78
@@ -644,7 +656,12 @@ where
         let transaction = block.transactions().get(index as usize).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
         let chain_id = self.chain_id()?;
 
-        Ok(to_starknet_core_tx::<H>(transaction.clone(), Felt252Wrapper(chain_id.0)))
+        let transaction_hash = self
+            .get_cached_transaction_hashes(block.header().hash::<H>().into())
+            .map(|vec| h256_to_felt(*vec.get(index as usize).ok_or(StarknetRpcApiError::InvalidTxnIndex)?))
+            .unwrap_or_else(|| Ok(transaction.compute_hash::<H>(chain_id.0.into(), false).0))?;
+
+        Ok(to_starknet_core_tx::<H>(transaction.clone(), transaction_hash))
     }
 
     /// Get block information with full transactions given the block id
@@ -659,6 +676,16 @@ where
         let chain_id = self.chain_id()?;
         let chain_id = Felt252Wrapper(chain_id.0);
 
+        let transaction_hashes = self.get_cached_transaction_hashes(block.header().hash::<H>().into());
+        let mut transactions = Vec::with_capacity(block.transactions().len());
+        for (index, tx) in block.transactions().iter().enumerate() {
+            let hash = transaction_hashes
+                .as_ref()
+                .map(|vec| h256_to_felt(*vec.get(index).ok_or(StarknetRpcApiError::InternalServerError)?))
+                .unwrap_or_else(|| Ok(tx.compute_hash::<H>(chain_id.0.into(), false).0))?;
+            transactions.push(to_starknet_core_tx::<H>(tx.clone(), hash));
+        }
+
         let block_with_txs = BlockWithTxs {
             // TODO: Get status from block
             status: BlockStatus::AcceptedOnL2,
@@ -668,12 +695,7 @@ where
             new_root: block.header().global_state_root.into(),
             timestamp: block.header().block_timestamp,
             sequencer_address: Felt252Wrapper::from(block.header().sequencer_address).into(),
-            transactions: block
-                .transactions()
-                .iter()
-                .cloned()
-                .map(|tx| to_starknet_core_tx::<H>(tx, Felt252Wrapper(chain_id.0)))
-                .collect::<Vec<_>>(),
+            transactions,
         };
 
         Ok(MaybePendingBlockWithTxs::Block(block_with_txs))
@@ -741,7 +763,7 @@ where
         })?;
 
         let chain_id = self.chain_id()?;
-        let transactions = transactions.into_iter().map(|tx| to_starknet_core_tx::<H>(tx, chain_id.0.into())).collect();
+        let transactions = transactions.into_iter().map(|tx| to_starknet_core_tx::<H>(tx, chain_id.0)).collect();
 
         Ok(transactions)
     }
@@ -829,7 +851,7 @@ where
             .transactions()
             .iter()
             .find(|tx| tx.compute_hash::<H>(chain_id, false).0 == transaction_hash)
-            .map(|tx| to_starknet_core_tx::<H>(tx.clone(), chain_id));
+            .map(|tx| to_starknet_core_tx::<H>(tx.clone(), transaction_hash));
 
         find_tx.ok_or(StarknetRpcApiError::TxnHashNotFound.into())
     }
@@ -1018,5 +1040,15 @@ where
             Ok(starknet_error) => Err(starknet_error.into()),
             Err(_) => Err(StarknetRpcApiError::InternalServerError),
         },
+    }
+}
+
+fn h256_to_felt(h256: H256) -> Result<FieldElement, StarknetRpcApiError> {
+    match Felt252Wrapper::try_from(h256) {
+        Ok(felt) => Ok(felt.0),
+        Err(err) => {
+            error!("failed to convert H256 to FieldElement: {err}");
+            Err(StarknetRpcApiError::InternalServerError)
+        }
     }
 }
