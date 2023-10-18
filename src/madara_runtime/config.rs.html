@@ -81,6 +81,38 @@
 <a href="#81" id="81">81</a>
 <a href="#82" id="82">82</a>
 <a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Configuration of the runtime.
 </span><span class="kw">pub use </span>frame_support::traits::{ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness, StorageInfo};
 <span class="kw">pub use </span>frame_support::weights::constants::{
@@ -89,6 +121,9 @@
 <span class="kw">pub use </span>frame_support::weights::{IdentityFee, Weight};
 <span class="kw">pub use </span>frame_support::{construct_runtime, parameter_types, StorageValue};
 <span class="kw">pub use </span>frame_system::Call <span class="kw">as </span>SystemCall;
+<span class="kw">use </span>parity_scale_codec::{Decode, Encode};
+<span class="kw">use </span>serde::{Deserialize, Serialize};
+<span class="kw">use </span>sp_core::RuntimeDebug;
 <span class="kw">use </span>sp_runtime::create_runtime_str;
 <span class="attr">#[cfg(any(feature = <span class="string">&quot;std&quot;</span>, test))]
 </span><span class="kw">pub use </span>sp_runtime::BuildStorage;
@@ -160,8 +195,37 @@
     <span class="kw">pub const </span>SS58Prefix: u8 = <span class="number">42</span>;
 }
 
+<span class="doccomment">/// The current sealing mode being used. This is needed for the runtime to adjust its behavior
+/// accordingly, e.g. suppress Aura validations in `OnTimestampSet` for manual or instant sealing.
+</span><span class="attr">#[derive(Default, Clone, PartialEq, Decode, Encode, RuntimeDebug, Deserialize, Serialize)]
+</span><span class="kw">pub enum </span>SealingMode {
+    <span class="attr">#[default]
+    </span>Default,
+    Manual,
+    Instant {
+        finalize: bool,
+    },
+}
+
+<span class="kw">impl </span>SealingMode {
+    <span class="kw">pub fn </span>is_default(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="macro">matches!</span>(<span class="self">self</span>, SealingMode::Default)
+    }
+}
+
+<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>SealingMode {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
+        <span class="kw">match </span><span class="self">self </span>{
+            SealingMode::Default =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Default&quot;</span>),
+            SealingMode::Manual =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Manual&quot;</span>),
+            SealingMode::Instant { finalize } =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Instant (finalize: {})&quot;</span>, finalize),
+        }
+    }
+}
+
 <span class="comment">// This storage item will be used to check if we are in the manual sealing mode
 </span><span class="macro">parameter_types! </span>{
-    <span class="kw">pub </span>storage EnableManualSeal: bool = <span class="bool-val">false</span>;
+    <span class="kw">pub </span>storage Sealing: SealingMode = SealingMode::default();
 }
 </code></pre></div></section></main></body></html>

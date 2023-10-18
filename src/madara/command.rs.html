@@ -222,12 +222,12 @@
         <span class="number">2017
     </span>}
 
-    <span class="kw">fn </span>load_spec(<span class="kw-2">&amp;</span><span class="self">self</span>, id: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>sc_service::ChainSpec&gt;, String&gt; {
+    <span class="kw">fn </span>load_spec(<span class="kw-2">&amp;</span><span class="self">self</span>, id: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>ChainSpec&gt;, String&gt; {
         <span class="prelude-val">Ok</span>(<span class="kw">match </span>id {
             DEV_CHAIN_ID =&gt; {
-                <span class="kw">let </span>enable_manual_seal = <span class="self">self</span>.run.sealing.map(|<span class="kw">_</span>| <span class="bool-val">true</span>);
+                <span class="kw">let </span>sealing = <span class="self">self</span>.run.sealing.map(Into::into).unwrap_or_default();
                 <span class="kw">let </span>base_path = <span class="self">self</span>.run.base_path().map_err(|e| e.to_string())<span class="question-mark">?</span>;
-                Box::new(chain_spec::development_config(enable_manual_seal, base_path)<span class="question-mark">?</span>)
+                Box::new(chain_spec::development_config(sealing, base_path)<span class="question-mark">?</span>)
             }
             <span class="attr">#[cfg(feature = <span class="string">&quot;sharingan&quot;</span>)]
             </span>SHARINGAN_CHAIN_ID =&gt; Box::new(chain_spec::ChainSpec::from_json_bytes(

@@ -634,6 +634,17 @@
 <a href="#634" id="634">634</a>
 <a href="#635" id="635">635</a>
 <a href="#636" id="636">636</a>
+<a href="#637" id="637">637</a>
+<a href="#638" id="638">638</a>
+<a href="#639" id="639">639</a>
+<a href="#640" id="640">640</a>
+<a href="#641" id="641">641</a>
+<a href="#642" id="642">642</a>
+<a href="#643" id="643">643</a>
+<a href="#644" id="644">644</a>
+<a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
+<a href="#647" id="647">647</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
@@ -644,9 +655,10 @@
 
 <span class="kw">use </span>futures::channel::mpsc;
 <span class="kw">use </span>futures::future;
+<span class="kw">use </span>futures::future::BoxFuture;
 <span class="kw">use </span>futures::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>madara_runtime::opaque::Block;
-<span class="kw">use </span>madara_runtime::{<span class="self">self</span>, Hash, RuntimeApi, StarknetHasher};
+<span class="kw">use </span>madara_runtime::{<span class="self">self</span>, Hash, RuntimeApi, SealingMode, StarknetHasher};
 <span class="kw">use </span>mc_block_proposer::ProposerFactory;
 <span class="kw">use </span>mc_data_availability::avail::config::AvailConfig;
 <span class="kw">use </span>mc_data_availability::avail::AvailClient;
@@ -677,7 +689,6 @@
 <span class="kw">use </span>sp_runtime::traits::BlakeTwo256;
 <span class="kw">use </span>sp_trie::PrefixedMemoryDB;
 
-<span class="kw">use </span><span class="kw">crate</span>::commands::Sealing;
 <span class="kw">use </span><span class="kw">crate</span>::genesis_block::MadaraGenesisBlockBuilder;
 <span class="kw">use </span><span class="kw">crate</span>::rpc::StarknetDeps;
 <span class="kw">use </span><span class="kw">crate</span>::starknet::{db_config_dir, MadaraBackend};
@@ -890,11 +901,11 @@
 <span class="doccomment">/// Builds a new service for a full client.
 </span><span class="kw">pub fn </span>new_full(
     config: Configuration,
-    sealing: <span class="prelude-ty">Option</span>&lt;Sealing&gt;,
+    sealing: SealingMode,
     da_layer: <span class="prelude-ty">Option</span>&lt;(DaLayer, PathBuf)&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;TaskManager, ServiceError&gt; {
     <span class="kw">let </span>build_import_queue =
-        <span class="kw">if </span>sealing.is_some() { build_manual_seal_import_queue } <span class="kw">else </span>{ build_aura_grandpa_import_queue };
+        <span class="kw">if </span>sealing.is_default() { build_aura_grandpa_import_queue } <span class="kw">else </span>{ build_manual_seal_import_queue };
 
     <span class="kw">let </span>sc_service::PartialComponents {
         client,
@@ -914,9 +925,7 @@
         <span class="kw-2">&amp;</span>config.chain_spec,
     );
 
-    <span class="kw">let </span>warp_sync_params = <span class="kw">if </span>sealing.is_some() {
-        <span class="prelude-val">None
-    </span>} <span class="kw">else </span>{
+    <span class="kw">let </span>warp_sync_params = <span class="kw">if </span>sealing.is_default() {
         net_config
             .add_notification_protocol(sc_consensus_grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone()));
         <span class="kw">let </span>warp_sync = Arc::new(sc_consensus_grandpa::warp_proof::NetworkProvider::new(
@@ -925,7 +934,9 @@
             Vec::default(),
         ));
         <span class="prelude-val">Some</span>(WarpSyncParams::WithProvider(warp_sync))
-    };
+    } <span class="kw">else </span>{
+        <span class="prelude-val">None
+    </span>};
 
     <span class="kw">let </span>(network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
         sc_service::build_network(sc_service::BuildNetworkParams {
@@ -947,14 +958,18 @@
     <span class="kw">let </span>force_authoring = config.force_authoring;
     <span class="kw">let </span>backoff_authoring_blocks: <span class="prelude-ty">Option</span>&lt;()&gt; = <span class="prelude-val">None</span>;
     <span class="kw">let </span>name = config.network.node_name.clone();
-    <span class="kw">let </span>enable_grandpa = !config.disable_grandpa &amp;&amp; sealing.is_none();
+    <span class="kw">let </span>enable_grandpa = !config.disable_grandpa &amp;&amp; sealing.is_default();
     <span class="kw">let </span>prometheus_registry = config.prometheus_registry().cloned();
     <span class="kw">let </span>starting_block = client.info().best_number;
 
     <span class="comment">// Channel for the rpc handler to communicate with the authorship task.
-    // TODO: commands_stream is is currently unused, but should be used to implement the `sealing`
-    // parameter
-    </span><span class="kw">let </span>(command_sink, commands_stream) = mpsc::channel(<span class="number">1000</span>);
+    </span><span class="kw">let </span>(command_sink, commands_stream) = <span class="kw">match </span>sealing {
+        SealingMode::Manual =&gt; {
+            <span class="kw">let </span>(sender, receiver) = mpsc::channel(<span class="number">1000</span>);
+            (<span class="prelude-val">Some</span>(sender), <span class="prelude-val">Some</span>(receiver))
+        }
+        <span class="kw">_ </span>=&gt; (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>),
+    };
 
     <span class="kw">let </span>overrides = overrides_handle(client.clone());
     <span class="kw">let </span>starknet_rpc_params = StarknetDeps {
@@ -977,7 +992,7 @@
                 graph: graph.clone(),
                 deny_unsafe,
                 starknet: starknet_rpc_params.clone(),
-                command_sink: <span class="kw">if </span>sealing.is_some() { <span class="prelude-val">Some</span>(command_sink.clone()) } <span class="kw">else </span>{ <span class="prelude-val">None </span>},
+                command_sink: command_sink.clone(),
             };
             <span class="kw">crate</span>::rpc::create_full(deps).map_err(Into::into)
         })
@@ -1045,7 +1060,9 @@
 
     <span class="kw">if </span>role.is_authority() {
         <span class="comment">// manual-seal authorship
-        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(sealing) = sealing {
+        </span><span class="kw">if </span>!sealing.is_default() {
+            <span class="macro">log::info!</span>(<span class="string">&quot;{} sealing enabled.&quot;</span>, sealing);
+
             run_manual_seal_authorship(
                 sealing,
                 client,
@@ -1059,7 +1076,6 @@
 
             network_starter.start_network();
 
-            <span class="macro">log::info!</span>(<span class="string">&quot;Manual Seal Ready&quot;</span>);
             <span class="kw">return </span><span class="prelude-val">Ok</span>(task_manager);
         }
 
@@ -1169,14 +1185,14 @@
 
 <span class="attr">#[allow(clippy::too_many_arguments)]
 </span><span class="kw">fn </span>run_manual_seal_authorship(
-    sealing: Sealing,
+    sealing: SealingMode,
     client: Arc&lt;FullClient&gt;,
     transaction_pool: Arc&lt;FullPool&lt;Block, FullClient&gt;&gt;,
     select_chain: FullSelectChain,
     block_import: BoxBlockImport&lt;FullClient&gt;,
     task_manager: <span class="kw-2">&amp;</span>TaskManager,
     prometheus_registry: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Registry&gt;,
-    commands_stream: mpsc::Receiver&lt;sc_consensus_manual_seal::rpc::EngineCommand&lt;Hash&gt;&gt;,
+    commands_stream: <span class="prelude-ty">Option</span>&lt;mpsc::Receiver&lt;sc_consensus_manual_seal::rpc::EngineCommand&lt;Hash&gt;&gt;&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), ServiceError&gt;
 <span class="kw">where
     </span>RuntimeApi: ConstructRuntimeApi&lt;Block, FullClient&gt;,
@@ -1222,21 +1238,21 @@
         <span class="prelude-val">Ok</span>(timestamp)
     };
 
-    <span class="kw">let </span>manual_seal = <span class="kw">match </span>sealing {
-        Sealing::Manual =&gt; future::Either::Left(sc_consensus_manual_seal::run_manual_seal(
-            sc_consensus_manual_seal::ManualSealParams {
+    <span class="kw">let </span>manual_seal: BoxFuture&lt;<span class="kw">_</span>&gt; = <span class="kw">match </span>sealing {
+        SealingMode::Manual =&gt; {
+            Box::pin(sc_consensus_manual_seal::run_manual_seal(sc_consensus_manual_seal::ManualSealParams {
                 block_import,
                 env: proposer_factory,
                 client,
                 pool: transaction_pool,
-                commands_stream,
+                commands_stream: commands_stream.expect(<span class="string">&quot;Manual sealing requires a channel from RPC.&quot;</span>),
                 select_chain,
                 consensus_data_provider: <span class="prelude-val">None</span>,
                 create_inherent_data_providers,
-            },
-        )),
-        Sealing::Instant =&gt; future::Either::Right(sc_consensus_manual_seal::run_instant_seal(
-            sc_consensus_manual_seal::InstantSealParams {
+            }))
+        }
+        SealingMode::Instant { finalize } =&gt; {
+            <span class="kw">let </span>instant_seal_params = sc_consensus_manual_seal::InstantSealParams {
                 block_import,
                 env: proposer_factory,
                 client,
@@ -1244,8 +1260,14 @@
                 select_chain,
                 consensus_data_provider: <span class="prelude-val">None</span>,
                 create_inherent_data_providers,
-            },
-        )),
+            };
+            <span class="kw">if </span>finalize {
+                Box::pin(sc_consensus_manual_seal::run_instant_seal_and_finalize(instant_seal_params))
+            } <span class="kw">else </span>{
+                Box::pin(sc_consensus_manual_seal::run_instant_seal(instant_seal_params))
+            }
+        }
+        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;Other sealing modes are not expected in manual-seal.&quot;</span>),
     };
 
     <span class="comment">// we spawn the future on a background thread managed by service.

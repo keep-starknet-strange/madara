@@ -318,7 +318,7 @@
 /// --------------------------------------
 
 /// Timestamp manipulation.
-/// For instance, we need it to set the timestamp of the Starkknet block.
+/// For instance, we need it to set the timestamp of the Starknet block.
 </span><span class="kw">impl </span>pallet_timestamp::Config <span class="kw">for </span>Runtime {
     <span class="doccomment">/// A timestamp: milliseconds since the unix epoch.
     </span><span class="kw">type </span>Moment = u64;
@@ -338,11 +338,11 @@
 }
 
 <span class="doccomment">/// Implement the OnTimestampSet trait to override the default Aura.
-/// This is needed to support manual sealing.
+/// This is needed to suppress Aura validations in case of non-default sealing.
 </span><span class="kw">pub struct </span>ConsensusOnTimestampSet&lt;T&gt;(PhantomData&lt;T&gt;);
 <span class="kw">impl</span>&lt;T: pallet_aura::Config&gt; OnTimestampSet&lt;T::Moment&gt; <span class="kw">for </span>ConsensusOnTimestampSet&lt;T&gt; {
     <span class="kw">fn </span>on_timestamp_set(moment: T::Moment) {
-        <span class="kw">if </span>EnableManualSeal::get() {
+        <span class="kw">if </span>Sealing::get() != SealingMode::Default {
             <span class="kw">return</span>;
         }
         &lt;pallet_aura::Pallet&lt;T&gt; <span class="kw">as </span>OnTimestampSet&lt;T::Moment&gt;&gt;::on_timestamp_set(moment)

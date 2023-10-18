@@ -85,23 +85,53 @@
 <a href="#85" id="85">85</a>
 <a href="#86" id="86">86</a>
 <a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
 
+<span class="kw">use </span>madara_runtime::SealingMode;
 <span class="kw">use </span>mc_data_availability::DaLayer;
 <span class="kw">use </span>sc_cli::{<span class="prelude-ty">Result</span>, RpcMethods, RunCmd, SubstrateCli};
 <span class="kw">use </span>sc_service::BasePath;
+<span class="kw">use </span>serde::{Deserialize, Serialize};
 
 <span class="kw">use </span><span class="kw">crate</span>::cli::Cli;
 <span class="kw">use </span><span class="kw">crate</span>::service;
 
 <span class="doccomment">/// Available Sealing methods.
-</span><span class="attr">#[derive(Debug, Copy, Clone, clap::ValueEnum, Default)]
+</span><span class="attr">#[derive(Debug, Copy, Clone, clap::ValueEnum, Default, Serialize, Deserialize)]
 </span><span class="kw">pub enum </span>Sealing {
-    <span class="comment">// Seal using rpc method.
+    <span class="doccomment">/// Seal using rpc method.
     </span><span class="attr">#[default]
     </span>Manual,
-    <span class="comment">// Seal when transaction is executed.
+    <span class="doccomment">/// Seal when transaction is executed. This mode does not finalize blocks, if you want to
+    /// finalize blocks use `--sealing=instant-finality`.
     </span>Instant,
+    <span class="doccomment">/// Seal when transaction is executed with finalization.
+    </span>InstantFinality,
+}
+
+<span class="kw">impl </span>From&lt;Sealing&gt; <span class="kw">for </span>SealingMode {
+    <span class="kw">fn </span>from(value: Sealing) -&gt; <span class="self">Self </span>{
+        <span class="kw">match </span>value {
+            Sealing::Manual =&gt; SealingMode::Manual,
+            Sealing::Instant =&gt; SealingMode::Instant { finalize: <span class="bool-val">false </span>},
+            Sealing::InstantFinality =&gt; SealingMode::Instant { finalize: <span class="bool-val">true </span>},
+        }
+    }
 }
 
 <span class="attr">#[derive(Clone, Debug, clap::Args)]
@@ -150,9 +180,9 @@
             <span class="prelude-val">None
         </span>}
     };
-    <span class="kw">let </span>sealing = cli.run.sealing;
 
     runner.run_node_until_exit(|config| <span class="kw">async move </span>{
+        <span class="kw">let </span>sealing = cli.run.sealing.map(Into::into).unwrap_or_default();
         service::new_full(config, sealing, da_config).map_err(sc_cli::Error::Service)
     })
 }
