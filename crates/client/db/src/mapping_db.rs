@@ -15,19 +15,23 @@ pub struct MappingCommitment<B: BlockT> {
     pub block_hash: B::Hash,
     pub starknet_block_hash: H256,
     pub starknet_transaction_hashes: Vec<H256>,
-
-    /// Indicates whether more information should be cached in the database.
-    pub cache: bool,
 }
 
 /// Allow interaction with the mapping db
 pub struct MappingDb<B: BlockT> {
-    pub(crate) db: Arc<dyn Database<DbHash>>,
-    pub(crate) write_lock: Arc<Mutex<()>>,
-    pub(crate) _marker: PhantomData<B>,
+    db: Arc<dyn Database<DbHash>>,
+    write_lock: Arc<Mutex<()>>,
+    /// Whether more information should be cached in the database.
+    cache_more_things: bool,
+    _marker: PhantomData<B>,
 }
 
 impl<B: BlockT> MappingDb<B> {
+    /// Creates a new instance of the mapping database.
+    pub fn new(db: Arc<dyn Database<DbHash>>, cache_more_things: bool) -> Self {
+        Self { db, write_lock: Arc::new(Mutex::new(())), cache_more_things, _marker: PhantomData }
+    }
+
     /// Check if the given block hash has already been processed
     pub fn is_synced(&self, block_hash: &B::Hash) -> Result<bool, String> {
         match self.db.get(crate::columns::SYNCED_MAPPING, &block_hash.encode()) {
@@ -96,7 +100,7 @@ impl<B: BlockT> MappingDb<B> {
             );
         }
 
-        if commitment.cache {
+        if self.cache_more_things {
             transaction.set(
                 crate::columns::STARKNET_TRANSACTION_HASHES_CACHE,
                 &commitment.starknet_block_hash.encode(),
