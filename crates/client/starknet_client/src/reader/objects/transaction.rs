@@ -6,33 +6,12 @@ use std::collections::HashMap;
 
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
-use starknet_api::api_core::{
-    ClassHash,
-    CompiledClassHash,
-    ContractAddress,
-    EntryPointSelector,
-    EthAddress,
-    Nonce,
-};
+use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, EntryPointSelector, EthAddress, Nonce};
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{
-    Calldata,
-    ContractAddressSalt,
-    DeclareTransactionOutput,
-    DeployAccountTransactionOutput,
-    DeployTransactionOutput,
-    Event,
-    Fee,
-    InvokeTransactionOutput,
-    L1HandlerTransactionOutput,
-    L1ToL2Payload,
-    L2ToL1Payload,
-    MessageToL1,
-    TransactionExecutionStatus,
-    TransactionHash,
-    TransactionOffsetInBlock,
-    TransactionOutput,
-    TransactionSignature,
+    Calldata, ContractAddressSalt, DeclareTransactionOutput, DeployAccountTransactionOutput, DeployTransactionOutput,
+    Event, Fee, InvokeTransactionOutput, L1HandlerTransactionOutput, L1ToL2Payload, L2ToL1Payload, MessageToL1,
+    TransactionExecutionStatus, TransactionHash, TransactionOffsetInBlock, TransactionOutput, TransactionSignature,
     TransactionVersion,
 };
 
@@ -67,15 +46,11 @@ impl TryFrom<Transaction> for starknet_api::transaction::Transaction {
             Transaction::Declare(declare_tx) => {
                 Ok(starknet_api::transaction::Transaction::Declare(declare_tx.try_into()?))
             }
-            Transaction::Deploy(deploy_tx) => {
-                Ok(starknet_api::transaction::Transaction::Deploy(deploy_tx.into()))
-            }
+            Transaction::Deploy(deploy_tx) => Ok(starknet_api::transaction::Transaction::Deploy(deploy_tx.into())),
             Transaction::DeployAccount(deploy_acc_tx) => {
                 Ok(starknet_api::transaction::Transaction::DeployAccount(deploy_acc_tx.into()))
             }
-            Transaction::Invoke(invoke_tx) => {
-                Ok(starknet_api::transaction::Transaction::Invoke(invoke_tx.try_into()?))
-            }
+            Transaction::Invoke(invoke_tx) => Ok(starknet_api::transaction::Transaction::Invoke(invoke_tx.try_into()?)),
             Transaction::L1Handler(l1_handler_tx) => {
                 Ok(starknet_api::transaction::Transaction::L1Handler(l1_handler_tx.into()))
             }
@@ -187,12 +162,10 @@ impl TryFrom<IntermediateDeclareTransaction> for starknet_api::transaction::Decl
             signature: declare_tx.signature,
             nonce: declare_tx.nonce,
             class_hash: declare_tx.class_hash,
-            compiled_class_hash: declare_tx.compiled_class_hash.ok_or(
-                ReaderClientError::BadTransaction {
-                    tx_hash: declare_tx.transaction_hash,
-                    msg: "Declare V2 must contain compiled_class_hash field.".to_string(),
-                },
-            )?,
+            compiled_class_hash: declare_tx.compiled_class_hash.ok_or(ReaderClientError::BadTransaction {
+                tx_hash: declare_tx.transaction_hash,
+                msg: "Declare V2 must contain compiled_class_hash field.".to_string(),
+            })?,
             sender_address: declare_tx.sender_address,
         })
     }
@@ -290,12 +263,10 @@ impl TryFrom<IntermediateInvokeTransaction> for starknet_api::transaction::Invok
             max_fee: invoke_tx.max_fee,
             signature: invoke_tx.signature,
             contract_address: invoke_tx.sender_address,
-            entry_point_selector: invoke_tx.entry_point_selector.ok_or(
-                ReaderClientError::BadTransaction {
-                    tx_hash: invoke_tx.transaction_hash,
-                    msg: "Invoke V0 must contain entry_point_selector field.".to_string(),
-                },
-            )?,
+            entry_point_selector: invoke_tx.entry_point_selector.ok_or(ReaderClientError::BadTransaction {
+                tx_hash: invoke_tx.transaction_hash,
+                msg: "Invoke V0 must contain entry_point_selector field.".to_string(),
+            })?,
             calldata: invoke_tx.calldata,
         })
     }
@@ -335,10 +306,7 @@ pub struct TransactionReceipt {
 }
 
 impl TransactionReceipt {
-    pub fn into_starknet_api_transaction_output(
-        self,
-        transaction: &Transaction,
-    ) -> TransactionOutput {
+    pub fn into_starknet_api_transaction_output(self, transaction: &Transaction) -> TransactionOutput {
         let messages_sent = self.l2_to_l1_messages.into_iter().map(MessageToL1::from).collect();
         let contract_address = transaction.contract_address();
         match transaction.transaction_type() {
@@ -352,34 +320,28 @@ impl TransactionReceipt {
                 actual_fee: self.actual_fee,
                 messages_sent,
                 events: self.events,
-                contract_address: contract_address
-                    .expect("Deploy transaction must have a contract address."),
+                contract_address: contract_address.expect("Deploy transaction must have a contract address."),
                 execution_status: self.execution_status,
             }),
-            TransactionType::DeployAccount => {
-                TransactionOutput::DeployAccount(DeployAccountTransactionOutput {
-                    actual_fee: self.actual_fee,
-                    messages_sent,
-                    events: self.events,
-                    contract_address: contract_address
-                        .expect("Deploy account transaction must have a contract address."),
-                    execution_status: self.execution_status,
-                })
-            }
+            TransactionType::DeployAccount => TransactionOutput::DeployAccount(DeployAccountTransactionOutput {
+                actual_fee: self.actual_fee,
+                messages_sent,
+                events: self.events,
+                contract_address: contract_address.expect("Deploy account transaction must have a contract address."),
+                execution_status: self.execution_status,
+            }),
             TransactionType::InvokeFunction => TransactionOutput::Invoke(InvokeTransactionOutput {
                 actual_fee: self.actual_fee,
                 messages_sent,
                 events: self.events,
                 execution_status: self.execution_status,
             }),
-            TransactionType::L1Handler => {
-                TransactionOutput::L1Handler(L1HandlerTransactionOutput {
-                    actual_fee: self.actual_fee,
-                    messages_sent,
-                    events: self.events,
-                    execution_status: self.execution_status,
-                })
-            }
+            TransactionType::L1Handler => TransactionOutput::L1Handler(L1HandlerTransactionOutput {
+                actual_fee: self.actual_fee,
+                messages_sent,
+                events: self.events,
+                execution_status: self.execution_status,
+            }),
         }
     }
 }
@@ -422,10 +384,7 @@ pub struct L1ToL2Message {
 
 impl From<L1ToL2Message> for starknet_api::transaction::MessageToL2 {
     fn from(message: L1ToL2Message) -> Self {
-        starknet_api::transaction::MessageToL2 {
-            from_address: message.from_address,
-            payload: message.payload,
-        }
+        starknet_api::transaction::MessageToL2 { from_address: message.from_address, payload: message.payload }
     }
 }
 
@@ -446,9 +405,7 @@ impl From<L2ToL1Message> for starknet_api::transaction::MessageToL1 {
     }
 }
 
-#[derive(
-    Debug, Copy, Clone, Eq, PartialEq, Hash, Deserialize, Serialize, PartialOrd, Ord, Default,
-)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Deserialize, Serialize, PartialOrd, Ord, Default)]
 pub enum TransactionType {
     #[serde(rename(deserialize = "DECLARE", serialize = "DECLARE"))]
     Declare,

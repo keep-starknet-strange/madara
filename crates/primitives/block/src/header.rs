@@ -76,7 +76,6 @@ pub struct Header {
     pub extra_data: Option<U256>,
 }
 
-
 impl Header {
     /// Creates a new header.
     #[allow(clippy::too_many_arguments)]
@@ -134,42 +133,42 @@ impl Header {
         if self.block_number >= 833 {
             // Computes the block hash for blocks generated after Cairo 0.7.0
             let data: &[Felt252Wrapper] = &[
-                self.block_number.into(), // block number
-                self.global_state_root.into(), // global state root
-                self.sequencer_address.into(), // sequencer address
-                self.block_timestamp.into(), // block timestamp
-                self.transaction_count.into(), // number of transactions
+                self.block_number.into(),           // block number
+                self.global_state_root.into(),      // global state root
+                self.sequencer_address.into(),      // sequencer address
+                self.block_timestamp.into(),        // block timestamp
+                self.transaction_count.into(),      // number of transactions
                 self.transaction_commitment.into(), // transaction commitment
-                self.event_count.into(), // number of events
-                self.event_commitment.into(), // event commitment
-                Felt252Wrapper::ZERO, // reserved: protocol version
-                Felt252Wrapper::ZERO, // reserved: extra data
-                self.parent_block_hash.into(), // parent block hash
+                self.event_count.into(),            // number of events
+                self.event_commitment.into(),       // event commitment
+                Felt252Wrapper::ZERO,               // reserved: protocol version
+                Felt252Wrapper::ZERO,               // reserved: extra data
+                self.parent_block_hash.into(),      // parent block hash
             ];
 
             H::compute_hash_on_wrappers(data)
         } else {
             // Computes the block hash for blocks generated before Cairo 0.7.0
             let data: &[Felt252Wrapper] = &[
-				self.block_number.into(),
-				self.global_state_root.into(),
-				Felt252Wrapper::ZERO,
-				Felt252Wrapper::ZERO,
-				self.transaction_count.into(),
-				self.transaction_commitment.into(),
-				Felt252Wrapper::ZERO,
-				Felt252Wrapper::ZERO,
-				Felt252Wrapper::ZERO,
-				Felt252Wrapper::ZERO,
-				Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_MAIN").unwrap()),
-				self.parent_block_hash.into(),
-			];
+                self.block_number.into(),
+                self.global_state_root.into(),
+                Felt252Wrapper::ZERO,
+                Felt252Wrapper::ZERO,
+                self.transaction_count.into(),
+                self.transaction_commitment.into(),
+                Felt252Wrapper::ZERO,
+                Felt252Wrapper::ZERO,
+                Felt252Wrapper::ZERO,
+                Felt252Wrapper::ZERO,
+                Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_MAIN").unwrap()),
+                self.parent_block_hash.into(),
+            ];
 
             // for (i, item) in data.iter().enumerate() {
             //     frame_support::log::info!("data[{}]: {:?}", i, item);
             // }
 
-			H::compute_hash_on_wrappers(data)
-		}
+            H::compute_hash_on_wrappers(data)
+        }
     }
 }

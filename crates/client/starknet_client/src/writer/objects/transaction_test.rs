@@ -1,11 +1,6 @@
 use test_utils::{get_rng, validate_load_and_dump, GetTestInstance};
 
-use super::{
-    DeclareV1Transaction,
-    DeclareV2Transaction,
-    DeployAccountTransaction,
-    InvokeTransaction,
-};
+use super::{DeclareV1Transaction, DeclareV2Transaction, DeployAccountTransaction, InvokeTransaction};
 
 #[test]
 fn load_and_dump_deploy_account_same_string() {
@@ -30,7 +25,5 @@ fn load_and_dump_declare_v2_same_string() {
 #[test]
 fn test_deploy_account_transaction_from_starknet_api() {
     let _deploy_account_transaction: DeployAccountTransaction =
-        starknet_api::transaction::DeployAccountTransaction::get_test_instance(&mut get_rng())
-            .try_into()
-            .unwrap();
+        starknet_api::transaction::DeployAccountTransaction::get_test_instance(&mut get_rng()).try_into().unwrap();
 }

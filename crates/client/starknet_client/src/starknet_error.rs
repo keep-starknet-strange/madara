@@ -83,9 +83,7 @@ where
     let string: String = Deserialize::deserialize(de)?;
     let string_as_json = format!("\"{string}\"");
     match serde_json::from_str::<KnownStarknetErrorCode>(&string_as_json) {
-        Ok(_) => Err(D::Error::custom(
-            "Trying to serialize a known Starknet error code into UnknownErrorCode",
-        )),
+        Ok(_) => Err(D::Error::custom("Trying to serialize a known Starknet error code into UnknownErrorCode")),
         Err(json_err) => {
             if json_err.is_data() {
                 return Ok(string);

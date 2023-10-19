@@ -49,7 +49,11 @@ impl Block {
     }
 
     /// Return a reference to all transaction hashes
-    pub fn transactions_hashes<H: HasherT>(&self, chain_id: Felt252Wrapper, block_number: Option<u64>) -> Vec<Felt252Wrapper> {
+    pub fn transactions_hashes<H: HasherT>(
+        &self,
+        chain_id: Felt252Wrapper,
+        block_number: Option<u64>,
+    ) -> Vec<Felt252Wrapper> {
         self.transactions.iter().map(|tx| tx.compute_hash::<H>(chain_id, false, block_number)).collect()
     }
 }

@@ -2,18 +2,14 @@ use std::collections::HashMap;
 
 use starknet_api::core::{ClassHash, ContractAddress};
 use starknet_api::deprecated_contract_class::{
-    ContractClassAbiEntry as DeprecatedContractClassAbiEntry,
-    EntryPoint as DeprecatedEntryPoint,
+    ContractClassAbiEntry as DeprecatedContractClassAbiEntry, EntryPoint as DeprecatedEntryPoint,
     EntryPointType as DeprecatedEntryPointType,
 };
 use starknet_api::transaction::TransactionHash;
 use test_utils::{auto_impl_get_test_instance, get_number_of_variants, GetTestInstance};
 
 use crate::writer::objects::response::{
-    DeclareResponse,
-    DeployAccountResponse,
-    InvokeResponse,
-    SuccessfulStarknetErrorCode,
+    DeclareResponse, DeployAccountResponse, InvokeResponse, SuccessfulStarknetErrorCode,
 };
 use crate::writer::objects::transaction::DeprecatedContractClass;
 

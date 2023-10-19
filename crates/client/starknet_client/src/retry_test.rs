@@ -14,10 +14,7 @@ struct Worker {
 
 impl Worker {
     fn new(number_of_errors: usize) -> Self {
-        Worker {
-            number_of_calls: Arc::new(Mutex::new(0)),
-            number_of_errors: Arc::new(number_of_errors),
-        }
+        Worker { number_of_calls: Arc::new(Mutex::new(0)), number_of_errors: Arc::new(number_of_errors) }
     }
 
     fn get_last_attempt(&self) -> usize {

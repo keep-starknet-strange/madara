@@ -42,14 +42,7 @@ use itertools::chain;
 use serde::Serialize;
 use serde_json::{json, Value};
 
-use crate::{
-    ConfigError,
-    ParamPath,
-    SerializationType,
-    SerializedContent,
-    SerializedParam,
-    IS_NONE_MARK,
-};
+use crate::{ConfigError, ParamPath, SerializationType, SerializedContent, SerializedParam, IS_NONE_MARK};
 
 /// Serialization for configs.
 pub trait SerializeConfig {
@@ -86,25 +79,16 @@ pub fn append_sub_config_name(
     sub_config_name: &str,
 ) -> BTreeMap<ParamPath, SerializedParam> {
     BTreeMap::from_iter(
-        sub_config_dump
-            .into_iter()
-            .map(|(field_name, val)| (format!("{sub_config_name}.{field_name}"), val)),
+        sub_config_dump.into_iter().map(|(field_name, val)| (format!("{sub_config_name}.{field_name}"), val)),
     )
 }
 
 /// Serializes a single param of a config.
 /// The returned pair is designed to be an input to a dumped config map.
-pub fn ser_param<T: Serialize>(
-    name: &str,
-    value: &T,
-    description: &str,
-) -> (String, SerializedParam) {
+pub fn ser_param<T: Serialize>(name: &str, value: &T, description: &str) -> (String, SerializedParam) {
     (
         name.to_owned(),
-        SerializedParam {
-            description: description.to_owned(),
-            content: SerializedContent::DefaultValue(json!(value)),
-        },
+        SerializedParam { description: description.to_owned(), content: SerializedContent::DefaultValue(json!(value)) },
     )
 }
 
@@ -186,10 +170,9 @@ pub(crate) fn combine_config_map_and_pointers(
         config_map.insert(target_param.clone(), serialized_pointer.clone());
 
         for pointing_param in pointing_params_vec {
-            let pointing_serialized_param =
-                config_map.get(pointing_param).ok_or(ConfigError::PointerSourceNotFound {
-                    pointing_param: pointing_param.to_owned(),
-                })?;
+            let pointing_serialized_param = config_map
+                .get(pointing_param)
+                .ok_or(ConfigError::PointerSourceNotFound { pointing_param: pointing_param.to_owned() })?;
             config_map.insert(
                 pointing_param.to_owned(),
                 SerializedParam {

@@ -79,7 +79,7 @@ use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
 use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
-use mp_block::{Block as StarknetBlock, Header as StarknetHeader, BlockStatus};
+use mp_block::{Block as StarknetBlock, BlockStatus, Header as StarknetHeader};
 use mp_digest_log::MADARA_ENGINE_ID;
 use mp_fee::INITIAL_GAS;
 use mp_felt::Felt252Wrapper;
@@ -188,34 +188,34 @@ pub mod pallet {
 
         /// The block is being initialized. Implement to have something happen.
         fn on_initialize(_: T::BlockNumber) -> Weight {
-			//log!(info, "{:?}", Decode::decode(&mut frame_system::Pallet::<T>::digest().logs()[0]));
-			// if frame_system::Pallet::<T>::digest().logs().len() == 1 {
+            // log!(info, "{:?}", Decode::decode(&mut frame_system::Pallet::<T>::digest().logs()[0]));
+            // if frame_system::Pallet::<T>::digest().logs().len() == 1 {
 
-			// 	match &frame_system::Pallet::<T>::digest().logs()[0] {
-			// 		DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID ,encoded_data) => {
+            // 	match &frame_system::Pallet::<T>::digest().logs()[0] {
+            // 		DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID ,encoded_data) => {
 
-			// 			if let Ok(block) = mp_starknet::block::Block::decode(&mut encoded_data.as_slice()) {
-			// 				let block_transactions = block.transactions();
-			// 				for tx in block_transactions {
-			// 				    let tx_type = tx.tx_type.clone();
-			// 				    let contract_class: Option<ContractClass> = match tx.contract_class.clone() {
-			// 				        Some(wrapper) => {
-			// 				            match ContractClass::try_from(wrapper) {
-			// 				                Ok(contract_class) => Some(contract_class),
-			// 				                Err(e) => {
-			// 				                    log!(info,"Error while converting ContractClassWrapper to ContractClass: {:?}", e);
-			// 				                    None
-			// 				                }
-			// 				            }
-			// 				        },
-			// 				        None => None,
-			// 				    };
+            // 			if let Ok(block) = mp_starknet::block::Block::decode(&mut encoded_data.as_slice()) {
+            // 				let block_transactions = block.transactions();
+            // 				for tx in block_transactions {
+            // 				    let tx_type = tx.tx_type.clone();
+            // 				    let contract_class: Option<ContractClass> = match tx.contract_class.clone() {
+            // 				        Some(wrapper) => {
+            // 				            match ContractClass::try_from(wrapper) {
+            // 				                Ok(contract_class) => Some(contract_class),
+            // 				                Err(e) => {
+            // 				                    log!(info,"Error while converting ContractClassWrapper to ContractClass:
+            // {:?}", e); 				                    None
+            // 				                }
+            // 				            }
+            // 				        },
+            // 				        None => None,
+            // 				    };
 
-			// 				    // Self::validate_tx(tx.clone(), tx_type.clone()).expect(
-			// 				    //     "pre-block transaction verification failed; the block cannot be built",
-			// 				    // );
+            // 				    // Self::validate_tx(tx.clone(), tx_type.clone()).expect(
+            // 				    //     "pre-block transaction verification failed; the block cannot be built",
+            // 				    // );
             //                     // let block_context = Self::get_block_context();
-			// 				    // match tx.execute(
+            // 				    // match tx.execute(
             //                     //     &mut BlockifierStateAdapter::<T>::default(),
             //                     //     &block_context,
             //                     //     tx_type,
@@ -515,7 +515,7 @@ pub mod pallet {
             SeqAddrUpdate::<T>::put(true);
             Ok(())
         }
-        
+
         /// The invoke transaction is the main transaction type used to invoke contract functions in
         /// Starknet.
         /// See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#invoke_transaction`.
@@ -1040,12 +1040,10 @@ impl<T: Config> Pallet<T> {
     /// * `block_number` - The block number.
     fn store_block(block_number: u64) {
         let block: StarknetBlock;
-		if frame_system::Pallet::<T>::digest().logs().len() == 1 {
+        if frame_system::Pallet::<T>::digest().logs().len() == 1 {
             match &frame_system::Pallet::<T>::digest().logs()[0] {
-                DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID ,encoded_data) => {
-                    
-
-					block = match StarknetBlock::decode(&mut encoded_data.as_slice()) {
+                DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID, encoded_data) => {
+                    block = match StarknetBlock::decode(&mut encoded_data.as_slice()) {
                         Ok(b) => b,
                         Err(e) => {
                             log!(error, "Failed to decode block: {:?}", e);
@@ -1053,16 +1051,17 @@ impl<T: Config> Pallet<T> {
                         }
                     };
 
-					let blockhash = Felt252Wrapper::try_from(block.header().extra_data.unwrap()).unwrap();
-					BlockHash::<T>::insert(block_number, blockhash);
-					Pending::<T>::kill();
-					let digest = DigestItem::Consensus(MADARA_ENGINE_ID, mp_digest_log::Log::Block(block).encode());
-					frame_system::Pallet::<T>::deposit_log(digest);
-				}
-				_ => { log!(info, "Block not found in store_block") },
-
-			}
-		} else {
+                    let blockhash = Felt252Wrapper::try_from(block.header().extra_data.unwrap()).unwrap();
+                    BlockHash::<T>::insert(block_number, blockhash);
+                    Pending::<T>::kill();
+                    let digest = DigestItem::Consensus(MADARA_ENGINE_ID, mp_digest_log::Log::Block(block).encode());
+                    frame_system::Pallet::<T>::deposit_log(digest);
+                }
+                _ => {
+                    log!(info, "Block not found in store_block")
+                }
+            }
+        } else {
             let transactions = Self::pending();
             let transaction_hashes = Self::pending_hashes();
             assert_eq!(

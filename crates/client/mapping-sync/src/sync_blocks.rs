@@ -49,7 +49,13 @@ where
                             starknet_transaction_hashes: digest_starknet_block
                                 .transactions()
                                 .iter()
-                                .map(|tx| H256::from(tx.compute_hash::<H>(chain_id, false, Some(storage_starknet_block.header().block_number))))
+                                .map(|tx| {
+                                    H256::from(tx.compute_hash::<H>(
+                                        chain_id,
+                                        false,
+                                        Some(storage_starknet_block.header().block_number),
+                                    ))
+                                })
                                 .collect(),
                         };
                         backend.mapping().write_hashes(mapping_commitment)

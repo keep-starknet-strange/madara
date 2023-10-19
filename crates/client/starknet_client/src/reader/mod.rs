@@ -13,8 +13,8 @@ use cairo_lang_starknet::casm_contract_class::CasmContractClass;
 #[cfg(any(feature = "testing", test))]
 use mockall::automock;
 use serde::{Deserialize, Serialize};
-use starknet_api::block::BlockNumber;
 use starknet_api::api_core::ClassHash;
+use starknet_api::block::BlockNumber;
 use starknet_api::deprecated_contract_class::ContractClass as DeprecatedContractClass;
 use starknet_api::transaction::TransactionHash;
 use starknet_api::StarknetApiError;
@@ -23,13 +23,7 @@ use url::Url;
 
 pub use crate::reader::objects::block::{Block, TransactionReceiptsError};
 pub use crate::reader::objects::state::{
-    ContractClass,
-    DeclaredClassHashEntry,
-    DeployedContract,
-    ReplacedClass,
-    StateDiff,
-    StateUpdate,
-    StorageEntry,
+    ContractClass, DeclaredClassHashEntry, DeployedContract, ReplacedClass, StateDiff, StateUpdate, StorageEntry,
 };
 #[cfg(doc)]
 pub use crate::reader::objects::transaction::TransactionReceipt;
@@ -74,24 +68,12 @@ pub trait StarknetReader {
     /// block exists in the system.
     async fn block(&self, block_number: BlockNumber) -> ReaderClientResult<Option<Block>>;
     /// Returns a [`GenericContractClass`] corresponding to `class_hash`.
-    async fn class_by_hash(
-        &self,
-        class_hash: ClassHash,
-    ) -> ReaderClientResult<Option<GenericContractClass>>;
-    async fn raw_class_by_hash(
-        &self,
-        class_hash: ClassHash,
-    ) -> Result<String, ReaderClientError>;
+    async fn class_by_hash(&self, class_hash: ClassHash) -> ReaderClientResult<Option<GenericContractClass>>;
+    async fn raw_class_by_hash(&self, class_hash: ClassHash) -> Result<String, ReaderClientError>;
     /// Returns a [`CasmContractClass`] corresponding to `class_hash`.
-    async fn compiled_class_by_hash(
-        &self,
-        class_hash: ClassHash,
-    ) -> ReaderClientResult<Option<CasmContractClass>>;
+    async fn compiled_class_by_hash(&self, class_hash: ClassHash) -> ReaderClientResult<Option<CasmContractClass>>;
     /// Returns a [`starknet_client`][`StateUpdate`] corresponding to `block_number`.
-    async fn state_update(
-        &self,
-        block_number: BlockNumber,
-    ) -> ReaderClientResult<Option<StateUpdate>>;
+    async fn state_update(&self, block_number: BlockNumber) -> ReaderClientResult<Option<StateUpdate>>;
 }
 
 /// A client for the [`Starknet`] feeder gateway.
@@ -112,8 +94,7 @@ struct StarknetUrls {
 
 const GET_BLOCK_URL: &str = "feeder_gateway/get_block";
 const GET_CONTRACT_BY_HASH_URL: &str = "feeder_gateway/get_class_by_hash";
-const GET_COMPILED_CLASS_BY_CLASS_HASH_URL: &str =
-    "feeder_gateway/get_compiled_class_by_class_hash";
+const GET_COMPILED_CLASS_BY_CLASS_HASH_URL: &str = "feeder_gateway/get_compiled_class_by_class_hash";
 const GET_STATE_UPDATE_URL: &str = "feeder_gateway/get_state_update";
 const BLOCK_NUMBER_QUERY: &str = "blockNumber";
 const LATEST_BLOCK_NUMBER: &str = "latest";
@@ -125,8 +106,7 @@ impl StarknetUrls {
         Ok(StarknetUrls {
             get_block: base_url.join(GET_BLOCK_URL)?,
             get_contract_by_hash: base_url.join(GET_CONTRACT_BY_HASH_URL)?,
-            get_compiled_class_by_class_hash: base_url
-                .join(GET_COMPILED_CLASS_BY_CLASS_HASH_URL)?,
+            get_compiled_class_by_class_hash: base_url.join(GET_COMPILED_CLASS_BY_CLASS_HASH_URL)?,
             get_state_update: base_url.join(GET_STATE_UPDATE_URL)?,
         })
     }
@@ -152,13 +132,9 @@ impl StarknetFeederGatewayClient {
             .map_err(Into::<ReaderClientError>::into)
     }
 
-    async fn request_block(
-        &self,
-        block_number: Option<BlockNumber>,
-    ) -> ReaderClientResult<Option<Block>> {
+    async fn request_block(&self, block_number: Option<BlockNumber>) -> ReaderClientResult<Option<Block>> {
         let mut url = self.urls.get_block.clone();
-        let block_number =
-            block_number.map(|bn| bn.to_string()).unwrap_or(String::from(LATEST_BLOCK_NUMBER));
+        let block_number = block_number.map(|bn| bn.to_string()).unwrap_or(String::from(LATEST_BLOCK_NUMBER));
         url.query_pairs_mut().append_pair(BLOCK_NUMBER_QUERY, block_number.as_str());
 
         let response = self.request_with_retry_url(url).await;
@@ -183,14 +159,10 @@ impl StarknetReader for StarknetFeederGatewayClient {
     }
 
     #[instrument(skip(self), level = "debug")]
-    async fn class_by_hash(
-        &self,
-        class_hash: ClassHash,
-    ) -> ReaderClientResult<Option<GenericContractClass>> {
+    async fn class_by_hash(&self, class_hash: ClassHash) -> ReaderClientResult<Option<GenericContractClass>> {
         let mut url = self.urls.get_contract_by_hash.clone();
         let class_hash = serde_json::to_string(&class_hash)?;
-        url.query_pairs_mut()
-            .append_pair(CLASS_HASH_QUERY, &class_hash.as_str()[1..class_hash.len() - 1]);
+        url.query_pairs_mut().append_pair(CLASS_HASH_QUERY, &class_hash.as_str()[1..class_hash.len() - 1]);
         let response = self.request_with_retry_url(url).await;
         load_object_from_response(
             response,
@@ -200,32 +172,23 @@ impl StarknetReader for StarknetFeederGatewayClient {
     }
 
     #[instrument(skip(self), level = "debug")]
-    async fn raw_class_by_hash(
-        &self,
-        class_hash: ClassHash,
-    ) -> Result<String, ReaderClientError> {
+    async fn raw_class_by_hash(&self, class_hash: ClassHash) -> Result<String, ReaderClientError> {
         let mut url = self.urls.get_contract_by_hash.clone();
         let class_hash = serde_json::to_string(&class_hash)?;
-        url.query_pairs_mut()
-            .append_pair(CLASS_HASH_QUERY, &class_hash.as_str()[1..class_hash.len() - 1]);
+        url.query_pairs_mut().append_pair(CLASS_HASH_QUERY, &class_hash.as_str()[1..class_hash.len() - 1]);
         let response = self.request_with_retry_url(url).await;
         response
     }
 
     #[instrument(skip(self), level = "debug")]
-    async fn state_update(
-        &self,
-        block_number: BlockNumber,
-    ) -> ReaderClientResult<Option<StateUpdate>> {
+    async fn state_update(&self, block_number: BlockNumber) -> ReaderClientResult<Option<StateUpdate>> {
         let mut url = self.urls.get_state_update.clone();
         url.query_pairs_mut().append_pair(BLOCK_NUMBER_QUERY, &block_number.to_string());
         let response = self.request_with_retry_url(url).await;
         load_object_from_response(
             response,
             KnownStarknetErrorCode::BlockNotFound,
-            format!(
-                "Failed to get state update for block number {block_number} from starknet server."
-            ),
+            format!("Failed to get state update for block number {block_number} from starknet server."),
         )
         .map(|option| {
             option.map(|mut state_update: StateUpdate| {
@@ -238,10 +201,7 @@ impl StarknetReader for StarknetFeederGatewayClient {
     }
 
     #[instrument(skip(self), level = "debug")]
-    async fn compiled_class_by_hash(
-        &self,
-        class_hash: ClassHash,
-    ) -> ReaderClientResult<Option<CasmContractClass>> {
+    async fn compiled_class_by_hash(&self, class_hash: ClassHash) -> ReaderClientResult<Option<CasmContractClass>> {
         debug!("Got compiled_class_by_hash {} from starknet server.", class_hash);
         // FIXME: Remove the following default CasmContractClass once integration environment gets
         // regenesissed.
@@ -292,8 +252,7 @@ impl StarknetReader for StarknetFeederGatewayClient {
 
         let mut url = self.urls.get_compiled_class_by_class_hash.clone();
         let class_hash = serde_json::to_string(&class_hash)?;
-        url.query_pairs_mut()
-            .append_pair(CLASS_HASH_QUERY, &class_hash.as_str()[1..class_hash.len() - 1]);
+        url.query_pairs_mut().append_pair(CLASS_HASH_QUERY, &class_hash.as_str()[1..class_hash.len() - 1]);
         let response = self.request_with_retry_url(url).await;
         load_object_from_response(
             response,

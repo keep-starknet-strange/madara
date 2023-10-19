@@ -33,9 +33,7 @@ fn load_invoke_with_contract_address_transaction_succeeds() {
 #[test]
 fn load_l1_handler_transaction_succeeds() {
     assert_matches!(
-        serde_json::from_str::<Transaction>(&read_resource_file(
-            "reader/invoke_transaction_l1_handler.json"
-        )),
+        serde_json::from_str::<Transaction>(&read_resource_file("reader/invoke_transaction_l1_handler.json")),
         Ok(Transaction::L1Handler(_))
     );
 }
@@ -50,28 +48,20 @@ fn load_declare_transaction_succeeds() {
 
 #[test]
 fn load_transaction_succeeds() {
-    for file_name in [
-        "reader/deploy_transaction.json",
-        "reader/invoke_transaction.json",
-        "reader/declare_transaction.json",
-    ] {
+    for file_name in
+        ["reader/deploy_transaction.json", "reader/invoke_transaction.json", "reader/declare_transaction.json"]
+    {
         assert_ok!(serde_json::from_str::<Transaction>(&read_resource_file(file_name)));
     }
 }
 
 #[test]
 fn load_transaction_unknown_field_fails() {
-    for file_name in [
-        "reader/deploy_transaction.json",
-        "reader/invoke_transaction.json",
-        "reader/declare_transaction.json",
-    ] {
-        let mut json_value: serde_json::Value =
-            serde_json::from_str(&read_resource_file(file_name)).unwrap();
-        json_value
-            .as_object_mut()
-            .unwrap()
-            .insert("unknown_field".to_string(), serde_json::Value::Null);
+    for file_name in
+        ["reader/deploy_transaction.json", "reader/invoke_transaction.json", "reader/declare_transaction.json"]
+    {
+        let mut json_value: serde_json::Value = serde_json::from_str(&read_resource_file(file_name)).unwrap();
+        json_value.as_object_mut().unwrap().insert("unknown_field".to_string(), serde_json::Value::Null);
         let json_str = serde_json::to_string(&json_value).unwrap();
         assert_err!(serde_json::from_str::<Transaction>(&json_str));
     }
@@ -85,8 +75,7 @@ fn load_transaction_wrong_type_fails() {
         ("reader/invoke_transaction.json", "DECLARE"),
         ("reader/declare_transaction.json", "DEPLOY"),
     ] {
-        let mut json_value: serde_json::Value =
-            serde_json::from_str(&read_resource_file(file_name)).unwrap();
+        let mut json_value: serde_json::Value = serde_json::from_str(&read_resource_file(file_name)).unwrap();
         json_value
             .as_object_mut()
             .unwrap()

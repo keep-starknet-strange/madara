@@ -9,6 +9,7 @@ use std::time::Duration;
 use futures::channel::mpsc;
 use futures::future;
 use futures::prelude::*;
+use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi, StarknetHasher};
 use mc_block_proposer::ProposerFactory;
 use mc_data_availability::avail::config::AvailConfig;
@@ -24,12 +25,10 @@ use mc_transaction_pool::FullPool;
 use mp_sequencer_address::{
     InherentDataProvider as SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
 };
-use madara_runtime::opaque::Block;
 use parity_scale_codec::Encode;
 use prometheus_endpoint::Registry;
 use sc_client_api::{Backend, BlockBackend, BlockchainEvents, HeaderBackend};
-use sc_consensus::BasicQueue;
-use sc_consensus::BlockImportParams;
+use sc_consensus::{BasicQueue, BlockImportParams};
 use sc_consensus_aura::{SlotProportion, StartAuraParams};
 use sc_consensus_grandpa::{GrandpaBlockImport, SharedVoterState};
 use sc_consensus_manual_seal::{ConsensusDataProvider, Error};
@@ -37,19 +36,14 @@ pub use sc_executor::NativeElseWasmExecutor;
 use sc_service::error::Error as ServiceError;
 use sc_service::{new_db_backend, Configuration, TaskManager, WarpSyncParams};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
-use sp_api::ProvideRuntimeApi;
 use sp_api::offchain::OffchainStorage;
-use sp_api::{ConstructRuntimeApi, TransactionFor};
+use sp_api::{ConstructRuntimeApi, ProvideRuntimeApi, TransactionFor};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_inherents::InherentData;
 use sp_offchain::STORAGE_PREFIX;
-use sp_runtime::testing::Digest;
-use sp_runtime::testing::DigestItem;
-use sp_runtime::traits::BlakeTwo256;
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::testing::{Digest, DigestItem};
+use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use sp_trie::PrefixedMemoryDB;
-use mc_deoxys::{fetch_block, BlockQueue, create_block_queue};
-use lazy_static::lazy_static;
 
 use crate::commands::Sealing;
 use crate::genesis_block::MadaraGenesisBlockBuilder;
@@ -259,11 +253,6 @@ where
         ),
         Box::new(client),
     ))
-
-}
-
-lazy_static! {
-    static ref QUEUE: BlockQueue = create_block_queue();
 }
 
 /// Builds a new service for a full client.
@@ -426,7 +415,13 @@ pub async fn new_full(
     if role.is_authority() {
         // manual-seal authorship
         if let Some(sealing) = sealing {
+            // NOTE(nils-mathieu):
+            //   For now I used a channel of size 20, this should be plently enough. That might
+            //   become a config option in the future.
+            let (block_sender, block_receiver) = async_channel::bounded::<mp_block::Block>(20);
+
             run_manual_seal_authorship(
+                block_receiver,
                 sealing,
                 client,
                 transaction_pool,
@@ -440,7 +435,7 @@ pub async fn new_full(
             network_starter.start_network();
 
             tokio::spawn(async move {
-                fetch_block(QUEUE.clone(), rpc_port).await;
+                mc_deoxys::fetch_block(block_sender, rpc_port).await;
             });
 
             log::info!("Manual Seal Ready");
@@ -548,12 +543,13 @@ pub async fn new_full(
     }
 
     network_starter.start_network();
-    
+
     Ok(task_manager)
 }
 
 #[allow(clippy::too_many_arguments)]
 fn run_manual_seal_authorship(
+    block_receiver: async_channel::Receiver<mp_block::Block>,
     sealing: Sealing,
     client: Arc<FullClient>,
     transaction_pool: Arc<FullPool<Block, FullClient>>,
@@ -608,35 +604,39 @@ where
     };
 
     struct QueryBlockConsensusDataProvider<C> {
-		_client: Arc<C>,
-	}
+        _client: Arc<C>,
 
-	impl<B, C> ConsensusDataProvider<B> for QueryBlockConsensusDataProvider<C>
-		where
-		B: BlockT,
-		C: ProvideRuntimeApi<B> + Send + Sync,{
-		type Transaction = TransactionFor<C, B>;
-		type Proof = ();
+        /// The receiver that we're using to receive blocks.
+        block_receiver: async_channel::Receiver<mp_block::Block>,
+    }
 
-		fn create_digest(&self, _parent: &B::Header, _inherents: &InherentData) -> Result<Digest, Error> {
-            let mut queue_guard = QUEUE.lock().unwrap();
-            let starknet_block: mp_block::Block = queue_guard.pop_front().unwrap();
+    impl<B, C> ConsensusDataProvider<B> for QueryBlockConsensusDataProvider<C>
+    where
+        B: BlockT,
+        C: ProvideRuntimeApi<B> + Send + Sync,
+    {
+        type Transaction = TransactionFor<C, B>;
+        type Proof = ();
 
-            let block_digest_item: DigestItem = sp_runtime::DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID, Encode::encode(&starknet_block));
+        fn create_digest(&self, _parent: &B::Header, _inherents: &InherentData) -> Result<Digest, Error> {
+            let starknet_block: mp_block::Block = self.block_receiver.recv_blocking().unwrap();
+
+            let block_digest_item: DigestItem =
+                sp_runtime::DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID, Encode::encode(&starknet_block));
             Ok(Digest { logs: vec![block_digest_item] })
         }
 
-		fn append_block_import(
-			&self,
-			_parent: &B::Header,
-			params: &mut BlockImportParams<B, Self::Transaction>,
-			_inherents: &InherentData,
-			_proof: Self::Proof,
-		) -> Result<(), Error> {
-			params.post_digests.push(DigestItem::Other(vec![1]));
-			Ok(())
-		}
-	}
+        fn append_block_import(
+            &self,
+            _parent: &B::Header,
+            params: &mut BlockImportParams<B, Self::Transaction>,
+            _inherents: &InherentData,
+            _proof: Self::Proof,
+        ) -> Result<(), Error> {
+            params.post_digests.push(DigestItem::Other(vec![1]));
+            Ok(())
+        }
+    }
 
     let manual_seal = match sealing {
         Sealing::Manual => future::Either::Left(sc_consensus_manual_seal::run_manual_seal(
@@ -647,7 +647,10 @@ where
                 pool: transaction_pool,
                 commands_stream,
                 select_chain,
-                consensus_data_provider: Some(Box::new(QueryBlockConsensusDataProvider { _client: client})),
+                consensus_data_provider: Some(Box::new(QueryBlockConsensusDataProvider {
+                    _client: client,
+                    block_receiver,
+                })),
                 create_inherent_data_providers,
             },
         )),
@@ -668,7 +671,6 @@ where
     task_manager.spawn_essential_handle().spawn_blocking("manual-seal", None, manual_seal);
     Ok(())
 }
-
 
 type ChainOpsResult = Result<
     (
