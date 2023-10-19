@@ -415,21 +415,19 @@ where
         let chain_id = self.chain_id()?;
         let blockhash = block.header().hash::<H>();
 
-        let a: H256 = Felt252Wrapper(FieldElement::MAX).into();
+        let transaction_hashes = if let Some(tx_hashes) = self.get_cached_transaction_hashes(blockhash.into()) {
+            let mut v = Vec::with_capacity(tx_hashes.len());
+            for tx_hash in tx_hashes {
+                v.push(h256_to_felt(tx_hash)?);
+            }
+            v
+        } else {
+            block.transactions_hashes::<H>(chain_id.0.into()).map(FieldElement::from).collect()
+        };
 
-        let transactions = self
-            .backend
-            .mapping()
-            .cached_transaction_hashes_from_block_hash(blockhash.into())
-            .unwrap_or_else(|err| {
-                error!("{err}");
-                None
-            })
-            .map(|vec| vec.into_iter().map(|val| Felt252Wrapper::try_from(val).unwrap().0).collect())
-            .unwrap_or_else(|| block.transactions_hashes::<H>(chain_id.0.into()).map(FieldElement::from).collect());
         let parent_blockhash = block.header().parent_block_hash;
         let block_with_tx_hashes = BlockWithTxHashes {
-            transactions,
+            transactions: transaction_hashes,
             // TODO: Status hardcoded, get status from block
             status: BlockStatus::AcceptedOnL2,
             block_hash: blockhash.into(),
