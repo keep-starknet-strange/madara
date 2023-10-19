@@ -28,6 +28,16 @@ pub enum NetworkType {
     Integration,
 }
 
+impl NetworkType {
+    pub fn uri(&self) -> &'static str {
+        match self {
+            NetworkType::Main => "https://alpha-mainnet.starknet.io/gateway/",
+            NetworkType::Test => "https://alpha4.starknet.io/gateway/",
+            NetworkType::Integration => "https://external.integration.starknet.io/",
+        }
+    }
+}
+
 #[derive(Clone, Debug, clap::Args)]
 pub struct ExtendedRunCmd {
     #[clap(flatten)]
@@ -81,7 +91,7 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
     let sealing = cli.run.sealing;
 
     runner.run_node_until_exit(|config| async move {
-        service::new_full(config, sealing, da_config, cli.run.base.rpc_port.unwrap())
+        service::new_full(config, sealing, da_config, cli.run.base.rpc_port.unwrap(), cli.run.network.uri())
             .await
             .map_err(sc_cli::Error::Service)
     })

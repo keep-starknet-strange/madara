@@ -186,6 +186,7 @@ impl Default for ExecutionConfig {
     }
 }
 
+/*
 pub struct RpcConfig {
     // #[validate(custom = "validate_ascii")]
     pub chain_id: ChainId,
@@ -216,10 +217,9 @@ impl Default for RpcConfig {
         }
     }
 }
+*/
 
-pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
-    let rpc_config = RpcConfig::default();
-
+pub async fn fetch_block(queue: BlockQueue, uri: &str, rpc_port: u16) {
     let retry_config = RetryConfig {
         retry_base_millis: 30,
         retry_max_delay_millis: 30000,
@@ -227,7 +227,7 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
     };
 
     let starknet_client = StarknetFeederGatewayClient::new(
-        &rpc_config.starknet_url,
+        uri,
         None,
         NODE_VERSION,
         retry_config
