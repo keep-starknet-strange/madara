@@ -1,7 +1,6 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 use std::cell::RefCell;
-use std::marker::PhantomData;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
@@ -80,6 +79,7 @@ type BoxBlockImport<Client> = sc_consensus::BoxBlockImport<Block, TransactionFor
 pub fn new_partial<BIQ>(
     config: &Configuration,
     build_import_queue: BIQ,
+    cache_more_things: bool,
 ) -> Result<
     sc_service::PartialComponents<
         FullClient,
@@ -168,7 +168,7 @@ where
         telemetry.as_ref().map(|x| x.handle()),
     )?;
 
-    let madara_backend = Arc::new(MadaraBackend::open(&config.database, &db_config_dir(config))?);
+    let madara_backend = Arc::new(MadaraBackend::open(&config.database, &db_config_dir(config), cache_more_things)?);
 
     let (import_queue, block_import) = build_import_queue(
         client.clone(),
@@ -256,11 +256,16 @@ where
 }
 
 /// Builds a new service for a full client.
-pub async fn new_full(
+///
+/// # Arguments
+///
+/// - `cache`: whether more information should be cached when storing the block in the database.
+pub fn new_full(
     config: Configuration,
     sealing: SealingMode,
     da_layer: Option<(DaLayer, PathBuf)>,
     rpc_port: u16,
+    cache_more_things: bool,
 ) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_default() { build_aura_grandpa_import_queue } else { build_manual_seal_import_queue };
@@ -274,7 +279,7 @@ pub async fn new_full(
         select_chain,
         transaction_pool,
         other: (block_import, grandpa_link, mut telemetry, madara_backend),
-    } = new_partial(&config, build_import_queue)?;
+    } = new_partial(&config, build_import_queue, cache_more_things)?;
 
     let mut net_config = sc_network::config::FullNetworkConfiguration::new(&config.network);
 
@@ -374,7 +379,7 @@ pub async fn new_full(
     task_manager.spawn_essential_handle().spawn(
         "mc-mapping-sync-worker",
         Some("madara"),
-        MappingSyncWorker::new(
+        MappingSyncWorker::<_, _, _, StarknetHasher>::new(
             client.import_notification_stream(),
             Duration::new(6, 0),
             client.clone(),
@@ -382,7 +387,6 @@ pub async fn new_full(
             madara_backend.clone(),
             3,
             0,
-            PhantomData::<StarknetHasher>,
         )
         .for_each(|()| future::ready(())),
     );
@@ -693,9 +697,9 @@ type ChainOpsResult = Result<
     ServiceError,
 >;
 
-pub fn new_chain_ops(config: &mut Configuration) -> ChainOpsResult {
+pub fn new_chain_ops(config: &mut Configuration, cache_more_things: bool) -> ChainOpsResult {
     config.keystore = sc_service::config::KeystoreConfig::InMemory;
     let sc_service::PartialComponents { client, backend, import_queue, task_manager, other, .. } =
-        new_partial::<_>(config, build_aura_grandpa_import_queue)?;
+        new_partial::<_>(config, build_aura_grandpa_import_queue, cache_more_things)?;
     Ok((client, backend, import_queue, task_manager, other.3))
 }
