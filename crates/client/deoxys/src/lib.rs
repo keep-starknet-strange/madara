@@ -24,6 +24,7 @@ use mp_hashers::pedersen::PedersenHasher;
 const NODE_VERSION: &str = "NODE VERSION";
 
 mod transactions;
+mod client;
 
 pub type BlockQueue = Arc<Mutex<VecDeque<Block>>>;
 
