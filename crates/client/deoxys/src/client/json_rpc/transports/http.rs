@@ -56,6 +56,9 @@ where
     fn request(&self, body: &[u8]) -> Self::Future<'_> {
         let body = hyper::Body::from(body.to_vec());
 
+        // IMPROVE(nils-mathieu):
+        //  Cookie to anyone capable of turning this into an actual
+        //  non-boxed future.
         let fut = async move {
             let mut response = self
                 .client
