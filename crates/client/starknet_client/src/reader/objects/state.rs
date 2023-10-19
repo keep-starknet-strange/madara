@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
-use starknet_api::block::BlockHash;
 use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, GlobalRoot, Nonce};
+use starknet_api::block::BlockHash;
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::{EntryPoint, EntryPointType, StorageKey};
 
@@ -72,11 +72,7 @@ pub struct ContractClass {
 
 impl From<ContractClass> for starknet_api::state::ContractClass {
     fn from(class: ContractClass) -> Self {
-        Self {
-            sierra_program: class.sierra_program,
-            entry_point_by_type: class.entry_points_by_type,
-            abi: class.abi,
-        }
+        Self { sierra_program: class.sierra_program, entry_point_by_type: class.entry_points_by_type, abi: class.abi }
     }
 }
 

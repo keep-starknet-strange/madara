@@ -99,8 +99,7 @@ impl StarknetClient {
             None => HeaderMap::new(),
         };
         let info = os_info::get();
-        let system_information =
-            format!("{}; {}; {}", info.os_type(), info.version(), info.bitness());
+        let system_information = format!("{}; {}; {}", info.os_type(), info.version(), info.bitness());
         let app_user_agent = format!(
             "{product_name}/{product_version} ({system_information})",
             product_name = "papyrus",
@@ -118,9 +117,7 @@ impl StarknetClient {
         match err {
             ClientError::BadResponseStatus { code, message: _ } => match *code {
                 StatusCode::TEMPORARY_REDIRECT => Some(RetryErrorCode::Redirect),
-                StatusCode::REQUEST_TIMEOUT | StatusCode::GATEWAY_TIMEOUT => {
-                    Some(RetryErrorCode::Timeout)
-                }
+                StatusCode::REQUEST_TIMEOUT | StatusCode::GATEWAY_TIMEOUT => Some(RetryErrorCode::Timeout),
                 StatusCode::TOO_MANY_REQUESTS => Some(RetryErrorCode::TooManyRequests),
                 StatusCode::SERVICE_UNAVAILABLE => Some(RetryErrorCode::ServiceUnavailable),
                 _ => None,
@@ -141,8 +138,7 @@ impl StarknetClient {
             }
 
             ClientError::StarknetError(StarknetError {
-                code:
-                    StarknetErrorCode::KnownErrorCode(KnownStarknetErrorCode::TransactionLimitExceeded),
+                code: StarknetErrorCode::KnownErrorCode(KnownStarknetErrorCode::TransactionLimitExceeded),
                 message: _,
             }) => Some(RetryErrorCode::TooManyRequests),
             _ => None,
@@ -157,18 +153,14 @@ impl StarknetClient {
     }
 
     // If the request_builder is unclonable, the function will not retry the request upon failure.
-    pub async fn request_with_retry(
-        &self,
-        request_builder: RequestBuilder,
-    ) -> ClientResult<String> {
+    pub async fn request_with_retry(&self, request_builder: RequestBuilder) -> ClientResult<String> {
         let res = Retry::new(&self.retry_config)
             .start_with_condition(
                 || async {
                     match request_builder.try_clone() {
-                        Some(request_builder) => self
-                            .request(request_builder)
-                            .await
-                            .map_err(RequestWithRetryError::ClientError),
+                        Some(request_builder) => {
+                            self.request(request_builder).await.map_err(RequestWithRetryError::ClientError)
+                        }
                         None => Err(RequestWithRetryError::CloneError),
                     }
                 },

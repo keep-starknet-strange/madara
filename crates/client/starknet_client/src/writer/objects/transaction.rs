@@ -13,20 +13,13 @@ mod transaction_test;
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-use starknet_api::api_core::{ClassHash, Nonce, ContractAddress, CompiledClassHash};
+use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
 use starknet_api::deprecated_contract_class::{
-    ContractClassAbiEntry as DeprecatedContractClassAbiEntry,
-    EntryPoint as DeprecatedEntryPoint,
+    ContractClassAbiEntry as DeprecatedContractClassAbiEntry, EntryPoint as DeprecatedEntryPoint,
     EntryPointType as DeprecatedEntryPointType,
 };
 use starknet_api::state::{EntryPoint, EntryPointType};
-use starknet_api::transaction::{
-    Calldata,
-    ContractAddressSalt,
-    Fee,
-    TransactionSignature,
-    TransactionVersion,
-};
+use starknet_api::transaction::{Calldata, ContractAddressSalt, Fee, TransactionSignature, TransactionVersion};
 
 // Each transaction type has a field called `type`. This field needs to be of a type that
 // serializes to/deserializes from a constant string.

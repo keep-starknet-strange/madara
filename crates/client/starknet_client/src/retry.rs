@@ -31,19 +31,14 @@ impl SerializeConfig for RetryConfig {
             ser_param(
                 "retry_base_millis",
                 &self.retry_base_millis,
-                "Base waiting time after a failed request. After that, the time increases \
-                 exponentially.",
+                "Base waiting time after a failed request. After that, the time increases exponentially.",
             ),
             ser_param(
                 "retry_max_delay_millis",
                 &self.retry_max_delay_millis,
                 "Max waiting time after a failed request.",
             ),
-            ser_param(
-                "max_retries",
-                &self.max_retries,
-                "Maximum number of retries before the node stops retrying.",
-            ),
+            ser_param("max_retries", &self.max_retries, "Maximum number of retries before the node stops retrying."),
         ])
     }
 }
@@ -85,18 +80,13 @@ impl Retry {
         self.start_with_condition(action, |_: &_| true).await
     }
 
-    pub async fn start_with_condition<I, E, A, C>(
-        &self,
-        action: A,
-        mut condition: C,
-    ) -> Result<I, E>
+    pub async fn start_with_condition<I, E, A, C>(&self, action: A, mut condition: C) -> Result<I, E>
     where
         E: Debug,
         A: Action<Item = I, Error = E>,
         C: Condition<E> + Send,
     {
-        let condition: Box<dyn Send + FnMut(&E) -> bool> =
-            Box::new(|err| Self::log_condition(err, &mut condition));
+        let condition: Box<dyn Send + FnMut(&E) -> bool> = Box::new(|err| Self::log_condition(err, &mut condition));
         RetryIf::spawn(self.strategy.clone(), action, condition).await
     }
 }

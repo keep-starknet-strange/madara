@@ -5,26 +5,15 @@ mod block_test;
 use std::ops::Index;
 
 use serde::{Deserialize, Serialize};
-use starknet_api::block::{
-    Block as starknet_api_block,
-    BlockHash,
-    BlockNumber,
-    BlockTimestamp,
-    GasPrice,
-};
 use starknet_api::api_core::{ContractAddress, GlobalRoot};
+use starknet_api::block::{Block as starknet_api_block, BlockHash, BlockNumber, BlockTimestamp, GasPrice};
 #[cfg(doc)]
 use starknet_api::transaction::TransactionOutput as starknet_api_transaction_output;
 use starknet_api::transaction::{TransactionHash, TransactionOffsetInBlock};
-
-use crate::reader::objects::transaction::{
-    L1ToL2Message,
-    Transaction,
-    TransactionReceipt,
-    TransactionType,
-};
-use crate::reader::{ReaderClientError, ReaderClientResult};
 use starknet_core;
+
+use crate::reader::objects::transaction::{L1ToL2Message, Transaction, TransactionReceipt, TransactionType};
+use crate::reader::{ReaderClientError, ReaderClientResult};
 
 /// A block as returned by the starknet gateway.
 #[derive(Debug, Default, Deserialize, Serialize, Clone, Eq, PartialEq)]
@@ -61,8 +50,8 @@ pub enum TransactionReceiptsError {
     )]
     WrongNumberOfReceipts { block_number: BlockNumber, num_of_txs: usize, num_of_receipts: usize },
     #[error(
-        "In block number {}, transaction in index {:?} with hash {:?} and type {:?} has a receipt \
-         with mismatched fields.",
+        "In block number {}, transaction in index {:?} with hash {:?} and type {:?} has a receipt with mismatched \
+         fields.",
         block_number,
         tx_index,
         tx_hash,
@@ -75,8 +64,7 @@ pub enum TransactionReceiptsError {
         tx_type: TransactionType,
     },
     #[error(
-        "In block number {}, transaction in index {:?} with hash {:?} has a receipt with \
-         transaction hash {:?}.",
+        "In block number {}, transaction in index {:?} with hash {:?} has a receipt with transaction hash {:?}.",
         block_number,
         tx_index,
         tx_hash,
@@ -89,8 +77,7 @@ pub enum TransactionReceiptsError {
         receipt_tx_hash: TransactionHash,
     },
     #[error(
-        "In block number {}, transaction in index {:?} with hash {:?} has a receipt with \
-         transaction index {:?}.",
+        "In block number {}, transaction in index {:?} with hash {:?} has a receipt with transaction index {:?}.",
         block_number,
         tx_index,
         tx_hash,
@@ -108,20 +95,16 @@ pub enum TransactionReceiptsError {
 /// [Block](`starknet_api_block`) and String representing the Starknet version corresponding to
 /// that block.
 impl Block {
-    pub fn to_starknet_api_block_and_version(
-        self,
-    ) -> ReaderClientResult<(starknet_api_block, String)> {
+    pub fn to_starknet_api_block_and_version(self) -> ReaderClientResult<(starknet_api_block, String)> {
         // Check that the number of receipts is the same as the number of transactions.
         let num_of_txs = self.transactions.len();
         let num_of_receipts = self.transaction_receipts.len();
         if num_of_txs != num_of_receipts {
-            return Err(ReaderClientError::TransactionReceiptsError(
-                TransactionReceiptsError::WrongNumberOfReceipts {
-                    block_number: self.block_number,
-                    num_of_txs,
-                    num_of_receipts,
-                },
-            ));
+            return Err(ReaderClientError::TransactionReceiptsError(TransactionReceiptsError::WrongNumberOfReceipts {
+                block_number: self.block_number,
+                num_of_txs,
+                num_of_receipts,
+            }));
         }
 
         // Get the transaction outputs and execution statuses.
@@ -160,14 +143,12 @@ impl Block {
             if transaction.transaction_type() != TransactionType::L1Handler
                 && receipt.l1_to_l2_consumed_message != L1ToL2Message::default()
             {
-                return Err(ReaderClientError::TransactionReceiptsError(
-                    TransactionReceiptsError::MismatchFields {
-                        block_number: self.block_number,
-                        tx_index: TransactionOffsetInBlock(i),
-                        tx_hash: transaction.transaction_hash(),
-                        tx_type: transaction.transaction_type(),
-                    },
-                ));
+                return Err(ReaderClientError::TransactionReceiptsError(TransactionReceiptsError::MismatchFields {
+                    block_number: self.block_number,
+                    tx_index: TransactionOffsetInBlock(i),
+                    tx_hash: transaction.transaction_hash(),
+                    tx_type: transaction.transaction_type(),
+                }));
             }
 
             transaction_hashes.push(receipt.transaction_hash);
@@ -196,19 +177,13 @@ impl Block {
             timestamp: self.timestamp,
         };
 
-        let body = starknet_api::block::BlockBody {
-            transactions,
-            transaction_outputs,
-            transaction_hashes,
-        };
+        let body = starknet_api::block::BlockBody { transactions, transaction_outputs, transaction_hashes };
 
         Ok((starknet_api_block { header, body }, self.starknet_version))
     }
 }
 
-#[derive(
-    Debug, Copy, Clone, Eq, PartialEq, Hash, Deserialize, Serialize, PartialOrd, Ord, Default,
-)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Deserialize, Serialize, PartialOrd, Ord, Default)]
 pub enum BlockStatus {
     #[serde(rename(deserialize = "ABORTED", serialize = "ABORTED"))]
     Aborted,
@@ -242,8 +217,8 @@ impl From<BlockStatus> for starknet_core::types::BlockStatus {
             BlockStatus::AcceptedOnL2 => starknet_core::types::BlockStatus::AcceptedOnL2,
             BlockStatus::AcceptedOnL1 => starknet_core::types::BlockStatus::AcceptedOnL1,
             BlockStatus::Reverted => starknet_core::types::BlockStatus::Rejected, // Assuming Reverted maps to Rejected
-            _ => panic!("Unsupported status conversion"), // Handle any additional statuses or provide a default conversion
+            _ => panic!("Unsupported status conversion"), /* Handle any additional statuses or provide a default
+                                                           * conversion */
         }
     }
 }
-

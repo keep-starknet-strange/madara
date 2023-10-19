@@ -1,25 +1,28 @@
-use mp_felt::Felt252Wrapper;
-use reqwest::StatusCode;
-use sp_core::U256;
+use std::collections::VecDeque;
+use std::path::PathBuf;
+use std::string::String;
+use std::sync::{Arc, Mutex};
+
+use log::info;
 use mp_block::Block;
-use reqwest::header::{HeaderMap, CONTENT_TYPE, HeaderValue};
+use mp_felt::Felt252Wrapper;
+use mp_hashers::pedersen::PedersenHasher;
+use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE};
+use reqwest::StatusCode;
 use serde_json::{json, Value};
-use starknet_api::block::BlockNumber;
+use sp_core::U256;
 use starknet_api::api_core::{ChainId, PatriciaKey};
+use starknet_api::block::BlockNumber;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::Event;
-use starknet_client::RetryConfig;
 use starknet_client::reader::{StarknetFeederGatewayClient, StarknetReader};
 use starknet_ff::FieldElement;
-use std::sync::{ Arc, Mutex};
-use std::collections::VecDeque;
-use log::info;
 use tokio::time;
-use std::string::String;
-use starknet_client;
-use std::path::PathBuf;
-use crate::transactions::{declare_tx_to_starknet_tx, deploy_account_tx_to_starknet_tx, invoke_tx_to_starknet_tx, l1handler_tx_to_starknet_tx, deploy_tx_to_starknet_tx};
-use mp_hashers::pedersen::PedersenHasher;
+
+use crate::transactions::{
+    declare_tx_to_starknet_tx, deploy_account_tx_to_starknet_tx, deploy_tx_to_starknet_tx, invoke_tx_to_starknet_tx,
+    l1handler_tx_to_starknet_tx,
+};
 
 const NODE_VERSION: &str = "NODE VERSION";
 
@@ -32,9 +35,12 @@ pub fn create_block_queue() -> BlockQueue {
     Arc::new(Mutex::new(VecDeque::new()))
 }
 
-
 // This function converts a block received from the gateway into a StarkNet block
-pub fn get_header(block: starknet_client::reader::Block, transactions: mp_block::BlockTransactions, events: &[Event]) -> mp_block::Header {
+pub fn get_header(
+    block: starknet_client::reader::Block,
+    transactions: mp_block::BlockTransactions,
+    events: &[Event],
+) -> mp_block::Header {
     let parent_block_hash = Felt252Wrapper::try_from(block.parent_block_hash.0.bytes());
     let block_number = block.block_number.0;
     let global_state_root = Felt252Wrapper::try_from(block.state_root.0.bytes());
@@ -50,11 +56,8 @@ pub fn get_header(block: starknet_client::reader::Block, transactions: mp_block:
     let block_timestamp = block.timestamp.0;
     let transaction_count = block.transactions.len() as u128;
     let (transaction_commitment, event_commitment) =
-            mp_commitments::calculate_commitments::<PedersenHasher>(&transactions, &events, chain_id, block_number);
-    let event_count: u128 = block.transaction_receipts
-                .iter()
-                .map(|receipt| receipt.events.len() as u128)
-                .sum();
+        mp_commitments::calculate_commitments::<PedersenHasher>(&transactions, &events, chain_id, block_number);
+    let event_count: u128 = block.transaction_receipts.iter().map(|receipt| receipt.events.len() as u128).sum();
     let protocol_version = Some(0u8);
     let extra_data: U256 = Felt252Wrapper::try_from(block.block_hash.0.bytes()).unwrap().into();
     let starknet_header = mp_block::Header::new(
@@ -82,27 +85,27 @@ pub async fn get_txs(block: starknet_client::reader::Block) -> mp_block::BlockTr
                 // convert declare_transaction to starknet transaction
                 let tx = declare_tx_to_starknet_tx(declare_transaction.clone());
                 transactions_vec.push(tx.unwrap());
-            },
+            }
             starknet_client::reader::objects::transaction::Transaction::DeployAccount(deploy_account_transaction) => {
                 // convert declare_transaction to starknet transaction
                 let tx = deploy_account_tx_to_starknet_tx(deploy_account_transaction.clone().into());
                 transactions_vec.push(tx.unwrap());
-            },
+            }
             starknet_client::reader::objects::transaction::Transaction::Deploy(deploy_transaction) => {
                 // convert declare_transaction to starknet transaction
                 let tx = deploy_tx_to_starknet_tx(deploy_transaction.clone().into()).await;
                 transactions_vec.push(tx.unwrap());
-            },
+            }
             starknet_client::reader::objects::transaction::Transaction::Invoke(invoke_transaction) => {
                 // convert invoke_transaction to starknet transaction
                 let tx = invoke_tx_to_starknet_tx(invoke_transaction.clone());
                 transactions_vec.push(tx.unwrap());
-            },
+            }
             starknet_client::reader::objects::transaction::Transaction::L1Handler(l1handler_transaction) => {
                 // convert declare_transaction to starknet transaction
                 let tx = l1handler_tx_to_starknet_tx(l1handler_transaction.clone().into());
                 transactions_vec.push(tx.unwrap());
-            },
+            }
         }
     }
 
@@ -112,15 +115,10 @@ pub async fn get_txs(block: starknet_client::reader::Block) -> mp_block::BlockTr
 // This function converts a block received from the gateway into a StarkNet block
 pub async fn from_gateway_to_starknet_block(block: starknet_client::reader::Block) -> mp_block::Block {
     let transactions_vec: mp_block::BlockTransactions = get_txs(block.clone()).await;
-    let all_events: Vec<starknet_api::transaction::Event> = block.transaction_receipts.iter()
-        .flat_map(|receipt| &receipt.events) 
-        .cloned()
-        .collect();
+    let all_events: Vec<starknet_api::transaction::Event> =
+        block.transaction_receipts.iter().flat_map(|receipt| &receipt.events).cloned().collect();
     let header = get_header(block.clone(), transactions_vec.clone(), &all_events);
-    mp_block::Block::new(
-        header,
-        transactions_vec,
-    )
+    mp_block::Block::new(header, transactions_vec)
 }
 
 async fn create_block(rpc_port: u16) -> Result<StatusCode, reqwest::Error> {
@@ -136,10 +134,7 @@ async fn create_block(rpc_port: u16) -> Result<StatusCode, reqwest::Error> {
         "params": [true, true, null]
     });
 
-    let response = client.post(url)
-        .headers(headers.clone())
-        .json(&payload)
-        .send().await?;
+    let response = client.post(url).headers(headers.clone()).json(&payload).send().await?;
 
     Ok(response.status())
 }
@@ -160,13 +155,10 @@ async fn get_last_synced_block(rpc_port: u16) -> Result<Option<u64>, reqwest::Er
         "params": []
     });
 
-    let response = client.post(&url)
-        .headers(headers)
-        .json(&payload)
-        .send().await?;
+    let response = client.post(&url).headers(headers).json(&payload).send().await?;
 
     let body: Value = response.json().await?;
-    
+
     body["result"]["block"]["header"]["number"]
         .as_str()
         .and_then(|number_hex| u64::from_str_radix(&number_hex[2..], 16).ok())
@@ -219,18 +211,10 @@ impl Default for RpcConfig {
 pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
     let rpc_config = RpcConfig::default();
 
-    let retry_config = RetryConfig {
-        retry_base_millis: 30,
-        retry_max_delay_millis: 30000,
-        max_retries: 10,
-    };
+    let retry_config = RetryConfig { retry_base_millis: 30, retry_max_delay_millis: 30000, max_retries: 10 };
 
-    let starknet_client = StarknetFeederGatewayClient::new(
-        &rpc_config.starknet_url,
-        None,
-        NODE_VERSION,
-        retry_config
-    ).unwrap();
+    let starknet_client =
+        StarknetFeederGatewayClient::new(&rpc_config.starknet_url, None, NODE_VERSION, retry_config).unwrap();
 
     let mut i = get_last_synced_block(rpc_port).await.unwrap().unwrap() + 1;
     loop {
@@ -248,12 +232,12 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
                             info!("[👽] Block #{} synced correctly", i);
                             i += 1;
                         }
-                    },
+                    }
                     Err(e) => {
                         eprintln!("Error processing RPC call: {:?}", e);
                     }
                 }
-            },
+            }
             Err(error) => {
                 eprintln!("Error retrieving block: {:?}", error);
                 time::sleep(time::Duration::from_secs(2)).await;
@@ -262,16 +246,17 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use std::sync::Mutex;
     use std::collections::VecDeque;
+    use std::convert::TryInto;
+    use std::sync::Mutex;
+
     use mockall::mock;
     use mockito::mock;
     use starknet_ff::FieldElement;
-    use std::convert::TryInto;
+
+    use super::*;
 
     // Mocking StarknetFeederGatewayClient for testing
     mock! {
@@ -283,14 +268,16 @@ mod tests {
 
     #[test]
     fn test_get_header() {
-        // Provide a mock starknet_client::reader::Block and BoundedVec<Transaction, MaxTransactions>
-        // Then, call get_header with the mock data and check if the resulting Header is as expected.
+        // Provide a mock starknet_client::reader::Block and BoundedVec<Transaction,
+        // MaxTransactions> Then, call get_header with the mock data and check if the
+        // resulting Header is as expected.
     }
 
     #[test]
     fn test_get_txs() {
         // Provide a mock starknet_client::reader::Block
-        // Call get_txs with the mock data and verify if the resulting BoundedVec<Transaction, MaxTransactions> is correct.
+        // Call get_txs with the mock data and verify if the resulting BoundedVec<Transaction,
+        // MaxTransactions> is correct.
     }
 
     #[tokio::test]
@@ -308,7 +295,8 @@ mod tests {
     #[tokio::test]
     async fn test_fetch_block_success() {
         // Mock the StarknetFeederGatewayClient to return a successful block.
-        // Run fetch_block and ensure the block is correctly added to the queue and RPC call is made.
+        // Run fetch_block and ensure the block is correctly added to the queue and RPC call is
+        // made.
     }
 
     #[tokio::test]

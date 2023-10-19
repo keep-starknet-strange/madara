@@ -16,22 +16,12 @@ use itertools::any;
 use serde::Deserialize;
 use serde_json::{json, Map, Value};
 
-use crate::{
-    command,
-    ConfigError,
-    ParamPath,
-    SerializationType,
-    SerializedContent,
-    SerializedParam,
-    IS_NONE_MARK,
-};
+use crate::{command, ConfigError, ParamPath, SerializationType, SerializedContent, SerializedParam, IS_NONE_MARK};
 
 /// Deserializes config from flatten JSON.
 /// For an explanation of `for<'a> Deserialize<'a>` see
 /// `<https://doc.rust-lang.org/nomicon/hrtb.html>`.
-pub fn load<T: for<'a> Deserialize<'a>>(
-    config_map: &BTreeMap<ParamPath, Value>,
-) -> Result<T, ConfigError> {
+pub fn load<T: for<'a> Deserialize<'a>>(config_map: &BTreeMap<ParamPath, Value>) -> Result<T, ConfigError> {
     let mut nested_map = json!({});
     for (param_path, value) in config_map {
         let mut entry = &mut nested_map;
@@ -50,8 +40,7 @@ pub fn load_and_process_config<T: for<'a> Deserialize<'a>>(
     command: Command,
     args: Vec<String>,
 ) -> Result<T, ConfigError> {
-    let deserialized_default_config: Map<String, Value> =
-        serde_json::from_reader(default_config_file)?;
+    let deserialized_default_config: Map<String, Value> = serde_json::from_reader(default_config_file)?;
 
     // Store the pointers separately from the default values. The pointers will receive a value
     // only at the end of the process.
@@ -139,9 +128,7 @@ pub(crate) fn update_config_map_by_pointers(
 ) -> Result<(), ConfigError> {
     for (param_path, target_param_path) in pointers_map {
         let Some(target_value) = config_map.get(target_param_path) else {
-            return Err(ConfigError::PointerTargetNotFound {
-                target_param: target_param_path.to_owned(),
-            });
+            return Err(ConfigError::PointerTargetNotFound { target_param: target_param_path.to_owned() });
         };
         config_map.insert(param_path.to_owned(), target_value.clone());
     }
@@ -157,17 +144,13 @@ pub(crate) fn update_optional_values(config_map: &mut BTreeMap<ParamPath, Value>
         .collect();
     let mut none_params = vec![];
     for optional_param in optional_params {
-        let value = config_map
-            .remove(&format!("{optional_param}.{IS_NONE_MARK}"))
-            .expect("Not found optional param");
+        let value = config_map.remove(&format!("{optional_param}.{IS_NONE_MARK}")).expect("Not found optional param");
         if value == json!(true) {
             none_params.push(optional_param);
         }
     }
     // Remove param paths that start with any None param.
-    config_map.retain(|param_path, _| {
-        !any(&none_params, |none_param| param_path.starts_with(none_param))
-    });
+    config_map.retain(|param_path, _| !any(&none_params, |none_param| param_path.starts_with(none_param)));
     for none_param in none_params {
         config_map.insert(none_param, Value::Null);
     }

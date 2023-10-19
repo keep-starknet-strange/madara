@@ -17,20 +17,11 @@ use validator::Validate;
 use crate::command::{get_command_matches, update_config_map_by_command_args};
 use crate::converters::deserialize_milliseconds_to_duration;
 use crate::dumping::{
-    append_sub_config_name,
-    combine_config_map_and_pointers,
-    ser_optional_param,
-    ser_optional_sub_config,
-    ser_param,
-    ser_required_param,
-    SerializeConfig,
+    append_sub_config_name, combine_config_map_and_pointers, ser_optional_param, ser_optional_sub_config, ser_param,
+    ser_required_param, SerializeConfig,
 };
 use crate::loading::{
-    load,
-    load_and_process_config,
-    split_pointers_map,
-    split_values_and_types,
-    update_config_map_by_pointers,
+    load, load_and_process_config, split_pointers_map, split_values_and_types, update_config_map_by_pointers,
     update_optional_values,
 };
 use crate::{ConfigError, ParamPath, SerializationType, SerializedContent, SerializedParam};
@@ -73,13 +64,9 @@ impl SerializeConfig for OuterConfig {
 
 #[test]
 fn dump_and_load_config() {
-    let some_outer_config = OuterConfig {
-        opt_elem: Some(2),
-        opt_config: Some(InnerConfig { o: 3 }),
-        inner_config: InnerConfig { o: 4 },
-    };
-    let none_outer_config =
-        OuterConfig { opt_elem: None, opt_config: None, inner_config: InnerConfig { o: 5 } };
+    let some_outer_config =
+        OuterConfig { opt_elem: Some(2), opt_config: Some(InnerConfig { o: 3 }), inner_config: InnerConfig { o: 4 } };
+    let none_outer_config = OuterConfig { opt_elem: None, opt_config: None, inner_config: InnerConfig { o: 5 } };
 
     for outer_config in [some_outer_config, none_outer_config] {
         let (mut dumped, _) = split_values_and_types(outer_config.dump());
@@ -91,8 +78,7 @@ fn dump_and_load_config() {
 
 #[test]
 fn test_validation() {
-    let outer_config =
-        OuterConfig { opt_elem: None, opt_config: None, inner_config: InnerConfig { o: 20 } };
+    let outer_config = OuterConfig { opt_elem: None, opt_config: None, inner_config: InnerConfig { o: 20 } };
     assert!(outer_config.validate().is_err());
 }
 
@@ -117,8 +103,7 @@ impl SerializeConfig for TypicalConfig {
 #[test]
 fn test_update_dumped_config() {
     let command = Command::new("Testing");
-    let dumped_config =
-        TypicalConfig { a: Duration::from_secs(1), b: "bbb".to_owned(), c: false }.dump();
+    let dumped_config = TypicalConfig { a: Duration::from_secs(1), b: "bbb".to_owned(), c: false }.dump();
     let args = vec!["Testing", "--a", "1234", "--b", "15"];
     env::set_var("C", "true");
     let args: Vec<String> = args.into_iter().map(|s| s.to_owned()).collect();
@@ -137,14 +122,10 @@ fn test_update_dumped_config() {
 
 #[test]
 fn test_pointers_flow() {
-    let config_map = BTreeMap::from([
-        ser_param("a1", &json!(5), "This is a."),
-        ser_param("a2", &json!(5), "This is a."),
-    ]);
-    let pointers = vec![(
-        ser_param("common_a", &json!(10), "This is common a"),
-        vec!["a1".to_owned(), "a2".to_owned()],
-    )];
+    let config_map =
+        BTreeMap::from([ser_param("a1", &json!(5), "This is a."), ser_param("a2", &json!(5), "This is a.")]);
+    let pointers =
+        vec![(ser_param("common_a", &json!(10), "This is common a"), vec!["a1".to_owned(), "a2".to_owned()])];
     let stored_map = combine_config_map_and_pointers(config_map, &pointers).unwrap();
     assert_eq!(
         stored_map["a1"],
@@ -173,10 +154,8 @@ fn test_pointers_flow() {
 
 #[test]
 fn test_replace_pointers() {
-    let (mut config_map, _) =
-        split_values_and_types(BTreeMap::from([ser_param("a", &json!(5), "This is a.")]));
-    let pointers_map =
-        BTreeMap::from([("b".to_owned(), "a".to_owned()), ("c".to_owned(), "a".to_owned())]);
+    let (mut config_map, _) = split_values_and_types(BTreeMap::from([ser_param("a", &json!(5), "This is a.")]));
+    let pointers_map = BTreeMap::from([("b".to_owned(), "a".to_owned()), ("c".to_owned(), "a".to_owned())]);
     update_config_map_by_pointers(&mut config_map, &pointers_map).unwrap();
     assert_eq!(config_map["a"], config_map["b"]);
     assert_eq!(config_map["a"], config_map["c"]);
@@ -200,9 +179,7 @@ impl SerializeConfig for CustomConfig {
 fn load_param_path(args: Vec<&str>) -> String {
     let dir = TempDir::new().unwrap();
     let file_path = dir.path().join("config.json");
-    CustomConfig { param_path: "default value".to_owned() }
-        .dump_to_file(&vec![], file_path.to_str().unwrap())
-        .unwrap();
+    CustomConfig { param_path: "default value".to_owned() }.dump_to_file(&vec![], file_path.to_str().unwrap()).unwrap();
 
     let loaded_config = load_and_process_config::<CustomConfig>(
         File::open(file_path).unwrap(),
@@ -229,13 +206,7 @@ fn test_load_custom_config_file() {
 
 #[test]
 fn test_load_custom_config_file_and_args() {
-    let args = vec![
-        "Testing",
-        "--config_file",
-        CUSTOM_CONFIG_PATH.to_str().unwrap(),
-        "--param_path",
-        "command value",
-    ];
+    let args = vec!["Testing", "--config_file", CUSTOM_CONFIG_PATH.to_str().unwrap(), "--param_path", "command value"];
     let param_path = load_param_path(args);
     assert_eq!(param_path, "command value");
 }
@@ -251,8 +222,7 @@ fn test_load_many_custom_config_files() {
 
 #[test]
 fn serialization_precision() {
-    let input =
-        "{\"value\":244116128358498188146337218061232635775543270890529169229936851982759783745}";
+    let input = "{\"value\":244116128358498188146337218061232635775543270890529169229936851982759783745}";
     let serialized = serde_json::from_str::<serde_json::Value>(input).unwrap();
     let deserialized = serde_json::to_string(&serialized).unwrap();
     assert_eq!(input, deserialized);

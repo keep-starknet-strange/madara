@@ -92,10 +92,8 @@ async fn test_integration_testnet() {
             replaced_classes: 0, // No block with this API change yet.
         },
         class_hashes: ClassHashes {
-            cairo_0_class_hash: "0x2753ce06a79a9a9c608787a608b424f79c56f465954f1f3a7f6785d575366fb"
-                .to_owned(),
-            cairo_1_class_hash: "0x2f80a64102b148f7142f1ec14a786ef130e2d4320f2214f4aafebb961e3ab45"
-                .to_owned(),
+            cairo_0_class_hash: "0x2753ce06a79a9a9c608787a608b424f79c56f465954f1f3a7f6785d575366fb".to_owned(),
+            cairo_1_class_hash: "0x2f80a64102b148f7142f1ec14a786ef130e2d4320f2214f4aafebb961e3ab45".to_owned(),
         },
     };
     run(integration_testnet_data).await;
@@ -123,10 +121,8 @@ async fn test_alpha_testnet() {
             replaced_classes: 788504,
         },
         class_hashes: ClassHashes {
-            cairo_0_class_hash: "0x7af612493193c771c1b12f511a8b4d3b0c6d0648242af4680c7cd0d06186f17"
-                .to_owned(),
-            cairo_1_class_hash: "0x702a9e80c74a214caf0e77326180e72ba3bd3f53dbd5519ede339eb3ae9eed4"
-                .to_owned(),
+            cairo_0_class_hash: "0x7af612493193c771c1b12f511a8b4d3b0c6d0648242af4680c7cd0d06186f17".to_owned(),
+            cairo_1_class_hash: "0x702a9e80c74a214caf0e77326180e72ba3bd3f53dbd5519ede339eb3ae9eed4".to_owned(),
         },
     };
     run(alpha_testnet_data).await;
@@ -149,10 +145,7 @@ async fn run(test_env_data: TestEnvData) {
 }
 
 // Call get_block on the given list of block_numbers.
-async fn test_get_block(
-    starknet_client: &StarknetFeederGatewayClient,
-    block_numbers: BlocksForGetBlock,
-) {
+async fn test_get_block(starknet_client: &StarknetFeederGatewayClient, block_numbers: BlocksForGetBlock) {
     for block_number in into_block_number_vec(block_numbers) {
         starknet_client.block(block_number).await.unwrap().unwrap();
     }
@@ -164,10 +157,7 @@ async fn test_get_block(
 }
 
 // Call get_state_update on the given list of block_numbers.
-async fn test_get_state_update(
-    starknet_client: &StarknetFeederGatewayClient,
-    block_numbers: BlocksForGetStateUpdate,
-) {
+async fn test_get_state_update(starknet_client: &StarknetFeederGatewayClient, block_numbers: BlocksForGetStateUpdate) {
     for block_number in into_block_number_vec(block_numbers) {
         starknet_client.state_update(block_number).await.unwrap().unwrap();
     }

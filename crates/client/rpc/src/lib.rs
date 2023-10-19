@@ -401,7 +401,8 @@ where
 
         let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
         let chain_id = self.chain_id()?;
-        let transactions_hashes = block.transactions_hashes::<H>(Felt252Wrapper(chain_id.0), Some(block.header().block_number));
+        let transactions_hashes =
+            block.transactions_hashes::<H>(Felt252Wrapper(chain_id.0), Some(block.header().block_number));
         let transactions = transactions_hashes.into_iter().map(FieldElement::from).collect();
         let blockhash = block.header().hash::<H>();
         let parent_blockhash = block.header().parent_block_hash;
@@ -729,7 +730,8 @@ where
         })?;
 
         let chain_id = self.chain_id()?;
-        let transactions = transactions.into_iter().map(|tx| to_starknet_core_tx::<H>(tx, chain_id.0.into(), block_number)).collect();
+        let transactions =
+            transactions.into_iter().map(|tx| to_starknet_core_tx::<H>(tx, chain_id.0.into(), block_number)).collect();
 
         Ok(transactions)
     }

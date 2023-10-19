@@ -2,9 +2,8 @@ use alloc::vec::Vec;
 
 use mp_felt::Felt252Wrapper;
 
-use crate::DeployTransaction;
-
 use super::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction, UserTransaction};
+use crate::DeployTransaction;
 
 impl Transaction {
     pub fn signature(&self) -> Vec<Felt252Wrapper> {

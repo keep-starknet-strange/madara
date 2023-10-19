@@ -66,7 +66,9 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
     let sealing = cli.run.sealing;
 
     runner.run_node_until_exit(|config| async move {
-        service::new_full(config, sealing, da_config, cli.run.base.rpc_port.unwrap()).await.map_err(sc_cli::Error::Service)
+        service::new_full(config, sealing, da_config, cli.run.base.rpc_port.unwrap())
+            .await
+            .map_err(sc_cli::Error::Service)
     })
 }
 
