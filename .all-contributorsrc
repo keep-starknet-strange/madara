@@ -392,6 +392,20 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/9974198?v=4",
       "profile": "https://github.com/tchataigner",
       "contributions": ["code"]
+    },
+    {
+      "login": "kalaninja",
+      "name": "Alexander Kalankhodzhaev",
+      "avatar_url": "https://avatars.githubusercontent.com/u/18083464?v=4",
+      "profile": "https://github.com/kalaninja",
+      "contributions": ["code"]
+    },
+    {
+      "login": "antiyro",
+      "name": "antiyro",
+      "avatar_url": "https://avatars.githubusercontent.com/u/74653697?v=4",
+      "profile": "https://github.com/antiyro",
+      "contributions": ["code"]
     }
   ],
   "contributorsPerLine": 7,

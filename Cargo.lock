@@ -6641,6 +6641,7 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
+ "serde",
  "sp-api",
  "sp-block-builder",
  "sp-consensus-aura",
