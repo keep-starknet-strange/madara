@@ -6,6 +6,9 @@ use std::fmt;
 mod request;
 mod transport;
 
+#[path = "transports/http.rs"]
+mod http_transport;
+
 pub use self::request::*;
 pub use self::transport::*;
 

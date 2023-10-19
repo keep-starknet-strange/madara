@@ -6792,6 +6792,8 @@ dependencies = [
  "blockifier",
  "env_logger 0.9.3",
  "hex",
+ "hyper",
+ "hyper-rustls 0.24.1",
  "log",
  "mockito",
  "mp-block",
