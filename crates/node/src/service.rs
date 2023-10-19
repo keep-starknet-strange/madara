@@ -7,9 +7,10 @@ use std::time::Duration;
 
 use futures::channel::mpsc;
 use futures::future;
+use futures::future::BoxFuture;
 use futures::prelude::*;
 use madara_runtime::opaque::Block;
-use madara_runtime::{self, Hash, RuntimeApi, StarknetHasher};
+use madara_runtime::{self, Hash, RuntimeApi, SealingMode, StarknetHasher};
 use mc_block_proposer::ProposerFactory;
 use mc_data_availability::avail::config::AvailConfig;
 use mc_data_availability::avail::AvailClient;
@@ -40,7 +41,6 @@ use sp_offchain::STORAGE_PREFIX;
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::PrefixedMemoryDB;
 
-use crate::commands::Sealing;
 use crate::genesis_block::MadaraGenesisBlockBuilder;
 use crate::rpc::StarknetDeps;
 use crate::starknet::{db_config_dir, MadaraBackend};
@@ -258,12 +258,12 @@ where
 /// - `cache`: whether more information should be cached when storing the block in the database.
 pub fn new_full(
     config: Configuration,
-    sealing: Option<Sealing>,
+    sealing: SealingMode,
     da_layer: Option<(DaLayer, PathBuf)>,
     cache_more_things: bool,
 ) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
-        if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
+        if sealing.is_default() { build_aura_grandpa_import_queue } else { build_manual_seal_import_queue };
 
     let sc_service::PartialComponents {
         client,
@@ -283,9 +283,7 @@ pub fn new_full(
         &config.chain_spec,
     );
 
-    let warp_sync_params = if sealing.is_some() {
-        None
-    } else {
+    let warp_sync_params = if sealing.is_default() {
         net_config
             .add_notification_protocol(sc_consensus_grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone()));
         let warp_sync = Arc::new(sc_consensus_grandpa::warp_proof::NetworkProvider::new(
@@ -294,6 +292,8 @@ pub fn new_full(
             Vec::default(),
         ));
         Some(WarpSyncParams::WithProvider(warp_sync))
+    } else {
+        None
     };
 
     let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
@@ -316,14 +316,18 @@ pub fn new_full(
     let force_authoring = config.force_authoring;
     let backoff_authoring_blocks: Option<()> = None;
     let name = config.network.node_name.clone();
-    let enable_grandpa = !config.disable_grandpa && sealing.is_none();
+    let enable_grandpa = !config.disable_grandpa && sealing.is_default();
     let prometheus_registry = config.prometheus_registry().cloned();
     let starting_block = client.info().best_number;
 
     // Channel for the rpc handler to communicate with the authorship task.
-    // TODO: commands_stream is is currently unused, but should be used to implement the `sealing`
-    // parameter
-    let (command_sink, commands_stream) = mpsc::channel(1000);
+    let (command_sink, commands_stream) = match sealing {
+        SealingMode::Manual => {
+            let (sender, receiver) = mpsc::channel(1000);
+            (Some(sender), Some(receiver))
+        }
+        _ => (None, None),
+    };
 
     let overrides = overrides_handle(client.clone());
     let starknet_rpc_params = StarknetDeps {
@@ -346,7 +350,7 @@ pub fn new_full(
                 graph: graph.clone(),
                 deny_unsafe,
                 starknet: starknet_rpc_params.clone(),
-                command_sink: if sealing.is_some() { Some(command_sink.clone()) } else { None },
+                command_sink: command_sink.clone(),
             };
             crate::rpc::create_full(deps).map_err(Into::into)
         })
@@ -413,7 +417,9 @@ pub fn new_full(
 
     if role.is_authority() {
         // manual-seal authorship
-        if let Some(sealing) = sealing {
+        if !sealing.is_default() {
+            log::info!("{} sealing enabled.", sealing);
+
             run_manual_seal_authorship(
                 sealing,
                 client,
@@ -427,7 +433,6 @@ pub fn new_full(
 
             network_starter.start_network();
 
-            log::info!("Manual Seal Ready");
             return Ok(task_manager);
         }
 
@@ -537,14 +542,14 @@ pub fn new_full(
 
 #[allow(clippy::too_many_arguments)]
 fn run_manual_seal_authorship(
-    sealing: Sealing,
+    sealing: SealingMode,
     client: Arc<FullClient>,
     transaction_pool: Arc<FullPool<Block, FullClient>>,
     select_chain: FullSelectChain,
     block_import: BoxBlockImport<FullClient>,
     task_manager: &TaskManager,
     prometheus_registry: Option<&Registry>,
-    commands_stream: mpsc::Receiver<sc_consensus_manual_seal::rpc::EngineCommand<Hash>>,
+    commands_stream: Option<mpsc::Receiver<sc_consensus_manual_seal::rpc::EngineCommand<Hash>>>,
 ) -> Result<(), ServiceError>
 where
     RuntimeApi: ConstructRuntimeApi<Block, FullClient>,
@@ -590,21 +595,21 @@ where
         Ok(timestamp)
     };
 
-    let manual_seal = match sealing {
-        Sealing::Manual => future::Either::Left(sc_consensus_manual_seal::run_manual_seal(
-            sc_consensus_manual_seal::ManualSealParams {
+    let manual_seal: BoxFuture<_> = match sealing {
+        SealingMode::Manual => {
+            Box::pin(sc_consensus_manual_seal::run_manual_seal(sc_consensus_manual_seal::ManualSealParams {
                 block_import,
                 env: proposer_factory,
                 client,
                 pool: transaction_pool,
-                commands_stream,
+                commands_stream: commands_stream.expect("Manual sealing requires a channel from RPC."),
                 select_chain,
                 consensus_data_provider: None,
                 create_inherent_data_providers,
-            },
-        )),
-        Sealing::Instant => future::Either::Right(sc_consensus_manual_seal::run_instant_seal(
-            sc_consensus_manual_seal::InstantSealParams {
+            }))
+        }
+        SealingMode::Instant { finalize } => {
+            let instant_seal_params = sc_consensus_manual_seal::InstantSealParams {
                 block_import,
                 env: proposer_factory,
                 client,
@@ -612,8 +617,14 @@ where
                 select_chain,
                 consensus_data_provider: None,
                 create_inherent_data_providers,
-            },
-        )),
+            };
+            if finalize {
+                Box::pin(sc_consensus_manual_seal::run_instant_seal_and_finalize(instant_seal_params))
+            } else {
+                Box::pin(sc_consensus_manual_seal::run_instant_seal(instant_seal_params))
+            }
+        }
+        _ => unreachable!("Other sealing modes are not expected in manual-seal."),
     };
 
     // we spawn the future on a background thread managed by service.
