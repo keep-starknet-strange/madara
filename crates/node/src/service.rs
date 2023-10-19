@@ -9,7 +9,6 @@ use std::time::Duration;
 use futures::channel::mpsc;
 use futures::future;
 use futures::prelude::*;
-use lazy_static::lazy_static;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi, StarknetHasher};
 use mc_block_proposer::ProposerFactory;
@@ -20,7 +19,6 @@ use mc_data_availability::celestia::CelestiaClient;
 use mc_data_availability::ethereum::config::EthereumConfig;
 use mc_data_availability::ethereum::EthereumClient;
 use mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker};
-use mc_deoxys::{create_block_queue, fetch_block, BlockQueue};
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
 use mc_transaction_pool::FullPool;
@@ -257,10 +255,6 @@ where
     ))
 }
 
-lazy_static! {
-    static ref QUEUE: BlockQueue = create_block_queue();
-}
-
 /// Builds a new service for a full client.
 pub async fn new_full(
     config: Configuration,
@@ -421,7 +415,13 @@ pub async fn new_full(
     if role.is_authority() {
         // manual-seal authorship
         if let Some(sealing) = sealing {
+            // NOTE(nils-mathieu):
+            //   For now I used a channel of size 20, this should be plently enough. That might
+            //   become a config option in the future.
+            let (block_sender, block_receiver) = async_channel::bounded::<mp_block::Block>(20);
+
             run_manual_seal_authorship(
+                block_receiver,
                 sealing,
                 client,
                 transaction_pool,
@@ -435,7 +435,7 @@ pub async fn new_full(
             network_starter.start_network();
 
             tokio::spawn(async move {
-                fetch_block(QUEUE.clone(), rpc_port).await;
+                mc_deoxys::fetch_block(block_sender, rpc_port).await;
             });
 
             log::info!("Manual Seal Ready");
@@ -549,6 +549,7 @@ pub async fn new_full(
 
 #[allow(clippy::too_many_arguments)]
 fn run_manual_seal_authorship(
+    block_receiver: async_channel::Receiver<mp_block::Block>,
     sealing: Sealing,
     client: Arc<FullClient>,
     transaction_pool: Arc<FullPool<Block, FullClient>>,
@@ -604,6 +605,9 @@ where
 
     struct QueryBlockConsensusDataProvider<C> {
         _client: Arc<C>,
+
+        /// The receiver that we're using to receive blocks.
+        block_receiver: async_channel::Receiver<mp_block::Block>,
     }
 
     impl<B, C> ConsensusDataProvider<B> for QueryBlockConsensusDataProvider<C>
@@ -615,8 +619,7 @@ where
         type Proof = ();
 
         fn create_digest(&self, _parent: &B::Header, _inherents: &InherentData) -> Result<Digest, Error> {
-            let mut queue_guard = QUEUE.lock().unwrap();
-            let starknet_block: mp_block::Block = queue_guard.pop_front().unwrap();
+            let starknet_block: mp_block::Block = self.block_receiver.recv_blocking().unwrap();
 
             let block_digest_item: DigestItem =
                 sp_runtime::DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID, Encode::encode(&starknet_block));
@@ -644,7 +647,10 @@ where
                 pool: transaction_pool,
                 commands_stream,
                 select_chain,
-                consensus_data_provider: Some(Box::new(QueryBlockConsensusDataProvider { _client: client })),
+                consensus_data_provider: Some(Box::new(QueryBlockConsensusDataProvider {
+                    _client: client,
+                    block_receiver,
+                })),
                 create_inherent_data_providers,
             },
         )),

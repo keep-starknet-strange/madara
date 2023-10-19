@@ -1,10 +1,7 @@
-use std::collections::VecDeque;
 use std::path::PathBuf;
 use std::string::String;
-use std::sync::{Arc, Mutex};
 
 use log::info;
-use mp_block::Block;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::pedersen::PedersenHasher;
 use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE};
@@ -16,6 +13,7 @@ use starknet_api::block::BlockNumber;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::Event;
 use starknet_client::reader::{StarknetFeederGatewayClient, StarknetReader};
+use starknet_client::RetryConfig;
 use starknet_ff::FieldElement;
 use tokio::time;
 
@@ -27,13 +25,6 @@ use crate::transactions::{
 const NODE_VERSION: &str = "NODE VERSION";
 
 mod transactions;
-
-pub type BlockQueue = Arc<Mutex<VecDeque<Block>>>;
-
-// Function to create a new block queue
-pub fn create_block_queue() -> BlockQueue {
-    Arc::new(Mutex::new(VecDeque::new()))
-}
 
 // This function converts a block received from the gateway into a StarkNet block
 pub fn get_header(
@@ -208,7 +199,7 @@ impl Default for RpcConfig {
     }
 }
 
-pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
+pub async fn fetch_block(sender: async_channel::Sender<mp_block::Block>, rpc_port: u16) {
     let rpc_config = RpcConfig::default();
 
     let retry_config = RetryConfig { retry_base_millis: 30, retry_max_delay_millis: 30000, max_retries: 10 };
@@ -222,10 +213,7 @@ pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
         match block {
             Ok(block) => {
                 let starknet_block = from_gateway_to_starknet_block(block.unwrap()).await;
-                {
-                    let mut queue_guard: std::sync::MutexGuard<'_, VecDeque<Block>> = queue.lock().unwrap();
-                    queue_guard.push_back(starknet_block);
-                }
+                sender.send(starknet_block).await.unwrap();
                 match create_block(rpc_port).await {
                     Ok(status) => {
                         if status.is_success() {

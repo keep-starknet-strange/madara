@@ -4,9 +4,9 @@ version.workspace = true
 edition.workspace = true
 description = "Madara node."
 authors = [
-  "Antiyro <@kasarLabs>",
-  "Abdelhamid Bakhta <@keep-starknet-strange>",
-  "Substrate DevHub <https://github.com/substrate-developer-hub>",
+    "Antiyro <@kasarLabs>",
+    "Abdelhamid Bakhta <@keep-starknet-strange>",
+    "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
 license = "MIT"
@@ -22,6 +22,7 @@ name = "madara"
 
 [dependencies]
 async-trait = "0.1"
+async-channel = "1"
 clap = { workspace = true, features = ["derive"] }
 futures = { workspace = true, features = ["thread-pool"] }
 lazy_static = { workspace = true }
@@ -116,9 +117,9 @@ substrate-build-script-utils = { workspace = true }
 default = []
 # Dependencies that are only required if runtime benchmarking should be build.
 runtime-benchmarks = [
-  "madara-runtime/runtime-benchmarks",
-  "frame-benchmarking/runtime-benchmarks",
-  "frame-benchmarking-cli/runtime-benchmarks",
+    "madara-runtime/runtime-benchmarks",
+    "frame-benchmarking/runtime-benchmarks",
+    "frame-benchmarking-cli/runtime-benchmarks",
 ]
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
 # in the near future.
