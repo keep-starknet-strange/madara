@@ -17,6 +17,17 @@ pub enum Sealing {
     Instant,
 }
 
+/// A possible network type.
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+pub enum NetworkType {
+    /// The main network (mainnet).
+    Main,
+    /// The test network (testnet).
+    Test,
+    /// The integration network.
+    Integration,
+}
+
 #[derive(Clone, Debug, clap::Args)]
 pub struct ExtendedRunCmd {
     #[clap(flatten)]
@@ -29,6 +40,10 @@ pub struct ExtendedRunCmd {
     /// Choose a supported DA Layer
     #[clap(long)]
     pub da_layer: Option<DaLayer>,
+
+    /// The network type to connect to.
+    #[clap(long, short, default_value = "integration")]
+    pub network: NetworkType,
 }
 
 impl ExtendedRunCmd {
@@ -66,7 +81,9 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
     let sealing = cli.run.sealing;
 
     runner.run_node_until_exit(|config| async move {
-        service::new_full(config, sealing, da_config, cli.run.base.rpc_port.unwrap()).await.map_err(sc_cli::Error::Service)
+        service::new_full(config, sealing, da_config, cli.run.base.rpc_port.unwrap())
+            .await
+            .map_err(sc_cli::Error::Service)
     })
 }
 
