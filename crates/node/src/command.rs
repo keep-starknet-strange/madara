@@ -72,28 +72,28 @@ pub fn run() -> sc_cli::Result<()> {
         Some(Subcommand::CheckBlock(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.async_run(|mut config| {
-                let (client, _, import_queue, task_manager, _) = service::new_chain_ops(&mut config)?;
+                let (client, _, import_queue, task_manager, _) = service::new_chain_ops(&mut config, cli.run.cache)?;
                 Ok((cmd.run(client, import_queue), task_manager))
             })
         }
         Some(Subcommand::ExportBlocks(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.async_run(|mut config| {
-                let (client, _, _, task_manager, _) = service::new_chain_ops(&mut config)?;
+                let (client, _, _, task_manager, _) = service::new_chain_ops(&mut config, cli.run.cache)?;
                 Ok((cmd.run(client, config.database), task_manager))
             })
         }
         Some(Subcommand::ExportState(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.async_run(|mut config| {
-                let (client, _, _, task_manager, _) = service::new_chain_ops(&mut config)?;
+                let (client, _, _, task_manager, _) = service::new_chain_ops(&mut config, cli.run.cache)?;
                 Ok((cmd.run(client, config.chain_spec), task_manager))
             })
         }
         Some(Subcommand::ImportBlocks(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.async_run(|mut config| {
-                let (client, _, import_queue, task_manager, _) = service::new_chain_ops(&mut config)?;
+                let (client, _, import_queue, task_manager, _) = service::new_chain_ops(&mut config, cli.run.cache)?;
                 Ok((cmd.run(client, import_queue), task_manager))
             })
         }
@@ -104,7 +104,7 @@ pub fn run() -> sc_cli::Result<()> {
         Some(Subcommand::Revert(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.async_run(|mut config| {
-                let (client, backend, _, task_manager, _) = service::new_chain_ops(&mut config)?;
+                let (client, backend, _, task_manager, _) = service::new_chain_ops(&mut config, cli.run.cache)?;
                 let aux_revert = Box::new(|client, _, blocks| {
                     sc_consensus_grandpa::revert(client, blocks)?;
                     Ok(())
@@ -129,7 +129,7 @@ pub fn run() -> sc_cli::Result<()> {
                         cmd.run::<Block, service::ExecutorDispatch>(config)
                     }
                     BenchmarkCmd::Block(cmd) => {
-                        let (client, _, _, _, _) = service::new_chain_ops(&mut config)?;
+                        let (client, _, _, _, _) = service::new_chain_ops(&mut config, cli.run.cache)?;
                         cmd.run(client)
                     }
                     #[cfg(not(feature = "runtime-benchmarks"))]
@@ -145,13 +145,13 @@ pub fn run() -> sc_cli::Result<()> {
                         cmd.run(config, client, db, storage)
                     }
                     BenchmarkCmd::Overhead(cmd) => {
-                        let (client, _, _, _, _) = service::new_chain_ops(&mut config)?;
+                        let (client, _, _, _, _) = service::new_chain_ops(&mut config, cli.run.cache)?;
                         let ext_builder = RemarkBuilder::new(client.clone());
 
                         cmd.run(config, client, inherent_benchmark_data()?, Vec::new(), &ext_builder)
                     }
                     BenchmarkCmd::Extrinsic(cmd) => {
-                        let (client, _, _, _, _) = service::new_chain_ops(&mut config)?;
+                        let (client, _, _, _, _) = service::new_chain_ops(&mut config, cli.run.cache)?;
                         // Register the *Remark* builder.
                         let ext_factory = ExtrinsicFactory(vec![Box::new(RemarkBuilder::new(client.clone()))]);
 

@@ -48,9 +48,14 @@ impl Block {
         &self.transactions
     }
 
-    /// Return a reference to all transaction hashes
-    pub fn transactions_hashes<H: HasherT>(&self, chain_id: Felt252Wrapper) -> Vec<Felt252Wrapper> {
-        self.transactions.iter().map(|tx| tx.compute_hash::<H>(chain_id, false)).collect()
+    /// Returns an iterator that iterates over all transaction hashes.
+    ///
+    /// Those transactions are computed using the given `chain_id`.
+    pub fn transactions_hashes<H: HasherT>(
+        &self,
+        chain_id: Felt252Wrapper,
+    ) -> impl '_ + Iterator<Item = Felt252Wrapper> {
+        self.transactions.iter().map(move |tx| tx.compute_hash::<H>(chain_id, false))
     }
 }
 
