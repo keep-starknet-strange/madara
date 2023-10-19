@@ -50,7 +50,7 @@ pub struct ExtendedRunCmd {
     ///
     /// This may improve response times for RPCs that require that information, but it also
     /// increases the memory footprint of the node.
-    #[clap(long, action)]
+    #[clap(long)]
     pub cache: bool,
 }
 
