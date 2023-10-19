@@ -116,6 +116,18 @@
 <a href="#116" id="116">116</a>
 <a href="#117" id="117">117</a>
 <a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A database backend storing data about madara chain
 //!
 //! # Usefulness
@@ -137,7 +149,7 @@
 
 <span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::path::{Path, PathBuf};
-<span class="kw">use </span>std::sync::{Arc, Mutex};
+<span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>da_db::DaDb;
 <span class="kw">use </span>mapping_db::MappingDb;
@@ -156,13 +168,22 @@
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>columns {
-    <span class="kw">pub const </span>NUM_COLUMNS: u32 = <span class="number">5</span>;
+    <span class="doccomment">/// Total number of columns.
+    </span><span class="comment">// ===== /!\ ===================================================================================
+    // MUST BE INCREMENTED WHEN A NEW COLUMN IN ADDED
+    // ===== /!\ ===================================================================================
+    </span><span class="kw">pub const </span>NUM_COLUMNS: u32 = <span class="number">6</span>;
 
     <span class="kw">pub const </span>META: u32 = <span class="number">0</span>;
     <span class="kw">pub const </span>BLOCK_MAPPING: u32 = <span class="number">1</span>;
     <span class="kw">pub const </span>TRANSACTION_MAPPING: u32 = <span class="number">2</span>;
     <span class="kw">pub const </span>SYNCED_MAPPING: u32 = <span class="number">3</span>;
     <span class="kw">pub const </span>DA: u32 = <span class="number">4</span>;
+    <span class="doccomment">/// This column is used to map starknet block hashes to a list of transaction hashes that are
+    /// contained in the block.
+    ///
+    /// This column should only be accessed if the `--cache` flag is enabled.
+    </span><span class="kw">pub const </span>STARKNET_TRANSACTION_HASHES_CACHE: u32 = <span class="number">5</span>;
 }
 
 <span class="kw">pub mod </span>static_keys {
@@ -190,30 +211,33 @@
     <span class="doccomment">/// Open the database
     ///
     /// The database will be created at db_config_dir.join(&lt;db_type_name&gt;)
-    </span><span class="kw">pub fn </span>open(database: <span class="kw-2">&amp;</span>DatabaseSource, db_config_dir: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, String&gt; {
-        <span class="self">Self</span>::new(<span class="kw-2">&amp;</span>DatabaseSettings {
-            source: <span class="kw">match </span>database {
-                DatabaseSource::RocksDb { .. } =&gt; {
-                    DatabaseSource::RocksDb { path: starknet_database_dir(db_config_dir, <span class="string">&quot;rockdb&quot;</span>), cache_size: <span class="number">0 </span>}
-                }
-                DatabaseSource::ParityDb { .. } =&gt; {
-                    DatabaseSource::ParityDb { path: starknet_database_dir(db_config_dir, <span class="string">&quot;paritydb&quot;</span>) }
-                }
-                DatabaseSource::Auto { .. } =&gt; DatabaseSource::Auto {
-                    rocksdb_path: starknet_database_dir(db_config_dir, <span class="string">&quot;rockdb&quot;</span>),
-                    paritydb_path: starknet_database_dir(db_config_dir, <span class="string">&quot;paritydb&quot;</span>),
-                    cache_size: <span class="number">0</span>,
+    </span><span class="kw">pub fn </span>open(database: <span class="kw-2">&amp;</span>DatabaseSource, db_config_dir: <span class="kw-2">&amp;</span>Path, cache_more_things: bool) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, String&gt; {
+        <span class="self">Self</span>::new(
+            <span class="kw-2">&amp;</span>DatabaseSettings {
+                source: <span class="kw">match </span>database {
+                    DatabaseSource::RocksDb { .. } =&gt; {
+                        DatabaseSource::RocksDb { path: starknet_database_dir(db_config_dir, <span class="string">&quot;rockdb&quot;</span>), cache_size: <span class="number">0 </span>}
+                    }
+                    DatabaseSource::ParityDb { .. } =&gt; {
+                        DatabaseSource::ParityDb { path: starknet_database_dir(db_config_dir, <span class="string">&quot;paritydb&quot;</span>) }
+                    }
+                    DatabaseSource::Auto { .. } =&gt; DatabaseSource::Auto {
+                        rocksdb_path: starknet_database_dir(db_config_dir, <span class="string">&quot;rockdb&quot;</span>),
+                        paritydb_path: starknet_database_dir(db_config_dir, <span class="string">&quot;paritydb&quot;</span>),
+                        cache_size: <span class="number">0</span>,
+                    },
+                    <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">&quot;Supported db sources: `rocksdb` | `paritydb` | `auto`&quot;</span>.to_string()),
                 },
-                <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">&quot;Supported db sources: `rocksdb` | `paritydb` | `auto`&quot;</span>.to_string()),
             },
-        })
+            cache_more_things,
+        )
     }
 
-    <span class="kw">fn </span>new(config: <span class="kw-2">&amp;</span>DatabaseSettings) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, String&gt; {
+    <span class="kw">fn </span>new(config: <span class="kw-2">&amp;</span>DatabaseSettings, cache_more_things: bool) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, String&gt; {
         <span class="kw">let </span>db = db_opening_utils::open_database(config)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
-            mapping: Arc::new(MappingDb { db: db.clone(), write_lock: Arc::new(Mutex::new(())), _marker: PhantomData }),
+            mapping: Arc::new(MappingDb::new(db.clone(), cache_more_things)),
             meta: Arc::new(MetaDb { db: db.clone(), _marker: PhantomData }),
             da: Arc::new(DaDb { db: db.clone(), _marker: PhantomData }),
         })

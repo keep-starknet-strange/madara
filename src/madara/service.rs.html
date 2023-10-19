@@ -645,10 +645,13 @@
 <a href="#645" id="645">645</a>
 <a href="#646" id="646">646</a>
 <a href="#647" id="647">647</a>
+<a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
+<a href="#650" id="650">650</a>
+<a href="#651" id="651">651</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
-<span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::time::Duration;
@@ -723,6 +726,7 @@
 </span><span class="kw">pub fn </span>new_partial&lt;BIQ&gt;(
     config: <span class="kw-2">&amp;</span>Configuration,
     build_import_queue: BIQ,
+    cache_more_things: bool,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;
     sc_service::PartialComponents&lt;
         FullClient,
@@ -811,7 +815,7 @@
         telemetry.as_ref().map(|x| x.handle()),
     )<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>madara_backend = Arc::new(MadaraBackend::open(<span class="kw-2">&amp;</span>config.database, <span class="kw-2">&amp;</span>db_config_dir(config))<span class="question-mark">?</span>);
+    <span class="kw">let </span>madara_backend = Arc::new(MadaraBackend::open(<span class="kw-2">&amp;</span>config.database, <span class="kw-2">&amp;</span>db_config_dir(config), cache_more_things)<span class="question-mark">?</span>);
 
     <span class="kw">let </span>(import_queue, block_import) = build_import_queue(
         client.clone(),
@@ -899,10 +903,15 @@
 }
 
 <span class="doccomment">/// Builds a new service for a full client.
+///
+/// # Arguments
+///
+/// - `cache`: whether more information should be cached when storing the block in the database.
 </span><span class="kw">pub fn </span>new_full(
     config: Configuration,
     sealing: SealingMode,
     da_layer: <span class="prelude-ty">Option</span>&lt;(DaLayer, PathBuf)&gt;,
+    cache_more_things: bool,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;TaskManager, ServiceError&gt; {
     <span class="kw">let </span>build_import_queue =
         <span class="kw">if </span>sealing.is_default() { build_aura_grandpa_import_queue } <span class="kw">else </span>{ build_manual_seal_import_queue };
@@ -916,7 +925,7 @@
         select_chain,
         transaction_pool,
         other: (block_import, grandpa_link, <span class="kw-2">mut </span>telemetry, madara_backend),
-    } = new_partial(<span class="kw-2">&amp;</span>config, build_import_queue)<span class="question-mark">?</span>;
+    } = new_partial(<span class="kw-2">&amp;</span>config, build_import_queue, cache_more_things)<span class="question-mark">?</span>;
 
     <span class="kw">let </span><span class="kw-2">mut </span>net_config = sc_network::config::FullNetworkConfiguration::new(<span class="kw-2">&amp;</span>config.network);
 
@@ -1016,7 +1025,7 @@
     task_manager.spawn_essential_handle().spawn(
         <span class="string">&quot;mc-mapping-sync-worker&quot;</span>,
         <span class="prelude-val">Some</span>(<span class="string">&quot;madara&quot;</span>),
-        MappingSyncWorker::new(
+        MappingSyncWorker::&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, StarknetHasher&gt;::new(
             client.import_notification_stream(),
             Duration::new(<span class="number">6</span>, <span class="number">0</span>),
             client.clone(),
@@ -1024,7 +1033,6 @@
             madara_backend.clone(),
             <span class="number">3</span>,
             <span class="number">0</span>,
-            PhantomData::&lt;StarknetHasher&gt;,
         )
         .for_each(|()| future::ready(())),
     );
@@ -1286,10 +1294,10 @@
     ServiceError,
 &gt;;
 
-<span class="kw">pub fn </span>new_chain_ops(config: <span class="kw-2">&amp;mut </span>Configuration) -&gt; ChainOpsResult {
+<span class="kw">pub fn </span>new_chain_ops(config: <span class="kw-2">&amp;mut </span>Configuration, cache_more_things: bool) -&gt; ChainOpsResult {
     config.keystore = sc_service::config::KeystoreConfig::InMemory;
     <span class="kw">let </span>sc_service::PartialComponents { client, backend, import_queue, task_manager, other, .. } =
-        new_partial::&lt;<span class="kw">_</span>&gt;(config, build_aura_grandpa_import_queue)<span class="question-mark">?</span>;
+        new_partial::&lt;<span class="kw">_</span>&gt;(config, build_aura_grandpa_import_queue, cache_more_things)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>((client, backend, import_queue, task_manager, other.<span class="number">3</span>))
 }
 </code></pre></div></section></main></body></html>

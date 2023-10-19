@@ -100,6 +100,14 @@
 <a href="#100" id="100">100</a>
 <a href="#101" id="101">101</a>
 <a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
 
 <span class="kw">use </span>madara_runtime::SealingMode;
@@ -146,6 +154,14 @@
     <span class="doccomment">/// Choose a supported DA Layer
     </span><span class="attr">#[clap(long)]
     </span><span class="kw">pub </span>da_layer: <span class="prelude-ty">Option</span>&lt;DaLayer&gt;,
+
+    <span class="doccomment">/// When enabled, more information about the blocks and their transaction is cached and stored
+    /// in the database.
+    ///
+    /// This may improve response times for RPCs that require that information, but it also
+    /// increases the memory footprint of the node.
+    </span><span class="attr">#[clap(long)]
+    </span><span class="kw">pub </span>cache: bool,
 }
 
 <span class="kw">impl </span>ExtendedRunCmd {
@@ -180,10 +196,10 @@
             <span class="prelude-val">None
         </span>}
     };
-
     runner.run_node_until_exit(|config| <span class="kw">async move </span>{
         <span class="kw">let </span>sealing = cli.run.sealing.map(Into::into).unwrap_or_default();
-        service::new_full(config, sealing, da_config).map_err(sc_cli::Error::Service)
+        <span class="kw">let </span>cache = cli.run.cache;
+        service::new_full(config, sealing, da_config, cache).map_err(sc_cli::Error::Service)
     })
 }
 

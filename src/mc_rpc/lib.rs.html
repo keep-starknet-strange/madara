@@ -1010,6 +1010,46 @@
 <a href="#1010" id="1010">1010</a>
 <a href="#1011" id="1011">1011</a>
 <a href="#1012" id="1012">1012</a>
+<a href="#1013" id="1013">1013</a>
+<a href="#1014" id="1014">1014</a>
+<a href="#1015" id="1015">1015</a>
+<a href="#1016" id="1016">1016</a>
+<a href="#1017" id="1017">1017</a>
+<a href="#1018" id="1018">1018</a>
+<a href="#1019" id="1019">1019</a>
+<a href="#1020" id="1020">1020</a>
+<a href="#1021" id="1021">1021</a>
+<a href="#1022" id="1022">1022</a>
+<a href="#1023" id="1023">1023</a>
+<a href="#1024" id="1024">1024</a>
+<a href="#1025" id="1025">1025</a>
+<a href="#1026" id="1026">1026</a>
+<a href="#1027" id="1027">1027</a>
+<a href="#1028" id="1028">1028</a>
+<a href="#1029" id="1029">1029</a>
+<a href="#1030" id="1030">1030</a>
+<a href="#1031" id="1031">1031</a>
+<a href="#1032" id="1032">1032</a>
+<a href="#1033" id="1033">1033</a>
+<a href="#1034" id="1034">1034</a>
+<a href="#1035" id="1035">1035</a>
+<a href="#1036" id="1036">1036</a>
+<a href="#1037" id="1037">1037</a>
+<a href="#1038" id="1038">1038</a>
+<a href="#1039" id="1039">1039</a>
+<a href="#1040" id="1040">1040</a>
+<a href="#1041" id="1041">1041</a>
+<a href="#1042" id="1042">1042</a>
+<a href="#1043" id="1043">1043</a>
+<a href="#1044" id="1044">1044</a>
+<a href="#1045" id="1045">1045</a>
+<a href="#1046" id="1046">1046</a>
+<a href="#1047" id="1047">1047</a>
+<a href="#1048" id="1048">1048</a>
+<a href="#1049" id="1049">1049</a>
+<a href="#1050" id="1050">1050</a>
+<a href="#1051" id="1051">1051</a>
+<a href="#1052" id="1052">1052</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1168,6 +1208,18 @@
             .ok_or(<span class="string">&quot;Failed to retrieve the substrate block number&quot;</span>.to_string())<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(block.header().block_number)
+    }
+
+    <span class="doccomment">/// Returns a list of all transaction hashes in the given block.
+    ///
+    /// # Arguments
+    ///
+    /// * `block_hash` - The hash of the block containing the transactions (starknet block).
+    </span><span class="kw">fn </span>get_cached_transaction_hashes(<span class="kw-2">&amp;</span><span class="self">self</span>, block_hash: H256) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;H256&gt;&gt; {
+        <span class="self">self</span>.backend.mapping().cached_transaction_hashes_from_block_hash(block_hash).unwrap_or_else(|err| {
+            <span class="macro">error!</span>(<span class="string">&quot;{err}&quot;</span>);
+            <span class="prelude-val">None
+        </span>})
     }
 }
 
@@ -1413,13 +1465,21 @@
 
         <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
         <span class="kw">let </span>chain_id = <span class="self">self</span>.chain_id()<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>transactions =
-            block.transactions_hashes::&lt;H&gt;(Felt252Wrapper(chain_id.<span class="number">0</span>)).into_iter().map(FieldElement::from).collect();
         <span class="kw">let </span>blockhash = block.header().hash::&lt;H&gt;();
+
+        <span class="kw">let </span>transaction_hashes = <span class="kw">if let </span><span class="prelude-val">Some</span>(tx_hashes) = <span class="self">self</span>.get_cached_transaction_hashes(blockhash.into()) {
+            <span class="kw">let </span><span class="kw-2">mut </span>v = Vec::with_capacity(tx_hashes.len());
+            <span class="kw">for </span>tx_hash <span class="kw">in </span>tx_hashes {
+                v.push(h256_to_felt(tx_hash)<span class="question-mark">?</span>);
+            }
+            v
+        } <span class="kw">else </span>{
+            block.transactions_hashes::&lt;H&gt;(chain_id.<span class="number">0</span>.into()).map(FieldElement::from).collect()
+        };
+
         <span class="kw">let </span>parent_blockhash = block.header().parent_block_hash;
         <span class="kw">let </span>block_with_tx_hashes = BlockWithTxHashes {
-            transactions,
+            transactions: transaction_hashes,
             <span class="comment">// TODO: Status hardcoded, get status from block
             </span>status: BlockStatus::AcceptedOnL2,
             block_hash: blockhash.into(),
@@ -1646,7 +1706,12 @@
         <span class="kw">let </span>transaction = block.transactions().get(index <span class="kw">as </span>usize).ok_or(StarknetRpcApiError::InvalidTxnIndex)<span class="question-mark">?</span>;
         <span class="kw">let </span>chain_id = <span class="self">self</span>.chain_id()<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(to_starknet_core_tx::&lt;H&gt;(transaction.clone(), Felt252Wrapper(chain_id.<span class="number">0</span>)))
+        <span class="kw">let </span>transaction_hash = <span class="self">self
+            </span>.get_cached_transaction_hashes(block.header().hash::&lt;H&gt;().into())
+            .map(|tx_hashes| h256_to_felt(<span class="kw-2">*</span>tx_hashes.get(index <span class="kw">as </span>usize).ok_or(StarknetRpcApiError::InvalidTxnIndex)<span class="question-mark">?</span>))
+            .unwrap_or_else(|| <span class="prelude-val">Ok</span>(transaction.compute_hash::&lt;H&gt;(chain_id.<span class="number">0</span>.into(), <span class="bool-val">false</span>).<span class="number">0</span>))<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(to_starknet_core_tx::&lt;H&gt;(transaction.clone(), transaction_hash))
     }
 
     <span class="doccomment">/// Get block information with full transactions given the block id
@@ -1661,6 +1726,16 @@
         <span class="kw">let </span>chain_id = <span class="self">self</span>.chain_id()<span class="question-mark">?</span>;
         <span class="kw">let </span>chain_id = Felt252Wrapper(chain_id.<span class="number">0</span>);
 
+        <span class="kw">let </span>transaction_hashes = <span class="self">self</span>.get_cached_transaction_hashes(block.header().hash::&lt;H&gt;().into());
+        <span class="kw">let </span><span class="kw-2">mut </span>transactions = Vec::with_capacity(block.transactions().len());
+        <span class="kw">for </span>(index, tx) <span class="kw">in </span>block.transactions().iter().enumerate() {
+            <span class="kw">let </span>hash = transaction_hashes
+                .as_ref()
+                .map(|tx_hashes| h256_to_felt(<span class="kw-2">*</span>tx_hashes.get(index).ok_or(StarknetRpcApiError::InternalServerError)<span class="question-mark">?</span>))
+                .unwrap_or_else(|| <span class="prelude-val">Ok</span>(tx.compute_hash::&lt;H&gt;(chain_id.<span class="number">0</span>.into(), <span class="bool-val">false</span>).<span class="number">0</span>))<span class="question-mark">?</span>;
+            transactions.push(to_starknet_core_tx::&lt;H&gt;(tx.clone(), hash));
+        }
+
         <span class="kw">let </span>block_with_txs = BlockWithTxs {
             <span class="comment">// TODO: Get status from block
             </span>status: BlockStatus::AcceptedOnL2,
@@ -1670,12 +1745,7 @@
             new_root: block.header().global_state_root.into(),
             timestamp: block.header().block_timestamp,
             sequencer_address: Felt252Wrapper::from(block.header().sequencer_address).into(),
-            transactions: block
-                .transactions()
-                .iter()
-                .cloned()
-                .map(|tx| to_starknet_core_tx::&lt;H&gt;(tx, Felt252Wrapper(chain_id.<span class="number">0</span>)))
-                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
+            transactions,
         };
 
         <span class="prelude-val">Ok</span>(MaybePendingBlockWithTxs::Block(block_with_txs))
@@ -1743,7 +1813,7 @@
         })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>chain_id = <span class="self">self</span>.chain_id()<span class="question-mark">?</span>;
-        <span class="kw">let </span>transactions = transactions.into_iter().map(|tx| to_starknet_core_tx::&lt;H&gt;(tx, chain_id.<span class="number">0</span>.into())).collect();
+        <span class="kw">let </span>transactions = transactions.into_iter().map(|tx| to_starknet_core_tx::&lt;H&gt;(tx, chain_id.<span class="number">0</span>)).collect();
 
         <span class="prelude-val">Ok</span>(transactions)
     }
@@ -1831,7 +1901,7 @@
             .transactions()
             .iter()
             .find(|tx| tx.compute_hash::&lt;H&gt;(chain_id, <span class="bool-val">false</span>).<span class="number">0 </span>== transaction_hash)
-            .map(|tx| to_starknet_core_tx::&lt;H&gt;(tx.clone(), chain_id));
+            .map(|tx| to_starknet_core_tx::&lt;H&gt;(tx.clone(), transaction_hash));
 
         find_tx.ok_or(StarknetRpcApiError::TxnHashNotFound.into())
     }
@@ -2020,6 +2090,16 @@
             <span class="prelude-val">Ok</span>(starknet_error) =&gt; <span class="prelude-val">Err</span>(starknet_error.into()),
             <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(StarknetRpcApiError::InternalServerError),
         },
+    }
+}
+
+<span class="kw">fn </span>h256_to_felt(h256: H256) -&gt; <span class="prelude-ty">Result</span>&lt;FieldElement, StarknetRpcApiError&gt; {
+    <span class="kw">match </span>Felt252Wrapper::try_from(h256) {
+        <span class="prelude-val">Ok</span>(felt) =&gt; <span class="prelude-val">Ok</span>(felt.<span class="number">0</span>),
+        <span class="prelude-val">Err</span>(err) =&gt; {
+            <span class="macro">error!</span>(<span class="string">&quot;failed to convert H256 to FieldElement: {err}&quot;</span>);
+            <span class="prelude-val">Err</span>(StarknetRpcApiError::InternalServerError)
+        }
     }
 }
 </code></pre></div></section></main></body></html>

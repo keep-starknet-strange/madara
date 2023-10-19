@@ -135,7 +135,6 @@
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
 <a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A worker syncing the Madara db
 //!
 //! # Role
@@ -193,7 +192,6 @@
         frontier_backend: Arc&lt;mc_db::Backend&lt;B&gt;&gt;,
         retry_times: usize,
         sync_from: &lt;B::Header <span class="kw">as </span>HeaderT&gt;::Number,
-        hasher: PhantomData&lt;H&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             import_notifications,
@@ -203,7 +201,7 @@
             client,
             substrate_backend,
             madara_backend: frontier_backend,
-            hasher,
+            hasher: PhantomData,
 
             have_next: <span class="bool-val">true</span>,
             retry_times,
