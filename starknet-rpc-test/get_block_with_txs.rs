@@ -1,10 +1,16 @@
 #![feature(assert_matches)]
 
-extern crate starknet_rpc_test;
-
 use std::assert_matches::assert_matches;
 
 use anyhow::anyhow;
+use madara_node_runner::constants::{
+    ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE, SIGNER_PRIVATE,
+};
+use madara_node_runner::fixtures::madara;
+use madara_node_runner::utils::{
+    assert_equal_blocks_with_txs, build_deploy_account_tx, build_oz_account_factory, create_account, AccountActions,
+};
+use madara_node_runner::{MadaraClient, Transaction};
 use rstest::rstest;
 use starknet_core::types::{
     BlockId, BlockStatus, BlockTag, BlockWithTxs, DeclareTransaction, DeclareTransactionV2, DeployAccountTransaction,
@@ -14,14 +20,9 @@ use starknet_core::types::{
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
-use starknet_rpc_test::constants::{
-    ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE, SIGNER_PRIVATE,
-};
-use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::utils::{
-    assert_equal_blocks_with_txs, build_deploy_account_tx, build_oz_account_factory, create_account, AccountActions,
-};
-use starknet_rpc_test::{MadaraClient, Transaction};
+
+const COUNTER_SIERRA_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/contracts/Counter.sierra.json");
+const COUNTER_CASM_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/contracts/Counter.casm.json");
 
 #[rstest]
 #[tokio::test]
@@ -219,7 +220,7 @@ async fn works_with_declare_txn(#[future] madara: MadaraClient) -> Result<(), an
 
     let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let (declare_tx, class_hash, compiled_class_hash) =
-        account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
+        account.declare_contract(COUNTER_SIERRA_PATH, COUNTER_CASM_PATH);
 
     // manually setting fee else estimate_fee will be called and it will fail
     // as the nonce has not been updated yet

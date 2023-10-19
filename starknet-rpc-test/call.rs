@@ -1,9 +1,11 @@
 #![feature(assert_matches)]
 
-extern crate starknet_rpc_test;
-
 use std::assert_matches::assert_matches;
 
+use madara_node_runner::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
+use madara_node_runner::fixtures::madara;
+use madara_node_runner::utils::{create_account, AccountActions};
+use madara_node_runner::{MadaraClient, Transaction};
 use rstest::rstest;
 use starknet_accounts::{Account, Execution};
 use starknet_contract::ContractFactory;
@@ -11,10 +13,9 @@ use starknet_core::types::{BlockId, BlockTag, FunctionCall, StarknetError};
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
-use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
-use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::utils::{create_account, AccountActions};
-use starknet_rpc_test::{MadaraClient, Transaction};
+
+const COUNTER_SIERRA_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/contracts/Counter.sierra.json");
+const COUNTER_CASM_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/contracts/Counter.casm.json");
 
 #[rstest]
 #[tokio::test]
@@ -159,8 +160,7 @@ async fn works_on_mutable_call_without_modifying_storage(#[future] madara: Madar
     madara.create_empty_block().await?;
     let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
 
-    let (declare_tx, class_hash, _) =
-        account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
+    let (declare_tx, class_hash, _) = account.declare_contract(COUNTER_SIERRA_PATH, COUNTER_CASM_PATH);
     let contract_factory = ContractFactory::new(class_hash, account.clone());
 
     // manually setting fee else estimate_fee will be called and it will fail

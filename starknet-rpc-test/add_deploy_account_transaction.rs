@@ -1,16 +1,14 @@
-extern crate starknet_rpc_test;
-
 use std::vec;
 
+use madara_node_runner::constants::{ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, SIGNER_PRIVATE};
+use madara_node_runner::fixtures::madara;
+use madara_node_runner::utils::{build_deploy_account_tx, build_oz_account_factory, create_account, AccountActions};
+use madara_node_runner::{MadaraClient, Transaction, TransactionResult};
 use rstest::rstest;
 use starknet_accounts::AccountFactory;
 use starknet_core::types::{BlockId, BlockTag, DeployAccountTransactionResult};
 use starknet_ff::FieldElement;
 use starknet_providers::Provider;
-use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, SIGNER_PRIVATE};
-use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::utils::{build_deploy_account_tx, build_oz_account_factory, create_account, AccountActions};
-use starknet_rpc_test::{MadaraClient, Transaction, TransactionResult};
 
 #[rstest]
 #[tokio::test]

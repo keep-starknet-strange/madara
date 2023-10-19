@@ -1,9 +1,11 @@
 #![feature(assert_matches)]
 
 use std::cell::Cell;
+use std::env;
 use std::fmt::Debug;
+use std::fs::{create_dir_all, File};
 use std::net::TcpListener;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 
 use anyhow::anyhow;
@@ -115,6 +117,11 @@ pub enum ExecutionStrategy {
     Wasm,
 }
 
+#[derive(Display, Clone)]
+pub enum Settlement {
+    Ethereum,
+}
+
 #[derive(Error, Debug)]
 pub enum TestError {
     #[error("No free ports")]
@@ -141,7 +148,11 @@ fn get_free_port() -> Result<u16, TestError> {
 }
 
 impl MadaraClient {
-    async fn init(execution: ExecutionStrategy) -> Result<Self, TestError> {
+    async fn init(
+        execution: ExecutionStrategy,
+        settlement: Option<Settlement>,
+        madara_path: Option<PathBuf>,
+    ) -> Result<Self, TestError> {
         let free_port = get_free_port()?;
 
         let manifest_path = Path::new(&env!("CARGO_MANIFEST_DIR"));
@@ -149,23 +160,55 @@ impl MadaraClient {
 
         std::env::set_current_dir(repository_root).expect("Failed to change working directory");
 
+        let settlement_arg = match settlement.clone() {
+            Some(arg) => format!("--settlement={arg}"),
+            None => String::new(),
+        };
+
+        let madara_path_arg = match madara_path.clone() {
+            Some(arg) => format!("--madara-path={}", arg.display()),
+            None => String::new(),
+        };
+
+        let execution_arg = format!("--execution={execution}");
+        let free_port_arg = format!("--rpc-port={free_port}");
+
+        let mut args = vec![
+            "run",
+            "--release",
+            "--",
+            "--alice",
+            "--sealing=manual",
+            &execution_arg,
+            "--chain=dev",
+            "--tmp",
+            &free_port_arg,
+        ];
+
+        if settlement.is_some() {
+            args.push(&settlement_arg);
+        }
+        if madara_path.is_some() {
+            args.push(&madara_path_arg);
+        }
+
+        let (stdout, stderr) = if env::var("MADARA_LOG").is_ok() {
+            let logs_dir = Path::join(repository_root, Path::new("target/madara-log"));
+            create_dir_all(logs_dir.clone()).expect("Failed to create logs dir");
+            (
+                Stdio::from(File::create(Path::join(&logs_dir, Path::new("madara-stdout-log.txt"))).unwrap()),
+                Stdio::from(File::create(Path::join(&logs_dir, Path::new("madara-stderr-log.txt"))).unwrap()),
+            )
+        } else {
+            (Stdio::null(), Stdio::null())
+        };
+
         let child_handle = Command::new("cargo")
-		// Silence Madara stdout and stderr
-		.stdout(Stdio::null())
-		.stderr(Stdio::null())
-		.args([
-			"run",
-			"--release",
-			"--",
-			"--alice",
-			"--sealing=manual",
-			&format!("--execution={execution}"),
-			"--chain=dev",
-			"--tmp",
-			&format!("--rpc-port={free_port}")
-			])
-			.spawn()
-			.expect("Could not start background madara node");
+            .stdout(stdout)
+            .stderr(stderr)
+            .args(args)
+            .spawn()
+            .expect("Could not start background madara node");
 
         let host = &format!("http://localhost:{free_port}");
 
@@ -180,14 +223,23 @@ impl MadaraClient {
         })
     }
 
-    pub async fn new(execution: ExecutionStrategy) -> Self {
+    pub async fn new(
+        execution: ExecutionStrategy,
+        settlement: Option<Settlement>,
+        madara_path: Option<PathBuf>,
+    ) -> Self {
         // we keep the reference, otherwise the mutex unlocks immediately
         let _mutex_guard = FREE_PORT_ATTRIBUTION_MUTEX.lock().await;
 
-        let madara = Self::init(execution).await.expect("Couldn't start Madara Node");
+        let mut madara = Self::init(execution, settlement, madara_path).await.expect("Couldn't start Madara Node");
 
         // Wait until node is ready
         loop {
+            // Check if there are no build / launch issues
+            if let Some(status) = madara.process.try_wait().expect("Failed to check Madara exit status") {
+                panic!("Madara exited early with {}", status)
+            }
+
             match madara.health().await {
                 Ok(is_ready) if is_ready => break,
                 _ => {}

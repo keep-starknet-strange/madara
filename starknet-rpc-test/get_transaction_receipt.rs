@@ -1,8 +1,16 @@
-extern crate starknet_rpc_test;
-
 use std::vec;
 
 use assert_matches::assert_matches;
+use madara_node_runner::constants::{
+    ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, FEE_TOKEN_ADDRESS, SEQUENCER_ADDRESS, SIGNER_PRIVATE,
+    UDC_ADDRESS,
+};
+use madara_node_runner::fixtures::madara;
+use madara_node_runner::utils::{
+    assert_eq_event, assert_eq_msg_to_l1, assert_poll, build_deploy_account_tx, build_oz_account_factory,
+    create_account, AccountActions,
+};
+use madara_node_runner::{MadaraClient, Transaction, TransactionResult};
 use rstest::rstest;
 use starknet_accounts::Account;
 use starknet_core::types::{
@@ -13,16 +21,9 @@ use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::jsonrpc::{HttpTransport, HttpTransportError, JsonRpcClientError};
 use starknet_providers::{JsonRpcClient, Provider, ProviderError};
-use starknet_rpc_test::constants::{
-    ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, FEE_TOKEN_ADDRESS, SEQUENCER_ADDRESS, SIGNER_PRIVATE,
-    UDC_ADDRESS,
-};
-use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::utils::{
-    assert_eq_event, assert_eq_msg_to_l1, assert_poll, build_deploy_account_tx, build_oz_account_factory,
-    create_account, AccountActions,
-};
-use starknet_rpc_test::{MadaraClient, Transaction, TransactionResult};
+
+const COUNTER_SIERRA_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/contracts/Counter.sierra.json");
+const COUNTER_CASM_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/contracts/Counter.casm.json");
 
 type TransactionReceiptResult =
     Result<MaybePendingTransactionReceipt, ProviderError<JsonRpcClientError<HttpTransportError>>>;
@@ -124,8 +125,7 @@ async fn work_with_declare_transaction(#[future] madara: MadaraClient) -> Result
     let rpc = madara.get_starknet_client();
 
     let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
-    let (declare_tx, _, _) =
-        account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
+    let (declare_tx, _, _) = account.declare_contract(COUNTER_SIERRA_PATH, COUNTER_CASM_PATH);
 
     let mut txs = madara.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
 
@@ -278,7 +278,8 @@ async fn work_with_messages_to_l1(#[future] madara: MadaraClient) -> Result<(), 
     // 1. Declaring class for our L2 > L1 contract
 
     let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
-    let (declare_tx, _) = account.declare_legacy_contract("../cairo-contracts/build/send_message.json");
+    let (declare_tx, _) = account
+        .declare_legacy_contract(concat!(env!("CARGO_MANIFEST_DIR"), "/../cairo-contracts/build/send_message.json"));
 
     let mut txs = madara.create_block_with_txs(vec![Transaction::LegacyDeclaration(declare_tx)]).await?;
 

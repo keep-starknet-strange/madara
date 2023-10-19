@@ -1,9 +1,10 @@
-extern crate starknet_rpc_test;
-
 use std::io::Read;
 
 use assert_matches::assert_matches;
 use flate2::read::GzDecoder;
+use madara_node_runner::constants::{CAIRO_1_ACCOUNT_CONTRACT, TEST_CONTRACT_ADDRESS};
+use madara_node_runner::fixtures::madara;
+use madara_node_runner::MadaraClient;
 use rstest::rstest;
 use starknet_core::types::contract::legacy::{LegacyContractClass, LegacyProgram};
 use starknet_core::types::contract::SierraClass;
@@ -11,9 +12,6 @@ use starknet_core::types::{BlockId, ContractClass, FlattenedSierraClass, Starkne
 use starknet_ff::FieldElement;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
-use starknet_rpc_test::constants::{CAIRO_1_ACCOUNT_CONTRACT, TEST_CONTRACT_ADDRESS};
-use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::MadaraClient;
 
 #[rstest]
 #[tokio::test]

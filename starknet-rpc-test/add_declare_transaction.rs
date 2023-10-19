@@ -1,17 +1,18 @@
-extern crate starknet_rpc_test;
-
 use std::vec;
 
 use assert_matches::assert_matches;
+use madara_node_runner::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
+use madara_node_runner::fixtures::madara;
+use madara_node_runner::utils::{create_account, read_erc20_balance, AccountActions, U256};
+use madara_node_runner::{MadaraClient, SendTransactionError, Transaction, TransactionResult};
 use rstest::rstest;
 use starknet_accounts::Account;
 use starknet_core::types::{BlockId, BlockTag, DeclareTransactionResult, StarknetError};
 use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
-use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
-use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::utils::{create_account, read_erc20_balance, AccountActions, U256};
-use starknet_rpc_test::{MadaraClient, SendTransactionError, Transaction, TransactionResult};
+
+const COUNTER_SIERRA_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/contracts/Counter.sierra.json");
+const COUNTER_CASM_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/contracts/Counter.casm.json");
 
 #[rstest]
 #[tokio::test]
@@ -21,8 +22,7 @@ async fn fail_validation_step(#[future] madara: MadaraClient) -> Result<(), anyh
 
     // using incorrect private key to generate the wrong signature
     let account = create_account(rpc, "0x1234", ARGENT_CONTRACT_ADDRESS, true);
-    let (declare_tx, _, _) =
-        account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
+    let (declare_tx, _, _) = account.declare_contract(COUNTER_SIERRA_PATH, COUNTER_CASM_PATH);
 
     let txs = madara.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
     assert_eq!(txs.len(), 1);
@@ -48,8 +48,7 @@ async fn fail_execution_step_with_no_storage_change(#[future] madara: MadaraClie
     let rpc = madara.get_starknet_client();
 
     let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
-    let (declare_tx, expected_class_hash, _) =
-        account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
+    let (declare_tx, expected_class_hash, _) = account.declare_contract(COUNTER_SIERRA_PATH, COUNTER_CASM_PATH);
 
     // draining account so the txn fails during execution
     let balance =
@@ -85,8 +84,7 @@ async fn works_with_storage_change(#[future] madara: MadaraClient) -> Result<(),
     let rpc = madara.get_starknet_client();
 
     let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
-    let (declare_tx, expected_class_hash, _) =
-        account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
+    let (declare_tx, expected_class_hash, _) = account.declare_contract(COUNTER_SIERRA_PATH, COUNTER_CASM_PATH);
 
     let mut txs = madara.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
 
@@ -121,8 +119,7 @@ async fn fails_already_declared(#[future] madara: MadaraClient) -> Result<(), an
 
     // first declaration works
     let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
-    let (declare_tx, _, _) =
-        account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
+    let (declare_tx, _, _) = account.declare_contract(COUNTER_SIERRA_PATH, COUNTER_CASM_PATH);
 
     let txs = madara.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
 
@@ -130,8 +127,7 @@ async fn fails_already_declared(#[future] madara: MadaraClient) -> Result<(), an
     assert!(txs[0].as_ref().is_ok());
 
     // second declaration fails
-    let (declare_tx, _, _) =
-        account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
+    let (declare_tx, _, _) = account.declare_contract(COUNTER_SIERRA_PATH, COUNTER_CASM_PATH);
 
     let mut txs = madara.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
     assert_eq!(txs.len(), 1);

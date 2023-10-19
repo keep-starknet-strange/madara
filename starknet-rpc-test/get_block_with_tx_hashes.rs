@@ -1,20 +1,18 @@
 #![feature(assert_matches)]
 
-extern crate starknet_rpc_test;
-
 use std::assert_matches::assert_matches;
 
 use anyhow::anyhow;
+use madara_node_runner::constants::{ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE};
+use madara_node_runner::fixtures::madara;
+use madara_node_runner::utils::{assert_equal_blocks_with_tx_hashes, create_account, AccountActions};
+use madara_node_runner::{MadaraClient, Transaction};
 use rstest::rstest;
 use starknet_core::types::{
     BlockId, BlockStatus, BlockTag, BlockWithTxHashes, MaybePendingBlockWithTxHashes, StarknetError,
 };
 use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
-use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE};
-use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::utils::{assert_equal_blocks_with_tx_hashes, create_account, AccountActions};
-use starknet_rpc_test::{MadaraClient, Transaction};
 
 #[rstest]
 #[tokio::test]

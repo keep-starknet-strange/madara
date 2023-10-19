@@ -12,6 +12,21 @@ pub const SN_GOERLI_CHAIN_ID: Felt252Wrapper = Felt252Wrapper(starknet_ff::Field
     398700013197595345,
 ]));
 
+/// ProgramHash for Starknet OS program
+///
+/// How to calculate:
+///     1. Get Starknet OS program sources (e.g. check keep-starknet-strange/snos)
+///     2. Install Cairo-lang and run `cairo-hash-program --program <cairo-output>.json`
+///     3. Install Starqli and run `starqli mont <program hash>`
+///
+/// Hex value: 0x41fc2a467ef8649580631912517edcab7674173f1dbfa2e9b64fbcd82bc4d79
+pub const SN_OS_PROGRAM_HASH: Felt252Wrapper = Felt252Wrapper(starknet_ff::FieldElement::from_mont([
+    6431315658044554931,
+    6518314672963632076,
+    7993178465604693533,
+    95212460539797968,
+]));
+
 // Configure a mock runtime to test the pallet.
 macro_rules! mock_runtime {
     ($mock_runtime:ident, $disable_transaction_fee:expr, $disable_nonce_validation: expr) => {
@@ -89,6 +104,7 @@ macro_rules! mock_runtime {
 				pub const ProtocolVersion: u8 = 0;
                 pub const ChainId: Felt252Wrapper = crate::tests::mock::SN_GOERLI_CHAIN_ID;
                 pub const MaxRecursionDepth: u32 = 50;
+				pub const ProgramHash: Felt252Wrapper = crate::tests::mock::SN_OS_PROGRAM_HASH;
             }
 
 			impl pallet_starknet::Config for MockRuntime {
@@ -104,6 +120,7 @@ macro_rules! mock_runtime {
 				type ProtocolVersion = ProtocolVersion;
                 type ChainId = ChainId;
                 type MaxRecursionDepth = MaxRecursionDepth;
+				type ProgramHash = ProgramHash;
 			}
 
 			/// Run to block n.

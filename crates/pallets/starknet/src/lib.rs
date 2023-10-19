@@ -171,6 +171,8 @@ pub mod pallet {
         type ChainId: Get<Felt252Wrapper>;
         #[pallet::constant]
         type MaxRecursionDepth: Get<u32>;
+        #[pallet::constant]
+        type ProgramHash: Get<Felt252Wrapper>;
     }
 
     /// The Starknet pallet hooks.
@@ -1182,5 +1184,9 @@ impl<T: Config> Pallet<T> {
 
     pub fn chain_id() -> Felt252Wrapper {
         T::ChainId::get()
+    }
+
+    pub fn program_hash() -> Felt252Wrapper {
+        T::ProgramHash::get()
     }
 }

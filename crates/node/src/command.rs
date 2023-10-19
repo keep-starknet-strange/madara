@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use madara_runtime::Block;
 use mc_data_availability::DaLayer;
+use mc_settlement::SettlementLayer;
 use pallet_starknet::utils;
 use sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
 
@@ -292,9 +293,24 @@ pub fn run() -> sc_cli::Result<()> {
                 }
             };
 
+            let settlement_config: Option<(SettlementLayer, PathBuf)> = match cli.run.settlement {
+                Some(SettlementLayer::Ethereum) => {
+                    let config_path = std::path::PathBuf::from(madara_path.clone() + "/eth-config.json");
+                    if !config_path.exists() {
+                        log::info!("{} does not contain Ethereum config", madara_path);
+                        return Err("Ethereum config not available".into());
+                    }
+                    Some((SettlementLayer::Ethereum, config_path))
+                }
+                None => {
+                    log::info!("Madara initialized w/o settlement layer");
+                    None
+                }
+            };
+
             let runner = cli.create_runner(&cli.run.run_cmd)?;
             runner.run_node_until_exit(|config| async move {
-                service::new_full(config, cli.sealing, da_config).map_err(sc_cli::Error::Service)
+                service::new_full(config, cli.sealing, da_config, settlement_config).map_err(sc_cli::Error::Service)
             })
         }
     }

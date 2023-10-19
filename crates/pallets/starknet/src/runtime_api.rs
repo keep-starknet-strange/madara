@@ -7,7 +7,6 @@
 
 use blockifier::execution::contract_class::ContractClass;
 use mp_felt::Felt252Wrapper;
-use mp_snos_output::{MessageL1ToL2, MessageL2ToL1};
 use mp_transactions::{Transaction, TxType, UserTransaction};
 use sp_api::BlockT;
 pub extern crate alloc;
@@ -63,8 +62,10 @@ sp_api::decl_runtime_apis! {
         fn get_tx_execution_outcome(tx_hash: TransactionHash) -> Option<Vec<u8>>;
         /// Return messages sent to L1 during tx execution
         fn get_tx_messages_to_l1(tx_hash: TransactionHash) -> Vec<MessageToL1>;
-        /// Return two lists of messages sent (to L1) and consumed (from L1) during this block
-        fn get_starknet_messages(block_extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper) -> (Vec<MessageL2ToL1>, Vec<MessageL1ToL2>);
+        /// Returns the Starknet OS Cairo program hash.
+        fn program_hash() -> Felt252Wrapper;
+        /// Returns the fee token address.
+        fn fee_token_address() -> ContractAddress;
     }
 
     pub trait ConvertTransactionRuntimeApi {

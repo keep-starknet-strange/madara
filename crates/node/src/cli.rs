@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use mc_data_availability::DaLayer;
+use mc_settlement::SettlementLayer;
 use sc_cli::RunCmd;
 
 /// Available Sealing methods.
@@ -51,6 +52,9 @@ pub struct ExtendedRunCmd {
 
     #[clap(long)]
     pub da_layer: Option<DaLayer>,
+
+    #[clap(long, ignore_case = true)]
+    pub settlement: Option<SettlementLayer>,
 }
 
 #[allow(clippy::large_enum_variant)]

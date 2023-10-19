@@ -163,14 +163,8 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
         path_to_sierra: &str,
         path_to_casm: &str,
     ) -> (TransactionDeclaration, FieldElement, FieldElement) {
-        let sierra: SierraClass = serde_json::from_reader(
-            std::fs::File::open(env!("CARGO_MANIFEST_DIR").to_owned() + "/" + path_to_sierra).unwrap(),
-        )
-        .unwrap();
-        let casm: CompiledClass = serde_json::from_reader(
-            std::fs::File::open(env!("CARGO_MANIFEST_DIR").to_owned() + "/" + path_to_casm).unwrap(),
-        )
-        .unwrap();
+        let sierra: SierraClass = serde_json::from_reader(std::fs::File::open(path_to_sierra).unwrap()).unwrap();
+        let casm: CompiledClass = serde_json::from_reader(std::fs::File::open(path_to_casm).unwrap()).unwrap();
         let compiled_class_hash = casm.class_hash().unwrap();
         (
             self.declare(sierra.clone().flatten().unwrap().into(), compiled_class_hash)
@@ -182,10 +176,8 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
     }
 
     fn declare_legacy_contract(&self, path_to_compiled_contract: &str) -> (TransactionLegacyDeclaration, FieldElement) {
-        let contract_artifact: LegacyContractClass = serde_json::from_reader(
-            std::fs::File::open(env!("CARGO_MANIFEST_DIR").to_owned() + "/" + path_to_compiled_contract).unwrap(),
-        )
-        .unwrap();
+        let contract_artifact: LegacyContractClass =
+            serde_json::from_reader(std::fs::File::open(path_to_compiled_contract).unwrap()).unwrap();
         (
             self.declare_legacy(Arc::new(contract_artifact.clone()))
 			 // starknet-rs calls estimateFee with incorrect version which throws an error

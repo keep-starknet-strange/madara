@@ -1,17 +1,15 @@
-extern crate starknet_rpc_test;
-
 use std::vec;
 
 use assert_matches::assert_matches;
+use madara_node_runner::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
+use madara_node_runner::fixtures::madara;
+use madara_node_runner::utils::{create_account, read_erc20_balance, AccountActions, U256};
+use madara_node_runner::{MadaraClient, SendTransactionError, Transaction, TransactionResult};
 use rstest::rstest;
 use starknet_accounts::Account;
 use starknet_core::types::{BlockId, BlockTag, InvokeTransactionResult, StarknetError};
 use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
-use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
-use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::utils::{create_account, read_erc20_balance, AccountActions, U256};
-use starknet_rpc_test::{MadaraClient, SendTransactionError, Transaction, TransactionResult};
 
 #[rstest]
 #[tokio::test]

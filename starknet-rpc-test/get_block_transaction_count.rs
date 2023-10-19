@@ -1,18 +1,16 @@
 #![feature(assert_matches)]
 
-extern crate starknet_rpc_test;
-
 use std::assert_matches::assert_matches;
 
+use madara_node_runner::constants::{ARGENT_CONTRACT_ADDRESS, MINT_AMOUNT, SIGNER_PRIVATE};
+use madara_node_runner::fixtures::madara;
+use madara_node_runner::utils::{create_account, AccountActions};
+use madara_node_runner::{MadaraClient, Transaction};
 use rstest::rstest;
 use starknet_accounts::Account;
 use starknet_core::types::{BlockId, BlockTag};
 use starknet_ff::FieldElement;
 use starknet_providers::{Provider, ProviderError};
-use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, MINT_AMOUNT, SIGNER_PRIVATE};
-use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::utils::{create_account, AccountActions};
-use starknet_rpc_test::{MadaraClient, Transaction};
 
 #[rstest]
 #[tokio::test]

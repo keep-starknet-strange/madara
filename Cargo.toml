@@ -20,9 +20,12 @@ members = [
   "crates/client/rpc-core",
   "crates/client/rpc",
   "crates/client/mapping-sync",
+  "crates/client/settlement",
   "crates/client/storage",
   "crates/client/transaction-pool",
   "starknet-rpc-test",
+  "starknet-e2e-test",
+  "madara-node-runner",
 ]
 
 [profile.release]
@@ -142,9 +145,13 @@ mc-rpc-core = { path = "crates/client/rpc-core" }
 mc-block-proposer = { path = "crates/client/block-proposer" }
 mc-transaction-pool = { path = "crates/client/transaction-pool" }
 mc-data-availability = { path = "crates/client/data-availability" }
+mc-settlement = { path = "crates/client/settlement" }
 
 # Madara runtime
 madara-runtime = { path = "crates/runtime" }
+
+# Madara node runner
+madara-node-runner = { path = "madara-node-runner" }
 
 # Starknet dependencies
 # Cairo Virtual Machine
@@ -205,3 +212,4 @@ indexmap = { git = "https://github.com/bluss/indexmap", rev = "ca5f848e10c31e80a
 num-traits = "0.2.16"
 num-bigint = "0.4.4"
 phf = { version = "0.11", default-features = false }
+ethers = "2.0.7"

@@ -13,7 +13,7 @@ use async_trait::async_trait;
 use ethers::types::{I256, U256};
 use futures::StreamExt;
 use sc_client_api::client::BlockchainEvents;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sp_api::ProvideRuntimeApi;
 use sp_runtime::traits::Block as BlockT;
 
@@ -31,7 +31,7 @@ pub enum DaLayer {
 /// Data availability modes in which Madara can be initialized.
 ///
 /// Default only mode currently implemented is Validium.
-#[derive(Debug, Copy, Clone, PartialEq, Deserialize, Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub enum DaMode {
     /// Full Validity Rollup
     ///

@@ -4,5 +4,5 @@ use crate::{ExecutionStrategy, MadaraClient};
 
 #[fixture]
 pub async fn madara() -> MadaraClient {
-    MadaraClient::new(ExecutionStrategy::Native).await
+    MadaraClient::new(ExecutionStrategy::Native, None, None).await
 }

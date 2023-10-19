@@ -1,6 +1,8 @@
-extern crate starknet_rpc_test;
-
 use assert_matches::assert_matches;
+use madara_node_runner::constants::{ARGENT_CONTRACT_ADDRESS, MINT_AMOUNT, SIGNER_PRIVATE, TEST_CONTRACT_CLASS_HASH};
+use madara_node_runner::fixtures::madara;
+use madara_node_runner::utils::{create_account, AccountActions};
+use madara_node_runner::{MadaraClient, Transaction as TransactionEnum};
 use rstest::rstest;
 use starknet_accounts::Account;
 use starknet_core::types::{
@@ -9,10 +11,6 @@ use starknet_core::types::{
 use starknet_ff::FieldElement;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
-use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, MINT_AMOUNT, SIGNER_PRIVATE, TEST_CONTRACT_CLASS_HASH};
-use starknet_rpc_test::fixtures::madara;
-use starknet_rpc_test::utils::{create_account, AccountActions};
-use starknet_rpc_test::{MadaraClient, Transaction as TransactionEnum};
 
 #[rstest]
 #[tokio::test]
