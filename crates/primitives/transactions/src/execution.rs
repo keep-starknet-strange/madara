@@ -225,7 +225,7 @@ pub trait Validate: GetAccountTransactionContext + GetTransactionCalldata {
         let mut context = EntryPointExecutionContext::new(
             block_context.clone(),
             account_tx_context,
-            block_context.invoke_tx_max_n_steps as usize,
+            block_context.invoke_tx_max_n_steps,
         );
 
         self.validate_tx_inner(state, resources, remaining_gas, &mut context, self.calldata())
@@ -416,7 +416,7 @@ impl Execute for InvokeTransaction {
         let mut context = EntryPointExecutionContext::new(
             block_context.clone(),
             account_tx_context.clone(),
-            block_context.invoke_tx_max_n_steps as usize,
+            block_context.invoke_tx_max_n_steps,
         );
 
         let validate_call_info = self.validate_tx_inner(
@@ -462,7 +462,7 @@ impl Execute for DeclareTransaction {
         let mut context = EntryPointExecutionContext::new(
             block_context.clone(),
             account_tx_context.clone(),
-            block_context.invoke_tx_max_n_steps as usize,
+            block_context.invoke_tx_max_n_steps,
         );
 
         let validate_call_info =
@@ -504,7 +504,7 @@ impl Execute for DeployAccountTransaction {
         let mut context = EntryPointExecutionContext::new(
             block_context.clone(),
             account_tx_context.clone(),
-            block_context.invoke_tx_max_n_steps as usize,
+            block_context.invoke_tx_max_n_steps,
         );
 
         // In order to be verified the tx must first be executed
@@ -529,7 +529,7 @@ impl Execute for L1HandlerTransaction {
         let mut context = EntryPointExecutionContext::new(
             block_context.clone(),
             account_tx_context.clone(),
-            block_context.invoke_tx_max_n_steps as usize,
+            block_context.invoke_tx_max_n_steps,
         );
 
         let execute_call_info = self.run_execute(state, resources, &mut context, remaining_gas)?;

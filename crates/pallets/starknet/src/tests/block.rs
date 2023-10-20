@@ -1,5 +1,4 @@
 use alloc::sync::Arc;
-use std::collections::HashMap;
 
 use frame_support::assert_ok;
 use mp_digest_log::{ensure_log, find_starknet_block};
@@ -110,7 +109,7 @@ fn get_block_context_works() {
             block_context.fee_token_address
         );
         // correct vm_resource_fee_cost
-        let vm_resoursce_fee_cost: Arc<HashMap<String, f64>> = Default::default();
+        let vm_resoursce_fee_cost: Arc<_> = Default::default();
         assert_eq!(vm_resoursce_fee_cost, block_context.vm_resource_fee_cost);
         // correct invoke_tx_max_n_steps: T::InvokeTxMaxNSteps::get(),
         assert_eq!(InvokeTxMaxNSteps::get(), block_context.invoke_tx_max_n_steps);
