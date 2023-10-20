@@ -143,6 +143,11 @@ impl<B: BlockT> MappingDb<B> {
     /// - The cache is disabled.
     /// - The provided `starknet_hash` is not present in the cache.
     pub fn cached_transaction_hashes_from_block_hash(&self, starknet_hash: H256) -> Result<Option<Vec<H256>>, String> {
+        if !self.cache_more_things {
+            // The cache is not enabled, no need to even touch the database.
+            return Ok(None);
+        }
+
         match self.db.get(crate::columns::STARKNET_TRANSACTION_HASHES_CACHE, &starknet_hash.encode()) {
             Some(raw) => Ok(Some(Vec::<H256>::decode(&mut &raw[..]).map_err(|e| format!("{:?}", e))?)),
             None => Ok(None),

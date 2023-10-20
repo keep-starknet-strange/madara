@@ -656,7 +656,7 @@ where
 
         let transaction_hash = self
             .get_cached_transaction_hashes(block.header().hash::<H>().into())
-            .map(|vec| h256_to_felt(*vec.get(index as usize).ok_or(StarknetRpcApiError::InvalidTxnIndex)?))
+            .map(|tx_hashes| h256_to_felt(*tx_hashes.get(index as usize).ok_or(StarknetRpcApiError::InvalidTxnIndex)?))
             .unwrap_or_else(|| Ok(transaction.compute_hash::<H>(chain_id.0.into(), false).0))?;
 
         Ok(to_starknet_core_tx::<H>(transaction.clone(), transaction_hash))
@@ -679,7 +679,7 @@ where
         for (index, tx) in block.transactions().iter().enumerate() {
             let hash = transaction_hashes
                 .as_ref()
-                .map(|vec| h256_to_felt(*vec.get(index).ok_or(StarknetRpcApiError::InternalServerError)?))
+                .map(|tx_hashes| h256_to_felt(*tx_hashes.get(index).ok_or(StarknetRpcApiError::InternalServerError)?))
                 .unwrap_or_else(|| Ok(tx.compute_hash::<H>(chain_id.0.into(), false).0))?;
             transactions.push(to_starknet_core_tx::<H>(tx.clone(), hash));
         }

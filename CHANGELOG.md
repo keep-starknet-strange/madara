@@ -2,6 +2,8 @@
 
 ## Next release
 
+- chore: update deps, vm ressource fee cost are now FixedU128, and stored in an
+  hashmap
 - ci: change jobs order in the workflow
 - ci: run integrations tests in the same runner as build
 - ci: replace ci cache with rust-cache
@@ -35,6 +37,8 @@
   method being used)
 - refactor(sealing): how the sealing mode is passed into runtime
 - feat(sealing): finalization for instant sealing
+- feat(cache-option): add an option to enable aggressive caching in the
+  command-line parameters
 
 ## v0.4.0
 

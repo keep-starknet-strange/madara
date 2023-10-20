@@ -671,7 +671,10 @@ pub mod pallet {
                     false,
                     T::DisableNonceValidation::get(),
                 )
-                .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+                .map_err(|e| {
+                    log::error!("Failed to consume l1 message: {}", e);
+                    Error::<T>::TransactionExecutionFailed
+                })?;
 
             let tx_hash = transaction.tx_hash;
             Self::emit_and_store_tx_and_fees_events(
@@ -883,7 +886,7 @@ impl<T: Config> Pallet<T> {
             invoke_tx_max_n_steps: T::InvokeTxMaxNSteps::get(),
             validate_max_n_steps: T::ValidateMaxNSteps::get(),
             gas_price,
-            max_recursion_depth: T::MaxRecursionDepth::get() as usize,
+            max_recursion_depth: T::MaxRecursionDepth::get(),
         }
     }
 
@@ -956,7 +959,7 @@ impl<T: Config> Pallet<T> {
         let max_n_steps = block_context.invoke_tx_max_n_steps;
         let mut resources = ExecutionResources::default();
         let mut entry_point_execution_context =
-            EntryPointExecutionContext::new(block_context, Default::default(), max_n_steps as usize);
+            EntryPointExecutionContext::new(block_context, Default::default(), max_n_steps);
 
         match entrypoint.execute(
             &mut BlockifierStateAdapter::<T>::default(),
