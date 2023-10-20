@@ -1,7 +1,6 @@
 use std::vec::Vec;
 
 use mp_felt::Felt252Wrapper;
-use mp_hashers::HasherT;
 use starknet_crypto::FieldElement;
 
 fn cast_vec_of_felt_252_wrappers(data: Vec<Felt252Wrapper>) -> Vec<FieldElement> {
@@ -11,7 +10,7 @@ fn cast_vec_of_felt_252_wrappers(data: Vec<Felt252Wrapper>) -> Vec<FieldElement>
     unsafe { alloc::vec::Vec::from_raw_parts(data.as_mut_ptr() as *mut FieldElement, data.len(), data.capacity()) }
 }
 
-pub fn to_starknet_core_tx<H: HasherT>(
+pub fn to_starknet_core_tx(
     tx: super::Transaction,
     transaction_hash: FieldElement,
 ) -> starknet_core::types::Transaction {
