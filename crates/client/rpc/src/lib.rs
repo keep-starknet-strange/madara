@@ -762,9 +762,13 @@ where
 
         let chain_id = self.chain_id()?;
 
-        // FIXME: passing the chain id instead of the transaction hash. This is simply incorrect.
-        let transactions = transactions.into_iter().map(|tx| to_starknet_core_tx(tx, chain_id.0)).collect();
-
+        let transactions = transactions
+            .into_iter()
+            .map(|tx| {
+                let hash = tx.compute_hash::<H>(chain_id.0.into(), false).into();
+                to_starknet_core_tx(tx, hash)
+            })
+            .collect();
         Ok(transactions)
     }
 
