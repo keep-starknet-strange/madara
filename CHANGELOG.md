@@ -37,8 +37,8 @@
   method being used)
 - refactor(sealing): how the sealing mode is passed into runtime
 - feat(sealing): finalization for instant sealing
-- feat(cache-option): add an option to enable aggressive caching in the
-  command-line parameters
+- feat(cache-option): add an option to enable aggressive caching in command-line
+  parameters
 
 ## v0.4.0
 
