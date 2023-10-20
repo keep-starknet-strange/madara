@@ -6,6 +6,8 @@ pub extern crate alloc;
 
 use alloc::vec;
 use alloc::vec::Vec;
+#[cfg(feature = "std")]
+use std::collections::HashMap;
 
 use blockifier::abi::constants::GAS_USAGE;
 use blockifier::block_context::BlockContext;
@@ -18,8 +20,11 @@ use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::{AccountTransactionContext, ResourcesMapping, TransactionExecutionResult};
 use blockifier::transaction::transaction_types::TransactionType;
 use blockifier::transaction::transaction_utils::{calculate_l1_gas_usage, calculate_tx_resources};
+#[cfg(not(feature = "std"))]
+use hashbrown::HashMap;
 use mp_state::{FeeConfig, StateChanges};
-use phf::phf_map;
+use sp_arithmetic::fixed_point::{FixedPointNumber, FixedU128};
+use sp_arithmetic::traits::Zero;
 use starknet_api::api_core::EntryPointSelector;
 use starknet_api::calldata;
 use starknet_api::deprecated_contract_class::EntryPointType;
@@ -33,15 +38,33 @@ pub const FEE_TRANSFER_N_STORAGE_CHANGES: u8 = 2; // Sender and sequencer balanc
 /// Number of storage updates to actually charge for the fee transfer tx.
 pub const FEE_TRANSFER_N_STORAGE_CHANGES_TO_CHARGE: u8 = FEE_TRANSFER_N_STORAGE_CHANGES - 1; // Exclude the sequencer balance update, since it's charged once throughout the batch.
 
-static VM_RESOURCE_FEE_COSTS: phf::Map<&'static str, f64> = phf_map! {
-    "n_steps" => 0.01_f64,
-    "pedersen_builtin" => 0.32_f64,
-    "range_check_builtin" => 0.16_f64,
-    "ecdsa_builtin" => 20.48_f64,
-    "bitwise_builtin" => 0.64_f64,
-    "poseidon_builtin" => 0.32_f64,
-    "ec_op_builtin" => 10.24_f64,
-};
+pub static VM_RESOURCE_FEE_COSTS: [(&'static str, FixedU128); 7] = [
+    ("n_steps", FixedU128::from_inner(10_000_000_000_000_000)),
+    ("pedersen_builtin", FixedU128::from_inner(32_000_000_000_000_000)),
+    ("range_check_builtin", FixedU128::from_inner(16_000_000_000_000_000)),
+    ("ecdsa_builtin", FixedU128::from_inner(20_480_000_000_000_000_000)),
+    ("bitwise_builtin", FixedU128::from_inner(640_000_000_000_000_000)),
+    ("poseidon_builtin", FixedU128::from_inner(320_000_000_000_000_000)),
+    ("ec_op_builtin", FixedU128::from_inner(10_240_000_000_000_000_000)),
+];
+
+#[cfg(test)]
+mod vm_resource_fee_costs {
+    use super::{FixedU128, HashMap, VM_RESOURCE_FEE_COSTS};
+
+    #[test]
+    fn check_values_as_floats() {
+        let hm = HashMap::from(VM_RESOURCE_FEE_COSTS);
+
+        assert_eq!(hm.get("n_steps"), Some(FixedU128::from_float(0.01)).as_ref());
+        assert_eq!(hm.get("pedersen_builtin"), Some(FixedU128::from_float(0.032)).as_ref());
+        assert_eq!(hm.get("range_check_builtin"), Some(FixedU128::from_float(0.016)).as_ref());
+        assert_eq!(hm.get("ecdsa_builtin"), Some(FixedU128::from_float(20.48)).as_ref());
+        assert_eq!(hm.get("bitwise_builtin"), Some(FixedU128::from_float(0.64)).as_ref());
+        assert_eq!(hm.get("poseidon_builtin"), Some(FixedU128::from_float(0.32)).as_ref());
+        assert_eq!(hm.get("ec_op_builtin"), Some(FixedU128::from_float(10.24)).as_ref());
+    }
+}
 
 /// Gets the transaction resources.
 pub fn compute_transaction_resources<S: State + StateChanges>(
@@ -137,7 +160,7 @@ fn execute_fee_transfer(
     };
 
     let max_steps = block_context.invoke_tx_max_n_steps;
-    let mut context = EntryPointExecutionContext::new(block_context.clone(), account_tx_context, max_steps as usize);
+    let mut context = EntryPointExecutionContext::new(block_context.clone(), account_tx_context, max_steps);
 
     Ok(fee_transfer_call.execute(state, &mut ExecutionResources::default(), &mut context)?)
 }
@@ -146,14 +169,16 @@ fn execute_fee_transfer(
 pub fn calculate_tx_fee(resources: &ResourcesMapping, block_context: &BlockContext) -> TransactionExecutionResult<Fee> {
     let (l1_gas_usage, vm_resources) = extract_l1_gas_and_vm_usage(resources);
     let l1_gas_by_vm_usage = calculate_l1_gas_by_vm_usage(block_context, &vm_resources)?;
-    let total_l1_gas_usage = l1_gas_usage as f64 + l1_gas_by_vm_usage;
-    // Ceil is in the std lib so we can't use it sadly.
-    let total_l1_gas_usage = if total_l1_gas_usage - total_l1_gas_usage as u128 as f64 > 0.0 {
-        total_l1_gas_usage as u128 + 1
-    } else {
-        total_l1_gas_usage as u128
-    };
-    Ok(Fee(total_l1_gas_usage * block_context.gas_price))
+
+    let total_l1_gas_usage = FixedU128::checked_from_integer(l1_gas_usage as u128)
+        .ok_or(TransactionExecutionError::FixedPointConversion)?
+        + l1_gas_by_vm_usage;
+    let tx_fee = total_l1_gas_usage
+        .ceil()
+        .checked_mul_int(block_context.gas_price)
+        .ok_or(TransactionExecutionError::FixedPointConversion)?;
+
+    Ok(Fee(tx_fee))
 }
 
 /// Computes the fees for l1 gas usage and the vm usage from the execution resources.
@@ -180,18 +205,24 @@ pub fn extract_l1_gas_and_vm_usage(resources: &ResourcesMapping) -> (usize, Reso
 pub fn calculate_l1_gas_by_vm_usage(
     _block_context: &BlockContext,
     vm_resource_usage: &ResourcesMapping,
-) -> TransactionExecutionResult<f64> {
+) -> TransactionExecutionResult<FixedU128> {
+    let vm_resource_fee_costs: HashMap<&str, FixedU128> = HashMap::from(VM_RESOURCE_FEE_COSTS);
     // Check if keys in vm_resource_usage are a subset of keys in VM_RESOURCE_FEE_COSTS
-    if vm_resource_usage.0.keys().any(|key| !VM_RESOURCE_FEE_COSTS.contains_key(key.as_str())) {
+    if vm_resource_usage.0.keys().any(|key| !vm_resource_fee_costs.contains_key(key.as_str())) {
         return Err(TransactionExecutionError::CairoResourcesNotContainedInFeeCosts);
     };
 
     // Convert Cairo usage to L1 gas usage.
-    let vm_l1_gas_usage: f64 = vm_resource_usage
+    let vm_l1_gas_usage = vm_resource_usage
         .0
         .iter()
-        .map(|(key, &value)| VM_RESOURCE_FEE_COSTS.get(key.as_str()).unwrap() * value as f64)
-        .fold(f64::NAN, f64::max);
+        .map(|(key, &value)| {
+            let value = <FixedU128 as FixedPointNumber>::checked_from_integer(value as u128)
+                .ok_or(TransactionExecutionError::FixedPointConversion);
+
+            value.map(|v| vm_resource_fee_costs.get(key.as_str()).unwrap().mul(v))
+        })
+        .try_fold(FixedU128::zero(), |accum, res| res.map(|v| v.max(accum)))?;
 
     Ok(vm_l1_gas_usage)
 }

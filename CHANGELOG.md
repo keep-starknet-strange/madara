@@ -2,6 +2,8 @@
 
 ## Next release
 
+- chore: update deps, vm ressource fee cost are now FixedU128, and stored in an
+  hashmap
 - ci: change jobs order in the workflow
 - ci: run integrations tests in the same runner as build
 - ci: replace ci cache with rust-cache
