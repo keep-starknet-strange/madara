@@ -93,7 +93,6 @@ mockito = { workspace = true }
 parity-scale-codec = "3.6.5"
 serde_json = "1.0.64"
 starknet_api = "0.4.1"
-starknet_client = { workspace = true }
 # Primitives
 mp-block = { workspace = true }
 mp-digest-log = { workspace = true }

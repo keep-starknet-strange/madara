@@ -34,7 +34,6 @@ starknet-ff = { workspace = true, default-features = false, features = [
   "serde",
 ] }
 starknet_api = { workspace = true, default-features = false }
-starknet_client = { workspace = true }
 tokio = { workspace = true, features = ["macros", "test-util"] }
 # test_utils = { path = "./test_utils", optional = true }
 hex = "0.4"
