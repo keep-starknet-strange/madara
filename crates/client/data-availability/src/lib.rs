@@ -30,7 +30,7 @@ pub enum DaLayer {
 
 /// Data availability modes in which Madara can be initialized.
 ///
-/// Default only mode currently implemented is Validium.
+/// Default only mode currently implemented is Sovereign.
 #[derive(Debug, Copy, Clone, PartialEq, Deserialize, Default)]
 pub enum DaMode {
     /// Full Validity Rollup
@@ -50,15 +50,15 @@ pub enum DaMode {
     /// will be necessary.
     #[serde(rename = "volition")]
     Volition,
-    /// Sovereign Validium
+    /// Sovereign Rollup
     ///
-    /// Validium state diffs are untethered to an accompanying validity proof therefore
+    /// Sovereign state diffs are untethered to an accompanying validity proof therefore
     /// they can simply be published to any da solution available. As this solution does not
     /// require an execution trace to be proved we can simply parse the state diff from the
     /// storage changes of the block.
-    #[serde(rename = "validium")]
+    #[serde(rename = "sovereign")]
     #[default]
-    Validium,
+    Sovereign,
 }
 
 #[async_trait]
@@ -175,7 +175,7 @@ where
                     // Write the publish state diff of last_proved + 1
                     log::info!("validity da mode not implemented");
                 }
-                DaMode::Validium => match madara_backend.da().state_diff(&notification.hash) {
+                DaMode::Sovereign => match madara_backend.da().state_diff(&notification.hash) {
                     Ok(state_diff) => {
                         if let Err(e) = da_client.publish_state_diff(state_diff).await {
                             log::error!("DA PUBLISH ERROR: {}", e);
