@@ -15,6 +15,7 @@ lazy_static! {
     pub static ref SN_CONTRACT_CLASS_PREFIX: Vec<u8> =
         [twox_128(PALLET_STARKNET), twox_128(STARKNET_CONTRACT_CLASS)].concat();
     pub static ref SN_STORAGE_PREFIX: Vec<u8> = [twox_128(PALLET_STARKNET), twox_128(STARKNET_STORAGE)].concat();
+    pub static ref PALLET_STARKNET_KEY: Vec<u8> = twox_128(PALLET_STARKNET).into();
 }
 
 // encode calldata:

@@ -79,6 +79,7 @@ pub trait StorageOverride<B: BlockT>: Send + Sync {
 
 /// Returns the storage prefix given the pallet module name and the storage name
 fn storage_prefix_build(module: &[u8], storage: &[u8]) -> Vec<u8> {
+    println!("MODULE: {module:?}");
     [twox_128(module), twox_128(storage)].concat().to_vec()
 }
 
