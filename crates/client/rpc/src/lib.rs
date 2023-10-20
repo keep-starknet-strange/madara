@@ -157,6 +157,18 @@ where
 
         Ok(block.header().block_number)
     }
+
+    /// Returns a list of all transaction hashes in the given block.
+    ///
+    /// # Arguments
+    ///
+    /// * `block_hash` - The hash of the block containing the transactions (starknet block).
+    fn get_cached_transaction_hashes(&self, block_hash: H256) -> Option<Vec<H256>> {
+        self.backend.mapping().cached_transaction_hashes_from_block_hash(block_hash).unwrap_or_else(|err| {
+            error!("{err}");
+            None
+        })
+    }
 }
 
 /// Taken from https://github.com/paritytech/substrate/blob/master/client/rpc/src/author/mod.rs#L78
@@ -401,12 +413,21 @@ where
 
         let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
         let chain_id = self.chain_id()?;
-        let transactions_hashes = block.transactions_hashes::<H>(Felt252Wrapper(chain_id.0), Some(block.header().block_number));
-        let transactions = transactions_hashes.into_iter().map(FieldElement::from).collect();
         let blockhash = block.header().hash::<H>();
+
+        let transaction_hashes = if let Some(tx_hashes) = self.get_cached_transaction_hashes(blockhash.into()) {
+            let mut v = Vec::with_capacity(tx_hashes.len());
+            for tx_hash in tx_hashes {
+                v.push(h256_to_felt(tx_hash)?);
+            }
+            v
+        } else {
+            block.transactions_hashes::<H>(chain_id.0.into(), Some(block.header().block_number)).map(FieldElement::from).collect()
+        };
+
         let parent_blockhash = block.header().parent_block_hash;
         let block_with_tx_hashes = BlockWithTxHashes {
-            transactions,
+            transactions: transaction_hashes,
             status: starknet_core::types::BlockStatus::from(block.header().status),
             block_hash: blockhash.into(),
             parent_hash: parent_blockhash.into(),
@@ -632,7 +653,12 @@ where
         let transaction = block.transactions().get(index as usize).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
         let chain_id = self.chain_id()?;
 
-        Ok(to_starknet_core_tx::<H>(transaction.clone(), Felt252Wrapper(chain_id.0), block.header().block_number))
+        let transaction_hash = self
+            .get_cached_transaction_hashes(block.header().hash::<H>().into())
+            .map(|tx_hashes| h256_to_felt(*tx_hashes.get(index as usize).ok_or(StarknetRpcApiError::InvalidTxnIndex)?))
+            .unwrap_or_else(|| Ok(transaction.compute_hash::<H>(chain_id.0.into(), false, Some(block.header().block_number)).0))?;
+
+        Ok(to_starknet_core_tx::<H>(transaction.clone(), transaction_hash))
     }
 
     /// Get block information with full transactions given the block id
@@ -647,6 +673,16 @@ where
         let chain_id = self.chain_id()?;
         let chain_id = Felt252Wrapper(chain_id.0);
 
+        let transaction_hashes = self.get_cached_transaction_hashes(block.header().hash::<H>().into());
+        let mut transactions = Vec::with_capacity(block.transactions().len());
+        for (index, tx) in block.transactions().iter().enumerate() {
+            let hash = transaction_hashes
+                .as_ref()
+                .map(|tx_hashes| h256_to_felt(*tx_hashes.get(index).ok_or(StarknetRpcApiError::InternalServerError)?))
+                .unwrap_or_else(|| Ok(tx.compute_hash::<H>(chain_id.0.into(), false, Some(block.header().block_number)).0))?;
+            transactions.push(to_starknet_core_tx::<H>(tx.clone(), hash));
+        }
+
         let block_with_txs = BlockWithTxs {
             // TODO: Get status from block
             status: starknet_core::types::BlockStatus::from(block.header().status),
@@ -656,12 +692,7 @@ where
             new_root: block.header().global_state_root.into(),
             timestamp: block.header().block_timestamp,
             sequencer_address: Felt252Wrapper::from(block.header().sequencer_address).into(),
-            transactions: block
-                .transactions()
-                .iter()
-                .cloned()
-                .map(|tx| to_starknet_core_tx::<H>(tx, Felt252Wrapper(chain_id.0), block.header().block_number))
-                .collect::<Vec<_>>(),
+            transactions,
         };
 
         Ok(MaybePendingBlockWithTxs::Block(block_with_txs))
@@ -729,7 +760,7 @@ where
         })?;
 
         let chain_id = self.chain_id()?;
-        let transactions = transactions.into_iter().map(|tx| to_starknet_core_tx::<H>(tx, chain_id.0.into(), block_number)).collect();
+        let transactions = transactions.into_iter().map(|tx| to_starknet_core_tx::<H>(tx, chain_id.0)).collect();
 
         Ok(transactions)
     }
@@ -817,7 +848,7 @@ where
             .transactions()
             .iter()
             .find(|tx| tx.compute_hash::<H>(chain_id, false, Some(block.header().block_number)).0 == transaction_hash)
-            .map(|tx| to_starknet_core_tx::<H>(tx.clone(), chain_id, block.header().block_number));
+            .map(|tx| to_starknet_core_tx::<H>(tx.clone(), transaction_hash));
 
         find_tx.ok_or(StarknetRpcApiError::TxnHashNotFound.into())
     }
@@ -1006,5 +1037,15 @@ where
             Ok(starknet_error) => Err(starknet_error.into()),
             Err(_) => Err(StarknetRpcApiError::InternalServerError),
         },
+    }
+}
+
+fn h256_to_felt(h256: H256) -> Result<FieldElement, StarknetRpcApiError> {
+    match Felt252Wrapper::try_from(h256) {
+        Ok(felt) => Ok(felt.0),
+        Err(err) => {
+            error!("failed to convert H256 to FieldElement: {err}");
+            Err(StarknetRpcApiError::InternalServerError)
+        }
     }
 }

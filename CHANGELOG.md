@@ -31,6 +31,12 @@
   `base_path` field
 - feat(cli): for `run` param `--dev` now imply `--tmp`, as it is in substrate
 - test(starknet-rpc-test): run all tests against a single madara node
+- fix(service): confusing message when node starts (output the actual sealing
+  method being used)
+- refactor(sealing): how the sealing mode is passed into runtime
+- feat(sealing): finalization for instant sealing
+- feat(cache-option): add an option to enable aggressive caching in the
+  command-line parameters
 
 ## v0.4.0
 

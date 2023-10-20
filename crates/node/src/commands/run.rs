@@ -1,20 +1,35 @@
 use std::path::PathBuf;
 
+use madara_runtime::SealingMode;
 use mc_data_availability::DaLayer;
 use sc_cli::{Result, RpcMethods, RunCmd, SubstrateCli};
 use sc_service::BasePath;
+use serde::{Deserialize, Serialize};
 
 use crate::cli::Cli;
 use crate::service;
 
 /// Available Sealing methods.
-#[derive(Debug, Copy, Clone, clap::ValueEnum, Default)]
+#[derive(Debug, Copy, Clone, clap::ValueEnum, Default, Serialize, Deserialize)]
 pub enum Sealing {
-    // Seal using rpc method.
+    /// Seal using rpc method.
     #[default]
     Manual,
-    // Seal when transaction is executed.
+    /// Seal when transaction is executed. This mode does not finalize blocks, if you want to
+    /// finalize blocks use `--sealing=instant-finality`.
     Instant,
+    /// Seal when transaction is executed with finalization.
+    InstantFinality,
+}
+
+impl From<Sealing> for SealingMode {
+    fn from(value: Sealing) -> Self {
+        match value {
+            Sealing::Manual => SealingMode::Manual,
+            Sealing::Instant => SealingMode::Instant { finalize: false },
+            Sealing::InstantFinality => SealingMode::Instant { finalize: true },
+        }
+    }
 }
 
 /// A possible network type.
@@ -54,6 +69,13 @@ pub struct ExtendedRunCmd {
     /// The network type to connect to.
     #[clap(long, short, default_value = "integration")]
     pub network: NetworkType,
+    /// When enabled, more information about the blocks and their transaction is cached and stored
+    /// in the database.
+    ///
+    /// This may improve response times for RPCs that require that information, but it also
+    /// increases the memory footprint of the node.
+    #[clap(long)]
+    pub cache: bool,
 }
 
 impl ExtendedRunCmd {
@@ -88,11 +110,11 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
             None
         }
     };
-    let sealing = cli.run.sealing;
-
     runner.run_node_until_exit(|config| async move {
-        service::new_full(config, sealing, da_config, cli.run.base.rpc_port.unwrap(), cli.run.network.uri())
-            .await
+        let sealing = cli.run.sealing.map(Into::into).unwrap_or_default();
+        let cache = cli.run.cache;
+        let network_uri = cli.run.network.uri();
+        service::new_full(config, sealing, da_config, cli.run.base.rpc_port.unwrap(), cache, network_uri)
             .map_err(sc_cli::Error::Service)
     })
 }

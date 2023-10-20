@@ -5,8 +5,6 @@ use mp_hashers::HasherT;
 use starknet_api::block;
 use starknet_crypto::FieldElement;
 
-use super::compute_hash::ComputeTransactionHash;
-
 fn cast_vec_of_felt_252_wrappers(data: Vec<Felt252Wrapper>) -> Vec<FieldElement> {
     // Non-copy but less dangerous than transmute
     // https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
@@ -16,13 +14,10 @@ fn cast_vec_of_felt_252_wrappers(data: Vec<Felt252Wrapper>) -> Vec<FieldElement>
 
 pub fn to_starknet_core_tx<H: HasherT>(
     tx: super::Transaction,
-    chain_id: Felt252Wrapper,
-    block_number: u64,
+    transaction_hash: FieldElement,
 ) -> starknet_core::types::Transaction {
     match tx {
         super::Transaction::Declare(tx) => {
-            let tx_hash = tx.compute_hash::<H>(chain_id, false, Some(block_number));
-
             let tx = match tx {
                 super::DeclareTransaction::V0(super::DeclareTransactionV0 {
                     max_fee,
@@ -31,7 +26,7 @@ pub fn to_starknet_core_tx<H: HasherT>(
                     class_hash,
                     sender_address,
                 }) => starknet_core::types::DeclareTransaction::V0(starknet_core::types::DeclareTransactionV0 {
-                    transaction_hash: tx_hash.0,
+                    transaction_hash,
                     max_fee: max_fee.into(),
                     signature: cast_vec_of_felt_252_wrappers(signature),
                     class_hash: class_hash.into(),
@@ -44,7 +39,7 @@ pub fn to_starknet_core_tx<H: HasherT>(
                     class_hash,
                     sender_address,
                 }) => starknet_core::types::DeclareTransaction::V1(starknet_core::types::DeclareTransactionV1 {
-                    transaction_hash: tx_hash.0,
+                    transaction_hash,
                     max_fee: max_fee.into(),
                     signature: cast_vec_of_felt_252_wrappers(signature),
                     nonce: nonce.into(),
@@ -59,7 +54,7 @@ pub fn to_starknet_core_tx<H: HasherT>(
                     sender_address,
                     compiled_class_hash,
                 }) => starknet_core::types::DeclareTransaction::V2(starknet_core::types::DeclareTransactionV2 {
-                    transaction_hash: tx_hash.0,
+                    transaction_hash,
                     max_fee: max_fee.into(),
                     signature: cast_vec_of_felt_252_wrappers(signature),
                     nonce: nonce.into(),
@@ -72,10 +67,8 @@ pub fn to_starknet_core_tx<H: HasherT>(
             starknet_core::types::Transaction::Declare(tx)
         }
         super::Transaction::DeployAccount(tx) => {
-            let tx_hash = tx.compute_hash::<H>(chain_id, false, Some(block_number));
-
             let tx = starknet_core::types::DeployAccountTransaction {
-                transaction_hash: tx_hash.0,
+                transaction_hash,
                 max_fee: tx.max_fee.into(),
                 signature: cast_vec_of_felt_252_wrappers(tx.signature),
                 nonce: tx.nonce.into(),
@@ -87,10 +80,8 @@ pub fn to_starknet_core_tx<H: HasherT>(
             starknet_core::types::Transaction::DeployAccount(tx)
         }
         super::Transaction::Deploy(tx) => {
-            let tx_hash = tx.compute_hash::<H>(chain_id, false, Some(block_number));
-
             let tx = starknet_core::types::DeployTransaction {
-                transaction_hash: tx_hash.0,
+                transaction_hash,
                 contract_address_salt: tx.contract_address_salt.into(),
                 constructor_calldata: cast_vec_of_felt_252_wrappers(tx.constructor_calldata),
                 class_hash: tx.class_hash.into(),
@@ -100,8 +91,6 @@ pub fn to_starknet_core_tx<H: HasherT>(
             starknet_core::types::Transaction::Deploy(tx)
         }
         super::Transaction::Invoke(tx) => {
-            let tx_hash = tx.compute_hash::<H>(chain_id, false, Some(block_number));
-
             let tx = match tx {
                 super::InvokeTransaction::V0(super::InvokeTransactionV0 {
                     max_fee,
@@ -110,7 +99,7 @@ pub fn to_starknet_core_tx<H: HasherT>(
                     entry_point_selector,
                     calldata,
                 }) => starknet_core::types::InvokeTransaction::V0(starknet_core::types::InvokeTransactionV0 {
-                    transaction_hash: tx_hash.0,
+                    transaction_hash,
                     max_fee: max_fee.into(),
                     signature: cast_vec_of_felt_252_wrappers(signature),
                     contract_address: contract_address.into(),
@@ -124,7 +113,7 @@ pub fn to_starknet_core_tx<H: HasherT>(
                     sender_address,
                     calldata,
                 }) => starknet_core::types::InvokeTransaction::V1(starknet_core::types::InvokeTransactionV1 {
-                    transaction_hash: tx_hash.0,
+                    transaction_hash,
                     max_fee: max_fee.into(),
                     signature: cast_vec_of_felt_252_wrappers(signature),
                     nonce: nonce.into(),
@@ -136,10 +125,8 @@ pub fn to_starknet_core_tx<H: HasherT>(
             starknet_core::types::Transaction::Invoke(tx)
         }
         super::Transaction::L1Handler(tx) => {
-            let tx_hash = tx.compute_hash::<H>(chain_id, false, Some(block_number));
-
             let tx = starknet_core::types::L1HandlerTransaction {
-                transaction_hash: tx_hash.0,
+                transaction_hash,
                 version: 0,
                 nonce: tx.nonce,
                 contract_address: tx.contract_address.into(),

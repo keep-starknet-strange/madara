@@ -132,7 +132,10 @@ pub fn calculate_commitments<H: HasherT>(
     chain_id: Felt252Wrapper,
     block_number: u64,
 ) -> (Felt252Wrapper, Felt252Wrapper) {
-    (calculate_transaction_commitment::<H>(transactions, chain_id, block_number), calculate_event_commitment::<H>(events))
+    (
+        calculate_transaction_commitment::<H>(transactions, chain_id, block_number),
+        calculate_event_commitment::<H>(events),
+    )
 }
 
 /// Calculate transaction commitment hash value.
@@ -154,7 +157,7 @@ pub fn calculate_transaction_commitment<H: HasherT>(
     block_number: u64,
 ) -> Felt252Wrapper {
     let mut tree = CommitmentTree::<H>::default();
-    
+
     transactions.iter().enumerate().for_each(|(idx, tx)| {
         let idx: u64 = idx.try_into().expect("too many transactions while calculating commitment");
         let final_hash = calculate_transaction_hash_with_signature::<H>(tx, chain_id, block_number);
@@ -284,14 +287,11 @@ where
         H::compute_hash_on_elements(&[])
     };
 
-    let transactions_hashes = H::hash_elements(
-        FieldElement::from(tx.compute_hash::<H>(chain_id, false, Some(block_number))),
-        signature_hash,
-    );
+    let transactions_hashes =
+        H::hash_elements(FieldElement::from(tx.compute_hash::<H>(chain_id, false, Some(block_number))), signature_hash);
 
     transactions_hashes
 }
-
 
 /// Calculate the hash of an event.
 ///

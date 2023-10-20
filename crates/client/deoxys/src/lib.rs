@@ -1,11 +1,8 @@
 #![allow(deprecated)]
 
-use std::collections::VecDeque;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
 
 use log::info;
-use mp_block::Block;
 use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE};
 use reqwest::{StatusCode, Url};
 use serde_json::{json, Value};
@@ -14,13 +11,6 @@ use starknet_providers::SequencerGatewayProvider;
 use tokio::time;
 
 mod convert;
-
-pub type BlockQueue = Arc<Mutex<VecDeque<Block>>>;
-
-// Function to create a new block queue
-pub fn create_block_queue() -> BlockQueue {
-    Arc::new(Mutex::new(VecDeque::new()))
-}
 
 async fn create_block(rpc_port: u16) -> Result<StatusCode, reqwest::Error> {
     let client = reqwest::Client::new();
@@ -78,21 +68,18 @@ impl Default for ExecutionConfig {
     }
 }
 
-pub async fn fetch_block(queue: BlockQueue, uri: &str, rpc_port: u16) {
+pub async fn fetch_block(sender: async_channel::Sender<mp_block::Block>, uri: &str, rpc_port: u16) {
     let gateway_url = Url::parse(&format!("{uri}/gateway")).unwrap();
     let feeder_gateway_url = Url::parse(&format!("{uri}/feeder_gateway", uri = uri)).unwrap();
     let chain_id = starknet_ff::FieldElement::ZERO;
     let client = SequencerGatewayProvider::new(gateway_url, feeder_gateway_url, chain_id);
-    
+
     let mut i = get_last_synced_block(rpc_port).await.unwrap().unwrap() + 1;
     loop {
         match client.get_block(BlockId::Number(i)).await {
             Ok(block) => {
                 let starknet_block = convert::block(&block);
-                {
-                    let mut queue_guard: std::sync::MutexGuard<'_, VecDeque<Block>> = queue.lock().unwrap();
-                    queue_guard.push_back(starknet_block);
-                }
+                sender.send(starknet_block).await.unwrap();
                 match create_block(rpc_port).await {
                     Ok(status) => {
                         if status.is_success() {

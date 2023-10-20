@@ -6522,6 +6522,7 @@ dependencies = [
 name = "madara"
 version = "0.4.0"
 dependencies = [
+ "async-channel",
  "async-trait",
  "bincode 1.3.3",
  "blockifier",
@@ -6613,6 +6614,7 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
+ "serde",
  "sp-api",
  "sp-block-builder",
  "sp-consensus-aura",
@@ -6762,6 +6764,7 @@ dependencies = [
 name = "mc-deoxys"
 version = "0.1.0"
 dependencies = [
+ "async-channel",
  "blockifier",
  "env_logger 0.9.3",
  "hex",

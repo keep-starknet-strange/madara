@@ -13,16 +13,15 @@ pub mod getters;
 #[cfg(feature = "client")]
 pub mod to_starknet_core_transaction;
 
-use spin::Mutex;
-
 use alloc::vec::Vec;
 
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::transaction::transaction_types::TransactionType;
 use derive_more::From;
+use lazy_static::lazy_static;
+use spin::Mutex;
 use starknet_api::transaction::{Fee, TransactionVersion};
 use starknet_ff::FieldElement;
-use lazy_static::lazy_static;
 
 const SIMULATE_TX_VERSION_OFFSET: FieldElement =
     FieldElement::from_mont([18446744073700081665, 17407, 18446744073709551584, 576460752142434320]);
@@ -42,9 +41,7 @@ pub struct LegacyEnv {
 }
 
 lazy_static! {
-    pub static ref LEGACY_ENV: Mutex<LegacyEnv> = Mutex::new(LegacyEnv {
-        legacy_mode: true,
-    });
+    pub static ref LEGACY_ENV: Mutex<LegacyEnv> = Mutex::new(LegacyEnv { legacy_mode: true });
 }
 
 pub fn update_legacy() {
