@@ -752,7 +752,7 @@ pub mod pallet {
                     // the future queue of the transaction pool.
                     if sender_nonce < *transaction_nonce {
                         log!(
-                            info,
+                            debug,
                             "Nonce is too high. Expected: {:?}, got: {:?}. This transaction will be placed in the \
                              transaction pool and executed in the future when the nonce is reached.",
                             sender_nonce,

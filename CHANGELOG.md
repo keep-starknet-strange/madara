@@ -2,6 +2,7 @@
 
 ## Next release
 
+- fix: change 'nonce too high' to log in debug instead of info
 - test(pallet): add function to get braavos hash
 - fix: event commitment documentation typo
 - ci: added testing key generation in the ci
