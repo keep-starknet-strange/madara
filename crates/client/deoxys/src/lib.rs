@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 use log::info;
 use mp_block::Block;
 use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE};
-use reqwest::StatusCode;
+use reqwest::{StatusCode, Url};
 use serde_json::{json, Value};
 use starknet_providers::sequencer::models::BlockId;
 use starknet_providers::SequencerGatewayProvider;
@@ -78,9 +78,12 @@ impl Default for ExecutionConfig {
     }
 }
 
-pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
-    let client = SequencerGatewayProvider::starknet_alpha_mainnet();
-
+pub async fn fetch_block(queue: BlockQueue, uri: &str, rpc_port: u16) {
+    let gateway_url = Url::parse(&format!("{uri}/gateway")).unwrap();
+    let feeder_gateway_url = Url::parse(&format!("{uri}/feeder_gateway", uri = uri)).unwrap();
+    let chain_id = starknet_ff::FieldElement::ZERO;
+    let client = SequencerGatewayProvider::new(gateway_url, feeder_gateway_url, chain_id);
+    
     let mut i = get_last_synced_block(rpc_port).await.unwrap().unwrap() + 1;
     loop {
         match client.get_block(BlockId::Number(i)).await {

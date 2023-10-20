@@ -272,6 +272,7 @@ pub async fn new_full(
     sealing: Option<Sealing>,
     da_layer: Option<(DaLayer, PathBuf)>,
     rpc_port: u16,
+    network_uri: &str,
 ) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
@@ -439,8 +440,9 @@ pub async fn new_full(
 
             network_starter.start_network();
 
+            let network_uri = Box::from(network_uri);
             tokio::spawn(async move {
-                fetch_block(QUEUE.clone(), rpc_port).await;
+                fetch_block(QUEUE.clone(), &network_uri, rpc_port).await;
             });
 
             log::info!("Manual Seal Ready");
