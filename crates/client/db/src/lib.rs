@@ -19,7 +19,7 @@ mod meta_db;
 
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use da_db::DaDb;
 use mapping_db::MappingDb;
@@ -38,13 +38,22 @@ struct DatabaseSettings {
 }
 
 pub(crate) mod columns {
-    pub const NUM_COLUMNS: u32 = 5;
+    /// Total number of columns.
+    // ===== /!\ ===================================================================================
+    // MUST BE INCREMENTED WHEN A NEW COLUMN IN ADDED
+    // ===== /!\ ===================================================================================
+    pub const NUM_COLUMNS: u32 = 6;
 
     pub const META: u32 = 0;
     pub const BLOCK_MAPPING: u32 = 1;
     pub const TRANSACTION_MAPPING: u32 = 2;
     pub const SYNCED_MAPPING: u32 = 3;
     pub const DA: u32 = 4;
+    /// This column is used to map starknet block hashes to a list of transaction hashes that are
+    /// contained in the block.
+    ///
+    /// This column should only be accessed if the `--cache` flag is enabled.
+    pub const STARKNET_TRANSACTION_HASHES_CACHE: u32 = 5;
 }
 
 pub mod static_keys {
@@ -72,30 +81,33 @@ impl<B: BlockT> Backend<B> {
     /// Open the database
     ///
     /// The database will be created at db_config_dir.join(<db_type_name>)
-    pub fn open(database: &DatabaseSource, db_config_dir: &Path) -> Result<Self, String> {
-        Self::new(&DatabaseSettings {
-            source: match database {
-                DatabaseSource::RocksDb { .. } => {
-                    DatabaseSource::RocksDb { path: starknet_database_dir(db_config_dir, "rockdb"), cache_size: 0 }
-                }
-                DatabaseSource::ParityDb { .. } => {
-                    DatabaseSource::ParityDb { path: starknet_database_dir(db_config_dir, "paritydb") }
-                }
-                DatabaseSource::Auto { .. } => DatabaseSource::Auto {
-                    rocksdb_path: starknet_database_dir(db_config_dir, "rockdb"),
-                    paritydb_path: starknet_database_dir(db_config_dir, "paritydb"),
-                    cache_size: 0,
+    pub fn open(database: &DatabaseSource, db_config_dir: &Path, cache_more_things: bool) -> Result<Self, String> {
+        Self::new(
+            &DatabaseSettings {
+                source: match database {
+                    DatabaseSource::RocksDb { .. } => {
+                        DatabaseSource::RocksDb { path: starknet_database_dir(db_config_dir, "rockdb"), cache_size: 0 }
+                    }
+                    DatabaseSource::ParityDb { .. } => {
+                        DatabaseSource::ParityDb { path: starknet_database_dir(db_config_dir, "paritydb") }
+                    }
+                    DatabaseSource::Auto { .. } => DatabaseSource::Auto {
+                        rocksdb_path: starknet_database_dir(db_config_dir, "rockdb"),
+                        paritydb_path: starknet_database_dir(db_config_dir, "paritydb"),
+                        cache_size: 0,
+                    },
+                    _ => return Err("Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string()),
                 },
-                _ => return Err("Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string()),
             },
-        })
+            cache_more_things,
+        )
     }
 
-    fn new(config: &DatabaseSettings) -> Result<Self, String> {
+    fn new(config: &DatabaseSettings, cache_more_things: bool) -> Result<Self, String> {
         let db = db_opening_utils::open_database(config)?;
 
         Ok(Self {
-            mapping: Arc::new(MappingDb { db: db.clone(), write_lock: Arc::new(Mutex::new(())), _marker: PhantomData }),
+            mapping: Arc::new(MappingDb::new(db.clone(), cache_more_things)),
             meta: Arc::new(MetaDb { db: db.clone(), _marker: PhantomData }),
             da: Arc::new(DaDb { db: db.clone(), _marker: PhantomData }),
         })

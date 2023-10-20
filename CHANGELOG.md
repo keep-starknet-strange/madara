@@ -3,6 +3,11 @@
 ## Next release
 
 - fix: change 'nonce too high' to log in debug instead of info
+- ci: change jobs order in the workflow
+- ci: run integrations tests in the same runner as build
+- ci: replace ci cache with rust-cache
+- fix(transactions): remove `nonce` field from InvokeV0 tx
+- feat(transactions): don't enforce ordering in validate_unsigned for invokeV0
 - test(pallet): add function to get braavos hash
 - fix: event commitment documentation typo
 - ci: added testing key generation in the ci
@@ -27,6 +32,12 @@
   `base_path` field
 - feat(cli): for `run` param `--dev` now imply `--tmp`, as it is in substrate
 - test(starknet-rpc-test): run all tests against a single madara node
+- fix(service): confusing message when node starts (output the actual sealing
+  method being used)
+- refactor(sealing): how the sealing mode is passed into runtime
+- feat(sealing): finalization for instant sealing
+- feat(cache-option): add an option to enable aggressive caching in the
+  command-line parameters
 
 ## v0.4.0
 

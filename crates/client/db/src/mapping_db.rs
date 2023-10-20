@@ -19,12 +19,19 @@ pub struct MappingCommitment<B: BlockT> {
 
 /// Allow interaction with the mapping db
 pub struct MappingDb<B: BlockT> {
-    pub(crate) db: Arc<dyn Database<DbHash>>,
-    pub(crate) write_lock: Arc<Mutex<()>>,
-    pub(crate) _marker: PhantomData<B>,
+    db: Arc<dyn Database<DbHash>>,
+    write_lock: Arc<Mutex<()>>,
+    /// Whether more information should be cached in the database.
+    cache_more_things: bool,
+    _marker: PhantomData<B>,
 }
 
 impl<B: BlockT> MappingDb<B> {
+    /// Creates a new instance of the mapping database.
+    pub fn new(db: Arc<dyn Database<DbHash>>, cache_more_things: bool) -> Self {
+        Self { db, write_lock: Arc::new(Mutex::new(())), cache_more_things, _marker: PhantomData }
+    }
+
     /// Check if the given block hash has already been processed
     pub fn is_synced(&self, block_hash: &B::Hash) -> Result<bool, String> {
         match self.db.get(crate::columns::SYNCED_MAPPING, &block_hash.encode()) {
@@ -85,11 +92,19 @@ impl<B: BlockT> MappingDb<B> {
 
         transaction.set(crate::columns::SYNCED_MAPPING, &commitment.block_hash.encode(), &true.encode());
 
-        for transaction_hash in commitment.starknet_transaction_hashes.into_iter() {
+        for transaction_hash in commitment.starknet_transaction_hashes.iter() {
             transaction.set(
                 crate::columns::TRANSACTION_MAPPING,
                 &transaction_hash.encode(),
                 &commitment.block_hash.encode(),
+            );
+        }
+
+        if self.cache_more_things {
+            transaction.set(
+                crate::columns::STARKNET_TRANSACTION_HASHES_CACHE,
+                &commitment.starknet_block_hash.encode(),
+                &commitment.starknet_transaction_hashes.encode(),
             );
         }
 
@@ -109,6 +124,32 @@ impl<B: BlockT> MappingDb<B> {
     pub fn block_hash_from_transaction_hash(&self, transaction_hash: H256) -> Result<Option<B::Hash>, String> {
         match self.db.get(crate::columns::TRANSACTION_MAPPING, &transaction_hash.encode()) {
             Some(raw) => Ok(Some(<B::Hash>::decode(&mut &raw[..]).map_err(|e| format!("{:?}", e))?)),
+            None => Ok(None),
+        }
+    }
+
+    /// Returns the list of transaction hashes for the given block hash.
+    ///
+    /// # Arguments
+    ///
+    /// * `starknet_hash` - the hash of the starknet block to search for.
+    ///
+    /// # Returns
+    ///
+    /// The list of transaction hashes.
+    ///
+    /// This function may return `None` for two separate reasons:
+    ///
+    /// - The cache is disabled.
+    /// - The provided `starknet_hash` is not present in the cache.
+    pub fn cached_transaction_hashes_from_block_hash(&self, starknet_hash: H256) -> Result<Option<Vec<H256>>, String> {
+        if !self.cache_more_things {
+            // The cache is not enabled, no need to even touch the database.
+            return Ok(None);
+        }
+
+        match self.db.get(crate::columns::STARKNET_TRANSACTION_HASHES_CACHE, &starknet_hash.encode()) {
+            Some(raw) => Ok(Some(Vec::<H256>::decode(&mut &raw[..]).map_err(|e| format!("{:?}", e))?)),
             None => Ok(None),
         }
     }

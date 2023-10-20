@@ -11,18 +11,10 @@ jobs:
     runs-on: ubuntu-latest-32-cores
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/cache@v3
+      - uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key:
-            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
-            github.run_id }}
-          fail-on-cache-miss: true
+          shared-key: "cache"
+          save-if: false
       - name: Setup build deps
         run: |
           sudo apt-get update

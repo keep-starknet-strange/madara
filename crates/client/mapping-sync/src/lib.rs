@@ -55,7 +55,6 @@ impl<B: BlockT, C, BE, H> MappingSyncWorker<B, C, BE, H> {
         frontier_backend: Arc<mc_db::Backend<B>>,
         retry_times: usize,
         sync_from: <B::Header as HeaderT>::Number,
-        hasher: PhantomData<H>,
     ) -> Self {
         Self {
             import_notifications,
@@ -65,7 +64,7 @@ impl<B: BlockT, C, BE, H> MappingSyncWorker<B, C, BE, H> {
             client,
             substrate_backend,
             madara_backend: frontier_backend,
-            hasher,
+            hasher: PhantomData,
 
             have_next: true,
             retry_times,

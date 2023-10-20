@@ -743,24 +743,27 @@ pub mod pallet {
                     let sender_nonce: Felt252Wrapper = Pallet::<T>::nonce(sender_address).into();
                     let transaction_nonce = transaction.nonce();
 
-                    // Reject transaction with an already used Nonce
-                    if sender_nonce > *transaction_nonce {
-                        Err(InvalidTransaction::Stale)?;
-                    }
+                    // InvokeV0 does not have a nonce
+                    if let Some(transaction_nonce) = transaction_nonce {
+                        // Reject transaction with an already used Nonce
+                        if sender_nonce > *transaction_nonce {
+                            Err(InvalidTransaction::Stale)?;
+                        }
 
-                    // A transaction with a nonce higher than the expected nonce is placed in
-                    // the future queue of the transaction pool.
-                    if sender_nonce < *transaction_nonce {
-                        log!(
-                            debug,
-                            "Nonce is too high. Expected: {:?}, got: {:?}. This transaction will be placed in the \
-                             transaction pool and executed in the future when the nonce is reached.",
-                            sender_nonce,
-                            transaction_nonce
-                        );
-                    }
+                        // A transaction with a nonce higher than the expected nonce is placed in
+                        // the future queue of the transaction pool.
+                        if sender_nonce < *transaction_nonce {
+                            log!(
+                                debug,
+                                "Nonce is too high. Expected: {:?}, got: {:?}. This transaction will be placed in the \
+                                 transaction pool and executed in the future when the nonce is reached.",
+                                sender_nonce,
+                                transaction_nonce
+                            );
+                        }
+                    };
 
-                    (transaction.sender_address(), sender_nonce, *transaction_nonce)
+                    (transaction.sender_address(), sender_nonce, transaction_nonce.cloned())
                 } else {
                     // TODO: create and check L1 messages Nonce
                     unimplemented!()
@@ -789,20 +792,24 @@ pub mod pallet {
                 })?;
             }
 
-            let nonce_for_priority: u64 =
-                transaction_nonce.try_into().map_err(|_| InvalidTransaction::Custom(NONCE_DECODE_FAILURE))?;
+            let nonce_for_priority: u64 = transaction_nonce
+                .unwrap_or(Felt252Wrapper::ZERO)
+                .try_into()
+                .map_err(|_| InvalidTransaction::Custom(NONCE_DECODE_FAILURE))?;
 
             let mut valid_transaction_builder = ValidTransaction::with_tag_prefix("starknet")
                 .priority(u64::MAX - nonce_for_priority)
-                .and_provides((sender_address, transaction_nonce))
                 .longevity(T::TransactionLongevity::get())
                 .propagate(true);
 
-            // Enforce waiting for the tx with the previous nonce,
-            // to be either executed or ordered before in the block
-            if transaction_nonce > sender_nonce {
-                valid_transaction_builder = valid_transaction_builder
-                    .and_requires((sender_address, Felt252Wrapper(transaction_nonce.0 - FieldElement::ONE)));
+            if let Some(transaction_nonce) = transaction_nonce {
+                valid_transaction_builder = valid_transaction_builder.and_provides((sender_address, transaction_nonce));
+                // Enforce waiting for the tx with the previous nonce,
+                // to be either executed or ordered before in the block
+                if transaction_nonce > sender_nonce {
+                    valid_transaction_builder = valid_transaction_builder
+                        .and_requires((sender_address, Felt252Wrapper(transaction_nonce.0 - FieldElement::ONE)));
+                }
             }
 
             valid_transaction_builder.build()
