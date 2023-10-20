@@ -659,7 +659,7 @@ where
             .map(|tx_hashes| h256_to_felt(*tx_hashes.get(index as usize).ok_or(StarknetRpcApiError::InvalidTxnIndex)?))
             .unwrap_or_else(|| Ok(transaction.compute_hash::<H>(chain_id.0.into(), false).0))?;
 
-        Ok(to_starknet_core_tx::<H>(transaction.clone(), transaction_hash))
+        Ok(to_starknet_core_tx(transaction.clone(), transaction_hash))
     }
 
     /// Get block information with full transactions given the block id
@@ -681,7 +681,7 @@ where
                 .as_ref()
                 .map(|tx_hashes| h256_to_felt(*tx_hashes.get(index).ok_or(StarknetRpcApiError::InternalServerError)?))
                 .unwrap_or_else(|| Ok(tx.compute_hash::<H>(chain_id.0.into(), false).0))?;
-            transactions.push(to_starknet_core_tx::<H>(tx.clone(), hash));
+            transactions.push(to_starknet_core_tx(tx.clone(), hash));
         }
 
         let block_with_txs = BlockWithTxs {
@@ -761,7 +761,9 @@ where
         })?;
 
         let chain_id = self.chain_id()?;
-        let transactions = transactions.into_iter().map(|tx| to_starknet_core_tx::<H>(tx, chain_id.0)).collect();
+
+        // FIXME: passing the chain id instead of the transaction hash. This is simply incorrect.
+        let transactions = transactions.into_iter().map(|tx| to_starknet_core_tx(tx, chain_id.0)).collect();
 
         Ok(transactions)
     }
@@ -845,11 +847,12 @@ where
         let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
         let chain_id = self.chain_id()?.0.into();
 
+        // FIXME: use the cache if possible.
         let find_tx = block
             .transactions()
             .iter()
             .find(|tx| tx.compute_hash::<H>(chain_id, false).0 == transaction_hash)
-            .map(|tx| to_starknet_core_tx::<H>(tx.clone(), transaction_hash));
+            .map(|tx| to_starknet_core_tx(tx.clone(), transaction_hash));
 
         find_tx.ok_or(StarknetRpcApiError::TxnHashNotFound.into())
     }
