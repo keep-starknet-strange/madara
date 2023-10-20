@@ -851,12 +851,19 @@ where
         let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
         let chain_id = self.chain_id()?.0.into();
 
-        // FIXME: use the cache if possible.
-        let find_tx = block
-            .transactions()
-            .iter()
-            .find(|tx| tx.compute_hash::<H>(chain_id, false).0 == transaction_hash)
-            .map(|tx| to_starknet_core_tx(tx.clone(), transaction_hash));
+        let find_tx = if let Some(tx_hashes) = self.get_cached_transaction_hashes(block.header().hash::<H>().into()) {
+            tx_hashes
+                .into_iter()
+                .zip(block.transactions())
+                .find(|(tx_hash, _)| *tx_hash == Felt252Wrapper(transaction_hash).into())
+                .map(|(_, tx)| to_starknet_core_tx(tx.clone(), transaction_hash))
+        } else {
+            block
+                .transactions()
+                .iter()
+                .find(|tx| tx.compute_hash::<H>(chain_id, false).0 == transaction_hash)
+                .map(|tx| to_starknet_core_tx(tx.clone(), transaction_hash))
+        };
 
         find_tx.ok_or(StarknetRpcApiError::TxnHashNotFound.into())
     }
