@@ -6,8 +6,8 @@ use log::info;
 use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE};
 use reqwest::{StatusCode, Url};
 use serde_json::{json, Value};
-use starknet_providers::sequencer::models::BlockId;
-use starknet_providers::SequencerGatewayProvider;
+use starknet_gateway::sequencer::models::BlockId;
+use starknet_gateway::SequencerGatewayProvider;
 use tokio::time;
 
 mod convert;
