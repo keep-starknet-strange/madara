@@ -2,6 +2,7 @@
 
 ## Next release
 
+- feat(da): update da calldata encoding to v0.11.0 spec, da conf examples, da conf flag
 - chore: update deps, vm ressource fee cost are now FixedU128, and stored in an
   hashmap
 - ci: change jobs order in the workflow
