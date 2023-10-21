@@ -4,7 +4,6 @@ pub mod ethereum;
 mod sharp;
 pub mod utils;
 
-use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
@@ -12,19 +11,19 @@ use anyhow::Result;
 use async_trait::async_trait;
 use ethers::types::{I256, U256};
 use futures::StreamExt;
+use indexmap::{IndexMap, IndexSet};
 use mp_storage::{
     PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_NONCE, STARKNET_STORAGE,
 };
 use sc_client_api::client::BlockchainEvents;
-use sc_client_api::StorageData;
+use sc_client_api::StorageKey as SubStorageKey;
 use serde::Deserialize;
 use sp_api::ProvideRuntimeApi;
 use sp_io::hashing::twox_128;
 use sp_runtime::traits::Block as BlockT;
-use starknet_api::api_core::ContractAddress;
-use starknet_core::types::StateDiff;
-
-pub type StorageWrites<'a> = Vec<(&'a [u8], &'a [u8])>;
+use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
+use starknet_api::state::{StorageKey, ThinStateDiff};
+use utils::{bytes_to_felt, bytes_to_key, safe_split, state_diff_to_calldata};
 
 pub struct DataAvailabilityWorker<B, C>(PhantomData<(B, C)>);
 
@@ -68,25 +67,6 @@ pub enum DaMode {
     Sovereign,
 }
 
-fn safe_split(key: &[u8]) -> ([u8; 16], [u8; 16], Option<Vec<u8>>) {
-    let length = key.len();
-    let (mut prefix, mut child, mut rest) = ([0_u8; 16], [0_u8; 16], None);
-    if length <= 16 {
-        prefix[..length].copy_from_slice(&key[..])
-    }
-    if length > 16 && key.len() <= 32 {
-        prefix.copy_from_slice(&key[..16]);
-        child[..(length - 16)].copy_from_slice(&key[16..]);
-    }
-    if length > 32 {
-        prefix.copy_from_slice(&key[..16]);
-        child.copy_from_slice(&key[16..32]);
-        rest = Some(Vec::from(&key[32..]))
-    }
-
-    (prefix, child, rest)
-}
-
 #[async_trait]
 pub trait DaClient: Send + Sync {
     fn get_mode(&self) -> DaMode;
@@ -104,51 +84,78 @@ where
         let pallet_starknet_key = twox_128(PALLET_STARKNET);
 
         let mut storage_event_st = client
-            .storage_changes_notification_stream(None, None)
+            .storage_changes_notification_stream(None, Some(&[(SubStorageKey(pallet_starknet_key.into()), None)]))
             .expect("node has been initialized to prove state change, but can't read from notification stream");
 
         while let Some(storage_event) = storage_event_st.next().await {
-            let mut diff = StateDiff::default();
+            let mut accessed_addrs: IndexSet<ContractAddress> = IndexSet::new();
+            let mut state_diff = ThinStateDiff {
+                declared_classes: IndexMap::new(),
+                storage_diffs: IndexMap::new(),
+                nonces: IndexMap::new(),
+                deployed_contracts: IndexMap::new(),
+                deprecated_declared_classes: Vec::new(),
+                replaced_classes: IndexMap::new(),
+            };
 
-            // Locate and encode the storage change
             for (_, storage_key, storage_val) in storage_event.changes.iter() {
                 let (prefix_key, child_key, rest_key) = safe_split(&storage_key.0);
+                let storage_val = match storage_val {
+                    Some(x) => x.0.clone(),
+                    None => continue,
+                };
+                let rest_key = match rest_key {
+                    Some(x) => x,
+                    None => continue,
+                };
+
                 if prefix_key == pallet_starknet_key {
                     if child_key == twox_128(STARKNET_NONCE) {
-                        if let Some(val) = storage_val {
-                            log::info!("encoding nonce change: {:?} {:?} {:?}", child_key, rest_key, val);
-                            diff.nonces.insert(ContractAddress::from(rest_key.unwrap()), Nonce(val.as_slice()));
-                        }
+                        state_diff
+                            .nonces
+                            .insert(ContractAddress(bytes_to_key(&rest_key)), Nonce(bytes_to_felt(&storage_val)));
+                        accessed_addrs.insert(ContractAddress(bytes_to_key(&rest_key)));
                     } else if child_key == twox_128(STARKNET_STORAGE) {
-                        log::info!("encoding storage change: {:?} {:?}", child_key, rest_key);
-                        // if let Some(val) = storage_val {
-                        //     storage_diffs
-                        //         .entry(child_key)
-                        //         .and_modify(|v| v.push((rest_key, val.as_slice())))
-                        //         .or_insert(vec![(rest_key, val.as_slice())]);
-                        // }
+                        if rest_key.len() > 32 {
+                            let (addr, key) = rest_key.split_at(32);
+                            let (addr, key) = (bytes_to_key(addr), bytes_to_key(key));
+
+                            state_diff
+                                .storage_diffs
+                                .entry(ContractAddress(addr))
+                                .and_modify(|v| {
+                                    v.insert(StorageKey(key), bytes_to_felt(&storage_val));
+                                })
+                                .or_insert(IndexMap::from([(StorageKey(key), bytes_to_felt(&storage_val))]));
+                            accessed_addrs.insert(ContractAddress(addr));
+                        }
                     } else if child_key == twox_128(STARKNET_CONTRACT_CLASS) {
-                        log::info!("encoding class declaration: {:?} {:?}", child_key, rest_key);
+                        state_diff.declared_classes.insert(
+                            ClassHash(bytes_to_felt(&rest_key)),
+                            CompiledClassHash(bytes_to_felt(&storage_val)),
+                        );
                     } else if child_key == twox_128(STARKNET_CONTRACT_CLASS_HASH) {
-                        log::info!("encoding replaced class: {:?} {:?}", child_key, rest_key);
+                        state_diff
+                            .deployed_contracts
+                            .insert(ContractAddress(bytes_to_key(&rest_key)), ClassHash(bytes_to_felt(&storage_val)));
+                        accessed_addrs.insert(ContractAddress(bytes_to_key(&rest_key)));
                     }
                 }
             }
 
-            // let state_diff = utils::pre_0_11_0_state_diff(storage_diffs, nonces);
-
-            // // Store the DA output from the SN OS
-            // if let Err(db_err) = madara_backend.da().store_state_diff(&storage_event.block, state_diff) {
-            //     log::error!("db err: {db_err}");
-            // };
+            // Store the DA output from the SN OS
+            if let Err(db_err) = madara_backend
+                .da()
+                .store_state_diff(&storage_event.block, state_diff_to_calldata(state_diff, accessed_addrs.len()))
+            {
+                log::error!("db err: {db_err}");
+            };
 
             match da_mode {
                 DaMode::Validity => {
-                    // Submit the StarkNet OS PIE
-                    // TODO: Validity Impl
-                    // run the Starknet OS with the Cairo VM
-                    // extract the PIE from the Cairo VM run
-                    // pass the PIE to `submit_pie` and zip/base64 internal
+                    // TODO:
+                    // - run the StarknetOs for this block
+                    // - parse the PIE to `submit_pie` and zip/base64 internal
                     if let Ok(job_resp) = sharp::submit_pie("TODO") {
                         log::info!("Job Submitted: {}", job_resp.cairo_job_key);
                         // Store the cairo job key

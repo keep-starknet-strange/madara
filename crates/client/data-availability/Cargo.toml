@@ -16,12 +16,12 @@ anyhow = { workspace = true }
 async-trait = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
 futures = "0.3.21"
+indexmap = { workspace = true }
 jsonrpsee = { version = "0.20.0", features = [
   "http-client",
   "ws-client",
   "macros",
 ] }
-lazy_static = { workspace = true }
 log = "0.4.19"
 reqwest = { version = "0.11.18", features = ["blocking", "json"] }
 serde = { workspace = true }
@@ -41,7 +41,7 @@ sp-runtime = { workspace = true }
 
 # Starknet
 mc-db = { workspace = true, default-features = true }
-starknet_api = { workspace = true, default-features = true }
+starknet_api = { workspace = true }
 
 # Ethereum
 ethers = "2.0.7"

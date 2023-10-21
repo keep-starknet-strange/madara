@@ -21,14 +21,14 @@ impl<B: BlockT> DaDb<B> {
     pub fn state_diff(&self, block_hash: &B::Hash) -> Result<Vec<U256>, String> {
         match self.db.get(crate::columns::DA, &block_hash.encode()) {
             Some(raw) => Ok(Vec::<U256>::decode(&mut &raw[..]).map_err(|e| format!("{:?}", e))?),
-            None => Ok(Vec::new()),
+            None => Err(String::from("can't write state diff")),
         }
     }
 
-    pub fn store_state_diff(&self, block_hash: &B::Hash, diffs: Vec<U256>) -> Result<(), String> {
+    pub fn store_state_diff(&self, block_hash: &B::Hash, diff: Vec<U256>) -> Result<(), String> {
         let mut transaction = sp_database::Transaction::new();
 
-        transaction.set(crate::columns::DA, &block_hash.encode(), &diffs.encode());
+        transaction.set(crate::columns::DA, &block_hash.encode(), &diff.encode());
 
         self.db.commit(transaction).map_err(|e| format!("{:?}", e))?;
 
