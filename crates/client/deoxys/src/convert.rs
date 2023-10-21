@@ -1,6 +1,5 @@
 //! Converts types from [`starknet_gateway`] to madara's expected types.
 
-use mp_felt::Felt252Wrapper;
 use starknet_api::hash::StarkFelt;
 use starknet_ff::FieldElement;
 use starknet_gateway::sequencer::models as p;
@@ -78,14 +77,32 @@ fn invoke_transaction(tx: &p::InvokeFunctionTransaction) -> mp_transactions::Inv
 }
 
 fn declare_transaction(tx: &p::DeclareTransaction) -> mp_transactions::DeclareTransaction {
-    mp_transactions::DeclareTransaction::V2(mp_transactions::DeclareTransactionV2 {
-        max_fee: fee(tx.max_fee),
-        signature: tx.signature.iter().copied().map(felt).map(Into::into).collect(),
-        nonce: felt(tx.nonce).into(),
-        class_hash: felt(tx.class_hash).into(),
-        sender_address: felt(tx.sender_address).into(),
-        compiled_class_hash: felt(tx.compiled_class_hash.expect("no class hash available")).into(),
-    })
+    if tx.version == FieldElement::ZERO {
+        mp_transactions::DeclareTransaction::V0(mp_transactions::DeclareTransactionV0 {
+            max_fee: fee(tx.max_fee),
+            signature: tx.signature.iter().copied().map(felt).map(Into::into).collect(),
+            nonce: felt(tx.nonce).into(),
+            class_hash: felt(tx.class_hash).into(),
+            sender_address: felt(tx.sender_address).into(),
+        })
+    } else if tx.version == FieldElement::ONE {
+        mp_transactions::DeclareTransaction::V1(mp_transactions::DeclareTransactionV1 {
+            max_fee: fee(tx.max_fee),
+            signature: tx.signature.iter().copied().map(felt).map(Into::into).collect(),
+            nonce: felt(tx.nonce).into(),
+            class_hash: felt(tx.class_hash).into(),
+            sender_address: felt(tx.sender_address).into(),
+        })
+    } else {
+        mp_transactions::DeclareTransaction::V2(mp_transactions::DeclareTransactionV2 {
+            max_fee: fee(tx.max_fee),
+            signature: tx.signature.iter().copied().map(felt).map(Into::into).collect(),
+            nonce: felt(tx.nonce).into(),
+            class_hash: felt(tx.class_hash).into(),
+            sender_address: felt(tx.sender_address).into(),
+            compiled_class_hash: felt(tx.compiled_class_hash.expect("no class hash available")).into(),
+        })
+    }
 }
 
 fn deploy_transaction(tx: &p::DeployTransaction) -> mp_transactions::DeployTransaction {

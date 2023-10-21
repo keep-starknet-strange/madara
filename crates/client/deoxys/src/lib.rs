@@ -69,11 +69,12 @@ impl Default for ExecutionConfig {
 }
 
 pub async fn fetch_block(sender: async_channel::Sender<mp_block::Block>, uri: &str, rpc_port: u16) {
-    let base_url = format!("{}/gateway", uri); // assuming 'uri' is something like "https://alpha-mainnet.starknet.io"
+    let base_url = format!("{}/gateway", uri);
     let gateway_url = Url::parse(&base_url).unwrap();
     let feeder_gateway_base_url = format!("{}/feeder_gateway", uri);
     let feeder_gateway_url = Url::parse(&feeder_gateway_base_url).unwrap();
-
+    
+    // TODO(nils) match chain id regarding --network
     let chain_id = starknet_ff::FieldElement::from_byte_slice_be(b"SN_MAIN").unwrap();
     let client = SequencerGatewayProvider::new(gateway_url, feeder_gateway_url, chain_id);
     
