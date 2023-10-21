@@ -69,15 +69,18 @@ impl Default for ExecutionConfig {
 }
 
 pub async fn fetch_block(sender: async_channel::Sender<mp_block::Block>, uri: &str, rpc_port: u16) {
-    let gateway_url = Url::parse(&format!("{uri}/gateway")).unwrap();
-    let feeder_gateway_url = Url::parse(&format!("{uri}/feeder_gateway", uri = uri)).unwrap();
-    let chain_id = starknet_ff::FieldElement::ZERO;
-    let client = SequencerGatewayProvider::new(gateway_url, feeder_gateway_url, chain_id);
+    let base_url = format!("{}/gateway", uri); // assuming 'uri' is something like "https://alpha-mainnet.starknet.io"
+    let gateway_url = Url::parse(&base_url).unwrap();
+    let feeder_gateway_base_url = format!("{}/feeder_gateway", uri);
+    let feeder_gateway_url = Url::parse(&feeder_gateway_base_url).unwrap();
 
+    let chain_id = starknet_ff::FieldElement::from_byte_slice_be(b"SN_MAIN").unwrap();
+    let client = SequencerGatewayProvider::new(gateway_url, feeder_gateway_url, chain_id);
+    
     let mut i = get_last_synced_block(rpc_port).await.unwrap().unwrap() + 1;
     loop {
-        match client.get_block(BlockId::Number(i)).await {
-            Ok(block) => {
+        match client.get_block(BlockId::Number(i)).await {  // Assuming 'get_block' accepts a URL
+        Ok(block) => {
                 let starknet_block = convert::block(&block);
                 sender.send(starknet_block).await.unwrap();
                 match create_block(rpc_port).await {
@@ -99,6 +102,7 @@ pub async fn fetch_block(sender: async_channel::Sender<mp_block::Block>, uri: &s
         }
     }
 }
+
 
 #[cfg(test)]
 mod tests {

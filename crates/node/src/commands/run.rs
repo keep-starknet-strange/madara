@@ -46,9 +46,9 @@ pub enum NetworkType {
 impl NetworkType {
     pub fn uri(&self) -> &'static str {
         match self {
-            NetworkType::Main => "https://alpha-mainnet.starknet.io/gateway/",
-            NetworkType::Test => "https://alpha4.starknet.io/gateway/",
-            NetworkType::Integration => "https://external.integration.starknet.io/",
+            NetworkType::Main => "https://alpha-mainnet.starknet.io",
+            NetworkType::Test => "https://alpha4.starknet.io",
+            NetworkType::Integration => "https://external.integration.starknet.io",
         }
     }
 }

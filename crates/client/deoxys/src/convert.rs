@@ -1,12 +1,16 @@
 //! Converts types from [`starknet_gateway`] to madara's expected types.
 
+use mp_felt::Felt252Wrapper;
 use starknet_api::hash::StarkFelt;
+use starknet_ff::FieldElement;
 use starknet_gateway::sequencer::models as p;
 
 pub fn block(block: &p::Block) -> mp_block::Block {
     let transactions = transactions(&block.transactions);
     let events = events(&block.transaction_receipts);
     let block_number = block.block_number.expect("no block number provided");
+    let sequencer_address = block.sequencer_address
+        .map_or(contract_address(FieldElement::ZERO), |addr| contract_address(addr));
     let (transaction_commitment, event_commitment) = commitments(&transactions, &events, block_number);
 
     let header = mp_block::Header {
@@ -15,7 +19,7 @@ pub fn block(block: &p::Block) -> mp_block::Block {
         status: block_status(&block.status),
         block_timestamp: block.timestamp,
         global_state_root: felt(block.state_root.expect("no state root provided")),
-        sequencer_address: contract_address(block.sequencer_address.expect("no sequencer address provided")),
+        sequencer_address: sequencer_address,
         transaction_count: block.transactions.len() as u128,
         transaction_commitment,
         event_count: events.len() as u128,
@@ -54,13 +58,23 @@ fn transaction(transaction: &p::TransactionType) -> mp_transactions::Transaction
 }
 
 fn invoke_transaction(tx: &p::InvokeFunctionTransaction) -> mp_transactions::InvokeTransaction {
-    mp_transactions::InvokeTransaction::V1(mp_transactions::InvokeTransactionV1 {
-        max_fee: fee(tx.max_fee),
-        signature: tx.signature.iter().copied().map(felt).map(Into::into).collect(),
-        nonce: felt(tx.nonce.expect("no nonce provided")).into(),
-        sender_address: felt(tx.sender_address).into(),
-        calldata: tx.calldata.iter().copied().map(felt).map(Into::into).collect(),
-    })
+    if tx.version == FieldElement::ZERO {
+        mp_transactions::InvokeTransaction::V0(mp_transactions::InvokeTransactionV0 {
+            max_fee: fee(tx.max_fee),
+            signature: tx.signature.iter().copied().map(felt).map(Into::into).collect(),
+            contract_address: felt(tx.sender_address).into(),
+            entry_point_selector: felt(tx.entry_point_selector.expect("no entry_point_selector provided")).into(),
+            calldata: tx.calldata.iter().copied().map(felt).map(Into::into).collect(),
+        })
+    } else {
+        mp_transactions::InvokeTransaction::V1(mp_transactions::InvokeTransactionV1 {
+            max_fee: fee(tx.max_fee),
+            signature: tx.signature.iter().copied().map(felt).map(Into::into).collect(),
+            nonce: felt(tx.nonce.expect("no nonce provided")).into(),
+            sender_address: felt(tx.sender_address).into(),
+            calldata: tx.calldata.iter().copied().map(felt).map(Into::into).collect(),
+        })
+    }
 }
 
 fn declare_transaction(tx: &p::DeclareTransaction) -> mp_transactions::DeclareTransaction {
