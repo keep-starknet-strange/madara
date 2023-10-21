@@ -7,7 +7,7 @@ const REMOTE_RPC_URL = process.env.REMOTE_RPC!;
 const LOCAL_RPC_URL = process.env.LOCAL_RPC!;
 const BLOCK_NUMBER = 100;
 const START_BLOCK = 0;
-const END_BLOCK = 400;
+const END_BLOCK = 700;
 
 const requestDataForMethod = (method: string, params: any[]) => ({
   id: 1,

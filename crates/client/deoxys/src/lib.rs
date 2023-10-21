@@ -1,116 +1,16 @@
+#![allow(deprecated)]
+
 use std::path::PathBuf;
-use std::string::String;
 
 use log::info;
-use mp_felt::Felt252Wrapper;
-use mp_hashers::pedersen::PedersenHasher;
 use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE};
-use reqwest::StatusCode;
+use reqwest::{StatusCode, Url};
 use serde_json::{json, Value};
-use sp_core::U256;
-use starknet_api::api_core::{ChainId, PatriciaKey};
-use starknet_api::block::BlockNumber;
-use starknet_api::hash::StarkFelt;
-use starknet_api::transaction::Event;
-use starknet_client::reader::{StarknetFeederGatewayClient, StarknetReader};
-use starknet_client::RetryConfig;
-use starknet_ff::FieldElement;
+use starknet_gateway::sequencer::models::BlockId;
+use starknet_gateway::SequencerGatewayProvider;
 use tokio::time;
 
-use crate::transactions::{
-    declare_tx_to_starknet_tx, deploy_account_tx_to_starknet_tx, deploy_tx_to_starknet_tx, invoke_tx_to_starknet_tx,
-    l1handler_tx_to_starknet_tx,
-};
-
-const NODE_VERSION: &str = "NODE VERSION";
-
-mod transactions;
-
-// This function converts a block received from the gateway into a StarkNet block
-pub fn get_header(
-    block: starknet_client::reader::Block,
-    transactions: mp_block::BlockTransactions,
-    events: &[Event],
-) -> mp_block::Header {
-    let parent_block_hash = Felt252Wrapper::try_from(block.parent_block_hash.0.bytes());
-    let block_number = block.block_number.0;
-    let global_state_root = Felt252Wrapper::try_from(block.state_root.0.bytes());
-    let status = match block.status {
-        starknet_client::reader::objects::block::BlockStatus::Pending => mp_block::BlockStatus::Pending,
-        starknet_client::reader::objects::block::BlockStatus::AcceptedOnL2 => mp_block::BlockStatus::AcceptedOnL2,
-        starknet_client::reader::objects::block::BlockStatus::AcceptedOnL1 => mp_block::BlockStatus::AcceptedOnL1,
-        starknet_client::reader::objects::block::BlockStatus::Reverted => mp_block::BlockStatus::Rejected,
-        starknet_client::reader::objects::block::BlockStatus::Aborted => mp_block::BlockStatus::Rejected,
-    };
-    let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_MAIN").unwrap());
-    let sequencer_address = Felt252Wrapper(FieldElement::from(*PatriciaKey::key(&block.sequencer_address.0)));
-    let block_timestamp = block.timestamp.0;
-    let transaction_count = block.transactions.len() as u128;
-    let (transaction_commitment, event_commitment) =
-        mp_commitments::calculate_commitments::<PedersenHasher>(&transactions, &events, chain_id, block_number);
-    let event_count: u128 = block.transaction_receipts.iter().map(|receipt| receipt.events.len() as u128).sum();
-    let protocol_version = Some(0u8);
-    let extra_data: U256 = Felt252Wrapper::try_from(block.block_hash.0.bytes()).unwrap().into();
-    let starknet_header = mp_block::Header::new(
-        StarkFelt::from(parent_block_hash.unwrap()),
-        block_number.into(),
-        status.into(),
-        StarkFelt::from(global_state_root.unwrap()),
-        sequencer_address.into(),
-        block_timestamp.into(),
-        transaction_count.into(),
-        StarkFelt::from(transaction_commitment),
-        event_count.into(),
-        StarkFelt::from(event_commitment),
-        protocol_version.unwrap(),
-        Some(extra_data),
-    );
-    starknet_header
-}
-
-pub async fn get_txs(block: starknet_client::reader::Block) -> mp_block::BlockTransactions {
-    let mut transactions_vec: mp_block::BlockTransactions = Vec::new();
-    for transaction in &block.transactions {
-        match transaction {
-            starknet_client::reader::objects::transaction::Transaction::Declare(declare_transaction) => {
-                // convert declare_transaction to starknet transaction
-                let tx = declare_tx_to_starknet_tx(declare_transaction.clone());
-                transactions_vec.push(tx.unwrap());
-            }
-            starknet_client::reader::objects::transaction::Transaction::DeployAccount(deploy_account_transaction) => {
-                // convert declare_transaction to starknet transaction
-                let tx = deploy_account_tx_to_starknet_tx(deploy_account_transaction.clone().into());
-                transactions_vec.push(tx.unwrap());
-            }
-            starknet_client::reader::objects::transaction::Transaction::Deploy(deploy_transaction) => {
-                // convert declare_transaction to starknet transaction
-                let tx = deploy_tx_to_starknet_tx(deploy_transaction.clone().into()).await;
-                transactions_vec.push(tx.unwrap());
-            }
-            starknet_client::reader::objects::transaction::Transaction::Invoke(invoke_transaction) => {
-                // convert invoke_transaction to starknet transaction
-                let tx = invoke_tx_to_starknet_tx(invoke_transaction.clone());
-                transactions_vec.push(tx.unwrap());
-            }
-            starknet_client::reader::objects::transaction::Transaction::L1Handler(l1handler_transaction) => {
-                // convert declare_transaction to starknet transaction
-                let tx = l1handler_tx_to_starknet_tx(l1handler_transaction.clone().into());
-                transactions_vec.push(tx.unwrap());
-            }
-        }
-    }
-
-    transactions_vec
-}
-
-// This function converts a block received from the gateway into a StarkNet block
-pub async fn from_gateway_to_starknet_block(block: starknet_client::reader::Block) -> mp_block::Block {
-    let transactions_vec: mp_block::BlockTransactions = get_txs(block.clone()).await;
-    let all_events: Vec<starknet_api::transaction::Event> =
-        block.transaction_receipts.iter().flat_map(|receipt| &receipt.events).cloned().collect();
-    let header = get_header(block.clone(), transactions_vec.clone(), &all_events);
-    mp_block::Block::new(header, transactions_vec)
-}
+mod convert;
 
 async fn create_block(rpc_port: u16) -> Result<StatusCode, reqwest::Error> {
     let client = reqwest::Client::new();
@@ -168,51 +68,21 @@ impl Default for ExecutionConfig {
     }
 }
 
-pub struct RpcConfig {
-    // #[validate(custom = "validate_ascii")]
-    pub chain_id: ChainId,
-    pub server_address: String,
-    pub max_events_chunk_size: usize,
-    pub max_events_keys: usize,
-    pub collect_metrics: bool,
-    pub starknet_url: String,
-    pub starknet_gateway_retry_config: RetryConfig,
-    pub execution_config: ExecutionConfig,
-}
-
-impl Default for RpcConfig {
-    fn default() -> Self {
-        RpcConfig {
-            chain_id: ChainId("SN_MAIN".to_string()),
-            server_address: String::from("0.0.0.0:9944"),
-            max_events_chunk_size: 1000,
-            max_events_keys: 100,
-            collect_metrics: false,
-            starknet_url: String::from("https://alpha-mainnet.starknet.io/"),
-            starknet_gateway_retry_config: RetryConfig {
-                retry_base_millis: 50,
-                retry_max_delay_millis: 1000,
-                max_retries: 5,
-            },
-            execution_config: ExecutionConfig::default(),
-        }
-    }
-}
-
-pub async fn fetch_block(sender: async_channel::Sender<mp_block::Block>, rpc_port: u16) {
-    let rpc_config = RpcConfig::default();
-
-    let retry_config = RetryConfig { retry_base_millis: 30, retry_max_delay_millis: 30000, max_retries: 10 };
-
-    let starknet_client =
-        StarknetFeederGatewayClient::new(&rpc_config.starknet_url, None, NODE_VERSION, retry_config).unwrap();
-
+pub async fn fetch_block(sender: async_channel::Sender<mp_block::Block>, uri: &str, rpc_port: u16) {
+    let base_url = format!("{}/gateway", uri);
+    let gateway_url = Url::parse(&base_url).unwrap();
+    let feeder_gateway_base_url = format!("{}/feeder_gateway", uri);
+    let feeder_gateway_url = Url::parse(&feeder_gateway_base_url).unwrap();
+    
+    // TODO(nils) match chain id regarding --network
+    let chain_id = starknet_ff::FieldElement::from_byte_slice_be(b"SN_MAIN").unwrap();
+    let client = SequencerGatewayProvider::new(gateway_url, feeder_gateway_url, chain_id);
+    
     let mut i = get_last_synced_block(rpc_port).await.unwrap().unwrap() + 1;
     loop {
-        let block = starknet_client.block(BlockNumber(i)).await;
-        match block {
-            Ok(block) => {
-                let starknet_block = from_gateway_to_starknet_block(block.unwrap()).await;
+        match client.get_block(BlockId::Number(i)).await {  // Assuming 'get_block' accepts a URL
+        Ok(block) => {
+                let starknet_block = convert::block(&block);
                 sender.send(starknet_block).await.unwrap();
                 match create_block(rpc_port).await {
                     Ok(status) => {
@@ -234,20 +104,15 @@ pub async fn fetch_block(sender: async_channel::Sender<mp_block::Block>, rpc_por
     }
 }
 
+
 #[cfg(test)]
 mod tests {
-    use std::collections::VecDeque;
     use std::convert::TryInto;
-    use std::sync::Mutex;
 
-    use mockall::mock;
-    use mockito::mock;
     use starknet_ff::FieldElement;
 
-    use super::*;
-
     // Mocking StarknetFeederGatewayClient for testing
-    mock! {
+    mockito::mock! {
         StarknetFeederGatewayClient {
             fn new(url: &str, option: Option<&str>, version: &str, retry_config: RetryConfig) -> Self;
             async fn block(&self, block_number: BlockNumber) -> Result<Option<starknet_client::reader::Block>, starknet_client::Error>;
