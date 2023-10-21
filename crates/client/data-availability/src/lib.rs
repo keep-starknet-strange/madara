@@ -99,7 +99,10 @@ where
             };
 
             for (_, storage_key, storage_val) in storage_event.changes.iter() {
-                let (prefix_key, child_key, rest_key) = safe_split(&storage_key.0);
+                // split storage key into the (starknet prefix) and (remaining tree path)
+                let (child_key, rest_key) = safe_split(&storage_key.0);
+
+                // saftey checks
                 let storage_val = match storage_val {
                     Some(x) => x.0.clone(),
                     None => continue,
@@ -109,41 +112,42 @@ where
                     None => continue,
                 };
 
-                if prefix_key == pallet_starknet_key {
-                    if child_key == twox_128(STARKNET_NONCE) {
-                        state_diff
-                            .nonces
-                            .insert(ContractAddress(bytes_to_key(&rest_key)), Nonce(bytes_to_felt(&storage_val)));
-                        accessed_addrs.insert(ContractAddress(bytes_to_key(&rest_key)));
-                    } else if child_key == twox_128(STARKNET_STORAGE) {
-                        if rest_key.len() > 32 {
-                            let (addr, key) = rest_key.split_at(32);
-                            let (addr, key) = (bytes_to_key(addr), bytes_to_key(key));
+                if child_key == twox_128(STARKNET_NONCE) {
+                    // collect nonce information in state diff
+                    state_diff
+                        .nonces
+                        .insert(ContractAddress(bytes_to_key(&rest_key)), Nonce(bytes_to_felt(&storage_val)));
+                    accessed_addrs.insert(ContractAddress(bytes_to_key(&rest_key)));
+                } else if child_key == twox_128(STARKNET_STORAGE) {
+                    // collect storage update information in state diff
+                    if rest_key.len() > 32 {
+                        let (addr, key) = rest_key.split_at(32);
+                        let (addr, key) = (bytes_to_key(addr), bytes_to_key(key));
 
-                            state_diff
-                                .storage_diffs
-                                .entry(ContractAddress(addr))
-                                .and_modify(|v| {
-                                    v.insert(StorageKey(key), bytes_to_felt(&storage_val));
-                                })
-                                .or_insert(IndexMap::from([(StorageKey(key), bytes_to_felt(&storage_val))]));
-                            accessed_addrs.insert(ContractAddress(addr));
-                        }
-                    } else if child_key == twox_128(STARKNET_CONTRACT_CLASS) {
-                        state_diff.declared_classes.insert(
-                            ClassHash(bytes_to_felt(&rest_key)),
-                            CompiledClassHash(bytes_to_felt(&storage_val)),
-                        );
-                    } else if child_key == twox_128(STARKNET_CONTRACT_CLASS_HASH) {
                         state_diff
-                            .deployed_contracts
-                            .insert(ContractAddress(bytes_to_key(&rest_key)), ClassHash(bytes_to_felt(&storage_val)));
-                        accessed_addrs.insert(ContractAddress(bytes_to_key(&rest_key)));
+                            .storage_diffs
+                            .entry(ContractAddress(addr))
+                            .and_modify(|v| {
+                                v.insert(StorageKey(key), bytes_to_felt(&storage_val));
+                            })
+                            .or_insert(IndexMap::from([(StorageKey(key), bytes_to_felt(&storage_val))]));
+                        accessed_addrs.insert(ContractAddress(addr));
                     }
+                } else if child_key == twox_128(STARKNET_CONTRACT_CLASS) {
+                    // collect declared class information in state diff
+                    state_diff
+                        .declared_classes
+                        .insert(ClassHash(bytes_to_felt(&rest_key)), CompiledClassHash(bytes_to_felt(&storage_val)));
+                } else if child_key == twox_128(STARKNET_CONTRACT_CLASS_HASH) {
+                    // collect deployed contract information in state diff
+                    state_diff
+                        .deployed_contracts
+                        .insert(ContractAddress(bytes_to_key(&rest_key)), ClassHash(bytes_to_felt(&storage_val)));
+                    accessed_addrs.insert(ContractAddress(bytes_to_key(&rest_key)));
                 }
             }
 
-            // Store the DA output from the SN OS
+            // store the da encoded calldata for the state update worker
             if let Err(db_err) = madara_backend
                 .da()
                 .store_state_diff(&storage_event.block, state_diff_to_calldata(state_diff, accessed_addrs.len()))

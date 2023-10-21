@@ -7,7 +7,7 @@ use url::{ParseError, Url};
 const CLASS_FLAG_TRUE: &str = "0x100000000000000000000000000000001"; // 2 ^ 128 + 1
 const NONCE_BASE: &str = "0x10000000000000000"; // 2 ^ 64
 
-/// Encode DA Calldata:
+/// DA calldata encoding:
 /// - https://docs.starknet.io/documentation/architecture_and_concepts/Data_Availability/on-chain-data
 pub fn state_diff_to_calldata(mut state_diff: ThinStateDiff, num_addrs_accessed: usize) -> Vec<U256> {
     let mut calldata: Vec<U256> = Vec::new();
@@ -21,8 +21,8 @@ pub fn state_diff_to_calldata(mut state_diff: ThinStateDiff, num_addrs_accessed:
         let nonce = state_diff.nonces.remove(&addr);
         calldata.push(da_word(class_flag.is_some(), nonce, writes.len() as u64));
 
-        if class_flag.is_some() {
-            calldata.push(U256::from_big_endian(class_flag.unwrap().0.bytes()));
+        if let Some(class_hash) = class_flag {
+            calldata.push(U256::from_big_endian(class_hash.0.bytes()));
         }
 
         for (key, val) in &writes {
@@ -35,8 +35,8 @@ pub fn state_diff_to_calldata(mut state_diff: ThinStateDiff, num_addrs_accessed:
 
         let class_flag = state_diff.deployed_contracts.remove(&addr);
         calldata.push(da_word(class_flag.is_some(), Some(nonce), 0_u64));
-        if class_flag.is_some() {
-            calldata.push(U256::from_big_endian(class_flag.unwrap().0.bytes()));
+        if let Some(class_hash) = class_flag {
+            calldata.push(U256::from_big_endian(class_hash.0.bytes()));
         }
     }
     for (addr, class_hash) in state_diff.deployed_contracts {
@@ -56,8 +56,9 @@ pub fn state_diff_to_calldata(mut state_diff: ThinStateDiff, num_addrs_accessed:
     calldata
 }
 
-///  |---padding---|---class flag---|---new nonce---|---num changes---|
-///      127 bits        1 bit           64 bits         64 bits
+/// DA word encoding:
+/// |---padding---|---class flag---|---new nonce---|---num changes---|
+///     127 bits        1 bit           64 bits          64 bits
 pub fn da_word(class_flag: bool, nonce_change: Option<Nonce>, num_changes: u64) -> U256 {
     let mut word = U256::from(0);
 
@@ -65,11 +66,9 @@ pub fn da_word(class_flag: bool, nonce_change: Option<Nonce>, num_changes: u64) 
         word += U256::from_str_radix(CLASS_FLAG_TRUE, 16).unwrap();
     }
     if let Some(new_nonce) = nonce_change {
-        word += U256::from_big_endian(&new_nonce.0.bytes()) + U256::from_str_radix(NONCE_BASE, 16).unwrap();
+        word += U256::from_big_endian(new_nonce.0.bytes()) + U256::from_str_radix(NONCE_BASE, 16).unwrap();
     }
     word += U256::from(num_changes);
-
-    println!("DA WORD: {} {nonce_change:?} {num_changes} {word}", u64::MAX);
 
     word
 }
@@ -99,23 +98,17 @@ pub fn is_valid_http_endpoint(endpoint: &str) -> bool {
     if let Ok(url) = get_valid_url(endpoint) { matches!(url.scheme(), "http" | "https") } else { false }
 }
 
-pub fn safe_split(key: &[u8]) -> ([u8; 16], [u8; 16], Option<Vec<u8>>) {
+pub fn safe_split(key: &[u8]) -> ([u8; 16], Option<Vec<u8>>) {
     let length = key.len();
-    let (mut prefix, mut child, mut rest) = ([0_u8; 16], [0_u8; 16], None);
-    if length <= 16 {
-        prefix[..length].copy_from_slice(&key[..])
-    }
+    let (mut child, mut rest) = ([0_u8; 16], None);
     if length > 16 && key.len() <= 32 {
-        prefix.copy_from_slice(&key[..16]);
         child[..(length - 16)].copy_from_slice(&key[16..]);
-    }
-    if length > 32 {
-        prefix.copy_from_slice(&key[..16]);
+    } else if length > 32 {
         child.copy_from_slice(&key[16..32]);
         rest = Some(Vec::from(&key[32..]))
     }
 
-    (prefix, child, rest)
+    (child, rest)
 }
 
 pub fn bytes_to_felt(raw: &[u8]) -> StarkFelt {
