@@ -81,10 +81,8 @@ where
     C: BlockchainEvents<B> + 'static,
 {
     pub async fn prove_current_block(da_mode: DaMode, client: Arc<C>, madara_backend: Arc<mc_db::Backend<B>>) {
-        let pallet_starknet_key = twox_128(PALLET_STARKNET);
-
         let mut storage_event_st = client
-            .storage_changes_notification_stream(None, Some(&[(SubStorageKey(pallet_starknet_key.into()), None)]))
+            .storage_changes_notification_stream(None, Some(&[(SubStorageKey(twox_128(PALLET_STARKNET).into()), None)]))
             .expect("node has been initialized to prove state change, but can't read from notification stream");
 
         while let Some(storage_event) = storage_event_st.next().await {
