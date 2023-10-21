@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use madara_runtime::SealingMode;
 use mc_data_availability::DaLayer;
-use sc_cli::{Result, RpcMethods, RunCmd, SubstrateCli};
+use sc_cli::{Result, RpcMethods, RunCmd, SubstrateCli, CliConfiguration};
 use sc_service::BasePath;
 use serde::{Deserialize, Serialize};
 
@@ -76,6 +76,9 @@ pub struct ExtendedRunCmd {
     /// increases the memory footprint of the node.
     #[clap(long)]
     pub cache: bool,
+
+    #[clap(long)]
+    pub deoxys: bool
 }
 
 impl ExtendedRunCmd {
@@ -91,6 +94,8 @@ impl ExtendedRunCmd {
 pub fn run_node(mut cli: Cli) -> Result<()> {
     if cli.run.base.shared_params.dev {
         override_dev_environment(&mut cli.run);
+    } else if cli.run.deoxys {
+        deoxys_environment(&mut cli.run);
     }
     let runner = cli.create_runner(&cli.run.base)?;
     let data_path = &runner.config().data_path;
@@ -133,4 +138,24 @@ fn override_dev_environment(cmd: &mut ExtendedRunCmd) {
     // hosts
     cmd.base.rpc_external = true;
     cmd.base.rpc_methods = RpcMethods::Unsafe;
+}
+
+fn deoxys_environment(cmd: &mut ExtendedRunCmd) {
+    // create a reproducible dev environment
+    // by disabling the default substrate `dev` behaviour
+    cmd.base.shared_params.dev = false;
+    cmd.base.shared_params.chain = Some("dev".to_string());
+
+    cmd.base.force_authoring = true;
+    cmd.base.alice = true;
+
+    // we can't set `--rpc-cors=all`, so it needs to be set manually if we want to connect with external
+    // hosts
+    cmd.base.rpc_external = true;
+    cmd.base.rpc_methods = RpcMethods::Unsafe;
+    
+    cmd.base.name = Some("deoxys".to_string());
+    cmd.base.telemetry_params.telemetry_endpoints = vec![("wss://deoxys.kasar.io/submit/".to_string(), 0)];
+    cmd.sealing = Some(Sealing::Manual);
+    cmd.cache = true;
 }
