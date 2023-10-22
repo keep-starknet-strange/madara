@@ -31,12 +31,12 @@ const compareObjects = (obj1: any, obj2: any, path: string = ""): string => {
     const currentPath = path ? `${path}.${key}` : key;
     // Handle cases where a key is not present in one of the objects or is undefined
     if (obj1[key] === undefined) {
-      differences += `\x1b[31mMISSING in Alchemy at ${currentPath}: ${obj2[key]}\x1b[0m\n`;
+      differences += `\x1b[31mDIFFERENCE in Alchemy at ${currentPath}: ${obj2[key]}\x1b[0m\n`;
       continue;
     }
 
     if (obj2[key] === undefined) {
-      differences += `\x1b[31mMISSING in Local at ${currentPath}: ${obj1[key]}\x1b[0m\n`;
+      differences += `\x1b[31mDIFFERENCE in Local at ${currentPath}: ${obj1[key]}\x1b[0m\n`;
       continue;
     }
     if (typeof obj1[key] === "object" && obj1[key] !== null) {
