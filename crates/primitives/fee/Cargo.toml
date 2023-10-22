@@ -12,8 +12,10 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 blockifier = { workspace = true }
+hashbrown = { workspace = true }
 mp-state = { workspace = true }
 phf = { workspace = true }
+sp-arithmetic = { workspace = true }
 starknet_api = { workspace = true }
 
 [features]
