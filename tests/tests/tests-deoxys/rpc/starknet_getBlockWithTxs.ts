@@ -5,9 +5,9 @@ dotenv.config();
 
 const REMOTE_RPC_URL = process.env.REMOTE_RPC;
 const LOCAL_RPC_URL = process.env.DEOXYS_RPC;
-const BLOCK_NUMBER = 2256;
-const START_BLOCK = 2900;
-const END_BLOCK = 2300;
+const BLOCK_NUMBER = 100;
+const START_BLOCK = 200;
+const END_BLOCK = 600;
 
 const requestDataForMethod = (method: string, params: any[]) => ({
   id: 1,
