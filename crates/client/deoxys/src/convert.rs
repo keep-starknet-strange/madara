@@ -127,9 +127,7 @@ fn deploy_account_transaction(tx: &p::DeployAccountTransaction) -> mp_transactio
 
 fn l1_handler_transaction(tx: &p::L1HandlerTransaction) -> mp_transactions::HandleL1MessageTransaction {
     mp_transactions::HandleL1MessageTransaction {
-        // TODO:
-        //  Convert the nonce from field element to u64??
-        nonce: 0,
+        nonce: u64::try_from(felt(tx.nonce.unwrap())).unwrap(),
         contract_address: felt(tx.contract_address).into(),
         entry_point_selector: felt(tx.entry_point_selector).into(),
         calldata: tx.calldata.iter().copied().map(felt).map(Into::into).collect(),
