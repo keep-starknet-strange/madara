@@ -23,7 +23,6 @@ members = [
   "crates/client/storage",
   "crates/client/transaction-pool",
   "crates/client/deoxys",
-  "crates/client/starknet_client",
   "starknet-rpc-test",
 ]
 # All previous except for `starknet-rpc-test`
@@ -181,7 +180,7 @@ cairo-vm = { git = "https://github.com/keep-starknet-strange/cairo-rs", branch =
 ] }
 starknet-crypto = { version = "0.6.0", default-features = false }
 starknet-core = { version = "0.6.0", default-features = false }
-starknet-providers = { version = "0.6.0", default-features = false }
+starknet-gateway = { version = "0.6.0", default-features = false }
 starknet-ff = { version = "0.3.4", default-features = false }
 starknet-signers = { version = "0.4.0" }
 starknet-accounts = { version = "0.5.0" }
@@ -236,7 +235,6 @@ phf = { version = "0.11", default-features = false }
 
 # Deoxys
 mc-deoxys = { path = "crates/client/deoxys" }
-starknet_client = { path = "crates/client/starknet_client" }
 tokio = "1.24.2"
 assert_matches = "1.5.0"
 mockito = "0.31.0"

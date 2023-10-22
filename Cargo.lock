@@ -582,12 +582,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "assert"
-version = "0.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d6ad2cfc66932f8ceee708631eaaf7131d189a2a68610269a6f65b433dd8c844"
-
-[[package]]
 name = "assert-json-diff"
 version = "2.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3569,26 +3563,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
-]
-
-[[package]]
-name = "enum-iterator"
-version = "1.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7add3873b5dd076766ee79c8e406ad1a472c385476b9e38849f8eec24f1be689"
-dependencies = [
- "enum-iterator-derive",
-]
-
-[[package]]
-name = "enum-iterator-derive"
-version = "1.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eecf8589574ce9b895052fa12d69af7a233f99e6107f5cb8dd1044f2a17bfdcb"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.38",
 ]
 
 [[package]]
@@ -6610,7 +6584,6 @@ dependencies = [
  "sp-trie 7.0.0",
  "starknet-core",
  "starknet_api 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "starknet_client",
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
@@ -6808,8 +6781,8 @@ dependencies = [
  "sp-core 7.0.0",
  "starknet-core",
  "starknet-ff",
+ "starknet-gateway",
  "starknet_api 0.4.1 (git+https://github.com/keep-starknet-strange/starknet-api?branch=no_std-support-dc83f05)",
- "starknet_client",
  "tokio",
  "validator",
 ]
@@ -7923,17 +7896,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
 
 [[package]]
-name = "os_info"
-version = "3.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "006e42d5b888366f1880eda20371fedde764ed2213dc8496f49622fa0c99cd5e"
-dependencies = [
- "log",
- "serde",
- "winapi",
-]
-
-[[package]]
 name = "p256"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8224,22 +8186,6 @@ dependencies = [
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
  "sp-timestamp",
-]
-
-[[package]]
-name = "papyrus_config"
-version = "0.4.0"
-dependencies = [
- "assert_matches",
- "clap 4.4.6",
- "itertools 0.10.5",
- "lazy_static",
- "serde",
- "serde_json",
- "strum_macros 0.25.3",
- "tempfile",
- "thiserror",
- "validator",
 ]
 
 [[package]]
@@ -12862,6 +12808,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "starknet-gateway"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "268deea7d8a5a1d3ebf8a0697de2633b461cd4542a0db30116ba61e80da80efb"
+dependencies = [
+ "async-trait",
+ "auto_impl",
+ "ethereum-types",
+ "flate2",
+ "log",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "starknet-core",
+ "thiserror",
+ "url",
+]
+
+[[package]]
 name = "starknet-providers"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12898,7 +12864,7 @@ dependencies = [
  "starknet-core",
  "starknet-crypto 0.6.0",
  "starknet-ff",
- "starknet-providers",
+ "starknet-gateway",
  "starknet-signers",
  "thiserror",
  "tokio",
@@ -12957,39 +12923,6 @@ dependencies = [
  "serde_json",
  "starknet-crypto 0.5.1",
  "thiserror-no-std",
-]
-
-[[package]]
-name = "starknet_client"
-version = "0.4.0"
-dependencies = [
- "assert",
- "assert_matches",
- "async-trait",
- "cairo-lang-casm 2.2.0",
- "cairo-lang-starknet 2.2.0",
- "cairo-lang-utils 2.2.0",
- "enum-iterator",
- "http",
- "indexmap 2.0.0-pre",
- "lazy_static",
- "mockall",
- "mockito",
- "os_info",
- "papyrus_config",
- "pretty_assertions",
- "rand 0.8.5",
- "rand_chacha 0.3.1",
- "reqwest",
- "serde",
- "serde_json",
- "starknet-core",
- "starknet_api 0.4.1 (git+https://github.com/keep-starknet-strange/starknet-api?branch=no_std-support-dc83f05)",
- "thiserror",
- "tokio",
- "tokio-retry",
- "tracing",
- "url",
 ]
 
 [[package]]
