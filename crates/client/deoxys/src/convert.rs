@@ -59,7 +59,7 @@ fn transaction(transaction: &p::TransactionType) -> mp_transactions::Transaction
 fn invoke_transaction(tx: &p::InvokeFunctionTransaction) -> mp_transactions::InvokeTransaction {
     if tx.version == FieldElement::ZERO {
         mp_transactions::InvokeTransaction::V0(mp_transactions::InvokeTransactionV0 {
-            max_fee: fee(tx.max_fee),
+            max_fee: fee(tx.max_fee).into(),
             signature: tx.signature.iter().copied().map(felt).map(Into::into).collect(),
             contract_address: felt(tx.sender_address).into(),
             entry_point_selector: felt(tx.entry_point_selector.expect("no entry_point_selector provided")).into(),
@@ -67,7 +67,7 @@ fn invoke_transaction(tx: &p::InvokeFunctionTransaction) -> mp_transactions::Inv
         })
     } else {
         mp_transactions::InvokeTransaction::V1(mp_transactions::InvokeTransactionV1 {
-            max_fee: fee(tx.max_fee),
+            max_fee: fee(tx.max_fee).into(),
             signature: tx.signature.iter().copied().map(felt).map(Into::into).collect(),
             nonce: felt(tx.nonce.expect("no nonce provided")).into(),
             sender_address: felt(tx.sender_address).into(),
@@ -79,7 +79,7 @@ fn invoke_transaction(tx: &p::InvokeFunctionTransaction) -> mp_transactions::Inv
 fn declare_transaction(tx: &p::DeclareTransaction) -> mp_transactions::DeclareTransaction {
     if tx.version == FieldElement::ZERO {
         mp_transactions::DeclareTransaction::V0(mp_transactions::DeclareTransactionV0 {
-            max_fee: fee(tx.max_fee),
+            max_fee: fee(tx.max_fee).into(),
             signature: tx.signature.iter().copied().map(felt).map(Into::into).collect(),
             nonce: felt(tx.nonce).into(),
             class_hash: felt(tx.class_hash).into(),
@@ -87,7 +87,7 @@ fn declare_transaction(tx: &p::DeclareTransaction) -> mp_transactions::DeclareTr
         })
     } else if tx.version == FieldElement::ONE {
         mp_transactions::DeclareTransaction::V1(mp_transactions::DeclareTransactionV1 {
-            max_fee: fee(tx.max_fee),
+            max_fee: fee(tx.max_fee).into(),
             signature: tx.signature.iter().copied().map(felt).map(Into::into).collect(),
             nonce: felt(tx.nonce).into(),
             class_hash: felt(tx.class_hash).into(),
@@ -95,7 +95,7 @@ fn declare_transaction(tx: &p::DeclareTransaction) -> mp_transactions::DeclareTr
         })
     } else {
         mp_transactions::DeclareTransaction::V2(mp_transactions::DeclareTransactionV2 {
-            max_fee: fee(tx.max_fee),
+            max_fee: fee(tx.max_fee).into(),
             signature: tx.signature.iter().copied().map(felt).map(Into::into).collect(),
             nonce: felt(tx.nonce).into(),
             class_hash: felt(tx.class_hash).into(),
@@ -116,7 +116,7 @@ fn deploy_transaction(tx: &p::DeployTransaction) -> mp_transactions::DeployTrans
 
 fn deploy_account_transaction(tx: &p::DeployAccountTransaction) -> mp_transactions::DeployAccountTransaction {
     mp_transactions::DeployAccountTransaction {
-        max_fee: fee(tx.max_fee),
+        max_fee: fee(tx.max_fee).into(),
         signature: tx.signature.iter().copied().map(felt).map(Into::into).collect(),
         nonce: felt(tx.nonce).into(),
         contract_address_salt: felt(tx.contract_address_salt).into(),
