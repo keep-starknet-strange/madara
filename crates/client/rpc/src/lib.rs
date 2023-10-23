@@ -897,6 +897,7 @@ where
         let block_header = block.header();
         let block_hash = block_header.hash::<H>().into();
         let block_number = block_header.block_number;
+        let sequencer_address = Felt252Wrapper::from(block.header().sequencer_address); //.into();
 
         let block_extrinsics = self
             .client
@@ -943,48 +944,76 @@ where
             }
         }
 
+        fn extract_fee_and_contract_address(
+            events: &Vec<starknet_core::types::Event>,
+            sequencer_address: &Felt252Wrapper,
+        ) -> (FieldElement, FieldElement) {
+            let transfer_event_key = starknet_core::utils::get_selector_from_name("Transfer").unwrap();
+            if let Some((actual_fee, contract_address)) = events.iter().find_map(|event| {
+                event.keys.iter().find(|&&key| key == transfer_event_key)?;
+                event.data.get(1).and_then(|send_to| (*send_to == sequencer_address.0).then_some(()))?;
+                let actual_fee = Felt252Wrapper(event.data.get(2).unwrap().clone());
+                let contract_address = Felt252Wrapper(event.data.get(0).unwrap().clone());
+                Some((actual_fee, contract_address))
+            }) {
+                return (actual_fee.0, contract_address.0);
+            }
+            // if not Transfer event - assume transaction without fee
+            if let Some((actual_fee, contract_address)) = events.iter().find_map(|event| {
+                event.keys.iter().find(|&&key| key != transfer_event_key)?;
+                Some((Felt252Wrapper::default(), Felt252Wrapper(event.from_address.clone())))
+            }) {
+                return (actual_fee.0, contract_address.0);
+            }
+            (Default::default(), Default::default())
+        }
+
+        let events_converted: Vec<starknet_core::types::Event> =
+            events.clone().into_iter().map(event_conversion).collect();
+        let (actual_fee, contract_address) = extract_fee_and_contract_address(&events_converted, &sequencer_address);
+
         let receipt = match tx_type {
             mp_transactions::TxType::Declare => TransactionReceipt::Declare(DeclareTransactionReceipt {
                 transaction_hash,
-                actual_fee: Default::default(),
+                actual_fee,
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
                 block_hash,
                 block_number,
                 messages_sent: Default::default(),
-                events: events.into_iter().map(event_conversion).collect(),
+                events: events_converted,
                 execution_result,
             }),
             mp_transactions::TxType::DeployAccount => {
                 TransactionReceipt::DeployAccount(DeployAccountTransactionReceipt {
                     transaction_hash,
-                    actual_fee: Default::default(),
+                    actual_fee,
                     finality_status: TransactionFinalityStatus::AcceptedOnL2,
                     block_hash,
                     block_number,
                     messages_sent: Default::default(),
-                    events: events.into_iter().map(event_conversion).collect(),
-                    contract_address: Default::default(), // TODO: we can probably find this in the events
+                    events: events_converted,
+                    contract_address,
                     execution_result,
                 })
             }
             mp_transactions::TxType::Invoke => TransactionReceipt::Invoke(InvokeTransactionReceipt {
                 transaction_hash,
-                actual_fee: Default::default(),
+                actual_fee,
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
                 block_hash,
                 block_number,
                 messages_sent: Default::default(),
-                events: events.into_iter().map(event_conversion).collect(),
+                events: events_converted,
                 execution_result,
             }),
             mp_transactions::TxType::L1Handler => TransactionReceipt::L1Handler(L1HandlerTransactionReceipt {
                 transaction_hash,
-                actual_fee: Default::default(),
+                actual_fee,
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
                 block_hash,
                 block_number,
                 messages_sent: Default::default(),
-                events: events.into_iter().map(event_conversion).collect(),
+                events: events_converted,
                 execution_result,
             }),
         };

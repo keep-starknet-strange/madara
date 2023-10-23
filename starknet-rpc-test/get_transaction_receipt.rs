@@ -67,7 +67,7 @@ async fn work_with_invoke_transaction(madara: &ThreadSafeMadaraClient) -> Result
     match invoke_tx_receipt {
         Ok(MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt))) => {
             assert_eq!(receipt.transaction_hash, rpc_response.transaction_hash);
-            // assert_eq!(receipt.actual_fee, expected_fee); TODO: Fix in RPC
+            assert_eq!(receipt.actual_fee, expected_fee);
             assert_eq!(receipt.finality_status, TransactionFinalityStatus::AcceptedOnL2);
             assert_eq_msg_to_l1(receipt.messages_sent, vec![]);
             assert_eq_event(
@@ -143,7 +143,7 @@ async fn work_with_declare_transaction(madara: &ThreadSafeMadaraClient) -> Resul
             _ => panic!("expected declare transaction receipt"),
         };
         assert_eq!(d1.transaction_hash, d2.transaction_hash);
-        // assert_eq!(d1.actual_fee, d2.actual_fee); TODO: Fix in rpc
+        assert_eq!(d1.actual_fee, d2.actual_fee);
         assert_eq!(d1.finality_status, d2.finality_status);
         assert_eq!(d1.block_hash, d2.block_hash);
         assert_eq!(d1.block_number, d2.block_number);
@@ -175,7 +175,7 @@ async fn work_with_declare_transaction(madara: &ThreadSafeMadaraClient) -> Resul
                 from_address: fee_token_address,
                 keys: vec![get_selector_from_name("Transfer").unwrap()],
                 data: vec![
-                    FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(), // to (sequencer address)
+                    FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(), // from
                     FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(),       // to (sequencer address)
                     expected_fee,                                                // value low
                     FieldElement::ZERO,                                          // value high
@@ -233,7 +233,7 @@ async fn work_with_deploy_account_transaction(madara: &ThreadSafeMadaraClient) -
     match account_deployment_tx_receipt {
         Ok(MaybePendingTransactionReceipt::Receipt(TransactionReceipt::DeployAccount(receipt))) => {
             assert_eq!(receipt.transaction_hash, rpc_response.transaction_hash);
-            // assert_eq!(receipt.actual_fee, expected_fee); TODO: fix in code
+            assert_eq!(receipt.actual_fee, expected_fee);
             assert_eq!(receipt.finality_status, TransactionFinalityStatus::AcceptedOnL2);
             assert_eq_msg_to_l1(receipt.messages_sent, vec![]);
             assert_eq_event(
@@ -250,7 +250,7 @@ async fn work_with_deploy_account_transaction(madara: &ThreadSafeMadaraClient) -
                 }],
             );
             assert_matches!(receipt.execution_result, ExecutionResult::Succeeded);
-            assert_eq!(receipt.contract_address, FieldElement::ZERO);
+            assert_eq!(receipt.contract_address, account_address);
         }
         _ => panic!("expected deploy account transaction receipt"),
     };
