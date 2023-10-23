@@ -40,6 +40,7 @@
 - feat(sealing): finalization for instant sealing
 - feat(cache-option): add an option to enable aggressive caching in command-line
   parameters
+- feat(rpc): return deployed contract address and actual fee in get_transaction_receipt api api
 
 ## v0.4.0
 
