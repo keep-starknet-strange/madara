@@ -4,7 +4,7 @@ dotenv.config();
 
 const REMOTE_RPC_URL = process.env.REMOTE_RPC!;
 const LOCAL_RPC_URL = process.env.DEOXYS_RPC!;
-// THIS ONE IS REALLY COST INTENCIVE
+// THIS ONE IS REALLY COST INTENSIVE
 const START_BLOCK = 1000;
 const END_BLOCK = 1466;
 
