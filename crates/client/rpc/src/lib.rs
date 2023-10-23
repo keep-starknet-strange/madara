@@ -608,7 +608,7 @@ where
             BroadcastedTransaction::DeployAccount(deploy_tx) => !deploy_tx.is_query,
         });
         if is_invalid_query_transaction {
-            return Err(StarknetRpcApiError::UnsupportedTxVersion.into());
+            log::error!("Got `is_query`: false. In a future version, this will fail fee estimation with UnsupportedTxVersion");
         }
 
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
@@ -627,7 +627,7 @@ where
             let (actual_fee, gas_usage) = self
                 .client
                 .runtime_api()
-                .estimate_fee(substrate_block_hash, tx)
+                .estimate_fee(substrate_block_hash, tx, !is_invalid_query_transaction)
                 .map_err(|e| {
                     error!("Request parameters error: {e}");
                     StarknetRpcApiError::InternalServerError

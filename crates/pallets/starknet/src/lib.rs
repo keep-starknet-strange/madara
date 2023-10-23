@@ -506,7 +506,6 @@ pub mod pallet {
                     log::error!("failed to execute invoke tx: {:?}", e);
                     Error::<T>::TransactionExecutionFailed
                 })?;
-
             let tx_hash = transaction.tx_hash;
             Self::emit_and_store_tx_and_fees_events(
                 tx_hash,
@@ -1092,7 +1091,7 @@ impl<T: Config> Pallet<T> {
     }
 
     /// Estimate the fee associated with transaction
-    pub fn estimate_fee(transaction: UserTransaction) -> Result<(u64, u64), DispatchError> {
+    pub fn estimate_fee(transaction: UserTransaction, is_query: bool) -> Result<(u64, u64), DispatchError> {
         let chain_id = Self::chain_id();
 
         fn execute_tx_and_rollback<S: State + StateChanges + FeeConfig>(
@@ -1116,20 +1115,20 @@ impl<T: Config> Pallet<T> {
 
         let execution_result = match transaction {
             UserTransaction::Declare(tx, contract_class) => execute_tx_and_rollback(
-                tx.try_into_executable::<T::SystemHash>(chain_id, contract_class, true)
+                tx.try_into_executable::<T::SystemHash>(chain_id, contract_class, is_query)
                     .map_err(|_| Error::<T>::InvalidContractClass)?,
                 &mut blockifier_state_adapter,
                 &block_context,
                 disable_nonce_validation,
             ),
             UserTransaction::DeployAccount(tx) => execute_tx_and_rollback(
-                tx.into_executable::<T::SystemHash>(chain_id, true),
+                tx.into_executable::<T::SystemHash>(chain_id, is_query),
                 &mut blockifier_state_adapter,
                 &block_context,
                 disable_nonce_validation,
             ),
             UserTransaction::Invoke(tx) => execute_tx_and_rollback(
-                tx.into_executable::<T::SystemHash>(chain_id, true),
+                tx.into_executable::<T::SystemHash>(chain_id, is_query),
                 &mut blockifier_state_adapter,
                 &block_context,
                 disable_nonce_validation,
