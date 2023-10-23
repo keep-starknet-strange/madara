@@ -506,6 +506,7 @@ pub mod pallet {
                     log::error!("failed to execute invoke tx: {:?}", e);
                     Error::<T>::TransactionExecutionFailed
                 })?;
+                
             let tx_hash = transaction.tx_hash;
             Self::emit_and_store_tx_and_fees_events(
                 tx_hash,
