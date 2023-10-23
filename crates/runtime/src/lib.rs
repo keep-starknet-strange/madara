@@ -397,6 +397,13 @@ impl_runtime_apis! {
 
             (messages_to_l1, messages_to_l2)
         }
+
+        fn ensure_l1_nonce_unused(nonce: &Nonce) -> bool {
+            match Starknet::ensure_l1_message_not_executed(nonce) {
+                Ok(_) => true,
+                _ => false
+            }
+        }
     }
 
     impl pallet_starknet::runtime_api::ConvertTransactionRuntimeApi<Block> for Runtime {

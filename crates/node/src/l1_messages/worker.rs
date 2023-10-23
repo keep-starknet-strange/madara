@@ -19,6 +19,7 @@ use sc_transaction_pool_api::{TransactionPool, TransactionSource};
 use sp_api::offchain::OffchainStorage;
 use sp_api::{BlockId, ProvideRuntimeApi};
 use sp_runtime::traits::Block as BlockT;
+use starknet_api::api_core::Nonce;
 use starknet_api::transaction::Fee;
 
 const TX_SOURCE: TransactionSource = TransactionSource::External;
@@ -102,6 +103,19 @@ where
         log::info!(target: LOG_TARGET, "Transaction: {:?}", transaction);
 
         let best_block_hash = client.info().best_hash;
+
+        if client
+            .runtime_api()
+            .ensure_l1_nonce_unused(
+                best_block_hash,
+                &Nonce(starknet_api::hash::StarkFelt::try_from(transaction.nonce).unwrap()),
+            )
+            .unwrap()
+        {
+            log::info!("Event already processed: {:?}", transaction);
+            continue;
+        }
+
         let extrinsic = client
             .runtime_api()
             .convert_l1_transaction(best_block_hash, transaction, fee)
