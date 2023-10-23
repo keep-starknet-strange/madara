@@ -608,7 +608,9 @@ where
             BroadcastedTransaction::DeployAccount(deploy_tx) => !deploy_tx.is_query,
         });
         if is_invalid_query_transaction {
-            log::error!("Got `is_query`: false. In a future version, this will fail fee estimation with UnsupportedTxVersion");
+            log::error!(
+                "Got `is_query`: false. In a future version, this will fail fee estimation with UnsupportedTxVersion"
+            );
         }
 
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
