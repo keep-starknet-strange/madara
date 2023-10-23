@@ -411,6 +411,8 @@ pub fn new_full(
         );
     };
 
+    let db_backend = backend.clone();
+
     if role.is_authority() {
         // manual-seal authorship
         if let Some(sealing) = sealing {
@@ -534,7 +536,7 @@ pub fn new_full(
     task_manager.spawn_essential_handle().spawn(
         "L1 Messages",
         Some(MADARA_TASK_GROUP),
-        l1_messages::worker::run_worker(client, transaction_pool),
+        l1_messages::worker::run_worker(client, transaction_pool, db_backend),
     );
 
     network_starter.start_network();
