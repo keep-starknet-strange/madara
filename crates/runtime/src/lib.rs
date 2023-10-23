@@ -403,6 +403,10 @@ impl_runtime_apis! {
         fn get_block_context() -> pallet_starknet::runtime_api::BlockContext {
            Starknet::get_block_context().into()
         }
+
+        fn ensure_l1_nonce_unused(nonce: &Nonce) -> bool {
+            Starknet::ensure_l1_message_not_executed(nonce).is_ok()
+        }
     }
 
     impl pallet_starknet::runtime_api::ConvertTransactionRuntimeApi<Block> for Runtime {
