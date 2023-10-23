@@ -6719,6 +6719,7 @@ dependencies = [
  "mc-db",
  "mc-mapping-sync",
  "mc-rpc",
+ "mc-snos",
  "mc-storage",
  "mc-transaction-pool",
  "md5",
@@ -6894,7 +6895,6 @@ dependencies = [
  "ethers",
  "futures",
  "jsonrpsee 0.20.2",
- "lazy_static",
  "log",
  "mc-db",
  "mp-storage",
@@ -6905,7 +6905,6 @@ dependencies = [
  "sp-api",
  "sp-blockchain",
  "sp-core 7.0.0",
- "sp-io 7.0.0",
  "sp-keyring",
  "sp-runtime 7.0.0",
  "starknet_api 0.4.1",
@@ -7018,6 +7017,26 @@ dependencies = [
  "starknet-core",
  "starknet_api 0.4.1",
  "thiserror",
+]
+
+[[package]]
+name = "mc-snos"
+version = "0.4.0"
+dependencies = [
+ "blockifier 0.1.0-rc2",
+ "futures",
+ "indexmap 2.0.0-pre",
+ "log",
+ "mp-digest-log",
+ "mp-storage",
+ "pallet-starknet",
+ "sc-client-api",
+ "snos",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime 7.0.0",
+ "sp-storage 7.0.0",
+ "starknet_api 0.4.1",
 ]
 
 [[package]]
@@ -7353,8 +7372,10 @@ dependencies = [
 name = "mp-storage"
 version = "0.4.0"
 dependencies = [
+ "lazy_static",
  "parity-scale-codec",
  "serde",
+ "sp-io 7.0.0",
 ]
 
 [[package]]
@@ -11707,14 +11728,6 @@ dependencies = [
  "tokio",
  "uuid 1.5.0",
  "zip",
-]
-
-[[package]]
-name = "snos-feeder"
-version = "0.4.0"
-dependencies = [
- "blockifier 0.1.0-rc2",
- "snos",
 ]
 
 [[package]]

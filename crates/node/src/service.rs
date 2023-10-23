@@ -20,6 +20,7 @@ use mc_data_availability::ethereum::config::EthereumConfig;
 use mc_data_availability::ethereum::EthereumClient;
 use mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker};
 use mc_mapping_sync::MappingSyncWorker;
+use mc_snos::SnosWorker;
 use mc_storage::overrides_handle;
 use mc_transaction_pool::FullPool;
 use mp_sequencer_address::{
@@ -385,6 +386,8 @@ pub fn new_full(
         )
         .for_each(|()| future::ready(())),
     );
+
+    task_manager.spawn_essential_handle().spawn("snos", Some("madara"), SnosWorker::run_snos(client.clone()));
 
     // initialize data availability worker
     if let Some((da_layer, da_path)) = da_layer {

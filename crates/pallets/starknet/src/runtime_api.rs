@@ -125,9 +125,7 @@ impl From<blockifier::block_context::BlockContext> for BlockContext {
             block_timestamp: value.block_timestamp.0,
             sequencer_address: value.sequencer_address,
             fee_token_address: value.fee_token_address,
-            vm_resource_fee_cost: Vec::from_iter(
-                value.vm_resource_fee_cost.iter().map(|(k, v)| (k.clone(), v.clone())),
-            ),
+            vm_resource_fee_cost: Vec::from_iter(value.vm_resource_fee_cost.iter().map(|(k, v)| (k.clone(), *v))),
             gas_price: value.gas_price,
             invoke_tx_max_n_steps: value.invoke_tx_max_n_steps,
             validate_max_n_steps: value.validate_max_n_steps,

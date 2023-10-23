@@ -20,9 +20,9 @@ members = [
   "crates/client/rpc-core",
   "crates/client/rpc",
   "crates/client/mapping-sync",
-  "crates/client/snos-feeder",
   "crates/client/storage",
   "crates/client/transaction-pool",
+  "crates/client/snos-runner",
   "starknet-rpc-test",
 ]
 # All previous except for `starknet-rpc-test`
@@ -47,9 +47,9 @@ default-members = [
   "crates/client/rpc-core",
   "crates/client/rpc",
   "crates/client/mapping-sync",
-  "crates/client/snos-feeder",
   "crates/client/storage",
   "crates/client/transaction-pool",
+  "crates/client/snos-runner",
 ]
 
 [profile.release]
@@ -169,6 +169,7 @@ mc-rpc-core = { path = "crates/client/rpc-core" }
 mc-block-proposer = { path = "crates/client/block-proposer" }
 mc-transaction-pool = { path = "crates/client/transaction-pool" }
 mc-data-availability = { path = "crates/client/data-availability" }
+mc-snos = { path = "crates/client/snos-runner" }
 
 # Madara runtime
 madara-runtime = { path = "crates/runtime" }
