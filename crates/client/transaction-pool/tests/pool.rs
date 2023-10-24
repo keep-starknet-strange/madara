@@ -18,11 +18,13 @@
 
 //! Tests for top-level transaction pool api
 
-use futures::{
-    executor::{block_on, block_on_stream},
-    prelude::*,
-    task::Poll,
-};
+use std::collections::BTreeSet;
+use std::pin::Pin;
+use std::sync::Arc;
+
+use futures::executor::{block_on, block_on_stream};
+use futures::prelude::*;
+use futures::task::Poll;
 use sc_block_builder::BlockBuilderProvider;
 use sc_client_api::client::BlockchainEvents;
 use sc_transaction_pool::*;
@@ -30,17 +32,14 @@ use sc_transaction_pool_api::{ChainEvent, MaintainedTransactionPool, Transaction
 use scale_codec::Encode;
 use sp_blockchain::HeaderBackend;
 use sp_consensus::BlockOrigin;
-use sp_runtime::{
-    generic::BlockId,
-    traits::Block as _,
-    transaction_validity::{TransactionSource, ValidTransaction},
+use sp_runtime::generic::BlockId;
+use sp_runtime::traits::Block as _;
+use sp_runtime::transaction_validity::{TransactionSource, ValidTransaction};
+use substrate_test_runtime_client::runtime::{
+    Block, Extrinsic, ExtrinsicBuilder, Hash, Header, Transfer, TransferData,
 };
-use std::{collections::BTreeSet, pin::Pin, sync::Arc};
-use substrate_test_runtime_client::{
-    runtime::{Block, Extrinsic, ExtrinsicBuilder, Hash, Header, Transfer, TransferData},
-    AccountKeyring::*,
-    ClientBlockImportExt,
-};
+use substrate_test_runtime_client::AccountKeyring::*;
+use substrate_test_runtime_client::ClientBlockImportExt;
 use substrate_test_runtime_transaction_pool::{uxt, TestApi};
 
 const LOG_TARGET: &str = "txpool";
@@ -717,7 +716,7 @@ fn resubmit_tx_of_fork_that_is_not_part_of_retracted() {
 
     // Block D2
     {
-        //push new best block
+        // push new best block
         let header = pool.api().push_block(2, vec![], true);
         let event = block_event_with_retracted(header, d0, pool.api());
         block_on(pool.maintain(event));
@@ -1158,16 +1157,16 @@ fn switching_fork_multiple_times_works() {
 
     {
         let mut stream = futures::executor::block_on_stream(from_alice_watcher);
-        //phase-0
+        // phase-0
         assert_eq!(stream.next(), Some(TransactionStatus::Ready));
         assert_eq!(stream.next(), Some(TransactionStatus::InBlock((b1_header.hash(), 0))));
-        //phase-1
+        // phase-1
         assert_eq!(stream.next(), Some(TransactionStatus::Retracted(b1_header.hash())));
         assert_eq!(stream.next(), Some(TransactionStatus::InBlock((b2_header.hash(), 0))));
-        //phase-2
+        // phase-2
         assert_eq!(stream.next(), Some(TransactionStatus::Retracted(b2_header.hash())));
         assert_eq!(stream.next(), Some(TransactionStatus::InBlock((b1_header.hash(), 0))));
-        //phase-3
+        // phase-3
         assert_eq!(stream.next(), Some(TransactionStatus::Retracted(b1_header.hash())));
         assert_eq!(stream.next(), Some(TransactionStatus::InBlock((b2_header.hash(), 0))));
         assert_eq!(stream.next(), Some(TransactionStatus::Finalized((b2_header.hash(), 0))));
@@ -1176,13 +1175,13 @@ fn switching_fork_multiple_times_works() {
 
     {
         let mut stream = futures::executor::block_on_stream(from_bob_watcher);
-        //phase-1
+        // phase-1
         assert_eq!(stream.next(), Some(TransactionStatus::Ready));
         assert_eq!(stream.next(), Some(TransactionStatus::InBlock((b2_header.hash(), 1))));
-        //phase-2
+        // phase-2
         assert_eq!(stream.next(), Some(TransactionStatus::Retracted(b2_header.hash())));
         assert_eq!(stream.next(), Some(TransactionStatus::Ready));
-        //phase-3
+        // phase-3
         assert_eq!(stream.next(), Some(TransactionStatus::InBlock((b2_header.hash(), 1))));
         assert_eq!(stream.next(), Some(TransactionStatus::Finalized((b2_header.hash(), 1))));
         assert_eq!(stream.next(), None);
@@ -1362,21 +1361,21 @@ fn delayed_finalization_does_not_retract() {
 
     {
         let mut stream = futures::executor::block_on_stream(from_alice_watcher);
-        //phase-0
+        // phase-0
         assert_eq!(stream.next(), Some(TransactionStatus::Ready));
         assert_eq!(stream.next(), Some(TransactionStatus::InBlock((b1_header.hash(), 0))));
-        //phase-2
+        // phase-2
         assert_eq!(stream.next(), Some(TransactionStatus::Finalized((b1_header.hash(), 0))));
         assert_eq!(stream.next(), None);
     }
 
     {
         let mut stream = futures::executor::block_on_stream(from_bob_watcher);
-        //phase-0
+        // phase-0
         assert_eq!(stream.next(), Some(TransactionStatus::Ready));
-        //phase-1
+        // phase-1
         assert_eq!(stream.next(), Some(TransactionStatus::InBlock((c1_header.hash(), 0))));
-        //phase-3
+        // phase-3
         assert_eq!(stream.next(), Some(TransactionStatus::Finalized((c1_header.hash(), 0))));
         assert_eq!(stream.next(), None);
     }
