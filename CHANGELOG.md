@@ -2,6 +2,7 @@
 
 ## Next release
 
+- feat(rpc): return deployed contract address and actual fee in get_transaction_receipt api
 - fix: change 'nonce too high' to log in debug instead of info
 - chore: update deps, vm ressource fee cost are now FixedU128, and stored in an
   hashmap
@@ -40,7 +41,6 @@
 - feat(sealing): finalization for instant sealing
 - feat(cache-option): add an option to enable aggressive caching in command-line
   parameters
-- feat(rpc): return deployed contract address and actual fee in get_transaction_receipt api api
 
 ## v0.4.0
 

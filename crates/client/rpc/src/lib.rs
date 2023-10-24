@@ -947,33 +947,28 @@ where
         fn extract_fee_and_contract_address(
             events: &Vec<starknet_core::types::Event>,
             sequencer_address: &Felt252Wrapper,
-            tx_type: &TxType,
-        ) -> (FieldElement, FieldElement) {
+        ) -> (FieldElement, Option<FieldElement>) {
             let transfer_event_key = starknet_core::utils::get_selector_from_name("Transfer").unwrap();
-            if let Some((actual_fee, contract_address)) = events.iter().find_map(|event| {
+            let find_transfer_fee_event = events.iter().find_map(|event| {
                 event.keys.iter().find(|&&key| key == transfer_event_key)?;
                 event.data.get(1).and_then(|send_to| (*send_to == sequencer_address.0).then_some(()))?;
-                let actual_fee = Felt252Wrapper(event.data.get(2).unwrap().clone());
-                let contract_address = Felt252Wrapper(event.data.get(0).unwrap().clone());
-                Some((actual_fee, contract_address))
-            }) {
-                return (actual_fee.0, contract_address.0);
-            }
-            // if not Transfer event - assume transaction without fee
-            if let mp_transactions::TxType::DeployAccount = tx_type {
-                if let Some((actual_fee, contract_address)) = events.iter().find_map(|event| {
-                    event.keys.iter().find(|&&key| key != transfer_event_key)?;
-                    Some((Felt252Wrapper::default(), Felt252Wrapper(event.from_address.clone())))
-                }) {
-                    return (actual_fee.0, contract_address.0);
+                Some(event)
+            });
+
+            match find_transfer_fee_event {
+                Some(transfer_fee_event) => {
+                    let actual_fee = Felt252Wrapper(transfer_fee_event.data[2].clone()).0; // ony low bits, see execute_fee_transfer() why
+                    let contract_address = Felt252Wrapper(transfer_fee_event.data[0].clone()).0;
+                    (actual_fee, Some(contract_address))
                 }
+                None => (Default::default(), None), // transaction without fee
             }
-            (Default::default(), Default::default())
         }
 
         let events_converted: Vec<starknet_core::types::Event> =
             events.clone().into_iter().map(event_conversion).collect();
-        let (actual_fee, contract_address) = extract_fee_and_contract_address(&events_converted, &sequencer_address, &tx_type);
+
+        let (actual_fee, contract_address) = extract_fee_and_contract_address(&events_converted, &sequencer_address);
 
         let receipt = match tx_type {
             mp_transactions::TxType::Declare => TransactionReceipt::Declare(DeclareTransactionReceipt {
@@ -987,6 +982,20 @@ where
                 execution_result,
             }),
             mp_transactions::TxType::DeployAccount => {
+                let contract_address = match contract_address {
+                    Some(contract_address) => contract_address,
+                    None => {
+                        let transfer_event_key = starknet_core::utils::get_selector_from_name("Transfer").unwrap();
+                        let address_in_other_event = events_converted.iter().find_map(|event| {
+                            event.keys.iter().find(|&&key| key != transfer_event_key)?;
+                            Some(Felt252Wrapper(event.from_address.clone()).0)
+                        });
+                        match address_in_other_event {
+                            Some(contract_address) => contract_address,
+                            None => Default::default(), // should we calculate it than?
+                        }
+                    }
+                };
                 TransactionReceipt::DeployAccount(DeployAccountTransactionReceipt {
                     transaction_hash,
                     actual_fee,
