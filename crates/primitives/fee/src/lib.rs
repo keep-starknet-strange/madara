@@ -209,7 +209,6 @@ pub fn calculate_l1_gas_by_vm_usage(
     Ok(vm_l1_gas_usage)
 }
 
-
 #[cfg(test)]
 mod vm_resource_fee_costs {
     use super::{FixedU128, HashMap, VM_RESOURCE_FEE_COSTS};
