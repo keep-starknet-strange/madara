@@ -896,7 +896,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(
             block_context.clone(),
             account_tx_context,
-            block_context.invoke_tx_max_n_steps <span class="kw">as </span>usize,
+            block_context.invoke_tx_max_n_steps,
         );
 
         <span class="self">self</span>.validate_tx_inner(state, resources, remaining_gas, <span class="kw-2">&amp;mut </span>context, <span class="self">self</span>.calldata())
@@ -1087,7 +1087,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(
             block_context.clone(),
             account_tx_context.clone(),
-            block_context.invoke_tx_max_n_steps <span class="kw">as </span>usize,
+            block_context.invoke_tx_max_n_steps,
         );
 
         <span class="kw">let </span>validate_call_info = <span class="self">self</span>.validate_tx_inner(
@@ -1133,7 +1133,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(
             block_context.clone(),
             account_tx_context.clone(),
-            block_context.invoke_tx_max_n_steps <span class="kw">as </span>usize,
+            block_context.invoke_tx_max_n_steps,
         );
 
         <span class="kw">let </span>validate_call_info =
@@ -1175,7 +1175,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(
             block_context.clone(),
             account_tx_context.clone(),
-            block_context.invoke_tx_max_n_steps <span class="kw">as </span>usize,
+            block_context.invoke_tx_max_n_steps,
         );
 
         <span class="comment">// In order to be verified the tx must first be executed
@@ -1200,7 +1200,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(
             block_context.clone(),
             account_tx_context.clone(),
-            block_context.invoke_tx_max_n_steps <span class="kw">as </span>usize,
+            block_context.invoke_tx_max_n_steps,
         );
 
         <span class="kw">let </span>execute_call_info = <span class="self">self</span>.run_execute(state, resources, <span class="kw-2">&amp;mut </span>context, remaining_gas)<span class="question-mark">?</span>;

@@ -125,11 +125,9 @@
 <a href="#125" id="125">125</a>
 <a href="#126" id="126">126</a>
 <a href="#127" id="127">127</a>
-<a href="#128" id="128">128</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::vec::Vec;
 
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
-<span class="kw">use </span>mp_hashers::HasherT;
 <span class="kw">use </span>starknet_crypto::FieldElement;
 
 <span class="kw">fn </span>cast_vec_of_felt_252_wrappers(data: Vec&lt;Felt252Wrapper&gt;) -&gt; Vec&lt;FieldElement&gt; {
@@ -139,7 +137,7 @@
     <span class="kw">unsafe </span>{ alloc::vec::Vec::from_raw_parts(data.as_mut_ptr() <span class="kw">as </span><span class="kw-2">*mut </span>FieldElement, data.len(), data.capacity()) }
 }
 
-<span class="kw">pub fn </span>to_starknet_core_tx&lt;H: HasherT&gt;(
+<span class="kw">pub fn </span>to_starknet_core_tx(
     tx: <span class="kw">super</span>::Transaction,
     transaction_hash: FieldElement,
 ) -&gt; starknet_core::types::Transaction {

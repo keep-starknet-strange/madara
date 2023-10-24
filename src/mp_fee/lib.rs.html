@@ -195,6 +195,37 @@
 <a href="#195" id="195">195</a>
 <a href="#196" id="196">196</a>
 <a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet fee logic
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
@@ -203,6 +234,8 @@
 
 <span class="kw">use </span>alloc::vec;
 <span class="kw">use </span>alloc::vec::Vec;
+<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">use </span>std::collections::HashMap;
 
 <span class="kw">use </span>blockifier::abi::constants::GAS_USAGE;
 <span class="kw">use </span>blockifier::block_context::BlockContext;
@@ -215,8 +248,11 @@
 <span class="kw">use </span>blockifier::transaction::objects::{AccountTransactionContext, ResourcesMapping, TransactionExecutionResult};
 <span class="kw">use </span>blockifier::transaction::transaction_types::TransactionType;
 <span class="kw">use </span>blockifier::transaction::transaction_utils::{calculate_l1_gas_usage, calculate_tx_resources};
+<span class="attr">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+</span><span class="kw">use </span>hashbrown::HashMap;
 <span class="kw">use </span>mp_state::{FeeConfig, StateChanges};
-<span class="kw">use </span>phf::phf_map;
+<span class="kw">use </span>sp_arithmetic::fixed_point::{FixedPointNumber, FixedU128};
+<span class="kw">use </span>sp_arithmetic::traits::Zero;
 <span class="kw">use </span>starknet_api::api_core::EntryPointSelector;
 <span class="kw">use </span>starknet_api::calldata;
 <span class="kw">use </span>starknet_api::deprecated_contract_class::EntryPointType;
@@ -230,15 +266,15 @@
 </span><span class="doccomment">/// Number of storage updates to actually charge for the fee transfer tx.
 </span><span class="kw">pub const </span>FEE_TRANSFER_N_STORAGE_CHANGES_TO_CHARGE: u8 = FEE_TRANSFER_N_STORAGE_CHANGES - <span class="number">1</span>; <span class="comment">// Exclude the sequencer balance update, since it&#39;s charged once throughout the batch.
 
-</span><span class="kw">static </span>VM_RESOURCE_FEE_COSTS: phf::Map&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, f64&gt; = <span class="macro">phf_map! </span>{
-    <span class="string">&quot;n_steps&quot; </span>=&gt; <span class="number">0.01_f64</span>,
-    <span class="string">&quot;pedersen_builtin&quot; </span>=&gt; <span class="number">0.32_f64</span>,
-    <span class="string">&quot;range_check_builtin&quot; </span>=&gt; <span class="number">0.16_f64</span>,
-    <span class="string">&quot;ecdsa_builtin&quot; </span>=&gt; <span class="number">20.48_f64</span>,
-    <span class="string">&quot;bitwise_builtin&quot; </span>=&gt; <span class="number">0.64_f64</span>,
-    <span class="string">&quot;poseidon_builtin&quot; </span>=&gt; <span class="number">0.32_f64</span>,
-    <span class="string">&quot;ec_op_builtin&quot; </span>=&gt; <span class="number">10.24_f64</span>,
-};
+</span><span class="kw">pub static </span>VM_RESOURCE_FEE_COSTS: [(<span class="kw-2">&amp;</span>str, FixedU128); <span class="number">7</span>] = [
+    (<span class="string">&quot;n_steps&quot;</span>, FixedU128::from_inner(<span class="number">10_000_000_000_000_000</span>)),
+    (<span class="string">&quot;pedersen_builtin&quot;</span>, FixedU128::from_inner(<span class="number">320_000_000_000_000_000</span>)),
+    (<span class="string">&quot;range_check_builtin&quot;</span>, FixedU128::from_inner(<span class="number">160_000_000_000_000_000</span>)),
+    (<span class="string">&quot;ecdsa_builtin&quot;</span>, FixedU128::from_inner(<span class="number">20_480_000_000_000_000_000</span>)),
+    (<span class="string">&quot;bitwise_builtin&quot;</span>, FixedU128::from_inner(<span class="number">640_000_000_000_000_000</span>)),
+    (<span class="string">&quot;poseidon_builtin&quot;</span>, FixedU128::from_inner(<span class="number">320_000_000_000_000_000</span>)),
+    (<span class="string">&quot;ec_op_builtin&quot;</span>, FixedU128::from_inner(<span class="number">10_240_000_000_000_000_000</span>)),
+];
 
 <span class="doccomment">/// Gets the transaction resources.
 </span><span class="kw">pub fn </span>compute_transaction_resources&lt;S: State + StateChanges&gt;(
@@ -334,7 +370,7 @@
     };
 
     <span class="kw">let </span>max_steps = block_context.invoke_tx_max_n_steps;
-    <span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(block_context.clone(), account_tx_context, max_steps <span class="kw">as </span>usize);
+    <span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(block_context.clone(), account_tx_context, max_steps);
 
     <span class="prelude-val">Ok</span>(fee_transfer_call.execute(state, <span class="kw-2">&amp;mut </span>ExecutionResources::default(), <span class="kw-2">&amp;mut </span>context)<span class="question-mark">?</span>)
 }
@@ -343,14 +379,16 @@
 </span><span class="kw">pub fn </span>calculate_tx_fee(resources: <span class="kw-2">&amp;</span>ResourcesMapping, block_context: <span class="kw-2">&amp;</span>BlockContext) -&gt; TransactionExecutionResult&lt;Fee&gt; {
     <span class="kw">let </span>(l1_gas_usage, vm_resources) = extract_l1_gas_and_vm_usage(resources);
     <span class="kw">let </span>l1_gas_by_vm_usage = calculate_l1_gas_by_vm_usage(block_context, <span class="kw-2">&amp;</span>vm_resources)<span class="question-mark">?</span>;
-    <span class="kw">let </span>total_l1_gas_usage = l1_gas_usage <span class="kw">as </span>f64 + l1_gas_by_vm_usage;
-    <span class="comment">// Ceil is in the std lib so we can&#39;t use it sadly.
-    </span><span class="kw">let </span>total_l1_gas_usage = <span class="kw">if </span>total_l1_gas_usage - total_l1_gas_usage <span class="kw">as </span>u128 <span class="kw">as </span>f64 &gt; <span class="number">0.0 </span>{
-        total_l1_gas_usage <span class="kw">as </span>u128 + <span class="number">1
-    </span>} <span class="kw">else </span>{
-        total_l1_gas_usage <span class="kw">as </span>u128
-    };
-    <span class="prelude-val">Ok</span>(Fee(total_l1_gas_usage * block_context.gas_price))
+
+    <span class="kw">let </span>total_l1_gas_usage = FixedU128::checked_from_integer(l1_gas_usage <span class="kw">as </span>u128)
+        .ok_or(TransactionExecutionError::FixedPointConversion)<span class="question-mark">?
+        </span>+ l1_gas_by_vm_usage;
+    <span class="kw">let </span>tx_fee = total_l1_gas_usage
+        .ceil()
+        .checked_mul_int(block_context.gas_price)
+        .ok_or(TransactionExecutionError::FixedPointConversion)<span class="question-mark">?</span>;
+
+    <span class="prelude-val">Ok</span>(Fee(tx_fee))
 }
 
 <span class="doccomment">/// Computes the fees for l1 gas usage and the vm usage from the execution resources.
@@ -377,19 +415,43 @@
 </span><span class="kw">pub fn </span>calculate_l1_gas_by_vm_usage(
     _block_context: <span class="kw-2">&amp;</span>BlockContext,
     vm_resource_usage: <span class="kw-2">&amp;</span>ResourcesMapping,
-) -&gt; TransactionExecutionResult&lt;f64&gt; {
+) -&gt; TransactionExecutionResult&lt;FixedU128&gt; {
+    <span class="kw">let </span>vm_resource_fee_costs: HashMap&lt;<span class="kw-2">&amp;</span>str, FixedU128&gt; = HashMap::from(VM_RESOURCE_FEE_COSTS);
     <span class="comment">// Check if keys in vm_resource_usage are a subset of keys in VM_RESOURCE_FEE_COSTS
-    </span><span class="kw">if </span>vm_resource_usage.<span class="number">0</span>.keys().any(|key| !VM_RESOURCE_FEE_COSTS.contains_key(key.as_str())) {
+    </span><span class="kw">if </span>vm_resource_usage.<span class="number">0</span>.keys().any(|key| !vm_resource_fee_costs.contains_key(key.as_str())) {
         <span class="kw">return </span><span class="prelude-val">Err</span>(TransactionExecutionError::CairoResourcesNotContainedInFeeCosts);
     };
 
     <span class="comment">// Convert Cairo usage to L1 gas usage.
-    </span><span class="kw">let </span>vm_l1_gas_usage: f64 = vm_resource_usage
+    </span><span class="kw">let </span>vm_l1_gas_usage = vm_resource_usage
         .<span class="number">0
         </span>.iter()
-        .map(|(key, <span class="kw-2">&amp;</span>value)| VM_RESOURCE_FEE_COSTS.get(key.as_str()).unwrap() * value <span class="kw">as </span>f64)
-        .fold(f64::NAN, f64::max);
+        .map(|(key, <span class="kw-2">&amp;</span>value)| {
+            <span class="kw">let </span>value = &lt;FixedU128 <span class="kw">as </span>FixedPointNumber&gt;::checked_from_integer(value <span class="kw">as </span>u128)
+                .ok_or(TransactionExecutionError::FixedPointConversion);
+
+            value.map(|v| vm_resource_fee_costs.get(key.as_str()).unwrap().mul(v))
+        })
+        .try_fold(FixedU128::zero(), |accum, res| res.map(|v| v.max(accum)))<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(vm_l1_gas_usage)
+}
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>vm_resource_fee_costs {
+    <span class="kw">use super</span>::{FixedU128, HashMap, VM_RESOURCE_FEE_COSTS};
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>check_values_as_floats() {
+        <span class="kw">let </span>hm = HashMap::from(VM_RESOURCE_FEE_COSTS);
+
+        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;n_steps&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">0.01</span>)).as_ref());
+        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;pedersen_builtin&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">0.32</span>)).as_ref());
+        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;range_check_builtin&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">0.16</span>)).as_ref());
+        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;ecdsa_builtin&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">20.48</span>)).as_ref());
+        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;bitwise_builtin&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">0.64</span>)).as_ref());
+        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;poseidon_builtin&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">0.32</span>)).as_ref());
+        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;ec_op_builtin&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">10.24</span>)).as_ref());
+    }
 }
 </code></pre></div></section></main></body></html>

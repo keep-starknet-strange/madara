@@ -1050,6 +1050,20 @@
 <a href="#1050" id="1050">1050</a>
 <a href="#1051" id="1051">1051</a>
 <a href="#1052" id="1052">1052</a>
+<a href="#1053" id="1053">1053</a>
+<a href="#1054" id="1054">1054</a>
+<a href="#1055" id="1055">1055</a>
+<a href="#1056" id="1056">1056</a>
+<a href="#1057" id="1057">1057</a>
+<a href="#1058" id="1058">1058</a>
+<a href="#1059" id="1059">1059</a>
+<a href="#1060" id="1060">1060</a>
+<a href="#1061" id="1061">1061</a>
+<a href="#1062" id="1062">1062</a>
+<a href="#1063" id="1063">1063</a>
+<a href="#1064" id="1064">1064</a>
+<a href="#1065" id="1065">1065</a>
+<a href="#1066" id="1066">1066</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1711,7 +1725,7 @@
             .map(|tx_hashes| h256_to_felt(<span class="kw-2">*</span>tx_hashes.get(index <span class="kw">as </span>usize).ok_or(StarknetRpcApiError::InvalidTxnIndex)<span class="question-mark">?</span>))
             .unwrap_or_else(|| <span class="prelude-val">Ok</span>(transaction.compute_hash::&lt;H&gt;(chain_id.<span class="number">0</span>.into(), <span class="bool-val">false</span>).<span class="number">0</span>))<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(to_starknet_core_tx::&lt;H&gt;(transaction.clone(), transaction_hash))
+        <span class="prelude-val">Ok</span>(to_starknet_core_tx(transaction.clone(), transaction_hash))
     }
 
     <span class="doccomment">/// Get block information with full transactions given the block id
@@ -1733,7 +1747,7 @@
                 .as_ref()
                 .map(|tx_hashes| h256_to_felt(<span class="kw-2">*</span>tx_hashes.get(index).ok_or(StarknetRpcApiError::InternalServerError)<span class="question-mark">?</span>))
                 .unwrap_or_else(|| <span class="prelude-val">Ok</span>(tx.compute_hash::&lt;H&gt;(chain_id.<span class="number">0</span>.into(), <span class="bool-val">false</span>).<span class="number">0</span>))<span class="question-mark">?</span>;
-            transactions.push(to_starknet_core_tx::&lt;H&gt;(tx.clone(), hash));
+            transactions.push(to_starknet_core_tx(tx.clone(), hash));
         }
 
         <span class="kw">let </span>block_with_txs = BlockWithTxs {
@@ -1813,8 +1827,14 @@
         })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>chain_id = <span class="self">self</span>.chain_id()<span class="question-mark">?</span>;
-        <span class="kw">let </span>transactions = transactions.into_iter().map(|tx| to_starknet_core_tx::&lt;H&gt;(tx, chain_id.<span class="number">0</span>)).collect();
 
+        <span class="kw">let </span>transactions = transactions
+            .into_iter()
+            .map(|tx| {
+                <span class="kw">let </span>hash = tx.compute_hash::&lt;H&gt;(chain_id.<span class="number">0</span>.into(), <span class="bool-val">false</span>).into();
+                to_starknet_core_tx(tx, hash)
+            })
+            .collect();
         <span class="prelude-val">Ok</span>(transactions)
     }
 
@@ -1897,11 +1917,19 @@
         <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
         <span class="kw">let </span>chain_id = <span class="self">self</span>.chain_id()<span class="question-mark">?</span>.<span class="number">0</span>.into();
 
-        <span class="kw">let </span>find_tx = block
-            .transactions()
-            .iter()
-            .find(|tx| tx.compute_hash::&lt;H&gt;(chain_id, <span class="bool-val">false</span>).<span class="number">0 </span>== transaction_hash)
-            .map(|tx| to_starknet_core_tx::&lt;H&gt;(tx.clone(), transaction_hash));
+        <span class="kw">let </span>find_tx = <span class="kw">if let </span><span class="prelude-val">Some</span>(tx_hashes) = <span class="self">self</span>.get_cached_transaction_hashes(block.header().hash::&lt;H&gt;().into()) {
+            tx_hashes
+                .into_iter()
+                .zip(block.transactions())
+                .find(|(tx_hash, <span class="kw">_</span>)| <span class="kw-2">*</span>tx_hash == Felt252Wrapper(transaction_hash).into())
+                .map(|(<span class="kw">_</span>, tx)| to_starknet_core_tx(tx.clone(), transaction_hash))
+        } <span class="kw">else </span>{
+            block
+                .transactions()
+                .iter()
+                .find(|tx| tx.compute_hash::&lt;H&gt;(chain_id, <span class="bool-val">false</span>).<span class="number">0 </span>== transaction_hash)
+                .map(|tx| to_starknet_core_tx(tx.clone(), transaction_hash))
+        };
 
         find_tx.ok_or(StarknetRpcApiError::TxnHashNotFound.into())
     }

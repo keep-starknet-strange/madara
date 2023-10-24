@@ -1172,6 +1172,9 @@
 <a href="#1172" id="1172">1172</a>
 <a href="#1173" id="1173">1173</a>
 <a href="#1174" id="1174">1174</a>
+<a href="#1175" id="1175">1175</a>
+<a href="#1176" id="1176">1176</a>
+<a href="#1177" id="1177">1177</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1845,7 +1848,10 @@
                     <span class="bool-val">false</span>,
                     T::DisableNonceValidation::get(),
                 )
-                .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TransactionExecutionFailed)<span class="question-mark">?</span>;
+                .map_err(|e| {
+                    <span class="macro">log::error!</span>(<span class="string">&quot;Failed to consume l1 message: {}&quot;</span>, e);
+                    Error::&lt;T&gt;::TransactionExecutionFailed
+                })<span class="question-mark">?</span>;
 
             <span class="kw">let </span>tx_hash = transaction.tx_hash;
             <span class="self">Self</span>::emit_and_store_tx_and_fees_events(
@@ -1928,7 +1934,7 @@
                         // the future queue of the transaction pool.
                         </span><span class="kw">if </span>sender_nonce &lt; <span class="kw-2">*</span>transaction_nonce {
                             <span class="macro">log!</span>(
-                                info,
+                                debug,
                                 <span class="string">&quot;Nonce is too high. Expected: {:?}, got: {:?}. This transaction will be placed in the \
                                  transaction pool and executed in the future when the nonce is reached.&quot;</span>,
                                 sender_nonce,
@@ -2057,7 +2063,7 @@
             invoke_tx_max_n_steps: T::InvokeTxMaxNSteps::get(),
             validate_max_n_steps: T::ValidateMaxNSteps::get(),
             gas_price,
-            max_recursion_depth: T::MaxRecursionDepth::get() <span class="kw">as </span>usize,
+            max_recursion_depth: T::MaxRecursionDepth::get(),
         }
     }
 
@@ -2130,7 +2136,7 @@
         <span class="kw">let </span>max_n_steps = block_context.invoke_tx_max_n_steps;
         <span class="kw">let </span><span class="kw-2">mut </span>resources = ExecutionResources::default();
         <span class="kw">let </span><span class="kw-2">mut </span>entry_point_execution_context =
-            EntryPointExecutionContext::new(block_context, Default::default(), max_n_steps <span class="kw">as </span>usize);
+            EntryPointExecutionContext::new(block_context, Default::default(), max_n_steps);
 
         <span class="kw">match </span>entrypoint.execute(
             <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
