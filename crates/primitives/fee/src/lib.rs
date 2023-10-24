@@ -48,24 +48,6 @@ pub static VM_RESOURCE_FEE_COSTS: [(&str, FixedU128); 7] = [
     ("ec_op_builtin", FixedU128::from_inner(10_240_000_000_000_000_000)),
 ];
 
-#[cfg(test)]
-mod vm_resource_fee_costs {
-    use super::{FixedU128, HashMap, VM_RESOURCE_FEE_COSTS};
-
-    #[test]
-    fn check_values_as_floats() {
-        let hm = HashMap::from(VM_RESOURCE_FEE_COSTS);
-
-        assert_eq!(hm.get("n_steps"), Some(FixedU128::from_float(0.01)).as_ref());
-        assert_eq!(hm.get("pedersen_builtin"), Some(FixedU128::from_float(0.32)).as_ref());
-        assert_eq!(hm.get("range_check_builtin"), Some(FixedU128::from_float(0.16)).as_ref());
-        assert_eq!(hm.get("ecdsa_builtin"), Some(FixedU128::from_float(20.48)).as_ref());
-        assert_eq!(hm.get("bitwise_builtin"), Some(FixedU128::from_float(0.64)).as_ref());
-        assert_eq!(hm.get("poseidon_builtin"), Some(FixedU128::from_float(0.32)).as_ref());
-        assert_eq!(hm.get("ec_op_builtin"), Some(FixedU128::from_float(10.24)).as_ref());
-    }
-}
-
 /// Gets the transaction resources.
 pub fn compute_transaction_resources<S: State + StateChanges>(
     state: &S,
@@ -225,4 +207,22 @@ pub fn calculate_l1_gas_by_vm_usage(
         .try_fold(FixedU128::zero(), |accum, res| res.map(|v| v.max(accum)))?;
 
     Ok(vm_l1_gas_usage)
+}
+
+#[cfg(test)]
+mod vm_resource_fee_costs {
+    use super::{FixedU128, HashMap, VM_RESOURCE_FEE_COSTS};
+
+    #[test]
+    fn check_values_as_floats() {
+        let hm = HashMap::from(VM_RESOURCE_FEE_COSTS);
+
+        assert_eq!(hm.get("n_steps"), Some(FixedU128::from_float(0.01)).as_ref());
+        assert_eq!(hm.get("pedersen_builtin"), Some(FixedU128::from_float(0.32)).as_ref());
+        assert_eq!(hm.get("range_check_builtin"), Some(FixedU128::from_float(0.16)).as_ref());
+        assert_eq!(hm.get("ecdsa_builtin"), Some(FixedU128::from_float(20.48)).as_ref());
+        assert_eq!(hm.get("bitwise_builtin"), Some(FixedU128::from_float(0.64)).as_ref());
+        assert_eq!(hm.get("poseidon_builtin"), Some(FixedU128::from_float(0.32)).as_ref());
+        assert_eq!(hm.get("ec_op_builtin"), Some(FixedU128::from_float(10.24)).as_ref());
+    }
 }
