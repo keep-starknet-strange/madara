@@ -58,9 +58,11 @@ fn maintained_pool() -> (BasicPool<TestApi, Block>, Arc<TestApi>, futures::execu
     (pool, api, thread_pool)
 }
 
-fn create_basic_pool_with_genesis(
-    test_api: Arc<TestApi>,
-) -> (BasicPool<TestApi, Block>, Pin<Box<dyn Future<Output = ()> + Send>>) {
+// new types just for the next function (so that "cargo clippy -- -D warnings" doesn't get mad)
+type BasicPoolTest = BasicPool<TestApi, Block>;
+type BackgroundTask = Pin<Box<dyn Future<Output = ()> + Send>>;
+
+fn create_basic_pool_with_genesis(test_api: Arc<TestApi>) -> (BasicPoolTest, BackgroundTask) {
     let genesis_hash = {
         test_api
             .chain()
