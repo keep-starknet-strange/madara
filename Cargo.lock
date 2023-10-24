@@ -6715,6 +6715,7 @@ dependencies = [
  "log",
  "madara-runtime",
  "mc-block-proposer",
+ "mc-commitment-state-diff",
  "mc-data-availability",
  "mc-db",
  "mc-mapping-sync",
@@ -6880,6 +6881,27 @@ dependencies = [
  "sp-runtime 7.0.0",
  "substrate-prometheus-endpoint",
  "substrate-test-runtime-client",
+]
+
+[[package]]
+name = "mc-commitment-state-diff"
+version = "0.4.0"
+dependencies = [
+ "blockifier 0.1.0-rc2",
+ "futures",
+ "indexmap 2.0.0-pre",
+ "log",
+ "mp-digest-log",
+ "mp-hashers",
+ "mp-storage",
+ "pallet-starknet",
+ "sc-client-api",
+ "snos",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime 7.0.0",
+ "sp-storage 7.0.0",
+ "starknet_api 0.4.1",
 ]
 
 [[package]]

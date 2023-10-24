@@ -12,6 +12,7 @@ use futures::prelude::*;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi, SealingMode, StarknetHasher};
 use mc_block_proposer::ProposerFactory;
+use mc_commitment_state_diff::{log_commitment_state_diff, CommitmentStateDiffWorker};
 use mc_data_availability::avail::config::AvailConfig;
 use mc_data_availability::avail::AvailClient;
 use mc_data_availability::celestia::config::CelestiaConfig;
@@ -20,7 +21,6 @@ use mc_data_availability::ethereum::config::EthereumConfig;
 use mc_data_availability::ethereum::EthereumClient;
 use mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker};
 use mc_mapping_sync::MappingSyncWorker;
-use mc_snos::SnosWorker;
 use mc_storage::overrides_handle;
 use mc_transaction_pool::FullPool;
 use mp_sequencer_address::{
@@ -387,7 +387,22 @@ pub fn new_full(
         .for_each(|()| future::ready(())),
     );
 
-    task_manager.spawn_essential_handle().spawn("snos", Some("madara"), SnosWorker::run_snos(client.clone()));
+    let (commitment_state_diff_tx, commitment_state_diff_rx) = mpsc::channel(5);
+
+    task_manager.spawn_essential_handle().spawn(
+        "commitment-state-diff",
+        Some("madara"),
+        CommitmentStateDiffWorker::<_, _, StarknetHasher>::emit_commitment_state_diff(
+            client.clone(),
+            commitment_state_diff_tx,
+        ),
+    );
+
+    task_manager.spawn_essential_handle().spawn(
+        "commitment-state-logger",
+        Some("madara"),
+        log_commitment_state_diff(commitment_state_diff_rx),
+    );
 
     // initialize data availability worker
     if let Some((da_layer, da_path)) = da_layer {

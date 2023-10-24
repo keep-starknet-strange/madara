@@ -85,6 +85,7 @@ mc-transaction-pool = { workspace = true }
 pallet-starknet = { workspace = true }
 starknet-core = { workspace = true }
 mc-snos = { workspace = true }
+mc-commitment-state-diff = { workspace = true }
 
 # Primitives
 mp-block = { workspace = true }

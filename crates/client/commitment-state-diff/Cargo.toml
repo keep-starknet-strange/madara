@@ -1,0 +1,32 @@
+[package]
+name = "mc-commitment-state-diff"
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[dependencies]
+# Substrate
+starknet_api = { workspace = true, features = ["std"] }
+sp-runtime = { workspace = true, features = ["std"] }
+sp-blockchain = { workspace = true }
+sp-api = { workspace = true, features = ["std"] }
+sp-storage = { workspace = true, features = ["std"] }
+sc-client-api = { workspace = true }
+
+# Madara
+mp-hashers = { workspace = true, features = ["std"] }
+mp-storage = { workspace = true, features = ["std"] }
+mp-digest-log = { workspace = true, features = ["std"] }
+pallet-starknet = { workspace = true }
+
+# Starknet
+snos = {git = "https://github.com/keep-starknet-strange/snos", branch = "main" }
+blockifier = { workspace = true, features = ["std"] }
+
+# Async
+futures = { workspace = true, features = ["std"] }
+
+# Others
+log = { workspace = true }
+indexmap = { workspace = true }

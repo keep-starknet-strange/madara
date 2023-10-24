@@ -108,7 +108,7 @@ impl From<BlockContext> for blockifier::block_context::BlockContext {
             block_timestamp: BlockTimestamp(value.block_timestamp),
             sequencer_address: value.sequencer_address,
             fee_token_address: value.fee_token_address,
-            vm_resource_fee_cost: Arc::new(HashMap::from_iter(value.vm_resource_fee_cost.into_iter())),
+            vm_resource_fee_cost: Arc::new(HashMap::from_iter(value.vm_resource_fee_cost)),
             gas_price: value.gas_price,
             invoke_tx_max_n_steps: value.invoke_tx_max_n_steps,
             validate_max_n_steps: value.validate_max_n_steps,

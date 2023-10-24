@@ -1,7 +1,19 @@
 use starknet_api::state::StorageKey;
-use starknet_api::{api_core as stcore, transaction as sttx};
+use starknet_api::{api_core as stcore, block as stb, transaction as sttx};
 
 use super::Felt252Wrapper;
+
+impl From<Felt252Wrapper> for stb::BlockHash {
+    fn from(value: Felt252Wrapper) -> Self {
+        Self(value.into())
+    }
+}
+
+impl From<stb::BlockHash> for Felt252Wrapper {
+    fn from(value: stb::BlockHash) -> Self {
+        value.0.into()
+    }
+}
 
 impl From<Felt252Wrapper> for sttx::TransactionHash {
     fn from(value: Felt252Wrapper) -> Self {
