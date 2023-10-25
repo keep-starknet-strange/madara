@@ -22,7 +22,6 @@ name = "madara"
 
 [dependencies]
 async-trait = "0.1"
-async-channel = "1"
 clap = { workspace = true, features = ["derive"] }
 futures = { workspace = true, features = ["thread-pool"] }
 lazy_static = { workspace = true }

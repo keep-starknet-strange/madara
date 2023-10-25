@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use madara_runtime::SealingMode;
 use mc_data_availability::DaLayer;
-use sc_cli::{Result, RpcMethods, RunCmd, SubstrateCli, CliConfiguration};
+use sc_cli::{Result, RpcMethods, RunCmd, SubstrateCli};
 use sc_service::BasePath;
 use serde::{Deserialize, Serialize};
 
@@ -51,6 +51,24 @@ impl NetworkType {
             NetworkType::Integration => "https://external.integration.starknet.io",
         }
     }
+
+    pub fn chain_id(&self) -> starknet_core::types::FieldElement {
+        match self {
+            NetworkType::Main => starknet_core::types::FieldElement::from_byte_slice_be(b"SN_MAIN").unwrap(),
+            NetworkType::Test => starknet_core::types::FieldElement::from_byte_slice_be(b"SN_TEST").unwrap(),
+            NetworkType::Integration => starknet_core::types::FieldElement::from_byte_slice_be(b"SN_INTE").unwrap(),
+        }
+    }
+
+    pub fn block_fetch_config(&self) -> mc_deoxys::BlockFetchConfig {
+        let uri = self.uri();
+        let chain_id = self.chain_id();
+
+        let gateway = format!("{uri}/gateway").parse().unwrap();
+        let feeder_gateway = format!("{uri}/feeder_gateway").parse().unwrap();
+
+        mc_deoxys::BlockFetchConfig { gateway, feeder_gateway, chain_id, workers: 5 }
+    }
 }
 
 #[derive(Clone, Debug, clap::Args)]
@@ -78,7 +96,7 @@ pub struct ExtendedRunCmd {
     pub cache: bool,
 
     #[clap(long)]
-    pub deoxys: bool
+    pub deoxys: bool,
 }
 
 impl ExtendedRunCmd {
@@ -118,8 +136,8 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
     runner.run_node_until_exit(|config| async move {
         let sealing = cli.run.sealing.map(Into::into).unwrap_or_default();
         let cache = cli.run.cache;
-        let network_uri = cli.run.network.uri();
-        service::new_full(config, sealing, da_config, cli.run.base.rpc_port.unwrap(), cache, network_uri)
+        let fetch_block_config = cli.run.network.block_fetch_config();
+        service::new_full(config, sealing, da_config, cli.run.base.rpc_port.unwrap(), cache, fetch_block_config)
             .map_err(sc_cli::Error::Service)
     })
 }
@@ -153,7 +171,7 @@ fn deoxys_environment(cmd: &mut ExtendedRunCmd) {
     // hosts
     cmd.base.rpc_external = true;
     cmd.base.rpc_methods = RpcMethods::Unsafe;
-    
+
     cmd.base.name = Some("deoxys".to_string());
     cmd.base.telemetry_params.telemetry_endpoints = vec![("wss://deoxys.kasar.io/submit/".to_string(), 0)];
     cmd.sealing = Some(Sealing::Manual);
