@@ -398,12 +398,15 @@ impl_runtime_apis! {
             (messages_to_l1, messages_to_l2)
         }
 
-        fn ensure_l1_nonce_unused(nonce: &Nonce) -> bool {
-            match Starknet::ensure_l1_message_not_executed(nonce) {
-                Ok(_) => true,
-                _ => false
+        fn l1_nonce_unused(nonce: u64) -> bool {
+            StarkFelt::try_from(nonce).map_or_else(
+                |e| {
+                    log::error!("Unexpected conversion error for Nonce in `l1_nonce_unused`: {:?}", e);
+                    false
+                },
+                |v| {Starknet::ensure_l1_message_not_executed(&Nonce(v)).is_ok()})
             }
-        }
+
     }
 
     impl pallet_starknet::runtime_api::ConvertTransactionRuntimeApi<Block> for Runtime {
