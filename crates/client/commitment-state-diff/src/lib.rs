@@ -146,14 +146,17 @@ where
     };
 
     for (_prefix, full_storage_key, change) in storage_notification.changes.iter() {
-        // The storages we are interested in here all have longe keys
+        // The storages we are interested in all have prefix of length 32 bytes.
+        // The pallet identifier takes 16 bytes, the storage one 16 bytes.
+        // So if a storage key is smaller than 32 bytes,
+        // the program will panic when we index it to get it's prefix
         if full_storage_key.0.len() < 32 {
             continue;
         }
         let prefix = &full_storage_key.0[..32];
 
-        // All the try_into are safe to unwrap because we know that is what the storage contains
-        // and therefore what length it is
+        // All the `try_into` are safe to `unwrap` because we know what the storage contains
+        // and therefore what size it is
         if prefix == *SN_NONCE_PREFIX {
             let contract_address =
                 ContractAddress(PatriciaKey(StarkFelt(full_storage_key.0[32..].try_into().unwrap())));
@@ -187,13 +190,11 @@ where
             commitment_state_diff.address_to_class_hash.insert(contract_address, class_hash);
         } else if prefix == *SN_COMPILED_CLASS_HASH_PREFIX {
             let class_hash = ClassHash(StarkFelt(full_storage_key.0[32..].try_into().unwrap()));
-            let compiled_class_hash = CompiledClassHash(match change {
-                Some(data) => StarkFelt(data.0.clone().try_into().unwrap()),
-                // This should not happen in the current state of starknet protocol, but there have been
-                // an erase_contract_class mechanism live on the network during the regenesis migration.
-                // Better safe than sorry
-                None => StarkFelt::default(),
-            });
+            // In the current state of starknet protocol, a compiled class hash can not be erased, so we should
+            // never see `change` being `None`. But there have been an "erase contract class" mechanism live on
+            // the network during the Regenesis migration. Better safe than sorry.
+            let compiled_class_hash =
+                CompiledClassHash(change.map(|data| StarkFelt(data.0.clone().try_into().unwrap())).unwrap_or_default());
 
             commitment_state_diff.class_hash_to_compiled_class_hash.insert(class_hash, compiled_class_hash);
         }
@@ -204,6 +205,6 @@ where
 
 pub async fn log_commitment_state_diff(mut rx: mpsc::Receiver<(BlockHash, CommitmentStateDiff)>) {
     while let Some((block_hash, csd)) = rx.next().await {
-        log::info!("recieved state diff for block {block_hash}: {csd:?}");
+        log::info!("received state diff for block {block_hash}: {csd:?}");
     }
 }
