@@ -2,8 +2,8 @@
 
 ## Next release
 
-- feat(client): spawn a task that listen to storage changes and build
-  the resulting commiment state diff for each block
+- feat(client): spawn a task that listen to storage changes and build the
+  resulting commiment state diff for each block
 - fix: change 'nonce too high' to log in debug instead of info
 - chore: update deps, vm ressource fee cost are now FixedU128, and stored in an
   hashmap
