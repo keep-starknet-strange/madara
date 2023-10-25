@@ -26,8 +26,8 @@ jobs:
           ./target/release/madara --dev --execution native &
           NATIVE_RUN_PID=$!
           while ! echo exit | nc localhost 9944; do sleep 1; done
-          git clone https://github.com/petscheit/madara-js-tests.git
-          cd madara-js-tests
+          git clone https://github.com/keep-starknet-strange/sequencer-js-compatibility-tests.git
+          cd sequencer-js-compatibility-tests
           npm install
           npm test
           kill $NATIVE_RUN_PID
