@@ -12,11 +12,11 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # Optional
+lazy_static = { workspace = true }
 parity-scale-codec = { workspace = true, features = [
   "derive",
 ], optional = true }
 serde = { workspace = true, optional = true, features = ["derive"] }
-lazy_static = { workspace = true }
 sp-io = { workspace = true }
 
 [features]

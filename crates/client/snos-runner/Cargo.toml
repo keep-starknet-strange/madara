@@ -7,22 +7,22 @@ version.workspace = true
 
 [dependencies]
 # Substrate
-starknet_api = { workspace = true, features = ["std"] }
-sp-runtime = { workspace = true, features = ["std"] }
-sp-blockchain = { workspace = true }
-sp-api = { workspace = true, features = ["std"] }
-sp-storage = { workspace = true, features = ["std"] }
 sc-client-api = { workspace = true }
+sp-api = { workspace = true, features = ["std"] }
+sp-blockchain = { workspace = true }
+sp-runtime = { workspace = true, features = ["std"] }
+sp-storage = { workspace = true, features = ["std"] }
+starknet_api = { workspace = true, features = ["std"] }
 
 # Madara
-mp-storage = { workspace = true, features = ["std"] }
 mp-digest-log = { workspace = true, features = ["std"] }
+mp-storage = { workspace = true, features = ["std"] }
 pallet-starknet = { workspace = true }
 
 # Starknet
-snos = {git = "https://github.com/keep-starknet-strange/snos", branch = "main" }
 blockifier = { workspace = true, features = ["std"] }
+snos = { git = "https://github.com/keep-starknet-strange/snos", branch = "main" }
 
-log = { workspace = true }
-indexmap = { workspace = true }
 futures = "0.3.21"
+indexmap = { workspace = true }
+log = { workspace = true }

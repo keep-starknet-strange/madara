@@ -76,16 +76,16 @@ blockifier = { workspace = true }
 hex = { workspace = true }
 madara-runtime = { workspace = true }
 mc-block-proposer = { workspace = true }
+mc-commitment-state-diff = { workspace = true }
 mc-data-availability = { workspace = true }
 mc-db = { workspace = true }
 mc-mapping-sync = { workspace = true }
 mc-rpc = { workspace = true }
+mc-snos = { workspace = true }
 mc-storage = { workspace = true }
 mc-transaction-pool = { workspace = true }
 pallet-starknet = { workspace = true }
 starknet-core = { workspace = true }
-mc-snos = { workspace = true }
-mc-commitment-state-diff = { workspace = true }
 
 # Primitives
 mp-block = { workspace = true }
