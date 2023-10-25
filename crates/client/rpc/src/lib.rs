@@ -473,6 +473,17 @@ where
         Ok(Felt(chain_id.0))
     }
 
+    /// Checks if L1 Nonce has been used.
+    fn l1_nonce_unused(&self, nonce: u64) -> RpcResult<bool> {
+        let best_block_hash = self.client.info().best_hash;
+        let unused = self
+            .client
+            .runtime_api()
+            .l1_nonce_unused(best_block_hash, nonce)
+            .map_err(|_| StarknetRpcApiError::InternalServerError)?;
+        Ok(unused)
+    }
+
     /// Submit a new declare transaction to be added to the chain
     ///
     /// # Arguments

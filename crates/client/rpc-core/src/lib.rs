@@ -138,4 +138,8 @@ pub trait StarknetRpcApi {
         &self,
         transaction_hash: FieldElement,
     ) -> RpcResult<MaybePendingTransactionReceipt>;
+
+    /// Checks if L1 Message Nonce has not been used
+    #[method(name = "l1NonceUnused")]
+    fn l1_nonce_unused(&self, nonce: u64) -> RpcResult<bool>;
 }

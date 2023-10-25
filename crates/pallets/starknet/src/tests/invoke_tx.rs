@@ -2,7 +2,7 @@ use blockifier::abi::abi_utils::get_storage_var_address;
 use frame_support::{assert_err, assert_ok};
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
-use mp_transactions::{InvokeTransaction, InvokeTransactionV1};
+use mp_transactions::{HandleL1MessageTransaction, InvokeTransaction, InvokeTransactionV1};
 use pretty_assertions::assert_eq;
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{
@@ -19,7 +19,6 @@ use super::constants::{BLOCKIFIER_ACCOUNT_ADDRESS, MULTIPLE_EVENT_EMITTING_CONTR
 use super::mock::default_mock::*;
 use super::mock::*;
 use super::utils::sign_message_hash;
-use crate::message::Message;
 use crate::tests::{
     get_invoke_argent_dummy, get_invoke_braavos_dummy, get_invoke_dummy, get_invoke_emit_event_dummy,
     get_invoke_nonce_dummy, get_invoke_openzeppelin_dummy, get_storage_read_write_dummy, set_nonce,
@@ -58,17 +57,23 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
 
         let transaction: InvokeTransaction = get_invoke_dummy(Felt252Wrapper::ZERO).into();
 
-        let tx = Message {
-            topics: vec![
-                "0xdb80dd488acf86d17c747445b0eabb5d57c541d3bd7b6b87af987858e5066b2b".to_owned(),
-                "0x0000000000000000000000000000000000000000000000000000000000000001".to_owned(),
-                "0x0000000000000000000000000000000000000000000000000000000000000001".to_owned(),
-                "0x01310e2c127c3b511c5ac0fd7949d544bb4d75b8bc83aaeb357e712ecf582771".to_owned(),
+        let tx = HandleL1MessageTransaction {
+            nonce: 1,
+            contract_address: Felt252Wrapper::from_hex_be(
+                "0x0000000000000000000000000000000000000000000000000000000000000001",
+            )
+            .unwrap(),
+            entry_point_selector: Felt252Wrapper::from_hex_be(
+                "0x01310e2c127c3b511c5ac0fd7949d544bb4d75b8bc83aaeb357e712ecf582771",
+            )
+            .unwrap(),
+            calldata: vec![
+                Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000001")
+                    .unwrap(),
+                Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000001")
+                    .unwrap(),
             ],
-            data: "0x0000000000000000000000000000000000000000000000000000000000000001".to_owned(),
-        }
-        .try_into_transaction()
-        .unwrap();
+        };
 
         assert_ok!(Starknet::invoke(none_origin.clone(), transaction));
         assert_ok!(Starknet::consume_l1_message(none_origin, tx, Fee(100)));
