@@ -30,3 +30,4 @@ futures = { workspace = true, features = ["std"] }
 # Others
 log = { workspace = true }
 indexmap = { workspace = true }
+thiserror = { workspace = true }

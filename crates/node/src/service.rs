@@ -392,10 +392,8 @@ pub fn new_full(
     task_manager.spawn_essential_handle().spawn(
         "commitment-state-diff",
         Some("madara"),
-        CommitmentStateDiffWorker::<_, _, StarknetHasher>::emit_commitment_state_diff(
-            client.clone(),
-            commitment_state_diff_tx,
-        ),
+        CommitmentStateDiffWorker::<_, _, StarknetHasher>::new(client.clone(), commitment_state_diff_tx)
+            .for_each(|()| future::ready(())),
     );
 
     task_manager.spawn_essential_handle().spawn(
