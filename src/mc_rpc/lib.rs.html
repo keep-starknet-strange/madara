@@ -1064,6 +1064,19 @@
 <a href="#1064" id="1064">1064</a>
 <a href="#1065" id="1065">1065</a>
 <a href="#1066" id="1066">1066</a>
+<a href="#1067" id="1067">1067</a>
+<a href="#1068" id="1068">1068</a>
+<a href="#1069" id="1069">1069</a>
+<a href="#1070" id="1070">1070</a>
+<a href="#1071" id="1071">1071</a>
+<a href="#1072" id="1072">1072</a>
+<a href="#1073" id="1073">1073</a>
+<a href="#1074" id="1074">1074</a>
+<a href="#1075" id="1075">1075</a>
+<a href="#1076" id="1076">1076</a>
+<a href="#1077" id="1077">1077</a>
+<a href="#1078" id="1078">1078</a>
+<a href="#1079" id="1079">1079</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1531,11 +1544,10 @@
     <span class="doccomment">/// Returns the chain id.
     </span><span class="kw">fn </span>chain_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;Felt&gt; {
         <span class="kw">let </span>best_block_hash = <span class="self">self</span>.client.info().best_hash;
-        <span class="kw">let </span>chain_id = <span class="self">self
-            </span>.client
-            .runtime_api()
-            .chain_id(best_block_hash)
-            .map_err(|<span class="kw">_</span>| StarknetRpcApiError::InternalServerError)<span class="question-mark">?</span>;
+        <span class="kw">let </span>chain_id = <span class="self">self</span>.client.runtime_api().chain_id(best_block_hash).map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;Failed to fetch chain_id with best_block_hash: {best_block_hash}, error: {e}&quot;</span>);
+            StarknetRpcApiError::InternalServerError
+        })<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(Felt(chain_id.<span class="number">0</span>))
     }
@@ -1556,7 +1568,7 @@
         <span class="kw">let </span>best_block_hash = <span class="self">self</span>.client.info().best_hash;
 
         <span class="kw">let </span>transaction: UserTransaction = declare_transaction.try_into().map_err(|e| {
-            <span class="macro">error!</span>(<span class="string">&quot;{e}&quot;</span>);
+            <span class="macro">error!</span>(<span class="string">&quot;Failed to convert BroadcastedDeclareTransaction to UserTransaction, error: {e}&quot;</span>);
             StarknetRpcApiError::InternalServerError
         })<span class="question-mark">?</span>;
         <span class="kw">let </span>class_hash = <span class="kw">match </span>transaction {
@@ -1602,7 +1614,7 @@
         <span class="kw">let </span>best_block_hash = <span class="self">self</span>.client.info().best_hash;
 
         <span class="kw">let </span>transaction: UserTransaction = invoke_transaction.try_into().map_err(|e| {
-            <span class="macro">error!</span>(<span class="string">&quot;{e}&quot;</span>);
+            <span class="macro">error!</span>(<span class="string">&quot;Failed to convert BroadcastedInvokeTransaction to UserTransaction: {e}&quot;</span>);
             StarknetRpcApiError::InternalServerError
         })<span class="question-mark">?</span>;
 
@@ -1632,7 +1644,7 @@
         <span class="kw">let </span>best_block_hash = <span class="self">self</span>.client.info().best_hash;
 
         <span class="kw">let </span>transaction: UserTransaction = deploy_account_transaction.try_into().map_err(|e| {
-            <span class="macro">error!</span>(<span class="string">&quot;{e}&quot;</span>);
+            <span class="macro">error!</span>(<span class="string">&quot;Failed to convert BroadcastedDeployAccountTransaction to UserTransaction, error: {e}&quot;</span>,);
             StarknetRpcApiError::InternalServerError
         })<span class="question-mark">?</span>;
 
@@ -1687,7 +1699,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>estimates = <span class="macro">vec!</span>[];
         <span class="kw">for </span>tx <span class="kw">in </span>request {
             <span class="kw">let </span>tx = tx.try_into().map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;{e}&quot;</span>);
+                <span class="macro">error!</span>(<span class="string">&quot;Failed to convert BroadcastedTransaction to UserTransaction: {e}&quot;</span>);
                 StarknetRpcApiError::InternalServerError
             })<span class="question-mark">?</span>;
             <span class="kw">let </span>(actual_fee, gas_usage) = <span class="self">self
@@ -1745,7 +1757,12 @@
         <span class="kw">for </span>(index, tx) <span class="kw">in </span>block.transactions().iter().enumerate() {
             <span class="kw">let </span>hash = transaction_hashes
                 .as_ref()
-                .map(|tx_hashes| h256_to_felt(<span class="kw-2">*</span>tx_hashes.get(index).ok_or(StarknetRpcApiError::InternalServerError)<span class="question-mark">?</span>))
+                .map(|tx_hashes| {
+                    h256_to_felt(<span class="kw-2">*</span>tx_hashes.get(index).ok_or_else(|| {
+                        <span class="macro">error!</span>(<span class="string">&quot;Transaction hash not found at index: {index} in transaction hashes cache.&quot;</span>);
+                        StarknetRpcApiError::InternalServerError
+                    })<span class="question-mark">?</span>)
+                })
                 .unwrap_or_else(|| <span class="prelude-val">Ok</span>(tx.compute_hash::&lt;H&gt;(chain_id.<span class="number">0</span>.into(), <span class="bool-val">false</span>).<span class="number">0</span>))<span class="question-mark">?</span>;
             transactions.push(to_starknet_core_tx(tx.clone(), hash));
         }
@@ -1822,11 +1839,14 @@
         <span class="kw">let </span>api = <span class="self">self</span>.client.runtime_api();
 
         <span class="kw">let </span>transactions = api.extrinsic_filter(substrate_block_hash, transactions).map_err(|e| {
-            <span class="macro">error!</span>(<span class="string">&quot;{:#?}&quot;</span>, e);
+            <span class="macro">error!</span>(<span class="string">&quot;Failed to filter extrinsics. Substrate block hash: {substrate_block_hash}, error: {e}&quot;</span>);
             StarknetRpcApiError::InternalServerError
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>chain_id = <span class="self">self</span>.chain_id()<span class="question-mark">?</span>;
+        <span class="kw">let </span>chain_id = <span class="self">self</span>.chain_id().map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve chain ID. Error: {e}&quot;</span>);
+            StarknetRpcApiError::InternalServerError
+        })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>transactions = transactions
             .into_iter()
@@ -1968,7 +1988,7 @@
             </span>.client
             .block_body(substrate_block_hash)
             .map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
+                <span class="macro">error!</span>(<span class="string">&quot;Failed to get block body. Substrate block hash: {substrate_block_hash}, error: {e}&quot;</span>);
                 StarknetRpcApiError::InternalServerError
             })<span class="question-mark">?
             </span>.ok_or(StarknetRpcApiError::BlockNotFound)<span class="question-mark">?</span>;
@@ -1979,10 +1999,13 @@
             .runtime_api()
             .get_events_for_tx_hash(substrate_block_hash, block_extrinsics, chain_id, transaction_hash.into())
             .map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
+                <span class="macro">error!</span>(
+                    <span class="string">&quot;Failed to get events for transaction hash. Substrate block hash: {substrate_block_hash}, \
+                     transaction hash: {transaction_hash}, error: {e}&quot;
+                </span>);
                 StarknetRpcApiError::InternalServerError
             })<span class="question-mark">?
-            </span>.expect(<span class="string">&quot;the thansaction should be present in the substrate extrinsics&quot;</span>);
+            </span>.expect(<span class="string">&quot;the transaction should be present in the substrate extrinsics&quot;</span>);
 
         <span class="kw">let </span>execution_result = {
             <span class="kw">let </span>revert_error = <span class="self">self
@@ -1990,7 +2013,10 @@
                 .runtime_api()
                 .get_tx_execution_outcome(substrate_block_hash, Felt252Wrapper(transaction_hash).into())
                 .map_err(|e| {
-                    <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
+                    <span class="macro">error!</span>(
+                        <span class="string">&quot;Failed to get transaction execution outcome. Substrate block hash: {substrate_block_hash}, \
+                         transaction hash: {transaction_hash}, error: {e}&quot;
+                    </span>);
                     StarknetRpcApiError::InternalServerError
                 })<span class="question-mark">?</span>;
 
@@ -2124,8 +2150,8 @@
 <span class="kw">fn </span>h256_to_felt(h256: H256) -&gt; <span class="prelude-ty">Result</span>&lt;FieldElement, StarknetRpcApiError&gt; {
     <span class="kw">match </span>Felt252Wrapper::try_from(h256) {
         <span class="prelude-val">Ok</span>(felt) =&gt; <span class="prelude-val">Ok</span>(felt.<span class="number">0</span>),
-        <span class="prelude-val">Err</span>(err) =&gt; {
-            <span class="macro">error!</span>(<span class="string">&quot;failed to convert H256 to FieldElement: {err}&quot;</span>);
+        <span class="prelude-val">Err</span>(e) =&gt; {
+            <span class="macro">error!</span>(<span class="string">&quot;failed to convert H256 to FieldElement: {e}&quot;</span>);
             <span class="prelude-val">Err</span>(StarknetRpcApiError::InternalServerError)
         }
     }
