@@ -11,8 +11,6 @@ sc-client-api = { workspace = true }
 sp-api = { workspace = true, default-features = true }
 sp-blockchain = { workspace = true }
 sp-runtime = { workspace = true, default-features = true }
-sp-storage = { workspace = true, default-features = true }
-starknet_api = { workspace = true, default-features = true }
 
 # Madara
 mp-digest-log = { workspace = true, default-features = true }
@@ -22,7 +20,7 @@ pallet-starknet = { workspace = true }
 
 # Starknet
 blockifier = { workspace = true, default-features = true }
-snos = { git = "https://github.com/keep-starknet-strange/snos", branch = "main" }
+starknet_api = { workspace = true, default-features = true }
 
 # Async
 futures = { workspace = true, default-features = true }

@@ -81,7 +81,6 @@ mc-data-availability = { workspace = true }
 mc-db = { workspace = true }
 mc-mapping-sync = { workspace = true }
 mc-rpc = { workspace = true }
-mc-snos = { workspace = true }
 mc-storage = { workspace = true }
 mc-transaction-pool = { workspace = true }
 pallet-starknet = { workspace = true }
