@@ -40,6 +40,8 @@
   method being used)
 - refactor(sealing): how the sealing mode is passed into runtime
 - feat(sealing): finalization for instant sealing
+- test(starknet-js-test): run basic starknetjs compatibility tests again the
+  madara node
 - feat(cache-option): add an option to enable aggressive caching in command-line
   parameters
 
