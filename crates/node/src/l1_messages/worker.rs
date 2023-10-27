@@ -11,18 +11,29 @@ use sp_api::offchain::OffchainStorage;
 use sp_api::{BlockId, ProvideRuntimeApi};
 use sp_runtime::traits::Block as BlockT;
 
-use crate::l1_messages::contract::L1Contract;
+use crate::l1_messages::contract::{L1Contract, LogMessageToL2Filter};
 use crate::l1_messages::error::L1MessagesWorkerError;
-
-pub(crate) const LOG_TARGET: &str = "node::service::L1MessagesWorker ⟠";
 
 const TX_SOURCE: TransactionSource = TransactionSource::External;
 const STORAGE_PREFIX: &str = "L1MessagesWorker";
 const STORAGE_KEY: &str = "last_synced_block";
 
-const L1_MESSAGES_CONTRACT_ADDRESS: &str = "0x5fbdb2315678afecb367f032d93f642f64180aa3";
+#[derive(Debug)]
+pub struct L1MessagesWorkerConfig {
+    rpc_endpoint: String,
+    contract_address: String,
+}
 
-pub async fn run_worker<C, P, B, S>(client: Arc<C>, pool: Arc<P>, backend: Arc<S>)
+impl Default for L1MessagesWorkerConfig {
+    fn default() -> Self {
+        Self {
+            rpc_endpoint: String::from("http://127.0.0.1:8545"),
+            contract_address: String::from("0x5fbdb2315678afecb367f032d93f642f64180aa3"),
+        }
+    }
+}
+
+pub async fn run_worker<C, P, B, S>(config: L1MessagesWorkerConfig, client: Arc<C>, pool: Arc<P>, backend: Arc<S>)
 where
     B: BlockT,
     C: ProvideRuntimeApi<B> + HeaderBackend<B>,
@@ -30,51 +41,94 @@ where
     P: TransactionPool<Block = B> + 'static,
     S: Backend<B> + Send + 'static,
 {
-    log::info!(target: LOG_TARGET,"Starting L1 Messages Worker!");
+    log::info!("⟠ Starting L1 Messages Worker with config: {:?}", config);
 
     let mut offchain_storage = backend.offchain_storage().unwrap();
 
-    let eth_client = Arc::new(Provider::<Http>::try_from("http://127.0.0.1:8545").unwrap());
-
-    let l1_contract_address = L1_MESSAGES_CONTRACT_ADDRESS.parse::<Address>().unwrap();
-    let l1_contract = L1Contract::new(l1_contract_address, Arc::clone(&eth_client));
+    let l1_contract = L1Contract::new(
+        config.contract_address.parse::<Address>().unwrap(),
+        Arc::new(Provider::<Http>::try_from(&config.rpc_endpoint).unwrap()),
+    );
 
     let last_synced_block = get_block_number::<B, S>(&offchain_storage).unwrap();
-
-    log::debug!("Last synchronized block: {:?}", last_synced_block);
+    log::debug!("⟠ Last synchronized block: {:?}", last_synced_block);
 
     let events = l1_contract.events().from_block(last_synced_block);
     let mut stream = events.stream().await.unwrap().with_meta();
     while let Some(Ok((event, meta))) = stream.next().await {
-        log::info!(target: LOG_TARGET, "Processing L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?}", meta.block_number, meta.transaction_hash, meta.log_index);
+        log::info!(
+            "⟠ Processing L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?}",
+            meta.block_number,
+            meta.transaction_hash,
+            meta.log_index
+        );
 
-        let fee = event.try_into_fee().unwrap();
-        let transaction = event.try_into_transaction().unwrap();
-
-        log::debug!(target: LOG_TARGET, "Transaction: {:?}", transaction);
-
-        let best_block_hash = client.info().best_hash;
-
-        if !client.runtime_api().l1_nonce_unused(best_block_hash, transaction.nonce).unwrap() {
-            log::debug!("Event already processed: {:?}", transaction);
-            continue;
+        match process_l1_message(&event, client.clone(), pool.clone()).await {
+            Ok(tx_hash) => {
+                log::info!(
+                    "⟠ L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?} submitted, transaction \
+                     hash on L2: {:?}",
+                    meta.block_number,
+                    meta.transaction_hash,
+                    meta.log_index,
+                    tx_hash
+                );
+                set_block_number::<B, S>(&mut offchain_storage, &meta.block_number.as_u64());
+            }
+            Err(e) => {
+                log::error!(
+                    "Unexpected error while processing L1 Message from block: {:?}, transaction_hash: {:?}, \
+                     log_index: {:?}, error: {:?}",
+                    meta.block_number,
+                    meta.transaction_hash,
+                    meta.log_index,
+                    e
+                )
+            }
         }
-
-        let extrinsic = client
-            .runtime_api()
-            .convert_l1_transaction(best_block_hash, transaction, fee)
-            .map_err(|e| {
-                log::error!("Failed to convert transaction: {:?}", e);
-                L1MessagesWorkerError::ToTransactionError
-            })
-            .unwrap()
-            .unwrap();
-
-        let tx_hash = pool.submit_one(&BlockId::Hash(best_block_hash), TX_SOURCE, extrinsic).await.unwrap();
-        log::info!("L1 Message submitted, transaction hash on L2: {:?}", tx_hash);
-
-        set_block_number::<B, S>(&mut offchain_storage, &meta.block_number.as_u64());
     }
+}
+
+async fn process_l1_message<C, P, B>(
+    event: &LogMessageToL2Filter,
+    client: Arc<C>,
+    pool: Arc<P>,
+) -> Result<P::Hash, L1MessagesWorkerError>
+where
+    B: BlockT,
+    C: ProvideRuntimeApi<B> + HeaderBackend<B>,
+    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
+    P: TransactionPool<Block = B> + 'static,
+{
+    let fee = event.try_into_fee()?;
+    let transaction = event.try_into_transaction()?;
+
+    let best_block_hash = client.info().best_hash;
+
+    match client.runtime_api().l1_nonce_unused(best_block_hash, transaction.nonce) {
+        Ok(true) => Ok(()),
+        Ok(false) => {
+            log::debug!("⟠ Event already processed: {:?}", transaction);
+            Err(L1MessagesWorkerError::MessageAlreadyProcessed)
+        }
+        Err(e) => {
+            log::error!("⟠ Unexpected runtime api error: {:?}", e);
+            Err(L1MessagesWorkerError::RuntimeApiError)
+        }
+    }?;
+
+    let extrinsic = client
+        .runtime_api()
+        .convert_l1_transaction(best_block_hash, transaction, fee)
+        .map_err(|e| {
+            log::error!("⟠ Failed to convert transaction: {:?}", e);
+            L1MessagesWorkerError::ConvertTransactionRuntimeApiError
+        })?
+        .map_err(|_| L1MessagesWorkerError::ConvertTransactionRuntimeApiError)?;
+
+    pool.submit_one(&BlockId::Hash(best_block_hash), TX_SOURCE, extrinsic)
+        .await
+        .map_err(|_| L1MessagesWorkerError::SubmitTxError)
 }
 
 fn set_block_number<B, S>(storage: &mut S::OffchainStorage, blknum: &u64)
