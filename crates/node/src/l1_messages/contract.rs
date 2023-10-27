@@ -17,7 +17,7 @@ impl LogMessageToL2Filter {
         // Check against panic
         // https://docs.rs/ethers/latest/ethers/types/struct.U256.html#method.as_u128
         if self.fee > U256::from_big_endian(&(u128::MAX.to_be_bytes())) {
-            Err(L1MessagesWorkerError::ToTransactionError)
+            Err(L1MessagesWorkerError::ToFeeError)
         } else {
             Ok(Fee(self.fee.as_u128()))
         }

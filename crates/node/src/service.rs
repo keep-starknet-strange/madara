@@ -43,6 +43,7 @@ use sp_offchain::STORAGE_PREFIX;
 
 use crate::genesis_block::MadaraGenesisBlockBuilder;
 use crate::l1_messages;
+use crate::l1_messages::worker::L1MessagesWorkerConfig;
 use crate::rpc::StarknetDeps;
 use crate::starknet::{db_config_dir, MadaraBackend};
 
@@ -584,7 +585,7 @@ pub fn new_full(
     task_manager.spawn_essential_handle().spawn(
         "L1 Messages",
         Some(MADARA_TASK_GROUP),
-        l1_messages::worker::run_worker(client, transaction_pool, db_backend),
+        l1_messages::worker::run_worker(L1MessagesWorkerConfig::default(), client, transaction_pool, db_backend),
     );
 
     network_starter.start_network();
