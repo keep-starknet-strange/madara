@@ -44,6 +44,7 @@
   madara node
 - feat(cache-option): add an option to enable aggressive caching in command-line
   parameters
+- docs: add translation of madara beast article to spanish
 
 ## v0.4.0
 
