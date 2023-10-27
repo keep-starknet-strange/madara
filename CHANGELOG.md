@@ -1,6 +1,8 @@
 # Madara Changelog
 
 ## Next release
+- fix: Ensure transaction checks are compatible with starknet-rs
+- ci: Run Starknet Foundry tests against Madara RPC for ongoing compatibility
 
 ## v0.5.0
 
@@ -50,7 +52,6 @@
   madara node
 - feat(cache-option): add an option to enable aggressive caching in command-line
   parameters
-- fix: Ensure transaction checks are compatible with starknet-rs
 
 ## v0.4.0
 
