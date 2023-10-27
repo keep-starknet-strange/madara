@@ -23,6 +23,7 @@ members = [
   "crates/client/storage",
   "crates/client/transaction-pool",
   "crates/client/deoxys",
+  "crates/client/commitment-state-diff",
   "starknet-rpc-test",
 ]
 # All previous except for `starknet-rpc-test`
@@ -49,6 +50,7 @@ default-members = [
   "crates/client/mapping-sync",
   "crates/client/storage",
   "crates/client/transaction-pool",
+  "crates/client/commitment-state-diff",
 ]
 
 [profile.release]
@@ -65,7 +67,7 @@ rpath = false        # Disables adding rpath to the binary
 authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
 edition = "2021"
 repository = "https://github.com/keep-starknet-strange/madara/"
-version = "0.4.0"
+version = "0.5.0"
 
 [workspace.dependencies]
 # Substrate frame dependencies
@@ -168,6 +170,7 @@ mc-rpc-core = { path = "crates/client/rpc-core" }
 mc-block-proposer = { path = "crates/client/block-proposer" }
 mc-transaction-pool = { path = "crates/client/transaction-pool" }
 mc-data-availability = { path = "crates/client/data-availability" }
+mc-commitment-state-diff = { path = "crates/client/commitment-state-diff" }
 
 # Madara runtime
 madara-runtime = { path = "crates/runtime" }
@@ -205,7 +208,7 @@ anyhow = "1.0.75"
 flate2 = "1.0.28"
 scale-codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false }
 parity-scale-codec = { version = "3.2.2", default-features = false }
-scale-info = { version = "2.9.0", default-features = false }
+scale-info = { version = "2.10.0", default-features = false }
 lazy_static = { version = "1.4.0", default-features = false }
 log = { version = "0.4.20", default-features = false }
 hex = { version = "0.4.3", default-features = false }
@@ -220,7 +223,7 @@ serde = { version = "1.0.189", default-features = false }
 serde_json = { version = "1.0.107", default-features = false }
 serde_with = { version = "2.3.3", default-features = false }
 bitvec = { version = "1", default-features = false }
-thiserror = "1.0.48"
+thiserror = "1.0.50"
 thiserror-no-std = "2.0.2"
 derive_more = { version = "0.99.17", default-features = false }
 rstest = "0.18.1"
@@ -235,7 +238,6 @@ phf = { version = "0.11", default-features = false }
 
 # Deoxys
 mc-deoxys = { path = "crates/client/deoxys" }
-tokio = "1.24.2"
 assert_matches = "1.5.0"
 mockito = "0.31.0"
 validator = "0.12"
@@ -283,3 +285,4 @@ tracing-subscriber = "0.3.16"
 tower = "0.4"
 url = "2.4.1"
 hashbrown = "0.14.2"
+tokio = "1.33.0"
