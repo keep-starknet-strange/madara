@@ -359,6 +359,10 @@ impl_runtime_apis! {
         fn get_tx_execution_outcome(tx_hash: TransactionHash) -> Option<Vec<u8>> {
            Starknet::tx_revert_error(tx_hash).map(|s| s.into_bytes())
         }
+
+        fn get_block_context() -> pallet_starknet::runtime_api::BlockContext {
+           Starknet::get_block_context().into()
+        }
     }
 
     impl pallet_starknet::runtime_api::ConvertTransactionRuntimeApi<Block> for Runtime {
