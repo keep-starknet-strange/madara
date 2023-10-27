@@ -181,7 +181,7 @@
         <span class="doccomment">/// Returns the chain id.
         </span><span class="kw">fn </span>chain_id() -&gt; Felt252Wrapper;
         <span class="doccomment">/// Returns fee estimate
-        </span><span class="kw">fn </span>estimate_fee(transaction: UserTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u64, u64), DispatchError&gt;;
+        </span><span class="kw">fn </span>estimate_fee(transaction: UserTransaction, is_query: bool) -&gt; <span class="prelude-ty">Result</span>&lt;(u64, u64), DispatchError&gt;;
         <span class="doccomment">/// Filters extrinsic transactions to return only Starknet transactions
         ///
         /// To support runtime upgrades, the client must be unaware of the specific extrinsic

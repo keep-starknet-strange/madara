@@ -146,7 +146,8 @@ function, only the first transaction/block will be “slow” to load these data
     key: StorageKey
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;StarkFelt, DispatchError&gt;</h4></section></summary><div class="docblock"><p>Get storage value at</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.estimate_fee" class="method"><a class="src rightside" href="../../src/pallet_starknet/lib.rs.html#1095-1153">source</a><h4 class="code-header">pub fn <a href="#method.estimate_fee" class="fn">estimate_fee</a>(
-    transaction: UserTransaction
+    transaction: UserTransaction,
+    is_query: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;(<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>, <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>), DispatchError&gt;</h4></section></summary><div class="docblock"><p>Estimate the fee associated with transaction</p>
 </div></details><section id="method.emit_and_store_tx_and_fees_events" class="method"><a class="src rightside" href="../../src/pallet_starknet/lib.rs.html#1155-1166">source</a><h4 class="code-header">pub fn <a href="#method.emit_and_store_tx_and_fees_events" class="fn">emit_and_store_tx_and_fees_events</a>(
     tx_hash: TransactionHash,

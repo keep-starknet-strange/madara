@@ -2269,7 +2269,7 @@
     }
 
     <span class="doccomment">/// Estimate the fee associated with transaction
-    </span><span class="kw">pub fn </span>estimate_fee(transaction: UserTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u64, u64), DispatchError&gt; {
+    </span><span class="kw">pub fn </span>estimate_fee(transaction: UserTransaction, is_query: bool) -&gt; <span class="prelude-ty">Result</span>&lt;(u64, u64), DispatchError&gt; {
         <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
 
         <span class="kw">fn </span>execute_tx_and_rollback&lt;S: State + StateChanges + FeeConfig&gt;(
@@ -2293,20 +2293,20 @@
 
         <span class="kw">let </span>execution_result = <span class="kw">match </span>transaction {
             UserTransaction::Declare(tx, contract_class) =&gt; execute_tx_and_rollback(
-                tx.try_into_executable::&lt;T::SystemHash&gt;(chain_id, contract_class, <span class="bool-val">true</span>)
+                tx.try_into_executable::&lt;T::SystemHash&gt;(chain_id, contract_class, is_query)
                     .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::InvalidContractClass)<span class="question-mark">?</span>,
                 <span class="kw-2">&amp;mut </span>blockifier_state_adapter,
                 <span class="kw-2">&amp;</span>block_context,
                 disable_nonce_validation,
             ),
             UserTransaction::DeployAccount(tx) =&gt; execute_tx_and_rollback(
-                tx.into_executable::&lt;T::SystemHash&gt;(chain_id, <span class="bool-val">true</span>),
+                tx.into_executable::&lt;T::SystemHash&gt;(chain_id, is_query),
                 <span class="kw-2">&amp;mut </span>blockifier_state_adapter,
                 <span class="kw-2">&amp;</span>block_context,
                 disable_nonce_validation,
             ),
             UserTransaction::Invoke(tx) =&gt; execute_tx_and_rollback(
-                tx.into_executable::&lt;T::SystemHash&gt;(chain_id, <span class="bool-val">true</span>),
+                tx.into_executable::&lt;T::SystemHash&gt;(chain_id, is_query),
                 <span class="kw-2">&amp;mut </span>blockifier_state_adapter,
                 <span class="kw-2">&amp;</span>block_context,
                 disable_nonce_validation,

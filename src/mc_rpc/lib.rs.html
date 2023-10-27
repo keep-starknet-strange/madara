@@ -1077,6 +1077,8 @@
 <a href="#1077" id="1077">1077</a>
 <a href="#1078" id="1078">1078</a>
 <a href="#1079" id="1079">1079</a>
+<a href="#1080" id="1080">1080</a>
+<a href="#1081" id="1081">1081</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1679,14 +1681,16 @@
         request: Vec&lt;BroadcastedTransaction&gt;,
         block_id: BlockId,
     ) -&gt; RpcResult&lt;Vec&lt;FeeEstimate&gt;&gt; {
-        <span class="kw">let </span>is_invalid_query_transaction = request.iter().any(|tx| <span class="kw">match </span>tx {
-            BroadcastedTransaction::Invoke(invoke_tx) =&gt; !invoke_tx.is_query,
-            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V1(tx_v1)) =&gt; !tx_v1.is_query,
-            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V2(tx_v2)) =&gt; !tx_v2.is_query,
-            BroadcastedTransaction::DeployAccount(deploy_tx) =&gt; !deploy_tx.is_query,
+        <span class="kw">let </span>is_query = request.iter().any(|tx| <span class="kw">match </span>tx {
+            BroadcastedTransaction::Invoke(invoke_tx) =&gt; invoke_tx.is_query,
+            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V1(tx_v1)) =&gt; tx_v1.is_query,
+            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V2(tx_v2)) =&gt; tx_v2.is_query,
+            BroadcastedTransaction::DeployAccount(deploy_tx) =&gt; deploy_tx.is_query,
         });
-        <span class="kw">if </span>is_invalid_query_transaction {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(StarknetRpcApiError::UnsupportedTxVersion.into());
+        <span class="kw">if </span>!is_query {
+            <span class="macro">log::error!</span>(
+                <span class="string">&quot;Got `is_query`: false. In a future version, this will fail fee estimation with UnsupportedTxVersion&quot;
+            </span>);
         }
 
         <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
@@ -1705,7 +1709,7 @@
             <span class="kw">let </span>(actual_fee, gas_usage) = <span class="self">self
                 </span>.client
                 .runtime_api()
-                .estimate_fee(substrate_block_hash, tx)
+                .estimate_fee(substrate_block_hash, tx, is_query)
                 .map_err(|e| {
                     <span class="macro">error!</span>(<span class="string">&quot;Request parameters error: {e}&quot;</span>);
                     StarknetRpcApiError::InternalServerError

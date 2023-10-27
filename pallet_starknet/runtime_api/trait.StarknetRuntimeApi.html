@@ -73,13 +73,15 @@
 <span class="item-spacer"></span>    fn <a href="#method.estimate_fee" class="fn">estimate_fee</a>(
         &amp;self,
         __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
-        transaction: UserTransaction
+        transaction: UserTransaction,
+        is_query: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>
     ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;(<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>, <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>), DispatchError&gt;, ApiError&gt; { ... }
 <span class="item-spacer"></span>    fn <a href="#method.estimate_fee_with_context" class="fn">estimate_fee_with_context</a>(
         &amp;self,
         __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
         context: ExecutionContext,
-        transaction: UserTransaction
+        transaction: UserTransaction,
+        is_query: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>
     ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;(<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>, <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>), DispatchError&gt;, ApiError&gt; { ... }
 <span class="item-spacer"></span>    fn <a href="#method.extrinsic_filter" class="fn">extrinsic_filter</a>(
         &amp;self,
@@ -213,13 +215,15 @@
 </div></details><details class="toggle method-toggle" open><summary><section id="method.estimate_fee" class="method"><a class="src rightside" href="../../src/pallet_starknet/runtime_api.rs.html#34-77">source</a><h4 class="code-header">fn <a href="#method.estimate_fee" class="fn">estimate_fee</a>(
     &amp;self,
     __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
-    transaction: UserTransaction
+    transaction: UserTransaction,
+    is_query: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;(<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>, <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>), DispatchError&gt;, ApiError&gt;</h4></section></summary><div class="docblock"><p>Returns fee estimate</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.estimate_fee_with_context" class="method"><a class="src rightside" href="../../src/pallet_starknet/runtime_api.rs.html#34-77">source</a><h4 class="code-header">fn <a href="#method.estimate_fee_with_context" class="fn">estimate_fee_with_context</a>(
     &amp;self,
     __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
     context: ExecutionContext,
-    transaction: UserTransaction
+    transaction: UserTransaction,
+    is_query: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;(<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>, <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>), DispatchError&gt;, ApiError&gt;</h4></section></summary><div class="docblock"><p>Returns fee estimate</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.extrinsic_filter" class="method"><a class="src rightside" href="../../src/pallet_starknet/runtime_api.rs.html#34-77">source</a><h4 class="code-header">fn <a href="#method.extrinsic_filter" class="fn">extrinsic_filter</a>(
     &amp;self,
