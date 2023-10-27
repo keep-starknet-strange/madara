@@ -2,6 +2,9 @@
 
 ## Next release
 
+- dev(StarknetRPC): log error received from node before mapping to
+  InternalServerError
+- fix: change 'nonce too high' to log in debug instead of info
 - chore: update deps, vm ressource fee cost are now FixedU128, and stored in an
   hashmap
 - ci: change jobs order in the workflow
@@ -37,6 +40,8 @@
   method being used)
 - refactor(sealing): how the sealing mode is passed into runtime
 - feat(sealing): finalization for instant sealing
+- test(starknet-js-test): run basic starknetjs compatibility tests again the
+  madara node
 - feat(cache-option): add an option to enable aggressive caching in command-line
   parameters
 
