@@ -1,8 +1,9 @@
 # Madara Changelog
 
 ## Next release
+
 - fix: Ensure transaction checks are compatible with starknet-rs
-- ci: Run Starknet Foundry tests against Madara RPC for ongoing compatibility
+- ci: Run Starknet Foundry tests against Madara RPC
 
 ## v0.5.0
 
