@@ -17,14 +17,14 @@ fn estimates_tx_fee_successfully_no_validate() {
         let tx = get_invoke_dummy(Felt252Wrapper::ZERO);
         let tx = UserTransaction::Invoke(tx.into());
 
-        let (actual, l1_gas_usage) = Starknet::estimate_fee(tx).unwrap();
+        let (actual, l1_gas_usage) = Starknet::estimate_fee(tx, true).unwrap();
         assert!(actual > 0, "actual fee is missing");
         assert!(l1_gas_usage == 0, "this should not be charged any l1_gas as it does not store nor send messages");
 
         let tx = get_storage_read_write_dummy();
         let tx = UserTransaction::Invoke(tx.into());
 
-        let (actual, l1_gas_usage) = Starknet::estimate_fee(tx).unwrap();
+        let (actual, l1_gas_usage) = Starknet::estimate_fee(tx, true).unwrap();
         assert!(actual > 0, "actual fee is missing");
         assert!(l1_gas_usage > 0, "this should be charged l1_gas as it store a value to storage");
     });
@@ -39,7 +39,7 @@ fn estimates_tx_fee_with_query_version() {
         let pre_storage = Starknet::pending().len();
         let tx = UserTransaction::Invoke(tx.into());
 
-        assert_ok!(Starknet::estimate_fee(tx));
+        assert_ok!(Starknet::estimate_fee(tx, true));
 
         assert!(pre_storage == Starknet::pending().len(), "estimate should not add a tx to pending");
     });
@@ -57,7 +57,7 @@ fn executable_tx_should_not_be_estimable() {
 
         // it should not be valid for estimate calls
         assert_err!(
-            Starknet::estimate_fee(UserTransaction::Invoke(tx.clone().into())),
+            Starknet::estimate_fee(UserTransaction::Invoke(tx.clone().into()), true),
             Error::<MockRuntime>::TransactionExecutionFailed
         );
 
@@ -77,7 +77,7 @@ fn query_tx_should_not_be_executable() {
         tx.signature = sign_message_hash(tx_hash);
 
         // it should be valid for estimate calls
-        assert_ok!(Starknet::estimate_fee(UserTransaction::Invoke(tx.clone().into())),);
+        assert_ok!(Starknet::estimate_fee(UserTransaction::Invoke(tx.clone().into()), true),);
 
         // it should not be executable
         assert_err!(

@@ -50,6 +50,7 @@
   madara node
 - feat(cache-option): add an option to enable aggressive caching in command-line
   parameters
+- fix: Ensure transaction checks are compatible with starknet-rs
 
 ## v0.4.0
 
