@@ -2,6 +2,9 @@
 
 ## Next release
 
+## v0.5.0
+
+- chore: release v0.5.0
 - test: add transaction pool logic unit tests
 - feat(client): spawn a task that listen to storage changes and build the
   resulting commiment state diff for each block
