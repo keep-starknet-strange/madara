@@ -2,6 +2,7 @@
 
 ## Next release
 
+- test: add transaction pool logic unit tests
 - feat(client): spawn a task that listen to storage changes and build the
   resulting commiment state diff for each block
 - dev(StarknetRPC): log error received from node before mapping to
