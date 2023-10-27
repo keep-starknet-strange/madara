@@ -47,6 +47,7 @@ frame-system = { workspace = true }
 sc-cli = { workspace = true, optional = true }
 # Substrate primitives
 sp-api = { workspace = true }
+sp-arithmetic = { workspace = true }
 sp-core = { workspace = true }
 sp-inherents = { workspace = true }
 sp-io = { workspace = true }
@@ -59,6 +60,7 @@ cairo-lang-casm-contract-class = { workspace = true, optional = true, features =
   "std",
 ] }
 derive_more = { workspace = true }
+hashbrown = { workspace = true }
 hex = { workspace = true }
 indexmap = { workspace = true }
 log = { workspace = true }
