@@ -2041,7 +2041,7 @@
     <span class="doccomment">/// Creates a [BlockContext] object. The [BlockContext] is needed by the blockifier to execute
     /// properly the transaction. Substrate caches data so it&#39;s fine to call multiple times this
     /// function, only the first transaction/block will be &quot;slow&quot; to load these data.
-    </span><span class="kw">fn </span>get_block_context() -&gt; BlockContext {
+    </span><span class="kw">pub fn </span>get_block_context() -&gt; BlockContext {
         <span class="kw">let </span>block_number = UniqueSaturatedInto::&lt;u64&gt;::unique_saturated_into(frame_system::Pallet::&lt;T&gt;::block_number());
         <span class="kw">let </span>block_timestamp = <span class="self">Self</span>::block_timestamp();
 

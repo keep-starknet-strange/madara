@@ -134,10 +134,34 @@
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>starknet_api::state::StorageKey;
-<span class="kw">use </span>starknet_api::{api_core <span class="kw">as </span>stcore, transaction <span class="kw">as </span>sttx};
+<span class="kw">use </span>starknet_api::{api_core <span class="kw">as </span>stcore, block <span class="kw">as </span>stb, transaction <span class="kw">as </span>sttx};
 
 <span class="kw">use </span><span class="kw">super</span>::Felt252Wrapper;
+
+<span class="kw">impl </span>From&lt;Felt252Wrapper&gt; <span class="kw">for </span>stb::BlockHash {
+    <span class="kw">fn </span>from(value: Felt252Wrapper) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(value.into())
+    }
+}
+
+<span class="kw">impl </span>From&lt;stb::BlockHash&gt; <span class="kw">for </span>Felt252Wrapper {
+    <span class="kw">fn </span>from(value: stb::BlockHash) -&gt; <span class="self">Self </span>{
+        value.<span class="number">0</span>.into()
+    }
+}
 
 <span class="kw">impl </span>From&lt;Felt252Wrapper&gt; <span class="kw">for </span>sttx::TransactionHash {
     <span class="kw">fn </span>from(value: Felt252Wrapper) -&gt; <span class="self">Self </span>{

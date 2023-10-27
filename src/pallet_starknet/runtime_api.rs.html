@@ -69,6 +69,70 @@
 <a href="#69" id="69">69</a>
 <a href="#70" id="70">70</a>
 <a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Definition of the runtime API for the StarkNet pallet.
 
 </span><span class="comment">// Adding allow unused type parameters to avoid clippy errors
@@ -76,15 +140,19 @@
 // Specifically, the macro generates a trait (`StarknetRuntimeApi`) with unused type parameters.
 </span><span class="attr">#![allow(clippy::extra_unused_type_parameters)]
 
-</span><span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
+</span><span class="kw">use </span>alloc::sync::Arc;
+
+<span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_transactions::{Transaction, TxType, UserTransaction};
 <span class="kw">use </span>sp_api::BlockT;
 <span class="kw">pub extern crate </span>alloc;
+<span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::vec::Vec;
 
 <span class="kw">use </span>sp_runtime::DispatchError;
-<span class="kw">use </span>starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
+<span class="kw">use </span>starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector, Nonce};
+<span class="kw">use </span>starknet_api::block::{BlockNumber, BlockTimestamp};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_api::state::StorageKey;
 <span class="kw">use </span>starknet_api::transaction::{Calldata, Event <span class="kw">as </span>StarknetEvent, TransactionHash};
@@ -131,6 +199,8 @@
         </span><span class="kw">fn </span>get_starknet_events_and_their_associated_tx_hash(block_extrinsics: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;, chain_id: Felt252Wrapper) -&gt; Vec&lt;(Felt252Wrapper, StarknetEvent)&gt;;
         <span class="doccomment">/// Return the outcome of the tx execution
         </span><span class="kw">fn </span>get_tx_execution_outcome(tx_hash: TransactionHash) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;;
+        <span class="doccomment">/// Return the block context
+        </span><span class="kw">fn </span>get_block_context() -&gt; BlockContext;
     }
 
     <span class="kw">pub trait </span>ConvertTransactionRuntimeApi {
@@ -138,6 +208,64 @@
         </span><span class="kw">fn </span>convert_transaction(transaction: UserTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic, DispatchError&gt;;
         <span class="doccomment">/// Converts the DispatchError to an understandable error for the client
         </span><span class="kw">fn </span>convert_error(error: DispatchError) -&gt; StarknetTransactionExecutionError;
+    }
+}
+
+<span class="attr">#[derive(Clone, Debug, parity_scale_codec::Encode, parity_scale_codec::Decode, scale_info::TypeInfo)]
+</span><span class="kw">pub struct </span>BlockContext {
+    <span class="kw">pub </span>chain_id: String,
+    <span class="kw">pub </span>block_number: u64,
+    <span class="kw">pub </span>block_timestamp: u64,
+
+    <span class="comment">// Fee-related.
+    </span><span class="kw">pub </span>sequencer_address: ContractAddress,
+    <span class="kw">pub </span>fee_token_address: ContractAddress,
+    <span class="kw">pub </span>vm_resource_fee_cost: Vec&lt;(String, sp_arithmetic::fixed_point::FixedU128)&gt;,
+    <span class="kw">pub </span>gas_price: u128, <span class="comment">// In wei.
+
+    // Limits.
+    </span><span class="kw">pub </span>invoke_tx_max_n_steps: u32,
+    <span class="kw">pub </span>validate_max_n_steps: u32,
+    <span class="kw">pub </span>max_recursion_depth: u32,
+}
+
+<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">use </span>std::collections::HashMap;
+
+<span class="attr">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+</span><span class="kw">use </span>hashbrown::HashMap;
+
+<span class="kw">impl </span>From&lt;BlockContext&gt; <span class="kw">for </span>blockifier::block_context::BlockContext {
+    <span class="kw">fn </span>from(value: BlockContext) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            chain_id: ChainId(value.chain_id),
+            block_number: BlockNumber(value.block_number),
+            block_timestamp: BlockTimestamp(value.block_timestamp),
+            sequencer_address: value.sequencer_address,
+            fee_token_address: value.fee_token_address,
+            vm_resource_fee_cost: Arc::new(HashMap::from_iter(value.vm_resource_fee_cost)),
+            gas_price: value.gas_price,
+            invoke_tx_max_n_steps: value.invoke_tx_max_n_steps,
+            validate_max_n_steps: value.validate_max_n_steps,
+            max_recursion_depth: value.max_recursion_depth,
+        }
+    }
+}
+
+<span class="kw">impl </span>From&lt;blockifier::block_context::BlockContext&gt; <span class="kw">for </span>BlockContext {
+    <span class="kw">fn </span>from(value: blockifier::block_context::BlockContext) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            chain_id: value.chain_id.<span class="number">0</span>,
+            block_number: value.block_number.<span class="number">0</span>,
+            block_timestamp: value.block_timestamp.<span class="number">0</span>,
+            sequencer_address: value.sequencer_address,
+            fee_token_address: value.fee_token_address,
+            vm_resource_fee_cost: Vec::from_iter(value.vm_resource_fee_cost.iter().map(|(k, v)| (k.clone(), <span class="kw-2">*</span>v))),
+            gas_price: value.gas_price,
+            invoke_tx_max_n_steps: value.invoke_tx_max_n_steps,
+            validate_max_n_steps: value.validate_max_n_steps,
+            max_recursion_depth: value.max_recursion_depth,
+        }
     }
 }
 </code></pre></div></section></main></body></html>

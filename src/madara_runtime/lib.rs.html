@@ -458,6 +458,10 @@
 <a href="#458" id="458">458</a>
 <a href="#459" id="459">459</a>
 <a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
+<a href="#463" id="463">463</a>
+<a href="#464" id="464">464</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don&#39;t support yet validity proofs and state updates to
@@ -818,6 +822,10 @@
 
         <span class="kw">fn </span>get_tx_execution_outcome(tx_hash: TransactionHash) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt; {
            Starknet::tx_revert_error(tx_hash).map(|s| s.into_bytes())
+        }
+
+        <span class="kw">fn </span>get_block_context() -&gt; pallet_starknet::runtime_api::BlockContext {
+           Starknet::get_block_context().into()
         }
     }
 

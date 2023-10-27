@@ -40,10 +40,35 @@
 <a href="#40" id="40">40</a>
 <a href="#41" id="41">41</a>
 <a href="#42" id="42">42</a>
+<a href="#43" id="43">43</a>
+<a href="#44" id="44">44</a>
+<a href="#45" id="45">45</a>
+<a href="#46" id="46">46</a>
+<a href="#47" id="47">47</a>
+<a href="#48" id="48">48</a>
+<a href="#49" id="49">49</a>
+<a href="#50" id="50">50</a>
+<a href="#51" id="51">51</a>
+<a href="#52" id="52">52</a>
+<a href="#53" id="53">53</a>
+<a href="#54" id="54">54</a>
+<a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! StarkNet storage primitives.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
-</span><span class="doccomment">/// Current version of pallet Starknet&#39;s storage schema is stored under this key.
+</span><span class="kw">extern crate </span>alloc;
+<span class="kw">use </span>alloc::vec::Vec;
+
+<span class="kw">use </span>lazy_static::lazy_static;
+<span class="kw">use </span>sp_io::hashing::twox_128;
+
+<span class="doccomment">/// Current version of pallet Starknet&#39;s storage schema is stored under this key.
 </span><span class="kw">pub const </span>PALLET_STARKNET_SCHEMA: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;:starknet_schema&quot;</span>;
 
 <span class="doccomment">/// System storage items.
@@ -65,6 +90,19 @@
 </span><span class="kw">pub const </span>STARKNET_NONCE: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;Nonces&quot;</span>;
 <span class="doccomment">/// Starknet storage
 </span><span class="kw">pub const </span>STARKNET_STORAGE: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;StorageView&quot;</span>;
+<span class="doccomment">/// Compiled class hashes
+</span><span class="kw">pub const </span>STARKNET_COMPILED_CLASS_HASH: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;CompiledClassHashes&quot;</span>;
+
+<span class="macro">lazy_static! </span>{
+    <span class="kw">pub static </span><span class="kw-2">ref </span>SN_NONCE_PREFIX: Vec&lt;u8&gt; = [twox_128(PALLET_STARKNET), twox_128(STARKNET_NONCE)].concat();
+    <span class="kw">pub static </span><span class="kw-2">ref </span>SN_CONTRACT_CLASS_HASH_PREFIX: Vec&lt;u8&gt; =
+        [twox_128(PALLET_STARKNET), twox_128(STARKNET_CONTRACT_CLASS_HASH)].concat();
+    <span class="kw">pub static </span><span class="kw-2">ref </span>SN_CONTRACT_CLASS_PREFIX: Vec&lt;u8&gt; =
+        [twox_128(PALLET_STARKNET), twox_128(STARKNET_CONTRACT_CLASS)].concat();
+    <span class="kw">pub static </span><span class="kw-2">ref </span>SN_STORAGE_PREFIX: Vec&lt;u8&gt; = [twox_128(PALLET_STARKNET), twox_128(STARKNET_STORAGE)].concat();
+    <span class="kw">pub static </span><span class="kw-2">ref </span>SN_COMPILED_CLASS_HASH_PREFIX: Vec&lt;u8&gt; =
+        [twox_128(PALLET_STARKNET), twox_128(STARKNET_COMPILED_CLASS_HASH)].concat();
+}
 
 <span class="doccomment">/// The schema version for Pallet Starknet&#39;s storage.
 </span><span class="attr">#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]

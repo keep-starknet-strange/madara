@@ -188,6 +188,7 @@
 <a href="#188" id="188">188</a>
 <a href="#189" id="189">189</a>
 <a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
 </pre></div><pre class="rust"><code><span class="kw">pub mod </span>avail;
 <span class="kw">pub mod </span>celestia;
 <span class="kw">pub mod </span>ethereum;
@@ -202,6 +203,7 @@
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>ethers::types::{I256, U256};
 <span class="kw">use </span>futures::StreamExt;
+<span class="kw">use </span>mp_storage::{SN_NONCE_PREFIX, SN_STORAGE_PREFIX};
 <span class="kw">use </span>sc_client_api::client::BlockchainEvents;
 <span class="kw">use </span>serde::Deserialize;
 <span class="kw">use </span>sp_api::ProvideRuntimeApi;
@@ -284,13 +286,13 @@
                     key = raw_split.<span class="number">1</span>;
                 }
 
-                <span class="kw">if </span>prefix == <span class="kw-2">*</span>utils::SN_NONCE_PREFIX {
+                <span class="kw">if </span>prefix == <span class="kw-2">*</span>SN_NONCE_PREFIX {
                     <span class="kw">if let </span><span class="prelude-val">Some</span>(data) = event.<span class="number">2 </span>{
                         nonces.insert(key, data.<span class="number">0</span>.as_slice());
                     }
                 }
 
-                <span class="kw">if </span>prefix == <span class="kw-2">*</span>utils::SN_STORAGE_PREFIX {
+                <span class="kw">if </span>prefix == <span class="kw-2">*</span>SN_STORAGE_PREFIX {
                     <span class="kw">if let </span><span class="prelude-val">Some</span>(data) = event.<span class="number">2 </span>{
                         <span class="comment">// first 32 bytes = contract address, second 32 bytes = storage variable
                         </span><span class="kw">let </span>write_split = key.split_at(<span class="number">32</span>);
