@@ -53,22 +53,27 @@ where
             .client
             .block_body(substrate_block_hash)
             .map_err(|e| {
-                error!("'{e}'");
+                error!("Failed to retrieve block body. Substrate block hash: {substrate_block_hash}, error: {e}");
                 StarknetRpcApiError::InternalServerError
             })?
             .ok_or(StarknetRpcApiError::BlockNotFound)?;
 
-        let chain_id = self
-            .client
-            .runtime_api()
-            .chain_id(substrate_block_hash)
-            .map_err(|_| StarknetRpcApiError::InternalServerError)?;
+        let chain_id = self.client.runtime_api().chain_id(substrate_block_hash).map_err(|_| {
+            error!("Failed to retrieve chain id");
+            StarknetRpcApiError::InternalServerError
+        })?;
 
         let tx_hash_and_events = self
             .client
             .runtime_api()
             .get_starknet_events_and_their_associated_tx_hash(substrate_block_hash, block_extrinsics, chain_id)
-            .map_err(|_| StarknetRpcApiError::InternalServerError)?;
+            .map_err(|e| {
+                error!(
+                    "Failed to retrieve starknet events and their associated transaction hash. Substrate block hash: \
+                     {substrate_block_hash}, chain ID: {chain_id:?}, error: {e}"
+                );
+                StarknetRpcApiError::InternalServerError
+            })?;
 
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)
             .ok_or(StarknetRpcApiError::BlockNotFound)?;

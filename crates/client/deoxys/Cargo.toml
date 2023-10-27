@@ -19,6 +19,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 starknet-gateway = "0.6"
 reqwest = "0.11"
 serde_json = "1"
+futures-channel.workspace = true
 
 blockifier = { workspace = true, default-features = false, features = [
     "testing",
@@ -34,7 +35,7 @@ starknet-ff = { workspace = true, default-features = false, features = [
     "serde",
 ] }
 starknet_api = { workspace = true, default-features = false }
-tokio = { workspace = true, features = ["macros", "test-util"] }
+tokio = { workspace = true, features = ["macros", "test-util", "parking_lot"] }
 # test_utils = { path = "./test_utils", optional = true }
 hex = "0.4"
 mp-block = { workspace = true }
@@ -43,7 +44,7 @@ mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
 mp-transactions = { workspace = true, features = ["client"] }
 validator = { workspace = true, features = ["derive"] }
-async-channel = "1"
+sc-consensus-manual-seal.workspace = true
 
 [dev-dependencies]
 # test_utils = { path = "./test_utils" }

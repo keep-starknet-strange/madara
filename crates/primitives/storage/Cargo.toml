@@ -12,13 +12,15 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # Optional
+lazy_static = { workspace = true }
 parity-scale-codec = { workspace = true, features = [
   "derive",
 ], optional = true }
 serde = { workspace = true, optional = true, features = ["derive"] }
+sp-io = { workspace = true }
 
 [features]
 default = ["std"]
-std = ["serde?/std", "parity-scale-codec?/std"]
+std = ["serde?/std", "parity-scale-codec?/std", "sp-io/std"]
 serde = ["dep:serde"]
 parity-scale-codec = ["dep:parity-scale-codec"]

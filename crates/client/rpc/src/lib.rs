@@ -38,7 +38,6 @@ use sp_runtime::generic::BlockId as SPBlockId;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use sp_runtime::transaction_validity::InvalidTransaction;
 use sp_runtime::DispatchError;
-use starknet_api::block;
 use starknet_api::transaction::Calldata;
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
@@ -465,11 +464,10 @@ where
     /// Returns the chain id.
     fn chain_id(&self) -> RpcResult<Felt> {
         let best_block_hash = self.client.info().best_hash;
-        let chain_id = self
-            .client
-            .runtime_api()
-            .chain_id(best_block_hash)
-            .map_err(|_| StarknetRpcApiError::InternalServerError)?;
+        let chain_id = self.client.runtime_api().chain_id(best_block_hash).map_err(|e| {
+            error!("Failed to fetch chain_id with best_block_hash: {best_block_hash}, error: {e}");
+            StarknetRpcApiError::InternalServerError
+        })?;
 
         Ok(Felt(chain_id.0))
     }
@@ -490,7 +488,7 @@ where
         let best_block_hash = self.client.info().best_hash;
 
         let transaction: UserTransaction = declare_transaction.try_into().map_err(|e| {
-            error!("{e}");
+            error!("Failed to convert BroadcastedDeclareTransaction to UserTransaction, error: {e}");
             StarknetRpcApiError::InternalServerError
         })?;
         let class_hash = match transaction {
@@ -536,7 +534,7 @@ where
         let best_block_hash = self.client.info().best_hash;
 
         let transaction: UserTransaction = invoke_transaction.try_into().map_err(|e| {
-            error!("{e}");
+            error!("Failed to convert BroadcastedInvokeTransaction to UserTransaction: {e}");
             StarknetRpcApiError::InternalServerError
         })?;
 
@@ -566,7 +564,7 @@ where
         let best_block_hash = self.client.info().best_hash;
 
         let transaction: UserTransaction = deploy_account_transaction.try_into().map_err(|e| {
-            error!("{e}");
+            error!("Failed to convert BroadcastedDeployAccountTransaction to UserTransaction, error: {e}",);
             StarknetRpcApiError::InternalServerError
         })?;
 
@@ -601,14 +599,16 @@ where
         request: Vec<BroadcastedTransaction>,
         block_id: BlockId,
     ) -> RpcResult<Vec<FeeEstimate>> {
-        let is_invalid_query_transaction = request.iter().any(|tx| match tx {
-            BroadcastedTransaction::Invoke(invoke_tx) => !invoke_tx.is_query,
-            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V1(tx_v1)) => !tx_v1.is_query,
-            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V2(tx_v2)) => !tx_v2.is_query,
-            BroadcastedTransaction::DeployAccount(deploy_tx) => !deploy_tx.is_query,
+        let is_query = request.iter().any(|tx| match tx {
+            BroadcastedTransaction::Invoke(invoke_tx) => invoke_tx.is_query,
+            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V1(tx_v1)) => tx_v1.is_query,
+            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V2(tx_v2)) => tx_v2.is_query,
+            BroadcastedTransaction::DeployAccount(deploy_tx) => deploy_tx.is_query,
         });
-        if is_invalid_query_transaction {
-            return Err(StarknetRpcApiError::UnsupportedTxVersion.into());
+        if !is_query {
+            log::error!(
+                "Got `is_query`: false. In a future version, this will fail fee estimation with UnsupportedTxVersion"
+            );
         }
 
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
@@ -621,13 +621,13 @@ where
         let mut estimates = vec![];
         for tx in request {
             let tx = tx.try_into().map_err(|e| {
-                error!("{e}");
+                error!("Failed to convert BroadcastedTransaction to UserTransaction: {e}");
                 StarknetRpcApiError::InternalServerError
             })?;
             let (actual_fee, gas_usage) = self
                 .client
                 .runtime_api()
-                .estimate_fee(substrate_block_hash, tx)
+                .estimate_fee(substrate_block_hash, tx, is_query)
                 .map_err(|e| {
                     error!("Request parameters error: {e}");
                     StarknetRpcApiError::InternalServerError
@@ -679,7 +679,12 @@ where
         for (index, tx) in block.transactions().iter().enumerate() {
             let hash = transaction_hashes
                 .as_ref()
-                .map(|tx_hashes| h256_to_felt(*tx_hashes.get(index).ok_or(StarknetRpcApiError::InternalServerError)?))
+                .map(|tx_hashes| {
+                    h256_to_felt(*tx_hashes.get(index).ok_or_else(|| {
+                        error!("Transaction hash not found at index: {index} in transaction hashes cache.");
+                        StarknetRpcApiError::InternalServerError
+                    })?)
+                })
                 .unwrap_or_else(|| Ok(tx.compute_hash::<H>(chain_id.0.into(), false, Some(block.header().block_number)).0))?;
             transactions.push(to_starknet_core_tx(tx.clone(), hash));
         }
@@ -756,11 +761,14 @@ where
         let api = self.client.runtime_api();
 
         let transactions = api.extrinsic_filter(substrate_block_hash, transactions).map_err(|e| {
-            error!("{:#?}", e);
+            error!("Failed to filter extrinsics. Substrate block hash: {substrate_block_hash}, error: {e}");
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let chain_id = self.chain_id()?;
+        let chain_id = self.chain_id().map_err(|e| {
+            error!("Failed to retrieve chain ID. Error: {e}");
+            StarknetRpcApiError::InternalServerError
+        })?;
 
         let transactions = transactions
             .into_iter()
@@ -902,7 +910,7 @@ where
             .client
             .block_body(substrate_block_hash)
             .map_err(|e| {
-                error!("'{e}'");
+                error!("Failed to get block body. Substrate block hash: {substrate_block_hash}, error: {e}");
                 StarknetRpcApiError::InternalServerError
             })?
             .ok_or(StarknetRpcApiError::BlockNotFound)?;
@@ -913,10 +921,13 @@ where
             .runtime_api()
             .get_events_for_tx_hash(substrate_block_hash, block_extrinsics, chain_id, transaction_hash.into())
             .map_err(|e| {
-                error!("'{e}'");
+                error!(
+                    "Failed to get events for transaction hash. Substrate block hash: {substrate_block_hash}, \
+                     transaction hash: {transaction_hash}, error: {e}"
+                );
                 StarknetRpcApiError::InternalServerError
             })?
-            .expect("the thansaction should be present in the substrate extrinsics");
+            .expect("the transaction should be present in the substrate extrinsics");
 
         let execution_result = {
             let revert_error = self
@@ -924,7 +935,10 @@ where
                 .runtime_api()
                 .get_tx_execution_outcome(substrate_block_hash, Felt252Wrapper(transaction_hash).into())
                 .map_err(|e| {
-                    error!("'{e}'");
+                    error!(
+                        "Failed to get transaction execution outcome. Substrate block hash: {substrate_block_hash}, \
+                         transaction hash: {transaction_hash}, error: {e}"
+                    );
                     StarknetRpcApiError::InternalServerError
                 })?;
 
@@ -1058,8 +1072,8 @@ where
 fn h256_to_felt(h256: H256) -> Result<FieldElement, StarknetRpcApiError> {
     match Felt252Wrapper::try_from(h256) {
         Ok(felt) => Ok(felt.0),
-        Err(err) => {
-            error!("failed to convert H256 to FieldElement: {err}");
+        Err(e) => {
+            error!("failed to convert H256 to FieldElement: {e}");
             Err(StarknetRpcApiError::InternalServerError)
         }
     }

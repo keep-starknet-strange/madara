@@ -808,7 +808,7 @@ pub mod pallet {
                         // the future queue of the transaction pool.
                         if sender_nonce < *transaction_nonce {
                             log!(
-                                info,
+                                debug,
                                 "Nonce is too high. Expected: {:?}, got: {:?}. This transaction will be placed in the \
                                  transaction pool and executed in the future when the nonce is reached.",
                                 sender_nonce,
@@ -915,7 +915,7 @@ impl<T: Config> Pallet<T> {
     /// Creates a [BlockContext] object. The [BlockContext] is needed by the blockifier to execute
     /// properly the transaction. Substrate caches data so it's fine to call multiple times this
     /// function, only the first transaction/block will be "slow" to load these data.
-    fn get_block_context() -> BlockContext {
+    pub fn get_block_context() -> BlockContext {
         let block_number = UniqueSaturatedInto::<u64>::unique_saturated_into(frame_system::Pallet::<T>::block_number());
         let block_timestamp = Self::block_timestamp();
 
@@ -1168,7 +1168,7 @@ impl<T: Config> Pallet<T> {
     }
 
     /// Estimate the fee associated with transaction
-    pub fn estimate_fee(transaction: UserTransaction) -> Result<(u64, u64), DispatchError> {
+    pub fn estimate_fee(transaction: UserTransaction, is_query: bool) -> Result<(u64, u64), DispatchError> {
         let chain_id = Self::chain_id();
 
         fn execute_tx_and_rollback<S: State + StateChanges + FeeConfig>(
@@ -1192,20 +1192,20 @@ impl<T: Config> Pallet<T> {
 
         let execution_result = match transaction {
             UserTransaction::Declare(tx, contract_class) => execute_tx_and_rollback(
-                tx.try_into_executable::<T::SystemHash>(chain_id, contract_class, true)
+                tx.try_into_executable::<T::SystemHash>(chain_id, contract_class, is_query)
                     .map_err(|_| Error::<T>::InvalidContractClass)?,
                 &mut blockifier_state_adapter,
                 &block_context,
                 disable_nonce_validation,
             ),
             UserTransaction::DeployAccount(tx) => execute_tx_and_rollback(
-                tx.into_executable::<T::SystemHash>(chain_id, true),
+                tx.into_executable::<T::SystemHash>(chain_id, is_query),
                 &mut blockifier_state_adapter,
                 &block_context,
                 disable_nonce_validation,
             ),
             UserTransaction::Invoke(tx) => execute_tx_and_rollback(
-                tx.into_executable::<T::SystemHash>(chain_id, true),
+                tx.into_executable::<T::SystemHash>(chain_id, is_query),
                 &mut blockifier_state_adapter,
                 &block_context,
                 disable_nonce_validation,

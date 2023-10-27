@@ -5,9 +5,9 @@ dotenv.config();
 
 const REMOTE_RPC_URL = process.env.REMOTE_RPC;
 const LOCAL_RPC_URL = process.env.DEOXYS_RPC;
-const BLOCK_NUMBER = 5066;
-const START_BLOCK = 5000;
-const END_BLOCK = 15000;
+const BLOCK_NUMBER = 10;
+const START_BLOCK = 32642;
+const END_BLOCK = 40000;
 
 const requestDataForMethod = (method: string, params: any[]) => ({
   id: 1,
@@ -27,12 +27,12 @@ const compareObjects = (obj1: any, obj2: any, path: string = ""): string => {
 
     // Handle cases where a key is not present in one of the objects or is undefined
     if (obj1[key] === undefined) {
-      differences += `\x1b[31mMISSING in Alchemy at ${currentPath}: ${obj2[key]}\x1b[0m\n`;
+      differences += `\x1b[31mDIFFERENCE in Alchemy at ${currentPath}: ${obj2[key]}\x1b[0m\n`;
       continue;
     }
 
     if (obj2[key] === undefined) {
-      differences += `\x1b[31mMISSING in Local at ${currentPath}: ${obj1[key]}\x1b[0m\n`;
+      differences += `\x1b[31mDIFFERENCE in Local at ${currentPath}: ${obj1[key]}\x1b[0m\n`;
       continue;
     }
 
