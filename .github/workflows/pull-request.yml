@@ -45,6 +45,15 @@ jobs:
     uses: ./.github/workflows/starknet-js-tests.yml
     needs: madara_commands
 
+  starknet-foundry-tests:
+    name: Run Starknet Foundry compatibility tests
+    runs-on: ubuntu-latest
+    needs: madara_commands
+    env:
+      SNCAST_VERSION: "0.8.3"
+    steps:
+      - uses: justinfrevert/madara-foundry-action@v0.1.0
+
   # https://github.com/keep-starknet-strange/madara/issues/1097
   # benchmark:
   #   name: Run benchmarks
