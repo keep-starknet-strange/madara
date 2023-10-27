@@ -266,7 +266,7 @@ pub fn new_full(
     da_layer: Option<(DaLayer, PathBuf)>,
     rpc_port: u16,
     cache_more_things: bool,
-    network_uri: &str,
+    fetch_config: mc_deoxys::BlockFetchConfig,
 ) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_default() { build_aura_grandpa_import_queue } else { build_manual_seal_import_queue };
@@ -348,6 +348,7 @@ pub fn new_full(
         let client = client.clone();
         let pool = transaction_pool.clone();
         let graph = transaction_pool.pool().clone();
+        let command_sink = command_sink.clone();
 
         Box::new(move |deny_unsafe, _| {
             let deps = crate::rpc::FullDeps {
@@ -425,9 +426,9 @@ pub fn new_full(
         // manual-seal authorship
         if !sealing.is_default() {
             // NOTE(nils-mathieu):
-            //   For now I used a channel of size 20, this should be plently enough. That might
+            //   For now I used a channel of size 100, this should be plently enough. That might
             //   become a config option in the future.
-            let (block_sender, block_receiver) = async_channel::bounded::<mp_block::Block>(20);
+            let (block_sender, block_receiver) = tokio::sync::mpsc::channel::<mp_block::Block>(100);
 
             run_manual_seal_authorship(
                 block_receiver,
@@ -443,9 +444,9 @@ pub fn new_full(
 
             network_starter.start_network();
 
-            let network_uri = Box::from(network_uri);
+            let command_sink = command_sink.unwrap().clone();
             tokio::spawn(async move {
-                mc_deoxys::fetch_block(block_sender, &network_uri, rpc_port).await;
+                mc_deoxys::fetch_block(command_sink, block_sender, fetch_config, rpc_port).await;
             });
 
             log::info!("Manual Seal Ready");
@@ -559,7 +560,7 @@ pub fn new_full(
 
 #[allow(clippy::too_many_arguments)]
 fn run_manual_seal_authorship(
-    block_receiver: async_channel::Receiver<mp_block::Block>,
+    block_receiver: tokio::sync::mpsc::Receiver<mp_block::Block>,
     sealing: SealingMode,
     client: Arc<FullClient>,
     transaction_pool: Arc<FullPool<Block, FullClient>>,
@@ -617,7 +618,7 @@ where
         _client: Arc<C>,
 
         /// The receiver that we're using to receive blocks.
-        block_receiver: async_channel::Receiver<mp_block::Block>,
+        block_receiver: tokio::sync::Mutex< tokio::sync::mpsc::Receiver<mp_block::Block>>,
     }
 
     impl<B, C> ConsensusDataProvider<B> for QueryBlockConsensusDataProvider<C>
@@ -629,10 +630,10 @@ where
         type Proof = ();
 
         fn create_digest(&self, _parent: &B::Header, _inherents: &InherentData) -> Result<Digest, Error> {
-            let starknet_block: mp_block::Block = self.block_receiver.recv_blocking().unwrap();
-
+            let mut lock = self.block_receiver.try_lock().map_err(|e| Error::Other(e.into()))?;
+            let block = lock.try_recv().map_err(|_| Error::EmptyTransactionPool)?;
             let block_digest_item: DigestItem =
-                sp_runtime::DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID, Encode::encode(&starknet_block));
+                sp_runtime::DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID, Encode::encode(&block));
             Ok(Digest { logs: vec![block_digest_item] })
         }
 
@@ -659,7 +660,7 @@ where
                 select_chain,
                 consensus_data_provider: Some(Box::new(QueryBlockConsensusDataProvider {
                     _client: client,
-                    block_receiver,
+                    block_receiver: tokio::sync::Mutex::new(block_receiver),
                 })),
                 create_inherent_data_providers,
             }))

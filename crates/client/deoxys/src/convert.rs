@@ -8,8 +8,7 @@ pub fn block(block: &p::Block) -> mp_block::Block {
     let transactions = transactions(&block.transactions);
     let events = events(&block.transaction_receipts);
     let block_number = block.block_number.expect("no block number provided");
-    let sequencer_address = block.sequencer_address
-        .map_or(contract_address(FieldElement::ZERO), |addr| contract_address(addr));
+    let sequencer_address = block.sequencer_address.map_or(contract_address(FieldElement::ZERO), contract_address);
     let (transaction_commitment, event_commitment) = commitments(&transactions, &events, block_number);
 
     let header = mp_block::Header {
@@ -18,7 +17,7 @@ pub fn block(block: &p::Block) -> mp_block::Block {
         status: block_status(&block.status),
         block_timestamp: block.timestamp,
         global_state_root: felt(block.state_root.expect("no state root provided")),
-        sequencer_address: sequencer_address,
+        sequencer_address,
         transaction_count: block.transactions.len() as u128,
         transaction_commitment,
         event_count: events.len() as u128,
@@ -127,13 +126,14 @@ fn deploy_account_transaction(tx: &p::DeployAccountTransaction) -> mp_transactio
 
 fn l1_handler_transaction(tx: &p::L1HandlerTransaction) -> mp_transactions::HandleL1MessageTransaction {
     mp_transactions::HandleL1MessageTransaction {
-        nonce: tx.nonce
-        .ok_or("Nonce value is missing")
-        .and_then(|n| u64::try_from(felt(n)).map_err(|_| "Failed to convert felt value to u64"))
-        .unwrap_or_else(|e| {
-            eprintln!("{}", e);
-            0
-        }),
+        nonce: tx
+            .nonce
+            .ok_or("Nonce value is missing")
+            .and_then(|n| u64::try_from(felt(n)).map_err(|_| "Failed to convert felt value to u64"))
+            .unwrap_or_else(|e| {
+                eprintln!("{}", e);
+                0
+            }),
         contract_address: felt(tx.contract_address).into(),
         entry_point_selector: felt(tx.entry_point_selector).into(),
         calldata: tx.calldata.iter().copied().map(felt).map(Into::into).collect(),
