@@ -1,0 +1,33 @@
+name: Starknet-js Compatibility Tests
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      BINARY_PATH: ../target/release/madara
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: target/release/madara
+          key:
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
+            github.run_id }}
+          fail-on-cache-miss: true
+      - name: Setup dev chain
+        run: |
+          ./target/release/madara setup --chain=dev --from-remote
+      - name: Run starknet-js test
+        run: |-
+          ./target/release/madara --dev --execution native &
+          NATIVE_RUN_PID=$!
+          while ! echo exit | nc localhost 9944; do sleep 1; done
+          git clone https://github.com/keep-starknet-strange/sequencer-js-compatibility-tests.git
+          cd sequencer-js-compatibility-tests
+          npm install
+          npm test
+          kill $NATIVE_RUN_PID

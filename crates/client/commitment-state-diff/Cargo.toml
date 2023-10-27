@@ -1,0 +1,31 @@
+[package]
+name = "mc-commitment-state-diff"
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[dependencies]
+# Substrate
+sc-client-api = { workspace = true }
+sp-api = { workspace = true, default-features = true }
+sp-blockchain = { workspace = true }
+sp-runtime = { workspace = true, default-features = true }
+
+# Madara
+mp-digest-log = { workspace = true, default-features = true }
+mp-hashers = { workspace = true, default-features = true }
+mp-storage = { workspace = true, default-features = true }
+pallet-starknet = { workspace = true }
+
+# Starknet
+blockifier = { workspace = true, default-features = true }
+starknet_api = { workspace = true, default-features = true }
+
+# Async
+futures = { workspace = true, default-features = true }
+
+# Others
+indexmap = { workspace = true }
+log = { workspace = true }
+thiserror = { workspace = true }
