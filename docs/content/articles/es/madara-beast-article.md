@@ -21,22 +21,21 @@ Descubre el Futuro de la Infraestructura Blockchain_</font>
 - Su implementación ofrece numerosos beneficios como infraestructura escalable,
   alto rendimiento y un control sin precedentes sobre las aplicaciones.
 - Las características únicas de Madara incluyen soporte para la privacidad
-  potencial en cadena, interoperabilidad simplificada entre diversas cadenas y
+  potencial _on-chain_, interoperabilidad simplificada entre diversas cadenas y
   una ejecución robusta.
 - Madara está abriendo el camino en el desarrollo de dApps al ofrecer soluciones
-  rentables, escalables y personalizables en el dominio de la cadena de bloques.
+  rentables, escalables y personalizables en el ámbito de _blockchain_.
 
 ## Introducción
 
-Imagina tener el poder de personalizar una cadena de bloques específicamente
-para los requisitos únicos de tu aplicación; eso es exactamente lo que ofrecen
-las appchains. Las appchains son cadenas de bloques específicas para
-aplicaciones que ofrecen a los desarrolladores la flexibilidad para ajustar
-aspectos de las cadenas para adaptarlas a las necesidades de sus aplicaciones,
-como elegir una función hash diferente o personalizar el algoritmo de consenso.
-¿La mejor parte? Las appchains heredan la seguridad de las robustas cadenas L1 o
-L2 en las que se basan, proporcionando a los desarrolladores lo mejor de ambos
-mundos.
+Imagina tener el poder de personalizar una _blockchain_ específicamente para los
+requisitos únicos de tu aplicación; eso es exactamente lo que ofrecen las
+appchains. Las appchains son cadenas de bloques específicas para aplicaciones
+que ofrecen a los desarrolladores la flexibilidad para ajustar aspectos de las
+cadenas para adaptarlas a las necesidades de sus aplicaciones, como elegir una
+función hash diferente o personalizar el algoritmo de consenso. ¿La mejor parte?
+Las appchains heredan la seguridad de las robustas cadenas L1 o L2 en las que se
+basan, proporcionando a los desarrolladores lo mejor de ambos mundos.
 
 Te presentamos a Madara, un secuenciador revolucionario que combina flexibilidad
 y un rendimiento ultrarrápido. Los secuenciadores son entidades responsables de
@@ -69,13 +68,13 @@ de depender directamente de Starknet.
 ### Rendimiento
 
 Los desarrolladores de aplicaciones enfrentan desafíos significativos en
-términos de escalabilidad dentro de la infraestructura de cadena de bloques
+términos de escalabilidad dentro de la infraestructura de _blockchain_
 existente. La escalabilidad abarca dos aspectos cruciales: alta velocidad y
 bajos costos. Al implementar una reducción de costos de 1,000 veces en cada
 capa, los desarrolladores pueden lograr una reducción de costos general notable
 de L1 a L3, potencialmente alcanzando hasta 1,000,000 veces. La velocidad de
 procesamiento no se ve afectada por la actividad de aplicaciones de terceros, ya
-que la aplicación tiene su propia cadena de bloques dedicada y no compite por
+que la aplicación tiene su propia _blockchain_ dedicada y no compite por
 recursos. Esto garantiza una experiencia constantemente fluida.
 
 ### Personalización
@@ -93,7 +92,7 @@ desarrolladores trabajar con características que actualmente no están
 disponibles o son riesgosas en entornos como Starknet. Las appchains ofrecerán a
 cada equipo la autonomía para escribir y autorizar cualquier pista de código
 deseada. Esto permite a las appchains desbloquear muchos casos de uso, como la
-capacidad de aplicar KYC en cadena sin divulgar información privada.
+capacidad de aplicar KYC _on-chain_ sin divulgar información privada.
 
 ## Efecto de Madara en el Stack de Appchains
 
@@ -124,9 +123,9 @@ capacidad de aplicar KYC en cadena sin divulgar información privada.
    una variedad de esquemas de disponibilidad de datos (DA) para elegir.
 5. **Gobernanza:** Cada appchain Madara puede elegir su modelo de gobernanza.
    [Snapshot X](https://twitter.com/SnapshotLabs) ofrece un sistema de
-   gobernanza completamente en cadena que se basa en pruebas de almacenamiento.
+   gobernanza completamente _on-chain_ que se basa en pruebas de almacenamiento.
    También se están explorando mecanismos de gobernanza alternativos, como el
-   "governance pallet" nativo de Substrate. La gobernanza en cadena se presenta
+   "governance pallet" nativo de Substrate. La gobernanza _on-chain_ se presenta
    como un valor fundamental para Madara.
 
 ![come come](https://lh4.googleusercontent.com/i7bXi2IPV-LTLzEgueA2SPHGULUFDj1OX4IznOQr5BeZe0hcey-VXA5TOV6q9XaVqBGAcYiie7u7uxw7q1ByZxjkPQKHERqKJTxhdDdTSgBQy8smyNO3jEHiNJv7Eqh8BMxjj4fFlQAW6gm-hQMzyIU)
