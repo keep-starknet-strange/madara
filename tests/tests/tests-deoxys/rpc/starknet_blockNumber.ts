@@ -26,7 +26,7 @@ const compareObjects = (
     const currentPath = path ? `${path}.${key}` : key;
 
     if (!localData.hasOwnProperty(key)) {
-      differences += `MISSING in Local at ${currentPath}: ${remoteData[key]}\n`;
+      differences += `DIFFERENCE in Local at ${currentPath}: ${remoteData[key]}\n`;
       continue;
     }
 
