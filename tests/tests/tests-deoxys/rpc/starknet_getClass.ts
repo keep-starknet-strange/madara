@@ -5,7 +5,7 @@ dotenv.config();
 
 const REMOTE_RPC_URL = process.env.REMOTE_RPC;
 const LOCAL_RPC_URL = process.env.DEOXYS_RPC;
-const BLOCK_NUMBER = 2000;
+const BLOCK_NUMBER = 4000;
 const START_BLOCK = 500;
 const END_BLOCK = 1000;
 
@@ -98,7 +98,7 @@ async function checkDifferencesInBlocks() {
   
   const singleCallDifferences = await benchmarkMethod("starknet_getClass", [
     { block_number: BLOCK_NUMBER },
-    "0x01cb96b938da26c060d5fd807eef8b580c49490926393a5eeb408a89f84b9b46",
+    "0x03131fa018d520a037686ce3efddeab8f28895662f019ca3ca18a626650f7d1e",
   ]);
   
   console.log(singleCallDifferences);
