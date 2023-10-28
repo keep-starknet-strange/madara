@@ -66,7 +66,7 @@ fueling growth within the Starknet ecosystem.
 - [Madara Kit Application](https://github.com/keep-starknet-strange/madara-app):
   A simple application that demonstrates how to use Madara. Deployed on
   `https://app.madara.zone`.
-- [Madara Docsite](https://github.com/keep-starknet-strange/madara-app): The
+- [Madara Docsite](https://github.com/keep-starknet-strange/madara-docs): The
   source code of the Madara documentation website. Deployed on
   `https://docs.madara.zone`.
 - [Madara Tsukuyomi](https://github.com/keep-starknet-strange/madara-tsukuyomi):
