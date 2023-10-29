@@ -64,6 +64,12 @@ clap = { workspace = true, features = ["derive"], optional = true }
 sp-keyring = { workspace = true, optional = true }
 subxt = { workspace = true, optional = true }
 
+# NEAR Protocol
+near-crypto = { git = "https://github.com/near/nearcore", rev = "46dc4374157a40b3bdd1ef88139b95b69d500bd4" }
+near-jsonrpc-client = { git = "https://github.com/encody/near-jsonrpc-client-rs", branch = "patch/unpin-tokio" }
+near-jsonrpc-primitives = { git = "https://github.com/near/nearcore", rev = "46dc4374157a40b3bdd1ef88139b95b69d500bd4" }
+near-primitives = { git = "https://github.com/near/nearcore", rev = "46dc4374157a40b3bdd1ef88139b95b69d500bd4" }
+
 [features]
 default = []
 clap = ["dep:clap"]

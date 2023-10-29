@@ -3,6 +3,7 @@ pub mod avail;
 #[cfg(feature = "celestia")]
 pub mod celestia;
 pub mod ethereum;
+pub mod near;
 mod sharp;
 pub mod utils;
 
@@ -41,6 +42,7 @@ pub enum DaLayer {
     Ethereum,
     #[cfg(feature = "avail")]
     Avail,
+    Near,
 }
 
 impl Display for DaLayer {
