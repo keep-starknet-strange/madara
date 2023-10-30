@@ -6057,7 +6057,7 @@ dependencies = [
 
 [[package]]
 name = "madara"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "async-trait",
  "blockifier",
@@ -6124,7 +6124,7 @@ dependencies = [
 
 [[package]]
 name = "madara-runtime"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "blockifier",
  "frame-benchmarking",
@@ -6215,7 +6215,7 @@ checksum = "60302e4db3a61da70c0cb7991976248362f30319e88850c487b9b95bbf059e00"
 
 [[package]]
 name = "mc-block-proposer"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "futures",
  "futures-timer",
@@ -6240,7 +6240,7 @@ dependencies = [
 
 [[package]]
 name = "mc-commitment-state-diff"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "blockifier",
  "futures",
@@ -6293,7 +6293,7 @@ dependencies = [
 
 [[package]]
 name = "mc-db"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "ethers",
  "kvdb-rocksdb",
@@ -6309,7 +6309,7 @@ dependencies = [
 
 [[package]]
 name = "mc-mapping-sync"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "futures",
  "futures-timer",
@@ -6330,7 +6330,7 @@ dependencies = [
 
 [[package]]
 name = "mc-rpc"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "blockifier",
  "frame-support",
@@ -6366,7 +6366,7 @@ dependencies = [
 
 [[package]]
 name = "mc-rpc-core"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "assert_matches",
@@ -6397,7 +6397,7 @@ dependencies = [
 
 [[package]]
 name = "mc-storage"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "blockifier",
  "frame-support",
@@ -6429,6 +6429,7 @@ dependencies = [
  "num-traits 0.2.17",
  "parity-scale-codec",
  "parking_lot 0.12.1",
+ "sc-block-builder",
  "sc-client-api",
  "sc-transaction-pool",
  "sc-transaction-pool-api",
@@ -6436,11 +6437,15 @@ dependencies = [
  "serde",
  "sp-api",
  "sp-blockchain",
+ "sp-consensus",
  "sp-core 7.0.0",
  "sp-runtime 7.0.0",
  "sp-tracing 6.0.0",
  "sp-transaction-pool",
  "substrate-prometheus-endpoint",
+ "substrate-test-runtime",
+ "substrate-test-runtime-client",
+ "substrate-test-runtime-transaction-pool",
  "thiserror",
 ]
 
@@ -6609,7 +6614,7 @@ dependencies = [
 
 [[package]]
 name = "mp-block"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "blockifier",
  "mp-felt",
@@ -6623,7 +6628,7 @@ dependencies = [
 
 [[package]]
 name = "mp-chain-id"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "mp-felt",
  "starknet-ff",
@@ -6631,7 +6636,7 @@ dependencies = [
 
 [[package]]
 name = "mp-commitments"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "bitvec",
  "derive_more",
@@ -6642,14 +6647,14 @@ dependencies = [
  "scale-info",
  "serde",
  "starknet-core",
- "starknet-crypto 0.6.0",
+ "starknet-crypto 0.6.1",
  "starknet-ff",
  "starknet_api",
 ]
 
 [[package]]
 name = "mp-digest-log"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "assert_matches",
  "mp-block",
@@ -6659,7 +6664,7 @@ dependencies = [
 
 [[package]]
 name = "mp-fee"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "blockifier",
  "hashbrown 0.14.2",
@@ -6671,7 +6676,7 @@ dependencies = [
 
 [[package]]
 name = "mp-felt"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "cairo-vm",
  "hex",
@@ -6686,19 +6691,19 @@ dependencies = [
 
 [[package]]
 name = "mp-hashers"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "mp-felt",
  "parity-scale-codec",
  "scale-info",
  "serde",
  "starknet-core",
- "starknet-crypto 0.6.0",
+ "starknet-crypto 0.6.1",
 ]
 
 [[package]]
 name = "mp-sequencer-address"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -6709,7 +6714,7 @@ dependencies = [
 
 [[package]]
 name = "mp-state"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "blockifier",
  "starknet_api",
@@ -6717,7 +6722,7 @@ dependencies = [
 
 [[package]]
 name = "mp-storage"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "lazy_static",
  "parity-scale-codec",
@@ -6727,7 +6732,7 @@ dependencies = [
 
 [[package]]
 name = "mp-transactions"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "assert_matches",
  "blockifier",
@@ -6747,7 +6752,7 @@ dependencies = [
  "serde",
  "serde_json",
  "starknet-core",
- "starknet-crypto 0.6.0",
+ "starknet-crypto 0.6.1",
  "starknet-ff",
  "starknet_api",
  "thiserror",
@@ -7604,7 +7609,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-starknet"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "assert_matches",
  "blockifier",
@@ -7648,7 +7653,7 @@ dependencies = [
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
  "starknet-core",
- "starknet-crypto 0.6.0",
+ "starknet-crypto 0.6.1",
  "starknet-ff",
  "starknet_api",
  "test-case",
@@ -12174,7 +12179,7 @@ dependencies = [
  "serde_json_pythonic",
  "serde_with",
  "sha3",
- "starknet-crypto 0.6.0",
+ "starknet-crypto 0.6.1",
  "starknet-ff",
 ]
 
@@ -12200,9 +12205,9 @@ dependencies = [
 
 [[package]]
 name = "starknet-crypto"
-version = "0.6.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4dbb308033b5c60c5677645f7ba3b012b4e3e81f773480d27fb5f342d50621e6"
+checksum = "33c03f5ac70f9b067f48db7d2d70bdf18ee0f731e8192b6cfa679136becfcdb0"
 dependencies = [
  "crypto-bigint 0.5.3",
  "hex",
@@ -12296,7 +12301,7 @@ dependencies = [
  "starknet-accounts",
  "starknet-contract",
  "starknet-core",
- "starknet-crypto 0.6.0",
+ "starknet-crypto 0.6.1",
  "starknet-ff",
  "starknet-providers",
  "starknet-signers",
@@ -12317,7 +12322,7 @@ dependencies = [
  "eth-keystore",
  "rand 0.8.5",
  "starknet-core",
- "starknet-crypto 0.6.0",
+ "starknet-crypto 0.6.1",
  "thiserror",
 ]
 
@@ -12644,6 +12649,22 @@ dependencies = [
  "sp-runtime 7.0.0",
  "substrate-test-client",
  "substrate-test-runtime",
+]
+
+[[package]]
+name = "substrate-test-runtime-transaction-pool"
+version = "2.0.0"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#5e49f6e44820affccaf517fd22af564f4b495d40"
+dependencies = [
+ "futures",
+ "parity-scale-codec",
+ "parking_lot 0.12.1",
+ "sc-transaction-pool",
+ "sc-transaction-pool-api",
+ "sp-blockchain",
+ "sp-runtime 7.0.0",
+ "substrate-test-runtime-client",
+ "thiserror",
 ]
 
 [[package]]
