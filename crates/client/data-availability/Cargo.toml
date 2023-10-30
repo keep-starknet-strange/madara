@@ -15,6 +15,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
+ethers = { workspace = true }
 futures = "0.3.21"
 jsonrpsee = { version = "0.20.0", features = [
   "http-client",
@@ -43,8 +44,6 @@ sp-runtime = { workspace = true }
 mc-db = { workspace = true, default-features = true }
 starknet_api = { workspace = true, default-features = true }
 
-# Ethereum
-ethers = "2.0.7"
 
 # Avail subxt dependency
 avail-subxt = { git = "https://github.com/availproject/avail", version = "0.3.0", rev = "0958c6ed499497b70a33ab072dcbe86c762f3976" }

@@ -11,8 +11,8 @@ use sp_api::offchain::OffchainStorage;
 use sp_api::{BlockId, ProvideRuntimeApi};
 use sp_runtime::traits::Block as BlockT;
 
-use crate::l1_messages::contract::{L1Contract, LogMessageToL2Filter};
-use crate::l1_messages::error::L1MessagesWorkerError;
+use crate::contract::{L1Contract, LogMessageToL2Filter};
+use crate::error::L1MessagesWorkerError;
 
 const TX_SOURCE: TransactionSource = TransactionSource::External;
 const STORAGE_PREFIX: &str = "L1MessagesWorker";

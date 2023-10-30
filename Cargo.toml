@@ -142,6 +142,8 @@ mc-rpc-core = { path = "crates/client/rpc-core" }
 mc-block-proposer = { path = "crates/client/block-proposer" }
 mc-transaction-pool = { path = "crates/client/transaction-pool" }
 mc-data-availability = { path = "crates/client/data-availability" }
+mc-l1-messages = { path = "crates/client/l1-messages" }
+
 
 # Madara runtime
 madara-runtime = { path = "crates/runtime" }
@@ -176,6 +178,7 @@ cairo-lang-utils = { git = "https://github.com/keep-starknet-strange/cairo.git",
 
 # Other third party dependencies
 anyhow = "1.0.75"
+ethers = "2.0.7"
 flate2 = "1.0.27"
 scale-codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false }
 parity-scale-codec = { version = "3.2.2", default-features = false }

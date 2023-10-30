@@ -9,7 +9,6 @@ mod cli;
 mod command;
 mod constants;
 mod genesis_block;
-mod l1_messages;
 mod rpc;
 mod starknet;
 

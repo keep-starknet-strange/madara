@@ -4,7 +4,8 @@ use mp_felt::Felt252Wrapper;
 use mp_transactions::HandleL1MessageTransaction;
 use starknet_api::transaction::Fee;
 
-use crate::l1_messages::error::L1MessagesWorkerError;
+use crate::error::L1MessagesWorkerError;
+
 abigen!(
     L1Contract,
     r"[
