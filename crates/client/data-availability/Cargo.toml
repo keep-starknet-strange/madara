@@ -21,7 +21,6 @@ jsonrpsee = { version = "0.20.0", features = [
   "ws-client",
   "macros",
 ] }
-lazy_static = { workspace = true }
 log = "0.4.19"
 reqwest = { version = "0.11.18", features = ["blocking", "json"] }
 serde = { workspace = true }
@@ -36,7 +35,6 @@ sc-client-api = { workspace = true }
 sp-api = { workspace = true }
 sp-blockchain = { workspace = true }
 sp-core = { workspace = true }
-sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 
 # Starknet

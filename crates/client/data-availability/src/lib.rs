@@ -12,6 +12,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use ethers::types::{I256, U256};
 use futures::StreamExt;
+use mp_storage::{SN_NONCE_PREFIX, SN_STORAGE_PREFIX};
 use sc_client_api::client::BlockchainEvents;
 use serde::Deserialize;
 use sp_api::ProvideRuntimeApi;
@@ -39,7 +40,7 @@ pub enum DaMode {
     /// run for the given block as it is applied to the current Madara state.
     /// Once this execution trace is proved to the L1 Verifier(i.e. [Ethereum](https://goerli.etherscan.io/address/0x8f97970aC5a9aa8D130d35146F5b59c4aef57963))
     /// the relevant [state diff](https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/on-chain-data) can be written and validated against the on-chain
-    /// proof verification of the block propogation.
+    /// proof verification of the block propagation.
     #[serde(rename = "validity")]
     Validity,
     /// Hybrid Volition
@@ -94,13 +95,13 @@ where
                     key = raw_split.1;
                 }
 
-                if prefix == *utils::SN_NONCE_PREFIX {
+                if prefix == *SN_NONCE_PREFIX {
                     if let Some(data) = event.2 {
                         nonces.insert(key, data.0.as_slice());
                     }
                 }
 
-                if prefix == *utils::SN_STORAGE_PREFIX {
+                if prefix == *SN_STORAGE_PREFIX {
                     if let Some(data) = event.2 {
                         // first 32 bytes = contract address, second 32 bytes = storage variable
                         let write_split = key.split_at(32);

@@ -34,3 +34,10 @@ sp-runtime = { workspace = true }
 sp-tracing = { workspace = true }
 sp-transaction-pool = { workspace = true }
 thiserror = { workspace = true }
+
+[dev-dependencies]
+substrate-test-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
+substrate-test-runtime-client = { workspace = true }
+substrate-test-runtime-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
+sc-block-builder = { workspace = true }
+sp-consensus = { workspace = true }
