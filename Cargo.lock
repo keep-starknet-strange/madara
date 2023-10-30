@@ -1917,9 +1917,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.4.6"
+version = "4.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d04704f56c2cde07f43e8e2c154b43f216dc5c92fc98ada720177362f953b956"
+checksum = "ac495e00dcec98c83465d5ad66c5c4fabd652fd6686e7c6269b117e729a6f17b"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -1927,9 +1927,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.4.6"
+version = "4.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e231faeaca65ebd1ea3c737966bf858971cd38c3849107aa3ea7de90a804e45"
+checksum = "c77ed9a32a62e6ca27175d00d29d05ca32e396ea1eb5fb01d8256b669cec7663"
 dependencies = [
  "anstream",
  "anstyle",
@@ -1939,9 +1939,9 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "4.4.2"
+version = "4.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0862016ff20d69b84ef8247369fabf5c008a7417002411897d40ee1f4532b873"
+checksum = "cf9804afaaf59a91e75b022a30fb7229a7901f60c755489cc61c9b423b836442"
 dependencies = [
  "heck 0.4.1",
  "proc-macro2",
@@ -1951,9 +1951,9 @@ dependencies = [
 
 [[package]]
 name = "clap_lex"
-version = "0.5.1"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd7cc57abe963c6d3b9d8be5b06ba7c8957a930305ca90304f24ef040aa6f961"
+checksum = "702fc72eb24e5a1e48ce58027a675bc24edd52096d5397d4aea7c6dd9eca0bd1"
 
 [[package]]
 name = "codespan-reporting"
@@ -3760,7 +3760,7 @@ dependencies = [
  "Inflector",
  "array-bytes 4.2.0",
  "chrono",
- "clap 4.4.6",
+ "clap 4.4.7",
  "comfy-table",
  "frame-benchmarking",
  "frame-support",
@@ -6057,11 +6057,11 @@ dependencies = [
 
 [[package]]
 name = "madara"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "async-trait",
  "blockifier",
- "clap 4.4.6",
+ "clap 4.4.7",
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "frame-system",
@@ -6124,7 +6124,7 @@ dependencies = [
 
 [[package]]
 name = "madara-runtime"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "blockifier",
  "frame-benchmarking",
@@ -6215,7 +6215,7 @@ checksum = "60302e4db3a61da70c0cb7991976248362f30319e88850c487b9b95bbf059e00"
 
 [[package]]
 name = "mc-block-proposer"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "futures",
  "futures-timer",
@@ -6240,7 +6240,7 @@ dependencies = [
 
 [[package]]
 name = "mc-commitment-state-diff"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "blockifier",
  "futures",
@@ -6267,7 +6267,7 @@ dependencies = [
  "avail-subxt",
  "celestia-rpc",
  "celestia-types",
- "clap 4.4.6",
+ "clap 4.4.7",
  "ethers",
  "futures",
  "jsonrpsee 0.20.2",
@@ -6293,7 +6293,7 @@ dependencies = [
 
 [[package]]
 name = "mc-db"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "ethers",
  "kvdb-rocksdb",
@@ -6309,7 +6309,7 @@ dependencies = [
 
 [[package]]
 name = "mc-mapping-sync"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "futures",
  "futures-timer",
@@ -6330,7 +6330,7 @@ dependencies = [
 
 [[package]]
 name = "mc-rpc"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "blockifier",
  "frame-support",
@@ -6366,7 +6366,7 @@ dependencies = [
 
 [[package]]
 name = "mc-rpc-core"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "assert_matches",
@@ -6397,7 +6397,7 @@ dependencies = [
 
 [[package]]
 name = "mc-storage"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "blockifier",
  "frame-support",
@@ -6429,6 +6429,7 @@ dependencies = [
  "num-traits 0.2.17",
  "parity-scale-codec",
  "parking_lot 0.12.1",
+ "sc-block-builder",
  "sc-client-api",
  "sc-transaction-pool",
  "sc-transaction-pool-api",
@@ -6436,11 +6437,15 @@ dependencies = [
  "serde",
  "sp-api",
  "sp-blockchain",
+ "sp-consensus",
  "sp-core 7.0.0",
  "sp-runtime 7.0.0",
  "sp-tracing 6.0.0",
  "sp-transaction-pool",
  "substrate-prometheus-endpoint",
+ "substrate-test-runtime",
+ "substrate-test-runtime-client",
+ "substrate-test-runtime-transaction-pool",
  "thiserror",
 ]
 
@@ -6609,7 +6614,7 @@ dependencies = [
 
 [[package]]
 name = "mp-block"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "blockifier",
  "mp-felt",
@@ -6623,7 +6628,7 @@ dependencies = [
 
 [[package]]
 name = "mp-chain-id"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "mp-felt",
  "starknet-ff",
@@ -6631,7 +6636,7 @@ dependencies = [
 
 [[package]]
 name = "mp-commitments"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "bitvec",
  "derive_more",
@@ -6649,7 +6654,7 @@ dependencies = [
 
 [[package]]
 name = "mp-digest-log"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "assert_matches",
  "mp-block",
@@ -6659,7 +6664,7 @@ dependencies = [
 
 [[package]]
 name = "mp-fee"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "blockifier",
  "hashbrown 0.14.2",
@@ -6671,7 +6676,7 @@ dependencies = [
 
 [[package]]
 name = "mp-felt"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "cairo-vm",
  "hex",
@@ -6686,7 +6691,7 @@ dependencies = [
 
 [[package]]
 name = "mp-hashers"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "mp-felt",
  "parity-scale-codec",
@@ -6698,7 +6703,7 @@ dependencies = [
 
 [[package]]
 name = "mp-sequencer-address"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -6709,7 +6714,7 @@ dependencies = [
 
 [[package]]
 name = "mp-state"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "blockifier",
  "starknet_api",
@@ -6717,7 +6722,7 @@ dependencies = [
 
 [[package]]
 name = "mp-storage"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "lazy_static",
  "parity-scale-codec",
@@ -6727,7 +6732,7 @@ dependencies = [
 
 [[package]]
 name = "mp-transactions"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "assert_matches",
  "blockifier",
@@ -7604,7 +7609,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-starknet"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "assert_matches",
  "blockifier",
@@ -9380,7 +9385,7 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#5e
 dependencies = [
  "array-bytes 4.2.0",
  "chrono",
- "clap 4.4.6",
+ "clap 4.4.7",
  "fdlimit",
  "futures",
  "libp2p-identity 0.1.3",
@@ -10169,7 +10174,7 @@ name = "sc-storage-monitor"
 version = "0.1.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#5e49f6e44820affccaf517fd22af564f4b495d40"
 dependencies = [
- "clap 4.4.6",
+ "clap 4.4.7",
  "fs4",
  "futures",
  "log",
@@ -12647,6 +12652,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "substrate-test-runtime-transaction-pool"
+version = "2.0.0"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#5e49f6e44820affccaf517fd22af564f4b495d40"
+dependencies = [
+ "futures",
+ "parity-scale-codec",
+ "parking_lot 0.12.1",
+ "sc-transaction-pool",
+ "sc-transaction-pool-api",
+ "sp-blockchain",
+ "sp-runtime 7.0.0",
+ "substrate-test-runtime-client",
+ "thiserror",
+]
+
+[[package]]
 name = "substrate-wasm-builder"
 version = "5.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#5e49f6e44820affccaf517fd22af564f4b495d40"
@@ -13513,7 +13534,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#5e49f6e44820affccaf517fd22af564f4b495d40"
 dependencies = [
  "async-trait",
- "clap 4.4.6",
+ "clap 4.4.7",
  "frame-remote-externalities",
  "frame-try-runtime",
  "hex",

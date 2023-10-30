@@ -213,7 +213,7 @@ log = { version = "0.4.20", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 safe-mix = { version = "1.0", default-features = false }
 jsonrpsee = { version = "0.16.3", default-features = false }
-clap = { version = "4.4.2", default-features = false }
+clap = { version = "4.4.7", default-features = false }
 futures = { version = "0.3.28", default-features = false }
 futures-timer = { version = "3.0.2", default-features = false }
 md5 = { version = "0.7.0", default-features = false }
