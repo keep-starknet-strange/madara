@@ -6419,6 +6419,7 @@ dependencies = [
  "mc-commitment-state-diff",
  "mc-data-availability",
  "mc-db",
+ "mc-l1-messages",
  "mc-mapping-sync",
  "mc-rpc",
  "mc-storage",
@@ -6634,6 +6635,24 @@ dependencies = [
  "sp-database",
  "sp-runtime 24.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
  "uuid 1.6.0",
+]
+
+[[package]]
+name = "mc-l1-messages"
+version = "0.1.0"
+dependencies = [
+ "ethers",
+ "log",
+ "madara-runtime",
+ "mp-felt",
+ "mp-transactions",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sc-transaction-pool-api",
+ "sp-api",
+ "sp-core 21.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
+ "sp-runtime 24.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
+ "starknet_api",
 ]
 
 [[package]]

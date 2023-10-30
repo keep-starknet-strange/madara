@@ -11,7 +11,6 @@ mod commands;
 mod configs;
 mod constants;
 mod genesis_block;
-mod l1_messages;
 mod rpc;
 mod starknet;
 
