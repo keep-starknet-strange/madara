@@ -279,18 +279,23 @@ pub fn calculate_transaction_hash_with_signature<H: HasherT>(
 where
     H: HasherT,
 {
-    let signature_hash = if matches!(tx, Transaction::Invoke(_)) {
+    let include_signature = block_number >= 61394;
+
+    let signature_hash = if matches!(tx, Transaction::Invoke(_)) || include_signature {
+        // Include signatures for Invoke transactions or for all transactions
+        // starting from block 61394
         H::compute_hash_on_elements(
             &tx.signature().iter().map(|elt| FieldElement::from(*elt)).collect::<Vec<FieldElement>>(),
         )
     } else {
+        // Before block 61394, and for non-Invoke transactions, signatures are not included
         H::compute_hash_on_elements(&[])
     };
 
-    let transactions_hashes =
+    let transaction_hashes =
         H::hash_elements(FieldElement::from(tx.compute_hash::<H>(chain_id, false, Some(block_number))), signature_hash);
 
-    transactions_hashes
+    transaction_hashes
 }
 
 /// Calculate the hash of an event.
