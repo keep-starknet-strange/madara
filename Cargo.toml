@@ -62,6 +62,9 @@ lto = true           # Enables Link Time Optimization, enabling more aggressive 
 opt-level = 3        # Optimize for speed regardless of binary size or compile time
 rpath = false        # Disables adding rpath to the binary
 
+[profile.dev]
+incremental = true
+
 [workspace.package]
 authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
 edition = "2021"
