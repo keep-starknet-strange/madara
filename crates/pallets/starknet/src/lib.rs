@@ -1104,12 +1104,12 @@ impl<T: Config> Pallet<T> {
         ) -> Vec<TransactionExecutionResult<TransactionExecutionInfo>> {
             let mut execution_results = vec![];
             let _: Result<_, DispatchError> = storage::transactional::with_transaction(|| {
+                let mut blockifier_state_adapter = BlockifierStateAdapter::<T>::default();
                 for tx in txs {
-                    let mut blockifier_state_adapter = BlockifierStateAdapter::<T>::default();
                     let result = match tx {
                         UserTransaction::Declare(tx, contract_class) => {
                             let executable = tx.try_into_executable::<T::SystemHash>(chain_id, contract_class, true)
-                                .map_err(|_| Error::<T>::InvalidContractClass).unwrap();
+                                .map_err(|_| Error::<T>::InvalidContractClass).expect("Contract class should be valid");
                             executable.execute(&mut blockifier_state_adapter, block_context, true, disable_nonce_validation)
                         },
                         UserTransaction::DeployAccount(tx) => {
@@ -1140,7 +1140,7 @@ impl<T: Config> Pallet<T> {
         for res in execution_results {
             match res {
                 Ok(tx_exec_info) => {
-                    log!(debug, "Successfully estimated fee: {:?}", tx_exec_info);
+                    log!(info, "Successfully estimated fee: {:?}", tx_exec_info);
                     if let Some(gas_usage) = tx_exec_info.actual_resources.0.get("l1_gas_usage") {
                         results.push((tx_exec_info.actual_fee.0 as u64, *gas_usage as u64));
                     } else {
@@ -1148,7 +1148,7 @@ impl<T: Config> Pallet<T> {
                     }
                 }
                 Err(e) => {
-                    log!(error, "Failed to estimate fee: {:?}", e);
+                    log!(info, "Failed to estimate fee: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             }
