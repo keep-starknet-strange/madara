@@ -3,6 +3,7 @@
 ## Next release
 
 - dev(compilation): add incremental compilation
+- Code style update: improve readability with moving BlockT and ChainApi in where clauses
 
 ## v0.5.0
 
