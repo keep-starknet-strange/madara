@@ -41,8 +41,9 @@ where
     }
 }
 
-impl<B: BlockT, C, H> Stream for CommitmentStateDiffWorker<B, C, H>
+impl<B, C, H> Stream for CommitmentStateDiffWorker<B, C, H>
 where
+    B: BlockT,
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
     C: HeaderBackend<B>,
@@ -121,11 +122,12 @@ enum BuildCommitmentStateDiffError {
     DigestLogNotFound(#[from] mp_digest_log::FindLogError),
 }
 
-fn build_commitment_state_diff<B: BlockT, C, H>(
+fn build_commitment_state_diff<B, C, H>(
     client: Arc<C>,
     storage_notification: StorageNotification<B::Hash>,
 ) -> Result<(BlockHash, CommitmentStateDiff), BuildCommitmentStateDiffError>
 where
+    B: BlockT,
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
     C: HeaderBackend<B>,

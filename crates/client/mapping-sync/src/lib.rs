@@ -73,8 +73,9 @@ impl<B: BlockT, C, BE, H> MappingSyncWorker<B, C, BE, H> {
     }
 }
 
-impl<B: BlockT, C, BE, H> Stream for MappingSyncWorker<B, C, BE, H>
+impl<B, C, BE, H> Stream for MappingSyncWorker<B, C, BE, H>
 where
+    B: BlockT,
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
     C: HeaderBackend<B> + StorageProvider<B, BE>,

@@ -100,8 +100,9 @@ where
     }
 }
 
-impl<A: ChainApi, B, BE, C, P, H> Starknet<A, B, BE, C, P, H>
+impl<A, B, BE, C, P, H> Starknet<A, B, BE, C, P, H>
 where
+    A: ChainApi,
     B: BlockT,
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,

@@ -9,8 +9,9 @@ use sp_blockchain::{Backend as _, HeaderBackend};
 use sp_core::H256;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT, Zero};
 
-fn sync_block<B: BlockT, C, BE, H>(client: &C, backend: &mc_db::Backend<B>, header: &B::Header) -> Result<(), String>
+fn sync_block<B, C, BE, H>(client: &C, backend: &mc_db::Backend<B>, header: &B::Header) -> Result<(), String>
 where
+    B: BlockT,
     C: HeaderBackend<B> + StorageProvider<B, BE>,
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
@@ -95,13 +96,14 @@ where
     Ok(())
 }
 
-fn sync_one_block<B: BlockT, C, BE, H>(
+fn sync_one_block<B, C, BE, H>(
     client: &C,
     substrate_backend: &BE,
     madara_backend: &mc_db::Backend<B>,
     sync_from: <B::Header as HeaderT>::Number,
 ) -> Result<bool, String>
 where
+    B: BlockT,
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
     C: HeaderBackend<B> + StorageProvider<B, BE>,
@@ -149,7 +151,7 @@ where
     }
 }
 
-pub fn sync_blocks<B: BlockT, C, BE, H>(
+pub fn sync_blocks<B, C, BE, H>(
     client: &C,
     substrate_backend: &BE,
     madara_backend: &mc_db::Backend<B>,
@@ -157,6 +159,7 @@ pub fn sync_blocks<B: BlockT, C, BE, H>(
     sync_from: <B::Header as HeaderT>::Number,
 ) -> Result<bool, String>
 where
+    B: BlockT,
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
     C: HeaderBackend<B> + StorageProvider<B, BE>,
