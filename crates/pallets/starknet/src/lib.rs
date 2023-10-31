@@ -1092,64 +1092,68 @@ impl<T: Config> Pallet<T> {
     }
 
     /// Estimate the fee associated with transaction
-    pub fn estimate_fee(transaction: UserTransaction, is_query: bool) -> Result<(u64, u64), DispatchError> {
+    pub fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
         let chain_id = Self::chain_id();
 
-        fn execute_tx_and_rollback<S: State + StateChanges + FeeConfig>(
-            tx: impl Execute,
-            state: &mut S,
+        fn execute_tx_and_rollback<T: pallet::Config, S: State + StateChanges + FeeConfig>(
+            txs: Vec<UserTransaction>,
+            _state: &mut S,
             block_context: &BlockContext,
             disable_nonce_validation: bool,
-        ) -> TransactionExecutionResult<TransactionExecutionInfo> {
-            // TODO: initialization can probably be skiped by using mem::MaybeUninit
-            let mut execution_result = Ok(Default::default());
+            chain_id: Felt252Wrapper,
+        ) -> Vec<TransactionExecutionResult<TransactionExecutionInfo>> {
+            let mut execution_results = vec![];
             let _: Result<_, DispatchError> = storage::transactional::with_transaction(|| {
-                execution_result = tx.execute(state, block_context, true, disable_nonce_validation);
+                for tx in txs {
+                    let mut blockifier_state_adapter = BlockifierStateAdapter::<T>::default();
+                    let result = match tx {
+                        UserTransaction::Declare(tx, contract_class) => {
+                            let executable = tx.try_into_executable::<T::SystemHash>(chain_id, contract_class, true)
+                                .map_err(|_| Error::<T>::InvalidContractClass).unwrap();
+                            executable.execute(&mut blockifier_state_adapter, block_context, true, disable_nonce_validation)
+                        },
+                        UserTransaction::DeployAccount(tx) => {
+                            let executable = tx.into_executable::<T::SystemHash>(chain_id, true);
+                            executable.execute(&mut blockifier_state_adapter, block_context, true, disable_nonce_validation)
+                        },
+                        UserTransaction::Invoke(tx) => {
+                            let executable = tx.into_executable::<T::SystemHash>(chain_id, true);
+                            executable.execute(&mut blockifier_state_adapter, block_context, true, disable_nonce_validation)
+                        }
+                    }; 
+                    execution_results.push(result);
+                }
                 storage::TransactionOutcome::Rollback(Ok(()))
             });
-            execution_result
+            execution_results
         }
 
-        let mut blockifier_state_adapter = BlockifierStateAdapter::<T>::default();
-        let block_context = Self::get_block_context();
-        let disable_nonce_validation = T::DisableNonceValidation::get();
+        let execution_results = execute_tx_and_rollback::<T, _>(
+            transactions,
+            &mut BlockifierStateAdapter::<T>::default(),
+            &Self::get_block_context(),
+            T::DisableNonceValidation::get(),
+            chain_id,
+        );
 
-        let execution_result = match transaction {
-            UserTransaction::Declare(tx, contract_class) => execute_tx_and_rollback(
-                tx.try_into_executable::<T::SystemHash>(chain_id, contract_class, is_query)
-                    .map_err(|_| Error::<T>::InvalidContractClass)?,
-                &mut blockifier_state_adapter,
-                &block_context,
-                disable_nonce_validation,
-            ),
-            UserTransaction::DeployAccount(tx) => execute_tx_and_rollback(
-                tx.into_executable::<T::SystemHash>(chain_id, is_query),
-                &mut blockifier_state_adapter,
-                &block_context,
-                disable_nonce_validation,
-            ),
-            UserTransaction::Invoke(tx) => execute_tx_and_rollback(
-                tx.into_executable::<T::SystemHash>(chain_id, is_query),
-                &mut blockifier_state_adapter,
-                &block_context,
-                disable_nonce_validation,
-            ),
-        };
-
-        match execution_result {
-            Ok(tx_exec_info) => {
-                log!(debug, "Successfully estimated fee: {:?}", tx_exec_info);
-                if let Some(gas_usage) = tx_exec_info.actual_resources.0.get("l1_gas_usage") {
-                    Ok((tx_exec_info.actual_fee.0 as u64, *gas_usage as u64))
-                } else {
-                    Err(Error::<T>::TransactionExecutionFailed.into())
+        let mut results = vec![];
+        for res in execution_results {
+            match res {
+                Ok(tx_exec_info) => {
+                    log!(debug, "Successfully estimated fee: {:?}", tx_exec_info);
+                    if let Some(gas_usage) = tx_exec_info.actual_resources.0.get("l1_gas_usage") {
+                        results.push((tx_exec_info.actual_fee.0 as u64, *gas_usage as u64));
+                    } else {
+                        return Err(Error::<T>::TransactionExecutionFailed.into());
+                    }
+                }
+                Err(e) => {
+                    log!(error, "Failed to estimate fee: {:?}", e);
+                    return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             }
-            Err(e) => {
-                log!(error, "Failed to estimate fee: {:?}", e);
-                Err(Error::<T>::TransactionExecutionFailed.into())
-            }
         }
+        Ok(results)
     }
 
     pub fn emit_and_store_tx_and_fees_events(
