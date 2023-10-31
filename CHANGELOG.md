@@ -2,6 +2,8 @@
 
 ## Next release
 
+- dev(compilation): add incremental compilation
+
 ## v0.5.0
 
 - chore: release v0.5.0
