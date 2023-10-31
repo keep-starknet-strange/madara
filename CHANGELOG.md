@@ -4,6 +4,7 @@
 
 - fix: Ensure transaction checks are compatible with starknet-rs
 - ci: Run Starknet Foundry tests against Madara RPC
+- dev(compilation): add incremental compilation
 
 ## v0.5.0
 
