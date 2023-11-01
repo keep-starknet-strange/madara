@@ -5,15 +5,19 @@
 // Specifically, the macro generates a trait (`StarknetRuntimeApi`) with unused type parameters.
 #![allow(clippy::extra_unused_type_parameters)]
 
+use alloc::sync::Arc;
+
 use blockifier::execution::contract_class::ContractClass;
 use mp_felt::Felt252Wrapper;
 use mp_transactions::{Transaction, TxType, UserTransaction};
 use sp_api::BlockT;
 pub extern crate alloc;
+use alloc::string::String;
 use alloc::vec::Vec;
 
 use sp_runtime::DispatchError;
-use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
+use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector, Nonce};
+use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Calldata, Event as StarknetEvent, TransactionHash};
@@ -42,7 +46,7 @@ sp_api::decl_runtime_apis! {
         /// Returns the chain id.
         fn chain_id() -> Felt252Wrapper;
         /// Returns fee estimate
-        fn estimate_fee(transaction: UserTransaction) -> Result<(u64, u64), DispatchError>;
+        fn estimate_fee(transaction: UserTransaction, is_query: bool) -> Result<(u64, u64), DispatchError>;
         /// Filters extrinsic transactions to return only Starknet transactions
         ///
         /// To support runtime upgrades, the client must be unaware of the specific extrinsic
@@ -60,6 +64,8 @@ sp_api::decl_runtime_apis! {
         fn get_starknet_events_and_their_associated_tx_hash(block_extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper) -> Vec<(Felt252Wrapper, StarknetEvent)>;
         /// Return the outcome of the tx execution
         fn get_tx_execution_outcome(tx_hash: TransactionHash) -> Option<Vec<u8>>;
+        /// Return the block context
+        fn get_block_context() -> BlockContext;
     }
 
     pub trait ConvertTransactionRuntimeApi {
@@ -67,5 +73,63 @@ sp_api::decl_runtime_apis! {
         fn convert_transaction(transaction: UserTransaction) -> Result<<Block as BlockT>::Extrinsic, DispatchError>;
         /// Converts the DispatchError to an understandable error for the client
         fn convert_error(error: DispatchError) -> StarknetTransactionExecutionError;
+    }
+}
+
+#[derive(Clone, Debug, parity_scale_codec::Encode, parity_scale_codec::Decode, scale_info::TypeInfo)]
+pub struct BlockContext {
+    pub chain_id: String,
+    pub block_number: u64,
+    pub block_timestamp: u64,
+
+    // Fee-related.
+    pub sequencer_address: ContractAddress,
+    pub fee_token_address: ContractAddress,
+    pub vm_resource_fee_cost: Vec<(String, sp_arithmetic::fixed_point::FixedU128)>,
+    pub gas_price: u128, // In wei.
+
+    // Limits.
+    pub invoke_tx_max_n_steps: u32,
+    pub validate_max_n_steps: u32,
+    pub max_recursion_depth: u32,
+}
+
+#[cfg(feature = "std")]
+use std::collections::HashMap;
+
+#[cfg(not(feature = "std"))]
+use hashbrown::HashMap;
+
+impl From<BlockContext> for blockifier::block_context::BlockContext {
+    fn from(value: BlockContext) -> Self {
+        Self {
+            chain_id: ChainId(value.chain_id),
+            block_number: BlockNumber(value.block_number),
+            block_timestamp: BlockTimestamp(value.block_timestamp),
+            sequencer_address: value.sequencer_address,
+            fee_token_address: value.fee_token_address,
+            vm_resource_fee_cost: Arc::new(HashMap::from_iter(value.vm_resource_fee_cost)),
+            gas_price: value.gas_price,
+            invoke_tx_max_n_steps: value.invoke_tx_max_n_steps,
+            validate_max_n_steps: value.validate_max_n_steps,
+            max_recursion_depth: value.max_recursion_depth,
+        }
+    }
+}
+
+impl From<blockifier::block_context::BlockContext> for BlockContext {
+    fn from(value: blockifier::block_context::BlockContext) -> Self {
+        Self {
+            chain_id: value.chain_id.0,
+            block_number: value.block_number.0,
+            block_timestamp: value.block_timestamp.0,
+            sequencer_address: value.sequencer_address,
+            fee_token_address: value.fee_token_address,
+            vm_resource_fee_cost: Vec::from_iter(value.vm_resource_fee_cost.iter().map(|(k, v)| (k.clone(), *v))),
+            gas_price: value.gas_price,
+            invoke_tx_max_n_steps: value.invoke_tx_max_n_steps,
+            validate_max_n_steps: value.validate_max_n_steps,
+            max_recursion_depth: value.max_recursion_depth,
+        }
     }
 }

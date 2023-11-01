@@ -40,6 +40,11 @@ jobs:
     uses: ./.github/workflows/starknet-rpc-tests.yml
     needs: madara_commands
 
+  starknet-js-tests:
+    name: Run starknet-js compatibility tests
+    uses: ./.github/workflows/starknet-js-tests.yml
+    needs: madara_commands
+
   # https://github.com/keep-starknet-strange/madara/issues/1097
   # benchmark:
   #   name: Run benchmarks

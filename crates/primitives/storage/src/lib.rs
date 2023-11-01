@@ -1,6 +1,12 @@
 //! StarkNet storage primitives.
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+use alloc::vec::Vec;
+
+use lazy_static::lazy_static;
+use sp_io::hashing::twox_128;
+
 /// Current version of pallet Starknet's storage schema is stored under this key.
 pub const PALLET_STARKNET_SCHEMA: &[u8] = b":starknet_schema";
 
@@ -23,6 +29,19 @@ pub const STARKNET_CONTRACT_CLASS: &[u8] = b"ContractClasses";
 pub const STARKNET_NONCE: &[u8] = b"Nonces";
 /// Starknet storage
 pub const STARKNET_STORAGE: &[u8] = b"StorageView";
+/// Compiled class hashes
+pub const STARKNET_COMPILED_CLASS_HASH: &[u8] = b"CompiledClassHashes";
+
+lazy_static! {
+    pub static ref SN_NONCE_PREFIX: Vec<u8> = [twox_128(PALLET_STARKNET), twox_128(STARKNET_NONCE)].concat();
+    pub static ref SN_CONTRACT_CLASS_HASH_PREFIX: Vec<u8> =
+        [twox_128(PALLET_STARKNET), twox_128(STARKNET_CONTRACT_CLASS_HASH)].concat();
+    pub static ref SN_CONTRACT_CLASS_PREFIX: Vec<u8> =
+        [twox_128(PALLET_STARKNET), twox_128(STARKNET_CONTRACT_CLASS)].concat();
+    pub static ref SN_STORAGE_PREFIX: Vec<u8> = [twox_128(PALLET_STARKNET), twox_128(STARKNET_STORAGE)].concat();
+    pub static ref SN_COMPILED_CLASS_HASH_PREFIX: Vec<u8> =
+        [twox_128(PALLET_STARKNET), twox_128(STARKNET_COMPILED_CLASS_HASH)].concat();
+}
 
 /// The schema version for Pallet Starknet's storage.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
