@@ -944,10 +944,22 @@ where
             }
         }
 
+        // Attempt to extract from transfer event:
+        // Transfer Event {
+        //     from_address: fee_token_address,
+        //     keys: [selector("Transfer")],
+        //     data: [
+        //         ACCOUNT_CONTRACT_ADDRESS,                                 // from
+        //         FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(),    // to (sequencer address)
+        //         expected_fee,                                             // value low
+        //         0,                                                        // value high
+        //     ],
+        // },
         fn extract_fee_and_contract_address(
             events: &Vec<starknet_core::types::Event>,
             sequencer_address: &Felt252Wrapper,
         ) -> (FieldElement, Option<FieldElement>) {
+
             let transfer_event_key = starknet_core::utils::get_selector_from_name("Transfer").unwrap();
             let find_transfer_fee_event = events.iter().find_map(|event| {
                 event.keys.iter().find(|&&key| key == transfer_event_key)?;
@@ -957,7 +969,7 @@ where
 
             match find_transfer_fee_event {
                 Some(transfer_fee_event) => {
-                    let actual_fee = Felt252Wrapper(transfer_fee_event.data[2].clone()).0; // ony low bits, see execute_fee_transfer() why
+                    let actual_fee = Felt252Wrapper(transfer_fee_event.data[2].clone()).0; // only low bits, see execute_fee_transfer() func
                     let contract_address = Felt252Wrapper(transfer_fee_event.data[0].clone()).0;
                     (actual_fee, Some(contract_address))
                 }
@@ -982,9 +994,8 @@ where
                 execution_result,
             }),
             mp_transactions::TxType::DeployAccount => {
-                let contract_address = match contract_address {
-                    Some(contract_address) => contract_address,
-                    None => {
+                let contract_address = contract_address.unwrap_or_else(|| {
+                    {
                         let transfer_event_key = starknet_core::utils::get_selector_from_name("Transfer").unwrap();
                         let address_in_other_event = events_converted.iter().find_map(|event| {
                             event.keys.iter().find(|&&key| key != transfer_event_key)?;
@@ -995,7 +1006,7 @@ where
                             None => Default::default(), // should we calculate it than?
                         }
                     }
-                };
+                });
                 TransactionReceipt::DeployAccount(DeployAccountTransactionReceipt {
                     transaction_hash,
                     actual_fee,
