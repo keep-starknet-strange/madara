@@ -3,6 +3,7 @@ use mp_felt::Felt252WrapperError;
 #[warn(dead_code)]
 #[derive(Debug, Eq, PartialEq)]
 pub enum L1MessagesWorkerError {
+    ConfigError,
     ConvertTransactionRuntimeApiError,
     MessageAlreadyProcessed,
     OffchainStorageError,

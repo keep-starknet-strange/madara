@@ -94,7 +94,7 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
     let l1_messages_config = match cli.run.l1_messages {
         Some(ref config_path) => {
             if !config_path.exists() {
-                return Err("L1 Messages Worker config not available".into());
+                return Err("L1 Messages Worker config file not available".into());
             }
             Some(config_path.clone())
         }
