@@ -295,8 +295,7 @@ pub fn run() -> sc_cli::Result<()> {
             let l1_messages_config = match cli.run.l1_messages {
                 Some(ref config_path) => {
                     if !config_path.exists() {
-                        log::info!("{} does not contain L1 Messages Worker config", madara_path);
-                        return Err("L1 Messages Worker config not available".into());
+                        return Err("L1 Messages Worker config file not available".into());
                     }
                     Some(config_path.clone())
                 }

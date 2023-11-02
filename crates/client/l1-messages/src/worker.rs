@@ -3,6 +3,7 @@ use std::sync::Arc;
 use ethers::core::types::Address;
 use ethers::providers::{Http, Provider, StreamExt};
 use madara_runtime::pallet_starknet;
+use mp_transactions::HandleL1MessageTransaction;
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use parity_scale_codec::{Decode, Encode};
 use sc_client_api::{Backend, HeaderBackend};
@@ -10,6 +11,7 @@ use sc_transaction_pool_api::{TransactionPool, TransactionSource};
 use sp_api::offchain::OffchainStorage;
 use sp_api::{BlockId, ProvideRuntimeApi};
 use sp_runtime::traits::Block as BlockT;
+use starknet_api::transaction::Fee;
 
 use crate::config::L1MessagesWorkerConfig;
 use crate::contract::{L1Contract, LogMessageToL2Filter};
@@ -19,6 +21,21 @@ const TX_SOURCE: TransactionSource = TransactionSource::External;
 const STORAGE_PREFIX: &str = "L1MessagesWorker";
 const STORAGE_KEY: &str = "last_synced_block";
 
+pub fn connect_to_l1_contract(
+    config: &L1MessagesWorkerConfig,
+) -> Result<L1Contract<Provider<Http>>, L1MessagesWorkerError> {
+    let address: Address =
+        config.contract_address.parse::<Address>().map_err(|_| L1MessagesWorkerError::ConfigError)?;
+    let provider = Provider::<Http>::try_from(&config.http_provider).map_err(|e| {
+        log::error!("⟠ Failed to connect to L1 Node: {:?}", e);
+        L1MessagesWorkerError::ConfigError
+    })?;
+
+    let l1_contract = L1Contract::new(address, Arc::new(provider));
+
+    Ok(l1_contract)
+}
+
 pub async fn run_worker<C, P, B, S>(config: L1MessagesWorkerConfig, client: Arc<C>, pool: Arc<P>, backend: Arc<S>)
 where
     B: BlockT,
@@ -27,20 +44,33 @@ where
     P: TransactionPool<Block = B> + 'static,
     S: Backend<B> + Send + 'static,
 {
-    log::info!("⟠ Starting L1 Messages Worker with config: {:?}", config);
+    log::info!("⟠ Starting L1 Messages Worker with settings: {:?}", config);
 
-    let mut offchain_storage = backend.offchain_storage().unwrap();
+    let mut offchain_storage = match backend.offchain_storage() {
+        Some(offchain_storage) => offchain_storage,
+        None => {
+            log::error!("⟠ Offchain storage unavailable");
+            return;
+        }
+    };
 
-    let l1_contract = L1Contract::new(
-        config.contract_address.parse::<Address>().unwrap(),
-        Arc::new(Provider::<Http>::try_from(&config.http_provider).unwrap()),
-    );
+    let l1_contract = match connect_to_l1_contract(&config) {
+        Ok(l1_contract) => l1_contract,
+        Err(e) => {
+            log::error!("⟠ Unexpected error while connecting to L1: {:?}", e);
+            return;
+        }
+    };
 
-    let last_synced_block = get_block_number::<B, S>(&offchain_storage).unwrap();
-    log::debug!("⟠ Last synchronized block: {:?}", last_synced_block);
+    let events = l1_contract.events().from_block(get_block_number::<B, S>(&offchain_storage).unwrap_or_default());
+    let mut stream = match events.stream().await {
+        Ok(stream) => stream.with_meta(),
+        Err(e) => {
+            log::error!("⟠ Unexpected error with L1 event stream: {:?}", e);
+            return;
+        }
+    };
 
-    let events = l1_contract.events().from_block(last_synced_block);
-    let mut stream = events.stream().await.unwrap().with_meta();
     while let Some(Ok((event, meta))) = stream.next().await {
         log::info!(
             "⟠ Processing L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?}",
@@ -63,7 +93,7 @@ where
             }
             Err(e) => {
                 log::error!(
-                    "Unexpected error while processing L1 Message from block: {:?}, transaction_hash: {:?}, \
+                    "⟠ Unexpected error while processing L1 Message from block: {:?}, transaction_hash: {:?}, \
                      log_index: {:?}, error: {:?}",
                     meta.block_number,
                     meta.transaction_hash,
@@ -86,8 +116,8 @@ where
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     P: TransactionPool<Block = B> + 'static,
 {
-    let fee = event.try_into_fee()?;
-    let transaction = event.try_into_transaction()?;
+    let fee: Fee = event.try_into()?;
+    let transaction: HandleL1MessageTransaction = event.try_into()?;
 
     let best_block_hash = client.info().best_hash;
 
@@ -107,14 +137,18 @@ where
         .runtime_api()
         .convert_l1_transaction(best_block_hash, transaction, fee)
         .map_err(|e| {
-            log::error!("⟠ Failed to convert transaction: {:?}", e);
+            log::error!("⟠ Failed to convert transaction via runtime api: {:?}", e);
             L1MessagesWorkerError::ConvertTransactionRuntimeApiError
         })?
-        .map_err(|_| L1MessagesWorkerError::ConvertTransactionRuntimeApiError)?;
+        .map_err(|e| {
+            log::error!("⟠ Failed to convert transaction via runtime api: {:?}", e);
+            L1MessagesWorkerError::ConvertTransactionRuntimeApiError
+        })?;
 
-    pool.submit_one(&BlockId::Hash(best_block_hash), TX_SOURCE, extrinsic)
-        .await
-        .map_err(|_| L1MessagesWorkerError::SubmitTxError)
+    pool.submit_one(&BlockId::Hash(best_block_hash), TX_SOURCE, extrinsic).await.map_err(|e| {
+        log::error!("⟠ Failed to submit transaction with L1 Message: {:?}", e);
+        L1MessagesWorkerError::SubmitTxError
+    })
 }
 
 fn set_block_number<B, S>(storage: &mut S::OffchainStorage, blknum: &u64)

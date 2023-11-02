@@ -6094,6 +6094,7 @@ dependencies = [
  "mc-block-proposer",
  "mc-data-availability",
  "mc-db",
+ "mc-l1-messages",
  "mc-mapping-sync",
  "mc-rpc",
  "mc-storage",
@@ -6154,6 +6155,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
+ "log",
  "mp-block",
  "mp-felt",
  "mp-hashers",
@@ -6307,6 +6309,26 @@ dependencies = [
  "sp-database",
  "sp-runtime 7.0.0",
  "uuid 1.4.1",
+]
+
+[[package]]
+name = "mc-l1-messages"
+version = "0.1.0"
+dependencies = [
+ "ethers",
+ "log",
+ "madara-runtime",
+ "mp-felt",
+ "mp-transactions",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sc-transaction-pool-api",
+ "serde",
+ "serde_json",
+ "sp-api",
+ "sp-core 7.0.0",
+ "sp-runtime 7.0.0",
+ "starknet_api",
 ]
 
 [[package]]
