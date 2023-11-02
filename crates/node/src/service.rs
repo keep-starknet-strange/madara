@@ -19,7 +19,7 @@ use mc_data_availability::celestia::CelestiaClient;
 use mc_data_availability::ethereum::config::EthereumConfig;
 use mc_data_availability::ethereum::EthereumClient;
 use mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker};
-use mc_l1_messages::worker::L1MessagesWorkerConfig;
+use mc_l1_messages::config::L1MessagesWorkerConfig;
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
 use mp_sequencer_address::{
@@ -45,7 +45,6 @@ use sp_offchain::STORAGE_PREFIX;
 use crate::genesis_block::MadaraGenesisBlockBuilder;
 use crate::rpc::StarknetDeps;
 use crate::starknet::{db_config_dir, MadaraBackend};
-
 // Our native executor instance.
 pub struct ExecutorDispatch;
 
@@ -270,6 +269,7 @@ pub fn new_full(
     sealing: SealingMode,
     da_layer: Option<(DaLayer, PathBuf)>,
     cache_more_things: bool,
+    l1_messages: Option<PathBuf>,
 ) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_default() { build_aura_grandpa_import_queue } else { build_manual_seal_import_queue };
@@ -581,12 +581,14 @@ pub fn new_full(
         );
     }
 
-    task_manager.spawn_essential_handle().spawn(
-        "L1 Messages",
-        Some(MADARA_TASK_GROUP),
-        mc_l1_messages::worker::run_worker(L1MessagesWorkerConfig::default(), client, transaction_pool, db_backend),
-    );
-
+    if let Some(ref l1_messages_config) = l1_messages {
+        let config = L1MessagesWorkerConfig::try_from(l1_messages_config)?;
+        task_manager.spawn_essential_handle().spawn(
+            "L1 Messages",
+            Some(MADARA_TASK_GROUP),
+            mc_l1_messages::worker::run_worker(config, client, transaction_pool, db_backend),
+        );
+    }
     network_starter.start_network();
     Ok(task_manager)
 }

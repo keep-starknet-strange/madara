@@ -11,27 +11,13 @@ use sp_api::offchain::OffchainStorage;
 use sp_api::ProvideRuntimeApi;
 use sp_runtime::traits::Block as BlockT;
 
+use crate::config::L1MessagesWorkerConfig;
 use crate::contract::{L1Contract, LogMessageToL2Filter};
 use crate::error::L1MessagesWorkerError;
 
 const TX_SOURCE: TransactionSource = TransactionSource::External;
 const STORAGE_PREFIX: &str = "L1MessagesWorker";
 const STORAGE_KEY: &str = "last_synced_block";
-
-#[derive(Debug)]
-pub struct L1MessagesWorkerConfig {
-    rpc_endpoint: String,
-    contract_address: String,
-}
-
-impl Default for L1MessagesWorkerConfig {
-    fn default() -> Self {
-        Self {
-            rpc_endpoint: String::from("http://127.0.0.1:8545"),
-            contract_address: String::from("0x5fbdb2315678afecb367f032d93f642f64180aa3"),
-        }
-    }
-}
 
 pub async fn run_worker<C, P, B, S>(config: L1MessagesWorkerConfig, client: Arc<C>, pool: Arc<P>, backend: Arc<S>)
 where
@@ -47,7 +33,7 @@ where
 
     let l1_contract = L1Contract::new(
         config.contract_address.parse::<Address>().unwrap(),
-        Arc::new(Provider::<Http>::try_from(&config.rpc_endpoint).unwrap()),
+        Arc::new(Provider::<Http>::try_from(&config.http_provider).unwrap()),
     );
 
     let last_synced_block = get_block_number::<B, S>(&offchain_storage).unwrap();

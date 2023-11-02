@@ -52,6 +52,10 @@ pub struct ExtendedRunCmd {
     /// increases the memory footprint of the node.
     #[clap(long)]
     pub cache: bool,
+
+    /// Path to configuration file for Ethereum Core Contract Events Listener
+    #[clap(long)]
+    pub l1_messages: Option<PathBuf>,
 }
 
 impl ExtendedRunCmd {
@@ -86,10 +90,24 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
             None
         }
     };
+
+    let l1_messages_config = match cli.run.l1_messages {
+        Some(ref config_path) => {
+            if !config_path.exists() {
+                return Err("L1 Messages Worker config not available".into());
+            }
+            Some(config_path.clone())
+        }
+        None => {
+            log::info!("madara initialized w/o L1 Messages Worker");
+            None
+        }
+    };
+
     runner.run_node_until_exit(|config| async move {
         let sealing = cli.run.sealing.map(Into::into).unwrap_or_default();
         let cache = cli.run.cache;
-        service::new_full(config, sealing, da_config, cache).map_err(sc_cli::Error::Service)
+        service::new_full(config, sealing, da_config, cache, l1_messages_config).map_err(sc_cli::Error::Service)
     })
 }
 
