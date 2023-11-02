@@ -51,6 +51,9 @@ pub struct ExtendedRunCmd {
 
     #[clap(long)]
     pub da_layer: Option<DaLayer>,
+
+    #[clap(long, short = 'm')]
+    pub l1_messages: Option<PathBuf>,
 }
 
 #[allow(clippy::large_enum_variant)]

@@ -292,9 +292,23 @@ pub fn run() -> sc_cli::Result<()> {
                 }
             };
 
+            let l1_messages_config = match cli.run.l1_messages {
+                Some(ref config_path) => {
+                    if !config_path.exists() {
+                        log::info!("{} does not contain L1 Messages Worker config", madara_path);
+                        return Err("L1 Messages Worker config not available".into());
+                    }
+                    Some(config_path.clone())
+                }
+                None => {
+                    log::info!("madara initialized w/o L1 Messages Worker");
+                    None
+                }
+            };
+
             let runner = cli.create_runner(&cli.run.run_cmd)?;
             runner.run_node_until_exit(|config| async move {
-                service::new_full(config, cli.sealing, da_config).map_err(sc_cli::Error::Service)
+                service::new_full(config, cli.sealing, da_config, l1_messages_config).map_err(sc_cli::Error::Service)
             })
         }
     }
