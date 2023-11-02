@@ -48,6 +48,12 @@ pub static VM_RESOURCE_FEE_COSTS: [(&str, FixedU128); 7] = [
     ("ec_op_builtin", FixedU128::from_inner(10_240_000_000_000_000_000)),
 ];
 
+pub const TRANSFER_SELECTOR_NAME: &str = "Transfer";
+pub const TRANSFER_SELECTOR_HASH: [u8; 32] = [
+    0, 131, 175, 211, 244, 202, 237, 198, 238, 191, 68, 36, 111, 229, 78, 56, 201, 94, 49, 121, 165, 236, 158, 168, 23,
+    64, 236, 165, 180, 130, 209, 46,
+]; // starknet_keccak(TRANSFER_SELECTOR_NAME.as_bytes()).to_le_bytes();
+
 /// Gets the transaction resources.
 pub fn compute_transaction_resources<S: State + StateChanges>(
     state: &S,
@@ -115,20 +121,14 @@ fn execute_fee_transfer(
     let lsb_amount = StarkFelt::from(actual_fee.0);
     // The most significant 128 bits of the amount transferred.
     let msb_amount = StarkFelt::from(0_u64);
-
     let storage_address = block_context.fee_token_address;
     let fee_transfer_call = CallEntryPoint {
         class_hash: None,
         code_address: None,
         entry_point_type: EntryPointType::External,
-        entry_point_selector: EntryPointSelector(
-            // The value is hardcoded and it's the encoding of the "transfer" selector so it cannot fail.
-            StarkFelt::new([
-                0, 131, 175, 211, 244, 202, 237, 198, 238, 191, 68, 36, 111, 229, 78, 56, 201, 94, 49, 121, 165, 236,
-                158, 168, 23, 64, 236, 165, 180, 130, 209, 46,
-            ])
-            .unwrap(),
-        ),
+        // The value TRANSFER_SELECTOR_HASH is hardcoded and it's the encoding of the "transfer" selector so it cannot
+        // fail.
+        entry_point_selector: EntryPointSelector(StarkFelt::new(TRANSFER_SELECTOR_HASH).unwrap()),
         calldata: calldata![
             *block_context.sequencer_address.0.key(), // Recipient.
             lsb_amount,
