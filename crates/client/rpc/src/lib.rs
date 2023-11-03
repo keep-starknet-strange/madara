@@ -906,7 +906,6 @@ where
         let block_header = block.header();
         let block_hash = block_header.hash::<H>().into();
         let block_number = block_header.block_number;
-        let sequencer_address = Felt252Wrapper::from(block.header().sequencer_address);
 
         let block_extrinsics = self
             .client
@@ -961,52 +960,38 @@ where
 
         fn extract_fee_and_contract_address_from_fee_transfer_event(
             events: &Vec<starknet_core::types::Event>,
-            sequencer_address: &Felt252Wrapper,
-        ) -> (FieldElement, Option<FieldElement>) {
-            let transfer_event_key =
-                starknet_core::utils::get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap();
-
-            // fee transfer must be the last event
-            let transfer_fee_event = events.last().and_then(|event| {
-                event.keys.contains(&transfer_event_key).then_some(())?;
-                event.data
-                    .get(1) // send to address
-                    .and_then(|send_to|
-                        (*send_to == sequencer_address.0).then_some(())
-                    )?;
-                Some(event)
-            });
-            // Event {
-            //     from_address: fee_token_address,
-            //     keys: [selector("Transfer")],
-            //     data: [
-            //         send_from_address,       // account_contract_address
-            //         send_to_address,         // to (sequencer address)
-            //         expected_fee_value_low,
-            //         expected_fee_value_high,
-            //     ],
-            // },
-            match transfer_fee_event {
-                Some(transfer_fee_event) => {
-                    let contract_address = Felt252Wrapper(transfer_fee_event.data[0].clone()).0;
-                    // TODO: This is what's done in the blockifier but this should be improved.
-                    // FIXME: https://github.com/keep-starknet-strange/madara/issues/332
-                    // The least significant 128 bits of the amount transferred.
-                    let lsb_amount = Felt252Wrapper(transfer_fee_event.data[2].clone()).0;
-                    // The most significant 128 bits of the amount transferred.
-                    let msb_amount = Felt252Wrapper(transfer_fee_event.data[3].clone()).0;
-
-                    (lsb_amount, Some(contract_address))
-                }
-                None => (Default::default(), None), // transaction without fee
-            }
+        ) -> Option<(FieldElement, FieldElement)> {
+            // fee transfer must be the last event, except enabled disable-transaction-fee feature
+            events.last().and_then(|transfer_fee_event| {
+                // Event {
+                //     from_address: fee_token_address,
+                //     keys: [selector("Transfer")],
+                //     data: [
+                //         send_from_address,       // account_contract_address
+                //         send_to_address,         // to (sequencer address)
+                //         expected_fee_value_low,
+                //         expected_fee_value_high,
+                //     ],
+                // },
+                let contract_address = Felt252Wrapper(transfer_fee_event.data[0].clone()).0;
+                // TODO: This is what's done in the blockifier but this should be improved.
+                // FIXME: https://github.com/keep-starknet-strange/madara/issues/332
+                // The least significant 128 bits of the amount transferred.
+                let lsb_amount = Felt252Wrapper(transfer_fee_event.data[2].clone()).0;
+                Some((lsb_amount, contract_address))
+            })
         }
 
         let events_converted: Vec<starknet_core::types::Event> =
             events.clone().into_iter().map(event_conversion).collect();
 
         let (actual_fee, contract_address) =
-            extract_fee_and_contract_address_from_fee_transfer_event(&events_converted, &sequencer_address);
+            extract_fee_and_contract_address_from_fee_transfer_event(&events_converted)
+                .ok_or_else(|| {
+                    error!( "Failed to get data from event, probably compiled with disable-transaction-fee feature" );
+                    StarknetRpcApiError::InternalServerError
+                }
+            )?;
 
         let receipt = match tx_type {
             mp_transactions::TxType::Declare => TransactionReceipt::Declare(DeclareTransactionReceipt {
@@ -1020,21 +1005,6 @@ where
                 execution_result,
             }),
             mp_transactions::TxType::DeployAccount => {
-                // In case of disabled fee, should search again for contract address
-                let contract_address = contract_address.unwrap_or_else(|| {
-                    {
-                        let transfer_event_key =
-                            starknet_core::utils::get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap();
-                        let address_in_other_event = events_converted.iter().find_map(|event| {
-                            event.keys.iter().find(|&&key| key != transfer_event_key)?;
-                            Some(Felt252Wrapper(event.from_address.clone()).0)
-                        });
-                        match address_in_other_event {
-                            Some(contract_address) => contract_address,
-                            None => Default::default(), // should we calculate it than?
-                        }
-                    }
-                });
                 TransactionReceipt::DeployAccount(DeployAccountTransactionReceipt {
                     transaction_hash,
                     actual_fee,
