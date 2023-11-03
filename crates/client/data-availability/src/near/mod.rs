@@ -59,13 +59,18 @@ impl DaClient for NearClient {
 
         // the NEAR DA server handles most of the heavy lifting for us
 
-        self.client
+        let res = self
+            .client
             .post(self.da_server_address.join("/blob")?)
             .json(&near_da_http_api_data::SubmitRequest { data: state_diff.to_vec() })
             .send()
+            .await?
+            .text()
             .await?;
 
-        todo!()
+        *self.last_published_txid.write().await = Some(res);
+
+        Ok(())
     }
 
     async fn last_published_state(&self) -> Result<bytes::Bytes> {
