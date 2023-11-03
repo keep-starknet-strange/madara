@@ -2,50 +2,49 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use async_trait::async_trait;
-use ethers::types::{I256, U256};
+use tokio::sync::RwLock;
+use url::Url;
 
 use crate::{DaClient, DaMode};
 
 pub mod config;
 use config::NearConfig;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct NearClient {
-    client: Arc<near_jsonrpc_client::JsonRpcClient>,
-    signer: near_crypto::InMemorySigner,
-    contract_account_id: near_primitives::account::id::AccountId,
+    client: Arc<reqwest::Client>,
+    last_published_txid: Arc<RwLock<Option<String>>>,
+    da_server_address: Url,
     mode: DaMode,
 }
 
-impl std::fmt::Debug for NearClient {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("NearClient")
-            .field("client", &self.client)
-            .field("signer.account_id", &self.signer.account_id)
-            .field("signer.public_key", &self.signer.public_key)
-            .field("mode", &self.mode)
-            .finish()
-    }
-}
+impl NearClient {
+    pub fn new_blocking(config: NearConfig) -> Result<Self> {
+        let blocking_client = reqwest::blocking::Client::new();
 
-impl TryFrom<NearConfig> for NearClient {
-    type Error = String;
+        let da_server_address = Url::parse(&config.da_server_address)
+            .map_err(|e| anyhow::anyhow!("error parsing NEAR DA server address: {e}"))?;
 
-    fn try_from(config: NearConfig) -> Result<Self, Self::Error> {
-        let client = near_jsonrpc_client::JsonRpcClient::connect(&config.rpc_address);
+        let da_server_is_alive = blocking_client.get(da_server_address.join("/ping")?).send();
 
-        let sequencer_account_id: near_primitives::types::AccountId =
-            config.sequencer_account_id.parse().map_err(|e| format!("Invalid sequencer account ID: {e}"))?;
+        let ok = da_server_is_alive.and_then(|r| r.text()).is_ok_and(|s| s == "pong");
 
-        let sequencer_key: near_crypto::SecretKey =
-            config.sequencer_key.parse().map_err(|e| format!("Invalid sequencer key: {e}"))?;
+        if !ok {
+            return Err(anyhow::anyhow!("Could not access NEAR DA server at {da_server_address}"));
+        }
 
-        let signer = near_crypto::InMemorySigner::from_secret_key(sequencer_account_id, sequencer_key);
+        let res = blocking_client.put(da_server_address.join("/configure")?).json(&config.da_server_config).send();
 
-        let contract_account_id =
-            config.contract_account_id.parse().map_err(|e| format!("Invalid contract account ID: {e}"))?;
+        if res.is_err() {
+            log::warn!("A configuration for the NEAR DA server was provided, but the server was already configured");
+        }
 
-        Ok(Self { client: Arc::new(client), signer, mode: config.mode, contract_account_id })
+        Ok(Self {
+            client: Arc::new(reqwest::Client::new()),
+            da_server_address,
+            last_published_txid: Arc::new(RwLock::new(None)),
+            mode: config.mode,
+        })
     }
 }
 
@@ -55,11 +54,40 @@ impl DaClient for NearClient {
         self.mode
     }
 
-    async fn last_published_state(&self) -> Result<I256> {
+    async fn publish_state_diff(&self, state_diff: bytes::Bytes) -> Result<()> {
+        // setter
+
+        // the NEAR DA server handles most of the heavy lifting for us
+
+        self.client
+            .post(self.da_server_address.join("/blob")?)
+            .json(&near_da_http_api_data::SubmitRequest { data: state_diff.to_vec() })
+            .send()
+            .await?;
+
         todo!()
     }
 
-    async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()> {
-        todo!()
+    async fn last_published_state(&self) -> Result<bytes::Bytes> {
+        // getter
+
+        // just remember the last published state from the last publish_state_diff call and return that,
+        // otherwise noop
+
+        if let Some(transaction_id) = self.last_published_txid.read().await.as_ref() {
+            let blob = self
+                .client
+                .get(self.da_server_address.join("/blob")?)
+                .query(&near_da_http_api_data::BlobRequest { transaction_id: transaction_id.clone() })
+                .send()
+                .await?
+                .json::<near_da_http_api_data::Blob>()
+                .await?;
+
+            Ok(bytes::Bytes::from(blob.data))
+        } else {
+            // There is no last-published state
+            Ok(bytes::Bytes::new())
+        }
     }
 }
