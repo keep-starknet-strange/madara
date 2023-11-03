@@ -84,9 +84,7 @@ async fn fail_if_one_txn_cannot_be_executed(madara: &ThreadSafeMadaraClient) -> 
 async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-    // from mainnet tx: 0x000c52079f33dcb44a58904fac3803fd908ac28d6632b67179ee06f2daccb4b5
-    // https://starkscan.co/tx/0x000c52079f33dcb44a58904fac3803fd908ac28d6632b67179ee06f2daccb4b5
-    let invoke_transaction = BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction {
+    let tx = BroadcastedInvokeTransaction {
         max_fee: FieldElement::ZERO,
         signature: vec![],
         nonce: FieldElement::ZERO,
@@ -99,22 +97,14 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
             FieldElement::from_hex_be("494196e88ce16bff11180d59f3c75e4ba3475d9fba76249ab5f044bcd25add6").unwrap(),
         ],
         is_query: true,
-    });
+    };
 
-    let invoke_transaction_2 = BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction {
-        max_fee: FieldElement::ZERO,
-        signature: vec![],
-        nonce: FieldElement::ONE,
-        sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap(),
-        calldata: vec![
-            FieldElement::from_hex_be("5a02acdbf218464be3dd787df7a302f71fab586cad5588410ba88b3ed7b3a21").unwrap(),
-            FieldElement::from_hex_be("3d7905601c217734671143d457f0db37f7f8883112abd34b92c4abfeafde0c3").unwrap(),
-            FieldElement::from_hex_be("2").unwrap(),
-            FieldElement::from_hex_be("e150b6c2db6ed644483b01685571de46d2045f267d437632b508c19f3eb877").unwrap(),
-            FieldElement::from_hex_be("494196e88ce16bff11180d59f3c75e4ba3475d9fba76249ab5f044bcd25add6").unwrap(),
-        ],
-        is_query: true,
-    });
+    // from mainnet tx: 0x000c52079f33dcb44a58904fac3803fd908ac28d6632b67179ee06f2daccb4b5
+    // https://starkscan.co/tx/0x000c52079f33dcb44a58904fac3803fd908ac28d6632b67179ee06f2daccb4b5
+    let invoke_transaction = BroadcastedTransaction::Invoke(tx.clone());
+
+    let invoke_transaction_2 =
+        BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction { nonce: FieldElement::ONE, ..tx });
 
     let estimates =
         rpc.estimate_fee(&vec![invoke_transaction, invoke_transaction_2], BlockId::Tag(BlockTag::Latest)).await?;
