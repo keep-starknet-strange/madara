@@ -986,12 +986,10 @@ where
             events.clone().into_iter().map(event_conversion).collect();
 
         let (actual_fee, contract_address) =
-            extract_fee_and_contract_address_from_fee_transfer_event(&events_converted)
-                .ok_or_else(|| {
-                    error!( "Failed to get data from event, probably compiled with disable-transaction-fee feature" );
-                    StarknetRpcApiError::InternalServerError
-                }
-            )?;
+            extract_fee_and_contract_address_from_fee_transfer_event(&events_converted).ok_or_else(|| {
+                error!("Failed to get data from event, probably compiled with disable-transaction-fee feature");
+                StarknetRpcApiError::InternalServerError
+            })?;
 
         let receipt = match tx_type {
             mp_transactions::TxType::Declare => TransactionReceipt::Declare(DeclareTransactionReceipt {
