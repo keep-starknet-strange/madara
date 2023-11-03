@@ -8,9 +8,9 @@ const CLASS_FLAG_TRUE: &str = "0x100000000000000000000000000000001"; // 2 ^ 128 
 const NONCE_BASE: &str = "0x10000000000000000"; // 2 ^ 64
 
 pub fn u256_to_bytes(input: U256) -> bytes::Bytes {
-    let mut buf = bytes::BytesMut::with_capacity(32);
-    input.to_little_endian(&mut buf);
-    buf.freeze()
+    let mut buf = [0u8; 32];
+    input.to_big_endian(&mut buf);
+    bytes::BytesMut::from(&buf[..]).freeze()
 }
 
 pub fn try_bytes_to_vec_u256(input: bytes::Bytes) -> anyhow::Result<Vec<U256>> {
@@ -160,4 +160,18 @@ pub fn bytes_to_felt(raw: &[u8]) -> StarkFelt {
 
 pub fn bytes_to_key(raw: &[u8]) -> PatriciaKey {
     PatriciaKey(bytes_to_felt(raw))
+}
+
+#[cfg(test)]
+mod test {
+    use ethers::types::U256;
+
+    use super::*;
+
+    #[test]
+    fn test_u256_bytes_conversion() {
+        let x = U256::from(5291);
+        let y = try_bytes_to_vec_u256(u256_to_bytes(x)).unwrap()[0];
+        assert_eq!(x, y);
+    }
 }
