@@ -51,7 +51,6 @@ jsonrpsee = { workspace = true, default-features = true, features = [
 log = { workspace = true, default-features = true }
 mp-block = { workspace = true }
 mp-felt = { workspace = true }
-mp-fee = { workspace = true }
 mp-hashers = { workspace = true }
 mp-transactions = { workspace = true, features = ["client"] }
 serde_json = { workspace = true, default-features = true }

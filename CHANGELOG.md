@@ -2,7 +2,8 @@
 
 ## Next release
 
-- feat(rpc): return deployed contract address and actual fee in get_transaction_receipt api
+- feat(rpc): return deployed contract address and actual fee in transaction
+  receipt
 - dev(compilation): add incremental compilation
 
 ## v0.5.0
