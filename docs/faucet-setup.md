@@ -76,68 +76,35 @@ or use an account like `0x2` which is based on Argent and supports multicall.
 **Example code for collecting tokens from `0x2` using starknetjs**
 
 ```javascript
-import * as starknet from "starknet";
+import * as starknet from 'starknet';
+import ERC20 from './ERC20.json' assert { type: 'json' };
 
 const eth_address =
-  "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
+  '0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7';
 const provider = new starknet.RpcProvider({
-  nodeUrl: "http://localhost:9944",
+  nodeUrl: 'http://localhost:9944',
 });
-const starkKeyPair = starknet.ec.getKeyPair(
-  "0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d",
+const account = new starknet.Account(
+  provider,
+  '0x0000000000000000000000000000000000000000000000000000000000000004',
+  '0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d',
+  '1'
 );
-const address = "0x2";
 
 async function transfer(to) {
-  const nonce = await provider.getNonceForAddress(address);
-  const chainId = await provider.getChainId();
-
-  const calldata = starknet.transaction.fromCallsToExecuteCalldata([
-    {
-      contractAddress: eth_address,
-      entrypoint: "transfer",
-      calldata: starknet.stark.compileCalldata({
-        recipient: to,
-        amount: {
-          type: "struct",
-          low: "1000000",
-          high: "0",
-        },
-      }),
+  const contract = new starknet.Contract(ERC20.abi, eth_address, provider);
+  let result = contract.populate('transfer', {
+    recipient: to,
+    amount: {
+      low: 0,
+      high: 0,
     },
-  ]);
-  const maxFee = "0x11111111111";
-  const version = "0x1";
-  const txnHash = starknet.hash.calculateTransactionHash(
-    address,
-    version,
-    calldata,
-    maxFee,
-    chainId,
-    nonce,
-  );
-  const signature = starknet.ec.sign(starkKeyPair, txnHash);
-  const invocationCall = {
-    signature,
-    contractAddress: address,
-    calldata,
-  };
-  const invocationDetails = {
-    maxFee,
-    nonce,
-    version,
-  };
+  });
 
-  // if estimating fees passes without failures, the txn should go through
-  const estimateFee = await provider.getEstimateFee(
-    invocationCall,
-    invocationDetails,
-  );
-  console.log("Estimate fee - ", estimateFee);
+  let hash = await account.execute(result, undefined, {});
 
-  const tx = await provider.invokeFunction(invocationCall, invocationDetails);
-  console.log(tx.transaction_hash);
+  console.log('Txn hash - ', hash);
 }
 
-transfer("0x11");
+transfer('0x100');
 ```
