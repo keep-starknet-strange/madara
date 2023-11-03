@@ -7,6 +7,21 @@ use url::{ParseError, Url};
 const CLASS_FLAG_TRUE: &str = "0x100000000000000000000000000000001"; // 2 ^ 128 + 1
 const NONCE_BASE: &str = "0x10000000000000000"; // 2 ^ 64
 
+pub fn u256_to_bytes(input: U256) -> bytes::Bytes {
+    let mut buf = bytes::BytesMut::with_capacity(32);
+    input.to_little_endian(&mut buf);
+    buf.freeze()
+}
+
+pub fn try_bytes_to_vec_u256(input: bytes::Bytes) -> anyhow::Result<Vec<U256>> {
+    let i = input.chunks_exact(32);
+    if !i.remainder().is_empty() {
+        Err(anyhow::anyhow!("input length is not a multiple of 32"))
+    } else {
+        Ok(i.map(U256::from).collect())
+    }
+}
+
 /// DA calldata encoding:
 /// - https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/on-chain-data
 pub fn state_diff_to_calldata(mut block_da_data: BlockDAData) -> Vec<U256> {

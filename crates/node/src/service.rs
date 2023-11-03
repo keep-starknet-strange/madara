@@ -459,7 +459,7 @@ pub fn new_full(
             }
             DaLayer::Near => {
                 let near_conf = NearConfig::try_from(&da_path)?;
-                Box::new(NearClient::try_from(near_conf).map_err(|e| ServiceError::Other(e.to_string()))?)
+                Box::new(NearClient::new_blocking(near_conf).map_err(|e| ServiceError::Other(e.to_string()))?)
             }
         };
         let retry_strategy = Box::new(RetryOnRecoverableErrors { delay: DEFAULT_SETTLEMENT_RETRY_INTERVAL });

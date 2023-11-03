@@ -29,6 +29,7 @@ use sp_runtime::traits::Block as BlockT;
 use starknet_api::block::BlockHash;
 use starknet_api::state::ThinStateDiff;
 use utils::state_diff_to_calldata;
+use utils::u256_to_bytes;
 
 use crate::da_metrics::DaMetrics;
 
@@ -103,8 +104,8 @@ impl Display for DaMode {
 #[async_trait]
 pub trait DaClient: Send + Sync {
     fn get_mode(&self) -> DaMode;
-    async fn last_published_state(&self) -> Result<I256>;
-    async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()>;
+    async fn last_published_state(&self) -> Result<bytes::Bytes>;
+    async fn publish_state_diff(&self, state_diff: bytes::Bytes) -> Result<()>;
     fn get_da_metric_labels(&self) -> HashMap<String, String>;
 }
 

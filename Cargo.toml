@@ -235,6 +235,7 @@ starknet-core-contract-client = { git = "https://github.com/keep-starknet-strang
 
 # Other third party dependencies
 anyhow = "1.0.75"
+bytes = { version = "1.5.0", default-features = false }
 flate2 = "1.0.28"
 parity-scale-codec = { version = "3.2.2", default-features = false }
 scale-info = { version = "2.10.0", default-features = false }

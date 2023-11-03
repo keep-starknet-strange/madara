@@ -14,6 +14,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
+bytes = { workspace = true, features = ["std"] }
 futures = "0.3.21"
 indexmap = { workspace = true }
 jsonrpsee = { version = "0.20.0", features = [
@@ -69,6 +70,7 @@ near-crypto = { git = "https://github.com/near/nearcore", rev = "46dc4374157a40b
 near-jsonrpc-client = { git = "https://github.com/encody/near-jsonrpc-client-rs", branch = "patch/unpin-tokio" }
 near-jsonrpc-primitives = { git = "https://github.com/near/nearcore", rev = "46dc4374157a40b3bdd1ef88139b95b69d500bd4" }
 near-primitives = { git = "https://github.com/near/nearcore", rev = "46dc4374157a40b3bdd1ef88139b95b69d500bd4" }
+near-da-http-api-data = { path = "../../../../rollup-data-availability/crates/http-api-data" }
 
 [features]
 default = []

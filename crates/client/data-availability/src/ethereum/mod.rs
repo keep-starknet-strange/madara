@@ -8,9 +8,9 @@ use async_trait::async_trait;
 use ethers::prelude::{abigen, SignerMiddleware};
 use ethers::providers::{Http, Provider};
 use ethers::signers::{LocalWallet, Signer};
-use ethers::types::{Address, I256, U256};
+use ethers::types::{Address, U256};
 
-use crate::utils::is_valid_http_endpoint;
+use crate::utils::{is_valid_http_endpoint, try_bytes_to_vec_u256, u256_to_bytes};
 use crate::{DaClient, DaMode};
 
 #[derive(Clone, Debug)]
@@ -23,7 +23,7 @@ pub struct EthereumClient {
 
 #[async_trait]
 impl DaClient for EthereumClient {
-    async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()> {
+    async fn publish_state_diff(&self, state_diff: bytes::Bytes) -> Result<()> {
         log::debug!("State Update: {:?}", state_diff);
         let fmt_tx = match self.mode {
             DaMode::Sovereign => {
@@ -50,6 +50,8 @@ impl DaClient for EthereumClient {
             }
         };
 
+        let state_diff = try_bytes_to_vec_u256(state_diff)?;
+        let fmt_tx = core_contracts.update_state(state_diff, U256::default(), U256::default());
         let tx = fmt_tx
             .send()
             .await
@@ -61,7 +63,7 @@ impl DaClient for EthereumClient {
         Ok(())
     }
 
-    async fn last_published_state(&self) -> Result<I256> {
+    async fn last_published_state(&self) -> Result<bytes::Bytes> {
         abigen!(
             STARKNET,
             r#"[
@@ -70,7 +72,12 @@ impl DaClient for EthereumClient {
         );
 
         let contract = STARKNET::new(self.cc_address, self.http_provider.clone().into());
-        contract.state_block_number().call().await.map_err(|e| anyhow::anyhow!("ethereum contract err: {e}"))
+        contract
+            .state_block_number()
+            .call()
+            .await
+            .map(|i| u256_to_bytes(i.into_raw()))
+            .map_err(|e| anyhow::anyhow!("ethereum contract err: {e}"))
     }
 
     fn get_mode(&self) -> DaMode {
