@@ -1097,30 +1097,31 @@ impl<T: Config> Pallet<T> {
 
         fn execute_tx_and_rollback<T: pallet::Config, S: State + StateChanges + FeeConfig>(
             txs: Vec<UserTransaction>,
-            _state: &mut S,
+            state: &mut S,
             block_context: &BlockContext,
             disable_nonce_validation: bool,
             chain_id: Felt252Wrapper,
         ) -> Vec<TransactionExecutionResult<TransactionExecutionInfo>> {
             let mut execution_results = vec![];
             let _: Result<_, DispatchError> = storage::transactional::with_transaction(|| {
-                let mut blockifier_state_adapter = BlockifierStateAdapter::<T>::default();
                 for tx in txs {
                     let result = match tx {
                         UserTransaction::Declare(tx, contract_class) => {
-                            let executable = tx.try_into_executable::<T::SystemHash>(chain_id, contract_class, true)
-                                .map_err(|_| Error::<T>::InvalidContractClass).expect("Contract class should be valid");
-                            executable.execute(&mut blockifier_state_adapter, block_context, true, disable_nonce_validation)
-                        },
+                            let executable = tx
+                                .try_into_executable::<T::SystemHash>(chain_id, contract_class, true)
+                                .map_err(|_| Error::<T>::InvalidContractClass)
+                                .expect("Contract class should be valid");
+                            executable.execute(state, block_context, true, disable_nonce_validation)
+                        }
                         UserTransaction::DeployAccount(tx) => {
                             let executable = tx.into_executable::<T::SystemHash>(chain_id, true);
-                            executable.execute(&mut blockifier_state_adapter, block_context, true, disable_nonce_validation)
-                        },
+                            executable.execute(state, block_context, true, disable_nonce_validation)
+                        }
                         UserTransaction::Invoke(tx) => {
                             let executable = tx.into_executable::<T::SystemHash>(chain_id, true);
-                            executable.execute(&mut blockifier_state_adapter, block_context, true, disable_nonce_validation)
+                            executable.execute(state, block_context, true, disable_nonce_validation)
                         }
-                    }; 
+                    };
                     execution_results.push(result);
                 }
                 storage::TransactionOutcome::Rollback(Ok(()))

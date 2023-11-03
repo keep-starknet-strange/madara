@@ -641,8 +641,11 @@ where
                 StarknetRpcApiError::ContractError
             })?;
 
-        let estimates = fee_estimates.into_iter().map(|x| FeeEstimate { gas_price: 0, gas_consumed: x.0, overall_fee: x.1 }).collect();
-        
+        let estimates = fee_estimates
+            .into_iter()
+            .map(|x| FeeEstimate { gas_price: 0, gas_consumed: x.1, overall_fee: x.0 })
+            .collect();
+
         Ok(estimates)
     }
 
