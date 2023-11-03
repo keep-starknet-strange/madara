@@ -3,6 +3,7 @@
 ## Next release
 
 - dev(compilation): add incremental compilation
+- feat(rpc): add support for bulk estimate fee
 
 ## v0.5.0
 
