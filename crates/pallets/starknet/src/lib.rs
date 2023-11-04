@@ -81,6 +81,7 @@ use frame_system::pallet_prelude::*;
 use mp_block::{Block as StarknetBlock, Header as StarknetHeader};
 use mp_digest_log::MADARA_ENGINE_ID;
 use mp_fee::INITIAL_GAS;
+use mp_state::FeeConfig;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
@@ -1191,6 +1192,7 @@ impl<T: Config> Pallet<T> {
         T::ChainId::get()
     }
     pub fn is_transaction_fee_disabled() -> bool {
+        // <BlockifierStateAdapter<T> as FeeConfig>::is_transaction_fee_disabled()
         BlockifierStateAdapter::<T>::default().is_transaction_fee_disabled()
     }
 }
