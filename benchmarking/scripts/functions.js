@@ -40,7 +40,7 @@ async function executeERC20Transfer(userContext, events, done) {
     "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00",
     "0x0000000000000000000000000000000000000000000000000000000000000002",
     amount,
-    nonce
+    nonce,
   ).send();
 
   // Update userContext nonce
@@ -57,7 +57,7 @@ async function executeERC721Mint(userContext, events, done) {
     ACCOUNT_CONTRACT,
     "0x0000000000000000000000000000000000000000000000000000000000000002",
     numberToHex(nonce, 256),
-    nonce
+    nonce,
   ).send();
 
   // Update userContext nonce
