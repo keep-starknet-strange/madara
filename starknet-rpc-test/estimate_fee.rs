@@ -84,9 +84,7 @@ async fn fail_if_one_txn_cannot_be_executed(madara: &ThreadSafeMadaraClient) -> 
 async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-    // from mainnet tx: 0x000c52079f33dcb44a58904fac3803fd908ac28d6632b67179ee06f2daccb4b5
-    // https://starkscan.co/tx/0x000c52079f33dcb44a58904fac3803fd908ac28d6632b67179ee06f2daccb4b5
-    let invoke_transaction = BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction {
+    let tx = BroadcastedInvokeTransaction {
         max_fee: FieldElement::ZERO,
         signature: vec![],
         nonce: FieldElement::ZERO,
@@ -99,18 +97,25 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
             FieldElement::from_hex_be("494196e88ce16bff11180d59f3c75e4ba3475d9fba76249ab5f044bcd25add6").unwrap(),
         ],
         is_query: true,
-    });
+    };
 
-    let estimate =
-        rpc.estimate_fee(&vec![invoke_transaction.clone(), invoke_transaction], BlockId::Tag(BlockTag::Latest)).await?;
+    // from mainnet tx: 0x000c52079f33dcb44a58904fac3803fd908ac28d6632b67179ee06f2daccb4b5
+    // https://starkscan.co/tx/0x000c52079f33dcb44a58904fac3803fd908ac28d6632b67179ee06f2daccb4b5
+    let invoke_transaction = BroadcastedTransaction::Invoke(tx.clone());
+
+    let invoke_transaction_2 =
+        BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction { nonce: FieldElement::ONE, ..tx });
+
+    let estimates =
+        rpc.estimate_fee(&vec![invoke_transaction, invoke_transaction_2], BlockId::Tag(BlockTag::Latest)).await?;
 
     // TODO: instead execute the tx and check that the actual fee are the same as the estimated ones
-    assert_eq!(estimate.len(), 2);
-    assert_eq!(estimate[0].overall_fee, 410);
-    assert_eq!(estimate[1].overall_fee, 410);
+    assert_eq!(estimates.len(), 2);
+    assert_eq!(estimates[0].overall_fee, 410);
+    assert_eq!(estimates[1].overall_fee, 410);
     // https://starkscan.co/block/5
-    assert_eq!(estimate[0].gas_consumed, 0);
-    assert_eq!(estimate[1].gas_consumed, 0);
+    assert_eq!(estimates[0].gas_consumed, 0);
+    assert_eq!(estimates[1].gas_consumed, 0);
 
     Ok(())
 }
