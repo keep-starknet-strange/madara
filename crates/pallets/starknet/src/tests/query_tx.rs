@@ -20,11 +20,9 @@ fn estimates_tx_fee_successfully_no_validate() {
         let tx_2 = get_invoke_dummy(Felt252Wrapper::ONE);
         let tx_2 = UserTransaction::Invoke(tx_2.into());
 
-        let mut tx_vec = Vec::new();
-        tx_vec.push(tx_1.clone());
-        tx_vec.push(tx_2.clone());
+        let txs = vec![tx_1, tx_2];
 
-        let fees = Starknet::estimate_fee(tx_vec).expect("estimate should not fail");
+        let fees = Starknet::estimate_fee(txs).expect("estimate should not fail");
 
         let (actual, l1_gas_usage) = fees[0];
         assert!(actual > 0, "actual fee is missing");
@@ -45,8 +43,7 @@ fn estimates_tx_fee_with_query_version() {
         let pre_storage = Starknet::pending().len();
         let tx = UserTransaction::Invoke(tx.into());
 
-        let mut tx_vec = Vec::new();
-        tx_vec.push(tx.clone());
+        let tx_vec = vec![tx];
 
         assert_ok!(Starknet::estimate_fee(tx_vec));
 
@@ -64,8 +61,7 @@ fn executable_tx_should_not_be_estimable() {
         let tx_hash = tx.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false);
         tx.signature = sign_message_hash(tx_hash);
 
-        let mut tx_vec = Vec::new();
-        tx_vec.push(UserTransaction::Invoke(tx.clone().into()));
+        let tx_vec = vec![UserTransaction::Invoke(tx.clone().into())];
 
         // it should not be valid for estimate calls
         assert_err!(Starknet::estimate_fee(tx_vec), Error::<MockRuntime>::TransactionExecutionFailed);
@@ -85,8 +81,7 @@ fn query_tx_should_not_be_executable() {
         let tx_hash = tx.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, true);
         tx.signature = sign_message_hash(tx_hash);
 
-        let mut tx_vec = Vec::new();
-        tx_vec.push(UserTransaction::Invoke(tx.clone().into()));
+        let tx_vec = vec![UserTransaction::Invoke(tx.clone().into())];
 
         // it should be valid for estimate calls
         assert_ok!(Starknet::estimate_fee(tx_vec));
