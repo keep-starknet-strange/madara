@@ -22,6 +22,8 @@ pub struct BlockFetchConfig {
     pub chain_id: starknet_ff::FieldElement,
     /// The number of tasks spawned to fetch blocks.
     pub workers: u32,
+    /// Whether to play a sound when a new block is fetched.
+    pub sound: bool,
 }
 
 /// Used to determine which Ids are required to be fetched.

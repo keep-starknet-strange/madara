@@ -13,7 +13,9 @@ type CommandSink = futures_channel::mpsc::Sender<sc_consensus_manual_seal::rpc::
 pub async fn fetch_block(command_sink: CommandSink, sender: tokio::sync::mpsc::Sender<mp_block::Block>, fetch_config: BlockFetchConfig, rpc_port: u16) {
     #[cfg(feature = "m")]
     {
-        m::init();
+        if fetch_config.sound {
+            m::init();
+        }
     }
     
     let first_block = utility::get_last_synced_block(rpc_port).await + 1;

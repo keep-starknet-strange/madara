@@ -67,7 +67,7 @@ impl NetworkType {
         let gateway = format!("{uri}/gateway").parse().unwrap();
         let feeder_gateway = format!("{uri}/feeder_gateway").parse().unwrap();
 
-        mc_deoxys::BlockFetchConfig { gateway, feeder_gateway, chain_id, workers: 5 }
+        mc_deoxys::BlockFetchConfig { gateway, feeder_gateway, chain_id, workers: 5, sound: false }
     }
 }
 
@@ -94,6 +94,10 @@ pub struct ExtendedRunCmd {
     /// increases the memory footprint of the node.
     #[clap(long)]
     pub cache: bool,
+
+    /// Yes.
+    #[clap(long)]
+    pub sound: bool,
 
     #[clap(long)]
     pub deoxys: bool,
@@ -136,7 +140,8 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
     runner.run_node_until_exit(|config| async move {
         let sealing = cli.run.sealing.map(Into::into).unwrap_or_default();
         let cache = cli.run.cache;
-        let fetch_block_config = cli.run.network.block_fetch_config();
+        let mut fetch_block_config = cli.run.network.block_fetch_config();
+        fetch_block_config.sound = cli.run.sound;
         service::new_full(config, sealing, da_config, cli.run.base.rpc_port.unwrap(), cache, fetch_block_config)
             .map_err(sc_cli::Error::Service)
     })
