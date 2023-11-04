@@ -727,8 +727,8 @@
             Starknet::chain_id()
         }
 
-        <span class="kw">fn </span>estimate_fee(transaction: UserTransaction, is_query: bool) -&gt; <span class="prelude-ty">Result</span>&lt;(u64, u64), DispatchError&gt; {
-            Starknet::estimate_fee(transaction, is_query)
+        <span class="kw">fn </span>estimate_fee(transactions: Vec&lt;UserTransaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(u64, u64)&gt;, DispatchError&gt; {
+            Starknet::estimate_fee(transactions)
         }
 
         <span class="kw">fn </span>get_starknet_events_and_their_associated_tx_hash(block_extrinsics: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;, chain_id: Felt252Wrapper) -&gt; Vec&lt;(Felt252Wrapper, StarknetEvent)&gt; {

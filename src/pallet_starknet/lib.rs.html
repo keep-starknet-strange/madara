@@ -1175,6 +1175,22 @@
 <a href="#1175" id="1175">1175</a>
 <a href="#1176" id="1176">1176</a>
 <a href="#1177" id="1177">1177</a>
+<a href="#1178" id="1178">1178</a>
+<a href="#1179" id="1179">1179</a>
+<a href="#1180" id="1180">1180</a>
+<a href="#1181" id="1181">1181</a>
+<a href="#1182" id="1182">1182</a>
+<a href="#1183" id="1183">1183</a>
+<a href="#1184" id="1184">1184</a>
+<a href="#1185" id="1185">1185</a>
+<a href="#1186" id="1186">1186</a>
+<a href="#1187" id="1187">1187</a>
+<a href="#1188" id="1188">1188</a>
+<a href="#1189" id="1189">1189</a>
+<a href="#1190" id="1190">1190</a>
+<a href="#1191" id="1191">1191</a>
+<a href="#1192" id="1192">1192</a>
+<a href="#1193" id="1193">1193</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1234,7 +1250,6 @@
 
 <span class="kw">use </span>blockifier::execution::entry_point::{CallEntryPoint, CallType, EntryPointExecutionContext};
 <span class="kw">use </span>blockifier::state::cached_state::ContractStorageKey;
-<span class="kw">use </span>blockifier::state::state_api::State;
 <span class="kw">use </span>blockifier::transaction::objects::{TransactionExecutionInfo, TransactionExecutionResult};
 <span class="kw">use </span>starknet_api::state::StorageKey;
 <span class="kw">use </span>starknet_api::transaction::{Calldata, Event <span class="kw">as </span>StarknetEvent, Fee};
@@ -1262,7 +1277,6 @@
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_hashers::HasherT;
 <span class="kw">use </span>mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
-<span class="kw">use </span>mp_state::{FeeConfig, StateChanges};
 <span class="kw">use </span>mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 <span class="kw">use </span>mp_transactions::execution::{Execute, Validate};
 <span class="kw">use </span>mp_transactions::{
@@ -2269,64 +2283,82 @@
     }
 
     <span class="doccomment">/// Estimate the fee associated with transaction
-    </span><span class="kw">pub fn </span>estimate_fee(transaction: UserTransaction, is_query: bool) -&gt; <span class="prelude-ty">Result</span>&lt;(u64, u64), DispatchError&gt; {
+    </span><span class="kw">pub fn </span>estimate_fee(transactions: Vec&lt;UserTransaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(u64, u64)&gt;, DispatchError&gt; {
         <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
 
-        <span class="kw">fn </span>execute_tx_and_rollback&lt;S: State + StateChanges + FeeConfig&gt;(
-            tx: <span class="kw">impl </span>Execute,
-            state: <span class="kw-2">&amp;mut </span>S,
+        <span class="kw">fn </span>execute_txs_and_rollback&lt;T: pallet::Config&gt;(
+            txs: Vec&lt;UserTransaction&gt;,
             block_context: <span class="kw-2">&amp;</span>BlockContext,
             disable_nonce_validation: bool,
-        ) -&gt; TransactionExecutionResult&lt;TransactionExecutionInfo&gt; {
-            <span class="comment">// TODO: initialization can probably be skiped by using mem::MaybeUninit
-            </span><span class="kw">let </span><span class="kw-2">mut </span>execution_result = <span class="prelude-val">Ok</span>(Default::default());
+            chain_id: Felt252Wrapper,
+        ) -&gt; Vec&lt;TransactionExecutionResult&lt;TransactionExecutionInfo&gt;&gt; {
+            <span class="kw">let </span><span class="kw-2">mut </span>execution_results = <span class="macro">vec!</span>[];
             <span class="kw">let _</span>: <span class="prelude-ty">Result</span>&lt;<span class="kw">_</span>, DispatchError&gt; = storage::transactional::with_transaction(|| {
-                execution_result = tx.execute(state, block_context, <span class="bool-val">true</span>, disable_nonce_validation);
+                <span class="kw">for </span>tx <span class="kw">in </span>txs {
+                    <span class="kw">let </span>result = <span class="kw">match </span>tx {
+                        UserTransaction::Declare(tx, contract_class) =&gt; {
+                            <span class="kw">let </span>executable = tx
+                                .try_into_executable::&lt;T::SystemHash&gt;(chain_id, contract_class, <span class="bool-val">true</span>)
+                                .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::InvalidContractClass)
+                                .expect(<span class="string">&quot;Contract class should be valid&quot;</span>);
+                            executable.execute(
+                                <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
+                                block_context,
+                                <span class="bool-val">true</span>,
+                                disable_nonce_validation,
+                            )
+                        }
+                        UserTransaction::DeployAccount(tx) =&gt; {
+                            <span class="kw">let </span>executable = tx.into_executable::&lt;T::SystemHash&gt;(chain_id, <span class="bool-val">true</span>);
+                            executable.execute(
+                                <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
+                                block_context,
+                                <span class="bool-val">true</span>,
+                                disable_nonce_validation,
+                            )
+                        }
+                        UserTransaction::Invoke(tx) =&gt; {
+                            <span class="kw">let </span>executable = tx.into_executable::&lt;T::SystemHash&gt;(chain_id, <span class="bool-val">true</span>);
+                            executable.execute(
+                                <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
+                                block_context,
+                                <span class="bool-val">true</span>,
+                                disable_nonce_validation,
+                            )
+                        }
+                    };
+                    execution_results.push(result);
+                }
                 storage::TransactionOutcome::Rollback(<span class="prelude-val">Ok</span>(()))
             });
-            execution_result
+            execution_results
         }
 
-        <span class="kw">let </span><span class="kw-2">mut </span>blockifier_state_adapter = BlockifierStateAdapter::&lt;T&gt;::default();
-        <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
-        <span class="kw">let </span>disable_nonce_validation = T::DisableNonceValidation::get();
+        <span class="kw">let </span>execution_results = execute_txs_and_rollback::&lt;T&gt;(
+            transactions,
+            <span class="kw-2">&amp;</span><span class="self">Self</span>::get_block_context(),
+            T::DisableNonceValidation::get(),
+            chain_id,
+        );
 
-        <span class="kw">let </span>execution_result = <span class="kw">match </span>transaction {
-            UserTransaction::Declare(tx, contract_class) =&gt; execute_tx_and_rollback(
-                tx.try_into_executable::&lt;T::SystemHash&gt;(chain_id, contract_class, is_query)
-                    .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::InvalidContractClass)<span class="question-mark">?</span>,
-                <span class="kw-2">&amp;mut </span>blockifier_state_adapter,
-                <span class="kw-2">&amp;</span>block_context,
-                disable_nonce_validation,
-            ),
-            UserTransaction::DeployAccount(tx) =&gt; execute_tx_and_rollback(
-                tx.into_executable::&lt;T::SystemHash&gt;(chain_id, is_query),
-                <span class="kw-2">&amp;mut </span>blockifier_state_adapter,
-                <span class="kw-2">&amp;</span>block_context,
-                disable_nonce_validation,
-            ),
-            UserTransaction::Invoke(tx) =&gt; execute_tx_and_rollback(
-                tx.into_executable::&lt;T::SystemHash&gt;(chain_id, is_query),
-                <span class="kw-2">&amp;mut </span>blockifier_state_adapter,
-                <span class="kw-2">&amp;</span>block_context,
-                disable_nonce_validation,
-            ),
-        };
-
-        <span class="kw">match </span>execution_result {
-            <span class="prelude-val">Ok</span>(tx_exec_info) =&gt; {
-                <span class="macro">log!</span>(debug, <span class="string">&quot;Successfully estimated fee: {:?}&quot;</span>, tx_exec_info);
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(gas_usage) = tx_exec_info.actual_resources.<span class="number">0</span>.get(<span class="string">&quot;l1_gas_usage&quot;</span>) {
-                    <span class="prelude-val">Ok</span>((tx_exec_info.actual_fee.<span class="number">0 </span><span class="kw">as </span>u64, <span class="kw-2">*</span>gas_usage <span class="kw">as </span>u64))
-                } <span class="kw">else </span>{
-                    <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed.into())
+        <span class="kw">let </span><span class="kw-2">mut </span>results = <span class="macro">vec!</span>[];
+        <span class="kw">for </span>res <span class="kw">in </span>execution_results {
+            <span class="kw">match </span>res {
+                <span class="prelude-val">Ok</span>(tx_exec_info) =&gt; {
+                    <span class="macro">log!</span>(info, <span class="string">&quot;Successfully estimated fee: {:?}&quot;</span>, tx_exec_info);
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(l1_gas_usage) = tx_exec_info.actual_resources.<span class="number">0</span>.get(<span class="string">&quot;l1_gas_usage&quot;</span>) {
+                        results.push((tx_exec_info.actual_fee.<span class="number">0 </span><span class="kw">as </span>u64, <span class="kw-2">*</span>l1_gas_usage <span class="kw">as </span>u64));
+                    } <span class="kw">else </span>{
+                        <span class="kw">return </span><span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed.into());
+                    }
+                }
+                <span class="prelude-val">Err</span>(e) =&gt; {
+                    <span class="macro">log!</span>(info, <span class="string">&quot;Failed to estimate fee: {:?}&quot;</span>, e);
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed.into());
                 }
             }
-            <span class="prelude-val">Err</span>(e) =&gt; {
-                <span class="macro">log!</span>(error, <span class="string">&quot;Failed to estimate fee: {:?}&quot;</span>, e);
-                <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed.into())
-            }
         }
+        <span class="prelude-val">Ok</span>(results)
     }
 
     <span class="kw">pub fn </span>emit_and_store_tx_and_fees_events(

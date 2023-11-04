@@ -1079,6 +1079,12 @@
 <a href="#1079" id="1079">1079</a>
 <a href="#1080" id="1080">1080</a>
 <a href="#1081" id="1081">1081</a>
+<a href="#1082" id="1082">1082</a>
+<a href="#1083" id="1083">1083</a>
+<a href="#1084" id="1084">1084</a>
+<a href="#1085" id="1085">1085</a>
+<a href="#1086" id="1086">1086</a>
+<a href="#1087" id="1087">1087</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1700,27 +1706,33 @@
         <span class="kw">let </span>best_block_hash = <span class="self">self</span>.client.info().best_hash;
         <span class="kw">let </span>chain_id = Felt252Wrapper(<span class="self">self</span>.chain_id()<span class="question-mark">?</span>.<span class="number">0</span>);
 
-        <span class="kw">let </span><span class="kw-2">mut </span>estimates = <span class="macro">vec!</span>[];
+        <span class="kw">let </span><span class="kw-2">mut </span>transactions = <span class="macro">vec!</span>[];
         <span class="kw">for </span>tx <span class="kw">in </span>request {
             <span class="kw">let </span>tx = tx.try_into().map_err(|e| {
                 <span class="macro">error!</span>(<span class="string">&quot;Failed to convert BroadcastedTransaction to UserTransaction: {e}&quot;</span>);
                 StarknetRpcApiError::InternalServerError
             })<span class="question-mark">?</span>;
-            <span class="kw">let </span>(actual_fee, gas_usage) = <span class="self">self
-                </span>.client
-                .runtime_api()
-                .estimate_fee(substrate_block_hash, tx, is_query)
-                .map_err(|e| {
-                    <span class="macro">error!</span>(<span class="string">&quot;Request parameters error: {e}&quot;</span>);
-                    StarknetRpcApiError::InternalServerError
-                })<span class="question-mark">?
-                </span>.map_err(|e| {
-                    <span class="macro">error!</span>(<span class="string">&quot;Failed to call function: {:#?}&quot;</span>, e);
-                    StarknetRpcApiError::ContractError
-                })<span class="question-mark">?</span>;
-
-            estimates.push(FeeEstimate { gas_price: <span class="number">0</span>, gas_consumed: gas_usage, overall_fee: actual_fee });
+            transactions.push(tx);
         }
+
+        <span class="kw">let </span>fee_estimates = <span class="self">self
+            </span>.client
+            .runtime_api()
+            .estimate_fee(substrate_block_hash, transactions)
+            .map_err(|e| {
+                <span class="macro">error!</span>(<span class="string">&quot;Request parameters error: {e}&quot;</span>);
+                StarknetRpcApiError::InternalServerError
+            })<span class="question-mark">?
+            </span>.map_err(|e| {
+                <span class="macro">error!</span>(<span class="string">&quot;Failed to call function: {:#?}&quot;</span>, e);
+                StarknetRpcApiError::ContractError
+            })<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>estimates = fee_estimates
+            .into_iter()
+            .map(|x| FeeEstimate { gas_price: <span class="number">0</span>, gas_consumed: x.<span class="number">1</span>, overall_fee: x.<span class="number">0 </span>})
+            .collect();
+
         <span class="prelude-val">Ok</span>(estimates)
     }
 
