@@ -66,6 +66,8 @@ sp_api::decl_runtime_apis! {
         fn get_tx_execution_outcome(tx_hash: TransactionHash) -> Option<Vec<u8>>;
         /// Return the block context
         fn get_block_context() -> BlockContext;
+        /// Return is fee disabled in state
+        fn is_transaction_fee_disabled() -> bool;
     }
 
     pub trait ConvertTransactionRuntimeApi {

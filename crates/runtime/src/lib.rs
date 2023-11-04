@@ -263,6 +263,10 @@ impl_runtime_apis! {
             Starknet::chain_id()
         }
 
+        fn is_transaction_fee_disabled() -> bool {
+            Starknet::is_transaction_fee_disabled()
+        }
+
         fn estimate_fee(transaction: UserTransaction, is_query: bool) -> Result<(u64, u64), DispatchError> {
             Starknet::estimate_fee(transaction, is_query)
         }

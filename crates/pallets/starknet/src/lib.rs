@@ -1174,4 +1174,7 @@ impl<T: Config> Pallet<T> {
     pub fn chain_id() -> Felt252Wrapper {
         T::ChainId::get()
     }
+    pub fn is_transaction_fee_disabled() -> bool {
+        BlockifierStateAdapter::<T>::default().is_transaction_fee_disabled()
+    }
 }
