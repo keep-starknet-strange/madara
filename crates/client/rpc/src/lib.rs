@@ -619,27 +619,33 @@ where
         let best_block_hash = self.client.info().best_hash;
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
-        let mut estimates = vec![];
+        let mut transactions = vec![];
         for tx in request {
             let tx = tx.try_into().map_err(|e| {
                 error!("Failed to convert BroadcastedTransaction to UserTransaction: {e}");
                 StarknetRpcApiError::InternalServerError
             })?;
-            let (actual_fee, gas_usage) = self
-                .client
-                .runtime_api()
-                .estimate_fee(substrate_block_hash, tx, is_query)
-                .map_err(|e| {
-                    error!("Request parameters error: {e}");
-                    StarknetRpcApiError::InternalServerError
-                })?
-                .map_err(|e| {
-                    error!("Failed to call function: {:#?}", e);
-                    StarknetRpcApiError::ContractError
-                })?;
-
-            estimates.push(FeeEstimate { gas_price: 0, gas_consumed: gas_usage, overall_fee: actual_fee });
+            transactions.push(tx);
         }
+
+        let fee_estimates = self
+            .client
+            .runtime_api()
+            .estimate_fee(substrate_block_hash, transactions)
+            .map_err(|e| {
+                error!("Request parameters error: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?
+            .map_err(|e| {
+                error!("Failed to call function: {:#?}", e);
+                StarknetRpcApiError::ContractError
+            })?;
+
+        let estimates = fee_estimates
+            .into_iter()
+            .map(|x| FeeEstimate { gas_price: 0, gas_consumed: x.1, overall_fee: x.0 })
+            .collect();
+
         Ok(estimates)
     }
 

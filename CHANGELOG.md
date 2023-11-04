@@ -4,7 +4,9 @@
 
 - feat(rpc): return deployed contract address and actual fee in transaction
   receipt
+- chore: update starknet-js version in faucet-setup docs
 - dev(compilation): add incremental compilation
+- feat(rpc): add support for bulk estimate fee
 
 ## v0.5.0
 

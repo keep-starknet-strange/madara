@@ -14,19 +14,23 @@ fn estimates_tx_fee_successfully_no_validate() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
-        let tx = get_invoke_dummy(Felt252Wrapper::ZERO);
-        let tx = UserTransaction::Invoke(tx.into());
+        let tx_1: mp_transactions::InvokeTransactionV1 = get_storage_read_write_dummy();
+        let tx_1 = UserTransaction::Invoke(tx_1.into());
 
-        let (actual, l1_gas_usage) = Starknet::estimate_fee(tx, true).unwrap();
-        assert!(actual > 0, "actual fee is missing");
-        assert!(l1_gas_usage == 0, "this should not be charged any l1_gas as it does not store nor send messages");
+        let tx_2 = get_invoke_dummy(Felt252Wrapper::ONE);
+        let tx_2 = UserTransaction::Invoke(tx_2.into());
 
-        let tx = get_storage_read_write_dummy();
-        let tx = UserTransaction::Invoke(tx.into());
+        let txs = vec![tx_1, tx_2];
 
-        let (actual, l1_gas_usage) = Starknet::estimate_fee(tx, true).unwrap();
+        let fees = Starknet::estimate_fee(txs).expect("estimate should not fail");
+
+        let (actual, l1_gas_usage) = fees[0];
         assert!(actual > 0, "actual fee is missing");
         assert!(l1_gas_usage > 0, "this should be charged l1_gas as it store a value to storage");
+
+        let (actual, l1_gas_usage) = fees[1];
+        assert!(actual > 0, "actual fee is missing");
+        assert!(l1_gas_usage == 0, "this should not be charged any l1_gas as it does not store nor send messages");
     });
 }
 
@@ -39,7 +43,9 @@ fn estimates_tx_fee_with_query_version() {
         let pre_storage = Starknet::pending().len();
         let tx = UserTransaction::Invoke(tx.into());
 
-        assert_ok!(Starknet::estimate_fee(tx, true));
+        let tx_vec = vec![tx];
+
+        assert_ok!(Starknet::estimate_fee(tx_vec));
 
         assert!(pre_storage == Starknet::pending().len(), "estimate should not add a tx to pending");
     });
@@ -55,11 +61,10 @@ fn executable_tx_should_not_be_estimable() {
         let tx_hash = tx.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false);
         tx.signature = sign_message_hash(tx_hash);
 
+        let tx_vec = vec![UserTransaction::Invoke(tx.clone().into())];
+
         // it should not be valid for estimate calls
-        assert_err!(
-            Starknet::estimate_fee(UserTransaction::Invoke(tx.clone().into()), true),
-            Error::<MockRuntime>::TransactionExecutionFailed
-        );
+        assert_err!(Starknet::estimate_fee(tx_vec), Error::<MockRuntime>::TransactionExecutionFailed);
 
         // it should be executable
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), tx.clone().into()));
@@ -76,8 +81,10 @@ fn query_tx_should_not_be_executable() {
         let tx_hash = tx.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, true);
         tx.signature = sign_message_hash(tx_hash);
 
+        let tx_vec = vec![UserTransaction::Invoke(tx.clone().into())];
+
         // it should be valid for estimate calls
-        assert_ok!(Starknet::estimate_fee(UserTransaction::Invoke(tx.clone().into()), true),);
+        assert_ok!(Starknet::estimate_fee(tx_vec));
 
         // it should not be executable
         assert_err!(
