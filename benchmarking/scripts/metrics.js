@@ -46,7 +46,7 @@ async function main() {
   if (type !== erc20 && type !== erc721) {
     throw new Error(
       "Please provide a type with --type flag, e.g. --type erc20 or --type erc721, current type is: " +
-        type,
+        type
     );
   }
 
@@ -91,12 +91,12 @@ async function main() {
         value: avgTps,
         extra: hostSpec(),
       },
-    ]),
+    ])
   );
 
   console.log(`Benchmark running on:\n${hostSpec()}`);
   console.log(
-    `Average TPS : ${avgTps} (avgExtrinsicsPerBlock: ${avgExtrinsicsPerBlock})`,
+    `Average TPS : ${avgTps} (avgExtrinsicsPerBlock: ${avgExtrinsicsPerBlock})`
   );
 }
 

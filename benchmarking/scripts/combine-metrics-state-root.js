@@ -17,7 +17,7 @@ function main() {
 
   fs.writeFileSync(
     "reports/metrics-state-root.json",
-    JSON.stringify(finalOutput),
+    JSON.stringify(finalOutput)
   );
 }
 
