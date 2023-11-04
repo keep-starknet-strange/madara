@@ -2,6 +2,7 @@
 
 ## Next release
 
+- chore: update starknet-js version in faucet-setup docs
 - dev(compilation): add incremental compilation
 
 ## v0.5.0
