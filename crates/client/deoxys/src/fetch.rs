@@ -166,5 +166,11 @@ async fn create_block(command_sink: &mut CommandSink, _parent_hash: Option<H256>
         .await
         .map_err(|err| format!("failed to seal block: {err}"))?
         .map_err(|err| format!("failed to seal block: {err}"))?;
+
+    #[cfg(feature = "m")]
+    {
+        super::m::play_note(create_block_info.hash.to_low_u64_ne());
+    }
+
     Ok(create_block_info.hash)
 }

@@ -53,6 +53,9 @@ default-members = [
   "crates/client/commitment-state-diff",
 ]
 
+[profile.dev]
+panic = "abort"
+
 [profile.release]
 panic = "unwind"
 
