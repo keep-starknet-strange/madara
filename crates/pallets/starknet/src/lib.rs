@@ -57,7 +57,6 @@ mod offchain_worker;
 
 use blockifier::execution::entry_point::{CallEntryPoint, CallType, EntryPointExecutionContext};
 use blockifier::state::cached_state::ContractStorageKey;
-use blockifier::state::state_api::State;
 use blockifier::transaction::objects::{TransactionExecutionInfo, TransactionExecutionResult};
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee};
@@ -85,7 +84,6 @@ use mp_fee::INITIAL_GAS;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
-use mp_state::{FeeConfig, StateChanges};
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_transactions::execution::{Execute, Validate};
 use mp_transactions::{
@@ -1095,9 +1093,8 @@ impl<T: Config> Pallet<T> {
     pub fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
         let chain_id = Self::chain_id();
 
-        fn execute_tx_and_rollback<T: pallet::Config, S: State + StateChanges + FeeConfig>(
+        fn execute_txs_and_rollback<T: pallet::Config>(
             txs: Vec<UserTransaction>,
-            state: &mut S,
             block_context: &BlockContext,
             disable_nonce_validation: bool,
             chain_id: Felt252Wrapper,
@@ -1111,15 +1108,30 @@ impl<T: Config> Pallet<T> {
                                 .try_into_executable::<T::SystemHash>(chain_id, contract_class, true)
                                 .map_err(|_| Error::<T>::InvalidContractClass)
                                 .expect("Contract class should be valid");
-                            executable.execute(state, block_context, true, disable_nonce_validation)
+                            executable.execute(
+                                &mut BlockifierStateAdapter::<T>::default(),
+                                block_context,
+                                true,
+                                disable_nonce_validation,
+                            )
                         }
                         UserTransaction::DeployAccount(tx) => {
                             let executable = tx.into_executable::<T::SystemHash>(chain_id, true);
-                            executable.execute(state, block_context, true, disable_nonce_validation)
+                            executable.execute(
+                                &mut BlockifierStateAdapter::<T>::default(),
+                                block_context,
+                                true,
+                                disable_nonce_validation,
+                            )
                         }
                         UserTransaction::Invoke(tx) => {
                             let executable = tx.into_executable::<T::SystemHash>(chain_id, true);
-                            executable.execute(state, block_context, true, disable_nonce_validation)
+                            executable.execute(
+                                &mut BlockifierStateAdapter::<T>::default(),
+                                block_context,
+                                true,
+                                disable_nonce_validation,
+                            )
                         }
                     };
                     execution_results.push(result);
@@ -1129,9 +1141,8 @@ impl<T: Config> Pallet<T> {
             execution_results
         }
 
-        let execution_results = execute_tx_and_rollback::<T, _>(
+        let execution_results = execute_txs_and_rollback::<T>(
             transactions,
-            &mut BlockifierStateAdapter::<T>::default(),
             &Self::get_block_context(),
             T::DisableNonceValidation::get(),
             chain_id,
@@ -1142,8 +1153,8 @@ impl<T: Config> Pallet<T> {
             match res {
                 Ok(tx_exec_info) => {
                     log!(info, "Successfully estimated fee: {:?}", tx_exec_info);
-                    if let Some(gas_usage) = tx_exec_info.actual_resources.0.get("l1_gas_usage") {
-                        results.push((tx_exec_info.actual_fee.0 as u64, *gas_usage as u64));
+                    if let Some(l1_gas_usage) = tx_exec_info.actual_resources.0.get("l1_gas_usage") {
+                        results.push((tx_exec_info.actual_fee.0 as u64, *l1_gas_usage as u64));
                     } else {
                         return Err(Error::<T>::TransactionExecutionFailed.into());
                     }

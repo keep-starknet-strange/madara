@@ -14,10 +14,10 @@ fn estimates_tx_fee_successfully_no_validate() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
-        let tx_1 = get_invoke_dummy(Felt252Wrapper::ZERO);
+        let tx_1: mp_transactions::InvokeTransactionV1 = get_storage_read_write_dummy();
         let tx_1 = UserTransaction::Invoke(tx_1.into());
 
-        let tx_2 = get_storage_read_write_dummy();
+        let tx_2 = get_invoke_dummy(Felt252Wrapper::ONE);
         let tx_2 = UserTransaction::Invoke(tx_2.into());
 
         let mut tx_vec = Vec::new();
@@ -28,11 +28,11 @@ fn estimates_tx_fee_successfully_no_validate() {
 
         let (actual, l1_gas_usage) = fees[0];
         assert!(actual > 0, "actual fee is missing");
-        assert!(l1_gas_usage == 0, "this should not be charged any l1_gas as it does not store nor send messages");
+        assert!(l1_gas_usage > 0, "this should be charged l1_gas as it store a value to storage");
 
         let (actual, l1_gas_usage) = fees[1];
         assert!(actual > 0, "actual fee is missing");
-        assert!(l1_gas_usage > 0, "this should be charged l1_gas as it store a value to storage");
+        assert!(l1_gas_usage == 0, "this should not be charged any l1_gas as it does not store nor send messages");
     });
 }
 
@@ -68,10 +68,7 @@ fn executable_tx_should_not_be_estimable() {
         tx_vec.push(UserTransaction::Invoke(tx.clone().into()));
 
         // it should not be valid for estimate calls
-        assert_err!(
-            Starknet::estimate_fee(tx_vec),
-            Error::<MockRuntime>::TransactionExecutionFailed
-        );
+        assert_err!(Starknet::estimate_fee(tx_vec), Error::<MockRuntime>::TransactionExecutionFailed);
 
         // it should be executable
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), tx.clone().into()));
