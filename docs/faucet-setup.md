@@ -63,17 +63,16 @@ was added so that the new request to get tokens is sent with the correct nonce.
 
 If you have a use case where you need to customize your faucet or you need to
 get faucet funds using code, you can achieve this by simply transferring funds
-from any of the genesis accounts using RPC calls. The genesis account private
-key for address `0x2` is available in
-`crates/pallets/starknet/src/tests/constants.rs`.
+from any of the genesis accounts using RPC calls. The genesis accounts and their
+private keys are logged when running a node in `--dev` mode.
 
 Keep in mind that account `0x1` on Madara doesn't support multicall so
 `account.execute` from starknetjs fails. You can either invoke the transfer
 transaction as shown
 [here](https://github.com/keep-starknet-strange/madara/blob/c916046adf9d7ea52131442090fae654ba6b234d/tests/util/starknet.ts#L241)
-or use an account like `0x2` which is based on Argent and supports multicall.
+or use an account that supports multicall.
 
-**Example code for collecting tokens from `0x2` using starknetjs**
+**Example code for collecting tokens from `0x4` using starknetjs**
 
 ```javascript
 import * as starknet from "starknet";
@@ -96,7 +95,7 @@ async function transfer(to) {
   let result = contract.populate("transfer", {
     recipient: to,
     amount: {
-      low: 0,
+      low: 10000000,
       high: 0,
     },
   });
