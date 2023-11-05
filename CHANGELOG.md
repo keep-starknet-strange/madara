@@ -5,6 +5,7 @@
 - chore: update starknet-js version in faucet-setup docs
 - dev(compilation): add incremental compilation
 - feat(rpc): add support for bulk estimate fee
+- feat: add argent multicall contract to genesis
 
 ## v0.5.0
 

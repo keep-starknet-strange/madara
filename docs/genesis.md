@@ -32,6 +32,7 @@ The below defines all hardcoded values set in the geneses:
 | 0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f | No validation account class hash               |
 | 0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276  | No validation account class hash cairo 1       |
 | 0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d | Argent account class hash                      |
+| 0x01d53d50d204842575c87f25161248aadb26d33c7375d0f043e2a3f1243cf874 | Argent multicall class hash                    |
 | 0x0424b7f61e3c5dfd74400d96fdea7e1f0bf2757f31df04387eaa957f095dd7b9 | Proxy class hash                               |
 | 0x2c2b8f559e1221468140ad7b2352b1a5be32660d0bf1a3ae3a054a4ec5254e4  | Braavos account class hash                     |
 | 0x5aa23d5bb71ddaa783da7ea79d405315bafa7cf0387a74f4593578c3e9e6570  | Braavos account base implementation class hash |

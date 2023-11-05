@@ -15,6 +15,13 @@
       }
     ],
     [
+      "0x01d53d50d204842575c87f25161248aadb26d33c7375d0f043e2a3f1243cf874",
+      {
+        "path": "genesis-assets/ArgentMulticall.casm.json",
+        "version": 1
+      }
+    ],
+    [
       "0x0424b7f61e3c5dfd74400d96fdea7e1f0bf2757f31df04387eaa957f095dd7b9",
       { "path": "genesis-assets/Proxy.json", "version": 0 }
     ],
