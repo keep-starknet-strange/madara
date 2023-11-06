@@ -32,6 +32,7 @@ The below defines all hardcoded values set in the geneses:
 | 0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f | No validation account class hash               |
 | 0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276  | No validation account class hash cairo 1       |
 | 0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d | Argent account class hash                      |
+| 0x01d53d50d204842575c87f25161248aadb26d33c7375d0f043e2a3f1243cf874 | Argent multicall class hash                    |
 | 0x0424b7f61e3c5dfd74400d96fdea7e1f0bf2757f31df04387eaa957f095dd7b9 | Proxy class hash                               |
 | 0x2c2b8f559e1221468140ad7b2352b1a5be32660d0bf1a3ae3a054a4ec5254e4  | Braavos account class hash                     |
 | 0x5aa23d5bb71ddaa783da7ea79d405315bafa7cf0387a74f4593578c3e9e6570  | Braavos account base implementation class hash |
@@ -60,6 +61,7 @@ The below defines all hardcoded values set in the geneses:
 | 0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d02 | 0x077cc28ed3c661419fda16bf120fb81f1f8f28617f5543b05a86d63b0926bbf4 |
 | 0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7  | 0x0372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4 |
 | 0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf | 0x07b3e05f48f0c69e4a65ce5e076a66271a527aff2c34ce1083ec6e1526997a69 |
+| 0x05754af3760f3356da99aea5c3ec39ccac7783d925a19666ebbeca58ff0087f4 | 0x01d53d50d204842575c87f25161248aadb26d33c7375d0f043e2a3f1243cf874 |
 
 <!-- markdownlint-disable MD013 -->
 
