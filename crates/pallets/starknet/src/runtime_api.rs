@@ -46,7 +46,7 @@ sp_api::decl_runtime_apis! {
         /// Returns the chain id.
         fn chain_id() -> Felt252Wrapper;
         /// Returns fee estimate
-        fn estimate_fee(transaction: UserTransaction, is_query: bool) -> Result<(u64, u64), DispatchError>;
+        fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError>;
         /// Filters extrinsic transactions to return only Starknet transactions
         ///
         /// To support runtime upgrades, the client must be unaware of the specific extrinsic
