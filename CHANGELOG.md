@@ -4,6 +4,7 @@
 
 - fix: Ensure transaction checks are compatible with starknet-rs
 - ci: Run Starknet Foundry tests against Madara RPC
+- docs: add translation of madara beast article to spanish
 - chore: update starknet-js version in faucet-setup docs
 - dev(compilation): add incremental compilation
 - feat(rpc): add support for bulk estimate fee
