@@ -186,7 +186,7 @@ cairo-vm = { git = "https://github.com/keep-starknet-strange/cairo-rs", branch =
 starknet-crypto = { version = "0.6.1", default-features = false }
 starknet-core = { version = "0.6.0", default-features = false }
 starknet-providers = { version = "0.6.0", default-features = false }
-starknet-ff = { version = "0.3.4", default-features = false }
+starknet-ff = { version = "0.3.5", default-features = false }
 starknet-signers = { version = "0.4.0" }
 starknet-accounts = { version = "0.5.0" }
 starknet-contract = { version = "0.5.0" }
