@@ -263,8 +263,8 @@ impl_runtime_apis! {
             Starknet::chain_id()
         }
 
-        fn estimate_fee(transaction: UserTransaction, is_query: bool) -> Result<(u64, u64), DispatchError> {
-            Starknet::estimate_fee(transaction, is_query)
+        fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
+            Starknet::estimate_fee(transactions)
         }
 
         fn get_starknet_events_and_their_associated_tx_hash(block_extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper) -> Vec<(Felt252Wrapper, StarknetEvent)> {
