@@ -69,11 +69,11 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
         override_dev_environment(&mut cli.run);
     }
     let runner = cli.create_runner(&cli.run.base)?;
-    let base_path = runner.config().base_path.path();
+    let data_path = &runner.config().data_path;
 
     let da_config: Option<(DaLayer, PathBuf)> = match cli.run.da_layer {
         Some(da_layer) => {
-            let da_path = base_path.join("da-config.json");
+            let da_path = data_path.join("da-config.json");
             if !da_path.exists() {
                 log::info!("{} does not contain DA config", da_path.display());
                 return Err("DA config not available".into());
