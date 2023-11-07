@@ -377,25 +377,6 @@ fn set_signer(address: ContractAddress, account_type: AccountType) {
         StarkFelt::try_from(ACCOUNT_PUBLIC_KEY).unwrap(),
     );
 }
-#[test]
-fn test_verify_storage() {
-    // for review check - delete;
-    use starknet_api::state::StorageKey;
-
-    // let fee_address =
-    // ContractAddress::from(Felt252Wrapper::from_hex_be("
-    // 0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7").unwrap());
-    let fee_address = ContractAddress::from(Felt252Wrapper::ZERO);
-
-    dbg!(get_storage_key(&fee_address, "ERC20_name", &vec![], 0).1);
-    dbg!(get_storage_key(&fee_address, "ERC20_symbol", &vec![], 0).1);
-    dbg!(get_storage_key(&fee_address, "ERC20_decimals", &vec![], 0).1);
-    let key_of_balance_of_0x1 = get_storage_key(&fee_address, "ERC20_balances", &vec![FieldElement::ONE], 0).1;
-    let expected_key_of_balance_of_0x1 = StorageKey::from(
-        Felt252Wrapper::from_hex_be("0x7b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09").unwrap(),
-    );
-    assert_eq!(key_of_balance_of_0x1, expected_key_of_balance_of_0x1);
-}
 
 #[test]
 fn test_verify_nonce_in_unsigned_tx() {
