@@ -109,7 +109,7 @@ async fn works_on_correct_call_no_calldata(madara: &ThreadSafeMadaraClient) -> R
         )
         .await
         .unwrap(),
-        vec![FieldElement::ZERO]
+        vec![FieldElement::from_hex_be("0x4574686572").unwrap()]
     );
 
     Ok(())
