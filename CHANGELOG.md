@@ -6,6 +6,7 @@
 - chore: update starknet-js version in faucet-setup docs
 - dev(compilation): add incremental compilation
 - feat(rpc): add support for bulk estimate fee
+- chore(data-availability): update avail-subxt to version 0.4.0
 
 ## v0.5.0
 
