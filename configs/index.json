@@ -14,6 +14,10 @@
       "md5": "fb96b0c9993878c6a5a5cabf8ce9b3c9"
     },
     {
+      "name": "ArgentMulticall.casm.json",
+      "md5": "506d699bd1e11853a336784bd9dd7be4"
+    },
+    {
       "name": "CallAggregator.json",
       "md5": "3f418be1aab5ebd4a591e815af65533a"
     },
@@ -27,7 +31,7 @@
     },
     {
       "name": "genesis.json",
-      "md5": "06b5c369b9ba1cbf18e0496855ff929c"
+      "md5": "d35a8d77f9d7d18ff48a5dac2685eb5b"
     },
     {
       "name": "NoValidateAccount.casm.json",

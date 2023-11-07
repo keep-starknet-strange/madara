@@ -240,3 +240,4 @@ phf = { version = "0.11", default-features = false }
 url = "2.4.1"
 hashbrown = "0.14.2"
 tokio = "1.33.0"
+openssl = { version = "0.10", features = ["vendored"] }
