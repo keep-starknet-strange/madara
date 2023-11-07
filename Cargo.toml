@@ -233,3 +233,4 @@ num-bigint = "0.4.4"
 phf = { version = "0.11", default-features = false }
 url = "2.4.1"
 hashbrown = "0.14.2"
+openssl = { version = "0.10", features = ["vendored"] }
