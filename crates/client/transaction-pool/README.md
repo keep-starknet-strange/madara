@@ -51,7 +51,7 @@ the pool, it's broadcasting status, block inclusion, finality, etc.
 
 ## Transaction Validity details
 
-Information retrieved from the the runtime are encapsulated in the
+Information retrieved from the runtime are encapsulated in the
 `TransactionValidity` type.
 
 ```rust
