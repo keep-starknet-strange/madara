@@ -99,15 +99,6 @@ jobs:
           export CXX_aarch64_unknown_linux_gnu=/usr/bin/aarch64-linux-gnu-g++
           cargo build --release --target ${{ matrix.build }}
 
-      - name: Pre-Build (x86_64-pc-windows-msvc)
-        if: matrix.build == 'x86_64-pc-windows-msvc'
-        shell: bash
-        run: |
-          cargo fetch --target ${{ matrix.build }}
-          export reg_folder=$(ls C:/Users/runneradmin/.cargo/registry/src | grep github.com)
-          export pdb_folder=$(ls C:/Users/runneradmin/.cargo/registry/src/$reg_folder | grep parity-db)
-          sed -ir 's/madvise_random(_id: TableId, _map: \&mut memmap2::MmapMut)/madvise_random(_map: \&mut memmap2::MmapMut)/g' C:/Users/runneradmin/.cargo/registry/src/$reg_folder/$pdb_folder/src/file.rs
-
       - name: Build (x86_64-pc-windows-msvc)
         if: matrix.build == 'x86_64-pc-windows-msvc'
         shell: bash
