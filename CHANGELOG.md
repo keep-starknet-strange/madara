@@ -2,6 +2,7 @@
 
 ## Next release
 
+- fix: dependencies for dockerfile and binaries
 - docs: add translation of madara beast article to spanish
 - chore: update starknet-js version in faucet-setup docs
 - dev(compilation): add incremental compilation
