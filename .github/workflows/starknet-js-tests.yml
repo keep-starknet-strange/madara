@@ -20,7 +20,7 @@ jobs:
           fail-on-cache-miss: true
       - name: Setup dev chain
         run: |
-          ./target/release/madara setup --chain=dev --from-remote
+          ./target/release/madara setup --chain=dev --from-local=configs
       - name: Run starknet-js test
         run: |-
           ./target/release/madara --dev --execution native &
