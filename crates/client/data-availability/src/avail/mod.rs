@@ -3,8 +3,8 @@ pub mod config;
 use anyhow::Result;
 use async_trait::async_trait;
 use avail_subxt::api::runtime_types::avail_core::AppId;
+use avail_subxt::api::runtime_types::bounded_collections::bounded_vec::BoundedVec;
 use avail_subxt::api::runtime_types::da_control::pallet::Call as DaCall;
-use avail_subxt::api::runtime_types::sp_core::bounded::bounded_vec::BoundedVec;
 use avail_subxt::avail::{AppUncheckedExtrinsic, Client as AvailSubxtClient};
 use avail_subxt::primitives::AvailExtrinsicParams;
 use avail_subxt::{api as AvailApi, build_client, AvailConfig, Call};
@@ -33,6 +33,7 @@ impl DaClient for AvailClient {
 
         let submitted_block_hash = self.publish_data(&bytes).await?;
 
+        // This theoritically do not have to be put here since we wait for finalization before
         self.verify_bytes_inclusion(submitted_block_hash, &bytes).await?;
         Ok(())
     }
@@ -96,7 +97,7 @@ impl TryFrom<config::AvailConfig> for AvailClient {
 
         let ws_client =
             futures::executor::block_on(async { build_client(conf.ws_provider.as_str(), conf.validate_codegen).await })
-                .map_err(|e| anyhow::anyhow!("could not initialize ws endpoint {e}"))?;
+                .map_err(|e| anyhow::anyhow!("DA Layer error: could not initialize ws endpoint {e}"))?;
 
         Ok(Self { ws_client, app_id, signer, mode: conf.mode })
     }
