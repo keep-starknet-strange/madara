@@ -107,13 +107,14 @@
 <a href="#107" id="107">107</a>
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
 </pre></div><pre class="rust"><code><span class="kw">pub mod </span>config;
 
 <span class="kw">use </span>anyhow::Result;
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>avail_subxt::api::runtime_types::avail_core::AppId;
+<span class="kw">use </span>avail_subxt::api::runtime_types::bounded_collections::bounded_vec::BoundedVec;
 <span class="kw">use </span>avail_subxt::api::runtime_types::da_control::pallet::Call <span class="kw">as </span>DaCall;
-<span class="kw">use </span>avail_subxt::api::runtime_types::sp_core::bounded::bounded_vec::BoundedVec;
 <span class="kw">use </span>avail_subxt::avail::{AppUncheckedExtrinsic, Client <span class="kw">as </span>AvailSubxtClient};
 <span class="kw">use </span>avail_subxt::primitives::AvailExtrinsicParams;
 <span class="kw">use </span>avail_subxt::{api <span class="kw">as </span>AvailApi, build_client, AvailConfig, Call};
@@ -142,7 +143,8 @@
 
         <span class="kw">let </span>submitted_block_hash = <span class="self">self</span>.publish_data(<span class="kw-2">&amp;</span>bytes).<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="self">self</span>.verify_bytes_inclusion(submitted_block_hash, <span class="kw-2">&amp;</span>bytes).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="comment">// This theoritically do not have to be put here since we wait for finalization before
+        </span><span class="self">self</span>.verify_bytes_inclusion(submitted_block_hash, <span class="kw-2">&amp;</span>bytes).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -205,7 +207,7 @@
 
         <span class="kw">let </span>ws_client =
             futures::executor::block_on(<span class="kw">async </span>{ build_client(conf.ws_provider.as_str(), conf.validate_codegen).<span class="kw">await </span>})
-                .map_err(|e| <span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;could not initialize ws endpoint {e}&quot;</span>))<span class="question-mark">?</span>;
+                .map_err(|e| <span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;DA Layer error: could not initialize ws endpoint {e}&quot;</span>))<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ ws_client, app_id, signer, mode: conf.mode })
     }
