@@ -148,6 +148,7 @@ fn copy_file(src_path: &Path, dest_dir_path: &PathBuf) -> Result<()> {
 
     std::fs::create_dir_all(dest_dir_path)?;
     let dest_file_path = dest_dir_path.join(src_path.file_name().ok_or("File name not found")?);
+    println!("Copying '{}' to '{}'", src_path.display(), dest_file_path.display());
     std::fs::copy(src_path, dest_file_path)?;
 
     Ok(())

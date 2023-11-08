@@ -1,15 +1,9 @@
 [submodule "madara-infra"]
 	path = madara-infra
 	url = https://github.com/keep-starknet-strange/madara-infra
-[submodule "madara-app"]
-	path = madara-app
-	url = https://github.com/keep-starknet-strange/madara-app
 [submodule "madara-docs"]
 	path = madara-docs
 	url = https://github.com/keep-starknet-strange/madara-docs
-[submodule "madara-dev-explorer"]
-	path = madara-dev-explorer
-	url = https://github.com/keep-starknet-strange/madara-dev-explorer
 [submodule "madara-tsukuyomi"]
 	path = madara-tsukuyomi
 	url = https://github.com/keep-starknet-strange/madara-tsukuyomi

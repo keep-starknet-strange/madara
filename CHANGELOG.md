@@ -4,9 +4,15 @@
 
 - feat(rpc): return deployed contract address and actual fee in transaction
   receipt
+- fix: add name, symbol and decimals to fee token storage
+- fix: dependencies for dockerfile and binaries
+- docs: add translation of madara beast article to spanish
 - chore: update starknet-js version in faucet-setup docs
 - dev(compilation): add incremental compilation
 - feat(rpc): add support for bulk estimate fee
+- feat: add argent multicall contract to genesis
+- fix(ci): setup should fetch files from local config
+- chore: deprecate `madara-app` and `madara-dev-explorer` modules
 
 ## v0.5.0
 
