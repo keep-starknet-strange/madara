@@ -65,40 +65,6 @@ impl TryFrom<config::AvailConfig> for SubxtClient {
     }
 }
 
-#[derive(Clone)]
-pub struct NonceTracker(Option<u32>);
-
-impl NonceTracker {
-    pub fn new() -> Self {
-        Self(None)
-    }
-
-    pub fn set(&mut self, nonce: u32) -> () {
-        self.0 = Some(nonce);
-    }
-
-    pub fn increment(&mut self) -> () {
-        match self.0 {
-            Some(i) => self.0 = Some(i + 1),
-            None => self.0 = Some(0),
-        }
-    }
-
-    pub fn is_initialized(&self) -> bool {
-        match self.0 {
-            Some(_) => true,
-            None => false,
-        }
-    }
-
-    pub fn get_nonce(&self) -> u32 {
-        match self.0 {
-            Some(i) => i,
-            None => 0,
-        }
-    }
-}
-
 #[async_trait]
 impl DaClient for AvailClient {
     async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()> {
