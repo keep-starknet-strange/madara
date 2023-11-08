@@ -983,11 +983,11 @@ where
             //         expected_fee_value_high,
             //     ],
             // },
-            let contract_address = Felt252Wrapper(transfer_fee_event.data.get(0)?.clone()).0;
+            let contract_address = Felt252Wrapper(*transfer_fee_event.data.get(0)?).0;
             // TODO: This is what's done in the blockifier but this should be improved.
             // FIXME: https://github.com/keep-starknet-strange/madara/issues/332
             // The least significant 128 bits of the amount transferred.
-            let lsb_amount = Felt252Wrapper(transfer_fee_event.data.get(2)?.clone()).0;
+            let lsb_amount = Felt252Wrapper(*transfer_fee_event.data.get(2)?).0;
             Some((lsb_amount, Some(contract_address)))
         }
 
@@ -1024,7 +1024,7 @@ where
                         starknet_core::utils::get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap();
                     let address_in_other_event = events_converted.iter().find_map(|event| {
                         event.keys.iter().find(|&&key| key != transfer_event_key)?;
-                        Some(Felt252Wrapper(event.from_address.clone()).0)
+                        Some(Felt252Wrapper(event.from_address).0)
                     });
                     match address_in_other_event {
                         Some(contract_address) => contract_address,
