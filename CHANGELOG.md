@@ -9,6 +9,8 @@
 - dev(compilation): add incremental compilation
 - feat(rpc): add support for bulk estimate fee
 - feat: add argent multicall contract to genesis
+- fix(ci): setup should fetch files from local config
+- chore: deprecate `madara-app` and `madara-dev-explorer` modules
 
 ## v0.5.0
 
