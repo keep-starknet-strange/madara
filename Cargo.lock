@@ -721,8 +721,8 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
 name = "avail-subxt"
-version = "0.3.0"
-source = "git+https://github.com/availproject/avail?rev=0958c6ed499497b70a33ab072dcbe86c762f3976#0958c6ed499497b70a33ab072dcbe86c762f3976"
+version = "0.4.0"
+source = "git+https://github.com/availproject/avail?tag=v1.8.0.0#9c5f37b92303991dc9cd39534d9298e2298114fd"
 dependencies = [
  "anyhow",
  "curve25519-dalek 2.1.3",
