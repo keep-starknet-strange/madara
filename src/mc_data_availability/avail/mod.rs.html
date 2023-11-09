@@ -108,19 +108,41 @@
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
 </pre></div><pre class="rust"><code><span class="kw">pub mod </span>config;
 
-<span class="kw">use </span>anyhow::Result;
+<span class="kw">use </span>std::sync::Arc;
+
+<span class="kw">use </span>anyhow::{anyhow, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>avail_subxt::api::runtime_types::avail_core::AppId;
 <span class="kw">use </span>avail_subxt::api::runtime_types::bounded_collections::bounded_vec::BoundedVec;
-<span class="kw">use </span>avail_subxt::api::runtime_types::da_control::pallet::Call <span class="kw">as </span>DaCall;
-<span class="kw">use </span>avail_subxt::avail::{AppUncheckedExtrinsic, Client <span class="kw">as </span>AvailSubxtClient};
+<span class="kw">use </span>avail_subxt::avail::Client <span class="kw">as </span>AvailSubxtClient;
 <span class="kw">use </span>avail_subxt::primitives::AvailExtrinsicParams;
-<span class="kw">use </span>avail_subxt::{api <span class="kw">as </span>AvailApi, build_client, AvailConfig, Call};
+<span class="kw">use </span>avail_subxt::{api <span class="kw">as </span>AvailApi, build_client, AvailConfig};
 <span class="kw">use </span>ethers::types::{I256, U256};
-<span class="kw">use </span>sp_core::H256;
+<span class="kw">use </span>futures::lock::Mutex;
 <span class="kw">use </span>subxt::ext::sp_core::sr25519::Pair;
+<span class="kw">use </span>subxt::OnlineClient;
 
 <span class="kw">use </span><span class="kw">crate</span>::utils::get_bytes_from_state_diff;
 <span class="kw">use crate</span>::{DaClient, DaMode};
@@ -129,10 +151,46 @@
 
 <span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>AvailClient {
-    ws_client: AvailSubxtClient,
+    ws_client: Arc&lt;Mutex&lt;SubxtClient&gt;&gt;,
     app_id: AppId,
     signer: AvailPairSigner,
     mode: DaMode,
+}
+
+<span class="kw">pub struct </span>SubxtClient {
+    client: AvailSubxtClient,
+    config: config::AvailConfig,
+}
+
+<span class="kw">pub fn </span>try_build_avail_subxt(conf: <span class="kw-2">&amp;</span>config::AvailConfig) -&gt; <span class="prelude-ty">Result</span>&lt;OnlineClient&lt;AvailConfig&gt;&gt; {
+    <span class="kw">let </span>client =
+        futures::executor::block_on(<span class="kw">async </span>{ build_client(conf.ws_provider.as_str(), conf.validate_codegen).<span class="kw">await </span>})
+            .map_err(|e| <span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;DA Layer error: could not initialize ws endpoint {e}&quot;</span>))<span class="question-mark">?</span>;
+
+    <span class="prelude-val">Ok</span>(client)
+}
+
+<span class="kw">impl </span>SubxtClient {
+    <span class="kw">pub async fn </span>restart(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), anyhow::Error&gt; {
+        <span class="self">self</span>.client = <span class="kw">match </span>build_client(<span class="self">self</span>.config.ws_provider.as_str(), <span class="self">self</span>.config.validate_codegen).<span class="kw">await </span>{
+            <span class="prelude-val">Ok</span>(i) =&gt; i,
+            <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">&quot;DA Layer error: could not restart ws endpoint {e}&quot;</span>)),
+        };
+
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">pub fn </span>client(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>OnlineClient&lt;AvailConfig&gt; {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.client
+    }
+}
+
+<span class="kw">impl </span>TryFrom&lt;config::AvailConfig&gt; <span class="kw">for </span>SubxtClient {
+    <span class="kw">type </span>Error = anyhow::Error;
+
+    <span class="kw">fn </span>try_from(conf: config::AvailConfig) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ client: try_build_avail_subxt(<span class="kw-2">&amp;</span>conf)<span class="question-mark">?</span>, config: conf })
+    }
 }
 
 <span class="attr">#[async_trait]
@@ -140,11 +198,8 @@
     <span class="kw">async fn </span>publish_state_diff(<span class="kw-2">&amp;</span><span class="self">self</span>, state_diff: Vec&lt;U256&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>bytes = get_bytes_from_state_diff(<span class="kw-2">&amp;</span>state_diff);
         <span class="kw">let </span>bytes = BoundedVec(bytes);
+        <span class="self">self</span>.publish_data(<span class="kw-2">&amp;</span>bytes).<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="kw">let </span>submitted_block_hash = <span class="self">self</span>.publish_data(<span class="kw-2">&amp;</span>bytes).<span class="kw">await</span><span class="question-mark">?</span>;
-
-        <span class="comment">// This theoritically do not have to be put here since we wait for finalization before
-        </span><span class="self">self</span>.verify_bytes_inclusion(submitted_block_hash, <span class="kw-2">&amp;</span>bytes).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -160,38 +215,22 @@
 }
 
 <span class="kw">impl </span>AvailClient {
-    <span class="kw">async fn </span>publish_data(<span class="kw-2">&amp;</span><span class="self">self</span>, bytes: <span class="kw-2">&amp;</span>BoundedVec&lt;u8&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;H256&gt; {
+    <span class="kw">async fn </span>publish_data(<span class="kw-2">&amp;</span><span class="self">self</span>, bytes: <span class="kw-2">&amp;</span>BoundedVec&lt;u8&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>ws_client = <span class="self">self</span>.ws_client.lock().<span class="kw">await</span>;
+
         <span class="kw">let </span>data_transfer = AvailApi::tx().data_availability().submit_data(bytes.clone());
         <span class="kw">let </span>extrinsic_params = AvailExtrinsicParams::new_with_app_id(<span class="self">self</span>.app_id);
-        <span class="kw">let </span>events = <span class="self">self
-            </span>.ws_client
-            .tx()
-            .sign_and_submit_then_watch(<span class="kw-2">&amp;</span>data_transfer, <span class="kw-2">&amp;</span><span class="self">self</span>.signer, extrinsic_params)
-            .<span class="kw">await</span><span class="question-mark">?
-            </span>.wait_for_finalized_success()
-            .<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(events.block_hash())
-    }
+        <span class="kw">match </span>ws_client.client().tx().sign_and_submit(<span class="kw-2">&amp;</span>data_transfer, <span class="kw-2">&amp;</span><span class="self">self</span>.signer, extrinsic_params).<span class="kw">await </span>{
+            <span class="prelude-val">Ok</span>(i) =&gt; i,
+            <span class="prelude-val">Err</span>(e) =&gt; {
+                <span class="kw">if </span>e.to_string().contains(<span class="string">&quot;restart required&quot;</span>) {
+                    ws_client.restart().<span class="kw">await</span>;
+                }
 
-    <span class="kw">async fn </span>verify_bytes_inclusion(<span class="kw-2">&amp;</span><span class="self">self</span>, block_hash: H256, bytes: <span class="kw-2">&amp;</span>BoundedVec&lt;u8&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>submitted_block = <span class="self">self
-            </span>.ws_client
-            .rpc()
-            .block(<span class="prelude-val">Some</span>(block_hash))
-            .<span class="kw">await</span><span class="question-mark">?
-            </span>.ok_or(<span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;Invalid hash, block not found&quot;</span>))<span class="question-mark">?</span>;
-
-        submitted_block
-            .block
-            .extrinsics
-            .into_iter()
-            .filter_map(|chain_block_ext| AppUncheckedExtrinsic::try_from(chain_block_ext).map(|ext| ext.function).ok())
-            .find(|call| <span class="kw">match </span>call {
-                Call::DataAvailability(DaCall::submit_data { data }) =&gt; data == bytes,
-                <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
-            })
-            .ok_or(<span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;Bytes not found in specified block&quot;</span>))<span class="question-mark">?</span>;
+                <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">&quot;DA Layer error : failed due to closed websocket connection {e}&quot;</span>));
+            }
+        };
 
         <span class="prelude-val">Ok</span>(())
     }
@@ -205,11 +244,12 @@
 
         <span class="kw">let </span>app_id = AppId(conf.app_id);
 
-        <span class="kw">let </span>ws_client =
-            futures::executor::block_on(<span class="kw">async </span>{ build_client(conf.ws_provider.as_str(), conf.validate_codegen).<span class="kw">await </span>})
-                .map_err(|e| <span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;DA Layer error: could not initialize ws endpoint {e}&quot;</span>))<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ ws_client, app_id, signer, mode: conf.mode })
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            ws_client: Arc::new(Mutex::new(SubxtClient::try_from(conf.clone())<span class="question-mark">?</span>)),
+            app_id,
+            signer,
+            mode: conf.mode,
+        })
     }
 }
 

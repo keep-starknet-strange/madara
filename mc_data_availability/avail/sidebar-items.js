@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["config"],"struct":["AvailClient"]};
+window.SIDEBAR_ITEMS = {"fn":["try_build_avail_subxt"],"mod":["config"],"struct":["AvailClient","SubxtClient"]};
