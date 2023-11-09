@@ -16,7 +16,7 @@ use prometheus_endpoint::Registry as PrometheusRegistry;
 use sc_block_builder::{BlockBuilderApi, BlockBuilderProvider};
 use sc_client_api::backend;
 use sc_proposer_metrics::{EndProposingReason, MetricsLink as PrometheusMetrics};
-use sc_transaction_pool_api::{InPoolTransaction, TransactionPool};
+use sc_transaction_pool_api::{InPoolTransaction, TransactionPool, TransactionFor};
 use sp_api::{ApiExt, ProvideRuntimeApi};
 use sp_blockchain::ApplyExtrinsicFailed::Validity;
 use sp_blockchain::Error::ApplyExtrinsicFailed;
@@ -198,7 +198,7 @@ where
     C::Api: ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>> + BlockBuilderApi<Block>,
     PR: ProofRecording,
 {
-    type Transaction = backend::TransactionFor<B, Block>;
+    type Transaction = sp_api::TransactionFor<B, Block>;
     type Proposal =
         Pin<Box<dyn Future<Output = Result<Proposal<Block, Self::Transaction, PR::Proof>, Self::Error>> + Send>>;
     type Error = sp_blockchain::Error;
@@ -292,7 +292,7 @@ where
         inherent_digests: Digest,
         deadline: time::Instant,
         block_size_limit: Option<usize>,
-    ) -> Result<Proposal<Block, backend::TransactionFor<B, Block>, PR::Proof>, sp_blockchain::Error> {
+    ) -> Result<Proposal<Block, PR::Proof>, sp_blockchain::Error> {
         // Start the timer to measure the total time it takes to create the proposal.
         let propose_with_timer = time::Instant::now();
 

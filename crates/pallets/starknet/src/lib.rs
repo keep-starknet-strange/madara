@@ -76,7 +76,7 @@ use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::{CallInfo, ExecutionResources};
 use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
-use frame_support::traits::Time;
+use frame_support::traits::{GenesisBuild, Time};
 use frame_system::pallet_prelude::*;
 use mp_block::{Block as StarknetBlock, Header as StarknetHeader};
 use mp_digest_log::MADARA_ENGINE_ID;
@@ -175,7 +175,7 @@ pub mod pallet {
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         /// The block is being finalized.
-        fn on_finalize(_n: T::BlockNumber) {
+        fn on_finalize(_n: u32) {
             assert!(SeqAddrUpdate::<T>::take(), "Sequencer address must be set for the block");
 
             // Create a new Starknet block and store it.
@@ -185,7 +185,7 @@ pub mod pallet {
         }
 
         /// The block is being initialized. Implement to have something happen.
-        fn on_initialize(_: T::BlockNumber) -> Weight {
+        fn on_initialize(_: BlockNumber) -> Weight {
             Weight::zero()
         }
 
@@ -198,7 +198,7 @@ pub mod pallet {
         /// See: `<https://docs.substrate.io/reference/how-to-guides/offchain-workers/>`
         /// # Arguments
         /// * `n` - The block number.
-        fn offchain_worker(n: T::BlockNumber) {
+        fn offchain_worker(n: BlockNumber) {
             log!(info, "Running offchain worker at block {:?}.", n);
 
             match Self::process_l1_messages() {
