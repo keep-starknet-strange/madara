@@ -59,9 +59,7 @@ impl TryFrom<config::AvailConfig> for SubxtClient {
     type Error = anyhow::Error;
 
     fn try_from(conf: config::AvailConfig) -> Result<Self, Self::Error> {
-        let ws_client = try_build_avail_subxt(&conf)?;
-
-        Ok(Self { client: ws_client, config: conf })
+        Ok(Self { client: try_build_avail_subxt(&conf)?, config: conf })
     }
 }
 
@@ -72,8 +70,6 @@ impl DaClient for AvailClient {
         let bytes = BoundedVec(bytes);
         self.publish_data(&bytes).await?;
 
-        // This theoritically do not have to be put here since we wait for finalization before
-        // self.verify_bytes_inclusion(submitted_block_hash, &bytes).await?;
         Ok(())
     }
 
@@ -102,34 +98,12 @@ impl AvailClient {
                     ws_client.restart().await;
                 }
 
-                return Err(anyhow!("Da failed due to closed websocket connection: {e}"));
+                return Err(anyhow!("DA Layer error : failed due to closed websocket connection {e}"));
             }
         };
 
         Ok(())
     }
-
-    // async fn verify_bytes_inclusion(&self, block_hash: H256, bytes: &BoundedVec<u8>) -> Result<()> {
-    //     let submitted_block = self
-    //         .ws_client
-    //         .rpc()
-    //         .block(Some(block_hash))
-    //         .await?
-    //         .ok_or(anyhow::anyhow!("Invalid hash, block not found"))?;
-
-    //     submitted_block
-    //         .block
-    //         .extrinsics
-    //         .into_iter()
-    //         .filter_map(|chain_block_ext| AppUncheckedExtrinsic::try_from(chain_block_ext).map(|ext|
-    // ext.function).ok())         .find(|call| match call {
-    //             Call::DataAvailability(DaCall::submit_data { data }) => data == bytes,
-    //             _ => false,
-    //         })
-    //         .ok_or(anyhow::anyhow!("Bytes not found in specified block"))?;
-
-    //     Ok(())
-    // }
 }
 
 impl TryFrom<config::AvailConfig> for AvailClient {
