@@ -2,6 +2,8 @@
 
 ## Next release
 
+- fix: Ensure transaction checks are compatible with starknet-rs
+- ci: Run Starknet Foundry tests against Madara RPC
 - fix: add name, symbol and decimals to fee token storage
 - fix: dependencies for dockerfile and binaries
 - docs: add translation of madara beast article to spanish
@@ -63,7 +65,6 @@
   madara node
 - feat(cache-option): add an option to enable aggressive caching in command-line
   parameters
-- fix: Ensure transaction checks are compatible with starknet-rs
 
 ## v0.4.0
 
