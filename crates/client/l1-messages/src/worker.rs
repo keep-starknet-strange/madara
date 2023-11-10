@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use ethers::core::types::Address;
 use ethers::providers::{Http, Provider, StreamExt};
 use madara_runtime::pallet_starknet;
 use mp_transactions::HandleL1MessageTransaction;
@@ -24,14 +23,12 @@ const STORAGE_KEY: &str = "last_synced_block";
 pub fn connect_to_l1_contract(
     config: &L1MessagesWorkerConfig,
 ) -> Result<L1Contract<Provider<Http>>, L1MessagesWorkerError> {
-    let address: Address =
-        config.contract_address.parse::<Address>().map_err(|_| L1MessagesWorkerError::ConfigError)?;
-    let provider = Provider::<Http>::try_from(&config.http_provider).map_err(|e| {
+    let provider = Provider::<Http>::try_from(config.get_provider()).map_err(|e| {
         log::error!("⟠ Failed to connect to L1 Node: {:?}", e);
         L1MessagesWorkerError::ConfigError
     })?;
 
-    let l1_contract = L1Contract::new(address, Arc::new(provider));
+    let l1_contract = L1Contract::new(*config.get_contract_address(), Arc::new(provider));
 
     Ok(l1_contract)
 }
@@ -116,7 +113,7 @@ where
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     P: TransactionPool<Block = B> + 'static,
 {
-    let fee: Fee = event.try_into()?;
+    let fee: Fee = event.try_get_fee()?;
     let transaction: HandleL1MessageTransaction = event.try_into()?;
 
     let best_block_hash = client.info().best_hash;
@@ -125,7 +122,7 @@ where
         Ok(true) => Ok(()),
         Ok(false) => {
             log::debug!("⟠ Event already processed: {:?}", transaction);
-            Err(L1MessagesWorkerError::MessageAlreadyProcessed)
+            Err(L1MessagesWorkerError::L1MessageAlreadyProcessed)
         }
         Err(e) => {
             log::error!("⟠ Unexpected runtime api error: {:?}", e);

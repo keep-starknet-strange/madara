@@ -6329,6 +6329,7 @@ dependencies = [
  "sp-core 7.0.0",
  "sp-runtime 7.0.0",
  "starknet_api",
+ "thiserror",
 ]
 
 [[package]]

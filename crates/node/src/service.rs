@@ -534,7 +534,8 @@ pub fn new_full(
     }
 
     if let Some(ref l1_messages_config) = l1_messages {
-        let config = L1MessagesWorkerConfig::try_from(l1_messages_config)?;
+        let config = L1MessagesWorkerConfig::new_from_file(l1_messages_config)
+            .map_err(|e| sc_service::error::Error::Other(format!("{:?}", e)))?;
         task_manager.spawn_essential_handle().spawn(
             "L1 Messages",
             Some(MADARA_TASK_GROUP),
