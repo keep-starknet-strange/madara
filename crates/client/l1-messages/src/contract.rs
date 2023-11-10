@@ -13,16 +13,14 @@ abigen!(
 ]"
 );
 
-impl TryFrom<&LogMessageToL2Filter> for Fee {
-    type Error = L1MessagesWorkerError;
-
-    fn try_from(event: &LogMessageToL2Filter) -> Result<Self, Self::Error> {
+impl LogMessageToL2Filter {
+    pub fn try_get_fee(&self) -> Result<Fee, L1MessagesWorkerError> {
         // Check against panic
         // https://docs.rs/ethers/latest/ethers/types/struct.U256.html#method.as_u128
-        if event.fee > U256::from_big_endian(&(u128::MAX.to_be_bytes())) {
+        if self.fee > U256::from_big_endian(&(u128::MAX.to_be_bytes())) {
             Err(L1MessagesWorkerError::ToFeeError)
         } else {
-            Ok(Fee(event.fee.as_u128()))
+            Ok(Fee(self.fee.as_u128()))
         }
     }
 }
@@ -40,14 +38,12 @@ impl TryFrom<&LogMessageToL2Filter> for HandleL1MessageTransaction {
         // L1 message nonce.
         let nonce: u64 = Felt252Wrapper::try_from(sp_core::U256(event.nonce.0))?.try_into()?;
 
-        // Add the from address here so it's directly in the calldata.
-        let mut calldata: Vec<Felt252Wrapper> = Vec::from([Felt252Wrapper::try_from(event.from_address.as_bytes())?]);
+        let mut calldata = Vec::<Felt252Wrapper>::new();
 
         for x in &event.payload {
             calldata.push(Felt252Wrapper::try_from(sp_core::U256(x.0))?);
         }
 
-        let tx = HandleL1MessageTransaction { nonce, contract_address, entry_point_selector, calldata };
-        Ok(tx)
+        Ok(HandleL1MessageTransaction { nonce, contract_address, entry_point_selector, calldata })
     }
 }
