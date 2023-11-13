@@ -36,7 +36,7 @@ use sc_service::error::Error as ServiceError;
 use sc_service::{new_db_backend, Configuration, TaskManager, WarpSyncParams};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
 use sp_api::offchain::OffchainStorage;
-use sp_api::{ConstructRuntimeApi, TransactionFor};
+use sp_api::{ConstructRuntimeApi};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_offchain::STORAGE_PREFIX;
 use sp_runtime::traits::BlakeTwo256;
@@ -70,7 +70,7 @@ type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 
 type BasicImportQueue<Client> = sc_consensus::DefaultImportQueue<Block, Client>;
-type BoxBlockImport<Client> = sc_consensus::BoxBlockImport<Block, TransactionFor<Client, Block>>;
+type BoxBlockImport<Client> = sc_consensus::BoxBlockImport<Block, sc_transaction_pool_api::TransactionFor<Client, Block>>;
 
 #[allow(clippy::type_complexity)]
 pub fn new_partial<BIQ>(

@@ -53,10 +53,6 @@ impl SubstrateCli for Cli {
             path_or_url => Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path_or_url))?),
         })
     }
-
-    fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-        &madara_runtime::VERSION
-    }
 }
 
 /// Parse and run command line arguments
