@@ -405,7 +405,7 @@ where
 
     fn submit_local(
         &self,
-        at: &BlockId<Self::Block>,
+        at: Block::Hash,
         xt: sc_transaction_pool_api::LocalTransactionFor<Self>,
     ) -> Result<Self::Hash, Self::Error> {
         use sp_runtime::traits::SaturatedConversion;
