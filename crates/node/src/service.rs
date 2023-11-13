@@ -69,8 +69,8 @@ pub(crate) type FullClient = sc_service::TFullClient<Block, RuntimeApi, NativeEl
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 
-type BasicImportQueue<Client> = sc_consensus::DefaultImportQueue<Block, Client>;
-type BoxBlockImport<Client> = sc_consensus::BoxBlockImport<Block, sc_transaction_pool_api::TransactionFor<Client, Block>>;
+type BasicImportQueue = sc_consensus::DefaultImportQueue<Block>;
+type BoxBlockImport = sc_consensus::BoxBlockImport<Block>;
 
 #[allow(clippy::type_complexity)]
 pub fn new_partial<BIQ>(
@@ -82,10 +82,10 @@ pub fn new_partial<BIQ>(
         FullClient,
         FullBackend,
         FullSelectChain,
-        sc_consensus::DefaultImportQueue<Block, FullClient>,
+        sc_consensus::DefaultImportQueue<Block>,
         mc_transaction_pool::FullPool<Block, FullClient>,
         (
-            BoxBlockImport<FullClient>,
+            BoxBlockImport,
             sc_consensus_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
             Option<Telemetry>,
             Arc<MadaraBackend>,
@@ -103,7 +103,7 @@ where
         Option<TelemetryHandle>,
         GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
         Arc<MadaraBackend>,
-    ) -> Result<(BasicImportQueue<FullClient>, BoxBlockImport<FullClient>), ServiceError>,
+    ) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>,
 {
     let telemetry = config
         .telemetry_endpoints
@@ -196,7 +196,7 @@ pub fn build_aura_grandpa_import_queue(
     telemetry: Option<TelemetryHandle>,
     grandpa_block_import: GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
     _madara_backend: Arc<MadaraBackend>,
-) -> Result<(BasicImportQueue<FullClient>, BoxBlockImport<FullClient>), ServiceError>
+) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>
 where
     RuntimeApi: ConstructRuntimeApi<Block, FullClient>,
     RuntimeApi: Send + Sync + 'static,
@@ -237,7 +237,7 @@ pub fn build_manual_seal_import_queue(
     _telemetry: Option<TelemetryHandle>,
     _grandpa_block_import: GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
     _madara_backend: Arc<MadaraBackend>,
-) -> Result<(BasicImportQueue<FullClient>, BoxBlockImport<FullClient>), ServiceError>
+) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>
 where
     RuntimeApi: ConstructRuntimeApi<Block, FullClient>,
     RuntimeApi: Send + Sync + 'static,
@@ -579,7 +579,7 @@ fn run_manual_seal_authorship(
     client: Arc<FullClient>,
     transaction_pool: Arc<FullPool<Block, FullClient>>,
     select_chain: FullSelectChain,
-    block_import: BoxBlockImport<FullClient>,
+    block_import: BoxBlockImport,
     task_manager: &TaskManager,
     prometheus_registry: Option<&Registry>,
     commands_stream: Option<mpsc::Receiver<sc_consensus_manual_seal::rpc::EngineCommand<Hash>>>,
@@ -669,7 +669,7 @@ type ChainOpsResult = Result<
     (
         Arc<FullClient>,
         Arc<FullBackend>,
-        BasicQueue<Block, PrefixedMemoryDB<BlakeTwo256>>,
+        BasicQueue<Block>,
         TaskManager,
         Arc<MadaraBackend>,
     ),
