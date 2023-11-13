@@ -129,7 +129,7 @@ where
     B: backend::Backend<Block> + Send + Sync + 'static,
     Block: BlockT,
     C: BlockBuilderProvider<B, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block> + Send + Sync + 'static,
-    C::Api: ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>> + BlockBuilderApi<Block>,
+    C::Api: ApiExt<Block> + BlockBuilderApi<Block>,
 {
     fn init_with_now(
         &mut self,
@@ -163,7 +163,7 @@ where
     B: backend::Backend<Block> + Send + Sync + 'static,
     Block: BlockT,
     C: BlockBuilderProvider<B, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block> + Send + Sync + 'static,
-    C::Api: ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>> + BlockBuilderApi<Block>,
+    C::Api: ApiExt<Block> + BlockBuilderApi<Block>,
     PR: ProofRecording,
 {
     type CreateProposer = future::Ready<Result<Self::Proposer, Self::Error>>;
@@ -195,7 +195,7 @@ where
     B: backend::Backend<Block> + Send + Sync + 'static,
     Block: BlockT,
     C: BlockBuilderProvider<B, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block> + Send + Sync + 'static,
-    C::Api: ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>> + BlockBuilderApi<Block>,
+    C::Api: ApiExt<Block> + BlockBuilderApi<Block>,
     PR: ProofRecording,
 {
     type Proposal =
@@ -245,7 +245,7 @@ where
     B: backend::Backend<Block> + Send + Sync + 'static,
     Block: BlockT,
     C: BlockBuilderProvider<B, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block> + Send + Sync + 'static,
-    C::Api: ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>> + BlockBuilderApi<Block>,
+    C::Api: ApiExt<Block> + BlockBuilderApi<Block>,
     PR: ProofRecording,
 {
     /// Propose a new block.
