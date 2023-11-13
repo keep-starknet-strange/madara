@@ -175,7 +175,7 @@ pub mod pallet {
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         /// The block is being finalized.
-        fn on_finalize(_n: u32) {
+        fn on_finalize(_n: BlockNumberFor<T>) {
             assert!(SeqAddrUpdate::<T>::take(), "Sequencer address must be set for the block");
 
             // Create a new Starknet block and store it.
@@ -185,7 +185,7 @@ pub mod pallet {
         }
 
         /// The block is being initialized. Implement to have something happen.
-        fn on_initialize(_: BlockNumber) -> Weight {
+        fn on_initialize(_: BlockNumberFor<T>) -> Weight {
             Weight::zero()
         }
 
@@ -198,7 +198,7 @@ pub mod pallet {
         /// See: `<https://docs.substrate.io/reference/how-to-guides/offchain-workers/>`
         /// # Arguments
         /// * `n` - The block number.
-        fn offchain_worker(n: BlockNumber) {
+        fn offchain_worker(n: BlockNumberFor<T>) {
             log!(info, "Running offchain worker at block {:?}.", n);
 
             match Self::process_l1_messages() {
