@@ -16,7 +16,7 @@ use prometheus_endpoint::Registry as PrometheusRegistry;
 use sc_block_builder::{BlockBuilderApi, BlockBuilderProvider};
 use sc_client_api::backend;
 use sc_proposer_metrics::{EndProposingReason, MetricsLink as PrometheusMetrics};
-use sc_transaction_pool_api::{InPoolTransaction, TransactionPool, TransactionFor};
+use sc_transaction_pool_api::{InPoolTransaction, TransactionPool};
 use sp_api::{ApiExt, ProvideRuntimeApi};
 use sp_blockchain::ApplyExtrinsicFailed::Validity;
 use sp_blockchain::Error::ApplyExtrinsicFailed;
@@ -198,9 +198,8 @@ where
     C::Api: ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>> + BlockBuilderApi<Block>,
     PR: ProofRecording,
 {
-    type Transaction = sp_api::TransactionFor<B, Block>;
     type Proposal =
-        Pin<Box<dyn Future<Output = Result<Proposal<Block, Self::Transaction, PR::Proof>, Self::Error>> + Send>>;
+        Pin<Box<dyn Future<Output = Result<Proposal<Block, PR::Proof>, Self::Error>> + Send>>;
     type Error = sp_blockchain::Error;
     type ProofRecording = PR;
     type Proof = PR::Proof;
