@@ -9,6 +9,7 @@ mod madara_backend_client;
 mod types;
 
 use std::marker::PhantomData;
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use errors::StarknetRpcApiError;
@@ -16,7 +17,7 @@ use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 pub use mc_rpc_core::utils::*;
 use mc_rpc_core::Felt;
-pub use mc_rpc_core::StarknetRpcApiServer;
+pub use mc_rpc_core::{PredeployedAccount, PredeployedAccountsList, StarknetRpcApiServer};
 use mc_storage::OverrideHandle;
 use mc_transaction_pool::{ChainApi, Pool};
 use mp_felt::Felt252Wrapper;
@@ -24,7 +25,10 @@ use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
 use mp_transactions::UserTransaction;
-use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
+use pallet_starknet::{
+    genesis_loader::{GenesisData, GenesisLoader},
+    runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi},
+};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::BlockBackend;
 use sc_network_sync::SyncingService;
@@ -62,6 +66,20 @@ pub struct Starknet<A: ChainApi, B: BlockT, BE, C, P, H> {
     sync_service: Arc<SyncingService<B>>,
     starting_block: <<B>::Header as HeaderT>::Number,
     _marker: PhantomData<(B, BE, H)>,
+}
+
+// copypasted from `node/src/chain_spec.rs` to avoid cyclic dependencies
+const GENESIS_ASSETS_DIR: &str = "genesis-assets/";
+const GENESIS_ASSETS_FILE: &str = "genesis.json";
+
+// Used by the function `predeployed_accounts`. Copypasted from node/src/chain_spec.rs to avoid cyclic dependencies
+fn load_genesis(data_path: PathBuf) -> GenesisLoader {
+    let genesis_path = data_path.join(GENESIS_ASSETS_DIR).join(GENESIS_ASSETS_FILE);
+    let genesis_file_content = std::fs::read_to_string(genesis_path)
+        .expect("Failed to read genesis file. Please run `madara setup` before opening an issue.");
+    let genesis_data: GenesisData = serde_json::from_str(&genesis_file_content).expect("Failed loading genesis");
+
+    GenesisLoader::new(data_path, genesis_data)
 }
 
 /// Constructor for A Starknet RPC server for Madara
@@ -187,6 +205,50 @@ where
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     H: HasherT + Send + Sync + 'static,
 {
+    fn predeployed_accounts(&self) -> RpcResult<PredeployedAccountsList> {
+        // let runtime_api = self.client.runtime_api();
+        let genesis_path = PathBuf::from("../../../../configs");
+        let genesis_loader: &GenesisLoader = &load_genesis(genesis_path);
+
+        let mut predeployed_accounts: PredeployedAccountsList = Vec::new();
+        let block_id = BlockId::Tag(BlockTag::Latest);
+
+        // stores class hashes that correspond to "no validate account" contract classes
+        let no_validate_account_class_hashes: [FieldElement; 2] = [
+            Felt252Wrapper::from_hex_be("0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f")
+                .unwrap()
+                .into(),
+            Felt252Wrapper::from_hex_be("0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276")
+                .unwrap()
+                .into(),
+        ];
+        // stores the pk for the relevant predeployed accounts
+        let argent_pk: FieldElement =
+            Felt252Wrapper::from_hex_be("0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d")
+                .unwrap()
+                .into();
+
+        let erc20_contract_address: FieldElement =
+            Felt252Wrapper::from_hex_be("0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7")
+                .unwrap()
+                .into();
+
+        // reads the first 4 contracts (which are predeployed accounts), get their classes, their balance,
+        // and stores it all in a vector
+        for i in 0..4 {
+            let (contract_address, class_hash) =
+                (genesis_loader.data().contracts[i].0 .0, genesis_loader.data().contracts[i].1 .0);
+            let private_key =
+                if no_validate_account_class_hashes.contains(&class_hash) { None } else { Some(argent_pk) };
+            let contract_class = self.get_class(block_id, class_hash).unwrap();
+            let balance = self.get_storage_at(erc20_contract_address, contract_address, block_id).unwrap().0;
+            let account = PredeployedAccount { contract_address, contract_class, balance, private_key };
+            predeployed_accounts.push(account);
+        }
+
+        Ok(predeployed_accounts)
+    }
+
     fn block_number(&self) -> RpcResult<u64> {
         self.current_block_number()
     }

@@ -27,9 +27,23 @@ use starknet_core::types::{
 #[derive(Serialize, Deserialize)]
 pub struct Felt(#[serde_as(as = "UfeHex")] pub FieldElement);
 
+#[derive(Serialize, Deserialize)]
+pub struct PredeployedAccount {
+    pub contract_address: FieldElement,
+    pub contract_class: ContractClass,
+    pub balance: FieldElement,
+    pub private_key: Option<FieldElement>,
+}
+
+pub type PredeployedAccountsList = Vec<PredeployedAccount>;
+
 /// Starknet rpc interface.
 #[rpc(server, namespace = "starknet")]
 pub trait StarknetRpcApi {
+    /// Get the list of predeployed accounts
+    #[method(name = "predeployedAccounts")]
+    fn predeployed_accounts(&self) -> RpcResult<PredeployedAccountsList>;
+
     /// Get the most recent accepted block number
     #[method(name = "blockNumber")]
     fn block_number(&self) -> RpcResult<u64>;
