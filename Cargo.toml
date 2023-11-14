@@ -23,6 +23,7 @@ members = [
   "crates/client/storage",
   "crates/client/transaction-pool",
   "crates/client/commitment-state-diff",
+  "crates/client/state-sync",
   "starknet-rpc-test",
 ]
 # All previous except for `starknet-rpc-test`
@@ -135,7 +136,7 @@ sc-block-builder = { git = "https://github.com/paritytech/substrate", branch = "
 sc-proposer-metrics = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 sc-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 substrate-test-runtime-client = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
-
+substrate-test-client = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 
 # Substrate build & tools dependencies
 substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
@@ -241,3 +242,7 @@ url = "2.4.1"
 hashbrown = "0.14.2"
 tokio = "1.33.0"
 openssl = { version = "0.10", features = ["vendored"] }
+
+primitive-types = "0.12.1"
+
+tracing = "0.1.37"

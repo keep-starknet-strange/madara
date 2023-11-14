@@ -1,0 +1,78 @@
+[package]
+name = "state-sync"
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+version.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+reqwest = { workspace = true, features = ["json"]}
+primitive-types = { workspace = true }
+serde_json = { workspace = true, features = [
+    "arbitrary_precision",
+    "raw_value",
+] }
+hex = { workspace = true }
+tracing = { workspace = true }
+indexmap = { workspace = true }
+
+# Madara
+mp-hashers = { workspace = true, default-features = true }
+mp-commitments = { workspace = true, default-features = true }
+mp-digest-log = { workspace = true }
+mc-rpc-core = { workspace = true }
+mp-block = { workspace = true }
+mp-storage = { workspace = true  }
+madara-runtime = { workspace = true }
+
+# Starknet
+blockifier = { workspace = true, default-features = true }
+starknet_api = { workspace = true }
+
+# Substrate
+sp-runtime = { workspace = true }
+sp-blockchain = { workspace = true }
+sp-state-machine = { workspace = true }
+sp-core = { workspace = true }
+sp-api = { workspace = true }
+sc-client-api = { workspace = true }
+sc-client-db = { workspace = true }
+frame-support = { worksapce = true }
+
+tokio-retry = "0.3.0"
+const-decoder = "0.3.0"
+keccak-hash = "0.10.0"
+ethereum-types = "0.14.1"
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "test-util"] }
+futures = { workspace = true }
+pretty_assertions = { workspace = true }
+
+# Substrate
+sc-block-builder = { workspace = true }
+sp-inherents = { workspace = true }
+sp-timestamp = { workspace = true }
+substrate-test-client = { workspace = true }
+
+# Starknet
+starknet-core = { workspace = true }
+starknet-crypto = { workspace = true, features = ["alloc"] }
+
+# Madara
+pallet-starknet = { workspace = true }
+mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
+mp-transactions = { workspace = true }
+
+const-decoder = "0.3.0"
+httpmock = "0.7.0-rc.1"
+project-root = "0.2.2"
+test-case = "3.1.0"
+lazy_static = "1.4.0"
+hexlit = "0.5.5"
+assert_matches = "1.5.0"

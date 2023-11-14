@@ -1,0 +1,286 @@
+{
+  "contract_classes": [
+    [
+      "0x00000000000000000000000000000000000000000000000000000000DEADBEEF",
+      {
+        "path": "./cairo-contracts/build/test.json",
+        "version": 0
+      }
+    ],
+    [
+      "0x01cb5d0b5b5146e1aab92eb9fc9883a32a33a604858bb0275ac0ee65d885bba8",
+      {
+        "path": "./cairo-contracts/build/l1_handler.json",
+        "version": 0
+      }
+    ],
+    [
+      "0x03bcec8de953ba8e305e2ce2db52c91504aefa7c56c91211873b4d6ba36e8c32",
+      {
+        "path": "./cairo-contracts/build/NoValidateAccount.json",
+        "version": 0
+      }
+    ],
+    [
+      "0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd",
+      {
+        "path": "./cairo-contracts/build/OpenzeppelinAccount.json",
+        "version": 0
+      }
+    ],
+    [
+      "0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d",
+      {
+        "path": "./cairo-contracts/build/ArgentAccount.json",
+        "version": 0
+      }
+    ],
+    [
+      "0x0244ca3d9fe8b47dd565a6f4270d979ba31a7d6ff2c3bf8776198161505e8b52",
+      {
+        "path": "./cairo-contracts/build/BraavosAccount.json",
+        "version": 0
+      }
+    ],
+    [
+      "0x06a89ae7bd72c96202c040341c1ee422474b562e1d73c6848f08cae429c33262",
+      {
+        "path": "./cairo-contracts/build/Proxy.json",
+        "version": 0
+      }
+    ],
+    [
+      "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f",
+      {
+        "path": "./cairo-contracts/build/NoValidateAccount.json",
+        "version": 0
+      }
+    ],
+    [
+      "0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276",
+      {
+        "path": "./cairo-contracts/build/cairo_1/NoValidateAccount.casm.json",
+        "version": 1
+      }
+    ],
+    [
+      "0x071aaf68d30c3e52e1c4b7d1209b0e09525939c31bb0275919dffd4cd53f57c4",
+      {
+        "path": "./cairo-contracts/build/UnauthorizedInnerCallAccount.json",
+        "version": 0
+      }
+    ],
+    [
+      "0x06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922",
+      {
+        "path": "./cairo-contracts/build/ERC20.json",
+        "version": 0
+      }
+    ],
+    [
+      "0x91000",
+      {
+        "path": "./cairo-contracts/build/emit_single_event.json",
+        "version": 0
+      }
+    ],
+    [
+      "0x92000",
+      {
+        "path": "./cairo-contracts/build/emit_multiple_events_across_contracts.json",
+        "version": 0
+      }
+    ]
+  ],
+  "contracts": [
+    [
+      "0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7",
+      "0x00000000000000000000000000000000000000000000000000000000DEADBEEF"
+    ],
+    [
+      "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "0x01cb5d0b5b5146e1aab92eb9fc9883a32a33a604858bb0275ac0ee65d885bba8"
+    ],
+    [
+      "0x02356b628d108863baf8644c945d97bad70190af5957031f4852d00d0f690a77",
+      "0x03bcec8de953ba8e305e2ce2db52c91504aefa7c56c91211873b4d6ba36e8c32"
+    ],
+    [
+      "0x06e2616a2dceff4355997369246c25a78e95093df7a49e5ca6a06ce1544ffd50",
+      "0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd"
+    ],
+    [
+      "0x02e63de215f650e9d7e2313c6e9ed26b4f920606fb08576b1663c21a7c4a28c5",
+      "0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d"
+    ],
+    [
+      "0x05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122",
+      "0x0244ca3d9fe8b47dd565a6f4270d979ba31a7d6ff2c3bf8776198161505e8b52"
+    ],
+    [
+      "0x04e7b41e2d628e6ab91d6c805bd22fbdb186d4e581266640663bd0094b3ef98b",
+      "0x06a89ae7bd72c96202c040341c1ee422474b562e1d73c6848f08cae429c33262"
+    ],
+    [
+      "0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0",
+      "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f"
+    ],
+    [
+      "0x0642a8b9e2c6cc3a9ddb84575123f262a21415f78db453b0625d889e1e06ac32",
+      "0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276"
+    ],
+    [
+      "0x0764d66462958b670b4dbd46e00eb3d60100f329dc0365d9b059e0549a4c6f58",
+      "0x071aaf68d30c3e52e1c4b7d1209b0e09525939c31bb0275919dffd4cd53f57c4"
+    ],
+    [
+      "0x00000000000000000000000000000000000000000000000000000000000000AA",
+      "0x06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922"
+    ],
+    [
+      "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02cf",
+      "0x91000"
+    ],
+    [
+      "0x051a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02cf",
+      "0x92000"
+    ]
+  ],
+  "storage": [
+    [
+      [
+        "0x00000000000000000000000000000000000000000000000000000000000000AA",
+        "0x0341c1bdfd89f69748aa00b5742b03adbffd79b8e80cab5c50d91cd8c2a79be1"
+      ],
+      "0x4574686572"
+    ],
+    [
+      [
+        "0x00000000000000000000000000000000000000000000000000000000000000AA",
+        "0x00b6ce5410fca59d078ee9b2a4371a9d684c530d697c64fbef0ae6d5e8f0ac72"
+      ],
+      "0x455448"
+    ],
+    [
+      [
+        "0x00000000000000000000000000000000000000000000000000000000000000AA",
+        "0x01f0d4aa99431d246bac9b8e48c33e888245b15e9678f64f9bdfc8823dc8f979"
+      ],
+      "0x12"
+    ],
+    [
+      [
+        "0x00000000000000000000000000000000000000000000000000000000000000AA",
+        "0x3701645da930cd7f63318f7f118a9134e72d64ab73c72ece81cae2bd5fb403f"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x00000000000000000000000000000000000000000000000000000000000000AA",
+        "0x3701645da930cd7f63318f7f118a9134e72d64ab73c72ece81cae2bd5fb4040"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x00000000000000000000000000000000000000000000000000000000000000AA",
+        "0x25aa869465e1c3ac7ed6e933ef1af43f4d9126339b8f453f692d631c4a40d24"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x00000000000000000000000000000000000000000000000000000000000000AA",
+        "0x25aa869465e1c3ac7ed6e933ef1af43f4d9126339b8f453f692d631c4a40d25"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x00000000000000000000000000000000000000000000000000000000000000AA",
+        "0x6afaa15cba5e9ea552a55fec494d2d859b4b73506794bf5afbb3d73c1fb00aa"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x00000000000000000000000000000000000000000000000000000000000000AA",
+        "0x6afaa15cba5e9ea552a55fec494d2d859b4b73506794bf5afbb3d73c1fb00ab"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x00000000000000000000000000000000000000000000000000000000000000AA",
+        "0x2231fbd06f0277a2cbcd41f94a6d6cf930a586168e7faa4d62281f554934236"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x00000000000000000000000000000000000000000000000000000000000000AA",
+        "0x2231fbd06f0277a2cbcd41f94a6d6cf930a586168e7faa4d62281f554934237"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x00000000000000000000000000000000000000000000000000000000000000AA",
+        "0x60b6ac06a42730e54bfd5d389ca51256c926bc9317adb44f7c1029711f8bf8e"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x00000000000000000000000000000000000000000000000000000000000000AA",
+        "0x60b6ac06a42730e54bfd5d389ca51256c926bc9317adb44f7c1029711f8bf8f"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x00000000000000000000000000000000000000000000000000000000000000AA",
+        "0x78f9a7bb317327b7ad49232784f8e6acfa88269879253bbf780c5bc7a18149a"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x00000000000000000000000000000000000000000000000000000000000000AA",
+        "0x78f9a7bb317327b7ad49232784f8e6acfa88269879253bbf780c5bc7a18149b"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x06e2616a2dceff4355997369246c25a78e95093df7a49e5ca6a06ce1544ffd50",
+        "0x1379ac0624b939ceb9dede92211d7db5ee174fe28be72245b0a1a2abd81c98f"
+      ],
+      "0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2"
+    ],
+    [
+      [
+        "0x02e63de215f650e9d7e2313c6e9ed26b4f920606fb08576b1663c21a7c4a28c5",
+        "0x1ccc09c8a19948e048de7add6929589945e25f22059c7345aaf7837188d8d05"
+      ],
+      "0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2"
+    ],
+    [
+      [
+        "0x05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122",
+        "0x1f23302c120008f28b62f70efc67ccd75cfe0b9631d77df231d78b0538dcd8f"
+      ],
+      "0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2"
+    ],
+    [
+      [
+        "0x051a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02cf",
+        "0x238cf5ef6d6264a50d29a47fdf07ec9b7a8e9873214fa58179c5bb40933fdcb"
+      ],
+      "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02cf"
+    ]
+  ],
+  "fee_token_address": "0x00000000000000000000000000000000000000000000000000000000000000AA",
+  "seq_addr_updated": true
+}
