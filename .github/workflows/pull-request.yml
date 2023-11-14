@@ -52,7 +52,7 @@ jobs:
     env:
       SNCAST_VERSION: "0.8.3"
     steps:
-      - uses: keep-starknet-strange/starknet-foundry-compatibility-tests@v0.1.0
+      - uses: keep-starknet-strange/starknet-foundry-compatibility-tests@main
 
   # https://github.com/keep-starknet-strange/madara/issues/1097
   # benchmark:
