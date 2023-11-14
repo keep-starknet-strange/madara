@@ -29,7 +29,7 @@ use sp_runtime::generic::BlockId;
 use sp_runtime::traits::{SaturatedConversion, Zero};
 use sp_runtime::transaction_validity::TransactionValidityError;
 
-use crate::graph::{ChainApi, ExtrinsicHash, NumberFor, Pool, ValidatedTransaction};
+use crate::graph::{BlockHash, ChainApi, ExtrinsicHash, Pool, ValidatedTransaction};
 use crate::LOG_TARGET;
 
 const BACKGROUND_REVALIDATION_INTERVAL: Duration = Duration::from_millis(200);
@@ -38,7 +38,7 @@ const MIN_BACKGROUND_REVALIDATION_BATCH_SIZE: usize = 20;
 
 /// Payload from queue to worker.
 struct WorkerPayload<Api: ChainApi> {
-    at: NumberFor<Api>,
+    at: BlockHash<Api>,
     transactions: Vec<ExtrinsicHash<Api>>,
 }
 
@@ -48,9 +48,9 @@ struct WorkerPayload<Api: ChainApi> {
 struct RevalidationWorker<Api: ChainApi> {
     api: Arc<Api>,
     pool: Arc<Pool<Api>>,
-    best_block: NumberFor<Api>,
-    block_ordered: BTreeMap<NumberFor<Api>, HashSet<ExtrinsicHash<Api>>>,
-    members: HashMap<ExtrinsicHash<Api>, NumberFor<Api>>,
+    best_block: BlockHash<Api>,
+    block_ordered: BTreeMap<BlockHash<Api>, HashSet<ExtrinsicHash<Api>>>,
+    members: HashMap<ExtrinsicHash<Api>, BlockHash<Api>>,
 }
 
 impl<Api: ChainApi> Unpin for RevalidationWorker<Api> {}
@@ -62,15 +62,30 @@ impl<Api: ChainApi> Unpin for RevalidationWorker<Api> {}
 async fn batch_revalidate<Api: ChainApi>(
     pool: Arc<Pool<Api>>,
     api: Arc<Api>,
-    at: NumberFor<Api>,
+    at: BlockHash<Api>,
     batch: impl IntoIterator<Item = ExtrinsicHash<Api>>,
 ) {
+    // This conversion should work. Otherwise, for unknown block the revalidation shall be skipped,
+    // all the transactions will be kept in the validated pool, and can be scheduled for
+    // revalidation with the next request.
+    let block_number = match api.block_id_to_number(&BlockId::Hash(at)) {
+	 Ok(Some(n)) => n,
+	 Ok(None) => {
+	     log::debug!(target: LOG_TARGET, "revalidation skipped at block {at:?}, could not get block number.");
+	     return
+	 },
+	 Err(e) => {
+	     log::debug!(target: LOG_TARGET, "revalidation skipped at block {at:?}: {e:?}.");
+	     return
+	 },
+    };
+
     let mut invalid_hashes = Vec::new();
     let mut revalidated = HashMap::new();
 
     let validation_results = futures::future::join_all(batch.into_iter().filter_map(|ext_hash| {
         pool.validated_pool().ready_by_hash(&ext_hash).map(|ext| {
-            api.validate_transaction(&BlockId::Number(at), ext.source, ext.data.clone())
+            api.validate_transaction(at, ext.source, ext.data.clone())
                 .map(move |validation_result| (validation_result, ext_hash, ext))
         })
     }))
@@ -91,7 +106,7 @@ async fn batch_revalidate<Api: ChainApi>(
                 revalidated.insert(
                     ext_hash,
                     ValidatedTransaction::valid_at(
-                        at.saturated_into::<u64>(),
+                        block_number.saturated_into::<u64>(),
                         ext_hash,
                         ext.source,
                         ext.data.clone(),
@@ -119,8 +134,8 @@ async fn batch_revalidate<Api: ChainApi>(
 }
 
 impl<Api: ChainApi> RevalidationWorker<Api> {
-    fn new(api: Arc<Api>, pool: Arc<Pool<Api>>) -> Self {
-        Self { api, pool, block_ordered: Default::default(), members: Default::default(), best_block: Zero::zero() }
+    fn new(api: Arc<Api>, pool: Arc<Pool<Api>>, best_block: BlockHash<Api>) -> Self {
+        Self { api, pool, block_ordered: Default::default(), members: Default::default(), best_block }
     }
 
     fn prepare_batch(&mut self) -> Vec<ExtrinsicHash<Api>> {
@@ -272,10 +287,11 @@ where
         api: Arc<Api>,
         pool: Arc<Pool<Api>>,
         interval: Duration,
+        best_block: BlockHash<Api>,
     ) -> (Self, Pin<Box<dyn Future<Output = ()> + Send>>) {
         let (to_worker, from_queue) = tracing_unbounded("mpsc_revalidation_queue", 100_000);
 
-        let worker = RevalidationWorker::new(api.clone(), pool.clone());
+        let worker = RevalidationWorker::new(api.clone(), pool.clone(), best_block);
 
         let queue = Self { api, pool, background: Some(to_worker) };
 
@@ -283,8 +299,8 @@ where
     }
 
     /// New revalidation queue with background worker.
-    pub fn new_background(api: Arc<Api>, pool: Arc<Pool<Api>>) -> (Self, Pin<Box<dyn Future<Output = ()> + Send>>) {
-        Self::new_with_interval(api, pool, BACKGROUND_REVALIDATION_INTERVAL)
+    pub fn new_background(api: Arc<Api>, pool: Arc<Pool<Api>>, best_block: BlockHash<Api>) -> (Self, Pin<Box<dyn Future<Output = ()> + Send>>) {
+        Self::new_with_interval(api, pool, BACKGROUND_REVALIDATION_INTERVAL, best_block)
     }
 
     /// Queue some transaction for later revalidation.
@@ -292,7 +308,7 @@ where
     /// If queue configured with background worker, this will return immediately.
     /// If queue configured without background worker, this will resolve after
     /// revalidation is actually done.
-    pub async fn revalidate_later(&self, at: NumberFor<Api>, transactions: Vec<ExtrinsicHash<Api>>) {
+    pub async fn revalidate_later(&self, at: BlockHash<Api>, transactions: Vec<ExtrinsicHash<Api>>) {
         if !transactions.is_empty() {
             log::debug!(target: LOG_TARGET, "Sent {} transactions to revalidation queue", transactions.len(),);
         }

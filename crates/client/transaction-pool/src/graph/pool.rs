@@ -69,7 +69,7 @@ pub trait ChainApi: Send + Sync {
     /// Verify extrinsic at given block.
     fn validate_transaction(
         &self,
-        at: &BlockId<Self::Block>,
+        at: <Self::Block as BlockT>::Hash,
         source: TransactionSource,
         uxt: ExtrinsicFor<Self>,
     ) -> Self::ValidationFuture;
@@ -78,8 +78,7 @@ pub trait ChainApi: Send + Sync {
     fn block_id_to_number(&self, at: &BlockId<Self::Block>) -> Result<Option<NumberFor<Self>>, Self::Error>;
 
     /// Returns a block hash given the block id.
-    fn block_id_to_hash(&self, at: &BlockId<Self::Block>)
-    -> Result<Option<<Self::Block as BlockT>::Hash>, Self::Error>;
+    fn block_id_to_hash(&self, at: &BlockId<Self::Block>) -> Result<Option<<Self::Block as BlockT>::Hash>, Self::Error>;
 
     /// Returns hash and encoding length of the extrinsic.
     fn hash_and_length(&self, uxt: &ExtrinsicFor<Self>) -> (ExtrinsicHash<Self>, usize);
@@ -168,7 +167,7 @@ impl<B: ChainApi> Pool<B> {
     /// Imports a bunch of unverified extrinsics to the pool
     pub async fn submit_at(
         &self,
-        at: &BlockId<B::Block>,
+        at: <B::Block as BlockT>::Hash,
         source: TransactionSource,
         xts: impl IntoIterator<Item = ExtrinsicFor<B>>,
     ) -> Result<Vec<Result<ExtrinsicHash<B>, B::Error>>, B::Error> {
@@ -182,7 +181,7 @@ impl<B: ChainApi> Pool<B> {
     /// This does not check if a transaction is banned, before we verify it again.
     pub async fn resubmit_at(
         &self,
-        at: &BlockId<B::Block>,
+        at: <B::Block as BlockT>::Hash,
         source: TransactionSource,
         xts: impl IntoIterator<Item = ExtrinsicFor<B>>,
     ) -> Result<Vec<Result<ExtrinsicHash<B>, B::Error>>, B::Error> {
@@ -194,7 +193,7 @@ impl<B: ChainApi> Pool<B> {
     /// Imports one unverified extrinsic to the pool
     pub async fn submit_one(
         &self,
-        at: &BlockId<B::Block>,
+        at: <B::Block as BlockT>::Hash,
         source: TransactionSource,
         xt: ExtrinsicFor<B>,
     ) -> Result<ExtrinsicHash<B>, B::Error> {
@@ -205,11 +204,11 @@ impl<B: ChainApi> Pool<B> {
     /// Import a single extrinsic and starts to watch its progress in the pool.
     pub async fn submit_and_watch(
         &self,
-        at: &BlockId<B::Block>,
+        at: <B::Block as BlockT>::Hash,
         source: TransactionSource,
         xt: ExtrinsicFor<B>,
     ) -> Result<Watcher<ExtrinsicHash<B>, ExtrinsicHash<B>>, B::Error> {
-        let block_number = self.resolve_block_number(at)?;
+        let block_number = self.resolve_block_number(&BlockId::Hash(at))?;
         let (_, tx) = self.verify_one(at, block_number, source, xt, CheckBannedBeforeVerify::Yes).await;
         self.validated_pool.submit_and_watch(tx)
     }
@@ -249,8 +248,8 @@ impl<B: ChainApi> Pool<B> {
     /// their provided tags from there. Otherwise we query the runtime at the `parent` block.
     pub async fn prune(
         &self,
-        at: &BlockId<B::Block>,
-        parent: &BlockId<B::Block>,
+        at: <B::Block as BlockT>::Hash,
+        parent: <B::Block as BlockT>::Hash,
         extrinsics: &[ExtrinsicFor<B>],
     ) -> Result<(), B::Error> {
         log::debug!(target: LOG_TARGET, "Starting pruning of block {:?} (extrinsics: {})", at, extrinsics.len());
@@ -314,7 +313,7 @@ impl<B: ChainApi> Pool<B> {
     /// prevent importing them in the (near) future.
     pub async fn prune_tags(
         &self,
-        at: &BlockId<B::Block>,
+        at: <B::Block as BlockT>::Hash,
         tags: impl IntoIterator<Item = Tag>,
         known_imported_hashes: impl IntoIterator<Item = ExtrinsicHash<B>> + Clone,
     ) -> Result<(), B::Error> {
@@ -338,7 +337,7 @@ impl<B: ChainApi> Pool<B> {
         // And finally - submit reverified transactions back to the pool
 
         self.validated_pool.resubmit_pruned(
-            at,
+            &BlockId::Hash(at),
             known_imported_hashes,
             pruned_hashes,
             reverified_transactions.into_values().collect(),
@@ -361,12 +360,12 @@ impl<B: ChainApi> Pool<B> {
     /// Returns future that validates a bunch of transactions at given block.
     async fn verify(
         &self,
-        at: &BlockId<B::Block>,
+        at: <B::Block as BlockT>::Hash,
         xts: impl IntoIterator<Item = (TransactionSource, ExtrinsicFor<B>)>,
         check: CheckBannedBeforeVerify,
     ) -> Result<HashMap<ExtrinsicHash<B>, ValidatedTransactionFor<B>>, B::Error> {
         // we need a block number to compute tx validity
-        let block_number = self.resolve_block_number(at)?;
+	 let block_number = self.resolve_block_number(&BlockId::Hash(at))?;
 
         let res = futures::future::join_all(
             xts.into_iter().map(|(source, xt)| self.verify_one(at, block_number, source, xt, check)),
@@ -381,7 +380,7 @@ impl<B: ChainApi> Pool<B> {
     /// Returns future that validates single transaction at given block.
     async fn verify_one(
         &self,
-        block_id: &BlockId<B::Block>,
+        block_id: <B::Block as BlockT>::Hash,
         block_number: NumberFor<B>,
         source: TransactionSource,
         xt: ExtrinsicFor<B>,
