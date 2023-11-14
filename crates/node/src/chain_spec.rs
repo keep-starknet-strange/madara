@@ -174,11 +174,12 @@ fn testnet_genesis(
         system: SystemConfig {
             // Add Wasm runtime to storage.
             code: wasm_binary.to_vec(),
+            _config: Default::default(),
         },
         // Authority-based consensus protocol used for block production
         aura: AuraConfig { authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect() },
         // Deterministic finality mechanism used for block finalization
-        grandpa: GrandpaConfig { authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect() },
+        grandpa: GrandpaConfig { authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect(), _config: Default::default() },
         /// Starknet Genesis configuration.
         starknet: starknet_genesis_config,
     }

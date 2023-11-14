@@ -122,7 +122,7 @@ pub fn run() -> sc_cli::Result<()> {
                                 .into());
                         }
 
-                        cmd.run::<Block, service::ExecutorDispatch>(config)
+                        cmd.run::<Block, sp_statement_store::runtime_api::HostFunctions>(config)
                     }
                     BenchmarkCmd::Block(cmd) => {
                         let (client, _, _, _, _) = service::new_chain_ops(&mut config, cli.run.cache)?;

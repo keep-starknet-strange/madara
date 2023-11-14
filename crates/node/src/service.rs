@@ -40,6 +40,7 @@ use sp_api::{ConstructRuntimeApi};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_offchain::STORAGE_PREFIX;
 use sp_runtime::traits::BlakeTwo256;
+use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 use sp_trie::PrefixedMemoryDB;
 
 use crate::genesis_block::MadaraGenesisBlockBuilder;
@@ -71,6 +72,10 @@ type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 
 type BasicImportQueue = sc_consensus::DefaultImportQueue<Block>;
 type BoxBlockImport = sc_consensus::BoxBlockImport<Block>;
+
+/// The minimum period of blocks on which justifications will be
+/// imported and generated.
+const GRANDPA_JUSTIFICATION_PERIOD: u32 = 512;
 
 #[allow(clippy::type_complexity)]
 pub fn new_partial<BIQ>(
@@ -160,6 +165,7 @@ where
 
     let (grandpa_block_import, grandpa_link) = sc_consensus_grandpa::block_import(
         client.clone(),
+        GRANDPA_JUSTIFICATION_PERIOD,
         &client as &Arc<_>,
         select_chain.clone(),
         telemetry.as_ref().map(|x| x.handle()),
@@ -318,7 +324,7 @@ pub fn new_full(
                 is_validator: config.role.is_authority(),
                 keystore: Some(keystore_container.keystore()),
                 offchain_db: backend.offchain_storage(),
-                transaction_pool: Some(sc_transaction_pool_api::OffchainTransactionPoolFactory::new(
+                transaction_pool: Some(OffchainTransactionPoolFactory::new(
                     transaction_pool.clone(),
                 )),
                 network_provider: network.clone(),
@@ -472,7 +478,7 @@ pub fn new_full(
         let proposer_factory = ProposerFactory::new(
             task_manager.spawn_handle(),
             client.clone(),
-            transaction_pool,
+            transaction_pool.clone(),
             prometheus_registry.as_ref(),
         );
 
@@ -534,7 +540,7 @@ pub fn new_full(
         let grandpa_config = sc_consensus_grandpa::Config {
             // FIXME #1578 make this available through chainspec
             gossip_duration: Duration::from_millis(333),
-            justification_period: 512,
+            justification_generation_period: GRANDPA_JUSTIFICATION_PERIOD,
             name: Some(name),
             observer_enabled: false,
             keystore,
@@ -558,6 +564,7 @@ pub fn new_full(
             prometheus_registry,
             shared_voter_state: SharedVoterState::empty(),
             telemetry: telemetry.as_ref().map(|x| x.handle()),
+            offchain_tx_pool_factory: OffchainTransactionPoolFactory::new(transaction_pool.clone()),
         };
 
         // the GRANDPA voter task is considered infallible, i.e.
