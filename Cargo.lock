@@ -629,9 +629,9 @@ dependencies = [
 
 [[package]]
 name = "async-lock"
-version = "3.0.0"
+version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "45e900cdcd39bb94a14487d3f7ef92ca222162e6c7c3fe7cb3550ea75fb486ed"
+checksum = "deb2ab2aa8a746e221ab826c73f48bc6ba41be6763f0855cb249eb6d154cf1d7"
 dependencies = [
  "event-listener 3.0.1",
  "event-listener-strategy",
@@ -12324,7 +12324,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "assert_matches",
- "async-lock 3.0.0",
+ "async-lock 3.1.0",
  "flate2",
  "reqwest",
  "rstest",
