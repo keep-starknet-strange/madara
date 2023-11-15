@@ -15,6 +15,7 @@ mod mapping_db;
 pub use mapping_db::MappingCommitment;
 mod da_db;
 mod db_opening_utils;
+mod messaging_db;
 mod meta_db;
 
 use std::marker::PhantomData;
@@ -23,6 +24,7 @@ use std::sync::Arc;
 
 use da_db::DaDb;
 use mapping_db::MappingDb;
+use messaging_db::MessagingDb;
 use meta_db::MetaDb;
 use sc_client_db::DatabaseSource;
 use sp_database::Database;
@@ -42,7 +44,7 @@ pub(crate) mod columns {
     // ===== /!\ ===================================================================================
     // MUST BE INCREMENTED WHEN A NEW COLUMN IN ADDED
     // ===== /!\ ===================================================================================
-    pub const NUM_COLUMNS: u32 = 6;
+    pub const NUM_COLUMNS: u32 = 7;
 
     pub const META: u32 = 0;
     pub const BLOCK_MAPPING: u32 = 1;
@@ -54,11 +56,15 @@ pub(crate) mod columns {
     ///
     /// This column should only be accessed if the `--cache` flag is enabled.
     pub const STARKNET_TRANSACTION_HASHES_CACHE: u32 = 5;
+
+    /// This column contains last synchronized L1 block.
+    pub const MESSAGING: u32 = 6;
 }
 
 pub mod static_keys {
     pub const CURRENT_SYNCING_TIPS: &[u8] = b"CURRENT_SYNCING_TIPS";
     pub const LAST_PROVED_BLOCK: &[u8] = b"LAST_PROVED_BLOCK";
+    pub const L1_MESSAGES: &[u8] = b"L1_MESSAGES";
 }
 
 /// The Madara client database backend
@@ -70,6 +76,7 @@ pub struct Backend<B: BlockT> {
     meta: Arc<MetaDb<B>>,
     mapping: Arc<MappingDb<B>>,
     da: Arc<DaDb<B>>,
+    messaging: Arc<MessagingDb<B>>,
 }
 
 /// Returns the Starknet database directory.
@@ -110,6 +117,7 @@ impl<B: BlockT> Backend<B> {
             mapping: Arc::new(MappingDb::new(db.clone(), cache_more_things)),
             meta: Arc::new(MetaDb { db: db.clone(), _marker: PhantomData }),
             da: Arc::new(DaDb { db: db.clone(), _marker: PhantomData }),
+            messaging: Arc::new(MessagingDb { db: db.clone(), _marker: PhantomData }),
         })
     }
 
@@ -126,5 +134,10 @@ impl<B: BlockT> Backend<B> {
     /// Return the da database manager
     pub fn da(&self) -> &Arc<DaDb<B>> {
         &self.da
+    }
+
+    /// Return the da database manager
+    pub fn messaging(&self) -> &Arc<MessagingDb<B>> {
+        &self.messaging
     }
 }

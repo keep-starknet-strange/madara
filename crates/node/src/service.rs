@@ -451,11 +451,9 @@ pub fn new_full(
         task_manager.spawn_essential_handle().spawn(
             "da-worker-update",
             Some(MADARA_TASK_GROUP),
-            DataAvailabilityWorker::update_state(da_client, client.clone(), madara_backend),
+            DataAvailabilityWorker::update_state(da_client, client.clone(), madara_backend.clone()),
         );
     };
-
-    let db_backend = backend.clone();
 
     if role.is_authority() {
         // manual-seal authorship
@@ -587,7 +585,7 @@ pub fn new_full(
         task_manager.spawn_essential_handle().spawn(
             "L1 Messages",
             Some(MADARA_TASK_GROUP),
-            mc_l1_messages::worker::run_worker(config, client, transaction_pool, db_backend),
+            mc_l1_messages::worker::run_worker(config, client, transaction_pool, madara_backend),
         );
     }
     network_starter.start_network();

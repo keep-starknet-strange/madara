@@ -4,10 +4,8 @@ use ethers::providers::{Http, Provider, StreamExt};
 use madara_runtime::pallet_starknet;
 use mp_transactions::HandleL1MessageTransaction;
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
-use parity_scale_codec::{Decode, Encode};
-use sc_client_api::{Backend, HeaderBackend};
+use sc_client_api::HeaderBackend;
 use sc_transaction_pool_api::{TransactionPool, TransactionSource};
-use sp_api::offchain::OffchainStorage;
 use sp_api::ProvideRuntimeApi;
 use sp_runtime::traits::Block as BlockT;
 use starknet_api::transaction::Fee;
@@ -17,8 +15,6 @@ use crate::contract::{L1Contract, LogMessageToL2Filter};
 use crate::error::L1MessagesWorkerError;
 
 const TX_SOURCE: TransactionSource = TransactionSource::External;
-const STORAGE_PREFIX: &str = "L1MessagesWorker";
-const STORAGE_KEY: &str = "last_synced_block";
 
 pub fn connect_to_l1_contract(
     config: &L1MessagesWorkerConfig,
@@ -33,23 +29,18 @@ pub fn connect_to_l1_contract(
     Ok(l1_contract)
 }
 
-pub async fn run_worker<C, P, B, S>(config: L1MessagesWorkerConfig, client: Arc<C>, pool: Arc<P>, backend: Arc<S>)
-where
+pub async fn run_worker<C, P, B>(
+    config: L1MessagesWorkerConfig,
+    client: Arc<C>,
+    pool: Arc<P>,
+    backend: Arc<mc_db::Backend<B>>,
+) where
     B: BlockT,
     C: ProvideRuntimeApi<B> + HeaderBackend<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     P: TransactionPool<Block = B> + 'static,
-    S: Backend<B> + Send + 'static,
 {
     log::info!("⟠ Starting L1 Messages Worker with settings: {:?}", config);
-
-    let mut offchain_storage = match backend.offchain_storage() {
-        Some(offchain_storage) => offchain_storage,
-        None => {
-            log::error!("⟠ Offchain storage unavailable");
-            return;
-        }
-    };
 
     let l1_contract = match connect_to_l1_contract(&config) {
         Ok(l1_contract) => l1_contract,
@@ -59,7 +50,15 @@ where
         }
     };
 
-    let events = l1_contract.events().from_block(get_block_number::<B, S>(&offchain_storage).unwrap_or_default());
+    let last_synced_l1_block = match backend.messaging().last_synced_l1_block() {
+        Ok(blknum) => blknum,
+        Err(e) => {
+            log::error!("⟠ Madara Messaging DB unavailable: {:?}", e);
+            return;
+        }
+    };
+
+    let events = l1_contract.events().from_block(last_synced_l1_block);
     let mut stream = match events.stream().await {
         Ok(stream) => stream.with_meta(),
         Err(e) => {
@@ -76,7 +75,7 @@ where
             meta.log_index
         );
 
-        match process_l1_message(&event, client.clone(), pool.clone()).await {
+        match process_l1_message(&event, &client, &pool, &backend, &meta.block_number.as_u64()).await {
             Ok(tx_hash) => {
                 log::info!(
                     "⟠ L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?} submitted, transaction \
@@ -86,7 +85,6 @@ where
                     meta.log_index,
                     tx_hash
                 );
-                set_block_number::<B, S>(&mut offchain_storage, &meta.block_number.as_u64());
             }
             Err(e) => {
                 log::error!(
@@ -104,8 +102,10 @@ where
 
 async fn process_l1_message<C, P, B>(
     event: &LogMessageToL2Filter,
-    client: Arc<C>,
-    pool: Arc<P>,
+    client: &Arc<C>,
+    pool: &Arc<P>,
+    backend: &Arc<mc_db::Backend<B>>,
+    l1_blknum: &u64,
 ) -> Result<P::Hash, L1MessagesWorkerError>
 where
     B: BlockT,
@@ -142,48 +142,15 @@ where
             L1MessagesWorkerError::ConvertTransactionRuntimeApiError
         })?;
 
-    pool.submit_one(best_block_hash, TX_SOURCE, extrinsic).await.map_err(|e| {
+    let tx_hash = pool.submit_one(best_block_hash, TX_SOURCE, extrinsic).await.map_err(|e| {
         log::error!("⟠ Failed to submit transaction with L1 Message: {:?}", e);
         L1MessagesWorkerError::SubmitTxError
-    })
-}
+    })?;
 
-fn set_block_number<B, S>(storage: &mut S::OffchainStorage, blknum: &u64)
-where
-    B: BlockT,
-    S: Backend<B> + Send + 'static,
-{
-    set_storage_value::<B, S, u64>(storage, STORAGE_PREFIX, STORAGE_KEY, blknum);
-}
+    backend.messaging().update_last_synced_l1_block(l1_blknum).map_err(|e| {
+        log::error!("⟠ Failed to save last L1 synced block: {:?}", e);
+        L1MessagesWorkerError::DatabaseError(e)
+    })?;
 
-fn get_block_number<B, S>(storage: &S::OffchainStorage) -> Result<u64, L1MessagesWorkerError>
-where
-    B: BlockT,
-    S: Backend<B> + Send + 'static,
-{
-    get_storage_value::<B, S, u64>(storage, STORAGE_PREFIX, STORAGE_KEY)
-}
-
-fn set_storage_value<B, S, T>(storage: &mut S::OffchainStorage, prefix: &str, key: &str, value: &T)
-where
-    B: BlockT,
-    S: Backend<B> + Send + 'static,
-    T: Encode,
-{
-    storage.set(prefix.as_bytes(), key.as_bytes(), &value.encode());
-}
-
-fn get_storage_value<B, S, T>(storage: &S::OffchainStorage, prefix: &str, key: &str) -> Result<T, L1MessagesWorkerError>
-where
-    B: BlockT,
-    S: Backend<B> + Send + 'static,
-    T: Decode + Default,
-{
-    match storage.get(prefix.as_bytes(), key.as_bytes()) {
-        Some(bytes) => match T::decode(&mut &bytes[..]) {
-            Ok(blknum) => Ok(blknum),
-            Err(_) => Err(L1MessagesWorkerError::OffchainStorageError),
-        },
-        None => Ok(T::default()),
-    }
+    Ok(tx_hash)
 }

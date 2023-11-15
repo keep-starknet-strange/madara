@@ -9,6 +9,7 @@ pub const DEFAULT_ETHEREUM_NODE: &str = "127.0.0.1:8545";
 pub const DEFAULT_CONTRACT_ADDRESS: &str = "0x5fbdb2315678afecb367f032d93f642f64180aa3";
 
 #[derive(Clone, PartialEq, serde::Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct L1MessagesWorkerConfig {
     http_provider: String,
     contract_address: Address,
