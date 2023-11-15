@@ -95,7 +95,7 @@ mp-felt = { workspace = true }
 mp-sequencer-address = { workspace = true, features = ["client"] }
 
 # CLI-specific dependencies
-try-runtime-cli = { optional = true, git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
+try-runtime-cli = { optional = true, git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
 
 reqwest = { workspace = true }
 serde_json = { workspace = true }

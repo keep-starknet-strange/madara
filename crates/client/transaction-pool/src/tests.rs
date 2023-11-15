@@ -51,6 +51,11 @@ impl TestApi {
     pub fn validation_requests(&self) -> Vec<Extrinsic> {
         self.validation_requests.lock().clone()
     }
+
+    /// Helper function for mapping block number to hash. Use if mapping shall not fail.
+    pub fn expect_hash_from_number(&self, n: BlockNumber) -> H256 {
+        self.block_id_to_hash(&BlockId::Number(n)).unwrap().unwrap()
+    }
 }
 
 impl ChainApi for TestApi {

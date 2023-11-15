@@ -1,4 +1,5 @@
 use frame_support::traits::GenesisBuild;
+use sp_runtime::BuildStorage;
 
 use crate::genesis_loader::{GenesisData, GenesisLoader};
 use crate::{Config, GenesisConfig};
@@ -50,13 +51,12 @@ macro_rules! mock_runtime {
 				type DbWeight = ();
 				type RuntimeOrigin = RuntimeOrigin;
 				type RuntimeCall = RuntimeCall;
-				type Index = u64;
-				type BlockNumber = u64;
+				type Nonce = u64;
 				type Hash = H256;
 				type Hashing = BlakeTwo256;
 				type AccountId = u64;
 				type Lookup = IdentityLookup<Self::AccountId>;
-				type Header = Header;
+				type Block = Block;
 				type RuntimeEvent = RuntimeEvent;
 				type BlockHashCount = ConstU64<250>;
 				type Version = ();
@@ -124,7 +124,7 @@ macro_rules! mock_runtime {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext<T: Config>() -> sp_io::TestExternalities {
-    let mut t = frame_system::GenesisConfig::default().build_storage::<T>().unwrap();
+	let mut t = frame_system::GenesisConfig::<T>::default().build_storage().unwrap();
 
     let genesis_data: GenesisData = serde_json::from_str(std::include_str!("./genesis.json")).unwrap();
     let genesis_loader = GenesisLoader::new(project_root::get_project_root().unwrap(), genesis_data);
