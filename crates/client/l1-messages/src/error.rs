@@ -14,6 +14,8 @@ pub enum L1MessagesWorkerError {
     ConfigError,
     #[error("Failed to convert transaction via Runtime API")]
     ConvertTransactionRuntimeApiError,
+    #[error("Madara Messaging DB Error")]
+    DatabaseError(String),
     #[error("Message from L1 has been already processed")]
     L1MessageAlreadyProcessed,
     #[error("Failed to read/write into Offchain Storage")]

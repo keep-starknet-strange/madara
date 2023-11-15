@@ -20,6 +20,9 @@ madara-runtime = { workspace = true, default-features = true }
 # Starknet dependencies
 starknet_api = { workspace = true, default-features = true }
 
+# Starknet
+mc-db = { workspace = true, default-features = true }
+
 # Madara Primitives
 mp-felt = { workspace = true, default-features = true }
 mp-transactions = { workspace = true, default-features = true }
@@ -37,8 +40,5 @@ sc-transaction-pool-api = { workspace = true, default-features = true }
 ethers = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-parity-scale-codec = { workspace = true, features = [
-    "derive",
-] }
 thiserror = { workspace = true }
 

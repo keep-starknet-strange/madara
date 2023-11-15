@@ -1,0 +1,34 @@
+use std::marker::PhantomData;
+use std::sync::Arc;
+
+// Substrate
+use scale_codec::{Decode, Encode};
+use sp_database::Database;
+use sp_runtime::traits::Block as BlockT;
+
+use crate::DbHash;
+
+pub struct MessagingDb<B: BlockT> {
+    pub(crate) db: Arc<dyn Database<DbHash>>,
+    pub(crate) _marker: PhantomData<B>,
+}
+
+// TODO: purge old cairo job keys
+impl<B: BlockT> MessagingDb<B> {
+    pub fn last_synced_l1_block(&self) -> Result<u64, String> {
+        match self.db.get(crate::columns::MESSAGING, crate::static_keys::L1_MESSAGES) {
+            Some(raw) => Ok(u64::decode(&mut &raw[..]).map_err(|e| format!("{:?}", e))?),
+            None => Ok(0),
+        }
+    }
+
+    pub fn update_last_synced_l1_block(&self, l1_blknum: &u64) -> Result<(), String> {
+        let mut transaction = sp_database::Transaction::new();
+
+        transaction.set(crate::columns::MESSAGING, crate::static_keys::L1_MESSAGES, &l1_blknum.encode());
+
+        self.db.commit(transaction).map_err(|e| format!("{:?}", e))?;
+
+        Ok(())
+    }
+}
