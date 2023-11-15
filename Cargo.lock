@@ -802,8 +802,8 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
 name = "avail-subxt"
-version = "0.3.0"
-source = "git+https://github.com/availproject/avail?rev=0958c6ed499497b70a33ab072dcbe86c762f3976#0958c6ed499497b70a33ab072dcbe86c762f3976"
+version = "0.4.0"
+source = "git+https://github.com/availproject/avail?tag=v1.8.0.0#9c5f37b92303991dc9cd39534d9298e2298114fd"
 dependencies = [
  "anyhow",
  "curve25519-dalek 2.1.3",
@@ -4626,9 +4626,9 @@ dependencies = [
 
 [[package]]
 name = "h2"
-version = "0.3.21"
+version = "0.3.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91fc23aa11be92976ef4729127f1a74adf36d8436f7816b185d18df956790833"
+checksum = "4d6250322ef6e60f93f9a2162799302cd6f68f79f6e5d85c8c16f14d1d958178"
 dependencies = [
  "bytes",
  "fnv",
@@ -4636,7 +4636,7 @@ dependencies = [
  "futures-sink",
  "futures-util",
  "http",
- "indexmap 1.9.3",
+ "indexmap 2.1.0",
  "slab",
  "tokio",
  "tokio-util",
@@ -5221,7 +5221,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb0889898416213fab133e1d33a0e5858a48177452750691bde3666d0fdbaf8b"
 dependencies = [
  "hermit-abi 0.3.3",
- "rustix 0.38.23",
+ "rustix 0.38.24",
  "windows-sys 0.48.0",
 ]
 
@@ -6822,7 +6822,7 @@ version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b2cffa4ad52c6f791f4f8b15f0c05f9824b2ced1160e88cc393d64fff9a8ac64"
 dependencies = [
- "rustix 0.38.23",
+ "rustix 0.38.24",
 ]
 
 [[package]]
@@ -9461,9 +9461,9 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "0.38.23"
+version = "0.38.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ffb93593068e9babdad10e4fce47dc9b3ac25315a72a59766ffd9e9a71996a04"
+checksum = "9ad981d6c340a49cdc40a1028d9c6084ec7e9fa33fcb839cab656a267071e234"
 dependencies = [
  "bitflags 2.4.1",
  "errno",
@@ -13166,7 +13166,7 @@ dependencies = [
  "cfg-if",
  "fastrand 2.0.1",
  "redox_syscall 0.4.1",
- "rustix 0.38.23",
+ "rustix 0.38.24",
  "windows-sys 0.48.0",
 ]
 
@@ -14773,7 +14773,7 @@ dependencies = [
  "either",
  "home",
  "once_cell",
- "rustix 0.38.23",
+ "rustix 0.38.24",
 ]
 
 [[package]]
