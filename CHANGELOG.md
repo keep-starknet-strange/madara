@@ -2,6 +2,7 @@
 
 ## Next release
 
+- ci: Fix starknet foundry sncast not found
 - fix: Ensure transaction checks are compatible with starknet-rs
 - ci: Run Starknet Foundry tests against Madara RPC
 - fix: add name, symbol and decimals to fee token storage
