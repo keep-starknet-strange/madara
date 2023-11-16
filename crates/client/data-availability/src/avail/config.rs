@@ -5,9 +5,9 @@ use serde::Deserialize;
 
 use crate::DaMode;
 
-const DEFAULT_AVAIL_WS: &str = "wss://kate.avail.tools:443/ws";
+const DEFAULT_AVAIL_WS: &str = "ws://127.0.0.1:9945";
 const DEFAULT_APP_ID: u32 = 0;
-const DEFAULT_AVAIL_VALIDATE_CODEGEN: bool = true;
+const DEFAULT_AVAIL_VALIDATE_CODEGEN: bool = false;
 const DEFAULT_AVAIL_SEED: &str = "//Alice";
 
 #[derive(Clone, PartialEq, Deserialize, Debug)]

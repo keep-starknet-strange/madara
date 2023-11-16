@@ -4,6 +4,9 @@
 
 - feat(rpc): return deployed contract address and actual fee in transaction
   receipt
+- ci: Fix starknet foundry sncast not found
+- fix: Ensure transaction checks are compatible with starknet-rs
+- ci: Run Starknet Foundry tests against Madara RPC
 - fix: add name, symbol and decimals to fee token storage
 - fix: dependencies for dockerfile and binaries
 - docs: add translation of madara beast article to spanish
@@ -11,8 +14,11 @@
 - dev(compilation): add incremental compilation
 - feat(rpc): add support for bulk estimate fee
 - feat: add argent multicall contract to genesis
+- chore(data-availability): update avail-subxt to version 0.4.0
 - fix(ci): setup should fetch files from local config
 - chore: deprecate `madara-app` and `madara-dev-explorer` modules
+- chore(data-availability-avail): implement fire and forget, and add ws
+  reconnection logic
 
 ## v0.5.0
 
@@ -62,7 +68,6 @@
   madara node
 - feat(cache-option): add an option to enable aggressive caching in command-line
   parameters
-- fix: Ensure transaction checks are compatible with starknet-rs
 
 ## v0.4.0
 
