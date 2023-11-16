@@ -2,6 +2,7 @@
 
 ## Next release
 
+- feat: add rpc method to fetch predeployed accounts
 - fix: add name, symbol and decimals to fee token storage
 - fix: dependencies for dockerfile and binaries
 - docs: add translation of madara beast article to spanish
