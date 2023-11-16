@@ -1192,7 +1192,6 @@ impl<T: Config> Pallet<T> {
         T::ChainId::get()
     }
     pub fn is_transaction_fee_disabled() -> bool {
-        // <BlockifierStateAdapter<T> as FeeConfig>::is_transaction_fee_disabled()
-        BlockifierStateAdapter::<T>::default().is_transaction_fee_disabled()
+        T::DisableTransactionFee::get()
     }
 }
