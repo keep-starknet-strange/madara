@@ -18,7 +18,8 @@
           nativeBuildInputs = with pkgs; [ pkg-config protobuf openssl ];
 
           buildInputs = with pkgs;
-            [ rustToolchain clang rocksdb ] ++ lib.optionals stdenv.isDarwin
+            [ hurl rustToolchain clang rocksdb ]
+            ++ lib.optionals stdenv.isDarwin
             [ darwin.apple_sdk.frameworks.Security ];
 
           LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
