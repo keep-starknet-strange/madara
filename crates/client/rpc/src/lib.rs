@@ -984,13 +984,9 @@ where
             //         send_to_address,         // to (sequencer address)
             //         expected_fee_value_low,
             //         expected_fee_value_high,
-            //     ],
-            // },
+            //     ]},
             // fee transfer must be the last event, except enabled disable-transaction-fee feature
-            events_converted
-                .last()
-                .unwrap()
-                .map(|&transfer_fee_event| transfer_fee_event.data[2].clone().0)
+            events_converted.last().unwrap().data[2].clone()
         };
 
         let receipt = match tx_type {
@@ -1013,8 +1009,7 @@ where
                         event.keys.iter().find(|&&key| key == event_key)?;
                         Some(Felt252Wrapper(event.from_address).0)
                     });
-                    address.unwrap_or_default() // FIXME: Compute the address ?
-
+                    address.unwrap_or_default() // todo: Compute the address ?
                 };
                 TransactionReceipt::DeployAccount(DeployAccountTransactionReceipt {
                     transaction_hash,
