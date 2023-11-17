@@ -306,7 +306,7 @@ impl_runtime_apis! {
             }).collect::<Vec<Transaction>>()
         }
 
-        fn get_events_for_tx_hash(extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper, tx_hash: Felt252Wrapper) -> Option<(TxType, Vec<StarknetEvent>)> {
+        fn get_index_and_tx_for_tx_hash(extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper, tx_hash: Felt252Wrapper) -> Option<(usize, Transaction)> {
             // Find our tx and it's index
             let (tx_index, tx) =  extrinsics.into_iter().enumerate().find(|(_, xt)| {
                 let computed_tx_hash = match &xt.function {
@@ -319,16 +319,18 @@ impl_runtime_apis! {
 
                 computed_tx_hash == tx_hash
             })?;
-
-            // Compute it's tx type
-            let tx_type = match tx.function {
-                RuntimeCall::Starknet( invoke { .. }) => TxType::Invoke,
-                RuntimeCall::Starknet( declare { .. }) => TxType::Declare,
-                RuntimeCall::Starknet( deploy_account { .. }) => TxType::DeployAccount,
-                RuntimeCall::Starknet( consume_l1_message { .. }) => TxType::L1Handler,
+            let transaction = match tx {
+                RuntimeCall::Starknet( invoke { transaction }) => Transaction::Invoke(transaction),
+                RuntimeCall::Starknet( declare { transaction, .. }) => Transaction::Declare(transaction),
+                RuntimeCall::Starknet( deploy_account { transaction }) => Transaction::DeployAccount(transaction),
+                RuntimeCall::Starknet( consume_l1_message { transaction, .. }) => Transaction::L1Handler(transaction),
                 _ => panic!("The previous match made sure that at this point tx is one of those starknet calls"),
-            };
+            }
 
+            (tx_index, transaction)
+        }
+
+        fn get_events_for_tx_by_index(tx_index: usize) -> Option<Vec<StarknetEvent>> {
 
             // Skip all the events that are not related to our tx
             let event_iter = System::read_events_no_consensus().filter_map(|event| {
@@ -357,7 +359,7 @@ impl_runtime_apis! {
                 tx_index as u32 == index
             }).map(|(_, event)| event).collect();
 
-            Some((tx_type, events))
+            Some(events)
         }
 
         fn get_tx_execution_outcome(tx_hash: TransactionHash) -> Option<Vec<u8>> {
