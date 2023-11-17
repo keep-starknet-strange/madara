@@ -366,7 +366,7 @@ where
         client: Arc<Client>,
     ) -> Arc<Self> {
         let pool_api = Arc::new(FullChainApi::new(client.clone(), prometheus, &spawner));
-        let pool = Arc::new(Self::with_revalidation_type(
+        Arc::new(Self::with_revalidation_type(
             options,
             is_validator,
             pool_api,
@@ -376,9 +376,7 @@ where
             client.usage_info().chain.best_number,
             client.usage_info().chain.best_hash,
             client.usage_info().chain.finalized_hash,
-        ));
-
-        pool
+        ))
     }
 }
 
