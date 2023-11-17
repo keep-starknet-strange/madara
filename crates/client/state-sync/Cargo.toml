@@ -20,6 +20,7 @@ serde_json = { workspace = true, features = [
 hex = { workspace = true }
 tracing = { workspace = true }
 indexmap = { workspace = true }
+hashbrown = { workspace = true }
 
 # Madara
 mp-hashers = { workspace = true, default-features = true }
@@ -28,6 +29,8 @@ mp-digest-log = { workspace = true }
 mc-rpc-core = { workspace = true }
 mp-block = { workspace = true }
 mp-storage = { workspace = true  }
+mc-db = { workspace = true }
+mc-mapping-sync = { workspace = true }
 madara-runtime = { workspace = true }
 
 # Starknet
@@ -58,6 +61,7 @@ pretty_assertions = { workspace = true }
 sc-block-builder = { workspace = true }
 sp-inherents = { workspace = true }
 sp-timestamp = { workspace = true }
+sp-block-builder = { workspace = true }
 substrate-test-client = { workspace = true }
 
 # Starknet
@@ -76,3 +80,4 @@ test-case = "3.1.0"
 lazy_static = "1.4.0"
 hexlit = "0.5.5"
 assert_matches = "1.5.0"
+tempfile = "3.8.1"

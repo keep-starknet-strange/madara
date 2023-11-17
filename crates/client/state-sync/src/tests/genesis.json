@@ -254,6 +254,20 @@
     ],
     [
       [
+        "0x00000000000000000000000000000000000000000000000000000000000000AA",
+        "0x02450cb55e7682ffca9e1db504e2de1263d587242b9b43e27a1eedf18b4bbabf"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x00000000000000000000000000000000000000000000000000000000000000AA",
+        "0x02450cb55e7682ffca9e1db504e2de1263d587242b9b43e27a1eedf18b4bbac0"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
         "0x06e2616a2dceff4355997369246c25a78e95093df7a49e5ca6a06ce1544ffd50",
         "0x1379ac0624b939ceb9dede92211d7db5ee174fe28be72245b0a1a2abd81c98f"
       ],

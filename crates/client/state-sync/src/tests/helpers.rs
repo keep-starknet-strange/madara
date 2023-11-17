@@ -2,40 +2,22 @@ use alloc::sync::Arc;
 
 use mp_felt::Felt252Wrapper;
 use mp_transactions::DeployAccountTransaction;
-use pallet_starknet::types::ContractStorageKey;
-use sp_core::H256;
-use starknet_api::api_core::{ClassHash, ContractAddress, PatriciaKey};
+use starknet_api::api_core::{ClassHash, ContractAddress};
 use starknet_api::hash::StarkFelt;
-use starknet_api::state::StorageKey;
 use starknet_api::transaction::Calldata;
-use starknet_core::utils::get_storage_var_address;
 use starknet_crypto::FieldElement;
 
 use super::constants::*;
 pub extern crate alloc;
 
-/// Returns the storage key for a given storage name, keys and offset.
-/// Calculates pedersen(sn_keccak(storage_name), keys) + storage_key_offset which is the key in the
-/// starknet contract for storage_name(key_1, key_2, ..., key_n).
-/// https://docs.starknet.io/documentation/architecture_and_concepts/Contracts/contract-storage/#storage_variables
-pub fn get_storage_key(
-    address: &ContractAddress,
-    storage_name: &str,
-    keys: &[FieldElement],
-    storage_key_offset: u64,
-) -> ContractStorageKey {
-    let storage_key_offset = H256::from_low_u64_be(storage_key_offset);
-    let mut storage_key = get_storage_var_address(storage_name, keys).unwrap();
-    storage_key += FieldElement::from_bytes_be(&storage_key_offset.to_fixed_bytes()).unwrap();
-    (*address, StorageKey(PatriciaKey(storage_key.into())))
-}
-
+#[allow(dead_code)]
 #[derive(Copy, Clone)]
 pub enum AccountType {
     V0(AccountTypeV0Inner),
     V1(AccountTypeV1Inner),
 }
 
+#[allow(dead_code)]
 #[derive(Copy, Clone)]
 pub enum AccountTypeV0Inner {
     Argent,
@@ -46,6 +28,7 @@ pub enum AccountTypeV0Inner {
     InnerCall,
 }
 
+#[allow(dead_code)]
 #[derive(Copy, Clone)]
 pub enum AccountTypeV1Inner {
     NoValidate,
