@@ -2,9 +2,9 @@ use mp_felt::Felt252WrapperError;
 
 #[derive(thiserror::Error, Debug, Eq, PartialEq)]
 pub enum L1MessagesConfigError {
-    #[error("File with L1 Messages Worker config not found")]
+    #[error("File with L1 Messages Worker config not found: `{0}`")]
     FileNotFound(String),
-    #[error("Failed to deserialize L1 Messages Worker Config from config file")]
+    #[error("Failed to deserialize L1 Messages Worker Config from config file: `{0}`")]
     InvalidFile(String),
 }
 
@@ -14,7 +14,7 @@ pub enum L1MessagesWorkerError {
     ConfigError,
     #[error("Failed to convert transaction via Runtime API")]
     ConvertTransactionRuntimeApiError,
-    #[error("Madara Messaging DB Error")]
+    #[error("Madara Messaging DB Error: `{0}`")]
     DatabaseError(String),
     #[error("Message from L1 has been already processed")]
     L1MessageAlreadyProcessed,
@@ -26,12 +26,12 @@ pub enum L1MessagesWorkerError {
     SubmitTxError,
     #[error("Failed to convert L1 Message into Fee")]
     ToFeeError,
-    #[error("Failed to convert L1 Message into L2 Transaction")]
+    #[error("Failed to convert L1 Message into L2 Transaction: `{0}`")]
     ToTransactionError(String),
 }
 
 impl From<Felt252WrapperError> for L1MessagesWorkerError {
     fn from(e: Felt252WrapperError) -> Self {
-        L1MessagesWorkerError::ToTransactionError(format!("{:?}", e))
+        L1MessagesWorkerError::ToTransactionError(e.to_string())
     }
 }

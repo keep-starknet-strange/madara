@@ -59,15 +59,15 @@ pub async fn run_worker<C, P, B>(
     };
 
     let events = l1_contract.events().from_block(last_synced_l1_block);
-    let mut stream = match events.stream().await {
-        Ok(stream) => stream.with_meta(),
+    let mut event_stream = match events.stream_with_meta().await {
+        Ok(stream) => stream,
         Err(e) => {
             log::error!("⟠ Unexpected error with L1 event stream: {:?}", e);
             return;
         }
     };
 
-    while let Some(Ok((event, meta))) = stream.next().await {
+    while let Some(Ok((event, meta))) = event_stream.next().await {
         log::info!(
             "⟠ Processing L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?}",
             meta.block_number,
@@ -105,7 +105,7 @@ async fn process_l1_message<C, P, B>(
     client: &Arc<C>,
     pool: &Arc<P>,
     backend: &Arc<mc_db::Backend<B>>,
-    l1_blknum: &u64,
+    l1_block_number: &u64,
 ) -> Result<P::Hash, L1MessagesWorkerError>
 where
     B: BlockT,
@@ -147,7 +147,7 @@ where
         L1MessagesWorkerError::SubmitTxError
     })?;
 
-    backend.messaging().update_last_synced_l1_block(l1_blknum).map_err(|e| {
+    backend.messaging().update_last_synced_l1_block(l1_block_number).map_err(|e| {
         log::error!("⟠ Failed to save last L1 synced block: {:?}", e);
         L1MessagesWorkerError::DatabaseError(e)
     })?;
