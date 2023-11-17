@@ -1,4 +1,3 @@
-use frame_support::traits::GenesisBuild;
 use sp_runtime::BuildStorage;
 
 use crate::genesis_loader::{GenesisData, GenesisLoader};
@@ -11,7 +10,6 @@ macro_rules! mock_runtime {
 			use frame_support::parameter_types;
 			use frame_support::traits::{ConstU16, ConstU64};
 			use sp_core::H256;
-			use sp_runtime::testing::Header;
 			use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
 			use {crate as pallet_starknet, frame_system as system};
 			use crate::{ SeqAddrUpdate, SequencerAddress};
@@ -22,15 +20,10 @@ macro_rules! mock_runtime {
 			use starknet_api::hash::StarkFelt;
 
 
-			type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
 			type Block = frame_system::mocking::MockBlock<MockRuntime>;
 
 			frame_support::construct_runtime!(
-				pub enum MockRuntime where
-					Block = Block,
-					NodeBlock = Block,
-					UncheckedExtrinsic = UncheckedExtrinsic,
-				{
+				pub enum MockRuntime {
 					System: frame_system,
 					Starknet: pallet_starknet,
 					Timestamp: pallet_timestamp,
