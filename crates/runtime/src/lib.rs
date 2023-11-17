@@ -35,6 +35,7 @@ use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as G
 pub use pallet_starknet;
 use pallet_starknet::pallet::Error as PalletError;
 use pallet_starknet::runtime_api::StarknetTransactionExecutionError;
+use pallet_starknet_runtime_api::StarknetRuntimeApi;
 use pallet_starknet::Call::{consume_l1_message, declare, deploy_account, invoke};
 use pallet_starknet::{Config, Event};
 pub use pallet_timestamp::Call as TimestampCall;
@@ -237,7 +238,7 @@ impl_runtime_apis! {
         }
     }
 
-    impl pallet_starknet::runtime_api::StarknetRuntimeApi<Block> for Runtime {
+    impl pallet_starknet_runtime_api::StarknetRuntimeApi<Block> for Runtime {
 
         fn get_storage_at(address: ContractAddress, key: StorageKey) -> Result<StarkFelt, DispatchError> {
             Starknet::get_storage_at(address, key)

@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 pub use overrides::*;
-use pallet_starknet::runtime_api::StarknetRuntimeApi;
+use pallet_starknet_runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use scale_codec::Decode;
 use sp_api::ProvideRuntimeApi;

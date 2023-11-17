@@ -3,6 +3,7 @@ resolver = "2"
 members = [
   "crates/node",
   "crates/runtime",
+  "crates/pallets/starknet/runtime_api/",
   "crates/pallets/starknet",
   "crates/primitives/digest-log",
   "crates/primitives/transactions",
@@ -30,6 +31,7 @@ members = [
 default-members = [
   "crates/node",
   "crates/runtime",
+  "crates/pallets/starknet/runtime_api/",
   "crates/pallets/starknet",
   "crates/primitives/digest-log",
   "crates/primitives/transactions",
@@ -149,6 +151,7 @@ pallet-timestamp = { default-features = false, git = "https://github.com/parityt
 
 # Madara pallets
 pallet-starknet = { path = "crates/pallets/starknet", default-features = false }
+pallet-starknet-runtime-api = { path = "crates/pallets/starknet/runtime_api", default-features = false }
 
 # Madara primtitives
 mp-digest-log = { path = "crates/primitives/digest-log", default-features = false }
