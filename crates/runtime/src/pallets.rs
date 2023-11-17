@@ -15,7 +15,6 @@ pub use mp_chain_id::SN_GOERLI_CHAIN_ID;
 pub use pallet_starknet;
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_runtime::generic;
 use sp_runtime::traits::{AccountIdLookup, BlakeTwo256};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;

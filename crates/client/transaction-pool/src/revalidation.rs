@@ -26,7 +26,7 @@ use std::time::Duration;
 use futures::prelude::*;
 use sc_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
 use sp_runtime::generic::BlockId;
-use sp_runtime::traits::{SaturatedConversion, Zero};
+use sp_runtime::traits::SaturatedConversion;
 use sp_runtime::transaction_validity::TransactionValidityError;
 
 use crate::graph::{BlockHash, ChainApi, ExtrinsicHash, Pool, ValidatedTransaction};
