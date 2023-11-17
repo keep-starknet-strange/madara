@@ -1119,7 +1119,7 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 [[package]]
 name = "blockifier"
 version = "0.1.0-rc2"
-source = "git+https://github.com/keep-starknet-strange/blockifier?branch=no_std-support-7578442#32f1af39418066159ffb231edf9430ab597ac87f"
+source = "git+https://github.com/keep-starknet-strange/blockifier?branch=no_std-support-7578442#59ab602d50735f01a024b4542f066e6b1a154fcb"
 dependencies = [
  "ark-ff 0.4.2",
  "ark-secp256k1",
@@ -1146,7 +1146,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha3",
- "sp-arithmetic 6.0.0",
+ "sp-arithmetic 16.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
  "spin 0.9.8",
  "starknet-crypto 0.5.2",
  "starknet_api",
@@ -11380,20 +11380,6 @@ dependencies = [
 
 [[package]]
 name = "sp-arithmetic"
-version = "6.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#5e49f6e44820affccaf517fd22af564f4b495d40"
-dependencies = [
- "integer-sqrt",
- "num-traits 0.2.17",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-std 5.0.0",
- "static_assertions",
-]
-
-[[package]]
-name = "sp-arithmetic"
 version = "16.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb6020576e544c6824a51d651bc8df8e6ab67cd59f1c9ac09868bb81a5199ded"
@@ -12101,11 +12087,6 @@ dependencies = [
  "thiserror",
  "x25519-dalek 2.0.0",
 ]
-
-[[package]]
-name = "sp-std"
-version = "5.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#5e49f6e44820affccaf517fd22af564f4b495d40"
 
 [[package]]
 name = "sp-std"
