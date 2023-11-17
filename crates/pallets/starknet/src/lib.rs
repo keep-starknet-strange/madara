@@ -84,7 +84,6 @@ use mp_fee::INITIAL_GAS;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
-use mp_state::FeeConfig;
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_transactions::execution::{Execute, Validate};
 use mp_transactions::{
