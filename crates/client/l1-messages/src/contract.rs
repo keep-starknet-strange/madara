@@ -1,6 +1,6 @@
 use ethers::contract::abigen;
 use ethers::types::U256;
-use mp_felt::Felt252Wrapper;
+use mp_felt::{Felt252Wrapper, Felt252WrapperError};
 use mp_transactions::HandleL1MessageTransaction;
 use starknet_api::transaction::Fee;
 
@@ -38,11 +38,11 @@ impl TryFrom<&LogMessageToL2Filter> for HandleL1MessageTransaction {
         // L1 message nonce.
         let nonce: u64 = Felt252Wrapper::try_from(sp_core::U256(event.nonce.0))?.try_into()?;
 
-        let mut calldata = Vec::<Felt252Wrapper>::new();
-
-        for x in &event.payload {
-            calldata.push(Felt252Wrapper::try_from(sp_core::U256(x.0))?);
-        }
+        let calldata: Vec<Felt252Wrapper> = event
+            .payload
+            .iter()
+            .map(|param| Felt252Wrapper::try_from(sp_core::U256(param.0)))
+            .collect::<Result<Vec<Felt252Wrapper>, Felt252WrapperError>>()?;
 
         Ok(HandleL1MessageTransaction { nonce, contract_address, entry_point_selector, calldata })
     }

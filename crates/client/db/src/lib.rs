@@ -40,7 +40,7 @@ struct DatabaseSettings {
 }
 
 pub(crate) mod columns {
-    pub const NUM_COLUMNS: u32 = 5;
+    pub const NUM_COLUMNS: u32 = 6;
 
     pub const META: u32 = 0;
     pub const BLOCK_MAPPING: u32 = 1;

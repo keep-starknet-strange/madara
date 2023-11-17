@@ -13,7 +13,6 @@ pub struct MessagingDb<B: BlockT> {
     pub(crate) _marker: PhantomData<B>,
 }
 
-// TODO: purge old cairo job keys
 impl<B: BlockT> MessagingDb<B> {
     pub fn last_synced_l1_block(&self) -> Result<u64, String> {
         match self.db.get(crate::columns::MESSAGING, crate::static_keys::L1_MESSAGES) {
@@ -22,10 +21,10 @@ impl<B: BlockT> MessagingDb<B> {
         }
     }
 
-    pub fn update_last_synced_l1_block(&self, l1_blknum: &u64) -> Result<(), String> {
+    pub fn update_last_synced_l1_block(&self, l1_block_number: &u64) -> Result<(), String> {
         let mut transaction = sp_database::Transaction::new();
 
-        transaction.set(crate::columns::MESSAGING, crate::static_keys::L1_MESSAGES, &l1_blknum.encode());
+        transaction.set(crate::columns::MESSAGING, crate::static_keys::L1_MESSAGES, &l1_block_number.encode());
 
         self.db.commit(transaction).map_err(|e| format!("{:?}", e))?;
 
