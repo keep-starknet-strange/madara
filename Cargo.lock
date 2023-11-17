@@ -480,7 +480,7 @@ dependencies = [
 [[package]]
 name = "ark-secret-scalar"
 version = "0.0.2"
-source = "git+https://github.com/w3f/ring-vrf?rev=4b09416#4b09416fd23383ec436ddac127d58c7b7cd392c6"
+source = "git+https://github.com/w3f/ring-vrf?rev=3ddc20?rev=3ddc20#3ddc2051066c4b3f0eadd0ba5700df12500d9754"
 dependencies = [
  "ark-ec",
  "ark-ff 0.4.2",
@@ -548,7 +548,7 @@ dependencies = [
 [[package]]
 name = "ark-transcript"
 version = "0.0.2"
-source = "git+https://github.com/w3f/ring-vrf?rev=4b09416#4b09416fd23383ec436ddac127d58c7b7cd392c6"
+source = "git+https://github.com/w3f/ring-vrf?rev=3ddc20?rev=3ddc20#3ddc2051066c4b3f0eadd0ba5700df12500d9754"
 dependencies = [
  "ark-ff 0.4.2",
  "ark-serialize 0.4.2",
@@ -840,8 +840,8 @@ dependencies = [
 
 [[package]]
 name = "bandersnatch_vrfs"
-version = "0.0.1"
-source = "git+https://github.com/w3f/ring-vrf?rev=4b09416#4b09416fd23383ec436ddac127d58c7b7cd392c6"
+version = "0.0.4"
+source = "git+https://github.com/w3f/ring-vrf?rev=3ddc20?rev=3ddc20#3ddc2051066c4b3f0eadd0ba5700df12500d9754"
 dependencies = [
  "ark-bls12-381",
  "ark-ec",
@@ -2175,7 +2175,7 @@ dependencies = [
 [[package]]
 name = "common"
 version = "0.1.0"
-source = "git+https://github.com/w3f/ring-proof#7275eb6f956219dd70400fce23e9b73593238981"
+source = "git+https://github.com/burdges/ring-proof?branch=patch-1#05a756076cb20f981a52afea3a620168de49f95f"
 dependencies = [
  "ark-ec",
  "ark-ff 0.4.2",
@@ -3049,7 +3049,7 @@ dependencies = [
 [[package]]
 name = "dleq_vrf"
 version = "0.0.2"
-source = "git+https://github.com/w3f/ring-vrf?rev=4b09416#4b09416fd23383ec436ddac127d58c7b7cd392c6"
+source = "git+https://github.com/w3f/ring-vrf?rev=3ddc20?rev=3ddc20#3ddc2051066c4b3f0eadd0ba5700df12500d9754"
 dependencies = [
  "ark-ec",
  "ark-ff 0.4.2",
@@ -9183,7 +9183,7 @@ dependencies = [
 [[package]]
 name = "ring"
 version = "0.1.0"
-source = "git+https://github.com/w3f/ring-proof#7275eb6f956219dd70400fce23e9b73593238981"
+source = "git+https://github.com/burdges/ring-proof?branch=patch-1#05a756076cb20f981a52afea3a620168de49f95f"
 dependencies = [
  "ark-ec",
  "ark-ff 0.4.2",
