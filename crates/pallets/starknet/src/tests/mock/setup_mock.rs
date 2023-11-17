@@ -124,7 +124,7 @@ macro_rules! mock_runtime {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext<T: Config>() -> sp_io::TestExternalities {
-	let mut t = frame_system::GenesisConfig::<T>::default().build_storage().unwrap();
+    let mut t = frame_system::GenesisConfig::<T>::default().build_storage().unwrap();
 
     let genesis_data: GenesisData = serde_json::from_str(std::include_str!("./genesis.json")).unwrap();
     let genesis_loader = GenesisLoader::new(project_root::get_project_root().unwrap(), genesis_data);

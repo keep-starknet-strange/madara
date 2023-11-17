@@ -35,12 +35,12 @@ pub use sc_executor::NativeElseWasmExecutor;
 use sc_service::error::Error as ServiceError;
 use sc_service::{new_db_backend, Configuration, TaskManager, WarpSyncParams};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
+use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 use sp_api::offchain::OffchainStorage;
-use sp_api::{ConstructRuntimeApi};
+use sp_api::ConstructRuntimeApi;
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_offchain::STORAGE_PREFIX;
 use sp_runtime::traits::BlakeTwo256;
-use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 use sp_trie::PrefixedMemoryDB;
 
 use crate::genesis_block::MadaraGenesisBlockBuilder;
@@ -325,9 +325,7 @@ pub fn new_full(
                 is_validator: config.role.is_authority(),
                 keystore: Some(keystore_container.keystore()),
                 offchain_db: backend.offchain_storage(),
-                transaction_pool: Some(OffchainTransactionPoolFactory::new(
-                    transaction_pool.clone(),
-                )),
+                transaction_pool: Some(OffchainTransactionPoolFactory::new(transaction_pool.clone())),
                 network_provider: network.clone(),
                 enable_http_requests: true,
                 custom_extensions: |_| vec![],
@@ -673,16 +671,8 @@ where
     Ok(())
 }
 
-type ChainOpsResult = Result<
-    (
-        Arc<FullClient>,
-        Arc<FullBackend>,
-        BasicQueue<Block>,
-        TaskManager,
-        Arc<MadaraBackend>,
-    ),
-    ServiceError,
->;
+type ChainOpsResult =
+    Result<(Arc<FullClient>, Arc<FullBackend>, BasicQueue<Block>, TaskManager, Arc<MadaraBackend>), ServiceError>;
 
 pub fn new_chain_ops(config: &mut Configuration, cache_more_things: bool) -> ChainOpsResult {
     config.keystore = sc_service::config::KeystoreConfig::InMemory;

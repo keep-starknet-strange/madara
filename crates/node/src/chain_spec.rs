@@ -179,7 +179,10 @@ fn testnet_genesis(
         // Authority-based consensus protocol used for block production
         aura: AuraConfig { authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect() },
         // Deterministic finality mechanism used for block finalization
-        grandpa: GrandpaConfig { authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect(), _config: Default::default() },
+        grandpa: GrandpaConfig {
+            authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect(),
+            _config: Default::default(),
+        },
         /// Starknet Genesis configuration.
         starknet: starknet_genesis_config,
     }

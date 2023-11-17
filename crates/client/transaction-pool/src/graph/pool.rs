@@ -78,7 +78,8 @@ pub trait ChainApi: Send + Sync {
     fn block_id_to_number(&self, at: &BlockId<Self::Block>) -> Result<Option<NumberFor<Self>>, Self::Error>;
 
     /// Returns a block hash given the block id.
-    fn block_id_to_hash(&self, at: &BlockId<Self::Block>) -> Result<Option<<Self::Block as BlockT>::Hash>, Self::Error>;
+    fn block_id_to_hash(&self, at: &BlockId<Self::Block>)
+    -> Result<Option<<Self::Block as BlockT>::Hash>, Self::Error>;
 
     /// Returns hash and encoding length of the extrinsic.
     fn hash_and_length(&self, uxt: &ExtrinsicFor<Self>) -> (ExtrinsicHash<Self>, usize);
@@ -365,7 +366,7 @@ impl<B: ChainApi> Pool<B> {
         check: CheckBannedBeforeVerify,
     ) -> Result<HashMap<ExtrinsicHash<B>, ValidatedTransactionFor<B>>, B::Error> {
         // we need a block number to compute tx validity
-	 let block_number = self.resolve_block_number(&BlockId::Hash(at))?;
+        let block_number = self.resolve_block_number(&BlockId::Hash(at))?;
 
         let res = futures::future::join_all(
             xts.into_iter().map(|(source, xt)| self.verify_one(at, block_number, source, xt, check)),

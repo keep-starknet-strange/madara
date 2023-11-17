@@ -198,8 +198,7 @@ where
     C::Api: ApiExt<Block> + BlockBuilderApi<Block>,
     PR: ProofRecording,
 {
-    type Proposal =
-        Pin<Box<dyn Future<Output = Result<Proposal<Block, PR::Proof>, Self::Error>> + Send>>;
+    type Proposal = Pin<Box<dyn Future<Output = Result<Proposal<Block, PR::Proof>, Self::Error>> + Send>>;
     type Error = sp_blockchain::Error;
     type ProofRecording = PR;
     type Proof = PR::Proof;

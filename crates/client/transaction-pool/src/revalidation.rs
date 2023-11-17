@@ -69,15 +69,15 @@ async fn batch_revalidate<Api: ChainApi>(
     // all the transactions will be kept in the validated pool, and can be scheduled for
     // revalidation with the next request.
     let block_number = match api.block_id_to_number(&BlockId::Hash(at)) {
-	 Ok(Some(n)) => n,
-	 Ok(None) => {
-	     log::debug!(target: LOG_TARGET, "revalidation skipped at block {at:?}, could not get block number.");
-	     return
-	 },
-	 Err(e) => {
-	     log::debug!(target: LOG_TARGET, "revalidation skipped at block {at:?}: {e:?}.");
-	     return
-	 },
+        Ok(Some(n)) => n,
+        Ok(None) => {
+            log::debug!(target: LOG_TARGET, "revalidation skipped at block {at:?}, could not get block number.");
+            return;
+        }
+        Err(e) => {
+            log::debug!(target: LOG_TARGET, "revalidation skipped at block {at:?}: {e:?}.");
+            return;
+        }
     };
 
     let mut invalid_hashes = Vec::new();
@@ -299,7 +299,11 @@ where
     }
 
     /// New revalidation queue with background worker.
-    pub fn new_background(api: Arc<Api>, pool: Arc<Pool<Api>>, best_block: BlockHash<Api>) -> (Self, Pin<Box<dyn Future<Output = ()> + Send>>) {
+    pub fn new_background(
+        api: Arc<Api>,
+        pool: Arc<Pool<Api>>,
+        best_block: BlockHash<Api>,
+    ) -> (Self, Pin<Box<dyn Future<Output = ()> + Send>>) {
         Self::new_with_interval(api, pool, BACKGROUND_REVALIDATION_INTERVAL, best_block)
     }
 

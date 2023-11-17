@@ -414,8 +414,10 @@ where
             })?;
 
         let (hash, bytes) = self.pool.validated_pool().api().hash_and_length(&xt);
-        let block_number =
-            self.api.block_id_to_number(&BlockId::hash(at))?.ok_or_else(|| error::Error::BlockIdConversion(format!("{:?}", at)))?;
+        let block_number = self
+            .api
+            .block_id_to_number(&BlockId::hash(at))?
+            .ok_or_else(|| error::Error::BlockIdConversion(format!("{:?}", at)))?;
 
         let validated = ValidatedTransaction::valid_at(
             block_number.saturated_into::<u64>(),
