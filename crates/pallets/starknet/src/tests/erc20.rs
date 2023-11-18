@@ -99,7 +99,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         let expected_fee_transfer_event = Event::StarknetEvent(StarknetEvent {
             content: EventContent {
                 keys: vec![EventKey(
-                    StarkFelt::try_from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME)).unwrap(),
+                    StarkFelt::try_from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap()).unwrap(),
                 )],
                 data: EventData(vec![
                     sender_account.0.0, // From
@@ -172,7 +172,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         let expected_event = Event::StarknetEvent(StarknetEvent {
             content: EventContent {
             keys: vec![
-                EventKey(StarkFelt::try_from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME))
+                EventKey(StarkFelt::try_from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap())
                     .unwrap()),
             ],
             data: EventData(vec![
@@ -193,7 +193,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         let expected_fee_transfer_event = Event::StarknetEvent(StarknetEvent {
             content: EventContent {
             keys: vec![
-                EventKey(StarkFelt::try_from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME))
+                EventKey(StarkFelt::try_from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap())
                     .unwrap()),
             ],
             data: EventData(vec![
