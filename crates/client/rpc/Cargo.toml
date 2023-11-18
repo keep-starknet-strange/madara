@@ -53,6 +53,7 @@ mp-hashers = { workspace = true }
 mp-transactions = { workspace = true, features = ["client"] }
 serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }
+tokio = { workspace = true, default-features = true, features = ["time"] }
 
 [dev-dependencies]
 rstest = { workspace = true }

@@ -6682,6 +6682,7 @@ dependencies = [
  "starknet-ff",
  "starknet_api",
  "thiserror",
+ "tokio",
 ]
 
 [[package]]
