@@ -35,12 +35,11 @@ pub use sc_executor::NativeElseWasmExecutor;
 use sc_service::error::Error as ServiceError;
 use sc_service::{new_db_backend, Configuration, TaskManager, WarpSyncParams};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
+use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 use sp_api::offchain::OffchainStorage;
-use sp_api::{ConstructRuntimeApi, TransactionFor};
+use sp_api::ConstructRuntimeApi;
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_offchain::STORAGE_PREFIX;
-use sp_runtime::traits::BlakeTwo256;
-use sp_trie::PrefixedMemoryDB;
 
 use crate::genesis_block::MadaraGenesisBlockBuilder;
 use crate::rpc::StarknetDeps;
@@ -69,8 +68,12 @@ pub(crate) type FullClient = sc_service::TFullClient<Block, RuntimeApi, NativeEl
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 
-type BasicImportQueue<Client> = sc_consensus::DefaultImportQueue<Block, Client>;
-type BoxBlockImport<Client> = sc_consensus::BoxBlockImport<Block, TransactionFor<Client, Block>>;
+type BasicImportQueue = sc_consensus::DefaultImportQueue<Block>;
+type BoxBlockImport = sc_consensus::BoxBlockImport<Block>;
+
+/// The minimum period of blocks on which justifications will be
+/// imported and generated.
+const GRANDPA_JUSTIFICATION_PERIOD: u32 = 512;
 
 #[allow(clippy::type_complexity)]
 pub fn new_partial<BIQ>(
@@ -82,10 +85,10 @@ pub fn new_partial<BIQ>(
         FullClient,
         FullBackend,
         FullSelectChain,
-        sc_consensus::DefaultImportQueue<Block, FullClient>,
+        sc_consensus::DefaultImportQueue<Block>,
         mc_transaction_pool::FullPool<Block, FullClient>,
         (
-            BoxBlockImport<FullClient>,
+            BoxBlockImport,
             sc_consensus_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
             Option<Telemetry>,
             Arc<MadaraBackend>,
@@ -103,7 +106,7 @@ where
         Option<TelemetryHandle>,
         GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
         Arc<MadaraBackend>,
-    ) -> Result<(BasicImportQueue<FullClient>, BoxBlockImport<FullClient>), ServiceError>,
+    ) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>,
 {
     let telemetry = config
         .telemetry_endpoints
@@ -160,6 +163,7 @@ where
 
     let (grandpa_block_import, grandpa_link) = sc_consensus_grandpa::block_import(
         client.clone(),
+        GRANDPA_JUSTIFICATION_PERIOD,
         &client as &Arc<_>,
         select_chain.clone(),
         telemetry.as_ref().map(|x| x.handle()),
@@ -196,7 +200,7 @@ pub fn build_aura_grandpa_import_queue(
     telemetry: Option<TelemetryHandle>,
     grandpa_block_import: GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
     _madara_backend: Arc<MadaraBackend>,
-) -> Result<(BasicImportQueue<FullClient>, BoxBlockImport<FullClient>), ServiceError>
+) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>
 where
     RuntimeApi: ConstructRuntimeApi<Block, FullClient>,
     RuntimeApi: Send + Sync + 'static,
@@ -237,7 +241,7 @@ pub fn build_manual_seal_import_queue(
     _telemetry: Option<TelemetryHandle>,
     _grandpa_block_import: GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
     _madara_backend: Arc<MadaraBackend>,
-) -> Result<(BasicImportQueue<FullClient>, BoxBlockImport<FullClient>), ServiceError>
+) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>
 where
     RuntimeApi: ConstructRuntimeApi<Block, FullClient>,
     RuntimeApi: Send + Sync + 'static,
@@ -307,10 +311,26 @@ pub fn new_full(
             import_queue,
             block_announce_validator_builder: None,
             warp_sync_params,
+            block_relay: None,
         })?;
 
     if config.offchain_worker.enabled {
-        sc_service::build_offchain_workers(&config, task_manager.spawn_handle(), client.clone(), network.clone());
+        task_manager.spawn_handle().spawn(
+            "offchain-workers-runner",
+            "offchain-worker",
+            sc_offchain::OffchainWorkers::new(sc_offchain::OffchainWorkerOptions {
+                runtime_api_provider: client.clone(),
+                is_validator: config.role.is_authority(),
+                keystore: Some(keystore_container.keystore()),
+                offchain_db: backend.offchain_storage(),
+                transaction_pool: Some(OffchainTransactionPoolFactory::new(transaction_pool.clone())),
+                network_provider: network.clone(),
+                enable_http_requests: true,
+                custom_extensions: |_| vec![],
+            })
+            .run(client.clone(), task_manager.spawn_handle())
+            .boxed(),
+        );
     }
 
     let role = config.role.clone();
@@ -455,7 +475,7 @@ pub fn new_full(
         let proposer_factory = ProposerFactory::new(
             task_manager.spawn_handle(),
             client.clone(),
-            transaction_pool,
+            transaction_pool.clone(),
             prometheus_registry.as_ref(),
         );
 
@@ -517,7 +537,7 @@ pub fn new_full(
         let grandpa_config = sc_consensus_grandpa::Config {
             // FIXME #1578 make this available through chainspec
             gossip_duration: Duration::from_millis(333),
-            justification_period: 512,
+            justification_generation_period: GRANDPA_JUSTIFICATION_PERIOD,
             name: Some(name),
             observer_enabled: false,
             keystore,
@@ -541,6 +561,7 @@ pub fn new_full(
             prometheus_registry,
             shared_voter_state: SharedVoterState::empty(),
             telemetry: telemetry.as_ref().map(|x| x.handle()),
+            offchain_tx_pool_factory: OffchainTransactionPoolFactory::new(transaction_pool.clone()),
         };
 
         // the GRANDPA voter task is considered infallible, i.e.
@@ -562,7 +583,7 @@ fn run_manual_seal_authorship(
     client: Arc<FullClient>,
     transaction_pool: Arc<FullPool<Block, FullClient>>,
     select_chain: FullSelectChain,
-    block_import: BoxBlockImport<FullClient>,
+    block_import: BoxBlockImport,
     task_manager: &TaskManager,
     prometheus_registry: Option<&Registry>,
     commands_stream: Option<mpsc::Receiver<sc_consensus_manual_seal::rpc::EngineCommand<Hash>>>,
@@ -648,16 +669,8 @@ where
     Ok(())
 }
 
-type ChainOpsResult = Result<
-    (
-        Arc<FullClient>,
-        Arc<FullBackend>,
-        BasicQueue<Block, PrefixedMemoryDB<BlakeTwo256>>,
-        TaskManager,
-        Arc<MadaraBackend>,
-    ),
-    ServiceError,
->;
+type ChainOpsResult =
+    Result<(Arc<FullClient>, Arc<FullBackend>, BasicQueue<Block>, TaskManager, Arc<MadaraBackend>), ServiceError>;
 
 pub fn new_chain_ops(config: &mut Configuration, cache_more_things: bool) -> ChainOpsResult {
     config.keystore = sc_service::config::KeystoreConfig::InMemory;

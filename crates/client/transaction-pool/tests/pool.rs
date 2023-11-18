@@ -45,8 +45,9 @@ use substrate_test_runtime_transaction_pool::{uxt, TestApi};
 const LOG_TARGET: &str = "txpool";
 type Nonce = u64;
 
-fn pool() -> Pool<TestApi> {
-    Pool::new(Default::default(), true.into(), TestApi::with_alice_nonce(209).into())
+fn pool() -> (Pool<TestApi>, Arc<TestApi>) {
+    let api = Arc::new(TestApi::with_alice_nonce(209));
+    (Pool::new(Default::default(), true.into(), api.clone()), api)
 }
 
 fn maintained_pool() -> (BasicPool<TestApi, Block>, Arc<TestApi>, futures::executor::ThreadPool) {
@@ -83,8 +84,8 @@ const SOURCE: TransactionSource = TransactionSource::External;
 
 #[test]
 fn submission_should_work() {
-    let pool = pool();
-    block_on(pool.submit_one(&BlockId::number(0), SOURCE, uxt(Alice, 209))).unwrap();
+    let (pool, api) = pool();
+    block_on(pool.submit_one(api.expect_hash_from_number(0), SOURCE, uxt(Alice, 209))).unwrap();
 
     let pending: Vec<_> =
         pool.validated_pool().ready().map(|a| TransferData::try_from(&a.data).unwrap().nonce).collect();
@@ -93,9 +94,9 @@ fn submission_should_work() {
 
 #[test]
 fn multiple_submission_should_work() {
-    let pool = pool();
-    block_on(pool.submit_one(&BlockId::number(0), SOURCE, uxt(Alice, 209))).unwrap();
-    block_on(pool.submit_one(&BlockId::number(0), SOURCE, uxt(Alice, 210))).unwrap();
+    let (pool, api) = pool();
+    block_on(pool.submit_one(api.expect_hash_from_number(0), SOURCE, uxt(Alice, 209))).unwrap();
+    block_on(pool.submit_one(api.expect_hash_from_number(0), SOURCE, uxt(Alice, 210))).unwrap();
 
     let pending: Vec<_> =
         pool.validated_pool().ready().map(|a| TransferData::try_from(&a.data).unwrap().nonce).collect();
@@ -105,8 +106,8 @@ fn multiple_submission_should_work() {
 #[test]
 fn early_nonce_should_be_culled() {
     sp_tracing::try_init_simple();
-    let pool = pool();
-    block_on(pool.submit_one(&BlockId::number(0), SOURCE, uxt(Alice, 208))).unwrap();
+    let (pool, api) = pool();
+    block_on(pool.submit_one(api.expect_hash_from_number(0), SOURCE, uxt(Alice, 208))).unwrap();
 
     let pending: Vec<_> =
         pool.validated_pool().ready().map(|a| TransferData::try_from(&a.data).unwrap().nonce).collect();
@@ -115,14 +116,14 @@ fn early_nonce_should_be_culled() {
 
 #[test]
 fn late_nonce_should_be_queued() {
-    let pool = pool();
+    let (pool, api) = pool();
 
-    block_on(pool.submit_one(&BlockId::number(0), SOURCE, uxt(Alice, 210))).unwrap();
+    block_on(pool.submit_one(api.expect_hash_from_number(0), SOURCE, uxt(Alice, 210))).unwrap();
     let pending: Vec<_> =
         pool.validated_pool().ready().map(|a| TransferData::try_from(&a.data).unwrap().nonce).collect();
     assert_eq!(pending, Vec::<Nonce>::new());
 
-    block_on(pool.submit_one(&BlockId::number(0), SOURCE, uxt(Alice, 209))).unwrap();
+    block_on(pool.submit_one(api.expect_hash_from_number(0), SOURCE, uxt(Alice, 209))).unwrap();
     let pending: Vec<_> =
         pool.validated_pool().ready().map(|a| TransferData::try_from(&a.data).unwrap().nonce).collect();
     assert_eq!(pending, vec![209, 210]);
@@ -130,16 +131,16 @@ fn late_nonce_should_be_queued() {
 
 #[test]
 fn prune_tags_should_work() {
-    let pool = pool();
-    let hash209 = block_on(pool.submit_one(&BlockId::number(0), SOURCE, uxt(Alice, 209))).unwrap();
-    block_on(pool.submit_one(&BlockId::number(0), SOURCE, uxt(Alice, 210))).unwrap();
+    let (pool, api) = pool();
+    let hash209 = block_on(pool.submit_one(api.expect_hash_from_number(0), SOURCE, uxt(Alice, 209))).unwrap();
+    block_on(pool.submit_one(api.expect_hash_from_number(0), SOURCE, uxt(Alice, 210))).unwrap();
 
     let pending: Vec<_> =
         pool.validated_pool().ready().map(|a| TransferData::try_from(&a.data).unwrap().nonce).collect();
     assert_eq!(pending, vec![209, 210]);
 
     pool.validated_pool().api().push_block(1, Vec::new(), true);
-    block_on(pool.prune_tags(&BlockId::number(1), vec![vec![209]], vec![hash209])).expect("Prune tags");
+    block_on(pool.prune_tags(api.expect_hash_from_number(1), vec![vec![209]], vec![hash209])).expect("Prune tags");
 
     let pending: Vec<_> =
         pool.validated_pool().ready().map(|a| TransferData::try_from(&a.data).unwrap().nonce).collect();
@@ -148,11 +149,11 @@ fn prune_tags_should_work() {
 
 #[test]
 fn should_ban_invalid_transactions() {
-    let pool = pool();
+    let (pool, api) = pool();
     let uxt = uxt(Alice, 209);
-    let hash = block_on(pool.submit_one(&BlockId::number(0), SOURCE, uxt.clone())).unwrap();
+    let hash = block_on(pool.submit_one(api.expect_hash_from_number(0), SOURCE, uxt.clone())).unwrap();
     pool.validated_pool().remove_invalid(&[hash]);
-    block_on(pool.submit_one(&BlockId::number(0), SOURCE, uxt.clone())).unwrap_err();
+    block_on(pool.submit_one(api.expect_hash_from_number(0), SOURCE, uxt.clone())).unwrap_err();
 
     // when
     let pending: Vec<_> =
@@ -160,7 +161,7 @@ fn should_ban_invalid_transactions() {
     assert_eq!(pending, Vec::<Nonce>::new());
 
     // then
-    block_on(pool.submit_one(&BlockId::number(0), SOURCE, uxt.clone())).unwrap_err();
+    block_on(pool.submit_one(api.expect_hash_from_number(0), SOURCE, uxt.clone())).unwrap_err();
 }
 
 #[test]
@@ -168,7 +169,7 @@ fn only_prune_on_new_best() {
     let (pool, api, _) = maintained_pool();
     let uxt = uxt(Alice, 209);
 
-    let _ = block_on(pool.submit_and_watch(&BlockId::number(0), SOURCE, uxt.clone())).expect("1. Imported");
+    let _ = block_on(pool.submit_and_watch(api.expect_hash_from_number(0), SOURCE, uxt.clone())).expect("1. Imported");
     pool.api().push_block(1, vec![uxt.clone()], true);
     assert_eq!(pool.status().ready, 1);
 
@@ -186,13 +187,13 @@ fn should_correctly_prune_transactions_providing_more_than_one_tag() {
     }));
     let pool = Pool::new(Default::default(), true.into(), api.clone());
     let xt = uxt(Alice, 209);
-    block_on(pool.submit_one(&BlockId::number(0), SOURCE, xt.clone())).expect("1. Imported");
+    block_on(pool.submit_one(api.expect_hash_from_number(0), SOURCE, xt.clone())).expect("1. Imported");
     assert_eq!(pool.validated_pool().status().ready, 1);
 
     // remove the transaction that just got imported.
     api.increment_nonce(Alice.into());
     api.push_block(1, Vec::new(), true);
-    block_on(pool.prune_tags(&BlockId::number(1), vec![vec![209]], vec![])).expect("1. Pruned");
+    block_on(pool.prune_tags(api.expect_hash_from_number(1), vec![vec![209]], vec![])).expect("1. Pruned");
     assert_eq!(pool.validated_pool().status().ready, 0);
     // it's re-imported to future
     assert_eq!(pool.validated_pool().status().future, 1);
@@ -201,7 +202,7 @@ fn should_correctly_prune_transactions_providing_more_than_one_tag() {
     api.increment_nonce(Alice.into());
     api.push_block(2, Vec::new(), true);
     let xt = uxt(Alice, 211);
-    block_on(pool.submit_one(&BlockId::number(2), SOURCE, xt.clone())).expect("2. Imported");
+    block_on(pool.submit_one(api.expect_hash_from_number(2), SOURCE, xt.clone())).expect("2. Imported");
     assert_eq!(pool.validated_pool().status().ready, 1);
     assert_eq!(pool.validated_pool().status().future, 1);
     let pending: Vec<_> =
@@ -211,7 +212,7 @@ fn should_correctly_prune_transactions_providing_more_than_one_tag() {
     // prune it and make sure the pool is empty
     api.increment_nonce(Alice.into());
     api.push_block(3, Vec::new(), true);
-    block_on(pool.prune_tags(&BlockId::number(3), vec![vec![155]], vec![])).expect("2. Pruned");
+    block_on(pool.prune_tags(api.expect_hash_from_number(3), vec![vec![155]], vec![])).expect("2. Pruned");
     assert_eq!(pool.validated_pool().status().ready, 0);
     assert_eq!(pool.validated_pool().status().future, 2);
 }
@@ -236,7 +237,7 @@ fn should_prune_old_during_maintenance() {
 
     let (pool, api, _guard) = maintained_pool();
 
-    block_on(pool.submit_one(&BlockId::number(0), SOURCE, xt.clone())).expect("1. Imported");
+    block_on(pool.submit_one(api.expect_hash_from_number(0), SOURCE, xt.clone())).expect("1. Imported");
     assert_eq!(pool.status().ready, 1);
 
     let header = api.push_block(1, vec![xt.clone()], true);
@@ -251,8 +252,9 @@ fn should_revalidate_during_maintenance() {
     let xt2 = uxt(Alice, 210);
 
     let (pool, api, _guard) = maintained_pool();
-    block_on(pool.submit_one(&BlockId::number(0), SOURCE, xt1.clone())).expect("1. Imported");
-    let watcher = block_on(pool.submit_and_watch(&BlockId::number(0), SOURCE, xt2.clone())).expect("2. Imported");
+    block_on(pool.submit_one(api.expect_hash_from_number(0), SOURCE, xt1.clone())).expect("1. Imported");
+    let watcher =
+        block_on(pool.submit_and_watch(api.expect_hash_from_number(0), SOURCE, xt2.clone())).expect("2. Imported");
     assert_eq!(pool.status().ready, 2);
     assert_eq!(api.validation_requests().len(), 2);
 
@@ -276,7 +278,7 @@ fn should_resubmit_from_retracted_during_maintenance() {
 
     let (pool, api, _guard) = maintained_pool();
 
-    block_on(pool.submit_one(&BlockId::number(0), SOURCE, xt.clone())).expect("1. Imported");
+    block_on(pool.submit_one(api.expect_hash_from_number(0), SOURCE, xt.clone())).expect("1. Imported");
     assert_eq!(pool.status().ready, 1);
 
     let header = api.push_block(1, vec![], true);
@@ -294,7 +296,7 @@ fn should_not_resubmit_from_retracted_during_maintenance_if_tx_is_also_in_enacte
 
     let (pool, api, _guard) = maintained_pool();
 
-    block_on(pool.submit_one(&BlockId::number(0), SOURCE, xt.clone())).expect("1. Imported");
+    block_on(pool.submit_one(api.expect_hash_from_number(0), SOURCE, xt.clone())).expect("1. Imported");
     assert_eq!(pool.status().ready, 1);
 
     let header = api.push_block(1, vec![xt.clone()], true);
@@ -312,7 +314,8 @@ fn should_not_retain_invalid_hashes_from_retracted() {
 
     let (pool, api, _guard) = maintained_pool();
 
-    let watcher = block_on(pool.submit_and_watch(&BlockId::number(0), SOURCE, xt.clone())).expect("1. Imported");
+    let watcher =
+        block_on(pool.submit_and_watch(api.expect_hash_from_number(0), SOURCE, xt.clone())).expect("1. Imported");
     assert_eq!(pool.status().ready, 1);
 
     let header = api.push_block(1, vec![], true);
@@ -338,14 +341,15 @@ fn should_revalidate_across_many_blocks() {
 
     let (pool, api, _guard) = maintained_pool();
 
-    let watcher1 = block_on(pool.submit_and_watch(&BlockId::number(0), SOURCE, xt1.clone())).expect("1. Imported");
-    block_on(pool.submit_one(&BlockId::number(0), SOURCE, xt2.clone())).expect("1. Imported");
+    let watcher1 =
+        block_on(pool.submit_and_watch(api.expect_hash_from_number(0), SOURCE, xt1.clone())).expect("1. Imported");
+    block_on(pool.submit_one(api.expect_hash_from_number(0), SOURCE, xt2.clone())).expect("1. Imported");
     assert_eq!(pool.status().ready, 2);
 
     let header = api.push_block(1, vec![], true);
     block_on(pool.maintain(block_event(header)));
 
-    block_on(pool.submit_one(&BlockId::number(1), SOURCE, xt3.clone())).expect("1. Imported");
+    block_on(pool.submit_one(api.expect_hash_from_number(1), SOURCE, xt3.clone())).expect("1. Imported");
     assert_eq!(pool.status().ready, 3);
 
     let header = api.push_block(2, vec![xt1.clone()], true);
@@ -369,15 +373,15 @@ fn should_push_watchers_during_maintenance() {
     let (pool, api, _guard) = maintained_pool();
 
     let tx0 = alice_uxt(0);
-    let watcher0 = block_on(pool.submit_and_watch(&BlockId::Number(0), SOURCE, tx0.clone())).unwrap();
+    let watcher0 = block_on(pool.submit_and_watch(api.expect_hash_from_number(0), SOURCE, tx0.clone())).unwrap();
     let tx1 = alice_uxt(1);
-    let watcher1 = block_on(pool.submit_and_watch(&BlockId::Number(0), SOURCE, tx1.clone())).unwrap();
+    let watcher1 = block_on(pool.submit_and_watch(api.expect_hash_from_number(0), SOURCE, tx1.clone())).unwrap();
     let tx2 = alice_uxt(2);
-    let watcher2 = block_on(pool.submit_and_watch(&BlockId::Number(0), SOURCE, tx2.clone())).unwrap();
+    let watcher2 = block_on(pool.submit_and_watch(api.expect_hash_from_number(0), SOURCE, tx2.clone())).unwrap();
     let tx3 = alice_uxt(3);
-    let watcher3 = block_on(pool.submit_and_watch(&BlockId::Number(0), SOURCE, tx3.clone())).unwrap();
+    let watcher3 = block_on(pool.submit_and_watch(api.expect_hash_from_number(0), SOURCE, tx3.clone())).unwrap();
     let tx4 = alice_uxt(4);
-    let watcher4 = block_on(pool.submit_and_watch(&BlockId::Number(0), SOURCE, tx4.clone())).unwrap();
+    let watcher4 = block_on(pool.submit_and_watch(api.expect_hash_from_number(0), SOURCE, tx4.clone())).unwrap();
     assert_eq!(pool.status().ready, 5);
 
     // when
@@ -445,7 +449,9 @@ fn finalization() {
     let api = TestApi::with_alice_nonce(209);
     api.push_block(1, vec![], true);
     let pool = create_basic_pool(api);
-    let watcher = block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, xt.clone())).expect("1. Imported");
+    let api = pool.api();
+    let watcher =
+        block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, xt.clone())).expect("1. Imported");
     pool.api().push_block(2, vec![xt.clone()], true);
 
     let header = pool.api().chain().read().block_by_number.get(&2).unwrap()[0].0.header().clone();
@@ -470,6 +476,7 @@ fn fork_aware_finalization() {
     let a_header = api.push_block(1, vec![], true);
 
     let pool = create_basic_pool(api);
+    let api = pool.api();
     let mut canon_watchers = vec![];
 
     let from_alice = uxt(Alice, 1);
@@ -493,8 +500,8 @@ fn fork_aware_finalization() {
 
     // block B1
     {
-        let watcher =
-            block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, from_alice.clone())).expect("1. Imported");
+        let watcher = block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, from_alice.clone()))
+            .expect("1. Imported");
         let header = pool.api().push_block(2, vec![from_alice.clone()], true);
         canon_watchers.push((watcher, header.hash()));
         assert_eq!(pool.status().ready, 1);
@@ -511,8 +518,8 @@ fn fork_aware_finalization() {
     // block C2
     {
         let header = pool.api().push_block_with_parent(b1, vec![from_dave.clone()], true);
-        from_dave_watcher =
-            block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, from_dave.clone())).expect("1. Imported");
+        from_dave_watcher = block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, from_dave.clone()))
+            .expect("1. Imported");
         assert_eq!(pool.status().ready, 1);
         log::trace!(target: LOG_TARGET, ">> C2: {:?} {:?}", header.hash(), header);
         let event = ChainEvent::NewBestBlock { hash: header.hash(), tree_route: None };
@@ -523,8 +530,8 @@ fn fork_aware_finalization() {
 
     // block D2
     {
-        from_bob_watcher =
-            block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, from_bob.clone())).expect("1. Imported");
+        from_bob_watcher = block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, from_bob.clone()))
+            .expect("1. Imported");
         assert_eq!(pool.status().ready, 1);
         let header = pool.api().push_block_with_parent(c2, vec![from_bob.clone()], true);
 
@@ -537,8 +544,8 @@ fn fork_aware_finalization() {
 
     // block C1
     {
-        let watcher =
-            block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, from_charlie.clone())).expect("1.Imported");
+        let watcher = block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, from_charlie.clone()))
+            .expect("1.Imported");
         assert_eq!(pool.status().ready, 1);
         let header = pool.api().push_block_with_parent(b1, vec![from_charlie.clone()], true);
         log::trace!(target: LOG_TARGET, ">> C1: {:?} {:?}", header.hash(), header);
@@ -555,7 +562,8 @@ fn fork_aware_finalization() {
     // block D1
     {
         let xt = uxt(Eve, 0);
-        let w = block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, xt.clone())).expect("1. Imported");
+        let w =
+            block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, xt.clone())).expect("1. Imported");
         assert_eq!(pool.status().ready, 3);
         let header = pool.api().push_block_with_parent(c1, vec![xt.clone()], true);
         log::trace!(target: LOG_TARGET, ">> D1: {:?} {:?}", header.hash(), header);
@@ -623,12 +631,13 @@ fn prune_and_retract_tx_at_same_time() {
     api.push_block(1, vec![], true);
 
     let pool = create_basic_pool(api);
+    let api = pool.api();
 
     let from_alice = uxt(Alice, 1);
     pool.api().increment_nonce(Alice.into());
 
-    let watcher =
-        block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, from_alice.clone())).expect("1. Imported");
+    let watcher = block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, from_alice.clone()))
+        .expect("1. Imported");
 
     // Block B1
     let b1 = {
@@ -689,6 +698,7 @@ fn resubmit_tx_of_fork_that_is_not_part_of_retracted() {
     api.push_block(1, vec![], true);
 
     let pool = create_basic_pool(api);
+    let api = pool.api();
 
     let tx0 = uxt(Alice, 1);
     let tx1 = uxt(Dave, 2);
@@ -699,7 +709,8 @@ fn resubmit_tx_of_fork_that_is_not_part_of_retracted() {
 
     // Block D0
     {
-        let _ = block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, tx0.clone())).expect("1. Imported");
+        let _ =
+            block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, tx0.clone())).expect("1. Imported");
         let header = pool.api().push_block(2, vec![tx0.clone()], true);
         assert_eq!(pool.status().ready, 1);
 
@@ -711,7 +722,8 @@ fn resubmit_tx_of_fork_that_is_not_part_of_retracted() {
 
     // Block D1
     {
-        let _ = block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, tx1.clone())).expect("1. Imported");
+        let _ =
+            block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, tx1.clone())).expect("1. Imported");
         pool.api().push_block(2, vec![tx1.clone()], false);
         assert_eq!(pool.status().ready, 1);
     }
@@ -733,6 +745,7 @@ fn resubmit_from_retracted_fork() {
     api.push_block(1, vec![], true);
 
     let pool = create_basic_pool(api);
+    let api = pool.api();
 
     let tx0 = uxt(Alice, 1);
     let tx1 = uxt(Dave, 2);
@@ -752,7 +765,8 @@ fn resubmit_from_retracted_fork() {
 
     // Block D0
     {
-        let _ = block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, tx0.clone())).expect("1. Imported");
+        let _ =
+            block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, tx0.clone())).expect("1. Imported");
         let header = pool.api().push_block(2, vec![tx0.clone()], true);
         assert_eq!(pool.status().ready, 1);
 
@@ -762,7 +776,8 @@ fn resubmit_from_retracted_fork() {
 
     // Block E0
     {
-        let _ = block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, tx1.clone())).expect("1. Imported");
+        let _ =
+            block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, tx1.clone())).expect("1. Imported");
         let header = pool.api().push_block(3, vec![tx1.clone()], true);
         block_on(pool.maintain(block_event(header)));
         assert_eq!(pool.status().ready, 0);
@@ -770,7 +785,8 @@ fn resubmit_from_retracted_fork() {
 
     // Block F0
     let f0 = {
-        let _ = block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, tx2.clone())).expect("1. Imported");
+        let _ =
+            block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, tx2.clone())).expect("1. Imported");
         let header = pool.api().push_block(4, vec![tx2.clone()], true);
         block_on(pool.maintain(block_event(header.clone())));
         assert_eq!(pool.status().ready, 0);
@@ -779,7 +795,8 @@ fn resubmit_from_retracted_fork() {
 
     // Block D1
     let d1 = {
-        let _ = block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, tx3.clone())).expect("1. Imported");
+        let _ =
+            block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, tx3.clone())).expect("1. Imported");
         let header = pool.api().push_block(2, vec![tx3.clone()], true);
         assert_eq!(pool.status().ready, 1);
         header.hash()
@@ -787,7 +804,8 @@ fn resubmit_from_retracted_fork() {
 
     // Block E1
     let e1 = {
-        let _ = block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, tx4.clone())).expect("1. Imported");
+        let _ =
+            block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, tx4.clone())).expect("1. Imported");
         let header = pool.api().push_block_with_parent(d1, vec![tx4.clone()], true);
         assert_eq!(pool.status().ready, 2);
         header.hash()
@@ -795,7 +813,8 @@ fn resubmit_from_retracted_fork() {
 
     // Block F1
     let f1_header = {
-        let _ = block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, tx5.clone())).expect("1. Imported");
+        let _ =
+            block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, tx5.clone())).expect("1. Imported");
         let header = pool.api().push_block_with_parent(e1, vec![tx5.clone()], true);
         // Don't announce the block event to the pool directly, because we will
         // re-org to this block.
@@ -818,9 +837,9 @@ fn resubmit_from_retracted_fork() {
 
 #[test]
 fn ready_set_should_not_resolve_before_block_update() {
-    let (pool, _api, _guard) = maintained_pool();
+    let (pool, api, _guard) = maintained_pool();
     let xt1 = uxt(Alice, 209);
-    block_on(pool.submit_one(&BlockId::number(0), SOURCE, xt1.clone())).expect("1. Imported");
+    block_on(pool.submit_one(api.expect_hash_from_number(0), SOURCE, xt1.clone())).expect("1. Imported");
 
     assert!(pool.ready_at(1).now_or_never().is_none());
 }
@@ -832,7 +851,7 @@ fn ready_set_should_resolve_after_block_update() {
 
     let xt1 = uxt(Alice, 209);
 
-    block_on(pool.submit_one(&BlockId::number(1), SOURCE, xt1.clone())).expect("1. Imported");
+    block_on(pool.submit_one(api.expect_hash_from_number(1), SOURCE, xt1.clone())).expect("1. Imported");
     block_on(pool.maintain(block_event(header)));
 
     assert!(pool.ready_at(1).now_or_never().is_some());
@@ -845,7 +864,7 @@ fn ready_set_should_eventually_resolve_when_block_update_arrives() {
 
     let xt1 = uxt(Alice, 209);
 
-    block_on(pool.submit_one(&BlockId::number(1), SOURCE, xt1.clone())).expect("1. Imported");
+    block_on(pool.submit_one(api.expect_hash_from_number(1), SOURCE, xt1.clone())).expect("1. Imported");
 
     let noop_waker = futures::task::noop_waker();
     let mut context = futures::task::Context::from_waker(&noop_waker);
@@ -886,7 +905,8 @@ fn import_notification_to_pool_maintain_works() {
 
     // Prepare the extrisic, push it to the pool and check that it was added.
     let xt = uxt(Alice, 0);
-    block_on(pool.submit_one(&BlockId::number(0), SOURCE, xt.clone())).expect("1. Imported");
+    block_on(pool.submit_one(pool.api().block_id_to_hash(&BlockId::Number(0)).unwrap().unwrap(), SOURCE, xt.clone()))
+        .expect("1. Imported");
     assert_eq!(pool.status().ready, 1);
 
     let mut import_stream = block_on_stream(client.import_notification_stream());
@@ -911,7 +931,7 @@ fn pruning_a_transaction_should_remove_it_from_best_transaction() {
 
     let xt1 = ExtrinsicBuilder::new_include_data(Vec::new()).build();
 
-    block_on(pool.submit_one(&BlockId::number(0), SOURCE, xt1.clone())).expect("1. Imported");
+    block_on(pool.submit_one(api.expect_hash_from_number(0), SOURCE, xt1.clone())).expect("1. Imported");
     assert_eq!(pool.status().ready, 1);
     let header = api.push_block(1, vec![xt1.clone()], true);
 
@@ -935,7 +955,8 @@ fn stale_transactions_are_pruned() {
     let (pool, api, _guard) = maintained_pool();
 
     xts.into_iter().for_each(|xt| {
-        block_on(pool.submit_one(&BlockId::number(0), SOURCE, xt.into_unchecked_extrinsic())).expect("1. Imported");
+        block_on(pool.submit_one(api.expect_hash_from_number(0), SOURCE, xt.into_unchecked_extrinsic()))
+            .expect("1. Imported");
     });
     assert_eq!(pool.status().ready, 0);
     assert_eq!(pool.status().future, 3);
@@ -972,7 +993,8 @@ fn finalized_only_handled_correctly() {
 
     let (pool, api, _guard) = maintained_pool();
 
-    let watcher = block_on(pool.submit_and_watch(&BlockId::number(0), SOURCE, xt.clone())).expect("1. Imported");
+    let watcher =
+        block_on(pool.submit_and_watch(api.expect_hash_from_number(0), SOURCE, xt.clone())).expect("1. Imported");
     assert_eq!(pool.status().ready, 1);
 
     let header = api.push_block(1, vec![xt], true);
@@ -998,7 +1020,8 @@ fn best_block_after_finalized_handled_correctly() {
 
     let (pool, api, _guard) = maintained_pool();
 
-    let watcher = block_on(pool.submit_and_watch(&BlockId::number(0), SOURCE, xt.clone())).expect("1. Imported");
+    let watcher =
+        block_on(pool.submit_and_watch(api.expect_hash_from_number(0), SOURCE, xt.clone())).expect("1. Imported");
     assert_eq!(pool.status().ready, 1);
 
     let header = api.push_block(1, vec![xt], true);
@@ -1026,6 +1049,7 @@ fn switching_fork_with_finalized_works() {
     let a_header = api.push_block(1, vec![], true);
 
     let pool = create_basic_pool(api);
+    let api = pool.api();
 
     let from_alice = uxt(Alice, 1);
     let from_bob = uxt(Bob, 2);
@@ -1040,7 +1064,8 @@ fn switching_fork_with_finalized_works() {
     // block B1
     {
         from_alice_watcher =
-            block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, from_alice.clone())).expect("1. Imported");
+            block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, from_alice.clone()))
+                .expect("1. Imported");
         let header = pool.api().push_block_with_parent(a_header.hash(), vec![from_alice.clone()], true);
         assert_eq!(pool.status().ready, 1);
         log::trace!(target: LOG_TARGET, ">> B1: {:?} {:?}", header.hash(), header);
@@ -1049,8 +1074,8 @@ fn switching_fork_with_finalized_works() {
 
     // block B2
     {
-        from_bob_watcher =
-            block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, from_bob.clone())).expect("1. Imported");
+        from_bob_watcher = block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, from_bob.clone()))
+            .expect("1. Imported");
         let header =
             pool.api().push_block_with_parent(a_header.hash(), vec![from_alice.clone(), from_bob.clone()], true);
         assert_eq!(pool.status().ready, 2);
@@ -1097,6 +1122,7 @@ fn switching_fork_multiple_times_works() {
     let a_header = api.push_block(1, vec![], true);
 
     let pool = create_basic_pool(api);
+    let api = pool.api();
 
     let from_alice = uxt(Alice, 1);
     let from_bob = uxt(Bob, 2);
@@ -1111,7 +1137,8 @@ fn switching_fork_multiple_times_works() {
     // block B1
     {
         from_alice_watcher =
-            block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, from_alice.clone())).expect("1. Imported");
+            block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, from_alice.clone()))
+                .expect("1. Imported");
         let header = pool.api().push_block_with_parent(a_header.hash(), vec![from_alice.clone()], true);
         assert_eq!(pool.status().ready, 1);
         log::trace!(target: LOG_TARGET, ">> B1: {:?} {:?}", header.hash(), header);
@@ -1120,8 +1147,8 @@ fn switching_fork_multiple_times_works() {
 
     // block B2
     {
-        from_bob_watcher =
-            block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, from_bob.clone())).expect("1. Imported");
+        from_bob_watcher = block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, from_bob.clone()))
+            .expect("1. Imported");
         let header =
             pool.api().push_block_with_parent(a_header.hash(), vec![from_alice.clone(), from_bob.clone()], true);
         assert_eq!(pool.status().ready, 2);
@@ -1198,6 +1225,7 @@ fn two_blocks_delayed_finalization_works() {
     let a_header = api.push_block(1, vec![], true);
 
     let pool = create_basic_pool(api);
+    let api = pool.api();
 
     let from_alice = uxt(Alice, 1);
     let from_bob = uxt(Bob, 2);
@@ -1216,7 +1244,8 @@ fn two_blocks_delayed_finalization_works() {
     // block B1
     {
         from_alice_watcher =
-            block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, from_alice.clone())).expect("1. Imported");
+            block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, from_alice.clone()))
+                .expect("1. Imported");
         let header = pool.api().push_block_with_parent(a_header.hash(), vec![from_alice.clone()], true);
         assert_eq!(pool.status().ready, 1);
 
@@ -1226,8 +1255,8 @@ fn two_blocks_delayed_finalization_works() {
 
     // block C1
     {
-        from_bob_watcher =
-            block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, from_bob.clone())).expect("1. Imported");
+        from_bob_watcher = block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, from_bob.clone()))
+            .expect("1. Imported");
         let header = pool.api().push_block_with_parent(b1_header.hash(), vec![from_bob.clone()], true);
         assert_eq!(pool.status().ready, 2);
 
@@ -1238,7 +1267,8 @@ fn two_blocks_delayed_finalization_works() {
     // block D1
     {
         from_charlie_watcher =
-            block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, from_charlie.clone())).expect("1. Imported");
+            block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, from_charlie.clone()))
+                .expect("1. Imported");
         let header = pool.api().push_block_with_parent(c1_header.hash(), vec![from_charlie.clone()], true);
         assert_eq!(pool.status().ready, 3);
 
@@ -1302,6 +1332,7 @@ fn delayed_finalization_does_not_retract() {
     let a_header = api.push_block(1, vec![], true);
 
     let pool = create_basic_pool(api);
+    let api = pool.api();
 
     let from_alice = uxt(Alice, 1);
     let from_bob = uxt(Bob, 2);
@@ -1316,7 +1347,8 @@ fn delayed_finalization_does_not_retract() {
     // block B1
     {
         from_alice_watcher =
-            block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, from_alice.clone())).expect("1. Imported");
+            block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, from_alice.clone()))
+                .expect("1. Imported");
         let header = pool.api().push_block_with_parent(a_header.hash(), vec![from_alice.clone()], true);
         assert_eq!(pool.status().ready, 1);
 
@@ -1326,8 +1358,8 @@ fn delayed_finalization_does_not_retract() {
 
     // block C1
     {
-        from_bob_watcher =
-            block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, from_bob.clone())).expect("1. Imported");
+        from_bob_watcher = block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, from_bob.clone()))
+            .expect("1. Imported");
         let header = pool.api().push_block_with_parent(b1_header.hash(), vec![from_bob.clone()], true);
         assert_eq!(pool.status().ready, 2);
 
@@ -1391,6 +1423,7 @@ fn best_block_after_finalization_does_not_retract() {
     let a_header = api.push_block(1, vec![], true);
 
     let pool = create_basic_pool(api);
+    let api = pool.api();
 
     let from_alice = uxt(Alice, 1);
     let from_bob = uxt(Bob, 2);
@@ -1405,7 +1438,8 @@ fn best_block_after_finalization_does_not_retract() {
     // block B1
     {
         from_alice_watcher =
-            block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, from_alice.clone())).expect("1. Imported");
+            block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, from_alice.clone()))
+                .expect("1. Imported");
         let header = pool.api().push_block_with_parent(a_header.hash(), vec![from_alice.clone()], true);
         assert_eq!(pool.status().ready, 1);
 
@@ -1415,8 +1449,8 @@ fn best_block_after_finalization_does_not_retract() {
 
     // block C1
     {
-        from_bob_watcher =
-            block_on(pool.submit_and_watch(&BlockId::number(1), SOURCE, from_bob.clone())).expect("1. Imported");
+        from_bob_watcher = block_on(pool.submit_and_watch(api.expect_hash_from_number(1), SOURCE, from_bob.clone()))
+            .expect("1. Imported");
         let header = pool.api().push_block_with_parent(b1_header.hash(), vec![from_bob.clone()], true);
         assert_eq!(pool.status().ready, 2);
 

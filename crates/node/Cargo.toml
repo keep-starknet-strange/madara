@@ -38,6 +38,7 @@ sc-executor = { workspace = true }
 sc-keystore = { workspace = true }
 sc-network = { workspace = true }
 sc-network-sync = { workspace = true }
+sc-offchain = { workspace = true }
 sc-service = { workspace = true }
 sc-telemetry = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
@@ -49,6 +50,7 @@ sp-keyring = { workspace = true }
 sp-offchain = { workspace = true }
 sp-runtime = { workspace = true }
 sp-state-machine = { workspace = true }
+sp-statement-store = { workspace = true }
 sp-timestamp = { workspace = true }
 sp-trie = { workspace = true, features = ["default"] }
 
@@ -93,7 +95,7 @@ mp-felt = { workspace = true }
 mp-sequencer-address = { workspace = true, features = ["client"] }
 
 # CLI-specific dependencies
-try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
+try-runtime-cli = { optional = true, git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
 
 reqwest = { workspace = true }
 serde_json = { workspace = true }

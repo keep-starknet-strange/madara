@@ -4,6 +4,8 @@
 
 - feat(rpc): return deployed contract address and actual fee in transaction
   receipt
+- fix: Wait for 1 minute for transaction to be processed in
+  get_transaction_receipt rpc
 - ci: Fix starknet foundry sncast not found
 - fix: Ensure transaction checks are compatible with starknet-rs
 - ci: Run Starknet Foundry tests against Madara RPC
@@ -19,6 +21,7 @@
 - chore: deprecate `madara-app` and `madara-dev-explorer` modules
 - chore(data-availability-avail): implement fire and forget, and add ws
   reconnection logic
+- chore: update `polkadot-sdk` to `release-polkadot-v1.3.0`
 
 ## v0.5.0
 

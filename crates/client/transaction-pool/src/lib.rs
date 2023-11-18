@@ -155,7 +155,7 @@ where
     ) -> (Self, Pin<Box<dyn Future<Output = ()> + Send>>) {
         let pool = Arc::new(graph::Pool::new(Default::default(), true.into(), pool_api.clone()));
         let (revalidation_queue, background_task) =
-            revalidation::RevalidationQueue::new_background(pool_api.clone(), pool.clone());
+            revalidation::RevalidationQueue::new_background(pool_api.clone(), pool.clone(), finalized_hash);
         (
             Self {
                 api: pool_api,
@@ -189,7 +189,7 @@ where
             RevalidationType::Light => (revalidation::RevalidationQueue::new(pool_api.clone(), pool.clone()), None),
             RevalidationType::Full => {
                 let (queue, background) =
-                    revalidation::RevalidationQueue::new_background(pool_api.clone(), pool.clone());
+                    revalidation::RevalidationQueue::new_background(pool_api.clone(), pool.clone(), finalized_hash);
                 (queue, Some(background))
             }
         };
@@ -235,45 +235,42 @@ where
 
     fn submit_at(
         &self,
-        at: &BlockId<Self::Block>,
+        at: <Self::Block as BlockT>::Hash,
         source: TransactionSource,
         xts: Vec<TransactionFor<Self>>,
     ) -> PoolFuture<Vec<Result<TxHash<Self>, Self::Error>>, Self::Error> {
         let pool = self.pool.clone();
-        let at = *at;
 
         self.metrics.report(|metrics| metrics.submitted_transactions.inc_by(xts.len() as u64));
 
-        async move { pool.submit_at(&at, source, xts).await }.boxed()
+        async move { pool.submit_at(at, source, xts).await }.boxed()
     }
 
     fn submit_one(
         &self,
-        at: &BlockId<Self::Block>,
+        at: <Self::Block as BlockT>::Hash,
         source: TransactionSource,
         xt: TransactionFor<Self>,
     ) -> PoolFuture<TxHash<Self>, Self::Error> {
         let pool = self.pool.clone();
-        let at = *at;
 
         self.metrics.report(|metrics| metrics.submitted_transactions.inc());
 
-        async move { pool.submit_one(&at, source, xt).await }.boxed()
+        async move { pool.submit_one(at, source, xt).await }.boxed()
     }
 
     fn submit_and_watch(
         &self,
-        at: &BlockId<Self::Block>,
+        at: <Self::Block as BlockT>::Hash,
         source: TransactionSource,
         xt: TransactionFor<Self>,
     ) -> PoolFuture<Pin<Box<TransactionStatusStreamFor<Self>>>, Self::Error> {
-        let at = *at;
         let pool = self.pool.clone();
 
         self.metrics.report(|metrics| metrics.submitted_transactions.inc());
 
         async move {
-            let watcher = pool.submit_and_watch(&at, source, xt).await?;
+            let watcher = pool.submit_and_watch(at, source, xt).await?;
 
             Ok(watcher.into_stream().boxed())
         }
@@ -337,6 +334,12 @@ where
     fn ready(&self) -> ReadyIteratorFor<PoolApi> {
         Box::new(self.pool.validated_pool().ready())
     }
+
+    fn futures(&self) -> Vec<Self::InPoolTransaction> {
+        let pool = self.pool.validated_pool().pool.read();
+
+        pool.futures().cloned().collect::<Vec<_>>()
+    }
 }
 
 impl<Block, Client> FullPool<Block, Client>
@@ -363,7 +366,7 @@ where
         client: Arc<Client>,
     ) -> Arc<Self> {
         let pool_api = Arc::new(FullChainApi::new(client.clone(), prometheus, &spawner));
-        let pool = Arc::new(Self::with_revalidation_type(
+        Arc::new(Self::with_revalidation_type(
             options,
             is_validator,
             pool_api,
@@ -373,12 +376,7 @@ where
             client.usage_info().chain.best_number,
             client.usage_info().chain.best_hash,
             client.usage_info().chain.finalized_hash,
-        ));
-
-        // make transaction pool available for off-chain runtime calls.
-        client.execution_extensions().register_transaction_pool(&pool);
-
-        pool
+        ))
     }
 }
 
@@ -399,7 +397,7 @@ where
 
     fn submit_local(
         &self,
-        at: &BlockId<Self::Block>,
+        at: Block::Hash,
         xt: sc_transaction_pool_api::LocalTransactionFor<Self>,
     ) -> Result<Self::Hash, Self::Error> {
         use sp_runtime::traits::SaturatedConversion;
@@ -414,8 +412,10 @@ where
             })?;
 
         let (hash, bytes) = self.pool.validated_pool().api().hash_and_length(&xt);
-        let block_number =
-            self.api.block_id_to_number(at)?.ok_or_else(|| error::Error::BlockIdConversion(format!("{:?}", at)))?;
+        let block_number = self
+            .api
+            .block_id_to_number(&BlockId::hash(at))?
+            .ok_or_else(|| error::Error::BlockIdConversion(format!("{:?}", at)))?;
 
         let validated = ValidatedTransaction::valid_at(
             block_number.saturated_into::<u64>(),
@@ -538,7 +538,7 @@ async fn prune_known_txs_for_block<Block: BlockT, Api: graph::ChainApi<Block = B
         }
     };
 
-    if let Err(e) = pool.prune(&BlockId::Hash(block_hash), &BlockId::hash(*header.parent_hash()), &extrinsics).await {
+    if let Err(e) = pool.prune(block_hash, *header.parent_hash(), &extrinsics).await {
         log::error!("Cannot prune known in the pool: {}", e);
     }
 
@@ -637,7 +637,7 @@ where
 
             if let Err(e) = pool
                 .resubmit_at(
-                    &BlockId::Hash(*hash),
+                    *hash,
                     // These transactions are coming from retracted blocks, we should
                     // simply consider them external.
                     TransactionSource::External,
@@ -656,7 +656,7 @@ where
 
         if next_action.revalidate {
             let hashes = pool.validated_pool().ready().map(|tx| tx.hash).collect();
-            self.revalidation_queue.revalidate_later(*block_number, hashes).await;
+            self.revalidation_queue.revalidate_later(*hash, hashes).await;
 
             self.revalidation_strategy.lock().clear();
         }

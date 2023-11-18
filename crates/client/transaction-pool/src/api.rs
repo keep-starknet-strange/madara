@@ -125,13 +125,12 @@ where
 
     fn validate_transaction(
         &self,
-        at: &BlockId<Self::Block>,
+        at: <Self::Block as BlockT>::Hash,
         source: TransactionSource,
         uxt: graph::ExtrinsicFor<Self>,
     ) -> Self::ValidationFuture {
         let (tx, rx) = oneshot::channel();
         let client = self.client.clone();
-        let at = *at;
         let validation_pool = self.validation_pool.clone();
         let metrics = self.metrics.clone();
 
@@ -143,7 +142,7 @@ where
                 .await
                 .send(
                     async move {
-                        let res = validate_transaction_blocking(&*client, &at, source, uxt);
+                        let res = validate_transaction_blocking(&*client, at, source, uxt);
                         let _ = tx.send(res);
                         metrics.report(|m| m.validations_finished.inc());
                     }
@@ -169,7 +168,7 @@ where
     }
 
     fn hash_and_length(&self, ex: &graph::ExtrinsicFor<Self>) -> (graph::ExtrinsicHash<Self>, usize) {
-        ex.using_encoded(|x| (<traits::HashFor<Block> as traits::Hash>::hash(x), x.len()))
+        ex.using_encoded(|x| (<traits::HashingFor<Block> as traits::Hash>::hash(x), x.len()))
     }
 
     fn block_header(
@@ -192,7 +191,7 @@ where
 /// This method will call into the runtime to perform the validation.
 fn validate_transaction_blocking<Client, Block>(
     client: &Client,
-    at: &BlockId<Block>,
+    at: Block::Hash,
     source: TransactionSource,
     uxt: graph::ExtrinsicFor<FullChainApi<Client, Block>>,
 ) -> error::Result<TransactionValidity>
@@ -208,7 +207,7 @@ where
 {
     sp_tracing::within_span!(sp_tracing::Level::TRACE, "validate_transaction";
     {
-        let block_hash = client.to_hash(at)
+        let block_hash = client.to_hash(&BlockId::Hash(at))
             .map_err(|e| Error::RuntimeApi(e.to_string()))?
             .ok_or_else(|| Error::RuntimeApi(format!("Could not get hash for block `{:?}`.", at)))?;
 
@@ -231,7 +230,7 @@ where
                 runtime_api.validate_transaction(block_hash, source, uxt, block_hash)
                     .map_err(|e| Error::RuntimeApi(e.to_string()))
             } else {
-                let block_number = client.to_number(at)
+                let block_number = client.to_number(&BlockId::Hash(at))
                     .map_err(|e| Error::RuntimeApi(e.to_string()))?
                     .ok_or_else(||
                         Error::RuntimeApi(format!("Could not get number for block `{:?}`.", at))
@@ -277,7 +276,7 @@ where
     /// the runtime locally.
     pub fn validate_transaction_blocking(
         &self,
-        at: &BlockId<Block>,
+        at: Block::Hash,
         source: TransactionSource,
         uxt: graph::ExtrinsicFor<Self>,
     ) -> error::Result<TransactionValidity> {
