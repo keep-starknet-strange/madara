@@ -1174,7 +1174,6 @@
 <span class="kw">use </span>mc_rpc_core::Felt;
 <span class="kw">pub use </span>mc_rpc_core::StarknetRpcApiServer;
 <span class="kw">use </span>mc_storage::OverrideHandle;
-<span class="kw">use </span>mc_transaction_pool::{ChainApi, Pool};
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_hashers::HasherT;
 <span class="kw">use </span>mp_transactions::compute_hash::ComputeTransactionHash;
@@ -1184,6 +1183,7 @@
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>sc_client_api::BlockBackend;
 <span class="kw">use </span>sc_network_sync::SyncingService;
+<span class="kw">use </span>sc_transaction_pool::{ChainApi, Pool};
 <span class="kw">use </span>sc_transaction_pool_api::error::{Error <span class="kw">as </span>PoolError, IntoPoolError};
 <span class="kw">use </span>sc_transaction_pool_api::{InPoolTransaction, TransactionPool, TransactionSource};
 <span class="kw">use </span>sp_api::{ApiError, ProvideRuntimeApi};

@@ -678,6 +678,10 @@
 <a href="#678" id="678">678</a>
 <a href="#679" id="679">679</a>
 <a href="#680" id="680">680</a>
+<a href="#681" id="681">681</a>
+<a href="#682" id="682">682</a>
+<a href="#683" id="683">683</a>
+<a href="#684" id="684">684</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
@@ -691,7 +695,6 @@
 <span class="kw">use </span>futures::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>madara_runtime::opaque::Block;
 <span class="kw">use </span>madara_runtime::{<span class="self">self</span>, Hash, RuntimeApi, SealingMode, StarknetHasher};
-<span class="kw">use </span>mc_block_proposer::ProposerFactory;
 <span class="kw">use </span>mc_commitment_state_diff::{log_commitment_state_diff, CommitmentStateDiffWorker};
 <span class="kw">use </span>mc_data_availability::avail::config::AvailConfig;
 <span class="kw">use </span>mc_data_availability::avail::AvailClient;
@@ -702,11 +705,11 @@
 <span class="kw">use </span>mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker};
 <span class="kw">use </span>mc_mapping_sync::MappingSyncWorker;
 <span class="kw">use </span>mc_storage::overrides_handle;
-<span class="kw">use </span>mc_transaction_pool::FullPool;
 <span class="kw">use </span>mp_sequencer_address::{
     InherentDataProvider <span class="kw">as </span>SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
 };
 <span class="kw">use </span>prometheus_endpoint::Registry;
+<span class="kw">use </span>sc_basic_authorship::ProposerFactory;
 <span class="kw">use </span>sc_client_api::{Backend, BlockBackend, BlockchainEvents, HeaderBackend};
 <span class="kw">use </span>sc_consensus::BasicQueue;
 <span class="kw">use </span>sc_consensus_aura::{SlotProportion, StartAuraParams};
@@ -715,6 +718,7 @@
 <span class="kw">use </span>sc_service::error::Error <span class="kw">as </span>ServiceError;
 <span class="kw">use </span>sc_service::{new_db_backend, Configuration, TaskManager, WarpSyncParams};
 <span class="kw">use </span>sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
+<span class="kw">use </span>sc_transaction_pool::FullPool;
 <span class="kw">use </span>sc_transaction_pool_api::OffchainTransactionPoolFactory;
 <span class="kw">use </span>sp_api::offchain::OffchainStorage;
 <span class="kw">use </span>sp_api::ConstructRuntimeApi;
@@ -766,7 +770,7 @@
         FullBackend,
         FullSelectChain,
         sc_consensus::DefaultImportQueue&lt;Block&gt;,
-        mc_transaction_pool::FullPool&lt;Block, FullClient&gt;,
+        sc_transaction_pool::FullPool&lt;Block, FullClient&gt;,
         (
             BoxBlockImport,
             sc_consensus_grandpa::LinkHalf&lt;Block, FullClient, FullSelectChain&gt;,
@@ -833,8 +837,8 @@
 
     <span class="kw">let </span>select_chain = sc_consensus::LongestChain::new(backend.clone());
 
-    <span class="kw">let </span>transaction_pool = mc_transaction_pool::BasicPool::new_full(
-        mc_transaction_pool::Options::from(config.transaction_pool.clone()),
+    <span class="kw">let </span>transaction_pool = sc_transaction_pool::BasicPool::new_full(
+        config.transaction_pool.clone(),
         config.role.is_authority().into(),
         config.prometheus_registry(),
         task_manager.spawn_essential_handle(),
@@ -1145,6 +1149,7 @@
                 <span class="kw-2">&amp;</span>task_manager,
                 prometheus_registry.as_ref(),
                 commands_stream,
+                telemetry,
             )<span class="question-mark">?</span>;
 
             network_starter.start_network();
@@ -1157,6 +1162,7 @@
             client.clone(),
             transaction_pool.clone(),
             prometheus_registry.as_ref(),
+            telemetry.as_ref().map(|x| x.handle()),
         );
 
         <span class="kw">let </span>slot_duration = sc_consensus_aura::slot_duration(<span class="kw-2">&amp;*</span>client)<span class="question-mark">?</span>;
@@ -1267,6 +1273,7 @@
     task_manager: <span class="kw-2">&amp;</span>TaskManager,
     prometheus_registry: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Registry&gt;,
     commands_stream: <span class="prelude-ty">Option</span>&lt;mpsc::Receiver&lt;sc_consensus_manual_seal::rpc::EngineCommand&lt;Hash&gt;&gt;&gt;,
+    telemetry: <span class="prelude-ty">Option</span>&lt;Telemetry&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), ServiceError&gt;
 <span class="kw">where
     </span>RuntimeApi: ConstructRuntimeApi&lt;Block, FullClient&gt;,
@@ -1277,6 +1284,7 @@
         client.clone(),
         transaction_pool.clone(),
         prometheus_registry,
+        telemetry.as_ref().map(|x| x.handle()),
     );
 
     <span class="macro">thread_local!</span>(<span class="kw">static </span>TIMESTAMP: RefCell&lt;u64&gt; = RefCell::new(<span class="number">0</span>));
