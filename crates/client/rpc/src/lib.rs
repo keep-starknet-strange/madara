@@ -904,8 +904,8 @@ where
                     .mapping()
                     .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
                     .map_err(|e| {
-                        error!("Failed to get transaction's substrate block hash from mapping_db: {e}");
-                        StarknetRpcApiError::TxnHashNotFound
+                        error!("Failed to interact with db backend error: {e}");
+                        StarknetRpcApiError::InternalServerError
                     })?;
 
                 match block_hash_from_db {
@@ -934,7 +934,7 @@ where
                 error!("did not receive tx hash within 1 minute");
                 return Err(StarknetRpcApiError::TxnHashNotFound.into());
             }
-            Ok(tx_hash) => tx_hash,
+            Ok(res) => res,
         }?;
 
         let block: mp_block::Block =

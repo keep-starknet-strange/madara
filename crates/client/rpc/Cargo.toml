@@ -16,7 +16,6 @@ repository = "https://github.com/keep-starknet-strange/madara"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-tokio = { workspace = true, default-features = true, features = ["time"] }
 # Madara runtime
 pallet-starknet = { workspace = true, default-features = true }
 # Madara client
@@ -56,6 +55,7 @@ mp-hashers = { workspace = true }
 mp-transactions = { workspace = true, features = ["client"] }
 serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }
+tokio = { workspace = true, default-features = true, features = ["time"] }
 
 [dev-dependencies]
 rstest = { workspace = true }
