@@ -665,6 +665,19 @@
 <a href="#665" id="665">665</a>
 <a href="#666" id="666">666</a>
 <a href="#667" id="667">667</a>
+<a href="#668" id="668">668</a>
+<a href="#669" id="669">669</a>
+<a href="#670" id="670">670</a>
+<a href="#671" id="671">671</a>
+<a href="#672" id="672">672</a>
+<a href="#673" id="673">673</a>
+<a href="#674" id="674">674</a>
+<a href="#675" id="675">675</a>
+<a href="#676" id="676">676</a>
+<a href="#677" id="677">677</a>
+<a href="#678" id="678">678</a>
+<a href="#679" id="679">679</a>
+<a href="#680" id="680">680</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
@@ -702,12 +715,11 @@
 <span class="kw">use </span>sc_service::error::Error <span class="kw">as </span>ServiceError;
 <span class="kw">use </span>sc_service::{new_db_backend, Configuration, TaskManager, WarpSyncParams};
 <span class="kw">use </span>sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
+<span class="kw">use </span>sc_transaction_pool_api::OffchainTransactionPoolFactory;
 <span class="kw">use </span>sp_api::offchain::OffchainStorage;
-<span class="kw">use </span>sp_api::{ConstructRuntimeApi, TransactionFor};
+<span class="kw">use </span>sp_api::ConstructRuntimeApi;
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityPair <span class="kw">as </span>AuraPair;
 <span class="kw">use </span>sp_offchain::STORAGE_PREFIX;
-<span class="kw">use </span>sp_runtime::traits::BlakeTwo256;
-<span class="kw">use </span>sp_trie::PrefixedMemoryDB;
 
 <span class="kw">use </span><span class="kw">crate</span>::genesis_block::MadaraGenesisBlockBuilder;
 <span class="kw">use </span><span class="kw">crate</span>::rpc::StarknetDeps;
@@ -736,8 +748,12 @@
 <span class="kw">type </span>FullBackend = sc_service::TFullBackend&lt;Block&gt;;
 <span class="kw">type </span>FullSelectChain = sc_consensus::LongestChain&lt;FullBackend, Block&gt;;
 
-<span class="kw">type </span>BasicImportQueue&lt;Client&gt; = sc_consensus::DefaultImportQueue&lt;Block, Client&gt;;
-<span class="kw">type </span>BoxBlockImport&lt;Client&gt; = sc_consensus::BoxBlockImport&lt;Block, TransactionFor&lt;Client, Block&gt;&gt;;
+<span class="kw">type </span>BasicImportQueue = sc_consensus::DefaultImportQueue&lt;Block&gt;;
+<span class="kw">type </span>BoxBlockImport = sc_consensus::BoxBlockImport&lt;Block&gt;;
+
+<span class="doccomment">/// The minimum period of blocks on which justifications will be
+/// imported and generated.
+</span><span class="kw">const </span>GRANDPA_JUSTIFICATION_PERIOD: u32 = <span class="number">512</span>;
 
 <span class="attr">#[allow(clippy::type_complexity)]
 </span><span class="kw">pub fn </span>new_partial&lt;BIQ&gt;(
@@ -749,10 +765,10 @@
         FullClient,
         FullBackend,
         FullSelectChain,
-        sc_consensus::DefaultImportQueue&lt;Block, FullClient&gt;,
+        sc_consensus::DefaultImportQueue&lt;Block&gt;,
         mc_transaction_pool::FullPool&lt;Block, FullClient&gt;,
         (
-            BoxBlockImport&lt;FullClient&gt;,
+            BoxBlockImport,
             sc_consensus_grandpa::LinkHalf&lt;Block, FullClient, FullSelectChain&gt;,
             <span class="prelude-ty">Option</span>&lt;Telemetry&gt;,
             Arc&lt;MadaraBackend&gt;,
@@ -770,7 +786,7 @@
         <span class="prelude-ty">Option</span>&lt;TelemetryHandle&gt;,
         GrandpaBlockImport&lt;FullBackend, Block, FullClient, FullSelectChain&gt;,
         Arc&lt;MadaraBackend&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(BasicImportQueue&lt;FullClient&gt;, BoxBlockImport&lt;FullClient&gt;), ServiceError&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(BasicImportQueue, BoxBlockImport), ServiceError&gt;,
 {
     <span class="kw">let </span>telemetry = config
         .telemetry_endpoints
@@ -827,6 +843,7 @@
 
     <span class="kw">let </span>(grandpa_block_import, grandpa_link) = sc_consensus_grandpa::block_import(
         client.clone(),
+        GRANDPA_JUSTIFICATION_PERIOD,
         <span class="kw-2">&amp;</span>client <span class="kw">as </span><span class="kw-2">&amp;</span>Arc&lt;<span class="kw">_</span>&gt;,
         select_chain.clone(),
         telemetry.as_ref().map(|x| x.handle()),
@@ -863,7 +880,7 @@
     telemetry: <span class="prelude-ty">Option</span>&lt;TelemetryHandle&gt;,
     grandpa_block_import: GrandpaBlockImport&lt;FullBackend, Block, FullClient, FullSelectChain&gt;,
     _madara_backend: Arc&lt;MadaraBackend&gt;,
-) -&gt; <span class="prelude-ty">Result</span>&lt;(BasicImportQueue&lt;FullClient&gt;, BoxBlockImport&lt;FullClient&gt;), ServiceError&gt;
+) -&gt; <span class="prelude-ty">Result</span>&lt;(BasicImportQueue, BoxBlockImport), ServiceError&gt;
 <span class="kw">where
     </span>RuntimeApi: ConstructRuntimeApi&lt;Block, FullClient&gt;,
     RuntimeApi: Send + Sync + <span class="lifetime">&#39;static</span>,
@@ -904,7 +921,7 @@
     _telemetry: <span class="prelude-ty">Option</span>&lt;TelemetryHandle&gt;,
     _grandpa_block_import: GrandpaBlockImport&lt;FullBackend, Block, FullClient, FullSelectChain&gt;,
     _madara_backend: Arc&lt;MadaraBackend&gt;,
-) -&gt; <span class="prelude-ty">Result</span>&lt;(BasicImportQueue&lt;FullClient&gt;, BoxBlockImport&lt;FullClient&gt;), ServiceError&gt;
+) -&gt; <span class="prelude-ty">Result</span>&lt;(BasicImportQueue, BoxBlockImport), ServiceError&gt;
 <span class="kw">where
     </span>RuntimeApi: ConstructRuntimeApi&lt;Block, FullClient&gt;,
     RuntimeApi: Send + Sync + <span class="lifetime">&#39;static</span>,
@@ -974,10 +991,26 @@
             import_queue,
             block_announce_validator_builder: <span class="prelude-val">None</span>,
             warp_sync_params,
+            block_relay: <span class="prelude-val">None</span>,
         })<span class="question-mark">?</span>;
 
     <span class="kw">if </span>config.offchain_worker.enabled {
-        sc_service::build_offchain_workers(<span class="kw-2">&amp;</span>config, task_manager.spawn_handle(), client.clone(), network.clone());
+        task_manager.spawn_handle().spawn(
+            <span class="string">&quot;offchain-workers-runner&quot;</span>,
+            <span class="string">&quot;offchain-worker&quot;</span>,
+            sc_offchain::OffchainWorkers::new(sc_offchain::OffchainWorkerOptions {
+                runtime_api_provider: client.clone(),
+                is_validator: config.role.is_authority(),
+                keystore: <span class="prelude-val">Some</span>(keystore_container.keystore()),
+                offchain_db: backend.offchain_storage(),
+                transaction_pool: <span class="prelude-val">Some</span>(OffchainTransactionPoolFactory::new(transaction_pool.clone())),
+                network_provider: network.clone(),
+                enable_http_requests: <span class="bool-val">true</span>,
+                custom_extensions: |<span class="kw">_</span>| <span class="macro">vec!</span>[],
+            })
+            .run(client.clone(), task_manager.spawn_handle())
+            .boxed(),
+        );
     }
 
     <span class="kw">let </span>role = config.role.clone();
@@ -1122,7 +1155,7 @@
         <span class="kw">let </span>proposer_factory = ProposerFactory::new(
             task_manager.spawn_handle(),
             client.clone(),
-            transaction_pool,
+            transaction_pool.clone(),
             prometheus_registry.as_ref(),
         );
 
@@ -1184,7 +1217,7 @@
         <span class="kw">let </span>grandpa_config = sc_consensus_grandpa::Config {
             <span class="comment">// FIXME #1578 make this available through chainspec
             </span>gossip_duration: Duration::from_millis(<span class="number">333</span>),
-            justification_period: <span class="number">512</span>,
+            justification_generation_period: GRANDPA_JUSTIFICATION_PERIOD,
             name: <span class="prelude-val">Some</span>(name),
             observer_enabled: <span class="bool-val">false</span>,
             keystore,
@@ -1208,6 +1241,7 @@
             prometheus_registry,
             shared_voter_state: SharedVoterState::empty(),
             telemetry: telemetry.as_ref().map(|x| x.handle()),
+            offchain_tx_pool_factory: OffchainTransactionPoolFactory::new(transaction_pool.clone()),
         };
 
         <span class="comment">// the GRANDPA voter task is considered infallible, i.e.
@@ -1229,7 +1263,7 @@
     client: Arc&lt;FullClient&gt;,
     transaction_pool: Arc&lt;FullPool&lt;Block, FullClient&gt;&gt;,
     select_chain: FullSelectChain,
-    block_import: BoxBlockImport&lt;FullClient&gt;,
+    block_import: BoxBlockImport,
     task_manager: <span class="kw-2">&amp;</span>TaskManager,
     prometheus_registry: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Registry&gt;,
     commands_stream: <span class="prelude-ty">Option</span>&lt;mpsc::Receiver&lt;sc_consensus_manual_seal::rpc::EngineCommand&lt;Hash&gt;&gt;&gt;,
@@ -1315,16 +1349,8 @@
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">type </span>ChainOpsResult = <span class="prelude-ty">Result</span>&lt;
-    (
-        Arc&lt;FullClient&gt;,
-        Arc&lt;FullBackend&gt;,
-        BasicQueue&lt;Block, PrefixedMemoryDB&lt;BlakeTwo256&gt;&gt;,
-        TaskManager,
-        Arc&lt;MadaraBackend&gt;,
-    ),
-    ServiceError,
-&gt;;
+<span class="kw">type </span>ChainOpsResult =
+    <span class="prelude-ty">Result</span>&lt;(Arc&lt;FullClient&gt;, Arc&lt;FullBackend&gt;, BasicQueue&lt;Block&gt;, TaskManager, Arc&lt;MadaraBackend&gt;), ServiceError&gt;;
 
 <span class="kw">pub fn </span>new_chain_ops(config: <span class="kw-2">&amp;mut </span>Configuration, cache_more_things: bool) -&gt; ChainOpsResult {
     config.keystore = sc_service::config::KeystoreConfig::InMemory;

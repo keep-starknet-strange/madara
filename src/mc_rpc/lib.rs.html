@@ -1084,7 +1084,6 @@
 <a href="#1084" id="1084">1084</a>
 <a href="#1085" id="1085">1085</a>
 <a href="#1086" id="1086">1086</a>
-<a href="#1087" id="1087">1087</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1121,7 +1120,6 @@
 <span class="kw">use </span>sp_arithmetic::traits::UniqueSaturatedInto;
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
 <span class="kw">use </span>sp_core::H256;
-<span class="kw">use </span>sp_runtime::generic::BlockId <span class="kw">as </span>SPBlockId;
 <span class="kw">use </span>sp_runtime::traits::{Block <span class="kw">as </span>BlockT, Header <span class="kw">as </span>HeaderT};
 <span class="kw">use </span>sp_runtime::transaction_validity::InvalidTransaction;
 <span class="kw">use </span>sp_runtime::DispatchError;
@@ -2111,7 +2109,7 @@
     B: BlockT,
     &lt;B <span class="kw">as </span>BlockT&gt;::Extrinsic: Send + Sync + <span class="lifetime">&#39;static</span>,
 {
-    pool.submit_one(<span class="kw-2">&amp;</span>SPBlockId::hash(best_block_hash), TX_SOURCE, extrinsic).<span class="kw">await</span>.map_err(|e| {
+    pool.submit_one(best_block_hash, TX_SOURCE, extrinsic).<span class="kw">await</span>.map_err(|e| {
         <span class="macro">error!</span>(<span class="string">&quot;Failed to submit extrinsic: {:?}&quot;</span>, e);
         <span class="kw">match </span>e.into_pool_error() {
             <span class="prelude-val">Ok</span>(PoolError::InvalidTransaction(InvalidTransaction::BadProof)) =&gt; StarknetRpcApiError::ValidationFailure,

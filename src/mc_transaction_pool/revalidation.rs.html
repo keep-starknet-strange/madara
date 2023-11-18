@@ -308,6 +308,26 @@
 <a href="#308" id="308">308</a>
 <a href="#309" id="309">309</a>
 <a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
 </pre></div><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
 // Copyright (C) Parity Technologies (UK) Ltd.
@@ -336,10 +356,10 @@
 <span class="kw">use </span>futures::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>sc_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
 <span class="kw">use </span>sp_runtime::generic::BlockId;
-<span class="kw">use </span>sp_runtime::traits::{SaturatedConversion, Zero};
+<span class="kw">use </span>sp_runtime::traits::SaturatedConversion;
 <span class="kw">use </span>sp_runtime::transaction_validity::TransactionValidityError;
 
-<span class="kw">use </span><span class="kw">crate</span>::graph::{ChainApi, ExtrinsicHash, NumberFor, Pool, ValidatedTransaction};
+<span class="kw">use </span><span class="kw">crate</span>::graph::{BlockHash, ChainApi, ExtrinsicHash, Pool, ValidatedTransaction};
 <span class="kw">use </span><span class="kw">crate</span>::LOG_TARGET;
 
 <span class="kw">const </span>BACKGROUND_REVALIDATION_INTERVAL: Duration = Duration::from_millis(<span class="number">200</span>);
@@ -348,7 +368,7 @@
 
 <span class="doccomment">/// Payload from queue to worker.
 </span><span class="kw">struct </span>WorkerPayload&lt;Api: ChainApi&gt; {
-    at: NumberFor&lt;Api&gt;,
+    at: BlockHash&lt;Api&gt;,
     transactions: Vec&lt;ExtrinsicHash&lt;Api&gt;&gt;,
 }
 
@@ -358,9 +378,9 @@
 </span><span class="kw">struct </span>RevalidationWorker&lt;Api: ChainApi&gt; {
     api: Arc&lt;Api&gt;,
     pool: Arc&lt;Pool&lt;Api&gt;&gt;,
-    best_block: NumberFor&lt;Api&gt;,
-    block_ordered: BTreeMap&lt;NumberFor&lt;Api&gt;, HashSet&lt;ExtrinsicHash&lt;Api&gt;&gt;&gt;,
-    members: HashMap&lt;ExtrinsicHash&lt;Api&gt;, NumberFor&lt;Api&gt;&gt;,
+    best_block: BlockHash&lt;Api&gt;,
+    block_ordered: BTreeMap&lt;BlockHash&lt;Api&gt;, HashSet&lt;ExtrinsicHash&lt;Api&gt;&gt;&gt;,
+    members: HashMap&lt;ExtrinsicHash&lt;Api&gt;, BlockHash&lt;Api&gt;&gt;,
 }
 
 <span class="kw">impl</span>&lt;Api: ChainApi&gt; Unpin <span class="kw">for </span>RevalidationWorker&lt;Api&gt; {}
@@ -372,15 +392,30 @@
 </span><span class="kw">async fn </span>batch_revalidate&lt;Api: ChainApi&gt;(
     pool: Arc&lt;Pool&lt;Api&gt;&gt;,
     api: Arc&lt;Api&gt;,
-    at: NumberFor&lt;Api&gt;,
+    at: BlockHash&lt;Api&gt;,
     batch: <span class="kw">impl </span>IntoIterator&lt;Item = ExtrinsicHash&lt;Api&gt;&gt;,
 ) {
+    <span class="comment">// This conversion should work. Otherwise, for unknown block the revalidation shall be skipped,
+    // all the transactions will be kept in the validated pool, and can be scheduled for
+    // revalidation with the next request.
+    </span><span class="kw">let </span>block_number = <span class="kw">match </span>api.block_id_to_number(<span class="kw-2">&amp;</span>BlockId::Hash(at)) {
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(n)) =&gt; n,
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; {
+            <span class="macro">log::debug!</span>(target: LOG_TARGET, <span class="string">&quot;revalidation skipped at block {at:?}, could not get block number.&quot;</span>);
+            <span class="kw">return</span>;
+        }
+        <span class="prelude-val">Err</span>(e) =&gt; {
+            <span class="macro">log::debug!</span>(target: LOG_TARGET, <span class="string">&quot;revalidation skipped at block {at:?}: {e:?}.&quot;</span>);
+            <span class="kw">return</span>;
+        }
+    };
+
     <span class="kw">let </span><span class="kw-2">mut </span>invalid_hashes = Vec::new();
     <span class="kw">let </span><span class="kw-2">mut </span>revalidated = HashMap::new();
 
     <span class="kw">let </span>validation_results = futures::future::join_all(batch.into_iter().filter_map(|ext_hash| {
         pool.validated_pool().ready_by_hash(<span class="kw-2">&amp;</span>ext_hash).map(|ext| {
-            api.validate_transaction(<span class="kw-2">&amp;</span>BlockId::Number(at), ext.source, ext.data.clone())
+            api.validate_transaction(at, ext.source, ext.data.clone())
                 .map(<span class="kw">move </span>|validation_result| (validation_result, ext_hash, ext))
         })
     }))
@@ -401,7 +436,7 @@
                 revalidated.insert(
                     ext_hash,
                     ValidatedTransaction::valid_at(
-                        at.saturated_into::&lt;u64&gt;(),
+                        block_number.saturated_into::&lt;u64&gt;(),
                         ext_hash,
                         ext.source,
                         ext.data.clone(),
@@ -429,8 +464,8 @@
 }
 
 <span class="kw">impl</span>&lt;Api: ChainApi&gt; RevalidationWorker&lt;Api&gt; {
-    <span class="kw">fn </span>new(api: Arc&lt;Api&gt;, pool: Arc&lt;Pool&lt;Api&gt;&gt;) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ api, pool, block_ordered: Default::default(), members: Default::default(), best_block: Zero::zero() }
+    <span class="kw">fn </span>new(api: Arc&lt;Api&gt;, pool: Arc&lt;Pool&lt;Api&gt;&gt;, best_block: BlockHash&lt;Api&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ api, pool, block_ordered: Default::default(), members: Default::default(), best_block }
     }
 
     <span class="kw">fn </span>prepare_batch(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Vec&lt;ExtrinsicHash&lt;Api&gt;&gt; {
@@ -582,10 +617,11 @@
         api: Arc&lt;Api&gt;,
         pool: Arc&lt;Pool&lt;Api&gt;&gt;,
         interval: Duration,
+        best_block: BlockHash&lt;Api&gt;,
     ) -&gt; (<span class="self">Self</span>, Pin&lt;Box&lt;<span class="kw">dyn </span>Future&lt;Output = ()&gt; + Send&gt;&gt;) {
         <span class="kw">let </span>(to_worker, from_queue) = tracing_unbounded(<span class="string">&quot;mpsc_revalidation_queue&quot;</span>, <span class="number">100_000</span>);
 
-        <span class="kw">let </span>worker = RevalidationWorker::new(api.clone(), pool.clone());
+        <span class="kw">let </span>worker = RevalidationWorker::new(api.clone(), pool.clone(), best_block);
 
         <span class="kw">let </span>queue = <span class="self">Self </span>{ api, pool, background: <span class="prelude-val">Some</span>(to_worker) };
 
@@ -593,8 +629,12 @@
     }
 
     <span class="doccomment">/// New revalidation queue with background worker.
-    </span><span class="kw">pub fn </span>new_background(api: Arc&lt;Api&gt;, pool: Arc&lt;Pool&lt;Api&gt;&gt;) -&gt; (<span class="self">Self</span>, Pin&lt;Box&lt;<span class="kw">dyn </span>Future&lt;Output = ()&gt; + Send&gt;&gt;) {
-        <span class="self">Self</span>::new_with_interval(api, pool, BACKGROUND_REVALIDATION_INTERVAL)
+    </span><span class="kw">pub fn </span>new_background(
+        api: Arc&lt;Api&gt;,
+        pool: Arc&lt;Pool&lt;Api&gt;&gt;,
+        best_block: BlockHash&lt;Api&gt;,
+    ) -&gt; (<span class="self">Self</span>, Pin&lt;Box&lt;<span class="kw">dyn </span>Future&lt;Output = ()&gt; + Send&gt;&gt;) {
+        <span class="self">Self</span>::new_with_interval(api, pool, BACKGROUND_REVALIDATION_INTERVAL, best_block)
     }
 
     <span class="doccomment">/// Queue some transaction for later revalidation.
@@ -602,7 +642,7 @@
     /// If queue configured with background worker, this will return immediately.
     /// If queue configured without background worker, this will resolve after
     /// revalidation is actually done.
-    </span><span class="kw">pub async fn </span>revalidate_later(<span class="kw-2">&amp;</span><span class="self">self</span>, at: NumberFor&lt;Api&gt;, transactions: Vec&lt;ExtrinsicHash&lt;Api&gt;&gt;) {
+    </span><span class="kw">pub async fn </span>revalidate_later(<span class="kw-2">&amp;</span><span class="self">self</span>, at: BlockHash&lt;Api&gt;, transactions: Vec&lt;ExtrinsicHash&lt;Api&gt;&gt;) {
         <span class="kw">if </span>!transactions.is_empty() {
             <span class="macro">log::debug!</span>(target: LOG_TARGET, <span class="string">&quot;Sent {} transactions to revalidation queue&quot;</span>, transactions.len(),);
         }

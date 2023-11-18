@@ -722,7 +722,7 @@
     is_validator: IsValidator,
     options: Options,
     listener: RwLock&lt;Listener&lt;ExtrinsicHash&lt;B&gt;, B&gt;&gt;,
-    pool: RwLock&lt;base::BasePool&lt;ExtrinsicHash&lt;B&gt;, ExtrinsicFor&lt;B&gt;&gt;&gt;,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) pool: RwLock&lt;base::BasePool&lt;ExtrinsicHash&lt;B&gt;, ExtrinsicFor&lt;B&gt;&gt;&gt;,
     import_notification_sinks: Mutex&lt;Vec&lt;Sender&lt;ExtrinsicHash&lt;B&gt;&gt;&gt;&gt;,
     rotator: PoolRotator&lt;ExtrinsicHash&lt;B&gt;&gt;,
 }

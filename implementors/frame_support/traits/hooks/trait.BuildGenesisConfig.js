@@ -1,0 +1,4 @@
+(function() {var implementors = {
+"madara_runtime":[["impl BuildGenesisConfig for <a class=\"struct\" href=\"madara_runtime/struct.RuntimeGenesisConfig.html\" title=\"struct madara_runtime::RuntimeGenesisConfig\">RuntimeGenesisConfig</a>"]],
+"pallet_starknet":[["impl&lt;T: <a class=\"trait\" href=\"pallet_starknet/pallet/trait.Config.html\" title=\"trait pallet_starknet::pallet::Config\">Config</a>&gt; BuildGenesisConfig for <a class=\"struct\" href=\"pallet_starknet/pallet/struct.GenesisConfig.html\" title=\"struct pallet_starknet::pallet::GenesisConfig\">GenesisConfig</a>&lt;T&gt;"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

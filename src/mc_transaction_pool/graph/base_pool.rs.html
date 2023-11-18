@@ -929,7 +929,6 @@
 <a href="#929" id="929">929</a>
 <a href="#930" id="930">930</a>
 <a href="#931" id="931">931</a>
-<a href="#932" id="932">932</a>
 </pre></div><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
 // Copyright (C) Parity Technologies (UK) Ltd.
@@ -1015,8 +1014,7 @@
 }
 
 <span class="doccomment">/// Immutable transaction
-</span><span class="attr">#[cfg_attr(test, derive(Clone))]
-#[derive(PartialEq, Eq)]
+</span><span class="attr">#[derive(PartialEq, Eq, Clone)]
 </span><span class="kw">pub struct </span>Transaction&lt;Hash, Extrinsic&gt; {
     <span class="doccomment">/// Raw extrinsic representing that transaction.
     </span><span class="kw">pub </span>data: Extrinsic,

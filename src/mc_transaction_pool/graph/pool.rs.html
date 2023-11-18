@@ -509,7 +509,7 @@
     <span class="doccomment">/// Verify extrinsic at given block.
     </span><span class="kw">fn </span>validate_transaction(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        at: <span class="kw-2">&amp;</span>BlockId&lt;<span class="self">Self</span>::Block&gt;,
+        at: &lt;<span class="self">Self</span>::Block <span class="kw">as </span>BlockT&gt;::Hash,
         source: TransactionSource,
         uxt: ExtrinsicFor&lt;<span class="self">Self</span>&gt;,
     ) -&gt; <span class="self">Self</span>::ValidationFuture;
@@ -608,7 +608,7 @@
     <span class="doccomment">/// Imports a bunch of unverified extrinsics to the pool
     </span><span class="kw">pub async fn </span>submit_at(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        at: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;,
+        at: &lt;B::Block <span class="kw">as </span>BlockT&gt;::Hash,
         source: TransactionSource,
         xts: <span class="kw">impl </span>IntoIterator&lt;Item = ExtrinsicFor&lt;B&gt;&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="prelude-ty">Result</span>&lt;ExtrinsicHash&lt;B&gt;, B::Error&gt;&gt;, B::Error&gt; {
@@ -622,7 +622,7 @@
     /// This does not check if a transaction is banned, before we verify it again.
     </span><span class="kw">pub async fn </span>resubmit_at(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        at: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;,
+        at: &lt;B::Block <span class="kw">as </span>BlockT&gt;::Hash,
         source: TransactionSource,
         xts: <span class="kw">impl </span>IntoIterator&lt;Item = ExtrinsicFor&lt;B&gt;&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="prelude-ty">Result</span>&lt;ExtrinsicHash&lt;B&gt;, B::Error&gt;&gt;, B::Error&gt; {
@@ -634,7 +634,7 @@
     <span class="doccomment">/// Imports one unverified extrinsic to the pool
     </span><span class="kw">pub async fn </span>submit_one(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        at: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;,
+        at: &lt;B::Block <span class="kw">as </span>BlockT&gt;::Hash,
         source: TransactionSource,
         xt: ExtrinsicFor&lt;B&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;ExtrinsicHash&lt;B&gt;, B::Error&gt; {
@@ -645,11 +645,11 @@
     <span class="doccomment">/// Import a single extrinsic and starts to watch its progress in the pool.
     </span><span class="kw">pub async fn </span>submit_and_watch(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        at: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;,
+        at: &lt;B::Block <span class="kw">as </span>BlockT&gt;::Hash,
         source: TransactionSource,
         xt: ExtrinsicFor&lt;B&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Watcher&lt;ExtrinsicHash&lt;B&gt;, ExtrinsicHash&lt;B&gt;&gt;, B::Error&gt; {
-        <span class="kw">let </span>block_number = <span class="self">self</span>.resolve_block_number(at)<span class="question-mark">?</span>;
+        <span class="kw">let </span>block_number = <span class="self">self</span>.resolve_block_number(<span class="kw-2">&amp;</span>BlockId::Hash(at))<span class="question-mark">?</span>;
         <span class="kw">let </span>(<span class="kw">_</span>, tx) = <span class="self">self</span>.verify_one(at, block_number, source, xt, CheckBannedBeforeVerify::Yes).<span class="kw">await</span>;
         <span class="self">self</span>.validated_pool.submit_and_watch(tx)
     }
@@ -689,8 +689,8 @@
     /// their provided tags from there. Otherwise we query the runtime at the `parent` block.
     </span><span class="kw">pub async fn </span>prune(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        at: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;,
-        parent: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;,
+        at: &lt;B::Block <span class="kw">as </span>BlockT&gt;::Hash,
+        parent: &lt;B::Block <span class="kw">as </span>BlockT&gt;::Hash,
         extrinsics: <span class="kw-2">&amp;</span>[ExtrinsicFor&lt;B&gt;],
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), B::Error&gt; {
         <span class="macro">log::debug!</span>(target: LOG_TARGET, <span class="string">&quot;Starting pruning of block {:?} (extrinsics: {})&quot;</span>, at, extrinsics.len());
@@ -754,7 +754,7 @@
     /// prevent importing them in the (near) future.
     </span><span class="kw">pub async fn </span>prune_tags(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        at: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;,
+        at: &lt;B::Block <span class="kw">as </span>BlockT&gt;::Hash,
         tags: <span class="kw">impl </span>IntoIterator&lt;Item = Tag&gt;,
         known_imported_hashes: <span class="kw">impl </span>IntoIterator&lt;Item = ExtrinsicHash&lt;B&gt;&gt; + Clone,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), B::Error&gt; {
@@ -778,7 +778,7 @@
         <span class="comment">// And finally - submit reverified transactions back to the pool
 
         </span><span class="self">self</span>.validated_pool.resubmit_pruned(
-            at,
+            <span class="kw-2">&amp;</span>BlockId::Hash(at),
             known_imported_hashes,
             pruned_hashes,
             reverified_transactions.into_values().collect(),
@@ -801,12 +801,12 @@
     <span class="doccomment">/// Returns future that validates a bunch of transactions at given block.
     </span><span class="kw">async fn </span>verify(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        at: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;,
+        at: &lt;B::Block <span class="kw">as </span>BlockT&gt;::Hash,
         xts: <span class="kw">impl </span>IntoIterator&lt;Item = (TransactionSource, ExtrinsicFor&lt;B&gt;)&gt;,
         check: CheckBannedBeforeVerify,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;HashMap&lt;ExtrinsicHash&lt;B&gt;, ValidatedTransactionFor&lt;B&gt;&gt;, B::Error&gt; {
         <span class="comment">// we need a block number to compute tx validity
-        </span><span class="kw">let </span>block_number = <span class="self">self</span>.resolve_block_number(at)<span class="question-mark">?</span>;
+        </span><span class="kw">let </span>block_number = <span class="self">self</span>.resolve_block_number(<span class="kw-2">&amp;</span>BlockId::Hash(at))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>res = futures::future::join_all(
             xts.into_iter().map(|(source, xt)| <span class="self">self</span>.verify_one(at, block_number, source, xt, check)),
@@ -821,7 +821,7 @@
     <span class="doccomment">/// Returns future that validates single transaction at given block.
     </span><span class="kw">async fn </span>verify_one(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        block_id: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;,
+        block_id: &lt;B::Block <span class="kw">as </span>BlockT&gt;::Hash,
         block_number: NumberFor&lt;B&gt;,
         source: TransactionSource,
         xt: ExtrinsicFor&lt;B&gt;,

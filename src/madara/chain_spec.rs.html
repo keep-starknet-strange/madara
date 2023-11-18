@@ -183,9 +183,13 @@
 <a href="#183" id="183">183</a>
 <a href="#184" id="184">184</a>
 <a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
 
-<span class="kw">use </span>madara_runtime::{AuraConfig, GenesisConfig, GrandpaConfig, SealingMode, SystemConfig, WASM_BINARY};
+<span class="kw">use </span>madara_runtime::{AuraConfig, GrandpaConfig, RuntimeGenesisConfig, SealingMode, SystemConfig, WASM_BINARY};
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>pallet_starknet::genesis_loader::{GenesisData, GenesisLoader, HexFelt};
 <span class="kw">use </span>sc_service::{BasePath, ChainType};
@@ -202,7 +206,7 @@
 <span class="kw">pub const </span>GENESIS_ASSETS_FILE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;genesis.json&quot;</span>;
 
 <span class="doccomment">/// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-</span><span class="kw">pub type </span>ChainSpec = sc_service::GenericChainSpec&lt;GenesisConfig&gt;;
+</span><span class="kw">pub type </span>ChainSpec = sc_service::GenericChainSpec&lt;RuntimeGenesisConfig&gt;;
 
 <span class="doccomment">/// Specialized `ChainSpec` for development.
 </span><span class="kw">pub type </span>DevChainSpec = sc_service::GenericChainSpec&lt;DevGenesisExt&gt;;
@@ -211,7 +215,7 @@
 </span><span class="attr">#[derive(Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>DevGenesisExt {
     <span class="doccomment">/// Genesis config.
-    </span>genesis_config: GenesisConfig,
+    </span>genesis_config: RuntimeGenesisConfig,
     <span class="doccomment">/// The sealing mode being used.
     </span>sealing: SealingMode,
 }
@@ -352,18 +356,22 @@
     wasm_binary: <span class="kw-2">&amp;</span>[u8],
     initial_authorities: Vec&lt;(AuraId, GrandpaId)&gt;,
     _enable_println: bool,
-) -&gt; GenesisConfig {
+) -&gt; RuntimeGenesisConfig {
     <span class="kw">let </span>starknet_genesis_config: madara_runtime::pallet_starknet::GenesisConfig&lt;<span class="kw">_</span>&gt; = genesis_loader.into();
 
-    GenesisConfig {
+    RuntimeGenesisConfig {
         system: SystemConfig {
             <span class="comment">// Add Wasm runtime to storage.
             </span>code: wasm_binary.to_vec(),
+            _config: Default::default(),
         },
         <span class="comment">// Authority-based consensus protocol used for block production
         </span>aura: AuraConfig { authorities: initial_authorities.iter().map(|x| (x.<span class="number">0</span>.clone())).collect() },
         <span class="comment">// Deterministic finality mechanism used for block finalization
-        </span>grandpa: GrandpaConfig { authorities: initial_authorities.iter().map(|x| (x.<span class="number">1</span>.clone(), <span class="number">1</span>)).collect() },
+        </span>grandpa: GrandpaConfig {
+            authorities: initial_authorities.iter().map(|x| (x.<span class="number">1</span>.clone(), <span class="number">1</span>)).collect(),
+            _config: Default::default(),
+        },
         <span class="doccomment">/// Starknet Genesis configuration.
         </span>starknet: starknet_genesis_config,
     }
