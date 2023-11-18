@@ -1115,6 +1115,44 @@
 <a href="#1115" id="1115">1115</a>
 <a href="#1116" id="1116">1116</a>
 <a href="#1117" id="1117">1117</a>
+<a href="#1118" id="1118">1118</a>
+<a href="#1119" id="1119">1119</a>
+<a href="#1120" id="1120">1120</a>
+<a href="#1121" id="1121">1121</a>
+<a href="#1122" id="1122">1122</a>
+<a href="#1123" id="1123">1123</a>
+<a href="#1124" id="1124">1124</a>
+<a href="#1125" id="1125">1125</a>
+<a href="#1126" id="1126">1126</a>
+<a href="#1127" id="1127">1127</a>
+<a href="#1128" id="1128">1128</a>
+<a href="#1129" id="1129">1129</a>
+<a href="#1130" id="1130">1130</a>
+<a href="#1131" id="1131">1131</a>
+<a href="#1132" id="1132">1132</a>
+<a href="#1133" id="1133">1133</a>
+<a href="#1134" id="1134">1134</a>
+<a href="#1135" id="1135">1135</a>
+<a href="#1136" id="1136">1136</a>
+<a href="#1137" id="1137">1137</a>
+<a href="#1138" id="1138">1138</a>
+<a href="#1139" id="1139">1139</a>
+<a href="#1140" id="1140">1140</a>
+<a href="#1141" id="1141">1141</a>
+<a href="#1142" id="1142">1142</a>
+<a href="#1143" id="1143">1143</a>
+<a href="#1144" id="1144">1144</a>
+<a href="#1145" id="1145">1145</a>
+<a href="#1146" id="1146">1146</a>
+<a href="#1147" id="1147">1147</a>
+<a href="#1148" id="1148">1148</a>
+<a href="#1149" id="1149">1149</a>
+<a href="#1150" id="1150">1150</a>
+<a href="#1151" id="1151">1151</a>
+<a href="#1152" id="1152">1152</a>
+<a href="#1153" id="1153">1153</a>
+<a href="#1154" id="1154">1154</a>
+<a href="#1155" id="1155">1155</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -2070,20 +2108,39 @@
 
         <span class="kw">let </span>chain_id = <span class="self">self</span>.chain_id()<span class="question-mark">?</span>.<span class="number">0</span>.into();
 
-        <span class="kw">let </span>(tx_type, events) = <span class="self">self
+        <span class="kw">let </span>fee_disabled =
+            <span class="self">self</span>.client.runtime_api().is_transaction_fee_disabled(substrate_block_hash).map_err(|e| {
+                <span class="macro">error!</span>(<span class="string">&quot;Failed to get check fee disabled. Substrate block hash: {substrate_block_hash}, error: {e}&quot;</span>);
+                StarknetRpcApiError::InternalServerError
+            })<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>(tx_index, transaction) = <span class="self">self
             </span>.client
             .runtime_api()
-            .get_events_for_tx_hash(substrate_block_hash, block_extrinsics, chain_id, transaction_hash.into())
+            .get_index_and_tx_for_tx_hash(substrate_block_hash, block_extrinsics, chain_id, transaction_hash.into())
             .map_err(|e| {
                 <span class="macro">error!</span>(
-                    <span class="string">&quot;Failed to get events for transaction hash. Substrate block hash: {substrate_block_hash}, \
+                    <span class="string">&quot;Failed to get index for transaction hash. Substrate block hash: {substrate_block_hash}, \
                      transaction hash: {transaction_hash}, error: {e}&quot;
                 </span>);
                 StarknetRpcApiError::InternalServerError
             })<span class="question-mark">?
-            </span>.expect(<span class="string">&quot;the transaction should be present in the substrate extrinsics&quot;</span>);
+            </span>.expect(<span class="string">&quot;the transaction should be present in the substrate extrinsics&quot;</span>); <span class="comment">// not reachable
 
-        <span class="kw">let </span>execution_result = {
+        </span><span class="kw">let </span>events = <span class="self">self
+            </span>.client
+            .runtime_api()
+            .get_events_for_tx_by_index(substrate_block_hash, tx_index)
+            .map_err(|e| {
+                <span class="macro">error!</span>(
+                    <span class="string">&quot;Failed to get events for transaction index. Substrate block hash: {substrate_block_hash}, \
+                     transaction idx: {tx_index}, error: {e}&quot;
+                </span>);
+                StarknetRpcApiError::InternalServerError
+            })<span class="question-mark">?
+            </span>.expect(<span class="string">&quot;the transaction should be present in the substrate extrinsics&quot;</span>); <span class="comment">// not reachable
+
+        </span><span class="kw">let </span>execution_result = {
             <span class="kw">let </span>revert_error = <span class="self">self
                 </span>.client
                 .runtime_api()
@@ -2111,48 +2168,67 @@
             }
         }
 
-        <span class="kw">let </span>receipt = <span class="kw">match </span>tx_type {
-            mp_transactions::TxType::Declare =&gt; TransactionReceipt::Declare(DeclareTransactionReceipt {
+        <span class="kw">let </span>events_converted: Vec&lt;starknet_core::types::Event&gt; =
+            events.clone().into_iter().map(event_conversion).collect();
+
+        <span class="kw">let </span>actual_fee = <span class="kw">if </span>fee_disabled {
+            FieldElement::ZERO
+        } <span class="kw">else </span>{
+            <span class="comment">// Event {
+            //     from_address: fee_token_address,
+            //     keys: [selector(&quot;Transfer&quot;)],
+            //     data: [
+            //         send_from_address,       // account_contract_address
+            //         send_to_address,         // to (sequencer address)
+            //         expected_fee_value_low,  // transfer amount (fee)
+            //         expected_fee_value_high,
+            //     ]},
+            // fee transfer must be the last event, except enabled disable-transaction-fee feature
+            </span>events_converted.last().unwrap().data[<span class="number">2</span>]
+        };
+
+        <span class="kw">let </span>receipt = <span class="kw">match </span>transaction {
+            mp_transactions::Transaction::Declare(<span class="kw">_</span>) =&gt; TransactionReceipt::Declare(DeclareTransactionReceipt {
                 transaction_hash,
-                actual_fee: Default::default(),
+                actual_fee,
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
                 block_hash,
                 block_number,
                 messages_sent: Default::default(),
-                events: events.into_iter().map(event_conversion).collect(),
+                events: events_converted,
                 execution_result,
             }),
-            mp_transactions::TxType::DeployAccount =&gt; {
+            mp_transactions::Transaction::DeployAccount(tx) =&gt; {
                 TransactionReceipt::DeployAccount(DeployAccountTransactionReceipt {
                     transaction_hash,
-                    actual_fee: Default::default(),
+                    actual_fee,
                     finality_status: TransactionFinalityStatus::AcceptedOnL2,
                     block_hash,
                     block_number,
                     messages_sent: Default::default(),
-                    events: events.into_iter().map(event_conversion).collect(),
-                    contract_address: Default::default(), <span class="comment">// TODO: we can probably find this in the events
-                    </span>execution_result,
+                    events: events_converted,
+                    contract_address: tx.get_account_address(),
+                    execution_result,
                 })
             }
-            mp_transactions::TxType::Invoke =&gt; TransactionReceipt::Invoke(InvokeTransactionReceipt {
+            mp_transactions::Transaction::Invoke(<span class="kw">_</span>) =&gt; TransactionReceipt::Invoke(InvokeTransactionReceipt {
                 transaction_hash,
-                actual_fee: Default::default(),
+                actual_fee,
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
                 block_hash,
                 block_number,
                 messages_sent: Default::default(),
-                events: events.into_iter().map(event_conversion).collect(),
+                events: events_converted,
                 execution_result,
             }),
-            mp_transactions::TxType::L1Handler =&gt; TransactionReceipt::L1Handler(L1HandlerTransactionReceipt {
+            mp_transactions::Transaction::L1Handler(<span class="kw">_</span>) =&gt; TransactionReceipt::L1Handler(L1HandlerTransactionReceipt {
                 transaction_hash,
-                actual_fee: Default::default(),
+                actual_fee,
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
                 block_hash,
                 block_number,
                 messages_sent: Default::default(),
-                events: events.into_iter().map(event_conversion).collect(),
+                events: events_converted,
                 execution_result,
             }),
         };

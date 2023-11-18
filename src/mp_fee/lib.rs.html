@@ -276,7 +276,13 @@
     (<span class="string">&quot;ec_op_builtin&quot;</span>, FixedU128::from_inner(<span class="number">10_240_000_000_000_000_000</span>)),
 ];
 
-<span class="doccomment">/// Gets the transaction resources.
+<span class="kw">pub const </span>TRANSFER_SELECTOR_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;Transfer&quot;</span>;
+<span class="kw">pub const </span>TRANSFER_SELECTOR_HASH: [u8; <span class="number">32</span>] = [
+    <span class="number">0</span>, <span class="number">131</span>, <span class="number">175</span>, <span class="number">211</span>, <span class="number">244</span>, <span class="number">202</span>, <span class="number">237</span>, <span class="number">198</span>, <span class="number">238</span>, <span class="number">191</span>, <span class="number">68</span>, <span class="number">36</span>, <span class="number">111</span>, <span class="number">229</span>, <span class="number">78</span>, <span class="number">56</span>, <span class="number">201</span>, <span class="number">94</span>, <span class="number">49</span>, <span class="number">121</span>, <span class="number">165</span>, <span class="number">236</span>, <span class="number">158</span>, <span class="number">168</span>, <span class="number">23</span>,
+    <span class="number">64</span>, <span class="number">236</span>, <span class="number">165</span>, <span class="number">180</span>, <span class="number">130</span>, <span class="number">209</span>, <span class="number">46</span>,
+]; <span class="comment">// starknet_keccak(TRANSFER_SELECTOR_NAME.as_bytes()).to_le_bytes();
+
+</span><span class="doccomment">/// Gets the transaction resources.
 </span><span class="kw">pub fn </span>compute_transaction_resources&lt;S: State + StateChanges&gt;(
     state: <span class="kw-2">&amp;</span>S,
     execute_call_info: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;CallInfo&gt;,
@@ -343,20 +349,14 @@
     </span><span class="kw">let </span>lsb_amount = StarkFelt::from(actual_fee.<span class="number">0</span>);
     <span class="comment">// The most significant 128 bits of the amount transferred.
     </span><span class="kw">let </span>msb_amount = StarkFelt::from(<span class="number">0_u64</span>);
-
     <span class="kw">let </span>storage_address = block_context.fee_token_address;
     <span class="kw">let </span>fee_transfer_call = CallEntryPoint {
         class_hash: <span class="prelude-val">None</span>,
         code_address: <span class="prelude-val">None</span>,
         entry_point_type: EntryPointType::External,
-        entry_point_selector: EntryPointSelector(
-            <span class="comment">// The value is hardcoded and it&#39;s the encoding of the &quot;transfer&quot; selector so it cannot fail.
-            </span>StarkFelt::new([
-                <span class="number">0</span>, <span class="number">131</span>, <span class="number">175</span>, <span class="number">211</span>, <span class="number">244</span>, <span class="number">202</span>, <span class="number">237</span>, <span class="number">198</span>, <span class="number">238</span>, <span class="number">191</span>, <span class="number">68</span>, <span class="number">36</span>, <span class="number">111</span>, <span class="number">229</span>, <span class="number">78</span>, <span class="number">56</span>, <span class="number">201</span>, <span class="number">94</span>, <span class="number">49</span>, <span class="number">121</span>, <span class="number">165</span>, <span class="number">236</span>,
-                <span class="number">158</span>, <span class="number">168</span>, <span class="number">23</span>, <span class="number">64</span>, <span class="number">236</span>, <span class="number">165</span>, <span class="number">180</span>, <span class="number">130</span>, <span class="number">209</span>, <span class="number">46</span>,
-            ])
-            .unwrap(),
-        ),
+        <span class="comment">// The value TRANSFER_SELECTOR_HASH is hardcoded and it&#39;s the encoding of the &quot;transfer&quot; selector so it cannot
+        // fail.
+        </span>entry_point_selector: EntryPointSelector(StarkFelt::new(TRANSFER_SELECTOR_HASH).unwrap()),
         calldata: <span class="macro">calldata!</span>[
             <span class="kw-2">*</span>block_context.sequencer_address.<span class="number">0</span>.key(), <span class="comment">// Recipient.
             </span>lsb_amount,

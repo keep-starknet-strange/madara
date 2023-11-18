@@ -1191,6 +1191,9 @@
 <a href="#1191" id="1191">1191</a>
 <a href="#1192" id="1192">1192</a>
 <a href="#1193" id="1193">1193</a>
+<a href="#1194" id="1194">1194</a>
+<a href="#1195" id="1195">1195</a>
+<a href="#1196" id="1196">1196</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -2382,6 +2385,9 @@
 
     <span class="kw">pub fn </span>chain_id() -&gt; Felt252Wrapper {
         T::ChainId::get()
+    }
+    <span class="kw">pub fn </span>is_transaction_fee_disabled() -&gt; bool {
+        T::DisableTransactionFee::get()
     }
 }
 </code></pre></div></section></main></body></html>

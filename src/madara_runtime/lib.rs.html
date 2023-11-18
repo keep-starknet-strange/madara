@@ -457,6 +457,13 @@
 <a href="#457" id="457">457</a>
 <a href="#458" id="458">458</a>
 <a href="#459" id="459">459</a>
+<a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
+<a href="#463" id="463">463</a>
+<a href="#464" id="464">464</a>
+<a href="#465" id="465">465</a>
+<a href="#466" id="466">466</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don&#39;t support yet validity proofs and state updates to
@@ -488,7 +495,7 @@
 <span class="kw">use </span>frame_system::{EventRecord, Phase};
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_transactions::compute_hash::ComputeTransactionHash;
-<span class="kw">use </span>mp_transactions::{Transaction, TxType, UserTransaction};
+<span class="kw">use </span>mp_transactions::{Transaction, UserTransaction};
 <span class="kw">use </span>pallet_grandpa::{fg_primitives, AuthorityId <span class="kw">as </span>GrandpaId, AuthorityList <span class="kw">as </span>GrandpaAuthorityList};
 <span class="doccomment">/// Import the StarkNet pallet.
 </span><span class="kw">pub use </span>pallet_starknet;
@@ -717,6 +724,10 @@
             Starknet::chain_id()
         }
 
+        <span class="kw">fn </span>is_transaction_fee_disabled() -&gt; bool {
+            Starknet::is_transaction_fee_disabled()
+        }
+
         <span class="kw">fn </span>estimate_fee(transactions: Vec&lt;UserTransaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(u64, u64)&gt;, DispatchError&gt; {
             Starknet::estimate_fee(transactions)
         }
@@ -756,7 +767,7 @@
             </span>}).collect::&lt;Vec&lt;Transaction&gt;&gt;()
         }
 
-        <span class="kw">fn </span>get_events_for_tx_hash(extrinsics: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;, chain_id: Felt252Wrapper, tx_hash: Felt252Wrapper) -&gt; <span class="prelude-ty">Option</span>&lt;(TxType, Vec&lt;StarknetEvent&gt;)&gt; {
+        <span class="kw">fn </span>get_index_and_tx_for_tx_hash(extrinsics: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;, chain_id: Felt252Wrapper, tx_hash: Felt252Wrapper) -&gt; <span class="prelude-ty">Option</span>&lt;(u32, Transaction)&gt; {
             <span class="comment">// Find our tx and it&#39;s index
             </span><span class="kw">let </span>(tx_index, tx) =  extrinsics.into_iter().enumerate().find(|(<span class="kw">_</span>, xt)| {
                 <span class="kw">let </span>computed_tx_hash = <span class="kw">match </span><span class="kw-2">&amp;</span>xt.function {
@@ -769,16 +780,19 @@
 
                 computed_tx_hash == tx_hash
             })<span class="question-mark">?</span>;
-
-            <span class="comment">// Compute it&#39;s tx type
-            </span><span class="kw">let </span>tx_type = <span class="kw">match </span>tx.function {
-                RuntimeCall::Starknet( invoke { .. }) =&gt; TxType::Invoke,
-                RuntimeCall::Starknet( declare { .. }) =&gt; TxType::Declare,
-                RuntimeCall::Starknet( deploy_account { .. }) =&gt; TxType::DeployAccount,
-                RuntimeCall::Starknet( consume_l1_message { .. }) =&gt; TxType::L1Handler,
-                <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;The previous match made sure that at this point tx is one of those starknet calls&quot;</span>),
+            <span class="kw">let </span>transaction = <span class="kw">match </span>tx.function {
+                RuntimeCall::Starknet( invoke { transaction }) =&gt; Transaction::Invoke(transaction),
+                RuntimeCall::Starknet( declare { transaction, .. }) =&gt; Transaction::Declare(transaction),
+                RuntimeCall::Starknet( deploy_account { transaction }) =&gt; Transaction::DeployAccount(transaction),
+                RuntimeCall::Starknet( consume_l1_message { transaction, .. }) =&gt; Transaction::L1Handler(transaction),
+                <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;The previous match made sure that at this point tx is one of those starknet calls&quot;</span>),
             };
 
+            <span class="kw">let </span>tx_index = u32::try_from(tx_index).expect(<span class="string">&quot;unexpected number of transactions&quot;</span>);
+            <span class="prelude-val">Some</span>((tx_index, transaction))
+        }
+
+        <span class="kw">fn </span>get_events_for_tx_by_index(tx_index: u32) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;StarknetEvent&gt;&gt; {
 
             <span class="comment">// Skip all the events that are not related to our tx
             </span><span class="kw">let </span>event_iter = System::read_events_no_consensus().filter_map(|event| {
@@ -792,7 +806,7 @@
                     <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="bool-val">true
                 </span>};
 
-                tx_index <span class="kw">as </span>u32 != index
+                tx_index != index
              });
 
             <span class="comment">// Collect all the events related to our tx
@@ -804,10 +818,10 @@
                     <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;The previous iteration made sure at this point phase is of ApplyExtrinsic variant&quot;</span>),
                 };
 
-                tx_index <span class="kw">as </span>u32 == index
+                tx_index == index
             }).map(|(<span class="kw">_</span>, event)| event).collect();
 
-            <span class="prelude-val">Some</span>((tx_type, events))
+            <span class="prelude-val">Some</span>(events)
         }
 
         <span class="kw">fn </span>get_tx_execution_outcome(tx_hash: TransactionHash) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt; {
