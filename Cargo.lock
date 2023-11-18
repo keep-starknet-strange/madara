@@ -6375,7 +6375,6 @@ dependencies = [
  "mc-storage",
  "mc-transaction-pool",
  "mp-block",
- "mp-fee",
  "mp-felt",
  "mp-hashers",
  "mp-transactions",

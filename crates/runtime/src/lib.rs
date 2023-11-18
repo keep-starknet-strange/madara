@@ -29,7 +29,7 @@ pub use frame_system::Call as SystemCall;
 use frame_system::{EventRecord, Phase};
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
-use mp_transactions::{Transaction, TxType, UserTransaction};
+use mp_transactions::{Transaction, UserTransaction};
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
@@ -324,7 +324,7 @@ impl_runtime_apis! {
                 RuntimeCall::Starknet( declare { transaction, .. }) => Transaction::Declare(transaction),
                 RuntimeCall::Starknet( deploy_account { transaction }) => Transaction::DeployAccount(transaction),
                 RuntimeCall::Starknet( consume_l1_message { transaction, .. }) => Transaction::L1Handler(transaction),
-                _ => panic!("The previous match made sure that at this point tx is one of those starknet calls"),
+                _ => unreachable!("The previous match made sure that at this point tx is one of those starknet calls"),
             };
 
             Some((tx_index as u64, transaction))

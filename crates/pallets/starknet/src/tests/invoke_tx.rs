@@ -90,7 +90,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                     from_address: Starknet::fee_token_address(),
                     content: EventContent {
                         keys: vec![EventKey(
-                            StarkFelt::try_from("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9")
+                            StarkFelt::try_from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap())
                                 .unwrap(),
                         )],
                         data: EventData(vec![
@@ -136,7 +136,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
                     from_address: Starknet::fee_token_address(),
                     content: EventContent {
                         keys: vec![EventKey(
-                            StarkFelt::try_from("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9")
+                            StarkFelt::try_from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap())
                                 .unwrap(),
                         )],
                         data: EventData(vec![
