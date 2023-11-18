@@ -15,13 +15,11 @@ members = [
   "crates/primitives/storage",
   "crates/primitives/commitments",
   "crates/primitives/chain-id",
-  "crates/client/block-proposer",
   "crates/client/db",
   "crates/client/rpc-core",
   "crates/client/rpc",
   "crates/client/mapping-sync",
   "crates/client/storage",
-  "crates/client/transaction-pool",
   "crates/client/commitment-state-diff",
   "starknet-rpc-test",
 ]
@@ -42,13 +40,11 @@ default-members = [
   "crates/primitives/storage",
   "crates/primitives/commitments",
   "crates/primitives/chain-id",
-  "crates/client/block-proposer",
   "crates/client/db",
   "crates/client/rpc-core",
   "crates/client/rpc",
   "crates/client/mapping-sync",
   "crates/client/storage",
-  "crates/client/transaction-pool",
   "crates/client/commitment-state-diff",
 ]
 
@@ -171,8 +167,6 @@ mc-db = { path = "crates/client/db" }
 mc-storage = { path = "crates/client/storage" }
 mc-rpc = { path = "crates/client/rpc" }
 mc-rpc-core = { path = "crates/client/rpc-core" }
-mc-block-proposer = { path = "crates/client/block-proposer" }
-mc-transaction-pool = { path = "crates/client/transaction-pool" }
 mc-data-availability = { path = "crates/client/data-availability" }
 mc-commitment-state-diff = { path = "crates/client/commitment-state-diff" }
 

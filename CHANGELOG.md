@@ -2,6 +2,7 @@
 
 ## Next release
 
+- chore: remove crates that have been copy-pasted from plkdtSDK
 - feat(rpc): return deployed contract address and actual fee in transaction
   receipt
 - fix: Wait for 1 minute for transaction to be processed in
