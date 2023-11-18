@@ -1029,7 +1029,7 @@ where
             //         expected_fee_value_high,
             //     ]},
             // fee transfer must be the last event, except enabled disable-transaction-fee feature
-            events_converted.last().unwrap().data[2].clone()
+            events_converted.last().unwrap().data[2]
         };
 
         let receipt = match transaction {

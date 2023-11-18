@@ -301,7 +301,7 @@ impl_runtime_apis! {
             }).collect::<Vec<Transaction>>()
         }
 
-        fn get_index_and_tx_for_tx_hash(extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper, tx_hash: Felt252Wrapper) -> Option<(u64, Transaction)> {
+        fn get_index_and_tx_for_tx_hash(extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper, tx_hash: Felt252Wrapper) -> Option<(u32, Transaction)> {
             // Find our tx and it's index
             let (tx_index, tx) =  extrinsics.into_iter().enumerate().find(|(_, xt)| {
                 let computed_tx_hash = match &xt.function {
@@ -322,10 +322,11 @@ impl_runtime_apis! {
                 _ => unreachable!("The previous match made sure that at this point tx is one of those starknet calls"),
             };
 
-            Some((tx_index as u64, transaction))
+            let tx_index = u32::try_from(tx_index).expect("unexpected number of transactions");
+            Some((tx_index, transaction))
         }
 
-        fn get_events_for_tx_by_index(tx_index: u64) -> Option<Vec<StarknetEvent>> {
+        fn get_events_for_tx_by_index(tx_index: u32) -> Option<Vec<StarknetEvent>> {
 
             // Skip all the events that are not related to our tx
             let event_iter = System::read_events_no_consensus().filter_map(|event| {
@@ -339,7 +340,7 @@ impl_runtime_apis! {
                     _ => return true
                 };
 
-                tx_index as u32 != index
+                tx_index != index
              });
 
             // Collect all the events related to our tx
@@ -351,7 +352,7 @@ impl_runtime_apis! {
                     _ => panic!("The previous iteration made sure at this point phase is of ApplyExtrinsic variant"),
                 };
 
-                tx_index as u32 == index
+                tx_index == index
             }).map(|(_, event)| event).collect();
 
             Some(events)
