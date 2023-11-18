@@ -2,6 +2,8 @@
 
 ## Next release
 
+- feat(rpc): return deployed contract address and actual fee in transaction
+  receipt
 - fix: Wait for 1 minute for transaction to be processed in
   get_transaction_receipt rpc
 - ci: Fix starknet foundry sncast not found

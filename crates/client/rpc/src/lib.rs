@@ -953,18 +953,37 @@ where
 
         let chain_id = self.chain_id()?.0.into();
 
-        let (tx_type, events) = self
+        let fee_disabled =
+            self.client.runtime_api().is_transaction_fee_disabled(substrate_block_hash).map_err(|e| {
+                error!("Failed to get check fee disabled. Substrate block hash: {substrate_block_hash}, error: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?;
+
+        let (tx_index, transaction) = self
             .client
             .runtime_api()
-            .get_events_for_tx_hash(substrate_block_hash, block_extrinsics, chain_id, transaction_hash.into())
+            .get_index_and_tx_for_tx_hash(substrate_block_hash, block_extrinsics, chain_id, transaction_hash.into())
             .map_err(|e| {
                 error!(
-                    "Failed to get events for transaction hash. Substrate block hash: {substrate_block_hash}, \
+                    "Failed to get index for transaction hash. Substrate block hash: {substrate_block_hash}, \
                      transaction hash: {transaction_hash}, error: {e}"
                 );
                 StarknetRpcApiError::InternalServerError
             })?
-            .expect("the transaction should be present in the substrate extrinsics");
+            .expect("the transaction should be present in the substrate extrinsics"); // not reachable
+
+        let events = self
+            .client
+            .runtime_api()
+            .get_events_for_tx_by_index(substrate_block_hash, tx_index)
+            .map_err(|e| {
+                error!(
+                    "Failed to get events for transaction index. Substrate block hash: {substrate_block_hash}, \
+                     transaction idx: {tx_index}, error: {e}"
+                );
+                StarknetRpcApiError::InternalServerError
+            })?
+            .expect("the transaction should be present in the substrate extrinsics"); // not reachable
 
         let execution_result = {
             let revert_error = self
@@ -994,48 +1013,67 @@ where
             }
         }
 
-        let receipt = match tx_type {
-            mp_transactions::TxType::Declare => TransactionReceipt::Declare(DeclareTransactionReceipt {
+        let events_converted: Vec<starknet_core::types::Event> =
+            events.clone().into_iter().map(event_conversion).collect();
+
+        let actual_fee = if fee_disabled {
+            FieldElement::ZERO
+        } else {
+            // Event {
+            //     from_address: fee_token_address,
+            //     keys: [selector("Transfer")],
+            //     data: [
+            //         send_from_address,       // account_contract_address
+            //         send_to_address,         // to (sequencer address)
+            //         expected_fee_value_low,  // transfer amount (fee)
+            //         expected_fee_value_high,
+            //     ]},
+            // fee transfer must be the last event, except enabled disable-transaction-fee feature
+            events_converted.last().unwrap().data[2]
+        };
+
+        let receipt = match transaction {
+            mp_transactions::Transaction::Declare(_) => TransactionReceipt::Declare(DeclareTransactionReceipt {
                 transaction_hash,
-                actual_fee: Default::default(),
+                actual_fee,
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
                 block_hash,
                 block_number,
                 messages_sent: Default::default(),
-                events: events.into_iter().map(event_conversion).collect(),
+                events: events_converted,
                 execution_result,
             }),
-            mp_transactions::TxType::DeployAccount => {
+            mp_transactions::Transaction::DeployAccount(tx) => {
                 TransactionReceipt::DeployAccount(DeployAccountTransactionReceipt {
                     transaction_hash,
-                    actual_fee: Default::default(),
+                    actual_fee,
                     finality_status: TransactionFinalityStatus::AcceptedOnL2,
                     block_hash,
                     block_number,
                     messages_sent: Default::default(),
-                    events: events.into_iter().map(event_conversion).collect(),
-                    contract_address: Default::default(), // TODO: we can probably find this in the events
+                    events: events_converted,
+                    contract_address: tx.get_account_address(),
                     execution_result,
                 })
             }
-            mp_transactions::TxType::Invoke => TransactionReceipt::Invoke(InvokeTransactionReceipt {
+            mp_transactions::Transaction::Invoke(_) => TransactionReceipt::Invoke(InvokeTransactionReceipt {
                 transaction_hash,
-                actual_fee: Default::default(),
+                actual_fee,
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
                 block_hash,
                 block_number,
                 messages_sent: Default::default(),
-                events: events.into_iter().map(event_conversion).collect(),
+                events: events_converted,
                 execution_result,
             }),
-            mp_transactions::TxType::L1Handler => TransactionReceipt::L1Handler(L1HandlerTransactionReceipt {
+            mp_transactions::Transaction::L1Handler(_) => TransactionReceipt::L1Handler(L1HandlerTransactionReceipt {
                 transaction_hash,
-                actual_fee: Default::default(),
+                actual_fee,
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
                 block_hash,
                 block_number,
                 messages_sent: Default::default(),
-                events: events.into_iter().map(event_conversion).collect(),
+                events: events_converted,
                 execution_result,
             }),
         };
