@@ -14,6 +14,7 @@ use std::sync::Arc;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
+use mc_db::Backend as MadaraBackend;
 pub use mc_rpc_core::utils::*;
 use mc_rpc_core::Felt;
 pub use mc_rpc_core::StarknetRpcApiServer;
@@ -887,24 +888,53 @@ where
     /// # Arguments
     ///
     /// * `transaction_hash` - Transaction hash corresponding to the transaction.
-    fn get_transaction_receipt(&self, transaction_hash: FieldElement) -> RpcResult<MaybePendingTransactionReceipt> {
-        let block_hash_from_db = self
-            .backend
-            .mapping()
-            .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
-            .map_err(|e| {
-                error!("Failed to get transaction's substrate block hash from mapping_db: {e}");
-                StarknetRpcApiError::TxnHashNotFound
-            })?;
+    async fn get_transaction_receipt(
+        &self,
+        transaction_hash: FieldElement,
+    ) -> RpcResult<MaybePendingTransactionReceipt> {
+        async fn wait_for_tx_inclusion<B: sp_api::BlockT>(
+            madara_backend: Arc<MadaraBackend<B>>,
+            transaction_hash: FieldElement,
+        ) -> Result<<B as BlockT>::Hash, StarknetRpcApiError> {
+            let substrate_block_hash;
 
-        let substrate_block_hash = match block_hash_from_db {
-            Some(block_hash) => block_hash,
-            None => {
-                // If the transaction is still in the pool, the receipt
-                // is not available, thus considered as not found.
+            loop {
+                let block_hash_from_db = madara_backend
+                    .mapping()
+                    .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
+                    .map_err(|e| {
+                        error!("Failed to interact with db backend error: {e}");
+                        StarknetRpcApiError::InternalServerError
+                    })?;
+
+                match block_hash_from_db {
+                    Some(block_hash) => {
+                        substrate_block_hash = block_hash;
+                        break;
+                    }
+                    None => {
+                        // TODO: hardcoded to match the blocktime; make it dynamic
+                        tokio::time::sleep(std::time::Duration::from_millis(6000)).await;
+                        continue;
+                    }
+                };
+            }
+
+            Ok(substrate_block_hash)
+        }
+
+        let substrate_block_hash = match tokio::time::timeout(
+            std::time::Duration::from_millis(60000),
+            wait_for_tx_inclusion(self.backend.clone(), transaction_hash),
+        )
+        .await
+        {
+            Err(_) => {
+                error!("did not receive tx hash within 1 minute");
                 return Err(StarknetRpcApiError::TxnHashNotFound.into());
             }
-        };
+            Ok(res) => res,
+        }?;
 
         let block: mp_block::Block =
             get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
@@ -920,6 +950,7 @@ where
                 StarknetRpcApiError::InternalServerError
             })?
             .ok_or(StarknetRpcApiError::BlockNotFound)?;
+
         let chain_id = self.chain_id()?.0.into();
 
         let (tx_type, events) = self
