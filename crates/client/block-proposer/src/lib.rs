@@ -129,7 +129,7 @@ where
     B: backend::Backend<Block> + Send + Sync + 'static,
     Block: BlockT,
     C: BlockBuilderProvider<B, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block> + Send + Sync + 'static,
-    C::Api: ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>> + BlockBuilderApi<Block>,
+    C::Api: ApiExt<Block> + BlockBuilderApi<Block>,
 {
     fn init_with_now(
         &mut self,
@@ -163,7 +163,7 @@ where
     B: backend::Backend<Block> + Send + Sync + 'static,
     Block: BlockT,
     C: BlockBuilderProvider<B, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block> + Send + Sync + 'static,
-    C::Api: ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>> + BlockBuilderApi<Block>,
+    C::Api: ApiExt<Block> + BlockBuilderApi<Block>,
     PR: ProofRecording,
 {
     type CreateProposer = future::Ready<Result<Self::Proposer, Self::Error>>;
@@ -195,12 +195,10 @@ where
     B: backend::Backend<Block> + Send + Sync + 'static,
     Block: BlockT,
     C: BlockBuilderProvider<B, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block> + Send + Sync + 'static,
-    C::Api: ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>> + BlockBuilderApi<Block>,
+    C::Api: ApiExt<Block> + BlockBuilderApi<Block>,
     PR: ProofRecording,
 {
-    type Transaction = backend::TransactionFor<B, Block>;
-    type Proposal =
-        Pin<Box<dyn Future<Output = Result<Proposal<Block, Self::Transaction, PR::Proof>, Self::Error>> + Send>>;
+    type Proposal = Pin<Box<dyn Future<Output = Result<Proposal<Block, PR::Proof>, Self::Error>> + Send>>;
     type Error = sp_blockchain::Error;
     type ProofRecording = PR;
     type Proof = PR::Proof;
@@ -246,7 +244,7 @@ where
     B: backend::Backend<Block> + Send + Sync + 'static,
     Block: BlockT,
     C: BlockBuilderProvider<B, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block> + Send + Sync + 'static,
-    C::Api: ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>> + BlockBuilderApi<Block>,
+    C::Api: ApiExt<Block> + BlockBuilderApi<Block>,
     PR: ProofRecording,
 {
     /// Propose a new block.
@@ -292,7 +290,7 @@ where
         inherent_digests: Digest,
         deadline: time::Instant,
         block_size_limit: Option<usize>,
-    ) -> Result<Proposal<Block, backend::TransactionFor<B, Block>, PR::Proof>, sp_blockchain::Error> {
+    ) -> Result<Proposal<Block, PR::Proof>, sp_blockchain::Error> {
         // Start the timer to measure the total time it takes to create the proposal.
         let propose_with_timer = time::Instant::now();
 
@@ -588,7 +586,8 @@ mod tests {
         let spawner = sp_core::testing::TaskExecutor::new();
         let txpool = BasicPool::new_full(Default::default(), true.into(), None, spawner.clone(), client.clone());
 
-        block_on(txpool.submit_at(&BlockId::number(0), SOURCE, vec![extrinsic(0), extrinsic(1)])).unwrap();
+        let hashof0 = client.info().genesis_hash;
+        block_on(txpool.submit_at(hashof0, SOURCE, vec![extrinsic(0), extrinsic(1)])).unwrap();
 
         block_on(
             txpool.maintain(chain_event(
@@ -663,7 +662,7 @@ mod tests {
 
         let genesis_hash = client.info().best_hash;
 
-        block_on(txpool.submit_at(&BlockId::number(0), SOURCE, vec![extrinsic(0)])).unwrap();
+        block_on(txpool.submit_at(genesis_hash, SOURCE, vec![extrinsic(0)])).unwrap();
 
         block_on(
             txpool.maintain(chain_event(
@@ -705,7 +704,7 @@ mod tests {
         let huge = |nonce| ExtrinsicBuilder::new_fill_block(Perbill::from_parts(HUGE)).nonce(nonce).build();
 
         block_on(txpool.submit_at(
-            &BlockId::number(0),
+            client.info().genesis_hash,
             SOURCE,
             vec![medium(0), medium(1), huge(2), medium(3), huge(4), medium(5), medium(6)],
         ))
@@ -784,7 +783,7 @@ mod tests {
         };
 
         block_on(txpool.submit_at(
-            &BlockId::number(0),
+            client.info().genesis_hash,
             SOURCE,
             // add 2 * MAX_SKIPPED_TRANSACTIONS that exhaust resources
             (0..MAX_SKIPPED_TRANSACTIONS * 2)
@@ -844,7 +843,7 @@ mod tests {
         };
 
         block_on(txpool.submit_at(
-            &BlockId::number(0),
+            client.info().genesis_hash,
             SOURCE,
             (0..MAX_SKIPPED_TRANSACTIONS + 2)
 					.map(huge)
@@ -904,6 +903,7 @@ mod tests {
         let client = Arc::new(substrate_test_runtime_client::new());
         let spawner = sp_core::testing::TaskExecutor::new();
         let txpool = BasicPool::new_full(Default::default(), true.into(), None, spawner.clone(), client.clone());
+        let genesis_hash = client.info().genesis_hash;
         let genesis_header = client.expect_header(client.info().genesis_hash).expect("there should be header");
 
         let extrinsics_num = 5;
@@ -918,7 +918,7 @@ mod tests {
             + extrinsics.iter().take(extrinsics_num - 1).map(Encode::encoded_size).sum::<usize>()
             + Vec::<Extrinsic>::new().encoded_size();
 
-        block_on(txpool.submit_at(&BlockId::number(0), SOURCE, extrinsics)).unwrap();
+        block_on(txpool.submit_at(genesis_hash, SOURCE, extrinsics)).unwrap();
 
         block_on(txpool.maintain(chain_event(genesis_header.clone())));
 
@@ -950,6 +950,7 @@ mod tests {
         let client = Arc::new(substrate_test_runtime_client::new());
         let spawner = sp_core::testing::TaskExecutor::new();
         let txpool = BasicPool::new_full(Default::default(), true.into(), None, spawner.clone(), client.clone());
+        let genesis_hash = client.info().genesis_hash;
         let genesis_header = client.expect_header(client.info().genesis_hash).expect("there should be header");
 
         let extrinsics_num = 5;
@@ -964,7 +965,7 @@ mod tests {
             + extrinsics.iter().take(extrinsics_num - 1).map(Encode::encoded_size).sum::<usize>()
             + Vec::<Extrinsic>::new().encoded_size();
 
-        block_on(txpool.submit_at(&BlockId::number(0), SOURCE, extrinsics)).unwrap();
+        block_on(txpool.submit_at(genesis_hash, SOURCE, extrinsics)).unwrap();
 
         block_on(txpool.maintain(chain_event(genesis_header.clone())));
 
