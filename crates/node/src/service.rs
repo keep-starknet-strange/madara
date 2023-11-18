@@ -11,7 +11,6 @@ use futures::future::BoxFuture;
 use futures::prelude::*;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi, SealingMode, StarknetHasher};
-use mc_block_proposer::ProposerFactory;
 use mc_commitment_state_diff::{log_commitment_state_diff, CommitmentStateDiffWorker};
 use mc_data_availability::avail::config::AvailConfig;
 use mc_data_availability::avail::AvailClient;
@@ -22,11 +21,11 @@ use mc_data_availability::ethereum::EthereumClient;
 use mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker};
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
-use mc_transaction_pool::FullPool;
 use mp_sequencer_address::{
     InherentDataProvider as SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
 };
 use prometheus_endpoint::Registry;
+use sc_basic_authorship::ProposerFactory;
 use sc_client_api::{Backend, BlockBackend, BlockchainEvents, HeaderBackend};
 use sc_consensus::BasicQueue;
 use sc_consensus_aura::{SlotProportion, StartAuraParams};
@@ -35,6 +34,7 @@ pub use sc_executor::NativeElseWasmExecutor;
 use sc_service::error::Error as ServiceError;
 use sc_service::{new_db_backend, Configuration, TaskManager, WarpSyncParams};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
+use sc_transaction_pool::FullPool;
 use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 use sp_api::offchain::OffchainStorage;
 use sp_api::ConstructRuntimeApi;
@@ -86,7 +86,7 @@ pub fn new_partial<BIQ>(
         FullBackend,
         FullSelectChain,
         sc_consensus::DefaultImportQueue<Block>,
-        mc_transaction_pool::FullPool<Block, FullClient>,
+        sc_transaction_pool::FullPool<Block, FullClient>,
         (
             BoxBlockImport,
             sc_consensus_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
@@ -153,8 +153,8 @@ where
 
     let select_chain = sc_consensus::LongestChain::new(backend.clone());
 
-    let transaction_pool = mc_transaction_pool::BasicPool::new_full(
-        mc_transaction_pool::Options::from(config.transaction_pool.clone()),
+    let transaction_pool = sc_transaction_pool::BasicPool::new_full(
+        config.transaction_pool.clone(),
         config.role.is_authority().into(),
         config.prometheus_registry(),
         task_manager.spawn_essential_handle(),
@@ -465,6 +465,7 @@ pub fn new_full(
                 &task_manager,
                 prometheus_registry.as_ref(),
                 commands_stream,
+                telemetry,
             )?;
 
             network_starter.start_network();
@@ -477,6 +478,7 @@ pub fn new_full(
             client.clone(),
             transaction_pool.clone(),
             prometheus_registry.as_ref(),
+            telemetry.as_ref().map(|x| x.handle()),
         );
 
         let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
@@ -587,6 +589,7 @@ fn run_manual_seal_authorship(
     task_manager: &TaskManager,
     prometheus_registry: Option<&Registry>,
     commands_stream: Option<mpsc::Receiver<sc_consensus_manual_seal::rpc::EngineCommand<Hash>>>,
+    telemetry: Option<Telemetry>,
 ) -> Result<(), ServiceError>
 where
     RuntimeApi: ConstructRuntimeApi<Block, FullClient>,
@@ -597,6 +600,7 @@ where
         client.clone(),
         transaction_pool.clone(),
         prometheus_registry,
+        telemetry.as_ref().map(|x| x.handle()),
     );
 
     thread_local!(static TIMESTAMP: RefCell<u64> = RefCell::new(0));
