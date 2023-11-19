@@ -2,6 +2,7 @@
 
 ## Next release
 
+- chore: update README.md and getting-started.md
 - ci: Fix starknet foundry sncast not found
 - fix: Ensure transaction checks are compatible with starknet-rs
 - ci: Run Starknet Foundry tests against Madara RPC
