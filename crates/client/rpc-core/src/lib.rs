@@ -134,5 +134,8 @@ pub trait StarknetRpcApi {
 
     /// Returns the receipt of a transaction by transaction hash.
     #[method(name = "getTransactionReceipt")]
-    fn get_transaction_receipt(&self, transaction_hash: FieldElement) -> RpcResult<MaybePendingTransactionReceipt>;
+    async fn get_transaction_receipt(
+        &self,
+        transaction_hash: FieldElement,
+    ) -> RpcResult<MaybePendingTransactionReceipt>;
 }

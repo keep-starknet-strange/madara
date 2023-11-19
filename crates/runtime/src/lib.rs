@@ -29,7 +29,7 @@ pub use frame_system::Call as SystemCall;
 use frame_system::{EventRecord, Phase};
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
-use mp_transactions::{Transaction, TxType, UserTransaction};
+use mp_transactions::{Transaction, UserTransaction};
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
@@ -258,6 +258,10 @@ impl_runtime_apis! {
             Starknet::chain_id()
         }
 
+        fn is_transaction_fee_disabled() -> bool {
+            Starknet::is_transaction_fee_disabled()
+        }
+
         fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
             Starknet::estimate_fee(transactions)
         }
@@ -297,7 +301,7 @@ impl_runtime_apis! {
             }).collect::<Vec<Transaction>>()
         }
 
-        fn get_events_for_tx_hash(extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper, tx_hash: Felt252Wrapper) -> Option<(TxType, Vec<StarknetEvent>)> {
+        fn get_index_and_tx_for_tx_hash(extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper, tx_hash: Felt252Wrapper) -> Option<(u32, Transaction)> {
             // Find our tx and it's index
             let (tx_index, tx) =  extrinsics.into_iter().enumerate().find(|(_, xt)| {
                 let computed_tx_hash = match &xt.function {
@@ -310,16 +314,19 @@ impl_runtime_apis! {
 
                 computed_tx_hash == tx_hash
             })?;
-
-            // Compute it's tx type
-            let tx_type = match tx.function {
-                RuntimeCall::Starknet( invoke { .. }) => TxType::Invoke,
-                RuntimeCall::Starknet( declare { .. }) => TxType::Declare,
-                RuntimeCall::Starknet( deploy_account { .. }) => TxType::DeployAccount,
-                RuntimeCall::Starknet( consume_l1_message { .. }) => TxType::L1Handler,
-                _ => panic!("The previous match made sure that at this point tx is one of those starknet calls"),
+            let transaction = match tx.function {
+                RuntimeCall::Starknet( invoke { transaction }) => Transaction::Invoke(transaction),
+                RuntimeCall::Starknet( declare { transaction, .. }) => Transaction::Declare(transaction),
+                RuntimeCall::Starknet( deploy_account { transaction }) => Transaction::DeployAccount(transaction),
+                RuntimeCall::Starknet( consume_l1_message { transaction, .. }) => Transaction::L1Handler(transaction),
+                _ => unreachable!("The previous match made sure that at this point tx is one of those starknet calls"),
             };
 
+            let tx_index = u32::try_from(tx_index).expect("unexpected number of transactions");
+            Some((tx_index, transaction))
+        }
+
+        fn get_events_for_tx_by_index(tx_index: u32) -> Option<Vec<StarknetEvent>> {
 
             // Skip all the events that are not related to our tx
             let event_iter = System::read_events_no_consensus().filter_map(|event| {
@@ -333,7 +340,7 @@ impl_runtime_apis! {
                     _ => return true
                 };
 
-                tx_index as u32 != index
+                tx_index != index
              });
 
             // Collect all the events related to our tx
@@ -345,10 +352,10 @@ impl_runtime_apis! {
                     _ => panic!("The previous iteration made sure at this point phase is of ApplyExtrinsic variant"),
                 };
 
-                tx_index as u32 == index
+                tx_index == index
             }).map(|(_, event)| event).collect();
 
-            Some((tx_type, events))
+            Some(events)
         }
 
         fn get_tx_execution_outcome(tx_hash: TransactionHash) -> Option<Vec<u8>> {

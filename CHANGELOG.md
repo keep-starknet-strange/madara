@@ -3,6 +3,11 @@
 ## Next release
 
 - chore: update README.md and getting-started.md
+- chore: remove crates that have been copy-pasted from plkdtSDK
+- feat(rpc): return deployed contract address and actual fee in transaction
+  receipt
+- fix: Wait for 1 minute for transaction to be processed in
+  get_transaction_receipt rpc
 - ci: Fix starknet foundry sncast not found
 - fix: Ensure transaction checks are compatible with starknet-rs
 - ci: Run Starknet Foundry tests against Madara RPC

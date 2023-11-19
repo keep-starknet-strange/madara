@@ -22,10 +22,10 @@ pallet-starknet = { workspace = true, default-features = true }
 mc-db = { workspace = true }
 mc-rpc-core = { workspace = true }
 mc-storage = { workspace = true }
-mc-transaction-pool = { workspace = true }
 # Substate primitives
 frame-support = { workspace = true }
 frame-system = { workspace = true }
+sc-transaction-pool = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
 sp-api = { workspace = true, default-features = true }
 sp-arithmetic = { workspace = true, default-features = true }
@@ -36,9 +36,7 @@ sp-runtime = { workspace = true, default-features = true }
 sc-client-api = { workspace = true, default-features = true }
 sc-network-sync = { workspace = true }
 # Starknet
-blockifier = { workspace = true, default-features = false, features = [
-  "testing",
-] }
+blockifier = { workspace = true, default-features = true }
 starknet-core = { workspace = true }
 starknet-ff = { workspace = true }
 starknet_api = { workspace = true, default-features = false }
@@ -55,6 +53,7 @@ mp-hashers = { workspace = true }
 mp-transactions = { workspace = true, features = ["client"] }
 serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }
+tokio = { workspace = true, default-features = true, features = ["time"] }
 
 [dev-dependencies]
 rstest = { workspace = true }
