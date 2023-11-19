@@ -61,9 +61,10 @@ project structure and architecture to benchmarking and running Madara:
 
 ## 📣 Building App Chains
 
-For many use cases, you do not need to fork this repo to build your app chain. By adding changes using forking, you will
-have to periodically rebase (and solve conflicts) to remain updated with the
-latest version of Madara. Madara by default provides
+For many use cases, you do not need to fork this repo to build your app chain.
+By adding changes using forking, you will have to periodically rebase (and solve
+conflicts) to remain updated with the latest version of Madara. Madara by
+default provides
 
 - `pallet_starknet`: Adds the CairoVM to Substrate which allows you to deploy
   and execute Cairo contracts.
