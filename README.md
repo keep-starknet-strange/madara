@@ -61,8 +61,7 @@ project structure and architecture to benchmarking and running Madara:
 
 ## 📣 Building App Chains
 
-For many use cases, you do not need to fork this repo and build your app chain
-on top unless completely necessary. By adding changes using forking, you will
+For many use cases, you do not need to fork this repo to build your app chain. By adding changes using forking, you will
 have to periodically rebase (and solve conflicts) to remain updated with the
 latest version of Madara. Madara by default provides
 
@@ -88,7 +87,7 @@ So for many use cases where you want to change common things like
 you don't need to fork the Madara repo. Instead, you can import the relevant
 code as crates/pallets. We have created an
 [app-chain-template](https://github.com/keep-starknet-strange/madara-app-chain-template)
-which imports Madara as a library to sh an example and would recommend you
+which imports Madara as a library to show an example and would recommend you
 start from here. For other more detailed use cases like
 
 - Adding a new syscall to the cairo VM
