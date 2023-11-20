@@ -624,7 +624,7 @@ pub mod pallet {
                     T::DisableNonceValidation::get(),
                 )
                 .map_err(|e| {
-                    log::error!("failed to deploy accout: {:?}", e);
+                    log::error!("failed to deploy account: {:?}", e);
                     Error::<T>::TransactionExecutionFailed
                 })?;
 
@@ -759,20 +759,14 @@ pub mod pallet {
                 .propagate(true);
 
             // Make sure txs from same account are executed in correct order (nonce based ordering)
-            match tx_priority_info {
-                TxPriorityInfo::RegularTxs { sender_address, transaction_nonce } => {
-                    valid_transaction_builder =
-                        valid_transaction_builder.and_provides((sender_address, Felt252Wrapper(transaction_nonce.0)));
-                    let sender_nonce: Felt252Wrapper = Pallet::<T>::nonce(ContractAddress::from(sender_address)).into();
-
-                    if transaction_nonce > sender_nonce {
-                        valid_transaction_builder = valid_transaction_builder
-                            .and_requires((sender_address, Felt252Wrapper(transaction_nonce.0 - FieldElement::ONE)));
-                    }
+            if let TxPriorityInfo::RegularTxs { sender_address, transaction_nonce, sender_nonce } = tx_priority_info {
+                valid_transaction_builder =
+                    valid_transaction_builder.and_provides((sender_address, Felt252Wrapper(transaction_nonce.0)));
+                if transaction_nonce > sender_nonce {
+                    valid_transaction_builder = valid_transaction_builder
+                        .and_requires((sender_address, Felt252Wrapper(transaction_nonce.0 - FieldElement::ONE)));
                 }
-                // Those have no ordering
-                _ => {}
-            };
+            }
 
             valid_transaction_builder.build()
         }

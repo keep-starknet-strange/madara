@@ -313,8 +313,8 @@ async fn work_with_messages_to_l1(madara: &ThreadSafeMadaraClient) -> Result<(),
 
     // 1. Declaring class for our L2 > L1 contract
 
-    let funding_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
-    let (declare_tx, _) = funding_account.declare_legacy_contract("../cairo-contracts/build/send_message.json");
+    let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    let (declare_tx, _) = account.declare_legacy_contract("../cairo-contracts/build/send_message.json");
 
     let txs = {
         let mut madara_write_lock = madara.write().await;
@@ -322,13 +322,12 @@ async fn work_with_messages_to_l1(madara: &ThreadSafeMadaraClient) -> Result<(),
     };
 
     // 2. Determine class hash
-
     let class_hash =
         assert_matches!(&txs[0], Ok(TransactionResult::Declaration(rpc_response)) => rpc_response.class_hash);
 
     // 3. Next, deploying an instance of this class using universal deployer
 
-    let deploy_tx = funding_account.invoke_contract(
+    let deploy_tx = account.invoke_contract(
         FieldElement::from_hex_be(UDC_ADDRESS).unwrap(),
         "deployContract",
         vec![
@@ -359,7 +358,7 @@ async fn work_with_messages_to_l1(madara: &ThreadSafeMadaraClient) -> Result<(),
 
     // 5. Sending message to L1
 
-    let invoke_tx = funding_account.invoke_contract(
+    let invoke_tx = account.invoke_contract(
         contract_address,
         "send_message_l2_to_l1",
         vec![FieldElement::ZERO, FieldElement::ONE, FieldElement::TWO],

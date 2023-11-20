@@ -1,3 +1,4 @@
+use assert_matches::assert_matches;
 use mp_transactions::{HandleL1MessageTransaction, UserAndL1HandlerTransaction};
 use sp_runtime::transaction_validity::InvalidTransaction;
 use starknet_api::api_core::Nonce;
@@ -6,6 +7,7 @@ use starknet_api::transaction::Fee;
 
 use super::mock::default_mock::*;
 use super::mock::*;
+use crate::transaction_validation::TxPriorityInfo;
 use crate::L1Messages;
 
 #[test]
@@ -38,10 +40,7 @@ fn should_accept_unused_nonce() {
 
         let tx = UserAndL1HandlerTransaction::L1Handler(transaction, Fee(100));
 
-        assert_eq!(
-            Starknet::validate_usigned_tx_nonce(&tx),
-            Ok(crate::transaction_validation::TxPriorityInfo::L1Handler)
-        );
+        assert_matches!(Starknet::validate_usigned_tx_nonce(&tx), Ok(TxPriorityInfo::L1Handler));
     });
 }
 
@@ -62,7 +61,7 @@ fn should_reject_used_nonce() {
 
         L1Messages::<MockRuntime>::insert(Nonce(StarkFelt::from(nonce)), ());
 
-        assert_eq!(Starknet::validate_usigned_tx_nonce(&tx), Err(InvalidTransaction::Stale));
+        assert_matches!(Starknet::validate_usigned_tx_nonce(&tx), Err(InvalidTransaction::Stale));
     });
 }
 
