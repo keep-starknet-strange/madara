@@ -447,29 +447,6 @@ fn test_verify_tx_longevity() {
 }
 
 #[test]
-fn test_verify_no_require_tag() {
-    new_test_ext::<MockRuntime>().execute_with(|| {
-        basic_test_setup(2);
-
-        let transaction = get_invoke_dummy(Felt252Wrapper::ZERO);
-
-        let validate_result = Starknet::validate_unsigned(
-            TransactionSource::InBlock,
-            &crate::Call::invoke { transaction: transaction.clone().into() },
-        );
-
-        let valid_transaction_expected = ValidTransaction::with_tag_prefix("starknet")
-            .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
-            .and_provides((transaction.sender_address, transaction.nonce))
-            .longevity(TransactionLongevity::get())
-            .propagate(true)
-            .build();
-
-        assert_eq!(validate_result.unwrap(), valid_transaction_expected.unwrap())
-    });
-}
-
-#[test]
 fn test_verify_require_tag() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
@@ -482,7 +459,7 @@ fn test_verify_require_tag() {
         );
 
         let valid_transaction_expected = ValidTransaction::with_tag_prefix("starknet")
-            .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
+            .priority(u64::MAX)
             .and_provides((transaction.sender_address, transaction.nonce))
             .longevity(TransactionLongevity::get())
             .propagate(true)

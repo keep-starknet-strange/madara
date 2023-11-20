@@ -15,7 +15,7 @@ pub fn eth_address_to_felt(eth_address: &EthAddress) -> StarkFelt {
 impl From<MessageToL1> for MessageL2ToL1 {
     fn from(message: MessageToL1) -> Self {
         Self {
-            from_address: message.from_address.0.key().clone(),
+            from_address: *message.from_address.0.key(),
             to_address: eth_address_to_felt(&message.to_address),
             payload: message.payload.0,
         }

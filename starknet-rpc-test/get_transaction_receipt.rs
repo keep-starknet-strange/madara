@@ -338,21 +338,23 @@ async fn fail_invalid_transaction_hash(madara: &ThreadSafeMadaraClient) -> Resul
 
 #[rstest]
 #[tokio::test]
-async fn work_with_messages_to_l1(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    let rpc = madara.get_starknet_client();
+async fn work_with_messages_to_l1(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
     // 1. Declaring class for our L2 > L1 contract
 
-    let account = create_account(rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let (declare_tx, _) = account.declare_legacy_contract("../cairo-contracts/build/send_message.json");
 
-    let mut txs = madara.create_block_with_txs(vec![Transaction::LegacyDeclaration(declare_tx)]).await?;
+    let txs = {
+        let mut madara_write_lock = madara.write().await;
+        madara_write_lock.create_block_with_txs(vec![Transaction::LegacyDeclaration(declare_tx)]).await?
+    };
 
     // 2. Determine class hash
 
     let class_hash = assert_matches!(
-        txs.remove(0).unwrap(),
+        txs[0].as_ref().unwrap(),
         TransactionResult::Declaration(rpc_response) => rpc_response.class_hash
     );
 
@@ -370,16 +372,19 @@ async fn work_with_messages_to_l1(#[future] madara: MadaraClient) -> Result<(), 
         None,
     );
 
-    txs = madara.create_block_with_txs(vec![Transaction::Execution(deploy_tx)]).await?;
+    let txs = {
+        let mut madara_write_lock = madara.write().await;
+        madara_write_lock.create_block_with_txs(vec![Transaction::Execution(deploy_tx)]).await?
+    };
 
     // 4. Now, we need to get the deployed contract address
 
     let deploy_tx_hash = assert_matches!(
-        txs.remove(0).unwrap(),
+        txs[0].as_ref().unwrap(),
         TransactionResult::Execution(rpc_response) => rpc_response.transaction_hash
     );
 
-    let deploy_tx_receipt = get_transaction_receipt(rpc, deploy_tx_hash).await?;
+    let deploy_tx_receipt = get_transaction_receipt(&rpc, deploy_tx_hash).await?;
 
     let contract_address = assert_matches!(
         deploy_tx_receipt,
@@ -395,16 +400,19 @@ async fn work_with_messages_to_l1(#[future] madara: MadaraClient) -> Result<(), 
         None,
     );
 
-    txs = madara.create_block_with_txs(vec![Transaction::Execution(invoke_tx)]).await?;
+    let txs = {
+        let mut madara_write_lock = madara.write().await;
+        madara_write_lock.create_block_with_txs(vec![Transaction::Execution(invoke_tx)]).await?
+    };
 
     // 6. Finally, checking that there is a single MessageToL1 in the receipt
 
     let invoke_tx_hash = assert_matches!(
-        txs.remove(0).unwrap(),
+        txs[0].as_ref().unwrap(),
         TransactionResult::Execution(rpc_response) => rpc_response.transaction_hash
     );
 
-    let invoke_tx_receipt = get_transaction_receipt(rpc, invoke_tx_hash).await?;
+    let invoke_tx_receipt = get_transaction_receipt(&rpc, invoke_tx_hash).await?;
 
     let messages_sent = assert_matches!(
         invoke_tx_receipt,
