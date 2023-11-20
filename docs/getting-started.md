@@ -11,22 +11,56 @@ then run:
 rustup show
 ```
 
-### Cargo Run
+### Single-Node Development Chain
 
 Use Rust's native `cargo` command to build and launch the template node:
 
+You first need to setup up the node, which means you need to load the genesis
+state into your file system.
+
 ```sh
 cargo run --release -- setup --chain=dev --from-remote
+```
+
+Now, you can start the node in development mode
+
+```sh
 cargo run --release -- --dev
 ```
 
+### Interacting with the node
+
+Madara is compatible with the Starknet
+[spec](https://github.com/starkware-libs/starknet-specs) which means all tooling
+around Starknet (starknet-js, starknet-rs, wallets, etc.) can be used out of the
+box by just changing the RPC url to point to your node. By default, this would
+be `http://localhost:9944`.
+
+### Common chain flags
+
+You can check all the available using the `--help` flag. Some common points to
+know about have been mentioned below.
+
+Madara overrides the default `dev` flag in substrate to meet its requirements.
+The following flags are automatically enabled with the `--dev` argument:
+
+`--chain=dev`, `--force-authoring`, `--alice`, `--tmp`, `--rpc-external`,
+`--rpc-methods=unsafe`
+
+The `--tmp` flag stores the chain database in a temporary folder. You can
+specify a custom folder to store the chain state by using the `--base-path`
+flag. You cannot combine the `base-path` command with `--dev` as `--dev`
+enforces `--tmp` which will store the db at a temporary folder. You can,
+however, manually specify all flags that the dev flag adds automatically. Keep
+in mind, the path must be the same as the one you used in the setup command.
+
 The node also supports to use manual seal (to produce block manually through
-RPC). This is also used by the typescript tests:
+RPC).
 
 ```sh
-$ cargo run --release -- --dev --sealing=manual
+cargo run --release -- --dev --sealing=manual
 # Or
-$ cargo run --release -- --dev --sealing=instant
+cargo run --release -- --dev --sealing=instant
 ```
 
 Log level can be specified with `-l` flag. For example, `-ldebug` will show
@@ -35,21 +69,6 @@ For example:
 
 ```sh
 RUSTLOG=runtime=info cargo run --release -- --dev
-```
-
-### Cargo Build
-
-The `cargo run` command will perform an initial build. Use the following command
-to build the node without launching it:
-
-```sh
-cargo build --release
-```
-
-You can optionally specify the compiler version for the build:
-
-```sh
-COMPILER_VERSION=0.12.0 cargo build --release
 ```
 
 ### Using Nix (optional, only for degens)
@@ -67,67 +86,6 @@ all parameters and subcommands:
 
 ```sh
 ./target/release/madara -h
-```
-
-## Run
-
-The provided `cargo run` command will launch a temporary node and its state will
-be discarded after you terminate the process. After the project has been built,
-there are other ways to launch the node.
-
-### Single-Node Development Chain
-
-This command will start the single-node development chain with non-persistent
-state:
-
-```bash
-./target/release/madara setup --chain=dev --from-remote
-./target/release/madara --dev
-```
-
-Purge the development chain's state:
-
-```bash
-./target/release/madara purge-chain --dev
-```
-
-Start the development chain with detailed logging:
-
-```bash
-RUST_BACKTRACE=1 ./target/release/madara -ldebug --dev
-```
-
-> Development chain means that the state of our chain will be in a tmp folder
-> while the nodes are running. Also, **alice** account will be authority and
-> sudo account as declared in the
-> [genesis state](https://github.com/substrate-developer-hub/substrate-madara/blob/main/node/src/chain_spec.rs#L49).
-> At the same time the following accounts will be pre-funded:
->
-> - Alice
-> - Bob
-> - Alice//stash
-> - Bob//stash
-
-In case of being interested in maintaining the chain' state between runs a base
-path must be added so the db can be stored in the provided folder instead of a
-temporal one. We could use this folder to store different chain databases, as a
-different folder will be created per different chain that is ran. The following
-commands shows how to use a newly created folder as our db base path.
-
-```bash
-// Create a folder to use as the db base path
-$ mkdir my-chain-state
-
-// Use of that folder to store the chain state
-$ ./target/release/madara --dev --base-path ./my-chain-state/
-
-// Check the folder structure created inside the base path after running the chain
-$ ls ./my-chain-state
-chains
-$ ls ./my-chain-state/chains/
-dev
-$ ls ./my-chain-state/chains/dev
-db keystore network
 ```
 
 ### Connect with Polkadot-JS Apps Front-end
