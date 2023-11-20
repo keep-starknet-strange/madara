@@ -2,16 +2,14 @@ use mp_felt::Felt252Wrapper;
 use mp_transactions::HandleL1MessageTransaction;
 use parity_scale_codec::Encode;
 use sp_runtime::traits::ValidateUnsigned;
-use sp_runtime::transaction_validity::{TransactionSource, TransactionTag, TransactionValidityError};
-use starknet_api::api_core::{ContractAddress, Nonce};
+use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError};
+use starknet_api::api_core::Nonce;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::Fee;
 
 use super::mock::default_mock::*;
 use super::mock::*;
 use crate::{Call, InvalidTransaction, L1Messages};
-
-const VALID_TX_BUILDER_TAG: &str = "starknet";
 
 #[test]
 fn verify_tx_validity() {
@@ -25,10 +23,7 @@ fn verify_tx_validity() {
             calldata: Default::default(),
         };
 
-        let expected_priority = u64::MAX - transaction.nonce;
-        let expected_provide: (Felt252Wrapper, Felt252Wrapper) =
-            (ContractAddress::default().into(), transaction.nonce.into());
-        let expected_provide: TransactionTag = (VALID_TX_BUILDER_TAG, expected_provide).encode();
+        let expected_priority = u64::MAX;
         let expected_longetivity = TransactionLongevity::get();
         let expected_propagate = true;
 
@@ -41,8 +36,6 @@ fn verify_tx_validity() {
         let validate_result = validate_result.unwrap();
 
         assert_eq!(validate_result.priority, expected_priority);
-        assert_eq!(validate_result.requires, Vec::<TransactionTag>::new());
-        assert_eq!(validate_result.provides, Vec::<TransactionTag>::from([expected_provide]));
         assert_eq!(validate_result.longevity, expected_longetivity);
         assert_eq!(validate_result.propagate, expected_propagate);
     });
