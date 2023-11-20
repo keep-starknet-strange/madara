@@ -43,10 +43,10 @@ Welcome to **Madara**, the modular stack to build chains using
 and Sorare have been using StarkEx for scaling for a while and now with Madara,
 it's open source for everyone to use.
 
-Madara is built on the Substrate framework which not only makes it modular but
-also gives it access to years of dev tooling, libraries and a strong developer
-community. It is specifically helpful if you want to own more of the stack and
-get more control over your chain.
+Madara is built on the [Substrate](https://substrate.io/) framework which not
+only makes it modular but also gives it access to years of dev tooling,
+libraries and a strong developer community. It is specifically helpful if you
+want to own more of the stack and get more control over your chain.
 
 ## 📚 Documentation
 
@@ -69,7 +69,7 @@ default provides
 - `pallet_starknet`: Adds the CairoVM to Substrate which allows you to deploy
   and execute Cairo contracts.
 - `Starknet RPC`: Adds all the Starknet RPC calls to your chain so that it's
-  compatible with all RPC tools like starknet-js, wallets etc.
+  compatible with all RPC tools like starknet-js, wallets, etc.
 - `DA Interface`: A general interface which allows you to use any DA layer like
   `Avail`, `Celestia`, `Ethereum` etc.
 - `Proving`: Running the Starknet OS which is the runtime logic in Cairo so that
