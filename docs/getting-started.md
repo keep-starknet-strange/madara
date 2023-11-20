@@ -32,7 +32,7 @@ cargo run --release -- --dev
 
 Madara is compatible with the Starknet
 [spec](https://github.com/starkware-libs/starknet-specs) which means all tooling
-around Starknet (starknet-js, starknet-rs, wallets etc.) can be used out of the
+around Starknet (starknet-js, starknet-rs, wallets, etc.) can be used out of the
 box by just changing the RPC url to point to your node. By default, this would
 be `http://localhost:9944`.
 
