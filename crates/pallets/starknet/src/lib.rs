@@ -45,8 +45,6 @@ pub mod blockifier_state_adapter;
 pub mod genesis_loader;
 /// The implementation of the message type.
 pub mod message;
-/// The Starknet pallet's runtime API
-pub mod runtime_api;
 /// Transaction validation logic.
 pub mod transaction_validation;
 /// The Starknet pallet's runtime custom types.
