@@ -8,7 +8,10 @@ edition = "2021"
 [dependencies]
 # Madara primitives
 mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
-mp-transactions = { workspace = true, features = ["parity-scale-codec", "scale-info"] }
+mp-transactions = { workspace = true, features = [
+  "parity-scale-codec",
+  "scale-info",
+] }
 
 # Starknet
 blockifier = { workspace = true, features = [
