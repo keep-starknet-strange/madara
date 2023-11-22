@@ -8063,6 +8063,7 @@ dependencies = [
 [[package]]
 name = "near-da-http-api-data"
 version = "0.2.3"
+source = "git+https://github.com/near/rollup-data-availability?branch=feat/http-api#803b9a3725d4306b03e52ed8ad38215ce14dd5e7"
 dependencies = [
  "near-da-primitives",
  "serde",
@@ -8072,6 +8073,7 @@ dependencies = [
 [[package]]
 name = "near-da-primitives"
 version = "0.2.3"
+source = "git+https://github.com/near/rollup-data-availability?branch=feat/http-api#803b9a3725d4306b03e52ed8ad38215ce14dd5e7"
 dependencies = [
  "borsh 0.10.3",
  "serde",

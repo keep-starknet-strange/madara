@@ -25,9 +25,9 @@ impl NearClient {
         let da_server_address = Url::parse(&config.da_server_address)
             .map_err(|e| anyhow::anyhow!("error parsing NEAR DA server address: {e}"))?;
 
-        let da_server_is_alive = blocking_client.get(da_server_address.join("/ping")?).send();
+        let da_server_is_alive = blocking_client.get(da_server_address.join("/health")?).send();
 
-        let ok = da_server_is_alive.and_then(|r| r.text()).is_ok_and(|s| s == "pong");
+        let ok = da_server_is_alive.and_then(|r| r.text()).is_ok();
 
         if !ok {
             return Err(anyhow::anyhow!("Could not access NEAR DA server at {da_server_address}"));
