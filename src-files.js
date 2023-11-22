@@ -19,7 +19,8 @@ var srcIndex = JSON.parse('{\
 "mp_state":["",[],["lib.rs"]],\
 "mp_storage":["",[],["lib.rs"]],\
 "mp_transactions":["",[],["compute_hash.rs","conversions.rs","execution.rs","from_broadcasted_transactions.rs","getters.rs","lib.rs","to_starknet_core_transaction.rs"]],\
-"pallet_starknet":["",[["offchain_worker",[],["mod.rs","types.rs"]]],["blockifier_state_adapter.rs","genesis_loader.rs","lib.rs","message.rs","runtime_api.rs","transaction_validation.rs","types.rs"]],\
+"pallet_starknet":["",[["offchain_worker",[],["mod.rs","types.rs"]]],["blockifier_state_adapter.rs","genesis_loader.rs","lib.rs","message.rs","transaction_validation.rs","types.rs"]],\
+"pallet_starknet_runtime_api":["",[],["lib.rs"]],\
 "starknet_rpc_test":["",[],["constants.rs","fixtures.rs","lib.rs","utils.rs"]]\
 }');
 createSrcSidebar();

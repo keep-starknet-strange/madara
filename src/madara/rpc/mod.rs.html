@@ -144,8 +144,8 @@
     C: Send + Sync + <span class="lifetime">&#39;static</span>,
     C::Api: substrate_frame_rpc_system::AccountNonceApi&lt;Block, AccountId, Index&gt;,
     C::Api: BlockBuilder&lt;Block&gt;,
-    C::Api: pallet_starknet::runtime_api::StarknetRuntimeApi&lt;Block&gt;
-        + pallet_starknet::runtime_api::ConvertTransactionRuntimeApi&lt;Block&gt;,
+    C::Api: pallet_starknet_runtime_api::StarknetRuntimeApi&lt;Block&gt;
+        + pallet_starknet_runtime_api::ConvertTransactionRuntimeApi&lt;Block&gt;,
     P: TransactionPool&lt;Block = Block&gt; + <span class="lifetime">&#39;static</span>,
     BE: Backend&lt;Block&gt; + <span class="lifetime">&#39;static</span>,
 {
