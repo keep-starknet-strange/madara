@@ -6425,6 +6425,7 @@ dependencies = [
  "mp-felt",
  "mp-sequencer-address",
  "pallet-starknet",
+ "pallet-starknet-runtime-api",
  "reqwest",
  "sc-basic-authorship",
  "sc-cli",
@@ -6486,6 +6487,7 @@ dependencies = [
  "pallet-aura",
  "pallet-grandpa",
  "pallet-starknet",
+ "pallet-starknet-runtime-api",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -6570,6 +6572,7 @@ dependencies = [
  "mp-hashers",
  "mp-storage",
  "pallet-starknet",
+ "pallet-starknet-runtime-api",
  "sc-client-api",
  "sp-api",
  "sp-blockchain",
@@ -6641,6 +6644,7 @@ dependencies = [
  "mp-hashers",
  "mp-transactions",
  "pallet-starknet",
+ "pallet-starknet-runtime-api",
  "sc-client-api",
  "sp-api",
  "sp-blockchain",
@@ -6666,6 +6670,7 @@ dependencies = [
  "mp-hashers",
  "mp-transactions",
  "pallet-starknet",
+ "pallet-starknet-runtime-api",
  "pretty_assertions",
  "rstest",
  "sc-client-api",
@@ -6726,6 +6731,7 @@ dependencies = [
  "madara-runtime",
  "mp-storage",
  "pallet-starknet",
+ "pallet-starknet-runtime-api",
  "parity-scale-codec",
  "sc-client-api",
  "sp-api",
@@ -7852,6 +7858,22 @@ dependencies = [
  "starknet-ff",
  "starknet_api",
  "test-case",
+]
+
+[[package]]
+name = "pallet-starknet-runtime-api"
+version = "0.1.0"
+dependencies = [
+ "blockifier",
+ "hashbrown 0.14.2",
+ "mp-felt",
+ "mp-transactions",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-api",
+ "sp-arithmetic 16.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
+ "sp-runtime 24.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
+ "starknet_api",
 ]
 
 [[package]]

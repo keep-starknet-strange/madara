@@ -23,6 +23,7 @@ mp-digest-log = { workspace = true }
 mp-hashers = { workspace = true }
 mp-transactions = { workspace = true }
 pallet-starknet = { workspace = true }
+pallet-starknet-runtime-api = { workspace = true }
 sc-client-api = { workspace = true }
 sp-api = { workspace = true }
 sp-blockchain = { workspace = true }

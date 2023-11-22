@@ -34,9 +34,9 @@ use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as G
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
 use pallet_starknet::pallet::Error as PalletError;
-use pallet_starknet::runtime_api::StarknetTransactionExecutionError;
 use pallet_starknet::Call::{consume_l1_message, declare, deploy_account, invoke};
 use pallet_starknet::{Config, Event};
+use pallet_starknet_runtime_api::StarknetTransactionExecutionError;
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -232,7 +232,7 @@ impl_runtime_apis! {
         }
     }
 
-    impl pallet_starknet::runtime_api::StarknetRuntimeApi<Block> for Runtime {
+    impl pallet_starknet_runtime_api::StarknetRuntimeApi<Block> for Runtime {
 
         fn get_storage_at(address: ContractAddress, key: StorageKey) -> Result<StarkFelt, DispatchError> {
             Starknet::get_storage_at(address, key)
@@ -362,12 +362,12 @@ impl_runtime_apis! {
            Starknet::tx_revert_error(tx_hash).map(|s| s.into_bytes())
         }
 
-        fn get_block_context() -> pallet_starknet::runtime_api::BlockContext {
+        fn get_block_context() -> pallet_starknet_runtime_api::BlockContext {
            Starknet::get_block_context().into()
         }
     }
 
-    impl pallet_starknet::runtime_api::ConvertTransactionRuntimeApi<Block> for Runtime {
+    impl pallet_starknet_runtime_api::ConvertTransactionRuntimeApi<Block> for Runtime {
         fn convert_transaction(transaction: UserTransaction) -> Result<UncheckedExtrinsic, DispatchError> {
             let call = match transaction {
                 UserTransaction::Declare(tx, contract_class) => {

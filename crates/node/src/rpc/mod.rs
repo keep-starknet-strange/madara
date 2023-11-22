@@ -53,8 +53,8 @@ where
     C: Send + Sync + 'static,
     C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
     C::Api: BlockBuilder<Block>,
-    C::Api: pallet_starknet::runtime_api::StarknetRuntimeApi<Block>
-        + pallet_starknet::runtime_api::ConvertTransactionRuntimeApi<Block>,
+    C::Api: pallet_starknet_runtime_api::StarknetRuntimeApi<Block>
+        + pallet_starknet_runtime_api::ConvertTransactionRuntimeApi<Block>,
     P: TransactionPool<Block = Block> + 'static,
     BE: Backend<Block> + 'static,
 {

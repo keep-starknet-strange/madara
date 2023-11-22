@@ -86,6 +86,7 @@ mc-mapping-sync = { workspace = true }
 mc-rpc = { workspace = true }
 mc-storage = { workspace = true }
 pallet-starknet = { workspace = true }
+pallet-starknet-runtime-api = { workspace = true }
 starknet-core = { workspace = true }
 
 # Primitives

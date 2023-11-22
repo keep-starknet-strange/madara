@@ -2,6 +2,7 @@
 
 ## Next release
 
+- refacto: move starknet runtime api in it's own crate
 - chore: update README.md and getting-started.md
 - chore: remove crates that have been copy-pasted from plkdtSDK
 - feat(rpc): return deployed contract address and actual fee in transaction
