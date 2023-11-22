@@ -34,9 +34,9 @@ use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as G
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
 use pallet_starknet::pallet::Error as PalletError;
-use pallet_starknet_runtime_api::StarknetTransactionExecutionError;
 use pallet_starknet::Call::{consume_l1_message, declare, deploy_account, invoke};
 use pallet_starknet::{Config, Event};
+use pallet_starknet_runtime_api::StarknetTransactionExecutionError;
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
