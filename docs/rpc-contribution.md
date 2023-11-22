@@ -141,10 +141,10 @@ where
 Quite often you will need to interact with the runtime, in order to access
 storage or call internal functions. To do so, follow these steps:
 
-1. Add your function signature to the runtime api
+1. The runtime api has its own pallet where you can add your function signature.
 
 ```rust
-// crates/pallets/starknet/src/runtime_api.rs
+// crates/pallets/starknet/runtime_api/src/lib.rs
 
 use mp_starknet::execution::ContractAddressWrapper;
 use sp_core::{H256, U256};
@@ -170,7 +170,7 @@ sp_api::decl_runtime_apis! {
 ```rust
 // crates/runtime/src/lib.rs
 
-impl pallet_starknet::runtime_api::StarknetRuntimeApi<Block> for Runtime {
+impl pallet_starknet_runtime_api::StarknetRuntimeApi<Block> for Runtime {
 
       fn call(address: ContractAddressWrapper, function_selector: Felt252Wrapper, calldata: Vec<Felt252Wrapper>) -> Result<Vec<Felt252Wrapper>, DispatchError> {
           Starknet::call_contract(address, function_selector, calldata)

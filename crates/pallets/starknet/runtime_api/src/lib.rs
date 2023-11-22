@@ -1,4 +1,4 @@
-//! Definition of the runtime API for the StarkNet pallet.
+//! This pallet defines the runtime API for the StarkNet pallet.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 // Adding allow unused type parameters to avoid clippy errors
