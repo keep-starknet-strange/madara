@@ -54,7 +54,7 @@ pub trait StarknetWriteRpcApi {
 
 /// Starknet rpc interface.
 #[rpc(server, namespace = "starknet")]
-pub trait StarknetRpcApi {
+pub trait StarknetReadRpcApi {
     /// Get the most recent accepted block number
     #[method(name = "blockNumber")]
     fn block_number(&self) -> RpcResult<u64>;

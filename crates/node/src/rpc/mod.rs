@@ -58,7 +58,7 @@ where
     P: TransactionPool<Block = Block> + 'static,
     BE: Backend<Block> + 'static,
 {
-    use mc_rpc::{Starknet, StarknetRpcApiServer, StarknetWriteRpcApiServer};
+    use mc_rpc::{Starknet, StarknetReadRpcApiServer, StarknetWriteRpcApiServer};
     use sc_consensus_manual_seal::rpc::{ManualSeal, ManualSealApiServer};
     use substrate_frame_rpc_system::{System, SystemApiServer};
 
@@ -66,7 +66,7 @@ where
     let FullDeps { client, pool, deny_unsafe, starknet: starknet_params, command_sink, graph } = deps;
 
     module.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())?;
-    module.merge(StarknetRpcApiServer::into_rpc(Starknet::<_, _, _, _, _, StarknetHasher>::new(
+    module.merge(StarknetReadRpcApiServer::into_rpc(Starknet::<_, _, _, _, _, StarknetHasher>::new(
         client.clone(),
         starknet_params.madara_backend.clone(),
         starknet_params.overrides.clone(),

@@ -17,7 +17,7 @@ use jsonrpsee::types::error::CallError;
 use log::error;
 use mc_db::Backend as MadaraBackend;
 pub use mc_rpc_core::utils::*;
-pub use mc_rpc_core::{Felt, StarknetRpcApiServer, StarknetWriteRpcApiServer};
+pub use mc_rpc_core::{Felt, StarknetReadRpcApiServer, StarknetWriteRpcApiServer};
 use mc_storage::OverrideHandle;
 use mp_felt::{Felt252Wrapper, Felt252WrapperError};
 use mp_hashers::HasherT;
@@ -300,7 +300,7 @@ where
 
 #[async_trait]
 #[allow(unused_variables)]
-impl<A, B, BE, C, P, H> StarknetRpcApiServer for Starknet<A, B, BE, C, P, H>
+impl<A, B, BE, C, P, H> StarknetReadRpcApiServer for Starknet<A, B, BE, C, P, H>
 where
     A: ChainApi<Block = B> + 'static,
     B: BlockT,
