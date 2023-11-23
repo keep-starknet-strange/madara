@@ -42,6 +42,7 @@ starknet-core = { workspace = true }
 starknet-ff = { workspace = true }
 starknet_api = { workspace = true, default-features = false }
 # Others
+anyhow = { workspace = true }
 hex = { workspace = true, default-features = true }
 jsonrpsee = { workspace = true, default-features = true, features = [
   "server",

@@ -6638,6 +6638,7 @@ dependencies = [
 name = "mc-rpc"
 version = "0.5.0"
 dependencies = [
+ "anyhow",
  "blockifier",
  "frame-support",
  "frame-system",

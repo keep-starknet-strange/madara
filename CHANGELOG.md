@@ -2,6 +2,7 @@
 
 ## Next release
 
+- chore: split StarknetRpcApi trait in two, like in openRPC specs
 - refacto: move starknet runtime api in it's own crate
 - chore: update README.md and getting-started.md
 - chore: remove crates that have been copy-pasted from plkdtSDK
