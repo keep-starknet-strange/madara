@@ -2,6 +2,7 @@
 
 ## Next release
 
+- chore: remove tests that run in wasm and native, only wasm from now
 - refacto: move starknet runtime api in it's own crate
 - chore: update README.md and getting-started.md
 - chore: remove crates that have been copy-pasted from plkdtSDK
