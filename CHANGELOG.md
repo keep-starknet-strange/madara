@@ -2,6 +2,7 @@
 
 ## Next release
 
+- chore: remove tests that run in wasm and native, only wasm from now
 - chore: split StarknetRpcApi trait in two, like in openRPC specs
 - refacto: move starknet runtime api in it's own crate
 - chore: update README.md and getting-started.md
