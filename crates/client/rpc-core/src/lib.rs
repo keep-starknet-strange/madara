@@ -32,17 +32,20 @@ pub struct PredeployedAccount {
     pub contract_address: FieldElement,
     pub contract_class: ContractClass,
     pub balance: FieldElement,
-    pub private_key: Option<FieldElement>,
 }
 
-pub type PredeployedAccountsList = Vec<PredeployedAccount>;
+#[derive(Serialize, Deserialize)]
+pub struct PredeployedAccountsInfo {
+    pub accounts: Vec<PredeployedAccount>,
+    pub private_key: FieldElement,
+}
 
 /// Starknet rpc interface.
 #[rpc(server, namespace = "starknet")]
 pub trait StarknetRpcApi {
     /// Get the list of predeployed accounts
     #[method(name = "predeployedAccounts")]
-    fn predeployed_accounts(&self) -> RpcResult<PredeployedAccountsList>;
+    fn predeployed_accounts(&self) -> RpcResult<PredeployedAccountsInfo>;
 
     /// Get the most recent accepted block number
     #[method(name = "blockNumber")]

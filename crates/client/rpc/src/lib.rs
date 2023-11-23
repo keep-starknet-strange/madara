@@ -9,6 +9,7 @@ mod madara_backend_client;
 mod types;
 
 use std::marker::PhantomData;
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use errors::StarknetRpcApiError;
@@ -16,7 +17,7 @@ use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 pub use mc_rpc_core::utils::*;
 use mc_rpc_core::Felt;
-pub use mc_rpc_core::{PredeployedAccount, PredeployedAccountsList, StarknetRpcApiServer};
+pub use mc_rpc_core::{PredeployedAccount, PredeployedAccountsInfo, StarknetRpcApiServer};
 use mc_storage::OverrideHandle;
 use mc_transaction_pool::{ChainApi, Pool};
 use mp_felt::Felt252Wrapper;
@@ -24,7 +25,10 @@ use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
 use mp_transactions::UserTransaction;
-use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
+use pallet_starknet::{
+    genesis_loader::GenesisData,
+    runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi},
+};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::BlockBackend;
 use sc_network_sync::SyncingService;
@@ -50,10 +54,7 @@ use starknet_core::types::{
 };
 use starknet_core::utils::get_selector_from_name;
 
-use crate::constants::{
-    ARGENT_PK, FEE_TOKEN_ADDRESS, MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS, NO_VALIDATE_ACCOUNT_CLASS_HASHES,
-    PREDEPLOYED_ACCOUNTS_ADDRESSES,
-};
+use crate::constants::{ARGENT_PK, GENESIS_FILE, MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
 use crate::types::RpcEventFilter;
 
 /// A Starknet RPC server for Madara
@@ -101,6 +102,18 @@ where
 {
     pub fn current_block_number(&self) -> RpcResult<u64> {
         Ok(UniqueSaturatedInto::<u64>::unique_saturated_into(self.client.info().best_number))
+    }
+
+    fn load_genesis() -> GenesisData {
+        let genesis_path: PathBuf = String::from(GENESIS_FILE).into();
+        let expect_string = format!(
+            "Failed to read genesis file at {}. Please run `madara setup` before opening an issue.",
+            genesis_path.canonicalize().unwrap().display()
+        );
+        let genesis_file_content = std::fs::read_to_string(genesis_path).expect(expect_string.as_str());
+        let genesis_data: GenesisData = serde_json::from_str(&genesis_file_content).expect("Failed loading genesis");
+
+        genesis_data
     }
 }
 
@@ -191,27 +204,30 @@ where
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     H: HasherT + Send + Sync + 'static,
 {
-    fn predeployed_accounts(&self) -> RpcResult<PredeployedAccountsList> {
-        let mut predeployed_accounts: PredeployedAccountsList = Vec::new();
+    /// Reads the `genesis.json` file, iterates through the contracts, returns a struct `PredeployedAccountsInfo`
+    /// which contains a vector of accounts info, and the (hardcoded) private key for them
+    fn predeployed_accounts(&self) -> RpcResult<PredeployedAccountsInfo> {
+        let genesis_data = Self::load_genesis();
+
+        let contracts = genesis_data
+            .contracts
+            .into_iter()
+            .map(|(address, hash)| {
+                let address = Felt252Wrapper(address.0).into();
+                let hash = Felt252Wrapper(hash.0).into();
+                (address, hash)
+            })
+            .collect::<Vec<_>>();
+        let mut accounts: Vec<PredeployedAccount> = Vec::new();
         let block_id = BlockId::Tag(BlockTag::Latest);
 
-        fn make_felt(hex: &str) -> FieldElement {
-            Felt252Wrapper::from_hex_be(hex).unwrap().into()
-        }
-        // stores class hashes that correspond to "no validate account" contract classes
-        let no_validate_account_class_hashes: Vec<FieldElement> =
-            NO_VALIDATE_ACCOUNT_CLASS_HASHES.iter().map(|h| make_felt(h)).collect();
         // stores the pk for the relevant predeployed accounts
-        let argent_pk: FieldElement = make_felt(ARGENT_PK);
+        let private_key: FieldElement = Felt252Wrapper::from_hex_be(ARGENT_PK).unwrap().into();
 
-        let fee_token_address: FieldElement = make_felt(FEE_TOKEN_ADDRESS);
+        let fee_token_address: FieldElement = genesis_data.fee_token_address.0;
 
-        for contract_address in PREDEPLOYED_ACCOUNTS_ADDRESSES.iter().map(|h| make_felt(h)) {
-            let class_hash = self.get_class_hash_at(block_id, contract_address).unwrap().0;
-            let private_key =
-                if no_validate_account_class_hashes.contains(&class_hash) { None } else { Some(argent_pk) };
+        for (contract_address, class_hash) in contracts {
             let contract_class = self.get_class(block_id, class_hash).unwrap();
-            // let balance = self.get_storage_at(fee_token_address, contract_address, block_id).unwrap().0;
             let balance_string = &self
                 .call(
                     FunctionCall {
@@ -222,12 +238,12 @@ where
                     block_id,
                 )
                 .unwrap()[0];
-            let balance = make_felt(balance_string);
-            let account = PredeployedAccount { contract_address, contract_class, balance, private_key };
-            predeployed_accounts.push(account);
+            let balance = Felt252Wrapper::from_hex_be(balance_string).unwrap().into();
+            let account = PredeployedAccount { contract_address, contract_class, balance };
+            accounts.push(account);
         }
 
-        Ok(predeployed_accounts)
+        Ok(PredeployedAccountsInfo { accounts, private_key })
     }
 
     fn block_number(&self) -> RpcResult<u64> {
