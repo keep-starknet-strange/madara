@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::state::cached_state::CommitmentStateDiff;
+use ethers::types::U256;
 use frame_support::{Identity, StorageHasher};
 #[cfg(not(feature = "std"))]
 use hashbrown::hash_map::DefaultHashBuilder as HasherBuilder;
@@ -25,19 +26,21 @@ use sp_runtime::generic::{Digest, DigestItem, Header as GenericHeader};
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use sp_state_machine::{OverlayedChanges, StorageKey, StorageValue};
 use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce, PatriciaKey};
-use starknet_api::hash::StarkFelt;
+use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::state::StorageKey as StarknetStorageKey;
 
-pub struct StateSyncWorker<B: sp_api::BlockT, C, BE> {
+use crate::Error;
+
+pub struct StateWriter<B: BlockT, C, BE> {
     client: Arc<C>,
     substrate_backend: Arc<BE>,
     madara_backend: Arc<mc_db::Backend<B>>,
     phantom_data: PhantomData<B>,
 }
 
-impl<B, C, BE> StateSyncWorker<B, C, BE>
+impl<B, C, BE> StateWriter<B, C, BE>
 where
-    B: sp_api::BlockT<Hash = H256, Header = GenericHeader<u32, BlakeTwo256>>,
+    B: BlockT<Hash = H256, Header = GenericHeader<u32, BlakeTwo256>>,
     C: HeaderBackend<B>,
     BE: Backend<B>,
 {
@@ -46,7 +49,7 @@ where
     }
 
     // Apply the state difference to the data layer.
-    pub fn apply_state_diff(&mut self, starknet_block_number: u64, state_diff: SyncStateDiff) -> Result<(), Error> {
+    pub fn apply_state_diff(&self, starknet_block_number: u64, state_diff: SyncStateDiff) -> Result<(), Error> {
         let block_info = self.client.info();
 
         let starknet_block = self.create_starknet_block(&block_info, starknet_block_number as u32)?;
@@ -283,13 +286,4 @@ impl From<SyncStateDiff> for InnerStorageChangeSet {
 
         InnerStorageChangeSet { changes, child_changes: _child_changes }
     }
-}
-
-#[derive(Debug)]
-pub enum Error {
-    AlreadyInChain,
-    UnknownBlock,
-    ConstructTransaction(String),
-    CommitStorage(String),
-    Other(String),
 }

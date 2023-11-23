@@ -237,7 +237,7 @@ fn test_apply_deploy_contract_state_diff() {
     assert_eq!(inner_state_diff, inner_state_diff2);
     // apply storage diff by StateSyncWorker
     let madara_db = create_temp_madara_backend();
-    let mut sync_worker = StateSyncWorker::new(client.clone(), backend, madara_db);
+    let mut sync_worker = StateWriter::new(client.clone(), backend, madara_db);
     sync_worker.apply_state_diff(2, inner_state_diff2).unwrap();
 
     let expected_erc20_address = ContractAddress(PatriciaKey(
@@ -307,7 +307,7 @@ fn test_apply_declare_contract_state_diff() {
 
     // apply storage diff by StateSyncWorker
     let madara_db = create_temp_madara_backend();
-    let mut sync_worker = StateSyncWorker::new(client.clone(), backend, madara_db);
+    let mut sync_worker = StateWriter::new(client.clone(), backend, madara_db);
     sync_worker.apply_state_diff(2, state_diff2).unwrap();
 
     let block_info = client.info();
@@ -357,7 +357,7 @@ fn test_apply_deploy_account_state_diff() {
 
     // apply storage diff by StateSyncWorker
     let madara_db = create_temp_madara_backend();
-    let mut sync_worker = StateSyncWorker::new(client.clone(), backend, madara_db);
+    let mut sync_worker = StateWriter::new(client.clone(), backend, madara_db);
     sync_worker.apply_state_diff(2, state_diff2).unwrap();
 
     let block_info = client.info();

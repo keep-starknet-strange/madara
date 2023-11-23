@@ -9,6 +9,8 @@ version.workspace = true
 
 [dependencies]
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+futures = { workspace = true }
+
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 reqwest = { workspace = true, features = ["json"]}
@@ -52,6 +54,9 @@ const-decoder = "0.3.0"
 keccak-hash = "0.10.0"
 ethereum-types = "0.14.1"
 
+# Ethereum
+ethers = "2.0.11"
+
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "test-util"] }
 futures = { workspace = true }
@@ -72,6 +77,7 @@ starknet-crypto = { workspace = true, features = ["alloc"] }
 pallet-starknet = { workspace = true }
 mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
 mp-transactions = { workspace = true }
+mc-db = { workspace = true }
 
 const-decoder = "0.3.0"
 httpmock = "0.7.0-rc.1"

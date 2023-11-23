@@ -42,7 +42,7 @@ mc-db = { workspace = true, default-features = true }
 starknet_api = { workspace = true, default-features = true }
 
 # Ethereum
-ethers = "2.0.7"
+ethers = "2.0.11"
 
 # Avail subxt dependency
 avail-subxt = { git = "https://github.com/availproject/avail", version = "0.4.0", tag = "v1.8.0.0" }
