@@ -139,6 +139,10 @@
 <a href="#139" id="139">139</a>
 <a href="#140" id="140">140</a>
 <a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC API trait and types
 //!
 //! Starkware maintains [a description of the Starknet API](https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json)
@@ -168,9 +172,34 @@
 #[derive(Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>Felt(<span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>)] </span><span class="kw">pub </span>FieldElement);
 
+<span class="doccomment">/// Starknet write rpc interface.
+</span><span class="attr">#[rpc(server, namespace = <span class="string">&quot;starknet&quot;</span>)]
+</span><span class="kw">pub trait </span>StarknetWriteRpcApi {
+    <span class="doccomment">/// Submit a new transaction to be added to the chain
+    </span><span class="attr">#[method(name = <span class="string">&quot;addInvokeTransaction&quot;</span>)]
+    </span><span class="kw">async fn </span>add_invoke_transaction(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        invoke_transaction: BroadcastedInvokeTransaction,
+    ) -&gt; RpcResult&lt;InvokeTransactionResult&gt;;
+
+    <span class="doccomment">/// Submit a new class declaration transaction
+    </span><span class="attr">#[method(name = <span class="string">&quot;addDeployAccountTransaction&quot;</span>)]
+    </span><span class="kw">async fn </span>add_deploy_account_transaction(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        deploy_account_transaction: BroadcastedDeployAccountTransaction,
+    ) -&gt; RpcResult&lt;DeployAccountTransactionResult&gt;;
+
+    <span class="doccomment">/// Submit a new deploy account transaction
+    </span><span class="attr">#[method(name = <span class="string">&quot;addDeclareTransaction&quot;</span>)]
+    </span><span class="kw">async fn </span>add_declare_transaction(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        declare_transaction: BroadcastedDeclareTransaction,
+    ) -&gt; RpcResult&lt;DeclareTransactionResult&gt;;
+}
+
 <span class="doccomment">/// Starknet rpc interface.
 </span><span class="attr">#[rpc(server, namespace = <span class="string">&quot;starknet&quot;</span>)]
-</span><span class="kw">pub trait </span>StarknetRpcApi {
+</span><span class="kw">pub trait </span>StarknetReadRpcApi {
     <span class="doccomment">/// Get the most recent accepted block number
     </span><span class="attr">#[method(name = <span class="string">&quot;blockNumber&quot;</span>)]
     </span><span class="kw">fn </span>block_number(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;u64&gt;;
@@ -224,20 +253,6 @@
     </span><span class="attr">#[method(name = <span class="string">&quot;chainId&quot;</span>)]
     </span><span class="kw">fn </span>chain_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;Felt&gt;;
 
-    <span class="doccomment">/// Add an Invoke Transaction to invoke a contract function
-    </span><span class="attr">#[method(name = <span class="string">&quot;addInvokeTransaction&quot;</span>)]
-    </span><span class="kw">async fn </span>add_invoke_transaction(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        invoke_transaction: BroadcastedInvokeTransaction,
-    ) -&gt; RpcResult&lt;InvokeTransactionResult&gt;;
-
-    <span class="doccomment">/// Add a Deploy Account Transaction
-    </span><span class="attr">#[method(name = <span class="string">&quot;addDeployAccountTransaction&quot;</span>)]
-    </span><span class="kw">async fn </span>add_deploy_account_transaction(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        deploy_account_transaction: BroadcastedDeployAccountTransaction,
-    ) -&gt; RpcResult&lt;DeployAccountTransactionResult&gt;;
-
     <span class="doccomment">/// Estimate the fee associated with transaction
     </span><span class="attr">#[method(name = <span class="string">&quot;estimateFee&quot;</span>)]
     </span><span class="kw">async fn </span>estimate_fee(
@@ -261,13 +276,6 @@
     <span class="doccomment">/// Returns all events matching the given filter
     </span><span class="attr">#[method(name = <span class="string">&quot;getEvents&quot;</span>)]
     </span><span class="kw">async fn </span>get_events(<span class="kw-2">&amp;</span><span class="self">self</span>, filter: EventFilterWithPage) -&gt; RpcResult&lt;EventsPage&gt;;
-
-    <span class="doccomment">/// Submit a new transaction to be added to the chain
-    </span><span class="attr">#[method(name = <span class="string">&quot;addDeclareTransaction&quot;</span>)]
-    </span><span class="kw">async fn </span>add_declare_transaction(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        declare_transaction: BroadcastedDeclareTransaction,
-    ) -&gt; RpcResult&lt;DeclareTransactionResult&gt;;
 
     <span class="doccomment">/// Returns the information about a transaction by transaction hash.
     </span><span class="attr">#[method(name = <span class="string">&quot;getTransactionByHash&quot;</span>)]
