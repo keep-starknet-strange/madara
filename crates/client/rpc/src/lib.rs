@@ -25,10 +25,8 @@ use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
 use mp_transactions::UserTransaction;
-use pallet_starknet::{
-    genesis_loader::GenesisData,
-    runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi},
-};
+use pallet_starknet::genesis_loader::GenesisData;
+use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::BlockBackend;
 use sc_network_sync::SyncingService;
@@ -106,11 +104,12 @@ where
 
     fn load_genesis() -> GenesisData {
         let genesis_path: PathBuf = String::from(GENESIS_FILE).into();
-        let expect_string = format!(
-            "Failed to read genesis file at {}. Please run `madara setup` before opening an issue.",
-            genesis_path.canonicalize().unwrap().display()
-        );
-        let genesis_file_content = std::fs::read_to_string(genesis_path).expect(expect_string.as_str());
+        let genesis_file_content = std::fs::read_to_string(genesis_path.clone()).unwrap_or_else(|_| {
+            panic!(
+                "Failed to read genesis file at {}. Please run `madara setup` before opening an issue.",
+                genesis_path.canonicalize().unwrap().display()
+            )
+        });
         let genesis_data: GenesisData = serde_json::from_str(&genesis_file_content).expect("Failed loading genesis");
 
         genesis_data
@@ -204,8 +203,9 @@ where
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     H: HasherT + Send + Sync + 'static,
 {
-    /// Reads the `genesis.json` file, iterates through the contracts, returns a struct `PredeployedAccountsInfo`
-    /// which contains a vector of accounts info, and the (hardcoded) private key for them
+    /// Reads the `genesis.json` file, iterates through the contracts, returns a struct
+    /// `PredeployedAccountsInfo` which contains a vector of accounts info, and the (hardcoded)
+    /// private key for them
     fn predeployed_accounts(&self) -> RpcResult<PredeployedAccountsInfo> {
         let genesis_data = Self::load_genesis();
 
