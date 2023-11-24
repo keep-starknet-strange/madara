@@ -17,7 +17,7 @@ use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 pub use mc_rpc_core::utils::*;
 use mc_rpc_core::Felt;
-pub use mc_rpc_core::{PredeployedAccount, PredeployedAccountsInfo, StarknetRpcApiServer};
+pub use mc_rpc_core::{PredeployedAccount, PredeployedAccountsList, StarknetRpcApiServer};
 use mc_storage::OverrideHandle;
 use mc_transaction_pool::{ChainApi, Pool};
 use mp_felt::Felt252Wrapper;
@@ -52,7 +52,7 @@ use starknet_core::types::{
 };
 use starknet_core::utils::get_selector_from_name;
 
-use crate::constants::{ARGENT_PK, GENESIS_FILE, MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
+use crate::constants::{GENESIS_ASSETS_PATH, MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
 use crate::types::RpcEventFilter;
 
 /// A Starknet RPC server for Madara
@@ -103,7 +103,8 @@ where
     }
 
     fn load_genesis() -> GenesisData {
-        let genesis_path: PathBuf = String::from(GENESIS_FILE).into();
+        let working_dir: PathBuf = ".".into();
+        let genesis_path: PathBuf = GENESIS_ASSETS_PATH.iter().fold(working_dir, |acc, &s| acc.join(String::from(s)));
         let genesis_file_content = std::fs::read_to_string(genesis_path.clone()).unwrap_or_else(|_| {
             panic!(
                 "Failed to read genesis file at {}. Please run `madara setup` before opening an issue.",
@@ -207,10 +208,9 @@ where
     /// `PredeployedAccountsList` which contains a vector of accounts info, and the (hardcoded)
     /// private key for them
     fn predeployed_accounts(&self) -> RpcResult<PredeployedAccountsList> {
-        let working_dir: PathBuf = ".".into();
-        let genesis_data = load_genesis(working_dir.join("configs"));
+        let genesis_data = Self::load_genesis();
 
-        let predeployed_account_no_balance = genesis_data
+        let predeployed_accounts_no_balance = genesis_data
             .predeployed_accounts
             .into_iter()
             .map(|(address, hash, name, pk)| {

@@ -30,13 +30,13 @@ pub struct Felt(#[serde_as(as = "UfeHex")] pub FieldElement);
 #[derive(Serialize, Deserialize)]
 pub struct PredeployedAccount {
     pub contract_address: FieldElement,
-    pub class_hash: ClassHash,
+    pub class_hash: FieldElement,
     pub name: String,
-    pub private_key: Vec<u8>,
+    pub private_key: Option<Vec<u8>>,
     pub balance: FieldElement,
 }
 
-pub struct PredeployedAccountsList = Vec<PredeployedAccount>;
+pub type PredeployedAccountsList = Vec<PredeployedAccount>;
 
 /// Starknet rpc interface.
 #[rpc(server, namespace = "starknet")]

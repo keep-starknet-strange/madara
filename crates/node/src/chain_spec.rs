@@ -154,7 +154,7 @@ pub fn local_testnet_config(base_path: BasePath, chain_id: &str) -> Result<Chain
 
 fn load_genesis(data_path: PathBuf) -> GenesisLoader {
     let genesis_path = data_path.join(GENESIS_ASSETS_DIR).join(GENESIS_ASSETS_FILE);
-    let genesis_file_content = std::fs::read_to_string(genesis_path)
+    let genesis_file_content = std::fs::read_to_string(genesis_path.clone())
         .expect("Failed to read genesis file. Please run `madara setup` before opening an issue.");
     let genesis_data: GenesisData = serde_json::from_str(&genesis_file_content).expect("Failed loading genesis");
 
