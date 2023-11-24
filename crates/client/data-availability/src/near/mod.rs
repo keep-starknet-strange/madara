@@ -27,7 +27,7 @@ impl NearClient {
 
         let da_server_is_alive = blocking_client.get(da_server_address.join("/health")?).send();
 
-        let ok = da_server_is_alive.and_then(|r| r.text()).is_ok();
+        let ok = da_server_is_alive.map_or(false, |r| r.status().is_success());
 
         if !ok {
             return Err(anyhow::anyhow!("Could not access NEAR DA server at {da_server_address}"));
