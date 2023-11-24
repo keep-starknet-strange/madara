@@ -53,7 +53,7 @@ pub(crate) mod columns {
 pub mod static_keys {
     pub const CURRENT_SYNCING_TIPS: &[u8] = b"CURRENT_SYNCING_TIPS";
     pub const LAST_PROVED_BLOCK: &[u8] = b"LAST_PROVED_BLOCK";
-    pub const L1_MESSAGES: &[u8] = b"L1_MESSAGES";
+    pub const LAST_SYNCED_L1_BLOCK: &[u8] = b"LAST_SYNCED_L1_BLOCK";
 }
 
 /// The Madara client database backend

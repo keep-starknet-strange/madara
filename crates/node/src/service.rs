@@ -534,8 +534,8 @@ pub fn new_full(
     if let Some(ref l1_messages_config) = l1_messages {
         let config = L1MessagesWorkerConfig::new_from_file(l1_messages_config)
             .map_err(|e| sc_service::error::Error::Other(e.to_string()))?;
-        task_manager.spawn_essential_handle().spawn(
-            "l1-messaging",
+        task_manager.spawn_handle().spawn(
+            "ethereum-core-contract-events-listener",
             Some(MADARA_TASK_GROUP),
             mc_l1_messages::worker::run_worker(config, client, transaction_pool, madara_backend),
         );

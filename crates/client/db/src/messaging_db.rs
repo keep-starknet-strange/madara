@@ -15,7 +15,7 @@ pub struct MessagingDb<B: BlockT> {
 
 impl<B: BlockT> MessagingDb<B> {
     pub fn last_synced_l1_block(&self) -> Result<u64, String> {
-        match self.db.get(crate::columns::MESSAGING, crate::static_keys::L1_MESSAGES) {
+        match self.db.get(crate::columns::MESSAGING, crate::static_keys::LAST_SYNCED_L1_BLOCK) {
             Some(raw) => Ok(u64::decode(&mut &raw[..]).map_err(|e| format!("{:?}", e))?),
             None => Ok(0),
         }
@@ -24,7 +24,7 @@ impl<B: BlockT> MessagingDb<B> {
     pub fn update_last_synced_l1_block(&self, l1_block_number: &u64) -> Result<(), String> {
         let mut transaction = sp_database::Transaction::new();
 
-        transaction.set(crate::columns::MESSAGING, crate::static_keys::L1_MESSAGES, &l1_block_number.encode());
+        transaction.set(crate::columns::MESSAGING, crate::static_keys::LAST_SYNCED_L1_BLOCK, &l1_block_number.encode());
 
         self.db.commit(transaction).map_err(|e| format!("{:?}", e))?;
 

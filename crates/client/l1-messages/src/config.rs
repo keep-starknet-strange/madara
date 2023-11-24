@@ -21,15 +21,16 @@ impl L1MessagesWorkerConfig {
     }
 
     pub fn new_from_file(path: &PathBuf) -> Result<Self, L1MessagesConfigError> {
-        let file = File::open(path).map_err(|_e| L1MessagesConfigError::FileNotFound(format!("{:?}", path)))?;
-        serde_json::from_reader(file).map_err(|_e| L1MessagesConfigError::InvalidFile(format!("{:?}", path)))
+        let file = File::open(path)?;
+        let config = serde_json::from_reader(file)?;
+        Ok(config)
     }
 
-    pub fn get_provider(&self) -> &String {
+    pub fn provider(&self) -> &String {
         &self.http_provider
     }
 
-    pub fn get_contract_address(&self) -> &Address {
+    pub fn contract_address(&self) -> &Address {
         &self.contract_address
     }
 }

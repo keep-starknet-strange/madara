@@ -66,7 +66,7 @@ sp_api::decl_runtime_apis! {
         /// Return two lists of messages sent (to L1) and consumed (from L1) during this block
         fn get_starknet_messages(block_extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper) -> (Vec<MessageL2ToL1>, Vec<MessageL1ToL2>);
         /// Check if L1 Message Nonce has not been used
-        fn l1_nonce_unused(nonce: u64) -> bool;
+        fn l1_nonce_unused(nonce: Nonce) -> bool;
     }
 
     pub trait ConvertTransactionRuntimeApi {

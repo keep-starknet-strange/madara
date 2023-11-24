@@ -300,7 +300,7 @@ pub fn run() -> sc_cli::Result<()> {
                     Some(config_path.clone())
                 }
                 None => {
-                    log::info!("madara initialized w/o L1 Messages Worker");
+                    log::warn!("madara initialized w/o L1 Messages Worker");
                     None
                 }
             };

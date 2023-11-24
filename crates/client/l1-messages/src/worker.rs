@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use ethers::providers::{Http, Provider, StreamExt};
+use ethers::types::U256;
 use madara_runtime::pallet_starknet;
 use mp_transactions::HandleL1MessageTransaction;
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
@@ -8,6 +9,8 @@ use sc_client_api::HeaderBackend;
 use sc_transaction_pool_api::{TransactionPool, TransactionSource};
 use sp_api::{BlockId, ProvideRuntimeApi};
 use sp_runtime::traits::Block as BlockT;
+use starknet_api::api_core::Nonce;
+use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::Fee;
 
 use crate::config::L1MessagesWorkerConfig;
@@ -19,12 +22,12 @@ const TX_SOURCE: TransactionSource = TransactionSource::External;
 pub fn connect_to_l1_contract(
     config: &L1MessagesWorkerConfig,
 ) -> Result<L1Contract<Provider<Http>>, L1MessagesWorkerError> {
-    let provider = Provider::<Http>::try_from(config.get_provider()).map_err(|e| {
+    let provider = Provider::<Http>::try_from(config.provider()).map_err(|e| {
         log::error!("⟠ Failed to connect to L1 Node: {:?}", e);
         L1MessagesWorkerError::ConfigError
     })?;
 
-    let l1_contract = L1Contract::new(*config.get_contract_address(), Arc::new(provider));
+    let l1_contract = L1Contract::new(*config.contract_address(), Arc::new(provider));
 
     Ok(l1_contract)
 }
@@ -75,7 +78,7 @@ pub async fn run_worker<C, P, B>(
             meta.log_index
         );
 
-        match process_l1_message(&event, &client, &pool, &backend, &meta.block_number.as_u64()).await {
+        match process_l1_message(event, &client, &pool, &backend, &meta.block_number.as_u64()).await {
             Ok(tx_hash) => {
                 log::info!(
                     "⟠ L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?} submitted, transaction \
@@ -101,7 +104,7 @@ pub async fn run_worker<C, P, B>(
 }
 
 async fn process_l1_message<C, P, B>(
-    event: &LogMessageToL2Filter,
+    event: LogMessageToL2Filter,
     client: &Arc<C>,
     pool: &Arc<P>,
     backend: &Arc<mc_db::Backend<B>>,
@@ -113,12 +116,18 @@ where
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     P: TransactionPool<Block = B> + 'static,
 {
-    let fee: Fee = event.try_get_fee()?;
+    // Check against panic
+    // https://docs.rs/ethers/latest/ethers/types/struct.U256.html#method.as_u128
+    let fee: Fee = if event.fee > U256::from_big_endian(&(u128::MAX.to_be_bytes())) {
+        return Err(L1MessagesWorkerError::ToFeeError);
+    } else {
+        Fee(event.fee.as_u128())
+    };
     let transaction: HandleL1MessageTransaction = event.try_into()?;
 
     let best_block_hash = client.info().best_hash;
 
-    match client.runtime_api().l1_nonce_unused(best_block_hash, transaction.nonce) {
+    match client.runtime_api().l1_nonce_unused(best_block_hash, Nonce(StarkFelt::from(transaction.nonce))) {
         Ok(true) => Ok(()),
         Ok(false) => {
             log::debug!("⟠ Event already processed: {:?}", transaction);

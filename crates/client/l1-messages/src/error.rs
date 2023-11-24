@@ -1,14 +1,26 @@
 use mp_felt::Felt252WrapperError;
 
-#[derive(thiserror::Error, Debug, Eq, PartialEq)]
-pub enum L1MessagesConfigError {
-    #[error("File with L1 Messages Worker config not found: `{0}`")]
-    FileNotFound(String),
-    #[error("Failed to deserialize L1 Messages Worker Config from config file: `{0}`")]
-    InvalidFile(String),
+#[derive(thiserror::Error, Debug, PartialEq)]
+pub enum L1EventToTransactionError {
+    #[error("Failed to convert Calldata param from L1 Event: `{0}`")]
+    InvalidCalldata(Felt252WrapperError),
+    #[error("Failed to convert Contract Address from L1 Event: `{0}`")]
+    InvalidContractAddress(Felt252WrapperError),
+    #[error("Failed to convert Entrypoint Selector from L1 Event: `{0}`")]
+    InvalidEntryPointSelector(Felt252WrapperError),
+    #[error("Failed to convert Nonce param from L1 Event: `{0}`")]
+    InvalidNonce(Felt252WrapperError),
 }
 
-#[derive(thiserror::Error, Debug, Eq, PartialEq)]
+#[derive(thiserror::Error, Debug)]
+pub enum L1MessagesConfigError {
+    #[error("File with L1 Messages Worker config not found")]
+    FileNotFound(#[from] std::io::Error),
+    #[error("Failed to deserialize L1 Messages Worker Config from config file")]
+    InvalidFile(#[from] serde_json::Error),
+}
+
+#[derive(thiserror::Error, Debug, PartialEq)]
 pub enum L1MessagesWorkerError {
     #[error("Failed to initialize L1 Messages Worker based on provided Config")]
     ConfigError,
@@ -26,12 +38,6 @@ pub enum L1MessagesWorkerError {
     SubmitTxError,
     #[error("Failed to convert L1 Message into Fee")]
     ToFeeError,
-    #[error("Failed to convert L1 Message into L2 Transaction: `{0}`")]
-    ToTransactionError(String),
-}
-
-impl From<Felt252WrapperError> for L1MessagesWorkerError {
-    fn from(e: Felt252WrapperError) -> Self {
-        L1MessagesWorkerError::ToTransactionError(e.to_string())
-    }
+    #[error("Failed to convert L1 Message into L2 Transaction")]
+    ToTransactionError(#[from] L1EventToTransactionError),
 }
