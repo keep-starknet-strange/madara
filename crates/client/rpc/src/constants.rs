@@ -4,4 +4,4 @@ pub const MAX_EVENTS_KEYS: usize = 100;
 pub const MAX_EVENTS_CHUNK_SIZE: usize = 1000;
 
 /// Path to the genesis assets file
-pub const GENESIS_ASSETS_PATH: &[&str] = &["configs", "genesis-assets", "genesis.json"];
+pub const GENESIS_ASSETS_PATH: &[&str] = &["genesis-assets", "genesis.json"];

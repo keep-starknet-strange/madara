@@ -30,6 +30,7 @@ use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntime
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::BlockBackend;
 use sc_network_sync::SyncingService;
+use sc_service::BasePath;
 use sc_transaction_pool_api::error::{Error as PoolError, IntoPoolError};
 use sc_transaction_pool_api::{InPoolTransaction, TransactionPool, TransactionSource};
 use sp_api::{ApiError, ProvideRuntimeApi};
@@ -103,8 +104,11 @@ where
     }
 
     fn load_genesis() -> GenesisData {
-        let working_dir: PathBuf = ".".into();
-        let genesis_path: PathBuf = GENESIS_ASSETS_PATH.iter().fold(working_dir, |acc, &s| acc.join(String::from(s)));
+        let base_path: PathBuf = BasePath::from_project("", "", "madara").config_dir("dev");
+        let genesis_path: PathBuf = GENESIS_ASSETS_PATH.iter().fold(base_path, |acc, &s| acc.join(String::from(s)));
+
+        log::info!("Loading predeployed accounts at: {}", genesis_path.display());
+
         let genesis_file_content = std::fs::read_to_string(genesis_path.clone()).unwrap_or_else(|_| {
             panic!(
                 "Failed to read genesis file at {}. Please run `madara setup` before opening an issue.",
@@ -209,7 +213,6 @@ where
     /// private key for them
     fn predeployed_accounts(&self) -> RpcResult<PredeployedAccountsList> {
         let genesis_data = Self::load_genesis();
-
         let predeployed_accounts_no_balance = genesis_data
             .predeployed_accounts
             .into_iter()

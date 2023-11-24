@@ -6383,6 +6383,7 @@ dependencies = [
  "rstest",
  "sc-client-api",
  "sc-network-sync",
+ "sc-service",
  "sc-transaction-pool-api",
  "serde_json",
  "sp-api",
