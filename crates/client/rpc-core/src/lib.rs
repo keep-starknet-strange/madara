@@ -30,22 +30,20 @@ pub struct Felt(#[serde_as(as = "UfeHex")] pub FieldElement);
 #[derive(Serialize, Deserialize)]
 pub struct PredeployedAccount {
     pub contract_address: FieldElement,
-    pub contract_class: ContractClass,
+    pub class_hash: ClassHash,
+    pub name: String,
+    pub private_key: Vec<u8>,
     pub balance: FieldElement,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct PredeployedAccountsInfo {
-    pub accounts: Vec<PredeployedAccount>,
-    pub private_key: FieldElement,
-}
+pub struct PredeployedAccountsList = Vec<PredeployedAccount>;
 
 /// Starknet rpc interface.
 #[rpc(server, namespace = "starknet")]
 pub trait StarknetRpcApi {
     /// Get the list of predeployed accounts
     #[method(name = "predeployedAccounts")]
-    fn predeployed_accounts(&self) -> RpcResult<PredeployedAccountsInfo>;
+    fn predeployed_accounts(&self) -> RpcResult<PredeployedAccountsList>;
 
     /// Get the most recent accepted block number
     #[method(name = "blockNumber")]

@@ -204,30 +204,27 @@ where
     H: HasherT + Send + Sync + 'static,
 {
     /// Reads the `genesis.json` file, iterates through the contracts, returns a struct
-    /// `PredeployedAccountsInfo` which contains a vector of accounts info, and the (hardcoded)
+    /// `PredeployedAccountsList` which contains a vector of accounts info, and the (hardcoded)
     /// private key for them
-    fn predeployed_accounts(&self) -> RpcResult<PredeployedAccountsInfo> {
-        let genesis_data = Self::load_genesis();
+    fn predeployed_accounts(&self) -> RpcResult<PredeployedAccountsList> {
+        let working_dir: PathBuf = ".".into();
+        let genesis_data = load_genesis(working_dir.join("configs"));
 
-        let contracts = genesis_data
-            .contracts
+        let predeployed_account_no_balance = genesis_data
+            .predeployed_accounts
             .into_iter()
-            .map(|(address, hash)| {
+            .map(|(address, hash, name, pk)| {
                 let address = Felt252Wrapper(address.0).into();
                 let hash = Felt252Wrapper(hash.0).into();
-                (address, hash)
+                (address, hash, name, pk)
             })
             .collect::<Vec<_>>();
         let mut accounts: Vec<PredeployedAccount> = Vec::new();
         let block_id = BlockId::Tag(BlockTag::Latest);
 
-        // stores the pk for the relevant predeployed accounts
-        let private_key: FieldElement = Felt252Wrapper::from_hex_be(ARGENT_PK).unwrap().into();
-
         let fee_token_address: FieldElement = genesis_data.fee_token_address.0;
 
-        for (contract_address, class_hash) in contracts {
-            let contract_class = self.get_class(block_id, class_hash).unwrap();
+        for (contract_address, class_hash, name, private_key) in predeployed_accounts_no_balance {
             let balance_string = &self
                 .call(
                     FunctionCall {
@@ -239,11 +236,11 @@ where
                 )
                 .unwrap()[0];
             let balance = Felt252Wrapper::from_hex_be(balance_string).unwrap().into();
-            let account = PredeployedAccount { contract_address, contract_class, balance };
+            let account = PredeployedAccount { contract_address, class_hash, name, private_key, balance };
             accounts.push(account);
         }
 
-        Ok(PredeployedAccountsInfo { accounts, private_key })
+        Ok(accounts)
     }
 
     fn block_number(&self) -> RpcResult<u64> {

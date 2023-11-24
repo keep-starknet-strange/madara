@@ -42,6 +42,7 @@ type StorageValue = HexFelt;
 pub struct GenesisData {
     pub contract_classes: Vec<(ClassHash, ContractClass)>,
     pub contracts: Vec<(ContractAddress, ClassHash)>,
+    pub predeployed_accounts: Vec<(ContractAddress, ClassHash, String, Option<Vec<u8>>)>,
     pub storage: Vec<(ContractStorageKey, StorageValue)>,
     pub fee_token_address: ContractAddress,
     pub seq_addr_updated: bool,
