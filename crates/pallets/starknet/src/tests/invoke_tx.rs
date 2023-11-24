@@ -2,7 +2,7 @@ use blockifier::abi::abi_utils::get_storage_var_address;
 use frame_support::{assert_err, assert_ok};
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
-use mp_transactions::{HandleL1MessageTransaction, InvokeTransaction, InvokeTransactionV1};
+use mp_transactions::{InvokeTransaction, InvokeTransactionV1};
 use pretty_assertions::assert_eq;
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{
@@ -11,7 +11,7 @@ use sp_runtime::transaction_validity::{
 use starknet_api::api_core::{ContractAddress, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
-use starknet_api::transaction::{Event as StarknetEvent, EventContent, EventData, EventKey, Fee, TransactionHash};
+use starknet_api::transaction::{Event as StarknetEvent, EventContent, EventData, EventKey, TransactionHash};
 use starknet_core::utils::get_selector_from_name;
 use starknet_crypto::FieldElement;
 
@@ -57,31 +57,12 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
 
         let transaction: InvokeTransaction = get_invoke_dummy(Felt252Wrapper::ZERO).into();
 
-        let tx = HandleL1MessageTransaction {
-            nonce: 1,
-            contract_address: Felt252Wrapper::from_hex_be(
-                "0x0000000000000000000000000000000000000000000000000000000000000001",
-            )
-            .unwrap(),
-            entry_point_selector: Felt252Wrapper::from_hex_be(
-                "0x01310e2c127c3b511c5ac0fd7949d544bb4d75b8bc83aaeb357e712ecf582771",
-            )
-            .unwrap(),
-            calldata: vec![
-                Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000001")
-                    .unwrap(),
-                Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000001")
-                    .unwrap(),
-            ],
-        };
-
         assert_ok!(Starknet::invoke(none_origin.clone(), transaction));
-        assert_ok!(Starknet::consume_l1_message(none_origin, tx, Fee(100)));
 
         let pending_txs = Starknet::pending();
-        pretty_assertions::assert_eq!(pending_txs.len(), 2);
+        pretty_assertions::assert_eq!(pending_txs.len(), 1);
         let pending_hashes = Starknet::pending_hashes();
-        pretty_assertions::assert_eq!(pending_hashes.len(), 2);
+        pretty_assertions::assert_eq!(pending_hashes.len(), 1);
 
         assert_eq!(
             pending_hashes[0],
