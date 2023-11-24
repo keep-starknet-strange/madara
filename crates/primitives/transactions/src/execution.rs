@@ -437,7 +437,10 @@ impl Execute for InvokeTransaction {
                     Ok(execute_call_info) => {
                         ValidateExecuteCallInfo::new_accepted(validate_call_info, execute_call_info)
                     }
-                    Err(_) => ValidateExecuteCallInfo::new_reverted(validate_call_info, context.error_trace()),
+                    Err(e) => {
+                        log::debug!("Invoke transaction reverted with error: {:?}", e);
+                        ValidateExecuteCallInfo::new_reverted(validate_call_info, context.error_trace())
+                    }
                 }
             }
         };

@@ -7051,6 +7051,7 @@ dependencies = [
  "cairo-vm",
  "derive_more",
  "flate2",
+ "log",
  "mp-fee",
  "mp-felt",
  "mp-hashers",
