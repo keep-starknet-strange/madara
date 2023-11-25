@@ -9,7 +9,6 @@ use alloc::sync::Arc;
 
 use blockifier::execution::contract_class::ContractClass;
 use mp_felt::Felt252Wrapper;
-use mp_snos_output::{MessageL1ToL2, MessageL2ToL1};
 use mp_transactions::{HandleL1MessageTransaction, Transaction, UserTransaction};
 use sp_api::BlockT;
 pub extern crate alloc;
@@ -73,8 +72,6 @@ sp_api::decl_runtime_apis! {
         fn is_transaction_fee_disabled() -> bool;
         /// Return messages sent to L1 during tx execution
         fn get_tx_messages_to_l1(tx_hash: TransactionHash) -> Vec<MessageToL1>;
-        /// Return two lists of messages sent (to L1) and consumed (from L1) during this block
-        fn get_starknet_messages(block_extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper) -> (Vec<MessageL2ToL1>, Vec<MessageL1ToL2>);
         /// Check if L1 Message Nonce has not been used
         fn l1_nonce_unused(nonce: Nonce) -> bool;
     }

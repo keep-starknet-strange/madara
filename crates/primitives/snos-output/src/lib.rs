@@ -15,6 +15,8 @@ use alloc::vec::Vec;
 
 use starknet_api::hash::StarkFelt;
 
+pub use crate::codec::SnosCodec;
+
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]

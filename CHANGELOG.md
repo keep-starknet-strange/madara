@@ -24,6 +24,8 @@
   reconnection logic
 - chore: update `polkadot-sdk` to `release-polkadot-v1.3.0`
 - feat(data-availability): extend eth config with poll interval
+- fix(snos-output): expose snos codec, remove unused `get_starknet_messages`
+  runtime method, and unnecessary mp-snos-output dependencies
 
 ## v0.5.0
 
