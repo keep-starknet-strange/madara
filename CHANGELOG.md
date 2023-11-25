@@ -31,6 +31,7 @@
 - feat(runtime): expose fee token address getter method
 - feat(settlement): run client thread responsible for pushing state updates
   and messaging on Ethereum
+- feat(settlement): starknet core contract tests with anvil sandbox
 
 ## v0.5.0
 
