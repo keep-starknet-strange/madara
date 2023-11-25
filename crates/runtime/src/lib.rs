@@ -258,6 +258,14 @@ impl_runtime_apis! {
             Starknet::chain_id()
         }
 
+        fn program_hash() -> Felt252Wrapper {
+            Starknet::program_hash()
+        }
+
+        fn fee_token_address() -> ContractAddress {
+            Starknet::fee_token_address()
+        }
+
         fn is_transaction_fee_disabled() -> bool {
             Starknet::is_transaction_fee_disabled()
         }

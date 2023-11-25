@@ -45,6 +45,10 @@ sp_api::decl_runtime_apis! {
         fn contract_class_by_class_hash(class_hash: ClassHash) -> Option<ContractClass>;
         /// Returns the chain id.
         fn chain_id() -> Felt252Wrapper;
+        /// Returns the Starknet OS Cairo program hash.
+        fn program_hash() -> Felt252Wrapper;
+        /// Returns the fee token address.
+        fn fee_token_address() -> ContractAddress;
         /// Returns fee estimate
         fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError>;
         /// Filters extrinsic transactions to return only Starknet transactions

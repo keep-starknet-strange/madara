@@ -17,6 +17,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 # Madara primitives
 mp-block = { workspace = true }
 mp-chain-id = { workspace = true }
+mp-program-hash = { workspace = true }
 mp-commitments = { workspace = true }
 mp-digest-log = { workspace = true }
 mp-fee = { workspace = true }

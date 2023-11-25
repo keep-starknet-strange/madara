@@ -6490,6 +6490,7 @@ dependencies = [
  "mp-chain-id",
  "mp-felt",
  "mp-hashers",
+ "mp-program-hash",
  "mp-transactions",
  "pallet-aura",
  "pallet-grandpa",
@@ -7051,6 +7052,14 @@ dependencies = [
  "serde",
  "starknet-core",
  "starknet-crypto 0.6.1",
+]
+
+[[package]]
+name = "mp-program-hash"
+version = "0.5.0"
+dependencies = [
+ "mp-felt",
+ "starknet-ff",
 ]
 
 [[package]]
@@ -7871,6 +7880,7 @@ dependencies = [
  "mp-fee",
  "mp-felt",
  "mp-hashers",
+ "mp-program-hash",
  "mp-sequencer-address",
  "mp-state",
  "mp-storage",
