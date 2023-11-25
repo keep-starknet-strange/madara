@@ -29,6 +29,8 @@
 - feat(program-hash): add new pallete constant for Starknet OS progam hash;
   expose runtime getter method; add dedicated crate to manage versions
 - feat(runtime): expose fee token address getter method
+- feat(settlement): run client thread responsible for pushing state updates
+  and messaging on Ethereum
 
 ## v0.5.0
 

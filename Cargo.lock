@@ -6422,6 +6422,7 @@ dependencies = [
  "mc-l1-messages",
  "mc-mapping-sync",
  "mc-rpc",
+ "mc-settlement",
  "mc-storage",
  "md5",
  "mp-block",
@@ -6747,6 +6748,39 @@ dependencies = [
  "starknet-core",
  "starknet_api",
  "thiserror",
+]
+
+[[package]]
+name = "mc-settlement"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "clap 4.4.8",
+ "ethers",
+ "futures",
+ "futures-timer",
+ "log",
+ "mc-data-availability",
+ "mp-block",
+ "mp-digest-log",
+ "mp-hashers",
+ "mp-snos-output",
+ "mp-transactions",
+ "pallet-starknet",
+ "rustc-hex",
+ "sc-client-api",
+ "serde",
+ "serde_json",
+ "sp-api",
+ "sp-arithmetic 16.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
+ "sp-blockchain",
+ "sp-core 21.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
+ "sp-io 23.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
+ "sp-runtime 24.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
+ "starknet-crypto 0.6.1",
+ "starknet_api",
+ "thiserror",
+ "url",
 ]
 
 [[package]]

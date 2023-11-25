@@ -23,6 +23,7 @@ members = [
   "crates/client/mapping-sync",
   "crates/client/storage",
   "crates/client/commitment-state-diff",
+  "crates/client/settlement",
   "starknet-rpc-test",
 ]
 # All previous except for `starknet-rpc-test`
@@ -49,6 +50,7 @@ default-members = [
   "crates/client/mapping-sync",
   "crates/client/storage",
   "crates/client/commitment-state-diff",
+  "crates/client/settlement",
 ]
 
 [profile.release]
@@ -175,6 +177,7 @@ mc-rpc-core = { path = "crates/client/rpc-core" }
 mc-data-availability = { path = "crates/client/data-availability" }
 mc-commitment-state-diff = { path = "crates/client/commitment-state-diff" }
 mc-l1-messages = { path = "crates/client/l1-messages" }
+mc-settlement = { path = "crates/client/settlement" }
 
 # Madara runtime
 madara-runtime = { path = "crates/runtime" }
