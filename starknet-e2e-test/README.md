@@ -12,30 +12,15 @@ In order to run a specific test case:
 cargo test --package starknet-e2e-test <your-test-case-name> -- --nocapture
 ```
 
-## Madara client
+## Madara runner
 
-Typically you should be fine using Madara fixture in your test case:
-
-```rust
-use rstest::rstest;
-use madara_node_runner::fixtures::madara;
-
-#[rstest]
-#[tokio::test]
-async fn my_test_case(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
-    let madara = madara.await;
-    todo!()
-}
-```
-
-But sometimes you might want more control over the launched node. 
-Here is how you can instantiate Madara client manually:
+Sometimes you might want more control over the launched node. 
+Here is how you can instantiate Madara runner which will run a node and provide you with a client:
 
 ```rust
-use madara_node_runner::{ExecutionStrategy, MadaraClient, Settlement};
+use madara_test_runner::{MadaraRunner, Settlement};
 
-let madara_client = MadaraClient::new(
-    ExecutionStrategy::Native,
+let madara_client = MadaraRunner::new(
     Some(Settlement::Ethereum),
     Some(format!("/tmp/madara").into()),
 )
@@ -43,9 +28,10 @@ let madara_client = MadaraClient::new(
 ```
 
 Available arguments:
-* `execution` - which Substrate runtime thas to be used (can be `ExecutionStrategy::Native` or `ExecutionStrategy::Wasm`)
 * `settlement` [Optional] - which settlement layer to use (can be `Settlement::Ethereum` for now)
-* `madara_path` [Optional] - override Madara base path which is used for storing configs and other assets
+* `base_path` [Optional] - override Madara base path which is used for storing configs and other assets
+
+Note that DA & settlement configs are expected to be stored in "data path" which is `base_path/chains/<substrate_chain_id>` (for tests it's `dev`).
 
 ## Logging
 
@@ -73,7 +59,7 @@ Here is how you can do that using `test_context` and `tempdir` crate:
 use tempdir::TempDir;
 use test_context::{test_context, AsyncTestContext};
 use async_trait::async_trait;
-use madara_node_runner::{ExecutionStrategy, MadaraClient};
+use madara_node_runner::MadaraRunner;
 
 struct Context {
     pub madara_path: TempDir,
@@ -95,8 +81,7 @@ impl AsyncTestContext for Context {
 #[rstest]
 #[tokio::test]
 async fn my_test_case(ctx: &mut Context) -> Result<(), anyhow::Error> {
-    let madara = MadaraClient::new(
-        ExecutionStrategy::Native,
+    let madara = MadaraRunner::new(
         None,
         Some(ctx.madara_path.path().into()),
     )

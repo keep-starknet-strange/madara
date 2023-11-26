@@ -26,6 +26,7 @@ members = [
   "crates/client/settlement",
   "starknet-rpc-test",
   "starknet-e2e-test",
+  "madara-test-runner",
 ]
 # All previous except for `starknet-rpc-test` and `starknet-e2e-test`
 # We don't want `cargo test` to trigger its tests
@@ -182,6 +183,9 @@ mc-settlement = { path = "crates/client/settlement" }
 
 # Madara runtime
 madara-runtime = { path = "crates/runtime" }
+
+# Madara test runner
+madara-test-runner = { path = "madara-test-runner" }
 
 # Starknet dependencies
 # Cairo Virtual Machine

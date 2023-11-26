@@ -17,7 +17,7 @@ pub struct SettlementWorker<B, H, SC>(PhantomData<(B, H, SC)>);
 
 #[derive(Debug, Copy, Clone, PartialEq, clap::ValueEnum)]
 pub enum SettlementLayer {
-    /// Use Starknet state contract in Ethereum
+    /// Use Ethereum core contract
     Ethereum,
 }
 

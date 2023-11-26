@@ -32,6 +32,8 @@
 - feat(settlement): run client thread responsible for pushing state updates
   and messaging on Ethereum
 - feat(settlement): starknet core contract tests with anvil sandbox
+- fix(rpc-test): incorrect node url
+- feat(settlement): e2e test with Madara node settling on Ethereum contract
 
 ## v0.5.0
 

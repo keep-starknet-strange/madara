@@ -6523,6 +6523,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "madara-test-runner"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "assert_matches",
+ "async-lock 3.1.1",
+ "async-trait",
+ "derive_more",
+ "flate2",
+ "lazy_static",
+ "reqwest",
+ "rstest",
+ "serde",
+ "serde_json",
+ "starknet-accounts",
+ "starknet-contract",
+ "starknet-core",
+ "starknet-crypto 0.6.1",
+ "starknet-ff",
+ "starknet-providers",
+ "starknet-rpc-test",
+ "starknet-signers",
+ "starknet_api",
+ "thiserror",
+ "tokio",
+ "url",
+]
+
+[[package]]
 name = "maplit"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12594,6 +12623,7 @@ dependencies = [
  "flate2",
  "home",
  "madara-runtime",
+ "madara-test-runner",
  "mc-settlement",
  "mp-snos-output",
  "reqwest",

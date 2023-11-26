@@ -10,7 +10,7 @@ pub struct ThreadSafeMadaraClient(RwLock<MadaraClient>);
 #[fixture]
 #[once]
 pub fn madara() -> ThreadSafeMadaraClient {
-    ThreadSafeMadaraClient(RwLock::new(MadaraClient::new()))
+    ThreadSafeMadaraClient(RwLock::new(MadaraClient::default()))
 }
 
 impl ThreadSafeMadaraClient {

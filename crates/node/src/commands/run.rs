@@ -132,10 +132,9 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
         .map_err(|e| sc_cli::Error::Input(e.to_string()))?;
     let settlement_config: Option<(SettlementLayer, PathBuf)> = match cli.run.settlement {
         Some(SettlementLayer::Ethereum) => {
-            let config_path = data_path.join("/eth-config.json");
+            let config_path = data_path.join("eth-config.json");
             if !config_path.exists() {
-                log::info!("{} does not contain Ethereum config", data_path.display());
-                return Err("Ethereum config not available".into());
+                return Err(sc_cli::Error::Input(format!("Ethereum config not found at {}", config_path.display())));
             }
             Some((SettlementLayer::Ethereum, config_path))
         }
