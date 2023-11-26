@@ -1,3 +1,11 @@
+#![cfg_attr(not(feature = "std"), no_std)]
+
+#[doc(hidden)]
+pub extern crate alloc;
+
+use alloc::string::String;
+use alloc::vec::Vec;
+
 use blockifier::execution::entry_point::CallType;
 use mp_felt::Felt252Wrapper;
 use starknet_api::deprecated_contract_class::EntryPointType;
