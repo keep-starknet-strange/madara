@@ -19,15 +19,6 @@ use crate::error::L1MessagesWorkerError;
 
 const TX_SOURCE: TransactionSource = TransactionSource::External;
 
-pub fn connect_to_l1_contract(
-    config: &L1MessagesWorkerConfig,
-) -> Result<L1Contract<Provider<Http>>, L1MessagesWorkerError> {
-    let provider = Provider::<Http>::try_from(config.provider())?;
-    let l1_contract = L1Contract::new(*config.contract_address(), Arc::new(provider));
-
-    Ok(l1_contract)
-}
-
 pub async fn run_worker<C, P, B>(
     config: L1MessagesWorkerConfig,
     client: Arc<C>,
@@ -41,13 +32,8 @@ pub async fn run_worker<C, P, B>(
 {
     log::info!("⟠ Starting L1 Messages Worker with settings: {:?}", config);
 
-    let l1_contract = match connect_to_l1_contract(&config) {
-        Ok(l1_contract) => l1_contract,
-        Err(e) => {
-            log::error!("⟠ Unexpected error while connecting to L1: {:?}", e);
-            return;
-        }
-    };
+    let l1_contract =
+        L1Contract::new(*config.contract_address(), Arc::new(Provider::new(Http::new(config.provider().clone()))));
 
     let last_synced_l1_block = match backend.messaging().last_synced_l1_block() {
         Ok(blknum) => blknum,
