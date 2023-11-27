@@ -91,7 +91,7 @@ async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraCli
 async fn works_with_storage_change(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-	let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let (declare_tx, expected_class_hash, _) = account
         .declare_contract("./contracts/Counter1/Counter1.sierra.json", "./contracts/Counter1/Counter1.casm.json");
 
