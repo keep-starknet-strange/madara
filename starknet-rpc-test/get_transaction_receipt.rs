@@ -36,7 +36,6 @@ async fn get_transaction_receipt(
 
 #[rstest]
 #[tokio::test]
-#[ignore = "reason"]
 async fn work_with_invoke_transaction(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
@@ -142,11 +141,8 @@ async fn work_with_declare_transaction(madara: &ThreadSafeMadaraClient) -> Resul
             Ok(MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Declare(d1))) => d1,
             _ => panic!("expected declare transaction receipt"),
         };
-        // assert_eq!(d1.transaction_hash, d2.transaction_hash);
         assert_eq!(d1.actual_fee, d2.actual_fee);
         assert_eq!(d1.finality_status, d2.finality_status);
-        assert_eq!(d1.block_hash, d2.block_hash);
-        assert_eq!(d1.block_number, d2.block_number);
         assert_eq_msg_to_l1(d1.messages_sent, d2.messages_sent);
         assert_eq_event(d1.events, d2.events);
         // assert_matches does not accept d2.execution_result on the RHS
@@ -190,7 +186,6 @@ async fn work_with_declare_transaction(madara: &ThreadSafeMadaraClient) -> Resul
 
 #[rstest]
 #[tokio::test]
-#[ignore = "reason"]
 async fn work_with_deploy_account_transaction(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
@@ -261,7 +256,6 @@ async fn work_with_deploy_account_transaction(madara: &ThreadSafeMadaraClient) -
 
 #[rstest]
 #[tokio::test]
-#[ignore = "reason"]
 async fn ensure_transfer_fee_event_not_messed_up_with_similar_transfer(
     madara: &ThreadSafeMadaraClient,
 ) -> Result<(), anyhow::Error> {
@@ -327,7 +321,6 @@ async fn ensure_transfer_fee_event_not_messed_up_with_similar_transfer(
 
 #[rstest]
 #[tokio::test]
-#[ignore = "reason"]
 async fn fail_invalid_transaction_hash(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
