@@ -64,13 +64,13 @@ block transaction receipts with events in block_id and an instance of Block</li>
     contract_address: FieldElement
 ) -&gt; RpcResult&lt;<a class="struct" href="struct.Felt.html" title="struct mc_rpc::Felt">Felt</a>&gt;</h4></section></summary><div class="docblock"><p>Get the contract class hash in the given block for the contract deployed at the given
 address</p>
-<h5 id="arguments-6"><a href="#arguments-6">Arguments</a></h5>
+<h5 id="arguments-3"><a href="#arguments-3">Arguments</a></h5>
 <ul>
 <li><code>block_id</code> - The hash of the requested block, or number (height) of the requested block,
 or a block tag</li>
 <li><code>contract_address</code> - The address of the contract whose class hash will be returned</li>
 </ul>
-<h5 id="returns-5"><a href="#returns-5">Returns</a></h5>
+<h5 id="returns-2"><a href="#returns-2">Returns</a></h5>
 <ul>
 <li><code>class_hash</code> - The class hash of the given contract</li>
 </ul>
@@ -96,12 +96,12 @@ or a block tag</li>
 ) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/core/pin/struct.Pin.html" title="struct core::pin::Pin">Pin</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box">Box</a>&lt;dyn <a class="trait" href="https://doc.rust-lang.org/nightly/core/future/future/trait.Future.html" title="trait core::future::future::Future">Future</a>&lt;Output = RpcResult&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;FeeEstimate&gt;&gt;&gt; + <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + 'async_trait&gt;&gt;<span class="where fmt-newline">where
     Self: 'async_trait,
     'life0: 'async_trait,</span></h4></section></summary><div class="docblock"><p>Estimate the fee associated with transaction</p>
-<h5 id="arguments-7"><a href="#arguments-7">Arguments</a></h5>
+<h5 id="arguments-4"><a href="#arguments-4">Arguments</a></h5>
 <ul>
 <li><code>request</code> - starknet transaction request</li>
 <li><code>block_id</code> - hash of the requested block, number (height), or tag</li>
 </ul>
-<h5 id="returns-6"><a href="#returns-6">Returns</a></h5>
+<h5 id="returns-3"><a href="#returns-3">Returns</a></h5>
 <ul>
 <li><code>fee_estimate</code> - fee estimate in gwei</li>
 </ul>
@@ -128,7 +128,7 @@ or a block tag</li>
 <p>If the transaction is in the transactions pool,
 it considers the transaction hash as not found.
 Consider using <code>pending_transaction</code> for that purpose.</p>
-<h5 id="arguments-8"><a href="#arguments-8">Arguments</a></h5>
+<h5 id="arguments-5"><a href="#arguments-5">Arguments</a></h5>
 <ul>
 <li><code>transaction_hash</code> - Transaction hash corresponding to the transaction.</li>
 </ul>
@@ -138,7 +138,7 @@ Consider using <code>pending_transaction</code> for that purpose.</p>
 ) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/core/pin/struct.Pin.html" title="struct core::pin::Pin">Pin</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box">Box</a>&lt;dyn <a class="trait" href="https://doc.rust-lang.org/nightly/core/future/future/trait.Future.html" title="trait core::future::future::Future">Future</a>&lt;Output = RpcResult&lt;MaybePendingTransactionReceipt&gt;&gt; + <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + 'async_trait&gt;&gt;<span class="where fmt-newline">where
     Self: 'async_trait,
     'life0: 'async_trait,</span></h4></section></summary><div class="docblock"><p>Returns the receipt of a transaction by transaction hash.</p>
-<h5 id="arguments-9"><a href="#arguments-9">Arguments</a></h5>
+<h5 id="arguments-6"><a href="#arguments-6">Arguments</a></h5>
 <ul>
 <li><code>transaction_hash</code> - Transaction hash corresponding to the transaction.</li>
 </ul>
@@ -154,7 +154,7 @@ Consider using <code>pending_transaction</code> for that purpose.</p>
     &amp;self,
     block_id: BlockId,
     index: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>
-) -&gt; RpcResult&lt;Transaction&gt;</h4></section></summary><div class='docblock'>Get the details of a transaction by a given block id and index</div></details><details class="toggle method-toggle" open><summary><section id="method.into_rpc-1" class="method trait-impl"><a class="src rightside" href="../src/mc_rpc_core/lib.rs.html#56">source</a><a href="#method.into_rpc-1" class="anchor">§</a><h4 class="code-header">fn <a href="trait.StarknetReadRpcApiServer.html#method.into_rpc" class="fn">into_rpc</a>(self) -&gt; RpcModule&lt;Self&gt;</h4></section></summary><div class='docblock'>Collects all the methods and subscriptions defined in the trait and adds them into a single <code>RpcModule</code>.</div></details></div></details><details class="toggle implementors-toggle" open><summary><section id="impl-StarknetWriteRpcApiServer-for-Starknet%3CA,+B,+BE,+C,+P,+H%3E" class="impl"><a class="src rightside" href="../src/mc_rpc/lib.rs.html#176-299">source</a><a href="#impl-StarknetWriteRpcApiServer-for-Starknet%3CA,+B,+BE,+C,+P,+H%3E" class="anchor">§</a><h3 class="code-header">impl&lt;A, B, BE, C, P, H&gt; <a class="trait" href="trait.StarknetWriteRpcApiServer.html" title="trait mc_rpc::StarknetWriteRpcApiServer">StarknetWriteRpcApiServer</a> for <a class="struct" href="struct.Starknet.html" title="struct mc_rpc::Starknet">Starknet</a>&lt;A, B, BE, C, P, H&gt;<span class="where fmt-newline">where
+) -&gt; RpcResult&lt;Transaction&gt;</h4></section></summary><div class='docblock'>Get the details of a transaction by a given block id and index</div></details><details class="toggle method-toggle" open><summary><section id="method.into_rpc" class="method trait-impl"><a class="src rightside" href="../src/mc_rpc_core/lib.rs.html#56">source</a><a href="#method.into_rpc" class="anchor">§</a><h4 class="code-header">fn <a href="trait.StarknetReadRpcApiServer.html#method.into_rpc" class="fn">into_rpc</a>(self) -&gt; RpcModule&lt;Self&gt;</h4></section></summary><div class='docblock'>Collects all the methods and subscriptions defined in the trait and adds them into a single <code>RpcModule</code>.</div></details></div></details><details class="toggle implementors-toggle" open><summary><section id="impl-StarknetWriteRpcApiServer-for-Starknet%3CA,+B,+BE,+C,+P,+H%3E" class="impl"><a class="src rightside" href="../src/mc_rpc/lib.rs.html#176-299">source</a><a href="#impl-StarknetWriteRpcApiServer-for-Starknet%3CA,+B,+BE,+C,+P,+H%3E" class="anchor">§</a><h3 class="code-header">impl&lt;A, B, BE, C, P, H&gt; <a class="trait" href="trait.StarknetWriteRpcApiServer.html" title="trait mc_rpc::StarknetWriteRpcApiServer">StarknetWriteRpcApiServer</a> for <a class="struct" href="struct.Starknet.html" title="struct mc_rpc::Starknet">Starknet</a>&lt;A, B, BE, C, P, H&gt;<span class="where fmt-newline">where
     A: ChainApi&lt;Block = B&gt; + 'static,
     B: BlockT,
     P: TransactionPool&lt;Block = B&gt; + 'static,
@@ -167,11 +167,11 @@ Consider using <code>pending_transaction</code> for that purpose.</p>
 ) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/core/pin/struct.Pin.html" title="struct core::pin::Pin">Pin</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box">Box</a>&lt;dyn <a class="trait" href="https://doc.rust-lang.org/nightly/core/future/future/trait.Future.html" title="trait core::future::future::Future">Future</a>&lt;Output = RpcResult&lt;DeclareTransactionResult&gt;&gt; + <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + 'async_trait&gt;&gt;<span class="where fmt-newline">where
     Self: 'async_trait,
     'life0: 'async_trait,</span></h4></section></summary><div class="docblock"><p>Submit a new declare transaction to be added to the chain</p>
-<h5 id="arguments-3"><a href="#arguments-3">Arguments</a></h5>
+<h5 id="arguments-7"><a href="#arguments-7">Arguments</a></h5>
 <ul>
 <li><code>declare_transaction</code> - the declare transaction to be added to the chain</li>
 </ul>
-<h5 id="returns-2"><a href="#returns-2">Returns</a></h5>
+<h5 id="returns-4"><a href="#returns-4">Returns</a></h5>
 <ul>
 <li><code>declare_transaction_result</code> - the result of the declare transaction</li>
 </ul>
@@ -181,11 +181,11 @@ Consider using <code>pending_transaction</code> for that purpose.</p>
 ) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/core/pin/struct.Pin.html" title="struct core::pin::Pin">Pin</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box">Box</a>&lt;dyn <a class="trait" href="https://doc.rust-lang.org/nightly/core/future/future/trait.Future.html" title="trait core::future::future::Future">Future</a>&lt;Output = RpcResult&lt;InvokeTransactionResult&gt;&gt; + <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + 'async_trait&gt;&gt;<span class="where fmt-newline">where
     Self: 'async_trait,
     'life0: 'async_trait,</span></h4></section></summary><div class="docblock"><p>Add an Invoke Transaction to invoke a contract function</p>
-<h5 id="arguments-4"><a href="#arguments-4">Arguments</a></h5>
+<h5 id="arguments-8"><a href="#arguments-8">Arguments</a></h5>
 <ul>
 <li><code>invoke tx</code> - <a href="https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#invoke_transaction">https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#invoke_transaction</a></li>
 </ul>
-<h5 id="returns-3"><a href="#returns-3">Returns</a></h5>
+<h5 id="returns-5"><a href="#returns-5">Returns</a></h5>
 <ul>
 <li><code>transaction_hash</code> - transaction hash corresponding to the invocation</li>
 </ul>
@@ -195,16 +195,16 @@ Consider using <code>pending_transaction</code> for that purpose.</p>
 ) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/core/pin/struct.Pin.html" title="struct core::pin::Pin">Pin</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box">Box</a>&lt;dyn <a class="trait" href="https://doc.rust-lang.org/nightly/core/future/future/trait.Future.html" title="trait core::future::future::Future">Future</a>&lt;Output = RpcResult&lt;DeployAccountTransactionResult&gt;&gt; + <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + 'async_trait&gt;&gt;<span class="where fmt-newline">where
     Self: 'async_trait,
     'life0: 'async_trait,</span></h4></section></summary><div class="docblock"><p>Add an Deploy Account Transaction</p>
-<h5 id="arguments-5"><a href="#arguments-5">Arguments</a></h5>
+<h5 id="arguments-9"><a href="#arguments-9">Arguments</a></h5>
 <ul>
 <li><code>deploy account transaction</code> - <a href="https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#deploy_account_transaction">https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#deploy_account_transaction</a></li>
 </ul>
-<h5 id="returns-4"><a href="#returns-4">Returns</a></h5>
+<h5 id="returns-6"><a href="#returns-6">Returns</a></h5>
 <ul>
 <li><code>transaction_hash</code> - transaction hash corresponding to the invocation</li>
 <li><code>contract_address</code> - address of the deployed contract account</li>
 </ul>
-</div></details><details class="toggle method-toggle" open><summary><section id="method.into_rpc" class="method trait-impl"><a class="src rightside" href="../src/mc_rpc_core/lib.rs.html#31">source</a><a href="#method.into_rpc" class="anchor">§</a><h4 class="code-header">fn <a href="trait.StarknetWriteRpcApiServer.html#method.into_rpc" class="fn">into_rpc</a>(self) -&gt; RpcModule&lt;Self&gt;</h4></section></summary><div class='docblock'>Collects all the methods and subscriptions defined in the trait and adds them into a single <code>RpcModule</code>.</div></details></div></details></div><h2 id="synthetic-implementations" class="small-section-header">Auto Trait Implementations<a href="#synthetic-implementations" class="anchor">§</a></h2><div id="synthetic-implementations-list"><section id="impl-RefUnwindSafe-for-Starknet%3CA,+B,+BE,+C,+P,+H%3E" class="impl"><a href="#impl-RefUnwindSafe-for-Starknet%3CA,+B,+BE,+C,+P,+H%3E" class="anchor">§</a><h3 class="code-header">impl&lt;A, B, BE, C, P, H&gt; !<a class="trait" href="https://doc.rust-lang.org/nightly/core/panic/unwind_safe/trait.RefUnwindSafe.html" title="trait core::panic::unwind_safe::RefUnwindSafe">RefUnwindSafe</a> for <a class="struct" href="struct.Starknet.html" title="struct mc_rpc::Starknet">Starknet</a>&lt;A, B, BE, C, P, H&gt;</h3></section><section id="impl-Send-for-Starknet%3CA,+B,+BE,+C,+P,+H%3E" class="impl"><a href="#impl-Send-for-Starknet%3CA,+B,+BE,+C,+P,+H%3E" class="anchor">§</a><h3 class="code-header">impl&lt;A, B, BE, C, P, H&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> for <a class="struct" href="struct.Starknet.html" title="struct mc_rpc::Starknet">Starknet</a>&lt;A, B, BE, C, P, H&gt;<span class="where fmt-newline">where
+</div></details><details class="toggle method-toggle" open><summary><section id="method.into_rpc-1" class="method trait-impl"><a class="src rightside" href="../src/mc_rpc_core/lib.rs.html#31">source</a><a href="#method.into_rpc-1" class="anchor">§</a><h4 class="code-header">fn <a href="trait.StarknetWriteRpcApiServer.html#method.into_rpc" class="fn">into_rpc</a>(self) -&gt; RpcModule&lt;Self&gt;</h4></section></summary><div class='docblock'>Collects all the methods and subscriptions defined in the trait and adds them into a single <code>RpcModule</code>.</div></details></div></details></div><h2 id="synthetic-implementations" class="small-section-header">Auto Trait Implementations<a href="#synthetic-implementations" class="anchor">§</a></h2><div id="synthetic-implementations-list"><section id="impl-RefUnwindSafe-for-Starknet%3CA,+B,+BE,+C,+P,+H%3E" class="impl"><a href="#impl-RefUnwindSafe-for-Starknet%3CA,+B,+BE,+C,+P,+H%3E" class="anchor">§</a><h3 class="code-header">impl&lt;A, B, BE, C, P, H&gt; !<a class="trait" href="https://doc.rust-lang.org/nightly/core/panic/unwind_safe/trait.RefUnwindSafe.html" title="trait core::panic::unwind_safe::RefUnwindSafe">RefUnwindSafe</a> for <a class="struct" href="struct.Starknet.html" title="struct mc_rpc::Starknet">Starknet</a>&lt;A, B, BE, C, P, H&gt;</h3></section><section id="impl-Send-for-Starknet%3CA,+B,+BE,+C,+P,+H%3E" class="impl"><a href="#impl-Send-for-Starknet%3CA,+B,+BE,+C,+P,+H%3E" class="anchor">§</a><h3 class="code-header">impl&lt;A, B, BE, C, P, H&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> for <a class="struct" href="struct.Starknet.html" title="struct mc_rpc::Starknet">Starknet</a>&lt;A, B, BE, C, P, H&gt;<span class="where fmt-newline">where
     BE: <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a>,
     C: <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html" title="trait core::marker::Sync">Sync</a>,
     H: <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a>,
