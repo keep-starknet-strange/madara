@@ -1,30 +1,37 @@
+use std::result::Result;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 use async_trait::async_trait;
 use ethers::abi::RawLog;
 use ethers::contract::{BaseContract, EthEvent, EthLogDecode};
 use ethers::core::abi::parse_abi;
 use ethers::providers::{Http, Middleware, Provider};
-use ethers::types::{Address, Bytes, Filter, Log, Topic, H160, H256, I256, U256};
-use mc_db::L1L2BlockMapping;
-use starknet_api::block::{BlockHash, BlockNumber};
-use starknet_api::hash::{StarkFelt, StarkHash};
+use ethers::types::{Address, Filter, Log, H256, I256, U256};
+use log::debug;
+use sp_runtime::generic::BlockId;
+use sp_runtime::traits::Block as BlockT;
 use starknet_api::state::StateDiff;
+use tokio::time::sleep;
+// use tokio_retry::strategy::ExponentialBackoff;
 
-use crate::{parse_da, Error, FetchState, StateFetcher};
+use crate::{parser, Error, FetchState, StateFetcher, LOG_TARGET};
+
+const STATE_SEARCH_STEP: u64 = 10;
+const LOG_SEARCH_STEP: u64 = 1000;
 
 #[derive(Debug)]
 pub struct EthOrigin {
     block_hash: H256,
     block_number: u64,
-    transaction_hash: H256,
+    _transaction_hash: H256,
     transaction_index: u64,
 }
 
 #[derive(Debug)]
 pub struct StateUpdate {
     eth_origin: EthOrigin,
-    state_update: LogStateUpdate,
+    update: LogStateUpdate,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, EthEvent)]
@@ -62,6 +69,7 @@ pub struct LogMemoryPageFactContinuousWithTxHash {
     pub tx_hash: H256,
 }
 
+#[derive(Debug)]
 pub struct EthereumStateFetcher {
     http_provider: Provider<Http>,
 
@@ -71,18 +79,86 @@ pub struct EthereumStateFetcher {
 
     memory_page_contract: Address,
 
-    search_step: u64,
+    eth_url_list: Vec<String>, // Ethereum Node URL List
+
+    current_provider_index: Mutex<usize>,
 }
 
 impl EthereumStateFetcher {
     pub fn new(
-        url: String,
         core_contract: Address,
         verifier_contract: Address,
         memory_page_contract: Address,
+        eth_url_list: Vec<String>,
     ) -> Result<Self, Error> {
-        let provider = Provider::<Http>::try_from(url).map_err(|e| Error::L1Connection(e.to_string()))?;
-        Ok(Self { http_provider: provider, core_contract, verifier_contract, memory_page_contract, search_step: 1000 })
+        let current_provider_index = 0;
+        let provider = Provider::<Http>::try_from(eth_url_list[current_provider_index].clone())
+            .map_err(|e| Error::L1Connection(e.to_string()))?;
+
+        Ok(Self {
+            http_provider: provider,
+            core_contract,
+            verifier_contract,
+            memory_page_contract,
+            eth_url_list,
+            current_provider_index: Mutex::new(current_provider_index),
+        })
+    }
+
+    pub async fn get_logs_retry(&self, filter: &Filter) -> Result<Vec<Log>, Error> {
+        // let _strategy = ExponentialBackoff::from_millis(100).max_delay(Duration::from_secs(10)).factor(2); //NonZeroU64::new(10).unwrap()
+
+        let mut retries = 0;
+        loop {
+            let provider = self
+                .current_provider_index
+                .lock()
+                .map(|index| {
+                    let current_provider_url = &self.eth_url_list[*index];
+                    Provider::<Http>::try_from(current_provider_url).map_err(|e| Error::L1Connection(e.to_string()))
+                })
+                .map_err(|e| Error::Other(e.to_string()))??;
+
+            // drop(current_index);
+            match provider.get_logs(&filter).await {
+                Ok(logs) => return Ok(logs),
+                Err(_e) => {
+                    retries += 1;
+                    if retries > self.eth_url_list.len() {
+                        return Err(Error::L1Connection("All Ethereum nodes failed.".to_string()));
+                    }
+
+                    // change to next Ethereum node
+                    if let Ok(mut index) = self.current_provider_index.lock() {
+                        *index = (*index + 1) % self.eth_url_list.len();
+                    };
+
+                    // self.current_provider_index = (self.current_provider_index + 1) % self.eth_url_list.len();
+
+                    // Calculate the wait time manually
+                    let wait_time = self.calculate_backoff(retries);
+
+                    println!("===== Retry #{}: Waiting for {:?} seconds", retries, wait_time);
+                    sleep(wait_time).await;
+                }
+            }
+        }
+    }
+
+    // Custom backoff calculation
+    pub fn calculate_backoff(&self, retries: usize) -> Duration {
+        // A simple exponential backoff with a maximum delay of 10 seconds
+        let base_delay = 1.0; // in seconds
+        let max_delay = 10; // in seconds
+        let exponential_factor: f64 = 2.0;
+
+        // Calculate the backoff using the exponential factor
+        let backoff = (base_delay * exponential_factor.powf(retries as f64)) as u64;
+
+        // Ensure the backoff does not exceed the maximum delay
+        let final_backoff = backoff.min(max_delay);
+
+        Duration::from_secs(final_backoff)
     }
 
     pub(crate) async fn query_state_update(
@@ -93,14 +169,13 @@ impl EthereumStateFetcher {
         let filter = Filter::new().address(self.core_contract).event("LogStateUpdate(uint256,int256,uint256)");
 
         let mut from = eth_from;
-        let mut to = eth_from + self.search_step;
+        let mut to = eth_from + STATE_SEARCH_STEP;
 
         loop {
             let filter = filter.clone().from_block(from).to_block(to);
 
             let updates: Result<Vec<StateUpdate>, Error> = self
-                .http_provider
-                .get_logs(&filter)
+                .get_logs_retry(&filter)
                 .await
                 .map_err(|e| Error::L1Connection(e.to_string()))?
                 .iter()
@@ -112,16 +187,16 @@ impl EthereumStateFetcher {
                                 eth_origin: EthOrigin {
                                     block_hash: log.block_hash.ok_or(Error::L1EventDecode)?,
                                     block_number: log.block_number.ok_or(Error::L1EventDecode)?.as_u64(),
-                                    transaction_hash: log.transaction_hash.ok_or(Error::L1EventDecode)?,
+                                    _transaction_hash: log.transaction_hash.ok_or(Error::L1EventDecode)?,
                                     transaction_index: log.transaction_index.ok_or(Error::L1EventDecode)?.as_u64(),
                                 },
-                                state_update: log_state_update,
+                                update: log_state_update,
                             })
                         })
                 })
                 .filter(|res| {
                     if let Ok(state_update) = res {
-                        if state_update.state_update.block_number.as_u64() < starknet_from {
+                        if state_update.update.block_number.as_u64() < starknet_from {
                             return false;
                         }
                     }
@@ -129,14 +204,14 @@ impl EthereumStateFetcher {
                 })
                 .collect();
 
-            if let Ok(res) = updates {
-                if res.len() > 0 {
-                    return Ok(res);
+            if let Ok(remind_state_updates) = updates {
+                if remind_state_updates.is_empty() {
+                    return Ok(remind_state_updates);
                 }
             }
 
-            from += self.search_step;
-            to += self.search_step;
+            from += LOG_SEARCH_STEP;
+            to += LOG_SEARCH_STEP;
         }
     }
 
@@ -151,8 +226,7 @@ impl EthereumStateFetcher {
             .from_block(eth_from)
             .to_block(eth_from);
 
-        self.http_provider
-            .get_logs(&filter)
+        self.get_logs_retry(&filter)
             .await
             .map_err(|e| Error::L1Connection(e.to_string()))?
             .iter()
@@ -181,7 +255,7 @@ impl EthereumStateFetcher {
     ) -> Result<LogMemoryPagesHashes, Error> {
         let filter = Filter::new().address(self.verifier_contract).event("LogMemoryPagesHashes(bytes32,bytes32[])");
 
-        let mut from = eth_from.saturating_sub(self.search_step);
+        let mut from = eth_from.saturating_sub(LOG_SEARCH_STEP);
         let mut to = eth_from;
 
         loop {
@@ -191,8 +265,7 @@ impl EthereumStateFetcher {
             let filter = filter.clone().from_block(from).to_block(to);
 
             let res = self
-                .http_provider
-                .get_logs(&filter)
+                .get_logs_retry(&filter)
                 .await
                 .map_err(|e| Error::L1Connection(e.to_string()))?
                 .iter()
@@ -215,8 +288,8 @@ impl EthereumStateFetcher {
                 return Ok(pages_hashes);
             }
 
-            from = from.saturating_sub(self.search_step);
-            to = to.saturating_sub(self.search_step);
+            from = from.saturating_sub(LOG_SEARCH_STEP);
+            to = to.saturating_sub(LOG_SEARCH_STEP);
         }
     }
 
@@ -229,8 +302,10 @@ impl EthereumStateFetcher {
             .address(self.memory_page_contract)
             .event("LogMemoryPageFactContinuous(bytes32,uint256,uint256)");
 
-        let mut from = eth_from.saturating_sub(self.search_step);
+        let mut from = eth_from.saturating_sub(LOG_SEARCH_STEP);
         let mut to = eth_from;
+
+        let mut match_pages_hashes = Vec::new();
 
         loop {
             if to == 0 {
@@ -238,7 +313,7 @@ impl EthereumStateFetcher {
             }
             let filter = filter.clone().from_block(from).to_block(to);
 
-            let logs = self.http_provider.get_logs(&filter).await.map_err(|e| Error::L1Connection(e.to_string()))?;
+            let logs = self.get_logs_retry(&filter).await.map_err(|e| Error::L1Connection(e.to_string()))?;
             let mut memory_pages_hashes = Vec::new();
 
             for l in logs.iter() {
@@ -255,14 +330,18 @@ impl EthereumStateFetcher {
                     })
                 }
             }
+            match_pages_hashes.push(memory_pages_hashes);
 
-            if pages_hashes.len() == 0 {
-                return Ok(memory_pages_hashes);
+            if pages_hashes.is_empty() {
+                break;
             }
 
-            from = from.saturating_sub(self.search_step);
-            to = to.saturating_sub(self.search_step);
+            from = from.saturating_sub(LOG_SEARCH_STEP);
+            to = to.saturating_sub(LOG_SEARCH_STEP);
         }
+
+        match_pages_hashes.reverse();
+        return Ok(match_pages_hashes.into_iter().flat_map(|v| v).collect());
     }
 
     pub async fn query_and_decode_transaction(&self, hash: H256) -> Result<Vec<U256>, Error> {
@@ -279,33 +358,44 @@ impl EthereumStateFetcher {
             .unwrap(),
         );
 
-        let (_, mut data, _, _, _): (U256, Vec<U256>, U256, U256, U256) =
+        let (_, data, _, _, _): (U256, Vec<U256>, U256, U256, U256) =
             abi.decode("registerContinuousMemoryPage", tx.input.as_ref()).unwrap();
-
-        match parse_da::decode_pre_011_diff(&mut data, true) {
-            Ok(state_diff) => {
-                // apply_state_diff()
-            }
-            Err(err) => {
-                // handle err
-                panic!("Error converting nonces_value: {:?}", err);
-            }
-        }
-
         Ok(data)
     }
 
-    pub fn temp_decode_interface(&self, _data: Vec<U256>) -> StateDiff {
-        unimplemented!()
+    pub fn decode_state_diff<B, C>(
+        &self,
+        starknet_block_number: u64,
+        data: Vec<U256>,
+        client: Arc<C>,
+    ) -> Result<StateDiff, Error>
+    where
+        B: BlockT,
+        C: ProvideRuntimeApi<B> + HeaderBackend<B>,
+        C::Api: StarknetRuntimeApi<B>,
+    {
+        let block_hash = client
+            .block_hash_from_id(&BlockId::Number((starknet_block_number as u32).saturating_sub(1).into()))
+            .map_err(|_| Error::UnknownBlock)?
+            .unwrap_or_default();
+        parser::decode_011_diff(&data, block_hash, client)
     }
 
-    pub async fn query_state_diff(&self, state_update: &StateUpdate) -> Result<FetchState, Error> {
+    pub async fn query_state_diff<B, C>(&self, state_update: &StateUpdate, client: Arc<C>) -> Result<FetchState, Error>
+    where
+        B: BlockT,
+        C: ProvideRuntimeApi<B> + HeaderBackend<B>,
+        C::Api: StarknetRuntimeApi<B>,
+    {
+        debug!(target: LOG_TARGET,"~~ query state diff for starknet block {:#?}", state_update.update.block_number);
+
         let fact = self
             .query_state_transition_fact(
                 state_update.eth_origin.block_number,
                 state_update.eth_origin.transaction_index,
             )
             .await?;
+
         let pages_hashes = self.query_memory_pages_hashes(state_update.eth_origin.block_number, fact).await?;
 
         let mut pages_hashes =
@@ -317,21 +407,23 @@ impl EthereumStateFetcher {
 
         let mut tx_input_data = Vec::new();
 
-        for log in continuous_logs_with_tx_hash.iter() {
+        for log in &continuous_logs_with_tx_hash[1..] {
+            debug!(target: LOG_TARGET,"~~ decode state diff from tx: {:#?}", log.tx_hash);
+
             let mut data = self.query_and_decode_transaction(log.tx_hash).await?;
             tx_input_data.append(&mut data)
         }
 
-        let state_diff = self.temp_decode_interface(tx_input_data);
+        let state_diff = self.decode_state_diff(state_update.update.block_number.as_u64(), tx_input_data, client)?;
 
         Ok(FetchState {
             l1_l2_block_mapping: L1L2BlockMapping {
                 l1_block_hash: state_update.eth_origin.block_hash,
                 l1_block_number: state_update.eth_origin.block_number,
-                l2_block_hash: state_update.state_update.block_hash,
-                l2_block_number: state_update.state_update.block_number.as_u64(),
+                l2_block_hash: state_update.update.block_hash,
+                l2_block_number: state_update.update.block_number.as_u64(),
             },
-            post_state_root: state_update.state_update.global_root,
+            post_state_root: state_update.update.global_root,
             state_diff,
         })
     }
@@ -339,12 +431,19 @@ impl EthereumStateFetcher {
 
 #[async_trait]
 impl StateFetcher for EthereumStateFetcher {
-    async fn state_diff(&self, l1_from: u64, l2_start: u64) -> Result<Vec<FetchState>, Error> {
+    async fn state_diff<B, C>(&self, l1_from: u64, l2_start: u64, client: Arc<C>) -> Result<Vec<FetchState>, Error>
+    where
+        B: BlockT,
+        C: ProvideRuntimeApi<B> + HeaderBackend<B>,
+        C::Api: StarknetRuntimeApi<B>,
+    {
+        debug!(target: LOG_TARGET, "state_diff {} {}", l1_from, l2_start);
         let state_updates = self.query_state_update(l1_from, l2_start).await?;
 
         let tasks = state_updates.iter().map(|updates| {
+            let client_clone = client.clone();
             let fetcher = self;
-            async move { fetcher.query_state_diff(updates).await }
+            async move { fetcher.query_state_diff(updates, client_clone).await }
         });
 
         let fetched_states = futures::future::join_all(tasks).await;
@@ -359,77 +458,4 @@ impl StateFetcher for EthereumStateFetcher {
 
         Ok(states_res)
     }
-}
-
-#[tokio::test]
-async fn test_get_state_update() {
-    let contract_address = "0xc662c410c0ecf747543f5ba90660f6abebd9c8c4".parse::<Address>().unwrap();
-    let verifier_address = "0x47312450B3Ac8b5b8e247a6bB6d523e7605bDb60".parse::<Address>().unwrap();
-    let memory_page_address = "0xdc1534eeBF8CEEe76E31C98F5f5e0F9979476c87".parse::<Address>().unwrap();
-
-    let eth_mainnet_url = "https://eth.llamarpc.com".to_string();
-
-    let client =
-        EthereumStateFetcher::new(eth_mainnet_url, contract_address, verifier_address, memory_page_address).unwrap();
-    client.query_state_update(18623979, 18623979).await.unwrap();
-}
-
-#[tokio::test]
-async fn test_get_state_transition_fact() {
-    let contract_address = "0xc662c410c0ecf747543f5ba90660f6abebd9c8c4".parse::<Address>().unwrap();
-    let verifier_address = "0x47312450B3Ac8b5b8e247a6bB6d523e7605bDb60".parse::<Address>().unwrap();
-    let memory_page_address = "0xdc1534eeBF8CEEe76E31C98F5f5e0F9979476c87".parse::<Address>().unwrap();
-
-    let eth_mainnet_url = "https://eth.llamarpc.com".to_string();
-
-    let client =
-        EthereumStateFetcher::new(eth_mainnet_url, contract_address, verifier_address, memory_page_address).unwrap();
-    client.query_state_transition_fact(18626167u64, 18626168u64).await.unwrap();
-}
-
-#[tokio::test]
-async fn test_get_memory_pages_hashes() {
-    // let contract_address =
-    // "0xde29d060D45901Fb19ED6C6e959EB22d8626708e".parse::<Address>().unwrap();
-    // let verifier_address =
-    // "0xb59D5F625b63fbb04134213A526AA3762555B853".parse::<Address>().unwrap();
-    // let memory_page_address =
-    // "0xdc1534eeBF8CEEe76E31C98F5f5e0F9979476c87".parse::<Address>().unwrap();
-
-    // let eth_mainnet_url = "https://eth-goerli.g.alchemy.com/v2/nMMxqPTld6cj0DUO-4Qj2cg88Dd1MUhH".to_string();
-
-    // let client =
-    //     EthereumStateFetcher::new(eth_mainnet_url, contract_address, verifier_address,
-    // memory_page_address).unwrap(); client.query_memory_pages_hashes(10000296,
-    // 10000296).await;
-}
-
-#[tokio::test]
-async fn get_memory_page_fact_continuous_logs() {
-    let contract_address = "0xde29d060D45901Fb19ED6C6e959EB22d8626708e".parse::<Address>().unwrap();
-    let verifier_address = "0xb59D5F625b63fbb04134213A526AA3762555B853".parse::<Address>().unwrap();
-    let memory_page_address = "0xdc1534eeBF8CEEe76E31C98F5f5e0F9979476c87".parse::<Address>().unwrap();
-
-    let eth_mainnet_url = "https://eth-goerli.g.alchemy.com/v2/nMMxqPTld6cj0DUO-4Qj2cg88Dd1MUhH".to_string();
-
-    let client =
-        EthereumStateFetcher::new(eth_mainnet_url, contract_address, verifier_address, memory_page_address).unwrap();
-
-    // client.query_memory_page_fact_continuous_logs(10087516, 10087516).await;
-}
-
-#[tokio::test]
-async fn decode_transaction() {
-    let contract_address = "0xde29d060D45901Fb19ED6C6e959EB22d8626708e".parse::<Address>().unwrap();
-    let verifier_address = "0xb59D5F625b63fbb04134213A526AA3762555B853".parse::<Address>().unwrap();
-    let memory_page_address = "0xdc1534eeBF8CEEe76E31C98F5f5e0F9979476c87".parse::<Address>().unwrap();
-
-    let eth_mainnet_url = "https://eth-goerli.g.alchemy.com/v2/nMMxqPTld6cj0DUO-4Qj2cg88Dd1MUhH".to_string();
-
-    let client =
-        EthereumStateFetcher::new(eth_mainnet_url, contract_address, verifier_address, memory_page_address).unwrap();
-
-    let tx_hash = "0x68a68fce176bb37aa3bbb6f19f68fb8d8d6401f1f8bec07456c99500a9740dca".parse::<H256>().unwrap();
-
-    client.query_and_decode_transaction(tx_hash).await;
 }

@@ -95,7 +95,7 @@ impl AvailClient {
             Ok(i) => i,
             Err(e) => {
                 if e.to_string().contains("restart required") {
-                    ws_client.restart().await;
+					let _ = ws_client.restart().await;
                 }
 
                 return Err(anyhow!("DA Layer error : failed due to closed websocket connection {e}"));

@@ -261,6 +261,7 @@ pub fn new_full(
     config: Configuration,
     sealing: SealingMode,
     da_layer: Option<(DaLayer, PathBuf)>,
+    state_sync_conf: Option<PathBuf>,
     cache_more_things: bool,
 ) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
@@ -427,9 +428,18 @@ pub fn new_full(
         task_manager.spawn_essential_handle().spawn(
             "da-worker-update",
             Some("madara"),
-            DataAvailabilityWorker::update_state(da_client, client.clone(), madara_backend),
+            DataAvailabilityWorker::update_state(da_client, client.clone(), madara_backend.clone()),
         );
     };
+
+    if let Some(state_sync_conf_path) = state_sync_conf {
+        task_manager.spawn_essential_handle().spawn(
+            "sync-from-l1",
+            Some("madara"),
+            mc_state_sync::create_and_run(state_sync_conf_path, madara_backend, client.clone(), backend.clone())
+                .map_err(|e| ServiceError::Other(e.to_string()))?,
+        );
+    }
 
     if role.is_authority() {
         // manual-seal authorship

@@ -1,28 +1,26 @@
 [package]
-name = "state-sync"
-authors.workspace = true
+name = "mc-state-sync"
+version = "0.1.0"
+description = "Sync state from L1."
+homepage = "https://github.com/keep-starknet-strange/madara"
 edition.workspace = true
-repository.workspace = true
-version.workspace = true
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license = "MIT"
+publish = false
+repository = "https://github.com/keep-starknet-strange/madara"
 
 [dependencies]
-tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+tokio = { workspace = true, features = ["macros", "test-util", "rt-multi-thread"] }
 futures = { workspace = true }
-
 anyhow = { workspace = true }
 async-trait = { workspace = true }
-reqwest = { workspace = true, features = ["json"]}
-primitive-types = { workspace = true }
+indexmap = { workspace = true }
+hashbrown = { workspace = true }
+log = { workspace = true }
+serde = { workspace = true }
 serde_json = { workspace = true, features = [
     "arbitrary_precision",
     "raw_value",
 ] }
-hex = { workspace = true }
-tracing = { workspace = true }
-indexmap = { workspace = true }
-hashbrown = { workspace = true }
 
 # Madara
 mp-hashers = { workspace = true, default-features = true }
@@ -34,12 +32,15 @@ mp-storage = { workspace = true  }
 mc-db = { workspace = true }
 mc-mapping-sync = { workspace = true }
 madara-runtime = { workspace = true }
+pallet-starknet = { workspace = true }
+mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
 
 # Starknet
 blockifier = { workspace = true, default-features = true }
 starknet_api = { workspace = true }
 
 # Substrate
+frame-support = { workspace = true }
 sp-runtime = { workspace = true }
 sp-blockchain = { workspace = true }
 sp-state-machine = { workspace = true }
@@ -47,19 +48,12 @@ sp-core = { workspace = true }
 sp-api = { workspace = true }
 sc-client-api = { workspace = true }
 sc-client-db = { workspace = true }
-frame-support = { worksapce = true }
-
-tokio-retry = "0.3.0"
-const-decoder = "0.3.0"
-keccak-hash = "0.10.0"
-ethereum-types = "0.14.1"
 
 # Ethereum
 ethers = "2.0.11"
+tokio-retry = "0.3.0"
 
 [dev-dependencies]
-tokio = { workspace = true, features = ["macros", "test-util"] }
-futures = { workspace = true }
 pretty_assertions = { workspace = true }
 
 # Substrate
@@ -74,10 +68,7 @@ starknet-core = { workspace = true }
 starknet-crypto = { workspace = true, features = ["alloc"] }
 
 # Madara
-pallet-starknet = { workspace = true }
-mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
 mp-transactions = { workspace = true }
-mc-db = { workspace = true }
 
 const-decoder = "0.3.0"
 httpmock = "0.7.0-rc.1"

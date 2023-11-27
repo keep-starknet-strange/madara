@@ -9,7 +9,7 @@ use sp_runtime::traits::Block as BlockT;
 
 use crate::DbHash;
 
-#[derive(Debug, Clone, Encode, Decode)]
+#[derive(Debug, Clone, PartialEq, Eq, Encode, Decode)]
 pub struct L1L2BlockMapping {
     pub l1_block_hash: H256,
     pub l1_block_number: u64,

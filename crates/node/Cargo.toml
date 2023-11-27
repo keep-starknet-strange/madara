@@ -85,6 +85,7 @@ mc-storage = { workspace = true }
 mc-transaction-pool = { workspace = true }
 pallet-starknet = { workspace = true }
 starknet-core = { workspace = true }
+mc-state-sync = { workspace = true }
 
 # Primitives
 mp-block = { workspace = true }

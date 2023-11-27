@@ -52,6 +52,10 @@ pub struct ExtendedRunCmd {
     /// increases the memory footprint of the node.
     #[clap(long)]
     pub cache: bool,
+
+    /// When enable, the node will sync state from l1.
+    #[clap(long)]
+    pub sync_from_l1: bool,
 }
 
 impl ExtendedRunCmd {
@@ -86,10 +90,14 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
             None
         }
     };
+
+    let sync_from_l1_config =
+        if cli.run.sync_from_l1 { Some(data_path.join("sync-from-l1-config.json")) } else { None };
+
     runner.run_node_until_exit(|config| async move {
         let sealing = cli.run.sealing.map(Into::into).unwrap_or_default();
         let cache = cli.run.cache;
-        service::new_full(config, sealing, da_config, cache).map_err(sc_cli::Error::Service)
+        service::new_full(config, sealing, da_config, sync_from_l1_config, cache).map_err(sc_cli::Error::Service)
     })
 }
 
