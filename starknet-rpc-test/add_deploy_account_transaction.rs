@@ -67,7 +67,8 @@ async fn works_with_storage_change(madara: &ThreadSafeMadaraClient) -> Result<()
 
     let (mut txs, block_number) = {
         let mut madara_write_lock = madara.write().await;
-		// If we group the funding of the account and the deployment in one block for some unknown reason the account_address isn't found in the get_class_hash_at later
+        // If we group the funding of the account and the deployment in one block for some unknown reason
+        // the account_address isn't found in the get_class_hash_at later
         let mut txs = madara_write_lock
             .create_block_with_txs(vec![Transaction::Execution(funding_account.transfer_tokens(
                 account_address,
