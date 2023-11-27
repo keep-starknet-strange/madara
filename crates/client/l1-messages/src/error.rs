@@ -1,4 +1,8 @@
+use mc_db::DbError;
 use mp_felt::Felt252WrapperError;
+use sp_api::ApiError;
+use sp_runtime::DispatchError;
+use url::ParseError;
 
 #[derive(thiserror::Error, Debug, PartialEq)]
 pub enum L1EventToTransactionError {
@@ -14,30 +18,30 @@ pub enum L1EventToTransactionError {
 
 #[derive(thiserror::Error, Debug)]
 pub enum L1MessagesConfigError {
-    #[error("File with L1 Messages Worker config not found")]
+    #[error("File with L1 Messages Worker config not found: {0}")]
     FileNotFound(#[from] std::io::Error),
-    #[error("Failed to deserialize L1 Messages Worker Config from config file")]
+    #[error("Failed to deserialize L1 Messages Worker Config from config file: {0}")]
     InvalidFile(#[from] serde_json::Error),
 }
 
-#[derive(thiserror::Error, Debug, PartialEq)]
+#[derive(thiserror::Error, Debug)]
 pub enum L1MessagesWorkerError {
-    #[error("Failed to initialize L1 Messages Worker based on provided Config")]
-    ConfigError,
-    #[error("Failed to convert transaction via Runtime API")]
-    ConvertTransactionRuntimeApiError,
+    #[error("Failed to initialize L1 Messages Worker based on provided Config: `{0}`")]
+    ConfigError(#[from] ParseError),
+    #[error("Failed to convert transaction via Runtime API: `{0}`")]
+    ConvertTransactionRuntimeApiError(ApiError),
+    #[error("Failed to Dispatch Runtime API")]
+    RuntimeApiDispatchError(DispatchError),
     #[error("Madara Messaging DB Error: `{0}`")]
-    DatabaseError(String),
-    #[error("Message from L1 has been already processed")]
-    L1MessageAlreadyProcessed,
-    #[error("Failed to read/write into Offchain Storage")]
-    OffchainStorageError,
-    #[error("Failed to use Runtime API")]
-    RuntimeApiError,
+    DatabaseError(#[from] DbError),
+    #[error("Message from L1 has been already processed, nonce: `{0}`")]
+    L1MessageAlreadyProcessed(u64),
+    #[error("Failed to use Runtime API: `{0}`")]
+    RuntimeApiError(ApiError),
     #[error("Failed to submit transaction into Transaction Pool")]
     SubmitTxError,
     #[error("Failed to convert L1 Message into Fee")]
     ToFeeError,
-    #[error("Failed to convert L1 Message into L2 Transaction")]
+    #[error("Failed to convert L1 Message into L2 Transaction: `{0}`")]
     ToTransactionError(#[from] L1EventToTransactionError),
 }

@@ -13,6 +13,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 log = { workspace = true }
+url = "2.5.0"
 
 # Madara Runtime
 madara-runtime = { workspace = true, default-features = true }

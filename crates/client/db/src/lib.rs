@@ -11,6 +11,9 @@
 //! `paritydb` and `rocksdb` are both supported, behind the `kvdb-rocksd` and `parity-db` feature
 //! flags. Support for custom databases is possible but not supported yet.
 
+mod error;
+pub use error::DbError;
+
 mod mapping_db;
 pub use mapping_db::MappingCommitment;
 mod da_db;

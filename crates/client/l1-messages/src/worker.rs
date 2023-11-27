@@ -22,11 +22,7 @@ const TX_SOURCE: TransactionSource = TransactionSource::External;
 pub fn connect_to_l1_contract(
     config: &L1MessagesWorkerConfig,
 ) -> Result<L1Contract<Provider<Http>>, L1MessagesWorkerError> {
-    let provider = Provider::<Http>::try_from(config.provider()).map_err(|e| {
-        log::error!("⟠ Failed to connect to L1 Node: {:?}", e);
-        L1MessagesWorkerError::ConfigError
-    })?;
-
+    let provider = Provider::<Http>::try_from(config.provider())?;
     let l1_contract = L1Contract::new(*config.contract_address(), Arc::new(provider));
 
     Ok(l1_contract)
@@ -131,11 +127,11 @@ where
         Ok(true) => Ok(()),
         Ok(false) => {
             log::debug!("⟠ Event already processed: {:?}", transaction);
-            Err(L1MessagesWorkerError::L1MessageAlreadyProcessed)
+            Err(L1MessagesWorkerError::L1MessageAlreadyProcessed(transaction.nonce))
         }
         Err(e) => {
             log::error!("⟠ Unexpected runtime api error: {:?}", e);
-            Err(L1MessagesWorkerError::RuntimeApiError)
+            Err(L1MessagesWorkerError::RuntimeApiError(e))
         }
     }?;
 
@@ -144,11 +140,11 @@ where
         .convert_l1_transaction(best_block_hash, transaction, fee)
         .map_err(|e| {
             log::error!("⟠ Failed to convert transaction via runtime api: {:?}", e);
-            L1MessagesWorkerError::ConvertTransactionRuntimeApiError
+            L1MessagesWorkerError::ConvertTransactionRuntimeApiError(e)
         })?
         .map_err(|e| {
             log::error!("⟠ Failed to convert transaction via runtime api: {:?}", e);
-            L1MessagesWorkerError::ConvertTransactionRuntimeApiError
+            L1MessagesWorkerError::RuntimeApiDispatchError(e)
         })?;
 
     let tx_hash = pool.submit_one(best_block_hash, TX_SOURCE, extrinsic).await.map_err(|e| {
