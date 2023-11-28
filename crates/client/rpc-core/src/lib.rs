@@ -14,7 +14,7 @@ use serde_with::serde_as;
 
 pub mod utils;
 
-use mp_simulations::SimulatedTransaction;
+use mp_simulations::{SimulatedTransaction, SimulationFlag};
 use mp_transactions::TransactionStatus;
 use starknet_core::serde::unsigned_field_element::UfeHex;
 use starknet_core::types::{
@@ -22,7 +22,7 @@ use starknet_core::types::{
     BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall,
     InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt,
-    SimulationFlag, StateUpdate, SyncStatusType, Transaction,
+    StateUpdate, SyncStatusType, Transaction,
 };
 
 #[serde_as]

@@ -7,7 +7,7 @@ use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{State, StateReader, StateResult};
 use indexmap::IndexMap;
 use mp_felt::Felt252Wrapper;
-use mp_state::{FeeConfig, StateChanges};
+use mp_state::{AppConfig, GetAppConfig, StateChanges};
 use sp_core::Get;
 use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
@@ -39,12 +39,15 @@ where
     }
 }
 
-impl<T> FeeConfig for BlockifierStateAdapter<T>
+impl<T> GetAppConfig for BlockifierStateAdapter<T>
 where
     T: Config,
 {
-    fn is_transaction_fee_disabled(&self) -> bool {
-        T::DisableTransactionFee::get()
+    fn get_app_config(&self) -> AppConfig {
+        AppConfig {
+            disable_nonce_validation: T::DisableNonceValidation::get(),
+            disable_transaction_fee: T::DisableTransactionFee::get(),
+        }
     }
 }
 

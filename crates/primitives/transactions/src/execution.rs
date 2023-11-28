@@ -24,7 +24,7 @@ use blockifier::transaction::transactions::{
 };
 use mp_fee::{calculate_tx_fee, charge_fee, compute_transaction_resources};
 use mp_felt::Felt252Wrapper;
-use mp_state::{FeeConfig, StateChanges};
+use mp_state::{GetAppConfig, StateChanges};
 use starknet_api::api_core::{ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::StarkFelt;
@@ -267,13 +267,14 @@ pub trait Validate: GetAccountTransactionContext + GetTransactionCalldata {
 }
 
 pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata + GetTxType {
-    fn execute_inner<S: State + StateChanges + FeeConfig>(
+    fn execute_inner<S: State + StateChanges + GetAppConfig>(
         &self,
         state: &mut S,
         block_context: &BlockContext,
         resources: &mut ExecutionResources,
         remaining_gas: &mut u64,
         account_tx_context: &AccountTransactionContext,
+        disable_validation: bool,
     ) -> TransactionExecutionResult<ValidateExecuteCallInfo>;
 
     fn handle_nonce(
@@ -301,11 +302,13 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
     }
 
     /// Handles nonce and checks that the account's balance covers max fee.
-    fn handle_nonce_and_check_fee_balance(
-        state: &mut dyn State,
+    fn handle_nonce_and_check_fee_balance<S: State + StateChanges + GetAppConfig>(
+        state: &mut S,
         block_context: &BlockContext,
         account_tx_context: &AccountTransactionContext,
         disable_nonce_validation: bool,
+        disable_fee_charge: bool,
+        is_query: bool,
     ) -> TransactionExecutionResult<()> {
         // Handle nonce.
 
@@ -313,8 +316,19 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
             Self::handle_nonce(account_tx_context, state)?;
         }
 
-        // Check fee balance.
-        if account_tx_context.max_fee != Fee(0) {
+        // Check fee balance. Skipped in the following cases:
+        // 1. account_tx_context.max_fee - balance would always be enough if max_fee is 0
+        // 2. disable_fee_charge - true during simulate transactions
+        // 3. state.get_app_config().disable_transaction_fee - true when fees is disabled at app level
+        // 4. is_query - true during estimate_fee transactions. estimate_fee transactions normally have
+        //    max_fee = 0 but they should also work if max_fee > 0
+        log::debug!("this is is query: {}", is_query);
+        if account_tx_context.max_fee != Fee(0)
+            && !state.get_app_config().disable_transaction_fee
+            && !disable_fee_charge
+            && !is_query
+        {
+            log::debug!("Inside checking balance");
             let (balance_low, balance_high) =
                 state.get_fee_token_balance(block_context, &account_tx_context.sender_address)?;
 
@@ -330,12 +344,13 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
         Ok(())
     }
 
-    fn execute<S: State + StateChanges + FeeConfig>(
+    fn execute<S: State + StateChanges + GetAppConfig>(
         &self,
         state: &mut S,
         block_context: &BlockContext,
-        is_query: bool,
-        disable_nonce_validation: bool,
+        is_query: bool,           // disables fee charge and increases tx version
+        disable_validation: bool, // disables tx validation only
+        disable_fee_charge: bool, // disables fee charge only
     ) -> TransactionExecutionResult<TransactionExecutionInfo> {
         let mut execution_resources = ExecutionResources::default();
         let mut remaining_gas = TX_INITIAL_AVAILABLE_GAS;
@@ -343,7 +358,15 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
         let account_tx_context = self.get_account_transaction_context(is_query);
 
         // Nonce and fee check should be done before running user code.
-        Self::handle_nonce_and_check_fee_balance(state, block_context, &account_tx_context, disable_nonce_validation)?;
+        log::debug!("this is is query: {}", is_query);
+        Self::handle_nonce_and_check_fee_balance(
+            state,
+            block_context,
+            &account_tx_context,
+            state.get_app_config().disable_nonce_validation,
+            disable_fee_charge,
+            is_query,
+        )?;
 
         // execute
         let ValidateExecuteCallInfo { validate_call_info, execute_call_info, revert_error } = self.execute_inner(
@@ -352,6 +375,7 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
             &mut execution_resources,
             &mut remaining_gas,
             &account_tx_context,
+            disable_validation,
         )?;
 
         let (actual_fee, fee_transfer_call_info, actual_resources) = self.handle_fee(
@@ -361,6 +385,7 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
             &mut execution_resources,
             block_context,
             account_tx_context,
+            disable_fee_charge,
         )?;
 
         let tx_execution_info = TransactionExecutionInfo {
@@ -375,7 +400,7 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
         Ok(tx_execution_info)
     }
 
-    fn handle_fee<S: State + StateChanges + FeeConfig>(
+    fn handle_fee<S: State + StateChanges + GetAppConfig>(
         &self,
         state: &mut S,
         execute_call_info: &Option<CallInfo>,
@@ -383,6 +408,7 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
         execution_resources: &mut ExecutionResources,
         block_context: &BlockContext,
         account_tx_context: AccountTransactionContext,
+        disable_fee_charge: bool,
     ) -> TransactionExecutionResult<(Fee, Option<CallInfo>, ResourcesMapping)> {
         let actual_resources = compute_transaction_resources(
             state,
@@ -394,7 +420,7 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
         )?;
 
         let (actual_fee, fee_transfer_call_info) =
-            charge_fee(state, block_context, account_tx_context, &actual_resources)?;
+            charge_fee(state, block_context, account_tx_context, &actual_resources, disable_fee_charge)?;
 
         Ok((actual_fee, fee_transfer_call_info, actual_resources))
     }
@@ -405,13 +431,14 @@ impl Validate for InvokeTransaction {
 }
 
 impl Execute for InvokeTransaction {
-    fn execute_inner<S: State + StateChanges + FeeConfig>(
+    fn execute_inner<S: State + StateChanges + GetAppConfig>(
         &self,
         state: &mut S,
         block_context: &BlockContext,
         resources: &mut ExecutionResources,
         remaining_gas: &mut u64,
         account_tx_context: &AccountTransactionContext,
+        disable_validation: bool,
     ) -> TransactionExecutionResult<ValidateExecuteCallInfo> {
         let mut context = EntryPointExecutionContext::new(
             block_context.clone(),
@@ -419,13 +446,17 @@ impl Execute for InvokeTransaction {
             block_context.invoke_tx_max_n_steps,
         );
 
-        let validate_call_info = self.validate_tx_inner(
-            state,
-            resources,
-            remaining_gas,
-            &mut context,
-            GetTransactionCalldata::calldata(self),
-        )?;
+        let validate_call_info = if !disable_validation {
+            self.validate_tx_inner(
+                state,
+                resources,
+                remaining_gas,
+                &mut context,
+                GetTransactionCalldata::calldata(self),
+            )?
+        } else {
+            None
+        };
         let validate_execute_call_info = match self.tx {
             // V0 tx cannot revert, we cannot charge the failling ones
             starknet_api::transaction::InvokeTransaction::V0(_) => {
@@ -454,13 +485,14 @@ impl Validate for DeclareTransaction {
 }
 
 impl Execute for DeclareTransaction {
-    fn execute_inner<S: State + StateChanges + FeeConfig>(
+    fn execute_inner<S: State + StateChanges + GetAppConfig>(
         &self,
         state: &mut S,
         block_context: &BlockContext,
         resources: &mut ExecutionResources,
         remaining_gas: &mut u64,
         account_tx_context: &AccountTransactionContext,
+        disable_validation: bool,
     ) -> TransactionExecutionResult<ValidateExecuteCallInfo> {
         let mut context = EntryPointExecutionContext::new(
             block_context.clone(),
@@ -468,8 +500,11 @@ impl Execute for DeclareTransaction {
             block_context.invoke_tx_max_n_steps,
         );
 
-        let validate_call_info =
-            self.validate_tx_inner(state, resources, remaining_gas, &mut context, self.calldata())?;
+        let validate_call_info = if !disable_validation {
+            self.validate_tx_inner(state, resources, remaining_gas, &mut context, self.calldata())?
+        } else {
+            None
+        };
         let validate_execute_call_info = match self.tx() {
             // V0 tx cannot revert, we cannot charge the failling ones
             starknet_api::transaction::DeclareTransaction::V0(_) => {
@@ -496,13 +531,14 @@ impl Validate for DeployAccountTransaction {
 }
 
 impl Execute for DeployAccountTransaction {
-    fn execute_inner<S: State + StateChanges + FeeConfig>(
+    fn execute_inner<S: State + StateChanges + GetAppConfig>(
         &self,
         state: &mut S,
         block_context: &BlockContext,
         resources: &mut ExecutionResources,
         remaining_gas: &mut u64,
         account_tx_context: &AccountTransactionContext,
+        disable_validation: bool,
     ) -> TransactionExecutionResult<ValidateExecuteCallInfo> {
         let mut context = EntryPointExecutionContext::new(
             block_context.clone(),
@@ -513,21 +549,25 @@ impl Execute for DeployAccountTransaction {
         // In order to be verified the tx must first be executed
         // so that the `constructor` method can initialize the account state
         let execute_call_info = self.run_execute(state, resources, &mut context, remaining_gas)?;
-        let validate_call_info =
-            self.validate_tx_inner(state, resources, remaining_gas, &mut context, self.calldata())?;
+        let validate_call_info = if !disable_validation {
+            self.validate_tx_inner(state, resources, remaining_gas, &mut context, self.calldata())?
+        } else {
+            None
+        };
 
         Ok(ValidateExecuteCallInfo::new_accepted(validate_call_info, execute_call_info))
     }
 }
 
 impl Execute for L1HandlerTransaction {
-    fn execute_inner<S: State + StateChanges + FeeConfig>(
+    fn execute_inner<S: State + StateChanges + GetAppConfig>(
         &self,
         state: &mut S,
         block_context: &BlockContext,
         resources: &mut ExecutionResources,
         remaining_gas: &mut u64,
         account_tx_context: &AccountTransactionContext,
+        disable_validation: bool,
     ) -> TransactionExecutionResult<ValidateExecuteCallInfo> {
         let mut context = EntryPointExecutionContext::new(
             block_context.clone(),
@@ -541,7 +581,7 @@ impl Execute for L1HandlerTransaction {
     }
 
     // No fee are charged for L1HandlerTransaction
-    fn handle_fee<S: State + StateChanges + FeeConfig>(
+    fn handle_fee<S: State + StateChanges + GetAppConfig>(
         &self,
         state: &mut S,
         execute_call_info: &Option<CallInfo>,
@@ -549,6 +589,7 @@ impl Execute for L1HandlerTransaction {
         execution_resources: &mut ExecutionResources,
         block_context: &BlockContext,
         _account_tx_context: AccountTransactionContext,
+        disable_fee_charge: bool,
     ) -> TransactionExecutionResult<(Fee, Option<CallInfo>, ResourcesMapping)> {
         // The calldata includes the "from" field, which is not a part of the payload.
         let l1_handler_payload_size = self.calldata().0.len() - 1;

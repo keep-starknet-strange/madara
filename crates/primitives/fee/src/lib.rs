@@ -22,7 +22,7 @@ use blockifier::transaction::transaction_types::TransactionType;
 use blockifier::transaction::transaction_utils::{calculate_l1_gas_usage, calculate_tx_resources};
 #[cfg(not(feature = "std"))]
 use hashbrown::HashMap;
-use mp_state::{FeeConfig, StateChanges};
+use mp_state::{GetAppConfig, StateChanges};
 use sp_arithmetic::fixed_point::{FixedPointNumber, FixedU128};
 use sp_arithmetic::traits::Zero;
 use starknet_api::api_core::EntryPointSelector;
@@ -81,21 +81,27 @@ pub fn compute_transaction_resources<S: State + StateChanges>(
 }
 
 /// Charges the fees for a specific execution resources.
-pub fn charge_fee<S: State + StateChanges + FeeConfig>(
+pub fn charge_fee<S: State + StateChanges + GetAppConfig>(
     state: &mut S,
     block_context: &BlockContext,
     account_tx_context: AccountTransactionContext,
     resources: &ResourcesMapping,
+    disable_fee_charge: bool,
 ) -> TransactionExecutionResult<(Fee, Option<CallInfo>)> {
-    if state.is_transaction_fee_disabled() {
+    // disable_transaction_fee in the config level implies that transaction fees have been disabled
+    // at the app level and so we return 0 as the fees
+    if state.get_app_config().disable_transaction_fee {
         return Ok((Fee(0), None));
     }
 
     let actual_fee = calculate_tx_fee(resources, block_context)?;
 
-    // even if the user doesn't have enough balance
-    // estimate fee shouldn't fail
-    if account_tx_context.version.0 >= StarkFelt::try_from("0x100000000000000000000000000000000").unwrap() {
+    // if the tx version is that of a estimate tx, then don't charge any fees
+    // if `disable_fee_charge` is true, it means its a simulate transaction so
+    // we don't charge fees but still return the correct fee amount
+    if account_tx_context.version.0 >= StarkFelt::try_from("0x100000000000000000000000000000000").unwrap()
+        || disable_fee_charge
+    {
         return Ok((actual_fee, None));
     }
 

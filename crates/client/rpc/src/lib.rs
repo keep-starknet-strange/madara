@@ -20,7 +20,7 @@ pub use mc_rpc_core::{Felt, StarknetReadRpcApiServer, StarknetTraceRpcApiServer,
 use mc_storage::OverrideHandle;
 use mp_felt::{Felt252Wrapper, Felt252WrapperError};
 use mp_hashers::HasherT;
-use mp_simulations::SimulatedTransaction;
+use mp_simulations::{SimulatedTransaction, SimulationFlag};
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
 use mp_transactions::{TransactionStatus, UserTransaction};
@@ -1497,7 +1497,7 @@ where
         let fee_estimates = self
             .client
             .runtime_api()
-            .simulate_transactions(substrate_block_hash, user_transactions)
+            .simulate_transactions(substrate_block_hash, user_transactions, simulation_flags)
             .map_err(|e| {
                 error!("Request parameters error: {e}");
                 StarknetRpcApiError::InternalServerError

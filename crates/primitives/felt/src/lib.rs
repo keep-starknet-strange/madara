@@ -329,6 +329,9 @@ pub enum Felt252WrapperError {
 
 use alloc::borrow::Cow;
 
+use serde::{Serialize, Serializer};
+use serde_with::SerializeAs;
+
 impl From<Felt252WrapperError> for Cow<'static, str> {
     fn from(err: Felt252WrapperError) -> Self {
         match err {
@@ -359,6 +362,19 @@ impl From<FromStrError> for Felt252WrapperError {
             FromStrError::InvalidCharacter => Self::InvalidCharacter,
             FromStrError::OutOfRange => Self::OutOfRange,
         }
+    }
+}
+
+#[cfg(feature = "serde")]
+pub struct UfeHex;
+
+#[cfg(feature = "serde")]
+impl SerializeAs<Felt252Wrapper> for UfeHex {
+    fn serialize_as<S>(value: &Felt252Wrapper, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        starknet_core::serde::unsigned_field_element::UfeHex::serialize_as::<S>(&value.0, serializer)
     }
 }
 

@@ -85,8 +85,8 @@ use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
 use mp_simulations::{
-    DeclareTransactionTrace, DeployAccountTransactionTrace, FeeEstimate, InvokeTransactionTrace, SimulatedTransaction,
-    TransactionTrace,
+    DeclareTransactionTrace, DeployAccountTransactionTrace, FeeEstimate, FunctionInvocation, InvokeTransactionTrace,
+    SimulatedTransaction, SimulationFlag, TransactionTrace,
 };
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_transactions::execution::{Execute, Validate};
@@ -504,12 +504,7 @@ pub mod pallet {
 
             // Execute
             let tx_execution_infos = transaction
-                .execute(
-                    &mut BlockifierStateAdapter::<T>::default(),
-                    &Self::get_block_context(),
-                    false,
-                    T::DisableNonceValidation::get(),
-                )
+                .execute(&mut BlockifierStateAdapter::<T>::default(), &Self::get_block_context(), false, false, false)
                 .map_err(|e| {
                     log::error!("failed to execute invoke tx: {:?}", e);
                     Error::<T>::TransactionExecutionFailed
@@ -567,12 +562,7 @@ pub mod pallet {
 
             // Execute
             let tx_execution_infos = transaction
-                .execute(
-                    &mut BlockifierStateAdapter::<T>::default(),
-                    &Self::get_block_context(),
-                    false,
-                    T::DisableNonceValidation::get(),
-                )
+                .execute(&mut BlockifierStateAdapter::<T>::default(), &Self::get_block_context(), false, false, false)
                 .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
             let tx_hash = transaction.tx_hash();
@@ -617,12 +607,7 @@ pub mod pallet {
 
             // Execute
             let tx_execution_infos = transaction
-                .execute(
-                    &mut BlockifierStateAdapter::<T>::default(),
-                    &Self::get_block_context(),
-                    false,
-                    T::DisableNonceValidation::get(),
-                )
+                .execute(&mut BlockifierStateAdapter::<T>::default(), &Self::get_block_context(), false, false, false)
                 .map_err(|e| {
                     log::error!("failed to deploy accout: {:?}", e);
                     Error::<T>::TransactionExecutionFailed
@@ -673,12 +658,7 @@ pub mod pallet {
 
             // Execute
             let tx_execution_infos = transaction
-                .execute(
-                    &mut BlockifierStateAdapter::<T>::default(),
-                    &Self::get_block_context(),
-                    false,
-                    T::DisableNonceValidation::get(),
-                )
+                .execute(&mut BlockifierStateAdapter::<T>::default(), &Self::get_block_context(), false, false, false)
                 .map_err(|e| {
                     log::error!("Failed to consume l1 message: {}", e);
                     Error::<T>::TransactionExecutionFailed
@@ -1103,12 +1083,9 @@ impl<T: Config> Pallet<T> {
     pub fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
         let chain_id = Self::chain_id();
 
-        let execution_results = execute_txs_and_rollback::<T>(
-            &transactions,
-            &Self::get_block_context(),
-            T::DisableNonceValidation::get(),
-            chain_id,
-        );
+        // is_query is true so disable_fee_charge could be true or false
+        let execution_results =
+            execute_txs_and_rollback::<T>(&transactions, &Self::get_block_context(), chain_id, true, false, false);
 
         let mut results = vec![];
         for res in execution_results {
@@ -1132,55 +1109,61 @@ impl<T: Config> Pallet<T> {
 
     pub fn simulate_transactions(
         transactions: Vec<UserTransaction>,
+        simulation_flags: Vec<SimulationFlag>,
     ) -> Result<Vec<SimulatedTransaction>, DispatchError> {
         let chain_id = Self::chain_id();
+
+        let disable_fee_charge = simulation_flags.contains(&SimulationFlag::SkipFeeCharge);
+        let disable_validation = simulation_flags.contains(&SimulationFlag::SkipValidate);
 
         let execution_results = execute_txs_and_rollback::<T>(
             &transactions,
             &Self::get_block_context(),
-            T::DisableNonceValidation::get(),
             chain_id,
+            false,
+            disable_validation,
+            disable_fee_charge,
         );
+
+        let get_function_invocation =
+            |call_info: Option<&CallInfo>| -> Result<Option<FunctionInvocation>, DispatchError> {
+                match call_info {
+                    Some(call_info) => Ok(Some(convert_call_info_to_function_invocation::<T>(call_info)?)),
+                    None => Ok(None),
+                }
+            };
 
         let mut results = vec![];
         for (tx, res) in transactions.iter().zip(execution_results.iter()) {
             match res {
                 Ok(tx_exec_info) => {
+                    let validate_invocation = get_function_invocation(tx_exec_info.validate_call_info.as_ref())?;
+                    let fee_transfer_invocation =
+                        get_function_invocation(tx_exec_info.fee_transfer_call_info.as_ref())?;
                     let transaction_trace = match tx {
                         UserTransaction::Invoke(tx) => TransactionTrace::Invoke(InvokeTransactionTrace {
-                            validate_invocation: Some(convert_call_info_to_function_invocation::<T>(
-                                tx_exec_info.validate_call_info.as_ref().ok_or(Error::<T>::MissingCallInfo)?,
-                            )?),
+                            validate_invocation,
                             execute_invocation: convert_call_info_to_execute_invocation::<T>(
                                 tx_exec_info.execute_call_info.as_ref().ok_or(Error::<T>::MissingCallInfo)?,
                                 tx_exec_info.revert_error.as_ref(),
                             )?,
-                            fee_transfer_invocation: Some(convert_call_info_to_function_invocation::<T>(
-                                tx_exec_info.fee_transfer_call_info.as_ref().ok_or(Error::<T>::MissingCallInfo)?,
-                            )?),
+                            fee_transfer_invocation,
                         }),
                         UserTransaction::Declare(tx, _) => TransactionTrace::Declare(DeclareTransactionTrace {
-                            validate_invocation: Some(convert_call_info_to_function_invocation::<T>(
-                                tx_exec_info.validate_call_info.as_ref().ok_or(Error::<T>::MissingCallInfo)?,
-                            )?),
-                            fee_transfer_invocation: Some(convert_call_info_to_function_invocation::<T>(
-                                tx_exec_info.fee_transfer_call_info.as_ref().ok_or(Error::<T>::MissingCallInfo)?,
-                            )?),
+                            validate_invocation,
+                            fee_transfer_invocation,
                         }),
                         UserTransaction::DeployAccount(tx) => {
                             TransactionTrace::DeployAccount(DeployAccountTransactionTrace {
-                                validate_invocation: Some(convert_call_info_to_function_invocation::<T>(
-                                    tx_exec_info.validate_call_info.as_ref().ok_or(Error::<T>::MissingCallInfo)?,
-                                )?),
+                                validate_invocation,
                                 constructor_invocation: convert_call_info_to_function_invocation::<T>(
                                     tx_exec_info.execute_call_info.as_ref().ok_or(Error::<T>::MissingCallInfo)?,
                                 )?,
-                                fee_transfer_invocation: Some(convert_call_info_to_function_invocation::<T>(
-                                    tx_exec_info.fee_transfer_call_info.as_ref().ok_or(Error::<T>::MissingCallInfo)?,
-                                )?),
+                                fee_transfer_invocation,
                             })
                         }
                     };
+                    log::info!("Simulated transaction: {:?}", transaction_trace);
                     results.push(SimulatedTransaction {
                         transaction_trace,
                         fee_estimation: FeeEstimate { gas_consumed: 0, gas_price: 0, overall_fee: 0 },

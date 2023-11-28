@@ -25,15 +25,23 @@ pub trait StateChanges {
     fn count_state_changes(&self) -> (usize, usize, usize, usize);
 }
 
+/// Contains all the configurational parameters of the pallet.
+/// The `GetAppConfig` trait allows access to this config using
+/// the state variable
+pub struct AppConfig {
+	pub disable_transaction_fee: bool,
+	pub disable_nonce_validation: bool,
+}
+
 /// This trait allows to get the fee config for the pallet and accordingly charge the fees
-pub trait FeeConfig {
+pub trait GetAppConfig {
     /// This function reads the DisableTransactionFee from the pallet and returns a boolean
     /// class hashes.
     ///
     /// # Returns
     ///
     /// * `bool` - Is the fee disabled
-    fn is_transaction_fee_disabled(&self) -> bool;
+    fn get_app_config(&self) -> AppConfig;
 }
 
 /// A simple implementation of `StateReader` using `HashMap`s as storage.

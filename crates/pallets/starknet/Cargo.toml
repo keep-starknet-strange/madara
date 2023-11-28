@@ -26,7 +26,7 @@ mp-sequencer-address = { workspace = true, features = ["parity-scale-codec"] }
 mp-state = { workspace = true }
 mp-storage = { workspace = true, features = ["parity-scale-codec"] }
 mp-transactions = { workspace = true, features = ["scale-info"] }
-mp-simulations = { workspace = true, features = ["parity-scale-codec", "serde"] }
+mp-simulations = { workspace = true, features = ["parity-scale-codec"] }
 
 blockifier = { workspace = true, features = [
   "testing",

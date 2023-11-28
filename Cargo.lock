@@ -6327,6 +6327,8 @@ dependencies = [
  "jsonrpsee 0.16.3",
  "mp-block",
  "mp-digest-log",
+ "mp-felt",
+ "mp-simulations",
  "mp-transactions",
  "num-bigint",
  "serde",
@@ -6620,7 +6622,9 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
+ "serde_with",
  "sp-core 21.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
+ "starknet-core",
  "starknet-ff 0.3.5 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=a35ce22)",
  "starknet_api",
  "thiserror-no-std",
@@ -6658,6 +6662,8 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
+ "serde_with",
+ "starknet-core",
  "starknet_api",
 ]
 
