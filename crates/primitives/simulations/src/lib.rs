@@ -9,13 +9,13 @@ use alloc::vec::Vec;
 use blockifier::execution::entry_point::CallType;
 use mp_felt::{Felt252Wrapper, UfeHex};
 use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::transaction::EventContent;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SimulationFlag {
     #[serde(rename = "SKIP_VALIDATE")]
     SkipValidate,
@@ -23,9 +23,10 @@ pub enum SimulationFlag {
     SkipFeeCharge,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct SimulatedTransaction {
     /// The transaction's trace
     pub transaction_trace: TransactionTrace,
@@ -33,9 +34,10 @@ pub struct SimulatedTransaction {
     pub fee_estimation: FeeEstimate,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[serde(untagged)]
 pub enum TransactionTrace {
     Invoke(InvokeTransactionTrace),
@@ -44,9 +46,10 @@ pub enum TransactionTrace {
     Declare(DeclareTransactionTrace),
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct FeeEstimate {
     /// The Ethereum gas cost of the transaction (see
     /// https://docs.starknet.io/docs/fees/fee-mechanism for more info)
@@ -57,9 +60,10 @@ pub struct FeeEstimate {
     pub overall_fee: u64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct DeclareTransactionTrace {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub validate_invocation: Option<FunctionInvocation>,
@@ -67,9 +71,10 @@ pub struct DeclareTransactionTrace {
     pub fee_transfer_invocation: Option<FunctionInvocation>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct InvokeTransactionTrace {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub validate_invocation: Option<FunctionInvocation>,
@@ -78,9 +83,10 @@ pub struct InvokeTransactionTrace {
     pub fee_transfer_invocation: Option<FunctionInvocation>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct DeployAccountTransactionTrace {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub validate_invocation: Option<FunctionInvocation>,
@@ -91,19 +97,21 @@ pub struct DeployAccountTransactionTrace {
     pub fee_transfer_invocation: Option<FunctionInvocation>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct L1HandlerTransactionTrace {
     /// The trace of the __execute__ call or constructor call, depending on the transaction type
     /// (none for declare transactions)
     pub function_invocation: FunctionInvocation,
 }
 
-#[serde_as]
-#[derive(Debug, Clone, Serialize)]
+#[serde_with::serde_as]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct FunctionInvocation {
     /// Contract address
     #[serde_as(as = "UfeHex")]
@@ -133,27 +141,30 @@ pub struct FunctionInvocation {
     pub messages: Vec<MsgToL1>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[serde(untagged)]
 pub enum ExecuteInvocation {
     Success(FunctionInvocation),
     Reverted(RevertedInvocation),
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct RevertedInvocation {
     /// The revert reason for the failed execution
     pub revert_reason: String,
 }
 
-#[serde_as]
-#[derive(Debug, Clone, Serialize)]
+#[serde_with::serde_as]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct MsgToL1 {
     /// The address of the L2 contract sending the message
     #[serde_as(as = "UfeHex")]
