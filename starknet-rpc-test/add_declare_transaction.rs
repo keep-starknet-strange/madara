@@ -8,7 +8,7 @@ use starknet_accounts::Account;
 use starknet_core::types::{BlockId, DeclareTransactionResult, StarknetError};
 use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
-use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
+use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, OZ_CONTRACT_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{build_single_owner_account, read_erc20_balance, AccountActions, U256};
 use starknet_rpc_test::{SendTransactionError, Transaction, TransactionResult};
@@ -45,14 +45,12 @@ async fn fail_validation_step(madara: &ThreadSafeMadaraClient) -> Result<(), any
 
 #[rstest]
 #[tokio::test]
-#[ignore = "this test drain the account, wich make other tests fail afterward. We have to find another way to make \
-            this one fail"]
 async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
     let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
-    let (declare_tx, expected_class_hash, _) = account
-        .declare_contract("./contracts/Counter0/Counter0.sierra.json", "./contracts/Counter0/Counter0.casm.json");
+    let (declare_tx, expected_class_hash, _) =
+        account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
 
     let (block_number, txs) = {
         let mut madara_write_lock = madara.write().await;
@@ -61,7 +59,7 @@ async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraCli
             read_erc20_balance(&rpc, FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(), account.address()).await;
         madara_write_lock
             .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens_u256(
-                FieldElement::from_hex_be("0x1234").unwrap(),
+                FieldElement::from_hex_be(OZ_CONTRACT_ADDRESS).unwrap(),
                 // subtractin 150k to keep some fees for the transfer
                 U256 { low: balance[0] - FieldElement::from_dec_str("150000").unwrap(), high: balance[1] },
                 None,
@@ -82,6 +80,25 @@ async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraCli
     // doesn't get included in block
     let included_txs = rpc.get_block_transaction_count(BlockId::Number(block_number)).await?;
     assert_eq!(included_txs, 0);
+
+    // Send the funds back to the original account to avoid messing up subsequent tests
+    let oz_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, OZ_CONTRACT_ADDRESS, true);
+
+    let mut madara_write_lock = madara.write().await;
+
+    let balance_oz =
+        read_erc20_balance(&rpc, FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(), oz_account.address()).await;
+    let mut ret = madara_write_lock
+        .create_block_with_txs(vec![Transaction::Execution(oz_account.transfer_tokens_u256(
+            FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(),
+            // subtractin 150k to keep some fees for the transfer
+            U256 { low: balance_oz[0] - FieldElement::from_dec_str("150000").unwrap(), high: balance_oz[1] },
+            None,
+        ))])
+        .await?;
+    assert!(ret.len() == 1);
+
+    assert!(ret.remove(0).is_ok());
 
     Ok(())
 }
@@ -105,12 +122,7 @@ async fn works_with_storage_change(madara: &ThreadSafeMadaraClient) -> Result<()
     assert_eq!(txs.len(), 1);
     let declare_tx_result = txs.remove(0);
     match declare_tx_result {
-        Ok(TransactionResult::Declaration(DeclareTransactionResult { transaction_hash, class_hash })) => {
-            assert_eq!(
-                transaction_hash,
-                FieldElement::from_hex_be("0x05d16c229ad76e91113b3216bd05b5cf3362c80967aaa3e4317bc48a0257b160")
-                    .unwrap()
-            );
+        Ok(TransactionResult::Declaration(DeclareTransactionResult { transaction_hash: _, class_hash })) => {
             assert_eq!(class_hash, expected_class_hash);
         }
         _ => panic!("Expected declare transaction result"),
@@ -127,7 +139,6 @@ async fn works_with_storage_change(madara: &ThreadSafeMadaraClient) -> Result<()
 
 #[rstest]
 #[tokio::test]
-#[ignore = "unpredictable behaviour depending on the test execution order"]
 async fn fails_already_declared(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 

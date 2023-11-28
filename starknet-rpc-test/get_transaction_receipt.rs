@@ -3,8 +3,7 @@ extern crate starknet_rpc_test;
 use assert_matches::assert_matches;
 use rstest::rstest;
 use starknet_core::types::{
-    DeclareTransactionReceipt, Event, ExecutionResult, MaybePendingTransactionReceipt, TransactionFinalityStatus,
-    TransactionReceipt,
+    Event, ExecutionResult, MaybePendingTransactionReceipt, TransactionFinalityStatus, TransactionReceipt,
 };
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
@@ -132,54 +131,30 @@ async fn work_with_declare_transaction(madara: &ThreadSafeMadaraClient) -> Resul
         _ => panic!("expected execution result"),
     };
 
-    // not validating the fields inside the transaction as
-    // that is covered in get_block_with_txs
-    let declare_tx_receipt = get_transaction_receipt(&rpc, rpc_response_declare.transaction_hash).await;
-
-    let assert_declare_tx_receipt = |d1: TransactionReceiptResult, d2: DeclareTransactionReceipt| {
-        let d1 = match d1 {
-            Ok(MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Declare(d1))) => d1,
-            _ => panic!("expected declare transaction receipt"),
-        };
-        assert_eq!(d1.actual_fee, d2.actual_fee);
-        assert_eq!(d1.finality_status, d2.finality_status);
-        assert_eq_msg_to_l1(d1.messages_sent, d2.messages_sent);
-        assert_eq_event(d1.events, d2.events);
-        // assert_matches does not accept d2.execution_result on the RHS
-        assert_matches!(d1.execution_result, ExecutionResult::Succeeded);
-        assert_matches!(d2.execution_result, ExecutionResult::Succeeded);
-    };
-
     let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
     let expected_fee =
         FieldElement::from_hex_be("0x00000000000000000000000000000000000000000000000000000000000030fc").unwrap();
+    let expected_events = vec![Event {
+        from_address: fee_token_address,
+        keys: vec![get_selector_from_name("Transfer").unwrap()],
+        data: vec![
+            FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(), // from
+            FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(),       // to (sequencer address)
+            expected_fee,                                                // value low
+            FieldElement::ZERO,                                          // value high
+        ],
+    }];
 
-    assert_declare_tx_receipt(
-        declare_tx_receipt,
-        DeclareTransactionReceipt {
-            transaction_hash: FieldElement::from_hex_be(
-                "0x012fe0d3db3b6e1b80839c187adf3b03d8868048e77acb6d39bcdae4af087fe2",
-            )
-            .unwrap(),
-            actual_fee: expected_fee,
-            finality_status: TransactionFinalityStatus::AcceptedOnL2,
-            block_hash: FieldElement::from_hex_be("0x001378ccd5b2e291783b670db2fca8477abbc3ba3cae78ca867282102eb06b1f")
-                .unwrap(),
-            block_number: 1,
-            messages_sent: vec![],
-            events: vec![Event {
-                from_address: fee_token_address,
-                keys: vec![get_selector_from_name("Transfer").unwrap()],
-                data: vec![
-                    FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(), // from
-                    FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(),       // to (sequencer address)
-                    expected_fee,                                                // value low
-                    FieldElement::ZERO,                                          // value high
-                ],
-            }],
-            execution_result: ExecutionResult::Succeeded,
-        },
-    );
+    match get_transaction_receipt(&rpc, rpc_response_declare.transaction_hash).await {
+        Ok(MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Declare(tx_receipt))) => {
+            assert_eq!(tx_receipt.actual_fee, expected_fee);
+            assert_eq!(tx_receipt.finality_status, TransactionFinalityStatus::AcceptedOnL2);
+            assert_eq_msg_to_l1(tx_receipt.messages_sent, vec![]);
+            assert_eq_event(tx_receipt.events, expected_events);
+            assert_matches!(tx_receipt.execution_result, ExecutionResult::Succeeded);
+        }
+        _ => panic!("expected declare transaction receipt"),
+    };
 
     Ok(())
 }
