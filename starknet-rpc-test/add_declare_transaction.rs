@@ -48,18 +48,18 @@ async fn fail_validation_step(madara: &ThreadSafeMadaraClient) -> Result<(), any
 async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-    let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
-    let (declare_tx, expected_class_hash, _) =
-        account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
+    let oz_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, OZ_CONTRACT_ADDRESS, true);
+    let (declare_tx, expected_class_hash, _) = oz_account
+        .declare_contract("./contracts/Counter5/Counter5.sierra.json", "./contracts/Counter5/Counter5.casm.json");
 
     let (block_number, txs) = {
         let mut madara_write_lock = madara.write().await;
-        // draining account so the txn fails during execution
+        // draining oz_account so the txn fails during execution
         let balance =
-            read_erc20_balance(&rpc, FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(), account.address()).await;
+            read_erc20_balance(&rpc, FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(), oz_account.address()).await;
         madara_write_lock
-            .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens_u256(
-                FieldElement::from_hex_be(OZ_CONTRACT_ADDRESS).unwrap(),
+            .create_block_with_txs(vec![Transaction::Execution(oz_account.transfer_tokens_u256(
+                FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(),
                 // subtractin 150k to keep some fees for the transfer
                 U256 { low: balance[0] - FieldElement::from_dec_str("150000").unwrap(), high: balance[1] },
                 None,
@@ -80,25 +80,6 @@ async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraCli
     // doesn't get included in block
     let included_txs = rpc.get_block_transaction_count(BlockId::Number(block_number)).await?;
     assert_eq!(included_txs, 0);
-
-    // Send the funds back to the original account to avoid messing up subsequent tests
-    let oz_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, OZ_CONTRACT_ADDRESS, true);
-
-    let mut madara_write_lock = madara.write().await;
-
-    let balance_oz =
-        read_erc20_balance(&rpc, FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(), oz_account.address()).await;
-    let mut ret = madara_write_lock
-        .create_block_with_txs(vec![Transaction::Execution(oz_account.transfer_tokens_u256(
-            FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(),
-            // subtractin 150k to keep some fees for the transfer
-            U256 { low: balance_oz[0] - FieldElement::from_dec_str("150000").unwrap(), high: balance_oz[1] },
-            None,
-        ))])
-        .await?;
-    assert!(ret.len() == 1);
-
-    assert!(ret.remove(0).is_ok());
 
     Ok(())
 }
