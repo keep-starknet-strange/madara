@@ -53,6 +53,7 @@ mp-block = { workspace = true }
 mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
 mp-transactions = { workspace = true, features = ["client"] }
+mp-simulations = { workspace = true }
 serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, default-features = true, features = ["time"] }

@@ -7,7 +7,6 @@ mod errors;
 mod events;
 mod madara_backend_client;
 mod types;
-
 use std::marker::PhantomData;
 use std::sync::Arc;
 
@@ -17,10 +16,11 @@ use jsonrpsee::types::error::CallError;
 use log::error;
 use mc_db::Backend as MadaraBackend;
 pub use mc_rpc_core::utils::*;
-pub use mc_rpc_core::{Felt, StarknetReadRpcApiServer, StarknetWriteRpcApiServer};
+pub use mc_rpc_core::{Felt, StarknetReadRpcApiServer, StarknetTraceRpcApiServer, StarknetWriteRpcApiServer};
 use mc_storage::OverrideHandle;
 use mp_felt::{Felt252Wrapper, Felt252WrapperError};
 use mp_hashers::HasherT;
+use mp_simulations::SimulatedTransaction;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
 use mp_transactions::{TransactionStatus, UserTransaction};
@@ -1456,6 +1456,58 @@ where
         };
 
         Ok(MaybePendingTransactionReceipt::Receipt(receipt))
+    }
+}
+
+#[async_trait]
+#[allow(unused_variables)]
+impl<A, B, BE, C, P, H> StarknetTraceRpcApiServer for Starknet<A, B, BE, C, P, H>
+where
+    A: ChainApi<Block = B> + 'static,
+    B: BlockT,
+    P: TransactionPool<Block = B> + 'static,
+    BE: Backend<B> + 'static,
+    C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
+    C: ProvideRuntimeApi<B>,
+    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
+    H: HasherT + Send + Sync + 'static,
+{
+    async fn simulate_transactions(
+        &self,
+        block_id: BlockId,
+        transactions: Vec<BroadcastedTransaction>,
+        simulation_flags: Vec<SimulationFlag>,
+    ) -> RpcResult<Vec<SimulatedTransaction>> {
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+        let best_block_hash = self.client.info().best_hash;
+        let chain_id = Felt252Wrapper(self.chain_id()?.0);
+
+        let mut user_transactions = vec![];
+        for tx in transactions {
+            let tx = tx.try_into().map_err(|e| {
+                error!("Failed to convert BroadcastedTransaction to UserTransaction: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?;
+            user_transactions.push(tx);
+        }
+
+        let fee_estimates = self
+            .client
+            .runtime_api()
+            .simulate_transactions(substrate_block_hash, user_transactions)
+            .map_err(|e| {
+                error!("Request parameters error: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?
+            .map_err(|e| {
+                error!("Failed to call function: {:#?}", e);
+                StarknetRpcApiError::ContractError
+            })?;
+
+        Ok(fee_estimates)
     }
 }
 

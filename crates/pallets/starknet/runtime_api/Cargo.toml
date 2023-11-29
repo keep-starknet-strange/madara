@@ -12,6 +12,7 @@ mp-transactions = { workspace = true, features = [
   "parity-scale-codec",
   "scale-info",
 ] }
+mp-simulations = { workspace = true, features = ["parity-scale-codec", "scale-info"] }
 
 # Starknet
 blockifier = { workspace = true, features = [
@@ -23,8 +24,9 @@ starknet_api = { workspace = true, features = [
   "scale-info",
   "parity-scale-codec",
 ] }
+starknet-core = { workspace = true }
 
-# Substrate 
+# Substrate
 parity-scale-codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive"] }
 sp-api = { workspace = true }

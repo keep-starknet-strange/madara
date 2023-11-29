@@ -57,10 +57,12 @@ mp-chain-id = { workspace = true }
 mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
 mp-transactions = { workspace = true }
+mp-simulations = { workspace = true }
 # Starknet dependencies
 blockifier = { workspace = true }
 starknet-ff = { workspace = true }
 starknet_api = { workspace = true }
+starknet-core = { workspace = true }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }

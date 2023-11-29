@@ -55,15 +55,17 @@ mod offchain_worker;
 
 use blockifier::execution::entry_point::{CallEntryPoint, CallType, EntryPointExecutionContext};
 use blockifier::state::cached_state::ContractStorageKey;
-use blockifier::transaction::objects::{TransactionExecutionInfo, TransactionExecutionResult};
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee};
 
 #[cfg(test)]
 mod tests;
+mod utils;
 
 #[macro_use]
 pub extern crate alloc;
+extern crate core;
+
 use alloc::str::from_utf8_unchecked;
 use alloc::string::String;
 use alloc::vec;
@@ -82,6 +84,10 @@ use mp_fee::INITIAL_GAS;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
+use mp_simulations::{
+    DeclareTransactionTrace, DeployAccountTransactionTrace, FeeEstimate, InvokeTransactionTrace, SimulatedTransaction,
+    TransactionTrace,
+};
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_transactions::execution::{Execute, Validate};
 use mp_transactions::{
@@ -100,6 +106,9 @@ use starknet_crypto::FieldElement;
 
 use crate::alloc::string::ToString;
 use crate::types::StorageSlot;
+use crate::utils::{
+    convert_call_info_to_execute_invocation, convert_call_info_to_function_invocation, execute_txs_and_rollback,
+};
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
@@ -428,6 +437,9 @@ pub mod pallet {
         SequencerAddressNotValid,
         InvalidContractClassForThisDeclareVersion,
         Unimplemented,
+        MissingClassHashInCallInfo,
+        MissingRevertReason,
+        MissingCallInfo,
     }
 
     /// The Starknet pallet external functions.
@@ -1091,56 +1103,8 @@ impl<T: Config> Pallet<T> {
     pub fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
         let chain_id = Self::chain_id();
 
-        fn execute_txs_and_rollback<T: pallet::Config>(
-            txs: Vec<UserTransaction>,
-            block_context: &BlockContext,
-            disable_nonce_validation: bool,
-            chain_id: Felt252Wrapper,
-        ) -> Vec<TransactionExecutionResult<TransactionExecutionInfo>> {
-            let mut execution_results = vec![];
-            let _: Result<_, DispatchError> = storage::transactional::with_transaction(|| {
-                for tx in txs {
-                    let result = match tx {
-                        UserTransaction::Declare(tx, contract_class) => {
-                            let executable = tx
-                                .try_into_executable::<T::SystemHash>(chain_id, contract_class, true)
-                                .map_err(|_| Error::<T>::InvalidContractClass)
-                                .expect("Contract class should be valid");
-                            executable.execute(
-                                &mut BlockifierStateAdapter::<T>::default(),
-                                block_context,
-                                true,
-                                disable_nonce_validation,
-                            )
-                        }
-                        UserTransaction::DeployAccount(tx) => {
-                            let executable = tx.into_executable::<T::SystemHash>(chain_id, true);
-                            executable.execute(
-                                &mut BlockifierStateAdapter::<T>::default(),
-                                block_context,
-                                true,
-                                disable_nonce_validation,
-                            )
-                        }
-                        UserTransaction::Invoke(tx) => {
-                            let executable = tx.into_executable::<T::SystemHash>(chain_id, true);
-                            executable.execute(
-                                &mut BlockifierStateAdapter::<T>::default(),
-                                block_context,
-                                true,
-                                disable_nonce_validation,
-                            )
-                        }
-                    };
-                    execution_results.push(result);
-                }
-                storage::TransactionOutcome::Rollback(Ok(()))
-            });
-            execution_results
-        }
-
         let execution_results = execute_txs_and_rollback::<T>(
-            transactions,
+            &transactions,
             &Self::get_block_context(),
             T::DisableNonceValidation::get(),
             chain_id,
@@ -1159,6 +1123,71 @@ impl<T: Config> Pallet<T> {
                 }
                 Err(e) => {
                     log!(info, "Failed to estimate fee: {:?}", e);
+                    return Err(Error::<T>::TransactionExecutionFailed.into());
+                }
+            }
+        }
+        Ok(results)
+    }
+
+    pub fn simulate_transactions(
+        transactions: Vec<UserTransaction>,
+    ) -> Result<Vec<SimulatedTransaction>, DispatchError> {
+        let chain_id = Self::chain_id();
+
+        let execution_results = execute_txs_and_rollback::<T>(
+            &transactions,
+            &Self::get_block_context(),
+            T::DisableNonceValidation::get(),
+            chain_id,
+        );
+
+        let mut results = vec![];
+        for (tx, res) in transactions.iter().zip(execution_results.iter()) {
+            match res {
+                Ok(tx_exec_info) => {
+                    let transaction_trace = match tx {
+                        UserTransaction::Invoke(tx) => TransactionTrace::Invoke(InvokeTransactionTrace {
+                            validate_invocation: Some(convert_call_info_to_function_invocation::<T>(
+                                tx_exec_info.validate_call_info.as_ref().ok_or(Error::<T>::MissingCallInfo)?,
+                            )?),
+                            execute_invocation: convert_call_info_to_execute_invocation::<T>(
+                                tx_exec_info.execute_call_info.as_ref().ok_or(Error::<T>::MissingCallInfo)?,
+                                tx_exec_info.revert_error.as_ref(),
+                            )?,
+                            fee_transfer_invocation: Some(convert_call_info_to_function_invocation::<T>(
+                                tx_exec_info.fee_transfer_call_info.as_ref().ok_or(Error::<T>::MissingCallInfo)?,
+                            )?),
+                        }),
+                        UserTransaction::Declare(tx, _) => TransactionTrace::Declare(DeclareTransactionTrace {
+                            validate_invocation: Some(convert_call_info_to_function_invocation::<T>(
+                                tx_exec_info.validate_call_info.as_ref().ok_or(Error::<T>::MissingCallInfo)?,
+                            )?),
+                            fee_transfer_invocation: Some(convert_call_info_to_function_invocation::<T>(
+                                tx_exec_info.fee_transfer_call_info.as_ref().ok_or(Error::<T>::MissingCallInfo)?,
+                            )?),
+                        }),
+                        UserTransaction::DeployAccount(tx) => {
+                            TransactionTrace::DeployAccount(DeployAccountTransactionTrace {
+                                validate_invocation: Some(convert_call_info_to_function_invocation::<T>(
+                                    tx_exec_info.validate_call_info.as_ref().ok_or(Error::<T>::MissingCallInfo)?,
+                                )?),
+                                constructor_invocation: convert_call_info_to_function_invocation::<T>(
+                                    tx_exec_info.execute_call_info.as_ref().ok_or(Error::<T>::MissingCallInfo)?,
+                                )?,
+                                fee_transfer_invocation: Some(convert_call_info_to_function_invocation::<T>(
+                                    tx_exec_info.fee_transfer_call_info.as_ref().ok_or(Error::<T>::MissingCallInfo)?,
+                                )?),
+                            })
+                        }
+                    };
+                    results.push(SimulatedTransaction {
+                        transaction_trace,
+                        fee_estimation: FeeEstimate { gas_consumed: 0, gas_price: 0, overall_fee: 0 },
+                    })
+                }
+                Err(e) => {
+                    log!(info, "Failed to simulate transactions: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             }

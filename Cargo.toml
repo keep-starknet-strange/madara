@@ -162,6 +162,7 @@ mp-storage = { path = "crates/primitives/storage", default-features = false }
 mp-transactions = { path = "crates/primitives/transactions", default-features = false }
 mp-commitments = { path = "crates/primitives/commitments", default-features = false }
 mp-chain-id = { path = "crates/primitives/chain-id", default-features = false }
+mp-simulations = { path = "crates/primitives/simulations", default-features = false }
 
 # Madara client
 mc-mapping-sync = { path = "crates/client/mapping-sync" }
@@ -189,7 +190,7 @@ starknet-signers = { git = "https://github.com/xJonathanLEI/starknet-rs.git", re
 starknet-accounts = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "a35ce22", default-features = false }
 starknet-contract = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "a35ce22", default-features = false }
 
-blockifier = { git = "https://github.com/keep-starknet-strange/blockifier", branch = "no_std-support-7578442", default-features = false, features = [
+blockifier = { git = "https://github.com/apoorvsadana/blockifier", branch = "scale_info_call_type", default-features = false, features = [
   "parity-scale-codec",
 ] }
 starknet_api = { git = "https://github.com/keep-starknet-strange/starknet-api", branch = "no_std-support-dc83f05", features = [
