@@ -6648,6 +6648,7 @@ dependencies = [
  "mc-db",
  "mp-felt",
  "mp-transactions",
+ "rustc-hex",
  "sc-client-api",
  "sc-transaction-pool-api",
  "serde",

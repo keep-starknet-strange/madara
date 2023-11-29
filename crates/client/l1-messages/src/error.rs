@@ -1,5 +1,6 @@
 use mc_db::DbError;
 use mp_felt::Felt252WrapperError;
+use rustc_hex::FromHexError;
 use sp_api::ApiError;
 use sp_runtime::DispatchError;
 use url::ParseError;
@@ -22,6 +23,14 @@ pub enum L1MessagesConfigError {
     FileNotFound(#[from] std::io::Error),
     #[error("Failed to deserialize L1 Messages Worker Config from config file: {0}")]
     InvalidFile(#[from] serde_json::Error),
+    #[error("Invalid Ethereum Provided Url: {0}")]
+    InvalidProviderUrl(#[from] url::ParseError),
+    #[error("Invalid L1 Contract Address: {0}")]
+    InvalidContractAddress(#[from] FromHexError),
+    #[error("Missing Ethereum Provided Url")]
+    MissingProviderUrl,
+    #[error("Missing L1 Contract Address")]
+    MissingContractAddress,
 }
 
 #[derive(thiserror::Error, Debug)]

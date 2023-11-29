@@ -2,6 +2,8 @@ use std::path::PathBuf;
 
 use madara_runtime::SealingMode;
 use mc_data_availability::DaLayer;
+use mc_l1_messages::config::L1MessagesWorkerConfig;
+use mc_l1_messages::error::L1MessagesConfigError;
 use sc_cli::{Result, RpcMethods, RunCmd, SubstrateCli};
 use sc_service::BasePath;
 use serde::{Deserialize, Serialize};
@@ -54,8 +56,32 @@ pub struct ExtendedRunCmd {
     pub cache: bool,
 
     /// Path to configuration file for Ethereum Core Contract Events Listener
-    #[clap(long)]
-    pub l1_messages: Option<PathBuf>,
+    #[clap(
+        long,
+        conflicts_with="provider_url",
+        conflicts_with="l1_contract_address",
+        value_hint=clap::ValueHint::FilePath,
+        require_equals=true,
+    )]
+    pub l1_messages_worker_config_file: Option<PathBuf>,
+
+    /// Ethereum Provider (Node) Url
+    #[clap(
+        long,
+        conflicts_with="l1_messages_worker_config_file",
+        value_hint=clap::ValueHint::Url,
+        require_equals=true,
+    )]
+    pub provider_url: Option<String>,
+
+    /// L1 Contract Address
+    #[clap(
+        long,
+        conflicts_with="l1_messages_worker_config_file",
+        value_hint=clap::ValueHint::Other,
+        require_equals=true,
+    )]
+    pub l1_contract_address: Option<String>,
 }
 
 impl ExtendedRunCmd {
@@ -91,24 +117,35 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
         }
     };
 
-    let l1_messages_config = match cli.run.l1_messages {
-        Some(ref config_path) => {
-            if !config_path.exists() {
-                return Err("L1 Messages Worker config file not available".into());
-            }
-            Some(config_path.clone())
-        }
-        None => {
-            log::warn!("madara initialized w/o L1 Messages Worker");
-            None
-        }
-    };
+    let l1_messages_worker_config =
+        extract_l1_messages_worker_config(&cli.run).map_err(|e| sc_cli::Error::Input(e.to_string()))?;
 
     runner.run_node_until_exit(|config| async move {
         let sealing = cli.run.sealing.map(Into::into).unwrap_or_default();
         let cache = cli.run.cache;
-        service::new_full(config, sealing, da_config, cache, l1_messages_config).map_err(sc_cli::Error::Service)
+        service::new_full(config, sealing, da_config, cache, l1_messages_worker_config).map_err(sc_cli::Error::Service)
     })
+}
+
+fn extract_l1_messages_worker_config(
+    run_cmd: &ExtendedRunCmd,
+) -> std::result::Result<Option<L1MessagesWorkerConfig>, L1MessagesConfigError> {
+    if let Some(ref config_path) = run_cmd.l1_messages_worker_config_file {
+        let config = L1MessagesWorkerConfig::new_from_file(config_path)?;
+        Ok(Some(config))
+    } else if let Some(ref provider_url) = run_cmd.provider_url {
+        if let Some(ref l1_contract_address) = run_cmd.l1_contract_address {
+            let config = L1MessagesWorkerConfig::new_from_params(provider_url, l1_contract_address)?;
+            Ok(Some(config))
+        } else {
+            Err(L1MessagesConfigError::MissingContractAddress)
+        }
+    } else if let Some(ref _l1_contract_address) = run_cmd.l1_contract_address {
+        Err(L1MessagesConfigError::MissingProviderUrl)
+    } else {
+        log::warn!("Madara initialized w/o L1 Messages Worker");
+        Ok(None)
+    }
 }
 
 fn override_dev_environment(cmd: &mut ExtendedRunCmd) {

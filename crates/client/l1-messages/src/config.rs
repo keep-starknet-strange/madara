@@ -35,6 +35,12 @@ impl L1MessagesWorkerConfig {
         Ok(config)
     }
 
+    pub fn new_from_params(provider_url: &str, contract_address: &str) -> Result<Self, L1MessagesConfigError> {
+        let http_provider = Url::parse(provider_url)?;
+        let contract_address = contract_address.parse()?;
+        Ok(Self { http_provider, contract_address })
+    }
+
     pub fn provider(&self) -> &Url {
         &self.http_provider
     }

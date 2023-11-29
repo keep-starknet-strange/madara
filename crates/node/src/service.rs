@@ -269,7 +269,7 @@ pub fn new_full(
     sealing: SealingMode,
     da_layer: Option<(DaLayer, PathBuf)>,
     cache_more_things: bool,
-    l1_messages: Option<PathBuf>,
+    l1_messages_worker_config: Option<L1MessagesWorkerConfig>,
 ) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_default() { build_aura_grandpa_import_queue } else { build_manual_seal_import_queue };
@@ -579,13 +579,11 @@ pub fn new_full(
         );
     }
 
-    if let Some(ref l1_messages_config) = l1_messages {
-        let config = L1MessagesWorkerConfig::new_from_file(l1_messages_config)
-            .map_err(|e| sc_service::error::Error::Other(e.to_string()))?;
+    if let Some(l1_messages_worker_config) = l1_messages_worker_config {
         task_manager.spawn_handle().spawn(
             "ethereum-core-contract-events-listener",
             Some(MADARA_TASK_GROUP),
-            mc_l1_messages::worker::run_worker(config, client, transaction_pool, madara_backend),
+            mc_l1_messages::worker::run_worker(l1_messages_worker_config, client, transaction_pool, madara_backend),
         );
     }
     network_starter.start_network();
