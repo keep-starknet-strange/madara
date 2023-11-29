@@ -1,15 +1,14 @@
 mod ethereum;
 mod parser;
-mod sync;
+mod writer;
 
 #[cfg(test)]
 mod tests;
 
 use std::cmp::Ordering;
-use std::fmt;
 use std::fs::File;
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use async_trait::async_trait;
@@ -21,18 +20,19 @@ use log::error;
 use mc_db::L1L2BlockMapping;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::Backend;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
+use sp_consensus::SyncOracle;
 use sp_runtime::generic::Header as GenericHeader;
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use starknet_api::state::StateDiff;
-use sync::StateWriter;
+use writer::StateWriter;
 
 const LOG_TARGET: &str = "state-sync";
 
 // StateSyncConfig defines the parameters to start the task of syncing states from L1.
-#[derive(Clone, PartialEq, Deserialize, Debug)]
+#[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub struct StateSyncConfig {
     // The block from which syncing starts on L1.
     pub l1_start: u64,
@@ -46,18 +46,22 @@ pub struct StateSyncConfig {
     pub l2_start: u64,
     // The RPC url for L1.
     pub l1_url: String,
+    // The starknet state diff format changed in l1 block height.
+    pub v011_diff_format_height: u64,
     // The number of blocks to query from L1 each time.
-    pub fetch_block_step: String,
+    pub fetch_block_step: u64,
     // The time interval for each query.
-    pub fetch_interval: u64,
+    pub syncing_fetch_interval: u64,
+    // The time interval for each query.
+    pub synced_fetch_interval: u64,
 }
 
 impl TryFrom<&PathBuf> for StateSyncConfig {
     type Error = String;
 
     fn try_from(path: &PathBuf) -> Result<Self, Self::Error> {
-        let file = File::open(path).map_err(|e| format!("error opening da config: {e}"))?;
-        serde_json::from_reader(file).map_err(|e| format!("error parsing da config: {e}"))
+        let file = File::open(path).map_err(|e| format!("error opening state sync config: {e}"))?;
+        serde_json::from_reader(file).map_err(|e| format!("error parsing state sync config: {e}"))
     }
 }
 
@@ -82,11 +86,17 @@ impl Ord for FetchState {
 
 #[async_trait]
 pub trait StateFetcher {
-    async fn state_diff<B, C>(&self, l1_from: u64, l2_start: u64, client: Arc<C>) -> Result<Vec<FetchState>, Error>
+    async fn state_diff<B, C>(&mut self, l1_from: u64, l2_start: u64, client: Arc<C>) -> Result<Vec<FetchState>, Error>
     where
         B: BlockT,
         C: ProvideRuntimeApi<B> + HeaderBackend<B>,
         C::Api: StarknetRuntimeApi<B>;
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum SyncStatus {
+    SYNCING,
+    SYNCED,
 }
 
 pub fn create_and_run<B, C, BE>(
@@ -94,7 +104,7 @@ pub fn create_and_run<B, C, BE>(
     madara_backend: Arc<mc_db::Backend<B>>,
     substrate_client: Arc<C>,
     substrate_backend: Arc<BE>,
-) -> Result<impl Future<Output = ()> + Send, Error>
+) -> Result<(impl Future<Output = ()> + Send, Arc<dyn SyncOracle + Send + Sync>), Error>
 where
     B: BlockT<Hash = H256, Header = GenericHeader<u32, BlakeTwo256>>,
     C: HeaderBackend<B> + ProvideRuntimeApi<B> + 'static,
@@ -102,6 +112,7 @@ where
     BE: Backend<B> + 'static,
 {
     let state_sync_config = StateSyncConfig::try_from(&config_path).map_err(|e| Error::Other(e.to_string()))?;
+
     let contract_address =
         state_sync_config.core_contract.parse::<Address>().map_err(|e| Error::Other(e.to_string()))?;
     let verifier_address =
@@ -111,20 +122,46 @@ where
 
     let eth_url_list = vec![state_sync_config.l1_url];
 
-    let state_fetcher =
-        EthereumStateFetcher::new(contract_address, verifier_address, memory_page_address, eth_url_list)?;
-    let state_fetcher = Arc::new(state_fetcher);
+    let sync_status = Arc::new(Mutex::new(SyncStatus::SYNCING));
+    let state_fetcher: EthereumStateFetcher<ethers::providers::Http> = EthereumStateFetcher::new(
+        contract_address,
+        verifier_address,
+        memory_page_address,
+        eth_url_list,
+        state_sync_config.v011_diff_format_height,
+        sync_status.clone(),
+    )?;
 
-    run(state_fetcher, madara_backend, substrate_client, substrate_backend)
+    let sync_status_oracle = Arc::new(SyncStatusOracle { sync_status });
+
+    let mut mapping = L1L2BlockMapping {
+        l1_block_hash: Default::default(),
+        l1_block_number: state_sync_config.l1_start,
+        l2_block_hash: Default::default(),
+        l2_block_number: state_sync_config.l2_start,
+    };
+
+    if let Ok(last_mapping) = madara_backend.meta().last_l1_l2_mapping() {
+        if last_mapping.l1_block_number < mapping.l1_block_number
+            || last_mapping.l2_block_number < mapping.l2_block_number
+        {
+            mapping.l1_block_number = state_sync_config.l1_start;
+            mapping.l2_block_number = state_sync_config.l2_start;
+        }
+    }
+
+    madara_backend.meta().write_last_l1_l2_mapping(&mapping).map_err(|e| Error::Other(e.to_string()))?;
+
+    Ok((run(state_fetcher, madara_backend, substrate_client, substrate_backend), sync_status_oracle))
 }
 
 // TODO pass a config then create state_fetcher
 pub fn run<B, C, BE, SF>(
-    state_fetcher: Arc<SF>,
+    mut state_fetcher: SF,
     madara_backend: Arc<mc_db::Backend<B>>,
     substrate_client: Arc<C>,
     substrate_backend: Arc<BE>,
-) -> Result<impl Future<Output = ()> + Send, Error>
+) -> impl Future<Output = ()> + Send
 where
     B: BlockT<Hash = H256, Header = GenericHeader<u32, BlakeTwo256>>,
     C: HeaderBackend<B> + ProvideRuntimeApi<B> + 'static,
@@ -136,12 +173,11 @@ where
 
     let state_writer = StateWriter::new(substrate_client.clone(), substrate_backend, madara_backend.clone());
     let state_writer = Arc::new(state_writer);
-    let state_fetcher_clone = state_fetcher.clone();
 
     let madara_backend_clone = madara_backend.clone();
     let fetcher_task = async move {
-        let mut eth_from_height: u64;
-        let mut starknet_start_height: u64;
+        let mut eth_from_height: u64 = 0;
+        let mut starknet_start_height: u64 = 0;
 
         match madara_backend_clone.clone().meta().last_l1_l2_mapping() {
             Ok(mapping) => {
@@ -150,14 +186,16 @@ where
             }
             Err(e) => {
                 error!(target: LOG_TARGET, "read last l1 l2 mapping failed, error {:#?}.", e);
-                return;
             }
         }
 
         loop {
-            match state_fetcher_clone.state_diff(eth_from_height, starknet_start_height, substrate_client.clone()).await
-            {
+            match state_fetcher.state_diff(eth_from_height, starknet_start_height, substrate_client.clone()).await {
                 Ok(mut fetched_states) => {
+                    if fetched_states.is_empty() {
+                        eth_from_height += 10;
+                        continue;
+                    }
                     fetched_states.sort();
 
                     if let Some(last) = fetched_states.last() {
@@ -171,6 +209,7 @@ where
                     error!(target: LOG_TARGET, "fetch state diff from l1 has error {:#?}", e);
                 }
             }
+            // TODO syncing, synced
             tokio::time::sleep(Duration::from_secs(5)).await;
         }
     };
@@ -188,7 +227,7 @@ where
 
                 if let Some(last) = fetched_states.last() {
                     if let Err(e) = madara_backend.meta().write_last_l1_l2_mapping(&last.l1_l2_block_mapping) {
-                        error!(target: LOG_TARGET, "write to madara backend has error {}", e);
+                        error!(target: LOG_TARGET, "write to madara backend has error {:#?}", e);
                         break;
                     }
                 }
@@ -196,9 +235,7 @@ where
         }
     };
 
-    let task = future::select(Box::pin(fetcher_task), Box::pin(state_write_task)).map(|_| ());
-
-    Ok(task)
+    future::select(Box::pin(fetcher_task), Box::pin(state_write_task)).map(|_| ())
 }
 
 fn u256_to_h256(u256: U256) -> H256 {
@@ -222,18 +259,16 @@ pub enum Error {
     Other(String),
 }
 
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Error::AlreadyInChain => write!(f, "Already in chain"),
-            Error::UnknownBlock => write!(f, "Unknown block"),
-            Error::ConstructTransaction(msg) => write!(f, "Error constructing transaction: {}", msg),
-            Error::CommitStorage(msg) => write!(f, "Error committing storage: {}", msg),
-            Error::L1Connection(msg) => write!(f, "L1 connection error: {}", msg),
-            Error::L1EventDecode => write!(f, "Error decoding L1 event"),
-            Error::L1StateError(msg) => write!(f, "L1 state error: {}", msg),
-            Error::TypeError(msg) => write!(f, "Type error: {}", msg),
-            Error::Other(msg) => write!(f, "Other error: {}", msg),
-        }
+struct SyncStatusOracle {
+    sync_status: Arc<Mutex<SyncStatus>>,
+}
+
+impl SyncOracle for SyncStatusOracle {
+    fn is_major_syncing(&self) -> bool {
+        self.sync_status.lock().map(|status| *status == SyncStatus::SYNCING).unwrap_or_default()
+    }
+
+    fn is_offline(&self) -> bool {
+        false
     }
 }

@@ -31,9 +31,9 @@ use starknet_api::transaction::Calldata;
 use substrate_test_client::*;
 use tempfile::tempdir;
 
-use crate::sync::*;
 use crate::tests::constants::*;
 use crate::tests::helpers::*;
+use crate::writer::*;
 
 pub type Backend = sc_client_db::Backend<runtime::Block>;
 

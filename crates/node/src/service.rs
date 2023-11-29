@@ -432,13 +432,16 @@ pub fn new_full(
         );
     };
 
+    // When we enable the syncing feature from L1, we need to provide an external SyncOracle.
+    // It notifies other components about the current sync status.
+    let mut l1_sync_oracle = None;
     if let Some(state_sync_conf_path) = state_sync_conf {
-        task_manager.spawn_essential_handle().spawn(
-            "sync-from-l1",
-            Some("madara"),
+        let (sync_task, so) =
             mc_state_sync::create_and_run(state_sync_conf_path, madara_backend, client.clone(), backend.clone())
-                .map_err(|e| ServiceError::Other(e.to_string()))?,
-        );
+                .map_err(|e| ServiceError::Other(format!("crate sync from l1 task failed, error: {:#?}", e)))?;
+
+        l1_sync_oracle = Some(so);
+        task_manager.spawn_essential_handle().spawn("sync-from-l1", Some("madara"), sync_task);
     }
 
     if role.is_authority() {
@@ -506,7 +509,8 @@ pub fn new_full(
             force_authoring,
             backoff_authoring_blocks,
             keystore: keystore_container.keystore(),
-            sync_oracle: sync_service.clone(),
+            // Choose between using the L1 SyncOracle or the SyncOracle within L2's own P2P network.
+            sync_oracle: l1_sync_oracle.unwrap_or(sync_service.clone()),
             justification_sync_link: sync_service.clone(),
             block_proposal_slot_portion: SlotProportion::new(2f32 / 3f32),
             max_block_proposal_slot_portion: None,

@@ -83,6 +83,7 @@ where
         state_diff: InnerStateDiff,
     ) -> Result<(), Error> {
         debug!(target: LOG_TARGET, "apply_inner_state_diff {} {:#?}", starknet_block_number, starknet_block_hash);
+
         let block_info = self.client.info();
 
         let starknet_block = self.create_starknet_block(&block_info, starknet_block_number as u32)?;

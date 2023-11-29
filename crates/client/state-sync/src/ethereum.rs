@@ -6,19 +6,20 @@ use async_trait::async_trait;
 use ethers::abi::RawLog;
 use ethers::contract::{BaseContract, EthEvent, EthLogDecode};
 use ethers::core::abi::parse_abi;
-use ethers::providers::{Http, Middleware, Provider};
+#[cfg(test)]
+use ethers::providers::MockProvider;
+use ethers::providers::{Http, JsonRpcClient, Middleware, Provider};
 use ethers::types::{Address, Filter, Log, H256, I256, U256};
 use log::debug;
 use sp_runtime::generic::BlockId;
 use sp_runtime::traits::Block as BlockT;
 use starknet_api::state::StateDiff;
 use tokio::time::sleep;
-// use tokio_retry::strategy::ExponentialBackoff;
 
 use crate::{parser, Error, FetchState, StateFetcher, LOG_TARGET};
 
-const STATE_SEARCH_STEP: u64 = 10;
-const LOG_SEARCH_STEP: u64 = 1000;
+const STATE_SEARCH_STEP: u64 = 1;
+const LOG_SEARCH_STEP: u64 = 500;
 
 #[derive(Debug)]
 pub struct EthOrigin {
@@ -69,9 +70,15 @@ pub struct LogMemoryPageFactContinuousWithTxHash {
     pub tx_hash: H256,
 }
 
-#[derive(Debug)]
-pub struct EthereumStateFetcher {
-    http_provider: Provider<Http>,
+impl Default for SyncStatus {
+    fn default() -> Self {
+        Self::SYNCING
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct EthereumStateFetcher<P: JsonRpcClient> {
+    http_provider: Provider<P>,
 
     core_contract: Address,
 
@@ -81,19 +88,50 @@ pub struct EthereumStateFetcher {
 
     eth_url_list: Vec<String>, // Ethereum Node URL List
 
-    current_provider_index: Mutex<usize>,
+    current_provider_index: Arc<Mutex<usize>>,
+
+    sync_status: Arc<Mutex<SyncStatus>>,
+
+    v011_diff_format_height: u64,
 }
 
-impl EthereumStateFetcher {
+impl EthereumStateFetcher<Http> {
     pub fn new(
         core_contract: Address,
         verifier_contract: Address,
         memory_page_contract: Address,
-        eth_url_list: Vec<String>,
+        eth_urls: Vec<String>,
+        v011_diff_format_height: u64,
+        sync_status: Arc<Mutex<SyncStatus>>,
     ) -> Result<Self, Error> {
-        let current_provider_index = 0;
-        let provider = Provider::<Http>::try_from(eth_url_list[current_provider_index].clone())
-            .map_err(|e| Error::L1Connection(e.to_string()))?;
+        let provider =
+            Provider::<Http>::try_from(eth_urls[0].clone()).map_err(|e| Error::L1Connection(e.to_string()))?;
+
+        Ok(Self {
+            http_provider: provider,
+            core_contract,
+            verifier_contract,
+            memory_page_contract,
+            eth_url_list: eth_urls,
+            current_provider_index: Arc::new(Mutex::new(0)),
+            sync_status,
+            v011_diff_format_height,
+        })
+    }
+}
+
+#[cfg(test)]
+impl EthereumStateFetcher<MockProvider> {
+    pub fn mock(
+        core_contract: Address,
+        verifier_contract: Address,
+        memory_page_contract: Address,
+        eth_url_list: Vec<String>,
+        v011_diff_format_height: u64,
+        mock_provider: MockProvider,
+        sync_status: Arc<Mutex<SyncStatus>>,
+    ) -> Result<Self, Error> {
+        let provider = Provider::<MockProvider>::new(mock_provider);
 
         Ok(Self {
             http_provider: provider,
@@ -101,12 +139,18 @@ impl EthereumStateFetcher {
             verifier_contract,
             memory_page_contract,
             eth_url_list,
-            current_provider_index: Mutex::new(current_provider_index),
+            current_provider_index: Arc::new(Mutex::new(0)),
+            sync_status,
+            v011_diff_format_height,
         })
     }
+}
 
-    pub async fn get_logs_retry(&self, filter: &Filter) -> Result<Vec<Log>, Error> {
-        // let _strategy = ExponentialBackoff::from_millis(100).max_delay(Duration::from_secs(10)).factor(2); //NonZeroU64::new(10).unwrap()
+impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
+    pub async fn get_logs_retry(&mut self, filter: &Filter) -> Result<Vec<Log>, Error> {
+        if let Ok(res) = self.http_provider.get_logs(&filter).await {
+            return Ok(res);
+        }
 
         let mut retries = 0;
         loop {
@@ -119,7 +163,6 @@ impl EthereumStateFetcher {
                 })
                 .map_err(|e| Error::Other(e.to_string()))??;
 
-            // drop(current_index);
             match provider.get_logs(&filter).await {
                 Ok(logs) => return Ok(logs),
                 Err(_e) => {
@@ -133,12 +176,9 @@ impl EthereumStateFetcher {
                         *index = (*index + 1) % self.eth_url_list.len();
                     };
 
-                    // self.current_provider_index = (self.current_provider_index + 1) % self.eth_url_list.len();
-
                     // Calculate the wait time manually
                     let wait_time = self.calculate_backoff(retries);
 
-                    println!("===== Retry #{}: Waiting for {:?} seconds", retries, wait_time);
                     sleep(wait_time).await;
                 }
             }
@@ -162,22 +202,49 @@ impl EthereumStateFetcher {
     }
 
     pub(crate) async fn query_state_update(
-        &self,
+        &mut self,
         eth_from: u64,
         starknet_from: u64,
     ) -> Result<Vec<StateUpdate>, Error> {
+        let highest_eth_block_number =
+            self.http_provider.get_block_number().await.map_err(|e| Error::L1Connection(e.to_string()))?.as_u64();
+
         let filter = Filter::new().address(self.core_contract).event("LogStateUpdate(uint256,int256,uint256)");
 
         let mut from = eth_from;
         let mut to = eth_from + STATE_SEARCH_STEP;
+
+        // TODO: Using more precise criteria to determine whether it is in a syncing state.
+        if from > highest_eth_block_number {
+            from = highest_eth_block_number;
+
+            self.sync_status
+                .lock()
+                .and_then(|mut status| {
+                    *status = SyncStatus::SYNCED;
+                    Ok(())
+                })
+                .map_err(|e| Error::Other(e.to_string()))?;
+        } else {
+            self.sync_status
+                .lock()
+                .and_then(|mut status| {
+                    *status = SyncStatus::SYNCING;
+                    Ok(())
+                })
+                .map_err(|e| Error::Other(e.to_string()))?;
+        }
+
+        if to > highest_eth_block_number {
+            to = highest_eth_block_number
+        }
 
         loop {
             let filter = filter.clone().from_block(from).to_block(to);
 
             let updates: Result<Vec<StateUpdate>, Error> = self
                 .get_logs_retry(&filter)
-                .await
-                .map_err(|e| Error::L1Connection(e.to_string()))?
+                .await?
                 .iter()
                 .map(|log| {
                     <LogStateUpdate as EthLogDecode>::decode_log(&(log.topics.clone(), log.data.to_vec()).into())
@@ -205,7 +272,7 @@ impl EthereumStateFetcher {
                 .collect();
 
             if let Ok(remind_state_updates) = updates {
-                if remind_state_updates.is_empty() {
+                if !remind_state_updates.is_empty() {
                     return Ok(remind_state_updates);
                 }
             }
@@ -216,7 +283,7 @@ impl EthereumStateFetcher {
     }
 
     pub async fn query_state_transition_fact(
-        &self,
+        &mut self,
         eth_from: u64,
         tx_index: u64,
     ) -> Result<LogStateTransitionFact, Error> {
@@ -227,8 +294,7 @@ impl EthereumStateFetcher {
             .to_block(eth_from);
 
         self.get_logs_retry(&filter)
-            .await
-            .map_err(|e| Error::L1Connection(e.to_string()))?
+            .await?
             .iter()
             .find(|log| {
                 if let Some(index) = log.transaction_index {
@@ -249,7 +315,7 @@ impl EthereumStateFetcher {
     }
 
     pub async fn query_memory_pages_hashes(
-        &self,
+        &mut self,
         eth_from: u64,
         state_transition_fact: LogStateTransitionFact,
     ) -> Result<LogMemoryPagesHashes, Error> {
@@ -266,8 +332,7 @@ impl EthereumStateFetcher {
 
             let res = self
                 .get_logs_retry(&filter)
-                .await
-                .map_err(|e| Error::L1Connection(e.to_string()))?
+                .await?
                 .iter()
                 .find_map(|log| {
                     match <LogMemoryPagesHashes as EthLogDecode>::decode_log(
@@ -294,7 +359,7 @@ impl EthereumStateFetcher {
     }
 
     pub async fn query_memory_page_fact_continuous_logs(
-        &self,
+        &mut self,
         eth_from: u64,
         pages_hashes: &mut Vec<U256>,
     ) -> Result<Vec<LogMemoryPageFactContinuousWithTxHash>, Error> {
@@ -313,7 +378,7 @@ impl EthereumStateFetcher {
             }
             let filter = filter.clone().from_block(from).to_block(to);
 
-            let logs = self.get_logs_retry(&filter).await.map_err(|e| Error::L1Connection(e.to_string()))?;
+            let logs = self.get_logs_retry(&filter).await?;
             let mut memory_pages_hashes = Vec::new();
 
             for l in logs.iter() {
@@ -341,10 +406,11 @@ impl EthereumStateFetcher {
         }
 
         match_pages_hashes.reverse();
-        return Ok(match_pages_hashes.into_iter().flat_map(|v| v).collect());
+
+        Ok(match_pages_hashes.into_iter().flatten().collect())
     }
 
-    pub async fn query_and_decode_transaction(&self, hash: H256) -> Result<Vec<U256>, Error> {
+    pub async fn query_and_decode_transaction(&mut self, hash: H256) -> Result<Vec<U256>, Error> {
         let tx = self
             .http_provider
             .get_transaction(hash)
@@ -365,6 +431,7 @@ impl EthereumStateFetcher {
 
     pub fn decode_state_diff<B, C>(
         &self,
+        l1_block_number: u64,
         starknet_block_number: u64,
         data: Vec<U256>,
         client: Arc<C>,
@@ -374,14 +441,22 @@ impl EthereumStateFetcher {
         C: ProvideRuntimeApi<B> + HeaderBackend<B>,
         C::Api: StarknetRuntimeApi<B>,
     {
-        let block_hash = client
-            .block_hash_from_id(&BlockId::Number((starknet_block_number as u32).saturating_sub(1).into()))
-            .map_err(|_| Error::UnknownBlock)?
-            .unwrap_or_default();
-        parser::decode_011_diff(&data, block_hash, client)
+        if l1_block_number < self.v011_diff_format_height {
+            parser::decode_pre_011_diff(&data, false)
+        } else {
+            let block_hash = client
+                .block_hash_from_id(&BlockId::Number((starknet_block_number as u32).saturating_sub(1).into()))
+                .map_err(|_| Error::UnknownBlock)?
+                .unwrap_or_default();
+            parser::decode_011_diff(&data, block_hash, client)
+        }
     }
 
-    pub async fn query_state_diff<B, C>(&self, state_update: &StateUpdate, client: Arc<C>) -> Result<FetchState, Error>
+    pub async fn query_state_diff<B, C>(
+        &mut self,
+        state_update: &StateUpdate,
+        client: Arc<C>,
+    ) -> Result<FetchState, Error>
     where
         B: BlockT,
         C: ProvideRuntimeApi<B> + HeaderBackend<B>,
@@ -414,7 +489,12 @@ impl EthereumStateFetcher {
             tx_input_data.append(&mut data)
         }
 
-        let state_diff = self.decode_state_diff(state_update.update.block_number.as_u64(), tx_input_data, client)?;
+        let state_diff = self.decode_state_diff(
+            state_update.eth_origin.block_number,
+            state_update.update.block_number.as_u64(),
+            tx_input_data,
+            client,
+        )?;
 
         Ok(FetchState {
             l1_l2_block_mapping: L1L2BlockMapping {
@@ -430,24 +510,24 @@ impl EthereumStateFetcher {
 }
 
 #[async_trait]
-impl StateFetcher for EthereumStateFetcher {
-    async fn state_diff<B, C>(&self, l1_from: u64, l2_start: u64, client: Arc<C>) -> Result<Vec<FetchState>, Error>
+impl<P: JsonRpcClient + Clone> StateFetcher for EthereumStateFetcher<P> {
+    async fn state_diff<B, C>(&mut self, l1_from: u64, l2_start: u64, client: Arc<C>) -> Result<Vec<FetchState>, Error>
     where
         B: BlockT,
         C: ProvideRuntimeApi<B> + HeaderBackend<B>,
         C::Api: StarknetRuntimeApi<B>,
     {
         debug!(target: LOG_TARGET, "state_diff {} {}", l1_from, l2_start);
+
         let state_updates = self.query_state_update(l1_from, l2_start).await?;
 
         let tasks = state_updates.iter().map(|updates| {
             let client_clone = client.clone();
-            let fetcher = self;
+            let mut fetcher = self.clone();
             async move { fetcher.query_state_diff(updates, client_clone).await }
         });
 
         let fetched_states = futures::future::join_all(tasks).await;
-
         let mut states_res = Vec::new();
         for fetched_state in fetched_states {
             match fetched_state {

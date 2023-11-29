@@ -1,12 +1,13 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+use ethers::providers::MockProvider;
 use ethers::types::{Address, Filter, U256};
 use mc_db::L1L2BlockMapping;
 
 use crate::ethereum::EthereumStateFetcher;
-use crate::tests::sync::{create_temp_madara_backend, create_test_client};
-use crate::{run, u256_to_h256, StateFetcher};
+use crate::tests::writer::{create_temp_madara_backend, create_test_client};
+use crate::{run, u256_to_h256, StateFetcher, StateSyncConfig, SyncStatus};
 
 #[tokio::test]
 async fn test_fetch_and_decode_state_diff() {
@@ -14,12 +15,17 @@ async fn test_fetch_and_decode_state_diff() {
     let verifier_address = "0xb59D5F625b63fbb04134213A526AA3762555B853".parse::<Address>().unwrap();
     let memory_page_address = "0xdc1534eeBF8CEEe76E31C98F5f5e0F9979476c87".parse::<Address>().unwrap();
 
-    let eth_url_list = vec![
-        String::from("https://eth.llamarpc.com"),
-        String::from("https://eth-goerli.g.alchemy.com/v2/nMMxqPTld6cj0DUO-4Qj2cg88Dd1MUhH"),
-    ];
-    let fetcher =
-        EthereumStateFetcher::new(contract_address, verifier_address, memory_page_address, eth_url_list).unwrap();
+    let eth_url_list = vec![String::from("https://eth-goerli.g.alchemy.com/v2/nMMxqPTld6cj0DUO-4Qj2cg88Dd1MUhH")];
+    let sync_status = Arc::new(Mutex::new(SyncStatus::SYNCING));
+    let mut fetcher = EthereumStateFetcher::new(
+        contract_address,
+        verifier_address,
+        memory_page_address,
+        eth_url_list,
+        28566,
+        sync_status,
+    )
+    .unwrap();
 
     let l1_from = 9064758;
     let l2_start = 809819;
@@ -36,13 +42,17 @@ async fn test_sync_state_diff_from_l1() {
     let verifier_address = "0xb59D5F625b63fbb04134213A526AA3762555B853".parse::<Address>().unwrap();
     let memory_page_address = "0xdc1534eeBF8CEEe76E31C98F5f5e0F9979476c87".parse::<Address>().unwrap();
 
-    let eth_url_list = vec![
-        // String::from("https://eth.llamarpc.com"),
-        String::from("https://eth-goerli.g.alchemy.com/v2/nMMxqPTld6cj0DUO-4Qj2cg88Dd1MUhH"),
-    ];
-    let fetcher =
-        EthereumStateFetcher::new(contract_address, verifier_address, memory_page_address, eth_url_list).unwrap();
-    let fetcher = Arc::new(fetcher);
+    let eth_url_list = vec![String::from("https://eth-goerli.g.alchemy.com/v2/nMMxqPTld6cj0DUO-4Qj2cg88Dd1MUhH")];
+    let sync_status = Arc::new(Mutex::new(SyncStatus::SYNCING));
+    let fetcher = EthereumStateFetcher::new(
+        contract_address,
+        verifier_address,
+        memory_page_address,
+        eth_url_list,
+        28566,
+        sync_status,
+    )
+    .unwrap();
 
     let (madara_client, backend) = create_test_client();
     let madara_client = Arc::new(madara_client);
@@ -59,7 +69,7 @@ async fn test_sync_state_diff_from_l1() {
         .unwrap();
 
     let madara_backend_clone = madara_backend.clone();
-    let task = run(fetcher, madara_backend_clone.clone(), madara_client, backend).unwrap();
+    let task = run(fetcher, madara_backend_clone.clone(), madara_client, backend);
 
     tokio::spawn(task);
 
@@ -91,13 +101,66 @@ async fn test_get_logs_retry() {
         String::from("https://eth-goerli.g.alchemy.com/v2/nMMxqPTld6cj0DUO-4Qj2cg88Dd1MUhH"),
     ];
 
-    let client =
-        EthereumStateFetcher::new(contract_address, verifier_address, memory_page_address, eth_url_list).unwrap();
+    let sync_status = Arc::new(Mutex::new(SyncStatus::SYNCING));
+    let mut client = EthereumStateFetcher::new(
+        contract_address,
+        verifier_address,
+        memory_page_address,
+        eth_url_list,
+        28566,
+        sync_status,
+    )
+    .unwrap();
     let filter = Filter::new().address(contract_address).event("LogStateUpdate(uint256,int256,uint256)");
 
     let from: u64 = 9064757;
     let to: u64 = 1000001;
-    let filter = filter.clone().from_block(from).to_block(to);
+    let filter = filter.from_block(from).to_block(to);
 
-    client.get_logs_retry(&filter).await.unwrap();
+    assert!(client.get_logs_retry(&filter).await.is_err());
+}
+
+#[tokio::test]
+async fn test_mock_fetch_and_decode_state_diff() {
+    let core_contract = "0xc662c410c0ecf747543f5ba90660f6abebd9c8c4".parse::<Address>().unwrap();
+    let verifier_contract = "0x47312450B3Ac8b5b8e247a6bB6d523e7605bDb60".parse::<Address>().unwrap();
+    let memory_page_contract = "0xdc1534eeBF8CEEe76E31C98F5f5e0F9979476c87".parse::<Address>().unwrap();
+
+    let eth_url_list = vec![
+        String::from("https://eth.llamarpc.com"),
+        String::from("https://eth-goerli.g.alchemy.com/v2/nMMxqPTld6cj0DUO-4Qj2cg88Dd1MUhH"),
+    ];
+
+    let sync_status = Arc::new(Mutex::new(SyncStatus::SYNCING));
+
+    let mock_provider = MockProvider::new();
+    let _mock_provider = EthereumStateFetcher::mock(
+        core_contract,
+        verifier_contract,
+        memory_page_contract,
+        eth_url_list,
+        28566,
+        mock_provider,
+        sync_status,
+    )
+    .unwrap();
+}
+
+#[test]
+fn unused_test() {
+    let conf = StateSyncConfig {
+        l1_start: 9064757,
+        core_contract: "0xde29d060D45901Fb19ED6C6e959EB22d8626708e".to_string(),
+        verifier_contract: "0x47312450B3Ac8b5b8e247a6bB6d523e7605bDb60".to_string(),
+        memory_page_contract: "0xdc1534eeBF8CEEe76E31C98F5f5e0F9979476c87".to_string(),
+        l2_start: 809818,
+        l1_url: "https://eth-goerli.g.alchemy.com/v2/nMMxqPTld6cj0DUO-4Qj2cg88Dd1MUhH".to_string(),
+        v011_diff_format_height: 28566,
+        fetch_block_step: 1000,
+        syncing_fetch_interval: 1000,
+        synced_fetch_interval: 1000,
+    };
+
+    let res = serde_json::to_string(&conf).unwrap();
+    println!("{}", res);
 }

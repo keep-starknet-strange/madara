@@ -38,7 +38,7 @@ where
     #[cfg(not(test))]
     match client.runtime_api().contract_class_hash_by_address(block_hash, address) {
         Ok(class_hash) => Ok(!class_hash.eq(&ClassHash::default())),
-        Err(e) => Err(Error::Other(e.to_string())),
+        Err(e) => Ok(false),
     }
 }
 

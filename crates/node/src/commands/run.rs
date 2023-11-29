@@ -53,9 +53,9 @@ pub struct ExtendedRunCmd {
     #[clap(long)]
     pub cache: bool,
 
-    /// When enable, the node will sync state from l1.
+    /// When enable, the node will sync state from l1,
     #[clap(long)]
-    pub sync_from_l1: bool,
+    pub sync_from_l1: Option<String>,
 }
 
 impl ExtendedRunCmd {
@@ -91,8 +91,7 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
         }
     };
 
-    let sync_from_l1_config =
-        if cli.run.sync_from_l1 { Some(data_path.join("sync-from-l1-config.json")) } else { None };
+    let sync_from_l1_config = cli.run.sync_from_l1.clone().map(|s| PathBuf::from(s));
 
     runner.run_node_until_exit(|config| async move {
         let sealing = cli.run.sealing.map(Into::into).unwrap_or_default();
