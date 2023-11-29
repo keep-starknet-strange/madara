@@ -60,7 +60,7 @@ pub fn execute_txs_and_rollback<T: pallet::Config>(
                     )
                 }
             };
-            log::info!("Executed transaction: {:#?}", result);
+            log::debug!("Executed transaction in rollback mode: {:#?}", result);
             execution_results.push(result);
         }
         storage::TransactionOutcome::Rollback(Ok(()))
