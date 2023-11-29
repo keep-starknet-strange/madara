@@ -68,28 +68,6 @@ pub fn execute_txs_and_rollback<T: pallet::Config>(
     execution_results
 }
 
-pub fn convert_call_info_to_function_invocation<T>(call_info: &CallInfo) -> Result<FunctionInvocation, Error<T>> {
-    let mut inner_calls = vec![];
-    for call in &call_info.inner_calls {
-        inner_calls.push(convert_call_info_to_function_invocation::<T>(&call)?);
-    }
-
-    Ok(FunctionInvocation {
-        contract_address: call_info.call.storage_address.0.0.into(),
-        entry_point_selector: call_info.call.entry_point_selector.0.into(),
-        calldata: call_info.call.calldata.0.iter().map(|x| (*x).into()).collect(),
-        caller_address: call_info.call.caller_address.0.0.into(),
-        class_hash: call_info.call.class_hash.ok_or(Error::MissingClassHashInCallInfo)?.0.into(),
-        entry_point_type: call_info.call.entry_point_type,
-        call_type: call_info.call.call_type,
-        result: call_info.execution.retdata.0.iter().map(|x| (*x).into()).collect(),
-        calls: inner_calls,
-        events: call_info.execution.events.iter().map(|event| event.event.clone()).collect(),
-        // TODO: implement messages for simulate
-        messages: vec![],
-    })
-}
-
 pub fn convert_call_info_to_execute_invocation<T>(
     call_info: &CallInfo,
     revert_error: Option<&String>,
@@ -99,5 +77,5 @@ pub fn convert_call_info_to_execute_invocation<T>(
             revert_reason: revert_error.ok_or(Error::MissingRevertReason)?.clone(),
         }));
     }
-    Ok(ExecuteInvocation::Success(convert_call_info_to_function_invocation::<T>(call_info)?))
+    Ok(ExecuteInvocation::Success(call_info.into()))
 }

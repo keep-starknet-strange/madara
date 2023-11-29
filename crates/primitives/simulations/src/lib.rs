@@ -3,12 +3,15 @@
 #[doc(hidden)]
 pub extern crate alloc;
 
+use alloc::collections::BTreeMap;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use blockifier::execution::entry_point::CallType;
+use blockifier::execution::entry_point::CallType::{Call, Delegate};
+use blockifier::execution::entry_point::{CallInfo, OrderedL2ToL1Message};
 use mp_felt::{Felt252Wrapper, UfeHex};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
+use starknet_api::api_core::EthAddress;
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::transaction::EventContent;
 
@@ -112,6 +115,22 @@ pub struct L1HandlerTransactionTrace {
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct MessageToL1 {
+    /// The address of the L2 contract sending the message
+    #[serde_as(as = "UfeHex")]
+    pub from_address: Felt252Wrapper,
+    /// The target L1 address the message is sent to
+    pub to_address: EthAddress,
+    /// The payload of the message
+    #[serde_as(as = "Vec<UfeHex>")]
+    pub payload: Vec<Felt252Wrapper>,
+}
+
+#[serde_with::serde_as]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct FunctionInvocation {
     /// Contract address
     #[serde_as(as = "UfeHex")]
@@ -126,8 +145,8 @@ pub struct FunctionInvocation {
     #[serde_as(as = "UfeHex")]
     pub caller_address: Felt252Wrapper,
     /// The hash of the class being called
-    #[serde_as(as = "UfeHex")]
-    pub class_hash: Felt252Wrapper,
+    #[serde_as(as = "Option<UfeHex>")]
+    pub class_hash: Option<Felt252Wrapper>,
     pub entry_point_type: EntryPointType,
     pub call_type: CallType,
     /// The value returned from the function invocation
@@ -138,7 +157,51 @@ pub struct FunctionInvocation {
     /// The events emitted in this invocation
     pub events: Vec<EventContent>,
     /// The messages sent by this invocation to L1
-    pub messages: Vec<MsgToL1>,
+    pub messages: Vec<MessageToL1>,
+}
+
+impl From<&CallInfo> for FunctionInvocation {
+    fn from(call_info: &CallInfo) -> FunctionInvocation {
+        let messages = ordered_l2_to_l1_messages(&call_info);
+
+        let mut inner_calls = Vec::new();
+        for call in &call_info.inner_calls {
+            inner_calls.push(call.into());
+        }
+
+        FunctionInvocation {
+            contract_address: call_info.call.storage_address.0.0.into(),
+            entry_point_selector: call_info.call.entry_point_selector.0.into(),
+            calldata: call_info.call.calldata.0.iter().map(|x| (*x).into()).collect(),
+            caller_address: call_info.call.caller_address.0.0.into(),
+            class_hash: call_info.call.class_hash.map(|x| x.0.into()),
+            entry_point_type: call_info.call.entry_point_type,
+            call_type: call_info.call.call_type.into(),
+            result: call_info.execution.retdata.0.iter().map(|x| (*x).into()).collect(),
+            calls: inner_calls,
+            events: call_info.execution.events.iter().map(|event| event.event.clone()).collect(),
+            messages,
+        }
+    }
+}
+
+fn ordered_l2_to_l1_messages(call_info: &CallInfo) -> Vec<MessageToL1> {
+    let mut messages = BTreeMap::new();
+
+    for call in call_info.into_iter() {
+        for OrderedL2ToL1Message { order, message } in &call.execution.l2_to_l1_messages {
+            messages.insert(
+                order,
+                MessageToL1 {
+                    payload: message.payload.0.iter().map(|x| (*x).into()).collect(),
+                    to_address: message.to_address,
+                    from_address: call.call.storage_address.0.0.into(),
+                },
+            );
+        }
+    }
+
+    messages.into_values().collect()
 }
 
 #[derive(Debug, Clone)]
@@ -160,19 +223,23 @@ pub struct RevertedInvocation {
     pub revert_reason: String,
 }
 
-#[serde_with::serde_as]
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub struct MsgToL1 {
-    /// The address of the L2 contract sending the message
-    #[serde_as(as = "UfeHex")]
-    pub from_address: Felt252Wrapper,
-    /// The target L1 address the message is sent to
-    #[serde_as(as = "UfeHex")]
-    pub to_address: Felt252Wrapper,
-    /// The payload of the message
-    #[serde_as(as = "Vec<UfeHex>")]
-    pub payload: Vec<Felt252Wrapper>,
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum CallType {
+    #[serde(rename = "CALL")]
+    Call,
+    #[serde(rename = "LIBRARY_CALL")]
+    LibraryCall,
+}
+
+impl From<blockifier::execution::entry_point::CallType> for CallType {
+    fn from(value: blockifier::execution::entry_point::CallType) -> Self {
+        use blockifier::execution::entry_point::CallType::*;
+        match value {
+            Call => Self::Call,
+            Delegate => Self::LibraryCall,
+        }
+    }
 }

@@ -106,9 +106,7 @@ use starknet_crypto::FieldElement;
 
 use crate::alloc::string::ToString;
 use crate::types::StorageSlot;
-use crate::utils::{
-    convert_call_info_to_execute_invocation, convert_call_info_to_function_invocation, execute_txs_and_rollback,
-};
+use crate::utils::{convert_call_info_to_execute_invocation, execute_txs_and_rollback};
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
@@ -437,7 +435,6 @@ pub mod pallet {
         SequencerAddressNotValid,
         InvalidContractClassForThisDeclareVersion,
         Unimplemented,
-        MissingClassHashInCallInfo,
         MissingRevertReason,
         MissingCallInfo,
     }
@@ -1125,21 +1122,19 @@ impl<T: Config> Pallet<T> {
             disable_fee_charge,
         );
 
-        let get_function_invocation =
-            |call_info: Option<&CallInfo>| -> Result<Option<FunctionInvocation>, DispatchError> {
-                match call_info {
-                    Some(call_info) => Ok(Some(convert_call_info_to_function_invocation::<T>(call_info)?)),
-                    None => Ok(None),
-                }
-            };
+        let get_function_invocation = |call_info: Option<&CallInfo>| -> Option<FunctionInvocation> {
+            match call_info {
+                Some(call_info) => Some(call_info.into()),
+                None => None,
+            }
+        };
 
         let mut results = vec![];
         for (tx, res) in transactions.iter().zip(execution_results.iter()) {
             match res {
                 Ok(tx_exec_info) => {
-                    let validate_invocation = get_function_invocation(tx_exec_info.validate_call_info.as_ref())?;
-                    let fee_transfer_invocation =
-                        get_function_invocation(tx_exec_info.fee_transfer_call_info.as_ref())?;
+                    let validate_invocation = get_function_invocation(tx_exec_info.validate_call_info.as_ref());
+                    let fee_transfer_invocation = get_function_invocation(tx_exec_info.fee_transfer_call_info.as_ref());
                     let transaction_trace = match tx {
                         UserTransaction::Invoke(tx) => TransactionTrace::Invoke(InvokeTransactionTrace {
                             validate_invocation,
@@ -1156,9 +1151,12 @@ impl<T: Config> Pallet<T> {
                         UserTransaction::DeployAccount(tx) => {
                             TransactionTrace::DeployAccount(DeployAccountTransactionTrace {
                                 validate_invocation,
-                                constructor_invocation: convert_call_info_to_function_invocation::<T>(
-                                    tx_exec_info.execute_call_info.as_ref().ok_or(Error::<T>::MissingCallInfo)?,
-                                )?,
+                                constructor_invocation: tx_exec_info
+                                    .execute_call_info
+                                    .as_ref()
+                                    .ok_or(Error::<T>::MissingCallInfo)?
+                                    .into(),
+
                                 fee_transfer_invocation,
                             })
                         }
