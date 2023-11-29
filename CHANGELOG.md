@@ -2,6 +2,7 @@
 
 ## Next release
 
+- test(rust-rpc-test): use undeclared contracts for declare transactions testing
 - build: update blockifier, fix divergent substrat block hash
 - chore: remove tests that run in wasm and native, only wasm from now
 - chore: split StarknetRpcApi trait in two, like in openRPC specs

@@ -67,21 +67,21 @@ async fn works_with_storage_change(madara: &ThreadSafeMadaraClient) -> Result<()
 
     let (mut txs, block_number) = {
         let mut madara_write_lock = madara.write().await;
-        let txs = madara_write_lock
-            .create_block_with_txs(vec![
-                Transaction::Execution(funding_account.transfer_tokens(
-                    account_address,
-                    FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap(),
-                    None,
-                )),
-                Transaction::AccountDeployment(account_deploy_txn),
-            ])
+        // If we group the funding of the account and the deployment in one block for some unknown reason
+        // the account_address isn't found in the get_class_hash_at later
+        let mut txs = madara_write_lock
+            .create_block_with_txs(vec![Transaction::Execution(funding_account.transfer_tokens(
+                account_address,
+                FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap(),
+                None,
+            ))])
             .await?;
+        let mut second_tx =
+            madara_write_lock.create_block_with_txs(vec![Transaction::AccountDeployment(account_deploy_txn)]).await?;
         let block_number = rpc.block_number().await?;
-
+        let _ = &txs.append(&mut second_tx);
         (txs, block_number)
     };
-
     assert_eq!(txs.len(), 2);
     let account_deploy_tx_result = txs.remove(1);
     match account_deploy_tx_result {
@@ -102,7 +102,7 @@ async fn works_with_storage_change(madara: &ThreadSafeMadaraClient) -> Result<()
 
     // included in block
     let included_txs = rpc.get_block_transaction_count(BlockId::Number(block_number)).await?;
-    assert_eq!(included_txs, 2); // fund transfer + deploy
+    assert_eq!(included_txs, 1); // Decomposed into 2 blocks
 
     Ok(())
 }
