@@ -6,7 +6,7 @@ use frame_support::{Identity, StorageHasher};
 #[cfg(not(feature = "std"))]
 use hashbrown::hash_map::DefaultHashBuilder as HasherBuilder;
 use indexmap::IndexMap;
-use log::debug;
+use log::info;
 use madara_runtime::{Block as SubstrateBlock, Header as SubstrateHeader};
 use mc_db::MappingCommitment;
 use mc_rpc_core::utils::get_block_by_block_hash;
@@ -30,6 +30,8 @@ use starknet_api::state::StorageKey as StarknetStorageKey;
 
 use super::*;
 
+/// StateWriter is responsible for applying StarkNet state differences to the underlying blockchain
+/// state.
 pub struct StateWriter<B: BlockT, C, BE> {
     client: Arc<C>,
     substrate_backend: Arc<BE>,
@@ -43,10 +45,28 @@ where
     C: HeaderBackend<B>,
     BE: Backend<B>,
 {
+    /// Creates a new `StateWriter` instance.
+    ///
+    /// # Arguments
+    ///
+    /// * `client` - StarkNet runtime client.
+    /// * `substrate_backend` - Substrate blockchain backend.
+    /// * `madara_backend` - Backend for interacting with the Madara storage.
     pub fn new(client: Arc<C>, substrate_backend: Arc<BE>, madara_backend: Arc<mc_db::Backend<B>>) -> Self {
         Self { client, substrate_backend, madara_backend, phantom_data: PhantomData }
     }
 
+    /// Applies a StarkNet state difference to the underlying blockchain state.
+    ///
+    /// # Arguments
+    ///
+    /// * `starknet_block_number` - StarkNet block number associated with the state difference.
+    /// * `starknet_block_hash` - StarkNet block hash associated with the state difference.
+    /// * `state_diff` - StarkNet state difference to be applied.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` indicating success or an error if the operation fails.
     pub fn apply_state_diff(
         &self,
         starknet_block_number: u64,
@@ -75,19 +95,36 @@ where
         self.apply_inner_state_diff(starknet_block_number, starknet_block_hash, inner_state_diff)
     }
 
-    // Apply the state difference to the data layer.
+    /// Applies the inner StarkNet state difference to the underlying blockchain state.
+    ///
+    /// This method takes the inner StarkNet state difference, StarkNet block number, and StarkNet
+    /// block hash, and applies the changes to the Substrate blockchain state. It calculates the
+    /// state root after the storage change and commits the operation to the Substrate backend.
+    ///
+    /// # Arguments
+    ///
+    /// * `starknet_block_number` - StarkNet block number associated with the inner state
+    ///   difference.
+    /// * `starknet_block_hash` - StarkNet block hash associated with the inner state difference.
+    /// * `state_diff` - Inner StarkNet state difference to be applied.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` indicating success or an error if the operation fails.
     pub(crate) fn apply_inner_state_diff(
         &self,
         starknet_block_number: u64,
-        starknet_block_hash: H256,
+        mut starknet_block_hash: H256,
         state_diff: InnerStateDiff,
     ) -> Result<(), Error> {
-        debug!(target: LOG_TARGET, "apply_inner_state_diff {} {:#?}", starknet_block_number, starknet_block_hash);
-
         let block_info = self.client.info();
 
         let starknet_block = self.create_starknet_block(&block_info, starknet_block_number as u32)?;
-        // let starknet_block_hash = starknet_block.header().hash::<PedersenHasher>().into();
+
+        // In earlier versions, we couldn't obtain the block hash from L1.
+        if starknet_block_hash == H256::default() {
+            starknet_block_hash = starknet_block.header().hash::<PedersenHasher>().into();
+        }
         let digest = DigestItem::Consensus(MADARA_ENGINE_ID, mp_digest_log::Log::Block(starknet_block).encode());
 
         let mut substrate_block = SubstrateBlock {
@@ -131,9 +168,26 @@ where
                 starknet_block_hash,
                 starknet_transaction_hashes: Vec::new(),
             })
-            .map_err(|e| Error::Other(e.to_string()))
+            .map_err(|e| Error::Other(e.to_string()))?;
+
+        info!(target: LOG_TARGET, "~~ apply state diff. starknet block number: {}, starknet block hash: {:#?}", 
+            starknet_block_number, starknet_block_hash);
+        Ok(())
     }
 
+    /// Creates a StarkNet block based on the best StarkNet block in the blockchain.
+    ///
+    /// This method takes the information of the best StarkNet block in the blockchain, the desired
+    /// block number, and creates a new StarkNet block with the appropriate header.
+    ///
+    /// # Arguments
+    ///
+    /// * `block_chain_info` - Information about the best block in the blockchain.
+    /// * `block_number` - Desired block number for the new StarkNet block.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the newly created StarkNet block or an error if the operation fails.
     fn create_starknet_block(&self, block_chain_info: &Info<B>, block_number: u32) -> Result<Block, Error> {
         if block_chain_info.best_number >= block_number {
             return Err(Error::AlreadyInChain);
@@ -152,6 +206,19 @@ where
         Ok(Block::new(starknet_header, Default::default()))
     }
 
+    /// Calculates the state root after a storage change.
+    ///
+    /// This method takes the inner storage change set and the current block hash,
+    /// and calculates the new state root after applying the storage changes.
+    ///
+    /// # Arguments
+    ///
+    /// * `storage_changes` - Inner storage change set to be applied.
+    /// * `block_hash` - Current block hash of the blockchain.
+    ///
+    /// # Returns
+    ///
+    /// The calculated state root after the storage change.
     fn calculate_state_root_after_storage_change(
         &self,
         storage_changes: &InnerStorageChangeSet,
@@ -178,6 +245,7 @@ pub(crate) struct InnerStorageChangeSet {
     pub child_changes: Vec<(StorageKey, Vec<(StorageKey, Option<StorageValue>)>)>,
 }
 
+/// InnerStateDiff represents the StarkNet state difference at a more granular level.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub(crate) struct InnerStateDiff {
     pub commitment: CommitmentStateDiff,
@@ -199,6 +267,7 @@ impl Default for InnerStateDiff {
 }
 
 impl InnerStorageChangeSet {
+    /// Creates an iterator over the changes in the `InnerStorageChangeSet`.
     pub fn iter(&self) -> impl Iterator<Item = (Option<&StorageKey>, &StorageKey, Option<&StorageValue>)> + '_ {
         let top = self.changes.iter().map(|(k, v)| (None, k, v.as_ref()));
         let children = self
@@ -213,6 +282,7 @@ pub fn storage_key_build(prefix: Vec<u8>, key: &[u8]) -> Vec<u8> {
     [prefix, Identity::hash(key)].concat()
 }
 
+/// Converts `InnerStorageChangeSet` to `InnerStateDiff`.
 impl From<InnerStorageChangeSet> for InnerStateDiff {
     fn from(value: InnerStorageChangeSet) -> Self {
         let mut state_diff = Self::default();
@@ -282,6 +352,7 @@ impl From<InnerStorageChangeSet> for InnerStateDiff {
     }
 }
 
+/// Converts `InnerStateDiff` to `InnerStorageChangeSet`.
 impl From<InnerStateDiff> for InnerStorageChangeSet {
     fn from(inner_state_diff: InnerStateDiff) -> Self {
         let mut changes: Vec<(StorageKey, Option<StorageValue>)> = Vec::new();

@@ -7,14 +7,31 @@ use starknet_api::state::{ContractClass, StorageKey};
 
 use super::*;
 
+/// Width of the field storing the number of storage updates in `U256`.
 #[allow(dead_code)]
 const NUM_STORAGE_UPDATES_WIDTH: u64 = 64; // Adjust this based on your logic
 
+/// Macro for converting a value of type `U256` to a StarkNet type.
+///
 /// Usually in starknet, some types like ClassHash and ContractClass can be directly converted from
 /// Felt252Wrapper, so we use this macro to convert U256 into Felt252Wrapper and then into the
 /// corresponding data.
 ///
-/// Usage: convert_to_starknet_type!(U256::from(1), ClassHash)
+/// # Arguments
+///
+/// * `$data` - The value to be converted.
+/// * `$target_type` - The StarkNet type to convert to.
+///
+/// # Returns
+///
+/// A `Result` containing the converted value or an `Error` if the conversion fails.
+///
+/// # Example
+///
+/// ```rust
+/// // Example usage
+/// let result = convert_to_starknet_type!(U256::from(1), ClassHash);
+/// ```
 macro_rules! convert_to_starknet_type {
     ($data:expr, $target_type:ident) => {{
         let result = Felt252Wrapper::try_from($data)
@@ -24,6 +41,24 @@ macro_rules! convert_to_starknet_type {
     }};
 }
 
+/// Checks if a contract is deployed based on its address and block hash.
+///
+/// # Arguments
+///
+/// * `address` - Address of the contract.
+/// * `block_hash` - Hash of the block in which the contract is being checked.
+/// * `client` - StarkNet runtime client.
+///
+/// # Returns
+///
+/// A `Result` indicating whether the contract is deployed or not.
+///
+/// # Example
+///
+/// ```rust
+/// // Example usage
+/// let result = contract_deployed(address, block_hash, client);
+/// ```
 #[allow(unused)]
 fn contract_deployed<B, C>(address: ContractAddress, block_hash: B::Hash, client: Arc<C>) -> Result<bool, Error>
 where
@@ -42,6 +77,24 @@ where
     }
 }
 
+/// Decodes a state difference using the 011 logic.
+///
+/// # Arguments
+///
+/// * `encoded_diff` - Encoded state difference data in the form of `U256` slices.
+/// * `block_hash` - Hash of the block in which the state difference occurred.
+/// * `client` - StarkNet runtime client.
+///
+/// # Returns
+///
+/// A `Result` containing the decoded `StateDiff` or an `Error` if decoding fails.
+///
+/// # Example
+///
+/// ```rust
+/// // Example usage
+/// let result = decode_011_diff(&encoded_diff, block_hash, client);
+/// ```
 pub fn decode_011_diff<B, C>(encoded_diff: &[U256], block_hash: B::Hash, client: Arc<C>) -> Result<StateDiff, Error>
 where
     B: BlockT,
@@ -116,7 +169,24 @@ where
     })
 }
 
-#[allow(dead_code)]
+/// Decodes a state difference using the pre-011 logic.
+///
+/// # Arguments
+///
+/// * `encoded_diff` - Encoded state difference data in the form of `U256` slices.
+/// * `with_constructor_args` - Flag indicating whether constructor arguments are present in the
+///   data.
+///
+/// # Returns
+///
+/// A `Result` containing the decoded `StateDiff` or an `Error` if decoding fails.
+///
+/// # Example
+///
+/// ```rust
+/// // Example usage
+/// let result = decode_pre_011_diff(&encoded_diff, true);
+/// ```
 pub fn decode_pre_011_diff(encoded_diff: &[U256], with_constructor_args: bool) -> Result<StateDiff, Error> {
     let mut offset = 0;
     let num_deployments_cells = encoded_diff[offset].as_usize();
@@ -146,7 +216,7 @@ pub fn decode_pre_011_diff(encoded_diff: &[U256], with_constructor_args: bool) -
         }
     }
 
-    let updates_len = encoded_diff[offset].as_usize();
+    let updates_len = encoded_diff[offset].low_u64();
     offset += 1;
     for _i in 0..updates_len {
         let address = convert_to_starknet_type!(encoded_diff[offset], ContractAddress)?;
@@ -167,7 +237,6 @@ pub fn decode_pre_011_diff(encoded_diff: &[U256], with_constructor_args: bool) -
         let mut diffs = IndexMap::new();
         for _ in 0..num_updates {
             let key = convert_to_starknet_type!(encoded_diff[offset], StorageKey)?;
-
             offset += 1;
 
             let value = convert_to_starknet_type!(encoded_diff[offset], StarkFelt)?;

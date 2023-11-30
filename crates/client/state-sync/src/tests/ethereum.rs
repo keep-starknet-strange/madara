@@ -7,13 +7,13 @@ use mc_db::L1L2BlockMapping;
 
 use crate::ethereum::EthereumStateFetcher;
 use crate::tests::writer::{create_temp_madara_backend, create_test_client};
-use crate::{run, u256_to_h256, StateFetcher, StateSyncConfig, SyncStatus};
+use crate::{run, u256_to_h256, StateFetcher, SyncStatus};
 
 #[tokio::test]
 async fn test_fetch_and_decode_state_diff() {
     let contract_address = "0xde29d060D45901Fb19ED6C6e959EB22d8626708e".parse::<Address>().unwrap();
-    let verifier_address = "0xb59D5F625b63fbb04134213A526AA3762555B853".parse::<Address>().unwrap();
-    let memory_page_address = "0xdc1534eeBF8CEEe76E31C98F5f5e0F9979476c87".parse::<Address>().unwrap();
+    let verifier_address = "0x5EF3C980Bf970FcE5BbC217835743ea9f0388f4F".parse::<Address>().unwrap();
+    let memory_page_address = "0x743789ff2fF82Bfb907009C9911a7dA636D34FA7".parse::<Address>().unwrap();
 
     let eth_url_list = vec![String::from("https://eth-goerli.g.alchemy.com/v2/nMMxqPTld6cj0DUO-4Qj2cg88Dd1MUhH")];
     let sync_status = Arc::new(Mutex::new(SyncStatus::SYNCING));
@@ -24,11 +24,12 @@ async fn test_fetch_and_decode_state_diff() {
         eth_url_list,
         28566,
         sync_status,
+        1000,
     )
     .unwrap();
 
-    let l1_from = 9064758;
-    let l2_start = 809819;
+    let l1_from = 5854001; // 5789711
+    let l2_start = 0;
 
     let (madara_client, _) = create_test_client();
 
@@ -51,6 +52,7 @@ async fn test_sync_state_diff_from_l1() {
         eth_url_list,
         28566,
         sync_status,
+        1000,
     )
     .unwrap();
 
@@ -109,6 +111,7 @@ async fn test_get_logs_retry() {
         eth_url_list,
         28566,
         sync_status,
+        1000,
     )
     .unwrap();
     let filter = Filter::new().address(contract_address).event("LogStateUpdate(uint256,int256,uint256)");
@@ -142,25 +145,7 @@ async fn test_mock_fetch_and_decode_state_diff() {
         28566,
         mock_provider,
         sync_status,
+        1000,
     )
     .unwrap();
-}
-
-#[test]
-fn unused_test() {
-    let conf = StateSyncConfig {
-        l1_start: 9064757,
-        core_contract: "0xde29d060D45901Fb19ED6C6e959EB22d8626708e".to_string(),
-        verifier_contract: "0x47312450B3Ac8b5b8e247a6bB6d523e7605bDb60".to_string(),
-        memory_page_contract: "0xdc1534eeBF8CEEe76E31C98F5f5e0F9979476c87".to_string(),
-        l2_start: 809818,
-        l1_url: "https://eth-goerli.g.alchemy.com/v2/nMMxqPTld6cj0DUO-4Qj2cg88Dd1MUhH".to_string(),
-        v011_diff_format_height: 28566,
-        fetch_block_step: 1000,
-        syncing_fetch_interval: 1000,
-        synced_fetch_interval: 1000,
-    };
-
-    let res = serde_json::to_string(&conf).unwrap();
-    println!("{}", res);
 }
