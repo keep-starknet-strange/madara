@@ -46,4 +46,6 @@ std = [
   "sp-arithmetic/std",
   "parity-scale-codec/std",
   "scale-info/std",
+  "starknet-core/std",
+  "mp-simulations/std",
 ]

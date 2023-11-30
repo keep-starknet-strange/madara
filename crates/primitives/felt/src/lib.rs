@@ -329,7 +329,9 @@ pub enum Felt252WrapperError {
 
 use alloc::borrow::Cow;
 
+#[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
+#[cfg(feature = "serde")]
 use serde_with::SerializeAs;
 
 impl From<Felt252WrapperError> for Cow<'static, str> {

@@ -10,7 +10,6 @@ use alloc::vec::Vec;
 use blockifier::execution::entry_point::CallType::{Call, Delegate};
 use blockifier::execution::entry_point::{CallInfo, OrderedL2ToL1Message};
 use mp_felt::{Felt252Wrapper, UfeHex};
-use serde::Serialize;
 use starknet_api::api_core::EthAddress;
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::transaction::EventContent;
@@ -164,10 +163,7 @@ impl From<&CallInfo> for FunctionInvocation {
     fn from(call_info: &CallInfo) -> FunctionInvocation {
         let messages = ordered_l2_to_l1_messages(&call_info);
 
-        let mut inner_calls = Vec::new();
-        for call in &call_info.inner_calls {
-            inner_calls.push(call.into());
-        }
+        let inner_calls = call_info.inner_calls.iter().map(|call| call.into()).collect();
 
         FunctionInvocation {
             contract_address: call_info.call.storage_address.0.0.into(),

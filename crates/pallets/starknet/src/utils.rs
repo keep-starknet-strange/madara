@@ -6,7 +6,7 @@ use blockifier::execution::entry_point::CallInfo;
 use blockifier::transaction::objects::{TransactionExecutionInfo, TransactionExecutionResult};
 use frame_support::storage;
 use mp_felt::Felt252Wrapper;
-use mp_simulations::{ExecuteInvocation, FunctionInvocation, RevertedInvocation};
+use mp_simulations::{ExecuteInvocation, RevertedInvocation};
 use mp_transactions::execution::Execute;
 use mp_transactions::UserTransaction;
 use sp_runtime::DispatchError;
@@ -21,7 +21,7 @@ pub fn execute_txs_and_rollback<T: pallet::Config>(
     is_query: bool,
     disable_validation: bool,
     disable_fee_charge: bool,
-) -> Vec<TransactionExecutionResult<TransactionExecutionInfo>> {
+) -> Result<Vec<TransactionExecutionResult<TransactionExecutionInfo>>, Error<T>> {
     let mut execution_results = vec![];
     let _: Result<_, DispatchError> = storage::transactional::with_transaction(|| {
         for tx in txs {
@@ -29,7 +29,6 @@ pub fn execute_txs_and_rollback<T: pallet::Config>(
                 UserTransaction::Declare(tx, contract_class) => {
                     let executable = tx
                         .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), is_query)
-                        .map_err(|_| Error::<T>::InvalidContractClass)
                         .expect("Contract class should be valid");
                     executable.execute(
                         &mut BlockifierStateAdapter::<T>::default(),
@@ -60,12 +59,11 @@ pub fn execute_txs_and_rollback<T: pallet::Config>(
                     )
                 }
             };
-            log::debug!("Executed transaction in rollback mode: {:#?}", result);
             execution_results.push(result);
         }
         storage::TransactionOutcome::Rollback(Ok(()))
     });
-    execution_results
+    Ok(execution_results)
 }
 
 pub fn convert_call_info_to_execute_invocation<T>(

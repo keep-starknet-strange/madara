@@ -322,7 +322,6 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
         // 3. state.get_app_config().disable_transaction_fee - true when fees is disabled at app level
         // 4. is_query - true during estimate_fee transactions. estimate_fee transactions normally have
         //    max_fee = 0 but they should also work if max_fee > 0
-        log::debug!("this is is query: {}", is_query);
         if account_tx_context.max_fee != Fee(0)
             && !state.get_app_config().disable_transaction_fee
             && !disable_fee_charge
@@ -358,7 +357,6 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
         let account_tx_context = self.get_account_transaction_context(is_query);
 
         // Nonce and fee check should be done before running user code.
-        log::debug!("this is is query: {}", is_query);
         Self::handle_nonce_and_check_fee_balance(
             state,
             block_context,

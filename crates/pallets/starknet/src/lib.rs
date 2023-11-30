@@ -437,6 +437,7 @@ pub mod pallet {
         Unimplemented,
         MissingRevertReason,
         MissingCallInfo,
+        TransactionalExecutionFailed,
     }
 
     /// The Starknet pallet external functions.
@@ -1082,7 +1083,7 @@ impl<T: Config> Pallet<T> {
 
         // is_query is true so disable_fee_charge could be true or false
         let execution_results =
-            execute_txs_and_rollback::<T>(&transactions, &Self::get_block_context(), chain_id, true, false, false);
+            execute_txs_and_rollback::<T>(&transactions, &Self::get_block_context(), chain_id, true, false, false)?;
 
         let mut results = vec![];
         for res in execution_results {
@@ -1120,14 +1121,14 @@ impl<T: Config> Pallet<T> {
             false,
             disable_validation,
             disable_fee_charge,
-        );
+        )?;
 
-        let get_function_invocation = |call_info: Option<&CallInfo>| -> Option<FunctionInvocation> {
+        fn get_function_invocation(call_info: Option<&CallInfo>) -> Option<FunctionInvocation> {
             match call_info {
                 Some(call_info) => Some(call_info.into()),
                 None => None,
             }
-        };
+        }
 
         let mut results = vec![];
         for (tx, res) in transactions.iter().zip(execution_results.iter()) {
@@ -1161,14 +1162,13 @@ impl<T: Config> Pallet<T> {
                             })
                         }
                     };
-                    log::info!("Simulated transaction: {:?}", transaction_trace);
                     results.push(SimulatedTransaction {
                         transaction_trace,
                         fee_estimation: FeeEstimate { gas_consumed: 0, gas_price: 0, overall_fee: 0 },
                     })
                 }
                 Err(e) => {
-                    log!(info, "Failed to simulate transactions: {:?}", e);
+                    log::error!("Failed to simulate transactions: {:?}, error: {:?}", tx, e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             }
