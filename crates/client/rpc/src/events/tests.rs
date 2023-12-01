@@ -1,5 +1,3 @@
-use std::iter::zip;
-
 use mp_felt::Felt252Wrapper;
 use rstest::*;
 use starknet_core::types::EmittedEvent;
@@ -16,22 +14,6 @@ struct TestCase<'a> {
     max_results: usize,
     expected_events: Vec<EmittedEvent>,
     n_visited: usize,
-}
-
-// This is only exist because EmittedEvent don't impl Eq, PartialEq
-// It will be fixed upstream in the future
-fn assert_emitted_events_are_equals(event1: EmittedEvent, event2: EmittedEvent) {
-    assert_eq!(event1.from_address, event2.from_address);
-    assert_eq!(event1.keys, event2.keys);
-    assert_eq!(event1.data, event2.data);
-    assert_eq!(event1.block_hash, event2.block_hash);
-    assert_eq!(event1.block_number, event2.block_number);
-    assert_eq!(event1.transaction_hash, event2.transaction_hash);
-}
-
-fn assert_vecs_of_emitted_events_are_equals(v1: Vec<EmittedEvent>, v2: Vec<EmittedEvent>) {
-    assert_eq!(v1.len(), v2.len(), "the two Vec should be of equal length");
-    zip(v1, v2).for_each(|(e1, e2)| assert_emitted_events_are_equals(e1, e2))
 }
 
 #[fixture]
@@ -149,7 +131,7 @@ fn filter_events_by_test_case(#[case] params: TestCase) {
         params.max_results,
         &mut n_visited,
     );
-    assert_vecs_of_emitted_events_are_equals(filtered_events, params.expected_events);
+    assert_eq!(filtered_events, params.expected_events);
     pretty_assertions::assert_eq!(n_visited, params.n_visited);
 }
 
