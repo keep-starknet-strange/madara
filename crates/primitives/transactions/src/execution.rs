@@ -319,11 +319,11 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
         // Check fee balance. Skipped in the following cases:
         // 1. account_tx_context.max_fee - balance would always be enough if max_fee is 0
         // 2. disable_fee_charge - true during simulate transactions
-        // 3. state.get_app_config().disable_transaction_fee - true when fees is disabled at app level
+        // 3. state.is_transaction_fee_disabled() - true when fees is disabled at app level
         // 4. is_query - true during estimate_fee transactions. estimate_fee transactions normally have
         //    max_fee = 0 but they should also work if max_fee > 0
         if account_tx_context.max_fee != Fee(0)
-            && !state.get_app_config().disable_transaction_fee
+            && !state.is_transaction_fee_disabled()
             && !disable_fee_charge
             && !is_query
         {
@@ -361,7 +361,7 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
             state,
             block_context,
             &account_tx_context,
-            state.get_app_config().disable_nonce_validation,
+            state.is_nonce_validation_disabled(),
             disable_fee_charge,
             is_query,
         )?;

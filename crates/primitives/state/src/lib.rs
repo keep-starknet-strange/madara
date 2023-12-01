@@ -29,19 +29,25 @@ pub trait StateChanges {
 /// The `GetAppConfig` trait allows access to this config using
 /// the state variable
 pub struct AppConfig {
-	pub disable_transaction_fee: bool,
-	pub disable_nonce_validation: bool,
+    pub disable_transaction_fee: bool,
+    pub disable_nonce_validation: bool,
 }
 
 /// This trait allows to get the fee config for the pallet and accordingly charge the fees
 pub trait GetAppConfig {
     /// This function reads the DisableTransactionFee from the pallet and returns a boolean
-    /// class hashes.
     ///
     /// # Returns
     ///
     /// * `bool` - Is the fee disabled
-    fn get_app_config(&self) -> AppConfig;
+    fn is_transaction_fee_disabled(&self) -> bool;
+
+    /// This function reads the DisableNonceValidation from the pallet and returns a boolean
+    ///
+    /// # Returns
+    ///
+    /// * `bool` - Is the nonce validation disabled
+    fn is_nonce_validation_disabled(&self) -> bool;
 }
 
 /// A simple implementation of `StateReader` using `HashMap`s as storage.

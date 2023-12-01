@@ -22,17 +22,20 @@ parity-scale-codec = { workspace = true, optional = true }
 scale-info = { workspace = true, optional = true }
 
 # Starknet dependencies
-starknet_api = { workspace = true, features = ["parity-scale-codec", "scale-info"] }
+starknet_api = { workspace = true }
 blockifier = { workspace = true }
 starknet-core = { workspace = true }
 
 [features]
 default = ["std"]
-parity-scale-codec = ["dep:parity-scale-codec"]
-serde = ["dep:serde", "dep:serde_with"]
+parity-scale-codec = ["dep:parity-scale-codec", "starknet_api/parity-scale-codec"]
+serde = ["dep:serde", "dep:serde_with", "starknet_api/scale-info"]
 scale-info = ["dep:scale-info"]
 std = [
 	"mp-felt/std",
+	"starknet_api/std",
+	"blockifier/std",
+	"starknet-core/std",
 	# Optional
 	"parity-scale-codec?/std",
 	"scale-info?/std",
