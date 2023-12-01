@@ -43,11 +43,12 @@ impl<T> GetAppConfig for BlockifierStateAdapter<T>
 where
     T: Config,
 {
-    fn get_app_config(&self) -> AppConfig {
-        AppConfig {
-            disable_nonce_validation: T::DisableNonceValidation::get(),
-            disable_transaction_fee: T::DisableTransactionFee::get(),
-        }
+    fn is_transaction_fee_disabled(&self) -> bool {
+        T::DisableTransactionFee::get()
+    }
+
+    fn is_nonce_validation_disabled(&self) -> bool {
+        T::DisableNonceValidation::get()
     }
 }
 

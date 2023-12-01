@@ -90,7 +90,7 @@ pub fn charge_fee<S: State + StateChanges + GetAppConfig>(
 ) -> TransactionExecutionResult<(Fee, Option<CallInfo>)> {
     // disable_transaction_fee in the config level implies that transaction fees have been disabled
     // at the app level and so we return 0 as the fees
-    if state.get_app_config().disable_transaction_fee {
+    if state.is_transaction_fee_disabled() {
         return Ok((Fee(0), None));
     }
 
