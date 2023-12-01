@@ -11,6 +11,7 @@ use futures::future::BoxFuture;
 use futures::prelude::*;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi, SealingMode, StarknetHasher};
+use madara_utils::OnDiskGenesisConfig;
 use mc_commitment_state_diff::{log_commitment_state_diff, CommitmentStateDiffWorker};
 use mc_data_availability::avail::config::AvailConfig;
 use mc_data_availability::avail::AvailClient;
@@ -351,12 +352,15 @@ pub fn new_full(
     };
 
     let overrides = overrides_handle(client.clone());
+    let config_dir: Box<PathBuf> = Box::new(config.data_path.clone());
+    let genesis_data = OnDiskGenesisConfig(config_dir.as_path().into());
     let starknet_rpc_params = StarknetDeps {
         client: client.clone(),
         madara_backend: madara_backend.clone(),
         overrides,
         sync_service: sync_service.clone(),
         starting_block,
+        genesis_provider: genesis_data.into(),
     };
 
     let rpc_extensions_builder = {

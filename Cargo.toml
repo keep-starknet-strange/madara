@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
   "crates/node",
+  "crates/utils",
   "crates/runtime",
   "crates/pallets/starknet/runtime_api/",
   "crates/pallets/starknet",
@@ -28,6 +29,7 @@ members = [
 # We don't want `cargo test` to trigger its tests
 default-members = [
   "crates/node",
+  "crates/utils",
   "crates/runtime",
   "crates/pallets/starknet/runtime_api/",
   "crates/pallets/starknet",
@@ -146,6 +148,9 @@ prometheus-endpoint = { package = "substrate-prometheus-endpoint", version = "0.
 pallet-aura = { default-features = false, git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
 pallet-grandpa = { default-features = false, git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
 pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
+
+# Madara utils
+madara-utils = { path = "crates/utils", default-features = false }
 
 # Madara pallets
 pallet-starknet = { path = "crates/pallets/starknet", default-features = false }

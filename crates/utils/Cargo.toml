@@ -1,0 +1,14 @@
+[package]
+name = "madara-utils"
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+version.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+pallet-starknet = { workspace = true }
+log = { workspace = true, default-features = true }
+serde = { workspace = true, default-features = true }
+serde_json = { workspace = true }
