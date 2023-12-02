@@ -30,14 +30,3 @@ impl<'a> GenesisProvider for OnDiskGenesisConfig {
         Ok(genesis_data)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
-}
