@@ -27,6 +27,8 @@
 - chore(data-availability-avail): implement fire and forget, and add ws
   reconnection logic
 - chore: update `polkadot-sdk` to `release-polkadot-v1.3.0`
+- feat(da): update da calldata encoding to v0.11.0 spec, da conf examples, da
+  conf flag
 
 ## v0.5.0
 

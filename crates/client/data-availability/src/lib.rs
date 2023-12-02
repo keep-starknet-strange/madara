@@ -11,7 +11,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use ethers::types::{I256, U256};
 use futures::StreamExt;
-use indexmap::{IndexMap, IndexSet};
+use indexmap::IndexMap;
 use mp_storage::{STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_NONCE, STARKNET_STORAGE};
 use sc_client_api::client::BlockchainEvents;
 use serde::Deserialize;
@@ -83,7 +83,7 @@ where
             .expect("node has been initialized to prove state change, but can't read from notification stream");
 
         while let Some(storage_event) = storage_event_st.next().await {
-            let mut accessed_addrs: IndexSet<ContractAddress> = IndexSet::new();
+            let mut num_addrs_accessed: usize = 0;
             let mut state_diff = ThinStateDiff {
                 declared_classes: IndexMap::new(),
                 storage_diffs: IndexMap::new(),
@@ -112,7 +112,7 @@ where
                     state_diff
                         .nonces
                         .insert(ContractAddress(bytes_to_key(&rest_key)), Nonce(bytes_to_felt(&storage_val)));
-                    accessed_addrs.insert(ContractAddress(bytes_to_key(&rest_key)));
+                    num_addrs_accessed += 1;
                 } else if child_key == twox_128(STARKNET_STORAGE) {
                     // collect storage update information in state diff
                     if rest_key.len() > 32 {
@@ -126,7 +126,7 @@ where
                                 v.insert(StorageKey(key), bytes_to_felt(&storage_val));
                             })
                             .or_insert(IndexMap::from([(StorageKey(key), bytes_to_felt(&storage_val))]));
-                        accessed_addrs.insert(ContractAddress(addr));
+                        num_addrs_accessed += 1;
                     }
                 } else if child_key == twox_128(STARKNET_CONTRACT_CLASS) {
                     // collect declared class information in state diff
@@ -146,14 +146,14 @@ where
                             .deployed_contracts
                             .insert(ContractAddress(bytes_to_key(&rest_key)), ClassHash(bytes_to_felt(&storage_val)));
                     }
-                    accessed_addrs.insert(ContractAddress(bytes_to_key(&rest_key)));
+                    num_addrs_accessed += 1;
                 }
             }
 
             // store the da encoded calldata for the state update worker
             if let Err(db_err) = madara_backend
                 .da()
-                .store_state_diff(&storage_event.block, state_diff_to_calldata(state_diff, accessed_addrs.len()))
+                .store_state_diff(&storage_event.block, state_diff_to_calldata(state_diff, num_addrs_accessed))
             {
                 log::error!("db err: {db_err}");
             };
