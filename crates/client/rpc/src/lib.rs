@@ -224,13 +224,15 @@ where
                     .call(
                         FunctionCall {
                             contract_address: fee_token_address,
-                            entry_point_selector: get_selector_from_name("balanceOf").unwrap(),
+                            entry_point_selector: get_selector_from_name("balanceOf")
+                                .expect("the provided method name should be a valid ASCII string."),
                             calldata: vec![contract_address],
                         },
                         block_id,
                     )
-                    .unwrap()[0];
-                let balance = Felt252Wrapper::from_hex_be(balance_string).unwrap().into();
+                    .expect("FunctionCall attributes should be correct.")[0];
+                let balance =
+                    Felt252Wrapper::from_hex_be(balance_string).expect("`balanceOf` should return a Felt").into();
                 PredeployedAccount { contract_address, class_hash, name, private_key, balance }
             })
             .collect::<Vec<_>>())
