@@ -14,7 +14,7 @@ pub struct OnDiskGenesisConfig(pub Box<Path>);
 #[derive(Debug)]
 pub struct LoadGenesisDataError<'a>(&'a str);
 
-impl<'a> GenesisProvider for OnDiskGenesisConfig {
+impl GenesisProvider for OnDiskGenesisConfig {
     fn load_genesis_data(&self) -> Result<GenesisData, LoadGenesisDataError> {
         let genesis_path = self.0.join(GENESIS_ASSETS_DIR).join(GENESIS_ASSETS_FILE);
 
