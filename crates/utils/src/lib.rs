@@ -1,8 +1,9 @@
 mod constants;
 
+use std::path::Path;
+
 use constants::{GENESIS_ASSETS_DIR, GENESIS_ASSETS_FILE};
 use pallet_starknet::genesis_loader::GenesisData;
-use std::path::Path;
 
 pub trait GenesisProvider {
     fn load_genesis_data(&self) -> Result<GenesisData, LoadGenesisDataError>;

@@ -8,7 +8,7 @@ version.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-pallet-starknet = { workspace = true }
 log = { workspace = true, default-features = true }
+pallet-starknet = { workspace = true }
 serde = { workspace = true, default-features = true }
 serde_json = { workspace = true }
