@@ -3,10 +3,11 @@ extern crate starknet_rpc_test;
 use assert_matches::assert_matches;
 use rstest::rstest;
 use starknet_core::types::{BlockId, BlockTag, BroadcastedInvokeTransaction, BroadcastedTransaction, StarknetError};
+use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
-use starknet_rpc_test::constants::ACCOUNT_CONTRACT;
+use starknet_rpc_test::constants::{ACCOUNT_CONTRACT, TEST_CONTRACT_ADDRESS};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 
 #[rstest]
@@ -20,11 +21,10 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
         nonce: FieldElement::ZERO,
         sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap(),
         calldata: vec![
-            FieldElement::from_hex_be("5a02acdbf218464be3dd787df7a302f71fab586cad5588410ba88b3ed7b3a21").unwrap(),
-            FieldElement::from_hex_be("3d7905601c217734671143d457f0db37f7f8883112abd34b92c4abfeafde0c3").unwrap(),
-            FieldElement::from_hex_be("2").unwrap(),
-            FieldElement::from_hex_be("e150b6c2db6ed644483b01685571de46d2045f267d437632b508c19f3eb877").unwrap(),
-            FieldElement::from_hex_be("494196e88ce16bff11180d59f3c75e4ba3475d9fba76249ab5f044bcd25add6").unwrap(),
+            FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
+            get_selector_from_name("sqrt").unwrap(),
+            FieldElement::from_hex_be("1").unwrap(),
+            FieldElement::from(81u8),
         ],
         is_query: true,
     });
@@ -51,19 +51,16 @@ async fn fail_if_one_txn_cannot_be_executed(madara: &ThreadSafeMadaraClient) -> 
         is_query: true,
     });
 
-    // from mainnet tx: 0x000c52079f33dcb44a58904fac3803fd908ac28d6632b67179ee06f2daccb4b5
-    // https://starkscan.co/tx/0x000c52079f33dcb44a58904fac3803fd908ac28d6632b67179ee06f2daccb4b5
     let ok_invoke_transaction = BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction {
         max_fee: FieldElement::ZERO,
         signature: vec![],
         nonce: FieldElement::ZERO,
         sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap(),
         calldata: vec![
-            FieldElement::from_hex_be("5a02acdbf218464be3dd787df7a302f71fab586cad5588410ba88b3ed7b3a21").unwrap(),
-            FieldElement::from_hex_be("3d7905601c217734671143d457f0db37f7f8883112abd34b92c4abfeafde0c3").unwrap(),
-            FieldElement::from_hex_be("2").unwrap(),
-            FieldElement::from_hex_be("e150b6c2db6ed644483b01685571de46d2045f267d437632b508c19f3eb877").unwrap(),
-            FieldElement::from_hex_be("494196e88ce16bff11180d59f3c75e4ba3475d9fba76249ab5f044bcd25add6").unwrap(),
+            FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
+            get_selector_from_name("sqrt").unwrap(),
+            FieldElement::from_hex_be("1").unwrap(),
+            FieldElement::from(81u8),
         ],
         is_query: true,
     });
@@ -90,17 +87,14 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
         nonce: FieldElement::ZERO,
         sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap(),
         calldata: vec![
-            FieldElement::from_hex_be("5a02acdbf218464be3dd787df7a302f71fab586cad5588410ba88b3ed7b3a21").unwrap(),
-            FieldElement::from_hex_be("3d7905601c217734671143d457f0db37f7f8883112abd34b92c4abfeafde0c3").unwrap(),
-            FieldElement::from_hex_be("2").unwrap(),
-            FieldElement::from_hex_be("e150b6c2db6ed644483b01685571de46d2045f267d437632b508c19f3eb877").unwrap(),
-            FieldElement::from_hex_be("494196e88ce16bff11180d59f3c75e4ba3475d9fba76249ab5f044bcd25add6").unwrap(),
+            FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
+            get_selector_from_name("sqrt").unwrap(),
+            FieldElement::from_hex_be("1").unwrap(),
+            FieldElement::from(81u8),
         ],
         is_query: true,
     };
 
-    // from mainnet tx: 0x000c52079f33dcb44a58904fac3803fd908ac28d6632b67179ee06f2daccb4b5
-    // https://starkscan.co/tx/0x000c52079f33dcb44a58904fac3803fd908ac28d6632b67179ee06f2daccb4b5
     let invoke_transaction = BroadcastedTransaction::Invoke(tx.clone());
 
     let invoke_transaction_2 =
@@ -111,8 +105,8 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
 
     // TODO: instead execute the tx and check that the actual fee are the same as the estimated ones
     assert_eq!(estimates.len(), 2);
-    assert_eq!(estimates[0].overall_fee, 410);
-    assert_eq!(estimates[1].overall_fee, 410);
+    assert_eq!(estimates[0].overall_fee, 420);
+    assert_eq!(estimates[1].overall_fee, 420);
     // https://starkscan.co/block/5
     assert_eq!(estimates[0].gas_consumed, 0);
     assert_eq!(estimates[1].gas_consumed, 0);

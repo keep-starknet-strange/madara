@@ -29,7 +29,7 @@ const NODE_RPC_URL: &str = "http://localhost:9944";
 
 type RpcAccount<'a> = SingleOwnerAccount<&'a JsonRpcClient<HttpTransport>, LocalWallet>;
 pub type RpcOzAccountFactory<'a> = OpenZeppelinAccountFactory<LocalWallet, &'a JsonRpcClient<HttpTransport>>;
-type TransactionExecution<'a> = Execution<'a, RpcAccount<'a>>;
+pub type TransactionExecution<'a> = Execution<'a, RpcAccount<'a>>;
 type TransactionDeclaration<'a> = Declaration<'a, RpcAccount<'a>>;
 type TransactionLegacyDeclaration<'a> = LegacyDeclaration<'a, RpcAccount<'a>>;
 type TransactionAccountDeployment<'a> = AccountDeployment<'a, RpcOzAccountFactory<'a>>;
