@@ -104,6 +104,16 @@ impl<A: ChainApi, B, BE, C, P, H> Starknet<A, B, BE, C, P, H>
 where
     B: BlockT,
     C: HeaderBackend<B> + 'static,
+{
+    pub fn current_spec_version(&self) -> RpcResult<String> {
+        Ok("0.4.0".to_string())
+    }
+}
+
+impl<A: ChainApi, B, BE, C, P, H> Starknet<A, B, BE, C, P, H>
+where
+    B: BlockT,
+    C: HeaderBackend<B> + 'static,
     H: HasherT + Send + Sync + 'static,
 {
     pub fn current_block_hash(&self) -> Result<H256, ApiError> {
@@ -311,6 +321,23 @@ where
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     H: HasherT + Send + Sync + 'static,
 {
+    /// Returns the Version of the StarkNet JSON-RPC Specification Being Used
+    ///
+    /// This method provides the version of the StarkNet JSON-RPC specification that the node is
+    /// currently using. The version is returned as a semantic versioning (SemVer) string.
+    ///
+    /// # Arguments
+    ///
+    /// This method does not take any arguments.
+    ///
+    /// # Returns
+    ///
+    /// * `spec_version` - A string representing the SemVer of the StarkNet JSON-RPC specification
+    ///   being used.
+    fn spec_version(&self) -> RpcResult<String> {
+        self.current_spec_version()
+    }
+
     /// Get the Most Recent Accepted Block Number
     ///
     /// ### Arguments
@@ -334,8 +361,6 @@ where
     ///
     /// * `block_hash_and_number` - A tuple containing the latest block hash and number of the
     ///   current network.
-    ///   - `block_hash`: The hash of the latest block.
-    ///   - `block_number`: The number of the latest block.
     fn block_hash_and_number(&self) -> RpcResult<BlockHashAndNumber> {
         let block_number = self.current_block_number()?;
         let block_hash = self.current_block_hash().map_err(|e| {

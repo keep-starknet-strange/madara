@@ -55,6 +55,10 @@ pub trait StarknetWriteRpcApi {
 /// Starknet rpc interface.
 #[rpc(server, namespace = "starknet")]
 pub trait StarknetReadRpcApi {
+    /// Get the Version of the StarkNet JSON-RPC Specification Being Used
+    #[method(name = "specVersion")]
+    fn spec_version(&self) -> RpcResult<String>;
+
     /// Get the most recent accepted block number
     #[method(name = "blockNumber")]
     fn block_number(&self) -> RpcResult<u64>;

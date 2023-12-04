@@ -32,3 +32,5 @@ pub const MAX_FEE_OVERRIDE: &str = "0x100000";
 /// ChainId for Starknet Goerli testnet
 pub const SN_GOERLI_CHAIN_ID: FieldElement =
     FieldElement::from_mont([3753493103916128178, 18446744073709548950, 18446744073709551615, 398700013197595345]);
+
+pub const SPEC_VERSION: &str = "0.4.0";
