@@ -19,7 +19,7 @@ from src.accounts.argent.library import (
 //
 // @title ArgentAccount
 // @author Argent Labs
-// @notice Main account for Argent on StarkNet
+// @notice Main account for Argent on Starknet
 //
 
 // ///////////////////

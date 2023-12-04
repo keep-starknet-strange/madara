@@ -6,7 +6,7 @@ pub use frame_support::weights::constants::{
 pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
-/// Import the StarkNet pallet.
+/// Import the Starknet pallet.
 pub use pallet_starknet;
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_runtime::traits::BlakeTwo256;

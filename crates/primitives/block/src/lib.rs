@@ -1,4 +1,4 @@
-//! StarkNet block primitives.
+//! Starknet block primitives.
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[doc(hidden)]
