@@ -40,7 +40,7 @@ sc-transaction-pool-api = { workspace = true, default-features = true }
 
 # Other third party dependencies
 ethers = { workspace = true }
-serde = { workspace = true }
-serde_json = { workspace = true }
+serde = { workspace = true, default-features = true }
+serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }
 

@@ -410,7 +410,7 @@ impl_runtime_apis! {
     }
 
     impl pallet_starknet::runtime_api::ConvertTransactionRuntimeApi<Block> for Runtime {
-        fn convert_transaction(transaction: UserTransaction) -> Result<UncheckedExtrinsic, DispatchError> {
+        fn convert_transaction(transaction: UserTransaction) -> UncheckedExtrinsic {
             let call = match transaction {
                 UserTransaction::Declare(tx, contract_class) => {
                     pallet_starknet::Call::declare { transaction: tx, contract_class  }
@@ -423,13 +423,13 @@ impl_runtime_apis! {
                 }
             };
 
-            Ok(UncheckedExtrinsic::new_unsigned(call.into()))
+            UncheckedExtrinsic::new_unsigned(call.into())
         }
 
-        fn convert_l1_transaction(transaction: HandleL1MessageTransaction, fee: Fee) -> Result<UncheckedExtrinsic, DispatchError> {
+        fn convert_l1_transaction(transaction: HandleL1MessageTransaction, fee: Fee) -> UncheckedExtrinsic {
             let call =  pallet_starknet::Call::<Runtime>::consume_l1_message { transaction, paid_fee_on_l1: fee };
 
-            Ok(UncheckedExtrinsic::new_unsigned(call.into()))
+            UncheckedExtrinsic::new_unsigned(call.into())
         }
 
         fn convert_error(error: DispatchError) -> StarknetTransactionExecutionError {

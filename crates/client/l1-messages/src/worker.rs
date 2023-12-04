@@ -61,7 +61,7 @@ pub async fn run_worker<C, P, B>(
         );
 
         match process_l1_message(event, &client, &pool, &backend, &meta.block_number.as_u64()).await {
-            Ok(tx_hash) => {
+            Ok(Some(tx_hash)) => {
                 log::info!(
                     "⟠ L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?} submitted, transaction \
                      hash on L2: {:?}",
@@ -71,6 +71,7 @@ pub async fn run_worker<C, P, B>(
                     tx_hash
                 );
             }
+            Ok(None) => {}
             Err(e) => {
                 log::error!(
                     "⟠ Unexpected error while processing L1 Message from block: {:?}, transaction_hash: {:?}, \
@@ -91,7 +92,7 @@ async fn process_l1_message<C, P, B>(
     pool: &Arc<P>,
     backend: &Arc<mc_db::Backend<B>>,
     l1_block_number: &u64,
-) -> Result<P::Hash, L1MessagesWorkerError>
+) -> Result<Option<P::Hash>, L1MessagesWorkerError>
 where
     B: BlockT,
     C: ProvideRuntimeApi<B> + HeaderBackend<B>,
@@ -113,25 +114,18 @@ where
         Ok(true) => Ok(()),
         Ok(false) => {
             log::debug!("⟠ Event already processed: {:?}", transaction);
-            Err(L1MessagesWorkerError::L1MessageAlreadyProcessed(transaction.nonce))
+            return Ok(None);
         }
         Err(e) => {
-            log::error!("⟠ Unexpected runtime api error: {:?}", e);
+            log::error!("⟠ Unexpected Runtime Api error: {:?}", e);
             Err(L1MessagesWorkerError::RuntimeApiError(e))
         }
     }?;
 
-    let extrinsic = client
-        .runtime_api()
-        .convert_l1_transaction(best_block_hash, transaction, fee)
-        .map_err(|e| {
-            log::error!("⟠ Failed to convert transaction via runtime api: {:?}", e);
-            L1MessagesWorkerError::ConvertTransactionRuntimeApiError(e)
-        })?
-        .map_err(|e| {
-            log::error!("⟠ Failed to convert transaction via runtime api: {:?}", e);
-            L1MessagesWorkerError::RuntimeApiDispatchError(e)
-        })?;
+    let extrinsic = client.runtime_api().convert_l1_transaction(best_block_hash, transaction, fee).map_err(|e| {
+        log::error!("⟠ Failed to convert L1 Transaction via Runtime Api: {:?}", e);
+        L1MessagesWorkerError::ConvertTransactionRuntimeApiError(e)
+    })?;
 
     let tx_hash = pool.submit_one(best_block_hash, TX_SOURCE, extrinsic).await.map_err(|e| {
         log::error!("⟠ Failed to submit transaction with L1 Message: {:?}", e);
@@ -143,5 +137,5 @@ where
         L1MessagesWorkerError::DatabaseError(e)
     })?;
 
-    Ok(tx_hash)
+    Ok(Some(tx_hash))
 }

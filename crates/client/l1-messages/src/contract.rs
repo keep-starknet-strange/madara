@@ -2,14 +2,25 @@ use ethers::contract::abigen;
 use mp_felt::{Felt252Wrapper, Felt252WrapperError};
 use mp_transactions::HandleL1MessageTransaction;
 
-use crate::error::L1EventToTransactionError;
-
 abigen!(
     L1Contract,
     r"[
 	event LogMessageToL2(address indexed fromAddress, uint256 indexed toAddress, uint256 indexed selector, uint256[] payload, uint256 nonce, uint256 fee)
 ]"
 );
+
+#[derive(thiserror::Error, Debug, PartialEq)]
+#[allow(clippy::enum_variant_names)]
+pub enum L1EventToTransactionError {
+    #[error("Failed to convert Calldata param from L1 Event: `{0}`")]
+    InvalidCalldata(Felt252WrapperError),
+    #[error("Failed to convert Contract Address from L1 Event: `{0}`")]
+    InvalidContractAddress(Felt252WrapperError),
+    #[error("Failed to convert Entrypoint Selector from L1 Event: `{0}`")]
+    InvalidEntryPointSelector(Felt252WrapperError),
+    #[error("Failed to convert Nonce param from L1 Event: `{0}`")]
+    InvalidNonce(Felt252WrapperError),
+}
 
 impl TryFrom<LogMessageToL2Filter> for HandleL1MessageTransaction {
     type Error = L1EventToTransactionError;

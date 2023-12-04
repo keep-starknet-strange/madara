@@ -2,14 +2,44 @@ use std::path::PathBuf;
 
 use madara_runtime::SealingMode;
 use mc_data_availability::DaLayer;
-use mc_l1_messages::config::L1MessagesWorkerConfig;
-use mc_l1_messages::error::L1MessagesConfigError;
+use mc_l1_messages::config::{L1MessagesWorkerConfig, L1MessagesWorkerConfigError};
 use sc_cli::{Result, RpcMethods, RunCmd, SubstrateCli};
 use sc_service::BasePath;
 use serde::{Deserialize, Serialize};
 
 use crate::cli::Cli;
 use crate::service;
+
+#[derive(Debug, Clone, clap::Args)]
+pub struct L1MessagesParams {
+    /// Ethereum Provider (Node) Url
+    #[clap(
+        long,
+        value_hint=clap::ValueHint::Url,
+    )]
+    pub provider_url: String,
+
+    /// L1 Contract Address
+    #[clap(
+        long,
+        value_hint=clap::ValueHint::Other,
+    )]
+    pub l1_contract_address: String,
+}
+
+#[derive(Debug, Clone, clap::Args)]
+pub struct L1Messages {
+    /// Path to configuration file for Ethereum Core Contract Events Listener
+    #[clap(
+        long,
+        conflicts_with_all=["provider_url", "l1_contract_address"],
+        value_hint=clap::ValueHint::FilePath,
+    )]
+    pub l1_messages_config: Option<PathBuf>,
+
+    #[clap(flatten)]
+    pub config_params: Option<L1MessagesParams>,
+}
 
 /// Available Sealing methods.
 #[derive(Debug, Copy, Clone, clap::ValueEnum, Default, Serialize, Deserialize)]
@@ -55,33 +85,9 @@ pub struct ExtendedRunCmd {
     #[clap(long)]
     pub cache: bool,
 
-    /// Path to configuration file for Ethereum Core Contract Events Listener
-    #[clap(
-        long,
-        conflicts_with="provider_url",
-        conflicts_with="l1_contract_address",
-        value_hint=clap::ValueHint::FilePath,
-        require_equals=true,
-    )]
-    pub l1_messages_worker_config_file: Option<PathBuf>,
-
-    /// Ethereum Provider (Node) Url
-    #[clap(
-        long,
-        conflicts_with="l1_messages_worker_config_file",
-        value_hint=clap::ValueHint::Url,
-        require_equals=true,
-    )]
-    pub provider_url: Option<String>,
-
-    /// L1 Contract Address
-    #[clap(
-        long,
-        conflicts_with="l1_messages_worker_config_file",
-        value_hint=clap::ValueHint::Other,
-        require_equals=true,
-    )]
-    pub l1_contract_address: Option<String>,
+    /// Configuration for L1 Messages (Syncing) Worker
+    #[clap(flatten)]
+    pub l1_messages_worker: L1Messages,
 }
 
 impl ExtendedRunCmd {
@@ -117,8 +123,8 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
         }
     };
 
-    let l1_messages_worker_config =
-        extract_l1_messages_worker_config(&cli.run).map_err(|e| sc_cli::Error::Input(e.to_string()))?;
+    let l1_messages_worker_config = extract_l1_messages_worker_config(&cli.run.l1_messages_worker)
+        .map_err(|e| sc_cli::Error::Input(e.to_string()))?;
 
     runner.run_node_until_exit(|config| async move {
         let sealing = cli.run.sealing.map(Into::into).unwrap_or_default();
@@ -128,22 +134,16 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
 }
 
 fn extract_l1_messages_worker_config(
-    run_cmd: &ExtendedRunCmd,
-) -> std::result::Result<Option<L1MessagesWorkerConfig>, L1MessagesConfigError> {
-    if let Some(ref config_path) = run_cmd.l1_messages_worker_config_file {
+    run_cmd: &L1Messages,
+) -> std::result::Result<Option<L1MessagesWorkerConfig>, L1MessagesWorkerConfigError> {
+    if let Some(ref config_path) = run_cmd.l1_messages_config {
         let config = L1MessagesWorkerConfig::new_from_file(config_path)?;
         Ok(Some(config))
-    } else if let Some(ref provider_url) = run_cmd.provider_url {
-        if let Some(ref l1_contract_address) = run_cmd.l1_contract_address {
-            let config = L1MessagesWorkerConfig::new_from_params(provider_url, l1_contract_address)?;
-            Ok(Some(config))
-        } else {
-            Err(L1MessagesConfigError::MissingContractAddress)
-        }
-    } else if let Some(ref _l1_contract_address) = run_cmd.l1_contract_address {
-        Err(L1MessagesConfigError::MissingProviderUrl)
+    } else if let Some(ref config_params) = run_cmd.config_params {
+        let config =
+            L1MessagesWorkerConfig::new_from_params(&config_params.provider_url, &config_params.l1_contract_address)?;
+        Ok(Some(config))
     } else {
-        log::warn!("Madara initialized w/o L1 Messages Worker");
         Ok(None)
     }
 }

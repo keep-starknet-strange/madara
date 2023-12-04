@@ -1130,18 +1130,12 @@ where
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
 {
-    let result = client.runtime_api().convert_transaction(best_block_hash, transaction).map_err(|e| {
+    let extrinsic = client.runtime_api().convert_transaction(best_block_hash, transaction).map_err(|e| {
         error!("Failed to convert transaction: {:?}", e);
         StarknetRpcApiError::InternalServerError
     })?;
 
-    match result {
-        Ok(extrinsic) => Ok(extrinsic),
-        Err(dispatch_error) => {
-            error!("Failed to convert transaction: {:?}", dispatch_error);
-            Err(StarknetRpcApiError::InternalServerError)
-        }
-    }
+    Ok(extrinsic)
 }
 
 fn convert_error<C, B, T>(
