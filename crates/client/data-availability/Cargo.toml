@@ -41,8 +41,8 @@ sp-runtime = { workspace = true, features = ["std"] }
 
 # Starknet
 mc-db = { workspace = true, default-features = true }
-starknet_api = { workspace = true, default-features = true }
 pallet-starknet-runtime-api = { workspace = true }
+starknet_api = { workspace = true, default-features = true }
 
 # Ethereum
 ethers = "2.0.7"
