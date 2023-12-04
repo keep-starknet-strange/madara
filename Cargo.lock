@@ -11960,6 +11960,7 @@ dependencies = [
  "anyhow",
  "assert_matches",
  "async-lock 3.2.0",
+ "async-trait",
  "flate2",
  "reqwest",
  "rstest",
