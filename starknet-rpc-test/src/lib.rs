@@ -12,7 +12,7 @@ use starknet_accounts::{
     OpenZeppelinAccountFactory, SingleOwnerAccount,
 };
 use starknet_core::types::{DeclareTransactionResult, DeployAccountTransactionResult, InvokeTransactionResult};
-use starknet_providers::jsonrpc::{HttpTransport, HttpTransportError, JsonRpcClient, JsonRpcClientError};
+use starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
 use starknet_providers::Provider;
 use starknet_signers::local_wallet::SignError;
 use starknet_signers::LocalWallet;
@@ -33,10 +33,8 @@ type TransactionExecution<'a> = Execution<'a, RpcAccount<'a>>;
 type TransactionDeclaration<'a> = Declaration<'a, RpcAccount<'a>>;
 type TransactionLegacyDeclaration<'a> = LegacyDeclaration<'a, RpcAccount<'a>>;
 type TransactionAccountDeployment<'a> = AccountDeployment<'a, RpcOzAccountFactory<'a>>;
-type StarknetAccountError = AccountError<
-    <SingleOwnerAccount<JsonRpcClient<HttpTransport>, LocalWallet> as Account>::SignError,
-    <JsonRpcClient<HttpTransport> as Provider>::Error,
->;
+type StarknetAccountError =
+    AccountError<<SingleOwnerAccount<JsonRpcClient<HttpTransport>, LocalWallet> as Account>::SignError>;
 
 pub enum Transaction<'a> {
     Execution(TransactionExecution<'a>),
@@ -57,7 +55,7 @@ pub enum SendTransactionError {
     #[error(transparent)]
     AccountError(StarknetAccountError),
     #[error(transparent)]
-    AccountFactoryError(AccountFactoryError<SignError, JsonRpcClientError<HttpTransportError>>),
+    AccountFactoryError(AccountFactoryError<SignError>),
 }
 
 impl Transaction<'_> {
