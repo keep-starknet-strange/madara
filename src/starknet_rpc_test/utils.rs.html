@@ -191,27 +191,6 @@
 <a href="#191" id="191">191</a>
 <a href="#192" id="192">192</a>
 <a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
-<a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a>
-<a href="#206" id="206">206</a>
-<a href="#207" id="207">207</a>
-<a href="#208" id="208">208</a>
-<a href="#209" id="209">209</a>
-<a href="#210" id="210">210</a>
-<a href="#211" id="211">211</a>
-<a href="#212" id="212">212</a>
-<a href="#213" id="213">213</a>
-<a href="#214" id="214">214</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::future::Future;
 <span class="kw">use </span>std::sync::Arc;
 
@@ -219,7 +198,7 @@
 <span class="kw">use </span>starknet_core::chain_id;
 <span class="kw">use </span>starknet_core::types::contract::legacy::LegacyContractClass;
 <span class="kw">use </span>starknet_core::types::contract::{CompiledClass, SierraClass};
-<span class="kw">use </span>starknet_core::types::{BlockId, BlockTag, EmittedEvent, Event, FieldElement, FunctionCall, MsgToL1};
+<span class="kw">use </span>starknet_core::types::{BlockId, BlockTag, FieldElement, FunctionCall, MsgToL1};
 <span class="kw">use </span>starknet_core::utils::get_selector_from_name;
 <span class="kw">use </span>starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
 <span class="kw">use </span>starknet_providers::Provider;
@@ -388,27 +367,6 @@
         <span class="macro">assert_eq!</span>(m1.payload, m2.payload);
         <span class="macro">assert_eq!</span>(m1.to_address, m2.to_address);
     }
-}
-
-<span class="kw">pub fn </span>assert_eq_event(l1: Vec&lt;Event&gt;, l2: Vec&lt;Event&gt;) {
-    <span class="macro">assert_eq!</span>(l1.len(), l2.len());
-    <span class="kw">for </span>(e1, e2) <span class="kw">in </span>l1.iter().zip(l2.iter()) {
-        <span class="macro">assert_eq!</span>(e1.data, e2.data);
-        <span class="macro">assert_eq!</span>(e1.from_address, e2.from_address);
-        <span class="macro">assert_eq!</span>(e1.keys, e2.keys);
-    }
-}
-
-<span class="kw">pub fn </span>assert_eq_emitted_event(l1: <span class="kw-2">&amp;</span>[EmittedEvent], l2: <span class="kw-2">&amp;</span>[EmittedEvent]) -&gt; bool {
-    <span class="macro">assert_eq!</span>(l1.len(), l2.len());
-    l1.iter().zip(l2.iter()).all(|(e1, e2)| {
-        e1.data == e2.data
-            || e1.from_address == e2.from_address
-            || e1.keys == e2.keys
-            || e1.block_hash == e2.block_hash
-            || e1.block_number == e2.block_number
-            || e1.transaction_hash == e2.transaction_hash
-    })
 }
 
 <span class="kw">pub async fn </span>assert_poll&lt;F, Fut&gt;(f: F, polling_time_ms: u64, max_poll_count: u32)

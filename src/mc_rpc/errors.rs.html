@@ -62,10 +62,6 @@
 <a href="#62" id="62">62</a>
 <a href="#63" id="63">63</a>
 <a href="#64" id="64">64</a>
-<a href="#65" id="65">65</a>
-<a href="#66" id="66">66</a>
-<a href="#67" id="67">67</a>
-<a href="#68" id="68">68</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>jsonrpsee::types::error::{CallError, ErrorObject};
 <span class="kw">use </span>pallet_starknet_runtime_api::StarknetTransactionExecutionError;
 
@@ -77,18 +73,14 @@
     </span>FailedToReceiveTxn = <span class="number">1</span>,
     <span class="attr">#[error(<span class="string">&quot;Contract not found&quot;</span>)]
     </span>ContractNotFound = <span class="number">20</span>,
-    <span class="attr">#[error(<span class="string">&quot;Invalid message selector&quot;</span>)]
-    </span>InvalidMessageSelector = <span class="number">21</span>,
-    <span class="attr">#[error(<span class="string">&quot;Invalid call data&quot;</span>)]
-    </span>InvalidCallData = <span class="number">22</span>,
     <span class="attr">#[error(<span class="string">&quot;Block not found&quot;</span>)]
     </span>BlockNotFound = <span class="number">24</span>,
-    <span class="attr">#[error(<span class="string">&quot;Transaction hash not found&quot;</span>)]
-    </span>TxnHashNotFound = <span class="number">25</span>,
     <span class="attr">#[error(<span class="string">&quot;Invalid transaction index in a block&quot;</span>)]
     </span>InvalidTxnIndex = <span class="number">27</span>,
     <span class="attr">#[error(<span class="string">&quot;Class hash not found&quot;</span>)]
     </span>ClassHashNotFound = <span class="number">28</span>,
+    <span class="attr">#[error(<span class="string">&quot;Transaction hash not found&quot;</span>)]
+    </span>TxnHashNotFound = <span class="number">29</span>,
     <span class="attr">#[error(<span class="string">&quot;Requested page size is too big&quot;</span>)]
     </span>PageSizeTooBig = <span class="number">31</span>,
     <span class="attr">#[error(<span class="string">&quot;There are no blocks&quot;</span>)]
