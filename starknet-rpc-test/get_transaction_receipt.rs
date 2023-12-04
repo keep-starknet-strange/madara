@@ -7,20 +7,19 @@ use starknet_core::types::{
 };
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
-use starknet_providers::jsonrpc::{HttpTransport, HttpTransportError, JsonRpcClientError};
+use starknet_providers::jsonrpc::HttpTransport;
 use starknet_providers::{JsonRpcClient, Provider, ProviderError};
 use starknet_rpc_test::constants::{
     ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, FEE_TOKEN_ADDRESS, SEQUENCER_ADDRESS, SIGNER_PRIVATE,
 };
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{
-    assert_eq_event, assert_eq_msg_to_l1, assert_poll, build_deploy_account_tx, build_oz_account_factory,
-    build_single_owner_account, AccountActions,
+    assert_eq_msg_to_l1, assert_poll, build_deploy_account_tx, build_oz_account_factory, build_single_owner_account,
+    AccountActions,
 };
 use starknet_rpc_test::{Transaction, TransactionResult};
 
-type TransactionReceiptResult =
-    Result<MaybePendingTransactionReceipt, ProviderError<JsonRpcClientError<HttpTransportError>>>;
+type TransactionReceiptResult = Result<MaybePendingTransactionReceipt, ProviderError>;
 
 async fn get_transaction_receipt(
     rpc: &JsonRpcClient<HttpTransport>,
@@ -69,7 +68,7 @@ async fn work_with_invoke_transaction(madara: &ThreadSafeMadaraClient) -> Result
             assert_eq!(receipt.actual_fee, expected_fee);
             assert_eq!(receipt.finality_status, TransactionFinalityStatus::AcceptedOnL2);
             assert_eq_msg_to_l1(receipt.messages_sent, vec![]);
-            assert_eq_event(
+            assert_eq!(
                 receipt.events,
                 vec![
                     Event {
@@ -150,7 +149,7 @@ async fn work_with_declare_transaction(madara: &ThreadSafeMadaraClient) -> Resul
             assert_eq!(tx_receipt.actual_fee, expected_fee);
             assert_eq!(tx_receipt.finality_status, TransactionFinalityStatus::AcceptedOnL2);
             assert_eq_msg_to_l1(tx_receipt.messages_sent, vec![]);
-            assert_eq_event(tx_receipt.events, expected_events);
+            assert_eq!(tx_receipt.events, expected_events);
             assert_matches!(tx_receipt.execution_result, ExecutionResult::Succeeded);
         }
         _ => panic!("expected declare transaction receipt"),
@@ -207,7 +206,7 @@ async fn work_with_deploy_account_transaction(madara: &ThreadSafeMadaraClient) -
             assert_eq!(receipt.actual_fee, expected_fee);
             assert_eq!(receipt.finality_status, TransactionFinalityStatus::AcceptedOnL2);
             assert_eq_msg_to_l1(receipt.messages_sent, vec![]);
-            assert_eq_event(
+            assert_eq!(
                 receipt.events,
                 vec![Event {
                     from_address: fee_token_address,
@@ -261,7 +260,7 @@ async fn ensure_transfer_fee_event_not_messed_up_with_similar_transfer(
             assert_eq!(receipt.finality_status, TransactionFinalityStatus::AcceptedOnL2);
             assert_eq_msg_to_l1(receipt.messages_sent, vec![]);
             receipt.events.remove(1);
-            assert_eq_event(
+            assert_eq!(
                 receipt.events,
                 vec![
                     Event {

@@ -9,18 +9,14 @@ pub enum StarknetRpcApiError {
     FailedToReceiveTxn = 1,
     #[error("Contract not found")]
     ContractNotFound = 20,
-    #[error("Invalid message selector")]
-    InvalidMessageSelector = 21,
-    #[error("Invalid call data")]
-    InvalidCallData = 22,
     #[error("Block not found")]
     BlockNotFound = 24,
-    #[error("Transaction hash not found")]
-    TxnHashNotFound = 25,
     #[error("Invalid transaction index in a block")]
     InvalidTxnIndex = 27,
     #[error("Class hash not found")]
     ClassHashNotFound = 28,
+    #[error("Transaction hash not found")]
+    TxnHashNotFound = 29,
     #[error("Requested page size is too big")]
     PageSizeTooBig = 31,
     #[error("There are no blocks")]
