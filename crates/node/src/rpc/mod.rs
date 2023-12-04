@@ -12,7 +12,7 @@ use futures::channel::mpsc;
 use jsonrpsee::RpcModule;
 use madara_runtime::opaque::Block;
 use madara_runtime::{AccountId, Hash, Index, StarknetHasher};
-use madara_utils::GenesisProvider;
+use mc_genesis_data_provider::GenesisProvider;
 use sc_client_api::{Backend, BlockBackend, StorageProvider};
 use sc_consensus_manual_seal::rpc::EngineCommand;
 pub use sc_rpc_api::DenyUnsafe;

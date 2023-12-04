@@ -17,7 +17,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # Madara utils
-madara-utils = { workspace = true }
+mc-genesis-data-provider = { workspace = true }
 # Madara runtime
 pallet-starknet = { workspace = true, default-features = true }
 pallet-starknet-runtime-api = { workspace = true, default-features = true }

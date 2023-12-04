@@ -38,11 +38,21 @@ type StorageKey = HexFelt;
 type ContractStorageKey = (ContractAddress, StorageKey);
 type StorageValue = HexFelt;
 
+/// A struct containing predeployed accounts info.
+#[derive(Serialize, Deserialize)]
+pub struct PredeployedAccount {
+    pub contract_address: FieldElement,
+    pub class_hash: FieldElement,
+    pub name: String,
+    pub private_key: Option<Vec<u8>>,
+    // pub balance: FieldElement,
+}
+
 #[derive(Deserialize, Serialize)]
 pub struct GenesisData {
     pub contract_classes: Vec<(ClassHash, ContractClass)>,
     pub contracts: Vec<(ContractAddress, ClassHash)>,
-    pub predeployed_accounts: Vec<(ContractAddress, ClassHash, String, Option<Vec<u8>>)>,
+    pub predeployed_accounts: Vec<PredeployedAccount>,
     pub storage: Vec<(ContractStorageKey, StorageValue)>,
     pub fee_token_address: ContractAddress,
     pub seq_addr_updated: bool,

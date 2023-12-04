@@ -90,7 +90,7 @@ pallet-starknet-runtime-api = { workspace = true }
 starknet-core = { workspace = true }
 
 # Madara utils
-madara-utils = { workspace = true }
+mc-genesis-data-provider = { workspace = true }
 
 # Primitives
 mp-block = { workspace = true }
