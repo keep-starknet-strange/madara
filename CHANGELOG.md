@@ -2,6 +2,7 @@
 
 ## Next release
 
+- docs: Added v0.6.0-rc5 documentation above the rpc method functions
 - test(rust-rpc-test): use undeclared contracts for declare transactions testing
 - build: update blockifier, fix divergent substrat block hash
 - chore: remove tests that run in wasm and native, only wasm from now
