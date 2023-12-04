@@ -2,6 +2,7 @@
 
 ## Next release
 
+- dev(deps): bump starknet rs
 - test(rust-rpc-test): use undeclared contracts for declare transactions testing
 - build: update blockifier, fix divergent substrat block hash
 - chore: remove tests that run in wasm and native, only wasm from now
