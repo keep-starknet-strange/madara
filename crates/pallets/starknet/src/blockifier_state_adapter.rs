@@ -7,7 +7,7 @@ use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{State, StateReader, StateResult};
 use indexmap::IndexMap;
 use mp_felt::Felt252Wrapper;
-use mp_state::{AppConfig, GetAppConfig, StateChanges};
+use mp_state::{GetAppConfig, StateChanges};
 use sp_core::Get;
 use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;

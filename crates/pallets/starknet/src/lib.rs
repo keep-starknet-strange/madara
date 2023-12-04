@@ -96,7 +96,6 @@ use mp_transactions::{
 };
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
-use sp_std::result;
 use starknet_api::api_core::{ChainId, ClassHash, CompiledClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::deprecated_contract_class::EntryPointType;
@@ -693,10 +692,6 @@ pub mod pallet {
             Some(Call::set_sequencer_address { addr: inherent_data })
         }
 
-        fn check_inherent(_call: &Self::Call, _data: &InherentData) -> result::Result<(), Self::Error> {
-            Ok(())
-        }
-
         fn is_inherent(call: &Self::Call) -> bool {
             matches!(call, Call::set_sequencer_address { .. })
         }
@@ -1124,10 +1119,7 @@ impl<T: Config> Pallet<T> {
         )?;
 
         fn get_function_invocation(call_info: Option<&CallInfo>) -> Option<FunctionInvocation> {
-            match call_info {
-                Some(call_info) => Some(call_info.into()),
-                None => None,
-            }
+            call_info.map(FunctionInvocation::from)
         }
 
         let mut results = vec![];
@@ -1137,7 +1129,7 @@ impl<T: Config> Pallet<T> {
                     let validate_invocation = get_function_invocation(tx_exec_info.validate_call_info.as_ref());
                     let fee_transfer_invocation = get_function_invocation(tx_exec_info.fee_transfer_call_info.as_ref());
                     let transaction_trace = match tx {
-                        UserTransaction::Invoke(tx) => TransactionTrace::Invoke(InvokeTransactionTrace {
+                        UserTransaction::Invoke(_) => TransactionTrace::Invoke(InvokeTransactionTrace {
                             validate_invocation,
                             execute_invocation: convert_call_info_to_execute_invocation::<T>(
                                 tx_exec_info.execute_call_info.as_ref().ok_or(Error::<T>::MissingCallInfo)?,
@@ -1145,11 +1137,11 @@ impl<T: Config> Pallet<T> {
                             )?,
                             fee_transfer_invocation,
                         }),
-                        UserTransaction::Declare(tx, _) => TransactionTrace::Declare(DeclareTransactionTrace {
+                        UserTransaction::Declare(_, _) => TransactionTrace::Declare(DeclareTransactionTrace {
                             validate_invocation,
                             fee_transfer_invocation,
                         }),
-                        UserTransaction::DeployAccount(tx) => {
+                        UserTransaction::DeployAccount(_) => {
                             TransactionTrace::DeployAccount(DeployAccountTransactionTrace {
                                 validate_invocation,
                                 constructor_invocation: tx_exec_info

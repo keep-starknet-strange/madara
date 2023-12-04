@@ -398,6 +398,7 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
         Ok(tx_execution_info)
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn handle_fee<S: State + StateChanges + GetAppConfig>(
         &self,
         state: &mut S,
@@ -565,7 +566,7 @@ impl Execute for L1HandlerTransaction {
         resources: &mut ExecutionResources,
         remaining_gas: &mut u64,
         account_tx_context: &AccountTransactionContext,
-        disable_validation: bool,
+        _disable_validation: bool,
     ) -> TransactionExecutionResult<ValidateExecuteCallInfo> {
         let mut context = EntryPointExecutionContext::new(
             block_context.clone(),
@@ -587,7 +588,7 @@ impl Execute for L1HandlerTransaction {
         execution_resources: &mut ExecutionResources,
         block_context: &BlockContext,
         _account_tx_context: AccountTransactionContext,
-        disable_fee_charge: bool,
+        _disable_fee_charge: bool,
     ) -> TransactionExecutionResult<(Fee, Option<CallInfo>, ResourcesMapping)> {
         // The calldata includes the "from" field, which is not a part of the payload.
         let l1_handler_payload_size = self.calldata().0.len() - 1;

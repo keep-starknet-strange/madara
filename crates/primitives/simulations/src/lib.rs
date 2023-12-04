@@ -7,7 +7,6 @@ use alloc::collections::BTreeMap;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use blockifier::execution::entry_point::CallType::{Call, Delegate};
 use blockifier::execution::entry_point::{CallInfo, OrderedL2ToL1Message};
 use mp_felt::{Felt252Wrapper, UfeHex};
 use starknet_api::api_core::EthAddress;
@@ -161,7 +160,7 @@ pub struct FunctionInvocation {
 
 impl From<&CallInfo> for FunctionInvocation {
     fn from(call_info: &CallInfo) -> FunctionInvocation {
-        let messages = ordered_l2_to_l1_messages(&call_info);
+        let messages = ordered_l2_to_l1_messages(call_info);
 
         let inner_calls = call_info.inner_calls.iter().map(|call| call.into()).collect();
 
