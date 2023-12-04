@@ -6580,6 +6580,7 @@ dependencies = [
  "log",
  "mc-db",
  "mp-storage",
+ "pallet-starknet-runtime-api",
  "reqwest",
  "sc-client-api",
  "serde",

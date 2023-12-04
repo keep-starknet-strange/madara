@@ -13,9 +13,11 @@ use ethers::types::{I256, U256};
 use futures::StreamExt;
 use indexmap::IndexMap;
 use mp_storage::{STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_NONCE, STARKNET_STORAGE};
+use pallet_starknet_runtime_api::StarknetRuntimeApi;
 use sc_client_api::client::BlockchainEvents;
 use serde::Deserialize;
 use sp_api::ProvideRuntimeApi;
+use sp_blockchain::HeaderBackend;
 use sp_io::hashing::twox_128;
 use sp_runtime::traits::Block as BlockT;
 use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
@@ -75,6 +77,8 @@ impl<B, C> DataAvailabilityWorker<B, C>
 where
     B: BlockT,
     C: ProvideRuntimeApi<B>,
+    C::Api: StarknetRuntimeApi<B>,
+    C: HeaderBackend<B> + 'static,
     C: BlockchainEvents<B> + 'static,
 {
     pub async fn prove_current_block(da_mode: DaMode, client: Arc<C>, madara_backend: Arc<mc_db::Backend<B>>) {
@@ -135,16 +139,17 @@ where
                         .insert(ClassHash(bytes_to_felt(&rest_key)), CompiledClassHash(bytes_to_felt(&storage_val)));
                 } else if child_key == twox_128(STARKNET_CONTRACT_CLASS_HASH) {
                     // collect deployed contract information in state diff
-                    // TODO: add contract_exists check
-                    let contract_exists = false;
+                    let runtime_api = client.runtime_api();
+                    let class_hash = ClassHash(bytes_to_felt(&storage_val));
+                    let current_block_hash = client.info().best_hash;
+
+                    let contract_exists =
+                        runtime_api.contract_class_by_class_hash(current_block_hash, class_hash).is_ok();
+
                     if contract_exists {
-                        state_diff
-                            .replaced_classes
-                            .insert(ContractAddress(bytes_to_key(&rest_key)), ClassHash(bytes_to_felt(&storage_val)));
+                        state_diff.replaced_classes.insert(ContractAddress(bytes_to_key(&rest_key)), class_hash);
                     } else {
-                        state_diff
-                            .deployed_contracts
-                            .insert(ContractAddress(bytes_to_key(&rest_key)), ClassHash(bytes_to_felt(&storage_val)));
+                        state_diff.deployed_contracts.insert(ContractAddress(bytes_to_key(&rest_key)), class_hash);
                     }
                     num_addrs_accessed += 1;
                 }
