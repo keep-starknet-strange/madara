@@ -5,7 +5,7 @@ use starknet_accounts::{Account, AccountFactory, Call, OpenZeppelinAccountFactor
 use starknet_core::chain_id;
 use starknet_core::types::contract::legacy::LegacyContractClass;
 use starknet_core::types::contract::{CompiledClass, SierraClass};
-use starknet_core::types::{BlockId, BlockTag, EmittedEvent, Event, FieldElement, FunctionCall, MsgToL1};
+use starknet_core::types::{BlockId, BlockTag, FieldElement, FunctionCall, MsgToL1};
 use starknet_core::utils::get_selector_from_name;
 use starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
 use starknet_providers::Provider;
@@ -174,27 +174,6 @@ pub fn assert_eq_msg_to_l1(l1: Vec<MsgToL1>, l2: Vec<MsgToL1>) {
         assert_eq!(m1.payload, m2.payload);
         assert_eq!(m1.to_address, m2.to_address);
     }
-}
-
-pub fn assert_eq_event(l1: Vec<Event>, l2: Vec<Event>) {
-    assert_eq!(l1.len(), l2.len());
-    for (e1, e2) in l1.iter().zip(l2.iter()) {
-        assert_eq!(e1.data, e2.data);
-        assert_eq!(e1.from_address, e2.from_address);
-        assert_eq!(e1.keys, e2.keys);
-    }
-}
-
-pub fn assert_eq_emitted_event(l1: &[EmittedEvent], l2: &[EmittedEvent]) -> bool {
-    assert_eq!(l1.len(), l2.len());
-    l1.iter().zip(l2.iter()).all(|(e1, e2)| {
-        e1.data == e2.data
-            || e1.from_address == e2.from_address
-            || e1.keys == e2.keys
-            || e1.block_hash == e2.block_hash
-            || e1.block_number == e2.block_number
-            || e1.transaction_hash == e2.transaction_hash
-    })
 }
 
 pub async fn assert_poll<F, Fut>(f: F, polling_time_ms: u64, max_poll_count: u32)
