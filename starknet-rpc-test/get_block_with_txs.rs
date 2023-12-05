@@ -149,7 +149,6 @@ async fn works_with_deploy_account_txn(madara: &ThreadSafeMadaraClient) -> Resul
 
 #[rstest]
 #[tokio::test]
-#[ignore = "class already declared"]
 async fn works_with_declare_txn(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
@@ -162,8 +161,8 @@ async fn works_with_declare_txn(madara: &ThreadSafeMadaraClient) -> Result<(), a
 
         let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
         let nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account.address()).await?;
-        let (declare_tx, class_hash, compiled_class_hash) =
-            account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
+        let (declare_tx, class_hash, compiled_class_hash) = account
+            .declare_contract("./contracts/Counter3/Counter3.sierra.json", "./contracts/Counter3/Counter3.casm.json");
 
         madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
 

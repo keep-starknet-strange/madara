@@ -7,6 +7,7 @@ use sp_runtime::transaction_validity::{InvalidTransaction, TransactionSource, Tr
 use starknet_api::api_core::{ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Event as StarknetEvent, EventContent, EventData, EventKey};
+use starknet_core::utils::get_selector_from_name;
 use starknet_crypto::FieldElement;
 
 use super::mock::default_mock::*;
@@ -45,7 +46,7 @@ fn given_contract_run_deploy_account_tx_works() {
         let expected_fee_transfer_event = Event::StarknetEvent(StarknetEvent {
             content: EventContent {
                 keys: vec![EventKey(
-                    StarkFelt::try_from("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap(),
+                    StarkFelt::try_from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap()).unwrap(),
                 )],
                 data: EventData(vec![
                     address.0.0,                            // From

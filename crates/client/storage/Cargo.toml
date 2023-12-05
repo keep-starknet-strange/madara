@@ -20,6 +20,7 @@ frame-system = { workspace = true, features = ["std"] }
 madara-runtime = { workspace = true, features = ["std"] }
 mp-storage = { workspace = true, features = ["std"] }
 pallet-starknet = { workspace = true, features = ["std"] }
+pallet-starknet-runtime-api = { workspace = true, features = ["std"] }
 sc-client-api = { workspace = true }
 scale-codec = { workspace = true, features = ["std"] }
 sp-api = { workspace = true, features = ["std"] }

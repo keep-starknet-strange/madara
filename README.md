@@ -35,60 +35,85 @@
 </a>
 </div>
 
-# ⚡ Madara: Starknet Sequencer 👉👈
+# ⚡ Madara App Chain Stack
 
-Welcome to **Madara**, a blazing fast ⚡ [Starknet](https://www.starknet.io/)
-sequencer designed to make your projects soar!
+Welcome to **Madara**, the modular stack to build chains using
+[Cairo](https://book.cairo-lang.org/title-page.html) and the
+[Starknet](https://www.starknet.io/) technology. Apps like dYdX V3, Immutable
+and Sorare have been using StarkEx for scaling for a while and now with Madara,
+it's open source for everyone to use.
 
-Built on the robust Substrate framework and fast, thanks to Rust 🦀, Madara
-delivers unmatched performance and scalability to power your Starknet-based
-Validity Rollup chain.
+Madara is built on the [Substrate](https://substrate.io/) framework which not
+only makes it modular but also gives it access to years of dev tooling,
+libraries and a strong developer community. It is specifically helpful if you
+want to own more of the stack and get more control over your chain.
 
-Dive into the world of Madara and join our passionate community of contributors!
-Together, we're pushing the boundaries of what's possible within the Starknet
-ecosystem.
+## 📚 Documentation
 
-🚀 Discover the unparalleled flexibility and might of Madara, your gateway to
-launching your very own Starknet appchain or L3. Harness the prowess of Cairo,
-while maintaining complete control over your custom appchain, tailored to your
-specific requirements. Madara is designed to empower a multitude of projects,
-fueling growth within the Starknet ecosystem.
+Get started with our comprehensive documentation, which covers everything from
+project structure and architecture to benchmarking and running Madara:
+
+- [Getting Started Guide](./docs/getting-started.md)
+- [Architecture Overview](./docs/architecture.md)
+- [Chain Genesis Information](./docs/genesis.md)
+- [Project Structure](./docs/project-structure.md)
+- [Run benchmark yourself](./benchmarking/README.md)
+
+## 📣 Building App Chains
+
+For many use cases, you do not need to fork this repo to build your app chain.
+By adding changes using forking, you will have to periodically rebase (and solve
+conflicts) to remain updated with the latest version of Madara. Madara by
+default provides
+
+- `pallet_starknet`: Adds the CairoVM to Substrate which allows you to deploy
+  and execute Cairo contracts.
+- `Starknet RPC`: Adds all the Starknet RPC calls to your chain so that it's
+  compatible with all RPC tools like starknet-js, wallets, etc.
+- `DA Interface`: A general interface which allows you to use any DA layer like
+  `Avail`, `Celestia`, `Ethereum` etc.
+- `Proving`: Running the Starknet OS which is the runtime logic in Cairo so that
+  it can be proven on the L1.
+
+So for many use cases where you want to change common things like
+
+- Configuration
+  [parameters](https://github.com/keep-starknet-strange/madara/blob/d90cb1a3ce5389f5f530ee5eaf3c3d4c96561b12/crates/runtime/src/pallets.rs#L33)
+  for example block time, maximum steps etc.
+- DA layer
+- Genesis state
+- Add new off chain workers
+- Add new pallets
+
+you don't need to fork the Madara repo. Instead, you can import the relevant
+code as crates/pallets. We have created an
+[app-chain-template](https://github.com/keep-starknet-strange/madara-app-chain-template)
+which imports Madara as a library to show an example and would recommend you
+start from here. For other more detailed use cases like
+
+- Adding a new syscall to the cairo VM
+- Changing the runtime logic to deviate from Starknet's logic
+
+You should consider forking parts of Madara.
 
 ## 📣 Peripheral repositories
 
-- [Madara Explorer](https://github.com/lambdaclass/madara_explorer) by the great
-  [LambdaClass](https://lambdaclass.com/) team 🫶: A block explorer for Madara.
+- [Madara Docsite](https://github.com/keep-starknet-strange/madara-docs): The
+  source code of the Madara documentation website. Deployed on
+  `https://docs.madara.zone`.
+- [Stark Compass Explorer](https://github.com/lambdaclass/madara_explorer) by
+  the [LambdaClass](https://lambdaclass.com/) team : An open source block
+  explorer for Starknet based chains.
 - [Madara Infra](https://github.com/keep-starknet-strange/madara-infra): A
   collection of scripts and tools to deploy and manage Madara on different
   environments (e.g. AWS, docker, ansible, etc.). It also contains the
   [Starknet Stack](https://github.com/keep-starknet-strange/madara-infra/blob/main/starknet-stack/docker-compose.yml)
   demo `docker-compose` file.
-- [Madara Kit Application](https://github.com/keep-starknet-strange/madara-app):
-  A simple application that demonstrates how to use Madara. Deployed on
-  `https://app.madara.zone`.
-- [Madara Docsite](https://github.com/keep-starknet-strange/madara-docs): The
-  source code of the Madara documentation website. Deployed on
-  `https://docs.madara.zone`.
 - [Madara Tsukuyomi](https://github.com/keep-starknet-strange/madara-tsukuyomi):
   The source code of the Madara Desktop App. A friendly GUI to start a Madara
   node and interact with it.
 - [App Chain Template](<(https://github.com/keep-starknet-strange/madara-app-chain-template)>):
   A ready to use template that allows you to easily start an app chain.
-
-## 📣 Building App Chains
-
-> Do NOT fork this repo and build your app chain on top unless completely
-> necessary. By adding changes using forking, you will have to periodically
-> rebase (and solve conflicts) to remain updated with the latest version of
-> Madara.
-
-One of the main features of Madara is to allow users to start their app chains
-that support Cairo contracts and Starknet like blocks. Hence, to make it easy
-for users to build a custom app chain, we have created an
-[app-chain-template](https://github.com/keep-starknet-strange/madara-app-chain-template)
-which imports Madara as a pallet. This removes all the boilerplate code and
-allows you to focus on code only relevant to your app chain. Moreover, updating
-Madara is as simple as updating the pallet version.
 
 ## 🌟 Features
 
@@ -98,17 +123,6 @@ Madara is as simple as updating the pallet version.
 - Custom FRAME pallets for Starknet functionality 🔧
 - Comprehensive documentation 📚
 - Active development and community support 🤝
-
-## 📚 Documentation
-
-Get started with our comprehensive documentation, which covers everything from
-project structure and architecture to benchmarking and running Madara:
-
-- [Architecture Overview](./docs/architecture.md)
-- [Chain Genesis Information](./docs/genesis.md)
-- [Project Structure](./docs/project-structure.md)
-- [Getting Started Guide](./docs/getting-started.md)
-- [Run benchmark yourself](./benchmarking/README.md)
 
 ## 🏗️ Build & Run
 

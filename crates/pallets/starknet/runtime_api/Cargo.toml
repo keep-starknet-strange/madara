@@ -1,0 +1,47 @@
+[package]
+name = "pallet-starknet-runtime-api"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# Madara primitives
+mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
+mp-transactions = { workspace = true, features = [
+  "parity-scale-codec",
+  "scale-info",
+] }
+
+# Starknet
+blockifier = { workspace = true, features = [
+  "parity-scale-codec",
+  "scale-info",
+] }
+hashbrown = { workspace = true }
+starknet_api = { workspace = true, features = [
+  "scale-info",
+  "parity-scale-codec",
+] }
+
+# Substrate 
+parity-scale-codec = { workspace = true, features = ["derive"] }
+scale-info = { workspace = true, features = ["derive"] }
+sp-api = { workspace = true }
+sp-arithmetic = { workspace = true }
+sp-runtime = { workspace = true }
+
+
+[features]
+default = ["std"]
+std = [
+  "mp-felt/std",
+  "mp-transactions/std",
+  "blockifier/std",
+  "starknet_api/std",
+  "sp-api/std",
+  "sp-runtime/std",
+  "sp-arithmetic/std",
+  "parity-scale-codec/std",
+  "scale-info/std",
+]
