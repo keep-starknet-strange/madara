@@ -143,6 +143,10 @@
 <a href="#143" id="143">143</a>
 <a href="#144" id="144">144</a>
 <a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC API trait and types
 //!
 //! Starkware maintains [a description of the Starknet API](https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json)
@@ -200,6 +204,10 @@
 <span class="doccomment">/// Starknet rpc interface.
 </span><span class="attr">#[rpc(server, namespace = <span class="string">&quot;starknet&quot;</span>)]
 </span><span class="kw">pub trait </span>StarknetReadRpcApi {
+    <span class="doccomment">/// Get the Version of the StarkNet JSON-RPC Specification Being Used
+    </span><span class="attr">#[method(name = <span class="string">&quot;specVersion&quot;</span>)]
+    </span><span class="kw">fn </span>spec_version(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;String&gt;;
+
     <span class="doccomment">/// Get the most recent accepted block number
     </span><span class="attr">#[method(name = <span class="string">&quot;blockNumber&quot;</span>)]
     </span><span class="kw">fn </span>block_number(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;u64&gt;;
