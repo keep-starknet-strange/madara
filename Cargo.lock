@@ -6127,19 +6127,6 @@ dependencies = [
 ]
 
 [[package]]
-<<<<<<< HEAD
-name = "madara-utils"
-version = "0.6.0"
-dependencies = [
- "log",
- "pallet-starknet",
- "serde",
- "serde_json",
-]
-
-[[package]]
-=======
->>>>>>> f3a010c (move crates/utils to crates/client/utils, and more)
 name = "maplit"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6263,7 +6250,7 @@ dependencies = [
 
 [[package]]
 name = "mc-genesis-data-provider"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "jsonrpsee 0.16.3",
