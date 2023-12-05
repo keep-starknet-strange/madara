@@ -16,7 +16,7 @@ use sp_runtime::traits::Block as BlockT;
 use starknet_api::state::StateDiff;
 use tokio::time::sleep;
 
-use crate::{parser, Error, FetchState, StateFetcher, LOG_TARGET};
+use super::*;
 
 /// Constants for state and log search steps
 const STATE_SEARCH_STEP: u64 = 10;
@@ -660,5 +660,11 @@ impl<P: JsonRpcClient + Clone> StateFetcher for EthereumStateFetcher<P> {
         }
 
         Ok(states_res)
+    }
+
+    async fn get_highest_block_number(&mut self) -> Result<u64, Error> {
+        let highest_eth_block_number =
+            self.http_provider.get_block_number().await.map_err(|e| Error::L1Connection(e.to_string()))?.as_u64();
+        Ok(highest_eth_block_number)
     }
 }

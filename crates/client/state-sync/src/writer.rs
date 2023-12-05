@@ -141,8 +141,9 @@ where
         substrate_block.header.number += 1;
 
         let storage_changes: InnerStorageChangeSet = state_diff.into();
+        // TODO use the second element.
         substrate_block.header.state_root =
-            self.calculate_state_root_after_storage_change(&storage_changes, block_info.best_hash);
+            self.calculate_state_root_after_storage_change(&storage_changes, block_info.best_hash).0;
 
         let substrate_block_hash = substrate_block.hash();
         let mut operation = self
@@ -223,7 +224,7 @@ where
         &self,
         storage_changes: &InnerStorageChangeSet,
         block_hash: H256,
-    ) -> H256 {
+    ) -> (H256, bool) {
         let mut overlay = OverlayedChanges::default();
 
         // now pallet starknet not use child storages.
@@ -232,7 +233,7 @@ where
         }
         let trie_backend = self.substrate_backend.state_at(block_hash).unwrap();
 
-        overlay.storage_root(&trie_backend, &mut Default::default(), Default::default())
+        overlay.storage_root(&trie_backend, Default::default())
     }
 }
 

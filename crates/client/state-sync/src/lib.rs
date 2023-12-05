@@ -97,7 +97,7 @@ use futures::channel::mpsc;
 use futures::prelude::*;
 use log::error;
 use mc_db::L1L2BlockMapping;
-use pallet_starknet::runtime_api::StarknetRuntimeApi;
+use pallet_starknet_runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::Backend;
 use serde::{Deserialize, Serialize};
 use sp_api::ProvideRuntimeApi;
@@ -192,6 +192,8 @@ pub trait StateFetcher {
         B: BlockT,
         C: ProvideRuntimeApi<B> + HeaderBackend<B>,
         C::Api: StarknetRuntimeApi<B>;
+
+    async fn get_highest_block_number(&mut self) -> Result<u64, Error>;
 }
 
 /// Enum representing the synchronization status.
@@ -358,8 +360,19 @@ where
                     error!(target: LOG_TARGET, "fetch state diff from l1 has error {:#?}", e);
                 }
             }
-            // TODO syncing, synced
-            tokio::time::sleep(Duration::from_secs(5)).await;
+            match state_fetcher.get_highest_block_number().await {
+                Ok(highest_block_number) => {
+                    if highest_block_number > eth_from_height {
+                        continue;
+                    }
+                    if eth_from_height == highest_block_number {
+                        tokio::time::sleep(Duration::from_secs(5)).await;
+                    }
+                }
+                Err(e) => {
+                    error!(target: LOG_TARGET, "get highest block number from l1 has error {:#?}", e);
+                }
+            };
         }
     };
 

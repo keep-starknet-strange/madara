@@ -9,35 +9,40 @@ publish = false
 repository = "https://github.com/keep-starknet-strange/madara"
 
 [dependencies]
-tokio = { workspace = true, features = ["macros", "test-util", "rt-multi-thread"] }
-futures = { workspace = true }
 anyhow = { workspace = true }
 async-trait = { workspace = true }
-indexmap = { workspace = true }
+futures = { workspace = true }
 hashbrown = { workspace = true }
+indexmap = { workspace = true }
 log = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true, features = [
-    "arbitrary_precision",
-    "raw_value",
+  "arbitrary_precision",
+  "raw_value",
+] }
+tokio = { workspace = true, features = [
+  "macros",
+  "test-util",
+  "rt-multi-thread",
 ] }
 
 # Madara
-mp-hashers = { workspace = true, default-features = true }
-mp-commitments = { workspace = true, default-features = true }
-mp-digest-log = { workspace = true }
-mc-rpc-core = { workspace = true }
-mp-block = { workspace = true }
-mp-storage = { workspace = true  }
+madara-runtime = { workspace = true }
 mc-db = { workspace = true }
 mc-mapping-sync = { workspace = true }
-madara-runtime = { workspace = true }
-pallet-starknet = { workspace = true }
+mc-rpc-core = { workspace = true }
+mp-block = { workspace = true }
+mp-commitments = { workspace = true, default-features = true }
+mp-digest-log = { workspace = true }
 mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
+mp-hashers = { workspace = true, default-features = true }
+mp-storage = { workspace = true }
+pallet-starknet = { workspace = true }
 
 # Starknet
 blockifier = { workspace = true, default-features = true }
-starknet_api = { workspace = true }
+pallet-starknet-runtime-api = { workspace = true, default-features = true }
+starknet_api = { workspace = true, default-features = true }
 
 # Substrate
 frame-support = { workspace = true }

@@ -6399,6 +6399,7 @@ dependencies = [
  "mc-db",
  "mc-mapping-sync",
  "mc-rpc",
+ "mc-state-sync",
  "mc-storage",
  "md5",
  "mp-block",
@@ -6701,6 +6702,58 @@ dependencies = [
  "starknet-core",
  "starknet_api",
  "thiserror",
+]
+
+[[package]]
+name = "mc-state-sync"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "blockifier",
+ "ethers",
+ "frame-support",
+ "futures",
+ "hashbrown 0.14.3",
+ "indexmap 2.0.0-pre",
+ "lazy_static",
+ "log",
+ "madara-runtime",
+ "mc-db",
+ "mc-mapping-sync",
+ "mc-rpc-core",
+ "mp-block",
+ "mp-commitments",
+ "mp-digest-log",
+ "mp-felt",
+ "mp-hashers",
+ "mp-storage",
+ "mp-transactions",
+ "pallet-starknet",
+ "pallet-starknet-runtime-api",
+ "pretty_assertions",
+ "project-root",
+ "sc-block-builder",
+ "sc-client-api",
+ "sc-client-db",
+ "serde",
+ "serde_json",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core 21.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
+ "sp-inherents",
+ "sp-runtime 24.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
+ "sp-state-machine 0.28.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
+ "sp-timestamp",
+ "starknet-core",
+ "starknet-crypto",
+ "starknet_api",
+ "substrate-test-client",
+ "tempfile",
+ "tokio",
+ "tokio-retry",
 ]
 
 [[package]]
@@ -12691,6 +12744,32 @@ dependencies = [
  "sc-rpc-api",
  "serde",
  "sp-runtime 24.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
+]
+
+[[package]]
+name = "substrate-test-client"
+version = "2.0.1"
+source = "git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0#401f8a3e9448db854f5605b679fa085b8f445039"
+dependencies = [
+ "array-bytes 6.2.0",
+ "async-trait",
+ "futures",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sc-client-db",
+ "sc-consensus",
+ "sc-executor",
+ "sc-offchain",
+ "sc-service",
+ "serde",
+ "serde_json",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core 21.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
+ "sp-keyring",
+ "sp-keystore 0.27.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
+ "sp-runtime 24.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
+ "sp-state-machine 0.28.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
 ]
 
 [[package]]

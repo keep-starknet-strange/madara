@@ -84,11 +84,11 @@ mc-data-availability = { workspace = true }
 mc-db = { workspace = true }
 mc-mapping-sync = { workspace = true }
 mc-rpc = { workspace = true }
+mc-state-sync = { workspace = true }
 mc-storage = { workspace = true }
 pallet-starknet = { workspace = true }
 pallet-starknet-runtime-api = { workspace = true }
 starknet-core = { workspace = true }
-mc-state-sync = { workspace = true }
 
 # Primitives
 mp-block = { workspace = true }
