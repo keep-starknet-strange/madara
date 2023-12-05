@@ -1035,43 +1035,7 @@ where
         })
     }
 
-    /// TODO: Transaction Status API: Added starknet_getTransactionStatus and removed
-    /// starknet_pendingTransactions.
-    async fn pending_transactions(&self) -> RpcResult<Vec<Transaction>> {
-        let substrate_block_hash = self.client.info().best_hash;
-
-        let mut transactions = vec![];
-
-        let mut transactions_ready: Vec<<B as BlockT>::Extrinsic> =
-            self.graph.validated_pool().ready().map(|tx| tx.data().clone()).collect();
-
-        let mut transactions_future: Vec<<B as BlockT>::Extrinsic> =
-            self.graph.validated_pool().futures().into_iter().map(|(_hash, extrinsic)| extrinsic).collect();
-
-        transactions.append(&mut transactions_ready);
-        transactions.append(&mut transactions_future);
-
-        let api = self.client.runtime_api();
-
-        let transactions = api.extrinsic_filter(substrate_block_hash, transactions).map_err(|e| {
-            error!("Failed to filter extrinsics. Substrate block hash: {substrate_block_hash}, error: {e}");
-            StarknetRpcApiError::InternalServerError
-        })?;
-
-        let chain_id = self.chain_id().map_err(|e| {
-            error!("Failed to retrieve chain ID. Error: {e}");
-            StarknetRpcApiError::InternalServerError
-        })?;
-
-        let transactions = transactions
-            .into_iter()
-            .map(|tx| {
-                let hash = tx.compute_hash::<H>(chain_id.0.into(), false).into();
-                to_starknet_core_tx(tx, hash)
-            })
-            .collect();
-        Ok(transactions)
-    }
+    
 
     /// Returns all events matching the given filter.
     ///

@@ -128,10 +128,6 @@ pub trait StarknetReadRpcApi {
     #[method(name = "getStateUpdate")]
     fn get_state_update(&self, block_id: BlockId) -> RpcResult<StateUpdate>;
 
-    /// Returns the transactions in the transaction pool, recognized by this sequencer
-    #[method(name = "pendingTransactions")]
-    async fn pending_transactions(&self) -> RpcResult<Vec<Transaction>>;
-
     /// Returns all events matching the given filter
     #[method(name = "getEvents")]
     async fn get_events(&self, filter: EventFilterWithPage) -> RpcResult<EventsPage>;
