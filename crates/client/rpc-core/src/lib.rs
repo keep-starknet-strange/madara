@@ -20,8 +20,10 @@ use starknet_core::types::{
     BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall,
     InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt,
-    StateUpdate, SyncStatusType, Transaction,
+    StateUpdate, SyncStatusType, Transaction
 };
+
+use mp_transactions::TransactionStatus;
 
 #[serde_as]
 #[derive(Serialize, Deserialize)]
@@ -70,6 +72,10 @@ pub trait StarknetReadRpcApi {
     /// Get the number of transactions in a block given a block id
     #[method(name = "getBlockTransactionCount")]
     fn get_block_transaction_count(&self, block_id: BlockId) -> RpcResult<u128>;
+
+    /// Gets the Transaction Status, Including Mempool Status and Execution Details
+    #[method(name = "getTransactionStatus")]
+    fn get_transaction_status(&self, transaction_hash: FieldElement) -> RpcResult<TransactionStatus>;
 
     /// Get the value of the storage at the given address and key, at the given block id
     #[method(name = "getStorageAt")]

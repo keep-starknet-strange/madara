@@ -23,14 +23,14 @@ use mp_felt::{Felt252Wrapper, Felt252WrapperError};
 use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
-use mp_transactions::UserTransaction;
+use mp_transactions::{UserTransaction, TransactionStatus};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::BlockBackend;
 use sc_network_sync::SyncingService;
 use sc_transaction_pool::{ChainApi, Pool};
 use sc_transaction_pool_api::error::{Error as PoolError, IntoPoolError};
-use sc_transaction_pool_api::{InPoolTransaction, TransactionPool, TransactionSource};
+use sc_transaction_pool_api::{TransactionPool, TransactionSource};
 use sp_api::{ApiError, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
@@ -46,7 +46,7 @@ use starknet_core::types::{
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, ExecutionResult, FeeEstimate, FieldElement,
     FunctionCall, InvokeTransactionReceipt, InvokeTransactionResult, L1HandlerTransactionReceipt,
     MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateDiff, StateUpdate,
-    SyncStatus, SyncStatusType, Transaction, TransactionFinalityStatus, TransactionReceipt,
+    SyncStatus, SyncStatusType, Transaction, TransactionFinalityStatus, TransactionReceipt
 };
 
 use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
@@ -399,6 +399,66 @@ where
 
         Ok(block.header().transaction_count)
     }
+
+    /// Gets the Transaction Status, Including Mempool Status and Execution Details
+    ///
+    /// This method retrieves the status of a specified transaction. It provides information on whether 
+    /// the transaction is still in the mempool, has been executed, or dropped from the mempool. 
+    /// The status includes both finality status and execution status of the transaction.
+    ///
+    /// ### Arguments
+    ///
+    /// * `transaction_hash` - The hash of the transaction for which the status is requested.
+    ///
+    /// ### Returns
+    ///
+    /// * `transaction_status` - An object containing the transaction status details:
+    ///   - `finality_status`: The finality status of the transaction, indicating whether it is confirmed, 
+    ///     pending, or rejected.
+    ///   - `execution_status`: The execution status of the transaction, providing details on 
+    ///     the execution outcome if the transaction has been processed.
+    fn get_transaction_status(&self, transaction_hash: FieldElement) -> RpcResult<TransactionStatus> {
+        let block_hash_from_db = self
+            .backend
+            .mapping()
+            .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
+            .map_err(|e| {
+                error!("Failed to get transaction's substrate block hash from mapping_db: {e}");
+                StarknetRpcApiError::TxnHashNotFound
+            })?;
+    
+        let substrate_block_hash = block_hash_from_db.ok_or(StarknetRpcApiError::TxnHashNotFound)?;
+    
+        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)
+            .ok_or(StarknetRpcApiError::BlockNotFound)?;
+    
+        let chain_id = self.chain_id()?.0.into();
+    
+        let find_tx = block.transactions()
+            .iter()
+            .find(|tx| tx.compute_hash::<H>(chain_id, false).0 == transaction_hash)
+            .map(|tx| to_starknet_core_tx(tx.clone(), transaction_hash))
+            .ok_or(StarknetRpcApiError::TxnHashNotFound)?;
+    
+        let execution_result: ExecutionResult = self
+            .client
+            .runtime_api()
+            .get_tx_execution_outcome(substrate_block_hash, Felt252Wrapper(transaction_hash).into())
+            .map_err(|e| {
+                error!(
+                    "Failed to get transaction execution outcome. Substrate block hash: {substrate_block_hash}, \
+                     transaction hash: {transaction_hash}, error: {e}"
+                );
+                StarknetRpcApiError::InternalServerError
+            })?
+            .map_or(ExecutionResult::Succeeded, |message| {
+                ExecutionResult::Reverted {
+                    reason: String::from_utf8(message).unwrap_or_else(|_| "Invalid UTF-8 sequence".to_string()),
+                }
+            });
+    
+        Ok(TransactionStatus::AcceptedOnL2(execution_result))
+    }    
 
     /// Get the value of the storage at the given address and key.
     ///
