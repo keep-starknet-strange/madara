@@ -60,3 +60,5 @@ celestia-types = { git = "https://github.com/eigerco/celestia-node-rs", rev = "b
 
 # Madara
 mp-storage = { workspace = true, default-features = true }
+mp-digest-log = { workspace = true, default-features = true }
+mp-hashers = { workspace = true, default-features = true }

@@ -6581,6 +6581,8 @@ dependencies = [
  "log",
  "mc-commitment-state-diff",
  "mc-db",
+ "mp-digest-log",
+ "mp-hashers",
  "mp-storage",
  "pallet-starknet-runtime-api",
  "reqwest",
@@ -6614,6 +6616,7 @@ dependencies = [
  "sp-core 21.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
  "sp-database",
  "sp-runtime 24.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
+ "starknet_api",
  "uuid 1.6.1",
 ]
 

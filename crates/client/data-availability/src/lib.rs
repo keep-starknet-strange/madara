@@ -13,16 +13,17 @@ use blockifier::state::cached_state::CommitmentStateDiff;
 use ethers::types::{I256, U256};
 use futures::channel::mpsc;
 use futures::StreamExt;
+use mp_hashers::HasherT;
 use pallet_starknet_runtime_api::StarknetRuntimeApi;
 use sc_client_api::client::BlockchainEvents;
 use serde::Deserialize;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::traits::{Block as BlockT, Header};
 use starknet_api::block::BlockHash;
-use utils::{safe_split, state_diff_to_calldata};
+use utils::state_diff_to_calldata;
 
-pub struct DataAvailabilityWorker<B, C>(PhantomData<(B, C)>);
+pub struct DataAvailabilityWorker<B, C, H>(PhantomData<(B, C, H)>);
 
 #[derive(Debug, Copy, Clone, PartialEq, clap::ValueEnum)]
 pub enum DaLayer {
@@ -71,7 +72,7 @@ pub trait DaClient: Send + Sync {
     async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()>;
 }
 
-impl<B, C> DataAvailabilityWorker<B, C>
+impl<B, C, H> DataAvailabilityWorker<B, C, H>
 where
     B: BlockT,
     C: ProvideRuntimeApi<B>,
@@ -114,11 +115,14 @@ where
     }
 }
 
-impl<B, C> DataAvailabilityWorker<B, C>
+impl<B, C, H> DataAvailabilityWorker<B, C, H>
 where
     B: BlockT,
     C: ProvideRuntimeApi<B>,
+    C::Api: StarknetRuntimeApi<B>,
     C: BlockchainEvents<B> + 'static,
+    C: HeaderBackend<B>,
+    H: HasherT + Unpin,
 {
     pub async fn update_state(
         da_client: Box<dyn DaClient + Send + Sync>,
@@ -138,13 +142,19 @@ where
                 }
             };
 
+            let starknet_block_hash = {
+                let digest = notification.header.digest();
+                let block = mp_digest_log::find_starknet_block(digest).expect("starknet block not found");
+                block.header().hash::<H>().into()
+            };
+
             match da_client.get_mode() {
                 DaMode::Validity => {
                     // Check the SHARP status of last_proved + 1
                     // Write the publish state diff of last_proved + 1
                     log::info!("validity da mode not implemented");
                 }
-                DaMode::Sovereign => match madara_backend.da().state_diff(&notification.hash) {
+                DaMode::Sovereign => match madara_backend.da().state_diff(&starknet_block_hash) {
                     Ok(state_diff) => {
                         if let Err(e) = da_client.publish_state_diff(state_diff).await {
                             log::error!("DA PUBLISH ERROR: {}", e);
