@@ -58,7 +58,7 @@ impl<B: BlockT> MetaDb<B> {
     pub fn last_l1_l2_mapping(&self) -> Result<L1L2BlockMapping, String> {
         match self.db.get(crate::columns::META, crate::static_keys::LAST_L1_L1_HEADER_MAPPING) {
             Some(data) => L1L2BlockMapping::decode(&mut &data[..]).map_err(|e| e.to_string()),
-            None => Err(format!("last l1 l2 block mapping not found")),
+            None => Err("last l1 l2 block mapping not found".to_string()),
         }
     }
 }

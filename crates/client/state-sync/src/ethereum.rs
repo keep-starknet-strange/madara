@@ -69,7 +69,7 @@ fn decode_log_state_update(raw_log: &RawLog) -> Result<LogStateUpdate, Error> {
         });
     }
 
-    return Err(Error::L1EventDecode);
+    Err(Error::L1EventDecode)
 }
 
 /// Ethereum contract event representing a log state transition fact.
@@ -201,7 +201,7 @@ impl EthereumStateFetcher<MockProvider> {
 
 impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
     pub async fn get_logs_retry(&mut self, filter: &Filter) -> Result<Vec<Log>, Error> {
-        if let Ok(res) = self.http_provider.get_logs(&filter).await {
+        if let Ok(res) = self.http_provider.get_logs(filter).await {
             return Ok(res);
         }
 
@@ -216,7 +216,7 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
                 })
                 .map_err(|e| Error::Other(e.to_string()))??;
 
-            match provider.get_logs(&filter).await {
+            match provider.get_logs(filter).await {
                 Ok(logs) => return Ok(logs),
                 Err(_e) => {
                     retries += 1;
@@ -286,17 +286,15 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
 
             self.sync_status
                 .lock()
-                .and_then(|mut status| {
+                .map(|mut status| {
                     *status = SyncStatus::SYNCED;
-                    Ok(())
                 })
                 .map_err(|e| Error::Other(e.to_string()))?;
         } else {
             self.sync_status
                 .lock()
-                .and_then(|mut status| {
+                .map(|mut status| {
                     *status = SyncStatus::SYNCING;
-                    Ok(())
                 })
                 .map_err(|e| Error::Other(e.to_string()))?;
         }
