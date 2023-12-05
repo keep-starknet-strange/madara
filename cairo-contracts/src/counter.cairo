@@ -1,4 +1,4 @@
-// Declare this file as a StarkNet contract.
+// Declare this file as a Starknet contract.
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin

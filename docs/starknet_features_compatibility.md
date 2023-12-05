@@ -1,4 +1,4 @@
-# StarkNet Features Compatibility
+# Starknet Features Compatibility
 
 ## Block
 
