@@ -6647,6 +6647,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "mp-genesis-config"
+version = "0.5.0"
+dependencies = [
+ "blockifier",
+ "derive_more",
+ "mp-felt",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "starknet-core",
+ "starknet-crypto 0.6.1",
+]
+
+[[package]]
 name = "mp-hashers"
 version = "0.6.0"
 dependencies = [
@@ -7445,6 +7459,7 @@ dependencies = [
  "mp-digest-log",
  "mp-fee",
  "mp-felt",
+ "mp-genesis-config",
  "mp-hashers",
  "mp-sequencer-address",
  "mp-simulations",

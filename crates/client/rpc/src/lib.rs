@@ -18,8 +18,7 @@ use mc_db::Backend as MadaraBackend;
 use mc_genesis_data_provider::GenesisProvider;
 pub use mc_rpc_core::utils::*;
 pub use mc_rpc_core::{
-    Felt, MadaraRpcApiServer, PredeployedAccountWithBalance, PredeployedAccountsList, StarknetReadRpcApiServer,
-    StarknetWriteRpcApiServer,
+    Felt, MadaraRpcApiServer, PredeployedAccountWithBalance, StarknetReadRpcApiServer, StarknetWriteRpcApiServer,
 };
 use mc_storage::OverrideHandle;
 use mp_felt::{Felt252Wrapper, Felt252WrapperError};
@@ -212,7 +211,7 @@ where
     G: GenesisProvider + Send + Sync + 'static,
     H: HasherT + Send + Sync + 'static,
 {
-    fn predeployed_accounts(&self) -> RpcResult<PredeployedAccountsList> {
+    fn predeployed_accounts(&self) -> RpcResult<Vec<PredeployedAccountWithBalance>> {
         let genesis_data = self.genesis_provider.load_genesis_data()?;
         let block_id = BlockId::Tag(BlockTag::Latest);
         let fee_token_address: FieldElement = genesis_data.fee_token_address.0;
