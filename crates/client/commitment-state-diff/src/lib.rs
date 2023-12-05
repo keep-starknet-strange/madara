@@ -48,7 +48,7 @@ where
     C: HeaderBackend<B>,
     H: HasherT + Unpin,
 {
-    type Item = ();
+    type Item = (BlockHash, CommitmentStateDiff);
 
     // CommitmentStateDiffWorker is a state machine with two states
     // state 1: waiting for some StorageEvent to happen, `commitment_state_diff` field is `None`
@@ -95,7 +95,7 @@ where
                 // Safe to unwrap because channel is ready
                 self_as_mut.tx.start_send(msg).unwrap();
 
-                Poll::Ready(Some(()))
+                Poll::Ready(None)
             }
 
             // Channel is full, we wait

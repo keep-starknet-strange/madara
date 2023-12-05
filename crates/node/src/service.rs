@@ -442,7 +442,11 @@ pub fn new_full(
         task_manager.spawn_essential_handle().spawn(
             "da-worker-prove",
             Some("madara"),
-            DataAvailabilityWorker::prove_current_block(da_client.get_mode(), client.clone(), madara_backend.clone()),
+            DataAvailabilityWorker::prove_current_block(
+                da_client.get_mode(),
+                commitment_state_diff_rx,
+                madara_backend.clone(),
+            ),
         );
         task_manager.spawn_essential_handle().spawn(
             "da-worker-update",

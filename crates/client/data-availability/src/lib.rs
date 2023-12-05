@@ -9,20 +9,18 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use async_trait::async_trait;
+use blockifier::state::cached_state::CommitmentStateDiff;
 use ethers::types::{I256, U256};
+use futures::channel::mpsc;
 use futures::StreamExt;
-use indexmap::IndexMap;
-use mp_storage::{STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_NONCE, STARKNET_STORAGE};
 use pallet_starknet_runtime_api::StarknetRuntimeApi;
 use sc_client_api::client::BlockchainEvents;
 use serde::Deserialize;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
-use sp_io::hashing::twox_128;
 use sp_runtime::traits::Block as BlockT;
-use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
-use starknet_api::state::{StorageKey, ThinStateDiff};
-use utils::{bytes_to_felt, bytes_to_key, safe_split, state_diff_to_calldata};
+use starknet_api::block::BlockHash;
+use utils::{safe_split, state_diff_to_calldata};
 
 pub struct DataAvailabilityWorker<B, C>(PhantomData<(B, C)>);
 
@@ -81,84 +79,16 @@ where
     C: HeaderBackend<B> + 'static,
     C: BlockchainEvents<B> + 'static,
 {
-    pub async fn prove_current_block(da_mode: DaMode, client: Arc<C>, madara_backend: Arc<mc_db::Backend<B>>) {
-        let mut storage_event_st = client
-            .storage_changes_notification_stream(None, None)
-            .expect("node has been initialized to prove state change, but can't read from notification stream");
-
-        while let Some(storage_event) = storage_event_st.next().await {
-            let mut num_addrs_accessed: usize = 0;
-            let mut state_diff = ThinStateDiff {
-                declared_classes: IndexMap::new(),
-                storage_diffs: IndexMap::new(),
-                nonces: IndexMap::new(),
-                deployed_contracts: IndexMap::new(),
-                deprecated_declared_classes: Vec::new(),
-                replaced_classes: IndexMap::new(),
-            };
-
-            for (_, storage_key, storage_val) in storage_event.changes.iter() {
-                // split storage key into the (starknet prefix) and (remaining tree path)
-                let (child_key, rest_key) = safe_split(&storage_key.0);
-
-                // safety checks
-                let storage_val = match storage_val {
-                    Some(x) => x.0.clone(),
-                    None => continue,
-                };
-                let rest_key = match rest_key {
-                    Some(x) => x,
-                    None => continue,
-                };
-
-                if child_key == twox_128(STARKNET_NONCE) {
-                    // collect nonce information in state diff
-                    state_diff
-                        .nonces
-                        .insert(ContractAddress(bytes_to_key(&rest_key)), Nonce(bytes_to_felt(&storage_val)));
-                    num_addrs_accessed += 1;
-                } else if child_key == twox_128(STARKNET_STORAGE) {
-                    // collect storage update information in state diff
-                    if rest_key.len() > 32 {
-                        let (addr, key) = rest_key.split_at(32);
-                        let (addr, key) = (bytes_to_key(addr), bytes_to_key(key));
-
-                        state_diff
-                            .storage_diffs
-                            .entry(ContractAddress(addr))
-                            .and_modify(|v| {
-                                v.insert(StorageKey(key), bytes_to_felt(&storage_val));
-                            })
-                            .or_insert(IndexMap::from([(StorageKey(key), bytes_to_felt(&storage_val))]));
-                        num_addrs_accessed += 1;
-                    }
-                } else if child_key == twox_128(STARKNET_CONTRACT_CLASS) {
-                    // collect declared class information in state diff
-                    state_diff
-                        .declared_classes
-                        .insert(ClassHash(bytes_to_felt(&rest_key)), CompiledClassHash(bytes_to_felt(&storage_val)));
-                } else if child_key == twox_128(STARKNET_CONTRACT_CLASS_HASH) {
-                    // collect deployed contract information in state diff
-                    let runtime_api = client.runtime_api();
-                    let class_hash = ClassHash(bytes_to_felt(&storage_val));
-                    let current_block_hash = client.info().best_hash;
-
-                    let contract_exists =
-                        runtime_api.contract_class_by_class_hash(current_block_hash, class_hash).is_ok();
-
-                    if contract_exists {
-                        state_diff.replaced_classes.insert(ContractAddress(bytes_to_key(&rest_key)), class_hash);
-                    } else {
-                        state_diff.deployed_contracts.insert(ContractAddress(bytes_to_key(&rest_key)), class_hash);
-                    }
-                    num_addrs_accessed += 1;
-                }
-            }
-
+    pub async fn prove_current_block(
+        da_mode: DaMode,
+        mut state_diffs_rx: mpsc::Receiver<(BlockHash, CommitmentStateDiff)>,
+        madara_backend: Arc<mc_db::Backend<B>>,
+    ) {
+        while let Some((block_hash, csd)) = state_diffs_rx.next().await {
             // store the da encoded calldata for the state update worker
             if let Err(db_err) = madara_backend
                 .da()
-                .store_state_diff(&storage_event.block, state_diff_to_calldata(state_diff, num_addrs_accessed))
+                .store_state_diff(&block_hash, state_diff_to_calldata(csd, csd.address_to_class_hash.len()))
             {
                 log::error!("db err: {db_err}");
             };
@@ -171,9 +101,7 @@ where
                     if let Ok(job_resp) = sharp::submit_pie("TODO") {
                         log::info!("Job Submitted: {}", job_resp.cairo_job_key);
                         // Store the cairo job key
-                        if let Err(db_err) =
-                            madara_backend.da().update_cairo_job(&storage_event.block, job_resp.cairo_job_key)
-                        {
+                        if let Err(db_err) = madara_backend.da().update_cairo_job(&block_hash, job_resp.cairo_job_key) {
                             log::error!("db err: {db_err}");
                         };
                     }
