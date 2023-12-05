@@ -30,7 +30,7 @@
 - chore(data-availability-avail): implement fire and forget, and add ws
   reconnection logic
 - chore: update `polkadot-sdk` to `release-polkadot-v1.3.0`
-- feat(rpc): add sync state from l1
+- feat: add sync state from l1
 
 ## v0.5.0
 
