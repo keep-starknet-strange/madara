@@ -295,8 +295,8 @@ How to contribute?
 3. Work on your fork, in a branch dedicated to the issue you are working on.
 4. Push your changes to your fork, and submit a pull request (PR) on Madara
    official repository.
-5. If change is non trivial and requires some time to complete we suggest opening
-   a Draft PR. In case you need any help you can ask in [madara's
+5. If change is non trivial and requires some time to complete we suggest
+   opening a Draft PR. In case you need any help you can ask in [madara's
    telegram](https://t.me/MadaraStarknet) channel and link to the relevant code
    path.
 
@@ -317,7 +317,8 @@ servers browser)
 
 Starkware, which is the company at the root of Starknet innovation, is rewarding
 the contributors via [OnlyDust](https://www.onlydust.xyz/). This is an amazing
-initiative and opportunity that rewards early builders of the Starknet ecosystem.
+initiative and opportunity that rewards early builders of the Starknet
+ecosystem.
 
 How it works? Simple:
 
