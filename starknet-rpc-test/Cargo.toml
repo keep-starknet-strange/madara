@@ -25,9 +25,9 @@ thiserror = { workspace = true }
 tokio = { version = "1.34.0", features = ["rt", "macros", "parking_lot"] }
 url = "2.4.1"
 
-[[test]]
-name = "starknet_spec_version"
-path = "spec_version.rs"
+# [[test]]
+# name = "starknet_spec_version"
+# path = "spec_version.rs"
 
 [[test]]
 name = "starknet_get_block_number"

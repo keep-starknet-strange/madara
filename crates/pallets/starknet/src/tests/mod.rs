@@ -24,6 +24,7 @@ mod invoke_tx;
 mod l1_message;
 mod no_nonce_validation;
 mod query_tx;
+mod send_message;
 mod sequencer_address;
 
 mod block;
