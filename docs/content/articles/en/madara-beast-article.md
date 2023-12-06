@@ -28,7 +28,7 @@ Future of Blockchain Infrastructure_</font>
 Imagine having the power to tailor-make a blockchain specifically for your
 application’s unique requirements – that’s exactly what appchains offer.
 Appchains are application-specific blockchains that offer developers the
-flexibility to fine-tune aspects of the chains to suit their applications’
+flexibility to fine-tune aspects of the chains to suit their applications
 needs, like choosing a different hash function or customizing the consensus
 algorithm. The best part? Appchains inherit the security of the robust L1 or L2
 blockchains on which they are built, providing developers with the best of both
