@@ -420,16 +420,15 @@ where
     ///   - `execution_status`: The execution status of the transaction, providing details on the
     ///     execution outcome if the transaction has been processed.
     fn get_transaction_status(&self, transaction_hash: FieldElement) -> RpcResult<TransactionStatus> {
-        let substrate_block_hash_from_db = self
+        let substrate_block_hash = self
             .backend
             .mapping()
             .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
             .map_err(|e| {
                 error!("Failed to get transaction's substrate block hash from mapping_db: {e}");
                 StarknetRpcApiError::TxnHashNotFound
-            })?;
-
-        let substrate_block_hash = substrate_block_hash_from_db.ok_or(StarknetRpcApiError::TxnHashNotFound)?;
+            })?
+            .ok_or(StarknetRpcApiError::TxnHashNotFound)?;
 
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)
             .ok_or(StarknetRpcApiError::BlockNotFound)?;
