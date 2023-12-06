@@ -19,6 +19,7 @@ use mc_data_availability::celestia::CelestiaClient;
 use mc_data_availability::ethereum::config::EthereumConfig;
 use mc_data_availability::ethereum::EthereumClient;
 use mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker};
+use mc_l1_messages::config::L1MessagesWorkerConfig;
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
 use mp_sequencer_address::{
@@ -46,6 +47,8 @@ use crate::rpc::StarknetDeps;
 use crate::starknet::{db_config_dir, MadaraBackend};
 // Our native executor instance.
 pub struct ExecutorDispatch;
+
+const MADARA_TASK_GROUP: &str = "madara";
 
 impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
     /// Only enable the benchmarking host functions when we actually want to benchmark.
@@ -266,6 +269,7 @@ pub fn new_full(
     sealing: SealingMode,
     da_layer: Option<(DaLayer, PathBuf)>,
     cache_more_things: bool,
+    l1_messages_worker_config: Option<L1MessagesWorkerConfig>,
 ) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_default() { build_aura_grandpa_import_queue } else { build_manual_seal_import_queue };
@@ -394,7 +398,7 @@ pub fn new_full(
 
     task_manager.spawn_essential_handle().spawn(
         "mc-mapping-sync-worker",
-        Some("madara"),
+        Some(MADARA_TASK_GROUP),
         MappingSyncWorker::<_, _, _, StarknetHasher>::new(
             client.import_notification_stream(),
             Duration::new(6, 0),
@@ -441,13 +445,13 @@ pub fn new_full(
 
         task_manager.spawn_essential_handle().spawn(
             "da-worker-prove",
-            Some("madara"),
+            Some(MADARA_TASK_GROUP),
             DataAvailabilityWorker::prove_current_block(da_client.get_mode(), client.clone(), madara_backend.clone()),
         );
         task_manager.spawn_essential_handle().spawn(
             "da-worker-update",
-            Some("madara"),
-            DataAvailabilityWorker::update_state(da_client, client.clone(), madara_backend),
+            Some(MADARA_TASK_GROUP),
+            DataAvailabilityWorker::update_state(da_client, client.clone(), madara_backend.clone()),
         );
     };
 
@@ -485,7 +489,7 @@ pub fn new_full(
 
         let aura = sc_consensus_aura::start_aura::<AuraPair, _, _, _, _, _, _, _, _, _, _>(StartAuraParams {
             slot_duration,
-            client,
+            client: client.clone(),
             select_chain,
             block_import,
             proposer_factory,
@@ -575,6 +579,13 @@ pub fn new_full(
         );
     }
 
+    if let Some(l1_messages_worker_config) = l1_messages_worker_config {
+        task_manager.spawn_handle().spawn(
+            "ethereum-core-contract-events-listener",
+            Some(MADARA_TASK_GROUP),
+            mc_l1_messages::worker::run_worker(l1_messages_worker_config, client, transaction_pool, madara_backend),
+        );
+    }
     network_starter.start_network();
     Ok(task_manager)
 }

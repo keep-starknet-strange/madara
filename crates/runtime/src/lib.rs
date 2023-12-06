@@ -30,7 +30,7 @@ use frame_system::{EventRecord, Phase};
 use mp_felt::Felt252Wrapper;
 use mp_snos_output::{MessageL1ToL2, MessageL2ToL1};
 use mp_transactions::compute_hash::ComputeTransactionHash;
-use mp_transactions::{Transaction, UserTransaction};
+use mp_transactions::{HandleL1MessageTransaction, Transaction, UserTransaction};
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
@@ -54,7 +54,7 @@ use sp_version::RuntimeVersion;
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
-use starknet_api::transaction::{Calldata, Event as StarknetEvent, MessageToL1, TransactionHash};
+use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash};
 /// Import the types.
 pub use types::*;
 
@@ -403,10 +403,14 @@ impl_runtime_apis! {
         fn get_block_context() -> pallet_starknet::runtime_api::BlockContext {
            Starknet::get_block_context().into()
         }
+
+        fn l1_nonce_unused(nonce: Nonce) -> bool {
+            Starknet::ensure_l1_message_not_executed(&nonce).is_ok()
+        }
     }
 
     impl pallet_starknet::runtime_api::ConvertTransactionRuntimeApi<Block> for Runtime {
-        fn convert_transaction(transaction: UserTransaction) -> Result<UncheckedExtrinsic, DispatchError> {
+        fn convert_transaction(transaction: UserTransaction) -> UncheckedExtrinsic {
             let call = match transaction {
                 UserTransaction::Declare(tx, contract_class) => {
                     pallet_starknet::Call::declare { transaction: tx, contract_class  }
@@ -419,7 +423,13 @@ impl_runtime_apis! {
                 }
             };
 
-            Ok(UncheckedExtrinsic::new_unsigned(call.into()))
+            UncheckedExtrinsic::new_unsigned(call.into())
+        }
+
+        fn convert_l1_transaction(transaction: HandleL1MessageTransaction, fee: Fee) -> UncheckedExtrinsic {
+            let call =  pallet_starknet::Call::<Runtime>::consume_l1_message { transaction, paid_fee_on_l1: fee };
+
+            UncheckedExtrinsic::new_unsigned(call.into())
         }
 
         fn convert_error(error: DispatchError) -> StarknetTransactionExecutionError {

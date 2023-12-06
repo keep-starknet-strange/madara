@@ -30,7 +30,6 @@ mod transaction_validation;
 
 mod block;
 mod constants;
-mod message;
 mod mock;
 mod utils;
 
