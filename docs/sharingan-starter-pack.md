@@ -254,7 +254,7 @@ and check that your node is appearing and start synchronizing the blocks.
 **Welcome to Sharingan, you're in!** :rocket:
 
 For now, there are few transactions, and the storage for the 20,000+ blocks is
-less that 1GB. But this will vary in the future depending on the network
+less than 1GB. But this will vary in the future depending on the network
 activity.
 
 ## Interact with Starknet using JSON RPC
