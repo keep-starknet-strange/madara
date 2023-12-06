@@ -94,9 +94,11 @@ where
 
             match da_mode {
                 DaMode::Validity => {
-                    // TODO:
-                    // - run the StarknetOs for this block
-                    // - parse the PIE to `submit_pie` and zip/base64 internal
+                    // Submit the Starknet OS PIE
+                    // TODO: Validity Impl
+                    // run the Starknet OS with the Cairo VM
+                    // extract the PIE from the Cairo VM run
+                    // pass the PIE to `submit_pie` and zip/base64 internal
                     if let Ok(job_resp) = sharp::submit_pie("TODO") {
                         log::info!("Job Submitted: {}", job_resp.cairo_job_key);
                         // Store the cairo job key

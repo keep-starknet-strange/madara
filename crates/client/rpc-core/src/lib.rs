@@ -14,6 +14,7 @@ use serde_with::serde_as;
 
 pub mod utils;
 
+use mp_transactions::TransactionStatus;
 use starknet_core::serde::unsigned_field_element::UfeHex;
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
@@ -55,6 +56,10 @@ pub trait StarknetWriteRpcApi {
 /// Starknet rpc interface.
 #[rpc(server, namespace = "starknet")]
 pub trait StarknetReadRpcApi {
+    /// Get the Version of the StarkNet JSON-RPC Specification Being Used
+    #[method(name = "specVersion")]
+    fn spec_version(&self) -> RpcResult<String>;
+
     /// Get the most recent accepted block number
     #[method(name = "blockNumber")]
     fn block_number(&self) -> RpcResult<u64>;
@@ -66,6 +71,10 @@ pub trait StarknetReadRpcApi {
     /// Get the number of transactions in a block given a block id
     #[method(name = "getBlockTransactionCount")]
     fn get_block_transaction_count(&self, block_id: BlockId) -> RpcResult<u128>;
+
+    /// Gets the Transaction Status, Including Mempool Status and Execution Details
+    #[method(name = "getTransactionStatus")]
+    fn get_transaction_status(&self, transaction_hash: FieldElement) -> RpcResult<TransactionStatus>;
 
     /// Get the value of the storage at the given address and key, at the given block id
     #[method(name = "getStorageAt")]
@@ -123,10 +132,6 @@ pub trait StarknetReadRpcApi {
     /// Get the information about the result of executing the requested block
     #[method(name = "getStateUpdate")]
     fn get_state_update(&self, block_id: BlockId) -> RpcResult<StateUpdate>;
-
-    /// Returns the transactions in the transaction pool, recognized by this sequencer
-    #[method(name = "pendingTransactions")]
-    async fn pending_transactions(&self) -> RpcResult<Vec<Transaction>>;
 
     /// Returns all events matching the given filter
     #[method(name = "getEvents")]

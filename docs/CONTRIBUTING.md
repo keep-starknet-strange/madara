@@ -25,7 +25,7 @@ To set up a development environment, please follow these steps:
 ## Issues and feature requests
 
 You've found a bug in the source code, a mistake in the documentation or maybe
-you'd like a new feature?Take a look at
+you'd like a new feature? Take a look at
 [GitHub Discussions](https://github.com/keep-starknet-strange/madara/discussions)
 to see if it's already being discussed. You can help us by
 [submitting an issue on GitHub](https://github.com/keep-starknet-strange/madara/issues).

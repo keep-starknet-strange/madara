@@ -39,7 +39,7 @@ There are two ways you can build madara to quickly test it:
 
 Madara is being built on
 [Substrate](https://docs.substrate.io/learn/welcome-to-substrate/), which
-already proposes an architecture for a modular blockchain development.
+already proposes an architecture for modular blockchain development.
 
 To do it short, madara is considered as a `substrate node`, which means madara
 is being developed using the SDK proposed by substrate to build a node of a

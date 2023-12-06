@@ -575,7 +575,7 @@ pub mod pallet {
             Ok(())
         }
 
-        /// Since StarkNet v0.10.1 the deploy_account transaction replaces the deploy transaction
+        /// Since Starknet v0.10.1 the deploy_account transaction replaces the deploy transaction
         /// for deploying account contracts. To use it, you should first pre-fund your
         /// would-be account address so that you could pay the transaction fee (see here for more
         /// details) . You can then send the deploy_account transaction. See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#deploy_account_transaction`.
