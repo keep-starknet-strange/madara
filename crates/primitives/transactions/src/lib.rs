@@ -19,24 +19,22 @@ use blockifier::execution::contract_class::ContractClass;
 use blockifier::transaction::transaction_types::TransactionType;
 use derive_more::From;
 use starknet_api::transaction::Fee;
-use starknet_core::types::ExecutionResult;
+use starknet_core::types::{TransactionExecutionStatus, TransactionFinalityStatus};
 use starknet_ff::FieldElement;
 
 const SIMULATE_TX_VERSION_OFFSET: FieldElement =
-FieldElement::from_mont([18446744073700081665, 17407, 18446744073709551584, 576460752142434320]);
+    FieldElement::from_mont([18446744073700081665, 17407, 18446744073709551584, 576460752142434320]);
 
 /// Functions related to transaction conversions
 // pub mod utils;
 use mp_felt::Felt252Wrapper;
 
-// TODO(antiyro): remove this when released: https://github.com/xJonathanLEI/starknet-rs/blob/7b23df210f9d11fee4784c2546bff59491e2d3a1/starknet-core/src/types/mod.rs#L167
+// TODO(antiyro): remove this when released: https://github.com/xJonathanLEI/starknet-rs/blame/fec81d126c58ff3dff6cbfd4b9e714913298e54e/starknet-core/src/types/serde_impls.rs#L175
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum TransactionStatus {
-    Received,
-    Rejected,
-    AcceptedOnL2(ExecutionResult),
-    AcceptedOnL1(ExecutionResult),
+pub struct TransactionStatus {
+    pub finality_status: TransactionFinalityStatus,
+    pub execution_status: TransactionExecutionStatus,
 }
 
 /// Wrapper type for transaction execution error.

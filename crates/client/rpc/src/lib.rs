@@ -46,7 +46,7 @@ use starknet_core::types::{
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, ExecutionResult, FeeEstimate, FieldElement,
     FunctionCall, InvokeTransactionReceipt, InvokeTransactionResult, L1HandlerTransactionReceipt,
     MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateDiff, StateUpdate,
-    SyncStatus, SyncStatusType, Transaction, TransactionFinalityStatus, TransactionReceipt
+    SyncStatus, SyncStatusType, Transaction, TransactionFinalityStatus, TransactionReceipt, TransactionExecutionStatus
 };
 
 use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
@@ -58,6 +58,7 @@ pub struct Starknet<A: ChainApi, B: BlockT, BE, C, P, H> {
     backend: Arc<mc_db::Backend<B>>,
     overrides: Arc<OverrideHandle<B>>,
     pool: Arc<P>,
+    #[allow(dead_code)]
     graph: Arc<Pool<A>>,
     sync_service: Arc<SyncingService<B>>,
     starting_block: <<B>::Header as HeaderT>::Number,
@@ -440,7 +441,7 @@ where
             .map(|tx| to_starknet_core_tx(tx.clone(), transaction_hash))
             .ok_or(StarknetRpcApiError::TxnHashNotFound)?;
     
-        let execution_result: ExecutionResult = self
+        let execution_result: TransactionExecutionStatus = self
             .client
             .runtime_api()
             .get_tx_execution_outcome(substrate_block_hash, Felt252Wrapper(transaction_hash).into())
@@ -451,13 +452,14 @@ where
                 );
                 StarknetRpcApiError::InternalServerError
             })?
-            .map_or(ExecutionResult::Succeeded, |message| {
-                ExecutionResult::Reverted {
-                    reason: String::from_utf8(message).unwrap_or_else(|_| "Invalid UTF-8 sequence".to_string()),
-                }
+            .map_or(TransactionExecutionStatus::Succeeded, |message| {
+                TransactionExecutionStatus::Reverted
             });
     
-        Ok(TransactionStatus::AcceptedOnL2(execution_result))
+        Ok(TransactionStatus {
+            finality_status: TransactionFinalityStatus::AcceptedOnL2,
+            execution_status: execution_result
+        })
     }    
 
     /// Get the value of the storage at the given address and key.

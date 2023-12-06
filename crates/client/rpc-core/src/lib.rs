@@ -14,16 +14,15 @@ use serde_with::serde_as;
 
 pub mod utils;
 
+use mp_transactions::TransactionStatus;
 use starknet_core::serde::unsigned_field_element::UfeHex;
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
     BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall,
     InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt,
-    StateUpdate, SyncStatusType, Transaction
+    StateUpdate, SyncStatusType, Transaction,
 };
-
-use mp_transactions::TransactionStatus;
 
 #[serde_as]
 #[derive(Serialize, Deserialize)]
