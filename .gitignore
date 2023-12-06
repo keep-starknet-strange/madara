@@ -38,3 +38,10 @@ cairo_venv
 
 # pyenv
 .python-version
+<<<<<<< HEAD
+=======
+
+# solidity cache
+starknet-e2e-test/contracts/cache
+starknet-e2e-test/contracts/build
+>>>>>>> fd971166 (feat: l2->l1 messaging)

@@ -22,6 +22,9 @@ use mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker, DataAvaila
 use mc_genesis_data_provider::OnDiskGenesisConfig;
 use mc_l1_messages::config::L1MessagesWorkerConfig;
 use mc_mapping_sync::MappingSyncWorker;
+use mc_settlement::errors::RetryOnRecoverableErrors;
+use mc_settlement::ethereum::StarknetContractClient;
+use mc_settlement::{SettlementLayer, SettlementProvider, SettlementWorker};
 use mc_storage::overrides_handle;
 use mp_sequencer_address::{
     InherentDataProvider as SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
@@ -271,6 +274,7 @@ pub fn new_full(
     da_layer: Option<(DaLayer, PathBuf)>,
     cache_more_things: bool,
     l1_messages_worker_config: Option<L1MessagesWorkerConfig>,
+    settlement_config: Option<(SettlementLayer, PathBuf)>,
 ) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_default() { build_aura_grandpa_import_queue } else { build_manual_seal_import_queue };
@@ -461,6 +465,25 @@ pub fn new_full(
             ),
         );
     };
+
+    // initialize settlement worker
+    if let Some((layer_kind, config_path)) = settlement_config {
+        let settlement_provider: Box<dyn SettlementProvider<_>> = match layer_kind {
+            SettlementLayer::Ethereum => {
+                let ethereum_conf = EthereumConfig::try_from(&config_path)?;
+                Box::new(
+                    StarknetContractClient::try_from(ethereum_conf).map_err(|e| ServiceError::Other(e.to_string()))?,
+                )
+            }
+        };
+        let retry_strategy = Box::new(RetryOnRecoverableErrors { delay: Duration::from_millis(100) });
+
+        task_manager.spawn_essential_handle().spawn(
+            "settlement-worker-sync-state",
+            Some("madara"),
+            SettlementWorker::<_, StarknetHasher, _>::sync_state(client.clone(), settlement_provider, retry_strategy),
+        );
+    }
 
     if role.is_authority() {
         // manual-seal authorship

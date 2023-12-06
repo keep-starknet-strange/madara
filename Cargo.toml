@@ -19,16 +19,20 @@ members = [
   "crates/primitives/commitments",
   "crates/primitives/chain-id",
   "crates/client/genesis-data-provider",
+  "crates/primitives/program-hash",
   "crates/client/db",
   "crates/client/rpc-core",
   "crates/client/rpc",
   "crates/client/mapping-sync",
   "crates/client/storage",
   "crates/client/commitment-state-diff",
+  "crates/client/settlement",
   "starknet-rpc-test",
   "da-test",
+  "starknet-e2e-test",
+  "madara-test-runner",
 ]
-# All previous except for `starknet-rpc-test` and `da-test`
+# All previous except for `starknet-rpc-test` and `starknet-e2e-test`
 # We don't want `cargo test` to trigger its tests
 default-members = [
   "crates/node",
@@ -48,12 +52,14 @@ default-members = [
   "crates/primitives/commitments",
   "crates/primitives/chain-id",
   "crates/client/genesis-data-provider",
+  "crates/primitives/program-hash",
   "crates/client/db",
   "crates/client/rpc-core",
   "crates/client/rpc",
   "crates/client/mapping-sync",
   "crates/client/storage",
   "crates/client/commitment-state-diff",
+  "crates/client/settlement",
 ]
 
 [profile.release]
@@ -171,6 +177,7 @@ mp-transactions = { path = "crates/primitives/transactions", default-features = 
 mp-commitments = { path = "crates/primitives/commitments", default-features = false }
 mp-chain-id = { path = "crates/primitives/chain-id", default-features = false }
 mp-simulations = { path = "crates/primitives/simulations", default-features = false }
+mp-program-hash = { path = "crates/primitives/program-hash", default-features = false }
 
 # Madara client
 mc-genesis-data-provider = { path = "crates/client/genesis-data-provider" }
@@ -182,9 +189,13 @@ mc-rpc-core = { path = "crates/client/rpc-core" }
 mc-data-availability = { path = "crates/client/data-availability" }
 mc-commitment-state-diff = { path = "crates/client/commitment-state-diff" }
 mc-l1-messages = { path = "crates/client/l1-messages" }
+mc-settlement = { path = "crates/client/settlement" }
 
 # Madara runtime
 madara-runtime = { path = "crates/runtime" }
+
+# Madara test runner
+madara-test-runner = { path = "madara-test-runner" }
 
 # Starknet dependencies
 # Cairo Virtual Machine

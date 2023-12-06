@@ -16,7 +16,7 @@ use mc_commitment_state_diff::BlockDAData;
 use mp_hashers::HasherT;
 use pallet_starknet_runtime_api::StarknetRuntimeApi;
 use sc_client_api::client::BlockchainEvents;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::{Block as BlockT, Header};
@@ -25,7 +25,7 @@ use utils::state_diff_to_calldata;
 pub struct DataAvailabilityWorker<B, C, H>(PhantomData<(B, C, H)>);
 pub struct DataAvailabilityWorkerProving<B>(PhantomData<B>);
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
 pub enum DaLayer {
     Celestia,
@@ -35,8 +35,8 @@ pub enum DaLayer {
 
 /// Data availability modes in which Madara can be initialized.
 ///
-/// Default only mode currently implemented is Sovereign.
-#[derive(Debug, Copy, Clone, PartialEq, Deserialize, Default)]
+/// Default only mode currently implemented is Sovereing.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum DaMode {
     /// Full Validity Rollup
     ///

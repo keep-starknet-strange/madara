@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::path::PathBuf;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::DaMode;
 
@@ -13,7 +13,7 @@ pub const DEFAULT_SEQUENCER_KEY: &str = "ac0974bec39a17e36ba4a6b4d238ff944bacb47
 pub const DEFAULT_STARKNET_CORE_CONTRACTS: &str = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 pub const DEFAULT_CHAIN_ID: u64 = 31337;
 
-#[derive(Clone, PartialEq, Deserialize, Debug)]
+#[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub struct EthereumConfig {
     #[serde(default = "default_http")]
     pub http_provider: String,
@@ -25,6 +25,8 @@ pub struct EthereumConfig {
     pub chain_id: u64,
     #[serde(default)]
     pub mode: DaMode,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub poll_interval_ms: Option<u64>,
 }
 
 impl TryFrom<&PathBuf> for EthereumConfig {
@@ -60,6 +62,7 @@ impl Default for EthereumConfig {
             core_contracts: default_core_contracts(),
             sequencer_key: default_sequencer_key(),
             chain_id: default_chain_id(),
+            poll_interval_ms: None,
         }
     }
 }

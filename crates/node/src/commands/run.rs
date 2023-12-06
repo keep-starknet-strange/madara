@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use madara_runtime::SealingMode;
 use mc_data_availability::DaLayer;
 use mc_l1_messages::config::{L1MessagesWorkerConfig, L1MessagesWorkerConfigError};
+use mc_settlement::SettlementLayer;
 use sc_cli::{Result, RpcMethods, RunCmd, SubstrateCli};
 use sc_service::BasePath;
 use serde::{Deserialize, Serialize};
@@ -80,6 +81,10 @@ pub struct ExtendedRunCmd {
     #[clap(long, requires = "da_layer")]
     pub da_conf: Option<String>,
 
+    /// Choose a supported settlement layer
+    #[clap(long, ignore_case = true)]
+    pub settlement: Option<SettlementLayer>,
+
     /// When enabled, more information about the blocks and their transaction is cached and stored
     /// in the database.
     ///
@@ -108,6 +113,7 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
         override_dev_environment(&mut cli.run);
     }
     let runner = cli.create_runner(&cli.run.base)?;
+    let data_path = &runner.config().data_path;
 
     let da_config: Option<(DaLayer, PathBuf)> = match cli.run.da_layer {
         Some(da_layer) => {
@@ -127,11 +133,25 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
 
     let l1_messages_worker_config = extract_l1_messages_worker_config(&cli.run.l1_messages_worker)
         .map_err(|e| sc_cli::Error::Input(e.to_string()))?;
+    let settlement_config: Option<(SettlementLayer, PathBuf)> = match cli.run.settlement {
+        Some(SettlementLayer::Ethereum) => {
+            let config_path = data_path.join("eth-config.json");
+            if !config_path.exists() {
+                return Err(sc_cli::Error::Input(format!("Ethereum config not found at {}", config_path.display())));
+            }
+            Some((SettlementLayer::Ethereum, config_path))
+        }
+        None => {
+            log::info!("Madara initialized w/o settlement layer");
+            None
+        }
+    };
 
     runner.run_node_until_exit(|config| async move {
         let sealing = cli.run.sealing.map(Into::into).unwrap_or_default();
         let cache = cli.run.cache;
-        service::new_full(config, sealing, da_config, cache, l1_messages_worker_config).map_err(sc_cli::Error::Service)
+        service::new_full(config, sealing, da_config, cache, l1_messages_worker_config, settlement_config)
+            .map_err(sc_cli::Error::Service)
     })
 }
 
