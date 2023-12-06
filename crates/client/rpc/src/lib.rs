@@ -436,21 +436,22 @@ where
 
         let chain_id = self.chain_id()?.0.into();
 
-        let find_tx = if let Some(tx_hashes) = self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into()) {
-            tx_hashes
-                .into_iter()
-                .zip(starknet_block.transactions())
-                .find(|(tx_hash, _)| *tx_hash == Felt252Wrapper(transaction_hash).into())
-                .map(|(_, tx)| to_starknet_core_tx(tx.clone(), transaction_hash))
-        } else {
-            starknet_block
-                .transactions()
-                .iter()
-                .find(|tx| tx.compute_hash::<H>(chain_id, false).0 == transaction_hash)
-                .map(|tx| to_starknet_core_tx(tx.clone(), transaction_hash))
-        };
+        let starknet_tx =
+            if let Some(tx_hashes) = self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into()) {
+                tx_hashes
+                    .into_iter()
+                    .zip(starknet_block.transactions())
+                    .find(|(tx_hash, _)| *tx_hash == Felt252Wrapper(transaction_hash).into())
+                    .map(|(_, tx)| to_starknet_core_tx(tx.clone(), transaction_hash))
+            } else {
+                starknet_block
+                    .transactions()
+                    .iter()
+                    .find(|tx| tx.compute_hash::<H>(chain_id, false).0 == transaction_hash)
+                    .map(|tx| to_starknet_core_tx(tx.clone(), transaction_hash))
+            };
 
-        let execution_result = {
+        let execution_status = {
             let revert_error = self
                 .client
                 .runtime_api()
@@ -463,17 +464,14 @@ where
                     StarknetRpcApiError::InternalServerError
                 })?;
 
-            match revert_error {
-                None => ExecutionResult::Succeeded,
-                // This is safe because the message is a Vec<u8> build from a String
-                Some(message) => ExecutionResult::Reverted { reason: unsafe { String::from_utf8_unchecked(message) } },
+            if revert_error.is_none() {
+                TransactionExecutionStatus::Succeeded
+            } else {
+                TransactionExecutionStatus::Reverted
             }
         };
 
-        Ok(TransactionStatus {
-            finality_status: TransactionFinalityStatus::AcceptedOnL2,
-            execution_status: execution_result,
-        })
+        Ok(TransactionStatus { finality_status: TransactionFinalityStatus::AcceptedOnL2, execution_status })
     }
 
     /// Get the value of the storage at the given address and key.
@@ -959,10 +957,12 @@ where
 
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
-        let transaction = starknet_block.transactions().get(index as usize).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
+        let transaction =
+            starknet_block.transactions().get(index as usize).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
         let chain_id = self.chain_id()?;
 
-        let opt_cached_transaction_hashes = self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into());
+        let opt_cached_transaction_hashes =
+            self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into());
 
         let transaction_hash = if let Some(cached_tx_hashes) = opt_cached_transaction_hashes {
             cached_tx_hashes
@@ -1016,7 +1016,8 @@ where
         let chain_id = self.chain_id()?;
         let chain_id = Felt252Wrapper(chain_id.0);
 
-        let opt_cached_transaction_hashes = self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into());
+        let opt_cached_transaction_hashes =
+            self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into());
         let mut transactions = Vec::with_capacity(starknet_block.transactions().len());
         for (index, tx) in starknet_block.transactions().iter().enumerate() {
             let tx_hash = if let Some(cached_tx_hashes) = opt_cached_transaction_hashes.as_ref() {
@@ -1082,7 +1083,8 @@ where
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
         let old_root = if starknet_block.header().block_number > 0 {
-            let parent_block_hash = (TryInto::<FieldElement>::try_into(starknet_block.header().parent_block_hash)).unwrap();
+            let parent_block_hash =
+                (TryInto::<FieldElement>::try_into(starknet_block.header().parent_block_hash)).unwrap();
             let substrate_parent_block_hash =
                 self.substrate_block_hash_from_starknet_block(BlockId::Hash(parent_block_hash)).map_err(|e| {
                     error!("'{e}'");
@@ -1227,19 +1229,20 @@ where
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
         let chain_id = self.chain_id()?.0.into();
 
-        let find_tx = if let Some(tx_hashes) = self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into()) {
-            tx_hashes
-                .into_iter()
-                .zip(starknet_block.transactions())
-                .find(|(tx_hash, _)| *tx_hash == Felt252Wrapper(transaction_hash).into())
-                .map(|(_, tx)| to_starknet_core_tx(tx.clone(), transaction_hash))
-        } else {
-            starknet_block
-                .transactions()
-                .iter()
-                .find(|tx| tx.compute_hash::<H>(chain_id, false).0 == transaction_hash)
-                .map(|tx| to_starknet_core_tx(tx.clone(), transaction_hash))
-        };
+        let find_tx =
+            if let Some(tx_hashes) = self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into()) {
+                tx_hashes
+                    .into_iter()
+                    .zip(starknet_block.transactions())
+                    .find(|(tx_hash, _)| *tx_hash == Felt252Wrapper(transaction_hash).into())
+                    .map(|(_, tx)| to_starknet_core_tx(tx.clone(), transaction_hash))
+            } else {
+                starknet_block
+                    .transactions()
+                    .iter()
+                    .find(|tx| tx.compute_hash::<H>(chain_id, false).0 == transaction_hash)
+                    .map(|tx| to_starknet_core_tx(tx.clone(), transaction_hash))
+            };
 
         find_tx.ok_or(StarknetRpcApiError::TxnHashNotFound.into())
     }
