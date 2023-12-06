@@ -2,7 +2,8 @@
 
 ## Next release
 
-- feat(rpc): Added starknet_getTransactionStatus and removed starknet_pendingTransactions
+- feat(rpc): Added starknet_getTransactionStatus and removed
+  starknet_pendingTransactions
 - feat(rpc): add starknet_specVersion rpc + added test for future support
 - docs: Added v0.6.0-rc5 documentation above the rpc method functions
 - dev(deps): bump starknet rs, use Eq for EmmitedEvents comparaison
