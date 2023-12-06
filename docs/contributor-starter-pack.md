@@ -54,7 +54,7 @@ journey:
 
 - _Collaboration and Communication_\
   Engage with the community, ask for guidance when needed, and seek feedback on your
-  contributions. Actively participate in GitHub discussions, issues or the chat channels.
+  contributions. Actively participate in GitHub discussions, issues or chat channels.
   Be respectful and constructive with other builders.
 
 - _Respect for Existing Contributors_\
