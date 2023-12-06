@@ -3,12 +3,14 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::task::Poll;
 
-use blockifier::state::cached_state::CommitmentStateDiff;
 use futures::channel::mpsc;
-use futures::{Stream, StreamExt};
+use futures::Stream;
 use indexmap::IndexMap;
 use mp_hashers::HasherT;
-use mp_storage::{SN_COMPILED_CLASS_HASH_PREFIX, SN_CONTRACT_CLASS_HASH_PREFIX, SN_NONCE_PREFIX, SN_STORAGE_PREFIX};
+use mp_storage::{
+    SN_COMPILED_CLASS_HASH_PREFIX, SN_CONTRACT_CLASS_HASH_PREFIX, SN_CONTRACT_CLASS_PREFIX, SN_NONCE_PREFIX,
+    SN_STORAGE_PREFIX,
+};
 use pallet_starknet_runtime_api::StarknetRuntimeApi;
 use sc_client_api::client::BlockchainEvents;
 use sc_client_api::{StorageEventStream, StorageNotification};
@@ -18,14 +20,14 @@ use sp_runtime::traits::{Block as BlockT, Header};
 use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce, PatriciaKey};
 use starknet_api::block::BlockHash;
 use starknet_api::hash::StarkFelt;
-use starknet_api::state::StorageKey as StarknetStorageKey;
+use starknet_api::state::{StorageKey as StarknetStorageKey, ThinStateDiff};
 use thiserror::Error;
 
 pub struct CommitmentStateDiffWorker<B: BlockT, C, H> {
     client: Arc<C>,
     storage_event_stream: StorageEventStream<B::Hash>,
-    tx: mpsc::Sender<(BlockHash, CommitmentStateDiff)>,
-    msg: Option<(BlockHash, CommitmentStateDiff)>,
+    tx: mpsc::Sender<(BlockHash, ThinStateDiff, usize)>,
+    msg: Option<(BlockHash, ThinStateDiff, usize)>,
     phantom: PhantomData<H>,
 }
 
@@ -33,7 +35,7 @@ impl<B: BlockT, C, H> CommitmentStateDiffWorker<B, C, H>
 where
     C: BlockchainEvents<B>,
 {
-    pub fn new(client: Arc<C>, tx: mpsc::Sender<(BlockHash, CommitmentStateDiff)>) -> Self {
+    pub fn new(client: Arc<C>, tx: mpsc::Sender<(BlockHash, ThinStateDiff, usize)>) -> Self {
         let storage_event_stream = client
             .storage_changes_notification_stream(None, None)
             .expect("the node storage changes notification stream should be up and running");
@@ -48,7 +50,7 @@ where
     C: HeaderBackend<B>,
     H: HasherT + Unpin,
 {
-    type Item = (BlockHash, CommitmentStateDiff);
+    type Item = ();
 
     // CommitmentStateDiffWorker is a state machine with two states
     // state 1: waiting for some StorageEvent to happen, `commitment_state_diff` field is `None`
@@ -124,7 +126,7 @@ enum BuildCommitmentStateDiffError {
 fn build_commitment_state_diff<B: BlockT, C, H>(
     client: Arc<C>,
     storage_notification: StorageNotification<B::Hash>,
-) -> Result<(BlockHash, CommitmentStateDiff), BuildCommitmentStateDiffError>
+) -> Result<(BlockHash, ThinStateDiff, usize), BuildCommitmentStateDiffError>
 where
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
@@ -138,11 +140,14 @@ where
         block.header().hash::<H>().into()
     };
 
-    let mut commitment_state_diff = CommitmentStateDiff {
-        address_to_class_hash: Default::default(),
-        address_to_nonce: Default::default(),
-        storage_updates: Default::default(),
-        class_hash_to_compiled_class_hash: Default::default(),
+    let mut num_addrs_accessed: usize = 0;
+    let mut commitment_state_diff = ThinStateDiff {
+        declared_classes: IndexMap::new(),
+        storage_diffs: IndexMap::new(),
+        nonces: IndexMap::new(),
+        deployed_contracts: IndexMap::new(),
+        deprecated_declared_classes: Vec::new(),
+        replaced_classes: IndexMap::new(),
     };
 
     for (_prefix, full_storage_key, change) in storage_notification.changes.iter() {
@@ -162,7 +167,7 @@ where
                 ContractAddress(PatriciaKey(StarkFelt(full_storage_key.0[32..].try_into().unwrap())));
             // `change` is safe to unwrap as `Nonces` storage is `ValueQuery`
             let nonce = Nonce(StarkFelt(change.unwrap().0.clone().try_into().unwrap()));
-            commitment_state_diff.address_to_nonce.insert(contract_address, nonce);
+            commitment_state_diff.nonces.insert(contract_address, nonce);
         } else if prefix == *SN_STORAGE_PREFIX {
             let contract_address =
                 ContractAddress(PatriciaKey(StarkFelt(full_storage_key.0[32..64].try_into().unwrap())));
@@ -170,7 +175,7 @@ where
             // `change` is safe to unwrap as `StorageView` storage is `ValueQuery`
             let value = StarkFelt(change.unwrap().0.clone().try_into().unwrap());
 
-            match commitment_state_diff.storage_updates.get_mut(&contract_address) {
+            match commitment_state_diff.storage_diffs.get_mut(&contract_address) {
                 Some(contract_storage) => {
                     contract_storage.insert(storage_key, value);
                 }
@@ -178,16 +183,36 @@ where
                     let mut contract_storage: IndexMap<_, _, _> = Default::default();
                     contract_storage.insert(storage_key, value);
 
-                    commitment_state_diff.storage_updates.insert(contract_address, contract_storage);
+                    commitment_state_diff.storage_diffs.insert(contract_address, contract_storage);
                 }
             }
+        } else if prefix == *SN_CONTRACT_CLASS_PREFIX {
+            let class_hash = ClassHash(StarkFelt(full_storage_key.0[32..].try_into().unwrap()));
+            // In the current state of starknet protocol, a contract class can not be erased, so we should
+            // never see `change` being `None`. But there have been an "erase contract class" mechanism live on
+            // the network during the Regenesis migration. Better safe than sorry.
+            let compiled_class_hash =
+                CompiledClassHash(change.map(|data| StarkFelt(data.0.clone().try_into().unwrap())).unwrap_or_default());
+
+            commitment_state_diff.declared_classes.insert(class_hash, compiled_class_hash);
         } else if prefix == *SN_CONTRACT_CLASS_HASH_PREFIX {
             let contract_address =
                 ContractAddress(PatriciaKey(StarkFelt(full_storage_key.0[32..].try_into().unwrap())));
             // `change` is safe to unwrap as `ContractClassHashes` storage is `ValueQuery`
             let class_hash = ClassHash(StarkFelt(change.unwrap().0.clone().try_into().unwrap()));
 
-            commitment_state_diff.address_to_class_hash.insert(contract_address, class_hash);
+            // check if contract already exists
+            let runtime_api = client.runtime_api();
+            let current_block_hash = client.info().best_hash;
+
+            let contract_exists = runtime_api.contract_class_by_class_hash(current_block_hash, class_hash).is_ok();
+
+            if contract_exists {
+                commitment_state_diff.replaced_classes.insert(contract_address, class_hash);
+            } else {
+                commitment_state_diff.deployed_contracts.insert(contract_address, class_hash);
+            }
+            num_addrs_accessed += 1;
         } else if prefix == *SN_COMPILED_CLASS_HASH_PREFIX {
             let class_hash = ClassHash(StarkFelt(full_storage_key.0[32..].try_into().unwrap()));
             // In the current state of starknet protocol, a compiled class hash can not be erased, so we should
@@ -196,15 +221,9 @@ where
             let compiled_class_hash =
                 CompiledClassHash(change.map(|data| StarkFelt(data.0.clone().try_into().unwrap())).unwrap_or_default());
 
-            commitment_state_diff.class_hash_to_compiled_class_hash.insert(class_hash, compiled_class_hash);
+            commitment_state_diff.declared_classes.insert(class_hash, compiled_class_hash);
         }
     }
 
-    Ok((starknet_block_hash, commitment_state_diff))
-}
-
-pub async fn log_commitment_state_diff(mut rx: mpsc::Receiver<(BlockHash, CommitmentStateDiff)>) {
-    while let Some((block_hash, csd)) = rx.next().await {
-        log::info!("received state diff for block {block_hash}: {csd:?}");
-    }
+    Ok((starknet_block_hash, commitment_state_diff, num_addrs_accessed))
 }

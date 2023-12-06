@@ -11,14 +11,14 @@ use futures::future::BoxFuture;
 use futures::prelude::*;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi, SealingMode, StarknetHasher};
-use mc_commitment_state_diff::{log_commitment_state_diff, CommitmentStateDiffWorker};
+use mc_commitment_state_diff::CommitmentStateDiffWorker;
 use mc_data_availability::avail::config::AvailConfig;
 use mc_data_availability::avail::AvailClient;
 use mc_data_availability::celestia::config::CelestiaConfig;
 use mc_data_availability::celestia::CelestiaClient;
 use mc_data_availability::ethereum::config::EthereumConfig;
 use mc_data_availability::ethereum::EthereumClient;
-use mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker};
+use mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker, DataAvailabilityWorkerProving};
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
 use mp_sequencer_address::{
@@ -416,12 +416,6 @@ pub fn new_full(
             .for_each(|()| future::ready(())),
     );
 
-    task_manager.spawn_essential_handle().spawn(
-        "commitment-state-logger",
-        Some("madara"),
-        log_commitment_state_diff(commitment_state_diff_rx),
-    );
-
     // initialize data availability worker
     if let Some((da_layer, da_path)) = da_layer {
         let da_client: Box<dyn DaClient + Send + Sync> = match da_layer {
@@ -442,7 +436,7 @@ pub fn new_full(
         task_manager.spawn_essential_handle().spawn(
             "da-worker-prove",
             Some("madara"),
-            DataAvailabilityWorker::prove_current_block(
+            DataAvailabilityWorkerProving::prove_current_block(
                 da_client.get_mode(),
                 commitment_state_diff_rx,
                 madara_backend.clone(),
@@ -451,7 +445,7 @@ pub fn new_full(
         task_manager.spawn_essential_handle().spawn(
             "da-worker-update",
             Some("madara"),
-            DataAvailabilityWorker::update_state(da_client, client.clone(), madara_backend),
+            DataAvailabilityWorker::<_, _, StarknetHasher>::update_state(da_client, client.clone(), madara_backend),
         );
     };
 

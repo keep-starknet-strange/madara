@@ -9,7 +9,6 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use async_trait::async_trait;
-use blockifier::state::cached_state::CommitmentStateDiff;
 use ethers::types::{I256, U256};
 use futures::channel::mpsc;
 use futures::StreamExt;
@@ -21,9 +20,11 @@ use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::{Block as BlockT, Header};
 use starknet_api::block::BlockHash;
+use starknet_api::state::ThinStateDiff;
 use utils::state_diff_to_calldata;
 
 pub struct DataAvailabilityWorker<B, C, H>(PhantomData<(B, C, H)>);
+pub struct DataAvailabilityWorkerProving<B>(PhantomData<B>);
 
 #[derive(Debug, Copy, Clone, PartialEq, clap::ValueEnum)]
 pub enum DaLayer {
@@ -72,24 +73,21 @@ pub trait DaClient: Send + Sync {
     async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()>;
 }
 
-impl<B, C, H> DataAvailabilityWorker<B, C, H>
+impl<B> DataAvailabilityWorkerProving<B>
 where
     B: BlockT,
-    C: ProvideRuntimeApi<B>,
-    C::Api: StarknetRuntimeApi<B>,
-    C: HeaderBackend<B> + 'static,
-    C: BlockchainEvents<B> + 'static,
 {
     pub async fn prove_current_block(
         da_mode: DaMode,
-        mut state_diffs_rx: mpsc::Receiver<(BlockHash, CommitmentStateDiff)>,
+        mut state_diffs_rx: mpsc::Receiver<(BlockHash, ThinStateDiff, usize)>,
         madara_backend: Arc<mc_db::Backend<B>>,
     ) {
-        while let Some((block_hash, csd)) = state_diffs_rx.next().await {
+        while let Some((block_hash, csd, num_addr_accessed)) = state_diffs_rx.next().await {
+            log::info!("received state diff for block {block_hash}: {csd:?}. {num_addr_accessed} addresses accessed.");
+
             // store the da encoded calldata for the state update worker
-            if let Err(db_err) = madara_backend
-                .da()
-                .store_state_diff(&block_hash, state_diff_to_calldata(csd, csd.address_to_class_hash.len()))
+            if let Err(db_err) =
+                madara_backend.da().store_state_diff(&block_hash, state_diff_to_calldata(csd, num_addr_accessed))
             {
                 log::error!("db err: {db_err}");
             };
