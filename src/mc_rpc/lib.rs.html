@@ -1487,6 +1487,46 @@
 <a href="#1487" id="1487">1487</a>
 <a href="#1488" id="1488">1488</a>
 <a href="#1489" id="1489">1489</a>
+<a href="#1490" id="1490">1490</a>
+<a href="#1491" id="1491">1491</a>
+<a href="#1492" id="1492">1492</a>
+<a href="#1493" id="1493">1493</a>
+<a href="#1494" id="1494">1494</a>
+<a href="#1495" id="1495">1495</a>
+<a href="#1496" id="1496">1496</a>
+<a href="#1497" id="1497">1497</a>
+<a href="#1498" id="1498">1498</a>
+<a href="#1499" id="1499">1499</a>
+<a href="#1500" id="1500">1500</a>
+<a href="#1501" id="1501">1501</a>
+<a href="#1502" id="1502">1502</a>
+<a href="#1503" id="1503">1503</a>
+<a href="#1504" id="1504">1504</a>
+<a href="#1505" id="1505">1505</a>
+<a href="#1506" id="1506">1506</a>
+<a href="#1507" id="1507">1507</a>
+<a href="#1508" id="1508">1508</a>
+<a href="#1509" id="1509">1509</a>
+<a href="#1510" id="1510">1510</a>
+<a href="#1511" id="1511">1511</a>
+<a href="#1512" id="1512">1512</a>
+<a href="#1513" id="1513">1513</a>
+<a href="#1514" id="1514">1514</a>
+<a href="#1515" id="1515">1515</a>
+<a href="#1516" id="1516">1516</a>
+<a href="#1517" id="1517">1517</a>
+<a href="#1518" id="1518">1518</a>
+<a href="#1519" id="1519">1519</a>
+<a href="#1520" id="1520">1520</a>
+<a href="#1521" id="1521">1521</a>
+<a href="#1522" id="1522">1522</a>
+<a href="#1523" id="1523">1523</a>
+<a href="#1524" id="1524">1524</a>
+<a href="#1525" id="1525">1525</a>
+<a href="#1526" id="1526">1526</a>
+<a href="#1527" id="1527">1527</a>
+<a href="#1528" id="1528">1528</a>
+<a href="#1529" id="1529">1529</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1512,14 +1552,14 @@
 <span class="kw">use </span>mp_hashers::HasherT;
 <span class="kw">use </span>mp_transactions::compute_hash::ComputeTransactionHash;
 <span class="kw">use </span>mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
-<span class="kw">use </span>mp_transactions::UserTransaction;
+<span class="kw">use </span>mp_transactions::{TransactionStatus, UserTransaction};
 <span class="kw">use </span>pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>sc_client_api::BlockBackend;
 <span class="kw">use </span>sc_network_sync::SyncingService;
 <span class="kw">use </span>sc_transaction_pool::{ChainApi, Pool};
 <span class="kw">use </span>sc_transaction_pool_api::error::{Error <span class="kw">as </span>PoolError, IntoPoolError};
-<span class="kw">use </span>sc_transaction_pool_api::{InPoolTransaction, TransactionPool, TransactionSource};
+<span class="kw">use </span>sc_transaction_pool_api::{TransactionPool, TransactionSource};
 <span class="kw">use </span>sp_api::{ApiError, ProvideRuntimeApi};
 <span class="kw">use </span>sp_arithmetic::traits::UniqueSaturatedInto;
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
@@ -1535,7 +1575,7 @@
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, ExecutionResult, FeeEstimate, FieldElement,
     FunctionCall, InvokeTransactionReceipt, InvokeTransactionResult, L1HandlerTransactionReceipt,
     MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateDiff, StateUpdate,
-    SyncStatus, SyncStatusType, Transaction, TransactionFinalityStatus, TransactionReceipt,
+    SyncStatus, SyncStatusType, Transaction, TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
 };
 
 <span class="kw">use </span><span class="kw">crate</span>::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
@@ -1547,7 +1587,8 @@
     backend: Arc&lt;mc_db::Backend&lt;B&gt;&gt;,
     overrides: Arc&lt;OverrideHandle&lt;B&gt;&gt;,
     pool: Arc&lt;P&gt;,
-    graph: Arc&lt;Pool&lt;A&gt;&gt;,
+    <span class="attr">#[allow(dead_code)]
+    </span>graph: Arc&lt;Pool&lt;A&gt;&gt;,
     sync_service: Arc&lt;SyncingService&lt;B&gt;&gt;,
     starting_block: &lt;&lt;B&gt;::Header <span class="kw">as </span>HeaderT&gt;::Number,
     _marker: PhantomData&lt;(B, BE, H)&gt;,
@@ -1608,9 +1649,9 @@
     <span class="kw">pub fn </span>current_block_hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;H256, ApiError&gt; {
         <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.client.info().best_hash;
 
-        <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        <span class="kw">let </span>starknet_block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
-        <span class="prelude-val">Ok</span>(block.header().hash::&lt;H&gt;().into())
+        <span class="prelude-val">Ok</span>(starknet_block.header().hash::&lt;H&gt;().into())
     }
 
     <span class="doccomment">/// Returns the substrate block hash corresponding to the given Starknet block id
@@ -1648,10 +1689,10 @@
 
         <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
+        <span class="kw">let </span>starknet_block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
             .ok_or(<span class="string">&quot;Failed to retrieve the substrate block number&quot;</span>.to_string())<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(block.header().block_number)
+        <span class="prelude-val">Ok</span>(starknet_block.header().block_number)
     }
 
     <span class="doccomment">/// Returns a list of all transaction hashes in the given block.
@@ -1884,9 +1925,81 @@
             StarknetRpcApiError::BlockNotFound
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        <span class="kw">let </span>starknet_block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
-        <span class="prelude-val">Ok</span>(block.header().transaction_count)
+        <span class="prelude-val">Ok</span>(starknet_block.header().transaction_count)
+    }
+
+    <span class="doccomment">/// Gets the Transaction Status, Including Mempool Status and Execution Details
+    ///
+    /// This method retrieves the status of a specified transaction. It provides information on
+    /// whether the transaction is still in the mempool, has been executed, or dropped from the
+    /// mempool. The status includes both finality status and execution status of the
+    /// transaction.
+    ///
+    /// ### Arguments
+    ///
+    /// * `transaction_hash` - The hash of the transaction for which the status is requested.
+    ///
+    /// ### Returns
+    ///
+    /// * `transaction_status` - An object containing the transaction status details:
+    ///   - `finality_status`: The finality status of the transaction, indicating whether it is
+    ///     confirmed, pending, or rejected.
+    ///   - `execution_status`: The execution status of the transaction, providing details on the
+    ///     execution outcome if the transaction has been processed.
+    </span><span class="kw">fn </span>get_transaction_status(<span class="kw-2">&amp;</span><span class="self">self</span>, transaction_hash: FieldElement) -&gt; RpcResult&lt;TransactionStatus&gt; {
+        <span class="kw">let </span>substrate_block_hash = <span class="self">self
+            </span>.backend
+            .mapping()
+            .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
+            .map_err(|e| {
+                <span class="macro">error!</span>(<span class="string">&quot;Failed to get transaction&#39;s substrate block hash from mapping_db: {e}&quot;</span>);
+                StarknetRpcApiError::TxnHashNotFound
+            })<span class="question-mark">?
+            </span>.ok_or(StarknetRpcApiError::TxnHashNotFound)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>starknet_block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
+            .ok_or(StarknetRpcApiError::BlockNotFound)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>chain_id = <span class="self">self</span>.chain_id()<span class="question-mark">?</span>.<span class="number">0</span>.into();
+
+        <span class="kw">let </span>starknet_tx =
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(tx_hashes) = <span class="self">self</span>.get_cached_transaction_hashes(starknet_block.header().hash::&lt;H&gt;().into()) {
+                tx_hashes
+                    .into_iter()
+                    .zip(starknet_block.transactions())
+                    .find(|(tx_hash, <span class="kw">_</span>)| <span class="kw-2">*</span>tx_hash == Felt252Wrapper(transaction_hash).into())
+                    .map(|(<span class="kw">_</span>, tx)| to_starknet_core_tx(tx.clone(), transaction_hash))
+            } <span class="kw">else </span>{
+                starknet_block
+                    .transactions()
+                    .iter()
+                    .find(|tx| tx.compute_hash::&lt;H&gt;(chain_id, <span class="bool-val">false</span>).<span class="number">0 </span>== transaction_hash)
+                    .map(|tx| to_starknet_core_tx(tx.clone(), transaction_hash))
+            };
+
+        <span class="kw">let </span>execution_status = {
+            <span class="kw">let </span>revert_error = <span class="self">self
+                </span>.client
+                .runtime_api()
+                .get_tx_execution_outcome(substrate_block_hash, Felt252Wrapper(transaction_hash).into())
+                .map_err(|e| {
+                    <span class="macro">error!</span>(
+                        <span class="string">&quot;Failed to get transaction execution outcome. Substrate block hash: {substrate_block_hash}, \
+                         transaction hash: {transaction_hash}, error: {e}&quot;
+                    </span>);
+                    StarknetRpcApiError::InternalServerError
+                })<span class="question-mark">?</span>;
+
+            <span class="kw">if </span>revert_error.is_none() {
+                TransactionExecutionStatus::Succeeded
+            } <span class="kw">else </span>{
+                TransactionExecutionStatus::Reverted
+            }
+        };
+
+        <span class="prelude-val">Ok</span>(TransactionStatus { finality_status: TransactionFinalityStatus::AcceptedOnL2, execution_status })
     }
 
     <span class="doccomment">/// Get the value of the storage at the given address and key.
@@ -2184,9 +2297,9 @@
             StarknetRpcApiError::BlockNotFound
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        <span class="kw">let </span>starknet_block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
         <span class="kw">let </span>chain_id = <span class="self">self</span>.chain_id()<span class="question-mark">?</span>;
-        <span class="kw">let </span>block_hash = block.header().hash::&lt;H&gt;();
+        <span class="kw">let </span>block_hash = starknet_block.header().hash::&lt;H&gt;();
 
         <span class="kw">let </span>transaction_hashes = <span class="kw">if let </span><span class="prelude-val">Some</span>(tx_hashes) = <span class="self">self</span>.get_cached_transaction_hashes(block_hash.into()) {
             <span class="kw">let </span><span class="kw-2">mut </span>v = Vec::with_capacity(tx_hashes.len());
@@ -2200,20 +2313,20 @@
             }
             v
         } <span class="kw">else </span>{
-            block.transactions_hashes::&lt;H&gt;(chain_id.<span class="number">0</span>.into()).map(FieldElement::from).collect()
+            starknet_block.transactions_hashes::&lt;H&gt;(chain_id.<span class="number">0</span>.into()).map(FieldElement::from).collect()
         };
 
-        <span class="kw">let </span>parent_blockhash = block.header().parent_block_hash;
+        <span class="kw">let </span>parent_blockhash = starknet_block.header().parent_block_hash;
         <span class="kw">let </span>block_with_tx_hashes = BlockWithTxHashes {
             transactions: transaction_hashes,
             <span class="comment">// TODO: Status hardcoded, get status from block
             </span>status: BlockStatus::AcceptedOnL2,
             block_hash: block_hash.into(),
             parent_hash: parent_blockhash.into(),
-            block_number: block.header().block_number,
-            new_root: block.header().global_state_root.into(),
-            timestamp: block.header().block_timestamp,
-            sequencer_address: Felt252Wrapper::from(block.header().sequencer_address).into(),
+            block_number: starknet_block.header().block_number,
+            new_root: starknet_block.header().global_state_root.into(),
+            timestamp: starknet_block.header().block_timestamp,
+            sequencer_address: Felt252Wrapper::from(starknet_block.header().sequencer_address).into(),
         };
 
         <span class="prelude-val">Ok</span>(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
@@ -2370,12 +2483,14 @@
             StarknetRpcApiError::BlockNotFound
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        <span class="kw">let </span>starknet_block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
-        <span class="kw">let </span>transaction = block.transactions().get(index <span class="kw">as </span>usize).ok_or(StarknetRpcApiError::InvalidTxnIndex)<span class="question-mark">?</span>;
+        <span class="kw">let </span>transaction =
+            starknet_block.transactions().get(index <span class="kw">as </span>usize).ok_or(StarknetRpcApiError::InvalidTxnIndex)<span class="question-mark">?</span>;
         <span class="kw">let </span>chain_id = <span class="self">self</span>.chain_id()<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>opt_cached_transaction_hashes = <span class="self">self</span>.get_cached_transaction_hashes(block.header().hash::&lt;H&gt;().into());
+        <span class="kw">let </span>opt_cached_transaction_hashes =
+            <span class="self">self</span>.get_cached_transaction_hashes(starknet_block.header().hash::&lt;H&gt;().into());
 
         <span class="kw">let </span>transaction_hash = <span class="kw">if let </span><span class="prelude-val">Some</span>(cached_tx_hashes) = opt_cached_transaction_hashes {
             cached_tx_hashes
@@ -2423,15 +2538,16 @@
             StarknetRpcApiError::BlockNotFound
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
-        <span class="kw">let </span>block_hash = block.header().hash::&lt;H&gt;();
+        <span class="kw">let </span>starknet_block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        <span class="kw">let </span>block_hash = starknet_block.header().hash::&lt;H&gt;();
 
         <span class="kw">let </span>chain_id = <span class="self">self</span>.chain_id()<span class="question-mark">?</span>;
         <span class="kw">let </span>chain_id = Felt252Wrapper(chain_id.<span class="number">0</span>);
 
-        <span class="kw">let </span>opt_cached_transaction_hashes = <span class="self">self</span>.get_cached_transaction_hashes(block.header().hash::&lt;H&gt;().into());
-        <span class="kw">let </span><span class="kw-2">mut </span>transactions = Vec::with_capacity(block.transactions().len());
-        <span class="kw">for </span>(index, tx) <span class="kw">in </span>block.transactions().iter().enumerate() {
+        <span class="kw">let </span>opt_cached_transaction_hashes =
+            <span class="self">self</span>.get_cached_transaction_hashes(starknet_block.header().hash::&lt;H&gt;().into());
+        <span class="kw">let </span><span class="kw-2">mut </span>transactions = Vec::with_capacity(starknet_block.transactions().len());
+        <span class="kw">for </span>(index, tx) <span class="kw">in </span>starknet_block.transactions().iter().enumerate() {
             <span class="kw">let </span>tx_hash = <span class="kw">if let </span><span class="prelude-val">Some</span>(cached_tx_hashes) = opt_cached_transaction_hashes.as_ref() {
                 cached_tx_hashes
                     .get(index)
@@ -2457,11 +2573,11 @@
             <span class="comment">// TODO: Get status from block
             </span>status: BlockStatus::AcceptedOnL2,
             block_hash: block_hash.into(),
-            parent_hash: block.header().parent_block_hash.into(),
-            block_number: block.header().block_number,
-            new_root: block.header().global_state_root.into(),
-            timestamp: block.header().block_timestamp,
-            sequencer_address: Felt252Wrapper::from(block.header().sequencer_address).into(),
+            parent_hash: starknet_block.header().parent_block_hash.into(),
+            block_number: starknet_block.header().block_number,
+            new_root: starknet_block.header().global_state_root.into(),
+            timestamp: starknet_block.header().block_timestamp,
+            sequencer_address: Felt252Wrapper::from(starknet_block.header().sequencer_address).into(),
             transactions,
         };
 
@@ -2492,10 +2608,11 @@
             StarknetRpcApiError::BlockNotFound
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        <span class="kw">let </span>starknet_block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
-        <span class="kw">let </span>old_root = <span class="kw">if </span>block.header().block_number &gt; <span class="number">0 </span>{
-            <span class="kw">let </span>parent_block_hash = (TryInto::&lt;FieldElement&gt;::try_into(block.header().parent_block_hash)).unwrap();
+        <span class="kw">let </span>old_root = <span class="kw">if </span>starknet_block.header().block_number &gt; <span class="number">0 </span>{
+            <span class="kw">let </span>parent_block_hash =
+                (TryInto::&lt;FieldElement&gt;::try_into(starknet_block.header().parent_block_hash)).unwrap();
             <span class="kw">let </span>substrate_parent_block_hash =
                 <span class="self">self</span>.substrate_block_hash_from_starknet_block(BlockId::Hash(parent_block_hash)).map_err(|e| {
                     <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
@@ -2510,8 +2627,8 @@
         };
 
         <span class="prelude-val">Ok</span>(StateUpdate {
-            block_hash: block.header().hash::&lt;H&gt;().into(),
-            new_root: block.header().global_state_root.into(),
+            block_hash: starknet_block.header().hash::&lt;H&gt;().into(),
+            new_root: starknet_block.header().global_state_root.into(),
             old_root,
             state_diff: StateDiff {
                 storage_diffs: Vec::new(),
@@ -2522,44 +2639,6 @@
                 nonces: Vec::new(),
             },
         })
-    }
-
-    <span class="doccomment">/// TODO: Transaction Status API: Added starknet_getTransactionStatus and removed
-    /// starknet_pendingTransactions.
-    </span><span class="kw">async fn </span>pending_transactions(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;Vec&lt;Transaction&gt;&gt; {
-        <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.client.info().best_hash;
-
-        <span class="kw">let </span><span class="kw-2">mut </span>transactions = <span class="macro">vec!</span>[];
-
-        <span class="kw">let </span><span class="kw-2">mut </span>transactions_ready: Vec&lt;&lt;B <span class="kw">as </span>BlockT&gt;::Extrinsic&gt; =
-            <span class="self">self</span>.graph.validated_pool().ready().map(|tx| tx.data().clone()).collect();
-
-        <span class="kw">let </span><span class="kw-2">mut </span>transactions_future: Vec&lt;&lt;B <span class="kw">as </span>BlockT&gt;::Extrinsic&gt; =
-            <span class="self">self</span>.graph.validated_pool().futures().into_iter().map(|(_hash, extrinsic)| extrinsic).collect();
-
-        transactions.append(<span class="kw-2">&amp;mut </span>transactions_ready);
-        transactions.append(<span class="kw-2">&amp;mut </span>transactions_future);
-
-        <span class="kw">let </span>api = <span class="self">self</span>.client.runtime_api();
-
-        <span class="kw">let </span>transactions = api.extrinsic_filter(substrate_block_hash, transactions).map_err(|e| {
-            <span class="macro">error!</span>(<span class="string">&quot;Failed to filter extrinsics. Substrate block hash: {substrate_block_hash}, error: {e}&quot;</span>);
-            StarknetRpcApiError::InternalServerError
-        })<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>chain_id = <span class="self">self</span>.chain_id().map_err(|e| {
-            <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve chain ID. Error: {e}&quot;</span>);
-            StarknetRpcApiError::InternalServerError
-        })<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>transactions = transactions
-            .into_iter()
-            .map(|tx| {
-                <span class="kw">let </span>hash = tx.compute_hash::&lt;H&gt;(chain_id.<span class="number">0</span>.into(), <span class="bool-val">false</span>).into();
-                to_starknet_core_tx(tx, hash)
-            })
-            .collect();
-        <span class="prelude-val">Ok</span>(transactions)
     }
 
     <span class="doccomment">/// Returns all events matching the given filter.
@@ -2661,7 +2740,7 @@
     /// - `TOO_MANY_KEYS_IN_FILTER` if there are too many keys in the filter, which may exceed the
     ///   system&#39;s capacity.
     </span><span class="kw">fn </span>get_transaction_by_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, transaction_hash: FieldElement) -&gt; RpcResult&lt;Transaction&gt; {
-        <span class="kw">let </span>block_hash_from_db = <span class="self">self
+        <span class="kw">let </span>substrate_block_hash_from_db = <span class="self">self
             </span>.backend
             .mapping()
             .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
@@ -2670,27 +2749,28 @@
                 StarknetRpcApiError::TxnHashNotFound
             })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>substrate_block_hash = <span class="kw">match </span>block_hash_from_db {
+        <span class="kw">let </span>substrate_block_hash = <span class="kw">match </span>substrate_block_hash_from_db {
             <span class="prelude-val">Some</span>(block_hash) =&gt; block_hash,
             <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(StarknetRpcApiError::TxnHashNotFound.into()),
         };
 
-        <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        <span class="kw">let </span>starknet_block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
         <span class="kw">let </span>chain_id = <span class="self">self</span>.chain_id()<span class="question-mark">?</span>.<span class="number">0</span>.into();
 
-        <span class="kw">let </span>find_tx = <span class="kw">if let </span><span class="prelude-val">Some</span>(tx_hashes) = <span class="self">self</span>.get_cached_transaction_hashes(block.header().hash::&lt;H&gt;().into()) {
-            tx_hashes
-                .into_iter()
-                .zip(block.transactions())
-                .find(|(tx_hash, <span class="kw">_</span>)| <span class="kw-2">*</span>tx_hash == Felt252Wrapper(transaction_hash).into())
-                .map(|(<span class="kw">_</span>, tx)| to_starknet_core_tx(tx.clone(), transaction_hash))
-        } <span class="kw">else </span>{
-            block
-                .transactions()
-                .iter()
-                .find(|tx| tx.compute_hash::&lt;H&gt;(chain_id, <span class="bool-val">false</span>).<span class="number">0 </span>== transaction_hash)
-                .map(|tx| to_starknet_core_tx(tx.clone(), transaction_hash))
-        };
+        <span class="kw">let </span>find_tx =
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(tx_hashes) = <span class="self">self</span>.get_cached_transaction_hashes(starknet_block.header().hash::&lt;H&gt;().into()) {
+                tx_hashes
+                    .into_iter()
+                    .zip(starknet_block.transactions())
+                    .find(|(tx_hash, <span class="kw">_</span>)| <span class="kw-2">*</span>tx_hash == Felt252Wrapper(transaction_hash).into())
+                    .map(|(<span class="kw">_</span>, tx)| to_starknet_core_tx(tx.clone(), transaction_hash))
+            } <span class="kw">else </span>{
+                starknet_block
+                    .transactions()
+                    .iter()
+                    .find(|tx| tx.compute_hash::&lt;H&gt;(chain_id, <span class="bool-val">false</span>).<span class="number">0 </span>== transaction_hash)
+                    .map(|tx| to_starknet_core_tx(tx.clone(), transaction_hash))
+            };
 
         find_tx.ok_or(StarknetRpcApiError::TxnHashNotFound.into())
     }
@@ -2728,7 +2808,7 @@
             <span class="kw">let </span>substrate_block_hash;
 
             <span class="kw">loop </span>{
-                <span class="kw">let </span>block_hash_from_db = madara_backend
+                <span class="kw">let </span>substrate_block_hash_from_db = madara_backend
                     .mapping()
                     .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
                     .map_err(|e| {
@@ -2736,7 +2816,7 @@
                         StarknetRpcApiError::InternalServerError
                     })<span class="question-mark">?</span>;
 
-                <span class="kw">match </span>block_hash_from_db {
+                <span class="kw">match </span>substrate_block_hash_from_db {
                     <span class="prelude-val">Some</span>(block_hash) =&gt; {
                         substrate_block_hash = block_hash;
                         <span class="kw">break</span>;
@@ -2765,9 +2845,9 @@
             <span class="prelude-val">Ok</span>(res) =&gt; res,
         }<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>block: mp_block::Block =
+        <span class="kw">let </span>starknet_block: mp_block::Block =
             get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
-        <span class="kw">let </span>block_header = block.header();
+        <span class="kw">let </span>block_header = starknet_block.header();
         <span class="kw">let </span>block_hash = block_header.hash::&lt;H&gt;().into();
         <span class="kw">let </span>block_number = block_header.block_number;
 

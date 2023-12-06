@@ -147,6 +147,7 @@
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
 <a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC API trait and types
 //!
 //! Starkware maintains [a description of the Starknet API](https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json)
@@ -163,6 +164,7 @@
 
 <span class="kw">pub mod </span>utils;
 
+<span class="kw">use </span>mp_transactions::TransactionStatus;
 <span class="kw">use </span>starknet_core::serde::unsigned_field_element::UfeHex;
 <span class="kw">use </span>starknet_core::types::{
     BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
@@ -220,6 +222,10 @@
     </span><span class="attr">#[method(name = <span class="string">&quot;getBlockTransactionCount&quot;</span>)]
     </span><span class="kw">fn </span>get_block_transaction_count(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId) -&gt; RpcResult&lt;u128&gt;;
 
+    <span class="doccomment">/// Gets the Transaction Status, Including Mempool Status and Execution Details
+    </span><span class="attr">#[method(name = <span class="string">&quot;getTransactionStatus&quot;</span>)]
+    </span><span class="kw">fn </span>get_transaction_status(<span class="kw-2">&amp;</span><span class="self">self</span>, transaction_hash: FieldElement) -&gt; RpcResult&lt;TransactionStatus&gt;;
+
     <span class="doccomment">/// Get the value of the storage at the given address and key, at the given block id
     </span><span class="attr">#[method(name = <span class="string">&quot;getStorageAt&quot;</span>)]
     </span><span class="kw">fn </span>get_storage_at(<span class="kw-2">&amp;</span><span class="self">self</span>, contract_address: FieldElement, key: FieldElement, block_id: BlockId) -&gt; RpcResult&lt;Felt&gt;;
@@ -276,10 +282,6 @@
     <span class="doccomment">/// Get the information about the result of executing the requested block
     </span><span class="attr">#[method(name = <span class="string">&quot;getStateUpdate&quot;</span>)]
     </span><span class="kw">fn </span>get_state_update(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId) -&gt; RpcResult&lt;StateUpdate&gt;;
-
-    <span class="doccomment">/// Returns the transactions in the transaction pool, recognized by this sequencer
-    </span><span class="attr">#[method(name = <span class="string">&quot;pendingTransactions&quot;</span>)]
-    </span><span class="kw">async fn </span>pending_transactions(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;Vec&lt;Transaction&gt;&gt;;
 
     <span class="doccomment">/// Returns all events matching the given filter
     </span><span class="attr">#[method(name = <span class="string">&quot;getEvents&quot;</span>)]
