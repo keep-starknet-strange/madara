@@ -23,7 +23,7 @@ use mp_felt::{Felt252Wrapper, Felt252WrapperError};
 use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
-use mp_transactions::{UserTransaction, TransactionStatus};
+use mp_transactions::{TransactionStatus, UserTransaction};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::BlockBackend;
@@ -46,7 +46,7 @@ use starknet_core::types::{
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, ExecutionResult, FeeEstimate, FieldElement,
     FunctionCall, InvokeTransactionReceipt, InvokeTransactionResult, L1HandlerTransactionReceipt,
     MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateDiff, StateUpdate,
-    SyncStatus, SyncStatusType, Transaction, TransactionFinalityStatus, TransactionReceipt, TransactionExecutionStatus
+    SyncStatus, SyncStatusType, Transaction, TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
 };
 
 use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
@@ -403,9 +403,10 @@ where
 
     /// Gets the Transaction Status, Including Mempool Status and Execution Details
     ///
-    /// This method retrieves the status of a specified transaction. It provides information on whether 
-    /// the transaction is still in the mempool, has been executed, or dropped from the mempool. 
-    /// The status includes both finality status and execution status of the transaction.
+    /// This method retrieves the status of a specified transaction. It provides information on
+    /// whether the transaction is still in the mempool, has been executed, or dropped from the
+    /// mempool. The status includes both finality status and execution status of the
+    /// transaction.
     ///
     /// ### Arguments
     ///
@@ -414,10 +415,10 @@ where
     /// ### Returns
     ///
     /// * `transaction_status` - An object containing the transaction status details:
-    ///   - `finality_status`: The finality status of the transaction, indicating whether it is confirmed, 
-    ///     pending, or rejected.
-    ///   - `execution_status`: The execution status of the transaction, providing details on 
-    ///     the execution outcome if the transaction has been processed.
+    ///   - `finality_status`: The finality status of the transaction, indicating whether it is
+    ///     confirmed, pending, or rejected.
+    ///   - `execution_status`: The execution status of the transaction, providing details on the
+    ///     execution outcome if the transaction has been processed.
     fn get_transaction_status(&self, transaction_hash: FieldElement) -> RpcResult<TransactionStatus> {
         let block_hash_from_db = self
             .backend
@@ -427,20 +428,21 @@ where
                 error!("Failed to get transaction's substrate block hash from mapping_db: {e}");
                 StarknetRpcApiError::TxnHashNotFound
             })?;
-    
+
         let substrate_block_hash = block_hash_from_db.ok_or(StarknetRpcApiError::TxnHashNotFound)?;
-    
+
         let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)
             .ok_or(StarknetRpcApiError::BlockNotFound)?;
-    
+
         let chain_id = self.chain_id()?.0.into();
-    
-        let find_tx = block.transactions()
+
+        let find_tx = block
+            .transactions()
             .iter()
             .find(|tx| tx.compute_hash::<H>(chain_id, false).0 == transaction_hash)
             .map(|tx| to_starknet_core_tx(tx.clone(), transaction_hash))
             .ok_or(StarknetRpcApiError::TxnHashNotFound)?;
-    
+
         let execution_result: TransactionExecutionStatus = self
             .client
             .runtime_api()
@@ -452,15 +454,13 @@ where
                 );
                 StarknetRpcApiError::InternalServerError
             })?
-            .map_or(TransactionExecutionStatus::Succeeded, |message| {
-                TransactionExecutionStatus::Reverted
-            });
-    
+            .map_or(TransactionExecutionStatus::Succeeded, |message| TransactionExecutionStatus::Reverted);
+
         Ok(TransactionStatus {
             finality_status: TransactionFinalityStatus::AcceptedOnL2,
-            execution_status: execution_result
+            execution_status: execution_result,
         })
-    }    
+    }
 
     /// Get the value of the storage at the given address and key.
     ///
@@ -1096,8 +1096,6 @@ where
             },
         })
     }
-
-    
 
     /// Returns all events matching the given filter.
     ///
