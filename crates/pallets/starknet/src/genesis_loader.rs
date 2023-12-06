@@ -48,7 +48,7 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
             .clone()
             .into_iter()
             .map(|(key, value)| {
-                let key = (Felt252Wrapper(key.0 .0).into(), Felt252Wrapper(key.1 .0).into());
+                let key = (Felt252Wrapper(key.0.0).into(), Felt252Wrapper(key.1.0).into());
                 let value = Felt252Wrapper(value.0).into();
                 (key, value)
             })
@@ -92,8 +92,9 @@ pub(crate) fn read_contract_class_from_json(json_str: &str, version: u8) -> Star
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use starknet_crypto::FieldElement;
+
+    use super::*;
 
     #[test]
     fn test_deserialize_loader() {
