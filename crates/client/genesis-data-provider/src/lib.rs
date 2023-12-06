@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use constants::{GENESIS_ASSETS_DIR, GENESIS_ASSETS_FILE};
 use jsonrpsee::types::error::CallError;
-use pallet_starknet::genesis_loader::GenesisData;
+use mp_genesis_config::GenesisData;
 
 pub trait GenesisProvider {
     type LoadGenesisDataError: std::error::Error;

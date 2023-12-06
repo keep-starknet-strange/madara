@@ -19,7 +19,7 @@ jobs:
           fail-on-cache-miss: true
       - name: Run setup
         run: |
-          target/release/madara setup --chain local --from-remote=https://raw.githubusercontent.com/Juul-Mc-Goa/madara/main/configs/index.json
+          target/release/madara setup --chain local --from-remote=https://raw.githubusercontent.com/Juul-Mc-Goa/madara/predeployed_accounts/configs/index.json
       - name: Create build-spec (plain)
         run: |
           target/release/madara build-spec --chain local > chain-plain.json
