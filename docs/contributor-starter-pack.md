@@ -54,7 +54,7 @@ journey:
 
 - _Collaboration and Communication_\
   Engage with the community, ask for guidance when needed, and seek feedback on your
-  contributions. Actively participate in GitHub discussions, issues or the chat channels.
+  contributions. Actively participate in GitHub discussions, issues or chat channels.
   Be respectful and constructive with other builders.
 
 - _Respect for Existing Contributors_\
@@ -317,7 +317,7 @@ servers browser)
 
 Starkware, which is the company at the root of Starknet innovation, is rewarding
 the contributors via [OnlyDust](https://www.onlydust.xyz/). This is an amazing
-initiative and opportunity that reward early builders of the Starknet ecoystem.
+initiative and opportunity that reward early builders of the Starknet ecosystem.
 
 How it works? Simple:
 
