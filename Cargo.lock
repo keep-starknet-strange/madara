@@ -2711,6 +2711,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "da-test"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "assert_matches",
+ "async-lock 3.2.0",
+ "flate2",
+ "mc-data-availability",
+ "reqwest",
+ "rstest",
+ "serde",
+ "serde_json",
+ "starknet-accounts",
+ "starknet-contract",
+ "starknet-core",
+ "starknet-crypto",
+ "starknet-ff",
+ "starknet-providers",
+ "starknet-signers",
+ "thiserror",
+ "tokio",
+ "url",
+]
+
+[[package]]
 name = "darling"
 version = "0.14.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -409,15 +409,15 @@ pub fn new_full(
 
     let (commitment_state_diff_tx, commitment_state_diff_rx) = mpsc::channel(5);
 
-    task_manager.spawn_essential_handle().spawn(
-        "commitment-state-diff",
-        Some("madara"),
-        CommitmentStateDiffWorker::<_, _, StarknetHasher>::new(client.clone(), commitment_state_diff_tx)
-            .for_each(|()| future::ready(())),
-    );
-
     // initialize data availability worker
     if let Some((da_layer, da_path)) = da_layer {
+        task_manager.spawn_essential_handle().spawn(
+            "commitment-state-diff",
+            Some("madara"),
+            CommitmentStateDiffWorker::<_, _, StarknetHasher>::new(client.clone(), commitment_state_diff_tx)
+                .for_each(|()| future::ready(())),
+        );
+
         let da_client: Box<dyn DaClient + Send + Sync> = match da_layer {
             DaLayer::Celestia => {
                 let celestia_conf = CelestiaConfig::try_from(&da_path)?;
@@ -442,6 +442,7 @@ pub fn new_full(
                 madara_backend.clone(),
             ),
         );
+
         task_manager.spawn_essential_handle().spawn(
             "da-worker-update",
             Some("madara"),

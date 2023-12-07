@@ -1,53 +1,54 @@
 [workspace]
 resolver = "2"
 members = [
-  "crates/node",
-  "crates/runtime",
-  "crates/pallets/starknet/runtime_api/",
-  "crates/pallets/starknet",
-  "crates/primitives/digest-log",
-  "crates/primitives/transactions",
-  "crates/primitives/felt",
-  "crates/primitives/hashers",
-  "crates/primitives/fee",
-  "crates/primitives/state",
-  "crates/primitives/block",
-  "crates/primitives/sequencer-address",
-  "crates/primitives/storage",
-  "crates/primitives/commitments",
-  "crates/primitives/chain-id",
-  "crates/client/db",
-  "crates/client/rpc-core",
-  "crates/client/rpc",
-  "crates/client/mapping-sync",
-  "crates/client/storage",
-  "crates/client/commitment-state-diff",
-  "starknet-rpc-test",
+	"crates/node",
+	"crates/runtime",
+	"crates/pallets/starknet/runtime_api/",
+	"crates/pallets/starknet",
+	"crates/primitives/digest-log",
+	"crates/primitives/transactions",
+	"crates/primitives/felt",
+	"crates/primitives/hashers",
+	"crates/primitives/fee",
+	"crates/primitives/state",
+	"crates/primitives/block",
+	"crates/primitives/sequencer-address",
+	"crates/primitives/storage",
+	"crates/primitives/commitments",
+	"crates/primitives/chain-id",
+	"crates/client/db",
+	"crates/client/rpc-core",
+	"crates/client/rpc",
+	"crates/client/mapping-sync",
+	"crates/client/storage",
+	"crates/client/commitment-state-diff",
+	"starknet-rpc-test",
+	"da-test",
 ]
 # All previous except for `starknet-rpc-test`
 # We don't want `cargo test` to trigger its tests
 default-members = [
-  "crates/node",
-  "crates/runtime",
-  "crates/pallets/starknet/runtime_api/",
-  "crates/pallets/starknet",
-  "crates/primitives/digest-log",
-  "crates/primitives/transactions",
-  "crates/primitives/felt",
-  "crates/primitives/hashers",
-  "crates/primitives/fee",
-  "crates/primitives/state",
-  "crates/primitives/block",
-  "crates/primitives/sequencer-address",
-  "crates/primitives/storage",
-  "crates/primitives/commitments",
-  "crates/primitives/chain-id",
-  "crates/client/db",
-  "crates/client/rpc-core",
-  "crates/client/rpc",
-  "crates/client/mapping-sync",
-  "crates/client/storage",
-  "crates/client/commitment-state-diff",
+	"crates/node",
+	"crates/runtime",
+	"crates/pallets/starknet/runtime_api/",
+	"crates/pallets/starknet",
+	"crates/primitives/digest-log",
+	"crates/primitives/transactions",
+	"crates/primitives/felt",
+	"crates/primitives/hashers",
+	"crates/primitives/fee",
+	"crates/primitives/state",
+	"crates/primitives/block",
+	"crates/primitives/sequencer-address",
+	"crates/primitives/storage",
+	"crates/primitives/commitments",
+	"crates/primitives/chain-id",
+	"crates/client/db",
+	"crates/client/rpc-core",
+	"crates/client/rpc",
+	"crates/client/mapping-sync",
+	"crates/client/storage",
+	"crates/client/commitment-state-diff",
 ]
 
 [profile.release]
@@ -109,7 +110,7 @@ sp-tracing = { git = "https://github.com/paritytech/polkadot-sdk", branch = "rel
 
 # Substrate client dependencies
 sc-client-db = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0", features = [
-  "rocksdb",
+	"rocksdb",
 ] }
 sc-network = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
 sc-network-common = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
@@ -178,8 +179,8 @@ madara-runtime = { path = "crates/runtime" }
 # Starknet dependencies
 # Cairo Virtual Machine
 cairo-vm = { git = "https://github.com/keep-starknet-strange/cairo-rs", branch = "no_std-support-21eff70", default-features = false, features = [
-  "cairo-1-hints",
-  "parity-scale-codec",
+	"cairo-1-hints",
+	"parity-scale-codec",
 ] }
 starknet-crypto = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "a35ce22", default-features = false }
 starknet-core = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "a35ce22", default-features = false }
@@ -190,11 +191,11 @@ starknet-accounts = { git = "https://github.com/xJonathanLEI/starknet-rs.git", r
 starknet-contract = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "a35ce22", default-features = false }
 
 blockifier = { git = "https://github.com/keep-starknet-strange/blockifier", branch = "no_std-support-7578442", default-features = false, features = [
-  "parity-scale-codec",
+	"parity-scale-codec",
 ] }
 starknet_api = { git = "https://github.com/keep-starknet-strange/starknet-api", branch = "no_std-support-dc83f05", features = [
-  "testing",
-  "parity-scale-codec",
+	"testing",
+	"parity-scale-codec",
 ], default-features = false }
 
 # Cairo lang
