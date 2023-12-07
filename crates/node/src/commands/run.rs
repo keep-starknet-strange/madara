@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 
-use clap::ArgGroup;
 use madara_runtime::SealingMode;
 use mc_data_availability::DaLayer;
 use sc_cli::{Result, RpcMethods, RunCmd, SubstrateCli};
@@ -34,7 +33,6 @@ impl From<Sealing> for SealingMode {
 }
 
 #[derive(Clone, Debug, clap::Args)]
-#[clap(group(ArgGroup::new("da").requires_all(&["da_layer", "da_conf"])))]
 pub struct ExtendedRunCmd {
     #[clap(flatten)]
     pub base: RunCmd,
@@ -44,10 +42,10 @@ pub struct ExtendedRunCmd {
     pub sealing: Option<Sealing>,
 
     /// Choose a supported DA Layer
-    #[clap(long, group = "da")]
+    #[clap(long, requires = "da_conf")]
     pub da_layer: Option<DaLayer>,
 
-    #[clap(long, group = "da")]
+    #[clap(long, requires = "da_layer")]
     pub da_conf: Option<String>,
 
     /// When enabled, more information about the blocks and their transaction is cached and stored
