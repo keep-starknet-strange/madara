@@ -46,7 +46,7 @@ participating to the consensus, and `fullnode` to a Madara instance used for
 data persistence.
 
 The objective of Sharingan is to start testing Starknet being decentralized and
-also give an access to everybody to participate and test Starknet network.
+also give access to everybody to participate and test the Starknet network.
 
 To interact with the Starknet network, Starknet nodes expose a JSON RPC
 endpoint. This means that any Madara instance participating in the network will
@@ -254,7 +254,7 @@ and check that your node is appearing and start synchronizing the blocks.
 **Welcome to Sharingan, you're in!** :rocket:
 
 For now, there are few transactions, and the storage for the 20,000+ blocks is
-less that 1GB. But this will vary in the future depending on the network
+less than 1GB. But this will vary in the future depending on the network
 activity.
 
 ## Interact with Starknet using JSON RPC

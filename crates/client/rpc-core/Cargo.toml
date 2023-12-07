@@ -32,6 +32,7 @@ jsonrpsee = { workspace = true, features = [
 ], default-features = true }
 mp-block = { workspace = true }
 mp-digest-log = { workspace = true }
+mp-transactions = { workspace = true, features = ["serde"] }
 num-bigint = { workspace = true }
 serde = { workspace = true, default-features = true }
 serde_json = { workspace = true }

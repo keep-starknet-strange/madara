@@ -16,7 +16,7 @@ The Madara project consists of the following directories:
 
 ### Node
 
-Madara node expose a number of capabilities:
+Madara node exposes a number of capabilities:
 
 - Networking: Substrate nodes use the [`libp2p`](https://libp2p.io/) networking
   stack to allow the nodes in the network to communicate with one another.
