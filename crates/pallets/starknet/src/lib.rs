@@ -1154,9 +1154,16 @@ impl<T: Config> Pallet<T> {
                             })
                         }
                     };
+                    let gas_consumed = tx_exec_info
+                        .execute_call_info
+                        .as_ref()
+                        .map(|x| x.execution.gas_consumed)
+                        .ok_or(Error::<T>::MissingCallInfo)?;
+                    let overall_fee = tx_exec_info.actual_fee.0 as u64;
+                    let gas_price = overall_fee / gas_consumed;
                     results.push(SimulatedTransaction {
                         transaction_trace,
-                        fee_estimation: FeeEstimate { gas_consumed: 0, gas_price: 0, overall_fee: 0 },
+                        fee_estimation: FeeEstimate { gas_consumed, gas_price, overall_fee },
                     })
                 }
                 Err(e) => {

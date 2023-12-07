@@ -15,7 +15,7 @@ pub extern crate alloc;
 mod starkware_types_conversions;
 
 #[cfg(feature = "serde")]
-include!("with_serde.rs");
+pub mod with_serde;
 
 use alloc::string::{String, ToString};
 

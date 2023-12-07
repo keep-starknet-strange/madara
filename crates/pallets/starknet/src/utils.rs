@@ -23,7 +23,7 @@ pub fn execute_txs_and_rollback<T: pallet::Config>(
     disable_fee_charge: bool,
 ) -> Result<Vec<TransactionExecutionResult<TransactionExecutionInfo>>, Error<T>> {
     let mut execution_results = vec![];
-    let _: Result<_, DispatchError> = storage::transactional::with_transaction(|| {
+    storage::transactional::with_transaction(|| {
         for tx in txs {
             let result = match tx {
                 UserTransaction::Declare(tx, contract_class) => {
@@ -61,8 +61,9 @@ pub fn execute_txs_and_rollback<T: pallet::Config>(
             };
             execution_results.push(result);
         }
-        storage::TransactionOutcome::Rollback(Ok(()))
-    });
+        storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(()))
+    })
+    .map_err(|_| Error::<T>::TransactionalExecutionFailed)?;
     Ok(execution_results)
 }
 
