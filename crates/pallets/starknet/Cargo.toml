@@ -23,10 +23,13 @@ mp-fee = { workspace = true }
 mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
 mp-hashers = { workspace = true }
 mp-sequencer-address = { workspace = true, features = ["parity-scale-codec"] }
+mp-simulations = { workspace = true, features = [
+  "parity-scale-codec",
+  "serde",
+] }
 mp-state = { workspace = true }
 mp-storage = { workspace = true, features = ["parity-scale-codec"] }
 mp-transactions = { workspace = true, features = ["scale-info"] }
-mp-simulations = { workspace = true, features = ["parity-scale-codec", "serde"] }
 
 blockifier = { workspace = true, features = [
   "testing",
@@ -108,7 +111,7 @@ std = [
   "dep:cairo-lang-casm-contract-class",
   "parity-scale-codec/std",
   "starknet-core/std",
-  "mp-simulations/std"
+  "mp-simulations/std",
 ]
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
 try-runtime = ["frame-support/try-runtime"]

@@ -52,8 +52,8 @@ log = { workspace = true, default-features = true }
 mp-block = { workspace = true, default-features = true }
 mp-felt = { workspace = true, default-features = true }
 mp-hashers = { workspace = true, default-features = true }
-mp-transactions = { workspace = true, features = ["client"] }
 mp-simulations = { workspace = true }
+mp-transactions = { workspace = true, features = ["client"] }
 serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, default-features = true, features = ["time"] }

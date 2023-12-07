@@ -13,6 +13,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 blockifier = { workspace = true }
 derive_more = { workspace = true, features = ["from"] }
+log = { workspace = true }
 mp-fee = { workspace = true }
 mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
@@ -21,7 +22,6 @@ starknet-core = { workspace = true }
 starknet-crypto = { workspace = true, features = ["alloc"] }
 starknet-ff = { workspace = true, features = ["alloc"] }
 starknet_api = { workspace = true }
-log = { workspace = true }
 
 # Optional (client)
 cairo-lang-casm-contract-class = { workspace = true, optional = true }
