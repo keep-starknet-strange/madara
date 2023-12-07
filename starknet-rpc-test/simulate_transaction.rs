@@ -136,9 +136,8 @@ async fn works_ok_on_no_validate(madara: &ThreadSafeMadaraClient) -> Result<(), 
         .await?;
 
     assert_eq!(simulations.len(), 2);
-    // TODO update
     assert_eq!(simulations[0].fee_estimation.gas_consumed, 0);
-    assert_eq!(simulations[0].fee_estimation.overall_fee, 0);
+    assert_eq!(simulations[0].fee_estimation.overall_fee, 420);
     assert_eq!(simulations[0].fee_estimation.gas_price, 0);
 
     Ok(())
@@ -164,9 +163,8 @@ async fn works_ok_on_validate_with_signature(madara: &ThreadSafeMadaraClient) ->
     let simulations = rpc.simulate_transactions(BlockId::Tag(BlockTag::Latest), &[invoke_transaction], []).await?;
 
     assert_eq!(simulations.len(), 1);
-    // TODO update
     assert_eq!(simulations[0].fee_estimation.gas_consumed, 0);
-    assert_eq!(simulations[0].fee_estimation.overall_fee, 0);
+    assert_eq!(simulations[0].fee_estimation.overall_fee, 480);
     assert_eq!(simulations[0].fee_estimation.gas_price, 0);
 
     Ok(())
@@ -196,9 +194,8 @@ async fn works_ok_on_validate_without_signature_with_skip_validate(
         .await?;
 
     assert_eq!(simulations.len(), 1);
-    // TODO update
     assert_eq!(simulations[0].fee_estimation.gas_consumed, 0);
-    assert_eq!(simulations[0].fee_estimation.overall_fee, 0);
+    assert_eq!(simulations[0].fee_estimation.overall_fee, 440);
     assert_eq!(simulations[0].fee_estimation.gas_price, 0);
 
     Ok(())
@@ -237,9 +234,8 @@ async fn works_ok_without_max_fee_with_skip_fee_charge(madara: &ThreadSafeMadara
         .await?;
 
     assert_eq!(simulations.len(), 2);
-    // TODO update
     assert_eq!(simulations[0].fee_estimation.gas_consumed, 0);
-    assert_eq!(simulations[0].fee_estimation.overall_fee, 0);
+    assert_eq!(simulations[0].fee_estimation.overall_fee, 420);
     assert_eq!(simulations[0].fee_estimation.gas_price, 0);
 
     Ok(())

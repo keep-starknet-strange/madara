@@ -8,9 +8,7 @@ use starknet_accounts::{
 use starknet_core::chain_id;
 use starknet_core::types::contract::legacy::LegacyContractClass;
 use starknet_core::types::contract::{CompiledClass, SierraClass};
-use starknet_core::types::{
-    BlockId, BlockTag, BroadcastedInvokeTransaction, EmittedEvent, Event, FieldElement, FunctionCall, MsgToL1,
-};
+use starknet_core::types::{BlockId, BlockTag, BroadcastedInvokeTransaction, FieldElement, FunctionCall, MsgToL1};
 use starknet_core::utils::get_selector_from_name;
 use starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
 use starknet_providers::Provider;

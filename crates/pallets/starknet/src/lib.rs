@@ -1132,7 +1132,10 @@ impl<T: Config> Pallet<T> {
                         UserTransaction::Invoke(_) => TransactionTrace::Invoke(InvokeTransactionTrace {
                             validate_invocation,
                             execute_invocation: convert_call_info_to_execute_invocation::<T>(
-                                tx_exec_info.execute_call_info.as_ref().ok_or(Error::<T>::MissingCallInfo)?,
+                                tx_exec_info
+                                    .execute_call_info
+                                    .as_ref()
+                                    .ok_or(Error::<T>::TransactionExecutionFailed)?,
                                 tx_exec_info.revert_error.as_ref(),
                             )?,
                             fee_transfer_invocation,
@@ -1147,7 +1150,7 @@ impl<T: Config> Pallet<T> {
                                 constructor_invocation: tx_exec_info
                                     .execute_call_info
                                     .as_ref()
-                                    .ok_or(Error::<T>::MissingCallInfo)?
+                                    .ok_or(Error::<T>::TransactionExecutionFailed)?
                                     .into(),
 
                                 fee_transfer_invocation,
@@ -1158,9 +1161,9 @@ impl<T: Config> Pallet<T> {
                         .execute_call_info
                         .as_ref()
                         .map(|x| x.execution.gas_consumed)
-                        .ok_or(Error::<T>::MissingCallInfo)?;
+                        .ok_or(Error::<T>::TransactionExecutionFailed)?;
                     let overall_fee = tx_exec_info.actual_fee.0 as u64;
-                    let gas_price = overall_fee / gas_consumed;
+                    let gas_price = if gas_consumed > 0 { overall_fee / gas_consumed } else { 0 };
                     results.push(SimulatedTransaction {
                         transaction_trace,
                         fee_estimation: FeeEstimate { gas_consumed, gas_price, overall_fee },
