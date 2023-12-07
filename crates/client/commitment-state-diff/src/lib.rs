@@ -57,7 +57,6 @@ where
     // state 2: waiting for the channel to be ready, `commitment_state_diff` field is `Some`
     fn poll_next(self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Option<Self::Item>> {
         let self_as_mut = self.get_mut();
-
         if self_as_mut.msg.is_none() {
             // State 1
             match Stream::poll_next(Pin::new(&mut self_as_mut.storage_event_stream), cx) {
@@ -97,16 +96,16 @@ where
                 // Safe to unwrap because channel is ready
                 self_as_mut.tx.start_send(msg).unwrap();
 
-                Poll::Ready(None)
+                Poll::Ready(Some(()))
             }
 
             // Channel is full, we wait
             Poll::Pending => Poll::Pending,
 
-            // Channel receiver have been drop, we close.
+            // Channel receiver has been dropped, we close.
             // This should not happen tho
             Poll::Ready(Err(e)) => {
-                log::error!("CommitmentStateDiff channel reciever have been droped: {e}");
+                log::error!("CommitmentStateDiff channel receiver has been dropped: {e}");
                 Poll::Ready(None)
             }
         }
