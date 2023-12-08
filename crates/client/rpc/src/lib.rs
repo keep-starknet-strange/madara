@@ -38,7 +38,7 @@ use sp_core::H256;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use sp_runtime::transaction_validity::InvalidTransaction;
 use sp_runtime::DispatchError;
-use starknet_api::transaction::Calldata;
+use starknet_api::transaction::{Calldata, Fee};
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
@@ -46,7 +46,7 @@ use starknet_core::types::{
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, ExecutionResult, FeeEstimate, FieldElement,
     FunctionCall, InvokeTransactionReceipt, InvokeTransactionResult, L1HandlerTransactionReceipt,
     MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateDiff, StateUpdate,
-    SyncStatus, SyncStatusType, Transaction, TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
+    SyncStatus, SyncStatusType, Transaction, TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt, ExecutionResources
 };
 
 use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
@@ -770,6 +770,8 @@ where
 
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
         let chain_id = self.chain_id()?;
+        let starknet_version = starknet_block.header().protocol_version;
+
         let block_hash = starknet_block.header().hash::<H>();
 
         let transaction_hashes = if let Some(tx_hashes) = self.get_cached_transaction_hashes(block_hash.into()) {
@@ -798,6 +800,8 @@ where
             new_root: starknet_block.header().global_state_root.into(),
             timestamp: starknet_block.header().block_timestamp,
             sequencer_address: Felt252Wrapper::from(starknet_block.header().sequencer_address).into(),
+            l1_gas_price: ResourcePriceWrapper::default(),
+            starknet_version: starknet_version.to_string(),
         };
 
         Ok(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
@@ -1011,6 +1015,7 @@ where
 
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
         let block_hash = starknet_block.header().hash::<H>();
+        let starknet_version = starknet_block.header().protocol_version;
 
         let chain_id = self.chain_id()?;
         let chain_id = Felt252Wrapper(chain_id.0);
@@ -1050,6 +1055,8 @@ where
             timestamp: starknet_block.header().block_timestamp,
             sequencer_address: Felt252Wrapper::from(starknet_block.header().sequencer_address).into(),
             transactions,
+            l1_gas_price: ResourcePrice::default(),
+            starknet_version: starknet_version.to_string(),
         };
 
         Ok(MaybePendingBlockWithTxs::Block(block_with_txs))
@@ -1333,6 +1340,8 @@ where
 
         let chain_id = self.chain_id()?.0.into();
 
+        let starknet_version = starknet_block.header().protocol_version;
+
         let fee_disabled =
             self.client.runtime_api().is_transaction_fee_disabled(substrate_block_hash).map_err(|e| {
                 error!("Failed to get check fee disabled. Substrate block hash: {substrate_block_hash}, error: {e}");
@@ -1422,6 +1431,7 @@ where
                 messages_sent: Default::default(),
                 events: events_converted,
                 execution_result,
+                execution_resources: ExecutionResources::default(),
             }),
             mp_transactions::Transaction::DeployAccount(tx) => {
                 TransactionReceipt::DeployAccount(DeployAccountTransactionReceipt {
@@ -1434,6 +1444,7 @@ where
                     events: events_converted,
                     contract_address: tx.get_account_address(),
                     execution_result,
+                    execution_resources: ExecutionResources::default(),
                 })
             }
             mp_transactions::Transaction::Invoke(_) => TransactionReceipt::Invoke(InvokeTransactionReceipt {
@@ -1445,8 +1456,10 @@ where
                 messages_sent: Default::default(),
                 events: events_converted,
                 execution_result,
+                execution_resources: ExecutionResources::default(),
             }),
             mp_transactions::Transaction::L1Handler(_) => TransactionReceipt::L1Handler(L1HandlerTransactionReceipt {
+                message_hash: Felt252Wrapper::default(),
                 transaction_hash,
                 actual_fee,
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
@@ -1455,6 +1468,7 @@ where
                 messages_sent: Default::default(),
                 events: events_converted,
                 execution_result,
+                execution_resources: ExecutionResources::default(),
             }),
         };
 

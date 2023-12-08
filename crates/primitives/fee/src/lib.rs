@@ -30,6 +30,7 @@ use starknet_api::calldata;
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, Fee};
+use starknet_core::types::ResourcePrice;
 
 /// Initial gas for a transaction
 pub const INITIAL_GAS: u64 = u64::MAX;
@@ -53,6 +54,19 @@ pub const TRANSFER_SELECTOR_HASH: [u8; 32] = [
     0, 131, 175, 211, 244, 202, 237, 198, 238, 191, 68, 36, 111, 229, 78, 56, 201, 94, 49, 121, 165, 236, 158, 168, 23,
     64, 236, 165, 180, 130, 209, 46,
 ]; // starknet_keccak(TRANSFER_SELECTOR_NAME.as_bytes()).to_le_bytes();
+
+/// Default implementation of ressource price.
+/// TODO(antiyro): consider replacing it with a proper implementation https://github.com/xJonathanLEI/starknet-rs/blob/fec81d126c58ff3dff6cbfd4b9e714913298e54e/starknet-core/src/types/codegen.rs#L1242C1-L1253C2.
+pub struct ResourcePriceWrapper(pub ResourcePrice);
+
+impl Default for ResourcePriceWrapper {
+    fn default() -> Self {
+        ResourcePriceWrapper(ResourcePrice {
+            price_in_strk: None,
+            price_in_wei: 0,
+        })
+    }
+}
 
 /// Gets the transaction resources.
 pub fn compute_transaction_resources<S: State + StateChanges>(

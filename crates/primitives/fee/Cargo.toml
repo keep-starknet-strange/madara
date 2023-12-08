@@ -17,6 +17,7 @@ mp-state = { workspace = true }
 phf = { workspace = true }
 sp-arithmetic = { workspace = true }
 starknet_api = { workspace = true }
+starknet-core = { workspace = true }
 
 [features]
 default = ["std"]
