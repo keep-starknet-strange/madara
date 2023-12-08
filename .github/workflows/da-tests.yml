@@ -51,4 +51,3 @@ jobs:
       - name: Stop DA Layer
         run: |
           bash ./scripts/stop_da_devnet.sh ${{ matrix.da_layer }}
-          

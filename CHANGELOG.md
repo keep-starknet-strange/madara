@@ -36,7 +36,7 @@
   reconnection logic
 - chore: update `polkadot-sdk` to `release-polkadot-v1.3.0`
 - feat(da): update da calldata encoding to v0.11.0 spec, da conf examples, da
-  conf flag
+  conf flag, da-tests in CI
 
 ## v0.5.0
 
