@@ -3,6 +3,10 @@
 ## Next release
 
 - fix: Change seliazation of bitvec to &[u8] in merkle tree to avoid memory uninitialized
+
+## v0.6.0
+
+- chore: release v0.6.0
 - refacto: substrate/starknet names in rpc library
 - feat(rpc): Added starknet_getTransactionStatus and removed
   starknet_pendingTransactions
