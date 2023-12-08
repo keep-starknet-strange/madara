@@ -8,6 +8,8 @@ if [ "$DA_LAYER" = "ethereum" ]; then
     ./zaun/scripts/sn-base-kill.sh target
 elif [ "$DA_LAYER" = "celestia" ]; then
     # TODO: Kill Celestia
+    echo "Killing Celestia:"
 elif [ "$DA_LAYER" = "avail" ]; then
     # TODO: Kill Avail
+    echo "Killing Avail:"
 fi
