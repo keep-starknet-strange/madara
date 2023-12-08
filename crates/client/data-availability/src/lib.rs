@@ -123,7 +123,7 @@ where
 
             match da_mode {
                 DaMode::Validity => {
-                    // Submit the StarkNet OS PIE
+                    // Submit the Starknet OS PIE
                     // TODO: Validity Impl
                     // run the Starknet OS with the Cairo VM
                     // extract the PIE from the Cairo VM run

@@ -1,5 +1,5 @@
 use jsonrpsee::types::error::{CallError, ErrorObject};
-use pallet_starknet::runtime_api::StarknetTransactionExecutionError;
+use pallet_starknet_runtime_api::StarknetTransactionExecutionError;
 
 // Comes from the RPC Spec:
 // https://github.com/starkware-libs/starknet-specs/blob/0e859ff905795f789f1dfd6f7340cdaf5015acc8/api/starknet_write_api.json#L227
@@ -9,18 +9,14 @@ pub enum StarknetRpcApiError {
     FailedToReceiveTxn = 1,
     #[error("Contract not found")]
     ContractNotFound = 20,
-    #[error("Invalid message selector")]
-    InvalidMessageSelector = 21,
-    #[error("Invalid call data")]
-    InvalidCallData = 22,
     #[error("Block not found")]
     BlockNotFound = 24,
-    #[error("Transaction hash not found")]
-    TxnHashNotFound = 25,
     #[error("Invalid transaction index in a block")]
     InvalidTxnIndex = 27,
     #[error("Class hash not found")]
     ClassHashNotFound = 28,
+    #[error("Transaction hash not found")]
+    TxnHashNotFound = 29,
     #[error("Requested page size is too big")]
     PageSizeTooBig = 31,
     #[error("There are no blocks")]

@@ -28,6 +28,7 @@ md5 = { workspace = true }
 serde = { workspace = true }
 
 frame-system = { workspace = true }
+sc-basic-authorship = { workspace = true }
 sc-cli = { workspace = true }
 sc-client-api = { workspace = true }
 sc-consensus = { workspace = true }
@@ -41,6 +42,7 @@ sc-network-sync = { workspace = true }
 sc-offchain = { workspace = true }
 sc-service = { workspace = true }
 sc-telemetry = { workspace = true }
+sc-transaction-pool = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
 sp-consensus-aura = { workspace = true }
 sp-consensus-grandpa = { workspace = true }
@@ -77,15 +79,14 @@ frame-benchmarking-cli = { workspace = true }
 blockifier = { workspace = true }
 hex = { workspace = true }
 madara-runtime = { workspace = true }
-mc-block-proposer = { workspace = true }
 mc-commitment-state-diff = { workspace = true }
 mc-data-availability = { workspace = true }
 mc-db = { workspace = true }
 mc-mapping-sync = { workspace = true }
 mc-rpc = { workspace = true }
 mc-storage = { workspace = true }
-mc-transaction-pool = { workspace = true }
 pallet-starknet = { workspace = true }
+pallet-starknet-runtime-api = { workspace = true }
 starknet-core = { workspace = true }
 
 # Primitives

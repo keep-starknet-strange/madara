@@ -11,7 +11,7 @@ pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
 pub use mp_chain_id::SN_GOERLI_CHAIN_ID;
-/// Import the StarkNet pallet.
+/// Import the Starknet pallet.
 pub use pallet_starknet;
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;

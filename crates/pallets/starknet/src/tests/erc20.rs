@@ -7,6 +7,7 @@ use starknet_api::api_core::{ContractAddress, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Event as StarknetEvent, EventContent, EventData, EventKey};
+use starknet_core::utils::get_selector_from_name;
 
 use super::mock::default_mock::*;
 use super::mock::*;
@@ -98,7 +99,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         let expected_fee_transfer_event = Event::StarknetEvent(StarknetEvent {
             content: EventContent {
                 keys: vec![EventKey(
-                    StarkFelt::try_from("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap(),
+                    StarkFelt::try_from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap()).unwrap(),
                 )],
                 data: EventData(vec![
                     sender_account.0.0, // From
@@ -171,7 +172,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         let expected_event = Event::StarknetEvent(StarknetEvent {
             content: EventContent {
             keys: vec![
-                EventKey(StarkFelt::try_from("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9")
+                EventKey(StarkFelt::try_from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap())
                     .unwrap()),
             ],
             data: EventData(vec![
@@ -192,7 +193,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         let expected_fee_transfer_event = Event::StarknetEvent(StarknetEvent {
             content: EventContent {
             keys: vec![
-                EventKey(StarkFelt::try_from("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9")
+                EventKey(StarkFelt::try_from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap())
                     .unwrap()),
             ],
             data: EventData(vec![

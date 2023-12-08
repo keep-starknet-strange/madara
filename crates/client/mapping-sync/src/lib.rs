@@ -20,7 +20,7 @@ use futures::task::{Context, Poll};
 use futures_timer::Delay;
 use log::debug;
 use mp_hashers::HasherT;
-use pallet_starknet::runtime_api::StarknetRuntimeApi;
+use pallet_starknet_runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::client::ImportNotifications;
 use sp_api::ProvideRuntimeApi;

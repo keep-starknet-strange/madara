@@ -45,8 +45,6 @@ pub mod blockifier_state_adapter;
 pub mod genesis_loader;
 /// The implementation of the message type.
 pub mod message;
-/// The Starknet pallet's runtime API
-pub mod runtime_api;
 /// Transaction validation logic.
 pub mod transaction_validation;
 /// The Starknet pallet's runtime custom types.
@@ -577,7 +575,7 @@ pub mod pallet {
             Ok(())
         }
 
-        /// Since StarkNet v0.10.1 the deploy_account transaction replaces the deploy transaction
+        /// Since Starknet v0.10.1 the deploy_account transaction replaces the deploy transaction
         /// for deploying account contracts. To use it, you should first pre-fund your
         /// would-be account address so that you could pay the transaction fee (see here for more
         /// details) . You can then send the deploy_account transaction. See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#deploy_account_transaction`.
@@ -1189,5 +1187,8 @@ impl<T: Config> Pallet<T> {
 
     pub fn chain_id() -> Felt252Wrapper {
         T::ChainId::get()
+    }
+    pub fn is_transaction_fee_disabled() -> bool {
+        T::DisableTransactionFee::get()
     }
 }

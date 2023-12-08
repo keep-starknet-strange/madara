@@ -26,6 +26,10 @@ tokio = { version = "1.34.0", features = ["rt", "macros", "parking_lot"] }
 url = "2.4.1"
 
 [[test]]
+name = "starknet_spec_version"
+path = "spec_version.rs"
+
+[[test]]
 name = "starknet_get_block_number"
 path = "get_block_number.rs"
 
@@ -88,10 +92,6 @@ path = "add_declare_transaction.rs"
 [[test]]
 name = "starknet_add_deploy_account_transaction"
 path = "add_deploy_account_transaction.rs"
-
-[[test]]
-name = "starknet_pending_transactions"
-path = "pending_transactions.rs"
 
 [[test]]
 name = "starknet_get_transaction_by_hash"
