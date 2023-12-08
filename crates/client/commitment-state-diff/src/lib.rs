@@ -5,12 +5,9 @@ use std::task::Poll;
 
 use futures::channel::mpsc;
 use futures::Stream;
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
 use mp_hashers::HasherT;
-use mp_storage::{
-    SN_COMPILED_CLASS_HASH_PREFIX, SN_CONTRACT_CLASS_HASH_PREFIX, SN_CONTRACT_CLASS_PREFIX, SN_NONCE_PREFIX,
-    SN_STORAGE_PREFIX,
-};
+use mp_storage::{SN_COMPILED_CLASS_HASH_PREFIX, SN_CONTRACT_CLASS_HASH_PREFIX, SN_NONCE_PREFIX, SN_STORAGE_PREFIX};
 use pallet_starknet_runtime_api::StarknetRuntimeApi;
 use sc_client_api::client::BlockchainEvents;
 use sc_client_api::{StorageEventStream, StorageNotification};
@@ -139,7 +136,7 @@ where
         block.header().hash::<H>().into()
     };
 
-    let mut num_addrs_accessed: usize = 0;
+    let mut accessed_addrs: IndexSet<ContractAddress> = IndexSet::new();
     let mut commitment_state_diff = ThinStateDiff {
         declared_classes: IndexMap::new(),
         storage_diffs: IndexMap::new(),
@@ -167,6 +164,7 @@ where
             // `change` is safe to unwrap as `Nonces` storage is `ValueQuery`
             let nonce = Nonce(StarkFelt(change.unwrap().0.clone().try_into().unwrap()));
             commitment_state_diff.nonces.insert(contract_address, nonce);
+            accessed_addrs.insert(contract_address);
         } else if prefix == *SN_STORAGE_PREFIX {
             let contract_address =
                 ContractAddress(PatriciaKey(StarkFelt(full_storage_key.0[32..64].try_into().unwrap())));
@@ -185,15 +183,7 @@ where
                     commitment_state_diff.storage_diffs.insert(contract_address, contract_storage);
                 }
             }
-        } else if prefix == *SN_CONTRACT_CLASS_PREFIX {
-            let class_hash = ClassHash(StarkFelt(full_storage_key.0[32..].try_into().unwrap()));
-            // In the current state of starknet protocol, a contract class can not be erased, so we should
-            // never see `change` being `None`. But there have been an "erase contract class" mechanism live on
-            // the network during the Regenesis migration. Better safe than sorry.
-            let compiled_class_hash =
-                CompiledClassHash(change.map(|data| StarkFelt(data.0.clone().try_into().unwrap())).unwrap_or_default());
-
-            commitment_state_diff.declared_classes.insert(class_hash, compiled_class_hash);
+            accessed_addrs.insert(contract_address);
         } else if prefix == *SN_CONTRACT_CLASS_HASH_PREFIX {
             let contract_address =
                 ContractAddress(PatriciaKey(StarkFelt(full_storage_key.0[32..].try_into().unwrap())));
@@ -211,7 +201,7 @@ where
             } else {
                 commitment_state_diff.deployed_contracts.insert(contract_address, class_hash);
             }
-            num_addrs_accessed += 1;
+            accessed_addrs.insert(contract_address);
         } else if prefix == *SN_COMPILED_CLASS_HASH_PREFIX {
             let class_hash = ClassHash(StarkFelt(full_storage_key.0[32..].try_into().unwrap()));
             // In the current state of starknet protocol, a compiled class hash can not be erased, so we should
@@ -224,5 +214,5 @@ where
         }
     }
 
-    Ok((starknet_block_hash, commitment_state_diff, num_addrs_accessed))
+    Ok((starknet_block_hash, commitment_state_diff, accessed_addrs.len()))
 }

@@ -36,8 +36,6 @@ lazy_static! {
     pub static ref SN_NONCE_PREFIX: Vec<u8> = [twox_128(PALLET_STARKNET), twox_128(STARKNET_NONCE)].concat();
     pub static ref SN_CONTRACT_CLASS_HASH_PREFIX: Vec<u8> =
         [twox_128(PALLET_STARKNET), twox_128(STARKNET_CONTRACT_CLASS_HASH)].concat();
-    pub static ref SN_CONTRACT_CLASS_PREFIX: Vec<u8> =
-        [twox_128(PALLET_STARKNET), twox_128(STARKNET_CONTRACT_CLASS)].concat();
     pub static ref SN_STORAGE_PREFIX: Vec<u8> = [twox_128(PALLET_STARKNET), twox_128(STARKNET_STORAGE)].concat();
     pub static ref SN_COMPILED_CLASS_HASH_PREFIX: Vec<u8> =
         [twox_128(PALLET_STARKNET), twox_128(STARKNET_COMPILED_CLASS_HASH)].concat();
