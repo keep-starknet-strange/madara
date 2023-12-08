@@ -27,16 +27,19 @@ pub fn execute_txs_and_rollback<T: pallet::Config>(
         for tx in txs {
             let result = match tx {
                 UserTransaction::Declare(tx, contract_class) => {
-                    let executable = tx
-                        .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), is_query)
-                        .expect("Contract class should be valid");
-                    executable.execute(
-                        &mut BlockifierStateAdapter::<T>::default(),
-                        block_context,
-                        is_query,
-                        disable_validation,
-                        disable_fee_charge,
-                    )
+                    let executable =
+                        tx.try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), is_query);
+
+                    match executable {
+                        Err(err) => Err(err),
+                        Ok(executable) => executable.execute(
+                            &mut BlockifierStateAdapter::<T>::default(),
+                            block_context,
+                            is_query,
+                            disable_validation,
+                            disable_fee_charge,
+                        ),
+                    }
                 }
                 UserTransaction::DeployAccount(tx) => {
                     let executable = tx.into_executable::<T::SystemHash>(chain_id, is_query);

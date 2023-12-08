@@ -11,6 +11,10 @@ use starknet_api::stdlib::collections::HashMap;
 
 type ContractClassMapping = HashMap<ClassHash, ContractClass>;
 
+pub type UpdatedContractsCount = usize;
+pub type UpdatedStorageVarsCount = usize;
+pub type DeclaredClassesCount = usize;
+pub type DeclaredCompiledClassesCount = usize;
 /// This trait allows to get the state changes of a starknet tx and therefore enables computing the
 /// fees.
 pub trait StateChanges {
@@ -19,22 +23,26 @@ pub trait StateChanges {
     ///
     /// # Returns
     ///
-    /// * `usize` - The number of modified contracts in the transaction.
-    /// * `usize` - The number of modified storage vars in the transaction.
-    /// * `usize` -  The number of newly declared classes.
-    fn count_state_changes(&self) -> (usize, usize, usize, usize);
+    /// * `UpdatedContractsCount` - The number of modified contracts in the transaction.
+    /// * `UpdatedStorageVarsCount` - The number of modified storage vars in the transaction.
+    /// * `UpdatedClassHashesCount` -  The number of newly declared classes.
+    /// * `UpdatedCompiledClassHashesCount` - The number of newly declared compiled classes.
+    fn count_state_changes(
+        &self,
+    ) -> (UpdatedContractsCount, UpdatedStorageVarsCount, DeclaredClassesCount, DeclaredCompiledClassesCount);
 }
 
-/// Contains all the configurational parameters of the pallet.
-/// The `GetAppConfig` trait allows access to this config using
-/// the state variable
-pub struct AppConfig {
+/// Contains the blockifier state configuration for disabling transaction fee
+/// and nonce validation.
+/// The [`StateConfigProvider`] trait allows access to the flags in the
+/// [`BlockifierStateAdapter`] trait.
+pub struct StateConfig {
     pub disable_transaction_fee: bool,
     pub disable_nonce_validation: bool,
 }
 
-/// This trait allows to get the fee config for the pallet and accordingly charge the fees
-pub trait GetAppConfig {
+/// This trait allows to get the nonce and fee simulation flags from the state.
+pub trait StateConfigProvider {
     /// This function reads the DisableTransactionFee from the pallet and returns a boolean
     ///
     /// # Returns

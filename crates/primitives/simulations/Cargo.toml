@@ -15,7 +15,7 @@ serde = { workspace = true, features = ["derive"], optional = true }
 serde_with = { workspace = true, optional = true }
 
 # Madara primitives
-mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
+mp-felt = { workspace = true }
 
 # Substrate dependencies
 parity-scale-codec = { workspace = true, optional = true }
@@ -31,9 +31,10 @@ default = ["std"]
 parity-scale-codec = [
   "dep:parity-scale-codec",
   "starknet_api/parity-scale-codec",
+  "mp-felt/parity-scale-codec",
 ]
-serde = ["dep:serde", "dep:serde_with", "starknet_api/scale-info"]
-scale-info = ["dep:scale-info"]
+serde = ["dep:serde", "dep:serde_with", "mp-felt/serde"]
+scale-info = ["dep:scale-info", "starknet_api/scale-info"]
 std = [
   "mp-felt/std",
   "starknet_api/std",

@@ -7,7 +7,10 @@ use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{State, StateReader, StateResult};
 use indexmap::IndexMap;
 use mp_felt::Felt252Wrapper;
-use mp_state::{GetAppConfig, StateChanges};
+use mp_state::{
+    DeclaredClassesCount, DeclaredCompiledClassesCount, StateChanges, StateConfigProvider, UpdatedContractsCount,
+    UpdatedStorageVarsCount,
+};
 use sp_core::Get;
 use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
@@ -32,14 +35,16 @@ impl<T> StateChanges for BlockifierStateAdapter<T>
 where
     T: Config,
 {
-    fn count_state_changes(&self) -> (usize, usize, usize, usize) {
+    fn count_state_changes(
+        &self,
+    ) -> (UpdatedContractsCount, UpdatedStorageVarsCount, DeclaredClassesCount, DeclaredCompiledClassesCount) {
         let keys = self.storage_update.keys();
         let n_contract_updated = BTreeSet::from_iter(keys.clone().map(|&(contract_address, _)| contract_address)).len();
         (n_contract_updated, keys.len(), self.class_hash_update, self.compiled_class_hash_update)
     }
 }
 
-impl<T> GetAppConfig for BlockifierStateAdapter<T>
+impl<T> StateConfigProvider for BlockifierStateAdapter<T>
 where
     T: Config,
 {

@@ -24,7 +24,7 @@ use blockifier::transaction::transactions::{
 };
 use mp_fee::{calculate_tx_fee, charge_fee, compute_transaction_resources};
 use mp_felt::Felt252Wrapper;
-use mp_state::{GetAppConfig, StateChanges};
+use mp_state::{StateChanges, StateConfigProvider};
 use starknet_api::api_core::{ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::StarkFelt;
@@ -267,7 +267,7 @@ pub trait Validate: GetAccountTransactionContext + GetTransactionCalldata {
 }
 
 pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata + GetTxType {
-    fn execute_inner<S: State + StateChanges + GetAppConfig>(
+    fn execute_inner<S: State + StateChanges + StateConfigProvider>(
         &self,
         state: &mut S,
         block_context: &BlockContext,
@@ -302,7 +302,7 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
     }
 
     /// Handles nonce and checks that the account's balance covers max fee.
-    fn handle_nonce_and_check_fee_balance<S: State + StateChanges + GetAppConfig>(
+    fn handle_nonce_and_check_fee_balance<S: State + StateChanges + StateConfigProvider>(
         state: &mut S,
         block_context: &BlockContext,
         account_tx_context: &AccountTransactionContext,
@@ -343,7 +343,7 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
         Ok(())
     }
 
-    fn execute<S: State + StateChanges + GetAppConfig>(
+    fn execute<S: State + StateChanges + StateConfigProvider>(
         &self,
         state: &mut S,
         block_context: &BlockContext,
@@ -399,7 +399,7 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
     }
 
     #[allow(clippy::too_many_arguments)]
-    fn handle_fee<S: State + StateChanges + GetAppConfig>(
+    fn handle_fee<S: State + StateChanges + StateConfigProvider>(
         &self,
         state: &mut S,
         execute_call_info: &Option<CallInfo>,
@@ -430,7 +430,7 @@ impl Validate for InvokeTransaction {
 }
 
 impl Execute for InvokeTransaction {
-    fn execute_inner<S: State + StateChanges + GetAppConfig>(
+    fn execute_inner<S: State + StateChanges + StateConfigProvider>(
         &self,
         state: &mut S,
         block_context: &BlockContext,
@@ -484,7 +484,7 @@ impl Validate for DeclareTransaction {
 }
 
 impl Execute for DeclareTransaction {
-    fn execute_inner<S: State + StateChanges + GetAppConfig>(
+    fn execute_inner<S: State + StateChanges + StateConfigProvider>(
         &self,
         state: &mut S,
         block_context: &BlockContext,
@@ -530,7 +530,7 @@ impl Validate for DeployAccountTransaction {
 }
 
 impl Execute for DeployAccountTransaction {
-    fn execute_inner<S: State + StateChanges + GetAppConfig>(
+    fn execute_inner<S: State + StateChanges + StateConfigProvider>(
         &self,
         state: &mut S,
         block_context: &BlockContext,
@@ -559,7 +559,7 @@ impl Execute for DeployAccountTransaction {
 }
 
 impl Execute for L1HandlerTransaction {
-    fn execute_inner<S: State + StateChanges + GetAppConfig>(
+    fn execute_inner<S: State + StateChanges + StateConfigProvider>(
         &self,
         state: &mut S,
         block_context: &BlockContext,
@@ -580,7 +580,7 @@ impl Execute for L1HandlerTransaction {
     }
 
     // No fee are charged for L1HandlerTransaction
-    fn handle_fee<S: State + StateChanges + GetAppConfig>(
+    fn handle_fee<S: State + StateChanges + StateConfigProvider>(
         &self,
         state: &mut S,
         execute_call_info: &Option<CallInfo>,

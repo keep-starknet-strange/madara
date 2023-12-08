@@ -22,7 +22,7 @@ use blockifier::transaction::transaction_types::TransactionType;
 use blockifier::transaction::transaction_utils::{calculate_l1_gas_usage, calculate_tx_resources};
 #[cfg(not(feature = "std"))]
 use hashbrown::HashMap;
-use mp_state::{GetAppConfig, StateChanges};
+use mp_state::{StateChanges, StateConfigProvider};
 use sp_arithmetic::fixed_point::{FixedPointNumber, FixedU128};
 use sp_arithmetic::traits::Zero;
 use starknet_api::api_core::EntryPointSelector;
@@ -81,7 +81,7 @@ pub fn compute_transaction_resources<S: State + StateChanges>(
 }
 
 /// Charges the fees for a specific execution resources.
-pub fn charge_fee<S: State + StateChanges + GetAppConfig>(
+pub fn charge_fee<S: State + StateChanges + StateConfigProvider>(
     state: &mut S,
     block_context: &BlockContext,
     account_tx_context: AccountTransactionContext,
