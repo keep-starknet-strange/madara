@@ -1015,7 +1015,10 @@ where
 
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
         let block_hash = starknet_block.header().hash::<H>();
+<<<<<<< HEAD
         let starknet_version = starknet_block.header().protocol_version;
+=======
+>>>>>>> 7092047c0df4a47f12adc8fc444e000345053c40
 
         let chain_id = self.chain_id()?;
         let chain_id = Felt252Wrapper(chain_id.0);
