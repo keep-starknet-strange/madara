@@ -79,5 +79,5 @@ pub fn convert_call_info_to_execute_invocation<T>(
             revert_reason: revert_error.ok_or(Error::MissingRevertReason)?.clone(),
         }));
     }
-    Ok(ExecuteInvocation::Success(call_info.into()))
+    Ok(ExecuteInvocation::Success(call_info.try_into().map_err(|_| Error::TransactionExecutionFailed)?))
 }

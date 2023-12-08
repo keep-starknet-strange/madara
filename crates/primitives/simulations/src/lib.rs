@@ -8,6 +8,8 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 use blockifier::execution::entry_point::{CallInfo, OrderedL2ToL1Message};
+use blockifier::transaction::errors::TransactionExecutionError;
+use blockifier::transaction::objects::TransactionExecutionResult;
 use mp_felt::{Felt252Wrapper, UfeHex};
 use starknet_api::api_core::EthAddress;
 use starknet_api::deprecated_contract_class::EntryPointType;
@@ -158,13 +160,21 @@ pub struct FunctionInvocation {
     pub messages: Vec<MessageToL1>,
 }
 
-impl From<&CallInfo> for FunctionInvocation {
-    fn from(call_info: &CallInfo) -> FunctionInvocation {
+impl TryFrom<&CallInfo> for FunctionInvocation {
+    type Error = TransactionExecutionError;
+
+    fn try_from(call_info: &CallInfo) -> TransactionExecutionResult<FunctionInvocation> {
         let messages = ordered_l2_to_l1_messages(call_info);
 
-        let inner_calls = call_info.inner_calls.iter().map(|call| call.into()).collect();
+        let inner_calls = call_info
+            .inner_calls
+            .iter()
+            .map(|call| call.try_into())
+            .collect::<Result<_, TransactionExecutionError>>()?;
 
-        FunctionInvocation {
+        call_info.get_sorted_l2_to_l1_payloads_length()?;
+
+        Ok(FunctionInvocation {
             contract_address: call_info.call.storage_address.0.0.into(),
             entry_point_selector: call_info.call.entry_point_selector.0.into(),
             calldata: call_info.call.calldata.0.iter().map(|x| (*x).into()).collect(),
@@ -176,7 +186,7 @@ impl From<&CallInfo> for FunctionInvocation {
             calls: inner_calls,
             events: call_info.execution.events.iter().map(|event| event.event.clone()).collect(),
             messages,
-        }
+        })
     }
 }
 

@@ -33,6 +33,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::large_enum_variant)]
 
+use blockifier::transaction::objects::TransactionExecutionResult;
 /// Starknet pallet.
 /// Definition of the pallet's runtime storage items, events, errors, and dispatchable
 /// functions.
@@ -1118,16 +1119,26 @@ impl<T: Config> Pallet<T> {
             disable_fee_charge,
         )?;
 
-        fn get_function_invocation(call_info: Option<&CallInfo>) -> Option<FunctionInvocation> {
-            call_info.map(FunctionInvocation::from)
+        fn get_function_invocation(
+            call_info: Option<&CallInfo>,
+        ) -> TransactionExecutionResult<Option<FunctionInvocation>> {
+            call_info.map(FunctionInvocation::try_from).transpose()
         }
 
         let mut results = vec![];
         for (tx, res) in transactions.iter().zip(execution_results.iter()) {
             match res {
                 Ok(tx_exec_info) => {
-                    let validate_invocation = get_function_invocation(tx_exec_info.validate_call_info.as_ref());
-                    let fee_transfer_invocation = get_function_invocation(tx_exec_info.fee_transfer_call_info.as_ref());
+                    let validate_invocation = get_function_invocation(tx_exec_info.validate_call_info.as_ref())
+                        .map_err(|err| {
+                            log::error!("Failed to convert validate call info to function invocation: {}", err);
+                            Error::<T>::TransactionExecutionFailed
+                        })?;
+                    let fee_transfer_invocation = get_function_invocation(tx_exec_info.fee_transfer_call_info.as_ref())
+                        .map_err(|err| {
+                            log::error!("Failed to convert fee transfer call info to function invocation: {}", err);
+                            Error::<T>::TransactionExecutionFailed
+                        })?;
                     let transaction_trace = match tx {
                         UserTransaction::Invoke(_) => TransactionTrace::Invoke(InvokeTransactionTrace {
                             validate_invocation,
@@ -1151,7 +1162,8 @@ impl<T: Config> Pallet<T> {
                                     .execute_call_info
                                     .as_ref()
                                     .ok_or(Error::<T>::TransactionExecutionFailed)?
-                                    .into(),
+                                    .try_into()
+                                    .map_err(|_| Error::<T>::TransactionExecutionFailed)?,
 
                                 fee_transfer_invocation,
                             })
