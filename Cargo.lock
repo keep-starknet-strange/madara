@@ -6344,6 +6344,7 @@ dependencies = [
  "mp-block",
  "mp-digest-log",
  "mp-felt",
+ "mp-genesis-config",
  "mp-simulations",
  "mp-transactions",
  "num-bigint",
@@ -6649,7 +6650,7 @@ dependencies = [
 
 [[package]]
 name = "mp-genesis-config"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "blockifier",
  "derive_more",
