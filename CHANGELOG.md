@@ -2,6 +2,10 @@
 
 ## Next release
 
+- fix: Change seliazation of bitvec to &[u8] in merkle tree to avoid memory
+  uninitialized
+- chore: change SCARB config version for foundry CI
+
 ## v0.6.0
 
 - feat(rpc) implemented v0.5.1 missing fields + bumped starknet.rs to match them
@@ -39,6 +43,7 @@
 - chore(data-availability-avail): implement fire and forget, and add ws
   reconnection logic
 - chore: update `polkadot-sdk` to `release-polkadot-v1.3.0`
+- refactor: use `map` in `estimate_fee` to stop computation on error
 
 ## v0.5.0
 

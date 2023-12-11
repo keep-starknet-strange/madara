@@ -905,14 +905,11 @@ where
         let best_block_hash = self.client.info().best_hash;
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
-        let mut transactions = vec![];
-        for tx in request {
-            let tx = tx.try_into().map_err(|e| {
+        let transactions =
+            request.into_iter().map(|tx| tx.try_into()).collect::<Result<Vec<UserTransaction>, _>>().map_err(|e| {
                 error!("Failed to convert BroadcastedTransaction to UserTransaction: {e}");
                 StarknetRpcApiError::InternalServerError
             })?;
-            transactions.push(tx);
-        }
 
         let fee_estimates = self
             .client

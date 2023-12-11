@@ -7,6 +7,7 @@
 use bitvec::order::Msb0;
 use bitvec::prelude::BitVec;
 use bitvec::slice::BitSlice;
+use bitvec::view::BitView;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use starknet_api::stdlib::collections::HashMap;
@@ -287,10 +288,10 @@ impl EdgeNode {
             None => unreachable!("child node not found"),
         };
 
-        let mut temp_path = self.path.clone();
-        temp_path.force_align();
+        let mut bytes = [0u8; 32];
+        bytes.view_bits_mut::<Msb0>()[256 - self.path.len()..].copy_from_bitslice(&self.path);
 
-        let path = Felt252Wrapper::try_from(temp_path.into_vec().as_slice()).unwrap();
+        let path = Felt252Wrapper::try_from(&bytes).unwrap();
         let mut length = [0; 32];
         // Safe as len() is guaranteed to be <= 251
         length[31] = self.path.len() as u8;
