@@ -56,7 +56,7 @@ pub const TRANSFER_SELECTOR_HASH: [u8; 32] = [
 ]; // starknet_keccak(TRANSFER_SELECTOR_NAME.as_bytes()).to_le_bytes();
 
 /// Default implementation of ressource price.
-/// TODO(antiyro): consider replacing it with a proper implementation https://github.com/xJonathanLEI/starknet-rs/blob/fec81d126c58ff3dff6cbfd4b9e714913298e54e/starknet-core/src/types/codegen.rs#L1242C1-L1253C2.
+/// TODO(#1291): consider replacing it with a proper implementation https://github.com/xJonathanLEI/starknet-rs/blob/fec81d126c58ff3dff6cbfd4b9e714913298e54e/starknet-core/src/types/codegen.rs#L1242C1-L1253C2.
 pub struct ResourcePriceWrapper(pub ResourcePrice);
 
 impl Default for ResourcePriceWrapper {
