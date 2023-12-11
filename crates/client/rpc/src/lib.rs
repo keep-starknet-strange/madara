@@ -773,6 +773,7 @@ where
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
         let chain_id = self.chain_id()?;
         let starknet_version = starknet_block.header().protocol_version;
+        // TODO(#1291): l1_gas_price defaulted, get l1_gas_price from block
         let l1_gas_price = ResourcePriceWrapper::default();
 
         let block_hash = starknet_block.header().hash::<H>();
@@ -803,7 +804,6 @@ where
             new_root: starknet_block.header().global_state_root.into(),
             timestamp: starknet_block.header().block_timestamp,
             sequencer_address: Felt252Wrapper::from(starknet_block.header().sequencer_address).into(),
-            // TODO(#1291): l1_gas_price hardcoded, get l1_gas_price from block
             l1_gas_price: l1_gas_price.0,
             starknet_version: starknet_version.to_string(),
         };
@@ -1017,6 +1017,7 @@ where
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
         let block_hash = starknet_block.header().hash::<H>();
         let starknet_version = starknet_block.header().protocol_version;
+        // TODO(#1291): l1_gas_price defaulted, get l1_gas_price from block
         let l1_gas_price = ResourcePriceWrapper::default();
 
         let chain_id = self.chain_id()?;

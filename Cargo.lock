@@ -980,7 +980,7 @@ dependencies = [
 [[package]]
 name = "blockifier"
 version = "0.1.0-rc2"
-source = "git+https://github.com/antiyro/blockifier-kss?branch=no_std-support-7578442#dfaf43ef71780f95328d82dd1ea9c26ba1a1d6ce"
+source = "git+https://github.com/keep-starknet-strange/blockifier?branch=no_std-support-7578442#e7a85edd7078eb25f3f56d82d45be56d617ccc85"
 dependencies = [
  "ark-ff 0.4.2",
  "ark-secp256k1",
@@ -1009,7 +1009,7 @@ dependencies = [
  "sha3",
  "sp-arithmetic 16.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
  "spin 0.9.8",
- "starknet-crypto 0.6.1 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=64ebc36)",
+ "starknet-crypto 0.6.1 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=a35ce22)",
  "starknet_api",
  "strum 0.24.1",
  "strum_macros 0.24.3",
@@ -11960,7 +11960,7 @@ dependencies = [
 [[package]]
 name = "starknet_api"
 version = "0.4.1"
-source = "git+https://github.com/antiyro/starknet-api-kss?branch=no_std-support-dc83f05#a48fe547080a258fd04b5abfbe25541e1ccaa47c"
+source = "git+https://github.com/keep-starknet-strange/starknet-api?branch=no_std-support-dc83f05#60e13594b5d3560ad3a6439c5dc6807e5f425866"
 dependencies = [
  "cairo-lang-casm-contract-class",
  "derive_more",
@@ -11973,7 +11973,7 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_json",
- "starknet-crypto 0.6.1 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=64ebc36)",
+ "starknet-crypto 0.6.1 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=a35ce22)",
  "thiserror-no-std",
 ]
 
