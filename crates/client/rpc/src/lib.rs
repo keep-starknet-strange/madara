@@ -1092,8 +1092,7 @@ where
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
         let old_root = if starknet_block.header().block_number > 0 {
-            let parent_block_hash =
-                Felt252Wrapper::from(starknet_block.header().parent_block_hash).into();
+            let parent_block_hash = Felt252Wrapper::from(starknet_block.header().parent_block_hash).into();
             let substrate_parent_block_hash =
                 self.substrate_block_hash_from_starknet_block(BlockId::Hash(parent_block_hash)).map_err(|e| {
                     error!("'{e}'");
