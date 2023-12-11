@@ -1,6 +1,4 @@
-use mp_felt::Felt252Wrapper;
 use mp_transactions::HandleL1MessageTransaction;
-use parity_scale_codec::Encode;
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError};
 use starknet_api::api_core::Nonce;
@@ -60,7 +58,7 @@ fn should_reject_used_nonce() {
 
         assert!(Starknet::validate_unsigned(tx_source, &call).is_ok());
 
-        L1Messages::<MockRuntime>::insert(Nonce(StarkFelt::from(nonce)), ());
+        L1Messages::<MockRuntime>::mutate(|nonces| nonces.insert(Nonce(StarkFelt::from(nonce))));
 
         assert_eq!(
             Starknet::validate_unsigned(tx_source, &call),

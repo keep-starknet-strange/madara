@@ -62,8 +62,8 @@ mod utils;
 
 #[macro_use]
 pub extern crate alloc;
-extern crate core;
 
+use alloc::collections::BTreeSet;
 use alloc::str::from_utf8_unchecked;
 use alloc::string::String;
 use alloc::vec;
@@ -322,7 +322,7 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::unbounded]
     #[pallet::getter(fn l1_messages)]
-    pub(super) type L1Messages<T: Config> = StorageMap<_, Twox64Concat, Nonce, (), OptionQuery>;
+    pub(super) type L1Messages<T: Config> = StorageValue<_, BTreeSet<Nonce>, ValueQuery>;
 
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
@@ -666,7 +666,7 @@ pub mod pallet {
             // Store infornamtion about message being processed
             // The next instruction executes the message
             // Either successfully  or not
-            L1Messages::<T>::insert(nonce, ());
+            L1Messages::<T>::mutate(|nonces| nonces.insert(nonce));
 
             // Execute
             let tx_execution_infos = transaction
@@ -732,7 +732,7 @@ pub mod pallet {
 
             let transaction = Self::get_call_transaction(call.clone()).map_err(|_| InvalidTransaction::Call)?;
 
-            let tx_priority_info = Self::validate_usigned_tx_nonce(&transaction)?;
+            let tx_priority_info = Self::validate_unsigned_tx_nonce(&transaction)?;
 
             Self::validate_unsigned_tx(&transaction)?;
 
@@ -983,6 +983,7 @@ impl<T: Config> Pallet<T> {
     ///
     /// # Arguments
     ///
+    /// * `tx_hash` - The hash of the transaction being processed
     /// * `call_info` — A ref to the call info structure.
     /// * `next_order` — Next expected message order, has to be 0 for a top level invocation
     ///
@@ -1019,7 +1020,7 @@ impl<T: Config> Pallet<T> {
                 continue;
             }
 
-            // At this point we have iterated over all sequential events and visited all internal calls
+            // At this point we have iterated over all sequential messages and visited all internal calls
             break;
         }
 

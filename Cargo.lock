@@ -6137,7 +6137,6 @@ dependencies = [
  "mp-hashers",
  "mp-program-hash",
  "mp-simulations",
- "mp-snos-output",
  "mp-transactions",
  "pallet-aura",
  "pallet-grandpa",

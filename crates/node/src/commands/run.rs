@@ -168,12 +168,9 @@ fn extract_l1_messages_worker_config(
         return Ok(Some(config));
     }
 
-    match &run_cmd.config_params {
-        L1MessagesParams { provider_url: Some(url), l1_contract_address: Some(address) } => {
-            let config = L1MessagesWorkerConfig::new_from_params(url, address)?;
-            return Ok(Some(config));
-        }
-        _ => {}
+    if let L1MessagesParams { provider_url: Some(url), l1_contract_address: Some(address) } = &run_cmd.config_params {
+        let config = L1MessagesWorkerConfig::new_from_params(url, address)?;
+        return Ok(Some(config));
     }
 
     Ok(None)

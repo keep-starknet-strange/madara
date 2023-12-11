@@ -19,7 +19,7 @@ fn should_ensure_l1_message_not_executed_work_properly() {
 
         assert!(Starknet::ensure_l1_message_not_executed(&nonce).is_ok());
 
-        L1Messages::<MockRuntime>::insert(nonce, ());
+        L1Messages::<MockRuntime>::mutate(|nonces| nonces.insert(nonce));
 
         assert_eq!(Starknet::ensure_l1_message_not_executed(&nonce), Err(InvalidTransaction::Stale));
     });
@@ -40,7 +40,7 @@ fn should_accept_unused_nonce() {
 
         let tx = UserAndL1HandlerTransaction::L1Handler(transaction, Fee(100));
 
-        assert_matches!(Starknet::validate_usigned_tx_nonce(&tx), Ok(TxPriorityInfo::L1Handler));
+        assert_matches!(Starknet::validate_unsigned_tx_nonce(&tx), Ok(TxPriorityInfo::L1Handler));
     });
 }
 
@@ -59,9 +59,9 @@ fn should_reject_used_nonce() {
 
         let tx = UserAndL1HandlerTransaction::L1Handler(transaction, Fee(100));
 
-        L1Messages::<MockRuntime>::insert(Nonce(StarkFelt::from(nonce)), ());
+        L1Messages::<MockRuntime>::mutate(|nonces| nonces.insert(Nonce(nonce.into())));
 
-        assert_matches!(Starknet::validate_usigned_tx_nonce(&tx), Err(InvalidTransaction::Stale));
+        assert_matches!(Starknet::validate_unsigned_tx_nonce(&tx), Err(InvalidTransaction::Stale));
     });
 }
 

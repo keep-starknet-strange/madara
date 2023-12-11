@@ -63,7 +63,7 @@ pub enum TxPriorityInfo {
 }
 
 impl<T: Config> Pallet<T> {
-    pub fn validate_usigned_tx_nonce(
+    pub fn validate_unsigned_tx_nonce(
         transaction: &UserAndL1HandlerTransaction,
     ) -> Result<TxPriorityInfo, InvalidTransaction> {
         match transaction {
@@ -150,6 +150,6 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn ensure_l1_message_not_executed(nonce: &Nonce) -> Result<(), InvalidTransaction> {
-        if L1Messages::<T>::contains_key(nonce) { Err(InvalidTransaction::Stale) } else { Ok(()) }
+        if L1Messages::<T>::get().contains(nonce) { Err(InvalidTransaction::Stale) } else { Ok(()) }
     }
 }
