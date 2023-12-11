@@ -93,7 +93,7 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
 
     fn increment_nonce(&mut self, contract_address: ContractAddress) -> StateResult<()> {
         let current_nonce = Pallet::<T>::nonce(contract_address);
-        let current_nonce: FieldElement = current_nonce.0.into();
+        let current_nonce: FieldElement = Felt252Wrapper::from(current_nonce.0).into();
         let new_nonce: Nonce = Felt252Wrapper(current_nonce + FieldElement::ONE).into();
 
         crate::Nonces::<T>::insert(contract_address, new_nonce);

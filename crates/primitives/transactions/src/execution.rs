@@ -70,8 +70,6 @@ pub struct ExecutionResourcesWrapper(pub CoreExecutionResources);
 impl Default for ExecutionResourcesWrapper {
     fn default() -> Self {
         ExecutionResourcesWrapper(CoreExecutionResources {
-            // Assuming CoreExecutionResources has these fields publicly accessible
-            // and assuming it does not implement Default itself
             steps: 0,
             memory_holes: None,
             range_check_builtin_applications: 0,
