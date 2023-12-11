@@ -2,6 +2,8 @@
 
 ## Next release
 
+- chore: update the ci for Starknet Foundry compatibility tests
+
 ## v0.6.0
 
 - chore: release v0.6.0
