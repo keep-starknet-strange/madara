@@ -55,11 +55,11 @@ pallet-starknet-runtime-api = { workspace = true }
 # Madara Primitives
 mp-block = { workspace = true }
 mp-chain-id = { workspace = true }
-mp-program-hash = { workspace = true }
 mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
 mp-simulations = { workspace = true }
 mp-snos-output = { workspace = true }
+mp-program-hash = { workspace = true }
 mp-transactions = { workspace = true }
 # Starknet dependencies
 blockifier = { workspace = true }

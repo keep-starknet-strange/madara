@@ -19,8 +19,8 @@
 - feat(program-hash): add new pallete constant for Starknet OS progam hash;
   expose runtime getter method; add dedicated crate to manage versions
 - feat(runtime): expose fee token address getter method
-- feat(settlement): run client thread responsible for pushing state updates
-  and messaging on Ethereum
+- feat(settlement): run client thread responsible for pushing state updates and
+  messaging on Ethereum
 - feat(settlement): starknet core contract tests with anvil sandbox
 - fix(rpc-test): incorrect node url
 - feat(settlement): e2e test with Madara node settling on Ethereum contract

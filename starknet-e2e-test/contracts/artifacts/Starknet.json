@@ -2038,9 +2038,7 @@
     "absolutePath": "src/StarknetValidium.sol",
     "id": 31651,
     "exportedSymbols": {
-      "Starknet": [
-        31650
-      ]
+      "Starknet": [31650]
     },
     "nodeType": "SourceUnit",
     "src": "40:7828:37",
@@ -2050,22 +2048,14 @@
         "nodeType": "PragmaDirective",
         "src": "40:24:37",
         "nodes": [],
-        "literals": [
-          "solidity",
-          "^",
-          "0.6",
-          ".12"
-        ]
+        "literals": ["solidity", "^", "0.6", ".12"]
       },
       {
         "id": 31174,
         "nodeType": "PragmaDirective",
         "src": "65:33:37",
         "nodes": [],
-        "literals": [
-          "experimental",
-          "ABIEncoderV2"
-        ]
+        "literals": ["experimental", "ABIEncoderV2"]
       },
       {
         "id": 31175,
@@ -2838,10 +2828,7 @@
                           "id": 31255,
                           "name": "programHash",
                           "nodeType": "Identifier",
-                          "overloadedDeclarations": [
-                            31312,
-                            31325
-                          ],
+                          "overloadedDeclarations": [31312, 31325],
                           "referencedDeclaration": 31312,
                           "src": "2168:11:37",
                           "typeDescriptions": {
@@ -2951,10 +2938,7 @@
                       "id": 31260,
                       "name": "programHash",
                       "nodeType": "Identifier",
-                      "overloadedDeclarations": [
-                        31312,
-                        31325
-                      ],
+                      "overloadedDeclarations": [31312, 31325],
                       "referencedDeclaration": 31325,
                       "src": "2208:11:37",
                       "typeDescriptions": {
@@ -3127,10 +3111,7 @@
                           "id": 31277,
                           "name": "configHash",
                           "nodeType": "Identifier",
-                          "overloadedDeclarations": [
-                            31349,
-                            31360
-                          ],
+                          "overloadedDeclarations": [31349, 31360],
                           "referencedDeclaration": 31360,
                           "src": "2376:10:37",
                           "typeDescriptions": {
@@ -3240,10 +3221,7 @@
                       "id": 31282,
                       "name": "configHash",
                       "nodeType": "Identifier",
-                      "overloadedDeclarations": [
-                        31349,
-                        31360
-                      ],
+                      "overloadedDeclarations": [31349, 31360],
                       "referencedDeclaration": 31349,
                       "src": "2414:10:37",
                       "typeDescriptions": {
@@ -3403,10 +3381,7 @@
                       "id": 31296,
                       "name": "messageCancellationDelay",
                       "nodeType": "Identifier",
-                      "overloadedDeclarations": [
-                        1836,
-                        1849
-                      ],
+                      "overloadedDeclarations": [1836, 1849],
                       "referencedDeclaration": 1849,
                       "src": "2588:24:37",
                       "typeDescriptions": {
@@ -4413,9 +4388,7 @@
               "nodes": [],
               "statements": [
                 {
-                  "assignments": [
-                    31379
-                  ],
+                  "assignments": [31379],
                   "declarations": [
                     {
                       "constant": false,
@@ -4684,10 +4657,7 @@
                         "id": 31395,
                         "name": "programHash",
                         "nodeType": "Identifier",
-                        "overloadedDeclarations": [
-                          31312,
-                          31325
-                        ],
+                        "overloadedDeclarations": [31312, 31325],
                         "referencedDeclaration": 31312,
                         "src": "4040:11:37",
                         "typeDescriptions": {
@@ -4743,9 +4713,7 @@
                 }
               ]
             },
-            "baseFunctions": [
-              499
-            ],
+            "baseFunctions": [499],
             "documentation": null,
             "implemented": true,
             "kind": "function",
@@ -4840,9 +4808,7 @@
                 }
               ]
             },
-            "baseFunctions": [
-              494
-            ],
+            "baseFunctions": [494],
             "documentation": null,
             "implemented": true,
             "kind": "function",
@@ -5051,10 +5017,7 @@
                       "id": 31416,
                       "name": "require",
                       "nodeType": "Identifier",
-                      "overloadedDeclarations": [
-                        -18,
-                        -18
-                      ],
+                      "overloadedDeclarations": [-18, -18],
                       "referencedDeclaration": -18,
                       "src": "4252:7:37",
                       "typeDescriptions": {
@@ -5082,9 +5045,7 @@
                   "src": "4252:56:37"
                 },
                 {
-                  "assignments": [
-                    31427
-                  ],
+                  "assignments": [31427],
                   "declarations": [
                     {
                       "constant": false,
@@ -5350,10 +5311,7 @@
                       "id": 31438,
                       "name": "require",
                       "nodeType": "Identifier",
-                      "overloadedDeclarations": [
-                        -18,
-                        -18
-                      ],
+                      "overloadedDeclarations": [-18, -18],
                       "referencedDeclaration": -18,
                       "src": "4383:7:37",
                       "typeDescriptions": {
@@ -5382,9 +5340,7 @@
                 }
               ]
             },
-            "baseFunctions": [
-              504
-            ],
+            "baseFunctions": [504],
             "documentation": null,
             "implemented": true,
             "kind": "function",
@@ -5454,9 +5410,7 @@
               "nodes": [],
               "statements": []
             },
-            "baseFunctions": [
-              509
-            ],
+            "baseFunctions": [509],
             "documentation": null,
             "implemented": true,
             "kind": "function",
@@ -5526,12 +5480,7 @@
               "nodes": [],
               "statements": [
                 {
-                  "assignments": [
-                    31460,
-                    31462,
-                    31464,
-                    31466
-                  ],
+                  "assignments": [31460, 31462, 31464, 31466],
                   "declarations": [
                     {
                       "constant": false,
@@ -5869,10 +5818,7 @@
                       "id": 31481,
                       "name": "programHash",
                       "nodeType": "Identifier",
-                      "overloadedDeclarations": [
-                        31312,
-                        31325
-                      ],
+                      "overloadedDeclarations": [31312, 31325],
                       "referencedDeclaration": 31325,
                       "src": "4867:11:37",
                       "typeDescriptions": {
@@ -6071,10 +6017,7 @@
                       "id": 31495,
                       "name": "configHash",
                       "nodeType": "Identifier",
-                      "overloadedDeclarations": [
-                        31349,
-                        31360
-                      ],
+                      "overloadedDeclarations": [31349, 31360],
                       "referencedDeclaration": 31349,
                       "src": "4977:10:37",
                       "typeDescriptions": {
@@ -6134,10 +6077,7 @@
                       "id": 31499,
                       "name": "messageCancellationDelay",
                       "nodeType": "Identifier",
-                      "overloadedDeclarations": [
-                        1836,
-                        1849
-                      ],
+                      "overloadedDeclarations": [1836, 1849],
                       "referencedDeclaration": 1849,
                       "src": "5010:24:37",
                       "typeDescriptions": {
@@ -6166,9 +6106,7 @@
                 }
               ]
             },
-            "baseFunctions": [
-              514
-            ],
+            "baseFunctions": [514],
             "documentation": null,
             "implemented": true,
             "kind": "function",
@@ -6263,9 +6201,7 @@
                 }
               ]
             },
-            "baseFunctions": [
-              532
-            ],
+            "baseFunctions": [532],
             "documentation": {
               "id": 31505,
               "nodeType": "StructuredDocumentation",
@@ -6713,9 +6649,7 @@
               "nodes": [],
               "statements": [
                 {
-                  "assignments": [
-                    31557
-                  ],
+                  "assignments": [31557],
                   "declarations": [
                     {
                       "constant": false,
@@ -6891,10 +6825,7 @@
                             "id": 31569,
                             "name": "configHash",
                             "nodeType": "Identifier",
-                            "overloadedDeclarations": [
-                              31349,
-                              31360
-                            ],
+                            "overloadedDeclarations": [31349, 31360],
                             "referencedDeclaration": 31360,
                             "src": "6528:10:37",
                             "typeDescriptions": {
@@ -7014,10 +6945,7 @@
                       "id": 31568,
                       "name": "require",
                       "nodeType": "Identifier",
-                      "overloadedDeclarations": [
-                        -18,
-                        -18
-                      ],
+                      "overloadedDeclarations": [-18, -18],
                       "referencedDeclaration": -18,
                       "src": "6507:7:37",
                       "typeDescriptions": {
@@ -7134,9 +7062,7 @@
                   "src": "6648:29:37"
                 },
                 {
-                  "assignments": [
-                    31586
-                  ],
+                  "assignments": [31586],
                   "declarations": [
                     {
                       "constant": false,
@@ -7666,10 +7592,7 @@
                       "id": 31614,
                       "name": "require",
                       "nodeType": "Identifier",
-                      "overloadedDeclarations": [
-                        -18,
-                        -18
-                      ],
+                      "overloadedDeclarations": [-18, -18],
                       "referencedDeclaration": -18,
                       "src": "7371:7:37",
                       "typeDescriptions": {
@@ -7697,9 +7620,7 @@
                   "src": "7371:73:37"
                 },
                 {
-                  "assignments": [
-                    31625
-                  ],
+                  "assignments": [31625],
                   "declarations": [
                     {
                       "constant": false,
@@ -8039,10 +7960,7 @@
                       "id": 31638,
                       "name": "require",
                       "nodeType": "Identifier",
-                      "overloadedDeclarations": [
-                        -18,
-                        -18
-                      ],
+                      "overloadedDeclarations": [-18, -18],
                       "referencedDeclaration": -18,
                       "src": "7775:7:37",
                       "typeDescriptions": {
@@ -8290,40 +8208,15 @@
           }
         ],
         "contractDependencies": [
-          266,
-          319,
-          456,
-          486,
-          515,
-          533,
-          555,
-          603,
-          773,
-          1174,
-          1249,
-          1725,
-          2200,
+          266, 319, 456, 486, 515, 533, 555, 603, 773, 1174, 1249, 1725, 2200,
           2224
         ],
         "contractKind": "contract",
         "documentation": null,
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          31650,
-          773,
-          515,
-          486,
-          2224,
-          456,
-          603,
-          319,
-          1725,
-          266,
-          555,
-          2200,
-          1174,
-          1249,
-          533
+          31650, 773, 515, 486, 2224, 456, 603, 319, 1725, 266, 555, 2200, 1174,
+          1249, 533
         ],
         "name": "Starknet",
         "scope": 31651

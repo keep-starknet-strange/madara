@@ -93,9 +93,7 @@
     "absolutePath": "src/UnsafeProxy.sol",
     "id": 28,
     "exportedSymbols": {
-      "UnsafeProxy": [
-        27
-      ]
+      "UnsafeProxy": [27]
     },
     "nodeType": "SourceUnit",
     "src": "0:571:0",
@@ -253,9 +251,7 @@
               "nodes": [],
               "statements": [
                 {
-                  "assignments": [
-                    16
-                  ],
+                  "assignments": [16],
                   "declarations": [
                     {
                       "constant": false,
@@ -303,9 +299,7 @@
                   "src": "163:25:0"
                 },
                 {
-                  "assignments": [
-                    20
-                  ],
+                  "assignments": [20],
                   "declarations": [
                     {
                       "constant": false,
@@ -696,9 +690,7 @@
         "contractDependencies": [],
         "contractKind": "contract",
         "fullyImplemented": true,
-        "linearizedBaseContracts": [
-          27
-        ],
+        "linearizedBaseContracts": [27],
         "name": "UnsafeProxy",
         "nameLocation": "9:11:0",
         "scope": 28,
