@@ -12,20 +12,25 @@ use crate::cli::Cli;
 use crate::service;
 
 #[derive(Debug, Clone, clap::Args)]
+#[group(multiple = true)]
 pub struct L1MessagesParams {
     /// Ethereum Provider (Node) Url
     #[clap(
         long,
         value_hint=clap::ValueHint::Url,
+        conflicts_with="l1_messages_config",
+        requires="l1_contract_address",
     )]
-    pub provider_url: String,
+    pub provider_url: Option<String>,
 
     /// L1 Contract Address
     #[clap(
         long,
         value_hint=clap::ValueHint::Other,
+        conflicts_with="l1_messages_config",
+        requires="provider_url",
     )]
-    pub l1_contract_address: String,
+    pub l1_contract_address: Option<String>,
 }
 
 #[derive(Debug, Clone, clap::Args)]
@@ -39,7 +44,7 @@ pub struct L1Messages {
     pub l1_messages_config: Option<PathBuf>,
 
     #[clap(flatten)]
-    pub config_params: Option<L1MessagesParams>,
+    pub config_params: L1MessagesParams,
 }
 
 /// Available Sealing methods.
@@ -160,14 +165,18 @@ fn extract_l1_messages_worker_config(
 ) -> std::result::Result<Option<L1MessagesWorkerConfig>, L1MessagesWorkerConfigError> {
     if let Some(ref config_path) = run_cmd.l1_messages_config {
         let config = L1MessagesWorkerConfig::new_from_file(config_path)?;
-        Ok(Some(config))
-    } else if let Some(ref config_params) = run_cmd.config_params {
-        let config =
-            L1MessagesWorkerConfig::new_from_params(&config_params.provider_url, &config_params.l1_contract_address)?;
-        Ok(Some(config))
-    } else {
-        Ok(None)
+        return Ok(Some(config));
     }
+
+    match &run_cmd.config_params {
+        L1MessagesParams { provider_url: Some(url), l1_contract_address: Some(address) } => {
+            let config = L1MessagesWorkerConfig::new_from_params(url, address)?;
+            return Ok(Some(config));
+        }
+        _ => {}
+    }
+
+    Ok(None)
 }
 
 fn override_dev_environment(cmd: &mut ExtendedRunCmd) {
