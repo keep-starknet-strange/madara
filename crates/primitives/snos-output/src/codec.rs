@@ -135,6 +135,8 @@ impl SnosCodec for StarknetOsOutput {
             config_hash: StarkFelt::decode(input)?,
             messages_to_l1: Vec::<MessageL2ToL1>::decode(input)?,
             messages_to_l2: Vec::<MessageL1ToL2>::decode(input)?,
+            state_updates: Vec::<StarkFelt>::decode(input)?,
+            contract_class_diff: Vec::<StarkFelt>::decode(input)?,
         })
     }
 }

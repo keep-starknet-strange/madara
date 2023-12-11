@@ -273,6 +273,8 @@ where
             config_hash,
             messages_to_l1,
             messages_to_l2,
+            // TODO: get values for state_updates and contract_class_diff too
+            ..Default::default()
         };
         log::trace!("{:#?}", program_output);
 

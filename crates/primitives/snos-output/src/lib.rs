@@ -36,6 +36,10 @@ pub struct StarknetOsOutput {
     pub messages_to_l1: Vec<MessageL2ToL1>,
     /// List of messages from L1 handled in this block
     pub messages_to_l2: Vec<MessageL1ToL2>,
+    /// List of the storage updates.
+    pub state_updates: Vec<StarkFelt>,
+    /// List of the newly declared contract classes.
+    pub contract_class_diff: Vec<StarkFelt>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
