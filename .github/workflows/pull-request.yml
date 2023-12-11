@@ -50,7 +50,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: madara_commands
     env:
-      SNCAST_VERSION: "0.8.3"
+      SNCAST_VERSION: "0.12.0"
+      SCARB_VERSION: "2.3.1"
     steps:
       - uses: keep-starknet-strange/starknet-foundry-compatibility-tests@main
 
