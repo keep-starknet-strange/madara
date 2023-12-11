@@ -2,6 +2,8 @@
 
 ## Next release
 
+- chore: change SCARB config version for foundry CI
+
 ## v0.6.0
 
 - chore: release v0.6.0
