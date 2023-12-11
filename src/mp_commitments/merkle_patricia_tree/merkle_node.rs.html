@@ -300,6 +300,7 @@
 <a href="#300" id="300">300</a>
 <a href="#301" id="301">301</a>
 <a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Contains constructs for describing the nodes in a Binary Merkle Patricia Tree
 //! used by Starknet.
 //!
@@ -309,6 +310,7 @@
 </span><span class="kw">use </span>bitvec::order::Msb0;
 <span class="kw">use </span>bitvec::prelude::BitVec;
 <span class="kw">use </span>bitvec::slice::BitSlice;
+<span class="kw">use </span>bitvec::view::BitView;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_hashers::HasherT;
 <span class="kw">use </span>starknet_api::stdlib::collections::HashMap;
@@ -589,10 +591,10 @@
             <span class="prelude-val">None </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;child node not found&quot;</span>),
         };
 
-        <span class="kw">let </span><span class="kw-2">mut </span>temp_path = <span class="self">self</span>.path.clone();
-        temp_path.force_align();
+        <span class="kw">let </span><span class="kw-2">mut </span>bytes = [<span class="number">0u8</span>; <span class="number">32</span>];
+        bytes.view_bits_mut::&lt;Msb0&gt;()[<span class="number">256 </span>- <span class="self">self</span>.path.len()..].copy_from_bitslice(<span class="kw-2">&amp;</span><span class="self">self</span>.path);
 
-        <span class="kw">let </span>path = Felt252Wrapper::try_from(temp_path.into_vec().as_slice()).unwrap();
+        <span class="kw">let </span>path = Felt252Wrapper::try_from(<span class="kw-2">&amp;</span>bytes).unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>length = [<span class="number">0</span>; <span class="number">32</span>];
         <span class="comment">// Safe as len() is guaranteed to be &lt;= 251
         </span>length[<span class="number">31</span>] = <span class="self">self</span>.path.len() <span class="kw">as </span>u8;
