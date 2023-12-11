@@ -61,10 +61,7 @@ pub struct ResourcePriceWrapper(pub ResourcePrice);
 
 impl Default for ResourcePriceWrapper {
     fn default() -> Self {
-        ResourcePriceWrapper(ResourcePrice {
-            price_in_strk: None,
-            price_in_wei: 0,
-        })
+        ResourcePriceWrapper(ResourcePrice { price_in_strk: Some(0u64), price_in_wei: 0 })
     }
 }
 

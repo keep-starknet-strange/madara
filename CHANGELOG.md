@@ -4,6 +4,7 @@
 
 ## v0.6.0
 
+- feat(rpc) implemented v0.5.1 missing fields + bumped starknet.rs to match them
 - chore: release v0.6.0
 - refacto: substrate/starknet names in rpc library
 - feat(rpc): Added starknet_getTransactionStatus and removed

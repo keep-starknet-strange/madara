@@ -29,6 +29,7 @@ use starknet_api::api_core::{ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, Fee, TransactionSignature, TransactionVersion};
+use starknet_core::types::ExecutionResources as CoreExecutionResources;
 
 use super::SIMULATE_TX_VERSION_OFFSET;
 
@@ -61,6 +62,26 @@ pub trait SimulateTxVersionOffset {
 impl SimulateTxVersionOffset for TransactionVersion {
     fn apply_simulate_tx_version_offset(&self) -> TransactionVersion {
         Felt252Wrapper(Felt252Wrapper::from(self.0).0 + SIMULATE_TX_VERSION_OFFSET).into()
+    }
+}
+
+pub struct ExecutionResourcesWrapper(pub CoreExecutionResources);
+
+impl Default for ExecutionResourcesWrapper {
+    fn default() -> Self {
+        ExecutionResourcesWrapper(CoreExecutionResources {
+            // Assuming CoreExecutionResources has these fields publicly accessible
+            // and assuming it does not implement Default itself
+            steps: 0,
+            memory_holes: None,
+            range_check_builtin_applications: 0,
+            pedersen_builtin_applications: 0,
+            poseidon_builtin_applications: 0,
+            ec_op_builtin_applications: 0,
+            ecdsa_builtin_applications: 0,
+            bitwise_builtin_applications: 0,
+            keccak_builtin_applications: 0,
+        })
     }
 }
 

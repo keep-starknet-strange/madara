@@ -19,9 +19,11 @@ use mc_db::Backend as MadaraBackend;
 pub use mc_rpc_core::utils::*;
 pub use mc_rpc_core::{Felt, StarknetReadRpcApiServer, StarknetWriteRpcApiServer};
 use mc_storage::OverrideHandle;
+use mp_fee::ResourcePriceWrapper;
 use mp_felt::{Felt252Wrapper, Felt252WrapperError};
 use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
+use mp_transactions::execution::ExecutionResourcesWrapper;
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
 use mp_transactions::{TransactionStatus, UserTransaction};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
@@ -38,15 +40,15 @@ use sp_core::H256;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use sp_runtime::transaction_validity::InvalidTransaction;
 use sp_runtime::DispatchError;
-use starknet_api::transaction::{Calldata, Fee};
+use starknet_api::transaction::Calldata;
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
     DeclareTransactionReceipt, DeclareTransactionResult, DeployAccountTransactionReceipt,
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, ExecutionResult, FeeEstimate, FieldElement,
-    FunctionCall, InvokeTransactionReceipt, InvokeTransactionResult, L1HandlerTransactionReceipt,
+    FunctionCall, Hash256, InvokeTransactionReceipt, InvokeTransactionResult, L1HandlerTransactionReceipt,
     MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateDiff, StateUpdate,
-    SyncStatus, SyncStatusType, Transaction, TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt, ExecutionResources
+    SyncStatus, SyncStatusType, Transaction, TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
 };
 
 use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
@@ -771,6 +773,7 @@ where
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
         let chain_id = self.chain_id()?;
         let starknet_version = starknet_block.header().protocol_version;
+        let l1_gas_price = ResourcePriceWrapper::default();
 
         let block_hash = starknet_block.header().hash::<H>();
 
@@ -800,7 +803,8 @@ where
             new_root: starknet_block.header().global_state_root.into(),
             timestamp: starknet_block.header().block_timestamp,
             sequencer_address: Felt252Wrapper::from(starknet_block.header().sequencer_address).into(),
-            l1_gas_price: ResourcePriceWrapper::default(),
+            // TODO(#1291): l1_gas_price hardcoded, get l1_gas_price from block
+            l1_gas_price: l1_gas_price.0,
             starknet_version: starknet_version.to_string(),
         };
 
@@ -1015,10 +1019,8 @@ where
 
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
         let block_hash = starknet_block.header().hash::<H>();
-<<<<<<< HEAD
         let starknet_version = starknet_block.header().protocol_version;
-=======
->>>>>>> 7092047c0df4a47f12adc8fc444e000345053c40
+        let l1_gas_price = ResourcePriceWrapper::default();
 
         let chain_id = self.chain_id()?;
         let chain_id = Felt252Wrapper(chain_id.0);
@@ -1058,7 +1060,7 @@ where
             timestamp: starknet_block.header().block_timestamp,
             sequencer_address: Felt252Wrapper::from(starknet_block.header().sequencer_address).into(),
             transactions,
-            l1_gas_price: ResourcePrice::default(),
+            l1_gas_price: l1_gas_price.0,
             starknet_version: starknet_version.to_string(),
         };
 
@@ -1397,6 +1399,12 @@ where
             }
         };
 
+        // TODO(#1291): compute execution_resources correctly to the receipt
+        let execution_resources = ExecutionResourcesWrapper::default();
+
+        // TODO(#1291): compute message hash correctly to L1HandlerTransactionReceipt
+        let message_hash: Hash256 = Hash256::from_felt(&FieldElement::default());
+
         fn event_conversion(event: starknet_api::transaction::Event) -> starknet_core::types::Event {
             starknet_core::types::Event {
                 from_address: Felt252Wrapper::from(event.from_address).0,
@@ -1434,7 +1442,7 @@ where
                 messages_sent: Default::default(),
                 events: events_converted,
                 execution_result,
-                execution_resources: ExecutionResources::default(),
+                execution_resources: execution_resources.0,
             }),
             mp_transactions::Transaction::DeployAccount(tx) => {
                 TransactionReceipt::DeployAccount(DeployAccountTransactionReceipt {
@@ -1447,7 +1455,7 @@ where
                     events: events_converted,
                     contract_address: tx.get_account_address(),
                     execution_result,
-                    execution_resources: ExecutionResources::default(),
+                    execution_resources: execution_resources.0,
                 })
             }
             mp_transactions::Transaction::Invoke(_) => TransactionReceipt::Invoke(InvokeTransactionReceipt {
@@ -1459,10 +1467,10 @@ where
                 messages_sent: Default::default(),
                 events: events_converted,
                 execution_result,
-                execution_resources: ExecutionResources::default(),
+                execution_resources: execution_resources.0,
             }),
             mp_transactions::Transaction::L1Handler(_) => TransactionReceipt::L1Handler(L1HandlerTransactionReceipt {
-                message_hash: Felt252Wrapper::default(),
+                message_hash,
                 transaction_hash,
                 actual_fee,
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
@@ -1471,7 +1479,7 @@ where
                 messages_sent: Default::default(),
                 events: events_converted,
                 execution_result,
-                execution_resources: ExecutionResources::default(),
+                execution_resources: execution_resources.0,
             }),
         };
 

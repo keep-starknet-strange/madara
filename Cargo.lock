@@ -6282,6 +6282,7 @@ dependencies = [
  "mc-rpc-core",
  "mc-storage",
  "mp-block",
+ "mp-fee",
  "mp-felt",
  "mp-hashers",
  "mp-transactions",
