@@ -21,6 +21,8 @@ starknet-crypto = { workspace = true }
 starknet-ff = { workspace = true }
 starknet-providers = { workspace = true }
 starknet-signers = { workspace = true }
+ethers = "2.0.7"
+starknet-rpc-test = { path = "../starknet-rpc-test" }
 thiserror = { workspace = true }
 tokio = { version = "1.34.0", features = ["rt", "macros", "parking_lot"] }
 url = "2.4.1"
@@ -29,5 +31,5 @@ url = "2.4.1"
 mc-data-availability = { workspace = true }
 
 [[test]]
-name = "da_state_diifs"
-path = "state_diifs.rs"
+name = "da_state_diffs"
+path = "state_diffs.rs"
