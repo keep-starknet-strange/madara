@@ -2,18 +2,16 @@
 
 ## Reporting a Vulnerability
 
-If there are any vulnerabilities in **Madara**, don't hesitate to _report them_.
+If you discover any vulnerabilities in **Madara**, please don't hesitate to _report them_.
 
-1. Use any of the
-   [private contact addresses](https://github.com/keep-starknet-strange/madara#support).
-2. Describe the vulnerability.
+### Reporting Process:
 
-   If you have a fix, that is most welcome -- please attach or summarize it in
-   your message!
+1. Use any of the [private contact addresses](https://github.com/keep-starknet-strange/madara#support).
+2. Clearly describe the vulnerability.
+   
+   If you have a fix, feel free to attach or summarize it in your message!
 
-3. We will evaluate the vulnerability and, if necessary, release a fix or
-   mitigating steps to address it. We will contact you to let you know the
-   outcome, and will credit you in the report.
+3. We will assess the vulnerability and, if necessary, release a fix or provide mitigating steps. Upon resolution, we will contact you to communicate the outcome and give due credit in the report.
 
    Please **do not disclose the vulnerability publicly** until a fix is
    released!
