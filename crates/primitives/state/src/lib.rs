@@ -32,32 +32,6 @@ pub trait StateChanges {
     ) -> (UpdatedContractsCount, UpdatedStorageVarsCount, DeclaredClassesCount, DeclaredCompiledClassesCount);
 }
 
-/// Contains the blockifier state configuration for disabling transaction fee
-/// and nonce validation.
-/// The [`StateConfigProvider`] trait allows access to the flags in the
-/// [`BlockifierStateAdapter`] trait.
-pub struct StateConfig {
-    pub disable_transaction_fee: bool,
-    pub disable_nonce_validation: bool,
-}
-
-/// This trait allows to get the nonce and fee simulation flags from the state.
-pub trait StateConfigProvider {
-    /// This function reads the DisableTransactionFee from the pallet and returns a boolean
-    ///
-    /// # Returns
-    ///
-    /// * `bool` - Is the fee disabled
-    fn is_transaction_fee_disabled(&self) -> bool;
-
-    /// This function reads the DisableNonceValidation from the pallet and returns a boolean
-    ///
-    /// # Returns
-    ///
-    /// * `bool` - Is the nonce validation disabled
-    fn is_nonce_validation_disabled(&self) -> bool;
-}
-
 /// A simple implementation of `StateReader` using `HashMap`s as storage.
 #[derive(Debug, Default)]
 pub struct DictStateReader {

@@ -42,6 +42,8 @@ use blockifier::transaction::objects::TransactionExecutionResult;
 pub use pallet::*;
 /// An adapter for the blockifier state related traits
 pub mod blockifier_state_adapter;
+/// The implementation of the execution configuration.
+pub mod execution_config;
 #[cfg(feature = "std")]
 pub mod genesis_loader;
 /// The implementation of the message type.
@@ -105,6 +107,7 @@ use starknet_api::transaction::TransactionHash;
 use starknet_crypto::FieldElement;
 
 use crate::alloc::string::ToString;
+use crate::execution_config::RuntimeExecutionConfigBuilder;
 use crate::types::StorageSlot;
 use crate::utils::{convert_call_info_to_execute_invocation, execute_txs_and_rollback};
 
@@ -502,7 +505,11 @@ pub mod pallet {
 
             // Execute
             let tx_execution_infos = transaction
-                .execute(&mut BlockifierStateAdapter::<T>::default(), &Self::get_block_context(), false, false, false)
+                .execute(
+                    &mut BlockifierStateAdapter::<T>::default(),
+                    &Self::get_block_context(),
+                    &RuntimeExecutionConfigBuilder::default().build::<T>(),
+                )
                 .map_err(|e| {
                     log::error!("failed to execute invoke tx: {:?}", e);
                     Error::<T>::TransactionExecutionFailed
@@ -560,7 +567,11 @@ pub mod pallet {
 
             // Execute
             let tx_execution_infos = transaction
-                .execute(&mut BlockifierStateAdapter::<T>::default(), &Self::get_block_context(), false, false, false)
+                .execute(
+                    &mut BlockifierStateAdapter::<T>::default(),
+                    &Self::get_block_context(),
+                    &RuntimeExecutionConfigBuilder::default().build::<T>(),
+                )
                 .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
             let tx_hash = transaction.tx_hash();
@@ -605,7 +616,11 @@ pub mod pallet {
 
             // Execute
             let tx_execution_infos = transaction
-                .execute(&mut BlockifierStateAdapter::<T>::default(), &Self::get_block_context(), false, false, false)
+                .execute(
+                    &mut BlockifierStateAdapter::<T>::default(),
+                    &Self::get_block_context(),
+                    &RuntimeExecutionConfigBuilder::default().build::<T>(),
+                )
                 .map_err(|e| {
                     log::error!("failed to deploy accout: {:?}", e);
                     Error::<T>::TransactionExecutionFailed
@@ -656,7 +671,11 @@ pub mod pallet {
 
             // Execute
             let tx_execution_infos = transaction
-                .execute(&mut BlockifierStateAdapter::<T>::default(), &Self::get_block_context(), false, false, false)
+                .execute(
+                    &mut BlockifierStateAdapter::<T>::default(),
+                    &Self::get_block_context(),
+                    &RuntimeExecutionConfigBuilder::default().build::<T>(),
+                )
                 .map_err(|e| {
                     log::error!("Failed to consume l1 message: {}", e);
                     Error::<T>::TransactionExecutionFailed
@@ -1077,9 +1096,13 @@ impl<T: Config> Pallet<T> {
     pub fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
         let chain_id = Self::chain_id();
 
-        // is_query is true so disable_fee_charge could be true or false
-        let execution_results =
-            execute_txs_and_rollback::<T>(&transactions, &Self::get_block_context(), chain_id, true, false, false)?;
+        // is_query is true so disable_transaction_fee could be true or false
+        let execution_results = execute_txs_and_rollback::<T>(
+            &transactions,
+            &Self::get_block_context(),
+            chain_id,
+            &RuntimeExecutionConfigBuilder::default().with_query_mode().build::<T>(),
+        )?;
 
         let mut results = vec![];
         for res in execution_results {
@@ -1107,16 +1130,19 @@ impl<T: Config> Pallet<T> {
     ) -> Result<Vec<SimulatedTransaction>, DispatchError> {
         let chain_id = Self::chain_id();
 
-        let disable_fee_charge = simulation_flags.contains(&SimulationFlag::SkipFeeCharge);
-        let disable_validation = simulation_flags.contains(&SimulationFlag::SkipValidate);
+        let mut execution_config_builder = RuntimeExecutionConfigBuilder::default();
+        if simulation_flags.contains(&SimulationFlag::SkipFeeCharge) {
+            execution_config_builder = execution_config_builder.with_fee_charge_disabled();
+        }
+        if simulation_flags.contains(&SimulationFlag::SkipValidate) {
+            execution_config_builder = execution_config_builder.with_validation_disabled();
+        }
 
         let execution_results = execute_txs_and_rollback::<T>(
             &transactions,
             &Self::get_block_context(),
             chain_id,
-            false,
-            disable_validation,
-            disable_fee_charge,
+            &execution_config_builder.build::<T>(),
         )?;
 
         fn get_function_invocation(

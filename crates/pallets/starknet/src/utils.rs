@@ -7,7 +7,7 @@ use blockifier::transaction::objects::{TransactionExecutionInfo, TransactionExec
 use frame_support::storage;
 use mp_felt::Felt252Wrapper;
 use mp_simulations::{ExecuteInvocation, RevertedInvocation};
-use mp_transactions::execution::Execute;
+use mp_transactions::execution::{Execute, ExecutionConfig};
 use mp_transactions::UserTransaction;
 use sp_runtime::DispatchError;
 
@@ -18,48 +18,24 @@ pub fn execute_txs_and_rollback<T: pallet::Config>(
     txs: &Vec<UserTransaction>,
     block_context: &BlockContext,
     chain_id: Felt252Wrapper,
-    is_query: bool,
-    disable_validation: bool,
-    disable_fee_charge: bool,
+    execution_config: &ExecutionConfig,
 ) -> Result<Vec<TransactionExecutionResult<TransactionExecutionInfo>>, Error<T>> {
     let mut execution_results = vec![];
     storage::transactional::with_transaction(|| {
         for tx in txs {
             let result = match tx {
-                UserTransaction::Declare(tx, contract_class) => {
-                    let executable =
-                        tx.try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), is_query);
-
-                    match executable {
-                        Err(err) => Err(err),
-                        Ok(executable) => executable.execute(
-                            &mut BlockifierStateAdapter::<T>::default(),
-                            block_context,
-                            is_query,
-                            disable_validation,
-                            disable_fee_charge,
-                        ),
-                    }
-                }
+                UserTransaction::Declare(tx, contract_class) => tx
+                    .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), execution_config.is_query)
+                    .and_then(|exec| {
+                        exec.execute(&mut BlockifierStateAdapter::<T>::default(), block_context, execution_config)
+                    }),
                 UserTransaction::DeployAccount(tx) => {
-                    let executable = tx.into_executable::<T::SystemHash>(chain_id, is_query);
-                    executable.execute(
-                        &mut BlockifierStateAdapter::<T>::default(),
-                        block_context,
-                        is_query,
-                        disable_validation,
-                        disable_fee_charge,
-                    )
+                    let executable = tx.into_executable::<T::SystemHash>(chain_id, execution_config.is_query);
+                    executable.execute(&mut BlockifierStateAdapter::<T>::default(), block_context, execution_config)
                 }
                 UserTransaction::Invoke(tx) => {
-                    let executable = tx.into_executable::<T::SystemHash>(chain_id, is_query);
-                    executable.execute(
-                        &mut BlockifierStateAdapter::<T>::default(),
-                        block_context,
-                        is_query,
-                        disable_validation,
-                        disable_fee_charge,
-                    )
+                    let executable = tx.into_executable::<T::SystemHash>(chain_id, execution_config.is_query);
+                    executable.execute(&mut BlockifierStateAdapter::<T>::default(), block_context, execution_config)
                 }
             };
             execution_results.push(result);
