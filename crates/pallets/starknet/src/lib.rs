@@ -508,7 +508,7 @@ pub mod pallet {
                 .execute(
                     &mut BlockifierStateAdapter::<T>::default(),
                     &Self::get_block_context(),
-                    &RuntimeExecutionConfigBuilder::default().build::<T>(),
+                    &RuntimeExecutionConfigBuilder::new::<T>().build(),
                 )
                 .map_err(|e| {
                     log::error!("failed to execute invoke tx: {:?}", e);
@@ -570,7 +570,7 @@ pub mod pallet {
                 .execute(
                     &mut BlockifierStateAdapter::<T>::default(),
                     &Self::get_block_context(),
-                    &RuntimeExecutionConfigBuilder::default().build::<T>(),
+                    &RuntimeExecutionConfigBuilder::new::<T>().build(),
                 )
                 .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
@@ -619,7 +619,7 @@ pub mod pallet {
                 .execute(
                     &mut BlockifierStateAdapter::<T>::default(),
                     &Self::get_block_context(),
-                    &RuntimeExecutionConfigBuilder::default().build::<T>(),
+                    &RuntimeExecutionConfigBuilder::new::<T>().build(),
                 )
                 .map_err(|e| {
                     log::error!("failed to deploy accout: {:?}", e);
@@ -674,7 +674,7 @@ pub mod pallet {
                 .execute(
                     &mut BlockifierStateAdapter::<T>::default(),
                     &Self::get_block_context(),
-                    &RuntimeExecutionConfigBuilder::default().build::<T>(),
+                    &RuntimeExecutionConfigBuilder::new::<T>().build(),
                 )
                 .map_err(|e| {
                     log::error!("Failed to consume l1 message: {}", e);
@@ -1096,12 +1096,11 @@ impl<T: Config> Pallet<T> {
     pub fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
         let chain_id = Self::chain_id();
 
-        // is_query is true so disable_transaction_fee could be true or false
         let execution_results = execute_txs_and_rollback::<T>(
             &transactions,
             &Self::get_block_context(),
             chain_id,
-            &RuntimeExecutionConfigBuilder::default().with_query_mode().build::<T>(),
+            &RuntimeExecutionConfigBuilder::new::<T>().with_query_mode().build(),
         )?;
 
         let mut results = vec![];
@@ -1130,19 +1129,11 @@ impl<T: Config> Pallet<T> {
     ) -> Result<Vec<SimulatedTransaction>, DispatchError> {
         let chain_id = Self::chain_id();
 
-        let mut execution_config_builder = RuntimeExecutionConfigBuilder::default();
-        if simulation_flags.contains(&SimulationFlag::SkipFeeCharge) {
-            execution_config_builder = execution_config_builder.with_fee_charge_disabled();
-        }
-        if simulation_flags.contains(&SimulationFlag::SkipValidate) {
-            execution_config_builder = execution_config_builder.with_validation_disabled();
-        }
-
         let execution_results = execute_txs_and_rollback::<T>(
             &transactions,
             &Self::get_block_context(),
             chain_id,
-            &execution_config_builder.build::<T>(),
+            &RuntimeExecutionConfigBuilder::new::<T>().with_simulation_mode(&simulation_flags).build(),
         )?;
 
         fn get_function_invocation(

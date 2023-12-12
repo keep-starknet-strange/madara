@@ -14,7 +14,6 @@ use blockifier::block_context::BlockContext;
 use blockifier::execution::entry_point::{
     CallEntryPoint, CallInfo, CallType, EntryPointExecutionContext, ExecutionResources,
 };
-use blockifier::state::cached_state::StateChangesCount;
 use blockifier::state::state_api::State;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::{AccountTransactionContext, ResourcesMapping, TransactionExecutionResult};
@@ -63,14 +62,7 @@ pub fn compute_transaction_resources<S: State + StateChanges>(
     tx_type: TransactionType,
     l1_handler_payload_size: Option<usize>,
 ) -> TransactionExecutionResult<ResourcesMapping> {
-    let (n_modified_contracts, n_storage_updates, n_class_hash_updates, n_compiled_class_hash_updates) =
-        state.count_state_changes();
-    let state_changes_count = StateChangesCount {
-        n_storage_updates,
-        n_class_hash_updates,
-        n_compiled_class_hash_updates,
-        n_modified_contracts,
-    };
+    let state_changes_count = state.count_state_changes();
     let non_optional_call_infos: Vec<&CallInfo> =
         vec![execute_call_info, validate_call_info].into_iter().flatten().collect();
 

@@ -2,14 +2,12 @@ use alloc::collections::{BTreeMap, BTreeSet};
 use core::marker::PhantomData;
 
 use blockifier::execution::contract_class::ContractClass;
-use blockifier::state::cached_state::{CommitmentStateDiff, ContractStorageKey};
+use blockifier::state::cached_state::{CommitmentStateDiff, ContractStorageKey, StateChangesCount};
 use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{State, StateReader, StateResult};
 use indexmap::IndexMap;
 use mp_felt::Felt252Wrapper;
-use mp_state::{
-    DeclaredClassesCount, DeclaredCompiledClassesCount, StateChanges, UpdatedContractsCount, UpdatedStorageVarsCount,
-};
+use mp_state::StateChanges;
 use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
@@ -33,12 +31,15 @@ impl<T> StateChanges for BlockifierStateAdapter<T>
 where
     T: Config,
 {
-    fn count_state_changes(
-        &self,
-    ) -> (UpdatedContractsCount, UpdatedStorageVarsCount, DeclaredClassesCount, DeclaredCompiledClassesCount) {
+    fn count_state_changes(&self) -> StateChangesCount {
         let keys = self.storage_update.keys();
         let n_contract_updated = BTreeSet::from_iter(keys.clone().map(|&(contract_address, _)| contract_address)).len();
-        (n_contract_updated, keys.len(), self.class_hash_update, self.compiled_class_hash_update)
+        StateChangesCount {
+            n_modified_contracts: n_contract_updated,
+            n_storage_updates: keys.len(),
+            n_class_hash_updates: self.class_hash_update,
+            n_compiled_class_hash_updates: self.compiled_class_hash_update,
+        }
     }
 }
 

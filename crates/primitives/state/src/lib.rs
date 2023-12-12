@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use blockifier::execution::contract_class::ContractClass;
-use blockifier::state::cached_state::ContractStorageKey;
+use blockifier::state::cached_state::{ContractStorageKey, StateChangesCount};
 use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{StateReader, StateResult};
 use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
@@ -11,25 +11,12 @@ use starknet_api::stdlib::collections::HashMap;
 
 type ContractClassMapping = HashMap<ClassHash, ContractClass>;
 
-pub type UpdatedContractsCount = usize;
-pub type UpdatedStorageVarsCount = usize;
-pub type DeclaredClassesCount = usize;
-pub type DeclaredCompiledClassesCount = usize;
 /// This trait allows to get the state changes of a starknet tx and therefore enables computing the
 /// fees.
 pub trait StateChanges {
     /// This function counts the storage var updates implied by a transaction and the newly declared
     /// class hashes.
-    ///
-    /// # Returns
-    ///
-    /// * `UpdatedContractsCount` - The number of modified contracts in the transaction.
-    /// * `UpdatedStorageVarsCount` - The number of modified storage vars in the transaction.
-    /// * `UpdatedClassHashesCount` -  The number of newly declared classes.
-    /// * `UpdatedCompiledClassHashesCount` - The number of newly declared compiled classes.
-    fn count_state_changes(
-        &self,
-    ) -> (UpdatedContractsCount, UpdatedStorageVarsCount, DeclaredClassesCount, DeclaredCompiledClassesCount);
+    fn count_state_changes(&self) -> StateChangesCount;
 }
 
 /// A simple implementation of `StateReader` using `HashMap`s as storage.
