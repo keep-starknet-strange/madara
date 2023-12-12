@@ -140,9 +140,8 @@ impl<T: Config> Pallet<T> {
                     validation_result
                 }
             }
-            UserAndL1HandlerTransaction::L1Handler(transaction, fee) => transaction
-                .into_executable::<T::SystemHash>(chain_id, *fee, false)
-                .validate_tx(&mut state, &block_context, &mut execution_resources, &mut initial_gas, false),
+            // No validation here either
+            UserAndL1HandlerTransaction::L1Handler(..) => Ok(None),
         }
         .map_err(|_| InvalidTransaction::BadProof)?;
 
