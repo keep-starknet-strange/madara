@@ -18,10 +18,12 @@ jobs:
           save-if: false
       - uses: actions/cache@v3
         with:
-          path: target/release/madara
+          path: |
+            target/release/madara
+            configs
           key:
-            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
-            github.run_id }}
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-configs-${{
+            hashFiles('configs/index.json') }}-${{ github.run_id }}
           fail-on-cache-miss: true
       - name: Setup build deps
         run: |
