@@ -20,11 +20,13 @@ use starknet_api::hash::StarkFelt;
 use starknet_api::state::{StorageKey as StarknetStorageKey, ThinStateDiff};
 use thiserror::Error;
 
+pub struct BlockDAData(pub BlockHash, pub ThinStateDiff, pub usize);
+
 pub struct CommitmentStateDiffWorker<B: BlockT, C, H> {
     client: Arc<C>,
     storage_event_stream: StorageEventStream<B::Hash>,
-    tx: mpsc::Sender<(BlockHash, ThinStateDiff, usize)>,
-    msg: Option<(BlockHash, ThinStateDiff, usize)>,
+    tx: mpsc::Sender<BlockDAData>,
+    msg: Option<BlockDAData>,
     phantom: PhantomData<H>,
 }
 
@@ -32,7 +34,7 @@ impl<B: BlockT, C, H> CommitmentStateDiffWorker<B, C, H>
 where
     C: BlockchainEvents<B>,
 {
-    pub fn new(client: Arc<C>, tx: mpsc::Sender<(BlockHash, ThinStateDiff, usize)>) -> Self {
+    pub fn new(client: Arc<C>, tx: mpsc::Sender<BlockDAData>) -> Self {
         let storage_event_stream = client
             .storage_changes_notification_stream(None, None)
             .expect("the node storage changes notification stream should be up and running");
@@ -122,7 +124,7 @@ enum BuildCommitmentStateDiffError {
 fn build_commitment_state_diff<B: BlockT, C, H>(
     client: Arc<C>,
     storage_notification: StorageNotification<B::Hash>,
-) -> Result<(BlockHash, ThinStateDiff, usize), BuildCommitmentStateDiffError>
+) -> Result<BlockDAData, BuildCommitmentStateDiffError>
 where
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
@@ -214,5 +216,5 @@ where
         }
     }
 
-    Ok((starknet_block_hash, commitment_state_diff, accessed_addrs.len()))
+    Ok(BlockDAData(starknet_block_hash, commitment_state_diff, accessed_addrs.len()))
 }

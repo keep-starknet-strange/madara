@@ -12,6 +12,7 @@ use async_trait::async_trait;
 use ethers::types::{I256, U256};
 use futures::channel::mpsc;
 use futures::StreamExt;
+use mc_commitment_state_diff::BlockDAData;
 use mp_hashers::HasherT;
 use pallet_starknet_runtime_api::StarknetRuntimeApi;
 use sc_client_api::client::BlockchainEvents;
@@ -19,8 +20,6 @@ use serde::Deserialize;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::{Block as BlockT, Header};
-use starknet_api::block::BlockHash;
-use starknet_api::state::ThinStateDiff;
 use utils::state_diff_to_calldata;
 
 pub struct DataAvailabilityWorker<B, C, H>(PhantomData<(B, C, H)>);
@@ -79,10 +78,10 @@ where
 {
     pub async fn prove_current_block(
         da_mode: DaMode,
-        mut state_diffs_rx: mpsc::Receiver<(BlockHash, ThinStateDiff, usize)>,
+        mut state_diffs_rx: mpsc::Receiver<BlockDAData>,
         madara_backend: Arc<mc_db::Backend<B>>,
     ) {
-        while let Some((block_hash, csd, num_addr_accessed)) = state_diffs_rx.next().await {
+        while let Some(BlockDAData(block_hash, csd, num_addr_accessed)) = state_diffs_rx.next().await {
             log::info!("received state diff for block {block_hash}: {csd:?}. {num_addr_accessed} addresses accessed.");
 
             // store the da encoded calldata for the state update worker
