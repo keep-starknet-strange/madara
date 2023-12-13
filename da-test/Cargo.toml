@@ -8,10 +8,11 @@ edition = "2021"
 
 anyhow = "1.0.72"
 assert_matches = "1.5.0"
-clap = { workspace = true, features = ["derive"] }
 async-lock = "3.1.0"
-lazy_static = "1.4.0"
+clap = { workspace = true, features = ["derive"] }
+ethers = "2.0.7"
 flate2 = { workspace = true }
+lazy_static = "1.4.0"
 reqwest = "0.11.18"
 rstest = "0.18.1"
 serde = { version = "1.0.192", features = ["derive"] }
@@ -22,9 +23,8 @@ starknet-core = { workspace = true }
 starknet-crypto = { workspace = true }
 starknet-ff = { workspace = true }
 starknet-providers = { workspace = true }
-starknet-signers = { workspace = true }
-ethers = "2.0.7"
 starknet-rpc-test = { path = "../starknet-rpc-test" }
+starknet-signers = { workspace = true }
 thiserror = { workspace = true }
 tokio = { version = "1.34.0", features = ["rt", "macros", "parking_lot"] }
 url = "2.4.1"
