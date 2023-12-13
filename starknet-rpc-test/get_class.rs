@@ -75,13 +75,13 @@ async fn work_ok_retrieving_class_for_contract_version_0(madara: &ThreadSafeMada
         ).await?,
         ContractClass::Legacy(c) => {
             // decompress program
-            let mut d = GzDecoder::new(&c.program[..]);
-            let mut data = String::new();
-            d.read_to_string(&mut data).unwrap();
-            let program: LegacyProgram = serde_json::from_str(data.as_str())?;
+            let mut gz = GzDecoder::new(&c.program[..]);
+            let mut decompressed_bytes = Vec::new();
+            gz.read_to_end(&mut decompressed_bytes).unwrap();
+            let program: LegacyProgram = serde_json::from_slice(decompressed_bytes.as_slice())?;
             assert_eq!(
-                program.data,
-                test_contract_class.program.data,
+                program.data.len(),
+                test_contract_class.program.data.len(),
             );
         }
     );

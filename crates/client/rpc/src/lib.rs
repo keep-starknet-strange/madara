@@ -291,7 +291,7 @@ where
             return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
         }
 
-        let extrinsic = convert_transaction(self.client.clone(), best_block_hash, transaction.clone()).await?;
+        let extrinsic = convert_tx_to_extrinsic(self.client.clone(), best_block_hash, transaction.clone()).await?;
 
         submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
 
@@ -323,7 +323,7 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let extrinsic = convert_transaction(self.client.clone(), best_block_hash, transaction.clone()).await?;
+        let extrinsic = convert_tx_to_extrinsic(self.client.clone(), best_block_hash, transaction.clone()).await?;
 
         submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
 
@@ -353,7 +353,7 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let extrinsic = convert_transaction(self.client.clone(), best_block_hash, transaction.clone()).await?;
+        let extrinsic = convert_tx_to_extrinsic(self.client.clone(), best_block_hash, transaction.clone()).await?;
 
         submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
 
@@ -1615,7 +1615,7 @@ where
     })
 }
 
-async fn convert_transaction<C, B>(
+async fn convert_tx_to_extrinsic<C, B>(
     client: Arc<C>,
     best_block_hash: <B as BlockT>::Hash,
     transaction: UserTransaction,
