@@ -3,7 +3,7 @@ extern crate da_test;
 use std::path::PathBuf;
 use std::vec;
 
-use da_test::utils::get_da_client;
+use da_test::fixtures::da_client;
 use ethers::types::I256;
 use mc_data_availability::DaLayer;
 use rstest::rstest;
@@ -15,15 +15,8 @@ use starknet_rpc_test::utils::{build_single_owner_account, AccountActions};
 use starknet_rpc_test::Transaction;
 
 #[rstest]
-#[case(DaLayer::Celestia, "examples/da-confs/celestia.json")]
-#[case(DaLayer::Ethereum, "examples/da-confs/ethereum.json")]
-#[case(DaLayer::Avail, "examples/da-confs/avail.json")]
 #[tokio::test]
-async fn publish_to_da_layer(
-    madara: &ThreadSafeMadaraClient,
-    #[case] da_layer: DaLayer,
-    #[case] da_path: PathBuf,
-) -> Result<(), anyhow::Error> {
+async fn publish_to_da_layer(madara: &ThreadSafeMadaraClient, da_client: DaClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
     let (txs, block_number) = {
@@ -46,8 +39,6 @@ async fn publish_to_da_layer(
     assert_eq!(txs.len(), 1);
 
     let _tx = &txs[0];
-
-    let da_client = get_da_client(da_layer, da_path);
 
     // Check the state diff that has been published to the DA layer
     let published_block_number = da_client.last_published_state().await?;

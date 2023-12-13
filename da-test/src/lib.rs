@@ -1,4 +1,10 @@
 #![feature(assert_matches)]
 
-/// Utilities for testing DA layers.
+/// Utilities for connecting to DA layers.
 pub mod utils;
+
+/// Fixtures
+pub mod fixtures;
+
+/// Constants
+pub mod constants;

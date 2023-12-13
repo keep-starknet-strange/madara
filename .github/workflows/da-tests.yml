@@ -46,7 +46,7 @@ jobs:
           MADARA_RUN_PID=$!
           while ! echo exit | nc localhost 9944; do sleep 1; done
           cd da-test
-          cargo test
+          DA_LAYER=${{ matrix.da_layer }} cargo test
           kill $MADARA_RUN_PID
       - name: Stop DA Layer
         run: |
