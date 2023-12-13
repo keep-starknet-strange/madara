@@ -1,11 +1,10 @@
 extern crate da_test;
 
-use std::path::PathBuf;
 use std::vec;
 
 use da_test::fixtures::da_client;
 use ethers::types::I256;
-use mc_data_availability::DaLayer;
+use mc_data_availability::DaClient;
 use rstest::rstest;
 use starknet_ff::FieldElement;
 use starknet_providers::Provider;
@@ -16,7 +15,10 @@ use starknet_rpc_test::Transaction;
 
 #[rstest]
 #[tokio::test]
-async fn publish_to_da_layer(madara: &ThreadSafeMadaraClient, da_client: DaClient) -> Result<(), anyhow::Error> {
+async fn publish_to_da_layer(
+    madara: &ThreadSafeMadaraClient,
+    da_client: Box<dyn DaClient + Send + Sync>,
+) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
     let (txs, block_number) = {

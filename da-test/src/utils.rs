@@ -33,8 +33,8 @@ pub fn get_da_client(da_layer: DaLayer) -> Box<dyn DaClient + Send + Sync> {
 
 pub(crate) fn get_da_path(da_layer: DaLayer) -> PathBuf {
     match da_layer {
-        DaLayer::Celestia => *CELESTIA_DA_CONFIG,
-        DaLayer::Ethereum => *ETHEREUM_DA_CONFIG,
-        DaLayer::Avail => *AVAIL_DA_CONFIG,
+        DaLayer::Celestia => CELESTIA_DA_CONFIG.clone(),
+        DaLayer::Ethereum => ETHEREUM_DA_CONFIG.clone(),
+        DaLayer::Avail => AVAIL_DA_CONFIG.clone(),
     }
 }
