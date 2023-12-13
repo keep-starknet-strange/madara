@@ -4,8 +4,8 @@ version.workspace = true
 edition.workspace = true
 description = "Madara node."
 authors = [
-  "Abdelhamid Bakhta <@keep-starknet-strange>",
-  "Substrate DevHub <https://github.com/substrate-developer-hub>",
+	"Abdelhamid Bakhta <@keep-starknet-strange>",
+	"Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
 license = "MIT"
@@ -80,7 +80,7 @@ blockifier = { workspace = true }
 hex = { workspace = true }
 madara-runtime = { workspace = true }
 mc-commitment-state-diff = { workspace = true }
-mc-data-availability = { workspace = true }
+mc-data-availability = { workspace = true, features = ["clap"] }
 mc-db = { workspace = true }
 mc-mapping-sync = { workspace = true }
 mc-rpc = { workspace = true }
@@ -109,9 +109,9 @@ substrate-build-script-utils = { workspace = true }
 default = []
 # Dependencies that are only required if runtime benchmarking should be build.
 runtime-benchmarks = [
-  "madara-runtime/runtime-benchmarks",
-  "frame-benchmarking/runtime-benchmarks",
-  "frame-benchmarking-cli/runtime-benchmarks",
+	"madara-runtime/runtime-benchmarks",
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-benchmarking-cli/runtime-benchmarks",
 ]
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
 # in the near future.

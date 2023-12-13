@@ -8,7 +8,7 @@ use mc_data_availability::DaClient;
 use rstest::rstest;
 use starknet_ff::FieldElement;
 use starknet_providers::Provider;
-use starknet_rpc_test::constants::ARGENT_CONTRACT_ADDRESS;
+use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{build_single_owner_account, AccountActions};
 use starknet_rpc_test::Transaction;
@@ -24,7 +24,7 @@ async fn publish_to_da_layer(
     let (txs, block_number) = {
         let mut madara_write_lock = madara.write().await;
         // using incorrect private key to generate the wrong signature
-        let account = build_single_owner_account(&rpc, "0x1234", ARGENT_CONTRACT_ADDRESS, true);
+        let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
 
         let txs = madara_write_lock
             .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(
