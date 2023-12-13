@@ -60,6 +60,85 @@ impl SetupCmd {
     }
 }
 
+enum ConfigSource {
+    Local(PathBuf),
+    Remote(Url),
+}
+
+impl ConfigSource {
+    fn display(&self, child_path: Option<Vec<&str>>) -> Result<String> {
+        let string = match self {
+            ConfigSource::Local(path_buf) => {
+                let mut full = path_buf.clone();
+
+                if let Some(childs) = child_path {
+                    for child in childs {
+                        full = full.join(child);
+                    }
+                }
+
+                full.display().to_string()
+            }
+            ConfigSource::Remote(url) => {
+                let mut full = url.clone();
+
+                if let Some(childs) = child_path {
+                    for child in childs {
+                        full = full.join(child).map_err(|e| Error::Application(Box::new(e)))?;
+                    }
+                }
+
+                full.to_string()
+            }
+        };
+
+        Ok(string)
+    }
+
+    fn load_config(&self) -> Result<Vec<u8>> {
+        let configs: Vec<u8> = match self {
+            ConfigSource::Local(source_configs_path) => {
+                let index_file_path = source_configs_path.join("index.json");
+                std::fs::read(index_file_path).map_err(|e| Error::Application(Box::new(e)))?
+            }
+            ConfigSource::Remote(source_configs_url) => {
+                println!("Fetching chain config from '{}'", &source_configs_url);
+
+                // Query, deserialize and copy it
+                let response =
+                    reqwest::blocking::get(source_configs_url.clone()).map_err(|e| Error::Application(Box::new(e)))?;
+                response.bytes().map_err(|e| Error::Application(Box::new(e)))?.into()
+            }
+        };
+
+        Ok(configs)
+    }
+
+    fn load_asset(&self, asset: &FileInfos) -> Result<Vec<u8>> {
+        let file_as_bytes = match self {
+            ConfigSource::Local(source_config_dir_path) => {
+                let asset_path = &source_config_dir_path.join(GENESIS_ASSETS_DIR).join(&asset.name);
+                if !asset_path.exists() {
+                    return Err(format!("Source file '{}' does not exist", asset_path.display()).into());
+                }
+                std::fs::read(asset_path)?
+            }
+            ConfigSource::Remote(source_configs_dir_url) => {
+                let full_url = source_configs_dir_url
+                    .join(GENESIS_ASSETS_DIR)
+                    .map_err(|e| Error::Application(Box::new(e)))?
+                    .join(&asset.name)
+                    .map_err(|e| Error::Application(Box::new(e)))?;
+
+                let response = reqwest::blocking::get(full_url.clone()).map_err(|e| Error::Application(Box::new(e)))?;
+                response.bytes().map_err(|e| Error::Application(Box::new(e)))?.into()
+            }
+        };
+
+        Ok(file_as_bytes)
+    }
+}
+
 impl SetupCmd {
     pub fn run(&self) -> Result<()> {
         log::info!("setup cmd: {:?}", self);
@@ -70,60 +149,49 @@ impl SetupCmd {
         };
         log::info!("Setting up madara config at '{}'", dest_config_dir_path.display());
 
-        // Load config from disk
-        if let Some(src_configs_dir_path) = &self.source.from_local {
-            // Build the source file path
-            let src_configs_dir_path = PathBuf::from(src_configs_dir_path);
-            let index_file_path = src_configs_dir_path.join("index.json");
-
-            // Read, deserialize and copy it
-            let madara_configs = {
-                let src_file_content =
-                    std::fs::read_to_string(index_file_path).map_err(|e| Error::Application(Box::new(e)))?;
-                // Make sure content is valid before writing it to disk
-                let configs_content: configs::Configs = serde_json::from_str(&src_file_content)
-                    .map_err(|e| Error::Input(format!("invalid `index.json` content: {}", e)))?;
-                write_content_to_disk(src_file_content, dest_config_dir_path.join("index.json").as_path())?;
-
-                configs_content
-            };
-
-            // Copy each asset
-            for asset in madara_configs.genesis_assets {
-                copy_file(
-                    &src_configs_dir_path.join(GENESIS_ASSETS_DIR).join(asset.name),
-                    &dest_config_dir_path.join(GENESIS_ASSETS_DIR),
-                )?;
-            }
-        // Load config form a remote server
-        } else if let Some(configs_url) = &self.source.from_remote {
-            // Build the source url
-            let configs_url = Url::parse(configs_url)
+        let config_source = if let Some(src_cfg_dir_path) = &self.source.from_local {
+            let path = PathBuf::from(src_cfg_dir_path);
+            ConfigSource::Local(path)
+        } else if let Some(src_cfg_dir_url) = &self.source.from_remote {
+            let url = Url::parse(src_cfg_dir_url)
                 .map_err(|e| Error::Input(format!("invalid input for 'fetch_madara_configs': {}", e)))?;
-            println!("Fetching chain config from '{}'", &configs_url);
-
-            // Query, deserialize and copy it
-            let madara_configs = {
-                let response = reqwest::blocking::get(configs_url).map_err(|e| Error::Application(Box::new(e)))?;
-                let bytes = response.bytes().map_err(|e| Error::Application(Box::new(e)))?;
-                // Make sure content is valid before writing it to disk
-                let configs_content: configs::Configs =
-                    serde_json::from_slice(&bytes[..]).map_err(|e| Error::Application(Box::new(e)))?;
-                write_content_to_disk(bytes, dest_config_dir_path.join("index.json").as_path())?;
-
-                configs_content
-            };
-
-            // Query and copy each asset
-            let base_url = Url::parse(&madara_configs.remote_base_path).map_err(|e| Error::Application(Box::new(e)))?;
-            for asset in madara_configs.genesis_assets {
-                fetch_and_validate_genesis_assets(&base_url, asset, &dest_config_dir_path)?;
-            }
+            ConfigSource::Remote(url)
         } else {
             unreachable!(
                 "clap::Args is derived upon `SetupSource` in a way that guarantee that either `from_remote` or \
                  `from_local` is present"
             );
+        };
+
+        let configs_file_content = config_source.load_config()?;
+        // Make sure it is valid data before writing it to disck
+        let configs: configs::Configs =
+            serde_json::from_slice(&configs_file_content).map_err(|e| Error::Application(Box::new(e)))?;
+        write_content_to_disk(configs_file_content, dest_config_dir_path.join("index.json").as_path())?;
+
+        let assets_dir_dest_path = &dest_config_dir_path.join(GENESIS_ASSETS_DIR);
+        for asset in &configs.genesis_assets {
+            let asset_file_content = config_source.load_asset(asset)?;
+
+            // Verify it's md5
+            if let Some(file_hash) = &asset.md5 {
+                let digest = md5::compute(&asset_file_content);
+                let hash = format!("{:x}", digest);
+                if hash != *file_hash {
+                    return Err(Error::Input(format!(
+                        "Hash mismatch for file '{}': {} != {}",
+                        asset.name, hash, file_hash
+                    )));
+                }
+            }
+
+            let asset_dest_path = assets_dir_dest_path.join(&asset.name);
+            println!(
+                "Copying '{}' to '{}'",
+                config_source.display(Some(vec![&GENESIS_ASSETS_DIR, &asset.name]))?,
+                asset_dest_path.display()
+            );
+            write_content_to_disk(&asset_file_content, &asset_dest_path)?;
         }
 
         Ok(())
@@ -132,52 +200,11 @@ impl SetupCmd {
 
 fn write_content_to_disk<T: AsRef<[u8]>>(config_content: T, dest_config_file_path: &Path) -> Result<()> {
     std::fs::create_dir_all(
-        dest_config_file_path.parent().expect("dest_config_file_path should be the path to a file, not a dict"),
+        dest_config_file_path.parent().expect("dest_config_file_path should be the path to a file, not a directory"),
     )?;
     let mut dest_file = std::fs::File::create(dest_config_file_path)?;
     let mut reader = std::io::Cursor::new(config_content);
     std::io::copy(&mut reader, &mut dest_file)?;
-
-    Ok(())
-}
-
-fn copy_file(src_path: &Path, dest_dir_path: &PathBuf) -> Result<()> {
-    if !src_path.exists() {
-        return Err(format!("Source file '{}' does not exist", src_path.display()).into());
-    }
-
-    std::fs::create_dir_all(dest_dir_path)?;
-    let dest_file_path = dest_dir_path.join(src_path.file_name().ok_or("File name not found")?);
-    println!("Copying '{}' to '{}'", src_path.display(), dest_file_path.display());
-    std::fs::copy(src_path, dest_file_path)?;
-
-    Ok(())
-}
-
-fn fetch_and_validate_genesis_assets(base_remote_url: &Url, file: FileInfos, base_path: &Path) -> Result<()> {
-    let full_url = base_remote_url
-        .join(GENESIS_ASSETS_DIR)
-        .map_err(|e| Error::Application(Box::new(e)))?
-        .join(&file.name)
-        .map_err(|e| Error::Application(Box::new(e)))?;
-    println!("Fetching '{}'", &full_url);
-    let dest_path = base_path.join(GENESIS_ASSETS_DIR);
-
-    // Copy
-    let file_as_bytes = {
-        let response = reqwest::blocking::get(full_url.clone()).map_err(|e| Error::Application(Box::new(e)))?;
-        let bytes = response.bytes().map_err(|e| Error::Application(Box::new(e)))?;
-        write_content_to_disk(&bytes, &dest_path.join(file.name))?;
-        bytes
-    };
-
-    if let Some(file_hash) = file.md5 {
-        let digest = md5::compute(file_as_bytes);
-        let hash = format!("{:x}", digest);
-        if hash != file_hash {
-            return Err(Error::Input(format!("Hash mismatch for file '{}': {} != {}", full_url, hash, file_hash)));
-        }
-    }
 
     Ok(())
 }
