@@ -83,6 +83,12 @@ func test_storage_read_write{syscall_ptr: felt*}(address: felt, value: felt) -> 
     return (result=read_value);
 }
 
+@l1_handler
+func test_l1_handler_store_under_caller_address{syscall_ptr: felt*}(from_address: felt, value: felt) {
+    storage_write(address=from_address, value=value);
+    return ();
+}
+
 @external
 @raw_output
 func test_library_call{syscall_ptr: felt*}(

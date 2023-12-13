@@ -607,8 +607,7 @@ impl Execute for L1HandlerTransaction {
         _account_tx_context: AccountTransactionContext,
         _execution_config: &ExecutionConfig,
     ) -> TransactionExecutionResult<(Fee, Option<CallInfo>, ResourcesMapping)> {
-        // The calldata includes the "from" field, which is not a part of the payload.
-        let l1_handler_payload_size = self.calldata().0.len() - 1;
+        let l1_handler_payload_size = self.calldata().0.len();
 
         let actual_resources = compute_transaction_resources(
             state,
