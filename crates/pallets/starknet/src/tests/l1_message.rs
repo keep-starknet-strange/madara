@@ -1,4 +1,4 @@
-use frame_support::assert_ok;
+use frame_support::{assert_err, assert_ok};
 use mp_felt::Felt252Wrapper;
 use mp_transactions::HandleL1MessageTransaction;
 use sp_runtime::traits::ValidateUnsigned;
@@ -10,7 +10,7 @@ use starknet_api::transaction::Fee;
 
 use super::mock::default_mock::*;
 use super::mock::*;
-use crate::{Call, InvalidTransaction, L1Messages};
+use crate::{Call, Error, InvalidTransaction, L1Messages};
 
 #[test]
 fn verify_tx_validity() {
@@ -71,7 +71,31 @@ fn should_reject_used_nonce() {
 }
 
 #[test]
-fn invoke_with_storage_write() {
+fn should_reject_zero_fee() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let nonce: u64 = 1;
+
+        let transaction = HandleL1MessageTransaction {
+            nonce,
+            contract_address: Default::default(),
+            entry_point_selector: Default::default(),
+            calldata: Default::default(),
+        };
+
+        let tx_source = TransactionSource::InBlock;
+        let call = Call::consume_l1_message { transaction, paid_fee_on_l1: Fee(0) };
+
+        assert_eq!(
+            Starknet::validate_unsigned(tx_source, &call),
+            Err(TransactionValidityError::Invalid(InvalidTransaction::Payment))
+        );
+    });
+}
+
+#[test]
+fn work() {
     // Execute `test_l1_handler_store_under_caller_address()`
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
@@ -98,5 +122,39 @@ fn invoke_with_storage_write() {
             StorageKey(PatriciaKey(StarkFelt::from(from_address))),
         );
         assert_eq!(Starknet::storage(storage_key), StarkFelt::from(1u128));
+    });
+}
+
+#[test]
+fn fail_if_no_fee() {
+    // Execute `test_l1_handler_store_under_caller_address()`
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+        let contract_address =
+            Felt252Wrapper::from_hex_be("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap();
+        let from_address = Felt252Wrapper::from_hex_be("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045").unwrap();
+
+        let transaction = HandleL1MessageTransaction {
+            nonce: 1,
+            contract_address,
+            entry_point_selector: Felt252Wrapper::from_hex_be(
+                "0x014093c40d95d0a3641c087f7d48d55160e1a58bc7c07b0d2323efeeb3087269",
+            )
+            .unwrap(),
+            calldata: vec![
+                from_address,
+                Felt252Wrapper::from_hex_be("0x1").unwrap(), // value
+            ],
+        };
+        assert_err!(
+            Starknet::consume_l1_message(RuntimeOrigin::none(), transaction, Fee(0)),
+            Error::<MockRuntime>::TransactionExecutionFailed
+        );
+
+        let storage_key = (
+            ContractAddress(PatriciaKey(StarkFelt::from(contract_address))),
+            StorageKey(PatriciaKey(StarkFelt::from(from_address))),
+        );
+        assert_eq!(Starknet::storage(storage_key), StarkFelt::from(0u128));
     });
 }

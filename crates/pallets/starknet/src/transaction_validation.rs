@@ -140,8 +140,14 @@ impl<T: Config> Pallet<T> {
                     validation_result
                 }
             }
-            // No validation here either
-            UserAndL1HandlerTransaction::L1Handler(..) => Ok(None),
+            UserAndL1HandlerTransaction::L1Handler(_, fee) => {
+                // The tx will fail if no fee have been paid
+                if fee.0 == 0 {
+                    return Err(InvalidTransaction::Payment);
+                }
+
+                Ok(None)
+            }
         }
         .map_err(|_| InvalidTransaction::BadProof)?;
 
