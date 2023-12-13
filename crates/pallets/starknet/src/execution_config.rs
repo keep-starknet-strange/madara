@@ -1,4 +1,4 @@
-use mp_simulations::SimulationFlag;
+use mp_simulations::SimulationFlags;
 use mp_transactions::execution::ExecutionConfig;
 use sp_core::Get;
 
@@ -25,20 +25,9 @@ impl RuntimeExecutionConfigBuilder {
         self
     }
     #[must_use]
-    pub fn with_simulation_mode(mut self, simulation_flags: &[SimulationFlag]) -> Self {
-        for sim in simulation_flags {
-            match sim {
-                SimulationFlag::SkipFeeCharge => {
-                    self.0.disable_fee_charge = true;
-                }
-                SimulationFlag::SkipValidate => {
-                    self.0.disable_validation = true;
-                }
-            }
-            if self.0.disable_fee_charge && self.0.disable_validation {
-                break;
-            }
-        }
+    pub fn with_simulation_mode(mut self, simulation_flags: &SimulationFlags) -> Self {
+        self.0.disable_fee_charge = simulation_flags.skip_fee_charge;
+        self.0.disable_validation = simulation_flags.skip_validate;
         self
     }
 

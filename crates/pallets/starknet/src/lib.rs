@@ -89,7 +89,7 @@ use mp_hashers::HasherT;
 use mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
 use mp_simulations::{
     DeclareTransactionTrace, DeployAccountTransactionTrace, FeeEstimate, FunctionInvocation, InvokeTransactionTrace,
-    SimulatedTransaction, SimulationFlag, TransactionTrace,
+    SimulatedTransaction, SimulationFlags, TransactionTrace,
 };
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_transactions::execution::{Execute, Validate};
@@ -1125,7 +1125,7 @@ impl<T: Config> Pallet<T> {
 
     pub fn simulate_transactions(
         transactions: Vec<UserTransaction>,
-        simulation_flags: Vec<SimulationFlag>,
+        simulation_flags: SimulationFlags,
     ) -> Result<Vec<SimulatedTransaction>, DispatchError> {
         let chain_id = Self::chain_id();
 

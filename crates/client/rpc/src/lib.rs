@@ -20,7 +20,7 @@ pub use mc_rpc_core::{Felt, StarknetReadRpcApiServer, StarknetTraceRpcApiServer,
 use mc_storage::OverrideHandle;
 use mp_felt::{Felt252Wrapper, Felt252WrapperError};
 use mp_hashers::HasherT;
-use mp_simulations::{SimulatedTransaction, SimulationFlag};
+use mp_simulations::{SimulatedTransaction, SimulationFlag, SimulationFlags};
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
 use mp_transactions::{TransactionStatus, UserTransaction};
@@ -1493,6 +1493,8 @@ where
             })?;
             user_transactions.push(tx);
         }
+
+        let simulation_flags: SimulationFlags = simulation_flags.into();
 
         let fee_estimates = self
             .client

@@ -15,7 +15,35 @@ use starknet_api::api_core::EthAddress;
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::transaction::EventContent;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct SimulationFlags {
+    pub skip_validate: bool,
+    pub skip_fee_charge: bool,
+}
+
+impl From<Vec<SimulationFlag>> for SimulationFlags {
+    fn from(flags: Vec<SimulationFlag>) -> Self {
+        let mut skip_validate = false;
+        let mut skip_fee_charge = false;
+
+        for flag in flags {
+            match flag {
+                SimulationFlag::SkipValidate => skip_validate = true,
+                SimulationFlag::SkipFeeCharge => skip_fee_charge = true,
+            }
+            if skip_validate && skip_fee_charge {
+                break;
+            }
+        }
+
+        Self { skip_validate, skip_fee_charge }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
