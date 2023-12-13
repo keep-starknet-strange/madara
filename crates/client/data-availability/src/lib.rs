@@ -25,7 +25,16 @@ use utils::state_diff_to_calldata;
 pub struct DataAvailabilityWorker<B, C, H>(PhantomData<(B, C, H)>);
 pub struct DataAvailabilityWorkerProving<B>(PhantomData<B>);
 
-#[derive(Debug, Copy, Clone, PartialEq, clap::ValueEnum)]
+#[cfg(feature = "clap")]
+#[derive(clap::ValueEnum, Debug, Copy, Clone, PartialEq)]
+pub enum DaLayer {
+    Celestia,
+    Ethereum,
+    Avail,
+}
+
+#[cfg(not(feature = "clap"))]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum DaLayer {
     Celestia,
     Ethereum,

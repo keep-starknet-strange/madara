@@ -6,31 +6,26 @@ edition = "2021"
 
 [dependencies]
 
-anyhow = "1.0.72"
-assert_matches = "1.5.0"
-async-lock = "3.1.0"
-clap = { workspace = true, features = ["derive"] }
-ethers = "2.0.7"
-flate2 = { workspace = true }
-lazy_static = "1.4.0"
-reqwest = "0.11.18"
-rstest = "0.18.1"
-serde = { version = "1.0.192", features = ["derive"] }
-serde_json = "1.0.108"
-starknet-accounts = { workspace = true }
-starknet-contract = { workspace = true }
-starknet-core = { workspace = true }
-starknet-crypto = { workspace = true }
-starknet-ff = { workspace = true }
-starknet-providers = { workspace = true }
+anyhow = { workspace = true, default-features = true }
+assert_matches = { workspace = true, default-features = true }
+async-lock = { workspace = true, default-features = true }
+clap = { workspace = true, features = ["std", "derive"] }
+ethers = { workspace = true, default-features = true }
+flate2 = { workspace = true, default-features = true }
+lazy_static = { workspace = true, default-features = true }
+reqwest = { workspace = true, default-features = true }
+rstest = { workspace = true, default-features = true }
+serde = { workspace = true, default-features = true }
+serde_json = { workspace = true, default-features = true }
+starknet-ff = { workspace = true, default-features = true }
+starknet-providers = { workspace = true, default-features = true }
 starknet-rpc-test = { path = "../starknet-rpc-test" }
-starknet-signers = { workspace = true }
 thiserror = { workspace = true }
-tokio = { version = "1.34.0", features = ["rt", "macros", "parking_lot"] }
-url = "2.4.1"
+tokio = { workspace = true, features = ["rt", "macros", "parking_lot"] }
+url = { workspace = true }
 
 # madara
-mc-data-availability = { workspace = true }
+mc-data-availability = { workspace = true, features = ["clap"] }
 
 [[test]]
 name = "da_state_diffs"
