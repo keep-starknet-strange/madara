@@ -18,9 +18,9 @@ clap = { workspace = true, features = ["derive"], optional = true }
 futures = "0.3.21"
 indexmap = { workspace = true }
 jsonrpsee = { version = "0.20.0", features = [
-	"http-client",
-	"ws-client",
-	"macros",
+  "http-client",
+  "ws-client",
+  "macros",
 ] }
 log = "0.4.19"
 reqwest = { version = "0.11.18", features = ["blocking", "json"] }

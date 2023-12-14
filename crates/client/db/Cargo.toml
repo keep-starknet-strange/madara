@@ -4,8 +4,8 @@ version.workspace = true
 edition.workspace = true
 description = "Starknet database backend"
 authors = [
-	"Timothée Delabrouille <https://github.com/tdelabro>",
-	"Substrate DevHub <https://github.com/substrate-developer-hub>",
+  "Timothée Delabrouille <https://github.com/tdelabro>",
+  "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
 license = "MIT"
@@ -22,7 +22,7 @@ log = { workspace = true, default-features = true }
 parity-db = { version = "0.4.12", optional = true }
 sc-client-db = { workspace = true, default-features = true }
 scale-codec = { workspace = true, default-features = true, features = [
-	"derive",
+  "derive",
 ] }
 sp-core = { workspace = true, default-features = true }
 sp-database = { workspace = true, default-features = true }
