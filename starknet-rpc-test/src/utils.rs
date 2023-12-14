@@ -1,11 +1,14 @@
 use std::future::Future;
 use std::sync::Arc;
 
-use starknet_accounts::{Account, AccountFactory, Call, OpenZeppelinAccountFactory, SingleOwnerAccount};
+use async_trait::async_trait;
+use starknet_accounts::{
+    Account, AccountFactory, Call, ConnectedAccount, Execution, OpenZeppelinAccountFactory, SingleOwnerAccount,
+};
 use starknet_core::chain_id;
 use starknet_core::types::contract::legacy::LegacyContractClass;
 use starknet_core::types::contract::{CompiledClass, SierraClass};
-use starknet_core::types::{BlockId, BlockTag, FieldElement, FunctionCall, MsgToL1};
+use starknet_core::types::{BlockId, BlockTag, BroadcastedInvokeTransaction, FieldElement, FunctionCall, MsgToL1};
 use starknet_core::utils::get_selector_from_name;
 use starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
 use starknet_providers::Provider;
@@ -72,6 +75,7 @@ pub fn build_deploy_account_tx<'a>(
     oz_factory.deploy(contract_address_salt).max_fee(max_fee)
 }
 
+#[async_trait]
 pub trait AccountActions {
     fn transfer_tokens_u256(
         &self,
@@ -94,6 +98,20 @@ pub trait AccountActions {
     ) -> (TransactionDeclaration, FieldElement, FieldElement);
 
     fn declare_legacy_contract(&self, path_to_compiled_contract: &str) -> (TransactionLegacyDeclaration, FieldElement);
+
+    async fn prepare_invoke(
+        &self,
+        calls: Vec<Call>,
+        nonce: FieldElement,
+        max_fee: FieldElement,
+        query_only: bool,
+    ) -> BroadcastedInvokeTransaction
+    where
+        Self: Account + ConnectedAccount,
+    {
+        let prepared_execution = Execution::new(calls, self).nonce(nonce).max_fee(max_fee).prepared().unwrap();
+        prepared_execution.get_invoke_request(query_only).await.unwrap()
+    }
 }
 
 impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalWallet> {

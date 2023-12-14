@@ -68,7 +68,7 @@ incremental = true
 authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
 edition = "2021"
 repository = "https://github.com/keep-starknet-strange/madara/"
-version = "0.5.0"
+version = "0.6.0"
 
 [workspace.dependencies]
 # Substrate frame dependencies
@@ -163,6 +163,7 @@ mp-storage = { path = "crates/primitives/storage", default-features = false }
 mp-transactions = { path = "crates/primitives/transactions", default-features = false }
 mp-commitments = { path = "crates/primitives/commitments", default-features = false }
 mp-chain-id = { path = "crates/primitives/chain-id", default-features = false }
+mp-simulations = { path = "crates/primitives/simulations", default-features = false }
 
 # Madara client
 mc-mapping-sync = { path = "crates/client/mapping-sync" }

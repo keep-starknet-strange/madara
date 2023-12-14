@@ -14,6 +14,7 @@ use serde_with::serde_as;
 
 pub mod utils;
 
+use mp_simulations::{SimulatedTransaction, SimulationFlag};
 use mp_transactions::TransactionStatus;
 use starknet_core::serde::unsigned_field_element::UfeHex;
 use starknet_core::types::{
@@ -53,7 +54,7 @@ pub trait StarknetWriteRpcApi {
     ) -> RpcResult<DeclareTransactionResult>;
 }
 
-/// Starknet rpc interface.
+/// Starknet read rpc interface.
 #[rpc(server, namespace = "starknet")]
 pub trait StarknetReadRpcApi {
     /// Get the Version of the StarkNet JSON-RPC Specification Being Used
@@ -147,4 +148,17 @@ pub trait StarknetReadRpcApi {
         &self,
         transaction_hash: FieldElement,
     ) -> RpcResult<MaybePendingTransactionReceipt>;
+}
+
+/// Starknet trace rpc interface.
+#[rpc(server, namespace = "starknet")]
+pub trait StarknetTraceRpcApi {
+    /// Returns the execution trace of a transaction by simulating it in the runtime.
+    #[method(name = "simulateTransactions")]
+    async fn simulate_transactions(
+        &self,
+        block_id: BlockId,
+        transactions: Vec<BroadcastedTransaction>,
+        simulation_flags: Vec<SimulationFlag>,
+    ) -> RpcResult<Vec<SimulatedTransaction>>;
 }

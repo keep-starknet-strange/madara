@@ -2,6 +2,16 @@
 
 ## Next release
 
+- feat(rpc): Added starknet_simulateTransactions
+- fix: Change serialization of bitvec to &[u8] in merkle tree to avoid memory
+  uninitialized
+- chore: change SCARB config version for foundry CI
+- feat(da): update da calldata encoding to v0.11.0 spec, da conf examples, da
+  conf flag, da-tests in CI
+
+## v0.6.0
+
+- chore: release v0.6.0
 - refacto: substrate/starknet names in rpc library
 - feat(rpc): Added starknet_getTransactionStatus and removed
   starknet_pendingTransactions
@@ -35,8 +45,7 @@
 - chore(data-availability-avail): implement fire and forget, and add ws
   reconnection logic
 - chore: update `polkadot-sdk` to `release-polkadot-v1.3.0`
-- feat(da): update da calldata encoding to v0.11.0 spec, da conf examples, da
-  conf flag, da-tests in CI
+- refactor: use `map` in `estimate_fee` to stop computation on error
 
 ## v0.5.0
 
