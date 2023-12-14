@@ -148,6 +148,20 @@
 <a href="#148" id="148">148</a>
 <a href="#149" id="149">149</a>
 <a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC API trait and types
 //!
 //! Starkware maintains [a description of the Starknet API](https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json)
@@ -164,6 +178,7 @@
 
 <span class="kw">pub mod </span>utils;
 
+<span class="kw">use </span>mp_simulations::{SimulatedTransaction, SimulationFlag};
 <span class="kw">use </span>mp_transactions::TransactionStatus;
 <span class="kw">use </span>starknet_core::serde::unsigned_field_element::UfeHex;
 <span class="kw">use </span>starknet_core::types::{
@@ -203,7 +218,7 @@
     ) -&gt; RpcResult&lt;DeclareTransactionResult&gt;;
 }
 
-<span class="doccomment">/// Starknet rpc interface.
+<span class="doccomment">/// Starknet read rpc interface.
 </span><span class="attr">#[rpc(server, namespace = <span class="string">&quot;starknet&quot;</span>)]
 </span><span class="kw">pub trait </span>StarknetReadRpcApi {
     <span class="doccomment">/// Get the Version of the StarkNet JSON-RPC Specification Being Used
@@ -297,5 +312,18 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         transaction_hash: FieldElement,
     ) -&gt; RpcResult&lt;MaybePendingTransactionReceipt&gt;;
+}
+
+<span class="doccomment">/// Starknet trace rpc interface.
+</span><span class="attr">#[rpc(server, namespace = <span class="string">&quot;starknet&quot;</span>)]
+</span><span class="kw">pub trait </span>StarknetTraceRpcApi {
+    <span class="doccomment">/// Returns the execution trace of a transaction by simulating it in the runtime.
+    </span><span class="attr">#[method(name = <span class="string">&quot;simulateTransactions&quot;</span>)]
+    </span><span class="kw">async fn </span>simulate_transactions(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        block_id: BlockId,
+        transactions: Vec&lt;BroadcastedTransaction&gt;,
+        simulation_flags: Vec&lt;SimulationFlag&gt;,
+    ) -&gt; RpcResult&lt;Vec&lt;SimulatedTransaction&gt;&gt;;
 }
 </code></pre></div></section></main></body></html>

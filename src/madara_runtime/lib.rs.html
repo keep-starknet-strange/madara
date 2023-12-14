@@ -464,6 +464,11 @@
 <a href="#464" id="464">464</a>
 <a href="#465" id="465">465</a>
 <a href="#466" id="466">466</a>
+<a href="#467" id="467">467</a>
+<a href="#468" id="468">468</a>
+<a href="#469" id="469">469</a>
+<a href="#470" id="470">470</a>
+<a href="#471" id="471">471</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don&#39;t support yet validity proofs and state updates to
@@ -494,6 +499,7 @@
 <span class="kw">pub use </span>frame_system::Call <span class="kw">as </span>SystemCall;
 <span class="kw">use </span>frame_system::{EventRecord, Phase};
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
+<span class="kw">use </span>mp_simulations::{SimulatedTransaction, SimulationFlags};
 <span class="kw">use </span>mp_transactions::compute_hash::ComputeTransactionHash;
 <span class="kw">use </span>mp_transactions::{Transaction, UserTransaction};
 <span class="kw">use </span>pallet_grandpa::{fg_primitives, AuthorityId <span class="kw">as </span>GrandpaId, AuthorityList <span class="kw">as </span>GrandpaAuthorityList};
@@ -730,6 +736,10 @@
 
         <span class="kw">fn </span>estimate_fee(transactions: Vec&lt;UserTransaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(u64, u64)&gt;, DispatchError&gt; {
             Starknet::estimate_fee(transactions)
+        }
+
+        <span class="kw">fn </span>simulate_transactions(transactions: Vec&lt;UserTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;SimulatedTransaction&gt;, DispatchError&gt; {
+            Starknet::simulate_transactions(transactions, simulation_flags)
         }
 
         <span class="kw">fn </span>get_starknet_events_and_their_associated_tx_hash(block_extrinsics: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;, chain_id: Felt252Wrapper) -&gt; Vec&lt;(Felt252Wrapper, StarknetEvent)&gt; {

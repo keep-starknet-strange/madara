@@ -95,6 +95,15 @@
 <a href="#95" id="95">95</a>
 <a href="#96" id="96">96</a>
 <a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A collection of node-specific RPC methods.
 //! Substrate provides the `sc-rpc` crate, which defines the core RPC layer
 //! used by Substrate nodes. This file extends those RPC definitions with
@@ -155,7 +164,7 @@
     P: TransactionPool&lt;Block = Block&gt; + <span class="lifetime">&#39;static</span>,
     BE: Backend&lt;Block&gt; + <span class="lifetime">&#39;static</span>,
 {
-    <span class="kw">use </span>mc_rpc::{Starknet, StarknetReadRpcApiServer, StarknetWriteRpcApiServer};
+    <span class="kw">use </span>mc_rpc::{Starknet, StarknetReadRpcApiServer, StarknetTraceRpcApiServer, StarknetWriteRpcApiServer};
     <span class="kw">use </span>sc_consensus_manual_seal::rpc::{ManualSeal, ManualSealApiServer};
     <span class="kw">use </span>substrate_frame_rpc_system::{System, SystemApiServer};
 
@@ -173,6 +182,15 @@
         starknet_params.starting_block,
     )))<span class="question-mark">?</span>;
     module.merge(StarknetWriteRpcApiServer::into_rpc(Starknet::&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, StarknetHasher&gt;::new(
+        client.clone(),
+        starknet_params.madara_backend.clone(),
+        starknet_params.overrides.clone(),
+        pool.clone(),
+        graph.clone(),
+        starknet_params.sync_service.clone(),
+        starknet_params.starting_block,
+    )))<span class="question-mark">?</span>;
+    module.merge(StarknetTraceRpcApiServer::into_rpc(Starknet::&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, StarknetHasher&gt;::new(
         client,
         starknet_params.madara_backend,
         starknet_params.overrides,

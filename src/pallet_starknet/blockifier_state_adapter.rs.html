@@ -133,22 +133,16 @@
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
-<a href="#140" id="140">140</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::collections::{BTreeMap, BTreeSet};
 <span class="kw">use </span>core::marker::PhantomData;
 
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
-<span class="kw">use </span>blockifier::state::cached_state::{CommitmentStateDiff, ContractStorageKey};
+<span class="kw">use </span>blockifier::state::cached_state::{CommitmentStateDiff, ContractStorageKey, StateChangesCount};
 <span class="kw">use </span>blockifier::state::errors::StateError;
 <span class="kw">use </span>blockifier::state::state_api::{State, StateReader, StateResult};
 <span class="kw">use </span>indexmap::IndexMap;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
-<span class="kw">use </span>mp_state::{FeeConfig, StateChanges};
-<span class="kw">use </span>sp_core::Get;
+<span class="kw">use </span>mp_state::StateChanges;
 <span class="kw">use </span>starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_api::state::StorageKey;
@@ -172,19 +166,15 @@
 <span class="kw">where
     </span>T: Config,
 {
-    <span class="kw">fn </span>count_state_changes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (usize, usize, usize, usize) {
+    <span class="kw">fn </span>count_state_changes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StateChangesCount {
         <span class="kw">let </span>keys = <span class="self">self</span>.storage_update.keys();
         <span class="kw">let </span>n_contract_updated = BTreeSet::from_iter(keys.clone().map(|<span class="kw-2">&amp;</span>(contract_address, <span class="kw">_</span>)| contract_address)).len();
-        (n_contract_updated, keys.len(), <span class="self">self</span>.class_hash_update, <span class="self">self</span>.compiled_class_hash_update)
-    }
-}
-
-<span class="kw">impl</span>&lt;T&gt; FeeConfig <span class="kw">for </span>BlockifierStateAdapter&lt;T&gt;
-<span class="kw">where
-    </span>T: Config,
-{
-    <span class="kw">fn </span>is_transaction_fee_disabled(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        T::DisableTransactionFee::get()
+        StateChangesCount {
+            n_modified_contracts: n_contract_updated,
+            n_storage_updates: keys.len(),
+            n_class_hash_updates: <span class="self">self</span>.class_hash_update,
+            n_compiled_class_hash_updates: <span class="self">self</span>.compiled_class_hash_update,
+        }
     }
 }
 

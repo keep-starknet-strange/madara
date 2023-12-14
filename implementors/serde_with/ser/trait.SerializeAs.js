@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"mp_felt":[["impl <a class=\"trait\" href=\"https://docs.rs/serde_with/2.3.3/serde_with/ser/trait.SerializeAs.html\" title=\"trait serde_with::ser::SerializeAs\">SerializeAs</a>&lt;<a class=\"struct\" href=\"mp_felt/struct.Felt252Wrapper.html\" title=\"struct mp_felt::Felt252Wrapper\">Felt252Wrapper</a>&gt; for <a class=\"struct\" href=\"mp_felt/with_serde/struct.UfeHex.html\" title=\"struct mp_felt::with_serde::UfeHex\">UfeHex</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

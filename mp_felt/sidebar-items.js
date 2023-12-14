@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Felt252WrapperError"],"struct":["Felt252Wrapper"]};
+window.SIDEBAR_ITEMS = {"enum":["Felt252WrapperError"],"mod":["with_serde"],"struct":["Felt252Wrapper"]};

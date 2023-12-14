@@ -482,6 +482,12 @@
 <a href="#482" id="482">482</a>
 <a href="#483" id="483">483</a>
 <a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
+<a href="#486" id="486">486</a>
+<a href="#487" id="487">487</a>
+<a href="#488" id="488">488</a>
+<a href="#489" id="489">489</a>
+<a href="#490" id="490">490</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! # Felt252 - FieldElement wrapper.
 //!
 //! Starknet base type is a [`FieldElement`] from starknet-ff crate.
@@ -498,6 +504,9 @@
 
 <span class="kw">mod </span>starkware_types_conversions;
 
+<span class="attr">#[cfg(feature = <span class="string">&quot;serde&quot;</span>)]
+</span><span class="kw">pub mod </span>with_serde;
+
 <span class="kw">use </span>alloc::string::{String, ToString};
 
 <span class="kw">use </span>cairo_vm::felt::Felt252;
@@ -509,6 +518,9 @@
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_ff::{FieldElement, FromByteSliceError, FromStrError};
 <span class="kw">use </span>thiserror_no_std::Error;
+
+<span class="attr">#[cfg(feature = <span class="string">&quot;serde&quot;</span>)]
+</span><span class="kw">pub use </span><span class="kw">crate</span>::with_serde::<span class="kw-2">*</span>;
 
 <span class="attr">#[derive(Clone, Debug, PartialEq, PartialOrd, Ord, Hash, Eq, Copy)]
 #[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize, serde::Deserialize))]

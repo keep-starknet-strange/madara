@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["DictStateReader"],"trait":["FeeConfig","StateChanges"]};
+window.SIDEBAR_ITEMS = {"struct":["DictStateReader"],"trait":["StateChanges"]};

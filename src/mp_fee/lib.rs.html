@@ -226,6 +226,7 @@
 <a href="#226" id="226">226</a>
 <a href="#227" id="227">227</a>
 <a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet fee logic
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
@@ -242,7 +243,6 @@
 <span class="kw">use </span>blockifier::execution::entry_point::{
     CallEntryPoint, CallInfo, CallType, EntryPointExecutionContext, ExecutionResources,
 };
-<span class="kw">use </span>blockifier::state::cached_state::StateChangesCount;
 <span class="kw">use </span>blockifier::state::state_api::State;
 <span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>blockifier::transaction::objects::{AccountTransactionContext, ResourcesMapping, TransactionExecutionResult};
@@ -250,7 +250,7 @@
 <span class="kw">use </span>blockifier::transaction::transaction_utils::{calculate_l1_gas_usage, calculate_tx_resources};
 <span class="attr">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
 </span><span class="kw">use </span>hashbrown::HashMap;
-<span class="kw">use </span>mp_state::{FeeConfig, StateChanges};
+<span class="kw">use </span>mp_state::StateChanges;
 <span class="kw">use </span>sp_arithmetic::fixed_point::{FixedPointNumber, FixedU128};
 <span class="kw">use </span>sp_arithmetic::traits::Zero;
 <span class="kw">use </span>starknet_api::api_core::EntryPointSelector;
@@ -291,14 +291,7 @@
     tx_type: TransactionType,
     l1_handler_payload_size: <span class="prelude-ty">Option</span>&lt;usize&gt;,
 ) -&gt; TransactionExecutionResult&lt;ResourcesMapping&gt; {
-    <span class="kw">let </span>(n_modified_contracts, n_storage_updates, n_class_hash_updates, n_compiled_class_hash_updates) =
-        state.count_state_changes();
-    <span class="kw">let </span>state_changes_count = StateChangesCount {
-        n_storage_updates,
-        n_class_hash_updates,
-        n_compiled_class_hash_updates,
-        n_modified_contracts,
-    };
+    <span class="kw">let </span>state_changes_count = state.count_state_changes();
     <span class="kw">let </span>non_optional_call_infos: Vec&lt;<span class="kw-2">&amp;</span>CallInfo&gt; =
         <span class="macro">vec!</span>[execute_call_info, validate_call_info].into_iter().flatten().collect();
 
@@ -309,21 +302,30 @@
 }
 
 <span class="doccomment">/// Charges the fees for a specific execution resources.
-</span><span class="kw">pub fn </span>charge_fee&lt;S: State + StateChanges + FeeConfig&gt;(
+</span><span class="kw">pub fn </span>charge_fee&lt;S: State + StateChanges&gt;(
     state: <span class="kw-2">&amp;mut </span>S,
     block_context: <span class="kw-2">&amp;</span>BlockContext,
     account_tx_context: AccountTransactionContext,
     resources: <span class="kw-2">&amp;</span>ResourcesMapping,
+    disable_transaction_fee: bool,
+    disable_fee_charge: bool,
 ) -&gt; TransactionExecutionResult&lt;(Fee, <span class="prelude-ty">Option</span>&lt;CallInfo&gt;)&gt; {
-    <span class="kw">if </span>state.is_transaction_fee_disabled() {
+    <span class="comment">// disable_transaction_fee flag implies that transaction fees have
+    // been disabled and so we return 0 as the fees
+    </span><span class="kw">if </span>disable_transaction_fee {
         <span class="kw">return </span><span class="prelude-val">Ok</span>((Fee(<span class="number">0</span>), <span class="prelude-val">None</span>));
     }
 
     <span class="kw">let </span>actual_fee = calculate_tx_fee(resources, block_context)<span class="question-mark">?</span>;
 
-    <span class="comment">// even if the user doesn&#39;t have enough balance
-    // estimate fee shouldn&#39;t fail
-    </span><span class="kw">if </span>account_tx_context.version.<span class="number">0 </span>&gt;= StarkFelt::try_from(<span class="string">&quot;0x100000000000000000000000000000000&quot;</span>).unwrap() {
+    <span class="comment">// Fee charging is skipped in the following cases:
+    //  1) If the tx version &gt;= 0x100000000000000000000000000000000, the current transaction mode is a
+    //     estimate fee transaction, so we don&#39;t charge fees
+    //  2) The disable_fee_charge flag is set
+    // in both cases we return the actual fee.
+    </span><span class="kw">if </span>disable_fee_charge
+        || account_tx_context.version.<span class="number">0 </span>&gt;= StarkFelt::try_from(<span class="string">&quot;0x100000000000000000000000000000000&quot;</span>).unwrap()
+    {
         <span class="kw">return </span><span class="prelude-val">Ok</span>((actual_fee, <span class="prelude-val">None</span>));
     }
 

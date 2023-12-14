@@ -669,6 +669,62 @@
 <a href="#669" id="669">669</a>
 <a href="#670" id="670">670</a>
 <a href="#671" id="671">671</a>
+<a href="#672" id="672">672</a>
+<a href="#673" id="673">673</a>
+<a href="#674" id="674">674</a>
+<a href="#675" id="675">675</a>
+<a href="#676" id="676">676</a>
+<a href="#677" id="677">677</a>
+<a href="#678" id="678">678</a>
+<a href="#679" id="679">679</a>
+<a href="#680" id="680">680</a>
+<a href="#681" id="681">681</a>
+<a href="#682" id="682">682</a>
+<a href="#683" id="683">683</a>
+<a href="#684" id="684">684</a>
+<a href="#685" id="685">685</a>
+<a href="#686" id="686">686</a>
+<a href="#687" id="687">687</a>
+<a href="#688" id="688">688</a>
+<a href="#689" id="689">689</a>
+<a href="#690" id="690">690</a>
+<a href="#691" id="691">691</a>
+<a href="#692" id="692">692</a>
+<a href="#693" id="693">693</a>
+<a href="#694" id="694">694</a>
+<a href="#695" id="695">695</a>
+<a href="#696" id="696">696</a>
+<a href="#697" id="697">697</a>
+<a href="#698" id="698">698</a>
+<a href="#699" id="699">699</a>
+<a href="#700" id="700">700</a>
+<a href="#701" id="701">701</a>
+<a href="#702" id="702">702</a>
+<a href="#703" id="703">703</a>
+<a href="#704" id="704">704</a>
+<a href="#705" id="705">705</a>
+<a href="#706" id="706">706</a>
+<a href="#707" id="707">707</a>
+<a href="#708" id="708">708</a>
+<a href="#709" id="709">709</a>
+<a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
+<a href="#712" id="712">712</a>
+<a href="#713" id="713">713</a>
+<a href="#714" id="714">714</a>
+<a href="#715" id="715">715</a>
+<a href="#716" id="716">716</a>
+<a href="#717" id="717">717</a>
+<a href="#718" id="718">718</a>
+<a href="#719" id="719">719</a>
+<a href="#720" id="720">720</a>
+<a href="#721" id="721">721</a>
+<a href="#722" id="722">722</a>
+<a href="#723" id="723">723</a>
+<a href="#724" id="724">724</a>
+<a href="#725" id="725">725</a>
+<a href="#726" id="726">726</a>
+<a href="#727" id="727">727</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>alloc::vec;
@@ -695,7 +751,7 @@
 };
 <span class="kw">use </span>mp_fee::{calculate_tx_fee, charge_fee, compute_transaction_resources};
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
-<span class="kw">use </span>mp_state::{FeeConfig, StateChanges};
+<span class="kw">use </span>mp_state::StateChanges;
 <span class="kw">use </span>starknet_api::api_core::{ContractAddress, EntryPointSelector, Nonce};
 <span class="kw">use </span>starknet_api::deprecated_contract_class::EntryPointType;
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
@@ -704,6 +760,25 @@
 <span class="kw">use </span><span class="kw">super</span>::SIMULATE_TX_VERSION_OFFSET;
 
 <span class="kw">const </span>TX_INITIAL_AVAILABLE_GAS: u64 = INITIAL_GAS_COST - TRANSACTION_GAS_COST;
+
+<span class="doccomment">/// Contains the execution configuration regarding transaction fee
+/// activation, transaction fee charging, nonce validation, transaction
+/// validation and the execution mode (query or not).
+/// Use [`RuntimeExecutionConfigBuilder`] to build this struct in the runtime.
+</span><span class="attr">#[derive(Debug, Clone)]
+</span><span class="kw">pub struct </span>ExecutionConfig {
+    <span class="doccomment">/// If true, the transaction is a query.
+    </span><span class="kw">pub </span>is_query: bool,
+    <span class="doccomment">/// If true, transaction fee calculation and charging
+    /// is disabled for all transactions.
+    </span><span class="kw">pub </span>disable_transaction_fee: bool,
+    <span class="doccomment">/// If true, fee charging is disabled for all transactions.
+    </span><span class="kw">pub </span>disable_fee_charge: bool,
+    <span class="doccomment">/// If true, nonce validation is disabled for all transactions.
+    </span><span class="kw">pub </span>disable_nonce_validation: bool,
+    <span class="doccomment">/// If true, transaction validation is disabled for all transactions.
+    </span><span class="kw">pub </span>disable_validation: bool,
+}
 
 <span class="kw">pub struct </span>ValidateExecuteCallInfo {
     <span class="kw">pub </span>validate_call_info: <span class="prelude-ty">Option</span>&lt;CallInfo&gt;,
@@ -938,13 +1013,14 @@
 }
 
 <span class="kw">pub trait </span>Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata + GetTxType {
-    <span class="kw">fn </span>execute_inner&lt;S: State + StateChanges + FeeConfig&gt;(
+    <span class="kw">fn </span>execute_inner&lt;S: State + StateChanges&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         state: <span class="kw-2">&amp;mut </span>S,
         block_context: <span class="kw-2">&amp;</span>BlockContext,
         resources: <span class="kw-2">&amp;mut </span>ExecutionResources,
         remaining_gas: <span class="kw-2">&amp;mut </span>u64,
         account_tx_context: <span class="kw-2">&amp;</span>AccountTransactionContext,
+        disable_validation: bool,
     ) -&gt; TransactionExecutionResult&lt;ValidateExecuteCallInfo&gt;;
 
     <span class="kw">fn </span>handle_nonce(
@@ -972,20 +1048,29 @@
     }
 
     <span class="doccomment">/// Handles nonce and checks that the account&#39;s balance covers max fee.
-    </span><span class="kw">fn </span>handle_nonce_and_check_fee_balance(
-        state: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>State,
+    </span><span class="kw">fn </span>handle_nonce_and_check_fee_balance&lt;S: State + StateChanges&gt;(
+        state: <span class="kw-2">&amp;mut </span>S,
         block_context: <span class="kw-2">&amp;</span>BlockContext,
         account_tx_context: <span class="kw-2">&amp;</span>AccountTransactionContext,
-        disable_nonce_validation: bool,
+        execution_config: <span class="kw-2">&amp;</span>ExecutionConfig,
     ) -&gt; TransactionExecutionResult&lt;()&gt; {
         <span class="comment">// Handle nonce.
-
-        </span><span class="kw">if </span>!disable_nonce_validation {
+        </span><span class="kw">if </span>!execution_config.disable_nonce_validation {
             <span class="self">Self</span>::handle_nonce(account_tx_context, state)<span class="question-mark">?</span>;
         }
 
-        <span class="comment">// Check fee balance.
-        </span><span class="kw">if </span>account_tx_context.max_fee != Fee(<span class="number">0</span>) {
+        <span class="comment">// Check fee balance. Skipped in the following cases:
+        // 1. account_tx_context.max_fee - balance would always be enough if max_fee is 0
+        // 2. disable_fee_charge - true during simulate transactions
+        // 3. disable_fee_charge - true when fees is disabled at app level
+        // 4. is_query - true during estimate_fee transactions. estimate_fee transactions normally have
+        //    max_fee = 0 but they should also work if max_fee &gt; 0
+        </span><span class="kw">if </span>account_tx_context.max_fee != Fee(<span class="number">0</span>)
+            &amp;&amp; !execution_config.disable_fee_charge
+            &amp;&amp; !execution_config.disable_transaction_fee
+            &amp;&amp; !execution_config.is_query
+        {
+            <span class="macro">log::debug!</span>(<span class="string">&quot;Inside checking balance&quot;</span>);
             <span class="kw">let </span>(balance_low, balance_high) =
                 state.get_fee_token_balance(block_context, <span class="kw-2">&amp;</span>account_tx_context.sender_address)<span class="question-mark">?</span>;
 
@@ -1001,20 +1086,19 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">fn </span>execute&lt;S: State + StateChanges + FeeConfig&gt;(
+    <span class="kw">fn </span>execute&lt;S: State + StateChanges&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         state: <span class="kw-2">&amp;mut </span>S,
         block_context: <span class="kw-2">&amp;</span>BlockContext,
-        is_query: bool,
-        disable_nonce_validation: bool,
+        execution_config: <span class="kw-2">&amp;</span>ExecutionConfig,
     ) -&gt; TransactionExecutionResult&lt;TransactionExecutionInfo&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>execution_resources = ExecutionResources::default();
         <span class="kw">let </span><span class="kw-2">mut </span>remaining_gas = TX_INITIAL_AVAILABLE_GAS;
 
-        <span class="kw">let </span>account_tx_context = <span class="self">self</span>.get_account_transaction_context(is_query);
+        <span class="kw">let </span>account_tx_context = <span class="self">self</span>.get_account_transaction_context(execution_config.is_query);
 
         <span class="comment">// Nonce and fee check should be done before running user code.
-        </span><span class="self">Self</span>::handle_nonce_and_check_fee_balance(state, block_context, <span class="kw-2">&amp;</span>account_tx_context, disable_nonce_validation)<span class="question-mark">?</span>;
+        </span><span class="self">Self</span>::handle_nonce_and_check_fee_balance(state, block_context, <span class="kw-2">&amp;</span>account_tx_context, execution_config)<span class="question-mark">?</span>;
 
         <span class="comment">// execute
         </span><span class="kw">let </span>ValidateExecuteCallInfo { validate_call_info, execute_call_info, revert_error } = <span class="self">self</span>.execute_inner(
@@ -1023,6 +1107,7 @@
             <span class="kw-2">&amp;mut </span>execution_resources,
             <span class="kw-2">&amp;mut </span>remaining_gas,
             <span class="kw-2">&amp;</span>account_tx_context,
+            execution_config.disable_validation,
         )<span class="question-mark">?</span>;
 
         <span class="kw">let </span>(actual_fee, fee_transfer_call_info, actual_resources) = <span class="self">self</span>.handle_fee(
@@ -1032,6 +1117,7 @@
             <span class="kw-2">&amp;mut </span>execution_resources,
             block_context,
             account_tx_context,
+            execution_config,
         )<span class="question-mark">?</span>;
 
         <span class="kw">let </span>tx_execution_info = TransactionExecutionInfo {
@@ -1046,7 +1132,8 @@
         <span class="prelude-val">Ok</span>(tx_execution_info)
     }
 
-    <span class="kw">fn </span>handle_fee&lt;S: State + StateChanges + FeeConfig&gt;(
+    <span class="attr">#[allow(clippy::too_many_arguments)]
+    </span><span class="kw">fn </span>handle_fee&lt;S: State + StateChanges&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         state: <span class="kw-2">&amp;mut </span>S,
         execute_call_info: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;CallInfo&gt;,
@@ -1054,6 +1141,7 @@
         execution_resources: <span class="kw-2">&amp;mut </span>ExecutionResources,
         block_context: <span class="kw-2">&amp;</span>BlockContext,
         account_tx_context: AccountTransactionContext,
+        execution_config: <span class="kw-2">&amp;</span>ExecutionConfig,
     ) -&gt; TransactionExecutionResult&lt;(Fee, <span class="prelude-ty">Option</span>&lt;CallInfo&gt;, ResourcesMapping)&gt; {
         <span class="kw">let </span>actual_resources = compute_transaction_resources(
             state,
@@ -1064,8 +1152,14 @@
             <span class="prelude-val">None</span>,
         )<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>(actual_fee, fee_transfer_call_info) =
-            charge_fee(state, block_context, account_tx_context, <span class="kw-2">&amp;</span>actual_resources)<span class="question-mark">?</span>;
+        <span class="kw">let </span>(actual_fee, fee_transfer_call_info) = charge_fee(
+            state,
+            block_context,
+            account_tx_context,
+            <span class="kw-2">&amp;</span>actual_resources,
+            execution_config.disable_transaction_fee,
+            execution_config.disable_fee_charge,
+        )<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>((actual_fee, fee_transfer_call_info, actual_resources))
     }
@@ -1076,13 +1170,14 @@
 }
 
 <span class="kw">impl </span>Execute <span class="kw">for </span>InvokeTransaction {
-    <span class="kw">fn </span>execute_inner&lt;S: State + StateChanges + FeeConfig&gt;(
+    <span class="kw">fn </span>execute_inner&lt;S: State + StateChanges&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         state: <span class="kw-2">&amp;mut </span>S,
         block_context: <span class="kw-2">&amp;</span>BlockContext,
         resources: <span class="kw-2">&amp;mut </span>ExecutionResources,
         remaining_gas: <span class="kw-2">&amp;mut </span>u64,
         account_tx_context: <span class="kw-2">&amp;</span>AccountTransactionContext,
+        disable_validation: bool,
     ) -&gt; TransactionExecutionResult&lt;ValidateExecuteCallInfo&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(
             block_context.clone(),
@@ -1090,13 +1185,17 @@
             block_context.invoke_tx_max_n_steps,
         );
 
-        <span class="kw">let </span>validate_call_info = <span class="self">self</span>.validate_tx_inner(
-            state,
-            resources,
-            remaining_gas,
-            <span class="kw-2">&amp;mut </span>context,
-            GetTransactionCalldata::calldata(<span class="self">self</span>),
-        )<span class="question-mark">?</span>;
+        <span class="kw">let </span>validate_call_info = <span class="kw">if </span>!disable_validation {
+            <span class="self">self</span>.validate_tx_inner(
+                state,
+                resources,
+                remaining_gas,
+                <span class="kw-2">&amp;mut </span>context,
+                GetTransactionCalldata::calldata(<span class="self">self</span>),
+            )<span class="question-mark">?
+        </span>} <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>};
         <span class="kw">let </span>validate_execute_call_info = <span class="kw">match </span><span class="self">self</span>.tx {
             <span class="comment">// V0 tx cannot revert, we cannot charge the failling ones
             </span>starknet_api::transaction::InvokeTransaction::V0(<span class="kw">_</span>) =&gt; {
@@ -1108,7 +1207,10 @@
                     <span class="prelude-val">Ok</span>(execute_call_info) =&gt; {
                         ValidateExecuteCallInfo::new_accepted(validate_call_info, execute_call_info)
                     }
-                    <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; ValidateExecuteCallInfo::new_reverted(validate_call_info, context.error_trace()),
+                    <span class="prelude-val">Err</span>(e) =&gt; {
+                        <span class="macro">log::debug!</span>(<span class="string">&quot;Invoke transaction reverted with error: {:?}&quot;</span>, e);
+                        ValidateExecuteCallInfo::new_reverted(validate_call_info, context.error_trace())
+                    }
                 }
             }
         };
@@ -1122,13 +1224,14 @@
 }
 
 <span class="kw">impl </span>Execute <span class="kw">for </span>DeclareTransaction {
-    <span class="kw">fn </span>execute_inner&lt;S: State + StateChanges + FeeConfig&gt;(
+    <span class="kw">fn </span>execute_inner&lt;S: State + StateChanges&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         state: <span class="kw-2">&amp;mut </span>S,
         block_context: <span class="kw-2">&amp;</span>BlockContext,
         resources: <span class="kw-2">&amp;mut </span>ExecutionResources,
         remaining_gas: <span class="kw-2">&amp;mut </span>u64,
         account_tx_context: <span class="kw-2">&amp;</span>AccountTransactionContext,
+        disable_validation: bool,
     ) -&gt; TransactionExecutionResult&lt;ValidateExecuteCallInfo&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(
             block_context.clone(),
@@ -1136,8 +1239,11 @@
             block_context.invoke_tx_max_n_steps,
         );
 
-        <span class="kw">let </span>validate_call_info =
-            <span class="self">self</span>.validate_tx_inner(state, resources, remaining_gas, <span class="kw-2">&amp;mut </span>context, <span class="self">self</span>.calldata())<span class="question-mark">?</span>;
+        <span class="kw">let </span>validate_call_info = <span class="kw">if </span>!disable_validation {
+            <span class="self">self</span>.validate_tx_inner(state, resources, remaining_gas, <span class="kw-2">&amp;mut </span>context, <span class="self">self</span>.calldata())<span class="question-mark">?
+        </span>} <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>};
         <span class="kw">let </span>validate_execute_call_info = <span class="kw">match </span><span class="self">self</span>.tx() {
             <span class="comment">// V0 tx cannot revert, we cannot charge the failling ones
             </span>starknet_api::transaction::DeclareTransaction::V0(<span class="kw">_</span>) =&gt; {
@@ -1164,13 +1270,14 @@
 }
 
 <span class="kw">impl </span>Execute <span class="kw">for </span>DeployAccountTransaction {
-    <span class="kw">fn </span>execute_inner&lt;S: State + StateChanges + FeeConfig&gt;(
+    <span class="kw">fn </span>execute_inner&lt;S: State + StateChanges&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         state: <span class="kw-2">&amp;mut </span>S,
         block_context: <span class="kw-2">&amp;</span>BlockContext,
         resources: <span class="kw-2">&amp;mut </span>ExecutionResources,
         remaining_gas: <span class="kw-2">&amp;mut </span>u64,
         account_tx_context: <span class="kw-2">&amp;</span>AccountTransactionContext,
+        disable_validation: bool,
     ) -&gt; TransactionExecutionResult&lt;ValidateExecuteCallInfo&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(
             block_context.clone(),
@@ -1181,21 +1288,25 @@
         <span class="comment">// In order to be verified the tx must first be executed
         // so that the `constructor` method can initialize the account state
         </span><span class="kw">let </span>execute_call_info = <span class="self">self</span>.run_execute(state, resources, <span class="kw-2">&amp;mut </span>context, remaining_gas)<span class="question-mark">?</span>;
-        <span class="kw">let </span>validate_call_info =
-            <span class="self">self</span>.validate_tx_inner(state, resources, remaining_gas, <span class="kw-2">&amp;mut </span>context, <span class="self">self</span>.calldata())<span class="question-mark">?</span>;
+        <span class="kw">let </span>validate_call_info = <span class="kw">if </span>!disable_validation {
+            <span class="self">self</span>.validate_tx_inner(state, resources, remaining_gas, <span class="kw-2">&amp;mut </span>context, <span class="self">self</span>.calldata())<span class="question-mark">?
+        </span>} <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>};
 
         <span class="prelude-val">Ok</span>(ValidateExecuteCallInfo::new_accepted(validate_call_info, execute_call_info))
     }
 }
 
 <span class="kw">impl </span>Execute <span class="kw">for </span>L1HandlerTransaction {
-    <span class="kw">fn </span>execute_inner&lt;S: State + StateChanges + FeeConfig&gt;(
+    <span class="kw">fn </span>execute_inner&lt;S: State + StateChanges&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         state: <span class="kw-2">&amp;mut </span>S,
         block_context: <span class="kw-2">&amp;</span>BlockContext,
         resources: <span class="kw-2">&amp;mut </span>ExecutionResources,
         remaining_gas: <span class="kw-2">&amp;mut </span>u64,
         account_tx_context: <span class="kw-2">&amp;</span>AccountTransactionContext,
+        _disable_validation: bool,
     ) -&gt; TransactionExecutionResult&lt;ValidateExecuteCallInfo&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(
             block_context.clone(),
@@ -1209,7 +1320,7 @@
     }
 
     <span class="comment">// No fee are charged for L1HandlerTransaction
-    </span><span class="kw">fn </span>handle_fee&lt;S: State + StateChanges + FeeConfig&gt;(
+    </span><span class="kw">fn </span>handle_fee&lt;S: State + StateChanges&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         state: <span class="kw-2">&amp;mut </span>S,
         execute_call_info: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;CallInfo&gt;,
@@ -1217,6 +1328,7 @@
         execution_resources: <span class="kw-2">&amp;mut </span>ExecutionResources,
         block_context: <span class="kw-2">&amp;</span>BlockContext,
         _account_tx_context: AccountTransactionContext,
+        _execution_config: <span class="kw-2">&amp;</span>ExecutionConfig,
     ) -&gt; TransactionExecutionResult&lt;(Fee, <span class="prelude-ty">Option</span>&lt;CallInfo&gt;, ResourcesMapping)&gt; {
         <span class="comment">// The calldata includes the &quot;from&quot; field, which is not a part of the payload.
         </span><span class="kw">let </span>l1_handler_payload_size = <span class="self">self</span>.calldata().<span class="number">0</span>.len() - <span class="number">1</span>;

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["utils"],"struct":["Felt"],"trait":["StarknetReadRpcApiServer","StarknetWriteRpcApiServer"]};
+window.SIDEBAR_ITEMS = {"mod":["utils"],"struct":["Felt"],"trait":["StarknetReadRpcApiServer","StarknetTraceRpcApiServer","StarknetWriteRpcApiServer"]};

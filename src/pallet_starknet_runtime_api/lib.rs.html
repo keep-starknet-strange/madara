@@ -138,6 +138,9 @@
 <a href="#138" id="138">138</a>
 <a href="#139" id="139">139</a>
 <a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Definition of the runtime API for the Starknet pallet.
 
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
@@ -156,6 +159,7 @@
 <span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::vec::Vec;
 
+<span class="kw">use </span>mp_simulations::{SimulatedTransaction, SimulationFlags};
 <span class="kw">use </span>sp_runtime::DispatchError;
 <span class="kw">use </span>starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector, Nonce};
 <span class="kw">use </span>starknet_api::block::{BlockNumber, BlockTimestamp};
@@ -188,6 +192,8 @@
         </span><span class="kw">fn </span>chain_id() -&gt; Felt252Wrapper;
         <span class="doccomment">/// Returns fee estimate
         </span><span class="kw">fn </span>estimate_fee(transactions: Vec&lt;UserTransaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(u64, u64)&gt;, DispatchError&gt;;
+        <span class="doccomment">/// Simulates transactions and returns their trace
+        </span><span class="kw">fn </span>simulate_transactions(transactions: Vec&lt;UserTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;SimulatedTransaction&gt;, DispatchError&gt;;
         <span class="doccomment">/// Filters extrinsic transactions to return only Starknet transactions
         ///
         /// To support runtime upgrades, the client must be unaware of the specific extrinsic

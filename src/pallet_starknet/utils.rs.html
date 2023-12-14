@@ -57,141 +57,63 @@
 <a href="#57" id="57">57</a>
 <a href="#58" id="58">58</a>
 <a href="#59" id="59">59</a>
-<a href="#60" id="60">60</a>
-<a href="#61" id="61">61</a>
-<a href="#62" id="62">62</a>
-<a href="#63" id="63">63</a>
-<a href="#64" id="64">64</a>
-<a href="#65" id="65">65</a>
-<a href="#66" id="66">66</a>
-<a href="#67" id="67">67</a>
-<a href="#68" id="68">68</a>
-<a href="#69" id="69">69</a>
-<a href="#70" id="70">70</a>
-<a href="#71" id="71">71</a>
-<a href="#72" id="72">72</a>
-<a href="#73" id="73">73</a>
-<a href="#74" id="74">74</a>
-<a href="#75" id="75">75</a>
-<a href="#76" id="76">76</a>
-<a href="#77" id="77">77</a>
-<a href="#78" id="78">78</a>
-<a href="#79" id="79">79</a>
-<a href="#80" id="80">80</a>
-<a href="#81" id="81">81</a>
-<a href="#82" id="82">82</a>
-<a href="#83" id="83">83</a>
-<a href="#84" id="84">84</a>
-<a href="#85" id="85">85</a>
-<a href="#86" id="86">86</a>
-<a href="#87" id="87">87</a>
-<a href="#88" id="88">88</a>
-<a href="#89" id="89">89</a>
-<a href="#90" id="90">90</a>
-<a href="#91" id="91">91</a>
-<a href="#92" id="92">92</a>
-<a href="#93" id="93">93</a>
-<a href="#94" id="94">94</a>
-<a href="#95" id="95">95</a>
-<a href="#96" id="96">96</a>
-<a href="#97" id="97">97</a>
-<a href="#98" id="98">98</a>
-</pre></div><pre class="rust"><code><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub enum </span>Error {
-    Cli(sc_cli::Error),
-}
+</pre></div><pre class="rust"><code><span class="kw">use </span>alloc::string::String;
+<span class="kw">use </span>alloc::vec::Vec;
 
-<span class="kw">impl </span>From&lt;Error&gt; <span class="kw">for </span>sc_cli::Error {
-    <span class="kw">fn </span>from(err: Error) -&gt; <span class="self">Self </span>{
-        <span class="kw">match </span>err {
-            Error::Cli(err) =&gt; err,
+<span class="kw">use </span>blockifier::block_context::BlockContext;
+<span class="kw">use </span>blockifier::execution::entry_point::CallInfo;
+<span class="kw">use </span>blockifier::transaction::objects::{TransactionExecutionInfo, TransactionExecutionResult};
+<span class="kw">use </span>frame_support::storage;
+<span class="kw">use </span>mp_felt::Felt252Wrapper;
+<span class="kw">use </span>mp_simulations::{ExecuteInvocation, RevertedInvocation};
+<span class="kw">use </span>mp_transactions::execution::{Execute, ExecutionConfig};
+<span class="kw">use </span>mp_transactions::UserTransaction;
+<span class="kw">use </span>sp_runtime::DispatchError;
+
+<span class="kw">use </span><span class="kw">crate</span>::blockifier_state_adapter::BlockifierStateAdapter;
+<span class="kw">use crate</span>::{pallet, Error};
+
+<span class="kw">pub fn </span>execute_txs_and_rollback&lt;T: pallet::Config&gt;(
+    txs: <span class="kw-2">&amp;</span>Vec&lt;UserTransaction&gt;,
+    block_context: <span class="kw-2">&amp;</span>BlockContext,
+    chain_id: Felt252Wrapper,
+    execution_config: <span class="kw-2">&amp;</span>ExecutionConfig,
+) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;TransactionExecutionResult&lt;TransactionExecutionInfo&gt;&gt;, Error&lt;T&gt;&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>execution_results = <span class="macro">vec!</span>[];
+    storage::transactional::with_transaction(|| {
+        <span class="kw">for </span>tx <span class="kw">in </span>txs {
+            <span class="kw">let </span>result = <span class="kw">match </span>tx {
+                UserTransaction::Declare(tx, contract_class) =&gt; tx
+                    .try_into_executable::&lt;T::SystemHash&gt;(chain_id, contract_class.clone(), execution_config.is_query)
+                    .and_then(|exec| {
+                        exec.execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), block_context, execution_config)
+                    }),
+                UserTransaction::DeployAccount(tx) =&gt; {
+                    <span class="kw">let </span>executable = tx.into_executable::&lt;T::SystemHash&gt;(chain_id, execution_config.is_query);
+                    executable.execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), block_context, execution_config)
+                }
+                UserTransaction::Invoke(tx) =&gt; {
+                    <span class="kw">let </span>executable = tx.into_executable::&lt;T::SystemHash&gt;(chain_id, execution_config.is_query);
+                    executable.execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), block_context, execution_config)
+                }
+            };
+            execution_results.push(result);
         }
+        storage::TransactionOutcome::Rollback(<span class="prelude-ty">Result</span>::&lt;<span class="kw">_</span>, DispatchError&gt;::Ok(()))
+    })
+    .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TransactionalExecutionFailed)<span class="question-mark">?</span>;
+    <span class="prelude-val">Ok</span>(execution_results)
+}
+
+<span class="kw">pub fn </span>convert_call_info_to_execute_invocation&lt;T&gt;(
+    call_info: <span class="kw-2">&amp;</span>CallInfo,
+    revert_error: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>String&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;ExecuteInvocation, Error&lt;T&gt;&gt; {
+    <span class="kw">if </span>call_info.execution.failed {
+        <span class="kw">return </span><span class="prelude-val">Ok</span>(ExecuteInvocation::Reverted(RevertedInvocation {
+            revert_reason: revert_error.ok_or(Error::MissingRevertReason)<span class="question-mark">?</span>.clone(),
+        }));
     }
-}
-
-<span class="kw">impl </span>From&lt;Error&gt; <span class="kw">for </span>String {
-    <span class="kw">fn </span>from(err: Error) -&gt; <span class="self">Self </span>{
-        <span class="kw">match </span>err {
-            Error::Cli(err) =&gt; err.to_string(),
-        }
-    }
-}
-
-<span class="kw">impl </span>From&lt;Box&lt;<span class="kw">dyn </span>std::error::Error&gt;&gt; <span class="kw">for </span>Error {
-    <span class="kw">fn </span>from(err: Box&lt;<span class="kw">dyn </span>std::error::Error&gt;) -&gt; <span class="self">Self </span>{
-        Error::Cli(sc_cli::Error::Input(err.to_string()))
-    }
-}
-
-<span class="kw">impl </span>From&lt;std::io::Error&gt; <span class="kw">for </span>Error {
-    <span class="kw">fn </span>from(err: std::io::Error) -&gt; <span class="self">Self </span>{
-        Error::Cli(sc_cli::Error::Io(err))
-    }
-}
-
-<span class="kw">impl </span>From&lt;reqwest::Error&gt; <span class="kw">for </span>Error {
-    <span class="kw">fn </span>from(err: reqwest::Error) -&gt; <span class="self">Self </span>{
-        Error::Cli(sc_cli::Error::Input(err.to_string()))
-    }
-}
-
-<span class="kw">impl </span>From&lt;<span class="kw-2">&amp;</span>str&gt; <span class="kw">for </span>Error {
-    <span class="kw">fn </span>from(err: <span class="kw-2">&amp;</span>str) -&gt; <span class="self">Self </span>{
-        Error::Cli(sc_cli::Error::Input(err.to_string()))
-    }
-}
-
-<span class="kw">impl </span>From&lt;core::str::Utf8Error&gt; <span class="kw">for </span>Error {
-    <span class="kw">fn </span>from(err: core::str::Utf8Error) -&gt; <span class="self">Self </span>{
-        Error::Cli(sc_cli::Error::Input(err.to_string()))
-    }
-}
-
-<span class="kw">pub fn </span>get_project_path() -&gt; <span class="prelude-ty">Result</span>&lt;String, Error&gt; {
-    <span class="kw">let </span>workspace = std::process::Command::new(<span class="macro">env!</span>(<span class="string">&quot;CARGO&quot;</span>))
-        .args([<span class="string">&quot;locate-project&quot;</span>, <span class="string">&quot;--workspace&quot;</span>, <span class="string">&quot;--message-format=plain&quot;</span>])
-        .output()<span class="question-mark">?</span>;
-
-    <span class="kw">let </span><span class="kw-2">mut </span>dir = std::path::PathBuf::from(std::str::from_utf8(<span class="kw-2">&amp;</span>workspace.stdout)<span class="question-mark">?</span>.trim());
-    dir.pop();
-    <span class="prelude-val">Ok</span>(dir.to_str().ok_or(<span class="string">&quot;Failed to get project path&quot;</span>)<span class="question-mark">?</span>.to_string())
-}
-
-<span class="kw">pub fn </span>copy_from_filesystem(src_path: String, dest_path: String) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
-    <span class="macro">log::info!</span>(<span class="string">&quot;Trying to copy {} to {} from filesystem&quot;</span>, src_path, dest_path);
-    <span class="kw">let </span>src = std::path::PathBuf::from(src_path.clone());
-    <span class="kw">if </span>!src.exists() {
-        <span class="macro">log::info!</span>(<span class="string">&quot;{} does not exist&quot;</span>, src_path);
-        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">&quot;File does not exist&quot;</span>.into());
-    }
-
-    <span class="kw">let </span><span class="kw-2">mut </span>dst = std::path::PathBuf::from(dest_path.clone());
-    std::fs::create_dir_all(<span class="kw-2">&amp;</span>dst)<span class="question-mark">?</span>;
-    dst.push(src.file_name().ok_or(<span class="string">&quot;File name not found&quot;</span>)<span class="question-mark">?</span>);
-    std::fs::copy(src, dst)<span class="question-mark">?</span>;
-
-    <span class="macro">log::info!</span>(<span class="string">&quot;Copied {} to {} from filesystem&quot;</span>, src_path, dest_path);
-    <span class="prelude-val">Ok</span>(())
-}
-
-<span class="kw">pub fn </span>fetch_from_url(target: String, dest_path: String) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
-    <span class="macro">log::info!</span>(<span class="string">&quot;Trying to fetch {} to {} from url&quot;</span>, target, dest_path);
-    <span class="kw">let </span><span class="kw-2">mut </span>dst = std::path::PathBuf::from(dest_path);
-    std::fs::create_dir_all(<span class="kw-2">&amp;</span>dst)<span class="question-mark">?</span>;
-    dst.push(target.split(<span class="string">&#39;/&#39;</span>).last().expect(<span class="string">&quot;Failed to get file name from `target` while fetching url&quot;</span>));
-
-    <span class="kw">let </span>response = reqwest::blocking::get(target.clone())<span class="question-mark">?</span>;
-
-    <span class="kw">let </span><span class="kw-2">mut </span>file = std::fs::File::create(dst)<span class="question-mark">?</span>;
-    <span class="kw">let </span>bytes = response.bytes()<span class="question-mark">?</span>;
-
-    <span class="kw">let </span><span class="kw-2">mut </span>content = std::io::Cursor::new(bytes);
-    std::io::copy(<span class="kw-2">&amp;mut </span>content, <span class="kw-2">&amp;mut </span>file)<span class="question-mark">?</span>;
-
-    <span class="prelude-val">Ok</span>(())
-}
-
-<span class="kw">pub fn </span>read_file_to_string(path: String) -&gt; <span class="prelude-ty">Result</span>&lt;String, Error&gt; {
-    <span class="prelude-val">Ok</span>(std::fs::read_to_string(path)<span class="question-mark">?</span>)
+    <span class="prelude-val">Ok</span>(ExecuteInvocation::Success(call_info.try_into().map_err(|<span class="kw">_</span>| Error::TransactionExecutionFailed)<span class="question-mark">?</span>))
 }
 </code></pre></div></section></main></body></html>

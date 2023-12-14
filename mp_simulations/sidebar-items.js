@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CallType","ExecuteInvocation","SimulationFlag","TransactionTrace"],"struct":["DeclareTransactionTrace","DeployAccountTransactionTrace","FeeEstimate","FunctionInvocation","InvokeTransactionTrace","L1HandlerTransactionTrace","MessageToL1","RevertedInvocation","SimulatedTransaction","SimulationFlags"]};
