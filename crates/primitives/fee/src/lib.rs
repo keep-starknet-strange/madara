@@ -14,7 +14,6 @@ use blockifier::block_context::BlockContext;
 use blockifier::execution::entry_point::{
     CallEntryPoint, CallInfo, CallType, EntryPointExecutionContext, ExecutionResources,
 };
-use blockifier::state::cached_state::StateChangesCount;
 use blockifier::state::state_api::State;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::{AccountTransactionContext, ResourcesMapping, TransactionExecutionResult};
@@ -22,7 +21,7 @@ use blockifier::transaction::transaction_types::TransactionType;
 use blockifier::transaction::transaction_utils::{calculate_l1_gas_usage, calculate_tx_resources};
 #[cfg(not(feature = "std"))]
 use hashbrown::HashMap;
-use mp_state::{FeeConfig, StateChanges};
+use mp_state::StateChanges;
 use sp_arithmetic::fixed_point::{FixedPointNumber, FixedU128};
 use sp_arithmetic::traits::Zero;
 use starknet_api::api_core::EntryPointSelector;
@@ -63,14 +62,7 @@ pub fn compute_transaction_resources<S: State + StateChanges>(
     tx_type: TransactionType,
     l1_handler_payload_size: Option<usize>,
 ) -> TransactionExecutionResult<ResourcesMapping> {
-    let (n_modified_contracts, n_storage_updates, n_class_hash_updates, n_compiled_class_hash_updates) =
-        state.count_state_changes();
-    let state_changes_count = StateChangesCount {
-        n_storage_updates,
-        n_class_hash_updates,
-        n_compiled_class_hash_updates,
-        n_modified_contracts,
-    };
+    let state_changes_count = state.count_state_changes();
     let non_optional_call_infos: Vec<&CallInfo> =
         vec![execute_call_info, validate_call_info].into_iter().flatten().collect();
 
@@ -81,21 +73,30 @@ pub fn compute_transaction_resources<S: State + StateChanges>(
 }
 
 /// Charges the fees for a specific execution resources.
-pub fn charge_fee<S: State + StateChanges + FeeConfig>(
+pub fn charge_fee<S: State + StateChanges>(
     state: &mut S,
     block_context: &BlockContext,
     account_tx_context: AccountTransactionContext,
     resources: &ResourcesMapping,
+    disable_transaction_fee: bool,
+    disable_fee_charge: bool,
 ) -> TransactionExecutionResult<(Fee, Option<CallInfo>)> {
-    if state.is_transaction_fee_disabled() {
+    // disable_transaction_fee flag implies that transaction fees have
+    // been disabled and so we return 0 as the fees
+    if disable_transaction_fee {
         return Ok((Fee(0), None));
     }
 
     let actual_fee = calculate_tx_fee(resources, block_context)?;
 
-    // even if the user doesn't have enough balance
-    // estimate fee shouldn't fail
-    if account_tx_context.version.0 >= StarkFelt::try_from("0x100000000000000000000000000000000").unwrap() {
+    // Fee charging is skipped in the following cases:
+    //  1) If the tx version >= 0x100000000000000000000000000000000, the current transaction mode is a
+    //     estimate fee transaction, so we don't charge fees
+    //  2) The disable_fee_charge flag is set
+    // in both cases we return the actual fee.
+    if disable_fee_charge
+        || account_tx_context.version.0 >= StarkFelt::try_from("0x100000000000000000000000000000000").unwrap()
+    {
         return Ok((actual_fee, None));
     }
 

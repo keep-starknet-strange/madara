@@ -13,6 +13,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 blockifier = { workspace = true }
 derive_more = { workspace = true, features = ["from"] }
+log = { workspace = true }
 mp-fee = { workspace = true }
 mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
