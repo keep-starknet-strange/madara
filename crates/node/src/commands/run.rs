@@ -75,7 +75,7 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
 
     let da_config: Option<(DaLayer, PathBuf)> = match cli.run.da_layer {
         Some(da_layer) => {
-            let da_conf = PathBuf::from(cli.run.da_conf.expect("no da config provided"));
+            let da_conf = PathBuf::from(cli.run.da_conf.expect("clap requires da_conf when da_layer is present"));
             if !da_conf.exists() {
                 log::info!("{} does not contain DA config", da_conf.display());
                 return Err("DA config not available".into());

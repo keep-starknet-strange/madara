@@ -25,7 +25,7 @@ members = [
 	"starknet-rpc-test",
 	"da-test",
 ]
-# All previous except for `starknet-rpc-test`
+# All previous except for `starknet-rpc-test` and `da-test`
 # We don't want `cargo test` to trigger its tests
 default-members = [
 	"crates/node",
