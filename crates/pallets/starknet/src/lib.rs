@@ -783,7 +783,7 @@ pub mod pallet {
                             .try_into_executable::<T::SystemHash>(chain_id, contract_class, false)
                             .map_err(|_| InvalidTransaction::BadProof)?
                             .validate_tx(&mut state, &block_context, &mut execution_resources, &mut initial_gas, false),
-                        // There is no way to validate it before the account is actuallly deployed
+                        // There is no way to validate it before the account is actually deployed
                         UserTransaction::DeployAccount(_) => Ok(None),
                         UserTransaction::Invoke(tx) => tx
                             .into_executable::<T::SystemHash>(chain_id, false)
