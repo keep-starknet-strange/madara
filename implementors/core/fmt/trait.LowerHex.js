@@ -1,3 +1,3 @@
 (function() {var implementors = {
-"pallet_starknet":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/fmt/trait.LowerHex.html\" title=\"trait core::fmt::LowerHex\">LowerHex</a> for <a class=\"struct\" href=\"pallet_starknet/genesis_loader/struct.HexFelt.html\" title=\"struct pallet_starknet::genesis_loader::HexFelt\">HexFelt</a>"]]
+"mp_genesis_config":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/fmt/trait.LowerHex.html\" title=\"trait core::fmt::LowerHex\">LowerHex</a> for <a class=\"struct\" href=\"mp_genesis_config/struct.HexFelt.html\" title=\"struct mp_genesis_config::HexFelt\">HexFelt</a>"]]
 };if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

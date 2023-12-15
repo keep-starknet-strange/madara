@@ -104,6 +104,23 @@
 <a href="#104" id="104">104</a>
 <a href="#105" id="105">105</a>
 <a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A collection of node-specific RPC methods.
 //! Substrate provides the `sc-rpc` crate, which defines the core RPC layer
 //! used by Substrate nodes. This file extends those RPC definitions with
@@ -118,6 +135,7 @@
 <span class="kw">use </span>jsonrpsee::RpcModule;
 <span class="kw">use </span>madara_runtime::opaque::Block;
 <span class="kw">use </span>madara_runtime::{AccountId, Hash, Index, StarknetHasher};
+<span class="kw">use </span>mc_genesis_data_provider::GenesisProvider;
 <span class="kw">use </span>sc_client_api::{Backend, BlockBackend, StorageProvider};
 <span class="kw">use </span>sc_consensus_manual_seal::rpc::EngineCommand;
 <span class="kw">pub use </span>sc_rpc_api::DenyUnsafe;
@@ -129,7 +147,7 @@
 <span class="kw">pub use </span>starknet::StarknetDeps;
 
 <span class="doccomment">/// Full client dependencies.
-</span><span class="kw">pub struct </span>FullDeps&lt;A: ChainApi, C, P&gt; {
+</span><span class="kw">pub struct </span>FullDeps&lt;A: ChainApi, C, G: GenesisProvider, P&gt; {
     <span class="doccomment">/// The client instance to use.
     </span><span class="kw">pub </span>client: Arc&lt;C&gt;,
     <span class="doccomment">/// Transaction pool instance.
@@ -141,12 +159,12 @@
     <span class="doccomment">/// Manual seal command sink
     </span><span class="kw">pub </span>command_sink: <span class="prelude-ty">Option</span>&lt;mpsc::Sender&lt;EngineCommand&lt;Hash&gt;&gt;&gt;,
     <span class="doccomment">/// Starknet dependencies
-    </span><span class="kw">pub </span>starknet: StarknetDeps&lt;C, Block&gt;,
+    </span><span class="kw">pub </span>starknet: StarknetDeps&lt;C, G, Block&gt;,
 }
 
 <span class="doccomment">/// Instantiate all full RPC extensions.
-</span><span class="kw">pub fn </span>create_full&lt;A, C, P, BE&gt;(
-    deps: FullDeps&lt;A, C, P&gt;,
+</span><span class="kw">pub fn </span>create_full&lt;A, C, G, P, BE&gt;(
+    deps: FullDeps&lt;A, C, G, P&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;RpcModule&lt;()&gt;, Box&lt;<span class="kw">dyn </span>std::error::Error + Send + Sync&gt;&gt;
 <span class="kw">where
     </span>A: ChainApi&lt;Block = Block&gt; + <span class="lifetime">&#39;static</span>,
@@ -161,18 +179,21 @@
     C::Api: BlockBuilder&lt;Block&gt;,
     C::Api: pallet_starknet_runtime_api::StarknetRuntimeApi&lt;Block&gt;
         + pallet_starknet_runtime_api::ConvertTransactionRuntimeApi&lt;Block&gt;,
+    G: GenesisProvider + Send + Sync + <span class="lifetime">&#39;static</span>,
     P: TransactionPool&lt;Block = Block&gt; + <span class="lifetime">&#39;static</span>,
     BE: Backend&lt;Block&gt; + <span class="lifetime">&#39;static</span>,
 {
-    <span class="kw">use </span>mc_rpc::{Starknet, StarknetReadRpcApiServer, StarknetTraceRpcApiServer, StarknetWriteRpcApiServer};
+    <span class="kw">use </span>mc_rpc::{
+        MadaraRpcApiServer, Starknet, StarknetReadRpcApiServer, StarknetTraceRpcApiServer, StarknetWriteRpcApiServer,
+    };
     <span class="kw">use </span>sc_consensus_manual_seal::rpc::{ManualSeal, ManualSealApiServer};
     <span class="kw">use </span>substrate_frame_rpc_system::{System, SystemApiServer};
 
     <span class="kw">let </span><span class="kw-2">mut </span>module = RpcModule::new(());
-    <span class="kw">let </span>FullDeps { client, pool, deny_unsafe, starknet: starknet_params, command_sink, graph } = deps;
+    <span class="kw">let </span>FullDeps { client, pool, deny_unsafe, starknet: starknet_params, command_sink, graph, .. } = deps;
 
     module.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())<span class="question-mark">?</span>;
-    module.merge(StarknetReadRpcApiServer::into_rpc(Starknet::&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, StarknetHasher&gt;::new(
+    module.merge(MadaraRpcApiServer::into_rpc(Starknet::&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, StarknetHasher&gt;::new(
         client.clone(),
         starknet_params.madara_backend.clone(),
         starknet_params.overrides.clone(),
@@ -180,8 +201,9 @@
         graph.clone(),
         starknet_params.sync_service.clone(),
         starknet_params.starting_block,
+        starknet_params.genesis_provider.clone(),
     )))<span class="question-mark">?</span>;
-    module.merge(StarknetWriteRpcApiServer::into_rpc(Starknet::&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, StarknetHasher&gt;::new(
+    module.merge(StarknetReadRpcApiServer::into_rpc(Starknet::&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, StarknetHasher&gt;::new(
         client.clone(),
         starknet_params.madara_backend.clone(),
         starknet_params.overrides.clone(),
@@ -189,8 +211,19 @@
         graph.clone(),
         starknet_params.sync_service.clone(),
         starknet_params.starting_block,
+        starknet_params.genesis_provider.clone(),
     )))<span class="question-mark">?</span>;
-    module.merge(StarknetTraceRpcApiServer::into_rpc(Starknet::&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, StarknetHasher&gt;::new(
+    module.merge(StarknetWriteRpcApiServer::into_rpc(Starknet::&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, StarknetHasher&gt;::new(
+        client.clone(),
+        starknet_params.madara_backend.clone(),
+        starknet_params.overrides.clone(),
+        pool.clone(),
+        graph.clone(),
+        starknet_params.sync_service.clone(),
+        starknet_params.starting_block,
+        starknet_params.genesis_provider.clone(),
+    )))<span class="question-mark">?</span>;
+    module.merge(StarknetTraceRpcApiServer::into_rpc(Starknet::&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, StarknetHasher&gt;::new(
         client,
         starknet_params.madara_backend,
         starknet_params.overrides,
@@ -198,6 +231,7 @@
         graph,
         starknet_params.sync_service,
         starknet_params.starting_block,
+        starknet_params.genesis_provider,
     )))<span class="question-mark">?</span>;
 
     <span class="kw">if let </span><span class="prelude-val">Some</span>(command_sink) = command_sink {

@@ -4,6 +4,7 @@ var srcIndex = JSON.parse('{\
 "mc_commitment_state_diff":["",[],["lib.rs"]],\
 "mc_data_availability":["",[["avail",[],["config.rs","mod.rs"]],["celestia",[],["config.rs","mod.rs"]],["ethereum",[],["config.rs","mod.rs"]],["sharp",[],["mod.rs"]]],["lib.rs","utils.rs"]],\
 "mc_db":["",[["db_opening_utils",[],["mod.rs","parity_db_adapter.rs"]]],["da_db.rs","lib.rs","mapping_db.rs","meta_db.rs"]],\
+"mc_genesis_data_provider":["",[],["constants.rs","lib.rs"]],\
 "mc_mapping_sync":["",[],["lib.rs","sync_blocks.rs"]],\
 "mc_rpc":["",[["events",[],["mod.rs"]]],["constants.rs","errors.rs","lib.rs","madara_backend_client.rs","types.rs"]],\
 "mc_rpc_core":["",[],["lib.rs","utils.rs"]],\
@@ -14,6 +15,7 @@ var srcIndex = JSON.parse('{\
 "mp_digest_log":["",[],["error.rs","lib.rs"]],\
 "mp_fee":["",[],["lib.rs"]],\
 "mp_felt":["",[],["lib.rs","starkware_types_conversions.rs","with_serde.rs"]],\
+"mp_genesis_config":["",[],["lib.rs"]],\
 "mp_hashers":["",[],["lib.rs","pedersen.rs","poseidon.rs"]],\
 "mp_sequencer_address":["",[],["lib.rs"]],\
 "mp_simulations":["",[],["lib.rs"]],\

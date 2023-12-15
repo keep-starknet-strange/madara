@@ -31,16 +31,21 @@
 <a href="#31" id="31">31</a>
 <a href="#32" id="32">32</a>
 <a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
+<a href="#36" id="36">36</a>
+<a href="#37" id="37">37</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mc_db::Backend;
+<span class="kw">use </span>mc_genesis_data_provider::GenesisProvider;
 <span class="kw">use </span>mc_storage::OverrideHandle;
 <span class="kw">use </span>sc_network_sync::SyncingService;
 <span class="kw">use </span>sp_api::BlockT;
 <span class="kw">use </span>sp_runtime::traits::Header <span class="kw">as </span>HeaderT;
 
 <span class="doccomment">/// Extra dependencies for Starknet compatibility.
-</span><span class="kw">pub struct </span>StarknetDeps&lt;C, B: BlockT&gt; {
+</span><span class="kw">pub struct </span>StarknetDeps&lt;C, G: GenesisProvider, B: BlockT&gt; {
     <span class="doccomment">/// The client instance to use.
     </span><span class="kw">pub </span>client: Arc&lt;C&gt;,
     <span class="doccomment">/// Madara Backend.
@@ -51,9 +56,11 @@
     </span><span class="kw">pub </span>sync_service: Arc&lt;SyncingService&lt;B&gt;&gt;,
     <span class="doccomment">/// The starting block for the syncing.
     </span><span class="kw">pub </span>starting_block: &lt;&lt;B&gt;::Header <span class="kw">as </span>HeaderT&gt;::Number,
+    <span class="doccomment">/// The genesis state data provider
+    </span><span class="kw">pub </span>genesis_provider: Arc&lt;G&gt;,
 }
 
-<span class="kw">impl</span>&lt;C, B: BlockT&gt; Clone <span class="kw">for </span>StarknetDeps&lt;C, B&gt; {
+<span class="kw">impl</span>&lt;C, G: GenesisProvider, B: BlockT&gt; Clone <span class="kw">for </span>StarknetDeps&lt;C, G, B&gt; {
     <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             client: <span class="self">self</span>.client.clone(),
@@ -61,6 +68,7 @@
             overrides: <span class="self">self</span>.overrides.clone(),
             sync_service: <span class="self">self</span>.sync_service.clone(),
             starting_block: <span class="self">self</span>.starting_block,
+            genesis_provider: <span class="self">self</span>.genesis_provider.clone(),
         }
     }
 }

@@ -133,138 +133,21 @@
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
-<a href="#140" id="140">140</a>
-<a href="#141" id="141">141</a>
-<a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
-<a href="#151" id="151">151</a>
-<a href="#152" id="152">152</a>
-<a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
-<a href="#155" id="155">155</a>
-<a href="#156" id="156">156</a>
-<a href="#157" id="157">157</a>
-<a href="#158" id="158">158</a>
-<a href="#159" id="159">159</a>
-<a href="#160" id="160">160</a>
-<a href="#161" id="161">161</a>
-<a href="#162" id="162">162</a>
-<a href="#163" id="163">163</a>
-<a href="#164" id="164">164</a>
-<a href="#165" id="165">165</a>
-<a href="#166" id="166">166</a>
-<a href="#167" id="167">167</a>
-<a href="#168" id="168">168</a>
-<a href="#169" id="169">169</a>
-<a href="#170" id="170">170</a>
-<a href="#171" id="171">171</a>
-<a href="#172" id="172">172</a>
-<a href="#173" id="173">173</a>
-<a href="#174" id="174">174</a>
-<a href="#175" id="175">175</a>
-<a href="#176" id="176">176</a>
-<a href="#177" id="177">177</a>
-<a href="#178" id="178">178</a>
-<a href="#179" id="179">179</a>
-<a href="#180" id="180">180</a>
-<a href="#181" id="181">181</a>
-<a href="#182" id="182">182</a>
-<a href="#183" id="183">183</a>
-<a href="#184" id="184">184</a>
-<a href="#185" id="185">185</a>
-<a href="#186" id="186">186</a>
-<a href="#187" id="187">187</a>
-<a href="#188" id="188">188</a>
-<a href="#189" id="189">189</a>
-<a href="#190" id="190">190</a>
-<a href="#191" id="191">191</a>
-<a href="#192" id="192">192</a>
-<a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::fmt;
-<span class="kw">use </span>std::path::PathBuf;
-<span class="kw">use </span>std::string::String;
-<span class="kw">use </span>std::vec::Vec;
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::vec::Vec;
 
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass <span class="kw">as </span>StarknetContractClass;
-<span class="kw">use </span>derive_more::Constructor;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
-<span class="kw">use </span>serde::{Deserialize, Serialize};
-<span class="kw">use </span>serde_with::serde_as;
-<span class="kw">use </span>starknet_core::serde::unsigned_field_element::UfeHex;
-<span class="kw">use </span>starknet_crypto::FieldElement;
+<span class="kw">use </span>mp_genesis_config::ContractClass;
+<span class="kw">pub use </span>mp_genesis_config::{GenesisData, GenesisLoader, HexFelt, PredeployedAccount};
 
 <span class="kw">use </span><span class="kw">crate</span>::GenesisConfig;
-
-<span class="doccomment">/// A wrapper for FieldElement that implements serde&#39;s Serialize and Deserialize for hex strings.
-</span><span class="attr">#[serde_as]
-#[derive(Serialize, Deserialize, Copy, Clone)]
-</span><span class="kw">pub struct </span>HexFelt(<span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>)] </span><span class="kw">pub </span>FieldElement);
-
-<span class="kw">impl </span>fmt::LowerHex <span class="kw">for </span>HexFelt {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        <span class="kw">let </span>val = <span class="self">self</span>.<span class="number">0</span>;
-
-        fmt::LowerHex::fmt(<span class="kw-2">&amp;</span>val, f)
-    }
-}
-
-<span class="kw">impl </span>From&lt;Felt252Wrapper&gt; <span class="kw">for </span>HexFelt {
-    <span class="kw">fn </span>from(felt: Felt252Wrapper) -&gt; HexFelt {
-        HexFelt(felt.<span class="number">0</span>)
-    }
-}
-
-<span class="kw">type </span>ClassHash = HexFelt;
-<span class="kw">type </span>ContractAddress = HexFelt;
-<span class="kw">type </span>StorageKey = HexFelt;
-<span class="kw">type </span>ContractStorageKey = (ContractAddress, StorageKey);
-<span class="kw">type </span>StorageValue = HexFelt;
-
-<span class="attr">#[derive(Deserialize, Serialize)]
-</span><span class="kw">pub struct </span>GenesisData {
-    <span class="kw">pub </span>contract_classes: Vec&lt;(ClassHash, ContractClass)&gt;,
-    <span class="kw">pub </span>contracts: Vec&lt;(ContractAddress, ClassHash)&gt;,
-    <span class="kw">pub </span>storage: Vec&lt;(ContractStorageKey, StorageValue)&gt;,
-    <span class="kw">pub </span>fee_token_address: ContractAddress,
-    <span class="kw">pub </span>seq_addr_updated: bool,
-}
-
-<span class="attr">#[derive(Constructor)]
-</span><span class="kw">pub struct </span>GenesisLoader {
-    base_path: PathBuf,
-    data: GenesisData,
-}
-
-<span class="kw">impl </span>GenesisLoader {
-    <span class="kw">pub fn </span>data(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>GenesisData {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.data
-    }
-}
-
-<span class="attr">#[derive(Deserialize, Serialize, Clone)]
-#[serde(untagged)]
-</span><span class="kw">pub enum </span>ContractClass {
-    Path { path: String, version: u8 },
-    Class(StarknetContractClass),
-}
 
 <span class="kw">impl</span>&lt;T: <span class="kw">crate</span>::Config&gt; From&lt;GenesisLoader&gt; <span class="kw">for </span>GenesisConfig&lt;T&gt; {
     <span class="kw">fn </span>from(loader: GenesisLoader) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>contract_classes = loader
-            .data
+            .data()
             .contract_classes
+            .clone()
             .into_iter()
             .map(|(hash, class)| {
                 <span class="kw">let </span>hash = Felt252Wrapper(hash.<span class="number">0</span>).into();
@@ -272,7 +155,7 @@
                     ContractClass::Path { path, version } =&gt; (
                         hash,
                         read_contract_class_from_json(
-                            <span class="kw-2">&amp;</span>std::fs::read_to_string(loader.base_path.join(path)).expect(
+                            <span class="kw-2">&amp;</span>std::fs::read_to_string(loader.base_path().join(path)).expect(
                                 <span class="string">&quot;Some contract is missing in the config folder. Try to run `madara setup` before \
                                  opening an issue.&quot;</span>,
                             ),
@@ -284,8 +167,9 @@
             })
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="kw">let </span>contracts = loader
-            .data
+            .data()
             .contracts
+            .clone()
             .into_iter()
             .map(|(address, hash)| {
                 <span class="kw">let </span>address = Felt252Wrapper(address.<span class="number">0</span>).into();
@@ -294,8 +178,9 @@
             })
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="kw">let </span>storage = loader
-            .data
+            .data()
             .storage
+            .clone()
             .into_iter()
             .map(|(key, value)| {
                 <span class="kw">let </span>key = (Felt252Wrapper(key.<span class="number">0.0</span>).into(), Felt252Wrapper(key.<span class="number">1.0</span>).into());
@@ -303,14 +188,14 @@
                 (key, value)
             })
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-        <span class="kw">let </span>fee_token_address = Felt252Wrapper(loader.data.fee_token_address.<span class="number">0</span>).into();
+        <span class="kw">let </span>fee_token_address = Felt252Wrapper(loader.data().fee_token_address.<span class="number">0</span>).into();
 
         GenesisConfig {
             contracts,
             contract_classes,
             storage,
             fee_token_address,
-            seq_addr_updated: loader.data.seq_addr_updated,
+            seq_addr_updated: loader.data().seq_addr_updated,
             ..Default::default()
         }
     }
@@ -342,13 +227,9 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span>starknet_crypto::FieldElement;
 
-    <span class="kw">impl </span>From&lt;FieldElement&gt; <span class="kw">for </span>HexFelt {
-        <span class="kw">fn </span>from(element: FieldElement) -&gt; <span class="self">Self </span>{
-            <span class="self">Self</span>(element)
-        }
-    }
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_deserialize_loader() {
@@ -373,6 +254,7 @@
         <span class="kw">let </span>genesis_loader = GenesisData {
             contract_classes: <span class="macro">vec!</span>[(class_hash, class)],
             contracts: <span class="macro">vec!</span>[(contract_address, class_hash)],
+            predeployed_accounts: Vec::new(),
             storage: <span class="macro">vec!</span>[((contract_address, storage_key), storage_value)],
             fee_token_address,
             seq_addr_updated: <span class="bool-val">false</span>,
@@ -382,7 +264,7 @@
         </span><span class="kw">let </span>serialized_loader = serde_json::to_string(<span class="kw-2">&amp;</span>genesis_loader).unwrap();
 
         <span class="comment">// Then
-        </span><span class="kw">let </span>expected = <span class="string">r#&quot;{&quot;contract_classes&quot;:[[&quot;0x1&quot;,{&quot;path&quot;:&quot;cairo-contracts/ERC20.json&quot;,&quot;version&quot;:0}]],&quot;contracts&quot;:[[&quot;0x2&quot;,&quot;0x1&quot;]],&quot;storage&quot;:[[[&quot;0x2&quot;,&quot;0x3&quot;],&quot;0x4&quot;]],&quot;fee_token_address&quot;:&quot;0x5&quot;,&quot;seq_addr_updated&quot;:false}&quot;#</span>;
+        </span><span class="kw">let </span>expected = <span class="string">r#&quot;{&quot;contract_classes&quot;:[[&quot;0x1&quot;,{&quot;path&quot;:&quot;cairo-contracts/ERC20.json&quot;,&quot;version&quot;:0}]],&quot;contracts&quot;:[[&quot;0x2&quot;,&quot;0x1&quot;]],&quot;predeployed_accounts&quot;:[],&quot;storage&quot;:[[[&quot;0x2&quot;,&quot;0x3&quot;],&quot;0x4&quot;]],&quot;fee_token_address&quot;:&quot;0x5&quot;,&quot;seq_addr_updated&quot;:false}&quot;#</span>;
         <span class="macro">assert_eq!</span>(expected, serialized_loader);
     }
 }

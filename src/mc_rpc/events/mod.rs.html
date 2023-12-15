@@ -230,7 +230,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::types::{ContinuationToken, RpcEventFilter};
 <span class="kw">use </span><span class="kw">crate</span>::Starknet;
 
-<span class="kw">impl</span>&lt;A: ChainApi, B, BE, C, P, H&gt; Starknet&lt;A, B, BE, C, P, H&gt;
+<span class="kw">impl</span>&lt;A: ChainApi, B, BE, G, C, P, H&gt; Starknet&lt;A, B, BE, G, C, P, H&gt;
 <span class="kw">where
     </span>B: BlockT,
     C: HeaderBackend&lt;B&gt; + BlockBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt; + <span class="lifetime">&#39;static</span>,
