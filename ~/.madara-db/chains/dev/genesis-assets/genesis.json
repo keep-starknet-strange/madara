@@ -88,13 +88,6 @@
         "path": "genesis-assets/UniversalDeployer.json",
         "version": 0
       }
-    ],
-    [
-      "0x01a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003",
-      {
-        "path": "genesis-assets/ArgentAccountCairoOne.casm.json",
-        "version": 1
-      }
     ]
   ],
   "contracts": [
@@ -138,42 +131,6 @@
       "0x05754af3760f3356da99aea5c3ec39ccac7783d925a19666ebbeca58ff0087f4",
       "0x01d53d50d204842575c87f25161248aadb26d33c7375d0f043e2a3f1243cf874"
     ]
-  ],
-  "predeployed_accounts": [
-    {
-      "contract_address": "0x1",
-      "class_hash": "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f",
-      "name": "No Validation Account",
-      "private_key": null
-    },
-    {
-      "contract_address": "0x2",
-      "class_hash": "0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d",
-      "name": "Argent Account",
-      "private_key": [
-        48, 120, 48, 48, 99, 49, 99, 102, 49, 52, 57, 48, 100, 101, 49, 51, 53,
-        50, 56, 54, 53, 51, 48, 49, 98, 98, 56, 55, 48, 53, 49, 52, 51, 102, 51,
-        101, 102, 57, 51, 56, 102, 57, 55, 102, 100, 102, 56, 57, 50, 102, 49,
-        48, 57, 48, 100, 99, 98, 53, 97, 99, 55, 98, 99, 100, 49, 100
-      ]
-    },
-    {
-      "contract_address": "0x3",
-      "class_hash": "0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd",
-      "name": "Openzeppelin Account",
-      "private_key": [
-        48, 120, 48, 48, 99, 49, 99, 102, 49, 52, 57, 48, 100, 101, 49, 51, 53,
-        50, 56, 54, 53, 51, 48, 49, 98, 98, 56, 55, 48, 53, 49, 52, 51, 102, 51,
-        101, 102, 57, 51, 56, 102, 57, 55, 102, 100, 102, 56, 57, 50, 102, 49,
-        48, 57, 48, 100, 99, 98, 53, 97, 99, 55, 98, 99, 100, 49, 100
-      ]
-    },
-    {
-      "contract_address": "0x4",
-      "class_hash": "0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276",
-      "name": "No Validation Account (cairo 1)",
-      "private_key": null
-    }
   ],
   "storage": [
     [
@@ -252,34 +209,6 @@
         "0x1d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f21470"
       ],
       "0xffffffffffffffffffffffffffffffff"
-    ],
-    [
-      [
-        "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
-        "0x341c1bdfd89f69748aa00b5742b03adbffd79b8e80cab5c50d91cd8c2a79be1"
-      ],
-      "0x4574686572"
-    ],
-    [
-      [
-        "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
-        "0xb6ce5410fca59d078ee9b2a4371a9d684c530d697c64fbef0ae6d5e8f0ac72"
-      ],
-      "0x455448"
-    ],
-    [
-      [
-        "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
-        "0xb6ce5410fca59d078ee9b2a4371a9d684c530d697c64fbef0ae6d5e8f0ac72"
-      ],
-      "0x455448"
-    ],
-    [
-      [
-        "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
-        "0x1f0d4aa99431d246bac9b8e48c33e888245b15e9678f64f9bdfc8823dc8f979"
-      ],
-      "0x12"
     ],
     [
       [

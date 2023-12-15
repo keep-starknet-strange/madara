@@ -10,6 +10,7 @@ pub use frame_support::weights::constants::{
 pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
+use mp_chain_id::MADARA_CHAIN_ID;
 pub use mp_chain_id::SN_GOERLI_CHAIN_ID;
 /// Import the Starknet pallet.
 pub use pallet_starknet;
@@ -157,7 +158,7 @@ parameter_types! {
     pub const InvokeTxMaxNSteps: u32 = 1_000_000;
     pub const ValidateMaxNSteps: u32 = 1_000_000;
     pub const ProtocolVersion: u8 = 0;
-    pub const ChainId: Felt252Wrapper = SN_GOERLI_CHAIN_ID;
+    pub const ChainId: Felt252Wrapper = MADARA_CHAIN_ID;
     pub const MaxRecursionDepth: u32 = 50;
 }
 
