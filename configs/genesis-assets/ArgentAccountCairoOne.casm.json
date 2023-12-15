@@ -25059,237 +25059,162 @@
       {
         "selector": "0x233f7eb4ceacfd7c3e238afaf740a3ffcb352f9844a11df665e97c3b0370b6",
         "offset": 787,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x29ce6d1019e7bef00e94df2973d8d36e9e9b6c5f8783275441c9e466cb8b43",
         "offset": 2494,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x7ec457cd7ed1630225a8328f826a29a327b19486f6b2882b4176545ebdbe3d",
         "offset": 538,
-        "builtins": [
-          "pedersen",
-          "range_check",
-          "ec_op"
-        ]
+        "builtins": ["pedersen", "range_check", "ec_op"]
       },
       {
         "selector": "0x9278fa5f64a571de10741418f1c4c0c4322aef645dd9d94a429c1f3e99a8a5",
         "offset": 4344,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x960e70c0b7135476e33b1ba6a72e9b10cb5e261ebaa730d1ed01a0f21c22d3",
         "offset": 2212,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0xf2f7c15cbe06c8d94597cd91fd7f3369eae842359235712def5584f8d270cd",
         "offset": 1114,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0xfe80f537b66d12a00b6d3c072b44afbb716e78dde5c3f0ef116ee93d3e3283",
         "offset": 4100,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x139562604eb722f14da2b8c1f8f681c99d31226bf9d57f148ec8b4d611f92f8",
         "offset": 3722,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x15d40a3d6ca2ac30f4031e42be28da9b056fef9bb7357ac5e85627ee876e5ad",
         "offset": 169,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x162da33a4585851fe8d3af3c2a9c60b557814e221e0d4f30ff0b2189d9c7775",
         "offset": 0,
-        "builtins": [
-          "range_check",
-          "ec_op"
-        ]
+        "builtins": ["range_check", "ec_op"]
       },
       {
         "selector": "0x1746f7542cac71b5c88f0b2301e87cd9b0896dab1c83b8b515762697e521040",
         "offset": 1863,
-        "builtins": [
-          "pedersen",
-          "range_check",
-          "ec_op"
-        ]
+        "builtins": ["pedersen", "range_check", "ec_op"]
       },
       {
         "selector": "0x178e27745484c91a084e6a72059b13e3dbebef761175a63f4330bec3ad4aaa0",
         "offset": 3370,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x1a1e41f464a235695e5050a846a26ca22ecc27acac54be5f6666848031efb8f",
         "offset": 1311,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x1e6d35df2b9d989fb4b6bbcebda1314e4254cbe5e589dd94ff4f29ea935e91c",
         "offset": 960,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x213dfe25e2ca309c4d615a09cfc95fdb2fc7dc73fbcad12c450fe93b1f2ff9e",
         "offset": 4588,
-        "builtins": [
-          "range_check",
-          "ec_op"
-        ]
+        "builtins": ["range_check", "ec_op"]
       },
       {
         "selector": "0x22e07fe65aff1304b57cc48ee7c75a04ce2583b5ef2e7866eb8acbe09be43e2",
         "offset": 3847,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x231c71f842bf17eb7be2cd595e2ad846543dbbbe46c1381a6477a1022625d60",
         "offset": 2875,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x24fd89f2d8a7798e705aa5361f39154ca43e03721c05188285138f16018955d",
         "offset": 3120,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x26e71b81ea2af0a2b5c6bfceb639b4fc6faae9d8de072a61fc913d3301ff56b",
         "offset": 2353,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x28420862938116cb3bbdbedee07451ccc54d4e9412dbef71142ad1980a30941",
         "offset": 343,
-        "builtins": [
-          "range_check",
-          "ec_op"
-        ]
+        "builtins": ["range_check", "ec_op"]
       },
       {
         "selector": "0x289da278a8dc833409cabfdad1581e8e7d40e42dcaed693fa4008dcdb4963b3",
         "offset": 1485,
-        "builtins": [
-          "range_check",
-          "ec_op"
-        ]
+        "builtins": ["range_check", "ec_op"]
       },
       {
         "selector": "0x29e211664c0b63c79638fbea474206ca74016b3e9a3dc4f9ac300ffd8bdf2cd",
         "offset": 4455,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x2a4bb4205277617b698a9a2950b938d0a236dd4619f82f05bec02bdbd245fab",
         "offset": 3497,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x2aa20ff86b29546fd697eb81064769cf566031d56b10b8bba2c70125bd8403a",
         "offset": 4233,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x2ad0f031c5480fdb7c7a0a026c56d2281dcc7359b88bd9053a8cf10048d44c4",
         "offset": 3245,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x309e00d93c6f8c0c2fcc1c8a01976f72e03b95841c3e3a1f7614048d5a77ead",
         "offset": 2071,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x31341177714d81ad9ccd0c903211bc056a60e8af988d0fd918cc43874549653",
         "offset": 3611,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x36fcbf06cd96843058359e1a75928beacfac10727dab22a3972f0af8aa92895",
         "offset": 1641,
-        "builtins": [
-          "range_check",
-          "ec_op"
-        ]
+        "builtins": ["range_check", "ec_op"]
       },
       {
         "selector": "0x395b662db8770f18d407bbbfeebf45fffec4a7fa4f6c7cee13d084055a9387d",
         "offset": 2635,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x3ad2979f59dc1535593f6af33e41945239f4811966bcd49314582a892ebcee8",
         "offset": 2755,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x3ce4edd1dfe90e117a8b46482ea1d41700d9d00c1dccbce6a8e2f812c1882e4",
         "offset": 3972,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x3ee0bfaf5b124501fef19bbd1312e71f6966d186c42eeb91d1bff729b91d1d4",
         "offset": 2995,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       }
     ],
     "L1_HANDLER": [],
@@ -25297,9 +25222,7 @@
       {
         "selector": "0x28ffe4ff0f226a9107253e17a904099aa4f63a02a5621de0576e5aa71bc5194",
         "offset": 4783,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       }
     ]
   }

@@ -28,7 +28,7 @@ The below defines all hardcoded values set in the geneses:
 <!-- markdownlint-disable MD013 -->
 
 | Class hash                                                         | Definition                                     |
-| :----------------------------------------------------------------- |:-----------------------------------------------|
+| :----------------------------------------------------------------- | :--------------------------------------------- |
 | 0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f | No validation account class hash               |
 | 0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276  | No validation account class hash cairo 1       |
 | 0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d | Argent account class hash                      |
