@@ -2,6 +2,7 @@
 
 ## Next release
 
+- feat: add predeployed accounts to genesis state
 - feat(rpc): Added starknet_simulateTransactions
 - fix: Change serialization of bitvec to &[u8] in merkle tree to avoid memory
   uninitialized

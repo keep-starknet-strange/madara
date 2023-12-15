@@ -6031,6 +6031,7 @@ dependencies = [
  "mc-commitment-state-diff",
  "mc-data-availability",
  "mc-db",
+ "mc-genesis-data-provider",
  "mc-mapping-sync",
  "mc-rpc",
  "mc-storage",
@@ -6248,6 +6249,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "mc-genesis-data-provider"
+version = "0.6.0"
+dependencies = [
+ "anyhow",
+ "jsonrpsee 0.16.3",
+ "log",
+ "mp-genesis-config",
+ "pallet-starknet",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "mc-mapping-sync"
 version = "0.6.0"
 dependencies = [
@@ -6281,6 +6296,7 @@ dependencies = [
  "jsonrpsee 0.16.3",
  "log",
  "mc-db",
+ "mc-genesis-data-provider",
  "mc-rpc-core",
  "mc-storage",
  "mp-block",
@@ -6328,9 +6344,11 @@ dependencies = [
  "mp-block",
  "mp-digest-log",
  "mp-felt",
+ "mp-genesis-config",
  "mp-simulations",
  "mp-transactions",
  "num-bigint",
+ "pallet-starknet",
  "serde",
  "serde_json",
  "serde_with",
@@ -6628,6 +6646,20 @@ dependencies = [
  "starknet-ff",
  "starknet_api",
  "thiserror-no-std",
+]
+
+[[package]]
+name = "mp-genesis-config"
+version = "0.6.0"
+dependencies = [
+ "blockifier",
+ "derive_more",
+ "mp-felt",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "starknet-core",
+ "starknet-crypto",
 ]
 
 [[package]]
@@ -7429,6 +7461,7 @@ dependencies = [
  "mp-digest-log",
  "mp-fee",
  "mp-felt",
+ "mp-genesis-config",
  "mp-hashers",
  "mp-sequencer-address",
  "mp-simulations",

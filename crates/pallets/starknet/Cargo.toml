@@ -21,6 +21,7 @@ mp-commitments = { workspace = true }
 mp-digest-log = { workspace = true }
 mp-fee = { workspace = true }
 mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
+mp-genesis-config = { workspace = true }
 mp-hashers = { workspace = true }
 mp-sequencer-address = { workspace = true, features = ["parity-scale-codec"] }
 mp-simulations = { workspace = true, features = [
