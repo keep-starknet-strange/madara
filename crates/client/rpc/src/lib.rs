@@ -18,7 +18,8 @@ use mc_db::Backend as MadaraBackend;
 use mc_genesis_data_provider::GenesisProvider;
 pub use mc_rpc_core::utils::*;
 pub use mc_rpc_core::{
-    Felt, MadaraRpcApiServer, PredeployedAccountWithBalance, StarknetReadRpcApiServer, StarknetWriteRpcApiServer,
+    Felt, MadaraRpcApiServer, PredeployedAccountWithBalance, StarknetReadRpcApiServer, StarknetTraceRpcApiServer,
+    StarknetWriteRpcApiServer,
 };
 use mc_storage::OverrideHandle;
 use mp_felt::{Felt252Wrapper, Felt252WrapperError};
@@ -203,12 +204,12 @@ impl<A, B, BE, G, C, P, H> MadaraRpcApiServer for Starknet<A, B, BE, G, C, P, H>
 where
     A: ChainApi<Block = B> + 'static,
     B: BlockT,
-    P: TransactionPool<Block = B> + 'static,
     BE: Backend<B> + 'static,
     C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
-    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     G: GenesisProvider + Send + Sync + 'static,
+    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
+    P: TransactionPool<Block = B> + 'static,
     H: HasherT + Send + Sync + 'static,
 {
     fn predeployed_accounts(&self) -> RpcResult<Vec<PredeployedAccountWithBalance>> {
@@ -1522,15 +1523,16 @@ where
 
 #[async_trait]
 #[allow(unused_variables)]
-impl<A, B, BE, C, P, H> StarknetTraceRpcApiServer for Starknet<A, B, BE, C, P, H>
+impl<A, B, BE, G, C, P, H> StarknetTraceRpcApiServer for Starknet<A, B, BE, G, C, P, H>
 where
     A: ChainApi<Block = B> + 'static,
     B: BlockT,
-    P: TransactionPool<Block = B> + 'static,
     BE: Backend<B> + 'static,
+    G: GenesisProvider + Send + Sync + 'static,
     C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
+    P: TransactionPool<Block = B> + 'static,
     H: HasherT + Send + Sync + 'static,
 {
     async fn simulate_transactions(

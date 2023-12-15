@@ -60,7 +60,9 @@ where
     P: TransactionPool<Block = Block> + 'static,
     BE: Backend<Block> + 'static,
 {
-    use mc_rpc::{Starknet, StarknetReadRpcApiServer, StarknetTraceRpcApiServer, StarknetWriteRpcApiServer};
+    use mc_rpc::{
+        MadaraRpcApiServer, Starknet, StarknetReadRpcApiServer, StarknetTraceRpcApiServer, StarknetWriteRpcApiServer,
+    };
     use sc_consensus_manual_seal::rpc::{ManualSeal, ManualSealApiServer};
     use substrate_frame_rpc_system::{System, SystemApiServer};
 
@@ -89,6 +91,16 @@ where
         starknet_params.genesis_provider.clone(),
     )))?;
     module.merge(StarknetWriteRpcApiServer::into_rpc(Starknet::<_, _, _, _, _, _, StarknetHasher>::new(
+        client.clone(),
+        starknet_params.madara_backend.clone(),
+        starknet_params.overrides.clone(),
+        pool.clone(),
+        graph.clone(),
+        starknet_params.sync_service.clone(),
+        starknet_params.starting_block,
+        starknet_params.genesis_provider.clone(),
+    )))?;
+    module.merge(StarknetTraceRpcApiServer::into_rpc(Starknet::<_, _, _, _, _, _, StarknetHasher>::new(
         client,
         starknet_params.madara_backend,
         starknet_params.overrides,
