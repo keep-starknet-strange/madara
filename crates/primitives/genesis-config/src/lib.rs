@@ -6,7 +6,7 @@ use std::vec::Vec;
 use blockifier::execution::contract_class::ContractClass as StarknetContractClass;
 use derive_more::Constructor;
 use mp_felt::Felt252Wrapper;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 use serde_with::serde_as;
 use starknet_core::serde::unsigned_field_element::UfeHex;
 use starknet_crypto::FieldElement;
@@ -77,8 +77,21 @@ pub enum ContractClass {
 /// A struct containing predeployed accounts info.
 #[derive(Serialize, Deserialize)]
 pub struct PredeployedAccount {
-    pub contract_address: FieldElement,
+    pub address: FieldElement,
     pub class_hash: FieldElement,
     pub name: String,
-    pub private_key: Option<Vec<u8>>,
+	#[serde(serialize_with = "buffer_to_hex")]
+	pub private_key: Option<Vec<u8>>,
+	pub public_key: HexFelt,
+}
+
+pub fn buffer_to_hex<S>(buffer: &Option<Vec<u8>>, serializer: S) -> Result<S::Ok, S::Error>
+	where S: Serializer
+{
+	if let Some(inner_buffer) = buffer {
+		let hex_string = format!("0x{}",hex::encode(inner_buffer));
+		serializer.serialize_str(&*hex_string)
+	} else {
+		serializer.serialize_none()
+	}
 }
