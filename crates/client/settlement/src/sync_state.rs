@@ -3,7 +3,6 @@ use std::sync::Arc;
 use futures::StreamExt;
 use futures_timer::Delay;
 use mp_block::Block as StarknetBlock;
-use mp_digest_log::find_starknet_block;
 use mp_hashers::HasherT;
 use mp_snos_output::{MessageL1ToL2, MessageL2ToL1, StarknetOsOutput};
 use mp_transactions::compute_hash::ComputeTransactionHash;
@@ -104,7 +103,7 @@ where
         let mut sync_from: u64 = last_settled_state.block_number.try_into()?;
 
         while let Some(notification) = finality_notifications.next().await {
-            let block = find_starknet_block(notification.header.digest())?;
+            let block = mp_digest_log::find_starknet_block(notification.header.digest())?;
             let sync_to = block.header().block_number;
 
             if sync_from > sync_to {
@@ -165,7 +164,7 @@ where
             .header(substrate_block_hash)?
             .ok_or_else(|| Error::UnknownSubstrateBlock(substrate_block_hash))?;
 
-        let starknet_block = find_starknet_block(substrate_block_header.digest())?;
+        let starknet_block = mp_digest_log::find_starknet_block(substrate_block_header.digest())?;
 
         Ok((starknet_block, substrate_block_hash))
     }
