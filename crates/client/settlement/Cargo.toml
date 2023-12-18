@@ -12,16 +12,14 @@ repository = "https://github.com/keep-starknet-strange/madara"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+# Async
 async-trait = { workspace = true }
-clap = { workspace = true, features = ["derive"] }
 futures = { workspace = true }
 futures-timer = { workspace = true }
-log = { workspace = true }
-rustc-hex = "2.0.0"
+
+# Serde
 serde = { workspace = true }
 serde_json = { workspace = true }
-thiserror = { workspace = true }
-url = "2.4.1"
 
 # Substrate
 sc-client-api = { workspace = true, default-features = true }
@@ -42,11 +40,21 @@ mp-transactions = { workspace = true, default-features = true }
 starknet-crypto = { workspace = true, default-features = true }
 starknet_api = { workspace = true, default-features = true }
 
-# Madara RuntimeApi
+# Madara
 pallet-starknet-runtime-api = { workspace = true, default-features = true }
 
 # Ethereum
 ethers = { workspace = true }
 
+# Others
+log = { workspace = true }
+rustc-hex = { workspace = true }
+thiserror = { workspace = true }
+url = { workspace = true }
+
+# Optional
+clap = { workspace = true, optional = true, features = ["std", "derive"] }
+
 [features]
 default = []
+clap = ["dep:clap"]

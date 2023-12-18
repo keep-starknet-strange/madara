@@ -15,7 +15,8 @@ use crate::errors::{Error, Result};
 
 pub struct SettlementWorker<B, H, SC>(PhantomData<(B, H, SC)>);
 
-#[derive(Debug, Copy, Clone, PartialEq, clap::ValueEnum)]
+#[derive(Debug, Copy, Clone, PartialEq)]
+#[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
 pub enum SettlementLayer {
     /// Use Ethereum core contract
     Ethereum,
