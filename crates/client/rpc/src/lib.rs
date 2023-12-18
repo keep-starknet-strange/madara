@@ -1189,7 +1189,7 @@ where
     /// block in which they occurred, and the transaction that triggered them. In case of
     /// errors, such as `PAGE_SIZE_TOO_BIG`, `INVALID_CONTINUATION_TOKEN`, `BLOCK_NOT_FOUND`, or
     /// `TOO_MANY_KEYS_IN_FILTER`, returns a `StarknetRpcApiError` indicating the specific issue.
-    async fn get_events(&self, filter: EventFilterWithPage) -> RpcResult<EventsPage> {
+    async fn get_events(&self, filter: EventFilterWithPage) -> RpcResult<EventsPageCustom> {
         let continuation_token = match filter.result_page_request.continuation_token {
             Some(token) => types::ContinuationToken::parse(token).map_err(|e| {
                 error!("Failed to parse continuation token: {:?}", e);
@@ -1231,7 +1231,7 @@ where
 
         // Verify that the requested range is valid
         if from_block > to_block {
-            return Ok(EventsPage { events: vec![], continuation_token: None });
+            return Ok(EventsPageCustom { events: vec![], continuation_token: None });
         }
 
         let to_block = if latest_block > to_block { to_block } else { latest_block };

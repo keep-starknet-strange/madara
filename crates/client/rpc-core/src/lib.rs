@@ -26,6 +26,8 @@ use starknet_core::types::{
     StateUpdate, SyncStatusType, Transaction,
 };
 
+use crate::utils::EventsPageCustom;
+
 #[serde_as]
 #[derive(Serialize, Deserialize)]
 pub struct Felt(#[serde_as(as = "UfeHex")] pub FieldElement);
@@ -150,7 +152,7 @@ pub trait StarknetReadRpcApi {
 
     /// Returns all events matching the given filter
     #[method(name = "getEvents")]
-    async fn get_events(&self, filter: EventFilterWithPage) -> RpcResult<EventsPage>;
+    async fn get_events(&self, filter: EventFilterWithPage) -> RpcResult<EventsPageCustom>;
 
     /// Returns the information about a transaction by transaction hash.
     #[method(name = "getTransactionByHash")]

@@ -10,6 +10,7 @@ use cairo_lang_starknet::contract_class::{
 };
 use cairo_lang_starknet::contract_class_into_casm_contract_class::StarknetSierraCompilationError;
 use cairo_lang_utils::bigint::BigUintAsHex;
+use frame_support::{Deserialize, Serialize};
 use mp_block::Block as StarknetBlock;
 use mp_digest_log::find_starknet_block;
 use num_bigint::{BigInt, BigUint, Sign};
@@ -18,9 +19,19 @@ use sp_blockchain::HeaderBackend;
 use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 use starknet_core::types::contract::{CompiledClass, CompiledClassEntrypoint, CompiledClassEntrypointList};
 use starknet_core::types::{
-    CompressedLegacyContractClass, ContractClass, EntryPointsByType, FieldElement, FlattenedSierraClass,
+    CompressedLegacyContractClass, ContractClass, EmittedEvent, EntryPointsByType, FieldElement, FlattenedSierraClass,
     FromByteArrayError, LegacyContractEntryPoint, LegacyEntryPointsByType, SierraEntryPoint,
 };
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct EventsPageCustom {
+    /// Matching events
+    pub events: Vec<EmittedEvent>,
+    /// A pointer to the last element of the delivered page, use this token in a subsequent query to
+    /// obtain the next page
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub continuation_token: Option<String>,
+}
 
 /// Returns a [`ContractClass`] from a [`BlockifierContractClass`]
 pub fn to_rpc_contract_class(contract_class: BlockifierContractClass) -> Result<ContractClass> {

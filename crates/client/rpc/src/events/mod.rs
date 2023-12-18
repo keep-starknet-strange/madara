@@ -6,7 +6,7 @@ use std::vec::IntoIter;
 
 use jsonrpsee::core::RpcResult;
 use log::error;
-use mc_rpc_core::utils::get_block_by_block_hash;
+use mc_rpc_core::utils::{get_block_by_block_hash, EventsPageCustom};
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
@@ -103,7 +103,7 @@ where
     /// # Returns
     ///
     /// * `EventsPage` - The filtered events with continuation token
-    pub fn filter_events(&self, filter: RpcEventFilter) -> RpcResult<EventsPage> {
+    pub fn filter_events(&self, filter: RpcEventFilter) -> RpcResult<EventsPageCustom> {
         // get filter values
         let continuation_token = filter.continuation_token;
         // skip blocks with continuation token block number
@@ -154,13 +154,13 @@ where
                     None
                 };
 
-                return Ok(EventsPage { events: filtered_events, continuation_token: token });
+                return Ok(EventsPageCustom { events: filtered_events, continuation_token: token });
             }
 
             current_block += 1;
         }
 
-        Ok(EventsPage { events: filtered_events, continuation_token: None })
+        Ok(EventsPageCustom { events: filtered_events, continuation_token: None })
     }
 }
 
