@@ -85,18 +85,19 @@ pub async fn run_worker<C, P, B>(
     }
 }
 
-async fn process_l1_message<C, P, B>(
+async fn process_l1_message<C, P, B, PE>(
     event: LogMessageToL2Filter,
     client: &Arc<C>,
     pool: &Arc<P>,
     backend: &Arc<mc_db::Backend<B>>,
     l1_block_number: &u64,
-) -> Result<Option<P::Hash>, L1MessagesWorkerError>
+) -> Result<Option<P::Hash>, L1MessagesWorkerError<PE>>
 where
     B: BlockT,
     C: ProvideRuntimeApi<B> + HeaderBackend<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
-    P: TransactionPool<Block = B> + 'static,
+    P: TransactionPool<Block = B, Error = PE> + 'static,
+    PE: std::error::Error,
 {
     // Check against panic
     // https://docs.rs/ethers/latest/ethers/types/struct.U256.html#method.as_u128
@@ -128,7 +129,7 @@ where
 
     let tx_hash = pool.submit_one(best_block_hash, TX_SOURCE, extrinsic).await.map_err(|e| {
         log::error!("⟠ Failed to submit transaction with L1 Message: {:?}", e);
-        L1MessagesWorkerError::SubmitTxError
+        L1MessagesWorkerError::SubmitTxError(e)
     })?;
 
     backend.messaging().update_last_synced_l1_block(l1_block_number).map_err(|e| {

@@ -5,7 +5,7 @@ use url::ParseError;
 use crate::contract::L1EventToTransactionError;
 
 #[derive(thiserror::Error, Debug)]
-pub enum L1MessagesWorkerError {
+pub enum L1MessagesWorkerError<PE> {
     #[error("Failed to initialize L1 Messages Worker based on provided Config: `{0}`")]
     ConfigError(#[from] ParseError),
     #[error("Failed to convert transaction via Runtime API: `{0}`")]
@@ -17,7 +17,7 @@ pub enum L1MessagesWorkerError {
     #[error("Failed to use Runtime API: `{0}`")]
     RuntimeApiError(ApiError),
     #[error("Failed to submit transaction into Transaction Pool")]
-    SubmitTxError,
+    SubmitTxError(#[source] PE),
     #[error("Failed to convert L1 Message into Fee")]
     ToFeeError,
     #[error("Failed to convert L1 Message into L2 Transaction: `{0}`")]
