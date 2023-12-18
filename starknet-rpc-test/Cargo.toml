@@ -9,6 +9,7 @@ edition = "2021"
 anyhow = "1.0.72"
 assert_matches = "1.5.0"
 async-lock = "3.1.0"
+async-trait = { workspace = true }
 flate2 = { workspace = true }
 reqwest = "0.11.18"
 rstest = "0.18.1"
@@ -108,3 +109,7 @@ path = "get_events.rs"
 [[test]]
 name = "starknet_estimate_fee"
 path = "estimate_fee.rs"
+
+[[test]]
+name = "starknet_simulate_transaction"
+path = "simulate_transaction.rs"

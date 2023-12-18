@@ -1,0 +1,48 @@
+[package]
+name = "mp-simulations"
+version.workspace = true
+edition.workspace = true
+license = "MIT"
+description = "Starknet chain ids"
+authors = { workspace = true }
+repository = { workspace = true }
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+serde = { workspace = true, features = ["derive"], optional = true }
+serde_with = { workspace = true, optional = true }
+
+# Madara primitives
+mp-felt = { workspace = true }
+
+# Substrate dependencies
+parity-scale-codec = { workspace = true, optional = true }
+scale-info = { workspace = true, optional = true }
+
+# Starknet dependencies
+blockifier = { workspace = true }
+starknet-core = { workspace = true }
+starknet_api = { workspace = true }
+
+[features]
+default = ["std"]
+parity-scale-codec = [
+  "dep:parity-scale-codec",
+  "starknet_api/parity-scale-codec",
+  "mp-felt/parity-scale-codec",
+]
+serde = ["dep:serde", "dep:serde_with", "mp-felt/serde"]
+scale-info = ["dep:scale-info", "starknet_api/scale-info"]
+std = [
+  "mp-felt/std",
+  "starknet_api/std",
+  "blockifier/std",
+  "starknet-core/std",
+  # Optional
+  "parity-scale-codec?/std",
+  "scale-info?/std",
+  "serde?/std",
+  "serde_with?/std",
+]

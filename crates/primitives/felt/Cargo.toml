@@ -13,6 +13,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 cairo-vm = { workspace = true }
 sp-core = { workspace = true }
+starknet-core = { workspace = true }
 starknet-ff = { workspace = true }
 starknet_api = { workspace = true }
 thiserror-no-std = { workspace = true }
@@ -24,21 +25,24 @@ parity-scale-codec = { workspace = true, features = [
 ], optional = true }
 scale-info = { workspace = true, features = ["derive"], optional = true }
 serde = { workspace = true, features = ["derive"], optional = true }
+serde_with = { workspace = true, optional = true }
 
 [features]
 default = ["std"]
 parity-scale-codec = ["dep:parity-scale-codec", "dep:hex"]
 scale-info = ["dep:scale-info"]
-serde = ["dep:serde", "starknet-ff/serde"]
+serde = ["dep:serde", "starknet-ff/serde", "dep:serde_with"]
 std = [
   "cairo-vm/std",
   "thiserror-no-std/std",
   "starknet_api/std",
   "sp-core/std",
   "starknet-ff/std",
+  "starknet-core/std",
   # Optional
   "parity-scale-codec?/std",
   "scale-info?/std",
   "serde?/std",
   "hex?/std",
+  "serde_with?/std",
 ]

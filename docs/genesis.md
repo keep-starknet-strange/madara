@@ -46,6 +46,25 @@ The below defines all hardcoded values set in the geneses:
 
 <!-- markdownlint-disable MD013 -->
 
+### Predeployed accounts node genesis
+
+<!-- markdownlint-disable MD013 -->
+
+| Contract address | Class hash                                                         | Name                            | Optional private key |
+| :--------------- | :----------------------------------------------------------------- | :------------------------------ | :------------------- |
+| 0x1              | 0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f | No Validation Account           | null                 |
+| 0x2              | 0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d | Argent Account                  | `pk`                 |
+| 0x3              | 0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd | Openzeppelin Account            | `pk`                 |
+| 0x4              | 0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276  | No Validation Account (cairo 1) | null                 |
+
+where `pk` is the following vector of `u8`:
+
+```rust
+[48,120,48,48,99,49,99,102,49,52,57,48,100,101,49,51,53,50,56,54,53,51,48,49,98,98,56,55,48,53,49,52,51,102,51,101,102,57,51,56,102,57,55,102,100,102,56,57,50,102,49,48,57,48,100,99,98,53,97,99,55,98,99,100,49,100]
+```
+
+<!-- markdownlint-disable MD013 -->
+
 ### Contracts node genesis
 
 <!-- markdownlint-disable MD013 -->

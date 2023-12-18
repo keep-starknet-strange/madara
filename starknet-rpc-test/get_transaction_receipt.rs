@@ -37,7 +37,7 @@ async fn get_transaction_receipt(
 async fn work_with_invoke_transaction(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-    let recepient = FieldElement::from_hex_be("0x123").unwrap();
+    let recipient = FieldElement::from_hex_be("0x123").unwrap();
     let transfer_amount = FieldElement::ONE;
 
     let mut txs = {
@@ -45,7 +45,7 @@ async fn work_with_invoke_transaction(madara: &ThreadSafeMadaraClient) -> Result
         let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
         madara_write_lock
             .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(
-                recepient,
+                recipient,
                 transfer_amount,
                 None,
             ))])
@@ -76,7 +76,7 @@ async fn work_with_invoke_transaction(madara: &ThreadSafeMadaraClient) -> Result
                         keys: vec![get_selector_from_name("Transfer").unwrap()],
                         data: vec![
                             FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(), // from
-                            recepient,                                                   // to
+                            recipient,                                                   // to
                             transfer_amount,                                             // value low
                             FieldElement::ZERO,                                          // value high
                         ],

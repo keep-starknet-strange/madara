@@ -28,6 +28,7 @@ pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
 use frame_system::{EventRecord, Phase};
 use mp_felt::Felt252Wrapper;
+use mp_simulations::{SimulatedTransaction, SimulationFlags};
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::{Transaction, UserTransaction};
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
@@ -264,6 +265,10 @@ impl_runtime_apis! {
 
         fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
             Starknet::estimate_fee(transactions)
+        }
+
+        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<SimulatedTransaction>, DispatchError> {
+            Starknet::simulate_transactions(transactions, simulation_flags)
         }
 
         fn get_starknet_events_and_their_associated_tx_hash(block_extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper) -> Vec<(Felt252Wrapper, StarknetEvent)> {

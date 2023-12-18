@@ -4,6 +4,9 @@
 
 - feat(rpc) implemented v0.5.1 missing fields + bumped starknet.rs to match them
 - fix: Change seliazation of bitvec to &[u8] in merkle tree to avoid memory
+- feat: add predeployed accounts to genesis state
+- feat(rpc): Added starknet_simulateTransactions
+- fix: Change serialization of bitvec to &[u8] in merkle tree to avoid memory
   uninitialized
 - chore: change SCARB config version for foundry CI
 

@@ -40,7 +40,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     .unwrap(), // deploy_contract selector
                 Felt252Wrapper::from_hex_be("0x9").unwrap(), // Calldata len
                 Felt252Wrapper::from_hex_be(TOKEN_CONTRACT_CLASS_HASH).unwrap(), // Class hash
-                Felt252Wrapper::ONE, // Contract address salt
+                Felt252Wrapper::ONE,     // Contract address salt
                 Felt252Wrapper::from_hex_be("0x6").unwrap(), // Constructor_calldata_len
                 Felt252Wrapper::from_hex_be("0xA").unwrap(), // Name
                 Felt252Wrapper::from_hex_be("0x1").unwrap(), // Symbol
@@ -71,7 +71,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     )],
                     data: EventData(vec![
                         expected_erc20_address, // Contract address
-                        StarkFelt::from(0u128),     /* Deployer (always 0 with this
+                        StarkFelt::from(0u128), /* Deployer (always 0 with this
                                                  * account contract) */
                         StarkFelt::try_from(TOKEN_CONTRACT_CLASS_HASH).unwrap(), // Class hash
                         StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000006")
@@ -102,11 +102,9 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     Felt252Wrapper::from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap()).into(),
                 )],
                 data: EventData(vec![
-                    sender_account.0.0, // From
-                    StarkFelt::try_from("0x000000000000000000000000000000000000000000000000000000000000dead")
-                        .unwrap(), // Sequencer address
-                    StarkFelt::try_from("0x00000000000000000000000000000000000000000000000000000000000198de")
-                        .unwrap(), // Amount low
+                    sender_account.0 .0, // From
+                    StarkFelt::try_from("0x000000000000000000000000000000000000000000000000000000000000dead").unwrap(), // Sequencer address
+                    StarkFelt::try_from("0x00000000000000000000000000000000000000000000000000000000000198de").unwrap(), // Amount low
                     StarkFelt::from(0u128), // Amount high
                 ]),
             },
@@ -133,32 +131,36 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         pretty_assertions::assert_eq!(
             Starknet::storage((
                 ContractAddress(PatriciaKey(expected_erc20_address)),
-                    StorageKey(PatriciaKey(StarkFelt::try_from("03701645da930cd7f63318f7f118a9134e72d64ab73c72ece81cae2bd5fb403f")
-                        .unwrap()))
+                StorageKey(PatriciaKey(
+                    StarkFelt::try_from("03701645da930cd7f63318f7f118a9134e72d64ab73c72ece81cae2bd5fb403f").unwrap()
+                ))
             )),
             StarkFelt::try_from("ffffffffffffffffffffffffffffff0").unwrap()
         );
         pretty_assertions::assert_eq!(
             Starknet::storage((
                 ContractAddress(PatriciaKey(expected_erc20_address)),
-                    StorageKey(PatriciaKey(StarkFelt::try_from("03701645da930cd7f63318f7f118a9134e72d64ab73c72ece81cae2bd5fb4040")
-                        .unwrap()))
+                StorageKey(PatriciaKey(
+                    StarkFelt::try_from("03701645da930cd7f63318f7f118a9134e72d64ab73c72ece81cae2bd5fb4040").unwrap()
+                ))
             )),
             StarkFelt::try_from("fffffffffffffffffffffffffffffff").unwrap()
         );
         pretty_assertions::assert_eq!(
             Starknet::storage((
                 ContractAddress(PatriciaKey(expected_erc20_address)),
-                    StorageKey(PatriciaKey(StarkFelt::try_from("0x011cb0dc747a73020cbd50eac7460edfaa7d67b0e05823b882b05c3f33b1c73e")
-                        .unwrap()))
+                StorageKey(PatriciaKey(
+                    StarkFelt::try_from("0x011cb0dc747a73020cbd50eac7460edfaa7d67b0e05823b882b05c3f33b1c73e").unwrap()
+                ))
             )),
             StarkFelt::from(15u128)
         );
         pretty_assertions::assert_eq!(
             Starknet::storage((
                 ContractAddress(PatriciaKey(expected_erc20_address)),
-                    StorageKey(PatriciaKey(StarkFelt::try_from("0x011cb0dc747a73020cbd50eac7460edfaa7d67b0e05823b882b05c3f33b1c73f")
-                        .unwrap()))
+                StorageKey(PatriciaKey(
+                    StarkFelt::try_from("0x011cb0dc747a73020cbd50eac7460edfaa7d67b0e05823b882b05c3f33b1c73f").unwrap()
+                ))
             )),
             StarkFelt::from(0u128)
         );
@@ -171,35 +173,35 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         // Check regular event.
         let expected_event = Event::StarknetEvent(StarknetEvent {
             content: EventContent {
-            keys: vec![
-                EventKey(Felt252Wrapper::from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap()).into()),
-            ],
-            data: EventData(vec![
-                StarkFelt::try_from("0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0").unwrap(), // From
-                StarkFelt::try_from("0x10").unwrap(), // To
-                StarkFelt::try_from("0xF").unwrap(),  // Amount low
-                StarkFelt::from(0u128),                         // Amount high
-            ]),
-        },
-            from_address: ContractAddress(PatriciaKey(StarkFelt::try_from(
-                "0x00dc58c1280862c95964106ef9eba5d9ed8c0c16d05883093e4540f22b829dff",
-            )
-            .unwrap())),
+                keys: vec![EventKey(
+                    StarkFelt::try_from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap()).unwrap(),
+                )],
+                data: EventData(vec![
+                    StarkFelt::try_from("0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0").unwrap(), // From
+                    StarkFelt::try_from("0x10").unwrap(), // To
+                    StarkFelt::try_from("0xF").unwrap(),  // Amount low
+                    StarkFelt::from(0u128),               // Amount high
+                ]),
+            },
+            from_address: ContractAddress(PatriciaKey(
+                StarkFelt::try_from("0x00dc58c1280862c95964106ef9eba5d9ed8c0c16d05883093e4540f22b829dff").unwrap(),
+            )),
         });
 
         pretty_assertions::assert_eq!(expected_event, events[events.len() - 2].event.clone().try_into().unwrap());
         // Check fee transfer.
         let expected_fee_transfer_event = Event::StarknetEvent(StarknetEvent {
             content: EventContent {
-            keys: vec![
-                EventKey(Felt252Wrapper::from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap()).into()),
-            ],
-            data: EventData(vec![
-                sender_account.0.0,                                  // From
-                StarkFelt::try_from("0xdead").unwrap(),  // Sequencer address
-                StarkFelt::try_from("0xf118").unwrap(), // Amount low
-                StarkFelt::from(0u128),                            // Amount high
-            ])},
+                keys: vec![EventKey(
+                    StarkFelt::try_from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap()).unwrap(),
+                )],
+                data: EventData(vec![
+                    sender_account.0 .0,                    // From
+                    StarkFelt::try_from("0xdead").unwrap(), // Sequencer address
+                    StarkFelt::try_from("0xf118").unwrap(), // Amount low
+                    StarkFelt::from(0u128),                 // Amount high
+                ]),
+            },
             from_address: Starknet::fee_token_address(),
         });
         pretty_assertions::assert_eq!(

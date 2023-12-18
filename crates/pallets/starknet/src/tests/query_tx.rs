@@ -4,7 +4,7 @@ use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::UserTransaction;
 
 use super::mock::default_mock::*;
-use super::mock::*;
+use super::mock::new_test_ext;
 use crate::tests::utils::sign_message_hash;
 use crate::tests::{get_invoke_argent_dummy, get_invoke_dummy, get_storage_read_write_dummy};
 use crate::{Config, Error};

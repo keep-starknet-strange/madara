@@ -7,7 +7,6 @@ mod errors;
 mod events;
 mod madara_backend_client;
 mod types;
-
 use std::marker::PhantomData;
 use std::sync::Arc;
 
@@ -16,12 +15,17 @@ use jsonrpsee::core::{async_trait, RpcResult};
 use jsonrpsee::types::error::CallError;
 use log::error;
 use mc_db::Backend as MadaraBackend;
+use mc_genesis_data_provider::GenesisProvider;
 pub use mc_rpc_core::utils::*;
-pub use mc_rpc_core::{Felt, StarknetReadRpcApiServer, StarknetWriteRpcApiServer};
+pub use mc_rpc_core::{
+    Felt, MadaraRpcApiServer, PredeployedAccountWithBalance, StarknetReadRpcApiServer, StarknetTraceRpcApiServer,
+    StarknetWriteRpcApiServer,
+};
 use mc_storage::OverrideHandle;
 use mp_fee::ResourcePriceWrapper;
 use mp_felt::{Felt252Wrapper, Felt252WrapperError};
 use mp_hashers::HasherT;
+use mp_simulations::{SimulatedTransaction, SimulationFlag, SimulationFlags};
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::execution::ExecutionResourcesWrapper;
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
@@ -50,12 +54,13 @@ use starknet_core::types::{
     MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateDiff, StateUpdate,
     SyncStatus, SyncStatusType, Transaction, TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
 };
+use starknet_core::utils::get_selector_from_name;
 
 use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
 use crate::types::RpcEventFilter;
 
 /// A Starknet RPC server for Madara
-pub struct Starknet<A: ChainApi, B: BlockT, BE, C, P, H> {
+pub struct Starknet<A: ChainApi, B: BlockT, BE, G, C, P, H> {
     client: Arc<C>,
     backend: Arc<mc_db::Backend<B>>,
     overrides: Arc<OverrideHandle<B>>,
@@ -64,6 +69,7 @@ pub struct Starknet<A: ChainApi, B: BlockT, BE, C, P, H> {
     graph: Arc<Pool<A>>,
     sync_service: Arc<SyncingService<B>>,
     starting_block: <<B>::Header as HeaderT>::Number,
+    genesis_provider: Arc<G>,
     _marker: PhantomData<(B, BE, H)>,
 }
 
@@ -79,7 +85,7 @@ pub struct Starknet<A: ChainApi, B: BlockT, BE, C, P, H> {
 // # Returns
 // * `Self` - The actual Starknet struct
 #[allow(clippy::too_many_arguments)]
-impl<A: ChainApi, B: BlockT, BE, C, P, H> Starknet<A, B, BE, C, P, H> {
+impl<A: ChainApi, B: BlockT, BE, G, C, P, H> Starknet<A, B, BE, G, C, P, H> {
     pub fn new(
         client: Arc<C>,
         backend: Arc<mc_db::Backend<B>>,
@@ -88,12 +94,23 @@ impl<A: ChainApi, B: BlockT, BE, C, P, H> Starknet<A, B, BE, C, P, H> {
         graph: Arc<Pool<A>>,
         sync_service: Arc<SyncingService<B>>,
         starting_block: <<B>::Header as HeaderT>::Number,
+        genesis_provider: Arc<G>,
     ) -> Self {
-        Self { client, backend, overrides, pool, graph, sync_service, starting_block, _marker: PhantomData }
+        Self {
+            client,
+            backend,
+            overrides,
+            pool,
+            graph,
+            sync_service,
+            starting_block,
+            genesis_provider,
+            _marker: PhantomData,
+        }
     }
 }
 
-impl<A: ChainApi, B, BE, C, P, H> Starknet<A, B, BE, C, P, H>
+impl<A: ChainApi, B, BE, G, C, P, H> Starknet<A, B, BE, G, C, P, H>
 where
     B: BlockT,
     C: HeaderBackend<B> + 'static,
@@ -103,7 +120,7 @@ where
     }
 }
 
-impl<A: ChainApi, B, BE, C, P, H> Starknet<A, B, BE, C, P, H>
+impl<A: ChainApi, B, BE, G, C, P, H> Starknet<A, B, BE, G, C, P, H>
 where
     B: BlockT,
     C: HeaderBackend<B> + 'static,
@@ -113,7 +130,7 @@ where
     }
 }
 
-impl<A: ChainApi, B, BE, C, P, H> Starknet<A, B, BE, C, P, H>
+impl<A: ChainApi, B, BE, G, C, P, H> Starknet<A, B, BE, G, C, P, H>
 where
     B: BlockT,
     C: HeaderBackend<B> + 'static,
@@ -184,9 +201,52 @@ where
 /// Taken from https://github.com/paritytech/substrate/blob/master/client/rpc/src/author/mod.rs#L78
 const TX_SOURCE: TransactionSource = TransactionSource::External;
 
+#[allow(unused_variables)]
+impl<A, B, BE, G, C, P, H> MadaraRpcApiServer for Starknet<A, B, BE, G, C, P, H>
+where
+    A: ChainApi<Block = B> + 'static,
+    B: BlockT,
+    BE: Backend<B> + 'static,
+    C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
+    C: ProvideRuntimeApi<B>,
+    G: GenesisProvider + Send + Sync + 'static,
+    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
+    P: TransactionPool<Block = B> + 'static,
+    H: HasherT + Send + Sync + 'static,
+{
+    fn predeployed_accounts(&self) -> RpcResult<Vec<PredeployedAccountWithBalance>> {
+        let genesis_data = self.genesis_provider.load_genesis_data()?;
+        let block_id = BlockId::Tag(BlockTag::Latest);
+        let fee_token_address: FieldElement = genesis_data.fee_token_address.0;
+
+        Ok(genesis_data
+            .predeployed_accounts
+            .into_iter()
+            .map(|account| {
+                let contract_address: FieldElement = Felt252Wrapper(account.contract_address).into();
+                let class_hash: FieldElement = Felt252Wrapper(account.class_hash).into();
+                let balance_string = &self
+                    .call(
+                        FunctionCall {
+                            contract_address: fee_token_address,
+                            entry_point_selector: get_selector_from_name("balanceOf")
+                                .expect("the provided method name should be a valid ASCII string."),
+                            calldata: vec![contract_address],
+                        },
+                        block_id,
+                    )
+                    .expect("FunctionCall attributes should be correct.")[0];
+                let balance =
+                    Felt252Wrapper::from_hex_be(balance_string).expect("`balanceOf` should return a Felt").into();
+                PredeployedAccountWithBalance { account, balance }
+            })
+            .collect::<Vec<_>>())
+    }
+}
+
 #[async_trait]
 #[allow(unused_variables)]
-impl<A, B, BE, C, P, H> StarknetWriteRpcApiServer for Starknet<A, B, BE, C, P, H>
+impl<A, B, BE, G, C, P, H> StarknetWriteRpcApiServer for Starknet<A, B, BE, G, C, P, H>
 where
     A: ChainApi<Block = B> + 'static,
     B: BlockT,
@@ -195,6 +255,7 @@ where
     C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
+    G: GenesisProvider + Send + Sync + 'static,
     H: HasherT + Send + Sync + 'static,
 {
     /// Submit a new declare transaction to be added to the chain
@@ -313,7 +374,7 @@ where
 
 #[async_trait]
 #[allow(unused_variables)]
-impl<A, B, BE, C, P, H> StarknetReadRpcApiServer for Starknet<A, B, BE, C, P, H>
+impl<A, B, BE, G, C, P, H> StarknetReadRpcApiServer for Starknet<A, B, BE, G, C, P, H>
 where
     A: ChainApi<Block = B> + 'static,
     B: BlockT,
@@ -322,6 +383,7 @@ where
     C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
+    G: GenesisProvider + Send + Sync + 'static,
     H: HasherT + Send + Sync + 'static,
 {
     /// Returns the Version of the StarkNet JSON-RPC Specification Being Used
@@ -1481,6 +1543,61 @@ where
         };
 
         Ok(MaybePendingTransactionReceipt::Receipt(receipt))
+    }
+}
+
+#[async_trait]
+#[allow(unused_variables)]
+impl<A, B, BE, G, C, P, H> StarknetTraceRpcApiServer for Starknet<A, B, BE, G, C, P, H>
+where
+    A: ChainApi<Block = B> + 'static,
+    B: BlockT,
+    BE: Backend<B> + 'static,
+    G: GenesisProvider + Send + Sync + 'static,
+    C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
+    C: ProvideRuntimeApi<B>,
+    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
+    P: TransactionPool<Block = B> + 'static,
+    H: HasherT + Send + Sync + 'static,
+{
+    async fn simulate_transactions(
+        &self,
+        block_id: BlockId,
+        transactions: Vec<BroadcastedTransaction>,
+        simulation_flags: Vec<SimulationFlag>,
+    ) -> RpcResult<Vec<SimulatedTransaction>> {
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+        let best_block_hash = self.client.info().best_hash;
+        let chain_id = Felt252Wrapper(self.chain_id()?.0);
+
+        let mut user_transactions = vec![];
+        for tx in transactions {
+            let tx = tx.try_into().map_err(|e| {
+                error!("Failed to convert BroadcastedTransaction to UserTransaction: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?;
+            user_transactions.push(tx);
+        }
+
+        let simulation_flags: SimulationFlags = simulation_flags.into();
+
+        let fee_estimates = self
+            .client
+            .runtime_api()
+            .simulate_transactions(substrate_block_hash, user_transactions, simulation_flags)
+            .map_err(|e| {
+                error!("Request parameters error: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?
+            .map_err(|e| {
+                error!("Failed to call function: {:#?}", e);
+                StarknetRpcApiError::ContractError
+            })?;
+
+        Ok(fee_estimates)
     }
 }
 

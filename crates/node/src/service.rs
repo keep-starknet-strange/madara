@@ -19,6 +19,7 @@ use mc_data_availability::celestia::CelestiaClient;
 use mc_data_availability::ethereum::config::EthereumConfig;
 use mc_data_availability::ethereum::EthereumClient;
 use mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker};
+use mc_genesis_data_provider::OnDiskGenesisConfig;
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
 use mp_sequencer_address::{
@@ -351,12 +352,15 @@ pub fn new_full(
     };
 
     let overrides = overrides_handle(client.clone());
+    let config_dir: PathBuf = config.data_path.clone();
+    let genesis_data = OnDiskGenesisConfig(config_dir);
     let starknet_rpc_params = StarknetDeps {
         client: client.clone(),
         madara_backend: madara_backend.clone(),
         overrides,
         sync_service: sync_service.clone(),
         starting_block,
+        genesis_provider: genesis_data.into(),
     };
 
     let rpc_extensions_builder = {

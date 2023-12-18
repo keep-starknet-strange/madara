@@ -21,8 +21,13 @@ mp-commitments = { workspace = true }
 mp-digest-log = { workspace = true }
 mp-fee = { workspace = true }
 mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
+mp-genesis-config = { workspace = true }
 mp-hashers = { workspace = true }
 mp-sequencer-address = { workspace = true, features = ["parity-scale-codec"] }
+mp-simulations = { workspace = true, features = [
+  "parity-scale-codec",
+  "serde",
+] }
 mp-state = { workspace = true }
 mp-storage = { workspace = true, features = ["parity-scale-codec"] }
 mp-transactions = { workspace = true, features = ["scale-info"] }
@@ -106,6 +111,8 @@ std = [
   "dep:reqwest",
   "dep:cairo-lang-casm-contract-class",
   "parity-scale-codec/std",
+  "starknet-core/std",
+  "mp-simulations/std",
 ]
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
 try-runtime = ["frame-support/try-runtime"]
