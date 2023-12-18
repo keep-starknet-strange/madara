@@ -53,6 +53,7 @@ use crate::starknet::{db_config_dir, MadaraBackend};
 pub struct ExecutorDispatch;
 
 const MADARA_TASK_GROUP: &str = "madara";
+const DEFAULT_SETTLEMENT_RETRY_INTERVAL: Duration = Duration::from_millis(100);
 
 impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
     /// Only enable the benchmarking host functions when we actually want to benchmark.
@@ -476,7 +477,7 @@ pub fn new_full(
                 )
             }
         };
-        let retry_strategy = Box::new(RetryOnRecoverableErrors { delay: Duration::from_millis(100) });
+        let retry_strategy = Box::new(RetryOnRecoverableErrors { delay: DEFAULT_SETTLEMENT_RETRY_INTERVAL });
 
         task_manager.spawn_essential_handle().spawn(
             "settlement-worker-sync-state",

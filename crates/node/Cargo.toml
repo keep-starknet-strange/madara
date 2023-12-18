@@ -21,7 +21,7 @@ name = "madara"
 
 [dependencies]
 # Ethereum
-ethers = { version = "2.0.7", features = ["openssl"] }
+ethers = { workspace = true, features = ["openssl"] }
 
 async-trait = "0.1"
 clap = { workspace = true, features = ["derive"] }

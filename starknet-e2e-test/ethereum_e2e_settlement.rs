@@ -78,7 +78,7 @@ async fn works_with_initialized_contract(ctx: &mut Context) -> Result<(), anyhow
     // works_with_initialized_contract -- --nocapture
 
     // At this point we have:
-    //   * spawnined Ethereum sandbox
+    //   * spawned Ethereum sandbox
     //   * deployed settlement contract (not initialized yet)
     //   * temp Madara path with correct ethereum config
     ctx.initialize(InitData::consistent()).await;

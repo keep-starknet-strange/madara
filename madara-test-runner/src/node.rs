@@ -48,10 +48,11 @@ fn get_repository_root() -> PathBuf {
 }
 
 impl MadaraNode {
-    fn cargo_run(root_dir: &Path, options: Vec<Option<String>>) -> Child {
-        let arguments = [vec![Some("run".into()), Some("--release".into()), Some("--".into())], options].concat();
-
-        let args: Vec<&str> = arguments.iter().filter_map(|arg| arg.as_ref().map(|val| val.as_str())).collect();
+    /// Run the Madara node
+    ///
+    /// Parameters to the node are passed with
+    fn cargo_run(root_dir: &Path, options: Vec<&str>) -> Child {
+        let arguments = [vec!["run".into(), "--release", "--"], options].concat();
 
         let (stdout, stderr) = if env::var("MADARA_LOG").is_ok() {
             let logs_dir = Path::join(root_dir, Path::new("target/madara-log"));
@@ -64,7 +65,7 @@ impl MadaraNode {
             (Stdio::null(), Stdio::null())
         };
 
-        Command::new("cargo").stdout(stdout).stderr(stderr).args(args).spawn().expect("Could not run Madara node")
+        Command::new("cargo").stdout(stdout).stderr(stderr).args(arguments).spawn().expect("Could not run Madara node")
     }
 
     pub fn run(settlement: Option<Settlement>, base_path: Option<PathBuf>) -> Self {
@@ -75,36 +76,37 @@ impl MadaraNode {
 
         let base_path_arg = base_path.map(|arg| format!("--base-path={}", arg.display()));
         let settlement_arg = settlement.map(|arg| format!("--settlement={arg}"));
-        let rpc_port_arg = Some(format!("--rpc-port={port}"));
-        let chain_arg = Some(format!("--chain=dev"));
+        let rpc_port_arg = format!("--rpc-port={port}");
+        let chain_arg = format!("--chain=dev");
+        let from_local_arg = format!("--from-local={}", repository_root.join("configs").display());
 
-        let setup_res = Self::cargo_run(
-            repository_root.as_path(),
-            vec![
-                Some("setup".into()),
-                base_path_arg.clone(),
-                chain_arg.clone(),
-                Some(format!("--from-local={}", repository_root.join("configs").display())),
-            ],
-        )
-        .wait()
-        .expect("Failed to setup Madara node");
+        // Codeblock to drop `setup_args` and be able to borrow again for `run_args`
+        {
+            let mut setup_args = vec!["setup", &chain_arg, &from_local_arg];
+            if let Some(bp) = &base_path_arg {
+                setup_args.push(bp);
+            };
+            if let Some(s) = &settlement_arg {
+                setup_args.push(s);
+            };
 
-        if !setup_res.success() {
-            panic!("Madara setup failed");
+            let setup_res =
+                Self::cargo_run(repository_root.as_path(), setup_args).wait().expect("Failed to setup Madara node");
+
+            if !setup_res.success() {
+                panic!("Madara setup failed");
+            }
         }
 
-        let process = Self::cargo_run(
-            repository_root.as_path(),
-            vec![
-                Some("--alice".into()),
-                Some("--sealing=manual".into()),
-                base_path_arg,
-                chain_arg,
-                rpc_port_arg,
-                settlement_arg,
-            ],
-        );
+        let mut run_args = vec!["--alice", "--sealing=manual", &chain_arg, &rpc_port_arg];
+        if let Some(bp) = &base_path_arg {
+            run_args.push(bp);
+        };
+        if let Some(s) = &settlement_arg {
+            run_args.push(s);
+        };
+
+        let process = Self::cargo_run(repository_root.as_path(), run_args);
 
         Self { process, port }
     }

@@ -77,7 +77,8 @@ impl From<InitData> for Bytes {
 }
 
 impl InitData {
-    pub fn consistent() -> Self {
+    /// Use the same config as in Starknet Goerli testnet
+    pub fn sn_goerli() -> Self {
         Self {
             // See SN_OS_PROGRAM_HASH constant
             program_hash: StarkFelt::from(

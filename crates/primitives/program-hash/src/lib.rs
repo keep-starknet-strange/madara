@@ -8,7 +8,7 @@ use mp_felt::Felt252Wrapper;
 /// How to calculate:
 ///     1. Get Starknet OS program sources (e.g. check keep-starknet-strange/snos)
 ///     2. Install Cairo-lang and run `cairo-hash-program --program <cairo-output>.json`
-///     3. Install Starqli and run `starqli mont <program hash>`
+///     3. Install Starkli and run `starkli mont <program hash>`
 ///
 /// Hex value: 0x41fc2a467ef8649580631912517edcab7674173f1dbfa2e9b64fbcd82bc4d79
 pub const SN_OS_PROGRAM_HASH: Felt252Wrapper = Felt252Wrapper(starknet_ff::FieldElement::from_mont([
