@@ -1152,16 +1152,6 @@ dependencies = [
 
 [[package]]
 name = "borsh"
-version = "0.10.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4114279215a005bc675e386011e594e1d9b800918cea18fcadadcce864a2046b"
-dependencies = [
- "borsh-derive 0.10.3",
- "hashbrown 0.13.2",
-]
-
-[[package]]
-name = "borsh"
 version = "1.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f58b559fd6448c6e2fd0adb5720cd98a2506594cafa4737ff98c396f3e82f667"
@@ -1176,21 +1166,8 @@ version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6441c552f230375d18e3cc377677914d2ca2b0d36e52129fe15450a2dce46775"
 dependencies = [
- "borsh-derive-internal 0.9.3",
- "borsh-schema-derive-internal 0.9.3",
- "proc-macro-crate 0.1.5",
- "proc-macro2",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "borsh-derive"
-version = "0.10.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0754613691538d51f329cce9af41d7b7ca150bc973056f1156611489475f54f7"
-dependencies = [
- "borsh-derive-internal 0.10.3",
- "borsh-schema-derive-internal 0.10.3",
+ "borsh-derive-internal",
+ "borsh-schema-derive-internal",
  "proc-macro-crate 0.1.5",
  "proc-macro2",
  "syn 1.0.109",
@@ -1222,32 +1199,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "borsh-derive-internal"
-version = "0.10.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "afb438156919598d2c7bad7e1c0adf3d26ed3840dbc010db1a882a65583ca2fb"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
 name = "borsh-schema-derive-internal"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdbd5696d8bfa21d53d9fe39a714a18538bad11492a42d066dbbc395fb1951c0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "borsh-schema-derive-internal"
-version = "0.10.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "634205cc43f74a1b9046ef87c4540ebda95696ec0f315024860cad7c5b0f5ccd"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1943,6 +1898,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "cbindgen"
+version = "0.26.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da6bc11b07529f16944307272d5bd9b22530bc7d05751717c9d416586cedab49"
+dependencies = [
+ "clap 3.2.25",
+ "heck 0.4.1",
+ "indexmap 1.9.3",
+ "log",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_json",
+ "syn 1.0.109",
+ "tempfile",
+ "toml 0.5.11",
+]
+
+[[package]]
 name = "cc"
 version = "1.0.83"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2156,9 +2130,24 @@ dependencies = [
  "atty",
  "bitflags 1.3.2",
  "strsim 0.8.0",
- "textwrap",
+ "textwrap 0.11.0",
  "unicode-width",
  "vec_map",
+]
+
+[[package]]
+name = "clap"
+version = "3.2.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ea181bf566f71cb9a5d17a59e1871af638180a18fb0035c92ae62b705207123"
+dependencies = [
+ "atty",
+ "bitflags 1.3.2",
+ "clap_lex 0.2.4",
+ "indexmap 1.9.3",
+ "strsim 0.10.0",
+ "termcolor",
+ "textwrap 0.16.0",
 ]
 
 [[package]]
@@ -2179,7 +2168,7 @@ checksum = "fb7fb5e4e979aec3be7791562fcba452f94ad85e954da024396433e0e25a79e9"
 dependencies = [
  "anstream",
  "anstyle",
- "clap_lex",
+ "clap_lex 0.6.0",
  "strsim 0.10.0",
 ]
 
@@ -2193,6 +2182,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.48",
+]
+
+[[package]]
+name = "clap_lex"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2850f2f5a82cbf437dd5af4d49848fbdfc27c157c3d010345776f952765261c5"
+dependencies = [
+ "os_str_bytes",
 ]
 
 [[package]]
@@ -7096,8 +7094,9 @@ dependencies = [
  "mp-hashers",
  "mp-storage",
  "near-crypto 0.0.0 (git+https://github.com/near/nearcore?rev=46dc4374157a40b3bdd1ef88139b95b69d500bd4)",
- "near-da-http-api-data",
- "near-jsonrpc-client",
+ "near-da-primitives",
+ "near-da-rpc",
+ "near-jsonrpc-client 0.6.0 (git+https://github.com/encody/near-jsonrpc-client-rs?branch=patch/unpin-tokio)",
  "near-jsonrpc-primitives 0.0.0 (git+https://github.com/near/nearcore?rev=46dc4374157a40b3bdd1ef88139b95b69d500bd4)",
  "near-primitives 0.0.0 (git+https://github.com/near/nearcore?rev=46dc4374157a40b3bdd1ef88139b95b69d500bd4)",
  "pallet-starknet-runtime-api",
@@ -7987,6 +7986,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "near-chain-configs"
+version = "0.17.0"
+source = "git+https://github.com/encody/nearcore?branch=madara-compat#b590ab22d79fb6eda9f4c2be2a959ac78a154933"
+dependencies = [
+ "anyhow",
+ "bytesize",
+ "chrono",
+ "derive_more",
+ "near-config-utils 0.17.0",
+ "near-crypto 0.17.0",
+ "near-primitives 0.17.0",
+ "num-rational 0.3.2",
+ "once_cell",
+ "serde",
+ "serde_json",
+ "sha2 0.10.8",
+ "smart-default",
+ "tracing",
+]
+
+[[package]]
 name = "near-config-utils"
 version = "0.0.0"
 source = "git+https://github.com/near/nearcore?rev=46dc4374157a40b3bdd1ef88139b95b69d500bd4#46dc4374157a40b3bdd1ef88139b95b69d500bd4"
@@ -8001,6 +8021,17 @@ dependencies = [
 name = "near-config-utils"
 version = "0.0.0"
 source = "git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd#984d7f927218cfad1a7117a5408ca665fb306bdd"
+dependencies = [
+ "anyhow",
+ "json_comments",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
+name = "near-config-utils"
+version = "0.17.0"
+source = "git+https://github.com/encody/nearcore?branch=madara-compat#b590ab22d79fb6eda9f4c2be2a959ac78a154933"
 dependencies = [
  "anyhow",
  "json_comments",
@@ -8061,23 +8092,63 @@ dependencies = [
 ]
 
 [[package]]
-name = "near-da-http-api-data"
-version = "0.2.3"
-source = "git+https://github.com/near/rollup-data-availability#557485e3140342617e7c6f110458a6ca63224d20"
+name = "near-crypto"
+version = "0.17.0"
+source = "git+https://github.com/encody/nearcore?branch=madara-compat#b590ab22d79fb6eda9f4c2be2a959ac78a154933"
 dependencies = [
- "near-da-primitives",
+ "blake2 0.9.2",
+ "borsh 1.3.1",
+ "bs58 0.4.0",
+ "c2-chacha",
+ "curve25519-dalek 4.1.1",
+ "derive_more",
+ "ed25519-dalek 2.1.0",
+ "hex",
+ "near-account-id 1.0.0",
+ "near-config-utils 0.17.0",
+ "near-stdx 0.17.0",
+ "once_cell",
+ "primitive-types 0.10.1",
+ "rand 0.7.3",
+ "secp256k1 0.27.0",
  "serde",
- "serde_with 3.5.1",
+ "serde_json",
+ "subtle 2.5.0",
+ "thiserror",
 ]
 
 [[package]]
 name = "near-da-primitives"
 version = "0.2.3"
-source = "git+https://github.com/near/rollup-data-availability#557485e3140342617e7c6f110458a6ca63224d20"
+source = "git+https://github.com/near/rollup-data-availability?branch=madara-compat#840a8848bd70c3449755745245fd6b41d0035128"
 dependencies = [
- "borsh 0.10.3",
+ "borsh 1.3.1",
+ "near-primitives 0.17.0",
  "serde",
  "serde_with 3.5.1",
+]
+
+[[package]]
+name = "near-da-rpc"
+version = "0.2.3"
+source = "git+https://github.com/near/rollup-data-availability?branch=madara-compat#840a8848bd70c3449755745245fd6b41d0035128"
+dependencies = [
+ "async-trait",
+ "borsh 1.3.1",
+ "cbindgen",
+ "eyre",
+ "futures",
+ "log",
+ "near-crypto 0.17.0",
+ "near-da-primitives",
+ "near-jsonrpc-client 0.6.0 (git+https://github.com/encody/near-jsonrpc-client-rs?branch=madara-compat)",
+ "near-jsonrpc-primitives 0.17.0",
+ "near-primitives 0.17.0",
+ "serde",
+ "serde_json",
+ "serde_with 3.5.1",
+ "tokio",
+ "which",
 ]
 
 [[package]]
@@ -8094,6 +8165,32 @@ version = "0.0.0"
 source = "git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd#984d7f927218cfad1a7117a5408ca665fb306bdd"
 dependencies = [
  "near-primitives-core 0.0.0 (git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd)",
+]
+
+[[package]]
+name = "near-fmt"
+version = "0.17.0"
+source = "git+https://github.com/encody/nearcore?branch=madara-compat#b590ab22d79fb6eda9f4c2be2a959ac78a154933"
+dependencies = [
+ "near-primitives-core 0.17.0",
+]
+
+[[package]]
+name = "near-jsonrpc-client"
+version = "0.6.0"
+source = "git+https://github.com/encody/near-jsonrpc-client-rs?branch=madara-compat#21de9a438b3a498506d994fe66328a795d96d755"
+dependencies = [
+ "borsh 1.3.1",
+ "lazy_static",
+ "log",
+ "near-chain-configs 0.17.0",
+ "near-crypto 0.17.0",
+ "near-jsonrpc-primitives 0.17.0",
+ "near-primitives 0.17.0",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]
@@ -8145,6 +8242,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "near-jsonrpc-primitives"
+version = "0.17.0"
+source = "git+https://github.com/encody/nearcore?branch=madara-compat#b590ab22d79fb6eda9f4c2be2a959ac78a154933"
+dependencies = [
+ "arbitrary",
+ "near-chain-configs 0.17.0",
+ "near-crypto 0.17.0",
+ "near-primitives 0.17.0",
+ "near-rpc-error-macro 0.17.0",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "near-o11y"
 version = "0.0.0"
 source = "git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd#984d7f927218cfad1a7117a5408ca665fb306bdd"
@@ -8155,6 +8267,33 @@ dependencies = [
  "near-crypto 0.0.0 (git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd)",
  "near-fmt 0.0.0 (git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd)",
  "near-primitives-core 0.0.0 (git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd)",
+ "once_cell",
+ "opentelemetry",
+ "opentelemetry-otlp",
+ "opentelemetry-semantic-conventions",
+ "prometheus",
+ "serde",
+ "serde_json",
+ "strum 0.24.1",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "tracing-appender",
+ "tracing-opentelemetry",
+ "tracing-subscriber 0.3.18",
+]
+
+[[package]]
+name = "near-o11y"
+version = "0.17.0"
+source = "git+https://github.com/encody/nearcore?branch=madara-compat#b590ab22d79fb6eda9f4c2be2a959ac78a154933"
+dependencies = [
+ "actix",
+ "base64 0.21.5",
+ "clap 4.4.13",
+ "near-crypto 0.17.0",
+ "near-fmt 0.17.0",
+ "near-primitives-core 0.17.0",
  "once_cell",
  "opentelemetry",
  "opentelemetry-otlp",
@@ -8225,11 +8364,52 @@ dependencies = [
  "hex",
  "near-crypto 0.0.0 (git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd)",
  "near-fmt 0.0.0 (git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd)",
- "near-o11y",
+ "near-o11y 0.0.0",
  "near-primitives-core 0.0.0 (git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd)",
  "near-rpc-error-macro 0.0.0 (git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd)",
  "near-stdx 0.0.0 (git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd)",
  "near-vm-runner 0.0.0 (git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd)",
+ "num-rational 0.3.2",
+ "once_cell",
+ "primitive-types 0.10.1",
+ "rand 0.8.5",
+ "rand_chacha 0.3.1",
+ "reed-solomon-erasure",
+ "serde",
+ "serde_json",
+ "serde_with 3.5.1",
+ "serde_yaml",
+ "sha3",
+ "smart-default",
+ "strum 0.24.1",
+ "thiserror",
+ "time",
+ "tracing",
+ "wat",
+]
+
+[[package]]
+name = "near-primitives"
+version = "0.17.0"
+source = "git+https://github.com/encody/nearcore?branch=madara-compat#b590ab22d79fb6eda9f4c2be2a959ac78a154933"
+dependencies = [
+ "arbitrary",
+ "base64 0.21.5",
+ "borsh 1.3.1",
+ "bytesize",
+ "cfg-if 1.0.0",
+ "chrono",
+ "derive_more",
+ "easy-ext",
+ "enum-map",
+ "hex",
+ "near-crypto 0.17.0",
+ "near-fmt 0.17.0",
+ "near-o11y 0.17.0",
+ "near-primitives-core 0.17.0",
+ "near-rpc-error-macro 0.17.0",
+ "near-stdx 0.17.0",
+ "near-vm-runner 0.17.0",
  "num-rational 0.3.2",
  "once_cell",
  "primitive-types 0.10.1",
@@ -8292,6 +8472,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "near-primitives-core"
+version = "0.17.0"
+source = "git+https://github.com/encody/nearcore?branch=madara-compat#b590ab22d79fb6eda9f4c2be2a959ac78a154933"
+dependencies = [
+ "arbitrary",
+ "base64 0.21.5",
+ "borsh 1.3.1",
+ "bs58 0.4.0",
+ "derive_more",
+ "enum-map",
+ "near-account-id 1.0.0",
+ "num-rational 0.3.2",
+ "serde",
+ "serde_repr",
+ "serde_with 3.5.1",
+ "sha2 0.10.8",
+ "strum 0.24.1",
+ "thiserror",
+]
+
+[[package]]
 name = "near-rpc-error-core"
 version = "0.0.0"
 source = "git+https://github.com/near/nearcore?rev=46dc4374157a40b3bdd1ef88139b95b69d500bd4#46dc4374157a40b3bdd1ef88139b95b69d500bd4"
@@ -8305,6 +8506,16 @@ dependencies = [
 name = "near-rpc-error-core"
 version = "0.0.0"
 source = "git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd#984d7f927218cfad1a7117a5408ca665fb306bdd"
+dependencies = [
+ "quote",
+ "serde",
+ "syn 2.0.48",
+]
+
+[[package]]
+name = "near-rpc-error-core"
+version = "0.17.0"
+source = "git+https://github.com/encody/nearcore?branch=madara-compat#b590ab22d79fb6eda9f4c2be2a959ac78a154933"
 dependencies = [
  "quote",
  "serde",
@@ -8334,6 +8545,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "near-rpc-error-macro"
+version = "0.17.0"
+source = "git+https://github.com/encody/nearcore?branch=madara-compat#b590ab22d79fb6eda9f4c2be2a959ac78a154933"
+dependencies = [
+ "fs2",
+ "near-rpc-error-core 0.17.0",
+ "serde",
+ "syn 2.0.48",
+]
+
+[[package]]
 name = "near-stdx"
 version = "0.0.0"
 source = "git+https://github.com/near/nearcore?rev=46dc4374157a40b3bdd1ef88139b95b69d500bd4#46dc4374157a40b3bdd1ef88139b95b69d500bd4"
@@ -8342,6 +8564,11 @@ source = "git+https://github.com/near/nearcore?rev=46dc4374157a40b3bdd1ef88139b9
 name = "near-stdx"
 version = "0.0.0"
 source = "git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd#984d7f927218cfad1a7117a5408ca665fb306bdd"
+
+[[package]]
+name = "near-stdx"
+version = "0.17.0"
+source = "git+https://github.com/encody/nearcore?branch=madara-compat#b590ab22d79fb6eda9f4c2be2a959ac78a154933"
 
 [[package]]
 name = "near-vm-compiler"
@@ -8369,6 +8596,23 @@ dependencies = [
  "finite-wasm",
  "near-vm-types 0.0.0 (git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd)",
  "near-vm-vm 0.0.0 (git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd)",
+ "rkyv",
+ "smallvec 1.11.2",
+ "target-lexicon 0.12.13",
+ "thiserror",
+ "tracing",
+ "wasmparser 0.99.0",
+]
+
+[[package]]
+name = "near-vm-compiler"
+version = "0.17.0"
+source = "git+https://github.com/encody/nearcore?branch=madara-compat#b590ab22d79fb6eda9f4c2be2a959ac78a154933"
+dependencies = [
+ "enumset",
+ "finite-wasm",
+ "near-vm-types 0.17.0",
+ "near-vm-vm 0.17.0",
  "rkyv",
  "smallvec 1.11.2",
  "target-lexicon 0.12.13",
@@ -8413,6 +8657,27 @@ dependencies = [
  "near-vm-compiler 0.0.0 (git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd)",
  "near-vm-types 0.0.0 (git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd)",
  "near-vm-vm 0.0.0 (git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd)",
+ "rayon",
+ "smallvec 1.11.2",
+ "strum 0.24.1",
+ "tracing",
+]
+
+[[package]]
+name = "near-vm-compiler-singlepass"
+version = "0.17.0"
+source = "git+https://github.com/encody/nearcore?branch=madara-compat#b590ab22d79fb6eda9f4c2be2a959ac78a154933"
+dependencies = [
+ "dynasm 2.0.0",
+ "dynasmrt 2.0.0",
+ "enumset",
+ "finite-wasm",
+ "lazy_static",
+ "memoffset 0.8.0",
+ "more-asserts",
+ "near-vm-compiler 0.17.0",
+ "near-vm-types 0.17.0",
+ "near-vm-vm 0.17.0",
  "rayon",
  "smallvec 1.11.2",
  "strum 0.24.1",
@@ -8460,6 +8725,31 @@ dependencies = [
  "near-vm-compiler 0.0.0 (git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd)",
  "near-vm-types 0.0.0 (git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd)",
  "near-vm-vm 0.0.0 (git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd)",
+ "region",
+ "rkyv",
+ "rustc-demangle",
+ "rustix 0.37.27",
+ "target-lexicon 0.12.13",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
+name = "near-vm-engine"
+version = "0.17.0"
+source = "git+https://github.com/encody/nearcore?branch=madara-compat#b590ab22d79fb6eda9f4c2be2a959ac78a154933"
+dependencies = [
+ "backtrace",
+ "cfg-if 1.0.0",
+ "crossbeam-queue",
+ "enumset",
+ "finite-wasm",
+ "lazy_static",
+ "memmap2",
+ "more-asserts",
+ "near-vm-compiler 0.17.0",
+ "near-vm-types 0.17.0",
+ "near-vm-vm 0.17.0",
  "region",
  "rkyv",
  "rustc-demangle",
@@ -8570,6 +8860,56 @@ dependencies = [
 ]
 
 [[package]]
+name = "near-vm-runner"
+version = "0.17.0"
+source = "git+https://github.com/encody/nearcore?branch=madara-compat#b590ab22d79fb6eda9f4c2be2a959ac78a154933"
+dependencies = [
+ "anyhow",
+ "base64 0.21.5",
+ "borsh 1.3.1",
+ "ed25519-dalek 2.1.0",
+ "enum-map",
+ "finite-wasm",
+ "loupe",
+ "memoffset 0.8.0",
+ "near-crypto 0.17.0",
+ "near-primitives-core 0.17.0",
+ "near-stdx 0.17.0",
+ "near-vm-compiler 0.17.0",
+ "near-vm-compiler-singlepass 0.17.0",
+ "near-vm-engine 0.17.0",
+ "near-vm-types 0.17.0",
+ "near-vm-vm 0.17.0",
+ "num-rational 0.3.2",
+ "once_cell",
+ "parity-wasm 0.41.0",
+ "parity-wasm 0.42.2",
+ "prefix-sum-vec",
+ "pwasm-utils",
+ "ripemd",
+ "serde",
+ "serde_repr",
+ "serde_with 3.5.1",
+ "sha2 0.10.8",
+ "sha3",
+ "strum 0.24.1",
+ "thiserror",
+ "tracing",
+ "wasm-encoder 0.27.0",
+ "wasmer-compiler-near",
+ "wasmer-compiler-singlepass-near",
+ "wasmer-engine-near",
+ "wasmer-engine-universal-near",
+ "wasmer-runtime-core-near",
+ "wasmer-runtime-near",
+ "wasmer-types-near",
+ "wasmer-vm-near",
+ "wasmparser 0.78.2",
+ "wasmtime 14.0.4",
+ "zeropool-bn",
+]
+
+[[package]]
 name = "near-vm-types"
 version = "0.0.0"
 source = "git+https://github.com/near/nearcore?rev=46dc4374157a40b3bdd1ef88139b95b69d500bd4#46dc4374157a40b3bdd1ef88139b95b69d500bd4"
@@ -8584,6 +8924,17 @@ dependencies = [
 name = "near-vm-types"
 version = "0.0.0"
 source = "git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd#984d7f927218cfad1a7117a5408ca665fb306bdd"
+dependencies = [
+ "indexmap 1.9.3",
+ "num-traits 0.2.17",
+ "rkyv",
+ "thiserror",
+]
+
+[[package]]
+name = "near-vm-types"
+version = "0.17.0"
+source = "git+https://github.com/encody/nearcore?branch=madara-compat#b590ab22d79fb6eda9f4c2be2a959ac78a154933"
 dependencies = [
  "indexmap 1.9.3",
  "num-traits 0.2.17",
@@ -8627,6 +8978,28 @@ dependencies = [
  "memoffset 0.8.0",
  "more-asserts",
  "near-vm-types 0.0.0 (git+https://github.com/near/nearcore?rev=984d7f927218cfad1a7117a5408ca665fb306bdd)",
+ "region",
+ "rkyv",
+ "thiserror",
+ "tracing",
+ "wasmparser 0.99.0",
+ "winapi",
+]
+
+[[package]]
+name = "near-vm-vm"
+version = "0.17.0"
+source = "git+https://github.com/encody/nearcore?branch=madara-compat#b590ab22d79fb6eda9f4c2be2a959ac78a154933"
+dependencies = [
+ "backtrace",
+ "cc",
+ "cfg-if 1.0.0",
+ "finite-wasm",
+ "indexmap 1.9.3",
+ "libc",
+ "memoffset 0.8.0",
+ "more-asserts",
+ "near-vm-types 0.17.0",
  "region",
  "rkyv",
  "thiserror",
@@ -9161,6 +9534,12 @@ name = "option-ext"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
+
+[[package]]
+name = "os_str_bytes"
+version = "6.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2355d85b9a3786f481747ced0e0ff2ba35213a1f9bd406ed906554d7af805a1"
 
 [[package]]
 name = "overload"
@@ -14862,6 +15241,12 @@ checksum = "d326610f408c7a4eb6f51c37c330e496b08506c9457c9d34287ecc38809fb060"
 dependencies = [
  "unicode-width",
 ]
+
+[[package]]
+name = "textwrap"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "222a222a5bfe1bba4a77b45ec488a741b3cb8872e5e499451fd7d0129c9c7c3d"
 
 [[package]]
 name = "thiserror"

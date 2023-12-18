@@ -267,7 +267,7 @@ num-bigint = "0.4.4"
 phf = { version = "0.11", default-features = false }
 url = "2.4.1"
 hashbrown = "0.14.2"
-tokio = "1.34.0"
+tokio = "1"
 openssl = { version = "0.10", features = ["vendored"] }
 subxt = "0.29"
 assert_matches = "1.5.0"
@@ -278,3 +278,14 @@ tempfile = "3.2"
 
 [patch."https://github.com/w3f/ring-vrf"]
 bandersnatch_vrfs = { git = "https://github.com/w3f/ring-vrf?rev=3ddc20", version = "0.0.4", rev = "3ddc20" }
+
+[patch.crates-io]
+# custom forks that don't break starknet dependencies
+near-o11y = { git = "https://github.com/encody/nearcore", branch = "madara-compat" }
+near-chain-configs = { git = "https://github.com/encody/nearcore", branch = "madara-compat" }
+near-crypto = { git = "https://github.com/encody/nearcore", branch = "madara-compat" }
+near-primitives = { git = "https://github.com/encody/nearcore", branch = "madara-compat" }
+near-primitives-core = { git = "https://github.com/encody/nearcore", branch = "madara-compat" }
+near-jsonrpc-primitives = { git = "https://github.com/encody/nearcore", branch = "madara-compat" }
+
+near-jsonrpc-client = { git = "https://github.com/encody/near-jsonrpc-client-rs", branch = "madara-compat" }
