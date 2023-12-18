@@ -1,5 +1,5 @@
 {
-  "remote_base_path": "https://raw.githubusercontent.com/Juul-Mc-Goa/madara/main/configs/",
+  "remote_base_path": "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/",
   "genesis_assets": [
     {
       "name": "Account.json",
@@ -31,7 +31,7 @@
     },
     {
       "name": "genesis.json",
-      "md5": "eab09ab8efae29edbb534c077f1a8179"
+      "md5": "458af8669f6aadec59b9f704c7dbd313"
     },
     {
       "name": "NoValidateAccount.casm.json",
