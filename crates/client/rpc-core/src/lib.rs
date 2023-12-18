@@ -16,6 +16,7 @@ pub mod utils;
 
 use mp_simulations::{SimulatedTransaction, SimulationFlag};
 use mp_transactions::TransactionStatus;
+use pallet_starknet::genesis_loader::PredeployedAccount;
 use starknet_core::serde::unsigned_field_element::UfeHex;
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
@@ -28,6 +29,19 @@ use starknet_core::types::{
 #[serde_as]
 #[derive(Serialize, Deserialize)]
 pub struct Felt(#[serde_as(as = "UfeHex")] pub FieldElement);
+
+#[derive(Serialize, Deserialize)]
+pub struct PredeployedAccountWithBalance {
+    pub account: PredeployedAccount,
+    pub balance: FieldElement,
+}
+
+/// Madara rpc interface for additional features.
+#[rpc(server, namespace = "madara")]
+pub trait MadaraRpcApi: StarknetReadRpcApi {
+    #[method(name = "predeployedAccounts")]
+    fn predeployed_accounts(&self) -> RpcResult<Vec<PredeployedAccountWithBalance>>;
+}
 
 /// Starknet write rpc interface.
 #[rpc(server, namespace = "starknet")]

@@ -5,6 +5,7 @@ members = [
   "crates/runtime",
   "crates/pallets/starknet/runtime_api/",
   "crates/pallets/starknet",
+  "crates/primitives/genesis-config/",
   "crates/primitives/digest-log",
   "crates/primitives/transactions",
   "crates/primitives/felt",
@@ -16,6 +17,7 @@ members = [
   "crates/primitives/storage",
   "crates/primitives/commitments",
   "crates/primitives/chain-id",
+  "crates/client/genesis-data-provider",
   "crates/client/db",
   "crates/client/rpc-core",
   "crates/client/rpc",
@@ -32,6 +34,7 @@ default-members = [
   "crates/runtime",
   "crates/pallets/starknet/runtime_api/",
   "crates/pallets/starknet",
+  "crates/primitives/genesis-config/",
   "crates/primitives/digest-log",
   "crates/primitives/transactions",
   "crates/primitives/felt",
@@ -43,6 +46,7 @@ default-members = [
   "crates/primitives/storage",
   "crates/primitives/commitments",
   "crates/primitives/chain-id",
+  "crates/client/genesis-data-provider",
   "crates/client/db",
   "crates/client/rpc-core",
   "crates/client/rpc",
@@ -152,6 +156,7 @@ pallet-timestamp = { default-features = false, git = "https://github.com/parityt
 pallet-starknet = { path = "crates/pallets/starknet", default-features = false }
 pallet-starknet-runtime-api = { path = "crates/pallets/starknet/runtime_api", default-features = false }
 # Madara primtitives
+mp-genesis-config = { path = "crates/primitives/genesis-config", default-features = false }
 mp-digest-log = { path = "crates/primitives/digest-log", default-features = false }
 mp-block = { path = "crates/primitives/block", default-features = false }
 mp-fee = { path = "crates/primitives/fee", default-features = false }
@@ -166,6 +171,7 @@ mp-chain-id = { path = "crates/primitives/chain-id", default-features = false }
 mp-simulations = { path = "crates/primitives/simulations", default-features = false }
 
 # Madara client
+mc-genesis-data-provider = { path = "crates/client/genesis-data-provider" }
 mc-mapping-sync = { path = "crates/client/mapping-sync" }
 mc-db = { path = "crates/client/db" }
 mc-storage = { path = "crates/client/storage" }
