@@ -52,8 +52,8 @@ jsonrpsee = { workspace = true, default-features = true, features = [
 ] }
 log = { workspace = true, default-features = true }
 mp-block = { workspace = true, default-features = true }
-mp-felt = { workspace = true, default-features = true }
 mp-fee = { workspace = true, default-features = true }
+mp-felt = { workspace = true, default-features = true }
 mp-hashers = { workspace = true, default-features = true }
 mp-simulations = { workspace = true }
 mp-transactions = { workspace = true, features = ["client"] }
