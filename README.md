@@ -85,7 +85,7 @@ So for many use cases where you want to change common things like
 - Add new off chain workers
 - Add new pallets
 
-you don't need to fork the Madara repo. Instead, you can import the relevant
+You don't need to fork the Madara repo. Instead, you can import the relevant
 code as crates/pallets. We have created an
 [app-chain-template](https://github.com/keep-starknet-strange/madara-app-chain-template)
 which imports Madara as a library to show an example and would recommend you
