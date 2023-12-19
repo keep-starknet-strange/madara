@@ -50,9 +50,10 @@ fn get_repository_root() -> PathBuf {
 impl MadaraNode {
     /// Run the Madara node
     ///
-    /// Parameters to the node are passed with
-    fn cargo_run(root_dir: &Path, options: Vec<&str>) -> Child {
-        let arguments = [vec!["run".into(), "--release", "--"], options].concat();
+    /// The node is run in `release` mode.
+    /// Parameters to the node can be passed with the `params` argument.
+    fn cargo_run(root_dir: &Path, params: Vec<&str>) -> Child {
+        let arguments = [vec!["run".into(), "--release", "--"], params].concat();
 
         let (stdout, stderr) = if env::var("MADARA_LOG").is_ok() {
             let logs_dir = Path::join(root_dir, Path::new("target/madara-log"));
