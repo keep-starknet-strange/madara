@@ -21,6 +21,14 @@
 <a href="#21" id="21">21</a>
 <a href="#22" id="22">22</a>
 <a href="#23" id="23">23</a>
+<a href="#24" id="24">24</a>
+<a href="#25" id="25">25</a>
+<a href="#26" id="26">26</a>
+<a href="#27" id="27">27</a>
+<a href="#28" id="28">28</a>
+<a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Traits for chain ids.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
@@ -40,6 +48,14 @@
     <span class="number">18446744073709551615</span>,
     <span class="number">18446744073709551615</span>,
     <span class="number">502562008147966918</span>,
+]));
+
+<span class="doccomment">/// ChainId for a custom Madara chain
+</span><span class="kw">pub const </span>MADARA_CHAIN_ID: Felt252Wrapper = Felt252Wrapper(starknet_ff::FieldElement::from_mont([
+    <span class="number">18444025906882525153</span>,
+    <span class="number">18446744073709551615</span>,
+    <span class="number">18446744073709551615</span>,
+    <span class="number">530251916243973616</span>,
 ]));
 
 <span class="attr">#[cfg(test)]
