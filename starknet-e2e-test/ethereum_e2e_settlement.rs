@@ -81,7 +81,7 @@ async fn works_with_initialized_contract(ctx: &mut Context) -> Result<(), anyhow
     //   * spawned Ethereum sandbox
     //   * deployed settlement contract (not initialized yet)
     //   * temp Madara path with correct ethereum config
-    ctx.initialize(InitData::consistent()).await;
+    ctx.initialize(InitData::sn_goerli()).await;
 
     let mut madara = ctx.launch_madara().await;
 
@@ -103,7 +103,7 @@ async fn recovers_from_non_initialized_state(ctx: &mut Context) -> Result<(), an
     // Give the client thread some time to handle the finalized block
     sleep(Duration::from_millis(100)).await;
 
-    ctx.initialize(InitData::consistent()).await;
+    ctx.initialize(InitData::sn_goerli()).await;
 
     madara.create_empty_block().await?;
     // Give the client thread some time to recover
@@ -121,7 +121,7 @@ async fn recovers_from_non_initialized_state(ctx: &mut Context) -> Result<(), an
 #[rstest]
 #[tokio::test]
 async fn catches_up_with_the_state_in_the_future(ctx: &mut Context) -> Result<(), anyhow::Error> {
-    ctx.initialize(InitData { block_number: 1u64.into(), ..InitData::consistent() }).await;
+    ctx.initialize(InitData { block_number: 1u64.into(), ..InitData::sn_goerli() }).await;
 
     let mut madara = ctx.launch_madara().await;
 
@@ -139,7 +139,7 @@ async fn catches_up_with_the_state_in_the_future(ctx: &mut Context) -> Result<()
 #[rstest]
 #[tokio::test]
 async fn fails_with_inconsistent_state_in_the_future(ctx: &mut Context) -> Result<(), anyhow::Error> {
-    ctx.initialize(InitData { block_number: 1u64.into(), state_root: 12345u64.into(), ..InitData::consistent() }).await;
+    ctx.initialize(InitData { block_number: 1u64.into(), state_root: 12345u64.into(), ..InitData::sn_goerli() }).await;
 
     let mut madara = ctx.launch_madara().await;
 
