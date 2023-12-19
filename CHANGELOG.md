@@ -2,6 +2,7 @@
 
 ## Next release
 
+- ci: add foundry ci task to push workflow
 - fix: first tx for non deployed account is valid
 - fix: incorrect base url for fetching config
 - feat: add predeployed accounts to genesis state
