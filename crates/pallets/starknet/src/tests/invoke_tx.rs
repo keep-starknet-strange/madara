@@ -426,6 +426,55 @@ fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails
 }
 
 #[test]
+fn given_account_not_deployed_invoke_tx_works_for_nonce_one() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        // Wrong address (not deployed)
+        let contract_address = Felt252Wrapper::from_hex_be("0x13123131").unwrap();
+
+        let transaction = InvokeTransactionV1 {
+            sender_address: contract_address,
+            calldata: vec![],
+            nonce: Felt252Wrapper::ONE,
+            max_fee: u128::MAX,
+            signature: vec![],
+        };
+
+        assert_ok!(Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::invoke { transaction: transaction.into() }
+        ));
+    })
+}
+
+#[test]
+fn given_account_not_deployed_invoke_tx_fails_for_nonce_not_one() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        // Wrong address (not deployed)
+        let contract_address = Felt252Wrapper::from_hex_be("0x13123131").unwrap();
+
+        let transaction = InvokeTransactionV1 {
+            sender_address: contract_address,
+            calldata: vec![],
+            nonce: Felt252Wrapper::TWO,
+            max_fee: u128::MAX,
+            signature: vec![],
+        };
+
+        assert_eq!(
+            Starknet::validate_unsigned(
+                TransactionSource::InBlock,
+                &crate::Call::invoke { transaction: transaction.into() }
+            ),
+            Err(TransactionValidityError::Invalid(InvalidTransaction::BadProof))
+        );
+    })
+}
+
+#[test]
 fn test_verify_tx_longevity() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
