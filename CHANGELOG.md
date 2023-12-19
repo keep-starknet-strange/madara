@@ -2,6 +2,7 @@
 
 ## Next release
 
+- fix: first tx for non deployed account is valid
 - fix: incorrect base url for fetching config
 - feat: add predeployed accounts to genesis state
 - feat(rpc): Added starknet_simulateTransactions
