@@ -988,7 +988,8 @@ where
 
         let estimates = fee_estimates
             .into_iter()
-            .map(|x| FeeEstimate { gas_price: 0, gas_consumed: x.1, overall_fee: x.0 })
+			// FIXME: https://github.com/keep-starknet-strange/madara/issues/329
+            .map(|x| FeeEstimate { gas_price: 10, gas_consumed: x.1, overall_fee: x.0 })
             .collect();
 
         Ok(estimates)

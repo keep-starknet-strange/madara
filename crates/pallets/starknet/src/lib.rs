@@ -77,6 +77,7 @@ use alloc::vec::Vec;
 use blockifier::block_context::BlockContext;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::{CallInfo, ExecutionResources};
+use blockifier::execution::errors::{EntryPointExecutionError, PreExecutionError};
 use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
 use frame_support::traits::Time;
@@ -130,6 +131,7 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
+    use blockifier::transaction::errors::TransactionExecutionError;
 
     use super::*;
 
@@ -775,25 +777,36 @@ pub mod pallet {
 
             // Validate the user transactions
             if let UserAndL1HandlerTransaction::User(transaction) = transaction {
-                match transaction {
-                    UserTransaction::Declare(tx, contract_class) => tx
-                        .try_into_executable::<T::SystemHash>(chain_id, contract_class, false)
-                        .map_err(|_| InvalidTransaction::BadProof)?
-                        .validate_tx(&mut state, &block_context, &mut execution_resources, &mut initial_gas, false),
-                    // There is no way to validate it before the account is actuallly deployed
-                    UserTransaction::DeployAccount(_) => Ok(None),
-                    UserTransaction::Invoke(tx) => tx.into_executable::<T::SystemHash>(chain_id, false).validate_tx(
-                        &mut state,
-                        &block_context,
-                        &mut execution_resources,
-                        &mut initial_gas,
-                        false,
-                    ),
-                }
-                .map_err(|e| {
-                    log::error!("failed to validate tx: {}", e);
-                    InvalidTransaction::BadProof
-                })?;
+                let validate_result =
+                    match transaction {
+                        UserTransaction::Declare(tx, contract_class) => tx
+                            .try_into_executable::<T::SystemHash>(chain_id, contract_class, false)
+                            .map_err(|_| InvalidTransaction::BadProof)?
+                            .validate_tx(&mut state, &block_context, &mut execution_resources, &mut initial_gas, false),
+                        // There is no way to validate it before the account is actually deployed
+                        UserTransaction::DeployAccount(_) => Ok(None),
+                        UserTransaction::Invoke(tx) => tx
+                            .into_executable::<T::SystemHash>(chain_id, false)
+                            .validate_tx(&mut state, &block_context, &mut execution_resources, &mut initial_gas, false),
+                    };
+                match validate_result {
+                    Ok(_) => {}
+                    Err(TransactionExecutionError::ValidateTransactionError(
+                        EntryPointExecutionError::PreExecutionError(PreExecutionError::UninitializedStorageAddress(
+                            contract_address,
+                        )),
+                    )) => {
+                        // If the the txn is failing because the account isn't deployed yet
+                        // then don't throw an error and add a `require` tag for transaction
+                        // of nonce 0 to be executed first.
+                        if contract_address.0.0 != sender_address.into()
+                            || transaction_nonce != Some(Felt252Wrapper::ONE)
+                        {
+                            Err(InvalidTransaction::BadProof)?
+                        }
+                    }
+                    Err(_) => Err(InvalidTransaction::BadProof)?,
+                };
             }
 
             let nonce_for_priority: u64 = transaction_nonce
