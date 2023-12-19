@@ -68,7 +68,7 @@ impl<T: SnosCodec> SnosCodec for Vec<T> {
 
 impl SnosCodec for MessageL2ToL1 {
     fn size_in_felts(&self) -> usize {
-        3 + self.payload.len()
+        3
     }
 
     fn encode_to(self, output: &mut Vec<StarkFelt>) {
@@ -88,7 +88,7 @@ impl SnosCodec for MessageL2ToL1 {
 
 impl SnosCodec for MessageL1ToL2 {
     fn size_in_felts(&self) -> usize {
-        5 + self.payload.len()
+        4 + self.payload.size_in_felts()
     }
 
     fn encode_to(self, output: &mut Vec<StarkFelt>) {
@@ -112,8 +112,8 @@ impl SnosCodec for MessageL1ToL2 {
 
 impl SnosCodec for StarknetOsOutput {
     fn size_in_felts(&self) -> usize {
-        9 + self.messages_to_l1.iter().map(|msg| msg.size_in_felts()).sum::<usize>()
-            + self.messages_to_l2.iter().map(|msg| msg.size_in_felts()).sum::<usize>()
+        5 + self.messages_to_l1.size_in_felts()
+            + self.messages_to_l2.size_in_felts()
             + self.state_updates.len()
             + self.contract_class_diff.len()
     }
