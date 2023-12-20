@@ -18,7 +18,11 @@ use crate::StarknetOsOutput;
 /// NOTE: Field element (252 bit) is encoded as an EVM word (256 bit) and vice versa
 /// EVM developer should be aware of that and prevent data loss by not using the higest 4 bits
 pub trait SnosCodec: Sized {
-    /// Returns number of field elements required to encode current snos output field
+    /// Return an estimation of the number of field elements required to encode `self`
+    ///
+    /// This is to be used for allocating the correct amount of memory before encoding.
+    /// It's for optimization purpose (avoiding reallocation) so it's implementation should be
+    /// efficient (no iteration, no IO, no other allocation, no expensive computation).
     fn size_in_felts(&self) -> usize;
     /// Encodes current snos output field as felt array and appends to the result
     fn encode_to(self, output: &mut Vec<StarkFelt>);
@@ -48,7 +52,10 @@ impl SnosCodec for StarkFelt {
 
 impl<T: SnosCodec> SnosCodec for Vec<T> {
     fn size_in_felts(&self) -> usize {
-        1 + self.iter().map(|elt| elt.size_in_felts()).sum::<usize>()
+        // Works well for Vec<StarkFelt>
+        // Works less well for Vec<Message>, but it just mean there will be a realocation
+        // Nothing terrible, and still better than iterating
+        1 + self.len()
     }
 
     fn encode_to(self, output: &mut Vec<StarkFelt>) {
@@ -129,6 +136,8 @@ impl SnosCodec for StarknetOsOutput {
         output.push(self.config_hash);
         self.messages_to_l1.encode_to(output);
         self.messages_to_l2.encode_to(output);
+        self.state_updates.encode_to(output);
+        self.contract_class_diff.encode_to(output);
     }
 
     fn decode(input: &mut FeltReader) -> Result<Self, FeltReaderError> {
