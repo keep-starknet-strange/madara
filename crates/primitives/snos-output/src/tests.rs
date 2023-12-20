@@ -1,8 +1,8 @@
+use mp_messages::conversions::eth_address_to_felt;
 use starknet_api::api_core::EthAddress;
 use starknet_api::hash::StarkFelt;
 
 use crate::codec::SnosCodec;
-use crate::conversions::eth_address_to_felt;
 use crate::felt_reader::FeltReader;
 use crate::StarknetOsOutput;
 

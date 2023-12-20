@@ -11,7 +11,8 @@ use blockifier::execution::entry_point::{CallInfo, OrderedL2ToL1Message};
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionResult;
 use mp_felt::{Felt252Wrapper, UfeHex};
-use starknet_api::api_core::EthAddress;
+use mp_messages::MessageL2ToL1;
+use starknet_api::api_core::{ContractAddress, PatriciaKey};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::transaction::EventContent;
 
@@ -143,22 +144,6 @@ pub struct L1HandlerTransactionTrace {
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub struct MessageToL1 {
-    /// The address of the L2 contract sending the message
-    #[serde_as(as = "UfeHex")]
-    pub from_address: Felt252Wrapper,
-    /// The target L1 address the message is sent to
-    pub to_address: EthAddress,
-    /// The payload of the message
-    #[serde_as(as = "Vec<UfeHex>")]
-    pub payload: Vec<Felt252Wrapper>,
-}
-
-#[serde_with::serde_as]
-#[derive(Debug, Clone)]
-#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
-#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct FunctionInvocation {
     /// Contract address
     #[serde_as(as = "UfeHex")]
@@ -185,7 +170,7 @@ pub struct FunctionInvocation {
     /// The events emitted in this invocation
     pub events: Vec<EventContent>,
     /// The messages sent by this invocation to L1
-    pub messages: Vec<MessageToL1>,
+    pub messages: Vec<MessageL2ToL1>,
 }
 
 impl TryFrom<&CallInfo> for FunctionInvocation {
@@ -218,17 +203,17 @@ impl TryFrom<&CallInfo> for FunctionInvocation {
     }
 }
 
-fn ordered_l2_to_l1_messages(call_info: &CallInfo) -> Vec<MessageToL1> {
+fn ordered_l2_to_l1_messages(call_info: &CallInfo) -> Vec<MessageL2ToL1> {
     let mut messages = BTreeMap::new();
 
     for call in call_info.into_iter() {
         for OrderedL2ToL1Message { order, message } in &call.execution.l2_to_l1_messages {
             messages.insert(
                 order,
-                MessageToL1 {
+                MessageL2ToL1 {
                     payload: message.payload.0.iter().map(|x| (*x).into()).collect(),
                     to_address: message.to_address,
-                    from_address: call.call.storage_address.0.0.into(),
+                    from_address: ContractAddress(PatriciaKey(call.call.storage_address.0.0)),
                 },
             );
         }

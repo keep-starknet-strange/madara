@@ -35,6 +35,7 @@ mc-data-availability = { workspace = true, default-features = true }
 mp-block = { workspace = true, default-features = true }
 mp-digest-log = { workspace = true, features = ["std"] }
 mp-hashers = { workspace = true, default-features = true }
+mp-messages = { workspace = true, default-features = true }
 mp-snos-output = { workspace = true, default-features = true }
 mp-transactions = { workspace = true, default-features = true }
 starknet-crypto = { workspace = true, default-features = true }

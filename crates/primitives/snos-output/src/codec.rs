@@ -1,9 +1,12 @@
 use alloc::vec::Vec;
 
+use mp_messages::conversions::eth_address_to_felt;
+use mp_messages::{MessageL1ToL2, MessageL2ToL1};
+use starknet_api::api_core::{ContractAddress, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 
 use crate::felt_reader::{FeltReader, FeltReaderError};
-use crate::{MessageL1ToL2, MessageL2ToL1, StarknetOsOutput};
+use crate::StarknetOsOutput;
 
 /// This codec allows to convert structured OS program output into array of felts
 ///
@@ -72,15 +75,15 @@ impl SnosCodec for MessageL2ToL1 {
     }
 
     fn encode_to(self, output: &mut Vec<StarkFelt>) {
-        output.push(self.from_address);
-        output.push(self.to_address);
+        output.push(self.from_address.0.0);
+        output.push(eth_address_to_felt(&self.to_address));
         self.payload.encode_to(output);
     }
 
     fn decode(input: &mut FeltReader) -> Result<Self, FeltReaderError> {
         Ok(Self {
-            from_address: StarkFelt::decode(input)?,
-            to_address: StarkFelt::decode(input)?,
+            from_address: ContractAddress(PatriciaKey(StarkFelt::decode(input)?)),
+            to_address: StarkFelt::decode(input)?.try_into().map_err(|_| FeltReaderError::InvalidCast)?,
             payload: Vec::<StarkFelt>::decode(input)?,
         })
     }
@@ -92,18 +95,18 @@ impl SnosCodec for MessageL1ToL2 {
     }
 
     fn encode_to(self, output: &mut Vec<StarkFelt>) {
-        output.push(self.from_address);
-        output.push(self.to_address);
-        output.push(self.nonce);
+        output.push(self.from_address.0.0);
+        output.push(self.to_address.0.0);
+        output.push(self.nonce.0);
         output.push(self.selector);
         self.payload.encode_to(output);
     }
 
     fn decode(input: &mut FeltReader) -> Result<Self, FeltReaderError> {
         Ok(Self {
-            from_address: StarkFelt::decode(input)?,
-            to_address: StarkFelt::decode(input)?,
-            nonce: StarkFelt::decode(input)?,
+            from_address: ContractAddress(PatriciaKey(StarkFelt::decode(input)?)),
+            to_address: ContractAddress(PatriciaKey(StarkFelt::decode(input)?)),
+            nonce: Nonce(StarkFelt::decode(input)?),
             selector: StarkFelt::decode(input)?,
             payload: Vec::<StarkFelt>::decode(input)?,
         })

@@ -2,7 +2,8 @@ use ethers::prelude::abigen;
 use ethers::types::{Address, Bytes, U256};
 use ethers::utils::keccak256;
 use mc_settlement::ethereum::convert_felt_to_u256;
-use mp_snos_output::{MessageL1ToL2, MessageL2ToL1, SnosCodec};
+use mp_messages::{MessageL1ToL2, MessageL2ToL1};
+use mp_snos_output::SnosCodec;
 use starknet_api::hash::StarkFelt;
 use starknet_ff::FieldElement;
 
@@ -150,7 +151,7 @@ impl StarknetContract {
         let messaging = StarknetMessaging::new(self.address, sandbox.client());
 
         messaging.send_message_to_l2(
-            convert_felt_to_u256(message.to_address),
+            convert_felt_to_u256(message.to_address.0.0),
             convert_felt_to_u256(message.selector),
             message.payload.clone().into_iter().map(convert_felt_to_u256).collect())
             .value(1) // L1 message fee must be between 0 and 1 ether

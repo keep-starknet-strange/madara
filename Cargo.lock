@@ -6473,6 +6473,7 @@ dependencies = [
  "mp-block",
  "mp-digest-log",
  "mp-hashers",
+ "mp-messages",
  "mp-snos-output",
  "mp-transactions",
  "pallet-starknet-runtime-api",
@@ -6806,6 +6807,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "mp-messages"
+version = "0.6.0"
+dependencies = [
+ "mp-transactions",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "serde_with",
+ "starknet_api",
+]
+
+[[package]]
 name = "mp-program-hash"
 version = "0.6.0"
 dependencies = [
@@ -6830,6 +6843,7 @@ version = "0.6.0"
 dependencies = [
  "blockifier",
  "mp-felt",
+ "mp-messages",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -6844,6 +6858,7 @@ version = "0.6.0"
 dependencies = [
  "assert_matches",
  "hex",
+ "mp-messages",
  "mp-transactions",
  "parity-scale-codec",
  "scale-info",
@@ -12109,6 +12124,7 @@ dependencies = [
  "madara-runtime",
  "madara-test-runner",
  "mc-settlement",
+ "mp-messages",
  "mp-snos-output",
  "reqwest",
  "rstest",
