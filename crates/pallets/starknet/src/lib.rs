@@ -92,6 +92,7 @@ use mp_simulations::{
     DeclareTransactionTrace, DeployAccountTransactionTrace, FeeEstimate, FunctionInvocation, InvokeTransactionTrace,
     SimulatedTransaction, SimulationFlags, TransactionTrace,
 };
+use mp_state::StateDiff;
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_transactions::execution::{Execute, Validate};
 use mp_transactions::{
@@ -1180,10 +1181,12 @@ impl<T: Config> Pallet<T> {
                                 tx_exec_info.revert_error.as_ref(),
                             )?,
                             fee_transfer_invocation,
+                            state_diff: Some(StateDiff::default()),
                         }),
                         UserTransaction::Declare(_, _) => TransactionTrace::Declare(DeclareTransactionTrace {
                             validate_invocation,
                             fee_transfer_invocation,
+                            state_diff: Some(StateDiff::default()),
                         }),
                         UserTransaction::DeployAccount(_) => {
                             TransactionTrace::DeployAccount(DeployAccountTransactionTrace {
@@ -1196,6 +1199,7 @@ impl<T: Config> Pallet<T> {
                                     .map_err(|_| Error::<T>::TransactionExecutionFailed)?,
 
                                 fee_transfer_invocation,
+                                state_diff: Some(StateDiff::default()),
                             })
                         }
                     };

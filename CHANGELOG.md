@@ -2,8 +2,7 @@
 
 ## Next release
 
-- feat(rpc) implemented v0.5.1 missing fields + bumped starknet.rs to match them
-- fix: Change seliazation of bitvec to &[u8] in merkle tree to avoid memory
+- ci: add foundry ci task to push workflow
 - fix: first tx for non deployed account is valid
 - fix: incorrect base url for fetching config
 - feat: add predeployed accounts to genesis state

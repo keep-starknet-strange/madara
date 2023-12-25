@@ -6693,6 +6693,7 @@ version = "0.6.0"
 dependencies = [
  "blockifier",
  "mp-felt",
+ "mp-state",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -6706,6 +6707,11 @@ name = "mp-state"
 version = "0.6.0"
 dependencies = [
  "blockifier",
+ "mp-felt",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "serde_with",
  "starknet_api",
 ]
 

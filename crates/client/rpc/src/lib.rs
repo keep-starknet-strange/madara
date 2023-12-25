@@ -25,7 +25,7 @@ use mc_storage::OverrideHandle;
 use mp_fee::ResourcePriceWrapper;
 use mp_felt::{Felt252Wrapper, Felt252WrapperError};
 use mp_hashers::HasherT;
-use mp_simulations::{SimulatedTransaction, SimulationFlag, SimulationFlags};
+use mp_simulations::{SimulatedTransaction, SimulationFlag};
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::execution::ExecutionResourcesWrapper;
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
@@ -1567,15 +1567,23 @@ where
         transactions: Vec<BroadcastedTransaction>,
         simulation_flags: Vec<SimulationFlag>,
     ) -> RpcResult<Vec<SimulatedTransaction>> {
+        println!("Entering simulate_transactions");
+
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
         })?;
+        println!("Substrate block hash: {:?}", substrate_block_hash);
+
         let best_block_hash = self.client.info().best_hash;
+        println!("Best block hash: {:?}", best_block_hash);
+
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
+        println!("Chain ID: {:?}", chain_id);
 
         let mut user_transactions = vec![];
         for tx in transactions {
+            println!("Processing transaction: {:?}", tx);
             let tx = tx.try_into().map_err(|e| {
                 error!("Failed to convert BroadcastedTransaction to UserTransaction: {e}");
                 StarknetRpcApiError::InternalServerError
@@ -1583,12 +1591,13 @@ where
             user_transactions.push(tx);
         }
 
-        let simulation_flags: SimulationFlags = simulation_flags.into();
+        println!("Simulation flags: {:?}", simulation_flags);
+        println!("User transactions: {:?}", user_transactions);
 
         let fee_estimates = self
             .client
             .runtime_api()
-            .simulate_transactions(substrate_block_hash, user_transactions, simulation_flags)
+            .simulate_transactions(substrate_block_hash, user_transactions, simulation_flags.into())
             .map_err(|e| {
                 error!("Request parameters error: {e}");
                 StarknetRpcApiError::InternalServerError
@@ -1598,6 +1607,9 @@ where
                 StarknetRpcApiError::ContractError
             })?;
 
+        println!("Fee estimates: {:?}", fee_estimates);
+
+        println!("Exiting simulate_transactions");
         Ok(fee_estimates)
     }
 }

@@ -11,6 +11,7 @@ use blockifier::execution::entry_point::{CallInfo, OrderedL2ToL1Message};
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionResult;
 use mp_felt::{Felt252Wrapper, UfeHex};
+use mp_state::StateDiff;
 use starknet_api::api_core::EthAddress;
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::transaction::EventContent;
@@ -100,6 +101,9 @@ pub struct DeclareTransactionTrace {
     pub validate_invocation: Option<FunctionInvocation>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fee_transfer_invocation: Option<FunctionInvocation>,
+    /// The state diffs induced by the transaction
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state_diff: Option<StateDiff>,
 }
 
 #[derive(Debug, Clone)]
@@ -112,6 +116,9 @@ pub struct InvokeTransactionTrace {
     pub execute_invocation: ExecuteInvocation,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fee_transfer_invocation: Option<FunctionInvocation>,
+    /// The state diffs induced by the transaction
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state_diff: Option<StateDiff>,
 }
 
 #[derive(Debug, Clone)]
@@ -126,6 +133,9 @@ pub struct DeployAccountTransactionTrace {
     pub constructor_invocation: FunctionInvocation,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fee_transfer_invocation: Option<FunctionInvocation>,
+    /// The state diffs induced by the transaction
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state_diff: Option<StateDiff>,
 }
 
 #[derive(Debug, Clone)]
@@ -136,6 +146,9 @@ pub struct L1HandlerTransactionTrace {
     /// The trace of the __execute__ call or constructor call, depending on the transaction type
     /// (none for declare transactions)
     pub function_invocation: FunctionInvocation,
+    /// The state diffs induced by the transaction
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state_diff: Option<StateDiff>,
 }
 
 #[serde_with::serde_as]

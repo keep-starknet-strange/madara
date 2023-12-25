@@ -15,7 +15,12 @@ serde = { workspace = true, features = ["derive"], optional = true }
 serde_with = { workspace = true, optional = true }
 
 # Madara primitives
-mp-felt = { workspace = true }
+mp-felt = { workspace = true, default-features = true }
+mp-state = { workspace = true, features = [
+  "parity-scale-codec",
+  "serde",
+  "scale-info",
+] }
 
 # Substrate dependencies
 parity-scale-codec = { workspace = true, optional = true }
