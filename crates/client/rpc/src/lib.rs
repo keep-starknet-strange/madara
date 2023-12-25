@@ -27,7 +27,7 @@ use mp_felt::{Felt252Wrapper, Felt252WrapperError};
 use mp_hashers::HasherT;
 use mp_simulations::{SimulatedTransaction, SimulationFlag};
 use mp_transactions::compute_hash::ComputeTransactionHash;
-use mp_transactions::execution::ExecutionResourcesWrapper;
+use mp_transactions::execution::{StarknetRPCExecutionResources};
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
 use mp_transactions::{TransactionStatus, UserTransaction};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
@@ -1460,7 +1460,7 @@ where
         };
 
         // TODO(#1291): compute execution_resources correctly to the receipt
-        let execution_resources = ExecutionResourcesWrapper::default();
+        let execution_resources = StarknetRPCExecutionResources::default();
 
         // TODO(#1291): compute message hash correctly to L1HandlerTransactionReceipt
         let message_hash: Hash256 = Hash256::from_felt(&FieldElement::default());
@@ -1502,7 +1502,7 @@ where
                 messages_sent: Default::default(),
                 events: events_converted,
                 execution_result,
-                execution_resources: execution_resources.0,
+				execution_resources: execution_resources.into_core_execution_resources(),
             }),
             mp_transactions::Transaction::DeployAccount(tx) => {
                 TransactionReceipt::DeployAccount(DeployAccountTransactionReceipt {
@@ -1515,7 +1515,7 @@ where
                     events: events_converted,
                     contract_address: tx.get_account_address(),
                     execution_result,
-                    execution_resources: execution_resources.0,
+					execution_resources: execution_resources.into_core_execution_resources(),
                 })
             }
             mp_transactions::Transaction::Invoke(_) => TransactionReceipt::Invoke(InvokeTransactionReceipt {
@@ -1527,7 +1527,7 @@ where
                 messages_sent: Default::default(),
                 events: events_converted,
                 execution_result,
-                execution_resources: execution_resources.0,
+				execution_resources: execution_resources.into_core_execution_resources(),
             }),
             mp_transactions::Transaction::L1Handler(_) => TransactionReceipt::L1Handler(L1HandlerTransactionReceipt {
                 message_hash,
@@ -1539,7 +1539,7 @@ where
                 messages_sent: Default::default(),
                 events: events_converted,
                 execution_result,
-                execution_resources: execution_resources.0,
+				execution_resources: execution_resources.into_core_execution_resources(),
             }),
         };
 

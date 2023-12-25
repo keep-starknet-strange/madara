@@ -25,6 +25,8 @@ use blockifier::transaction::transactions::{
 use mp_fee::{calculate_tx_fee, charge_fee, compute_transaction_resources};
 use mp_felt::Felt252Wrapper;
 use mp_state::StateChanges;
+use parity_scale_codec::{Encode, Decode};
+use serde::{Deserialize, Serialize};
 use starknet_api::api_core::{ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::StarkFelt;
@@ -84,22 +86,60 @@ impl SimulateTxVersionOffset for TransactionVersion {
     }
 }
 
-pub struct ExecutionResourcesWrapper(pub CoreExecutionResources);
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Encode, Decode)]
+#[cfg_attr(feature = "no_unknown_fields", serde(deny_unknown_fields))]
+pub struct StarknetRPCExecutionResources {
+	/// The number of cairo steps used
+	pub steps: u64,
+	/// The number of unused memory cells (each cell is roughly equivalent to a step)
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub memory_holes: Option<u64>,
+	/// The number of range_check builtin instances
+	pub range_check_builtin_applications: u64,
+	/// The number of pedersen builtin instances
+	pub pedersen_builtin_applications: u64,
+	/// The number of poseidon builtin instances
+	pub poseidon_builtin_applications: u64,
+	/// The number of ec_op builtin instances
+	pub ec_op_builtin_applications: u64,
+	/// The number of ecdsa builtin instances
+	pub ecdsa_builtin_applications: u64,
+	/// The number of bitwise builtin instances
+	pub bitwise_builtin_applications: u64,
+	/// The number of keccak builtin instances
+	pub keccak_builtin_applications: u64,
+}
 
-impl Default for ExecutionResourcesWrapper {
-    fn default() -> Self {
-        ExecutionResourcesWrapper(CoreExecutionResources {
-            steps: 0,
-            memory_holes: None,
-            range_check_builtin_applications: 0,
-            pedersen_builtin_applications: 0,
-            poseidon_builtin_applications: 0,
-            ec_op_builtin_applications: 0,
-            ecdsa_builtin_applications: 0,
-            bitwise_builtin_applications: 0,
-            keccak_builtin_applications: 0,
-        })
-    }
+impl StarknetRPCExecutionResources {
+	pub fn into_core_execution_resources(self) -> CoreExecutionResources {
+		CoreExecutionResources {
+			steps: self.steps,
+			memory_holes: self.memory_holes,
+			range_check_builtin_applications: self.range_check_builtin_applications,
+			pedersen_builtin_applications: self.pedersen_builtin_applications,
+			poseidon_builtin_applications: self.poseidon_builtin_applications,
+			ec_op_builtin_applications: self.ec_op_builtin_applications,
+			ecdsa_builtin_applications: self.ecdsa_builtin_applications,
+			bitwise_builtin_applications: self.bitwise_builtin_applications,
+			keccak_builtin_applications: self.keccak_builtin_applications
+		}
+	}
+}
+
+impl Default for StarknetRPCExecutionResources {
+	fn default() -> Self {
+		StarknetRPCExecutionResources{
+			steps: 0,
+			memory_holes: None,
+			range_check_builtin_applications: 0,
+			pedersen_builtin_applications: 0,
+			poseidon_builtin_applications: 0,
+			ec_op_builtin_applications: 0,
+			ecdsa_builtin_applications: 0,
+			bitwise_builtin_applications: 0,
+			keccak_builtin_applications: 0
+		}
+	}
 }
 
 impl GetAccountTransactionContext for DeclareTransaction {
