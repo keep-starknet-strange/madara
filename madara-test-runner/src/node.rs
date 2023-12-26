@@ -87,15 +87,12 @@ impl MadaraNode {
             if let Some(bp) = &base_path_arg {
                 setup_args.push(bp);
             };
-            if let Some(s) = &settlement_arg {
-                setup_args.push(s);
-            };
 
             let setup_res =
                 Self::cargo_run(repository_root.as_path(), setup_args).wait().expect("Failed to setup Madara node");
 
             if !setup_res.success() {
-                panic!("Madara setup failed");
+                panic!("Madara setup failed with {} (check out stderr logs)", setup_res.to_string());
             }
         }
 

@@ -17,7 +17,7 @@
 - feat(data-availability): extend eth config with poll interval
 - fix(snos-output): expose snos codec, remove unused `get_starknet_messages`
   runtime method, and unnecessary mp-snos-output dependencies
-- feat(program-hash): add new pallete constant for Starknet OS progam hash;
+- feat(program-hash): add new pallet constant for Starknet OS progam hash;
   expose runtime getter method; add dedicated crate to manage versions
 - feat(runtime): expose fee token address getter method
 - feat(settlement): run client thread responsible for pushing state updates and

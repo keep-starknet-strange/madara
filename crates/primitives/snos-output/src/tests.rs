@@ -49,7 +49,7 @@ fn test_snos_output_codec() {
     let mut actual: Vec<u8> = Vec::new();
     snos_output.into_encoded_vec().into_iter().for_each(|felt| actual.extend_from_slice(felt.0.as_slice()));
 
-    assert_eq!(output_bytes, actual);
+    pretty_assertions::assert_eq!(output_bytes, actual);
 }
 
 #[test]

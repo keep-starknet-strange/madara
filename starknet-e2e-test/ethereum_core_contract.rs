@@ -3,8 +3,10 @@ extern crate starknet_e2e_test;
 use madara_runtime::opaque::Block;
 use mc_settlement::ethereum::StarknetContractClient;
 use mc_settlement::{SettlementProvider, StarknetSpec, StarknetState};
-use mp_snos_output::{MessageL1ToL2, MessageL2ToL1, StarknetOsOutput};
+use mp_messages::{MessageL1ToL2, MessageL2ToL1};
+use mp_snos_output::StarknetOsOutput;
 use rstest::rstest;
+use starknet_api::api_core::{ContractAddress, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_e2e_test::ethereum_sandbox::EthereumSandbox;
 use starknet_e2e_test::starknet_contract::{InitData, StarknetContract};
@@ -70,9 +72,9 @@ async fn starknet_core_contract_sends_messages_to_l2() -> anyhow::Result<()> {
     from_address[12..32].copy_from_slice(sandbox.address().as_bytes());
 
     let message = MessageL1ToL2 {
-        from_address: StarkFelt::new(from_address).unwrap(),
+        from_address: ContractAddress(PatriciaKey(StarkFelt::new(from_address).unwrap())),
         to_address: 3u64.into(),
-        nonce: 0u64.into(), // Starknet contract maintains global nonce counter
+        nonce: Nonce(0u64.into()), // Starknet contract maintains global nonce counter
         selector: 2u64.into(),
         payload: vec![1u64.into()],
     };
@@ -111,7 +113,11 @@ async fn starknet_core_contract_consumes_messages_from_l2() -> anyhow::Result<()
 
     starknet_contract.initialize(&sandbox, InitData::one()).await;
 
-    let message = MessageL2ToL1 { from_address: 1u64.into(), to_address: 2u64.into(), payload: vec![3u64.into()] };
+    let message = MessageL2ToL1 {
+        from_address: 1u64.into(),
+        to_address: StarkFelt::from(2u64).try_into().unwrap(),
+        payload: vec![3u64.into()],
+    };
     let starknet = StarknetContractClient::new(starknet_contract.address(), sandbox.client());
 
     let program_output = StarknetOsOutput {

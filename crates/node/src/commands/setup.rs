@@ -164,7 +164,7 @@ impl SetupCmd {
         };
 
         let configs_file_content = config_source.load_config()?;
-        // Make sure it is valid data before writing it to disck
+        // Make sure it is valid data before writing it to disk
         let configs: configs::Configs =
             serde_json::from_slice(&configs_file_content).map_err(|e| Error::Application(Box::new(e)))?;
         write_content_to_disk(configs_file_content, dest_config_dir_path.join("index.json").as_path())?;

@@ -115,3 +115,6 @@ By default, integration tests involving Ethereum contracts will try to find
 Anvil at `~/.foundry/bin/anvil`.  
 Alternatively you can specify the Anvil binary location by setting `ANVIL_PATH`
 environment variable.
+
+IMPORTANT: make sure your Anvil version uses a compatiuble `ethers-rs` library version.  
+In case of an issue, try to update both dependencies first.

@@ -2,7 +2,7 @@ use alloc::vec::Vec;
 
 use mp_messages::conversions::eth_address_to_felt;
 use mp_messages::{MessageL1ToL2, MessageL2ToL1};
-use starknet_api::api_core::{ContractAddress, Nonce, PatriciaKey};
+use starknet_api::api_core::{ContractAddress, EthAddress, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 
 use crate::felt_reader::{FeltReader, FeltReaderError};
@@ -22,7 +22,7 @@ pub trait SnosCodec: Sized {
     ///
     /// This is to be used for allocating the correct amount of memory before encoding.
     /// It's for optimization purpose (avoiding reallocation) so it's implementation should be
-    /// efficient (no iteration, no IO, no other allocation, no expensive computation).
+    /// efficient (no iteration, no IO, no other allocation, no expensive
     fn size_in_felts(&self) -> usize;
     /// Encodes current snos output field as felt array and appends to the result
     fn encode_to(self, output: &mut Vec<StarkFelt>);
@@ -50,20 +50,68 @@ impl SnosCodec for StarkFelt {
     }
 }
 
+impl SnosCodec for ContractAddress {
+    fn size_in_felts(&self) -> usize {
+        1
+    }
+
+    fn encode_to(self, output: &mut Vec<StarkFelt>) {
+        output.push(self.0.0);
+    }
+
+    fn decode(input: &mut FeltReader) -> Result<Self, FeltReaderError> {
+        Ok(ContractAddress(PatriciaKey(StarkFelt::decode(input)?)))
+    }
+}
+
+impl SnosCodec for EthAddress {
+    fn size_in_felts(&self) -> usize {
+        1
+    }
+
+    fn encode_to(self, output: &mut Vec<StarkFelt>) {
+        output.push(eth_address_to_felt(&self));
+    }
+
+    fn decode(input: &mut FeltReader) -> Result<Self, FeltReaderError> {
+        StarkFelt::decode(input)?.try_into().map_err(|_| FeltReaderError::InvalidCast)
+    }
+}
+
+impl SnosCodec for Nonce {
+    fn size_in_felts(&self) -> usize {
+        1
+    }
+
+    fn encode_to(self, output: &mut Vec<StarkFelt>) {
+        output.push(self.0);
+    }
+
+    fn decode(input: &mut FeltReader) -> Result<Self, FeltReaderError> {
+        Ok(Nonce(StarkFelt::decode(input)?))
+    }
+}
+
 impl<T: SnosCodec> SnosCodec for Vec<T> {
     fn size_in_felts(&self) -> usize {
         // Works well for Vec<StarkFelt>
-        // Works less well for Vec<Message>, but it just mean there will be a realocation
+        // Works less well for Vec<Message>, but it just means there will be some realocation
         // Nothing terrible, and still better than iterating
         1 + self.len()
     }
 
     fn encode_to(self, output: &mut Vec<StarkFelt>) {
-        let segment_size = self.size_in_felts() as u64;
-        output.push(segment_size.into());
+        let output_len_before = output.len();
+        // Temporary placeholder value
+        output.push(StarkFelt::from(0u8));
+
         for elt in self.into_iter() {
             elt.encode_to(output);
         }
+
+        // Replace the zero placeholder
+        let added_data = output.len() - output_len_before;
+        output[output_len_before] = StarkFelt::from(added_data as u64);
     }
 
     fn decode(input: &mut FeltReader) -> Result<Self, FeltReaderError> {
@@ -78,19 +126,19 @@ impl<T: SnosCodec> SnosCodec for Vec<T> {
 
 impl SnosCodec for MessageL2ToL1 {
     fn size_in_felts(&self) -> usize {
-        3
+        self.from_address.size_in_felts() + self.to_address.size_in_felts() + self.payload.size_in_felts()
     }
 
     fn encode_to(self, output: &mut Vec<StarkFelt>) {
-        output.push(self.from_address.0.0);
-        output.push(eth_address_to_felt(&self.to_address));
+        self.from_address.encode_to(output);
+        self.to_address.encode_to(output);
         self.payload.encode_to(output);
     }
 
     fn decode(input: &mut FeltReader) -> Result<Self, FeltReaderError> {
         Ok(Self {
-            from_address: ContractAddress(PatriciaKey(StarkFelt::decode(input)?)),
-            to_address: StarkFelt::decode(input)?.try_into().map_err(|_| FeltReaderError::InvalidCast)?,
+            from_address: ContractAddress::decode(input)?,
+            to_address: EthAddress::decode(input)?,
             payload: Vec::<StarkFelt>::decode(input)?,
         })
     }
@@ -98,22 +146,26 @@ impl SnosCodec for MessageL2ToL1 {
 
 impl SnosCodec for MessageL1ToL2 {
     fn size_in_felts(&self) -> usize {
-        4 + self.payload.size_in_felts()
+        self.from_address.size_in_felts()
+            + self.to_address.size_in_felts()
+            + self.nonce.size_in_felts()
+            + self.selector.size_in_felts()
+            + self.payload.size_in_felts()
     }
 
     fn encode_to(self, output: &mut Vec<StarkFelt>) {
-        output.push(self.from_address.0.0);
-        output.push(self.to_address.0.0);
-        output.push(self.nonce.0);
-        output.push(self.selector);
+        self.from_address.encode_to(output);
+        self.to_address.encode_to(output);
+        self.nonce.encode_to(output);
+        self.selector.encode_to(output);
         self.payload.encode_to(output);
     }
 
     fn decode(input: &mut FeltReader) -> Result<Self, FeltReaderError> {
         Ok(Self {
-            from_address: ContractAddress(PatriciaKey(StarkFelt::decode(input)?)),
-            to_address: ContractAddress(PatriciaKey(StarkFelt::decode(input)?)),
-            nonce: Nonce(StarkFelt::decode(input)?),
+            from_address: ContractAddress::decode(input)?,
+            to_address: ContractAddress::decode(input)?,
+            nonce: Nonce::decode(input)?,
             selector: StarkFelt::decode(input)?,
             payload: Vec::<StarkFelt>::decode(input)?,
         })
@@ -122,22 +174,23 @@ impl SnosCodec for MessageL1ToL2 {
 
 impl SnosCodec for StarknetOsOutput {
     fn size_in_felts(&self) -> usize {
-        5 + self.messages_to_l1.size_in_felts()
+        self.prev_state_root.size_in_felts()
+            + self.new_state_root.size_in_felts()
+            + self.block_number.size_in_felts()
+            + self.block_hash.size_in_felts()
+            + self.config_hash.size_in_felts()
+            + self.messages_to_l1.size_in_felts()
             + self.messages_to_l2.size_in_felts()
-            + self.state_updates.len()
-            + self.contract_class_diff.len()
     }
 
     fn encode_to(self, output: &mut Vec<StarkFelt>) {
-        output.push(self.prev_state_root);
-        output.push(self.new_state_root);
-        output.push(self.block_number);
-        output.push(self.block_hash);
-        output.push(self.config_hash);
+        self.prev_state_root.encode_to(output);
+        self.new_state_root.encode_to(output);
+        self.block_number.encode_to(output);
+        self.block_hash.encode_to(output);
+        self.config_hash.encode_to(output);
         self.messages_to_l1.encode_to(output);
         self.messages_to_l2.encode_to(output);
-        self.state_updates.encode_to(output);
-        self.contract_class_diff.encode_to(output);
     }
 
     fn decode(input: &mut FeltReader) -> Result<Self, FeltReaderError> {
@@ -149,8 +202,6 @@ impl SnosCodec for StarknetOsOutput {
             config_hash: StarkFelt::decode(input)?,
             messages_to_l1: Vec::<MessageL2ToL1>::decode(input)?,
             messages_to_l2: Vec::<MessageL1ToL2>::decode(input)?,
-            state_updates: Vec::<StarkFelt>::decode(input)?,
-            contract_class_diff: Vec::<StarkFelt>::decode(input)?,
         })
     }
 }
