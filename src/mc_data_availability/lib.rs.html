@@ -167,53 +167,35 @@
 <a href="#167" id="167">167</a>
 <a href="#168" id="168">168</a>
 <a href="#169" id="169">169</a>
-<a href="#170" id="170">170</a>
-<a href="#171" id="171">171</a>
-<a href="#172" id="172">172</a>
-<a href="#173" id="173">173</a>
-<a href="#174" id="174">174</a>
-<a href="#175" id="175">175</a>
-<a href="#176" id="176">176</a>
-<a href="#177" id="177">177</a>
-<a href="#178" id="178">178</a>
-<a href="#179" id="179">179</a>
-<a href="#180" id="180">180</a>
-<a href="#181" id="181">181</a>
-<a href="#182" id="182">182</a>
-<a href="#183" id="183">183</a>
-<a href="#184" id="184">184</a>
-<a href="#185" id="185">185</a>
-<a href="#186" id="186">186</a>
-<a href="#187" id="187">187</a>
-<a href="#188" id="188">188</a>
-<a href="#189" id="189">189</a>
-<a href="#190" id="190">190</a>
-<a href="#191" id="191">191</a>
 </pre></div><pre class="rust"><code><span class="kw">pub mod </span>avail;
 <span class="kw">pub mod </span>celestia;
 <span class="kw">pub mod </span>ethereum;
 <span class="kw">mod </span>sharp;
 <span class="kw">pub mod </span>utils;
 
-<span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>anyhow::Result;
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>ethers::types::{I256, U256};
+<span class="kw">use </span>futures::channel::mpsc;
 <span class="kw">use </span>futures::StreamExt;
-<span class="kw">use </span>mp_storage::{SN_NONCE_PREFIX, SN_STORAGE_PREFIX};
+<span class="kw">use </span>mc_commitment_state_diff::BlockDAData;
+<span class="kw">use </span>mp_hashers::HasherT;
+<span class="kw">use </span>pallet_starknet_runtime_api::StarknetRuntimeApi;
 <span class="kw">use </span>sc_client_api::client::BlockchainEvents;
 <span class="kw">use </span>serde::Deserialize;
 <span class="kw">use </span>sp_api::ProvideRuntimeApi;
-<span class="kw">use </span>sp_runtime::traits::Block <span class="kw">as </span>BlockT;
+<span class="kw">use </span>sp_blockchain::HeaderBackend;
+<span class="kw">use </span>sp_runtime::traits::{Block <span class="kw">as </span>BlockT, Header};
+<span class="kw">use </span>utils::state_diff_to_calldata;
 
-<span class="kw">pub type </span>StorageWrites&lt;<span class="lifetime">&#39;a</span>&gt; = Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8], <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8])&gt;;
+<span class="kw">pub struct </span>DataAvailabilityWorker&lt;B, C, H&gt;(PhantomData&lt;(B, C, H)&gt;);
+<span class="kw">pub struct </span>DataAvailabilityWorkerProving&lt;B&gt;(PhantomData&lt;B&gt;);
 
-<span class="kw">pub struct </span>DataAvailabilityWorker&lt;B, C&gt;(PhantomData&lt;(B, C)&gt;);
-
-<span class="attr">#[derive(Debug, Copy, Clone, PartialEq, clap::ValueEnum)]
+<span class="attr">#[derive(Debug, Copy, Clone, PartialEq)]
+#[cfg_attr(feature = <span class="string">&quot;clap&quot;</span>, derive(clap::ValueEnum))]
 </span><span class="kw">pub enum </span>DaLayer {
     Celestia,
     Ethereum,
@@ -222,7 +204,7 @@
 
 <span class="doccomment">/// Data availability modes in which Madara can be initialized.
 ///
-/// Default only mode currently implemented is Validium.
+/// Default only mode currently implemented is Sovereign.
 </span><span class="attr">#[derive(Debug, Copy, Clone, PartialEq, Deserialize, Default)]
 </span><span class="kw">pub enum </span>DaMode {
     <span class="doccomment">/// Full Validity Rollup
@@ -242,15 +224,15 @@
     /// will be necessary.
     </span><span class="attr">#[serde(rename = <span class="string">&quot;volition&quot;</span>)]
     </span>Volition,
-    <span class="doccomment">/// Sovereign Validium
+    <span class="doccomment">/// Sovereign Rollup
     ///
-    /// Validium state diffs are untethered to an accompanying validity proof therefore
+    /// Sovereign state diffs are untethered to an accompanying validity proof therefore
     /// they can simply be published to any da solution available. As this solution does not
     /// require an execution trace to be proved we can simply parse the state diff from the
     /// storage changes of the block.
-    </span><span class="attr">#[serde(rename = <span class="string">&quot;validium&quot;</span>)]
+    </span><span class="attr">#[serde(rename = <span class="string">&quot;sovereign&quot;</span>)]
     #[default]
-    </span>Validium,
+    </span>Sovereign,
 }
 
 <span class="attr">#[async_trait]
@@ -260,55 +242,22 @@
     <span class="kw">async fn </span>publish_state_diff(<span class="kw-2">&amp;</span><span class="self">self</span>, state_diff: Vec&lt;U256&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;;
 }
 
-<span class="kw">impl</span>&lt;B, C&gt; DataAvailabilityWorker&lt;B, C&gt;
+<span class="kw">impl</span>&lt;B&gt; DataAvailabilityWorkerProving&lt;B&gt;
 <span class="kw">where
     </span>B: BlockT,
-    C: ProvideRuntimeApi&lt;B&gt;,
-    C: BlockchainEvents&lt;B&gt; + <span class="lifetime">&#39;static</span>,
 {
-    <span class="kw">pub async fn </span>prove_current_block(da_mode: DaMode, client: Arc&lt;C&gt;, madara_backend: Arc&lt;mc_db::Backend&lt;B&gt;&gt;) {
-        <span class="kw">let </span><span class="kw-2">mut </span>storage_event_st = client
-            .storage_changes_notification_stream(<span class="prelude-val">None</span>, <span class="prelude-val">None</span>)
-            .expect(<span class="string">&quot;node has been initialized to prove state change, but can&#39;t read from notification stream&quot;</span>);
+    <span class="kw">pub async fn </span>prove_current_block(
+        da_mode: DaMode,
+        <span class="kw-2">mut </span>state_diffs_rx: mpsc::Receiver&lt;BlockDAData&gt;,
+        madara_backend: Arc&lt;mc_db::Backend&lt;B&gt;&gt;,
+    ) {
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(BlockDAData(block_hash, csd, num_addr_accessed)) = state_diffs_rx.next().<span class="kw">await </span>{
+            <span class="macro">log::info!</span>(<span class="string">&quot;received state diff for block {block_hash}: {csd:?}. {num_addr_accessed} addresses accessed.&quot;</span>);
 
-        <span class="kw">while let </span><span class="prelude-val">Some</span>(storage_event) = storage_event_st.next().<span class="kw">await </span>{
-            <span class="comment">// Locate and encode the storage change
-            </span><span class="kw">let </span><span class="kw-2">mut </span>nonces: HashMap&lt;<span class="kw-2">&amp;</span>[u8], <span class="kw-2">&amp;</span>[u8]&gt; = HashMap::new();
-            <span class="kw">let </span><span class="kw-2">mut </span>storage_diffs: HashMap&lt;<span class="kw-2">&amp;</span>[u8], StorageWrites&gt; = HashMap::new();
-
-            <span class="comment">// Locate and encode the storage change
-            </span><span class="kw">for </span>event <span class="kw">in </span>storage_event.changes.iter() {
-                <span class="kw">let </span><span class="kw-2">mut </span>prefix = event.<span class="number">1.0</span>.as_slice();
-                <span class="kw">let </span><span class="kw-2">mut </span>key: <span class="kw-2">&amp;</span>[u8] = <span class="kw-2">&amp;</span>[];
-                <span class="kw">if </span>prefix.len() &gt; <span class="number">32 </span>{
-                    <span class="kw">let </span>raw_split = prefix.split_at(<span class="number">32</span>);
-                    prefix = raw_split.<span class="number">0</span>;
-                    key = raw_split.<span class="number">1</span>;
-                }
-
-                <span class="kw">if </span>prefix == <span class="kw-2">*</span>SN_NONCE_PREFIX {
-                    <span class="kw">if let </span><span class="prelude-val">Some</span>(data) = event.<span class="number">2 </span>{
-                        nonces.insert(key, data.<span class="number">0</span>.as_slice());
-                    }
-                }
-
-                <span class="kw">if </span>prefix == <span class="kw-2">*</span>SN_STORAGE_PREFIX {
-                    <span class="kw">if let </span><span class="prelude-val">Some</span>(data) = event.<span class="number">2 </span>{
-                        <span class="comment">// first 32 bytes = contract address, second 32 bytes = storage variable
-                        </span><span class="kw">let </span>write_split = key.split_at(<span class="number">32</span>);
-
-                        storage_diffs
-                            .entry(write_split.<span class="number">0</span>)
-                            .and_modify(|v| v.push((write_split.<span class="number">1</span>, data.<span class="number">0</span>.as_slice())))
-                            .or_insert(<span class="macro">vec!</span>[(write_split.<span class="number">1</span>, data.<span class="number">0</span>.as_slice())]);
-                    }
-                }
-            }
-
-            <span class="kw">let </span>state_diff = utils::pre_0_11_0_state_diff(storage_diffs, nonces);
-
-            <span class="comment">// Store the DA output from the SN OS
-            </span><span class="kw">if let </span><span class="prelude-val">Err</span>(db_err) = madara_backend.da().store_state_diff(<span class="kw-2">&amp;</span>storage_event.block, state_diff) {
+            <span class="comment">// store the da encoded calldata for the state update worker
+            </span><span class="kw">if let </span><span class="prelude-val">Err</span>(db_err) =
+                madara_backend.da().store_state_diff(<span class="kw-2">&amp;</span>block_hash, state_diff_to_calldata(csd, num_addr_accessed))
+            {
                 <span class="macro">log::error!</span>(<span class="string">&quot;db err: {db_err}&quot;</span>);
             };
 
@@ -322,9 +271,7 @@
                     </span><span class="kw">if let </span><span class="prelude-val">Ok</span>(job_resp) = sharp::submit_pie(<span class="string">&quot;TODO&quot;</span>) {
                         <span class="macro">log::info!</span>(<span class="string">&quot;Job Submitted: {}&quot;</span>, job_resp.cairo_job_key);
                         <span class="comment">// Store the cairo job key
-                        </span><span class="kw">if let </span><span class="prelude-val">Err</span>(db_err) =
-                            madara_backend.da().update_cairo_job(<span class="kw-2">&amp;</span>storage_event.block, job_resp.cairo_job_key)
-                        {
+                        </span><span class="kw">if let </span><span class="prelude-val">Err</span>(db_err) = madara_backend.da().update_cairo_job(<span class="kw-2">&amp;</span>block_hash, job_resp.cairo_job_key) {
                             <span class="macro">log::error!</span>(<span class="string">&quot;db err: {db_err}&quot;</span>);
                         };
                     }
@@ -337,11 +284,14 @@
     }
 }
 
-<span class="kw">impl</span>&lt;B, C&gt; DataAvailabilityWorker&lt;B, C&gt;
+<span class="kw">impl</span>&lt;B, C, H&gt; DataAvailabilityWorker&lt;B, C, H&gt;
 <span class="kw">where
     </span>B: BlockT,
     C: ProvideRuntimeApi&lt;B&gt;,
+    C::Api: StarknetRuntimeApi&lt;B&gt;,
     C: BlockchainEvents&lt;B&gt; + <span class="lifetime">&#39;static</span>,
+    C: HeaderBackend&lt;B&gt;,
+    H: HasherT + Unpin,
 {
     <span class="kw">pub async fn </span>update_state(
         da_client: Box&lt;<span class="kw">dyn </span>DaClient + Send + Sync&gt;,
@@ -361,13 +311,19 @@
                 }
             };
 
+            <span class="kw">let </span>starknet_block_hash = {
+                <span class="kw">let </span>digest = notification.header.digest();
+                <span class="kw">let </span>block = mp_digest_log::find_starknet_block(digest).expect(<span class="string">&quot;starknet block not found&quot;</span>);
+                block.header().hash::&lt;H&gt;().into()
+            };
+
             <span class="kw">match </span>da_client.get_mode() {
                 DaMode::Validity =&gt; {
                     <span class="comment">// Check the SHARP status of last_proved + 1
                     // Write the publish state diff of last_proved + 1
                     </span><span class="macro">log::info!</span>(<span class="string">&quot;validity da mode not implemented&quot;</span>);
                 }
-                DaMode::Validium =&gt; <span class="kw">match </span>madara_backend.da().state_diff(<span class="kw-2">&amp;</span>notification.hash) {
+                DaMode::Sovereign =&gt; <span class="kw">match </span>madara_backend.da().state_diff(<span class="kw-2">&amp;</span>starknet_block_hash) {
                     <span class="prelude-val">Ok</span>(state_diff) =&gt; {
                         <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = da_client.publish_state_diff(state_diff).<span class="kw">await </span>{
                             <span class="macro">log::error!</span>(<span class="string">&quot;DA PUBLISH ERROR: {}&quot;</span>, e);

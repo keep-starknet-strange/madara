@@ -353,8 +353,8 @@
             })
         }
         <span class="attr">#[cfg(not(feature = <span class="string">&quot;try-runtime&quot;</span>))]
-        </span><span class="prelude-val">Some</span>(Subcommand::TryRuntime) =&gt; <span class="prelude-val">Err</span>(<span class="string">&quot;TryRuntime wasn&#39;t enabled when building the node. You can enable it \
-                                             with `--features try-runtime`.&quot;
+        </span><span class="prelude-val">Some</span>(Subcommand::TryRuntimeDisabled) =&gt; <span class="prelude-val">Err</span>(<span class="string">&quot;TryRuntime wasn&#39;t enabled when building the node. You can \
+                                                     enable it with `--features try-runtime`.&quot;
             </span>.into()),
         <span class="prelude-val">Some</span>(Subcommand::ChainInfo(<span class="kw-2">ref </span>cmd)) =&gt; {
             <span class="kw">let </span>runner = cli.create_runner(cmd)<span class="question-mark">?</span>;

@@ -108,6 +108,8 @@
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
 
 <span class="kw">use </span>madara_runtime::SealingMode;
@@ -152,8 +154,11 @@
     </span><span class="kw">pub </span>sealing: <span class="prelude-ty">Option</span>&lt;Sealing&gt;,
 
     <span class="doccomment">/// Choose a supported DA Layer
-    </span><span class="attr">#[clap(long)]
+    </span><span class="attr">#[clap(long, requires = <span class="string">&quot;da_conf&quot;</span>)]
     </span><span class="kw">pub </span>da_layer: <span class="prelude-ty">Option</span>&lt;DaLayer&gt;,
+
+    <span class="attr">#[clap(long, requires = <span class="string">&quot;da_layer&quot;</span>)]
+    </span><span class="kw">pub </span>da_conf: <span class="prelude-ty">Option</span>&lt;String&gt;,
 
     <span class="doccomment">/// When enabled, more information about the blocks and their transaction is cached and stored
     /// in the database.
@@ -179,17 +184,16 @@
         override_dev_environment(<span class="kw-2">&amp;mut </span>cli.run);
     }
     <span class="kw">let </span>runner = cli.create_runner(<span class="kw-2">&amp;</span>cli.run.base)<span class="question-mark">?</span>;
-    <span class="kw">let </span>data_path = <span class="kw-2">&amp;</span>runner.config().data_path;
 
     <span class="kw">let </span>da_config: <span class="prelude-ty">Option</span>&lt;(DaLayer, PathBuf)&gt; = <span class="kw">match </span>cli.run.da_layer {
         <span class="prelude-val">Some</span>(da_layer) =&gt; {
-            <span class="kw">let </span>da_path = data_path.join(<span class="string">&quot;da-config.json&quot;</span>);
-            <span class="kw">if </span>!da_path.exists() {
-                <span class="macro">log::info!</span>(<span class="string">&quot;{} does not contain DA config&quot;</span>, da_path.display());
+            <span class="kw">let </span>da_conf = PathBuf::from(cli.run.da_conf.expect(<span class="string">&quot;clap requires da_conf when da_layer is present&quot;</span>));
+            <span class="kw">if </span>!da_conf.exists() {
+                <span class="macro">log::info!</span>(<span class="string">&quot;{} does not contain DA config&quot;</span>, da_conf.display());
                 <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">&quot;DA config not available&quot;</span>.into());
             }
 
-            <span class="prelude-val">Some</span>((da_layer, da_path))
+            <span class="prelude-val">Some</span>((da_layer, da_conf))
         }
         <span class="prelude-val">None </span>=&gt; {
             <span class="macro">log::info!</span>(<span class="string">&quot;Madara initialized w/o DA layer&quot;</span>);

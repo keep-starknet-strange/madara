@@ -208,15 +208,24 @@
 <a href="#208" id="208">208</a>
 <a href="#209" id="209">209</a>
 <a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::pin::Pin;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::task::Poll;
 
-<span class="kw">use </span>blockifier::state::cached_state::CommitmentStateDiff;
 <span class="kw">use </span>futures::channel::mpsc;
-<span class="kw">use </span>futures::{Stream, StreamExt};
-<span class="kw">use </span>indexmap::IndexMap;
+<span class="kw">use </span>futures::Stream;
+<span class="kw">use </span>indexmap::{IndexMap, IndexSet};
 <span class="kw">use </span>mp_hashers::HasherT;
 <span class="kw">use </span>mp_storage::{SN_COMPILED_CLASS_HASH_PREFIX, SN_CONTRACT_CLASS_HASH_PREFIX, SN_NONCE_PREFIX, SN_STORAGE_PREFIX};
 <span class="kw">use </span>pallet_starknet_runtime_api::StarknetRuntimeApi;
@@ -228,14 +237,16 @@
 <span class="kw">use </span>starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce, PatriciaKey};
 <span class="kw">use </span>starknet_api::block::BlockHash;
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
-<span class="kw">use </span>starknet_api::state::StorageKey <span class="kw">as </span>StarknetStorageKey;
+<span class="kw">use </span>starknet_api::state::{StorageKey <span class="kw">as </span>StarknetStorageKey, ThinStateDiff};
 <span class="kw">use </span>thiserror::Error;
+
+<span class="kw">pub struct </span>BlockDAData(<span class="kw">pub </span>BlockHash, <span class="kw">pub </span>ThinStateDiff, <span class="kw">pub </span>usize);
 
 <span class="kw">pub struct </span>CommitmentStateDiffWorker&lt;B: BlockT, C, H&gt; {
     client: Arc&lt;C&gt;,
     storage_event_stream: StorageEventStream&lt;B::Hash&gt;,
-    tx: mpsc::Sender&lt;(BlockHash, CommitmentStateDiff)&gt;,
-    msg: <span class="prelude-ty">Option</span>&lt;(BlockHash, CommitmentStateDiff)&gt;,
+    tx: mpsc::Sender&lt;BlockDAData&gt;,
+    msg: <span class="prelude-ty">Option</span>&lt;BlockDAData&gt;,
     phantom: PhantomData&lt;H&gt;,
 }
 
@@ -243,7 +254,7 @@
 <span class="kw">where
     </span>C: BlockchainEvents&lt;B&gt;,
 {
-    <span class="kw">pub fn </span>new(client: Arc&lt;C&gt;, tx: mpsc::Sender&lt;(BlockHash, CommitmentStateDiff)&gt;) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>new(client: Arc&lt;C&gt;, tx: mpsc::Sender&lt;BlockDAData&gt;) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>storage_event_stream = client
             .storage_changes_notification_stream(<span class="prelude-val">None</span>, <span class="prelude-val">None</span>)
             .expect(<span class="string">&quot;the node storage changes notification stream should be up and running&quot;</span>);
@@ -265,7 +276,6 @@
     // state 2: waiting for the channel to be ready, `commitment_state_diff` field is `Some`
     </span><span class="kw">fn </span>poll_next(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>std::task::Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;<span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt;&gt; {
         <span class="kw">let </span>self_as_mut = <span class="self">self</span>.get_mut();
-
         <span class="kw">if </span>self_as_mut.msg.is_none() {
             <span class="comment">// State 1
             </span><span class="kw">match </span>Stream::poll_next(Pin::new(<span class="kw-2">&amp;mut </span>self_as_mut.storage_event_stream), cx) {
@@ -311,10 +321,10 @@
             <span class="comment">// Channel is full, we wait
             </span>Poll::Pending =&gt; Poll::Pending,
 
-            <span class="comment">// Channel receiver have been drop, we close.
+            <span class="comment">// Channel receiver has been dropped, we close.
             // This should not happen tho
             </span>Poll::Ready(<span class="prelude-val">Err</span>(e)) =&gt; {
-                <span class="macro">log::error!</span>(<span class="string">&quot;CommitmentStateDiff channel reciever have been droped: {e}&quot;</span>);
+                <span class="macro">log::error!</span>(<span class="string">&quot;CommitmentStateDiff channel receiver has been dropped: {e}&quot;</span>);
                 Poll::Ready(<span class="prelude-val">None</span>)
             }
         }
@@ -334,7 +344,7 @@
 <span class="kw">fn </span>build_commitment_state_diff&lt;B: BlockT, C, H&gt;(
     client: Arc&lt;C&gt;,
     storage_notification: StorageNotification&lt;B::Hash&gt;,
-) -&gt; <span class="prelude-ty">Result</span>&lt;(BlockHash, CommitmentStateDiff), BuildCommitmentStateDiffError&gt;
+) -&gt; <span class="prelude-ty">Result</span>&lt;BlockDAData, BuildCommitmentStateDiffError&gt;
 <span class="kw">where
     </span>C: ProvideRuntimeApi&lt;B&gt;,
     C::Api: StarknetRuntimeApi&lt;B&gt;,
@@ -348,11 +358,14 @@
         block.header().hash::&lt;H&gt;().into()
     };
 
-    <span class="kw">let </span><span class="kw-2">mut </span>commitment_state_diff = CommitmentStateDiff {
-        address_to_class_hash: Default::default(),
-        address_to_nonce: Default::default(),
-        storage_updates: Default::default(),
-        class_hash_to_compiled_class_hash: Default::default(),
+    <span class="kw">let </span><span class="kw-2">mut </span>accessed_addrs: IndexSet&lt;ContractAddress&gt; = IndexSet::new();
+    <span class="kw">let </span><span class="kw-2">mut </span>commitment_state_diff = ThinStateDiff {
+        declared_classes: IndexMap::new(),
+        storage_diffs: IndexMap::new(),
+        nonces: IndexMap::new(),
+        deployed_contracts: IndexMap::new(),
+        deprecated_declared_classes: Vec::new(),
+        replaced_classes: IndexMap::new(),
     };
 
     <span class="kw">for </span>(_prefix, full_storage_key, change) <span class="kw">in </span>storage_notification.changes.iter() {
@@ -372,7 +385,8 @@
                 ContractAddress(PatriciaKey(StarkFelt(full_storage_key.<span class="number">0</span>[<span class="number">32</span>..].try_into().unwrap())));
             <span class="comment">// `change` is safe to unwrap as `Nonces` storage is `ValueQuery`
             </span><span class="kw">let </span>nonce = Nonce(StarkFelt(change.unwrap().<span class="number">0</span>.clone().try_into().unwrap()));
-            commitment_state_diff.address_to_nonce.insert(contract_address, nonce);
+            commitment_state_diff.nonces.insert(contract_address, nonce);
+            accessed_addrs.insert(contract_address);
         } <span class="kw">else if </span>prefix == <span class="kw-2">*</span>SN_STORAGE_PREFIX {
             <span class="kw">let </span>contract_address =
                 ContractAddress(PatriciaKey(StarkFelt(full_storage_key.<span class="number">0</span>[<span class="number">32</span>..<span class="number">64</span>].try_into().unwrap())));
@@ -380,7 +394,7 @@
             <span class="comment">// `change` is safe to unwrap as `StorageView` storage is `ValueQuery`
             </span><span class="kw">let </span>value = StarkFelt(change.unwrap().<span class="number">0</span>.clone().try_into().unwrap());
 
-            <span class="kw">match </span>commitment_state_diff.storage_updates.get_mut(<span class="kw-2">&amp;</span>contract_address) {
+            <span class="kw">match </span>commitment_state_diff.storage_diffs.get_mut(<span class="kw-2">&amp;</span>contract_address) {
                 <span class="prelude-val">Some</span>(contract_storage) =&gt; {
                     contract_storage.insert(storage_key, value);
                 }
@@ -388,16 +402,28 @@
                     <span class="kw">let </span><span class="kw-2">mut </span>contract_storage: IndexMap&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>&gt; = Default::default();
                     contract_storage.insert(storage_key, value);
 
-                    commitment_state_diff.storage_updates.insert(contract_address, contract_storage);
+                    commitment_state_diff.storage_diffs.insert(contract_address, contract_storage);
                 }
             }
+            accessed_addrs.insert(contract_address);
         } <span class="kw">else if </span>prefix == <span class="kw-2">*</span>SN_CONTRACT_CLASS_HASH_PREFIX {
             <span class="kw">let </span>contract_address =
                 ContractAddress(PatriciaKey(StarkFelt(full_storage_key.<span class="number">0</span>[<span class="number">32</span>..].try_into().unwrap())));
             <span class="comment">// `change` is safe to unwrap as `ContractClassHashes` storage is `ValueQuery`
             </span><span class="kw">let </span>class_hash = ClassHash(StarkFelt(change.unwrap().<span class="number">0</span>.clone().try_into().unwrap()));
 
-            commitment_state_diff.address_to_class_hash.insert(contract_address, class_hash);
+            <span class="comment">// check if contract already exists
+            </span><span class="kw">let </span>runtime_api = client.runtime_api();
+            <span class="kw">let </span>current_block_hash = client.info().best_hash;
+
+            <span class="kw">let </span>contract_exists = runtime_api.contract_class_by_class_hash(current_block_hash, class_hash).is_ok();
+
+            <span class="kw">if </span>contract_exists {
+                commitment_state_diff.replaced_classes.insert(contract_address, class_hash);
+            } <span class="kw">else </span>{
+                commitment_state_diff.deployed_contracts.insert(contract_address, class_hash);
+            }
+            accessed_addrs.insert(contract_address);
         } <span class="kw">else if </span>prefix == <span class="kw-2">*</span>SN_COMPILED_CLASS_HASH_PREFIX {
             <span class="kw">let </span>class_hash = ClassHash(StarkFelt(full_storage_key.<span class="number">0</span>[<span class="number">32</span>..].try_into().unwrap()));
             <span class="comment">// In the current state of starknet protocol, a compiled class hash can not be erased, so we should
@@ -406,16 +432,10 @@
             </span><span class="kw">let </span>compiled_class_hash =
                 CompiledClassHash(change.map(|data| StarkFelt(data.<span class="number">0</span>.clone().try_into().unwrap())).unwrap_or_default());
 
-            commitment_state_diff.class_hash_to_compiled_class_hash.insert(class_hash, compiled_class_hash);
+            commitment_state_diff.declared_classes.insert(class_hash, compiled_class_hash);
         }
     }
 
-    <span class="prelude-val">Ok</span>((starknet_block_hash, commitment_state_diff))
-}
-
-<span class="kw">pub async fn </span>log_commitment_state_diff(<span class="kw-2">mut </span>rx: mpsc::Receiver&lt;(BlockHash, CommitmentStateDiff)&gt;) {
-    <span class="kw">while let </span><span class="prelude-val">Some</span>((block_hash, csd)) = rx.next().<span class="kw">await </span>{
-        <span class="macro">log::info!</span>(<span class="string">&quot;received state diff for block {block_hash}: {csd:?}&quot;</span>);
-    }
+    <span class="prelude-val">Ok</span>(BlockDAData(starknet_block_hash, commitment_state_diff, accessed_addrs.len()))
 }
 </code></pre></div></section></main></body></html>

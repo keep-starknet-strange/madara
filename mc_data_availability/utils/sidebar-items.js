@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["get_bytes_from_state_diff","get_valid_url","is_valid_http_endpoint","is_valid_ws_endpoint","pre_0_11_0_state_diff"]};
+window.SIDEBAR_ITEMS = {"fn":["bytes_to_felt","bytes_to_key","da_word","get_bytes_from_state_diff","get_valid_url","is_valid_http_endpoint","is_valid_ws_endpoint","safe_split","state_diff_to_calldata"]};

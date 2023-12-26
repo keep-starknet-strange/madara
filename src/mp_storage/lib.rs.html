@@ -57,8 +57,6 @@
 <a href="#57" id="57">57</a>
 <a href="#58" id="58">58</a>
 <a href="#59" id="59">59</a>
-<a href="#60" id="60">60</a>
-<a href="#61" id="61">61</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet storage primitives.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
@@ -97,8 +95,6 @@
     <span class="kw">pub static </span><span class="kw-2">ref </span>SN_NONCE_PREFIX: Vec&lt;u8&gt; = [twox_128(PALLET_STARKNET), twox_128(STARKNET_NONCE)].concat();
     <span class="kw">pub static </span><span class="kw-2">ref </span>SN_CONTRACT_CLASS_HASH_PREFIX: Vec&lt;u8&gt; =
         [twox_128(PALLET_STARKNET), twox_128(STARKNET_CONTRACT_CLASS_HASH)].concat();
-    <span class="kw">pub static </span><span class="kw-2">ref </span>SN_CONTRACT_CLASS_PREFIX: Vec&lt;u8&gt; =
-        [twox_128(PALLET_STARKNET), twox_128(STARKNET_CONTRACT_CLASS)].concat();
     <span class="kw">pub static </span><span class="kw-2">ref </span>SN_STORAGE_PREFIX: Vec&lt;u8&gt; = [twox_128(PALLET_STARKNET), twox_128(STARKNET_STORAGE)].concat();
     <span class="kw">pub static </span><span class="kw-2">ref </span>SN_COMPILED_CLASS_HASH_PREFIX: Vec&lt;u8&gt; =
         [twox_128(PALLET_STARKNET), twox_128(STARKNET_COMPILED_CLASS_HASH)].concat();

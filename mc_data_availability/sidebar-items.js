@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["DaLayer","DaMode"],"mod":["avail","celestia","ethereum","utils"],"struct":["DataAvailabilityWorker"],"trait":["DaClient"],"type":["StorageWrites"]};
+window.SIDEBAR_ITEMS = {"enum":["DaLayer","DaMode"],"mod":["avail","celestia","ethereum","utils"],"struct":["DataAvailabilityWorker","DataAvailabilityWorkerProving"],"trait":["DaClient"]};

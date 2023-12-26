@@ -685,7 +685,6 @@
 <a href="#685" id="685">685</a>
 <a href="#686" id="686">686</a>
 <a href="#687" id="687">687</a>
-<a href="#688" id="688">688</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
@@ -699,14 +698,14 @@
 <span class="kw">use </span>futures::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>madara_runtime::opaque::Block;
 <span class="kw">use </span>madara_runtime::{<span class="self">self</span>, Hash, RuntimeApi, SealingMode, StarknetHasher};
-<span class="kw">use </span>mc_commitment_state_diff::{log_commitment_state_diff, CommitmentStateDiffWorker};
+<span class="kw">use </span>mc_commitment_state_diff::CommitmentStateDiffWorker;
 <span class="kw">use </span>mc_data_availability::avail::config::AvailConfig;
 <span class="kw">use </span>mc_data_availability::avail::AvailClient;
 <span class="kw">use </span>mc_data_availability::celestia::config::CelestiaConfig;
 <span class="kw">use </span>mc_data_availability::celestia::CelestiaClient;
 <span class="kw">use </span>mc_data_availability::ethereum::config::EthereumConfig;
 <span class="kw">use </span>mc_data_availability::ethereum::EthereumClient;
-<span class="kw">use </span>mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker};
+<span class="kw">use </span>mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker, DataAvailabilityWorkerProving};
 <span class="kw">use </span>mc_genesis_data_provider::OnDiskGenesisConfig;
 <span class="kw">use </span>mc_mapping_sync::MappingSyncWorker;
 <span class="kw">use </span>mc_storage::overrides_handle;
@@ -1101,21 +1100,15 @@
 
     <span class="kw">let </span>(commitment_state_diff_tx, commitment_state_diff_rx) = mpsc::channel(<span class="number">5</span>);
 
-    task_manager.spawn_essential_handle().spawn(
-        <span class="string">&quot;commitment-state-diff&quot;</span>,
-        <span class="prelude-val">Some</span>(<span class="string">&quot;madara&quot;</span>),
-        CommitmentStateDiffWorker::&lt;<span class="kw">_</span>, <span class="kw">_</span>, StarknetHasher&gt;::new(client.clone(), commitment_state_diff_tx)
-            .for_each(|()| future::ready(())),
-    );
-
-    task_manager.spawn_essential_handle().spawn(
-        <span class="string">&quot;commitment-state-logger&quot;</span>,
-        <span class="prelude-val">Some</span>(<span class="string">&quot;madara&quot;</span>),
-        log_commitment_state_diff(commitment_state_diff_rx),
-    );
-
     <span class="comment">// initialize data availability worker
     </span><span class="kw">if let </span><span class="prelude-val">Some</span>((da_layer, da_path)) = da_layer {
+        task_manager.spawn_essential_handle().spawn(
+            <span class="string">&quot;commitment-state-diff&quot;</span>,
+            <span class="prelude-val">Some</span>(<span class="string">&quot;madara&quot;</span>),
+            CommitmentStateDiffWorker::&lt;<span class="kw">_</span>, <span class="kw">_</span>, StarknetHasher&gt;::new(client.clone(), commitment_state_diff_tx)
+                .for_each(|()| future::ready(())),
+        );
+
         <span class="kw">let </span>da_client: Box&lt;<span class="kw">dyn </span>DaClient + Send + Sync&gt; = <span class="kw">match </span>da_layer {
             DaLayer::Celestia =&gt; {
                 <span class="kw">let </span>celestia_conf = CelestiaConfig::try_from(<span class="kw-2">&amp;</span>da_path)<span class="question-mark">?</span>;
@@ -1134,12 +1127,17 @@
         task_manager.spawn_essential_handle().spawn(
             <span class="string">&quot;da-worker-prove&quot;</span>,
             <span class="prelude-val">Some</span>(<span class="string">&quot;madara&quot;</span>),
-            DataAvailabilityWorker::prove_current_block(da_client.get_mode(), client.clone(), madara_backend.clone()),
+            DataAvailabilityWorkerProving::prove_current_block(
+                da_client.get_mode(),
+                commitment_state_diff_rx,
+                madara_backend.clone(),
+            ),
         );
+
         task_manager.spawn_essential_handle().spawn(
             <span class="string">&quot;da-worker-update&quot;</span>,
             <span class="prelude-val">Some</span>(<span class="string">&quot;madara&quot;</span>),
-            DataAvailabilityWorker::update_state(da_client, client.clone(), madara_backend),
+            DataAvailabilityWorker::&lt;<span class="kw">_</span>, <span class="kw">_</span>, StarknetHasher&gt;::update_state(da_client, client.clone(), madara_backend),
         );
     };
 

@@ -1,4 +1,5 @@
 var srcIndex = JSON.parse('{\
+"da_test":["",[],["constants.rs","fixtures.rs","lib.rs","utils.rs"]],\
 "madara":["",[["commands",[],["mod.rs","run.rs","setup.rs"]],["rpc",[],["mod.rs","starknet.rs"]]],["benchmarking.rs","chain_spec.rs","cli.rs","command.rs","configs.rs","constants.rs","genesis_block.rs","main.rs","service.rs","starknet.rs"]],\
 "madara_runtime":["",[],["config.rs","lib.rs","opaque.rs","pallets.rs","runtime_tests.rs","types.rs"]],\
 "mc_commitment_state_diff":["",[],["lib.rs"]],\

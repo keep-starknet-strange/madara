@@ -53,35 +53,166 @@
 <a href="#53" id="53">53</a>
 <a href="#54" id="54">54</a>
 <a href="#55" id="55">55</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
-
-<span class="kw">use </span>ethers::types::U256;
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>ethers::types::U256;
+<span class="kw">use </span>starknet_api::api_core::{Nonce, PatriciaKey};
+<span class="kw">use </span>starknet_api::hash::StarkFelt;
+<span class="kw">use </span>starknet_api::state::ThinStateDiff;
 <span class="kw">use </span>url::{ParseError, Url};
 
-<span class="comment">// encode calldata:
-// - https://docs.starknet.io/documentation/architecture_and_concepts/Data_Availability/on-chain-data/#pre_v0.11.0_example
-</span><span class="kw">pub fn </span>pre_0_11_0_state_diff(
-    storage_diffs: HashMap&lt;<span class="kw-2">&amp;</span>[u8], <span class="kw">crate</span>::StorageWrites&gt;,
-    nonces: HashMap&lt;<span class="kw-2">&amp;</span>[u8], <span class="kw-2">&amp;</span>[u8]&gt;,
-) -&gt; Vec&lt;U256&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>state_diff: Vec&lt;U256&gt; = Vec::new();
+<span class="kw">const </span>CLASS_FLAG_TRUE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;0x100000000000000000000000000000001&quot;</span>; <span class="comment">// 2 ^ 128 + 1
+</span><span class="kw">const </span>NONCE_BASE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;0x10000000000000000&quot;</span>; <span class="comment">// 2 ^ 64
 
-    state_diff.push(U256::from(storage_diffs.len()));
+</span><span class="doccomment">/// DA calldata encoding:
+/// - https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/on-chain-data
+</span><span class="kw">pub fn </span>state_diff_to_calldata(<span class="kw-2">mut </span>state_diff: ThinStateDiff, num_addrs_accessed: usize) -&gt; Vec&lt;U256&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>calldata: Vec&lt;U256&gt; = Vec::new();
 
-    <span class="kw">for </span>(addr, writes) <span class="kw">in </span>storage_diffs {
-        state_diff.push(U256::from_big_endian(addr));
-        state_diff.push(U256::from(writes.len()));
-        <span class="kw">for </span>write <span class="kw">in </span>writes {
-            state_diff.push(U256::from_big_endian(write.<span class="number">0</span>));
-            state_diff.push(U256::from_big_endian(write.<span class="number">1</span>));
+    calldata.push(U256::from(num_addrs_accessed));
+
+    <span class="comment">// Loop over storage diffs
+    </span><span class="kw">for </span>(addr, writes) <span class="kw">in </span>state_diff.storage_diffs {
+        calldata.push(U256::from_big_endian(<span class="kw-2">&amp;</span>addr.<span class="number">0</span>.key().<span class="number">0</span>));
+
+        <span class="kw">let </span>class_flag = state_diff.deployed_contracts.get(<span class="kw-2">&amp;</span>addr).or_else(|| state_diff.replaced_classes.get(<span class="kw-2">&amp;</span>addr));
+
+        <span class="kw">let </span>nonce = state_diff.nonces.remove(<span class="kw-2">&amp;</span>addr);
+        calldata.push(da_word(class_flag.is_some(), nonce, writes.len() <span class="kw">as </span>u64));
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(class_hash) = class_flag {
+            calldata.push(U256::from_big_endian(class_hash.<span class="number">0</span>.bytes()));
+        }
+
+        <span class="kw">for </span>(key, val) <span class="kw">in </span><span class="kw-2">&amp;</span>writes {
+            calldata.push(U256::from_big_endian(key.<span class="number">0</span>.key().bytes()));
+            calldata.push(U256::from_big_endian(val.bytes()));
         }
     }
 
-    <span class="kw">for </span>(addr, nonce) <span class="kw">in </span>nonces {
-        state_diff.push(U256::from_big_endian(addr));
-        state_diff.push(U256::from_big_endian(nonce));
+    <span class="comment">// Handle nonces
+    </span><span class="kw">for </span>(addr, nonce) <span class="kw">in </span>state_diff.nonces {
+        calldata.push(U256::from_big_endian(<span class="kw-2">&amp;</span>addr.<span class="number">0</span>.key().<span class="number">0</span>));
+
+        <span class="kw">let </span>class_flag = state_diff.deployed_contracts.get(<span class="kw-2">&amp;</span>addr).or_else(|| state_diff.replaced_classes.get(<span class="kw-2">&amp;</span>addr));
+
+        calldata.push(da_word(class_flag.is_some(), <span class="prelude-val">Some</span>(nonce), <span class="number">0_u64</span>));
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(class_hash) = class_flag {
+            calldata.push(U256::from_big_endian(class_hash.<span class="number">0</span>.bytes()));
+        }
     }
-    state_diff
+
+    <span class="comment">// Handle deployed contracts
+    </span><span class="kw">for </span>(addr, class_hash) <span class="kw">in </span>state_diff.deployed_contracts {
+        calldata.push(U256::from_big_endian(<span class="kw-2">&amp;</span>addr.<span class="number">0</span>.key().<span class="number">0</span>));
+
+        calldata.push(da_word(<span class="bool-val">true</span>, <span class="prelude-val">None</span>, <span class="number">0_u64</span>));
+        calldata.push(U256::from_big_endian(class_hash.<span class="number">0</span>.bytes()));
+    }
+
+    <span class="comment">// Handle replaced classes
+    </span>calldata.push(U256::from(state_diff.declared_classes.len()));
+
+    <span class="kw">for </span>(class_hash, compiled_class_hash) <span class="kw">in </span><span class="kw-2">&amp;</span>state_diff.declared_classes {
+        calldata.push(U256::from_big_endian(class_hash.<span class="number">0</span>.bytes()));
+        calldata.push(U256::from_big_endian(compiled_class_hash.<span class="number">0</span>.bytes()));
+    }
+
+    calldata
+}
+
+<span class="doccomment">/// DA word encoding:
+/// |---padding---|---class flag---|---new nonce---|---num changes---|
+///     127 bits        1 bit           64 bits          64 bits
+</span><span class="kw">pub fn </span>da_word(class_flag: bool, nonce_change: <span class="prelude-ty">Option</span>&lt;Nonce&gt;, num_changes: u64) -&gt; U256 {
+    <span class="kw">let </span><span class="kw-2">mut </span>word = U256::from(<span class="number">0</span>);
+
+    <span class="kw">if </span>class_flag {
+        word += U256::from_str_radix(CLASS_FLAG_TRUE, <span class="number">16</span>).unwrap();
+    }
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(new_nonce) = nonce_change {
+        word += U256::from_big_endian(new_nonce.<span class="number">0</span>.bytes()) + U256::from_str_radix(NONCE_BASE, <span class="number">16</span>).unwrap();
+    }
+    word += U256::from(num_changes);
+
+    word
 }
 
 <span class="kw">pub fn </span>get_bytes_from_state_diff(state_diff: <span class="kw-2">&amp;</span>[U256]) -&gt; Vec&lt;u8&gt; {
@@ -107,5 +238,32 @@
 
 <span class="kw">pub fn </span>is_valid_http_endpoint(endpoint: <span class="kw-2">&amp;</span>str) -&gt; bool {
     <span class="kw">if let </span><span class="prelude-val">Ok</span>(url) = get_valid_url(endpoint) { <span class="macro">matches!</span>(url.scheme(), <span class="string">&quot;http&quot; </span>| <span class="string">&quot;https&quot;</span>) } <span class="kw">else </span>{ <span class="bool-val">false </span>}
+}
+
+<span class="kw">pub fn </span>safe_split(key: <span class="kw-2">&amp;</span>[u8]) -&gt; ([u8; <span class="number">16</span>], <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;) {
+    <span class="kw">let </span>length = key.len();
+    <span class="kw">let </span>(<span class="kw-2">mut </span>child, <span class="kw-2">mut </span>rest) = ([<span class="number">0_u8</span>; <span class="number">16</span>], <span class="prelude-val">None</span>);
+    <span class="kw">if </span>length &gt; <span class="number">16 </span>&amp;&amp; key.len() &lt;= <span class="number">32 </span>{
+        child[..(length - <span class="number">16</span>)].copy_from_slice(<span class="kw-2">&amp;</span>key[<span class="number">16</span>..]);
+    } <span class="kw">else if </span>length &gt; <span class="number">32 </span>{
+        child.copy_from_slice(<span class="kw-2">&amp;</span>key[<span class="number">16</span>..<span class="number">32</span>]);
+        rest = <span class="prelude-val">Some</span>(Vec::from(<span class="kw-2">&amp;</span>key[<span class="number">32</span>..]))
+    }
+
+    (child, rest)
+}
+
+<span class="kw">pub fn </span>bytes_to_felt(raw: <span class="kw-2">&amp;</span>[u8]) -&gt; StarkFelt {
+    <span class="kw">let </span><span class="kw-2">mut </span>buf = [<span class="number">0_u8</span>; <span class="number">32</span>];
+    <span class="kw">if </span>raw.len() &lt; <span class="number">32 </span>{
+        buf[<span class="number">32 </span>- raw.len()..].copy_from_slice(raw);
+    } <span class="kw">else </span>{
+        buf.copy_from_slice(<span class="kw-2">&amp;</span>raw[..<span class="number">32</span>]);
+    }
+    StarkFelt::new(buf).unwrap()
+}
+
+<span class="kw">pub fn </span>bytes_to_key(raw: <span class="kw-2">&amp;</span>[u8]) -&gt; PatriciaKey {
+    PatriciaKey(bytes_to_felt(raw))
 }
 </code></pre></div></section></main></body></html>
