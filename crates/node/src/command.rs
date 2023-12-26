@@ -170,8 +170,8 @@ pub fn run() -> sc_cli::Result<()> {
             })
         }
         #[cfg(not(feature = "try-runtime"))]
-        Some(Subcommand::TryRuntime) => Err("TryRuntime wasn't enabled when building the node. You can enable it \
-                                             with `--features try-runtime`."
+        Some(Subcommand::TryRuntimeDisabled) => Err("TryRuntime wasn't enabled when building the node. You can \
+                                                     enable it with `--features try-runtime`."
             .into()),
         Some(Subcommand::ChainInfo(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;

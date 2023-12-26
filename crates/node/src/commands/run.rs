@@ -42,8 +42,11 @@ pub struct ExtendedRunCmd {
     pub sealing: Option<Sealing>,
 
     /// Choose a supported DA Layer
-    #[clap(long)]
+    #[clap(long, requires = "da_conf")]
     pub da_layer: Option<DaLayer>,
+
+    #[clap(long, requires = "da_layer")]
+    pub da_conf: Option<String>,
 
     /// When enabled, more information about the blocks and their transaction is cached and stored
     /// in the database.
@@ -69,17 +72,16 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
         override_dev_environment(&mut cli.run);
     }
     let runner = cli.create_runner(&cli.run.base)?;
-    let data_path = &runner.config().data_path;
 
     let da_config: Option<(DaLayer, PathBuf)> = match cli.run.da_layer {
         Some(da_layer) => {
-            let da_path = data_path.join("da-config.json");
-            if !da_path.exists() {
-                log::info!("{} does not contain DA config", da_path.display());
+            let da_conf = PathBuf::from(cli.run.da_conf.expect("clap requires da_conf when da_layer is present"));
+            if !da_conf.exists() {
+                log::info!("{} does not contain DA config", da_conf.display());
                 return Err("DA config not available".into());
             }
 
-            Some((da_layer, da_path))
+            Some((da_layer, da_conf))
         }
         None => {
             log::info!("Madara initialized w/o DA layer");
