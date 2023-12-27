@@ -11,6 +11,8 @@
 - fix: Change serialization of bitvec to &[u8] in merkle tree to avoid memory
   uninitialized
 - chore: change SCARB config version for foundry CI
+- feat(da): update da calldata encoding to v0.11.0 spec, da conf examples, da
+  conf flag, da-tests in CI
 
 ## v0.6.0
 

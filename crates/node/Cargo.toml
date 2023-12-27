@@ -80,7 +80,7 @@ blockifier = { workspace = true }
 hex = { workspace = true }
 madara-runtime = { workspace = true }
 mc-commitment-state-diff = { workspace = true }
-mc-data-availability = { workspace = true }
+mc-data-availability = { workspace = true, features = ["clap"] }
 mc-db = { workspace = true }
 mc-mapping-sync = { workspace = true }
 mc-rpc = { workspace = true }

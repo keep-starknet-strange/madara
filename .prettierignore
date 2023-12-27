@@ -1,6 +1,7 @@
 target
 cairo-contracts/build
-madara-app
+madara-tsukuyomi
 madara-dev-explorer
 madara-docs
 madara-infra
+zaun

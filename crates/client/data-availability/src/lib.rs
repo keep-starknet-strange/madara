@@ -4,25 +4,29 @@ pub mod ethereum;
 mod sharp;
 pub mod utils;
 
-use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
 use anyhow::Result;
 use async_trait::async_trait;
 use ethers::types::{I256, U256};
+use futures::channel::mpsc;
 use futures::StreamExt;
-use mp_storage::{SN_NONCE_PREFIX, SN_STORAGE_PREFIX};
+use mc_commitment_state_diff::BlockDAData;
+use mp_hashers::HasherT;
+use pallet_starknet_runtime_api::StarknetRuntimeApi;
 use sc_client_api::client::BlockchainEvents;
 use serde::Deserialize;
 use sp_api::ProvideRuntimeApi;
-use sp_runtime::traits::Block as BlockT;
+use sp_blockchain::HeaderBackend;
+use sp_runtime::traits::{Block as BlockT, Header};
+use utils::state_diff_to_calldata;
 
-pub type StorageWrites<'a> = Vec<(&'a [u8], &'a [u8])>;
+pub struct DataAvailabilityWorker<B, C, H>(PhantomData<(B, C, H)>);
+pub struct DataAvailabilityWorkerProving<B>(PhantomData<B>);
 
-pub struct DataAvailabilityWorker<B, C>(PhantomData<(B, C)>);
-
-#[derive(Debug, Copy, Clone, PartialEq, clap::ValueEnum)]
+#[derive(Debug, Copy, Clone, PartialEq)]
+#[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
 pub enum DaLayer {
     Celestia,
     Ethereum,
@@ -31,7 +35,7 @@ pub enum DaLayer {
 
 /// Data availability modes in which Madara can be initialized.
 ///
-/// Default only mode currently implemented is Validium.
+/// Default only mode currently implemented is Sovereign.
 #[derive(Debug, Copy, Clone, PartialEq, Deserialize, Default)]
 pub enum DaMode {
     /// Full Validity Rollup
@@ -51,15 +55,15 @@ pub enum DaMode {
     /// will be necessary.
     #[serde(rename = "volition")]
     Volition,
-    /// Sovereign Validium
+    /// Sovereign Rollup
     ///
-    /// Validium state diffs are untethered to an accompanying validity proof therefore
+    /// Sovereign state diffs are untethered to an accompanying validity proof therefore
     /// they can simply be published to any da solution available. As this solution does not
     /// require an execution trace to be proved we can simply parse the state diff from the
     /// storage changes of the block.
-    #[serde(rename = "validium")]
+    #[serde(rename = "sovereign")]
     #[default]
-    Validium,
+    Sovereign,
 }
 
 #[async_trait]
@@ -69,55 +73,22 @@ pub trait DaClient: Send + Sync {
     async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()>;
 }
 
-impl<B, C> DataAvailabilityWorker<B, C>
+impl<B> DataAvailabilityWorkerProving<B>
 where
     B: BlockT,
-    C: ProvideRuntimeApi<B>,
-    C: BlockchainEvents<B> + 'static,
 {
-    pub async fn prove_current_block(da_mode: DaMode, client: Arc<C>, madara_backend: Arc<mc_db::Backend<B>>) {
-        let mut storage_event_st = client
-            .storage_changes_notification_stream(None, None)
-            .expect("node has been initialized to prove state change, but can't read from notification stream");
+    pub async fn prove_current_block(
+        da_mode: DaMode,
+        mut state_diffs_rx: mpsc::Receiver<BlockDAData>,
+        madara_backend: Arc<mc_db::Backend<B>>,
+    ) {
+        while let Some(BlockDAData(block_hash, csd, num_addr_accessed)) = state_diffs_rx.next().await {
+            log::info!("received state diff for block {block_hash}: {csd:?}. {num_addr_accessed} addresses accessed.");
 
-        while let Some(storage_event) = storage_event_st.next().await {
-            // Locate and encode the storage change
-            let mut nonces: HashMap<&[u8], &[u8]> = HashMap::new();
-            let mut storage_diffs: HashMap<&[u8], StorageWrites> = HashMap::new();
-
-            // Locate and encode the storage change
-            for event in storage_event.changes.iter() {
-                let mut prefix = event.1.0.as_slice();
-                let mut key: &[u8] = &[];
-                if prefix.len() > 32 {
-                    let raw_split = prefix.split_at(32);
-                    prefix = raw_split.0;
-                    key = raw_split.1;
-                }
-
-                if prefix == *SN_NONCE_PREFIX {
-                    if let Some(data) = event.2 {
-                        nonces.insert(key, data.0.as_slice());
-                    }
-                }
-
-                if prefix == *SN_STORAGE_PREFIX {
-                    if let Some(data) = event.2 {
-                        // first 32 bytes = contract address, second 32 bytes = storage variable
-                        let write_split = key.split_at(32);
-
-                        storage_diffs
-                            .entry(write_split.0)
-                            .and_modify(|v| v.push((write_split.1, data.0.as_slice())))
-                            .or_insert(vec![(write_split.1, data.0.as_slice())]);
-                    }
-                }
-            }
-
-            let state_diff = utils::pre_0_11_0_state_diff(storage_diffs, nonces);
-
-            // Store the DA output from the SN OS
-            if let Err(db_err) = madara_backend.da().store_state_diff(&storage_event.block, state_diff) {
+            // store the da encoded calldata for the state update worker
+            if let Err(db_err) =
+                madara_backend.da().store_state_diff(&block_hash, state_diff_to_calldata(csd, num_addr_accessed))
+            {
                 log::error!("db err: {db_err}");
             };
 
@@ -131,9 +102,7 @@ where
                     if let Ok(job_resp) = sharp::submit_pie("TODO") {
                         log::info!("Job Submitted: {}", job_resp.cairo_job_key);
                         // Store the cairo job key
-                        if let Err(db_err) =
-                            madara_backend.da().update_cairo_job(&storage_event.block, job_resp.cairo_job_key)
-                        {
+                        if let Err(db_err) = madara_backend.da().update_cairo_job(&block_hash, job_resp.cairo_job_key) {
                             log::error!("db err: {db_err}");
                         };
                     }
@@ -146,11 +115,14 @@ where
     }
 }
 
-impl<B, C> DataAvailabilityWorker<B, C>
+impl<B, C, H> DataAvailabilityWorker<B, C, H>
 where
     B: BlockT,
     C: ProvideRuntimeApi<B>,
+    C::Api: StarknetRuntimeApi<B>,
     C: BlockchainEvents<B> + 'static,
+    C: HeaderBackend<B>,
+    H: HasherT + Unpin,
 {
     pub async fn update_state(
         da_client: Box<dyn DaClient + Send + Sync>,
@@ -170,13 +142,19 @@ where
                 }
             };
 
+            let starknet_block_hash = {
+                let digest = notification.header.digest();
+                let block = mp_digest_log::find_starknet_block(digest).expect("starknet block not found");
+                block.header().hash::<H>().into()
+            };
+
             match da_client.get_mode() {
                 DaMode::Validity => {
                     // Check the SHARP status of last_proved + 1
                     // Write the publish state diff of last_proved + 1
                     log::info!("validity da mode not implemented");
                 }
-                DaMode::Validium => match madara_backend.da().state_diff(&notification.hash) {
+                DaMode::Sovereign => match madara_backend.da().state_diff(&starknet_block_hash) {
                     Ok(state_diff) => {
                         if let Err(e) = da_client.publish_state_diff(state_diff).await {
                             log::error!("DA PUBLISH ERROR: {}", e);

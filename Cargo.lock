@@ -2517,6 +2517,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "da-test"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "assert_matches",
+ "async-lock 3.2.0",
+ "clap 4.4.11",
+ "ethers",
+ "flate2",
+ "lazy_static",
+ "mc-data-availability",
+ "reqwest",
+ "rstest",
+ "serde",
+ "serde_json",
+ "starknet-ff",
+ "starknet-providers",
+ "starknet-rpc-test",
+ "thiserror",
+ "tokio",
+ "url",
+]
+
+[[package]]
 name = "darling"
 version = "0.14.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6206,15 +6230,21 @@ dependencies = [
  "anyhow",
  "async-trait",
  "avail-subxt",
+ "blockifier",
  "celestia-rpc",
  "celestia-types",
  "clap 4.4.10",
  "ethers",
  "futures",
+ "indexmap 2.0.0-pre",
  "jsonrpsee 0.20.3",
  "log",
+ "mc-commitment-state-diff",
  "mc-db",
+ "mp-digest-log",
+ "mp-hashers",
  "mp-storage",
+ "pallet-starknet-runtime-api",
  "reqwest",
  "sc-client-api",
  "serde",
@@ -6222,6 +6252,7 @@ dependencies = [
  "sp-api",
  "sp-blockchain",
  "sp-core 21.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
+ "sp-io 23.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
  "sp-keyring",
  "sp-runtime 24.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
  "starknet_api",
@@ -6245,6 +6276,7 @@ dependencies = [
  "sp-core 21.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
  "sp-database",
  "sp-runtime 24.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
+ "starknet_api",
  "uuid 1.6.1",
 ]
 

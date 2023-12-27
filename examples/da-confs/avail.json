@@ -1,0 +1,6 @@
+{
+  "ws_provider": "ws://127.0.0.1:9945",
+  "app_id": 0,
+  "validate_codegen": true,
+  "seed": "//Alice"
+}
