@@ -35,6 +35,8 @@ pub struct Header {
     pub event_commitment: StarkHash,
     /// The version of the Starknet protocol used when creating this block
     pub protocol_version: u8,
+    /// l1 gas price for this block
+    pub l1_gas_price: StarkHash,
     /// Extraneous data that might be useful for running transactions
     pub extra_data: Option<U256>,
 }
@@ -54,6 +56,7 @@ impl Header {
         event_count: u128,
         event_commitment: StarkHash,
         protocol_version: u8,
+        l1_gas_price: StarkHash,
         extra_data: Option<U256>,
     ) -> Self {
         Self {
@@ -67,6 +70,7 @@ impl Header {
             event_count,
             event_commitment,
             protocol_version,
+            l1_gas_price,
             extra_data,
         }
     }
@@ -101,7 +105,7 @@ impl Header {
             self.event_count.into(),
             self.event_commitment.into(),
             self.protocol_version.into(),
-            Felt252Wrapper::ZERO,
+            self.l1_gas_price.into(),
             self.parent_block_hash.into(),
         ];
 
