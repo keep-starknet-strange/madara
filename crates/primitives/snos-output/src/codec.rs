@@ -101,17 +101,18 @@ impl<T: SnosCodec> SnosCodec for Vec<T> {
     }
 
     fn encode_to(self, output: &mut Vec<StarkFelt>) {
-        let output_len_before = output.len();
         // Temporary placeholder value
         output.push(StarkFelt::from(0u8));
+
+        let output_len_before = output.len();
 
         for elt in self.into_iter() {
             elt.encode_to(output);
         }
 
-        // Replace the zero placeholder
         let added_data = output.len() - output_len_before;
-        output[output_len_before] = StarkFelt::from(added_data as u64);
+        // Replace the zero placeholder
+        output[output_len_before - 1] = StarkFelt::from(added_data as u64);
     }
 
     fn decode(input: &mut FeltReader) -> Result<Self, FeltReaderError> {
