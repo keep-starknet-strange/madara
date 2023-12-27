@@ -22,7 +22,6 @@ pub use mc_rpc_core::{
     StarknetWriteRpcApiServer,
 };
 use mc_storage::OverrideHandle;
-use mp_fee::ResourcePriceWrapper;
 use mp_felt::{Felt252Wrapper, Felt252WrapperError};
 use mp_hashers::HasherT;
 use mp_simulations::{SimulatedTransaction, SimulationFlag};
@@ -836,7 +835,7 @@ where
         let chain_id = self.chain_id()?;
         let starknet_version = starknet_block.header().protocol_version;
         // TODO(#1291): l1_gas_price defaulted, get l1_gas_price from block
-        let l1_gas_price = ResourcePriceWrapper::default();
+        let l1_gas_price = starknet_block.header().l1_gas_price;
 
         let block_hash = starknet_block.header().hash::<H>();
 
@@ -866,7 +865,7 @@ where
             new_root: Felt252Wrapper::from(starknet_block.header().global_state_root).into(),
             timestamp: starknet_block.header().block_timestamp,
             sequencer_address: Felt252Wrapper::from(starknet_block.header().sequencer_address).into(),
-            l1_gas_price: Felt252Wrapper::from(starknet_block.header().l1_gas_price).into(),
+            l1_gas_price: starknet_block.header().l1_gas_price.into(),
             starknet_version: starknet_version.to_string(),
         };
 
@@ -1080,8 +1079,6 @@ where
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
         let block_hash = starknet_block.header().hash::<H>();
         let starknet_version = starknet_block.header().protocol_version;
-        // TODO(#1291): l1_gas_price defaulted, get l1_gas_price from block
-        let l1_gas_price = ResourcePriceWrapper::default();
 
         let chain_id = self.chain_id()?;
         let chain_id = Felt252Wrapper(chain_id.0);
@@ -1121,7 +1118,7 @@ where
             timestamp: starknet_block.header().block_timestamp,
             sequencer_address: Felt252Wrapper::from(starknet_block.header().sequencer_address).into(),
             transactions,
-            l1_gas_price: l1_gas_price.0,
+            l1_gas_price: starknet_block.header().l1_gas_price.into(),
             starknet_version: starknet_version.to_string(),
         };
 

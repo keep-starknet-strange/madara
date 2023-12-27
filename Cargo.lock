@@ -6607,6 +6607,7 @@ name = "mp-block"
 version = "0.6.0"
 dependencies = [
  "blockifier",
+ "mp-fee",
  "mp-felt",
  "mp-hashers",
  "mp-transactions",
@@ -6658,8 +6659,13 @@ version = "0.6.0"
 dependencies = [
  "blockifier",
  "hashbrown 0.14.3",
+ "mp-felt",
  "mp-state",
+ "parity-scale-codec",
  "phf",
+ "scale-info",
+ "serde",
+ "serde_with",
  "sp-arithmetic 16.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
  "starknet-core",
  "starknet_api",

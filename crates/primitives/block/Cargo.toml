@@ -15,6 +15,11 @@ blockifier = { workspace = true }
 mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
 mp-transactions = { workspace = true }
+mp-fee = { workspace = true, features = [
+  "parity-scale-codec",
+  "serde",
+  "scale-info",
+] }
 sp-core = { workspace = true }
 starknet_api = { workspace = true }
 
@@ -33,6 +38,7 @@ default = ["std"]
 std = [
   "sp-core/std",
   "mp-felt/std",
+  "mp-fee/std",
   "mp-transactions/std",
   "mp-hashers/std",
   "starknet_api/std",
@@ -44,8 +50,9 @@ std = [
 parity-scale-codec = [
   "dep:parity-scale-codec",
   "mp-felt/parity-scale-codec",
+  "mp-fee/parity-scale-codec",
   "mp-transactions/parity-scale-codec",
   "starknet_api/parity-scale-codec",
   "blockifier/parity-scale-codec",
 ]
-serde = ["dep:serde", "mp-felt/serde", "mp-transactions/serde"]
+serde = ["dep:serde", "mp-felt/serde", "mp-transactions/serde", "mp-fee/serde"]

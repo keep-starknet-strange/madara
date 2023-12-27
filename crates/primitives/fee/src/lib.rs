@@ -29,7 +29,7 @@ use starknet_api::calldata;
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, Fee};
-use starknet_core::types::ResourcePrice;
+use starknet_core::types::ResourcePrice as CoreResourcePrice;
 
 /// Initial gas for a transaction
 pub const INITIAL_GAS: u64 = u64::MAX;
@@ -54,13 +54,24 @@ pub const TRANSFER_SELECTOR_HASH: [u8; 32] = [
     64, 236, 165, 180, 130, 209, 46,
 ]; // starknet_keccak(TRANSFER_SELECTOR_NAME.as_bytes()).to_le_bytes();
 
-/// Default implementation of ressource price.
-/// TODO(#1291): consider replacing it with a proper implementation https://github.com/xJonathanLEI/starknet-rs/blob/fec81d126c58ff3dff6cbfd4b9e714913298e54e/starknet-core/src/types/codegen.rs#L1242C1-L1253C2.
-pub struct ResourcePriceWrapper(pub ResourcePrice);
+#[serde_with::serde_as]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct ResourcePrice {
+    /// The price of one unit of the given resource, denominated in fri (10^-18 strk)
+    pub price_in_strk: Option<u64>,
+    /// The price of one unit of the given resource, denominated in wei
+    pub price_in_wei: u64,
+}
 
-impl Default for ResourcePriceWrapper {
-    fn default() -> Self {
-        ResourcePriceWrapper(ResourcePrice { price_in_strk: Some(0u64), price_in_wei: 0 })
+impl From<ResourcePrice> for CoreResourcePrice {
+    fn from(item: ResourcePrice) -> Self {
+        CoreResourcePrice {
+            price_in_strk: item.price_in_strk.into(),
+            price_in_wei: item.price_in_wei.into(),
+        }
     }
 }
 

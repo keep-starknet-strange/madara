@@ -84,7 +84,7 @@ use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
 use mp_block::{Block as StarknetBlock, Header as StarknetHeader};
 use mp_digest_log::MADARA_ENGINE_ID;
-use mp_fee::INITIAL_GAS;
+use mp_fee::{INITIAL_GAS, ResourcePrice};
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
@@ -1029,6 +1029,9 @@ impl<T: Config> Pallet<T> {
         let protocol_version = T::ProtocolVersion::get();
         let extra_data = None;
 
+        // TODO: Compute l1_gas_price correctly
+        let l1_gas_price = ResourcePrice::default();
+
         let block = StarknetBlock::new(
             StarknetHeader::new(
                 parent_block_hash.into(),
@@ -1041,6 +1044,7 @@ impl<T: Config> Pallet<T> {
                 events.len() as u128,
                 event_commitment.into(),
                 protocol_version,
+                l1_gas_price.into(),
                 extra_data,
             ),
             transactions,
