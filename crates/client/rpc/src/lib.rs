@@ -27,7 +27,7 @@ use mp_felt::{Felt252Wrapper, Felt252WrapperError};
 use mp_hashers::HasherT;
 use mp_simulations::{SimulatedTransaction, SimulationFlag};
 use mp_transactions::compute_hash::ComputeTransactionHash;
-use mp_transactions::execution::{StarknetRPCExecutionResources};
+use mp_transactions::execution::StarknetRPCExecutionResources;
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
 use mp_transactions::{TransactionStatus, UserTransaction};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
@@ -866,7 +866,7 @@ where
             new_root: Felt252Wrapper::from(starknet_block.header().global_state_root).into(),
             timestamp: starknet_block.header().block_timestamp,
             sequencer_address: Felt252Wrapper::from(starknet_block.header().sequencer_address).into(),
-            l1_gas_price: l1_gas_price.0,
+            l1_gas_price: Felt252Wrapper::from(starknet_block.header().l1_gas_price).into(),
             starknet_version: starknet_version.to_string(),
         };
 
@@ -1502,7 +1502,7 @@ where
                 messages_sent: Default::default(),
                 events: events_converted,
                 execution_result,
-				execution_resources: execution_resources.into_core_execution_resources(),
+                execution_resources: execution_resources.into_core_execution_resources(),
             }),
             mp_transactions::Transaction::DeployAccount(tx) => {
                 TransactionReceipt::DeployAccount(DeployAccountTransactionReceipt {
@@ -1515,7 +1515,7 @@ where
                     events: events_converted,
                     contract_address: tx.get_account_address(),
                     execution_result,
-					execution_resources: execution_resources.into_core_execution_resources(),
+                    execution_resources: execution_resources.into_core_execution_resources(),
                 })
             }
             mp_transactions::Transaction::Invoke(_) => TransactionReceipt::Invoke(InvokeTransactionReceipt {
@@ -1527,7 +1527,7 @@ where
                 messages_sent: Default::default(),
                 events: events_converted,
                 execution_result,
-				execution_resources: execution_resources.into_core_execution_resources(),
+                execution_resources: execution_resources.into_core_execution_resources(),
             }),
             mp_transactions::Transaction::L1Handler(_) => TransactionReceipt::L1Handler(L1HandlerTransactionReceipt {
                 message_hash,
@@ -1539,7 +1539,7 @@ where
                 messages_sent: Default::default(),
                 events: events_converted,
                 execution_result,
-				execution_resources: execution_resources.into_core_execution_resources(),
+                execution_resources: execution_resources.into_core_execution_resources(),
             }),
         };
 

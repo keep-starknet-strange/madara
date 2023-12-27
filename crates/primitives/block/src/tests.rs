@@ -8,7 +8,6 @@ use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::{StarkFelt, StarkHash};
 
 use crate::Header;
-
 fn generate_dummy_header() -> Header {
     Header::new(
         StarkFelt::from(1u128),
@@ -21,7 +20,8 @@ fn generate_dummy_header() -> Header {
         0,
         StarkFelt::from(4u128),
         1,
-        Some(U256::from(3)),
+        StarkFelt::from(5u128),
+        None,
     )
 }
 
@@ -55,6 +55,7 @@ fn test_real_header_hash() {
     let event_commitment =
         StarkFelt::try_from("0x2043ba1ef46882ce1dbb17b501fffa4b71f87f618e8f394e9605959d92efdf6").unwrap();
     let protocol_version = 0;
+    let l1_gas_price = StarkFelt::try_from("0x8e0dc8cbd").unwrap();
     let extra_data = None;
 
     let header = Header::new(
@@ -68,6 +69,7 @@ fn test_real_header_hash() {
         event_count,
         event_commitment,
         protocol_version,
+        l1_gas_price,
         extra_data,
     );
 
