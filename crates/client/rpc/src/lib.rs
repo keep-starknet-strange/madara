@@ -23,6 +23,7 @@ pub use mc_rpc_core::{
 };
 use mc_storage::OverrideHandle;
 use mp_felt::{Felt252Wrapper, Felt252WrapperError};
+use mp_block::BlockId as StarknetBlockId;
 use mp_hashers::HasherT;
 use mp_simulations::{SimulatedTransaction, SimulationFlag};
 use mp_transactions::compute_hash::ComputeTransactionHash;
@@ -45,9 +46,9 @@ use sp_runtime::transaction_validity::InvalidTransaction;
 use sp_runtime::DispatchError;
 use starknet_api::transaction::Calldata;
 use starknet_core::types::{
-    BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
+    BlockHashAndNumber, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
-    DeclareTransactionReceipt, DeclareTransactionResult, DeployAccountTransactionReceipt,
+    DeclareTransactionReceipt, DeclareTransactionResult, DeployAccountTransactionReceipt, BlockId,
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, ExecutionResult, FeeEstimate, FieldElement,
     FunctionCall, Hash256, InvokeTransactionReceipt, InvokeTransactionResult, L1HandlerTransactionReceipt,
     MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateDiff, StateUpdate,
@@ -1575,9 +1576,6 @@ where
         let best_block_hash = self.client.info().best_hash;
         println!("Best block hash: {:?}", best_block_hash);
 
-        let chain_id = Felt252Wrapper(self.chain_id()?.0);
-        println!("Chain ID: {:?}", chain_id);
-
         let mut user_transactions = vec![];
         for tx in transactions {
             println!("Processing transaction: {:?}", tx);
@@ -1594,7 +1592,7 @@ where
         let fee_estimates = self
             .client
             .runtime_api()
-            .simulate_transactions(substrate_block_hash, user_transactions, simulation_flags.into())
+            .simulate_transactions(block_id.into(), user_transactions, simulation_flags.into())
             .map_err(|e| {
                 error!("Request parameters error: {e}");
                 StarknetRpcApiError::InternalServerError

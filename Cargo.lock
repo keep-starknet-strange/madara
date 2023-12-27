@@ -6120,6 +6120,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
+ "mp-block",
  "mp-chain-id",
  "mp-felt",
  "mp-hashers",
@@ -6612,6 +6613,7 @@ dependencies = [
  "mp-hashers",
  "mp-transactions",
  "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-core 21.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
  "starknet_api",
@@ -7544,6 +7546,7 @@ version = "0.1.0"
 dependencies = [
  "blockifier",
  "hashbrown 0.14.3",
+ "mp-block",
  "mp-felt",
  "mp-simulations",
  "mp-transactions",

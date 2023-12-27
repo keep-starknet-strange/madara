@@ -31,6 +31,7 @@ use mp_felt::Felt252Wrapper;
 use mp_simulations::{SimulatedTransaction, SimulationFlags};
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::{Transaction, UserTransaction};
+use mp_block::BlockId;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the Starknet pallet.
 pub use pallet_starknet;
@@ -267,8 +268,8 @@ impl_runtime_apis! {
             Starknet::estimate_fee(transactions)
         }
 
-        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<SimulatedTransaction>, DispatchError> {
-            Starknet::simulate_transactions(transactions, simulation_flags)
+        fn simulate_transactions(block_id: BlockId, transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<SimulatedTransaction>, DispatchError> {
+            Starknet::simulate_transactions(block_id, transactions, simulation_flags)
         }
 
         fn get_starknet_events_and_their_associated_tx_hash(block_extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper) -> Vec<(Felt252Wrapper, StarknetEvent)> {

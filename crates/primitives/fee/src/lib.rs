@@ -6,6 +6,7 @@ pub extern crate alloc;
 
 use alloc::vec;
 use alloc::vec::Vec;
+use serde::Deserialize;
 #[cfg(feature = "std")]
 use std::collections::HashMap;
 
@@ -55,7 +56,7 @@ pub const TRANSFER_SELECTOR_HASH: [u8; 32] = [
 ]; // starknet_keccak(TRANSFER_SELECTOR_NAME.as_bytes()).to_le_bytes();
 
 #[serde_with::serde_as]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)] // Added Deserialize here
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
@@ -68,10 +69,7 @@ pub struct ResourcePrice {
 
 impl From<ResourcePrice> for CoreResourcePrice {
     fn from(item: ResourcePrice) -> Self {
-        CoreResourcePrice {
-            price_in_strk: item.price_in_strk.into(),
-            price_in_wei: item.price_in_wei.into(),
-        }
+        CoreResourcePrice { price_in_strk: item.price_in_strk.into(), price_in_wei: item.price_in_wei.into() }
     }
 }
 

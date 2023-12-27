@@ -84,7 +84,7 @@ use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
 use mp_block::{Block as StarknetBlock, Header as StarknetHeader};
 use mp_digest_log::MADARA_ENGINE_ID;
-use mp_fee::{INITIAL_GAS, ResourcePrice};
+use mp_fee::{ResourcePrice, INITIAL_GAS};
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
@@ -99,6 +99,7 @@ use mp_transactions::{
     DeclareTransaction, DeployAccountTransaction, HandleL1MessageTransaction, InvokeTransaction, Transaction,
     UserAndL1HandlerTransaction, UserTransaction,
 };
+use mp_block::BlockId;
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
 use starknet_api::api_core::{ChainId, ClassHash, CompiledClassHash, ContractAddress, EntryPointSelector, Nonce};
@@ -1142,6 +1143,7 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn simulate_transactions(
+        block_id: BlockId,
         transactions: Vec<UserTransaction>,
         simulation_flags: SimulationFlags,
     ) -> Result<Vec<SimulatedTransaction>, DispatchError> {

@@ -113,9 +113,6 @@ async fn works_ok_on_no_validate(madara: &ThreadSafeMadaraClient) -> Result<(), 
     let rpc = madara.get_starknet_client().await;
 
     let tx = BroadcastedInvokeTransaction {
-        max_fee: FieldElement::from(420u16),
-        signature: vec![],
-        nonce: FieldElement::ZERO,
         sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap(),
         calldata: vec![
             FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
@@ -123,6 +120,9 @@ async fn works_ok_on_no_validate(madara: &ThreadSafeMadaraClient) -> Result<(), 
             FieldElement::from_hex_be("1").unwrap(),
             FieldElement::from(81u8),
         ],
+        max_fee: FieldElement::from(420u16),
+        signature: vec![],
+        nonce: FieldElement::ZERO,
         is_query: false,
     };
 
@@ -135,7 +135,7 @@ async fn works_ok_on_no_validate(madara: &ThreadSafeMadaraClient) -> Result<(), 
         "RPC simulate_transactions called {:?}",
         rpc.simulate_transactions(
             BlockId::Tag(BlockTag::Latest),
-            &[invoke_transaction.clone(), invoke_transaction_2.clone(),],
+            &[invoke_transaction.clone(), invoke_transaction_2.clone()],
             []
         )
         .await

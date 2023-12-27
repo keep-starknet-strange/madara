@@ -16,6 +16,7 @@ mp-transactions = { workspace = true, features = [
   "parity-scale-codec",
   "scale-info",
 ] }
+mp-block = { workspace = true, features = ["parity-scale-codec", "serde", "scale-info"] }
 
 # Starknet
 blockifier = { workspace = true, features = [
