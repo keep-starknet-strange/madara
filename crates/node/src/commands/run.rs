@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use clap::ValueHint::FilePath;
 use madara_runtime::SealingMode;
 use mc_data_availability::DaLayer;
 use mc_l1_messages::config::{L1MessagesWorkerConfig, L1MessagesWorkerConfigError};
@@ -80,15 +81,20 @@ pub struct ExtendedRunCmd {
     pub sealing: Option<Sealing>,
 
     /// Choose a supported DA Layer
-    #[clap(long, requires = "da_conf")]
+    #[clap(long, ignore_case = true, requires = "da_conf")]
     pub da_layer: Option<DaLayer>,
 
-    #[clap(long, requires = "da_layer")]
-    pub da_conf: Option<String>,
+    /// Path to a file containing the DA configuration
+    #[clap(long, value_hint = FilePath, requires = "da_layer")]
+    pub da_conf: Option<PathBuf>,
 
     /// Choose a supported settlement layer
-    #[clap(long, ignore_case = true)]
+    #[clap(long, ignore_case = true, requires = "settlement_conf")]
     pub settlement: Option<SettlementLayer>,
+
+    /// Path to a file containing the settlement configuration
+    #[clap(long, value_hint = FilePath, requires = "settlement")]
+    pub settlement_conf: Option<PathBuf>,
 
     /// When enabled, more information about the blocks and their transaction is cached and stored
     /// in the database.
@@ -118,11 +124,10 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
         override_dev_environment(&mut cli.run);
     }
     let runner = cli.create_runner(&cli.run.base)?;
-    let data_path = &runner.config().data_path;
 
     let da_config: Option<(DaLayer, PathBuf)> = match cli.run.da_layer {
         Some(da_layer) => {
-            let da_conf = PathBuf::from(cli.run.da_conf.expect("clap requires da_conf when da_layer is present"));
+            let da_conf = cli.run.da_conf.expect("clap requires da_conf when da_layer is present");
             if !da_conf.exists() {
                 log::info!("{} does not contain DA config", da_conf.display());
                 return Err("DA config not available".into());
@@ -138,13 +143,17 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
 
     let l1_messages_worker_config = extract_l1_messages_worker_config(&cli.run.l1_messages_worker)
         .map_err(|e| sc_cli::Error::Input(e.to_string()))?;
+
     let settlement_config: Option<(SettlementLayer, PathBuf)> = match cli.run.settlement {
         Some(SettlementLayer::Ethereum) => {
-            let config_path = data_path.join("eth-config.json");
-            if !config_path.exists() {
-                return Err(sc_cli::Error::Input(format!("Ethereum config not found at {}", config_path.display())));
+            let settlement_conf = cli.run.settlement_conf.expect("clap requires da_conf when settlement is present");
+            if !settlement_conf.exists() {
+                return Err(sc_cli::Error::Input(format!(
+                    "Ethereum config not found at {}",
+                    settlement_conf.display()
+                )));
             }
-            Some((SettlementLayer::Ethereum, config_path))
+            Some((SettlementLayer::Ethereum, settlement_conf))
         }
         None => {
             log::info!("Madara initialized w/o settlement layer");
