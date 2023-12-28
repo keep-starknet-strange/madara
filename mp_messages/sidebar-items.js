@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["conversions"],"struct":["MessageL1ToL2","MessageL2ToL1"]};

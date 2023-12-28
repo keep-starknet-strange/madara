@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["copy_file","fetch_and_validate_genesis_assets","write_content_to_disk"],"struct":["SetupCmd","SetupSource"]};
+window.SIDEBAR_ITEMS = {"enum":["ConfigSource"],"fn":["write_content_to_disk"],"struct":["SetupCmd","SetupSource"]};

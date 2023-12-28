@@ -469,6 +469,28 @@
 <a href="#469" id="469">469</a>
 <a href="#470" id="470">470</a>
 <a href="#471" id="471">471</a>
+<a href="#472" id="472">472</a>
+<a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
+<a href="#483" id="483">483</a>
+<a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
+<a href="#486" id="486">486</a>
+<a href="#487" id="487">487</a>
+<a href="#488" id="488">488</a>
+<a href="#489" id="489">489</a>
+<a href="#490" id="490">490</a>
+<a href="#491" id="491">491</a>
+<a href="#492" id="492">492</a>
+<a href="#493" id="493">493</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don&#39;t support yet validity proofs and state updates to
@@ -501,7 +523,7 @@
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_simulations::{SimulatedTransaction, SimulationFlags};
 <span class="kw">use </span>mp_transactions::compute_hash::ComputeTransactionHash;
-<span class="kw">use </span>mp_transactions::{Transaction, UserTransaction};
+<span class="kw">use </span>mp_transactions::{HandleL1MessageTransaction, Transaction, UserTransaction};
 <span class="kw">use </span>pallet_grandpa::{fg_primitives, AuthorityId <span class="kw">as </span>GrandpaId, AuthorityList <span class="kw">as </span>GrandpaAuthorityList};
 <span class="doccomment">/// Import the Starknet pallet.
 </span><span class="kw">pub use </span>pallet_starknet;
@@ -525,7 +547,7 @@
 <span class="kw">use </span>starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_api::state::StorageKey;
-<span class="kw">use </span>starknet_api::transaction::{Calldata, Event <span class="kw">as </span>StarknetEvent, TransactionHash};
+<span class="kw">use </span>starknet_api::transaction::{Calldata, Event <span class="kw">as </span>StarknetEvent, Fee, MessageToL1, TransactionHash};
 <span class="doccomment">/// Import the types.
 </span><span class="kw">pub use </span>types::<span class="kw-2">*</span>;
 
@@ -730,6 +752,14 @@
             Starknet::chain_id()
         }
 
+        <span class="kw">fn </span>program_hash() -&gt; Felt252Wrapper {
+            Starknet::program_hash()
+        }
+
+        <span class="kw">fn </span>fee_token_address() -&gt; ContractAddress {
+            Starknet::fee_token_address()
+        }
+
         <span class="kw">fn </span>is_transaction_fee_disabled() -&gt; bool {
             Starknet::is_transaction_fee_disabled()
         }
@@ -834,17 +864,25 @@
             <span class="prelude-val">Some</span>(events)
         }
 
+        <span class="kw">fn </span>get_tx_messages_to_l1(tx_hash: TransactionHash) -&gt; Vec&lt;MessageToL1&gt; {
+            Starknet::tx_messages(tx_hash)
+        }
+
         <span class="kw">fn </span>get_tx_execution_outcome(tx_hash: TransactionHash) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt; {
-           Starknet::tx_revert_error(tx_hash).map(|s| s.into_bytes())
+            Starknet::tx_revert_error(tx_hash).map(|s| s.into_bytes())
         }
 
         <span class="kw">fn </span>get_block_context() -&gt; pallet_starknet_runtime_api::BlockContext {
            Starknet::get_block_context().into()
         }
+
+        <span class="kw">fn </span>l1_nonce_unused(nonce: Nonce) -&gt; bool {
+            Starknet::ensure_l1_message_not_executed(<span class="kw-2">&amp;</span>nonce).is_ok()
+        }
     }
 
     <span class="kw">impl </span>pallet_starknet_runtime_api::ConvertTransactionRuntimeApi&lt;Block&gt; <span class="kw">for </span>Runtime {
-        <span class="kw">fn </span>convert_transaction(transaction: UserTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;UncheckedExtrinsic, DispatchError&gt; {
+        <span class="kw">fn </span>convert_transaction(transaction: UserTransaction) -&gt; UncheckedExtrinsic {
             <span class="kw">let </span>call = <span class="kw">match </span>transaction {
                 UserTransaction::Declare(tx, contract_class) =&gt; {
                     pallet_starknet::Call::declare { transaction: tx, contract_class  }
@@ -857,7 +895,13 @@
                 }
             };
 
-            <span class="prelude-val">Ok</span>(UncheckedExtrinsic::new_unsigned(call.into()))
+            UncheckedExtrinsic::new_unsigned(call.into())
+        }
+
+        <span class="kw">fn </span>convert_l1_transaction(transaction: HandleL1MessageTransaction, fee: Fee) -&gt; UncheckedExtrinsic {
+            <span class="kw">let </span>call =  pallet_starknet::Call::&lt;Runtime&gt;::consume_l1_message { transaction, paid_fee_on_l1: fee };
+
+            UncheckedExtrinsic::new_unsigned(call.into())
         }
 
         <span class="kw">fn </span>convert_error(error: DispatchError) -&gt; StarknetTransactionExecutionError {

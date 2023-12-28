@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["StarknetContractCalls"],"static":["STARKNETCONTRACT_ABI"],"struct":["ConfigHashCall","ConfigHashReturn","ProgramHashCall","ProgramHashReturn","StarknetContract","StateBlockNumberCall","StateBlockNumberReturn","StateRootCall","StateRootReturn","UpdateStateCall"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["starknet_initializer","starknet_messaging"],"struct":["InitData","StarknetContract"]};

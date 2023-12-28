@@ -35,7 +35,7 @@
 <span class="attr">#[fixture]
 #[once]
 </span><span class="kw">pub fn </span>madara() -&gt; ThreadSafeMadaraClient {
-    ThreadSafeMadaraClient(RwLock::new(MadaraClient::new()))
+    ThreadSafeMadaraClient(RwLock::new(MadaraClient::default()))
 }
 
 <span class="kw">impl </span>ThreadSafeMadaraClient {

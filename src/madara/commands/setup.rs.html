@@ -181,6 +181,33 @@
 <a href="#181" id="181">181</a>
 <a href="#182" id="182">182</a>
 <a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::{Path, PathBuf};
 
 <span class="kw">use </span>sc_cli::{Error, <span class="prelude-ty">Result</span>, SubstrateCli};
@@ -243,6 +270,85 @@
     }
 }
 
+<span class="kw">enum </span>ConfigSource {
+    Local(PathBuf),
+    Remote(Url),
+}
+
+<span class="kw">impl </span>ConfigSource {
+    <span class="kw">fn </span>display(<span class="kw-2">&amp;</span><span class="self">self</span>, child_path: <span class="prelude-ty">Option</span>&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;String&gt; {
+        <span class="kw">let </span>string = <span class="kw">match </span><span class="self">self </span>{
+            ConfigSource::Local(path_buf) =&gt; {
+                <span class="kw">let </span><span class="kw-2">mut </span>full = path_buf.clone();
+
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(childs) = child_path {
+                    <span class="kw">for </span>child <span class="kw">in </span>childs {
+                        full = full.join(child);
+                    }
+                }
+
+                full.display().to_string()
+            }
+            ConfigSource::Remote(url) =&gt; {
+                <span class="kw">let </span><span class="kw-2">mut </span>full = url.clone();
+
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(childs) = child_path {
+                    <span class="kw">for </span>child <span class="kw">in </span>childs {
+                        full = full.join(child).map_err(|e| Error::Application(Box::new(e)))<span class="question-mark">?</span>;
+                    }
+                }
+
+                full.to_string()
+            }
+        };
+
+        <span class="prelude-val">Ok</span>(string)
+    }
+
+    <span class="kw">fn </span>load_config(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
+        <span class="kw">let </span>configs: Vec&lt;u8&gt; = <span class="kw">match </span><span class="self">self </span>{
+            ConfigSource::Local(source_configs_path) =&gt; {
+                <span class="kw">let </span>index_file_path = source_configs_path.join(<span class="string">&quot;index.json&quot;</span>);
+                std::fs::read(index_file_path).map_err(|e| Error::Application(Box::new(e)))<span class="question-mark">?
+            </span>}
+            ConfigSource::Remote(source_configs_url) =&gt; {
+                <span class="macro">println!</span>(<span class="string">&quot;Fetching chain config from &#39;{}&#39;&quot;</span>, <span class="kw-2">&amp;</span>source_configs_url);
+
+                <span class="comment">// Query, deserialize and copy it
+                </span><span class="kw">let </span>response =
+                    reqwest::blocking::get(source_configs_url.clone()).map_err(|e| Error::Application(Box::new(e)))<span class="question-mark">?</span>;
+                response.bytes().map_err(|e| Error::Application(Box::new(e)))<span class="question-mark">?</span>.into()
+            }
+        };
+
+        <span class="prelude-val">Ok</span>(configs)
+    }
+
+    <span class="kw">fn </span>load_asset(<span class="kw-2">&amp;</span><span class="self">self</span>, asset: <span class="kw-2">&amp;</span>FileInfos) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
+        <span class="kw">let </span>file_as_bytes = <span class="kw">match </span><span class="self">self </span>{
+            ConfigSource::Local(source_config_dir_path) =&gt; {
+                <span class="kw">let </span>asset_path = <span class="kw-2">&amp;</span>source_config_dir_path.join(GENESIS_ASSETS_DIR).join(<span class="kw-2">&amp;</span>asset.name);
+                <span class="kw">if </span>!asset_path.exists() {
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;Source file &#39;{}&#39; does not exist&quot;</span>, asset_path.display()).into());
+                }
+                std::fs::read(asset_path)<span class="question-mark">?
+            </span>}
+            ConfigSource::Remote(source_configs_dir_url) =&gt; {
+                <span class="kw">let </span>full_url = source_configs_dir_url
+                    .join(GENESIS_ASSETS_DIR)
+                    .map_err(|e| Error::Application(Box::new(e)))<span class="question-mark">?
+                    </span>.join(<span class="kw-2">&amp;</span>asset.name)
+                    .map_err(|e| Error::Application(Box::new(e)))<span class="question-mark">?</span>;
+
+                <span class="kw">let </span>response = reqwest::blocking::get(full_url.clone()).map_err(|e| Error::Application(Box::new(e)))<span class="question-mark">?</span>;
+                response.bytes().map_err(|e| Error::Application(Box::new(e)))<span class="question-mark">?</span>.into()
+            }
+        };
+
+        <span class="prelude-val">Ok</span>(file_as_bytes)
+    }
+}
+
 <span class="kw">impl </span>SetupCmd {
     <span class="kw">pub fn </span>run(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="macro">log::info!</span>(<span class="string">&quot;setup cmd: {:?}&quot;</span>, <span class="self">self</span>);
@@ -253,60 +359,49 @@
         };
         <span class="macro">log::info!</span>(<span class="string">&quot;Setting up madara config at &#39;{}&#39;&quot;</span>, dest_config_dir_path.display());
 
-        <span class="comment">// Load config from disk
-        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(src_configs_dir_path) = <span class="kw-2">&amp;</span><span class="self">self</span>.source.from_local {
-            <span class="comment">// Build the source file path
-            </span><span class="kw">let </span>src_configs_dir_path = PathBuf::from(src_configs_dir_path);
-            <span class="kw">let </span>index_file_path = src_configs_dir_path.join(<span class="string">&quot;index.json&quot;</span>);
-
-            <span class="comment">// Read, deserialize and copy it
-            </span><span class="kw">let </span>madara_configs = {
-                <span class="kw">let </span>src_file_content =
-                    std::fs::read_to_string(index_file_path).map_err(|e| Error::Application(Box::new(e)))<span class="question-mark">?</span>;
-                <span class="comment">// Make sure content is valid before writing it to disk
-                </span><span class="kw">let </span>configs_content: configs::Configs = serde_json::from_str(<span class="kw-2">&amp;</span>src_file_content)
-                    .map_err(|e| Error::Input(<span class="macro">format!</span>(<span class="string">&quot;invalid `index.json` content: {}&quot;</span>, e)))<span class="question-mark">?</span>;
-                write_content_to_disk(src_file_content, dest_config_dir_path.join(<span class="string">&quot;index.json&quot;</span>).as_path())<span class="question-mark">?</span>;
-
-                configs_content
-            };
-
-            <span class="comment">// Copy each asset
-            </span><span class="kw">for </span>asset <span class="kw">in </span>madara_configs.genesis_assets {
-                copy_file(
-                    <span class="kw-2">&amp;</span>src_configs_dir_path.join(GENESIS_ASSETS_DIR).join(asset.name),
-                    <span class="kw-2">&amp;</span>dest_config_dir_path.join(GENESIS_ASSETS_DIR),
-                )<span class="question-mark">?</span>;
-            }
-        <span class="comment">// Load config form a remote server
-        </span>} <span class="kw">else if let </span><span class="prelude-val">Some</span>(configs_url) = <span class="kw-2">&amp;</span><span class="self">self</span>.source.from_remote {
-            <span class="comment">// Build the source url
-            </span><span class="kw">let </span>configs_url = Url::parse(configs_url)
+        <span class="kw">let </span>config_source = <span class="kw">if let </span><span class="prelude-val">Some</span>(src_cfg_dir_path) = <span class="kw-2">&amp;</span><span class="self">self</span>.source.from_local {
+            <span class="kw">let </span>path = PathBuf::from(src_cfg_dir_path);
+            ConfigSource::Local(path)
+        } <span class="kw">else if let </span><span class="prelude-val">Some</span>(src_cfg_dir_url) = <span class="kw-2">&amp;</span><span class="self">self</span>.source.from_remote {
+            <span class="kw">let </span>url = Url::parse(src_cfg_dir_url)
                 .map_err(|e| Error::Input(<span class="macro">format!</span>(<span class="string">&quot;invalid input for &#39;fetch_madara_configs&#39;: {}&quot;</span>, e)))<span class="question-mark">?</span>;
-            <span class="macro">println!</span>(<span class="string">&quot;Fetching chain config from &#39;{}&#39;&quot;</span>, <span class="kw-2">&amp;</span>configs_url);
-
-            <span class="comment">// Query, deserialize and copy it
-            </span><span class="kw">let </span>madara_configs = {
-                <span class="kw">let </span>response = reqwest::blocking::get(configs_url).map_err(|e| Error::Application(Box::new(e)))<span class="question-mark">?</span>;
-                <span class="kw">let </span>bytes = response.bytes().map_err(|e| Error::Application(Box::new(e)))<span class="question-mark">?</span>;
-                <span class="comment">// Make sure content is valid before writing it to disk
-                </span><span class="kw">let </span>configs_content: configs::Configs =
-                    serde_json::from_slice(<span class="kw-2">&amp;</span>bytes[..]).map_err(|e| Error::Application(Box::new(e)))<span class="question-mark">?</span>;
-                write_content_to_disk(bytes, dest_config_dir_path.join(<span class="string">&quot;index.json&quot;</span>).as_path())<span class="question-mark">?</span>;
-
-                configs_content
-            };
-
-            <span class="comment">// Query and copy each asset
-            </span><span class="kw">let </span>base_url = Url::parse(<span class="kw-2">&amp;</span>madara_configs.remote_base_path).map_err(|e| Error::Application(Box::new(e)))<span class="question-mark">?</span>;
-            <span class="kw">for </span>asset <span class="kw">in </span>madara_configs.genesis_assets {
-                fetch_and_validate_genesis_assets(<span class="kw-2">&amp;</span>base_url, asset, <span class="kw-2">&amp;</span>dest_config_dir_path)<span class="question-mark">?</span>;
-            }
+            ConfigSource::Remote(url)
         } <span class="kw">else </span>{
             <span class="macro">unreachable!</span>(
                 <span class="string">&quot;clap::Args is derived upon `SetupSource` in a way that guarantee that either `from_remote` or \
                  `from_local` is present&quot;
             </span>);
+        };
+
+        <span class="kw">let </span>configs_file_content = config_source.load_config()<span class="question-mark">?</span>;
+        <span class="comment">// Make sure it is valid data before writing it to disk
+        </span><span class="kw">let </span>configs: configs::Configs =
+            serde_json::from_slice(<span class="kw-2">&amp;</span>configs_file_content).map_err(|e| Error::Application(Box::new(e)))<span class="question-mark">?</span>;
+        write_content_to_disk(configs_file_content, dest_config_dir_path.join(<span class="string">&quot;index.json&quot;</span>).as_path())<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>assets_dir_dest_path = <span class="kw-2">&amp;</span>dest_config_dir_path.join(GENESIS_ASSETS_DIR);
+        <span class="kw">for </span>asset <span class="kw">in </span><span class="kw-2">&amp;</span>configs.genesis_assets {
+            <span class="kw">let </span>asset_file_content = config_source.load_asset(asset)<span class="question-mark">?</span>;
+
+            <span class="comment">// Verify it&#39;s md5
+            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(file_hash) = <span class="kw-2">&amp;</span>asset.md5 {
+                <span class="kw">let </span>digest = md5::compute(<span class="kw-2">&amp;</span>asset_file_content);
+                <span class="kw">let </span>hash = <span class="macro">format!</span>(<span class="string">&quot;{:x}&quot;</span>, digest);
+                <span class="kw">if </span>hash != <span class="kw-2">*</span>file_hash {
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Input(<span class="macro">format!</span>(
+                        <span class="string">&quot;Hash mismatch for file &#39;{}&#39;: {} != {}&quot;</span>,
+                        asset.name, hash, file_hash
+                    )));
+                }
+            }
+
+            <span class="kw">let </span>asset_dest_path = assets_dir_dest_path.join(<span class="kw-2">&amp;</span>asset.name);
+            <span class="macro">println!</span>(
+                <span class="string">&quot;Copying &#39;{}&#39; to &#39;{}&#39;&quot;</span>,
+                config_source.display(<span class="prelude-val">Some</span>(<span class="macro">vec!</span>[<span class="kw-2">&amp;</span>GENESIS_ASSETS_DIR, <span class="kw-2">&amp;</span>asset.name]))<span class="question-mark">?</span>,
+                asset_dest_path.display()
+            );
+            write_content_to_disk(<span class="kw-2">&amp;</span>asset_file_content, <span class="kw-2">&amp;</span>asset_dest_path)<span class="question-mark">?</span>;
         }
 
         <span class="prelude-val">Ok</span>(())
@@ -315,52 +410,11 @@
 
 <span class="kw">fn </span>write_content_to_disk&lt;T: AsRef&lt;[u8]&gt;&gt;(config_content: T, dest_config_file_path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     std::fs::create_dir_all(
-        dest_config_file_path.parent().expect(<span class="string">&quot;dest_config_file_path should be the path to a file, not a dict&quot;</span>),
+        dest_config_file_path.parent().expect(<span class="string">&quot;dest_config_file_path should be the path to a file, not a directory&quot;</span>),
     )<span class="question-mark">?</span>;
     <span class="kw">let </span><span class="kw-2">mut </span>dest_file = std::fs::File::create(dest_config_file_path)<span class="question-mark">?</span>;
     <span class="kw">let </span><span class="kw-2">mut </span>reader = std::io::Cursor::new(config_content);
     std::io::copy(<span class="kw-2">&amp;mut </span>reader, <span class="kw-2">&amp;mut </span>dest_file)<span class="question-mark">?</span>;
-
-    <span class="prelude-val">Ok</span>(())
-}
-
-<span class="kw">fn </span>copy_file(src_path: <span class="kw-2">&amp;</span>Path, dest_dir_path: <span class="kw-2">&amp;</span>PathBuf) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="kw">if </span>!src_path.exists() {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;Source file &#39;{}&#39; does not exist&quot;</span>, src_path.display()).into());
-    }
-
-    std::fs::create_dir_all(dest_dir_path)<span class="question-mark">?</span>;
-    <span class="kw">let </span>dest_file_path = dest_dir_path.join(src_path.file_name().ok_or(<span class="string">&quot;File name not found&quot;</span>)<span class="question-mark">?</span>);
-    <span class="macro">println!</span>(<span class="string">&quot;Copying &#39;{}&#39; to &#39;{}&#39;&quot;</span>, src_path.display(), dest_file_path.display());
-    std::fs::copy(src_path, dest_file_path)<span class="question-mark">?</span>;
-
-    <span class="prelude-val">Ok</span>(())
-}
-
-<span class="kw">fn </span>fetch_and_validate_genesis_assets(base_remote_url: <span class="kw-2">&amp;</span>Url, file: FileInfos, base_path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="kw">let </span>full_url = base_remote_url
-        .join(GENESIS_ASSETS_DIR)
-        .map_err(|e| Error::Application(Box::new(e)))<span class="question-mark">?
-        </span>.join(<span class="kw-2">&amp;</span>file.name)
-        .map_err(|e| Error::Application(Box::new(e)))<span class="question-mark">?</span>;
-    <span class="macro">println!</span>(<span class="string">&quot;Fetching &#39;{}&#39;&quot;</span>, <span class="kw-2">&amp;</span>full_url);
-    <span class="kw">let </span>dest_path = base_path.join(GENESIS_ASSETS_DIR);
-
-    <span class="comment">// Copy
-    </span><span class="kw">let </span>file_as_bytes = {
-        <span class="kw">let </span>response = reqwest::blocking::get(full_url.clone()).map_err(|e| Error::Application(Box::new(e)))<span class="question-mark">?</span>;
-        <span class="kw">let </span>bytes = response.bytes().map_err(|e| Error::Application(Box::new(e)))<span class="question-mark">?</span>;
-        write_content_to_disk(<span class="kw-2">&amp;</span>bytes, <span class="kw-2">&amp;</span>dest_path.join(file.name))<span class="question-mark">?</span>;
-        bytes
-    };
-
-    <span class="kw">if let </span><span class="prelude-val">Some</span>(file_hash) = file.md5 {
-        <span class="kw">let </span>digest = md5::compute(file_as_bytes);
-        <span class="kw">let </span>hash = <span class="macro">format!</span>(<span class="string">&quot;{:x}&quot;</span>, digest);
-        <span class="kw">if </span>hash != file_hash {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Input(<span class="macro">format!</span>(<span class="string">&quot;Hash mismatch for file &#39;{}&#39;: {} != {}&quot;</span>, full_url, hash, file_hash)));
-        }
-    }
 
     <span class="prelude-val">Ok</span>(())
 }

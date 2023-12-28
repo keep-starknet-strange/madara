@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["starknet_contract"],"struct":["EthereumConfig","StarknetContractClient"],"type":["LocalMiddleware"]};

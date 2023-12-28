@@ -172,6 +172,9 @@
 <a href="#172" id="172">172</a>
 <a href="#173" id="173">173</a>
 <a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Configuration of the pallets used in the runtime.
 //! The pallets used in the runtime are configured here.
 //! This file is used to generate the `construct_runtime!` macro.
@@ -185,7 +188,8 @@
 <span class="kw">pub use </span>frame_support::{construct_runtime, parameter_types, StorageValue};
 <span class="kw">pub use </span>frame_system::Call <span class="kw">as </span>SystemCall;
 <span class="kw">pub use </span>mp_chain_id::SN_GOERLI_CHAIN_ID;
-<span class="doccomment">/// Import the Starknet pallet.
+<span class="kw">pub use </span>mp_program_hash::SN_OS_PROGRAM_HASH;
+<span class="doccomment">/// Import the StarkNet pallet.
 </span><span class="kw">pub use </span>pallet_starknet;
 <span class="kw">pub use </span>pallet_timestamp::Call <span class="kw">as </span>TimestampCall;
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityId <span class="kw">as </span>AuraId;
@@ -220,6 +224,7 @@
     <span class="kw">type </span>ProtocolVersion = ProtocolVersion;
     <span class="kw">type </span>ChainId = ChainId;
     <span class="kw">type </span>MaxRecursionDepth = MaxRecursionDepth;
+    <span class="kw">type </span>ProgramHash = ProgramHash;
 }
 
 <span class="doccomment">/// --------------------------------------
@@ -333,6 +338,7 @@
     <span class="kw">pub const </span>ProtocolVersion: u8 = <span class="number">0</span>;
     <span class="kw">pub const </span>ChainId: Felt252Wrapper = SN_GOERLI_CHAIN_ID;
     <span class="kw">pub const </span>MaxRecursionDepth: u32 = <span class="number">50</span>;
+    <span class="kw">pub const </span>ProgramHash: Felt252Wrapper = SN_OS_PROGRAM_HASH;
 }
 
 <span class="doccomment">/// Implement the OnTimestampSet trait to override the default Aura.

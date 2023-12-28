@@ -685,6 +685,45 @@
 <a href="#685" id="685">685</a>
 <a href="#686" id="686">686</a>
 <a href="#687" id="687">687</a>
+<a href="#688" id="688">688</a>
+<a href="#689" id="689">689</a>
+<a href="#690" id="690">690</a>
+<a href="#691" id="691">691</a>
+<a href="#692" id="692">692</a>
+<a href="#693" id="693">693</a>
+<a href="#694" id="694">694</a>
+<a href="#695" id="695">695</a>
+<a href="#696" id="696">696</a>
+<a href="#697" id="697">697</a>
+<a href="#698" id="698">698</a>
+<a href="#699" id="699">699</a>
+<a href="#700" id="700">700</a>
+<a href="#701" id="701">701</a>
+<a href="#702" id="702">702</a>
+<a href="#703" id="703">703</a>
+<a href="#704" id="704">704</a>
+<a href="#705" id="705">705</a>
+<a href="#706" id="706">706</a>
+<a href="#707" id="707">707</a>
+<a href="#708" id="708">708</a>
+<a href="#709" id="709">709</a>
+<a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
+<a href="#712" id="712">712</a>
+<a href="#713" id="713">713</a>
+<a href="#714" id="714">714</a>
+<a href="#715" id="715">715</a>
+<a href="#716" id="716">716</a>
+<a href="#717" id="717">717</a>
+<a href="#718" id="718">718</a>
+<a href="#719" id="719">719</a>
+<a href="#720" id="720">720</a>
+<a href="#721" id="721">721</a>
+<a href="#722" id="722">722</a>
+<a href="#723" id="723">723</a>
+<a href="#724" id="724">724</a>
+<a href="#725" id="725">725</a>
+<a href="#726" id="726">726</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
@@ -707,7 +746,11 @@
 <span class="kw">use </span>mc_data_availability::ethereum::EthereumClient;
 <span class="kw">use </span>mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker, DataAvailabilityWorkerProving};
 <span class="kw">use </span>mc_genesis_data_provider::OnDiskGenesisConfig;
+<span class="kw">use </span>mc_l1_messages::config::L1MessagesWorkerConfig;
 <span class="kw">use </span>mc_mapping_sync::MappingSyncWorker;
+<span class="kw">use </span>mc_settlement::errors::RetryOnRecoverableErrors;
+<span class="kw">use </span>mc_settlement::ethereum::StarknetContractClient;
+<span class="kw">use </span>mc_settlement::{SettlementLayer, SettlementProvider, SettlementWorker};
 <span class="kw">use </span>mc_storage::overrides_handle;
 <span class="kw">use </span>mp_sequencer_address::{
     InherentDataProvider <span class="kw">as </span>SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
@@ -734,6 +777,9 @@
 <span class="kw">use </span><span class="kw">crate</span>::starknet::{db_config_dir, MadaraBackend};
 <span class="comment">// Our native executor instance.
 </span><span class="kw">pub struct </span>ExecutorDispatch;
+
+<span class="kw">const </span>MADARA_TASK_GROUP: <span class="kw-2">&amp;</span>str = <span class="string">&quot;madara&quot;</span>;
+<span class="kw">const </span>DEFAULT_SETTLEMENT_RETRY_INTERVAL: Duration = Duration::from_millis(<span class="number">100</span>);
 
 <span class="kw">impl </span>sc_executor::NativeExecutionDispatch <span class="kw">for </span>ExecutorDispatch {
     <span class="doccomment">/// Only enable the benchmarking host functions when we actually want to benchmark.
@@ -954,6 +1000,8 @@
     sealing: SealingMode,
     da_layer: <span class="prelude-ty">Option</span>&lt;(DaLayer, PathBuf)&gt;,
     cache_more_things: bool,
+    l1_messages_worker_config: <span class="prelude-ty">Option</span>&lt;L1MessagesWorkerConfig&gt;,
+    settlement_config: <span class="prelude-ty">Option</span>&lt;(SettlementLayer, PathBuf)&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;TaskManager, ServiceError&gt; {
     <span class="kw">let </span>build_import_queue =
         <span class="kw">if </span>sealing.is_default() { build_aura_grandpa_import_queue } <span class="kw">else </span>{ build_manual_seal_import_queue };
@@ -1085,7 +1133,7 @@
 
     task_manager.spawn_essential_handle().spawn(
         <span class="string">&quot;mc-mapping-sync-worker&quot;</span>,
-        <span class="prelude-val">Some</span>(<span class="string">&quot;madara&quot;</span>),
+        <span class="prelude-val">Some</span>(MADARA_TASK_GROUP),
         MappingSyncWorker::&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, StarknetHasher&gt;::new(
             client.import_notification_stream(),
             Duration::new(<span class="number">6</span>, <span class="number">0</span>),
@@ -1126,7 +1174,7 @@
 
         task_manager.spawn_essential_handle().spawn(
             <span class="string">&quot;da-worker-prove&quot;</span>,
-            <span class="prelude-val">Some</span>(<span class="string">&quot;madara&quot;</span>),
+            <span class="prelude-val">Some</span>(MADARA_TASK_GROUP),
             DataAvailabilityWorkerProving::prove_current_block(
                 da_client.get_mode(),
                 commitment_state_diff_rx,
@@ -1136,10 +1184,33 @@
 
         task_manager.spawn_essential_handle().spawn(
             <span class="string">&quot;da-worker-update&quot;</span>,
-            <span class="prelude-val">Some</span>(<span class="string">&quot;madara&quot;</span>),
-            DataAvailabilityWorker::&lt;<span class="kw">_</span>, <span class="kw">_</span>, StarknetHasher&gt;::update_state(da_client, client.clone(), madara_backend),
+            <span class="prelude-val">Some</span>(MADARA_TASK_GROUP),
+            DataAvailabilityWorker::&lt;<span class="kw">_</span>, <span class="kw">_</span>, StarknetHasher&gt;::update_state(
+                da_client,
+                client.clone(),
+                madara_backend.clone(),
+            ),
         );
     };
+
+    <span class="comment">// initialize settlement worker
+    </span><span class="kw">if let </span><span class="prelude-val">Some</span>((layer_kind, config_path)) = settlement_config {
+        <span class="kw">let </span>settlement_provider: Box&lt;<span class="kw">dyn </span>SettlementProvider&lt;<span class="kw">_</span>&gt;&gt; = <span class="kw">match </span>layer_kind {
+            SettlementLayer::Ethereum =&gt; {
+                <span class="kw">let </span>ethereum_conf = EthereumConfig::try_from(<span class="kw-2">&amp;</span>config_path)<span class="question-mark">?</span>;
+                Box::new(
+                    StarknetContractClient::try_from(ethereum_conf).map_err(|e| ServiceError::Other(e.to_string()))<span class="question-mark">?</span>,
+                )
+            }
+        };
+        <span class="kw">let </span>retry_strategy = Box::new(RetryOnRecoverableErrors { delay: DEFAULT_SETTLEMENT_RETRY_INTERVAL });
+
+        task_manager.spawn_essential_handle().spawn(
+            <span class="string">&quot;settlement-worker-sync-state&quot;</span>,
+            <span class="prelude-val">Some</span>(<span class="string">&quot;madara&quot;</span>),
+            SettlementWorker::&lt;<span class="kw">_</span>, StarknetHasher, <span class="kw">_</span>&gt;::sync_state(client.clone(), settlement_provider, retry_strategy),
+        );
+    }
 
     <span class="kw">if </span>role.is_authority() {
         <span class="comment">// manual-seal authorship
@@ -1175,7 +1246,7 @@
 
         <span class="kw">let </span>aura = sc_consensus_aura::start_aura::&lt;AuraPair, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>&gt;(StartAuraParams {
             slot_duration,
-            client,
+            client: client.clone(),
             select_chain,
             block_import,
             proposer_factory,
@@ -1265,6 +1336,13 @@
         );
     }
 
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(l1_messages_worker_config) = l1_messages_worker_config {
+        task_manager.spawn_handle().spawn(
+            <span class="string">&quot;ethereum-core-contract-events-listener&quot;</span>,
+            <span class="prelude-val">Some</span>(MADARA_TASK_GROUP),
+            mc_l1_messages::worker::run_worker(l1_messages_worker_config, client, transaction_pool, madara_backend),
+        );
+    }
     network_starter.start_network();
     <span class="prelude-val">Ok</span>(task_manager)
 }

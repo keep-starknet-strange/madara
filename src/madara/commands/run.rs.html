@@ -110,16 +110,145 @@
 <a href="#110" id="110">110</a>
 <a href="#111" id="111">111</a>
 <a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
 
+<span class="kw">use </span>clap::ValueHint::FilePath;
 <span class="kw">use </span>madara_runtime::SealingMode;
 <span class="kw">use </span>mc_data_availability::DaLayer;
+<span class="kw">use </span>mc_l1_messages::config::{L1MessagesWorkerConfig, L1MessagesWorkerConfigError};
+<span class="kw">use </span>mc_settlement::SettlementLayer;
 <span class="kw">use </span>sc_cli::{<span class="prelude-ty">Result</span>, RpcMethods, RunCmd, SubstrateCli};
 <span class="kw">use </span>sc_service::BasePath;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 
 <span class="kw">use </span><span class="kw">crate</span>::cli::Cli;
 <span class="kw">use </span><span class="kw">crate</span>::service;
+
+<span class="attr">#[derive(Debug, Clone, clap::Args)]
+#[group(multiple = <span class="bool-val">true</span>)]
+</span><span class="kw">pub struct </span>L1MessagesParams {
+    <span class="doccomment">/// Ethereum Provider (Node) Url
+    </span><span class="attr">#[clap(
+        long,
+        value_hint=clap::ValueHint::Url,
+        conflicts_with=<span class="string">&quot;l1_messages_config&quot;</span>,
+        requires=<span class="string">&quot;l1_contract_address&quot;</span>,
+    )]
+    </span><span class="kw">pub </span>provider_url: <span class="prelude-ty">Option</span>&lt;String&gt;,
+
+    <span class="doccomment">/// L1 Contract Address
+    </span><span class="attr">#[clap(
+        long,
+        value_hint=clap::ValueHint::Other,
+        conflicts_with=<span class="string">&quot;l1_messages_config&quot;</span>,
+        requires=<span class="string">&quot;provider_url&quot;</span>,
+    )]
+    </span><span class="kw">pub </span>l1_contract_address: <span class="prelude-ty">Option</span>&lt;String&gt;,
+}
+
+<span class="attr">#[derive(Debug, Clone, clap::Args)]
+</span><span class="kw">pub struct </span>L1Messages {
+    <span class="doccomment">/// Path to configuration file for Ethereum Core Contract Events Listener
+    </span><span class="attr">#[clap(
+        long,
+        conflicts_with_all=[<span class="string">&quot;provider_url&quot;</span>, <span class="string">&quot;l1_contract_address&quot;</span>]</span>,
+        value_hint=clap::ValueHint::FilePath,
+    )]
+    <span class="kw">pub </span>l1_messages_config: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
+
+    <span class="attr">#[clap(flatten)]
+    </span><span class="kw">pub </span>config_params: L1MessagesParams,
+}
 
 <span class="doccomment">/// Available Sealing methods.
 </span><span class="attr">#[derive(Debug, Copy, Clone, clap::ValueEnum, Default, Serialize, Deserialize)]
@@ -154,11 +283,20 @@
     </span><span class="kw">pub </span>sealing: <span class="prelude-ty">Option</span>&lt;Sealing&gt;,
 
     <span class="doccomment">/// Choose a supported DA Layer
-    </span><span class="attr">#[clap(long, requires = <span class="string">&quot;da_conf&quot;</span>)]
+    </span><span class="attr">#[clap(long, ignore_case = <span class="bool-val">true</span>, requires = <span class="string">&quot;da_conf&quot;</span>)]
     </span><span class="kw">pub </span>da_layer: <span class="prelude-ty">Option</span>&lt;DaLayer&gt;,
 
-    <span class="attr">#[clap(long, requires = <span class="string">&quot;da_layer&quot;</span>)]
-    </span><span class="kw">pub </span>da_conf: <span class="prelude-ty">Option</span>&lt;String&gt;,
+    <span class="doccomment">/// Path to a file containing the DA configuration
+    </span><span class="attr">#[clap(long, value_hint = FilePath, requires = <span class="string">&quot;da_layer&quot;</span>)]
+    </span><span class="kw">pub </span>da_conf: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
+
+    <span class="doccomment">/// Choose a supported settlement layer
+    </span><span class="attr">#[clap(long, ignore_case = <span class="bool-val">true</span>, requires = <span class="string">&quot;settlement_conf&quot;</span>)]
+    </span><span class="kw">pub </span>settlement: <span class="prelude-ty">Option</span>&lt;SettlementLayer&gt;,
+
+    <span class="doccomment">/// Path to a file containing the settlement configuration
+    </span><span class="attr">#[clap(long, value_hint = FilePath, requires = <span class="string">&quot;settlement&quot;</span>)]
+    </span><span class="kw">pub </span>settlement_conf: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
 
     <span class="doccomment">/// When enabled, more information about the blocks and their transaction is cached and stored
     /// in the database.
@@ -167,6 +305,10 @@
     /// increases the memory footprint of the node.
     </span><span class="attr">#[clap(long)]
     </span><span class="kw">pub </span>cache: bool,
+
+    <span class="doccomment">/// Configuration for L1 Messages (Syncing) Worker
+    </span><span class="attr">#[clap(flatten)]
+    </span><span class="kw">pub </span>l1_messages_worker: L1Messages,
 }
 
 <span class="kw">impl </span>ExtendedRunCmd {
@@ -187,7 +329,7 @@
 
     <span class="kw">let </span>da_config: <span class="prelude-ty">Option</span>&lt;(DaLayer, PathBuf)&gt; = <span class="kw">match </span>cli.run.da_layer {
         <span class="prelude-val">Some</span>(da_layer) =&gt; {
-            <span class="kw">let </span>da_conf = PathBuf::from(cli.run.da_conf.expect(<span class="string">&quot;clap requires da_conf when da_layer is present&quot;</span>));
+            <span class="kw">let </span>da_conf = cli.run.da_conf.expect(<span class="string">&quot;clap requires da_conf when da_layer is present&quot;</span>);
             <span class="kw">if </span>!da_conf.exists() {
                 <span class="macro">log::info!</span>(<span class="string">&quot;{} does not contain DA config&quot;</span>, da_conf.display());
                 <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">&quot;DA config not available&quot;</span>.into());
@@ -200,11 +342,49 @@
             <span class="prelude-val">None
         </span>}
     };
+
+    <span class="kw">let </span>l1_messages_worker_config = extract_l1_messages_worker_config(<span class="kw-2">&amp;</span>cli.run.l1_messages_worker)
+        .map_err(|e| sc_cli::Error::Input(e.to_string()))<span class="question-mark">?</span>;
+
+    <span class="kw">let </span>settlement_config: <span class="prelude-ty">Option</span>&lt;(SettlementLayer, PathBuf)&gt; = <span class="kw">match </span>cli.run.settlement {
+        <span class="prelude-val">Some</span>(SettlementLayer::Ethereum) =&gt; {
+            <span class="kw">let </span>settlement_conf = cli.run.settlement_conf.expect(<span class="string">&quot;clap requires da_conf when settlement is present&quot;</span>);
+            <span class="kw">if </span>!settlement_conf.exists() {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(sc_cli::Error::Input(<span class="macro">format!</span>(
+                    <span class="string">&quot;Ethereum config not found at {}&quot;</span>,
+                    settlement_conf.display()
+                )));
+            }
+            <span class="prelude-val">Some</span>((SettlementLayer::Ethereum, settlement_conf))
+        }
+        <span class="prelude-val">None </span>=&gt; {
+            <span class="macro">log::info!</span>(<span class="string">&quot;Madara initialized w/o settlement layer&quot;</span>);
+            <span class="prelude-val">None
+        </span>}
+    };
+
     runner.run_node_until_exit(|config| <span class="kw">async move </span>{
         <span class="kw">let </span>sealing = cli.run.sealing.map(Into::into).unwrap_or_default();
         <span class="kw">let </span>cache = cli.run.cache;
-        service::new_full(config, sealing, da_config, cache).map_err(sc_cli::Error::Service)
+        service::new_full(config, sealing, da_config, cache, l1_messages_worker_config, settlement_config)
+            .map_err(sc_cli::Error::Service)
     })
+}
+
+<span class="kw">fn </span>extract_l1_messages_worker_config(
+    run_cmd: <span class="kw-2">&amp;</span>L1Messages,
+) -&gt; std::result::Result&lt;<span class="prelude-ty">Option</span>&lt;L1MessagesWorkerConfig&gt;, L1MessagesWorkerConfigError&gt; {
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>config_path) = run_cmd.l1_messages_config {
+        <span class="kw">let </span>config = L1MessagesWorkerConfig::new_from_file(config_path)<span class="question-mark">?</span>;
+        <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(config));
+    }
+
+    <span class="kw">if let </span>L1MessagesParams { provider_url: <span class="prelude-val">Some</span>(url), l1_contract_address: <span class="prelude-val">Some</span>(address) } = <span class="kw-2">&amp;</span>run_cmd.config_params {
+        <span class="kw">let </span>config = L1MessagesWorkerConfig::new_from_params(url, address)<span class="question-mark">?</span>;
+        <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(config));
+    }
+
+    <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
 }
 
 <span class="kw">fn </span>override_dev_environment(cmd: <span class="kw-2">&amp;mut </span>ExtendedRunCmd) {

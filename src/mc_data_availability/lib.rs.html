@@ -185,7 +185,7 @@
 <span class="kw">use </span>mp_hashers::HasherT;
 <span class="kw">use </span>pallet_starknet_runtime_api::StarknetRuntimeApi;
 <span class="kw">use </span>sc_client_api::client::BlockchainEvents;
-<span class="kw">use </span>serde::Deserialize;
+<span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>sp_api::ProvideRuntimeApi;
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
 <span class="kw">use </span>sp_runtime::traits::{Block <span class="kw">as </span>BlockT, Header};
@@ -194,7 +194,7 @@
 <span class="kw">pub struct </span>DataAvailabilityWorker&lt;B, C, H&gt;(PhantomData&lt;(B, C, H)&gt;);
 <span class="kw">pub struct </span>DataAvailabilityWorkerProving&lt;B&gt;(PhantomData&lt;B&gt;);
 
-<span class="attr">#[derive(Debug, Copy, Clone, PartialEq)]
+<span class="attr">#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = <span class="string">&quot;clap&quot;</span>, derive(clap::ValueEnum))]
 </span><span class="kw">pub enum </span>DaLayer {
     Celestia,
@@ -204,8 +204,8 @@
 
 <span class="doccomment">/// Data availability modes in which Madara can be initialized.
 ///
-/// Default only mode currently implemented is Sovereign.
-</span><span class="attr">#[derive(Debug, Copy, Clone, PartialEq, Deserialize, Default)]
+/// Default only mode currently implemented is Sovereing.
+</span><span class="attr">#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 </span><span class="kw">pub enum </span>DaMode {
     <span class="doccomment">/// Full Validity Rollup
     ///
@@ -291,7 +291,7 @@
     C::Api: StarknetRuntimeApi&lt;B&gt;,
     C: BlockchainEvents&lt;B&gt; + <span class="lifetime">&#39;static</span>,
     C: HeaderBackend&lt;B&gt;,
-    H: HasherT + Unpin,
+    H: HasherT,
 {
     <span class="kw">pub async fn </span>update_state(
         da_client: Box&lt;<span class="kw">dyn </span>DaClient + Send + Sync&gt;,

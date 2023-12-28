@@ -1642,6 +1642,19 @@
 <a href="#1642" id="1642">1642</a>
 <a href="#1643" id="1643">1643</a>
 <a href="#1644" id="1644">1644</a>
+<a href="#1645" id="1645">1645</a>
+<a href="#1646" id="1646">1646</a>
+<a href="#1647" id="1647">1647</a>
+<a href="#1648" id="1648">1648</a>
+<a href="#1649" id="1649">1649</a>
+<a href="#1650" id="1650">1650</a>
+<a href="#1651" id="1651">1651</a>
+<a href="#1652" id="1652">1652</a>
+<a href="#1653" id="1653">1653</a>
+<a href="#1654" id="1654">1654</a>
+<a href="#1655" id="1655">1655</a>
+<a href="#1656" id="1656">1656</a>
+<a href="#1657" id="1657">1657</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1935,7 +1948,7 @@
             <span class="kw">return </span><span class="prelude-val">Err</span>(StarknetRpcApiError::ClassAlreadyDeclared.into());
         }
 
-        <span class="kw">let </span>extrinsic = convert_transaction(<span class="self">self</span>.client.clone(), best_block_hash, transaction.clone()).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>extrinsic = convert_tx_to_extrinsic(<span class="self">self</span>.client.clone(), best_block_hash, transaction.clone()).<span class="kw">await</span><span class="question-mark">?</span>;
 
         submit_extrinsic(<span class="self">self</span>.pool.clone(), best_block_hash, extrinsic).<span class="kw">await</span><span class="question-mark">?</span>;
 
@@ -1967,7 +1980,7 @@
             StarknetRpcApiError::InternalServerError
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>extrinsic = convert_transaction(<span class="self">self</span>.client.clone(), best_block_hash, transaction.clone()).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>extrinsic = convert_tx_to_extrinsic(<span class="self">self</span>.client.clone(), best_block_hash, transaction.clone()).<span class="kw">await</span><span class="question-mark">?</span>;
 
         submit_extrinsic(<span class="self">self</span>.pool.clone(), best_block_hash, extrinsic).<span class="kw">await</span><span class="question-mark">?</span>;
 
@@ -1997,7 +2010,7 @@
             StarknetRpcApiError::InternalServerError
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>extrinsic = convert_transaction(<span class="self">self</span>.client.clone(), best_block_hash, transaction.clone()).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>extrinsic = convert_tx_to_extrinsic(<span class="self">self</span>.client.clone(), best_block_hash, transaction.clone()).<span class="kw">await</span><span class="question-mark">?</span>;
 
         submit_extrinsic(<span class="self">self</span>.pool.clone(), best_block_hash, extrinsic).<span class="kw">await</span><span class="question-mark">?</span>;
 
@@ -3116,6 +3129,25 @@
             </span>events_converted.last().unwrap().data[<span class="number">2</span>]
         };
 
+        <span class="kw">let </span>messages = <span class="self">self
+            </span>.client
+            .runtime_api()
+            .get_tx_messages_to_l1(substrate_block_hash, Felt252Wrapper(transaction_hash).into())
+            .map_err(|e| {
+                <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
+                StarknetRpcApiError::InternalServerError
+            })<span class="question-mark">?</span>;
+
+        <span class="kw">fn </span>message_conversion(message: starknet_api::transaction::MessageToL1) -&gt; starknet_core::types::MsgToL1 {
+            <span class="kw">let </span><span class="kw-2">mut </span>to_address = [<span class="number">0u8</span>; <span class="number">32</span>];
+            to_address[<span class="number">12</span>..<span class="number">32</span>].copy_from_slice(message.to_address.<span class="number">0</span>.as_bytes());
+            starknet_core::types::MsgToL1 {
+                from_address: Felt252Wrapper::from(message.from_address).<span class="number">0</span>,
+                to_address: FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>to_address).unwrap(),
+                payload: message.payload.<span class="number">0</span>.into_iter().map(|felt| Felt252Wrapper::from(felt).<span class="number">0</span>).collect(),
+            }
+        }
+
         <span class="kw">let </span>receipt = <span class="kw">match </span>transaction {
             mp_transactions::Transaction::Declare(<span class="kw">_</span>) =&gt; TransactionReceipt::Declare(DeclareTransactionReceipt {
                 transaction_hash,
@@ -3123,7 +3155,7 @@
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
                 block_hash,
                 block_number,
-                messages_sent: Default::default(),
+                messages_sent: messages.into_iter().map(message_conversion).collect(),
                 events: events_converted,
                 execution_result,
             }),
@@ -3134,7 +3166,7 @@
                     finality_status: TransactionFinalityStatus::AcceptedOnL2,
                     block_hash,
                     block_number,
-                    messages_sent: Default::default(),
+                    messages_sent: messages.into_iter().map(message_conversion).collect(),
                     events: events_converted,
                     contract_address: tx.get_account_address(),
                     execution_result,
@@ -3146,7 +3178,7 @@
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
                 block_hash,
                 block_number,
-                messages_sent: Default::default(),
+                messages_sent: messages.into_iter().map(message_conversion).collect(),
                 events: events_converted,
                 execution_result,
             }),
@@ -3156,7 +3188,7 @@
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
                 block_hash,
                 block_number,
-                messages_sent: Default::default(),
+                messages_sent: messages.into_iter().map(message_conversion).collect(),
                 events: events_converted,
                 execution_result,
             }),
@@ -3240,7 +3272,7 @@
     })
 }
 
-<span class="kw">async fn </span>convert_transaction&lt;C, B&gt;(
+<span class="kw">async fn </span>convert_tx_to_extrinsic&lt;C, B&gt;(
     client: Arc&lt;C&gt;,
     best_block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash,
     transaction: UserTransaction,
@@ -3250,18 +3282,12 @@
     C: ProvideRuntimeApi&lt;B&gt;,
     C::Api: StarknetRuntimeApi&lt;B&gt; + ConvertTransactionRuntimeApi&lt;B&gt;,
 {
-    <span class="kw">let </span>result = client.runtime_api().convert_transaction(best_block_hash, transaction).map_err(|e| {
+    <span class="kw">let </span>extrinsic = client.runtime_api().convert_transaction(best_block_hash, transaction).map_err(|e| {
         <span class="macro">error!</span>(<span class="string">&quot;Failed to convert transaction: {:?}&quot;</span>, e);
         StarknetRpcApiError::InternalServerError
     })<span class="question-mark">?</span>;
 
-    <span class="kw">match </span>result {
-        <span class="prelude-val">Ok</span>(extrinsic) =&gt; <span class="prelude-val">Ok</span>(extrinsic),
-        <span class="prelude-val">Err</span>(dispatch_error) =&gt; {
-            <span class="macro">error!</span>(<span class="string">&quot;Failed to convert transaction: {:?}&quot;</span>, dispatch_error);
-            <span class="prelude-val">Err</span>(StarknetRpcApiError::InternalServerError)
-        }
-    }
+    <span class="prelude-val">Ok</span>(extrinsic)
 }
 
 <span class="kw">fn </span>convert_error&lt;C, B, T&gt;(

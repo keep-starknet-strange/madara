@@ -209,6 +209,22 @@
 <a href="#209" id="209">209</a>
 <a href="#210" id="210">210</a>
 <a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::future::Future;
 <span class="kw">use </span>std::sync::Arc;
 
@@ -302,6 +318,14 @@
         nonce: <span class="prelude-ty">Option</span>&lt;u64&gt;,
     ) -&gt; TransactionExecution;
 
+    <span class="kw">fn </span>invoke_contract(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        address: FieldElement,
+        method: <span class="kw-2">&amp;</span>str,
+        calldata: Vec&lt;FieldElement&gt;,
+        nonce: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+    ) -&gt; TransactionExecution;
+
     <span class="kw">fn </span>declare_contract(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         path_to_sierra: <span class="kw-2">&amp;</span>str,
@@ -333,21 +357,12 @@
         nonce: <span class="prelude-ty">Option</span>&lt;u64&gt;,
     ) -&gt; TransactionExecution {
         <span class="kw">let </span>fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
-
-        <span class="kw">let </span>calls = <span class="macro">vec!</span>[Call {
-            to: fee_token_address,
-            selector: get_selector_from_name(<span class="string">&quot;transfer&quot;</span>).unwrap(),
-            calldata: <span class="macro">vec!</span>[recipient, transfer_amount.low, transfer_amount.high],
-        }];
-
-        <span class="comment">// starknet-rs calls estimateFee with incorrect version which throws an error
-        </span><span class="kw">let </span>max_fee = FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap();
-
-        <span class="comment">// TODO: add support for nonce with raw execution e.g https://github.com/0xSpaceShard/starknet-devnet-rs/blob/main/crates/starknet/src/starknet/add_invoke_transaction.rs#L10
-        </span><span class="kw">match </span>nonce {
-            <span class="prelude-val">Some</span>(nonce) =&gt; <span class="self">self</span>.execute(calls).max_fee(max_fee).nonce(nonce.into()),
-            <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.execute(calls).max_fee(max_fee),
-        }
+        <span class="self">self</span>.invoke_contract(
+            fee_token_address,
+            <span class="string">&quot;transfer&quot;</span>,
+            <span class="macro">vec!</span>[recipient, transfer_amount.low, transfer_amount.high],
+            nonce,
+        )
     }
 
     <span class="kw">fn </span>transfer_tokens(
@@ -357,6 +372,23 @@
         nonce: <span class="prelude-ty">Option</span>&lt;u64&gt;,
     ) -&gt; TransactionExecution {
         <span class="self">self</span>.transfer_tokens_u256(recipient, U256 { high: FieldElement::ZERO, low: transfer_amount }, nonce)
+    }
+
+    <span class="kw">fn </span>invoke_contract(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        address: FieldElement,
+        method: <span class="kw-2">&amp;</span>str,
+        calldata: Vec&lt;FieldElement&gt;,
+        nonce: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+    ) -&gt; TransactionExecution {
+        <span class="kw">let </span>calls = <span class="macro">vec!</span>[Call { to: address, selector: get_selector_from_name(method).unwrap(), calldata }];
+
+        <span class="kw">let </span>max_fee = FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap();
+
+        <span class="kw">match </span>nonce {
+            <span class="prelude-val">Some</span>(nonce) =&gt; <span class="self">self</span>.execute(calls).max_fee(max_fee).nonce(nonce.into()),
+            <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.execute(calls).max_fee(max_fee),
+        }
     }
 
     <span class="kw">fn </span>declare_contract(

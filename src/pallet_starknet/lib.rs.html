@@ -1223,29 +1223,6 @@
 <a href="#1223" id="1223">1223</a>
 <a href="#1224" id="1224">1224</a>
 <a href="#1225" id="1225">1225</a>
-<a href="#1226" id="1226">1226</a>
-<a href="#1227" id="1227">1227</a>
-<a href="#1228" id="1228">1228</a>
-<a href="#1229" id="1229">1229</a>
-<a href="#1230" id="1230">1230</a>
-<a href="#1231" id="1231">1231</a>
-<a href="#1232" id="1232">1232</a>
-<a href="#1233" id="1233">1233</a>
-<a href="#1234" id="1234">1234</a>
-<a href="#1235" id="1235">1235</a>
-<a href="#1236" id="1236">1236</a>
-<a href="#1237" id="1237">1237</a>
-<a href="#1238" id="1238">1238</a>
-<a href="#1239" id="1239">1239</a>
-<a href="#1240" id="1240">1240</a>
-<a href="#1241" id="1241">1241</a>
-<a href="#1242" id="1242">1242</a>
-<a href="#1243" id="1243">1243</a>
-<a href="#1244" id="1244">1244</a>
-<a href="#1245" id="1245">1245</a>
-<a href="#1246" id="1246">1246</a>
-<a href="#1247" id="1247">1247</a>
-<a href="#1248" id="1248">1248</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1294,15 +1271,10 @@
 </span><span class="kw">pub mod </span>execution_config;
 <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
 </span><span class="kw">pub mod </span>genesis_loader;
-<span class="doccomment">/// The implementation of the message type.
-</span><span class="kw">pub mod </span>message;
 <span class="doccomment">/// Transaction validation logic.
 </span><span class="kw">pub mod </span>transaction_validation;
 <span class="doccomment">/// The Starknet pallet&#39;s runtime custom types.
 </span><span class="kw">pub mod </span>types;
-
-<span class="doccomment">/// Everything needed to run the pallet offchain workers
-</span><span class="kw">mod </span>offchain_worker;
 
 <span class="kw">use </span>blockifier::execution::entry_point::{CallEntryPoint, CallType, EntryPointExecutionContext};
 <span class="kw">use </span>blockifier::state::cached_state::ContractStorageKey;
@@ -1315,8 +1287,8 @@
 
 <span class="attr">#[macro_use]
 </span><span class="kw">pub extern crate </span>alloc;
-<span class="kw">extern crate </span>core;
 
+<span class="kw">use </span>alloc::collections::BTreeSet;
 <span class="kw">use </span>alloc::str::from_utf8_unchecked;
 <span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::vec;
@@ -1341,7 +1313,7 @@
     SimulatedTransaction, SimulationFlags, TransactionTrace,
 };
 <span class="kw">use </span>mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
-<span class="kw">use </span>mp_transactions::execution::{Execute, Validate};
+<span class="kw">use </span>mp_transactions::execution::Execute;
 <span class="kw">use </span>mp_transactions::{
     DeclareTransaction, DeployAccountTransaction, HandleL1MessageTransaction, InvokeTransaction, Transaction,
     UserAndL1HandlerTransaction, UserTransaction,
@@ -1352,8 +1324,9 @@
 <span class="kw">use </span>starknet_api::block::{BlockNumber, BlockTimestamp};
 <span class="kw">use </span>starknet_api::deprecated_contract_class::EntryPointType;
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
-<span class="kw">use </span>starknet_api::transaction::TransactionHash;
+<span class="kw">use </span>starknet_api::transaction::{MessageToL1, TransactionHash};
 <span class="kw">use </span>starknet_crypto::FieldElement;
+<span class="kw">use </span>transaction_validation::TxPriorityInfo;
 
 <span class="kw">use </span><span class="kw">crate</span>::alloc::string::ToString;
 <span class="kw">use </span><span class="kw">crate</span>::execution_config::RuntimeExecutionConfigBuilder;
@@ -1364,7 +1337,6 @@
 
 <span class="kw">pub const </span>ETHEREUM_EXECUTION_RPC: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;starknet::ETHEREUM_EXECUTION_RPC&quot;</span>;
 <span class="kw">pub const </span>ETHEREUM_CONSENSUS_RPC: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;starknet::ETHEREUM_CONSENSUS_RPC&quot;</span>;
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>NONCE_DECODE_FAILURE: u8 = <span class="number">1</span>;
 
 <span class="comment">// syntactic sugar for logging.
 </span><span class="attr">#[macro_export]
@@ -1379,8 +1351,6 @@
 
 <span class="attr">#[frame_support::pallet]
 </span><span class="kw">pub mod </span>pallet {
-    <span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
-
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="attr">#[pallet::pallet]
@@ -1424,6 +1394,8 @@
         </span><span class="kw">type </span>ChainId: Get&lt;Felt252Wrapper&gt;;
         <span class="attr">#[pallet::constant]
         </span><span class="kw">type </span>MaxRecursionDepth: Get&lt;u32&gt;;
+        <span class="attr">#[pallet::constant]
+        </span><span class="kw">type </span>ProgramHash: Get&lt;Felt252Wrapper&gt;;
     }
 
     <span class="doccomment">/// The Starknet pallet hooks.
@@ -1451,24 +1423,6 @@
         </span><span class="kw">fn </span>on_runtime_upgrade() -&gt; Weight {
             Weight::zero()
         }
-
-        <span class="doccomment">/// Run offchain tasks.
-        /// See: `&lt;https://docs.substrate.io/reference/how-to-guides/offchain-workers/&gt;`
-        /// # Arguments
-        /// * `n` - The block number.
-        </span><span class="kw">fn </span>offchain_worker(n: BlockNumberFor&lt;T&gt;) {
-            <span class="macro">log!</span>(info, <span class="string">&quot;Running offchain worker at block {:?}.&quot;</span>, n);
-
-            <span class="kw">match </span><span class="self">Self</span>::process_l1_messages() {
-                <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="macro">log!</span>(info, <span class="string">&quot;Successfully executed L1 messages&quot;</span>),
-                <span class="prelude-val">Err</span>(err) =&gt; <span class="kw">match </span>err {
-                    offchain_worker::OffchainWorkerError::NoLastKnownEthBlock =&gt; {
-                        <span class="macro">log!</span>(info, <span class="string">&quot;No last known Ethereum block number found. Skipping execution of L1 messages.&quot;</span>)
-                    }
-                    <span class="kw">_ </span>=&gt; <span class="macro">log!</span>(error, <span class="string">&quot;Failed to execute L1 messages: {:?}&quot;</span>, err),
-                },
-            }
-        }
     }
 
     <span class="doccomment">/// The Starknet pallet storage items.
@@ -1490,6 +1444,11 @@
     #[pallet::unbounded]
     #[pallet::getter(<span class="kw">fn </span>tx_events)]
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>TxEvents&lt;T: Config&gt; = StorageMap&lt;<span class="kw">_</span>, Identity, TransactionHash, Vec&lt;StarknetEvent&gt;, ValueQuery&gt;;
+
+    <span class="attr">#[pallet::storage]
+    #[pallet::unbounded]
+    #[pallet::getter(<span class="kw">fn </span>tx_messages)]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>TxMessages&lt;T: Config&gt; = StorageMap&lt;<span class="kw">_</span>, Identity, TransactionHash, Vec&lt;MessageToL1&gt;, ValueQuery&gt;;
 
     <span class="attr">#[pallet::storage]
     #[pallet::unbounded]
@@ -1582,6 +1541,13 @@
     #[pallet::unbounded]
     #[pallet::getter(<span class="kw">fn </span>seq_addr_update)]
     </span><span class="kw">pub type </span>SeqAddrUpdate&lt;T: Config&gt; = StorageValue&lt;<span class="kw">_</span>, bool, ValueQuery&gt;;
+
+    <span class="doccomment">/// Information about processed L1 Messages
+    /// Based on Nonce value.
+    </span><span class="attr">#[pallet::storage]
+    #[pallet::unbounded]
+    #[pallet::getter(<span class="kw">fn </span>l1_messages)]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>L1Messages&lt;T: Config&gt; = StorageValue&lt;<span class="kw">_</span>, BTreeSet&lt;Nonce&gt;, ValueQuery&gt;;
 
     <span class="doccomment">/// Starknet genesis configuration.
     </span><span class="attr">#[pallet::genesis_config]
@@ -1691,6 +1657,7 @@
         MissingRevertReason,
         MissingCallInfo,
         TransactionalExecutionFailed,
+        L1MessageAlreadyExecuted,
     }
 
     <span class="doccomment">/// The Starknet pallet external functions.
@@ -1768,10 +1735,9 @@
             <span class="kw">let </span>tx_hash = transaction.tx_hash;
             <span class="self">Self</span>::emit_and_store_tx_and_fees_events(
                 tx_hash,
-                tx_execution_infos.execute_call_info,
-                tx_execution_infos.fee_transfer_call_info,
+                <span class="kw-2">&amp;</span>tx_execution_infos.execute_call_info,
+                <span class="kw-2">&amp;</span>tx_execution_infos.fee_transfer_call_info,
             );
-
             <span class="self">Self</span>::store_transaction(tx_hash, Transaction::Invoke(input_transaction), tx_execution_infos.revert_error);
 
             <span class="prelude-val">Ok</span>(())
@@ -1827,10 +1793,9 @@
             <span class="kw">let </span>tx_hash = transaction.tx_hash();
             <span class="self">Self</span>::emit_and_store_tx_and_fees_events(
                 tx_hash,
-                tx_execution_infos.execute_call_info,
-                tx_execution_infos.fee_transfer_call_info,
+                <span class="kw-2">&amp;</span>tx_execution_infos.execute_call_info,
+                <span class="kw-2">&amp;</span>tx_execution_infos.fee_transfer_call_info,
             );
-
             <span class="self">Self</span>::store_transaction(tx_hash, Transaction::Declare(input_transaction), tx_execution_infos.revert_error);
 
             <span class="prelude-val">Ok</span>(())
@@ -1872,17 +1837,16 @@
                     <span class="kw-2">&amp;</span>RuntimeExecutionConfigBuilder::new::&lt;T&gt;().build(),
                 )
                 .map_err(|e| {
-                    <span class="macro">log::error!</span>(<span class="string">&quot;failed to deploy accout: {:?}&quot;</span>, e);
+                    <span class="macro">log::error!</span>(<span class="string">&quot;failed to deploy account: {:?}&quot;</span>, e);
                     Error::&lt;T&gt;::TransactionExecutionFailed
                 })<span class="question-mark">?</span>;
 
             <span class="kw">let </span>tx_hash = transaction.tx_hash;
             <span class="self">Self</span>::emit_and_store_tx_and_fees_events(
                 tx_hash,
-                tx_execution_infos.execute_call_info,
-                tx_execution_infos.fee_transfer_call_info,
+                <span class="kw-2">&amp;</span>tx_execution_infos.execute_call_info,
+                <span class="kw-2">&amp;</span>tx_execution_infos.fee_transfer_call_info,
             );
-
             <span class="self">Self</span>::store_transaction(
                 tx_hash,
                 Transaction::DeployAccount(input_transaction),
@@ -1919,6 +1883,16 @@
             <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
             <span class="kw">let </span>transaction = input_transaction.into_executable::&lt;T::SystemHash&gt;(chain_id, paid_fee_on_l1, <span class="bool-val">false</span>);
 
+            <span class="kw">let </span>nonce: Nonce = transaction.tx.nonce;
+
+            <span class="comment">// Ensure that L1 Message has not been executed
+            </span><span class="self">Self</span>::ensure_l1_message_not_executed(<span class="kw-2">&amp;</span>nonce).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::L1MessageAlreadyExecuted)<span class="question-mark">?</span>;
+
+            <span class="comment">// Store infornamtion about message being processed
+            // The next instruction executes the message
+            // Either successfully  or not
+            </span>L1Messages::&lt;T&gt;::mutate(|nonces| nonces.insert(nonce));
+
             <span class="comment">// Execute
             </span><span class="kw">let </span>tx_execution_infos = transaction
                 .execute(
@@ -1934,10 +1908,9 @@
             <span class="kw">let </span>tx_hash = transaction.tx_hash;
             <span class="self">Self</span>::emit_and_store_tx_and_fees_events(
                 tx_hash,
-                tx_execution_infos.execute_call_info,
-                tx_execution_infos.fee_transfer_call_info,
+                <span class="kw-2">&amp;</span>tx_execution_infos.execute_call_info,
+                <span class="kw-2">&amp;</span>tx_execution_infos.fee_transfer_call_info,
             );
-
             <span class="self">Self</span>::store_transaction(
                 tx_hash,
                 Transaction::L1Handler(input_transaction),
@@ -1982,96 +1955,22 @@
             // otherwise we have a nonce error and everything fails.
             // Once we have a real fee market this is where we&#39;ll chose the most profitable transaction.
 
-            </span><span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
-            <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
-            <span class="kw">let </span><span class="kw-2">mut </span>state: BlockifierStateAdapter&lt;T&gt; = BlockifierStateAdapter::&lt;T&gt;::default();
-            <span class="kw">let </span><span class="kw-2">mut </span>execution_resources = ExecutionResources::default();
-            <span class="kw">let </span><span class="kw-2">mut </span>initial_gas = blockifier::abi::constants::INITIAL_GAS_COST;
+            </span><span class="kw">let </span>transaction = <span class="self">Self</span>::get_call_transaction(call.clone()).map_err(|<span class="kw">_</span>| InvalidTransaction::Call)<span class="question-mark">?</span>;
 
-            <span class="kw">let </span>transaction = <span class="self">Self</span>::get_call_transaction(call.clone()).map_err(|<span class="kw">_</span>| InvalidTransaction::Call)<span class="question-mark">?</span>;
+            <span class="kw">let </span>tx_priority_info = <span class="self">Self</span>::validate_unsigned_tx_nonce(<span class="kw-2">&amp;</span>transaction)<span class="question-mark">?</span>;
 
-            <span class="comment">// Check the nonce is correct
-            </span><span class="kw">let </span>(sender_address, sender_nonce, transaction_nonce) =
-                <span class="kw">if let </span>UserAndL1HandlerTransaction::User(<span class="kw-2">ref </span>transaction) = transaction {
-                    <span class="kw">let </span>sender_address: ContractAddress = transaction.sender_address().into();
-                    <span class="kw">let </span>sender_nonce: Felt252Wrapper = Pallet::&lt;T&gt;::nonce(sender_address).into();
-                    <span class="kw">let </span>transaction_nonce = transaction.nonce();
-
-                    <span class="comment">// InvokeV0 does not have a nonce
-                    </span><span class="kw">if let </span><span class="prelude-val">Some</span>(transaction_nonce) = transaction_nonce {
-                        <span class="comment">// Reject transaction with an already used Nonce
-                        </span><span class="kw">if </span>sender_nonce &gt; <span class="kw-2">*</span>transaction_nonce {
-                            <span class="prelude-val">Err</span>(InvalidTransaction::Stale)<span class="question-mark">?</span>;
-                        }
-
-                        <span class="comment">// A transaction with a nonce higher than the expected nonce is placed in
-                        // the future queue of the transaction pool.
-                        </span><span class="kw">if </span>sender_nonce &lt; <span class="kw-2">*</span>transaction_nonce {
-                            <span class="macro">log!</span>(
-                                debug,
-                                <span class="string">&quot;Nonce is too high. Expected: {:?}, got: {:?}. This transaction will be placed in the \
-                                 transaction pool and executed in the future when the nonce is reached.&quot;</span>,
-                                sender_nonce,
-                                transaction_nonce
-                            );
-                        }
-                    };
-
-                    (transaction.sender_address(), sender_nonce, transaction_nonce.cloned())
-                } <span class="kw">else </span>{
-                    <span class="comment">// TODO: create and check L1 messages Nonce
-                    </span><span class="macro">unimplemented!</span>()
-                };
-
-            <span class="comment">// Validate the user transactions
-            </span><span class="kw">if let </span>UserAndL1HandlerTransaction::User(transaction) = transaction {
-                <span class="kw">let </span>validate_result =
-                    <span class="kw">match </span>transaction {
-                        UserTransaction::Declare(tx, contract_class) =&gt; tx
-                            .try_into_executable::&lt;T::SystemHash&gt;(chain_id, contract_class, <span class="bool-val">false</span>)
-                            .map_err(|<span class="kw">_</span>| InvalidTransaction::BadProof)<span class="question-mark">?
-                            </span>.validate_tx(<span class="kw-2">&amp;mut </span>state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;mut </span>execution_resources, <span class="kw-2">&amp;mut </span>initial_gas, <span class="bool-val">false</span>),
-                        <span class="comment">// There is no way to validate it before the account is actually deployed
-                        </span>UserTransaction::DeployAccount(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-                        UserTransaction::Invoke(tx) =&gt; tx
-                            .into_executable::&lt;T::SystemHash&gt;(chain_id, <span class="bool-val">false</span>)
-                            .validate_tx(<span class="kw-2">&amp;mut </span>state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;mut </span>execution_resources, <span class="kw-2">&amp;mut </span>initial_gas, <span class="bool-val">false</span>),
-                    };
-                <span class="kw">match </span>validate_result {
-                    <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {}
-                    <span class="prelude-val">Err</span>(TransactionExecutionError::ValidateTransactionError(
-                        EntryPointExecutionError::PreExecutionError(PreExecutionError::UninitializedStorageAddress(
-                            contract_address,
-                        )),
-                    )) =&gt; {
-                        <span class="comment">// If the the txn is failing because the account isn&#39;t deployed yet
-                        // then don&#39;t throw an error and add a `require` tag for transaction
-                        // of nonce 0 to be executed first.
-                        </span><span class="kw">if </span>contract_address.<span class="number">0.0 </span>!= sender_address.into()
-                            || transaction_nonce != <span class="prelude-val">Some</span>(Felt252Wrapper::ONE)
-                        {
-                            <span class="prelude-val">Err</span>(InvalidTransaction::BadProof)<span class="question-mark">?
-                        </span>}
-                    }
-                    <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(InvalidTransaction::BadProof)<span class="question-mark">?</span>,
-                };
-            }
-
-            <span class="kw">let </span>nonce_for_priority: u64 = transaction_nonce
-                .unwrap_or(Felt252Wrapper::ZERO)
-                .try_into()
-                .map_err(|<span class="kw">_</span>| InvalidTransaction::Custom(NONCE_DECODE_FAILURE))<span class="question-mark">?</span>;
+            <span class="self">Self</span>::validate_unsigned_tx(<span class="kw-2">&amp;</span>transaction)<span class="question-mark">?</span>;
 
             <span class="kw">let </span><span class="kw-2">mut </span>valid_transaction_builder = ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
-                .priority(u64::MAX - nonce_for_priority)
+                .priority(u64::MAX)
                 .longevity(T::TransactionLongevity::get())
                 .propagate(<span class="bool-val">true</span>);
 
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(transaction_nonce) = transaction_nonce {
-                valid_transaction_builder = valid_transaction_builder.and_provides((sender_address, transaction_nonce));
-                <span class="comment">// Enforce waiting for the tx with the previous nonce,
-                // to be either executed or ordered before in the block
-                </span><span class="kw">if </span>transaction_nonce &gt; sender_nonce {
+            <span class="comment">// Make sure txs from same account are executed in correct order (nonce based ordering)
+            </span><span class="kw">if let </span>TxPriorityInfo::RegularTxs { sender_address, transaction_nonce, sender_nonce } = tx_priority_info {
+                valid_transaction_builder =
+                    valid_transaction_builder.and_provides((sender_address, Felt252Wrapper(transaction_nonce.<span class="number">0</span>)));
+                <span class="kw">if </span>transaction_nonce &gt; sender_nonce {
                     valid_transaction_builder = valid_transaction_builder
                         .and_requires((sender_address, Felt252Wrapper(transaction_nonce.<span class="number">0 </span>- FieldElement::ONE)));
                 }
@@ -2305,6 +2204,54 @@
         frame_system::Pallet::&lt;T&gt;::deposit_log(digest);
     }
 
+    <span class="doccomment">/// Aggregate L2 &gt; L1 messages from the call info.
+    ///
+    /// # Arguments
+    ///
+    /// * `tx_hash` - The hash of the transaction being processed
+    /// * `call_info` — A ref to the call info structure.
+    /// * `next_order` — Next expected message order, has to be 0 for a top level invocation
+    ///
+    /// # Returns
+    ///
+    /// Next expected message order
+    </span><span class="kw">fn </span>aggregate_messages_in_call_info(tx_hash: TransactionHash, call_info: <span class="kw-2">&amp;</span>CallInfo, next_order: usize) -&gt; usize {
+        <span class="kw">let </span><span class="kw-2">mut </span>message_idx = <span class="number">0</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>inner_call_idx = <span class="number">0</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>next_order = next_order;
+
+        <span class="kw">loop </span>{
+            <span class="comment">// Store current call&#39;s messages as long as they have sequential orders
+            </span><span class="kw">if </span>message_idx &lt; call_info.execution.l2_to_l1_messages.len() {
+                <span class="kw">let </span>ordered_message = <span class="kw-2">&amp;</span>call_info.execution.l2_to_l1_messages[message_idx];
+                <span class="kw">if </span>ordered_message.order == next_order {
+                    <span class="kw">let </span>message = MessageToL1 {
+                        from_address: call_info.call.storage_address,
+                        to_address: ordered_message.message.to_address,
+                        payload: ordered_message.message.payload.clone(),
+                    };
+                    TxMessages::&lt;T&gt;::append(tx_hash, message);
+                    next_order += <span class="number">1</span>;
+                    message_idx += <span class="number">1</span>;
+                    <span class="kw">continue</span>;
+                }
+            }
+
+            <span class="comment">// Go deeper to find the continuation of the sequence
+            </span><span class="kw">if </span>inner_call_idx &lt; call_info.inner_calls.len() {
+                next_order =
+                    <span class="self">Self</span>::aggregate_messages_in_call_info(tx_hash, <span class="kw-2">&amp;</span>call_info.inner_calls[inner_call_idx], next_order);
+                inner_call_idx += <span class="number">1</span>;
+                <span class="kw">continue</span>;
+            }
+
+            <span class="comment">// At this point we have iterated over all sequential messages and visited all internal calls
+            </span><span class="kw">break</span>;
+        }
+
+        next_order
+    }
+
     <span class="doccomment">/// Emit events from the call info.
     ///
     /// # Arguments
@@ -2470,14 +2417,16 @@
 
     <span class="kw">pub fn </span>emit_and_store_tx_and_fees_events(
         tx_hash: TransactionHash,
-        execute_call_info: <span class="prelude-ty">Option</span>&lt;CallInfo&gt;,
-        fee_transfer_call_info: <span class="prelude-ty">Option</span>&lt;CallInfo&gt;,
+        execute_call_info: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;CallInfo&gt;,
+        fee_transfer_call_info: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;CallInfo&gt;,
     ) {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(call_info) = execute_call_info {
-            <span class="kw">let _ </span>= <span class="self">Self</span>::emit_events_in_call_info(tx_hash, <span class="kw-2">&amp;</span>call_info, <span class="number">0</span>);
+            <span class="self">Self</span>::emit_events_in_call_info(tx_hash, call_info, <span class="number">0</span>);
+            <span class="self">Self</span>::aggregate_messages_in_call_info(tx_hash, call_info, <span class="number">0</span>);
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(call_info) = fee_transfer_call_info {
-            <span class="kw">let _ </span>= <span class="self">Self</span>::emit_events_in_call_info(tx_hash, <span class="kw-2">&amp;</span>call_info, <span class="number">0</span>);
+            <span class="self">Self</span>::emit_events_in_call_info(tx_hash, call_info, <span class="number">0</span>);
+            <span class="self">Self</span>::aggregate_messages_in_call_info(tx_hash, call_info, <span class="number">0</span>);
         }
     }
 
@@ -2490,6 +2439,11 @@
     <span class="kw">pub fn </span>chain_id() -&gt; Felt252Wrapper {
         T::ChainId::get()
     }
+
+    <span class="kw">pub fn </span>program_hash() -&gt; Felt252Wrapper {
+        T::ProgramHash::get()
+    }
+
     <span class="kw">pub fn </span>is_transaction_fee_disabled() -&gt; bool {
         T::DisableTransactionFee::get()
     }

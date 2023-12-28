@@ -290,13 +290,13 @@
 <span class="kw">impl </span>Default <span class="kw">for </span>MadaraClient {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>url = Url::parse(NODE_RPC_URL).expect(<span class="string">&quot;Invalid JSONRPC Url&quot;</span>);
-        MadaraClient { url, rpc_request_count: Default::default() }
+        MadaraClient::new(url)
     }
 }
 
 <span class="kw">impl </span>MadaraClient {
-    <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
-        Default::default()
+    <span class="kw">pub fn </span>new(url: Url) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ url, rpc_request_count: Default::default() }
     }
 
     <span class="kw">pub async fn </span>run_to_block(<span class="kw-2">&amp;mut </span><span class="self">self</span>, target_block: u64) -&gt; anyhow::Result&lt;()&gt; {
@@ -331,7 +331,7 @@
         <span class="kw">let </span>body = serde_json::to_string(<span class="kw-2">&amp;</span>body).expect(<span class="string">&quot;the json body must be serializable&quot;</span>);
 
         <span class="kw">let </span>response = Client::new()
-            .post(<span class="string">&quot;http://localhost:9944&quot;</span>)
+            .post(<span class="self">self</span>.url.clone())
             .header(CONTENT_TYPE, <span class="string">&quot;application/json; charset=utf-8&quot;</span>)
             .body(body)
             .send()

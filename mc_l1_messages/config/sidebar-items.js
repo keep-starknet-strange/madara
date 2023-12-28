@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["L1MessagesWorkerConfigError"],"struct":["L1MessagesWorkerConfig"]};
