@@ -291,7 +291,7 @@ where
             return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
         }
 
-        let extrinsic = convert_transaction(self.client.clone(), best_block_hash, transaction.clone()).await?;
+        let extrinsic = convert_tx_to_extrinsic(self.client.clone(), best_block_hash, transaction.clone()).await?;
 
         submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
 
@@ -323,7 +323,7 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let extrinsic = convert_transaction(self.client.clone(), best_block_hash, transaction.clone()).await?;
+        let extrinsic = convert_tx_to_extrinsic(self.client.clone(), best_block_hash, transaction.clone()).await?;
 
         submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
 
@@ -353,7 +353,7 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let extrinsic = convert_transaction(self.client.clone(), best_block_hash, transaction.clone()).await?;
+        let extrinsic = convert_tx_to_extrinsic(self.client.clone(), best_block_hash, transaction.clone()).await?;
 
         submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
 
@@ -1472,6 +1472,25 @@ where
             events_converted.last().unwrap().data[2]
         };
 
+        let messages = self
+            .client
+            .runtime_api()
+            .get_tx_messages_to_l1(substrate_block_hash, Felt252Wrapper(transaction_hash).into())
+            .map_err(|e| {
+                error!("'{e}'");
+                StarknetRpcApiError::InternalServerError
+            })?;
+
+        fn message_conversion(message: starknet_api::transaction::MessageToL1) -> starknet_core::types::MsgToL1 {
+            let mut to_address = [0u8; 32];
+            to_address[12..32].copy_from_slice(message.to_address.0.as_bytes());
+            starknet_core::types::MsgToL1 {
+                from_address: Felt252Wrapper::from(message.from_address).0,
+                to_address: FieldElement::from_bytes_be(&to_address).unwrap(),
+                payload: message.payload.0.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
+            }
+        }
+
         let receipt = match transaction {
             mp_transactions::Transaction::Declare(_) => TransactionReceipt::Declare(DeclareTransactionReceipt {
                 transaction_hash,
@@ -1479,7 +1498,7 @@ where
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
                 block_hash,
                 block_number,
-                messages_sent: Default::default(),
+                messages_sent: messages.into_iter().map(message_conversion).collect(),
                 events: events_converted,
                 execution_result,
             }),
@@ -1490,7 +1509,7 @@ where
                     finality_status: TransactionFinalityStatus::AcceptedOnL2,
                     block_hash,
                     block_number,
-                    messages_sent: Default::default(),
+                    messages_sent: messages.into_iter().map(message_conversion).collect(),
                     events: events_converted,
                     contract_address: tx.get_account_address(),
                     execution_result,
@@ -1502,7 +1521,7 @@ where
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
                 block_hash,
                 block_number,
-                messages_sent: Default::default(),
+                messages_sent: messages.into_iter().map(message_conversion).collect(),
                 events: events_converted,
                 execution_result,
             }),
@@ -1512,7 +1531,7 @@ where
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
                 block_hash,
                 block_number,
-                messages_sent: Default::default(),
+                messages_sent: messages.into_iter().map(message_conversion).collect(),
                 events: events_converted,
                 execution_result,
             }),
@@ -1596,7 +1615,7 @@ where
     })
 }
 
-async fn convert_transaction<C, B>(
+async fn convert_tx_to_extrinsic<C, B>(
     client: Arc<C>,
     best_block_hash: <B as BlockT>::Hash,
     transaction: UserTransaction,
@@ -1606,18 +1625,12 @@ where
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
 {
-    let result = client.runtime_api().convert_transaction(best_block_hash, transaction).map_err(|e| {
+    let extrinsic = client.runtime_api().convert_transaction(best_block_hash, transaction).map_err(|e| {
         error!("Failed to convert transaction: {:?}", e);
         StarknetRpcApiError::InternalServerError
     })?;
 
-    match result {
-        Ok(extrinsic) => Ok(extrinsic),
-        Err(dispatch_error) => {
-            error!("Failed to convert transaction: {:?}", dispatch_error);
-            Err(StarknetRpcApiError::InternalServerError)
-        }
-    }
+    Ok(extrinsic)
 }
 
 fn convert_error<C, B, T>(

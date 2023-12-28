@@ -1,0 +1,42 @@
+[package]
+name = "mp-snos-output"
+version.workspace = true
+edition.workspace = true
+license = "MIT"
+description = "Primitives for Starknet OS output"
+authors = { workspace = true }
+repository = { workspace = true }
+
+[dependencies]
+mp-messages = { workspace = true }
+mp-transactions = { workspace = true }
+parity-scale-codec = { workspace = true, features = [
+  "derive",
+], optional = true }
+scale-info = { workspace = true, features = ["derive"], optional = true }
+sp-core = { workspace = true }
+starknet_api = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
+assert_matches = "1.5.0"
+hex = "*"
+
+[features]
+default = ["std"]
+std = [
+  "parity-scale-codec/std",
+  "mp-transactions/std",
+  "mp-messages/std",
+  "starknet_api/std",
+]
+parity-scale-codec = [
+  "dep:parity-scale-codec",
+  "starknet_api/parity-scale-codec",
+  "mp-messages/parity-scale-codec",
+]
+scale-info = [
+  "dep:scale-info",
+  "starknet_api/scale-info",
+  "mp-messages/scale-info",
+]

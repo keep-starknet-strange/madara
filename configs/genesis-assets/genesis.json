@@ -62,7 +62,7 @@
       }
     ],
     [
-      "0x05a2b92d9a36509a3d651e7df99144a4ad8301e2caf42465ee6ab0451ae91882",
+      "0x04c5efa8dc6f0554da51f125d04e379ac41153a8b837391083a8dc3771a33388",
       {
         "path": "genesis-assets/test.json",
         "version": 0
@@ -116,7 +116,7 @@
     ],
     [
       "0x1111",
-      "0x05a2b92d9a36509a3d651e7df99144a4ad8301e2caf42465ee6ab0451ae91882"
+      "0x04c5efa8dc6f0554da51f125d04e379ac41153a8b837391083a8dc3771a33388"
     ],
     [
       "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00",

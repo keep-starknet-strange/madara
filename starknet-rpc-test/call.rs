@@ -161,12 +161,9 @@ async fn works_on_mutable_call_without_modifying_storage(madara: &ThreadSafeMada
         let deploy_tx =
             Execution::from(&contract_factory.deploy(vec![], FieldElement::ZERO, true).max_fee(max_fee).nonce(nonce));
 
-        println!("before declare");
         // declare and deploy contract
         madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
-        println!("before execute");
         madara_write_lock.create_block_with_txs(vec![Transaction::Execution(deploy_tx)]).await?;
-        println!("after block");
     }
 
     // address of deployed contract (will always be the same for 0 salt)
