@@ -13,7 +13,7 @@
 - feat(da): update da calldata encoding to v0.11.0 spec, da conf examples, da
   conf flag, da-tests in CI
 - refactor: use `map` in `estimate_fee` to stop computation on error
-- fix(node/commands): md5 are aslo checked when running setup --from-local
+- fix(node/commands): md5 are also checked when running setup --from-local
 - feat(data-availability): extend eth config with poll interval
 - fix(snos-output): expose snos codec, remove unused `get_starknet_messages`
   runtime method, and unnecessary mp-snos-output dependencies

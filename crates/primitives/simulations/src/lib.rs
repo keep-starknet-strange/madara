@@ -211,7 +211,7 @@ fn ordered_l2_to_l1_messages(call_info: &CallInfo) -> Vec<MessageL2ToL1> {
             messages.insert(
                 order,
                 MessageL2ToL1 {
-                    payload: message.payload.0.iter().map(|x| (*x).into()).collect(),
+                    payload: message.payload.0.to_vec(),
                     to_address: message.to_address,
                     from_address: ContractAddress(PatriciaKey(call.call.storage_address.0.0)),
                 },

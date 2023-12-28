@@ -148,9 +148,7 @@ async fn fails_with_inconsistent_state_in_the_future(ctx: &mut Context) -> Resul
     sleep(Duration::from_millis(100)).await;
 
     // Expected connection refused because Madara is shut down at this point
-    let is_connection_refused =
-        assert_matches!(madara.create_empty_block().await, Err(err) => err.downcast_ref::<reqwest::Error>().is_some());
-    assert!(is_connection_refused);
+    assert_matches!(madara.create_empty_block().await, Err(err) => assert!(err.downcast_ref::<reqwest::Error>().is_some()));
 
     Ok(())
 }
@@ -168,9 +166,7 @@ async fn fails_with_inconsistent_starknet_spec(ctx: &mut Context) -> Result<(), 
     sleep(Duration::from_millis(100)).await;
 
     // Expected connection refused because Madara is shut down at this point
-    let is_connection_refused =
-        assert_matches!(madara.create_empty_block().await, Err(err) => err.downcast_ref::<reqwest::Error>().is_some());
-    assert!(is_connection_refused);
+    assert_matches!(madara.create_empty_block().await, Err(err) => assert!(err.downcast_ref::<reqwest::Error>().is_some()));
 
     Ok(())
 }
