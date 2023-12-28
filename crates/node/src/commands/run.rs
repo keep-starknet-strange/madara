@@ -1,4 +1,6 @@
+use std::io::BufReader;
 use std::path::PathBuf;
+use std::fs::File;
 
 use clap::ValueHint::FilePath;
 use madara_runtime::SealingMode;
@@ -127,13 +129,43 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
 
     let da_config: Option<(DaLayer, PathBuf)> = match cli.run.da_layer {
         Some(da_layer) => {
-            let da_conf = cli.run.da_conf.expect("clap requires da_conf when da_layer is present");
-            if !da_conf.exists() {
-                log::info!("{} does not contain DA config", da_conf.display());
-                return Err("DA config not available".into());
-            }
+            let da_conf = match cli.run.da_conf {
+                Some(da_conf) => Some(da_conf),
+                None => {
+                    let path_base_path = cli.run.base_path()?;
+                    let path_conf_json = path_base_path.path().join("da_conf.json");
+                    let path_conf_toml = path_base_path.path().join("da_conf.toml");
+                    let (test_path_conf_json,test_path_conf_toml) = match (path_conf_json.exists(),path_conf_toml.exists()) {
+                        (true,true) => {
+                            log::info!("does not contain DA config");
+                            return Err("DA config not available".into());
+                        },
+                        (true,false) => {
+                            let file = File::open(path_conf_json).unwrap();
+                            let reader = BufReader::new(file);
+                            let res : PathBuf = serde_json::from_reader(reader).unwrap();
+                            (Some(res),None)
+                        },
+                        (false,true) => {
+                            let file = File::open(path_conf_json).unwrap();
+                            let reader = BufReader::new(file);
+                            let res : PathBuf = serde_json::from_reader(reader).unwrap();
+                            (None,Some(res))
+                        },
+                        _ => {
+                            log::info!("does not contain DA config");
+                            return Err("DA config not available".into());
+                        }
+                    };
+                    match (test_path_conf_json,test_path_conf_toml) {
+                        (Some(x),None) => Some(x),
+                        (None,Some(x)) => Some(x),
+                        _ => None
+                    }
+                }
+            };
 
-            Some((da_layer, da_conf))
+            Some((da_layer, da_conf.expect("problem in fn run_node logic")))
         }
         None => {
             log::info!("Madara initialized w/o DA layer");
