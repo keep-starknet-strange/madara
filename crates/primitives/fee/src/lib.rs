@@ -6,7 +6,6 @@ pub extern crate alloc;
 
 use alloc::vec;
 use alloc::vec::Vec;
-use serde::Deserialize;
 #[cfg(feature = "std")]
 use std::collections::HashMap;
 
@@ -23,6 +22,7 @@ use blockifier::transaction::transaction_utils::{calculate_l1_gas_usage, calcula
 #[cfg(not(feature = "std"))]
 use hashbrown::HashMap;
 use mp_state::StateChanges;
+use serde::Deserialize;
 use sp_arithmetic::fixed_point::{FixedPointNumber, FixedU128};
 use sp_arithmetic::traits::Zero;
 use starknet_api::api_core::EntryPointSelector;

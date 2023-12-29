@@ -99,7 +99,6 @@ use mp_transactions::{
     DeclareTransaction, DeployAccountTransaction, HandleL1MessageTransaction, InvokeTransaction, Transaction,
     UserAndL1HandlerTransaction, UserTransaction,
 };
-use mp_block::BlockId;
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
 use starknet_api::api_core::{ChainId, ClassHash, CompiledClassHash, ContractAddress, EntryPointSelector, Nonce};
@@ -1143,10 +1142,10 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn simulate_transactions(
-        block_id: BlockId,
         transactions: Vec<UserTransaction>,
         simulation_flags: SimulationFlags,
     ) -> Result<Vec<SimulatedTransaction>, DispatchError> {
+        println!("AYAAAH");
         let chain_id = Self::chain_id();
 
         let execution_results = execute_txs_and_rollback::<T>(

@@ -27,8 +27,8 @@ starknet_api = { workspace = true }
 parity-scale-codec = { workspace = true, features = [
   "derive",
 ], optional = true }
-serde = { workspace = true, features = ["derive"], optional = true }
 scale-info = { workspace = true, features = ["derive"], optional = true }
+serde = { workspace = true, features = ["derive"], optional = true }
 
 [dev-dependencies]
 mp-hashers = { workspace = true }

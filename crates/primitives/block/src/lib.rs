@@ -13,7 +13,7 @@ use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::Transaction;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Block Transactions
 pub type BlockTransactions = Vec<Transaction>;
