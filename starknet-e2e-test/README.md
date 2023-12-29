@@ -71,10 +71,10 @@ running Madara instance at a single point of time. In order to avoid concurrent
 access to e.g. config files you can override Madara base path and use unique
 temporary directories for each instance.
 
-Here is how you can do that using `test_context` and `tempdir` crate:
+Here is how you can do that using `test_context` and `tempfile` crate:
 
 ```rust
-use tempdir::TempDir;
+use tempfile::TempDir;
 use test_context::{test_context, AsyncTestContext};
 use async_trait::async_trait;
 use madara_node_runner::MadaraRunner;
@@ -86,7 +86,7 @@ struct Context {
 #[async_trait]
 impl AsyncTestContext for Context {
     async fn setup() -> Self {
-        let madara_path = TempDir::new("madara").expect("Failed to create Madara path");
+        let madara_path = TempDir::with_prefix("madara").expect("Failed to create Madara path");
         Self { madara_path }
     }
 
