@@ -8,7 +8,7 @@ At the [last community call](https://www.youtube.com/watch?v=VyvDAxF46uc), a
 special accent was put on RPC contributions to make madara quickly featured to
 be queried as a full node.
 
-Here is a little guide to quickly dive into madara project, focused on RPC.
+Here is a little guide to quickly dive into the madara project, focused on RPC.
 
 ## How to build madara
 
@@ -106,7 +106,7 @@ pub trait StarknetRpcApi {
 }
 ```
 
-1. `rpc`: implements actual RPC logic to process the parameters (if any) and
+2. `rpc`: implements actual RPC logic to process the parameters (if any) and
    return a result.
 
 ```rust
@@ -165,7 +165,7 @@ sp_api::decl_runtime_apis! {
 }
 ```
 
-1. Implement your function in the runtime
+2. Implement your function in the runtime
 
 ```rust
 // crates/runtime/src/lib.rs
