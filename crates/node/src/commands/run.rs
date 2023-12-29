@@ -129,25 +129,25 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
 
     let da_config: Option<(DaLayer, PathBuf)> = match cli.run.da_layer {
         Some(da_layer) => {
-            let da_conf = match cli.run.da_conf {
+            let da_conf = match cli.run.da_conf.clone() {
                 Some(da_conf) => Some(da_conf),
                 None => {
                     let path_base_path = cli.run.base_path()?;
-                    let path_conf_json = path_base_path.path().join("da_conf.json");
-                    let path_conf_toml = path_base_path.path().join("da_conf.toml");
-                    let (test_path_conf_json,test_path_conf_toml) = match (path_conf_json.exists(),path_conf_toml.exists()) {
+                    let path_da_conf_json = path_base_path.path().join("da_conf.json");
+                    let path_da_conf_toml = path_base_path.path().join("da_conf.toml");
+                    let (test_path_da_conf_json,test_path_da_conf_toml) = match (path_da_conf_json.exists(),path_da_conf_toml.exists()) {
                         (true,true) => {
                             log::info!("does not contain DA config");
                             return Err("DA config not available".into());
                         },
                         (true,false) => {
-                            let file = File::open(path_conf_json).unwrap();
+                            let file = File::open(path_da_conf_json).unwrap();
                             let reader = BufReader::new(file);
                             let res : PathBuf = serde_json::from_reader(reader).unwrap();
                             (Some(res),None)
                         },
                         (false,true) => {
-                            let file = File::open(path_conf_json).unwrap();
+                            let file = File::open(path_da_conf_toml).unwrap();
                             let reader = BufReader::new(file);
                             let res : PathBuf = serde_json::from_reader(reader).unwrap();
                             (None,Some(res))
@@ -157,7 +157,7 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
                             return Err("DA config not available".into());
                         }
                     };
-                    match (test_path_conf_json,test_path_conf_toml) {
+                    match (test_path_da_conf_json,test_path_da_conf_toml) {
                         (Some(x),None) => Some(x),
                         (None,Some(x)) => Some(x),
                         _ => None
@@ -165,7 +165,7 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
                 }
             };
 
-            Some((da_layer, da_conf.expect("problem in fn run_node logic")))
+            Some((da_layer, da_conf.expect("problem in fn run_node logic (da_conf)")))
         }
         None => {
             log::info!("Madara initialized w/o DA layer");
@@ -178,14 +178,45 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
 
     let settlement_config: Option<(SettlementLayer, PathBuf)> = match cli.run.settlement {
         Some(SettlementLayer::Ethereum) => {
-            let settlement_conf = cli.run.settlement_conf.expect("clap requires da_conf when settlement is present");
-            if !settlement_conf.exists() {
-                return Err(sc_cli::Error::Input(format!(
-                    "Ethereum config not found at {}",
-                    settlement_conf.display()
-                )));
-            }
-            Some((SettlementLayer::Ethereum, settlement_conf))
+            let settlement_conf = match cli.run.settlement_conf {
+                Some(settlement_conf) => Some(settlement_conf),
+                None => {
+                    let path_base_path = cli.run.base_path()?;
+                    let path_sett_conf_json = path_base_path.path().join("settlement_conf.json");
+                    let path_sett_conf_toml = path_base_path.path().join("settlement_conf.toml");
+                    let (test_path_sett_conf_json,test_path_sett_conf_toml) = match (path_sett_conf_json.exists(),path_sett_conf_toml.exists()) {
+                        (true,true) => {
+                            return Err(sc_cli::Error::Input(format!(
+                                "Ethereum config not found in fn run_node"
+                            )));
+                        },
+                        (true,false) => {
+                            let file = File::open(path_sett_conf_json).unwrap();
+                            let reader = BufReader::new(file);
+                            let res : PathBuf = serde_json::from_reader(reader).unwrap();
+                            (Some(res),None)
+                        },
+                        (false,true) => {
+                            let file = File::open(path_sett_conf_toml).unwrap();
+                            let reader = BufReader::new(file);
+                            let res : PathBuf = serde_json::from_reader(reader).unwrap();
+                            (Some(res),None)
+                        },
+                        _ => {
+                            return Err(sc_cli::Error::Input(format!(
+                                "Ethereum config not found in fn run_node"
+                            )));
+                        }
+                    };
+                    match (test_path_sett_conf_json,test_path_sett_conf_toml) {
+                        (Some(x),None) => Some(x),
+                        (None,Some(x)) => Some(x),
+                        _ => None
+                    }
+                }
+            };
+
+            Some((SettlementLayer::Ethereum, settlement_conf.expect("problem in fn run_node logic (settlement_conf)")))
         }
         None => {
             log::info!("Madara initialized w/o settlement layer");
