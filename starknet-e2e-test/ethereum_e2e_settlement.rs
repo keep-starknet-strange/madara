@@ -15,7 +15,7 @@ use rstest::rstest;
 use starknet_api::serde_utils::hex_str_from_bytes;
 use starknet_e2e_test::ethereum_sandbox::EthereumSandbox;
 use starknet_e2e_test::starknet_contract::{InitData, StarknetContract};
-use tempdir::TempDir;
+use tempfile::TempDir;
 use test_context::{test_context, AsyncTestContext};
 use tokio::time::sleep;
 
@@ -46,7 +46,7 @@ impl AsyncTestContext for Context {
         let sandbox = EthereumSandbox::new();
         let starknet_contract = StarknetContract::deploy(&sandbox).await;
 
-        let madara_path = TempDir::new("madara").expect("Failed to create Madara path");
+        let madara_path = TempDir::with_prefix("madara").expect("Failed to create Madara path");
         let config_dir = madara_path.path().join("chains/dev"); // data path
         create_dir_all(&config_dir).unwrap();
 
