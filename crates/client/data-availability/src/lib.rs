@@ -14,15 +14,12 @@ use futures::channel::mpsc;
 use futures::StreamExt;
 use mc_commitment_state_diff::BlockDAData;
 use mp_hashers::HasherT;
-use pallet_starknet_runtime_api::StarknetRuntimeApi;
-use sc_client_api::client::BlockchainEvents;
 use serde::{Deserialize, Serialize};
-use sp_api::ProvideRuntimeApi;
-use sp_blockchain::HeaderBackend;
-use sp_runtime::traits::{Block as BlockT, Header};
+use sp_runtime::traits::Block as BlockT;
+use starknet_api::block::BlockHash;
 use utils::state_diff_to_calldata;
 
-pub struct DataAvailabilityWorker<B, C, H>(PhantomData<(B, C, H)>);
+pub struct DataAvailabilityWorker<B, H>(PhantomData<(B, H)>);
 pub struct DataAvailabilityWorkerProving<B>(PhantomData<B>);
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -77,61 +74,53 @@ impl<B> DataAvailabilityWorkerProving<B>
 where
     B: BlockT,
 {
-    pub async fn prove_current_block(
-        da_mode: DaMode,
-        mut state_diffs_rx: mpsc::Receiver<BlockDAData>,
-        madara_backend: Arc<mc_db::Backend<B>>,
-    ) {
-        while let Some(BlockDAData(block_hash, csd, num_addr_accessed)) = state_diffs_rx.next().await {
-            log::info!("received state diff for block {block_hash}: {csd:?}. {num_addr_accessed} addresses accessed.");
+    pub async fn prove_current_block(da_mode: DaMode, block_hash: BlockHash, madara_backend: Arc<mc_db::Backend<B>>) {
+        log::info!("proving the block {block_hash}");
 
-            // store the da encoded calldata for the state update worker
-            if let Err(db_err) =
-                madara_backend.da().store_state_diff(&block_hash, state_diff_to_calldata(csd, num_addr_accessed))
-            {
-                log::error!("db err: {db_err}");
-            };
-
-            match da_mode {
-                DaMode::Validity => {
-                    // Submit the Starknet OS PIE
-                    // TODO: Validity Impl
-                    // run the Starknet OS with the Cairo VM
-                    // extract the PIE from the Cairo VM run
-                    // pass the PIE to `submit_pie` and zip/base64 internal
-                    if let Ok(job_resp) = sharp::submit_pie("TODO") {
-                        log::info!("Job Submitted: {}", job_resp.cairo_job_key);
-                        // Store the cairo job key
-                        if let Err(db_err) = madara_backend.da().update_cairo_job(&block_hash, job_resp.cairo_job_key) {
-                            log::error!("db err: {db_err}");
-                        };
-                    }
+        match da_mode {
+            DaMode::Validity => {
+                // Submit the Starknet OS PIE
+                // TODO: Validity Impl
+                // run the Starknet OS with the Cairo VM
+                // extract the PIE from the Cairo VM run
+                // pass the PIE to `submit_pie` and zip/base64 internal
+                if let Ok(job_resp) = sharp::submit_pie("TODO") {
+                    log::info!("Job Submitted: {}", job_resp.cairo_job_key);
+                    // Store the cairo job key
+                    if let Err(db_err) = madara_backend.da().update_cairo_job(&block_hash, job_resp.cairo_job_key) {
+                        log::error!("db err: {db_err}");
+                    };
                 }
-                _ => {
-                    log::info!("don't prove in remaining DA modes")
-                }
+            }
+            _ => {
+                log::info!("don't prove in remaining DA modes")
             }
         }
     }
 }
 
-impl<B, C, H> DataAvailabilityWorker<B, C, H>
+impl<B, H> DataAvailabilityWorker<B, H>
 where
     B: BlockT,
-    C: ProvideRuntimeApi<B>,
-    C::Api: StarknetRuntimeApi<B>,
-    C: BlockchainEvents<B> + 'static,
-    C: HeaderBackend<B>,
     H: HasherT,
 {
     pub async fn update_state(
         da_client: Box<dyn DaClient + Send + Sync>,
-        client: Arc<C>,
+        mut state_diffs_rx: mpsc::Receiver<BlockDAData>,
         madara_backend: Arc<mc_db::Backend<B>>,
     ) {
-        let mut notification_st = client.import_notification_stream();
+        while let Some(BlockDAData(starknet_block_hash, csd, num_addr_accessed)) = state_diffs_rx.next().await {
+            log::info!(
+                "received state diff for block {starknet_block_hash}: {csd:?}. {num_addr_accessed} addresses accessed."
+            );
 
-        while let Some(notification) = notification_st.next().await {
+            // store the state diff
+            if let Err(db_err) = madara_backend
+                .da()
+                .store_state_diff(&starknet_block_hash, state_diff_to_calldata(csd, num_addr_accessed))
+            {
+                log::error!("db err: {db_err}");
+            };
             // Query last written state
             // TODO: this value will be used to ensure the correct state diff is being written in Validity mode
             let _last_published_state = match da_client.last_published_state().await {
@@ -140,12 +129,6 @@ where
                     log::error!("da provider error: {e}");
                     continue;
                 }
-            };
-
-            let starknet_block_hash = {
-                let digest = notification.header.digest();
-                let block = mp_digest_log::find_starknet_block(digest).expect("starknet block not found");
-                block.header().hash::<H>().into()
             };
 
             match da_client.get_mode() {
@@ -160,10 +143,16 @@ where
                             log::error!("DA PUBLISH ERROR: {}", e);
                         }
                     }
-                    Err(e) => log::error!("could not pull state diff: {e}"),
+                    Err(e) => log::error!("could not pull state diff for block {starknet_block_hash}: {e}"),
                 },
                 DaMode::Volition => log::info!("volition da mode not implemented"),
             }
+
+            tokio::spawn(DataAvailabilityWorkerProving::<B>::prove_current_block(
+                da_client.get_mode(),
+                starknet_block_hash,
+                madara_backend.clone(),
+            ));
         }
     }
 }
