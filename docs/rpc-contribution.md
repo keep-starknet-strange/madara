@@ -79,27 +79,27 @@ In the `crates/client` we can find two RPC related packages.
 
    ```rust
    // crates/client/rpc-core/src/lib.rs
-   
+
    // Note here the macro to ensure correct serialization.
    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
    pub struct MyEndpointParams {
        pub some_str: String,
        pub some_u64: u64,
    }
-   
+
    // If needed, define MyEndpointResult for instance.
-   
+
    ...
-   
+
    /// Starknet rpc interface.
    #[rpc(server, namespace = "starknet")]
    pub trait StarknetRpcApi {
        /// Get the most recent accepted block number
        #[method(name = "blockNumber")]
        fn block_number(&self) -> RpcResult<BlockNumber>;
-   
+
        ....
-   
+
        /// My new RPC endpoint.
        #[method(name = "myEndpoint")] // <-- camel case naming.
        fn my_endpoint(&self, my_params: MyEndpointParams) -> RpcResult<String>; // <-- Define struct as needed for params or result.
@@ -111,11 +111,11 @@ In the `crates/client` we can find two RPC related packages.
 
    ```rust
    // crates/client/rpc/src/lib.rs
-   
+
    ...
    use mc_rpc_core::{BlockHashAndNumber, BlockId as StarknetBlockId, MyEndpointParams};
    ...
-   
+
    impl<B, BE, C> StarknetRpcApiServer for Starknet<B, BE, C>
    where
        B: BlockT,
@@ -125,16 +125,16 @@ In the `crates/client` we can find two RPC related packages.
        C::Api: StarknetRuntimeApi<B>,
    {
        ...
-   
+
        /// New endpoint for an amazing feature.
        fn my_endpoint(&self, my_params: MyEndpointParams) -> RpcResult<String> {
            // Here comes the logic to interact with storage, etc...
            Ok(String::from("Let's build the future!"))
-   
+
            // If you need to access the runtime, you can use the following code:
            let runtime_api = self.client.runtime_api();
        }
-   
+
    }
    ```
 
@@ -145,16 +145,16 @@ storage or call internal functions. To do so, follow these steps:
 
    ```rust
    // crates/pallets/starknet/src/runtime_api.rs
-   
+
    use mp_starknet::execution::ContractAddressWrapper;
    use sp_core::{H256, U256};
    pub extern crate alloc;
    use alloc::vec::Vec;
-   
+
    use sp_runtime::DispatchError;
-   
+
    // /!\ You should be using runtime types here.
-   
+
    sp_api::decl_runtime_apis! {
        pub trait StarknetRuntimeApi {
            /// Returns a `Call` response.
@@ -169,13 +169,13 @@ storage or call internal functions. To do so, follow these steps:
 
    ```rust
    // crates/runtime/src/lib.rs
-   
+
    impl pallet_starknet::runtime_api::StarknetRuntimeApi<Block> for Runtime {
-   
+
          fn call(address: ContractAddressWrapper, function_selector: Felt252Wrapper, calldata: Vec<Felt252Wrapper>) -> Result<Vec<Felt252Wrapper>, DispatchError> {
              Starknet::call_contract(address, function_selector, calldata)
          }
-   
+
          fn my_function() -> H256 {
              // Here comes the logic to interact with storage, pallets...
              H256::from_low_u64_be(1234)
