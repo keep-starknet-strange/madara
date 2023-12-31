@@ -20,6 +20,19 @@ LABEL description="Madara, a blazing fast Starknet sequencer" \
 # TODO: change the way chain-specs are copied on the node
 COPY --from=builder /madara/target/release/madara /madara-bin
 
+# Making directory to store the certificate
+RUN mkdir /etc/ssl/certs/madara
+
+# Generating a self-signed certificate
+RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout /etc/ssl/certs/madara/madara.key \
+    -out /etc/ssl/certs/madara/madara.crt \
+    -subj "/C=US/ST=State/L=City/O=Organization/OU=Unit/CN=madara.zone"
+
+# Trust the self-signed certificate
+RUN cp /etc/ssl/certs/myapp/myapp.crt /usr/local/share/ca-certificates/madara.crt
+RUN update-ca-certificates
+
 RUN apt-get -y update; \
     apt-get install -y --no-install-recommends \
         curl; \
