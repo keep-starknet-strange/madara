@@ -24,31 +24,17 @@ impl DaClient for CelestiaClient {
     async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()> {
         let blob = self.get_blob_from_state_diff(state_diff).map_err(|e| anyhow::anyhow!("celestia error: {e}"))?;
 
-        let start = std::time::Instant::now();
         let submitted_height = self.publish_data(&blob).await.map_err(|e| anyhow::anyhow!("celestia error: {e}"))?;
-        let end = std::time::Instant::now();
-        log::info!("celestia blob was submitted in {} seconds", end.checked_duration_since(start).unwrap().as_secs());
 
         // blocking call, awaiting on server side (Celestia Node) that a block with our data is included
-        let start = std::time::Instant::now();
         self.http_client
             .header_wait_for_height(submitted_height)
             .await
             .map_err(|e| anyhow::anyhow!("celestia da error: {e}"))?;
-        let end = std::time::Instant::now();
-        log::info!("wait for height was done in {} seconds", end.checked_duration_since(start).unwrap().as_secs());
 
-        let start = std::time::Instant::now();
         self.verify_blob_was_included(submitted_height, blob)
             .await
             .map_err(|e| anyhow::anyhow!("celestia error: {e}"))?;
-        let end = std::time::Instant::now();
-        log::info!(
-            "verification of blob inclusion was done in {} seconds",
-            end.checked_duration_since(start).unwrap().as_secs()
-        );
-
-        log::info!("celestia blob was succesfully included!");
 
         Ok(())
     }
