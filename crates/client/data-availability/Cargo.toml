@@ -54,8 +54,8 @@ sp-keyring = { workspace = true }
 subxt = { workspace = true }
 
 # Celestia
-celestia-rpc = { git = "https://github.com/eigerco/celestia-node-rs", rev = "bd6394b66b11065c543ab3f19fd66000a72b6236" }
-celestia-types = { git = "https://github.com/eigerco/celestia-node-rs", rev = "bd6394b66b11065c543ab3f19fd66000a72b6236" }
+celestia-rpc = { git = "https://github.com/eigerco/lumina", rev = "ccc5b9bfeac632cccd32d35ecb7b7d51d71fbb87" }
+celestia-types = { git = "https://github.com/eigerco/lumina", rev = "ccc5b9bfeac632cccd32d35ecb7b7d51d71fbb87" }
 
 # Madara
 mp-digest-log = { workspace = true, default-features = true }
