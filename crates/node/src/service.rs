@@ -18,7 +18,7 @@ use mc_data_availability::celestia::config::CelestiaConfig;
 use mc_data_availability::celestia::CelestiaClient;
 use mc_data_availability::ethereum::config::EthereumConfig;
 use mc_data_availability::ethereum::EthereumClient;
-use mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker, DataAvailabilityWorkerProving};
+use mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker};
 use mc_genesis_data_provider::OnDiskGenesisConfig;
 use mc_l1_messages::config::L1MessagesWorkerConfig;
 use mc_mapping_sync::MappingSyncWorker;
@@ -447,21 +447,11 @@ pub fn new_full(
         };
 
         task_manager.spawn_essential_handle().spawn(
-            "da-worker-prove",
-            Some(MADARA_TASK_GROUP),
-            DataAvailabilityWorkerProving::prove_current_block(
-                da_client.get_mode(),
-                commitment_state_diff_rx,
-                madara_backend.clone(),
-            ),
-        );
-
-        task_manager.spawn_essential_handle().spawn(
             "da-worker-update",
             Some(MADARA_TASK_GROUP),
-            DataAvailabilityWorker::<_, _, StarknetHasher>::update_state(
+            DataAvailabilityWorker::<_, StarknetHasher>::update_state(
                 da_client,
-                client.clone(),
+                commitment_state_diff_rx,
                 madara_backend.clone(),
             ),
         );

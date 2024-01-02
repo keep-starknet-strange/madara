@@ -2522,7 +2522,7 @@ dependencies = [
  "anyhow",
  "assert_matches",
  "async-lock 3.2.0",
- "clap 4.4.10",
+ "clap 4.4.11",
  "ethers",
  "flate2",
  "lazy_static",
