@@ -49,8 +49,8 @@
         &amp;self,
         __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
         transactions: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;UserTransaction&gt;,
-        simulation_flags: <a class="struct" href="../mp_simulations/struct.SimulationFlags.html" title="struct mp_simulations::SimulationFlags">SimulationFlags</a>
-    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="struct" href="../mp_simulations/struct.SimulatedTransaction.html" title="struct mp_simulations::SimulatedTransaction">SimulatedTransaction</a>&gt;, DispatchError&gt;, ApiError&gt; { ... }
+        simulation_flags: SimulationFlags
+    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;SimulatedTransaction&gt;, DispatchError&gt;, ApiError&gt; { ... }
 <span class="item-spacer"></span>    fn <a href="#method.extrinsic_filter" class="fn">extrinsic_filter</a>(
         &amp;self,
         __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
@@ -146,8 +146,8 @@
     &amp;self,
     __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
     transactions: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;UserTransaction&gt;,
-    simulation_flags: <a class="struct" href="../mp_simulations/struct.SimulationFlags.html" title="struct mp_simulations::SimulationFlags">SimulationFlags</a>
-) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="struct" href="../mp_simulations/struct.SimulatedTransaction.html" title="struct mp_simulations::SimulatedTransaction">SimulatedTransaction</a>&gt;, DispatchError&gt;, ApiError&gt;</h4></section></summary><div class="docblock"><p>Simulates transactions and returns their trace</p>
+    simulation_flags: SimulationFlags
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;SimulatedTransaction&gt;, DispatchError&gt;, ApiError&gt;</h4></section></summary><div class="docblock"><p>Simulates transactions and returns their trace</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.extrinsic_filter" class="method"><a class="src rightside" href="../src/pallet_starknet_runtime_api/lib.rs.html#36-97">source</a><h4 class="code-header">fn <a href="#method.extrinsic_filter" class="fn">extrinsic_filter</a>(
     &amp;self,
     __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
