@@ -268,7 +268,6 @@ impl_runtime_apis! {
         }
 
         fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<SimulatedTransaction>, DispatchError> {
-            println!("BRRRR");
             Starknet::simulate_transactions(transactions, simulation_flags)
         }
 

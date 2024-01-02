@@ -6721,6 +6721,7 @@ dependencies = [
  "blockifier",
  "mp-felt",
  "mp-state",
+ "mp-transactions",
  "parity-scale-codec",
  "scale-info",
  "serde",

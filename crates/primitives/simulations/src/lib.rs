@@ -12,9 +12,10 @@ use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionResult;
 use mp_felt::{Felt252Wrapper, UfeHex};
 use mp_state::StateDiff;
+use mp_transactions::execution::StarknetRPCExecutionResources;
 use starknet_api::api_core::EthAddress;
 use starknet_api::deprecated_contract_class::EntryPointType;
-use starknet_api::transaction::EventContent;
+use starknet_api::transaction::{EventContent, EventKey, EventData};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
@@ -151,12 +152,49 @@ pub struct L1HandlerTransactionTrace {
     pub state_diff: Option<StateDiff>,
 }
 
+/// Orderedevent.
+///
+/// An event alongside its order within the transaction.
+#[serde_with::serde_as]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct OrderedEvent {
+    /// The order of the event within the transaction
+    pub order: u64,
+    /// Keys
+    #[serde_as(as = "Vec<UfeHex>")]
+    pub keys: Vec<Felt252Wrapper>,
+    /// Data
+    #[serde_as(as = "Vec<UfeHex>")]
+    pub data: Vec<Felt252Wrapper>,
+}
+
 #[serde_with::serde_as]
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct MessageToL1 {
+    /// The address of the L2 contract sending the message
+    #[serde_as(as = "UfeHex")]
+    pub from_address: Felt252Wrapper,
+    /// The target L1 address the message is sent to
+    pub to_address: EthAddress,
+    /// The payload of the message
+    #[serde_as(as = "Vec<UfeHex>")]
+    pub payload: Vec<Felt252Wrapper>,
+}
+
+#[serde_with::serde_as]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct OrderedMessage {
+    /// The order of the message within the transaction
+    pub order: u64,
     /// The address of the L2 contract sending the message
     #[serde_as(as = "UfeHex")]
     pub from_address: Felt252Wrapper,
@@ -196,9 +234,11 @@ pub struct FunctionInvocation {
     /// The calls made by this invocation
     pub calls: Vec<FunctionInvocation>,
     /// The events emitted in this invocation
-    pub events: Vec<EventContent>,
+    pub events: Vec<OrderedEvent>,
     /// The messages sent by this invocation to L1
-    pub messages: Vec<MessageToL1>,
+    pub messages: Vec<OrderedMessage>,
+    /// Resources consumed by the internal call
+    pub execution_resources: StarknetRPCExecutionResources,
 }
 
 impl TryFrom<&CallInfo> for FunctionInvocation {
@@ -206,6 +246,7 @@ impl TryFrom<&CallInfo> for FunctionInvocation {
 
     fn try_from(call_info: &CallInfo) -> TransactionExecutionResult<FunctionInvocation> {
         let messages = ordered_l2_to_l1_messages(call_info);
+        let events = my_ordered_events_to_ordered_events(&call_info.execution.events);
 
         let inner_calls = call_info
             .inner_calls
@@ -225,29 +266,43 @@ impl TryFrom<&CallInfo> for FunctionInvocation {
             call_type: call_info.call.call_type.into(),
             result: call_info.execution.retdata.0.iter().map(|x| (*x).into()).collect(),
             calls: inner_calls,
-            events: call_info.execution.events.iter().map(|event| event.event.clone()).collect(),
+            events,
             messages,
+            execution_resources: StarknetRPCExecutionResources::default(),
         })
     }
 }
 
-fn ordered_l2_to_l1_messages(call_info: &CallInfo) -> Vec<MessageToL1> {
-    let mut messages = BTreeMap::new();
+fn ordered_l2_to_l1_messages(call_info: &CallInfo) -> Vec<OrderedMessage> {
+    let mut messages = Vec::new();
 
     for call in call_info.into_iter() {
-        for OrderedL2ToL1Message { order, message } in &call.execution.l2_to_l1_messages {
-            messages.insert(
-                order,
-                MessageToL1 {
-                    payload: message.payload.0.iter().map(|x| (*x).into()).collect(),
-                    to_address: message.to_address,
-                    from_address: call.call.storage_address.0.0.into(),
-                },
-            );
+        for (index, message) in call.execution.l2_to_l1_messages.iter().enumerate() {
+            messages.push(OrderedMessage {
+                order: index as u64,
+                payload: message.message.payload.0.iter().map(|x| (*x).into()).collect(),
+                to_address: message.message.to_address,
+                from_address: call.call.storage_address.0.0.into(),
+            });
         }
     }
 
-    messages.into_values().collect()
+    messages
+}
+
+fn my_ordered_events_to_ordered_events(blockifier_ordered_events: &[blockifier::execution::entry_point::OrderedEvent]) -> Vec<OrderedEvent> {
+    blockifier_ordered_events
+        .iter()
+        .map(|event| OrderedEvent {
+            order: event.order as u64,  // Convert usize to u64
+            keys: event.event.keys.iter().map(|key| {
+                Felt252Wrapper::from(key.0) // Convert StarkFelt to Felt252Wrapper
+            }).collect(),
+            data: event.event.data.0.iter().map(|data_item| {
+                Felt252Wrapper::from(*data_item) // Convert StarkFelt to Felt252Wrapper
+            }).collect(),
+        })
+        .collect()
 }
 
 #[derive(Debug, Clone)]
@@ -278,6 +333,8 @@ pub enum CallType {
     Call,
     #[serde(rename = "LIBRARY_CALL")]
     LibraryCall,
+    #[serde(rename = "DELEGATE")]
+    Delegate,
 }
 
 impl From<blockifier::execution::entry_point::CallType> for CallType {

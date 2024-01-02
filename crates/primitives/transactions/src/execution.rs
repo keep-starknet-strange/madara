@@ -87,6 +87,7 @@ impl SimulateTxVersionOffset for TransactionVersion {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Encode, Decode)]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 #[cfg_attr(feature = "no_unknown_fields", serde(deny_unknown_fields))]
 pub struct StarknetRPCExecutionResources {
     /// The number of cairo steps used
