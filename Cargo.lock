@@ -12135,6 +12135,7 @@ dependencies = [
  "madara-runtime",
  "madara-test-runner",
  "mc-settlement",
+ "mp-felt",
  "mp-messages",
  "mp-snos-output",
  "reqwest",

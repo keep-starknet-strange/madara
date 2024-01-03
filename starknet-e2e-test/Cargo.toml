@@ -37,6 +37,7 @@ madara-test-runner = { workspace = true }
 mc-settlement = { workspace = true }
 mp-messages = { workspace = true }
 mp-snos-output = { workspace = true }
+mp-felt = { workspace = true }
 
 [[test]]
 name = "ethereum_core_contract"
