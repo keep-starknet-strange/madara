@@ -87,16 +87,33 @@
 <a href="#87" id="87">87</a>
 <a href="#88" id="88">88</a>
 <a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
 </pre></div><pre class="rust"><code><span class="kw">pub mod </span>config;
 
 <span class="kw">use </span>anyhow::Result;
 <span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>celestia_rpc::client::new_http;
 <span class="kw">use </span>celestia_rpc::{BlobClient, HeaderClient};
+<span class="kw">use </span>celestia_types::blob::SubmitOptions;
 <span class="kw">use </span>celestia_types::nmt::Namespace;
 <span class="kw">use </span>celestia_types::{Blob, <span class="prelude-ty">Result </span><span class="kw">as </span>CelestiaTypesResult};
 <span class="kw">use </span>ethers::types::{I256, U256};
-<span class="kw">use </span>jsonrpsee::http_client::HttpClient;
+<span class="kw">use </span>jsonrpsee::http_client::{HeaderMap, HeaderValue, HttpClient, HttpClientBuilder};
+<span class="kw">use </span>reqwest::header;
 
 <span class="kw">use crate</span>::{DaClient, DaMode};
 
@@ -111,6 +128,7 @@
 </span><span class="kw">impl </span>DaClient <span class="kw">for </span>CelestiaClient {
     <span class="kw">async fn </span>publish_state_diff(<span class="kw-2">&amp;</span><span class="self">self</span>, state_diff: Vec&lt;U256&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>blob = <span class="self">self</span>.get_blob_from_state_diff(state_diff).map_err(|e| <span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;celestia error: {e}&quot;</span>))<span class="question-mark">?</span>;
+
         <span class="kw">let </span>submitted_height = <span class="self">self</span>.publish_data(<span class="kw-2">&amp;</span>blob).<span class="kw">await</span>.map_err(|e| <span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;celestia error: {e}&quot;</span>))<span class="question-mark">?</span>;
 
         <span class="comment">// blocking call, awaiting on server side (Celestia Node) that a block with our data is included
@@ -137,7 +155,10 @@
 
 <span class="kw">impl </span>CelestiaClient {
     <span class="kw">async fn </span>publish_data(<span class="kw-2">&amp;</span><span class="self">self</span>, blob: <span class="kw-2">&amp;</span>Blob) -&gt; <span class="prelude-ty">Result</span>&lt;u64&gt; {
-        <span class="self">self</span>.http_client.blob_submit(<span class="kw-2">&amp;</span>[blob.clone()]).<span class="kw">await</span>.map_err(|e| <span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;could not submit blob {e}&quot;</span>))
+        <span class="self">self</span>.http_client
+            .blob_submit(<span class="kw-2">&amp;</span>[blob.clone()], SubmitOptions::default())
+            .<span class="kw">await
+            </span>.map_err(|e| <span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;could not submit blob {e}&quot;</span>))
     }
 
     <span class="kw">fn </span>get_blob_from_state_diff(<span class="kw-2">&amp;</span><span class="self">self</span>, state_diff: Vec&lt;U256&gt;) -&gt; CelestiaTypesResult&lt;Blob&gt; {
@@ -164,7 +185,18 @@
     <span class="kw">type </span>Error = anyhow::Error;
 
     <span class="kw">fn </span>try_from(conf: config::CelestiaConfig) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">let </span>http_client = new_http(conf.http_provider.as_str(), conf.auth_token.as_deref())
+        <span class="comment">// Borrowed the below code from https://github.com/eigerco/lumina/blob/ccc5b9bfeac632cccd32d35ecb7b7d51d71fbb87/rpc/src/client.rs#L41.
+        // Directly calling the function wasn&#39;t possible as the function is async. Since
+        // we only need to initiate the http provider and not the ws provider, we don&#39;t need async
+        </span><span class="kw">let </span><span class="kw-2">mut </span>headers = HeaderMap::new();
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(auth_token) = conf.auth_token {
+            <span class="kw">let </span>val = HeaderValue::from_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;Bearer {}&quot;</span>, auth_token))<span class="question-mark">?</span>;
+            headers.insert(header::AUTHORIZATION, val);
+        }
+
+        <span class="kw">let </span>http_client = HttpClientBuilder::default()
+            .set_headers(headers)
+            .build(conf.http_provider.as_str())
             .map_err(|e| <span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;could not init http client: {e}&quot;</span>))<span class="question-mark">?</span>;
 
         <span class="comment">// Convert the input string to bytes
