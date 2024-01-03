@@ -37,7 +37,7 @@ RUN mkdir -p /usr/local/share/ca-certificates/extra
 RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -keyout /usr/local/share/ca-certificates/extra/my-cert.key \
     -out /usr/local/share/ca-certificates/extra/my-cert.crt \
-    -subj "/CN=localhost" \
+    -subj "/CN=localhost";
 
 # Update the CA certificates bundle.
 RUN update-ca-certificates
