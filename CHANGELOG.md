@@ -3,6 +3,8 @@
 ## Next release
 
 - chore: bump celestia rpc crate version
+- fix(DA): run the proof first then the state update
+- fix: `prove_current_block` is called after `update_state`
 - ci: add foundry ci task to push workflow
 - fix: first tx for non deployed account is valid
 - fix: incorrect base url for fetching config
