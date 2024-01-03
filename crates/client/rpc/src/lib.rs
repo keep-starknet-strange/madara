@@ -1564,53 +1564,39 @@ where
         transactions: Vec<BroadcastedTransaction>,
         simulation_flags: Vec<SimulationFlag>,
     ) -> RpcResult<Vec<SimulatedTransaction>> {
-        println!("Starting simulate_transactions");
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
-            println!("Error in substrate_block_hash_from_starknet_block: {e}");
             StarknetRpcApiError::BlockNotFound
         })?;
-        println!("substrate_block_hash obtained: {:?}", substrate_block_hash);
         let best_block_hash = self.client.info().best_hash;
-        println!("best_block_hash obtained: {:?}", best_block_hash);
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
-        println!("chain_id obtained: {:?}", chain_id);
-    
+
         let mut user_transactions = vec![];
         for tx in transactions {
-            println!("Processing transaction: {:?}", tx);
             let tx = tx.try_into().map_err(|e| {
                 error!("Failed to convert BroadcastedTransaction to UserTransaction: {e}");
-                println!("Error in converting BroadcastedTransaction: {e}");
                 StarknetRpcApiError::InternalServerError
             })?;
             user_transactions.push(tx);
         }
-    
-        println!("All transactions processed. Total: {}", user_transactions.len());
-    
+
         let simulation_flags: SimulationFlags = simulation_flags.into();
-        println!("Simulation flags set: {:?}", simulation_flags);
-    
+
         let fee_estimates = self
             .client
             .runtime_api()
             .simulate_transactions(substrate_block_hash, user_transactions, simulation_flags)
             .map_err(|e| {
                 error!("Request parameters error: {e}");
-                println!("Error in simulate_transactions request parameters: {e}");
                 StarknetRpcApiError::InternalServerError
             })?
             .map_err(|e| {
                 error!("Failed to call function: {:#?}", e);
-                println!("Error in simulate_transactions call: {:#?}", e);
                 StarknetRpcApiError::ContractError
             })?;
-    
-        println!("simulate_transactions completed successfully");
-    
+
         Ok(fee_estimates)
-    }    
+    }
 }
 
 async fn submit_extrinsic<P, B>(

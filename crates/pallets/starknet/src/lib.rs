@@ -1146,33 +1146,33 @@ impl<T: Config> Pallet<T> {
         simulation_flags: SimulationFlags,
     ) -> Result<Vec<SimulatedTransaction>, DispatchError> {
         log::info!("Simulate transactions started.");
-    
+
         let chain_id = Self::chain_id();
-    
+
         let execution_results = execute_txs_and_rollback::<T>(
             &transactions,
             &Self::get_block_context(),
             chain_id,
             &RuntimeExecutionConfigBuilder::new::<T>().with_simulation_mode(&simulation_flags).build(),
         )?;
-    
+
         log::info!("Executed transactions and rolled back. Total transactions: {}", transactions.len());
-    
+
         fn get_function_invocation(
             call_info: Option<&CallInfo>,
         ) -> TransactionExecutionResult<Option<FunctionInvocation>> {
             call_info.map(FunctionInvocation::try_from).transpose()
         }
-    
+
         let mut results = vec![];
         for (tx, res) in transactions.iter().zip(execution_results.iter()) {
             log::debug!("Processing transaction: {:?}", tx);
-    
+
             match res {
                 Ok(tx_exec_info) => {
                     log::info!("ARAHA");
                     log::debug!("Transaction execution info: {:?}", tx_exec_info);
-    
+
                     let validate_invocation = get_function_invocation(tx_exec_info.validate_call_info.as_ref())
                         .map_err(|err| {
                             log::error!("Failed to convert validate call info to function invocation: {}", err);
@@ -1183,7 +1183,7 @@ impl<T: Config> Pallet<T> {
                             log::error!("Failed to convert fee transfer call info to function invocation: {}", err);
                             Error::<T>::TransactionExecutionFailed
                         })?;
-                    
+
                     let transaction_trace = match tx {
                         UserTransaction::Invoke(_) => TransactionTrace::Invoke(InvokeTransactionTrace {
                             validate_invocation,
@@ -1211,7 +1211,7 @@ impl<T: Config> Pallet<T> {
                                     .ok_or(Error::<T>::TransactionExecutionFailed)?
                                     .try_into()
                                     .map_err(|_| Error::<T>::TransactionExecutionFailed)?,
-    
+
                                 fee_transfer_invocation,
                                 state_diff: Some(StateDiff::default()),
                             })
@@ -1228,7 +1228,7 @@ impl<T: Config> Pallet<T> {
                         transaction_trace,
                         fee_estimation: FeeEstimate { gas_consumed, gas_price, overall_fee },
                     });
-    
+
                     log::debug!("Processed transaction successfully: {:?}", tx);
                 }
                 Err(e) => {
@@ -1237,11 +1237,10 @@ impl<T: Config> Pallet<T> {
                 }
             }
         }
-    
+
         log::info!("Simulate transactions completed successfully. Total results: {:#?}", results);
         Ok(results)
     }
-    
 
     pub fn emit_and_store_tx_and_fees_events(
         tx_hash: TransactionHash,

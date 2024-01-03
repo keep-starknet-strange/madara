@@ -3,11 +3,10 @@
 #[doc(hidden)]
 pub extern crate alloc;
 
-use alloc::collections::BTreeMap;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use blockifier::execution::entry_point::{CallInfo, OrderedL2ToL1Message};
+use blockifier::execution::entry_point::CallInfo;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionResult;
 use mp_felt::{Felt252Wrapper, UfeHex};
@@ -15,7 +14,6 @@ use mp_state::StateDiff;
 use mp_transactions::execution::StarknetRPCExecutionResources;
 use starknet_api::api_core::EthAddress;
 use starknet_api::deprecated_contract_class::EntryPointType;
-use starknet_api::transaction::{EventContent, EventKey, EventData};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
@@ -71,11 +69,15 @@ pub struct SimulatedTransaction {
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-#[serde(untagged)]
+#[serde(tag = "type")]
 pub enum TransactionTrace {
+    #[serde(rename = "INVOKE")]
     Invoke(InvokeTransactionTrace),
+    #[serde(rename = "DEPLOY_ACCOUNT")]
     DeployAccount(DeployAccountTransactionTrace),
+    #[serde(rename = "L1_HANDLER")]
     L1Handler(L1HandlerTransactionTrace),
+    #[serde(rename = "DECLARE")]
     Declare(DeclareTransactionTrace),
 }
 
@@ -246,7 +248,7 @@ impl TryFrom<&CallInfo> for FunctionInvocation {
 
     fn try_from(call_info: &CallInfo) -> TransactionExecutionResult<FunctionInvocation> {
         let messages = ordered_l2_to_l1_messages(call_info);
-        let events = my_ordered_events_to_ordered_events(&call_info.execution.events);
+        let events = events_to_ordered_events(&call_info.execution.events);
 
         let inner_calls = call_info
             .inner_calls
@@ -290,17 +292,28 @@ fn ordered_l2_to_l1_messages(call_info: &CallInfo) -> Vec<OrderedMessage> {
     messages
 }
 
-fn my_ordered_events_to_ordered_events(blockifier_ordered_events: &[blockifier::execution::entry_point::OrderedEvent]) -> Vec<OrderedEvent> {
-    blockifier_ordered_events
+fn events_to_ordered_events(ordered_events: &[blockifier::execution::entry_point::OrderedEvent]) -> Vec<OrderedEvent> {
+    ordered_events
         .iter()
         .map(|event| OrderedEvent {
-            order: event.order as u64,  // Convert usize to u64
-            keys: event.event.keys.iter().map(|key| {
-                Felt252Wrapper::from(key.0) // Convert StarkFelt to Felt252Wrapper
-            }).collect(),
-            data: event.event.data.0.iter().map(|data_item| {
-                Felt252Wrapper::from(*data_item) // Convert StarkFelt to Felt252Wrapper
-            }).collect(),
+            order: event.order as u64, // Convert usize to u64
+            keys: event
+                .event
+                .keys
+                .iter()
+                .map(|key| {
+                    Felt252Wrapper::from(key.0) // Convert StarkFelt to Felt252Wrapper
+                })
+                .collect(),
+            data: event
+                .event
+                .data
+                .0
+                .iter()
+                .map(|data_item| {
+                    Felt252Wrapper::from(*data_item) // Convert StarkFelt to Felt252Wrapper
+                })
+                .collect(),
         })
         .collect()
 }

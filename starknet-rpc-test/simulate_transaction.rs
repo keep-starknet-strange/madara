@@ -131,16 +131,6 @@ async fn works_ok_on_no_validate(madara: &ThreadSafeMadaraClient) -> Result<(), 
     let invoke_transaction_2 =
         BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction { nonce: FieldElement::ONE, ..tx });
 
-    println!(
-        "RPC simulate_transactions called {:?}",
-        rpc.simulate_transactions(
-            BlockId::Tag(BlockTag::Latest),
-            &[invoke_transaction.clone(), invoke_transaction_2.clone()],
-            []
-        )
-        .await
-    );
-
     let simulations = rpc
         .simulate_transactions(BlockId::Tag(BlockTag::Latest), &[invoke_transaction, invoke_transaction_2], [])
         .await?;
@@ -214,9 +204,7 @@ async fn works_ok_on_validate_without_signature_with_skip_validate(
 #[rstest]
 #[tokio::test]
 async fn works_ok_without_max_fee_with_skip_fee_charge(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
-    println!("Starting function works_ok_without_max_fee_with_skip_fee_charge");
     let rpc = madara.get_starknet_client().await;
-    println!("Starknet client obtained");
 
     let tx = BroadcastedInvokeTransaction {
         max_fee: FieldElement::from(0u8),
@@ -231,14 +219,11 @@ async fn works_ok_without_max_fee_with_skip_fee_charge(madara: &ThreadSafeMadara
         ],
         is_query: false,
     };
-    println!("BroadcastedInvokeTransaction created");
 
     let invoke_transaction = BroadcastedTransaction::Invoke(tx.clone());
-    println!("Invoke transaction 1 prepared");
 
     let invoke_transaction_2 =
         BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction { nonce: FieldElement::ONE, ..tx });
-    println!("Invoke transaction 2 prepared");
 
     let simulations = rpc
         .simulate_transactions(
@@ -247,20 +232,11 @@ async fn works_ok_without_max_fee_with_skip_fee_charge(madara: &ThreadSafeMadara
             [SimulationFlag::SkipFeeCharge],
         )
         .await?;
-    println!("Transactions simulated");
 
     assert_eq!(simulations.len(), 2);
-    println!("Assertion passed: Number of simulations is 2");
-
     assert_eq!(simulations[0].fee_estimation.gas_consumed, 0);
-    println!("Assertion passed: Gas consumed in first simulation is 0");
-
     assert_eq!(simulations[0].fee_estimation.overall_fee, 420);
-    println!("Assertion passed: Overall fee in first simulation is 420");
-
     assert_eq!(simulations[0].fee_estimation.gas_price, 0);
-    println!("Assertion passed: Gas price in first simulation is 0");
 
-    println!("Function works_ok_without_max_fee_with_skip_fee_charge completed successfully");
     Ok(())
 }
