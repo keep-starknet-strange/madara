@@ -55,14 +55,7 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
             .collect::<Vec<_>>();
         let fee_token_address = Felt252Wrapper(loader.data().fee_token_address.0).into();
 
-        GenesisConfig {
-            contracts,
-            contract_classes,
-            storage,
-            fee_token_address,
-            seq_addr_updated: loader.data().seq_addr_updated,
-            ..Default::default()
-        }
+        GenesisConfig { contracts, contract_classes, storage, fee_token_address, ..Default::default() }
     }
 }
 
@@ -122,14 +115,13 @@ mod tests {
             predeployed_accounts: Vec::new(),
             storage: vec![((contract_address, storage_key), storage_value)],
             fee_token_address,
-            seq_addr_updated: false,
         };
 
         // When
         let serialized_loader = serde_json::to_string(&genesis_loader).unwrap();
 
         // Then
-        let expected = r#"{"contract_classes":[["0x1",{"path":"cairo-contracts/ERC20.json","version":0}]],"contracts":[["0x2","0x1"]],"predeployed_accounts":[],"storage":[[["0x2","0x3"],"0x4"]],"fee_token_address":"0x5","seq_addr_updated":false}"#;
+        let expected = r#"{"contract_classes":[["0x1",{"path":"cairo-contracts/ERC20.json","version":0}]],"contracts":[["0x2","0x1"]],"predeployed_accounts":[],"storage":[[["0x2","0x3"],"0x4"]],"fee_token_address":"0x5"}"#;
         assert_eq!(expected, serialized_loader);
     }
 }

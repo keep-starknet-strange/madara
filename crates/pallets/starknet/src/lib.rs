@@ -344,7 +344,6 @@ pub mod pallet {
         /// Must be set to the address of the fee token ERC20 contract.
         pub fee_token_address: ContractAddress,
         pub _phantom: PhantomData<T>,
-        pub seq_addr_updated: bool,
     }
 
     /// `Default` impl required by `pallet::GenesisBuild`.
@@ -356,7 +355,6 @@ pub mod pallet {
                 storage: vec![],
                 fee_token_address: ContractAddress::default(),
                 _phantom: PhantomData,
-                seq_addr_updated: true,
             }
         }
     }
@@ -385,7 +383,7 @@ pub mod pallet {
             LastKnownEthBlock::<T>::set(None);
             // Set the fee token address from the genesis config.
             FeeTokenAddress::<T>::set(self.fee_token_address);
-            SeqAddrUpdate::<T>::put(self.seq_addr_updated);
+            SeqAddrUpdate::<T>::put(true);
         }
     }
 
