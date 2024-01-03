@@ -133,18 +133,19 @@ where
             let madara_backend = madara_backend.clone();
             tokio::spawn(async move {
                 let prove_state_start = time::Instant::now();
-                match prove(da_client.get_mode(), starknet_block_hash, &csd, num_addr_accessed, madara_backend.clone())
-                    .await
+
+                if let Err(err) =
+                    prove(da_client.get_mode(), starknet_block_hash, &csd, num_addr_accessed, madara_backend.clone())
+                        .await
                 {
-                    Err(err) => log::error!("Failed to prove block: {err}"),
-                    Ok(()) => {}
+                    log::error!("Failed to prove block: {err}");
                 }
                 let prove_state_end = time::Instant::now();
 
-                match update_state::<B, H>(madara_backend, da_client, starknet_block_hash, csd, num_addr_accessed).await
+                if let Err(err) =
+                    update_state::<B, H>(madara_backend, da_client, starknet_block_hash, csd, num_addr_accessed).await
                 {
-                    Err(err) => log::error!("Failed to update the DA state: {err}"),
-                    Ok(()) => {}
+                    log::error!("Failed to update the DA state: {err}");
                 };
                 let update_state_end = time::Instant::now();
 
