@@ -966,7 +966,7 @@ impl<T: Config> Pallet<T> {
                 events.len() as u128,
                 event_commitment.into(),
                 protocol_version,
-                l1_gas_price.into(),
+                l1_gas_price,
                 extra_data,
             ),
             transactions,

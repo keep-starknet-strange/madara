@@ -69,7 +69,7 @@ pub struct ResourcePrice {
 
 impl From<ResourcePrice> for CoreResourcePrice {
     fn from(item: ResourcePrice) -> Self {
-        CoreResourcePrice { price_in_strk: item.price_in_strk.into(), price_in_wei: item.price_in_wei.into() }
+        CoreResourcePrice { price_in_strk: item.price_in_strk, price_in_wei: item.price_in_wei }
     }
 }
 

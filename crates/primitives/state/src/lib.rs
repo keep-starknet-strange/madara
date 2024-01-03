@@ -116,7 +116,7 @@ pub struct NonceUpdate {
 /// The change in state applied in this block, given as a mapping of addresses to the new values
 /// and/or new contracts.
 #[serde_with::serde_as]
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
@@ -134,19 +134,6 @@ pub struct StateDiff {
     pub replaced_classes: Vec<ReplacedClassItem>,
     /// Nonces
     pub nonces: Vec<NonceUpdate>,
-}
-
-impl Default for StateDiff {
-    fn default() -> Self {
-        StateDiff {
-            storage_diffs: Vec::default(),
-            deprecated_declared_classes: Vec::default(),
-            declared_classes: Vec::default(),
-            deployed_contracts: Vec::default(),
-            replaced_classes: Vec::default(),
-            nonces: Vec::default(),
-        }
-    }
 }
 
 /// This trait allows to get the state changes of a starknet tx and therefore enables computing the

@@ -86,7 +86,7 @@ impl SimulateTxVersionOffset for TransactionVersion {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Encode, Decode)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Encode, Decode)]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 #[cfg_attr(feature = "no_unknown_fields", serde(deny_unknown_fields))]
 pub struct StarknetRPCExecutionResources {
@@ -123,22 +123,6 @@ impl StarknetRPCExecutionResources {
             ecdsa_builtin_applications: self.ecdsa_builtin_applications,
             bitwise_builtin_applications: self.bitwise_builtin_applications,
             keccak_builtin_applications: self.keccak_builtin_applications,
-        }
-    }
-}
-
-impl Default for StarknetRPCExecutionResources {
-    fn default() -> Self {
-        StarknetRPCExecutionResources {
-            steps: 0,
-            memory_holes: None,
-            range_check_builtin_applications: 0,
-            pedersen_builtin_applications: 0,
-            poseidon_builtin_applications: 0,
-            ec_op_builtin_applications: 0,
-            ecdsa_builtin_applications: 0,
-            bitwise_builtin_applications: 0,
-            keccak_builtin_applications: 0,
         }
     }
 }
