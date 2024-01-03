@@ -82,16 +82,16 @@ impl InitData {
     pub fn sn_goerli() -> Self {
         Self {
             // See SN_OS_PROGRAM_HASH constant
-            program_hash: StarkFelt::from(
+            program_hash: StarkFelt::from(Felt252Wrapper::from(
                 FieldElement::from_hex_be("0x41fc2a467ef8649580631912517edcab7674173f1dbfa2e9b64fbcd82bc4d79").unwrap(),
-            ),
+            )),
             // Hash version:        SN_OS_CONFIG_HASH_VERSION (settlement)
             // Chain ID:            SN_GOERLI_CHAIN_ID (pallet config)
             // Fee token address:   0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 (genesis config)
-            config_hash: StarkFelt::from(
+            config_hash: StarkFelt::from(Felt252Wrapper::from(
                 FieldElement::from_hex_be("0x036f5e4ea4dd042801c8841e3db8e654124305da0f11824fc1db60c405dbb39f")
                     .unwrap(),
-            ),
+            )),
             ..Default::default()
         }
     }
