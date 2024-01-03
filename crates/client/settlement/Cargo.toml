@@ -1,0 +1,62 @@
+[package]
+name = "mc-settlement"
+version = "0.1.0"
+description = "Starknet chain settlement."
+homepage = "https://github.com/keep-starknet-strange/madara"
+edition = "2021"
+license = "MIT"
+publish = false
+repository = "https://github.com/keep-starknet-strange/madara"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+# Async
+async-trait = { workspace = true }
+futures = { workspace = true }
+futures-timer = { workspace = true }
+
+# Serde
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Substrate
+sc-client-api = { workspace = true, default-features = true }
+sp-api = { workspace = true, default-features = true }
+sp-arithmetic = { workspace = true, default-features = true }
+sp-blockchain = { workspace = true, default-features = true }
+sp-core = { workspace = true, default-features = true }
+sp-io = { workspace = true, default-features = true }
+sp-runtime = { workspace = true, default-features = true }
+
+# Starknet
+mc-data-availability = { workspace = true, default-features = true }
+mp-block = { workspace = true, default-features = true }
+mp-digest-log = { workspace = true, features = ["std"] }
+mp-felt = { workspace = true, default-features = true }
+mp-hashers = { workspace = true, default-features = true }
+mp-messages = { workspace = true, default-features = true }
+mp-snos-output = { workspace = true, default-features = true }
+mp-transactions = { workspace = true, default-features = true }
+starknet-crypto = { workspace = true, default-features = true }
+starknet_api = { workspace = true, default-features = true }
+
+# Madara
+pallet-starknet-runtime-api = { workspace = true, default-features = true }
+
+# Ethereum
+ethers = { workspace = true }
+
+# Others
+log = { workspace = true }
+rustc-hex = { workspace = true }
+thiserror = { workspace = true }
+url = { workspace = true }
+
+# Optional
+clap = { workspace = true, optional = true, features = ["std", "derive"] }
+
+[features]
+default = []
+clap = ["dep:clap"]

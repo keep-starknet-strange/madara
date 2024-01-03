@@ -10,7 +10,7 @@ use alloc::sync::Arc;
 
 use blockifier::execution::contract_class::ContractClass;
 use mp_felt::Felt252Wrapper;
-use mp_transactions::{Transaction, UserTransaction};
+use mp_transactions::{HandleL1MessageTransaction, Transaction, UserTransaction};
 use sp_api::BlockT;
 pub extern crate alloc;
 use alloc::string::String;
@@ -22,7 +22,7 @@ use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSele
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
-use starknet_api::transaction::{Calldata, Event as StarknetEvent, TransactionHash};
+use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash};
 
 #[derive(parity_scale_codec::Encode, parity_scale_codec::Decode, scale_info::TypeInfo)]
 pub enum StarknetTransactionExecutionError {
@@ -47,6 +47,10 @@ sp_api::decl_runtime_apis! {
         fn contract_class_by_class_hash(class_hash: ClassHash) -> Option<ContractClass>;
         /// Returns the chain id.
         fn chain_id() -> Felt252Wrapper;
+        /// Returns the Starknet OS Cairo program hash.
+        fn program_hash() -> Felt252Wrapper;
+        /// Returns the fee token address.
+        fn fee_token_address() -> ContractAddress;
         /// Returns fee estimate
         fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError>;
         /// Simulates transactions and returns their trace
@@ -74,11 +78,19 @@ sp_api::decl_runtime_apis! {
         fn get_block_context() -> BlockContext;
         /// Return is fee disabled in state
         fn is_transaction_fee_disabled() -> bool;
+        /// Return messages sent to L1 during tx execution
+        fn get_tx_messages_to_l1(tx_hash: TransactionHash) -> Vec<MessageToL1>;
+        /// Check if L1 Message Nonce has not been used
+        fn l1_nonce_unused(nonce: Nonce) -> bool;
     }
 
     pub trait ConvertTransactionRuntimeApi {
         /// Converts the transaction to an UncheckedExtrinsic for submission to the pool.
-        fn convert_transaction(transaction: UserTransaction) -> Result<<Block as BlockT>::Extrinsic, DispatchError>;
+        fn convert_transaction(transaction: UserTransaction) -> <Block as BlockT>::Extrinsic;
+
+        /// Converts the L1 Message transaction to an UncheckedExtrinsic for submission to the pool.
+        fn convert_l1_transaction(transaction: HandleL1MessageTransaction, fee: Fee) -> <Block as BlockT>::Extrinsic;
+
         /// Converts the DispatchError to an understandable error for the client
         fn convert_error(error: DispatchError) -> StarknetTransactionExecutionError;
     }

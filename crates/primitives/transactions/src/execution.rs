@@ -631,6 +631,10 @@ impl Execute for DeployAccountTransaction {
     }
 }
 
+impl Validate for L1HandlerTransaction {
+    const VALIDATE_TX_ENTRY_POINT_NAME: &'static str = VALIDATE_ENTRY_POINT_NAME;
+}
+
 impl Execute for L1HandlerTransaction {
     fn execute_inner<S: State + StateChanges>(
         &self,

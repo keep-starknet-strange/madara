@@ -57,6 +57,7 @@ mp-block = { workspace = true }
 mp-chain-id = { workspace = true }
 mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
+mp-program-hash = { workspace = true }
 mp-simulations = { workspace = true }
 mp-transactions = { workspace = true }
 # Starknet dependencies

@@ -21,14 +21,15 @@ mod erc20;
 mod events;
 mod fees_disabled;
 mod invoke_tx;
+mod l1_handler_validation;
 mod l1_message;
 mod no_nonce_validation;
 mod query_tx;
+mod send_message;
 mod sequencer_address;
 
 mod block;
 mod constants;
-mod message;
 mod mock;
 mod utils;
 

@@ -7,25 +7,22 @@ pub mod utils;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use ethers::types::{I256, U256};
 use futures::channel::mpsc;
 use futures::StreamExt;
 use mc_commitment_state_diff::BlockDAData;
 use mp_hashers::HasherT;
-use pallet_starknet_runtime_api::StarknetRuntimeApi;
-use sc_client_api::client::BlockchainEvents;
-use serde::Deserialize;
-use sp_api::ProvideRuntimeApi;
-use sp_blockchain::HeaderBackend;
-use sp_runtime::traits::{Block as BlockT, Header};
+use serde::{Deserialize, Serialize};
+use sp_runtime::traits::Block as BlockT;
+use starknet_api::block::BlockHash;
+use starknet_api::state::ThinStateDiff;
 use utils::state_diff_to_calldata;
 
-pub struct DataAvailabilityWorker<B, C, H>(PhantomData<(B, C, H)>);
-pub struct DataAvailabilityWorkerProving<B>(PhantomData<B>);
+pub struct DataAvailabilityWorker<B, H>(PhantomData<(B, H)>);
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
 pub enum DaLayer {
     Celestia,
@@ -35,8 +32,8 @@ pub enum DaLayer {
 
 /// Data availability modes in which Madara can be initialized.
 ///
-/// Default only mode currently implemented is Sovereign.
-#[derive(Debug, Copy, Clone, PartialEq, Deserialize, Default)]
+/// Default only mode currently implemented is Sovereing.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum DaMode {
     /// Full Validity Rollup
     ///
@@ -73,97 +70,112 @@ pub trait DaClient: Send + Sync {
     async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()>;
 }
 
-impl<B> DataAvailabilityWorkerProving<B>
+/// The client worker for DA related tasks
+///
+/// Listen to new block state diff and spawn new threads to execute each block flow concurently.
+/// The flow goes as follow:
+/// 1. Prove. Do nothing if node is run in sovereign mode
+/// 2. Updata
+impl<B, H> DataAvailabilityWorker<B, H>
 where
     B: BlockT,
+    H: HasherT,
 {
     pub async fn prove_current_block(
-        da_mode: DaMode,
+        da_client: Arc<dyn DaClient + Send + Sync>,
         mut state_diffs_rx: mpsc::Receiver<BlockDAData>,
         madara_backend: Arc<mc_db::Backend<B>>,
     ) {
-        while let Some(BlockDAData(block_hash, csd, num_addr_accessed)) = state_diffs_rx.next().await {
-            log::info!("received state diff for block {block_hash}: {csd:?}. {num_addr_accessed} addresses accessed.");
+        while let Some(BlockDAData(starknet_block_hash, csd, num_addr_accessed)) = state_diffs_rx.next().await {
+            log::info!(
+                "received state diff for block {starknet_block_hash}: {csd:?}.{num_addr_accessed} addresses accessed."
+            );
 
-            // store the da encoded calldata for the state update worker
-            if let Err(db_err) =
-                madara_backend.da().store_state_diff(&block_hash, state_diff_to_calldata(csd, num_addr_accessed))
-            {
-                log::error!("db err: {db_err}");
-            };
+            let da_client = da_client.clone();
+            let madara_backend = madara_backend.clone();
+            tokio::spawn(async move {
+                match prove(da_client.get_mode(), starknet_block_hash, &csd, num_addr_accessed, madara_backend.clone())
+                    .await
+                {
+                    Err(err) => log::error!("proving error: {err}"),
+                    Ok(()) => {}
+                }
 
-            match da_mode {
-                DaMode::Validity => {
-                    // Submit the Starknet OS PIE
-                    // TODO: Validity Impl
-                    // run the Starknet OS with the Cairo VM
-                    // extract the PIE from the Cairo VM run
-                    // pass the PIE to `submit_pie` and zip/base64 internal
-                    if let Ok(job_resp) = sharp::submit_pie("TODO") {
-                        log::info!("Job Submitted: {}", job_resp.cairo_job_key);
-                        // Store the cairo job key
-                        if let Err(db_err) = madara_backend.da().update_cairo_job(&block_hash, job_resp.cairo_job_key) {
-                            log::error!("db err: {db_err}");
-                        };
-                    }
-                }
-                _ => {
-                    log::info!("don't prove in remaining DA modes")
-                }
-            }
+                match update_state::<B, H>(madara_backend, da_client, starknet_block_hash, csd, num_addr_accessed).await
+                {
+                    Err(err) => log::error!("state publishing error: {err}"),
+                    Ok(()) => {}
+                };
+            });
         }
     }
 }
 
-impl<B, C, H> DataAvailabilityWorker<B, C, H>
-where
-    B: BlockT,
-    C: ProvideRuntimeApi<B>,
-    C::Api: StarknetRuntimeApi<B>,
-    C: BlockchainEvents<B> + 'static,
-    C: HeaderBackend<B>,
-    H: HasherT + Unpin,
-{
-    pub async fn update_state(
-        da_client: Box<dyn DaClient + Send + Sync>,
-        client: Arc<C>,
-        madara_backend: Arc<mc_db::Backend<B>>,
-    ) {
-        let mut notification_st = client.import_notification_stream();
+pub async fn prove<B: BlockT>(
+    da_mode: DaMode,
+    block_hash: BlockHash,
+    _state_diff: &ThinStateDiff,
+    _num_addr_accessed: usize,
+    madara_backend: Arc<mc_db::Backend<B>>,
+) -> Result<(), anyhow::Error> {
+    log::info!("proving the block {block_hash}");
 
-        while let Some(notification) = notification_st.next().await {
-            // Query last written state
-            // TODO: this value will be used to ensure the correct state diff is being written in Validity mode
-            let _last_published_state = match da_client.last_published_state().await {
-                Ok(last_published_state) => last_published_state,
-                Err(e) => {
-                    log::error!("da provider error: {e}");
-                    continue;
-                }
-            };
-
-            let starknet_block_hash = {
-                let digest = notification.header.digest();
-                let block = mp_digest_log::find_starknet_block(digest).expect("starknet block not found");
-                block.header().hash::<H>().into()
-            };
-
-            match da_client.get_mode() {
-                DaMode::Validity => {
-                    // Check the SHARP status of last_proved + 1
-                    // Write the publish state diff of last_proved + 1
-                    log::info!("validity da mode not implemented");
-                }
-                DaMode::Sovereign => match madara_backend.da().state_diff(&starknet_block_hash) {
-                    Ok(state_diff) => {
-                        if let Err(e) = da_client.publish_state_diff(state_diff).await {
-                            log::error!("DA PUBLISH ERROR: {}", e);
-                        }
-                    }
-                    Err(e) => log::error!("could not pull state diff: {e}"),
-                },
-                DaMode::Volition => log::info!("volition da mode not implemented"),
+    match da_mode {
+        DaMode::Validity => {
+            // Submit the Starknet OS PIE
+            // TODO: Validity Impl
+            // run the Starknet OS with the Cairo VM
+            // extract the PIE from the Cairo VM run
+            // pass the PIE to `submit_pie` and zip/base64 internal
+            if let Ok(job_resp) = sharp::submit_pie("TODO") {
+                log::info!("Job Submitted: {}", job_resp.cairo_job_key);
+                // Store the cairo job key
+                madara_backend
+                    .da()
+                    .update_cairo_job(&block_hash, job_resp.cairo_job_key)
+                    .map_err(|e| anyhow!("{e}"))?;
             }
         }
+        _ => {
+            log::info!("don't prove in remaining DA modes")
+        }
     }
+
+    Ok(())
+}
+
+pub async fn update_state<B: BlockT, H: HasherT>(
+    madara_backend: Arc<mc_db::Backend<B>>,
+    da_client: Arc<dyn DaClient + Send + Sync>,
+    starknet_block_hash: BlockHash,
+    csd: ThinStateDiff,
+    num_addr_accessed: usize,
+) -> Result<(), anyhow::Error> {
+    // store the state diff
+    madara_backend
+        .da()
+        .store_state_diff(&starknet_block_hash, state_diff_to_calldata(csd, num_addr_accessed))
+        .map_err(|e| anyhow!("{e}"))?;
+
+    // Query last written state
+    // TODO: this value will be used to ensure the correct state diff is being written in
+    // Validity mode
+    let _last_published_state = da_client.last_published_state().await?;
+
+    match da_client.get_mode() {
+        DaMode::Validity => {
+            // Check the SHARP status of last_proved + 1
+            // Write the publish state diff of last_proved + 1
+            log::info!("validity da mode not implemented");
+        }
+        DaMode::Sovereign => match madara_backend.da().state_diff(&starknet_block_hash) {
+            Ok(state_diff) => {
+                da_client.publish_state_diff(state_diff).await.map_err(|e| anyhow!("DA PUBLISH ERROR: {e}"))?;
+            }
+            Err(e) => Err(anyhow!("could not pull state diff for block {starknet_block_hash}: {e}"))?,
+        },
+        DaMode::Volition => log::info!("volition da mode not implemented"),
+    };
+
+    Ok(())
 }

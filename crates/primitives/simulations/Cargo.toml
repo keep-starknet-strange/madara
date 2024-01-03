@@ -20,6 +20,7 @@ mp-felt = { workspace = true, features = [
   "serde",
   "scale-info",
 ] }
+mp-messages = { workspace = true }
 mp-state = { workspace = true, features = [
   "parity-scale-codec",
   "serde",
@@ -46,9 +47,14 @@ parity-scale-codec = [
   "dep:parity-scale-codec",
   "starknet_api/parity-scale-codec",
   "mp-felt/parity-scale-codec",
+  "mp-messages/parity-scale-codec",
 ]
-serde = ["dep:serde", "dep:serde_with", "mp-felt/serde"]
-scale-info = ["dep:scale-info", "starknet_api/scale-info"]
+serde = ["dep:serde", "dep:serde_with", "mp-felt/serde", "mp-messages/serde"]
+scale-info = [
+  "dep:scale-info",
+  "starknet_api/scale-info",
+  "mp-messages/scale-info",
+]
 std = [
   "mp-felt/std",
   "starknet_api/std",

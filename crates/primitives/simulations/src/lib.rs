@@ -247,7 +247,7 @@ impl TryFrom<&CallInfo> for FunctionInvocation {
     type Error = TransactionExecutionError;
 
     fn try_from(call_info: &CallInfo) -> TransactionExecutionResult<FunctionInvocation> {
-        let messages = ordered_l2_to_l1_messages(call_info);
+        let messages = ordered_messages(call_info);
         let events = events_to_ordered_events(&call_info.execution.events);
 
         let inner_calls = call_info
@@ -275,18 +275,16 @@ impl TryFrom<&CallInfo> for FunctionInvocation {
     }
 }
 
-fn ordered_l2_to_l1_messages(call_info: &CallInfo) -> Vec<OrderedMessage> {
+fn ordered_messages(call_info: &CallInfo) -> Vec<OrderedMessage> {
     let mut messages = Vec::new();
 
-    for call in call_info.into_iter() {
-        for (index, message) in call.execution.l2_to_l1_messages.iter().enumerate() {
-            messages.push(OrderedMessage {
-                order: index as u64,
-                payload: message.message.payload.0.iter().map(|x| (*x).into()).collect(),
-                to_address: message.message.to_address,
-                from_address: call.call.storage_address.0.0.into(),
-            });
-        }
+    for (index, message) in call_info.execution.l2_to_l1_messages.iter().enumerate() {
+        messages.push(OrderedMessage {
+            order: index as u64,
+            payload: message.message.payload.0.iter().map(|x| (*x).into()).collect(),
+            to_address: message.message.to_address,
+            from_address: call_info.call.storage_address.0.0.into(),
+        });
     }
 
     messages

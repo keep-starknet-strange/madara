@@ -20,6 +20,9 @@ targets = ["x86_64-unknown-linux-gnu"]
 name = "madara"
 
 [dependencies]
+# Ethereum
+ethers = { workspace = true, features = ["openssl"] }
+
 async-trait = "0.1"
 clap = { workspace = true, features = ["derive"] }
 futures = { workspace = true, features = ["thread-pool"] }
@@ -82,12 +85,18 @@ madara-runtime = { workspace = true }
 mc-commitment-state-diff = { workspace = true }
 mc-data-availability = { workspace = true, features = ["clap"] }
 mc-db = { workspace = true }
+mc-l1-messages = { workspace = true }
 mc-mapping-sync = { workspace = true }
 mc-rpc = { workspace = true }
+mc-settlement = { workspace = true, features = ["clap"] }
 mc-storage = { workspace = true }
 pallet-starknet = { workspace = true }
 pallet-starknet-runtime-api = { workspace = true }
 starknet-core = { workspace = true }
+starknet_api = { workspace = true, features = [
+  "scale-info",
+  "parity-scale-codec",
+] }
 
 # Madara utils
 mc-genesis-data-provider = { workspace = true }
@@ -97,10 +106,13 @@ mp-block = { workspace = true }
 mp-digest-log = { workspace = true }
 mp-felt = { workspace = true }
 mp-sequencer-address = { workspace = true, features = ["client"] }
+mp-transactions = { workspace = true, features = ["scale-info"] }
+
 
 # CLI-specific dependencies
 try-runtime-cli = { optional = true, git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
 
+parity-scale-codec = { workspace = true, features = ["derive"] }
 reqwest = { workspace = true }
 serde_json = { workspace = true }
 url = { workspace = true }
