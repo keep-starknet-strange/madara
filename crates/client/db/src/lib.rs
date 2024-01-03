@@ -18,7 +18,7 @@ mod mapping_db;
 pub use mapping_db::MappingCommitment;
 mod da_db;
 mod db_opening_utils;
-mod messaging_db;
+pub mod messaging_db;
 mod meta_db;
 
 use std::marker::PhantomData;

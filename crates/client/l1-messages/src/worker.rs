@@ -15,6 +15,7 @@ use starknet_api::transaction::Fee;
 use crate::config::L1MessagesWorkerConfig;
 use crate::contract::{L1Contract, LogMessageToL2Filter};
 use crate::error::L1MessagesWorkerError;
+use mc_db::messaging_db::LastSyncedEventBlock;
 
 const TX_SOURCE: TransactionSource = TransactionSource::External;
 
@@ -34,7 +35,7 @@ pub async fn run_worker<C, P, B>(
     let l1_contract =
         L1Contract::new(*config.contract_address(), Arc::new(Provider::new(Http::new(config.provider().clone()))));
 
-    let last_synced_l1_block = match backend.messaging().last_synced_l1_block() {
+    let last_synced_event_block = match backend.messaging().last_synced_l1_block_with_event() {
         Ok(blknum) => blknum,
         Err(e) => {
             log::error!("⟠ Madara Messaging DB unavailable: {:?}", e);
@@ -42,7 +43,7 @@ pub async fn run_worker<C, P, B>(
         }
     };
 
-    let events = l1_contract.events().from_block(last_synced_l1_block);
+    let events = l1_contract.events().from_block(last_synced_event_block.block_number);
     let mut event_stream = match events.stream_with_meta().await {
         Ok(stream) => stream,
         Err(e) => {
@@ -59,7 +60,7 @@ pub async fn run_worker<C, P, B>(
             meta.log_index
         );
 
-        match process_l1_message(event, &client, &pool, &backend, &meta.block_number.as_u64()).await {
+        match process_l1_message(event, &client, &pool, &backend, &meta.block_number.as_u64(), &meta.log_index.as_u64()).await {
             Ok(Some(tx_hash)) => {
                 log::info!(
                     "⟠ L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?} submitted, transaction \
@@ -91,6 +92,7 @@ async fn process_l1_message<C, P, B, PE>(
     pool: &Arc<P>,
     backend: &Arc<mc_db::Backend<B>>,
     l1_block_number: &u64,
+    event_index: &u64,
 ) -> Result<Option<P::Hash>, L1MessagesWorkerError<PE>>
 where
     B: BlockT,
@@ -132,7 +134,7 @@ where
         L1MessagesWorkerError::SubmitTxError(e)
     })?;
 
-    backend.messaging().update_last_synced_l1_block(l1_block_number).map_err(|e| {
+    backend.messaging().update_last_synced_l1_block_with_event(&LastSyncedEventBlock::new(l1_block_number.to_owned(), event_index.to_owned())).map_err(|e| {
         log::error!("⟠ Failed to save last L1 synced block: {:?}", e);
         L1MessagesWorkerError::DatabaseError(e)
     })?;
