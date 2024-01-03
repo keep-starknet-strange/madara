@@ -431,25 +431,25 @@ pub fn new_full(
                 .for_each(|()| future::ready(())),
         );
 
-        let da_client: Box<dyn DaClient + Send + Sync> = match da_layer {
+        let da_client: Arc<dyn DaClient + Send + Sync> = match da_layer {
             DaLayer::Celestia => {
                 let celestia_conf = CelestiaConfig::try_from(&da_path)?;
-                Box::new(CelestiaClient::try_from(celestia_conf).map_err(|e| ServiceError::Other(e.to_string()))?)
+                Arc::new(CelestiaClient::try_from(celestia_conf).map_err(|e| ServiceError::Other(e.to_string()))?)
             }
             DaLayer::Ethereum => {
                 let ethereum_conf = EthereumConfig::try_from(&da_path)?;
-                Box::new(EthereumClient::try_from(ethereum_conf)?)
+                Arc::new(EthereumClient::try_from(ethereum_conf)?)
             }
             DaLayer::Avail => {
                 let avail_conf = AvailConfig::try_from(&da_path)?;
-                Box::new(AvailClient::try_from(avail_conf).map_err(|e| ServiceError::Other(e.to_string()))?)
+                Arc::new(AvailClient::try_from(avail_conf).map_err(|e| ServiceError::Other(e.to_string()))?)
             }
         };
 
         task_manager.spawn_essential_handle().spawn(
-            "da-worker-update",
+            "da-worker",
             Some(MADARA_TASK_GROUP),
-            DataAvailabilityWorker::<_, StarknetHasher>::update_state(
+            DataAvailabilityWorker::<_, StarknetHasher>::prove_current_block(
                 da_client,
                 commitment_state_diff_rx,
                 madara_backend.clone(),
