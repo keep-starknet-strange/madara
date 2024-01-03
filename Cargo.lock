@@ -1017,6 +1017,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "blockstore"
+version = "0.1.0"
+source = "git+https://github.com/eigerco/lumina?rev=ccc5b9bfeac632cccd32d35ecb7b7d51d71fbb87#ccc5b9bfeac632cccd32d35ecb7b7d51d71fbb87"
+dependencies = [
+ "async-trait",
+ "cid 0.11.0",
+ "dashmap",
+ "multihash 0.19.1",
+ "thiserror",
+]
+
+[[package]]
 name = "bounded-collections"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1686,7 +1698,7 @@ dependencies = [
 [[package]]
 name = "celestia-proto"
 version = "0.1.0"
-source = "git+https://github.com/eigerco/celestia-node-rs?rev=bd6394b66b11065c543ab3f19fd66000a72b6236#bd6394b66b11065c543ab3f19fd66000a72b6236"
+source = "git+https://github.com/eigerco/lumina?rev=ccc5b9bfeac632cccd32d35ecb7b7d51d71fbb87#ccc5b9bfeac632cccd32d35ecb7b7d51d71fbb87"
 dependencies = [
  "anyhow",
  "prost 0.12.3",
@@ -1699,29 +1711,33 @@ dependencies = [
 [[package]]
 name = "celestia-rpc"
 version = "0.1.0"
-source = "git+https://github.com/eigerco/celestia-node-rs?rev=bd6394b66b11065c543ab3f19fd66000a72b6236#bd6394b66b11065c543ab3f19fd66000a72b6236"
+source = "git+https://github.com/eigerco/lumina?rev=ccc5b9bfeac632cccd32d35ecb7b7d51d71fbb87#ccc5b9bfeac632cccd32d35ecb7b7d51d71fbb87"
 dependencies = [
+ "async-trait",
  "celestia-types",
  "http",
  "jsonrpsee 0.20.3",
  "serde",
  "thiserror",
+ "tracing",
 ]
 
 [[package]]
 name = "celestia-types"
 version = "0.1.0"
-source = "git+https://github.com/eigerco/celestia-node-rs?rev=bd6394b66b11065c543ab3f19fd66000a72b6236#bd6394b66b11065c543ab3f19fd66000a72b6236"
+source = "git+https://github.com/eigerco/lumina?rev=ccc5b9bfeac632cccd32d35ecb7b7d51d71fbb87#ccc5b9bfeac632cccd32d35ecb7b7d51d71fbb87"
 dependencies = [
  "base64 0.21.5",
  "bech32",
+ "blockstore",
  "bytes",
  "celestia-proto",
- "cid 0.10.1",
+ "cid 0.11.0",
  "const_format",
  "enum_dispatch",
  "libp2p-identity 0.2.8",
  "multiaddr 0.18.1",
+ "multihash 0.19.1",
  "nmt-rs",
  "ruint",
  "serde",
@@ -1821,20 +1837,19 @@ dependencies = [
  "multibase",
  "multihash 0.17.0",
  "serde",
- "unsigned-varint",
+ "unsigned-varint 0.7.2",
 ]
 
 [[package]]
 name = "cid"
-version = "0.10.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd94671561e36e4e7de75f753f577edafb0e7c05d6e4547229fdf7938fbcd2c3"
+checksum = "472ac98592f38dfd48f188d5713a328422ed22fa39eb52b8bca495370134762a"
 dependencies = [
  "core2",
  "multibase",
- "multihash 0.18.1",
- "serde",
- "unsigned-varint",
+ "multihash 0.19.1",
+ "unsigned-varint 0.8.0",
 ]
 
 [[package]]
@@ -2607,6 +2622,19 @@ dependencies = [
  "darling_core 0.20.3",
  "quote",
  "syn 2.0.40",
+]
+
+[[package]]
+name = "dashmap"
+version = "5.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "978747c1d849a7d2ee5e8adc0159961c48fb7e5db2f06af6723b80123bb53856"
+dependencies = [
+ "cfg-if",
+ "hashbrown 0.14.3",
+ "lock_api",
+ "once_cell",
+ "parking_lot_core 0.9.9",
 ]
 
 [[package]]
@@ -5436,7 +5464,7 @@ dependencies = [
  "rw-stream-sink",
  "smallvec 1.11.2",
  "thiserror",
- "unsigned-varint",
+ "unsigned-varint 0.7.2",
  "void",
 ]
 
@@ -5533,7 +5561,7 @@ dependencies = [
  "smallvec 1.11.2",
  "thiserror",
  "uint",
- "unsigned-varint",
+ "unsigned-varint 0.7.2",
  "void",
 ]
 
@@ -6912,7 +6940,7 @@ dependencies = [
  "percent-encoding",
  "serde",
  "static_assertions",
- "unsigned-varint",
+ "unsigned-varint 0.7.2",
  "url",
 ]
 
@@ -6931,7 +6959,7 @@ dependencies = [
  "percent-encoding",
  "serde",
  "static_assertions",
- "unsigned-varint",
+ "unsigned-varint 0.7.2",
  "url",
 ]
 
@@ -6960,18 +6988,7 @@ dependencies = [
  "multihash-derive",
  "sha2 0.10.8",
  "sha3",
- "unsigned-varint",
-]
-
-[[package]]
-name = "multihash"
-version = "0.18.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cfd8a792c1694c6da4f68db0a9d707c72bd260994da179e6030a5dcee00bb815"
-dependencies = [
- "core2",
- "multihash-derive",
- "unsigned-varint",
+ "unsigned-varint 0.7.2",
 ]
 
 [[package]]
@@ -6981,7 +6998,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "076d548d76a0e2a0d4ab471d0b1c36c577786dfc4471242035d97a12a735c492"
 dependencies = [
  "core2",
- "unsigned-varint",
+ "unsigned-varint 0.7.2",
 ]
 
 [[package]]
@@ -7015,7 +7032,7 @@ dependencies = [
  "log",
  "pin-project",
  "smallvec 1.11.2",
- "unsigned-varint",
+ "unsigned-varint 0.7.2",
 ]
 
 [[package]]
@@ -7171,7 +7188,8 @@ dependencies = [
 [[package]]
 name = "nmt-rs"
 version = "0.1.0"
-source = "git+https://github.com/eigerco/nmt-rs.git?rev=5146800#514680024ae3bc389aba0e3c70d635ee6d437a0e"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e787133eafbd0f386dc4e26828a50f7595d6d7213ea0e8244c1ca6b9a9648c30"
 dependencies = [
  "bytes",
  "sha2 0.10.8",
@@ -8465,7 +8483,7 @@ dependencies = [
  "bytes",
  "quick-protobuf",
  "thiserror",
- "unsigned-varint",
+ "unsigned-varint 0.7.2",
 ]
 
 [[package]]
@@ -9735,7 +9753,7 @@ dependencies = [
  "sp-runtime 24.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
  "substrate-prometheus-endpoint",
  "thiserror",
- "unsigned-varint",
+ "unsigned-varint 0.7.2",
  "wasm-timer",
  "zeroize",
 ]
@@ -9757,7 +9775,7 @@ dependencies = [
  "sp-blockchain",
  "sp-runtime 24.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
  "thiserror",
- "unsigned-varint",
+ "unsigned-varint 0.7.2",
 ]
 
 [[package]]
@@ -12591,7 +12609,7 @@ dependencies = [
 [[package]]
 name = "tendermint"
 version = "0.32.0"
-source = "git+https://github.com/eigerco/celestia-tendermint-rs.git?rev=19dc3da#19dc3dae78ee7e4dcde67881ab31af229ed133a2"
+source = "git+https://github.com/eigerco/celestia-tendermint-rs.git?rev=bbe7de8#bbe7de8c777f0c44b338f4bf26f0f6efb18e87f0"
 dependencies = [
  "bytes",
  "digest 0.10.7",
@@ -12619,7 +12637,7 @@ dependencies = [
 [[package]]
 name = "tendermint-proto"
 version = "0.32.0"
-source = "git+https://github.com/eigerco/celestia-tendermint-rs.git?rev=19dc3da#19dc3dae78ee7e4dcde67881ab31af229ed133a2"
+source = "git+https://github.com/eigerco/celestia-tendermint-rs.git?rev=bbe7de8#bbe7de8c777f0c44b338f4bf26f0f6efb18e87f0"
 dependencies = [
  "bytes",
  "flex-error",
@@ -13446,6 +13464,12 @@ dependencies = [
  "futures-io",
  "futures-util",
 ]
+
+[[package]]
+name = "unsigned-varint"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eb066959b24b5196ae73cb057f45598450d2c5f71460e98c49b738086eff9c06"
 
 [[package]]
 name = "untrusted"
