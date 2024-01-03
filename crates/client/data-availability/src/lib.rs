@@ -7,6 +7,7 @@ pub mod utils;
 mod da_metrics;
 
 use std::collections::HashMap;
+use std::fmt::Display;
 use std::marker::PhantomData;
 use std::sync::Arc;
 use std::time;
@@ -71,6 +72,16 @@ pub enum DaMode {
     Sovereign,
 }
 
+impl Display for DaMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DaMode::Validity => Display::fmt("Validity", f),
+            DaMode::Volition => Display::fmt("Volition", f),
+            DaMode::Sovereign => Display::fmt("Sovereign", f),
+        }
+    }
+}
+
 #[async_trait]
 pub trait DaClient: Send + Sync {
     fn get_mode(&self) -> DaMode;
@@ -115,9 +126,7 @@ where
             }
         }
         while let Some(BlockDAData(starknet_block_hash, csd, num_addr_accessed)) = state_diffs_rx.next().await {
-            log::info!(
-                "received state diff for block {starknet_block_hash}: {csd:?}.{num_addr_accessed} addresses accessed."
-            );
+            log::info!("Received state diff for block {starknet_block_hash}");
 
             let da_metrics = da_metrics.clone();
             let da_client = da_client.clone();
@@ -127,14 +136,14 @@ where
                 match prove(da_client.get_mode(), starknet_block_hash, &csd, num_addr_accessed, madara_backend.clone())
                     .await
                 {
-                    Err(err) => log::error!("proving error: {err}"),
+                    Err(err) => log::error!("Failed to prove block: {err}"),
                     Ok(()) => {}
                 }
                 let prove_state_end = time::Instant::now();
 
                 match update_state::<B, H>(madara_backend, da_client, starknet_block_hash, csd, num_addr_accessed).await
                 {
-                    Err(err) => log::error!("state publishing error: {err}"),
+                    Err(err) => log::error!("Failed to update the DA state: {err}"),
                     Ok(()) => {}
                 };
                 let update_state_end = time::Instant::now();
@@ -159,8 +168,6 @@ pub async fn prove<B: BlockT>(
     _num_addr_accessed: usize,
     madara_backend: Arc<mc_db::Backend<B>>,
 ) -> Result<(), anyhow::Error> {
-    log::info!("proving the block {block_hash}");
-
     match da_mode {
         DaMode::Validity => {
             // Submit the Starknet OS PIE
@@ -169,7 +176,7 @@ pub async fn prove<B: BlockT>(
             // extract the PIE from the Cairo VM run
             // pass the PIE to `submit_pie` and zip/base64 internal
             if let Ok(job_resp) = sharp::submit_pie("TODO") {
-                log::info!("Job Submitted: {}", job_resp.cairo_job_key);
+                log::info!("Proof job submitted with key '{}'", job_resp.cairo_job_key);
                 // Store the cairo job key
                 madara_backend
                     .da()
@@ -178,7 +185,7 @@ pub async fn prove<B: BlockT>(
             }
         }
         _ => {
-            log::info!("don't prove in remaining DA modes")
+            log::info!("No proof required for current DA mode ({da_mode}).")
         }
     }
 
