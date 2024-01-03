@@ -834,9 +834,7 @@ where
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
         let chain_id = self.chain_id()?;
         let starknet_version = starknet_block.header().protocol_version;
-        // TODO(#1291): l1_gas_price defaulted, get l1_gas_price from block
         let l1_gas_price = starknet_block.header().l1_gas_price;
-
         let block_hash = starknet_block.header().hash::<H>();
 
         let transaction_hashes = if let Some(tx_hashes) = self.get_cached_transaction_hashes(block_hash.into()) {

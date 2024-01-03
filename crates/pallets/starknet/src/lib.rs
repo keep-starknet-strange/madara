@@ -1156,11 +1156,13 @@ impl<T: Config> Pallet<T> {
                                 tx_exec_info.revert_error.as_ref(),
                             )?,
                             fee_transfer_invocation,
+                            // TODO(#1291): Compute state diff correctly
                             state_diff: Some(StateDiff::default()),
                         }),
                         UserTransaction::Declare(_, _) => TransactionTrace::Declare(DeclareTransactionTrace {
                             validate_invocation,
                             fee_transfer_invocation,
+                            // TODO(#1291): Compute state diff correctly
                             state_diff: Some(StateDiff::default()),
                         }),
                         UserTransaction::DeployAccount(_) => {
@@ -1174,6 +1176,7 @@ impl<T: Config> Pallet<T> {
                                     .map_err(|_| Error::<T>::TransactionExecutionFailed)?,
 
                                 fee_transfer_invocation,
+                                // TODO(#1291): Compute state diff correctly
                                 state_diff: Some(StateDiff::default()),
                             })
                         }
