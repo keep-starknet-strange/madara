@@ -1147,25 +1147,25 @@
                 .for_each(|()| future::ready(())),
         );
 
-        <span class="kw">let </span>da_client: Box&lt;<span class="kw">dyn </span>DaClient + Send + Sync&gt; = <span class="kw">match </span>da_layer {
+        <span class="kw">let </span>da_client: Arc&lt;<span class="kw">dyn </span>DaClient + Send + Sync&gt; = <span class="kw">match </span>da_layer {
             DaLayer::Celestia =&gt; {
                 <span class="kw">let </span>celestia_conf = CelestiaConfig::try_from(<span class="kw-2">&amp;</span>da_path)<span class="question-mark">?</span>;
-                Box::new(CelestiaClient::try_from(celestia_conf).map_err(|e| ServiceError::Other(e.to_string()))<span class="question-mark">?</span>)
+                Arc::new(CelestiaClient::try_from(celestia_conf).map_err(|e| ServiceError::Other(e.to_string()))<span class="question-mark">?</span>)
             }
             DaLayer::Ethereum =&gt; {
                 <span class="kw">let </span>ethereum_conf = EthereumConfig::try_from(<span class="kw-2">&amp;</span>da_path)<span class="question-mark">?</span>;
-                Box::new(EthereumClient::try_from(ethereum_conf)<span class="question-mark">?</span>)
+                Arc::new(EthereumClient::try_from(ethereum_conf)<span class="question-mark">?</span>)
             }
             DaLayer::Avail =&gt; {
                 <span class="kw">let </span>avail_conf = AvailConfig::try_from(<span class="kw-2">&amp;</span>da_path)<span class="question-mark">?</span>;
-                Box::new(AvailClient::try_from(avail_conf).map_err(|e| ServiceError::Other(e.to_string()))<span class="question-mark">?</span>)
+                Arc::new(AvailClient::try_from(avail_conf).map_err(|e| ServiceError::Other(e.to_string()))<span class="question-mark">?</span>)
             }
         };
 
         task_manager.spawn_essential_handle().spawn(
-            <span class="string">&quot;da-worker-update&quot;</span>,
+            <span class="string">&quot;da-worker&quot;</span>,
             <span class="prelude-val">Some</span>(MADARA_TASK_GROUP),
-            DataAvailabilityWorker::&lt;<span class="kw">_</span>, StarknetHasher&gt;::update_state(
+            DataAvailabilityWorker::&lt;<span class="kw">_</span>, StarknetHasher&gt;::prove_current_block(
                 da_client,
                 commitment_state_diff_rx,
                 madara_backend.clone(),
