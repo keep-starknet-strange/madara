@@ -1145,8 +1145,6 @@ impl<T: Config> Pallet<T> {
         transactions: Vec<UserTransaction>,
         simulation_flags: SimulationFlags,
     ) -> Result<Vec<SimulatedTransaction>, DispatchError> {
-        log::info!("Simulate transactions started.");
-
         let chain_id = Self::chain_id();
 
         let execution_results = execute_txs_and_rollback::<T>(
@@ -1156,8 +1154,6 @@ impl<T: Config> Pallet<T> {
             &RuntimeExecutionConfigBuilder::new::<T>().with_simulation_mode(&simulation_flags).build(),
         )?;
 
-        log::info!("Executed transactions and rolled back. Total transactions: {}", transactions.len());
-
         fn get_function_invocation(
             call_info: Option<&CallInfo>,
         ) -> TransactionExecutionResult<Option<FunctionInvocation>> {
@@ -1166,13 +1162,8 @@ impl<T: Config> Pallet<T> {
 
         let mut results = vec![];
         for (tx, res) in transactions.iter().zip(execution_results.iter()) {
-            log::debug!("Processing transaction: {:?}", tx);
-
             match res {
                 Ok(tx_exec_info) => {
-                    log::info!("ARAHA");
-                    log::debug!("Transaction execution info: {:?}", tx_exec_info);
-
                     let validate_invocation = get_function_invocation(tx_exec_info.validate_call_info.as_ref())
                         .map_err(|err| {
                             log::error!("Failed to convert validate call info to function invocation: {}", err);
@@ -1228,8 +1219,6 @@ impl<T: Config> Pallet<T> {
                         transaction_trace,
                         fee_estimation: FeeEstimate { gas_consumed, gas_price, overall_fee },
                     });
-
-                    log::debug!("Processed transaction successfully: {:?}", tx);
                 }
                 Err(e) => {
                     log::error!("Failed to simulate transaction: {:?}, error: {:?}", tx, e);
@@ -1238,7 +1227,6 @@ impl<T: Config> Pallet<T> {
             }
         }
 
-        log::info!("Simulate transactions completed successfully. Total results: {:#?}", results);
         Ok(results)
     }
 
