@@ -259,7 +259,7 @@ fn given_contract_declare_on_cairo_1_no_validate_account_then_it_works() {
 
         let hello_starknet_class = get_contract_class("HelloStarknet.casm.json", 1);
         let hello_starknet_class_hash =
-            Felt252Wrapper::from_hex_be("0x010bd93d6a001480047a4474daf84aaa33be4c5419a6e0e8f0330348cb61faac").unwrap();
+            Felt252Wrapper::from_hex_be("0x05518b17fb5c84683ba37eba8a682b7a6f330911c2216c52c6badff69cc2ec13").unwrap();
         let hello_starknet_compiled_class_hash =
             Felt252Wrapper::from_hex_be("0x00df4d3042eec107abe704619f13d92bbe01a58029311b7a1886b23dcbb4ea87").unwrap();
 
