@@ -27,6 +27,6 @@ jobs:
       - uses: actions/checkout@v3
       - name: Verify hashes
         run: |
-          for f in $(find configs/genesis-assets -type f -not -path configs/index.json -not -name "*.sierra.json"); do
+          for f in $(find configs/genesis-assets -type f -not -path configs/index.json); do
             cat configs/index.json | grep $(md5sum $f | awk '{print $1}')
           done
