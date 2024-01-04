@@ -51,6 +51,7 @@ pub type StorageValue = HexFelt;
 #[derive(Deserialize, Serialize)]
 pub struct GenesisData {
     pub contract_classes: Vec<(ClassHash, ContractClass)>,
+    pub sierra_class_hash_to_casm_class_hash: Vec<(ClassHash, ClassHash)>,
     pub contracts: Vec<(ContractAddress, ClassHash)>,
     pub predeployed_accounts: Vec<PredeployedAccount>,
     pub storage: Vec<(ContractStorageKey, StorageValue)>,

@@ -111,6 +111,10 @@ mod tests {
 
         let genesis_loader = GenesisData {
             contract_classes: vec![(class_hash, class)],
+            sierra_class_hash_to_casm_class_hash: vec![(
+                FieldElement::from(42u8).into(),
+                FieldElement::from(1u8).into(),
+            )],
             contracts: vec![(contract_address, class_hash)],
             predeployed_accounts: Vec::new(),
             storage: vec![((contract_address, storage_key), storage_value)],
@@ -121,7 +125,7 @@ mod tests {
         let serialized_loader = serde_json::to_string(&genesis_loader).unwrap();
 
         // Then
-        let expected = r#"{"contract_classes":[["0x1",{"path":"cairo-contracts/ERC20.json","version":0}]],"contracts":[["0x2","0x1"]],"predeployed_accounts":[],"storage":[[["0x2","0x3"],"0x4"]],"fee_token_address":"0x5"}"#;
+        let expected = r#"{"contract_classes":[["0x1",{"path":"cairo-contracts/ERC20.json","version":0}]],"sierra_class_hash_to_casm_class_hash":[["0x42", "0x1"]],"contracts":[["0x2","0x1"]],"predeployed_accounts":[],"storage":[[["0x2","0x3"],"0x4"]],"fee_token_address":"0x5"}"#;
         assert_eq!(expected, serialized_loader);
     }
 }

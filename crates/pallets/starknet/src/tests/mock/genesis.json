@@ -57,7 +57,7 @@
       }
     ],
     [
-      "0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276",
+      "0x02f99bf9799ada84cd5ac0d0fe36b9d8f65efcb377cd2e8cf8309ad2daf15e4b",
       {
         "path": "./cairo-contracts/build/cairo_1/NoValidateAccount.casm.json",
         "version": 1
@@ -127,7 +127,7 @@
     ],
     [
       "0x0642a8b9e2c6cc3a9ddb84575123f262a21415f78db453b0625d889e1e06ac32",
-      "0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276"
+      "0x02f99bf9799ada84cd5ac0d0fe36b9d8f65efcb377cd2e8cf8309ad2daf15e4b"
     ],
     [
       "0x0764d66462958b670b4dbd46e00eb3d60100f329dc0365d9b059e0549a4c6f58",
