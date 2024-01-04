@@ -2,6 +2,7 @@
 
 ## Next release
 
+- chore: added prometheus metrics for da layer
 - chore: bump celestia rpc crate version
 - fix(DA): run the proof first then the state update
 - fix: `prove_current_block` is called after `update_state`
