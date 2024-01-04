@@ -1,5 +1,6 @@
 pub mod config;
 
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
@@ -11,9 +12,14 @@ use avail_subxt::primitives::AvailExtrinsicParams;
 use avail_subxt::{api as AvailApi, build_client, AvailConfig};
 use ethers::types::{I256, U256};
 use futures::lock::Mutex;
+use futures::stream::iter;
+use jsonrpsee::tracing::Instrument;
+use prometheus_endpoint::prometheus::core::Metric;
+use prometheus_endpoint::prometheus::proto::LabelPair;
 use subxt::ext::sp_core::sr25519::Pair;
 use subxt::OnlineClient;
 
+use crate::da_metrics::DaMetrics;
 use crate::utils::get_bytes_from_state_diff;
 use crate::{DaClient, DaMode};
 
@@ -81,6 +87,10 @@ impl DaClient for AvailClient {
 
     fn get_mode(&self) -> DaMode {
         self.mode
+    }
+
+    fn get_da_metric_labels(&self) -> HashMap<String, String> {
+        [("name".into(), "avail".into()), ("app_id".into(), self.app_id.0.to_string())].iter().cloned().collect()
     }
 }
 

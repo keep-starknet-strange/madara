@@ -62,6 +62,9 @@ mp-digest-log = { workspace = true, default-features = true }
 mp-hashers = { workspace = true, default-features = true }
 mp-storage = { workspace = true, default-features = true }
 
+# Prometheus
+prometheus-endpoint = { workspace = true }
+
 # Optional
 clap = { workspace = true, features = ["derive"], optional = true }
 
