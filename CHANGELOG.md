@@ -2,6 +2,7 @@
 
 ## Next release
 
+- feat: remove `seq_addr_updated` from `GenesisData`
 - chore: added prometheus metrics for da layer
 - chore: bump celestia rpc crate version
 - fix(DA): run the proof first then the state update
