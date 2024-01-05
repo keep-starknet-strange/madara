@@ -2,13 +2,13 @@ use std::path::PathBuf;
 
 use clap::ValueHint::FilePath;
 use madara_runtime::SealingMode;
-use mc_data_availability::avail::AvailClient;
 use mc_data_availability::avail::config::AvailConfig;
-use mc_data_availability::celestia::CelestiaClient;
+use mc_data_availability::avail::AvailClient;
 use mc_data_availability::celestia::config::CelestiaConfig;
-use mc_data_availability::ethereum::EthereumClient;
+use mc_data_availability::celestia::CelestiaClient;
 use mc_data_availability::ethereum::config::EthereumConfig;
-use mc_data_availability::{DaLayer, DaClient};
+use mc_data_availability::ethereum::EthereumClient;
+use mc_data_availability::{DaClient, DaLayer};
 use mc_l1_messages::config::{L1MessagesWorkerConfig, L1MessagesWorkerConfigError};
 use mc_settlement::SettlementLayer;
 use sc_cli::{Result, RpcMethods, RunCmd, SubstrateCli};
@@ -150,7 +150,7 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
     }
     let runner = cli.create_runner(&cli.run.base)?;
 
-    let (da_config,_da_client) = match cli.run.da_layer {
+    let (da_config, _da_client) = match cli.run.da_layer {
         Some(da_layer) => {
             let da_conf = cli.run.clone().da_conf.unwrap_or({
                 let path_base_path = cli.run.base_path()?;
@@ -158,15 +158,14 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
                 if !path_da_conf_json.exists() {
                     return Err(sc_cli::Error::Input("no file ethereum.json in base_path".to_string()));
                 }
-                
                 path_da_conf_json
             });
 
-            (Some((da_layer,da_conf.clone())),Some(init_da_client(da_layer, da_conf)?))
+            (Some((da_layer, da_conf.clone())), Some(init_da_client(da_layer, da_conf)?))
         }
         None => {
             log::info!("Madara initialized w/o DA layer");
-            (None,None)
+            (None, None)
         }
     };
 
@@ -181,10 +180,10 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
                 if !path_sett_conf_json.exists() {
                     return Err(sc_cli::Error::Input("no file settlement_conf in base_path".to_string()));
                 }
-                
                 path_sett_conf_json
             });
-            Some((SettlementLayer::Ethereum,settlement_conf))
+
+            Some((SettlementLayer::Ethereum, settlement_conf))
         }
 
         None => {
