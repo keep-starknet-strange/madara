@@ -179,14 +179,59 @@
 <a href="#179" id="179">179</a>
 <a href="#180" id="180">180</a>
 <a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
 </pre></div><pre class="rust"><code><span class="kw">pub mod </span>avail;
 <span class="kw">pub mod </span>celestia;
 <span class="kw">pub mod </span>ethereum;
 <span class="kw">mod </span>sharp;
 <span class="kw">pub mod </span>utils;
 
+<span class="kw">mod </span>da_metrics;
+
+<span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>std::time;
 
 <span class="kw">use </span>anyhow::{anyhow, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>async_trait::async_trait;
@@ -195,11 +240,15 @@
 <span class="kw">use </span>futures::StreamExt;
 <span class="kw">use </span>mc_commitment_state_diff::BlockDAData;
 <span class="kw">use </span>mp_hashers::HasherT;
+<span class="kw">use </span>prometheus_endpoint::prometheus::core::AtomicU64;
+<span class="kw">use </span>prometheus_endpoint::{register, Gauge, Opts, Registry <span class="kw">as </span>PrometheusRegistry};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>sp_runtime::traits::Block <span class="kw">as </span>BlockT;
 <span class="kw">use </span>starknet_api::block::BlockHash;
 <span class="kw">use </span>starknet_api::state::ThinStateDiff;
 <span class="kw">use </span>utils::state_diff_to_calldata;
+
+<span class="kw">use </span><span class="kw">crate</span>::da_metrics::DaMetrics;
 
 <span class="kw">pub struct </span>DataAvailabilityWorker&lt;B, H&gt;(PhantomData&lt;(B, H)&gt;);
 
@@ -249,6 +298,7 @@
     <span class="kw">fn </span>get_mode(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; DaMode;
     <span class="kw">async fn </span>last_published_state(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;I256&gt;;
     <span class="kw">async fn </span>publish_state_diff(<span class="kw-2">&amp;</span><span class="self">self</span>, state_diff: Vec&lt;U256&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;;
+    <span class="kw">fn </span>get_da_metric_labels(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; HashMap&lt;String, String&gt;;
 }
 
 <span class="doccomment">/// The client worker for DA related tasks
@@ -264,29 +314,61 @@
 {
     <span class="kw">pub async fn </span>prove_current_block(
         da_client: Arc&lt;<span class="kw">dyn </span>DaClient + Send + Sync&gt;,
+        prometheus: <span class="prelude-ty">Option</span>&lt;PrometheusRegistry&gt;,
         <span class="kw-2">mut </span>state_diffs_rx: mpsc::Receiver&lt;BlockDAData&gt;,
         madara_backend: Arc&lt;mc_db::Backend&lt;B&gt;&gt;,
     ) {
+        <span class="kw">let </span>da_metrics = prometheus.as_ref().and_then(|registry| DaMetrics::register(registry).ok());
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(registry) = prometheus.as_ref() {
+            <span class="kw">let </span>gauge = Gauge::&lt;AtomicU64&gt;::with_opts(
+                Opts::new(<span class="string">&quot;madara_da_layer_info&quot;</span>, <span class="string">&quot;Information about the data availability layer used&quot;</span>)
+                    .const_labels(da_client.get_da_metric_labels()),
+            );
+            <span class="kw">match </span>gauge {
+                <span class="prelude-val">Ok</span>(gauge) =&gt; <span class="kw">match </span>register(gauge, registry) {
+                    <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; (),
+                    <span class="prelude-val">Err</span>(e) =&gt; {
+                        <span class="macro">log::error!</span>(<span class="string">&quot;failed to register gauge for da layer info metrics: {e}&quot;</span>);
+                    }
+                },
+                <span class="prelude-val">Err</span>(e) =&gt; {
+                    <span class="macro">log::error!</span>(<span class="string">&quot;failed to create gauge for da layer info metrics: {e}&quot;</span>);
+                }
+            }
+        }
         <span class="kw">while let </span><span class="prelude-val">Some</span>(BlockDAData(starknet_block_hash, csd, num_addr_accessed)) = state_diffs_rx.next().<span class="kw">await </span>{
             <span class="macro">log::info!</span>(
                 <span class="string">&quot;received state diff for block {starknet_block_hash}: {csd:?}.{num_addr_accessed} addresses accessed.&quot;
             </span>);
 
+            <span class="kw">let </span>da_metrics = da_metrics.clone();
             <span class="kw">let </span>da_client = da_client.clone();
             <span class="kw">let </span>madara_backend = madara_backend.clone();
             tokio::spawn(<span class="kw">async move </span>{
+                <span class="kw">let </span>prove_state_start = time::Instant::now();
                 <span class="kw">match </span>prove(da_client.get_mode(), starknet_block_hash, <span class="kw-2">&amp;</span>csd, num_addr_accessed, madara_backend.clone())
                     .<span class="kw">await
                 </span>{
                     <span class="prelude-val">Err</span>(err) =&gt; <span class="macro">log::error!</span>(<span class="string">&quot;proving error: {err}&quot;</span>),
                     <span class="prelude-val">Ok</span>(()) =&gt; {}
                 }
+                <span class="kw">let </span>prove_state_end = time::Instant::now();
 
                 <span class="kw">match </span>update_state::&lt;B, H&gt;(madara_backend, da_client, starknet_block_hash, csd, num_addr_accessed).<span class="kw">await
                 </span>{
                     <span class="prelude-val">Err</span>(err) =&gt; <span class="macro">log::error!</span>(<span class="string">&quot;state publishing error: {err}&quot;</span>),
                     <span class="prelude-val">Ok</span>(()) =&gt; {}
                 };
+                <span class="kw">let </span>update_state_end = time::Instant::now();
+
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(da_metrics) = da_metrics {
+                    da_metrics
+                        .state_proofs
+                        .observe(prove_state_end.saturating_duration_since(prove_state_start).as_secs_f64());
+                    da_metrics
+                        .state_updates
+                        .observe(update_state_end.saturating_duration_since(prove_state_end).as_secs_f64());
+                }
             });
         }
     }

@@ -84,8 +84,17 @@
 <a href="#84" id="84">84</a>
 <a href="#85" id="85">85</a>
 <a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
 </pre></div><pre class="rust"><code><span class="kw">pub mod </span>config;
 
+<span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>anyhow::Result;
@@ -94,7 +103,10 @@
 <span class="kw">use </span>ethers::providers::{Http, Provider};
 <span class="kw">use </span>ethers::signers::{LocalWallet, Signer};
 <span class="kw">use </span>ethers::types::{Address, I256, U256};
+<span class="kw">use </span>prometheus_endpoint::prometheus::core::Metric;
+<span class="kw">use </span>prometheus_endpoint::prometheus::proto::LabelPair;
 
+<span class="kw">use </span><span class="kw">crate</span>::da_metrics::DaMetrics;
 <span class="kw">use </span><span class="kw">crate</span>::utils::is_valid_http_endpoint;
 <span class="kw">use crate</span>::{DaClient, DaMode};
 
@@ -144,6 +156,10 @@
 
     <span class="kw">fn </span>get_mode(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; DaMode {
         <span class="self">self</span>.mode
+    }
+
+    <span class="kw">fn </span>get_da_metric_labels(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; HashMap&lt;String, String&gt; {
+        [(<span class="string">&quot;name&quot;</span>.into(), <span class="string">&quot;ethereum&quot;</span>.into())].iter().cloned().collect()
     }
 }
 

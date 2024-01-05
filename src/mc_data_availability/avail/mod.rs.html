@@ -128,8 +128,19 @@
 <a href="#128" id="128">128</a>
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
 </pre></div><pre class="rust"><code><span class="kw">pub mod </span>config;
 
+<span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>anyhow::{anyhow, <span class="prelude-ty">Result</span>};
@@ -141,9 +152,14 @@
 <span class="kw">use </span>avail_subxt::{api <span class="kw">as </span>AvailApi, build_client, AvailConfig};
 <span class="kw">use </span>ethers::types::{I256, U256};
 <span class="kw">use </span>futures::lock::Mutex;
+<span class="kw">use </span>futures::stream::iter;
+<span class="kw">use </span>jsonrpsee::tracing::Instrument;
+<span class="kw">use </span>prometheus_endpoint::prometheus::core::Metric;
+<span class="kw">use </span>prometheus_endpoint::prometheus::proto::LabelPair;
 <span class="kw">use </span>subxt::ext::sp_core::sr25519::Pair;
 <span class="kw">use </span>subxt::OnlineClient;
 
+<span class="kw">use </span><span class="kw">crate</span>::da_metrics::DaMetrics;
 <span class="kw">use </span><span class="kw">crate</span>::utils::get_bytes_from_state_diff;
 <span class="kw">use crate</span>::{DaClient, DaMode};
 
@@ -211,6 +227,10 @@
 
     <span class="kw">fn </span>get_mode(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; DaMode {
         <span class="self">self</span>.mode
+    }
+
+    <span class="kw">fn </span>get_da_metric_labels(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; HashMap&lt;String, String&gt; {
+        [(<span class="string">&quot;name&quot;</span>.into(), <span class="string">&quot;avail&quot;</span>.into()), (<span class="string">&quot;app_id&quot;</span>.into(), <span class="self">self</span>.app_id.<span class="number">0</span>.to_string())].iter().cloned().collect()
     }
 }
 

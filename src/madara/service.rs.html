@@ -714,6 +714,7 @@
 <a href="#714" id="714">714</a>
 <a href="#715" id="715">715</a>
 <a href="#716" id="716">716</a>
+<a href="#717" id="717">717</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
@@ -1167,6 +1168,7 @@
             <span class="prelude-val">Some</span>(MADARA_TASK_GROUP),
             DataAvailabilityWorker::&lt;<span class="kw">_</span>, StarknetHasher&gt;::prove_current_block(
                 da_client,
+                prometheus_registry.clone(),
                 commitment_state_diff_rx,
                 madara_backend.clone(),
             ),
