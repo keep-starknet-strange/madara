@@ -1,5 +1,4 @@
-use prometheus_endpoint::prometheus::core::AtomicU64;
-use prometheus_endpoint::{register, Gauge, Histogram, HistogramOpts, Opts, PrometheusError, Registry};
+use prometheus_endpoint::{register, Histogram, HistogramOpts, PrometheusError, Registry};
 
 #[derive(Clone, Debug)]
 pub struct DaMetrics {

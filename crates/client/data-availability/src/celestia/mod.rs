@@ -10,11 +10,8 @@ use celestia_types::nmt::Namespace;
 use celestia_types::{Blob, Result as CelestiaTypesResult};
 use ethers::types::{I256, U256};
 use jsonrpsee::http_client::{HeaderMap, HeaderValue, HttpClient, HttpClientBuilder};
-use prometheus_endpoint::prometheus::core::Metric;
-use prometheus_endpoint::prometheus::proto::LabelPair;
 use reqwest::header;
 
-use crate::da_metrics::DaMetrics;
 use crate::{DaClient, DaMode};
 
 #[derive(Clone, Debug)]
