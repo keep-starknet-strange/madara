@@ -111,18 +111,18 @@ pub struct StarknetRPCExecutionResources {
     pub keccak_builtin_applications: u64,
 }
 
-impl StarknetRPCExecutionResources {
-    pub fn into_core_execution_resources(self) -> CoreExecutionResources {
+impl From<StarknetRPCExecutionResources> for CoreExecutionResources {
+    fn from(resources: StarknetRPCExecutionResources) -> Self {
         CoreExecutionResources {
-            steps: self.steps,
-            memory_holes: self.memory_holes,
-            range_check_builtin_applications: self.range_check_builtin_applications,
-            pedersen_builtin_applications: self.pedersen_builtin_applications,
-            poseidon_builtin_applications: self.poseidon_builtin_applications,
-            ec_op_builtin_applications: self.ec_op_builtin_applications,
-            ecdsa_builtin_applications: self.ecdsa_builtin_applications,
-            bitwise_builtin_applications: self.bitwise_builtin_applications,
-            keccak_builtin_applications: self.keccak_builtin_applications,
+            steps: resources.steps,
+            memory_holes: resources.memory_holes,
+            range_check_builtin_applications: resources.range_check_builtin_applications,
+            pedersen_builtin_applications: resources.pedersen_builtin_applications,
+            poseidon_builtin_applications: resources.poseidon_builtin_applications,
+            ec_op_builtin_applications: resources.ec_op_builtin_applications,
+            ecdsa_builtin_applications: resources.ecdsa_builtin_applications,
+            bitwise_builtin_applications: resources.bitwise_builtin_applications,
+            keccak_builtin_applications: resources.keccak_builtin_applications,
         }
     }
 }

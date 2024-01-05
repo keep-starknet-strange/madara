@@ -17,7 +17,6 @@ mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
 mp-transactions = { workspace = true }
 starknet-crypto = { workspace = true }
-starknet-ff = { workspace = true }
 starknet_api = { workspace = true }
 
 # Optional
@@ -26,6 +25,7 @@ parity-scale-codec = { workspace = true, features = [
 ], optional = true }
 scale-info = { workspace = true, features = ["derive"], optional = true }
 serde = { workspace = true, features = ["derive"], optional = true }
+starknet-ff = { workspace = true, optional = true }
 
 [dev-dependencies]
 starknet-core = { workspace = true }

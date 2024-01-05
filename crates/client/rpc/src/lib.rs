@@ -200,7 +200,6 @@ where
 /// Taken from https://github.com/paritytech/substrate/blob/master/client/rpc/src/author/mod.rs#L78
 const TX_SOURCE: TransactionSource = TransactionSource::External;
 
-#[allow(unused_variables)]
 impl<A, B, BE, G, C, P, H> MadaraRpcApiServer for Starknet<A, B, BE, G, C, P, H>
 where
     A: ChainApi<Block = B> + 'static,
@@ -222,8 +221,7 @@ where
             .predeployed_accounts
             .into_iter()
             .map(|account| {
-                let contract_address: FieldElement = Felt252Wrapper(account.contract_address).into();
-                let class_hash: FieldElement = Felt252Wrapper(account.class_hash).into();
+                let contract_address: FieldElement = account.contract_address.into();
                 let balance_string = &self
                     .call(
                         FunctionCall {
@@ -244,7 +242,6 @@ where
 }
 
 #[async_trait]
-#[allow(unused_variables)]
 impl<A, B, BE, G, C, P, H> StarknetWriteRpcApiServer for Starknet<A, B, BE, G, C, P, H>
 where
     A: ChainApi<Block = B> + 'static,
@@ -1516,7 +1513,7 @@ where
                 messages_sent: messages.into_iter().map(message_conversion).collect(),
                 events: events_converted,
                 execution_result,
-                execution_resources: execution_resources.into_core_execution_resources(),
+                execution_resources: execution_resources.into(),
             }),
             mp_transactions::Transaction::DeployAccount(tx) => {
                 TransactionReceipt::DeployAccount(DeployAccountTransactionReceipt {
@@ -1529,7 +1526,7 @@ where
                     events: events_converted,
                     contract_address: tx.get_account_address(),
                     execution_result,
-                    execution_resources: execution_resources.into_core_execution_resources(),
+                    execution_resources: execution_resources.into(),
                 })
             }
             mp_transactions::Transaction::Invoke(_) => TransactionReceipt::Invoke(InvokeTransactionReceipt {
@@ -1541,7 +1538,7 @@ where
                 messages_sent: messages.into_iter().map(message_conversion).collect(),
                 events: events_converted,
                 execution_result,
-                execution_resources: execution_resources.into_core_execution_resources(),
+                execution_resources: execution_resources.into(),
             }),
             mp_transactions::Transaction::L1Handler(_) => TransactionReceipt::L1Handler(L1HandlerTransactionReceipt {
                 message_hash,
@@ -1553,7 +1550,7 @@ where
                 messages_sent: messages.into_iter().map(message_conversion).collect(),
                 events: events_converted,
                 execution_result,
-                execution_resources: execution_resources.into_core_execution_resources(),
+                execution_resources: execution_resources.into(),
             }),
         };
 

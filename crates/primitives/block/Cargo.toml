@@ -20,6 +20,8 @@ mp-fee = { workspace = true, features = [
 mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
 mp-transactions = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 sp-core = { workspace = true }
 starknet_api = { workspace = true }
 
@@ -28,7 +30,6 @@ parity-scale-codec = { workspace = true, features = [
   "derive",
 ], optional = true }
 scale-info = { workspace = true, features = ["derive"], optional = true }
-serde = { workspace = true, features = ["derive"], optional = true }
 
 [dev-dependencies]
 mp-hashers = { workspace = true }
@@ -44,9 +45,9 @@ std = [
   "mp-hashers/std",
   "starknet_api/std",
   "blockifier/std",
+  "serde/std",
   # Optionals
   "parity-scale-codec?/std",
-  "serde?/std",
   "scale-info?/std",
 ]
 parity-scale-codec = [
@@ -63,4 +64,3 @@ scale-info = [
   "starknet_api/scale-info",
   "blockifier/scale-info",
 ]
-serde = ["dep:serde", "mp-felt/serde", "mp-transactions/serde", "mp-fee/serde"]

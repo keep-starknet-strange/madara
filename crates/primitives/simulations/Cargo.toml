@@ -11,8 +11,6 @@ repository = { workspace = true }
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-serde = { workspace = true, features = ["derive"], optional = true }
-serde_with = { workspace = true, optional = true }
 
 # Madara primitives
 mp-felt = { workspace = true, features = [
@@ -32,14 +30,16 @@ mp-transactions = { workspace = true, features = [
   "scale-info",
 ] }
 
-# Substrate dependencies
-parity-scale-codec = { workspace = true, optional = true }
-scale-info = { workspace = true, optional = true }
-
 # Starknet dependencies
 blockifier = { workspace = true }
 starknet-core = { workspace = true }
 starknet_api = { workspace = true }
+
+# Optional dependencies
+parity-scale-codec = { workspace = true, optional = true }
+scale-info = { workspace = true, optional = true }
+serde = { workspace = true, features = ["derive"], optional = true }
+serde_with = { workspace = true, optional = true }
 
 [features]
 default = ["std"]
@@ -48,12 +48,23 @@ parity-scale-codec = [
   "starknet_api/parity-scale-codec",
   "mp-felt/parity-scale-codec",
   "mp-messages/parity-scale-codec",
+  "mp-state/parity-scale-codec",
+  "mp-transactions/parity-scale-codec",
 ]
-serde = ["dep:serde", "dep:serde_with", "mp-felt/serde", "mp-messages/serde"]
+serde = [
+  "dep:serde",
+  "dep:serde_with",
+  "mp-felt/serde",
+  "mp-messages/serde",
+  "mp-state/serde",
+  "mp-transactions/serde",
+]
 scale-info = [
   "dep:scale-info",
   "starknet_api/scale-info",
   "mp-messages/scale-info",
+  "mp-state/scale-info",
+  "mp-transactions/scale-info",
 ]
 std = [
   "mp-felt/std",

@@ -22,7 +22,6 @@ use blockifier::transaction::transaction_utils::{calculate_l1_gas_usage, calcula
 #[cfg(not(feature = "std"))]
 use hashbrown::HashMap;
 use mp_state::StateChanges;
-use serde::Deserialize;
 use sp_arithmetic::fixed_point::{FixedPointNumber, FixedU128};
 use sp_arithmetic::traits::Zero;
 use starknet_api::api_core::EntryPointSelector;
@@ -56,10 +55,10 @@ pub const TRANSFER_SELECTOR_HASH: [u8; 32] = [
 ]; // starknet_keccak(TRANSFER_SELECTOR_NAME.as_bytes()).to_le_bytes();
 
 #[serde_with::serde_as]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)] // Added Deserialize here
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ResourcePrice {
     /// The price of one unit of the given resource, denominated in fri (10^-18 strk)
     pub price_in_strk: Option<u64>,

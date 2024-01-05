@@ -17,13 +17,13 @@ mp-felt = { workspace = true, features = [
   "serde",
   "scale-info",
 ] }
-serde = { workspace = true, optional = true }
-serde_with = { workspace = true, optional = true }
 starknet_api = { workspace = true }
 
-# Substrate dependencies
+# Optional dependencies
 parity-scale-codec = { workspace = true, optional = true }
 scale-info = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }
+serde_with = { workspace = true, optional = true }
 
 [features]
 default = ["std"]
@@ -42,4 +42,4 @@ parity-scale-codec = [
   "mp-felt/parity-scale-codec",
 ]
 serde = ["dep:serde", "dep:serde_with", "mp-felt/serde"]
-scale-info = ["dep:scale-info", "starknet_api/scale-info"]
+scale-info = ["dep:scale-info", "starknet_api/scale-info", "mp-felt/scale-info"]

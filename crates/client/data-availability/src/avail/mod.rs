@@ -1,5 +1,6 @@
 pub mod config;
 
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
@@ -81,6 +82,10 @@ impl DaClient for AvailClient {
 
     fn get_mode(&self) -> DaMode {
         self.mode
+    }
+
+    fn get_da_metric_labels(&self) -> HashMap<String, String> {
+        [("name".into(), "avail".into()), ("app_id".into(), self.app_id.0.to_string())].iter().cloned().collect()
     }
 }
 

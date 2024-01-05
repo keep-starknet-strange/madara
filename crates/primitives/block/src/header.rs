@@ -107,6 +107,7 @@ impl Header {
             self.event_commitment.into(),
             self.protocol_version.into(),
             self.parent_block_hash.into(),
+            Felt252Wrapper::ZERO,
         ];
 
         H::compute_hash_on_wrappers(data)

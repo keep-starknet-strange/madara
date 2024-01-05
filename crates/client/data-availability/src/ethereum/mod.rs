@@ -1,5 +1,6 @@
 pub mod config;
 
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use anyhow::Result;
@@ -58,6 +59,10 @@ impl DaClient for EthereumClient {
 
     fn get_mode(&self) -> DaMode {
         self.mode
+    }
+
+    fn get_da_metric_labels(&self) -> HashMap<String, String> {
+        [("name".into(), "ethereum".into())].iter().cloned().collect()
     }
 }
 

@@ -1,5 +1,7 @@
 pub mod config;
 
+use std::collections::HashMap;
+
 use anyhow::Result;
 use async_trait::async_trait;
 use celestia_rpc::{BlobClient, HeaderClient};
@@ -45,6 +47,10 @@ impl DaClient for CelestiaClient {
 
     fn get_mode(&self) -> DaMode {
         self.mode
+    }
+
+    fn get_da_metric_labels(&self) -> HashMap<String, String> {
+        [("name".into(), "celesia".into())].iter().cloned().collect()
     }
 }
 

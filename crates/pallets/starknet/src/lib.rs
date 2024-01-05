@@ -96,7 +96,7 @@ use mp_transactions::{
 };
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
-use starknet_api::api_core::{ChainId, ClassHash, CompiledClassHash, ContractAddress, EntryPointSelector, Nonce};
+use starknet_api::api_core::{ChainId, CompiledClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::StarkFelt;
@@ -106,7 +106,7 @@ use transaction_validation::TxPriorityInfo;
 
 use crate::alloc::string::ToString;
 use crate::execution_config::RuntimeExecutionConfigBuilder;
-use crate::types::StorageSlot;
+use crate::types::{CasmClassHash, SierraClassHash, StorageSlot};
 use crate::utils::{convert_call_info_to_execute_invocation, execute_txs_and_rollback};
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
@@ -260,21 +260,23 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::unbounded]
     #[pallet::getter(fn contract_class_hash_by_address)]
-    pub(super) type ContractClassHashes<T: Config> = StorageMap<_, Identity, ContractAddress, ClassHash, ValueQuery>;
+    pub(super) type ContractClassHashes<T: Config> =
+        StorageMap<_, Identity, ContractAddress, CasmClassHash, ValueQuery>;
 
     /// Mapping from Starknet class hash to contract class.
     /// Safe to use `Identity` as the key is already a hash.
     #[pallet::storage]
     #[pallet::unbounded]
     #[pallet::getter(fn contract_class_by_class_hash)]
-    pub(super) type ContractClasses<T: Config> = StorageMap<_, Identity, ClassHash, ContractClass, OptionQuery>;
+    pub(super) type ContractClasses<T: Config> = StorageMap<_, Identity, CasmClassHash, ContractClass, OptionQuery>;
 
     /// Mapping from Starknet Sierra class hash to  Casm compiled contract class.
     /// Safe to use `Identity` as the key is already a hash.
     #[pallet::storage]
     #[pallet::unbounded]
     #[pallet::getter(fn compiled_class_hash_by_class_hash)]
-    pub(super) type CompiledClassHashes<T: Config> = StorageMap<_, Identity, ClassHash, CompiledClassHash, OptionQuery>;
+    pub(super) type CompiledClassHashes<T: Config> =
+        StorageMap<_, Identity, SierraClassHash, CompiledClassHash, OptionQuery>;
 
     /// Mapping from Starknet contract address to its nonce.
     /// Safe to use `Identity` as the key is already a hash.
@@ -333,19 +335,19 @@ pub mod pallet {
         /// second element is the contract class hash.
         /// This can be used to start the chain with a set of pre-deployed contracts, for example in
         /// a test environment or in the case of a migration of an existing chain state.
-        pub contracts: Vec<(ContractAddress, ClassHash)>,
+        pub contracts: Vec<(ContractAddress, CasmClassHash)>,
+        pub sierra_to_casm_class_hash: Vec<(SierraClassHash, CasmClassHash)>,
         /// The contract classes to be deployed at genesis.
         /// This is a vector of tuples, where the first element is the contract class hash and the
         /// second element is the contract class definition.
         /// Same as `contracts`, this can be used to start the chain with a set of pre-deployed
         /// contracts classes.
-        pub contract_classes: Vec<(ClassHash, ContractClass)>,
+        pub contract_classes: Vec<(CasmClassHash, ContractClass)>,
         pub storage: Vec<(ContractStorageKey, StarkFelt)>,
         /// The address of the fee token.
         /// Must be set to the address of the fee token ERC20 contract.
         pub fee_token_address: ContractAddress,
         pub _phantom: PhantomData<T>,
-        pub seq_addr_updated: bool,
     }
 
     /// `Default` impl required by `pallet::GenesisBuild`.
@@ -353,11 +355,11 @@ pub mod pallet {
         fn default() -> Self {
             Self {
                 contracts: vec![],
+                sierra_to_casm_class_hash: vec![],
                 contract_classes: vec![],
                 storage: vec![],
                 fee_token_address: ContractAddress::default(),
                 _phantom: PhantomData,
-                seq_addr_updated: true,
             }
         }
     }
@@ -371,12 +373,16 @@ pub mod pallet {
                 &StarknetStorageSchemaVersion::V1,
             );
 
-            for (address, class_hash) in self.contracts.iter() {
-                ContractClassHashes::<T>::insert(address, class_hash);
-            }
-
             for (class_hash, contract_class) in self.contract_classes.iter() {
                 ContractClasses::<T>::insert(class_hash, contract_class);
+            }
+
+            for (sierra_class_hash, casm_class_hash) in self.sierra_to_casm_class_hash.iter() {
+                CompiledClassHashes::<T>::insert(sierra_class_hash, CompiledClassHash(casm_class_hash.0));
+            }
+
+            for (address, class_hash) in self.contracts.iter() {
+                ContractClassHashes::<T>::insert(address, class_hash);
             }
 
             for (key, value) in self.storage.iter() {
@@ -386,7 +392,7 @@ pub mod pallet {
             LastKnownEthBlock::<T>::set(None);
             // Set the fee token address from the genesis config.
             FeeTokenAddress::<T>::set(self.fee_token_address);
-            SeqAddrUpdate::<T>::put(self.seq_addr_updated);
+            SeqAddrUpdate::<T>::put(true);
         }
     }
 
@@ -1193,8 +1199,7 @@ impl<T: Config> Pallet<T> {
                         fee_estimation: FeeEstimate { gas_consumed, gas_price, overall_fee },
                     });
                 }
-                Err(e) => {
-                    log::error!("Failed to simulate transaction: {:?}, error: {:?}", tx, e);
+                Err(_e) => {
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             }

@@ -2,7 +2,15 @@
 
 ## Next release
 
-- feat(rpc): Added state diff field in trace fields
+- feat(rpc): added support for v0.5.1 JSON-RPC specs
+- feat(rpc): added ordered messages/events in trace fields
+- feat(rpc): support for starknet.rs v0.5.1 version
+- feat(rpc): added execution resources in trace fields
+- feat(rpc): added state diff field in trace fields
+- feat: add sierra to casm class hash mapping to genesis assets
+- chore: remove ArgentMulticall from genesis assets
+- feat: remove `seq_addr_updated` from `GenesisData`
+- chore: added prometheus metrics for da layer
 - chore: bump celestia rpc crate version
 - fix(DA): run the proof first then the state update
 - fix: `prove_current_block` is called after `update_state`
