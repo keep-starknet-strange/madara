@@ -1,5 +1,6 @@
 pub mod config;
 
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use anyhow::Result;
@@ -8,7 +9,10 @@ use ethers::prelude::{abigen, SignerMiddleware};
 use ethers::providers::{Http, Provider};
 use ethers::signers::{LocalWallet, Signer};
 use ethers::types::{Address, I256, U256};
+use prometheus_endpoint::prometheus::core::Metric;
+use prometheus_endpoint::prometheus::proto::LabelPair;
 
+use crate::da_metrics::DaMetrics;
 use crate::utils::is_valid_http_endpoint;
 use crate::{DaClient, DaMode};
 
@@ -58,6 +62,10 @@ impl DaClient for EthereumClient {
 
     fn get_mode(&self) -> DaMode {
         self.mode
+    }
+
+    fn get_da_metric_labels(&self) -> HashMap<String, String> {
+        [("name".into(), "ethereum".into())].iter().cloned().collect()
     }
 }
 

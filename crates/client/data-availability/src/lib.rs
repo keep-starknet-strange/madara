@@ -4,8 +4,12 @@ pub mod ethereum;
 mod sharp;
 pub mod utils;
 
+mod da_metrics;
+
+use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
+use std::time;
 
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
@@ -14,11 +18,15 @@ use futures::channel::mpsc;
 use futures::StreamExt;
 use mc_commitment_state_diff::BlockDAData;
 use mp_hashers::HasherT;
+use prometheus_endpoint::prometheus::core::AtomicU64;
+use prometheus_endpoint::{register, Gauge, Opts, Registry as PrometheusRegistry};
 use serde::{Deserialize, Serialize};
 use sp_runtime::traits::Block as BlockT;
 use starknet_api::block::BlockHash;
 use starknet_api::state::ThinStateDiff;
 use utils::state_diff_to_calldata;
+
+use crate::da_metrics::DaMetrics;
 
 pub struct DataAvailabilityWorker<B, H>(PhantomData<(B, H)>);
 
@@ -68,6 +76,7 @@ pub trait DaClient: Send + Sync {
     fn get_mode(&self) -> DaMode;
     async fn last_published_state(&self) -> Result<I256>;
     async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()>;
+    fn get_da_metric_labels(&self) -> HashMap<String, String>;
 }
 
 /// The client worker for DA related tasks
@@ -83,29 +92,61 @@ where
 {
     pub async fn prove_current_block(
         da_client: Arc<dyn DaClient + Send + Sync>,
+        prometheus: Option<PrometheusRegistry>,
         mut state_diffs_rx: mpsc::Receiver<BlockDAData>,
         madara_backend: Arc<mc_db::Backend<B>>,
     ) {
+        let da_metrics = prometheus.as_ref().and_then(|registry| DaMetrics::register(registry).ok());
+        if let Some(registry) = prometheus.as_ref() {
+            let gauge = Gauge::<AtomicU64>::with_opts(
+                Opts::new("madara_da_layer_info", "Information about the data availability layer used")
+                    .const_labels(da_client.get_da_metric_labels()),
+            );
+            match gauge {
+                Ok(gauge) => match register(gauge, registry) {
+                    Ok(_) => (),
+                    Err(e) => {
+                        log::error!("failed to register gauge for da layer info metrics: {e}");
+                    }
+                },
+                Err(e) => {
+                    log::error!("failed to create gauge for da layer info metrics: {e}");
+                }
+            }
+        }
         while let Some(BlockDAData(starknet_block_hash, csd, num_addr_accessed)) = state_diffs_rx.next().await {
             log::info!(
                 "received state diff for block {starknet_block_hash}: {csd:?}.{num_addr_accessed} addresses accessed."
             );
 
+            let da_metrics = da_metrics.clone();
             let da_client = da_client.clone();
             let madara_backend = madara_backend.clone();
             tokio::spawn(async move {
+                let prove_state_start = time::Instant::now();
                 match prove(da_client.get_mode(), starknet_block_hash, &csd, num_addr_accessed, madara_backend.clone())
                     .await
                 {
                     Err(err) => log::error!("proving error: {err}"),
                     Ok(()) => {}
                 }
+                let prove_state_end = time::Instant::now();
 
                 match update_state::<B, H>(madara_backend, da_client, starknet_block_hash, csd, num_addr_accessed).await
                 {
                     Err(err) => log::error!("state publishing error: {err}"),
                     Ok(()) => {}
                 };
+                let update_state_end = time::Instant::now();
+
+                if let Some(da_metrics) = da_metrics {
+                    da_metrics
+                        .state_proofs
+                        .observe(prove_state_end.saturating_duration_since(prove_state_start).as_secs_f64());
+                    da_metrics
+                        .state_updates
+                        .observe(update_state_end.saturating_duration_since(prove_state_end).as_secs_f64());
+                }
             });
         }
     }

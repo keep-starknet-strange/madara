@@ -1,5 +1,7 @@
 pub mod config;
 
+use std::collections::HashMap;
+
 use anyhow::Result;
 use async_trait::async_trait;
 use celestia_rpc::{BlobClient, HeaderClient};
@@ -8,8 +10,11 @@ use celestia_types::nmt::Namespace;
 use celestia_types::{Blob, Result as CelestiaTypesResult};
 use ethers::types::{I256, U256};
 use jsonrpsee::http_client::{HeaderMap, HeaderValue, HttpClient, HttpClientBuilder};
+use prometheus_endpoint::prometheus::core::Metric;
+use prometheus_endpoint::prometheus::proto::LabelPair;
 use reqwest::header;
 
+use crate::da_metrics::DaMetrics;
 use crate::{DaClient, DaMode};
 
 #[derive(Clone, Debug)]
@@ -45,6 +50,10 @@ impl DaClient for CelestiaClient {
 
     fn get_mode(&self) -> DaMode {
         self.mode
+    }
+
+    fn get_da_metric_labels(&self) -> HashMap<String, String> {
+        [("name".into(), "celesia".into())].iter().cloned().collect()
     }
 }
 

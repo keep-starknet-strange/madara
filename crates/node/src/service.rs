@@ -451,6 +451,7 @@ pub fn new_full(
             Some(MADARA_TASK_GROUP),
             DataAvailabilityWorker::<_, StarknetHasher>::prove_current_block(
                 da_client,
+                prometheus_registry.clone(),
                 commitment_state_diff_rx,
                 madara_backend.clone(),
             ),

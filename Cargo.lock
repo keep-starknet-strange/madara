@@ -6309,6 +6309,7 @@ dependencies = [
  "sp-keyring",
  "sp-runtime 24.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
  "starknet_api",
+ "substrate-prometheus-endpoint",
  "subxt",
  "thiserror",
  "tokio",
