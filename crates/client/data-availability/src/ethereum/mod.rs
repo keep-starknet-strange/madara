@@ -9,10 +9,7 @@ use ethers::prelude::{abigen, SignerMiddleware};
 use ethers::providers::{Http, Provider};
 use ethers::signers::{LocalWallet, Signer};
 use ethers::types::{Address, I256, U256};
-use prometheus_endpoint::prometheus::core::Metric;
-use prometheus_endpoint::prometheus::proto::LabelPair;
 
-use crate::da_metrics::DaMetrics;
 use crate::utils::is_valid_http_endpoint;
 use crate::{DaClient, DaMode};
 

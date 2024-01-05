@@ -12,14 +12,9 @@ use avail_subxt::primitives::AvailExtrinsicParams;
 use avail_subxt::{api as AvailApi, build_client, AvailConfig};
 use ethers::types::{I256, U256};
 use futures::lock::Mutex;
-use futures::stream::iter;
-use jsonrpsee::tracing::Instrument;
-use prometheus_endpoint::prometheus::core::Metric;
-use prometheus_endpoint::prometheus::proto::LabelPair;
 use subxt::ext::sp_core::sr25519::Pair;
 use subxt::OnlineClient;
 
-use crate::da_metrics::DaMetrics;
 use crate::utils::get_bytes_from_state_diff;
 use crate::{DaClient, DaMode};
 
