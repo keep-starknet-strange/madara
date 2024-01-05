@@ -172,7 +172,7 @@
     /// The node is run in `release` mode.
     /// Parameters to the node can be passed with the `params` argument.
     </span><span class="kw">fn </span>cargo_run(root_dir: <span class="kw-2">&amp;</span>Path, params: Vec&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; Child {
-        <span class="kw">let </span>arguments = [<span class="macro">vec!</span>[<span class="string">&quot;run&quot;</span>.into(), <span class="string">&quot;--release&quot;</span>, <span class="string">&quot;--&quot;</span>], params].concat();
+        <span class="kw">let </span>arguments = [<span class="macro">vec!</span>[<span class="string">&quot;run&quot;</span>, <span class="string">&quot;--release&quot;</span>, <span class="string">&quot;--&quot;</span>], params].concat();
 
         <span class="kw">let </span>(stdout, stderr) = <span class="kw">if </span>env::var(<span class="string">&quot;MADARA_LOG&quot;</span>).is_ok() {
             <span class="kw">let </span>logs_dir = Path::join(root_dir, Path::new(<span class="string">&quot;target/madara-log&quot;</span>));
@@ -197,7 +197,7 @@
         <span class="kw">let </span>base_path_arg = base_path.map(|arg| <span class="macro">format!</span>(<span class="string">&quot;--base-path={}&quot;</span>, arg.display()));
         <span class="kw">let </span>settlement_arg = settlement.map(|arg| <span class="macro">format!</span>(<span class="string">&quot;--settlement={arg}&quot;</span>));
         <span class="kw">let </span>rpc_port_arg = <span class="macro">format!</span>(<span class="string">&quot;--rpc-port={port}&quot;</span>);
-        <span class="kw">let </span>chain_arg = <span class="macro">format!</span>(<span class="string">&quot;--chain=dev&quot;</span>);
+        <span class="kw">let </span>chain_arg = <span class="string">&quot;--chain=dev&quot;</span>;
         <span class="kw">let </span>from_local_arg = <span class="macro">format!</span>(<span class="string">&quot;--from-local={}&quot;</span>, repository_root.join(<span class="string">&quot;configs&quot;</span>).display());
 
         <span class="comment">// Codeblock to drop `setup_args` and be able to borrow again for `run_args`
@@ -211,7 +211,7 @@
                 <span class="self">Self</span>::cargo_run(repository_root.as_path(), setup_args).wait().expect(<span class="string">&quot;Failed to setup Madara node&quot;</span>);
 
             <span class="kw">if </span>!setup_res.success() {
-                <span class="macro">panic!</span>(<span class="string">&quot;Madara setup failed with {} (check out stderr logs)&quot;</span>, setup_res.to_string());
+                <span class="macro">panic!</span>(<span class="string">&quot;Madara setup failed with {} (check out stderr logs)&quot;</span>, setup_res);
             }
         }
 

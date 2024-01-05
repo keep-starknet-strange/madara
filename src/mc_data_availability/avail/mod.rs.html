@@ -133,11 +133,6 @@
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
-<a href="#140" id="140">140</a>
 </pre></div><pre class="rust"><code><span class="kw">pub mod </span>config;
 
 <span class="kw">use </span>std::collections::HashMap;
@@ -152,14 +147,9 @@
 <span class="kw">use </span>avail_subxt::{api <span class="kw">as </span>AvailApi, build_client, AvailConfig};
 <span class="kw">use </span>ethers::types::{I256, U256};
 <span class="kw">use </span>futures::lock::Mutex;
-<span class="kw">use </span>futures::stream::iter;
-<span class="kw">use </span>jsonrpsee::tracing::Instrument;
-<span class="kw">use </span>prometheus_endpoint::prometheus::core::Metric;
-<span class="kw">use </span>prometheus_endpoint::prometheus::proto::LabelPair;
 <span class="kw">use </span>subxt::ext::sp_core::sr25519::Pair;
 <span class="kw">use </span>subxt::OnlineClient;
 
-<span class="kw">use </span><span class="kw">crate</span>::da_metrics::DaMetrics;
 <span class="kw">use </span><span class="kw">crate</span>::utils::get_bytes_from_state_diff;
 <span class="kw">use crate</span>::{DaClient, DaMode};
 

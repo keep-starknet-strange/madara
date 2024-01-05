@@ -82,6 +82,12 @@
 <a href="#82" id="82">82</a>
 <a href="#83" id="83">83</a>
 <a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::fmt;
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::string::String;
@@ -109,9 +115,15 @@
 }
 
 <span class="kw">impl </span>From&lt;FieldElement&gt; <span class="kw">for </span>HexFelt {
-    <span class="kw">fn </span>from(element: FieldElement) -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>(element)
+    <span class="kw">fn </span>from(felt: FieldElement) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(felt)
     }
+}
+
+<span class="kw">impl </span>From&lt;HexFelt&gt; <span class="kw">for </span>FieldElement {
+    <span class="kw">fn </span>from(hex_felt: HexFelt) -&gt; <span class="self">Self </span>{
+        hex_felt.<span class="number">0
+    </span>}
 }
 
 <span class="kw">impl </span>From&lt;Felt252Wrapper&gt; <span class="kw">for </span>HexFelt {
@@ -129,11 +141,11 @@
 <span class="attr">#[derive(Deserialize, Serialize)]
 </span><span class="kw">pub struct </span>GenesisData {
     <span class="kw">pub </span>contract_classes: Vec&lt;(ClassHash, ContractClass)&gt;,
+    <span class="kw">pub </span>sierra_class_hash_to_casm_class_hash: Vec&lt;(ClassHash, ClassHash)&gt;,
     <span class="kw">pub </span>contracts: Vec&lt;(ContractAddress, ClassHash)&gt;,
     <span class="kw">pub </span>predeployed_accounts: Vec&lt;PredeployedAccount&gt;,
     <span class="kw">pub </span>storage: Vec&lt;(ContractStorageKey, StorageValue)&gt;,
     <span class="kw">pub </span>fee_token_address: ContractAddress,
-    <span class="kw">pub </span>seq_addr_updated: bool,
 }
 
 <span class="attr">#[derive(Constructor)]
@@ -161,8 +173,8 @@
 <span class="doccomment">/// A struct containing predeployed accounts info.
 </span><span class="attr">#[derive(Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>PredeployedAccount {
-    <span class="kw">pub </span>contract_address: FieldElement,
-    <span class="kw">pub </span>class_hash: FieldElement,
+    <span class="kw">pub </span>contract_address: ContractAddress,
+    <span class="kw">pub </span>class_hash: ClassHash,
     <span class="kw">pub </span>name: String,
     <span class="kw">pub </span>private_key: <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;,
 }

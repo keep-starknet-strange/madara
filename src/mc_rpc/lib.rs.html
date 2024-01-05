@@ -1652,9 +1652,6 @@
 <a href="#1652" id="1652">1652</a>
 <a href="#1653" id="1653">1653</a>
 <a href="#1654" id="1654">1654</a>
-<a href="#1655" id="1655">1655</a>
-<a href="#1656" id="1656">1656</a>
-<a href="#1657" id="1657">1657</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1856,8 +1853,7 @@
 <span class="doccomment">/// Taken from https://github.com/paritytech/substrate/blob/master/client/rpc/src/author/mod.rs#L78
 </span><span class="kw">const </span>TX_SOURCE: TransactionSource = TransactionSource::External;
 
-<span class="attr">#[allow(unused_variables)]
-</span><span class="kw">impl</span>&lt;A, B, BE, G, C, P, H&gt; MadaraRpcApiServer <span class="kw">for </span>Starknet&lt;A, B, BE, G, C, P, H&gt;
+<span class="kw">impl</span>&lt;A, B, BE, G, C, P, H&gt; MadaraRpcApiServer <span class="kw">for </span>Starknet&lt;A, B, BE, G, C, P, H&gt;
 <span class="kw">where
     </span>A: ChainApi&lt;Block = B&gt; + <span class="lifetime">&#39;static</span>,
     B: BlockT,
@@ -1878,8 +1874,7 @@
             .predeployed_accounts
             .into_iter()
             .map(|account| {
-                <span class="kw">let </span>contract_address: FieldElement = Felt252Wrapper(account.contract_address).into();
-                <span class="kw">let </span>class_hash: FieldElement = Felt252Wrapper(account.class_hash).into();
+                <span class="kw">let </span>contract_address: FieldElement = account.contract_address.into();
                 <span class="kw">let </span>balance_string = <span class="kw-2">&amp;</span><span class="self">self
                     </span>.call(
                         FunctionCall {
@@ -1900,7 +1895,6 @@
 }
 
 <span class="attr">#[async_trait]
-#[allow(unused_variables)]
 </span><span class="kw">impl</span>&lt;A, B, BE, G, C, P, H&gt; StarknetWriteRpcApiServer <span class="kw">for </span>Starknet&lt;A, B, BE, G, C, P, H&gt;
 <span class="kw">where
     </span>A: ChainApi&lt;Block = B&gt; + <span class="lifetime">&#39;static</span>,

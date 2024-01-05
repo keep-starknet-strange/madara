@@ -109,9 +109,6 @@
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
 <a href="#111" id="111">111</a>
-<a href="#112" id="112">112</a>
-<a href="#113" id="113">113</a>
-<a href="#114" id="114">114</a>
 </pre></div><pre class="rust"><code><span class="kw">pub mod </span>config;
 
 <span class="kw">use </span>std::collections::HashMap;
@@ -124,11 +121,8 @@
 <span class="kw">use </span>celestia_types::{Blob, <span class="prelude-ty">Result </span><span class="kw">as </span>CelestiaTypesResult};
 <span class="kw">use </span>ethers::types::{I256, U256};
 <span class="kw">use </span>jsonrpsee::http_client::{HeaderMap, HeaderValue, HttpClient, HttpClientBuilder};
-<span class="kw">use </span>prometheus_endpoint::prometheus::core::Metric;
-<span class="kw">use </span>prometheus_endpoint::prometheus::proto::LabelPair;
 <span class="kw">use </span>reqwest::header;
 
-<span class="kw">use </span><span class="kw">crate</span>::da_metrics::DaMetrics;
 <span class="kw">use crate</span>::{DaClient, DaMode};
 
 <span class="attr">#[derive(Clone, Debug)]
