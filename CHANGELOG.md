@@ -2,6 +2,9 @@
 
 ## Next release
 
+- feat: add sierra to casm class hash mapping to genesis assets
+- chore: remove ArgentMulticall from genesis assets
+- feat: remove `seq_addr_updated` from `GenesisData`
 - chore: added prometheus metrics for da layer
 - chore: bump celestia rpc crate version
 - fix(DA): run the proof first then the state update

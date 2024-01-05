@@ -65,3 +65,9 @@ impl EthereumSandbox {
             .expect("Ethereum polling error")
     }
 }
+
+impl Default for EthereumSandbox {
+    fn default() -> Self {
+        Self::new()
+    }
+}

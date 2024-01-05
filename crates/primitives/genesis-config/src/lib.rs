@@ -25,8 +25,14 @@ impl fmt::LowerHex for HexFelt {
 }
 
 impl From<FieldElement> for HexFelt {
-    fn from(element: FieldElement) -> Self {
-        Self(element)
+    fn from(felt: FieldElement) -> Self {
+        Self(felt)
+    }
+}
+
+impl From<HexFelt> for FieldElement {
+    fn from(hex_felt: HexFelt) -> Self {
+        hex_felt.0
     }
 }
 
@@ -45,11 +51,11 @@ pub type StorageValue = HexFelt;
 #[derive(Deserialize, Serialize)]
 pub struct GenesisData {
     pub contract_classes: Vec<(ClassHash, ContractClass)>,
+    pub sierra_class_hash_to_casm_class_hash: Vec<(ClassHash, ClassHash)>,
     pub contracts: Vec<(ContractAddress, ClassHash)>,
     pub predeployed_accounts: Vec<PredeployedAccount>,
     pub storage: Vec<(ContractStorageKey, StorageValue)>,
     pub fee_token_address: ContractAddress,
-    pub seq_addr_updated: bool,
 }
 
 #[derive(Constructor)]
@@ -77,8 +83,8 @@ pub enum ContractClass {
 /// A struct containing predeployed accounts info.
 #[derive(Serialize, Deserialize)]
 pub struct PredeployedAccount {
-    pub contract_address: FieldElement,
-    pub class_hash: FieldElement,
+    pub contract_address: ContractAddress,
+    pub class_hash: ClassHash,
     pub name: String,
     pub private_key: Option<Vec<u8>>,
 }
