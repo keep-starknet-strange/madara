@@ -22,10 +22,23 @@ COPY --from=builder /madara/target/release/madara /madara-bin
 
 RUN apt-get -y update; \
     apt-get install -y --no-install-recommends \
-        curl; \
+            curl; \
+    apt-get install -y openssl ca-certificates; \
     apt-get autoremove -y; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
+
+# Create a directory for the new certificate.
+RUN mkdir -p /usr/local/share/ca-certificates/extra
+
+# Generate a new self-signed certificate.
+RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout /usr/local/share/ca-certificates/extra/my-cert.key \
+    -out /usr/local/share/ca-certificates/extra/my-cert.crt \
+    -subj "/CN=localhost";
+
+# Update the CA certificates bundle.
+RUN update-ca-certificates
 
 HEALTHCHECK --interval=10s --timeout=30s --start-period=10s --retries=10 \
   CMD curl --request POST \
