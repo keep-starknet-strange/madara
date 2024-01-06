@@ -2,6 +2,7 @@
 
 ## Next release
 
+- chore: add ssl certificate to dockerfile
 - feat: add sierra to casm class hash mapping to genesis assets
 - chore: remove ArgentMulticall from genesis assets
 - feat: remove `seq_addr_updated` from `GenesisData`
