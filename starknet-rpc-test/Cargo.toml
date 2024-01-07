@@ -9,6 +9,7 @@ edition = "2021"
 anyhow = "1.0.72"
 assert_matches = "1.5.0"
 async-lock = "3.1.0"
+async-trait = { workspace = true }
 flate2 = { workspace = true }
 reqwest = "0.11.18"
 rstest = "0.18.1"
@@ -24,6 +25,10 @@ starknet-signers = { workspace = true }
 thiserror = { workspace = true }
 tokio = { version = "1.34.0", features = ["rt", "macros", "parking_lot"] }
 url = "2.4.1"
+
+# [[test]]
+# name = "starknet_spec_version"
+# path = "spec_version.rs"
 
 [[test]]
 name = "starknet_get_block_number"
@@ -90,10 +95,6 @@ name = "starknet_add_deploy_account_transaction"
 path = "add_deploy_account_transaction.rs"
 
 [[test]]
-name = "starknet_pending_transactions"
-path = "pending_transactions.rs"
-
-[[test]]
 name = "starknet_get_transaction_by_hash"
 path = "get_transaction_by_hash.rs"
 
@@ -108,3 +109,7 @@ path = "get_events.rs"
 [[test]]
 name = "starknet_estimate_fee"
 path = "estimate_fee.rs"
+
+[[test]]
+name = "starknet_simulate_transaction"
+path = "simulate_transaction.rs"

@@ -16,6 +16,8 @@ repository = "https://github.com/keep-starknet-strange/madara"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+# Madara utils
+mc-genesis-data-provider = { workspace = true }
 # Madara runtime
 pallet-starknet = { workspace = true, default-features = true }
 pallet-starknet-runtime-api = { workspace = true, default-features = true }
@@ -49,9 +51,10 @@ jsonrpsee = { workspace = true, default-features = true, features = [
   "macros",
 ] }
 log = { workspace = true, default-features = true }
-mp-block = { workspace = true }
-mp-felt = { workspace = true }
-mp-hashers = { workspace = true }
+mp-block = { workspace = true, default-features = true }
+mp-felt = { workspace = true, default-features = true }
+mp-hashers = { workspace = true, default-features = true }
+mp-simulations = { workspace = true }
 mp-transactions = { workspace = true, features = ["client"] }
 serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }

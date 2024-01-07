@@ -1,0 +1,16 @@
+[package]
+name = "mc-genesis-data-provider"
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+jsonrpsee = { workspace = true, default-features = true }
+log = { workspace = true, default-features = true }
+mp-genesis-config = { workspace = true }
+pallet-starknet = { workspace = true, default-features = true }
+serde = { workspace = true, default-features = true }
+serde_json = { workspace = true, default-features = true }
+thiserror = { workspace = true }

@@ -1,0 +1,6 @@
+{
+  "http_provider": "http://127.0.0.1:26658",
+  "ws_provider": "ws://127.0.0.1:26658",
+  "nid": "Madara",
+  "auth_token": "<populate>"
+}

@@ -105,7 +105,6 @@ async fn work_ok_retrieving_class_for_contract_version_1(madara: &ThreadSafeMada
             test_contract_address
         ).await?,
         ContractClass::Sierra(c) => {
-            println!("{:#?}", c);
             assert_eq!(
                 c.abi,
                 flattened_test_contract_class.abi,

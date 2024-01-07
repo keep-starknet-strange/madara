@@ -1,11 +1,14 @@
 use std::future::Future;
 use std::sync::Arc;
 
-use starknet_accounts::{Account, AccountFactory, Call, OpenZeppelinAccountFactory, SingleOwnerAccount};
+use async_trait::async_trait;
+use starknet_accounts::{
+    Account, AccountFactory, Call, ConnectedAccount, Execution, OpenZeppelinAccountFactory, SingleOwnerAccount,
+};
 use starknet_core::chain_id;
 use starknet_core::types::contract::legacy::LegacyContractClass;
 use starknet_core::types::contract::{CompiledClass, SierraClass};
-use starknet_core::types::{BlockId, BlockTag, FieldElement, FunctionCall, MsgToL1};
+use starknet_core::types::{BlockId, BlockTag, BroadcastedInvokeTransaction, FieldElement, FunctionCall, MsgToL1};
 use starknet_core::utils::get_selector_from_name;
 use starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
 use starknet_providers::Provider;
@@ -72,6 +75,7 @@ pub fn build_deploy_account_tx<'a>(
     oz_factory.deploy(contract_address_salt).max_fee(max_fee)
 }
 
+#[async_trait]
 pub trait AccountActions {
     fn transfer_tokens_u256(
         &self,
@@ -87,6 +91,14 @@ pub trait AccountActions {
         nonce: Option<u64>,
     ) -> TransactionExecution;
 
+    fn invoke_contract(
+        &self,
+        address: FieldElement,
+        method: &str,
+        calldata: Vec<FieldElement>,
+        nonce: Option<u64>,
+    ) -> TransactionExecution;
+
     fn declare_contract(
         &self,
         path_to_sierra: &str,
@@ -94,6 +106,20 @@ pub trait AccountActions {
     ) -> (TransactionDeclaration, FieldElement, FieldElement);
 
     fn declare_legacy_contract(&self, path_to_compiled_contract: &str) -> (TransactionLegacyDeclaration, FieldElement);
+
+    async fn prepare_invoke(
+        &self,
+        calls: Vec<Call>,
+        nonce: FieldElement,
+        max_fee: FieldElement,
+        query_only: bool,
+    ) -> BroadcastedInvokeTransaction
+    where
+        Self: Account + ConnectedAccount,
+    {
+        let prepared_execution = Execution::new(calls, self).nonce(nonce).max_fee(max_fee).prepared().unwrap();
+        prepared_execution.get_invoke_request(query_only).await.unwrap()
+    }
 }
 
 impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalWallet> {
@@ -104,21 +130,12 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
         nonce: Option<u64>,
     ) -> TransactionExecution {
         let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
-
-        let calls = vec![Call {
-            to: fee_token_address,
-            selector: get_selector_from_name("transfer").unwrap(),
-            calldata: vec![recipient, transfer_amount.low, transfer_amount.high],
-        }];
-
-        // starknet-rs calls estimateFee with incorrect version which throws an error
-        let max_fee = FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap();
-
-        // TODO: add support for nonce with raw execution e.g https://github.com/0xSpaceShard/starknet-devnet-rs/blob/main/crates/starknet/src/starknet/add_invoke_transaction.rs#L10
-        match nonce {
-            Some(nonce) => self.execute(calls).max_fee(max_fee).nonce(nonce.into()),
-            None => self.execute(calls).max_fee(max_fee),
-        }
+        self.invoke_contract(
+            fee_token_address,
+            "transfer",
+            vec![recipient, transfer_amount.low, transfer_amount.high],
+            nonce,
+        )
     }
 
     fn transfer_tokens(
@@ -128,6 +145,23 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
         nonce: Option<u64>,
     ) -> TransactionExecution {
         self.transfer_tokens_u256(recipient, U256 { high: FieldElement::ZERO, low: transfer_amount }, nonce)
+    }
+
+    fn invoke_contract(
+        &self,
+        address: FieldElement,
+        method: &str,
+        calldata: Vec<FieldElement>,
+        nonce: Option<u64>,
+    ) -> TransactionExecution {
+        let calls = vec![Call { to: address, selector: get_selector_from_name(method).unwrap(), calldata }];
+
+        let max_fee = FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap();
+
+        match nonce {
+            Some(nonce) => self.execute(calls).max_fee(max_fee).nonce(nonce.into()),
+            None => self.execute(calls).max_fee(max_fee),
+        }
     }
 
     fn declare_contract(

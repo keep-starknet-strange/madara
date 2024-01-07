@@ -8,6 +8,14 @@ edition = "2021"
 [dependencies]
 # Madara primitives
 mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
+mp-simulations = { workspace = true, features = [
+  "parity-scale-codec",
+  "scale-info",
+] }
+mp-snos-output = { workspace = true, features = [
+  "parity-scale-codec",
+  "scale-info",
+] }
 mp-transactions = { workspace = true, features = [
   "parity-scale-codec",
   "scale-info",
@@ -19,12 +27,13 @@ blockifier = { workspace = true, features = [
   "scale-info",
 ] }
 hashbrown = { workspace = true }
+starknet-core = { workspace = true }
 starknet_api = { workspace = true, features = [
   "scale-info",
   "parity-scale-codec",
 ] }
 
-# Substrate 
+# Substrate
 parity-scale-codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive"] }
 sp-api = { workspace = true }
@@ -44,4 +53,6 @@ std = [
   "sp-arithmetic/std",
   "parity-scale-codec/std",
   "scale-info/std",
+  "starknet-core/std",
+  "mp-simulations/std",
 ]

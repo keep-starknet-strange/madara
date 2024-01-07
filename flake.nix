@@ -18,6 +18,7 @@
 
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
+            openssl
             pkg-config
             protobuf
           ];

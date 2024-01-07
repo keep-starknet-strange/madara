@@ -14,6 +14,9 @@ pub extern crate alloc;
 
 mod starkware_types_conversions;
 
+#[cfg(feature = "serde")]
+pub mod with_serde;
+
 use alloc::string::{String, ToString};
 
 use cairo_vm::felt::Felt252;
@@ -25,6 +28,9 @@ use sp_core::{H256, U256};
 use starknet_api::hash::StarkFelt;
 use starknet_ff::{FieldElement, FromByteSliceError, FromStrError};
 use thiserror_no_std::Error;
+
+#[cfg(feature = "serde")]
+pub use crate::with_serde::*;
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Ord, Hash, Eq, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

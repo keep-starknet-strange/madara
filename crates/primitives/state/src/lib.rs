@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use blockifier::execution::contract_class::ContractClass;
-use blockifier::state::cached_state::ContractStorageKey;
+use blockifier::state::cached_state::{ContractStorageKey, StateChangesCount};
 use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{StateReader, StateResult};
 use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
@@ -16,24 +16,7 @@ type ContractClassMapping = HashMap<ClassHash, ContractClass>;
 pub trait StateChanges {
     /// This function counts the storage var updates implied by a transaction and the newly declared
     /// class hashes.
-    ///
-    /// # Returns
-    ///
-    /// * `usize` - The number of modified contracts in the transaction.
-    /// * `usize` - The number of modified storage vars in the transaction.
-    /// * `usize` -  The number of newly declared classes.
-    fn count_state_changes(&self) -> (usize, usize, usize, usize);
-}
-
-/// This trait allows to get the fee config for the pallet and accordingly charge the fees
-pub trait FeeConfig {
-    /// This function reads the DisableTransactionFee from the pallet and returns a boolean
-    /// class hashes.
-    ///
-    /// # Returns
-    ///
-    /// * `bool` - Is the fee disabled
-    fn is_transaction_fee_disabled(&self) -> bool;
+    fn count_state_changes(&self) -> StateChangesCount;
 }
 
 /// A simple implementation of `StateReader` using `HashMap`s as storage.

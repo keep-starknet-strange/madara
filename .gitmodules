@@ -7,3 +7,6 @@
 [submodule "madara-tsukuyomi"]
 	path = madara-tsukuyomi
 	url = https://github.com/keep-starknet-strange/madara-tsukuyomi
+[submodule "zaun"]
+	path = zaun
+	url = https://github.com/keep-starknet-strange/zaun

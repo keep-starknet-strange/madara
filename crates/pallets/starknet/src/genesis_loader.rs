@@ -1,76 +1,18 @@
-use std::fmt;
-use std::path::PathBuf;
-use std::string::String;
 use std::vec::Vec;
 
 use blockifier::execution::contract_class::ContractClass as StarknetContractClass;
-use derive_more::Constructor;
 use mp_felt::Felt252Wrapper;
-use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
-use starknet_core::serde::unsigned_field_element::UfeHex;
-use starknet_crypto::FieldElement;
+use mp_genesis_config::ContractClass;
+pub use mp_genesis_config::{GenesisData, GenesisLoader, HexFelt, PredeployedAccount};
 
 use crate::GenesisConfig;
-
-/// A wrapper for FieldElement that implements serde's Serialize and Deserialize for hex strings.
-#[serde_as]
-#[derive(Serialize, Deserialize, Copy, Clone)]
-pub struct HexFelt(#[serde_as(as = "UfeHex")] pub FieldElement);
-
-impl fmt::LowerHex for HexFelt {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let val = self.0;
-
-        fmt::LowerHex::fmt(&val, f)
-    }
-}
-
-impl From<Felt252Wrapper> for HexFelt {
-    fn from(felt: Felt252Wrapper) -> HexFelt {
-        HexFelt(felt.0)
-    }
-}
-
-type ClassHash = HexFelt;
-type ContractAddress = HexFelt;
-type StorageKey = HexFelt;
-type ContractStorageKey = (ContractAddress, StorageKey);
-type StorageValue = HexFelt;
-
-#[derive(Deserialize, Serialize)]
-pub struct GenesisData {
-    pub contract_classes: Vec<(ClassHash, ContractClass)>,
-    pub contracts: Vec<(ContractAddress, ClassHash)>,
-    pub storage: Vec<(ContractStorageKey, StorageValue)>,
-    pub fee_token_address: ContractAddress,
-    pub seq_addr_updated: bool,
-}
-
-#[derive(Constructor)]
-pub struct GenesisLoader {
-    base_path: PathBuf,
-    data: GenesisData,
-}
-
-impl GenesisLoader {
-    pub fn data(&self) -> &GenesisData {
-        &self.data
-    }
-}
-
-#[derive(Deserialize, Serialize, Clone)]
-#[serde(untagged)]
-pub enum ContractClass {
-    Path { path: String, version: u8 },
-    Class(StarknetContractClass),
-}
 
 impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
     fn from(loader: GenesisLoader) -> Self {
         let contract_classes = loader
-            .data
+            .data()
             .contract_classes
+            .clone()
             .into_iter()
             .map(|(hash, class)| {
                 let hash = Felt252Wrapper(hash.0).into();
@@ -78,7 +20,7 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
                     ContractClass::Path { path, version } => (
                         hash,
                         read_contract_class_from_json(
-                            &std::fs::read_to_string(loader.base_path.join(path)).expect(
+                            &std::fs::read_to_string(loader.base_path().join(path)).expect(
                                 "Some contract is missing in the config folder. Try to run `madara setup` before \
                                  opening an issue.",
                             ),
@@ -90,8 +32,9 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
             })
             .collect::<Vec<_>>();
         let contracts = loader
-            .data
+            .data()
             .contracts
+            .clone()
             .into_iter()
             .map(|(address, hash)| {
                 let address = Felt252Wrapper(address.0).into();
@@ -100,8 +43,9 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
             })
             .collect::<Vec<_>>();
         let storage = loader
-            .data
+            .data()
             .storage
+            .clone()
             .into_iter()
             .map(|(key, value)| {
                 let key = (Felt252Wrapper(key.0.0).into(), Felt252Wrapper(key.1.0).into());
@@ -109,16 +53,9 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
                 (key, value)
             })
             .collect::<Vec<_>>();
-        let fee_token_address = Felt252Wrapper(loader.data.fee_token_address.0).into();
+        let fee_token_address = Felt252Wrapper(loader.data().fee_token_address.0).into();
 
-        GenesisConfig {
-            contracts,
-            contract_classes,
-            storage,
-            fee_token_address,
-            seq_addr_updated: loader.data.seq_addr_updated,
-            ..Default::default()
-        }
+        GenesisConfig { contracts, contract_classes, storage, fee_token_address, ..Default::default() }
     }
 }
 
@@ -148,13 +85,9 @@ pub fn read_contract_class_from_json(json_str: &str, version: u8) -> StarknetCon
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use starknet_crypto::FieldElement;
 
-    impl From<FieldElement> for HexFelt {
-        fn from(element: FieldElement) -> Self {
-            Self(element)
-        }
-    }
+    use super::*;
 
     #[test]
     fn test_deserialize_loader() {
@@ -178,17 +111,21 @@ mod tests {
 
         let genesis_loader = GenesisData {
             contract_classes: vec![(class_hash, class)],
+            sierra_class_hash_to_casm_class_hash: vec![(
+                FieldElement::from(42u8).into(),
+                FieldElement::from(1u8).into(),
+            )],
             contracts: vec![(contract_address, class_hash)],
+            predeployed_accounts: Vec::new(),
             storage: vec![((contract_address, storage_key), storage_value)],
             fee_token_address,
-            seq_addr_updated: false,
         };
 
         // When
         let serialized_loader = serde_json::to_string(&genesis_loader).unwrap();
 
         // Then
-        let expected = r#"{"contract_classes":[["0x1",{"path":"cairo-contracts/ERC20.json","version":0}]],"contracts":[["0x2","0x1"]],"storage":[[["0x2","0x3"],"0x4"]],"fee_token_address":"0x5","seq_addr_updated":false}"#;
+        let expected = r#"{"contract_classes":[["0x1",{"path":"cairo-contracts/ERC20.json","version":0}]],"sierra_class_hash_to_casm_class_hash":[["0x2a","0x1"]],"contracts":[["0x2","0x1"]],"predeployed_accounts":[],"storage":[[["0x2","0x3"],"0x4"]],"fee_token_address":"0x5"}"#;
         assert_eq!(expected, serialized_loader);
     }
 }

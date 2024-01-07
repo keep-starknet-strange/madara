@@ -11,6 +11,7 @@ pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
 pub use mp_chain_id::SN_GOERLI_CHAIN_ID;
+pub use mp_program_hash::SN_OS_PROGRAM_HASH;
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -46,6 +47,7 @@ impl pallet_starknet::Config for Runtime {
     type ProtocolVersion = ProtocolVersion;
     type ChainId = ChainId;
     type MaxRecursionDepth = MaxRecursionDepth;
+    type ProgramHash = ProgramHash;
 }
 
 /// --------------------------------------
@@ -159,6 +161,7 @@ parameter_types! {
     pub const ProtocolVersion: u8 = 0;
     pub const ChainId: Felt252Wrapper = SN_GOERLI_CHAIN_ID;
     pub const MaxRecursionDepth: u32 = 50;
+    pub const ProgramHash: Felt252Wrapper = SN_OS_PROGRAM_HASH;
 }
 
 /// Implement the OnTimestampSet trait to override the default Aura.

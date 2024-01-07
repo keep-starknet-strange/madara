@@ -1,9 +1,11 @@
 extern crate starknet_rpc_test;
 
+use std::vec;
+
 use assert_matches::assert_matches;
 use rstest::rstest;
 use starknet_core::types::{
-    Event, ExecutionResult, MaybePendingTransactionReceipt, TransactionFinalityStatus, TransactionReceipt,
+    Event, ExecutionResult, MaybePendingTransactionReceipt, MsgToL1, TransactionFinalityStatus, TransactionReceipt,
 };
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
@@ -11,6 +13,7 @@ use starknet_providers::jsonrpc::HttpTransport;
 use starknet_providers::{JsonRpcClient, Provider, ProviderError};
 use starknet_rpc_test::constants::{
     ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, FEE_TOKEN_ADDRESS, SEQUENCER_ADDRESS, SIGNER_PRIVATE,
+    UDC_ADDRESS,
 };
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{
@@ -37,7 +40,7 @@ async fn get_transaction_receipt(
 async fn work_with_invoke_transaction(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-    let recepient = FieldElement::from_hex_be("0x123").unwrap();
+    let recipient = FieldElement::from_hex_be("0x123").unwrap();
     let transfer_amount = FieldElement::ONE;
 
     let mut txs = {
@@ -45,7 +48,7 @@ async fn work_with_invoke_transaction(madara: &ThreadSafeMadaraClient) -> Result
         let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
         madara_write_lock
             .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(
-                recepient,
+                recipient,
                 transfer_amount,
                 None,
             ))])
@@ -76,7 +79,7 @@ async fn work_with_invoke_transaction(madara: &ThreadSafeMadaraClient) -> Result
                         keys: vec![get_selector_from_name("Transfer").unwrap()],
                         data: vec![
                             FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(), // from
-                            recepient,                                                   // to
+                            recipient,                                                   // to
                             transfer_amount,                                             // value low
                             FieldElement::ZERO,                                          // value high
                         ],
@@ -299,6 +302,101 @@ async fn fail_invalid_transaction_hash(madara: &ThreadSafeMadaraClient) -> Resul
     let rpc = madara.get_starknet_client().await;
 
     assert!(rpc.get_transaction_receipt(FieldElement::ZERO).await.is_err());
+
+    Ok(())
+}
+
+#[rstest]
+#[tokio::test]
+async fn work_with_messages_to_l1(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
+
+    // 1. Declaring class for our L2 > L1 contract
+
+    let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    let (declare_tx, _) = account.declare_legacy_contract("../cairo-contracts/build/send_message.json");
+
+    let txs = {
+        let mut madara_write_lock = madara.write().await;
+        madara_write_lock.create_block_with_txs(vec![Transaction::LegacyDeclaration(declare_tx)]).await?
+    };
+
+    // 2. Determine class hash
+
+    let class_hash = assert_matches!(
+        &txs[0],
+        Ok(TransactionResult::Declaration(rpc_response)) => rpc_response.class_hash
+    );
+
+    // 3. Next, deploying an instance of this class using universal deployer
+
+    let deploy_tx = account.invoke_contract(
+        FieldElement::from_hex_be(UDC_ADDRESS).unwrap(),
+        "deployContract",
+        vec![
+            class_hash,
+            FieldElement::ZERO, // salt
+            FieldElement::ZERO, // unique
+            FieldElement::ZERO, // calldata len
+        ],
+        None,
+    );
+
+    let txs = {
+        let mut madara_write_lock = madara.write().await;
+        madara_write_lock.create_block_with_txs(vec![Transaction::Execution(deploy_tx)]).await?
+    };
+
+    // 4. Now, we need to get the deployed contract address
+
+    let deploy_tx_hash = assert_matches!(
+        &txs[0],
+        Ok(TransactionResult::Execution(rpc_response)) => rpc_response.transaction_hash
+    );
+
+    let deploy_tx_receipt = get_transaction_receipt(&rpc, deploy_tx_hash).await?;
+
+    let contract_address = assert_matches!(
+        deploy_tx_receipt,
+        MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) => receipt.events[0].data[0]
+    );
+
+    // 5. Sending message to L1
+
+    let invoke_tx = account.invoke_contract(
+        contract_address,
+        "send_message_l2_to_l1",
+        vec![FieldElement::ZERO, FieldElement::ONE, FieldElement::TWO],
+        None,
+    );
+
+    let txs = {
+        let mut madara_write_lock = madara.write().await;
+        madara_write_lock.create_block_with_txs(vec![Transaction::Execution(invoke_tx)]).await?
+    };
+
+    // 6. Finally, checking that there is a single MessageToL1 in the receipt
+
+    let invoke_tx_hash = assert_matches!(
+        &txs[0],
+        Ok(TransactionResult::Execution(rpc_response)) => rpc_response.transaction_hash
+    );
+
+    let invoke_tx_receipt = get_transaction_receipt(&rpc, invoke_tx_hash).await?;
+
+    let messages_sent = assert_matches!(
+        invoke_tx_receipt,
+        MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) => receipt.messages_sent
+    );
+
+    assert_eq_msg_to_l1(
+        vec![MsgToL1 {
+            from_address: contract_address,
+            to_address: FieldElement::ZERO,
+            payload: vec![FieldElement::TWO],
+        }],
+        messages_sent,
+    );
 
     Ok(())
 }

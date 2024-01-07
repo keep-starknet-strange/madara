@@ -28,10 +28,11 @@ pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
 use frame_system::{EventRecord, Phase};
 use mp_felt::Felt252Wrapper;
+use mp_simulations::{SimulatedTransaction, SimulationFlags};
 use mp_transactions::compute_hash::ComputeTransactionHash;
-use mp_transactions::{Transaction, UserTransaction};
+use mp_transactions::{HandleL1MessageTransaction, Transaction, UserTransaction};
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
-/// Import the StarkNet pallet.
+/// Import the Starknet pallet.
 pub use pallet_starknet;
 use pallet_starknet::pallet::Error as PalletError;
 use pallet_starknet::Call::{consume_l1_message, declare, deploy_account, invoke};
@@ -53,7 +54,7 @@ use sp_version::RuntimeVersion;
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
-use starknet_api::transaction::{Calldata, Event as StarknetEvent, TransactionHash};
+use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash};
 /// Import the types.
 pub use types::*;
 
@@ -258,12 +259,24 @@ impl_runtime_apis! {
             Starknet::chain_id()
         }
 
+        fn program_hash() -> Felt252Wrapper {
+            Starknet::program_hash()
+        }
+
+        fn fee_token_address() -> ContractAddress {
+            Starknet::fee_token_address()
+        }
+
         fn is_transaction_fee_disabled() -> bool {
             Starknet::is_transaction_fee_disabled()
         }
 
         fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
             Starknet::estimate_fee(transactions)
+        }
+
+        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<SimulatedTransaction>, DispatchError> {
+            Starknet::simulate_transactions(transactions, simulation_flags)
         }
 
         fn get_starknet_events_and_their_associated_tx_hash(block_extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper) -> Vec<(Felt252Wrapper, StarknetEvent)> {
@@ -358,17 +371,25 @@ impl_runtime_apis! {
             Some(events)
         }
 
+        fn get_tx_messages_to_l1(tx_hash: TransactionHash) -> Vec<MessageToL1> {
+            Starknet::tx_messages(tx_hash)
+        }
+
         fn get_tx_execution_outcome(tx_hash: TransactionHash) -> Option<Vec<u8>> {
-           Starknet::tx_revert_error(tx_hash).map(|s| s.into_bytes())
+            Starknet::tx_revert_error(tx_hash).map(|s| s.into_bytes())
         }
 
         fn get_block_context() -> pallet_starknet_runtime_api::BlockContext {
            Starknet::get_block_context().into()
         }
+
+        fn l1_nonce_unused(nonce: Nonce) -> bool {
+            Starknet::ensure_l1_message_not_executed(&nonce).is_ok()
+        }
     }
 
     impl pallet_starknet_runtime_api::ConvertTransactionRuntimeApi<Block> for Runtime {
-        fn convert_transaction(transaction: UserTransaction) -> Result<UncheckedExtrinsic, DispatchError> {
+        fn convert_transaction(transaction: UserTransaction) -> UncheckedExtrinsic {
             let call = match transaction {
                 UserTransaction::Declare(tx, contract_class) => {
                     pallet_starknet::Call::declare { transaction: tx, contract_class  }
@@ -381,7 +402,13 @@ impl_runtime_apis! {
                 }
             };
 
-            Ok(UncheckedExtrinsic::new_unsigned(call.into()))
+            UncheckedExtrinsic::new_unsigned(call.into())
+        }
+
+        fn convert_l1_transaction(transaction: HandleL1MessageTransaction, fee: Fee) -> UncheckedExtrinsic {
+            let call =  pallet_starknet::Call::<Runtime>::consume_l1_message { transaction, paid_fee_on_l1: fee };
+
+            UncheckedExtrinsic::new_unsigned(call.into())
         }
 
         fn convert_error(error: DispatchError) -> StarknetTransactionExecutionError {

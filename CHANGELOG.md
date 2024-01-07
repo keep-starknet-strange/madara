@@ -2,7 +2,48 @@
 
 ## Next release
 
-- dev(deps): bump starknet rs
+- feat: add sierra to casm class hash mapping to genesis assets
+- chore: remove ArgentMulticall from genesis assets
+- feat: remove `seq_addr_updated` from `GenesisData`
+- chore: added prometheus metrics for da layer
+- chore: bump celestia rpc crate version
+- fix(DA): run the proof first then the state update
+- fix: `prove_current_block` is called after `update_state`
+- ci: add foundry ci task to push workflow
+- fix: first tx for non deployed account is valid
+- fix: incorrect base url for fetching config
+- feat: add predeployed accounts to genesis state
+- feat(rpc): Added starknet_simulateTransactions
+- fix: Change serialization of bitvec to &[u8] in merkle tree to avoid memory
+  uninitialized
+- chore: change SCARB config version for foundry CI
+- feat(da): update da calldata encoding to v0.11.0 spec, da conf examples, da
+  conf flag, da-tests in CI
+- refactor: use `map` in `estimate_fee` to stop computation on error
+- fix(node/commands): md5 are also checked when running setup --from-local
+- feat(data-availability): extend eth config with poll interval
+- fix(snos-output): expose snos codec, remove unused `get_starknet_messages`
+  runtime method, and unnecessary mp-snos-output dependencies
+- feat(program-hash): add new pallet constant for Starknet OS progam hash;
+  expose runtime getter method; add dedicated crate to manage versions
+- feat(runtime): expose fee token address getter method
+- feat(settlement): run client thread responsible for pushing state updates and
+  messaging on Ethereum
+- feat(settlement): starknet core contract tests with anvil sandbox
+- fix(rpc-test): incorrect node url
+- feat(settlement): e2e test with Madara node settling on Ethereum contract
+- refactor: use `map` in `estimate_fee` to stop computation on error
+- fix: `tempdir` crate has been deprecated; use `tempfile` instead
+
+## v0.6.0
+
+- chore: release v0.6.0
+- refacto: substrate/starknet names in rpc library
+- feat(rpc): Added starknet_getTransactionStatus and removed
+  starknet_pendingTransactions
+- feat(rpc): add starknet_specVersion rpc + added test for future support
+- docs: Added v0.6.0-rc5 documentation above the rpc method functions
+- dev(deps): bump starknet rs, use Eq for EmmitedEvents comparaison
 - test(rust-rpc-test): use undeclared contracts for declare transactions testing
 - build: update blockifier, fix divergent substrat block hash
 - chore: remove tests that run in wasm and native, only wasm from now
@@ -148,6 +189,8 @@
 - fix: rpc tests and background node run
 - test: add tests for simulate tx offset
 - test: add tests for tx hashing
+- fix: bring back messages in transaction receipts
+- feat: starknet os program output primitive
 
 ## v0.2.0
 

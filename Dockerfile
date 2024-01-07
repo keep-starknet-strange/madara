@@ -9,7 +9,7 @@ RUN apt-get -y update; \
 
 WORKDIR /madara
 COPY . .
-RUN cargo build --release -Z sparse-registry --config net.git-fetch-with-cli=true
+RUN cargo build --release
 
 FROM debian:buster-slim
 LABEL description="Madara, a blazing fast Starknet sequencer" \

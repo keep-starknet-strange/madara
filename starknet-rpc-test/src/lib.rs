@@ -29,7 +29,7 @@ const NODE_RPC_URL: &str = "http://localhost:9944";
 
 type RpcAccount<'a> = SingleOwnerAccount<&'a JsonRpcClient<HttpTransport>, LocalWallet>;
 pub type RpcOzAccountFactory<'a> = OpenZeppelinAccountFactory<LocalWallet, &'a JsonRpcClient<HttpTransport>>;
-type TransactionExecution<'a> = Execution<'a, RpcAccount<'a>>;
+pub type TransactionExecution<'a> = Execution<'a, RpcAccount<'a>>;
 type TransactionDeclaration<'a> = Declaration<'a, RpcAccount<'a>>;
 type TransactionLegacyDeclaration<'a> = LegacyDeclaration<'a, RpcAccount<'a>>;
 type TransactionAccountDeployment<'a> = AccountDeployment<'a, RpcOzAccountFactory<'a>>;
@@ -89,13 +89,13 @@ pub struct MadaraClient {
 impl Default for MadaraClient {
     fn default() -> Self {
         let url = Url::parse(NODE_RPC_URL).expect("Invalid JSONRPC Url");
-        MadaraClient { url, rpc_request_count: Default::default() }
+        MadaraClient::new(url)
     }
 }
 
 impl MadaraClient {
-    pub fn new() -> Self {
-        Default::default()
+    pub fn new(url: Url) -> Self {
+        Self { url, rpc_request_count: Default::default() }
     }
 
     pub async fn run_to_block(&mut self, target_block: u64) -> anyhow::Result<()> {
@@ -130,7 +130,7 @@ impl MadaraClient {
         let body = serde_json::to_string(&body).expect("the json body must be serializable");
 
         let response = Client::new()
-            .post("http://localhost:9944")
+            .post(self.url.clone())
             .header(CONTENT_TYPE, "application/json; charset=utf-8")
             .body(body)
             .send()

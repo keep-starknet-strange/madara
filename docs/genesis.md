@@ -30,19 +30,38 @@ The below defines all hardcoded values set in the geneses:
 | Class hash                                                         | Definition                                     |
 | :----------------------------------------------------------------- | :--------------------------------------------- |
 | 0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f | No validation account class hash               |
-| 0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276  | No validation account class hash cairo 1       |
+| 0x02f99bf9799ada84cd5ac0d0fe36b9d8f65efcb377cd2e8cf8309ad2daf15e4b | No validation account class hash cairo 1       |
 | 0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d | Argent account class hash                      |
-| 0x01d53d50d204842575c87f25161248aadb26d33c7375d0f043e2a3f1243cf874 | Argent multicall class hash                    |
 | 0x0424b7f61e3c5dfd74400d96fdea7e1f0bf2757f31df04387eaa957f095dd7b9 | Proxy class hash                               |
 | 0x2c2b8f559e1221468140ad7b2352b1a5be32660d0bf1a3ae3a054a4ec5254e4  | Braavos account class hash                     |
 | 0x5aa23d5bb71ddaa783da7ea79d405315bafa7cf0387a74f4593578c3e9e6570  | Braavos account base implementation class hash |
 | 0x07db5c2c2676c2a5bfc892ee4f596b49514e3056a0eee8ad125870b4fb1dd909 | Braavos account call aggregator class hash     |
 | 0x3131fa018d520a037686ce3efddeab8f28895662f019ca3ca18a626650f7d1e  | Proxy class hash                               |
 | 0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd | Openzeppelin account class hash                |
-| 0x05a2b92d9a36509a3d651e7df99144a4ad8301e2caf42465ee6ab0451ae91882 | Test contract class hash                       |
+| 0x04c5efa8dc6f0554da51f125d04e379ac41153a8b837391083a8dc3771a33388 | Test contract class hash                       |
 | 0x0372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4 | ERC20 class hash                               |
 | 0x077cc28ed3c661419fda16bf120fb81f1f8f28617f5543b05a86d63b0926bbf4 | ERC721 class hash                              |
 | 0x04569ffd48c2a3d455437c16dc843801fb896b1af845bc8bc7ba83ebc4358b7f | Universal deployer class hash                  |
+| 0x01a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003 | Argent Cairo 1 Account                         |
+
+<!-- markdownlint-disable MD013 -->
+
+### Predeployed accounts node genesis
+
+<!-- markdownlint-disable MD013 -->
+
+| Contract address | Class hash                                                         | Name                            | Optional private key |
+| :--------------- | :----------------------------------------------------------------- | :------------------------------ | :------------------- |
+| 0x1              | 0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f | No Validation Account           | null                 |
+| 0x2              | 0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d | Argent Account                  | `pk`                 |
+| 0x3              | 0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd | Openzeppelin Account            | `pk`                 |
+| 0x4              | 0x02f99bf9799ada84cd5ac0d0fe36b9d8f65efcb377cd2e8cf8309ad2daf15e4b | No Validation Account (cairo 1) | null                 |
+
+where `pk` is the following vector of `u8`:
+
+```rust
+[48,120,48,48,99,49,99,102,49,52,57,48,100,101,49,51,53,50,56,54,53,51,48,49,98,98,56,55,48,53,49,52,51,102,51,101,102,57,51,56,102,57,55,102,100,102,56,57,50,102,49,48,57,48,100,99,98,53,97,99,55,98,99,100,49,100]
+```
 
 <!-- markdownlint-disable MD013 -->
 
@@ -55,13 +74,12 @@ The below defines all hardcoded values set in the geneses:
 | 0x1                                                                | 0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f |
 | 0x2                                                                | 0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d |
 | 0x3                                                                | 0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd |
-| 0x4                                                                | 0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276  |
-| 0x1111                                                             | 0x05a2b92d9a36509a3d651e7df99144a4ad8301e2caf42465ee6ab0451ae91882 |
+| 0x4                                                                | 0x02f99bf9799ada84cd5ac0d0fe36b9d8f65efcb377cd2e8cf8309ad2daf15e4b |
+| 0x1111                                                             | 0x04c5efa8dc6f0554da51f125d04e379ac41153a8b837391083a8dc3771a33388 |
 | 0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00 | 0x0372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4 |
 | 0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d02 | 0x077cc28ed3c661419fda16bf120fb81f1f8f28617f5543b05a86d63b0926bbf4 |
 | 0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7  | 0x0372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4 |
 | 0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf | 0x07b3e05f48f0c69e4a65ce5e076a66271a527aff2c34ce1083ec6e1526997a69 |
-| 0x05754af3760f3356da99aea5c3ec39ccac7783d925a19666ebbeca58ff0087f4 | 0x01d53d50d204842575c87f25161248aadb26d33c7375d0f043e2a3f1243cf874 |
 
 <!-- markdownlint-disable MD013 -->
 
@@ -116,7 +134,7 @@ deployed as a ERC721 contract (given the class hash of 0x80000).
 | :----------------------------------------------------------------- | :----------------------------------------- |
 | 0x03bcec8de953ba8e305e2ce2db52c91504aefa7c56c91211873b4d6ba36e8c32 | No validation account class hash           |
 | 0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f | No validation account class hash           |
-| 0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276  | No validation account class hash cairo 1   |
+| 0x02f99bf9799ada84cd5ac0d0fe36b9d8f65efcb377cd2e8cf8309ad2daf15e4b | No validation account class hash cairo 1   |
 | 0x071aaf68d30c3e52e1c4b7d1209b0e09525939c31bb0275919dffd4cd53f57c4 | Unauthorized inner call account class hash |
 | 0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d | Argent account class hash                  |
 | 0x06a89ae7bd72c96202c040341c1ee422474b562e1d73c6848f08cae429c33262 | Proxy class hash                           |
@@ -144,7 +162,7 @@ deployed as a ERC721 contract (given the class hash of 0x80000).
 | 0x05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122 | 0x0244ca3d9fe8b47dd565a6f4270d979ba31a7d6ff2c3bf8776198161505e8b52 |
 | 0x04e7b41e2d628e6ab91d6c805bd22fbdb186d4e581266640663bd0094b3ef98b | 0x06a89ae7bd72c96202c040341c1ee422474b562e1d73c6848f08cae429c33262 |
 | 0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0 | 0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f |
-| 0x0642a8b9e2c6cc3a9ddb84575123f262a21415f78db453b0625d889e1e06ac32 | 0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276  |
+| 0x0642a8b9e2c6cc3a9ddb84575123f262a21415f78db453b0625d889e1e06ac32 | 0x02f99bf9799ada84cd5ac0d0fe36b9d8f65efcb377cd2e8cf8309ad2daf15e4b |
 | 0x0764d66462958b670b4dbd46e00eb3d60100f329dc0365d9b059e0549a4c6f58 | 0x071aaf68d30c3e52e1c4b7d1209b0e09525939c31bb0275919dffd4cd53f57c4 |
 | 0x00000000000000000000000000000000000000000000000000000000000000AA | 0x06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922 |
 | 0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02cf | 0x91000                                                            |

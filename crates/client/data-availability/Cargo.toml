@@ -14,44 +14,60 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
-clap = { workspace = true, features = ["derive"] }
 futures = "0.3.21"
+indexmap = { workspace = true }
 jsonrpsee = { version = "0.20.0", features = [
   "http-client",
   "ws-client",
   "macros",
 ] }
-log = "0.4.19"
+log = { workspace = true }
 reqwest = { version = "0.11.18", features = ["blocking", "json"] }
-serde = { workspace = true }
-serde_json = { workspace = true }
+serde = { workspace = true, default-features = true }
+serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }
 tokio = { version = "1", features = ["full"] }
-url = "2.4.0"
+url = { workspace = true }
 uuid = { version = "1.4.0", features = ["v4", "serde"] }
 
 # Substrate
 sc-client-api = { workspace = true }
-sp-api = { workspace = true }
+sp-api = { workspace = true, features = ["std"] }
 sp-blockchain = { workspace = true }
-sp-core = { workspace = true }
-sp-runtime = { workspace = true }
+sp-core = { workspace = true, features = ["std"] }
+sp-io = { workspace = true, features = ["std"] }
+sp-runtime = { workspace = true, features = ["std"] }
 
 # Starknet
+blockifier = { workspace = true, default-features = true }
+mc-commitment-state-diff = { workspace = true, default-features = true }
 mc-db = { workspace = true, default-features = true }
+pallet-starknet-runtime-api = { workspace = true, features = ["std"] }
 starknet_api = { workspace = true, default-features = true }
 
 # Ethereum
-ethers = "2.0.11"
+ethers = { workspace = true }
 
 # Avail subxt dependency
 avail-subxt = { git = "https://github.com/availproject/avail", version = "0.4.0", tag = "v1.8.0.0" }
 sp-keyring = { workspace = true }
-subxt = "0.29"
+subxt = { workspace = true }
 
 # Celestia
-celestia-rpc = { git = "https://github.com/eigerco/celestia-node-rs", rev = "bd6394b66b11065c543ab3f19fd66000a72b6236" }
-celestia-types = { git = "https://github.com/eigerco/celestia-node-rs", rev = "bd6394b66b11065c543ab3f19fd66000a72b6236" }
+celestia-rpc = { git = "https://github.com/eigerco/lumina", rev = "ccc5b9bfeac632cccd32d35ecb7b7d51d71fbb87" }
+celestia-types = { git = "https://github.com/eigerco/lumina", rev = "ccc5b9bfeac632cccd32d35ecb7b7d51d71fbb87" }
 
 # Madara
+mp-digest-log = { workspace = true, default-features = true }
+mp-hashers = { workspace = true, default-features = true }
 mp-storage = { workspace = true, default-features = true }
+
+# Prometheus
+prometheus-endpoint = { workspace = true }
+
+# Optional
+clap = { workspace = true, features = ["derive"], optional = true }
+
+[features]
+default = []
+clap = ["dep:clap"]
