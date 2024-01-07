@@ -8,7 +8,11 @@ use mc_data_availability::ethereum::config::EthereumConfig;
 use mc_data_availability::ethereum::EthereumClient;
 use mc_data_availability::{DaClient, DaLayer};
 
-use crate::constants::{AVAIL_DA_CONFIG, CELESTIA_DA_CONFIG, ETHEREUM_DA_CONFIG};
+#[cfg(feature = "avail")]
+use crate::constants::AVAIL_DA_CONFIG;
+#[cfg(feature = "celestia")]
+use crate::constants::CELESTIA_DA_CONFIG;
+use crate::constants::ETHEREUM_DA_CONFIG;
 
 pub fn get_da_client(da_layer: DaLayer) -> Box<dyn DaClient + Send + Sync> {
     let da_path = get_da_path(da_layer);
