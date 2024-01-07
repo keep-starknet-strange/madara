@@ -1082,7 +1082,10 @@ impl<T: Config> Pallet<T> {
     }
 
     /// Estimate the fee associated with transaction
-    pub fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
+    pub fn estimate_fee(
+        transactions: Vec<UserTransaction>,
+        offset_version: bool,
+    ) -> Result<Vec<(u64, u64)>, DispatchError> {
         let chain_id = Self::chain_id();
 
         let execution_results = execute_txs_and_rollback::<T>(
@@ -1090,6 +1093,7 @@ impl<T: Config> Pallet<T> {
             &Self::get_block_context(),
             chain_id,
             &RuntimeExecutionConfigBuilder::new::<T>().with_query_mode().build(),
+            offset_version,
         )?;
 
         let mut results = vec![];
@@ -1123,6 +1127,7 @@ impl<T: Config> Pallet<T> {
             &Self::get_block_context(),
             chain_id,
             &RuntimeExecutionConfigBuilder::new::<T>().with_simulation_mode(&simulation_flags).build(),
+            false,
         )?;
 
         fn get_function_invocation(

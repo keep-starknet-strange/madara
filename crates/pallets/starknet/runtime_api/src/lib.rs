@@ -52,7 +52,7 @@ sp_api::decl_runtime_apis! {
         /// Returns the fee token address.
         fn fee_token_address() -> ContractAddress;
         /// Returns fee estimate
-        fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError>;
+        fn estimate_fee(transactions: Vec<UserTransaction>, offset_version: bool) -> Result<Vec<(u64, u64)>, DispatchError>;
         /// Simulates transactions and returns their trace
         fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<SimulatedTransaction>, DispatchError>;
         /// Filters extrinsic transactions to return only Starknet transactions

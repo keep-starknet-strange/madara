@@ -220,7 +220,7 @@ where
             .predeployed_accounts
             .into_iter()
             .map(|account| {
-                let contract_address: FieldElement = account.contract_address.into();
+                let contract_address: FieldElement = account.address.into();
                 let balance_string = &self
                     .call(
                         FunctionCall {
@@ -965,7 +965,7 @@ where
         let fee_estimates = self
             .client
             .runtime_api()
-            .estimate_fee(substrate_block_hash, transactions)
+            .estimate_fee(substrate_block_hash, transactions, is_query)
             .map_err(|e| {
                 error!("Request parameters error: {e}");
                 StarknetRpcApiError::InternalServerError
