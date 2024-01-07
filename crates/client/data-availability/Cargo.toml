@@ -48,17 +48,6 @@ starknet_api = { workspace = true, default-features = true }
 # Ethereum
 ethers = { workspace = true }
 
-# Avail subxt dependency
-#[cfg(feature = "avail")]
-avail-subxt = { git = "https://github.com/availproject/avail", version = "0.4.0", tag = "v1.8.0.0",optional = true }
-sp-keyring = { workspace = true,optional = true }
-subxt = { workspace = true,optional = true }
-
-# Celestia
-#[cfg(feature = "celestia")]
-celestia-rpc = { git = "https://github.com/eigerco/lumina", rev = "ccc5b9bfeac632cccd32d35ecb7b7d51d71fbb87", optional = true }
-celestia-types = { git = "https://github.com/eigerco/lumina", rev = "ccc5b9bfeac632cccd32d35ecb7b7d51d71fbb87", optional = true }
-
 # Madara
 mp-digest-log = { workspace = true, default-features = true }
 mp-hashers = { workspace = true, default-features = true }
@@ -68,7 +57,12 @@ mp-storage = { workspace = true, default-features = true }
 prometheus-endpoint = { workspace = true }
 
 # Optional
+avail-subxt = { git = "https://github.com/availproject/avail", version = "0.4.0", tag = "v1.8.0.0",optional = true }
+celestia-rpc = { git = "https://github.com/eigerco/lumina", rev = "ccc5b9bfeac632cccd32d35ecb7b7d51d71fbb87", optional = true }
+celestia-types = { git = "https://github.com/eigerco/lumina", rev = "ccc5b9bfeac632cccd32d35ecb7b7d51d71fbb87", optional = true }
 clap = { workspace = true, features = ["derive"], optional = true }
+sp-keyring = { workspace = true,optional = true }
+subxt = { workspace = true,optional = true }
 
 [features]
 default = []
