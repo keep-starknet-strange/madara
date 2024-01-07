@@ -13,9 +13,9 @@ use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi, SealingMode, StarknetHasher};
 use mc_commitment_state_diff::CommitmentStateDiffWorker;
 #[cfg(feature = "avail-subxt")]
-use mc_data_availability::avail::{AvailClient, config::AvailConfig};
+use mc_data_availability::avail::{config::AvailConfig, AvailClient};
 #[cfg(feature = "celestia")]
-use mc_data_availability::celestia::{CelestiaClient, config::CelestiaConfig};
+use mc_data_availability::celestia::{config::CelestiaConfig, CelestiaClient};
 use mc_data_availability::ethereum::config::EthereumConfig;
 use mc_data_availability::ethereum::EthereumClient;
 use mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker};

@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 
 #[cfg(feature = "avail")]
-use mc_data_availability::avail::{AvailClient,config::AvailConfig};
+use mc_data_availability::avail::{config::AvailConfig, AvailClient};
 #[cfg(feature = "celestia")]
-use mc_data_availability::celestia::{CelestiaClient,config::CelestiaConfig};
+use mc_data_availability::celestia::{config::CelestiaConfig, CelestiaClient};
 use mc_data_availability::ethereum::config::EthereumConfig;
 use mc_data_availability::ethereum::EthereumClient;
 use mc_data_availability::{DaClient, DaLayer};
