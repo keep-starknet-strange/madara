@@ -1,4 +1,6 @@
+#[cfg(feature = "avail")]
 pub mod avail;
+#[cfg(feature = "celestia")]
 pub mod celestia;
 pub mod ethereum;
 mod sharp;
@@ -34,8 +36,10 @@ pub struct DataAvailabilityWorker<B, H>(PhantomData<(B, H)>);
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
 pub enum DaLayer {
+    #[cfg(feature = "celestia")]
     Celestia,
     Ethereum,
+    #[cfg(feature = "avail-subxt")]
     Avail,
 }
 
