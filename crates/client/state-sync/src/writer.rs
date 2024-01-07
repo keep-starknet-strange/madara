@@ -14,11 +14,12 @@ use mp_block::{Block, Header};
 use mp_digest_log::MADARA_ENGINE_ID;
 use mp_hashers::pedersen::PedersenHasher;
 use mp_storage::{
-    SN_COMPILED_CLASS_HASH_PREFIX, SN_CONTRACT_CLASS_HASH_PREFIX, SN_NONCE_PREFIX,
+    SN_COMPILED_CLASS_HASH_PREFIX, SN_COMPILED_CLASS_PREFIX, SN_CONTRACT_CLASS_HASH_PREFIX, SN_NONCE_PREFIX,
     SN_STORAGE_PREFIX,
 };
 use sc_client_api::backend::NewBlockState::Best;
 use sc_client_api::backend::{Backend, BlockImportOperation};
+use scale_codec::Decode;
 use sp_blockchain::{HeaderBackend, Info};
 use sp_core::Encode;
 use sp_runtime::generic::{Digest, DigestItem, Header as GenericHeader};
@@ -342,6 +343,11 @@ impl From<InnerStorageChangeSet> for InnerStateDiff {
                 );
 
                 state_diff.commitment.class_hash_to_compiled_class_hash.insert(class_hash, compiled_class_hash);
+            } else if prefix == *SN_COMPILED_CLASS_PREFIX {
+                let contract_class = ContractClass::decode(&mut &change.unwrap()[..]).unwrap();
+                let class_hash = ClassHash(StarkFelt(full_storage_key[32..].try_into().unwrap()));
+
+                state_diff.declared_classes.insert(class_hash, contract_class);
             }
         }
 
@@ -381,6 +387,12 @@ impl From<InnerStateDiff> for InnerStorageChangeSet {
             let storage_key = storage_key_build(SN_COMPILED_CLASS_HASH_PREFIX.clone(), &address.encode());
             let storage_value = compiled_class_hash.encode();
             changes.push((storage_key, Some(storage_value)));
+        }
+
+        for (class_hash, contract_class) in inner_state_diff.declared_classes.iter() {
+            let storage_key = storage_key_build(SN_COMPILED_CLASS_PREFIX.clone(), &class_hash.encode());
+            let storage_value = contract_class.encode();
+            changes.push((storage_key, Some(storage_value)))
         }
 
         InnerStorageChangeSet { changes, child_changes: _child_changes }

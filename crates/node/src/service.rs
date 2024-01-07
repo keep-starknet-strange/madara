@@ -482,9 +482,13 @@ pub fn new_full(
     // It notifies other components about the current sync status.
     let mut l1_sync_oracle = None;
     if let Some(state_sync_conf_path) = state_sync_conf {
-        let (sync_task, so) =
-            mc_state_sync::create_and_run(state_sync_conf_path, madara_backend.clone(), client.clone(), backend.clone())
-                .map_err(|e| ServiceError::Other(format!("crate sync from l1 task failed, error: {:#?}", e)))?;
+        let (sync_task, so) = mc_state_sync::create_and_run(
+            state_sync_conf_path,
+            madara_backend.clone(),
+            client.clone(),
+            backend.clone(),
+        )
+        .map_err(|e| ServiceError::Other(format!("crate sync from l1 task failed, error: {:#?}", e)))?;
 
         l1_sync_oracle = Some(so);
         task_manager.spawn_essential_handle().spawn("sync-from-l1", Some("madara"), sync_task);

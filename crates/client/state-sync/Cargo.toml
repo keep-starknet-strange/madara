@@ -26,6 +26,10 @@ tokio = { workspace = true, features = [
   "rt-multi-thread",
 ] }
 
+scale-codec = { workspace = true, default-features = true, features = [
+  "derive",
+] }
+
 # Madara
 madara-runtime = { workspace = true }
 mc-db = { workspace = true }
@@ -75,7 +79,12 @@ starknet-crypto = { workspace = true, features = ["alloc"] }
 
 # Madara
 mp-transactions = { workspace = true }
+pallet-starknet-runtime-api = { workspace = true, default-features = true }
+mp-chain-id = { workspace = true }
 
 project-root = "0.2.2"
 lazy_static = "1.4.0"
 tempfile = "3.8.1"
+
+[features]
+default = ["scale-codec/std"]

@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 // Substrate
-use parity_scale_codec::{Decode, Encode};
+use scale_codec::{Decode, Encode};
 use sp_core::{H256, U256};
 use sp_database::Database;
 use sp_runtime::traits::Block as BlockT;

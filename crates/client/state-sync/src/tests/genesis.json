@@ -1,4 +1,10 @@
 {
+  "sierra_class_hash_to_casm_class_hash": [
+    [
+      "0x035ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276",
+      "0x02f99bf9799ada84cd5ac0d0fe36b9d8f65efcb377cd2e8cf8309ad2daf15e4b"
+    ]
+  ],
   "contract_classes": [
     [
       "0x00000000000000000000000000000000000000000000000000000000DEADBEEF",
@@ -57,7 +63,7 @@
       }
     ],
     [
-      "0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276",
+      "0x02f99bf9799ada84cd5ac0d0fe36b9d8f65efcb377cd2e8cf8309ad2daf15e4b",
       {
         "path": "./cairo-contracts/build/cairo_1/NoValidateAccount.casm.json",
         "version": 1
@@ -127,7 +133,7 @@
     ],
     [
       "0x0642a8b9e2c6cc3a9ddb84575123f262a21415f78db453b0625d889e1e06ac32",
-      "0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276"
+      "0x02f99bf9799ada84cd5ac0d0fe36b9d8f65efcb377cd2e8cf8309ad2daf15e4b"
     ],
     [
       "0x0764d66462958b670b4dbd46e00eb3d60100f329dc0365d9b059e0549a4c6f58",
@@ -144,6 +150,14 @@
     [
       "0x051a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02cf",
       "0x92000"
+    ]
+  ],
+  "predeployed_accounts": [
+    [
+      "0x02356b628d108863baf8644c945d97bad70190af5957031f4852d00d0f690a77",
+      "0x03bcec8de953ba8e305e2ce2db52c91504aefa7c56c91211873b4d6ba36e8c32",
+      "No validation account",
+      null
     ]
   ],
   "storage": [
@@ -254,20 +268,6 @@
     ],
     [
       [
-        "0x00000000000000000000000000000000000000000000000000000000000000AA",
-        "0x02450cb55e7682ffca9e1db504e2de1263d587242b9b43e27a1eedf18b4bbabf"
-      ],
-      "0xffffffffffffffffffffffffffffffff"
-    ],
-    [
-      [
-        "0x00000000000000000000000000000000000000000000000000000000000000AA",
-        "0x02450cb55e7682ffca9e1db504e2de1263d587242b9b43e27a1eedf18b4bbac0"
-      ],
-      "0xffffffffffffffffffffffffffffffff"
-    ],
-    [
-      [
         "0x06e2616a2dceff4355997369246c25a78e95093df7a49e5ca6a06ce1544ffd50",
         "0x1379ac0624b939ceb9dede92211d7db5ee174fe28be72245b0a1a2abd81c98f"
       ],
@@ -293,8 +293,21 @@
         "0x238cf5ef6d6264a50d29a47fdf07ec9b7a8e9873214fa58179c5bb40933fdcb"
       ],
       "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02cf"
+    ],
+    [
+      [
+        "0x00000000000000000000000000000000000000000000000000000000000000aa",
+        "0x02450cb55e7682ffca9e1db504e2de1263d587242b9b43e27a1eedf18b4bbabf"
+      ],
+      "0x000000000000000000000000000000000000000000000000ffffffffffffffff"
+    ],
+    [
+      [
+        "0x00000000000000000000000000000000000000000000000000000000000000aa",
+        "0x02450cb55e7682ffca9e1db504e2de1263d587242b9b43e27a1eedf18b4bbac0"
+      ],
+      "0x000000000000000000000000000000000000000000000000ffffffffffffffff"
     ]
   ],
-  "fee_token_address": "0x00000000000000000000000000000000000000000000000000000000000000AA",
-  "seq_addr_updated": true
+  "fee_token_address": "0x00000000000000000000000000000000000000000000000000000000000000AA"
 }

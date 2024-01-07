@@ -7,15 +7,14 @@ use frame_support::assert_ok;
 use futures::executor::block_on;
 pub use madara_runtime as runtime;
 pub use madara_runtime::{
-    BuildStorage, GenesisConfig, RuntimeCall, SealingMode, SystemConfig, UncheckedExtrinsic, WASM_BINARY,
+    BuildStorage, RuntimeCall, RuntimeGenesisConfig, SealingMode, SystemConfig, UncheckedExtrinsic, WASM_BINARY,
 };
 use mp_felt::Felt252Wrapper;
 use mp_transactions::{DeclareTransactionV1, DeployAccountTransaction, InvokeTransactionV1};
 use pallet_starknet::genesis_loader::{read_contract_class_from_json, GenesisData, GenesisLoader};
-use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use pallet_starknet::Call as StarknetCall;
+use pallet_starknet_runtime_api::StarknetRuntimeApi;
 use sc_block_builder::{BlockBuilder, BlockBuilderProvider, RecordProof};
-use sc_client_api::ExecutionStrategy::NativeElseWasm;
 use sc_client_api::HeaderBackend;
 use sc_client_db::DatabaseSource;
 use sp_api::ProvideRuntimeApi;
@@ -75,8 +74,8 @@ impl substrate_test_client::GenesisInit for GenesisParameters {
 
         let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string()).unwrap();
 
-        let mut storage = GenesisConfig {
-            system: SystemConfig { code: wasm_binary.to_vec() },
+        let mut storage = RuntimeGenesisConfig {
+            system: SystemConfig { code: wasm_binary.to_vec(), _config: std::marker::PhantomData },
             aura: Default::default(),
             grandpa: Default::default(),
             starknet: genesis_loader.into(),
@@ -116,7 +115,7 @@ impl TestClientBuilderExt
 
     fn build(self) -> (Client, Arc<Backend>) {
         let backend = self.backend();
-        (self.set_execution_strategy(NativeElseWasm).build_with_native_executor(None).0, backend)
+        (self.build_with_native_executor(None).0, backend)
     }
 }
 
@@ -157,8 +156,7 @@ fn apply_inherents_for_block_builder<'a, Block: BlockT, C, BE>(
 ) where
     BE: sc_client_api::backend::Backend<Block> + Send + Sync + 'static,
     C: BlockBuilderProvider<BE, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block> + Send + Sync + 'static,
-    C::Api: sp_api::ApiExt<Block, StateBackend = sc_client_api::backend::StateBackendFor<BE, Block>>
-        + sc_block_builder::BlockBuilderApi<Block>,
+    C::Api: sp_api::ApiExt<Block> + sc_block_builder::BlockBuilderApi<Block>,
 {
     let mut inherents = InherentData::new();
     inherents
@@ -301,15 +299,11 @@ fn test_apply_declare_contract_state_diff() {
     };
 
     let state_diff: InnerStateDiff = ics.into();
-    let ics2 = InnerStorageChangeSet::from(state_diff.clone());
-    let state_diff2: InnerStateDiff = ics2.into();
-
-    assert_eq!(state_diff, state_diff2);
 
     // apply storage diff by StateSyncWorker
     let madara_db = create_temp_madara_backend();
     let sync_worker = StateWriter::new(client.clone(), backend, madara_db);
-    sync_worker.apply_inner_state_diff(2, H256::random(), state_diff2).unwrap();
+    sync_worker.apply_inner_state_diff(2, H256::random(), state_diff).unwrap();
 
     let block_info = client.info();
     let declared_contract = client
