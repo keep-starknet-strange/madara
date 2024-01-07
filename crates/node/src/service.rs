@@ -12,7 +12,7 @@ use futures::prelude::*;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi, SealingMode, StarknetHasher};
 use mc_commitment_state_diff::CommitmentStateDiffWorker;
-#[cfg(feature = "avail-subxt")]
+#[cfg(feature = "avail")]
 use mc_data_availability::avail::{config::AvailConfig, AvailClient};
 #[cfg(feature = "celestia")]
 use mc_data_availability::celestia::{config::CelestiaConfig, CelestiaClient};
@@ -441,7 +441,7 @@ pub fn new_full(
                 let ethereum_conf = EthereumConfig::try_from(&da_path)?;
                 Arc::new(EthereumClient::try_from(ethereum_conf)?)
             }
-            #[cfg(feature = "avail-subxt")]
+            #[cfg(feature = "avail")]
             DaLayer::Avail => {
                 let avail_conf = AvailConfig::try_from(&da_path)?;
                 Arc::new(AvailClient::try_from(avail_conf).map_err(|e| ServiceError::Other(e.to_string()))?)

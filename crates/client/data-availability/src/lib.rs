@@ -39,7 +39,7 @@ pub enum DaLayer {
     #[cfg(feature = "celestia")]
     Celestia,
     Ethereum,
-    #[cfg(feature = "avail-subxt")]
+    #[cfg(feature = "avail")]
     Avail,
 }
 
