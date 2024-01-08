@@ -7,6 +7,7 @@ use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeA
 use sc_client_api::HeaderBackend;
 use sc_transaction_pool_api::{TransactionPool, TransactionSource};
 use sp_api::ProvideRuntimeApi;
+use sp_runtime::generic::BlockId as SPBlockId;
 use sp_runtime::traits::Block as BlockT;
 use starknet_api::api_core::Nonce;
 use starknet_api::hash::StarkFelt;
@@ -127,7 +128,7 @@ where
         L1MessagesWorkerError::ConvertTransactionRuntimeApiError(e)
     })?;
 
-    let tx_hash = pool.submit_one(best_block_hash, TX_SOURCE, extrinsic).await.map_err(|e| {
+    let tx_hash = pool.submit_one(&SPBlockId::hash(best_block_hash), TX_SOURCE, extrinsic).await.map_err(|e| {
         log::error!("⟠ Failed to submit transaction with L1 Message: {:?}", e);
         L1MessagesWorkerError::SubmitTxError(e)
     })?;

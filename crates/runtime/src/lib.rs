@@ -60,7 +60,12 @@ pub use types::*;
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
-    pub struct Runtime {
+    pub struct Runtime
+    where
+        Block = Block,
+        NodeBlock = opaque::Block,
+        UncheckedExtrinsic = UncheckedExtrinsic,
+    {
         System: frame_system,
         Timestamp: pallet_timestamp,
         Aura: pallet_aura,

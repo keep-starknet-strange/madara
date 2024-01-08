@@ -110,7 +110,7 @@ mp-transactions = { workspace = true, features = ["scale-info"] }
 
 
 # CLI-specific dependencies
-try-runtime-cli = { optional = true, git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
+try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 
 parity-scale-codec = { workspace = true, features = ["derive"] }
 reqwest = { workspace = true }

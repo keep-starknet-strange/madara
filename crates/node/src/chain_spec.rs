@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use madara_runtime::{AuraConfig, GrandpaConfig, RuntimeGenesisConfig, SealingMode, SystemConfig, WASM_BINARY};
+use madara_runtime::{AuraConfig, GenesisConfig, GrandpaConfig, SealingMode, SystemConfig, WASM_BINARY};
 use mp_felt::Felt252Wrapper;
 use pallet_starknet::genesis_loader::{GenesisData, GenesisLoader, HexFelt};
 use sc_service::{BasePath, ChainType};
@@ -17,7 +17,7 @@ pub const GENESIS_ASSETS_DIR: &str = "genesis-assets/";
 pub const GENESIS_ASSETS_FILE: &str = "genesis.json";
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<RuntimeGenesisConfig>;
+pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
 
 /// Specialized `ChainSpec` for development.
 pub type DevChainSpec = sc_service::GenericChainSpec<DevGenesisExt>;
@@ -26,7 +26,7 @@ pub type DevChainSpec = sc_service::GenericChainSpec<DevGenesisExt>;
 #[derive(Serialize, Deserialize)]
 pub struct DevGenesisExt {
     /// Genesis config.
-    genesis_config: RuntimeGenesisConfig,
+    genesis_config: GenesisConfig,
     /// The sealing mode being used.
     sealing: SealingMode,
 }
@@ -168,22 +168,18 @@ fn testnet_genesis(
     wasm_binary: &[u8],
     initial_authorities: Vec<(AuraId, GrandpaId)>,
     _enable_println: bool,
-) -> RuntimeGenesisConfig {
+) -> GenesisConfig {
     let starknet_genesis_config: madara_runtime::pallet_starknet::GenesisConfig<_> = genesis_loader.into();
 
-    RuntimeGenesisConfig {
+    GenesisConfig {
         system: SystemConfig {
             // Add Wasm runtime to storage.
             code: wasm_binary.to_vec(),
-            _config: Default::default(),
         },
         // Authority-based consensus protocol used for block production
         aura: AuraConfig { authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect() },
         // Deterministic finality mechanism used for block finalization
-        grandpa: GrandpaConfig {
-            authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect(),
-            _config: Default::default(),
-        },
+        grandpa: GrandpaConfig { authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect() },
         /// Starknet Genesis configuration.
         starknet: starknet_genesis_config,
     }

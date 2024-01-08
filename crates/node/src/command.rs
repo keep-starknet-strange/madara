@@ -1,6 +1,6 @@
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use madara_runtime::Block;
-use sc_cli::{ChainSpec, SubstrateCli};
+use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
 
 use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
 use crate::cli::{Cli, Subcommand};
@@ -52,6 +52,10 @@ impl SubstrateCli for Cli {
             }
             path_or_url => Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path_or_url))?),
         })
+    }
+
+    fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
+        &madara_runtime::VERSION
     }
 }
 
@@ -122,7 +126,7 @@ pub fn run() -> sc_cli::Result<()> {
                                 .into());
                         }
 
-                        cmd.run::<Block, sp_statement_store::runtime_api::HostFunctions>(config)
+                        cmd.run::<Block, service::ExecutorDispatch>(config)
                     }
                     BenchmarkCmd::Block(cmd) => {
                         let (client, _, _, _, _) = service::new_chain_ops(&mut config, cli.run.cache)?;

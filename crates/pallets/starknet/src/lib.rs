@@ -180,7 +180,7 @@ pub mod pallet {
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         /// The block is being finalized.
-        fn on_finalize(_n: BlockNumberFor<T>) {
+        fn on_finalize(_n: T::BlockNumber) {
             assert!(SeqAddrUpdate::<T>::take(), "Sequencer address must be set for the block");
 
             // Create a new Starknet block and store it.
@@ -190,7 +190,7 @@ pub mod pallet {
         }
 
         /// The block is being initialized. Implement to have something happen.
-        fn on_initialize(_: BlockNumberFor<T>) -> Weight {
+        fn on_initialize(_: T::BlockNumber) -> Weight {
             Weight::zero()
         }
 
@@ -364,7 +364,7 @@ pub mod pallet {
     }
 
     #[pallet::genesis_build]
-    impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
+    impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
         fn build(&self) {
             <Pallet<T>>::store_block(0);
             frame_support::storage::unhashed::put::<StarknetStorageSchemaVersion>(
