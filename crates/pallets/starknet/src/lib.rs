@@ -1104,7 +1104,7 @@ impl<T: Config> Pallet<T> {
                     }
                 }
                 Err(e) => {
-                    log!(info, "Failed to estimate fee haha: {:?}", e);
+                    log!(info, "Failed to estimate fee: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             }
