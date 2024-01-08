@@ -715,6 +715,8 @@
 <a href="#715" id="715">715</a>
 <a href="#716" id="716">716</a>
 <a href="#717" id="717">717</a>
+<a href="#718" id="718">718</a>
+<a href="#719" id="719">719</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
@@ -729,10 +731,10 @@
 <span class="kw">use </span>madara_runtime::opaque::Block;
 <span class="kw">use </span>madara_runtime::{<span class="self">self</span>, Hash, RuntimeApi, SealingMode, StarknetHasher};
 <span class="kw">use </span>mc_commitment_state_diff::CommitmentStateDiffWorker;
-<span class="kw">use </span>mc_data_availability::avail::config::AvailConfig;
-<span class="kw">use </span>mc_data_availability::avail::AvailClient;
-<span class="kw">use </span>mc_data_availability::celestia::config::CelestiaConfig;
-<span class="kw">use </span>mc_data_availability::celestia::CelestiaClient;
+<span class="attr">#[cfg(feature = <span class="string">&quot;avail&quot;</span>)]
+</span><span class="kw">use </span>mc_data_availability::avail::{config::AvailConfig, AvailClient};
+<span class="attr">#[cfg(feature = <span class="string">&quot;celestia&quot;</span>)]
+</span><span class="kw">use </span>mc_data_availability::celestia::{config::CelestiaConfig, CelestiaClient};
 <span class="kw">use </span>mc_data_availability::ethereum::config::EthereumConfig;
 <span class="kw">use </span>mc_data_availability::ethereum::EthereumClient;
 <span class="kw">use </span>mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker};
@@ -1149,7 +1151,8 @@
         );
 
         <span class="kw">let </span>da_client: Arc&lt;<span class="kw">dyn </span>DaClient + Send + Sync&gt; = <span class="kw">match </span>da_layer {
-            DaLayer::Celestia =&gt; {
+            <span class="attr">#[cfg(feature = <span class="string">&quot;celestia&quot;</span>)]
+            </span>DaLayer::Celestia =&gt; {
                 <span class="kw">let </span>celestia_conf = CelestiaConfig::try_from(<span class="kw-2">&amp;</span>da_path)<span class="question-mark">?</span>;
                 Arc::new(CelestiaClient::try_from(celestia_conf).map_err(|e| ServiceError::Other(e.to_string()))<span class="question-mark">?</span>)
             }
@@ -1157,7 +1160,8 @@
                 <span class="kw">let </span>ethereum_conf = EthereumConfig::try_from(<span class="kw-2">&amp;</span>da_path)<span class="question-mark">?</span>;
                 Arc::new(EthereumClient::try_from(ethereum_conf)<span class="question-mark">?</span>)
             }
-            DaLayer::Avail =&gt; {
+            <span class="attr">#[cfg(feature = <span class="string">&quot;avail&quot;</span>)]
+            </span>DaLayer::Avail =&gt; {
                 <span class="kw">let </span>avail_conf = AvailConfig::try_from(<span class="kw-2">&amp;</span>da_path)<span class="question-mark">?</span>;
                 Arc::new(AvailClient::try_from(avail_conf).map_err(|e| ServiceError::Other(e.to_string()))<span class="question-mark">?</span>)
             }

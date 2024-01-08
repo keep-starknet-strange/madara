@@ -228,8 +228,14 @@
 <a href="#228" id="228">228</a>
 <a href="#229" id="229">229</a>
 <a href="#230" id="230">230</a>
-</pre></div><pre class="rust"><code><span class="kw">pub mod </span>avail;
-<span class="kw">pub mod </span>celestia;
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+</pre></div><pre class="rust"><code><span class="attr">#[cfg(feature = <span class="string">&quot;avail&quot;</span>)]
+</span><span class="kw">pub mod </span>avail;
+<span class="attr">#[cfg(feature = <span class="string">&quot;celestia&quot;</span>)]
+</span><span class="kw">pub mod </span>celestia;
 <span class="kw">pub mod </span>ethereum;
 <span class="kw">mod </span>sharp;
 <span class="kw">pub mod </span>utils;
@@ -264,9 +270,11 @@
 <span class="attr">#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = <span class="string">&quot;clap&quot;</span>, derive(clap::ValueEnum))]
 </span><span class="kw">pub enum </span>DaLayer {
-    Celestia,
+    <span class="attr">#[cfg(feature = <span class="string">&quot;celestia&quot;</span>)]
+    </span>Celestia,
     Ethereum,
-    Avail,
+    <span class="attr">#[cfg(feature = <span class="string">&quot;avail&quot;</span>)]
+    </span>Avail,
 }
 
 <span class="doccomment">/// Data availability modes in which Madara can be initialized.
