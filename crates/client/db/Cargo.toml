@@ -32,4 +32,4 @@ thiserror = { workspace = true }
 uuid = "1.4.1"
 
 [features]
-default = ["kvdb-rocksdb", "parity-db"]
+default = ["kvdb-rocksdb", "parity-db", "scale-codec/std"]

@@ -1,0 +1,90 @@
+[package]
+name = "mc-state-sync"
+version = "0.1.0"
+description = "Sync state from L1."
+homepage = "https://github.com/keep-starknet-strange/madara"
+edition.workspace = true
+license = "MIT"
+publish = false
+repository = "https://github.com/keep-starknet-strange/madara"
+
+[dependencies]
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+futures = { workspace = true }
+hashbrown = { workspace = true }
+indexmap = { workspace = true }
+log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true, features = [
+  "arbitrary_precision",
+  "raw_value",
+] }
+tokio = { workspace = true, features = [
+  "macros",
+  "test-util",
+  "rt-multi-thread",
+] }
+
+scale-codec = { workspace = true, default-features = true, features = [
+  "derive",
+] }
+
+# Madara
+madara-runtime = { workspace = true }
+mc-db = { workspace = true }
+mc-mapping-sync = { workspace = true }
+mc-rpc-core = { workspace = true }
+mp-block = { workspace = true }
+mp-commitments = { workspace = true, default-features = true }
+mp-digest-log = { workspace = true }
+mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
+mp-hashers = { workspace = true, default-features = true }
+mp-storage = { workspace = true }
+pallet-starknet = { workspace = true }
+
+# Starknet
+blockifier = { workspace = true, default-features = true }
+pallet-starknet-runtime-api = { workspace = true, default-features = true }
+starknet_api = { workspace = true, default-features = true }
+
+# Substrate
+frame-support = { workspace = true }
+sc-client-api = { workspace = true }
+sc-client-db = { workspace = true }
+sp-api = { workspace = true }
+sp-blockchain = { workspace = true }
+sp-consensus = { workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+sp-state-machine = { workspace = true }
+
+# Ethereum
+ethers = "2.0.11"
+tokio-retry = "0.3.0"
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
+
+# Substrate
+sc-block-builder = { workspace = true }
+sp-inherents = { workspace = true }
+sp-timestamp = { workspace = true }
+sp-block-builder = { workspace = true }
+substrate-test-client = { workspace = true }
+
+# Starknet
+starknet-core = { workspace = true }
+starknet-crypto = { workspace = true, features = ["alloc"] }
+
+# Madara
+mp-transactions = { workspace = true }
+pallet-starknet-runtime-api = { workspace = true, default-features = true }
+mp-chain-id = { workspace = true }
+
+project-root = "0.2.2"
+lazy_static = "1.4.0"
+tempfile = "3.8.1"
+
+[features]
+default = ["scale-codec/std"]

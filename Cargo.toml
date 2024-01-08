@@ -28,6 +28,7 @@ members = [
   "crates/client/storage",
   "crates/client/commitment-state-diff",
   "crates/client/settlement",
+  "crates/client/state-sync",
   "starknet-rpc-test",
   "da-test",
   "starknet-e2e-test",
@@ -149,7 +150,7 @@ sc-block-builder = { git = "https://github.com/paritytech/polkadot-sdk", branch 
 sc-proposer-metrics = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
 sc-utils = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
 substrate-test-runtime-client = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
-
+substrate-test-client = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
 
 # Substrate build & tools dependencies
 substrate-build-script-utils = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
@@ -193,6 +194,7 @@ mc-data-availability = { path = "crates/client/data-availability" }
 mc-commitment-state-diff = { path = "crates/client/commitment-state-diff" }
 mc-l1-messages = { path = "crates/client/l1-messages" }
 mc-settlement = { path = "crates/client/settlement" }
+mc-state-sync = { path = "crates/client/state-sync" }
 
 # Madara runtime
 madara-runtime = { path = "crates/runtime" }
