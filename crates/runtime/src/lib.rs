@@ -271,8 +271,8 @@ impl_runtime_apis! {
             Starknet::is_transaction_fee_disabled()
         }
 
-        fn estimate_fee(transactions: Vec<UserTransaction>, offset_version: bool) -> Result<Vec<(u64, u64)>, DispatchError> {
-            Starknet::estimate_fee(transactions, offset_version)
+        fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
+            Starknet::estimate_fee(transactions)
         }
 
         fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<SimulatedTransaction>, DispatchError> {

@@ -140,14 +140,14 @@
   ],
   "predeployed_accounts": [
     {
-      "address": "0x1",
+      "contract_address": "0x1",
       "class_hash": "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f",
       "name": "No Validation Account",
       "private_key": null,
       "public_key": "0x0"
     },
     {
-      "address": "0x2",
+      "contract_address": "0x2",
       "class_hash": "0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d",
       "name": "Argent Account",
       "private_key": [
@@ -157,7 +157,7 @@
       "public_key": "0x3603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2"
     },
     {
-      "address": "0x3",
+      "contract_address": "0x3",
       "class_hash": "0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd",
       "name": "Openzeppelin Account",
       "private_key": [
@@ -167,7 +167,7 @@
       "public_key": "0x3603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2"
     },
     {
-      "address": "0x4",
+      "contract_address": "0x4",
       "class_hash": "0x02f99bf9799ada84cd5ac0d0fe36b9d8f65efcb377cd2e8cf8309ad2daf15e4b",
       "name": "No Validation Account (cairo 1)",
       "private_key": null,

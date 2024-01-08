@@ -220,7 +220,7 @@ where
             .predeployed_accounts
             .into_iter()
             .map(|account| {
-                let contract_address: FieldElement = account.address.into();
+                let contract_address: FieldElement = account.contract_address.into();
                 let balance_string = &self
                     .call(
                         FunctionCall {
@@ -937,18 +937,6 @@ where
         request: Vec<BroadcastedTransaction>,
         block_id: BlockId,
     ) -> RpcResult<Vec<FeeEstimate>> {
-        let is_query = request.iter().any(|tx| match tx {
-            BroadcastedTransaction::Invoke(invoke_tx) => invoke_tx.is_query,
-            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V1(tx_v1)) => tx_v1.is_query,
-            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V2(tx_v2)) => tx_v2.is_query,
-            BroadcastedTransaction::DeployAccount(deploy_tx) => deploy_tx.is_query,
-        });
-        if !is_query {
-            log::error!(
-                "Got `is_query`: false. In a future version, this will fail fee estimation with UnsupportedTxVersion"
-            );
-        }
-
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -965,7 +953,7 @@ where
         let fee_estimates = self
             .client
             .runtime_api()
-            .estimate_fee(substrate_block_hash, transactions, is_query)
+            .estimate_fee(substrate_block_hash, transactions)
             .map_err(|e| {
                 error!("Request parameters error: {e}");
                 StarknetRpcApiError::InternalServerError
