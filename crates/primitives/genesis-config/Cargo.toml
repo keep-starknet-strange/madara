@@ -18,9 +18,9 @@ blockifier = { workspace = true, features = [
 #
 # third party
 derive_more = { workspace = true }
+hex = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 serde_with = { workspace = true }
 starknet-core = { workspace = true }
 starknet-crypto = { workspace = true, features = ["alloc"] }
-hex = { workspace = true }
