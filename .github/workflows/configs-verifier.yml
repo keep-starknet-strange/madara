@@ -9,7 +9,7 @@ jobs:
   genesis-docs:
     name: Genesis documentation
     runs-on: ubuntu-latest
-    if: ${{ github.event.label.name != 'ignore-docs' }}
+    if: ${{ github.event.pull_request.labels.*.name != 'ignore-docs' }}
     steps:
       - uses: actions/checkout@v3
         with:
