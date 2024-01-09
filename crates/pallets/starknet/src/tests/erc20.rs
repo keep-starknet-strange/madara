@@ -49,6 +49,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 Felt252Wrapper::from_hex_be("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF").unwrap(), // Initial supply high
                 felt_252_sender_account, // recipient
             ],
+            offset_version: false,
         };
 
         let expected_erc20_address =
