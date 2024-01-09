@@ -65,7 +65,39 @@ fn get_invoke_argent_dummy() -> InvokeTransactionV1 {
         Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), /* calldata[0] */
     ];
 
-    InvokeTransactionV1 { max_fee: u64::MAX as u128, signature: vec![], nonce, sender_address, calldata, offset_version: false }
+    InvokeTransactionV1 {
+        max_fee: u64::MAX as u128,
+        signature: vec![],
+        nonce,
+        sender_address,
+        calldata,
+        offset_version: false,
+    }
+}
+
+// ref: https://github.com/argentlabs/argent-contracts-starknet/blob/develop/contracts/account/ArgentAccount.cairo
+fn get_estimate_fee_dummy() -> InvokeTransactionV1 {
+    let sender_address =
+        Felt252Wrapper::from_hex_be("0x02e63de215f650e9d7e2313c6e9ed26b4f920606fb08576b1663c21a7c4a28c5").unwrap();
+    let nonce = Felt252Wrapper::ZERO;
+    let calldata = vec![
+        Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), /* call_array_len */
+        Felt252Wrapper::from_hex_be("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(), /* to */
+        Felt252Wrapper::from_hex_be("0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc").unwrap(), /* selector */
+        Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(), /* data_offset */
+        Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), /* data_len */
+        Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), /* calldata_len */
+        Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), /* calldata[0] */
+    ];
+
+    InvokeTransactionV1 {
+        max_fee: u64::MAX as u128,
+        signature: vec![],
+        nonce,
+        sender_address,
+        calldata,
+        offset_version: true,
+    }
 }
 
 // ref: https://github.com/myBraavos/braavos-account-cairo/blob/develop/src/account/Account.cairo
