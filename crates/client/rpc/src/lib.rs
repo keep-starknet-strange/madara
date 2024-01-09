@@ -47,10 +47,10 @@ use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
     DeclareTransactionReceipt, DeclareTransactionResult, DeployAccountTransactionReceipt,
-    DeployAccountTransactionResult, EventFilterWithPage, EventsPage, ExecutionResult, FeeEstimate, FieldElement,
-    FunctionCall, InvokeTransactionReceipt, InvokeTransactionResult, L1HandlerTransactionReceipt,
-    MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateDiff, StateUpdate,
-    SyncStatus, SyncStatusType, Transaction, TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
+    DeployAccountTransactionResult, EventFilterWithPage, ExecutionResult, FeeEstimate, FieldElement, FunctionCall,
+    InvokeTransactionReceipt, InvokeTransactionResult, L1HandlerTransactionReceipt, MaybePendingBlockWithTxHashes,
+    MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateDiff, StateUpdate, SyncStatus, SyncStatusType,
+    Transaction, TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
 };
 use starknet_core::utils::get_selector_from_name;
 

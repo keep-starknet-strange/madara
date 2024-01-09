@@ -16,7 +16,7 @@ use sc_transaction_pool::ChainApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
-use starknet_core::types::{BlockId, EmittedEvent, EventsPage};
+use starknet_core::types::{BlockId, EmittedEvent};
 use starknet_ff::FieldElement;
 
 use crate::errors::StarknetRpcApiError;
