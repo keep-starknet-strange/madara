@@ -42,6 +42,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: u128::MAX,
             signature: vec![],
+            offset_version: true,
         };
 
         assert_err!(Starknet::invoke(none_origin, transaction.into()), Error::<MockRuntime>::AccountNotDeployed);
@@ -171,6 +172,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: u128::MAX,
             signature: vec![],
+            offset_version: true,
         };
 
         let none_origin = RuntimeOrigin::none();
@@ -197,6 +199,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
             nonce: Felt252Wrapper::ONE,
             max_fee: u128::MAX,
             signature: vec![],
+            offset_version: true,
         };
 
         let none_origin = RuntimeOrigin::none();
@@ -425,6 +428,7 @@ fn given_account_not_deployed_invoke_tx_works_for_nonce_one() {
             nonce: Felt252Wrapper::ONE,
             max_fee: u128::MAX,
             signature: vec![],
+            offset_version: true,
         };
 
         assert_ok!(Starknet::validate_unsigned(
@@ -448,6 +452,7 @@ fn given_account_not_deployed_invoke_tx_fails_for_nonce_not_one() {
             nonce: Felt252Wrapper::TWO,
             max_fee: u128::MAX,
             signature: vec![],
+            offset_version: true,
         };
 
         assert_eq!(

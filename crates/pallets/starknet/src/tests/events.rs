@@ -34,6 +34,7 @@ fn internal_and_external_events_are_emitted_in_the_right_order() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: u128::MAX,
             signature: vec![],
+            offset_version: true,
         };
 
         let none_origin = RuntimeOrigin::none();
