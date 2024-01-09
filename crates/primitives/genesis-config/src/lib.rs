@@ -98,7 +98,7 @@ where
 {
     if let Some(inner_buffer) = buffer {
         let hex_string = format!("0x{}", hex::encode(inner_buffer));
-        serializer.serialize_str(&*hex_string)
+        serializer.serialize_str(&hex_string)
     } else {
         serializer.serialize_none()
     }
