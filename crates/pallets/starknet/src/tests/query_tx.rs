@@ -57,7 +57,7 @@ fn executable_tx_should_not_be_estimable() {
         basic_test_setup(2);
 
         let chain_id = Starknet::chain_id();
-        let mut tx = get_estimate_fee_dummy();
+        let mut tx = get_invoke_argent_dummy();
         let tx_hash = tx.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false);
         tx.signature = sign_message_hash(tx_hash);
 
