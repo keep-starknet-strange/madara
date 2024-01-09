@@ -39,6 +39,7 @@
 - feat(settlement): e2e test with Madara node settling on Ethereum contract
 - refactor: use `map` in `estimate_fee` to stop computation on error
 - fix: `tempdir` crate has been deprecated; use `tempfile` instead
+- dev: add avail and celestia crates behind a feature flag
 
 ## v0.6.0
 
