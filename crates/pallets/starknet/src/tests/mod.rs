@@ -47,7 +47,7 @@ pub fn get_invoke_dummy(nonce: Felt252Wrapper) -> InvokeTransactionV1 {
         Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), /* calldata[0] */
     ];
 
-    InvokeTransactionV1 { max_fee: u64::MAX as u128, signature, nonce, sender_address, calldata, offset_version: true }
+    InvokeTransactionV1 { max_fee: u64::MAX as u128, signature, nonce, sender_address, calldata, offset_version: false }
 }
 
 // ref: https://github.com/argentlabs/argent-contracts-starknet/blob/develop/contracts/account/ArgentAccount.cairo
@@ -65,7 +65,7 @@ fn get_invoke_argent_dummy() -> InvokeTransactionV1 {
         Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), /* calldata[0] */
     ];
 
-    InvokeTransactionV1 { max_fee: u64::MAX as u128, signature: vec![], nonce, sender_address, calldata, offset_version: true }
+    InvokeTransactionV1 { max_fee: u64::MAX as u128, signature: vec![], nonce, sender_address, calldata, offset_version: false }
 }
 
 // ref: https://github.com/myBraavos/braavos-account-cairo/blob/develop/src/account/Account.cairo
@@ -87,7 +87,7 @@ fn get_invoke_braavos_dummy() -> InvokeTransactionV1 {
         Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), /* calldata[0] */
     ];
 
-    InvokeTransactionV1 { max_fee: u64::MAX as u128, signature, nonce, sender_address, calldata, offset_version: true }
+    InvokeTransactionV1 { max_fee: u64::MAX as u128, signature, nonce, sender_address, calldata, offset_version: false }
 }
 
 // ref: https://github.com/OpenZeppelin/cairo-contracts/blob/main/src/openzeppelin/token/erc20/IERC20.cairo
@@ -105,7 +105,7 @@ fn get_invoke_emit_event_dummy() -> InvokeTransactionV1 {
         Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(), /* amount */
     ];
 
-    InvokeTransactionV1 { max_fee: u64::MAX as u128, signature, nonce, sender_address, calldata, offset_version: true }
+    InvokeTransactionV1 { max_fee: u64::MAX as u128, signature, nonce, sender_address, calldata, offset_version: false }
 }
 
 // ref: https://github.com/tdelabro/blockifier/blob/no_std-support/crates/blockifier/feature_contracts/account_without_validations.cairo
@@ -123,7 +123,7 @@ fn get_invoke_nonce_dummy() -> InvokeTransactionV1 {
         Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), /* calldata[0] */
     ];
 
-    InvokeTransactionV1 { max_fee: u64::MAX as u128, signature, nonce, sender_address, calldata, offset_version: true }
+    InvokeTransactionV1 { max_fee: u64::MAX as u128, signature, nonce, sender_address, calldata, offset_version: false }
 }
 
 // ref: https://github.com/keep-starknet-strange/madara/blob/main/cairo-contracts/src/accounts/NoValidateAccount.cairo
@@ -139,7 +139,7 @@ fn get_storage_read_write_dummy() -> InvokeTransactionV1 {
         Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), /* calldata[1] */
     ];
 
-    InvokeTransactionV1 { max_fee: u64::MAX as u128, signature, nonce, sender_address, calldata, offset_version: true }
+    InvokeTransactionV1 { max_fee: u64::MAX as u128, signature, nonce, sender_address, calldata, offset_version: false }
 }
 
 // ref: https://github.com/OpenZeppelin/cairo-contracts/blob/main/src/openzeppelin/account/IAccount.cairo
@@ -161,7 +161,7 @@ fn get_invoke_openzeppelin_dummy() -> InvokeTransactionV1 {
         Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), /* calldata[0] */
     ];
 
-    InvokeTransactionV1 { max_fee: u64::MAX as u128, signature, nonce, sender_address, calldata, offset_version: true }
+    InvokeTransactionV1 { max_fee: u64::MAX as u128, signature, nonce, sender_address, calldata, offset_version: false }
 }
 
 /// Returns a dummy declare transaction for the given account type.
@@ -183,7 +183,7 @@ pub fn get_declare_dummy(
         nonce,
         class_hash: erc20_class_hash,
         sender_address: account_addr.into(),
-        offset_version: true,
+        offset_version: false,
     };
 
     let tx_hash = tx.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false);
@@ -209,7 +209,7 @@ pub fn get_deploy_account_dummy(
         contract_address_salt: salt,
         constructor_calldata: calldata.0.iter().map(|e| Felt252Wrapper::from(*e)).collect(),
         class_hash: account_class_hash.into(),
-        offset_version: true,
+        offset_version: false,
     }
 }
 

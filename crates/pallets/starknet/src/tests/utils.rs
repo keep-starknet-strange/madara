@@ -82,7 +82,7 @@ pub fn build_transfer_invoke_transaction(request: BuildTransferInvokeTransaction
             request.amount_low,    // initial supply low
             request.amount_high,   // initial supply high
         ],
-        offset_version: true,
+        offset_version: false,
     }
     .into()
 }
