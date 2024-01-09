@@ -28,7 +28,7 @@ impl LastSyncedEventBlock {
 
 impl<B: BlockT> MessagingDb<B> {
     pub fn last_synced_l1_block_with_event(&self) -> Result<LastSyncedEventBlock, DbError> {
-        match self.db.get(crate::columns::MESSAGING, crate::static_keys::LAST_SYNCED_L1_BLOCK) {
+        match self.db.get(crate::columns::MESSAGING, crate::static_keys::LAST_SYNCED_L1_EVENT_BLOCK) {
             Some(raw) => Ok(LastSyncedEventBlock::decode(&mut &raw[..])?),
             None => Ok(LastSyncedEventBlock::new(0,0)),
         }
@@ -37,7 +37,7 @@ impl<B: BlockT> MessagingDb<B> {
     pub fn update_last_synced_l1_block_with_event(&self, last_synced_event_block: &LastSyncedEventBlock) -> Result<(), DbError> {
         let mut transaction = sp_database::Transaction::new();
 
-        transaction.set(crate::columns::MESSAGING, crate::static_keys::LAST_SYNCED_L1_BLOCK, &last_synced_event_block.encode());
+        transaction.set(crate::columns::MESSAGING, crate::static_keys::LAST_SYNCED_L1_EVENT_BLOCK, &last_synced_event_block.encode());
 
         self.db.commit(transaction)?;
 
