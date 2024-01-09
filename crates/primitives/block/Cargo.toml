@@ -20,7 +20,7 @@ mp-fee = { workspace = true, features = [
 mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
 mp-transactions = { workspace = true }
-serde = { workspace = true, features = ["derive"] }
+serde = { workspace = true, features = ["derive"], optional = true }
 serde_json = { workspace = true }
 sp-core = { workspace = true }
 starknet_api = { workspace = true }

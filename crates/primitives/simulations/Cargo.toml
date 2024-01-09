@@ -13,22 +13,10 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 
 # Madara primitives
-mp-felt = { workspace = true, features = [
-  "parity-scale-codec",
-  "serde",
-  "scale-info",
-] }
+mp-felt = { workspace = true }
 mp-messages = { workspace = true }
-mp-state = { workspace = true, features = [
-  "parity-scale-codec",
-  "serde",
-  "scale-info",
-] }
-mp-transactions = { workspace = true, features = [
-  "parity-scale-codec",
-  "serde",
-  "scale-info",
-] }
+mp-state = { workspace = true }
+mp-transactions = { workspace = true }
 
 # Starknet dependencies
 blockifier = { workspace = true }

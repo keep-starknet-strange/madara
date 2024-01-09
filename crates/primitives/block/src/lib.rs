@@ -13,7 +13,6 @@ use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::Transaction;
-use serde::{Deserialize, Serialize};
 
 /// Block Transactions
 pub type BlockTransactions = Vec<Transaction>;
@@ -21,13 +20,13 @@ pub type BlockTransactions = Vec<Transaction>;
 /// Block tag.
 ///
 /// A tag specifying a dynamic reference to a block.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
-#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub enum BlockTag {
-    #[serde(rename = "latest")]
+    #[cfg_attr(feature = "serde", serde(rename = "latest"))]
     Latest,
-    #[serde(rename = "pending")]
+    #[cfg_attr(feature = "serde", serde(rename = "pending"))]
     Pending,
 }
 

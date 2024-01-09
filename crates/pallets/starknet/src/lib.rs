@@ -87,7 +87,7 @@ use mp_simulations::{
     DeclareTransactionTrace, DeployAccountTransactionTrace, FeeEstimate, FunctionInvocation, InvokeTransactionTrace,
     SimulatedTransaction, SimulationFlags, TransactionTrace,
 };
-use mp_state::StateDiff;
+use mp_state::rpc::StateDiff;
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_transactions::execution::Execute;
 use mp_transactions::{

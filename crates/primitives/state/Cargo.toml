@@ -12,11 +12,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 blockifier = { workspace = true }
-mp-felt = { workspace = true, features = [
-  "parity-scale-codec",
-  "serde",
-  "scale-info",
-] }
+mp-felt = { workspace = true }
 starknet_api = { workspace = true }
 
 # Optional dependencies

@@ -10,7 +10,7 @@ use blockifier::execution::entry_point::CallInfo;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionResult;
 use mp_felt::{Felt252Wrapper, UfeHex};
-use mp_state::StateDiff;
+use mp_state::rpc::StateDiff;
 use mp_transactions::execution::StarknetRPCExecutionResources;
 use starknet_api::api_core::EthAddress;
 use starknet_api::deprecated_contract_class::EntryPointType;

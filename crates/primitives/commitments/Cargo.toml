@@ -43,4 +43,4 @@ std = [
 ]
 parity-scale-codec = ["dep:parity-scale-codec", "mp-felt/parity-scale-codec"]
 scale-info = ["dep:scale-info", "mp-felt/scale-info"]
-serde = ["dep:serde", "starknet-ff/serde", "mp-felt/serde"]
+serde = ["dep:serde", "dep:starknet-ff", "starknet-ff?/serde", "mp-felt/serde"]
