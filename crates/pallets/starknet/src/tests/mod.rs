@@ -65,7 +65,14 @@ fn get_invoke_argent_dummy() -> InvokeTransactionV1 {
         Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), /* calldata[0] */
     ];
 
-    InvokeTransactionV1 { max_fee: u64::MAX as u128, signature: vec![], nonce, sender_address, calldata, offset_version: false }
+    InvokeTransactionV1 {
+        max_fee: u64::MAX as u128,
+        signature: vec![],
+        nonce,
+        sender_address,
+        calldata,
+        offset_version: false,
+    }
 }
 
 // ref: https://github.com/myBraavos/braavos-account-cairo/blob/develop/src/account/Account.cairo

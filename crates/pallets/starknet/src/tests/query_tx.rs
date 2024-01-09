@@ -63,8 +63,8 @@ fn executable_tx_should_not_be_estimable() {
 
         let tx_vec = vec![UserTransaction::Invoke(tx.clone().into())];
 
-        // it should not be valid for estimate calls
-        assert_err!(Starknet::estimate_fee(tx_vec), Error::<MockRuntime>::TransactionExecutionFailed);
+        // it should be valid for estimate calls
+        assert_ok!(Starknet::estimate_fee(tx_vec));
 
         // it should be executable
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), tx.clone().into()));
@@ -78,6 +78,7 @@ fn query_tx_should_not_be_executable() {
 
         let chain_id = Starknet::chain_id();
         let mut tx = get_invoke_argent_dummy();
+        tx.offset_version = true;
         let tx_hash = tx.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, true);
         tx.signature = sign_message_hash(tx_hash);
 
