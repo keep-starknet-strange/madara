@@ -190,7 +190,6 @@
 <a href="#190" id="190">190</a>
 <a href="#191" id="191">191</a>
 <a href="#192" id="192">192</a>
-<a href="#193" id="193">193</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
@@ -222,8 +221,7 @@
 </span><span class="comment">// pub mod utils;
 </span><span class="kw">use </span>mp_felt::Felt252Wrapper;
 
-<span class="comment">// TODO(antiyro): remove this when released: https://github.com/xJonathanLEI/starknet-rs/blame/fec81d126c58ff3dff6cbfd4b9e714913298e54e/starknet-core/src/types/serde_impls.rs#L175
-</span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
+<span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
 </span><span class="kw">pub struct </span>TransactionStatus {
     <span class="kw">pub </span>finality_status: TransactionFinalityStatus,

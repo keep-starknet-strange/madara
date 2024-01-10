@@ -2,9 +2,9 @@
     config: <a class="struct" href="../config/struct.L1MessagesWorkerConfig.html" title="struct mc_l1_messages::config::L1MessagesWorkerConfig">L1MessagesWorkerConfig</a>,
     client: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc">Arc</a>&lt;C&gt;,
     pool: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc">Arc</a>&lt;P&gt;,
-    backend: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc">Arc</a>&lt;Backend&lt;B&gt;&gt;
+    backend: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc">Arc</a>&lt;<a class="struct" href="../../mc_db/struct.Backend.html" title="struct mc_db::Backend">Backend</a>&lt;B&gt;&gt;
 )<span class="where fmt-newline">where
     B: BlockT,
     C: ProvideRuntimeApi&lt;B&gt; + HeaderBackend&lt;B&gt;,
-    C::Api: StarknetRuntimeApi&lt;B&gt; + ConvertTransactionRuntimeApi&lt;B&gt;,
+    C::Api: <a class="trait" href="../../pallet_starknet_runtime_api/trait.StarknetRuntimeApi.html" title="trait pallet_starknet_runtime_api::StarknetRuntimeApi">StarknetRuntimeApi</a>&lt;B&gt; + <a class="trait" href="../../pallet_starknet_runtime_api/trait.ConvertTransactionRuntimeApi.html" title="trait pallet_starknet_runtime_api::ConvertTransactionRuntimeApi">ConvertTransactionRuntimeApi</a>&lt;B&gt;,
     P: TransactionPool&lt;Block = B&gt; + 'static,</span></code></pre></section></div></main></body></html>

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["DictStateReader"],"trait":["StateChanges"]};
+window.SIDEBAR_ITEMS = {"mod":["rpc"],"struct":["DictStateReader"],"trait":["StateChanges"]};

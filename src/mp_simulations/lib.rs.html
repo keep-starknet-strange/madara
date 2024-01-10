@@ -261,23 +261,118 @@
 <a href="#261" id="261">261</a>
 <a href="#262" id="262">262</a>
 <a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
 </pre></div><pre class="rust"><code><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
 #[doc(hidden)]
 </span><span class="kw">pub extern crate </span>alloc;
 
-<span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::vec::Vec;
 
-<span class="kw">use </span>blockifier::execution::entry_point::{CallInfo, OrderedL2ToL1Message};
+<span class="kw">use </span>blockifier::execution::entry_point::CallInfo;
 <span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>blockifier::transaction::objects::TransactionExecutionResult;
 <span class="kw">use </span>mp_felt::{Felt252Wrapper, UfeHex};
-<span class="kw">use </span>mp_messages::MessageL2ToL1;
-<span class="kw">use </span>starknet_api::api_core::{ContractAddress, PatriciaKey};
+<span class="kw">use </span>mp_state::rpc::StateDiff;
+<span class="kw">use </span>mp_transactions::execution::StarknetRPCExecutionResources;
+<span class="kw">use </span>starknet_api::api_core::EthAddress;
 <span class="kw">use </span>starknet_api::deprecated_contract_class::EntryPointType;
-<span class="kw">use </span>starknet_api::transaction::EventContent;
 
 <span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
@@ -333,12 +428,16 @@
 #[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
 #[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize))]
-#[serde(untagged)]
+#[serde(tag = <span class="string">&quot;type&quot;</span>)]
 </span><span class="kw">pub enum </span>TransactionTrace {
-    Invoke(InvokeTransactionTrace),
-    DeployAccount(DeployAccountTransactionTrace),
-    L1Handler(L1HandlerTransactionTrace),
-    Declare(DeclareTransactionTrace),
+    <span class="attr">#[serde(rename = <span class="string">&quot;INVOKE&quot;</span>)]
+    </span>Invoke(InvokeTransactionTrace),
+    <span class="attr">#[serde(rename = <span class="string">&quot;DEPLOY_ACCOUNT&quot;</span>)]
+    </span>DeployAccount(DeployAccountTransactionTrace),
+    <span class="attr">#[serde(rename = <span class="string">&quot;L1_HANDLER&quot;</span>)]
+    </span>L1Handler(L1HandlerTransactionTrace),
+    <span class="attr">#[serde(rename = <span class="string">&quot;DECLARE&quot;</span>)]
+    </span>Declare(DeclareTransactionTrace),
 }
 
 <span class="attr">#[derive(Debug, Clone)]
@@ -364,6 +463,9 @@
     </span><span class="kw">pub </span>validate_invocation: <span class="prelude-ty">Option</span>&lt;FunctionInvocation&gt;,
     <span class="attr">#[serde(skip_serializing_if = <span class="string">&quot;Option::is_none&quot;</span>)]
     </span><span class="kw">pub </span>fee_transfer_invocation: <span class="prelude-ty">Option</span>&lt;FunctionInvocation&gt;,
+    <span class="doccomment">/// The state diffs induced by the transaction
+    </span><span class="attr">#[serde(skip_serializing_if = <span class="string">&quot;Option::is_none&quot;</span>)]
+    </span><span class="kw">pub </span>state_diff: <span class="prelude-ty">Option</span>&lt;StateDiff&gt;,
 }
 
 <span class="attr">#[derive(Debug, Clone)]
@@ -376,6 +478,9 @@
     <span class="kw">pub </span>execute_invocation: ExecuteInvocation,
     <span class="attr">#[serde(skip_serializing_if = <span class="string">&quot;Option::is_none&quot;</span>)]
     </span><span class="kw">pub </span>fee_transfer_invocation: <span class="prelude-ty">Option</span>&lt;FunctionInvocation&gt;,
+    <span class="doccomment">/// The state diffs induced by the transaction
+    </span><span class="attr">#[serde(skip_serializing_if = <span class="string">&quot;Option::is_none&quot;</span>)]
+    </span><span class="kw">pub </span>state_diff: <span class="prelude-ty">Option</span>&lt;StateDiff&gt;,
 }
 
 <span class="attr">#[derive(Debug, Clone)]
@@ -390,6 +495,9 @@
     </span><span class="kw">pub </span>constructor_invocation: FunctionInvocation,
     <span class="attr">#[serde(skip_serializing_if = <span class="string">&quot;Option::is_none&quot;</span>)]
     </span><span class="kw">pub </span>fee_transfer_invocation: <span class="prelude-ty">Option</span>&lt;FunctionInvocation&gt;,
+    <span class="doccomment">/// The state diffs induced by the transaction
+    </span><span class="attr">#[serde(skip_serializing_if = <span class="string">&quot;Option::is_none&quot;</span>)]
+    </span><span class="kw">pub </span>state_diff: <span class="prelude-ty">Option</span>&lt;StateDiff&gt;,
 }
 
 <span class="attr">#[derive(Debug, Clone)]
@@ -400,6 +508,62 @@
     <span class="doccomment">/// The trace of the __execute__ call or constructor call, depending on the transaction type
     /// (none for declare transactions)
     </span><span class="kw">pub </span>function_invocation: FunctionInvocation,
+    <span class="doccomment">/// The state diffs induced by the transaction
+    </span><span class="attr">#[serde(skip_serializing_if = <span class="string">&quot;Option::is_none&quot;</span>)]
+    </span><span class="kw">pub </span>state_diff: <span class="prelude-ty">Option</span>&lt;StateDiff&gt;,
+}
+
+<span class="doccomment">/// Orderedevent.
+///
+/// An event alongside its order within the transaction.
+</span><span class="attr">#[serde_with::serde_as]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize))]
+</span><span class="kw">pub struct </span>OrderedEvent {
+    <span class="doccomment">/// The order of the event within the transaction
+    </span><span class="kw">pub </span>order: u64,
+    <span class="doccomment">/// Keys
+    </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;Vec&lt;UfeHex&gt;&quot;</span>)]
+    </span><span class="kw">pub </span>keys: Vec&lt;Felt252Wrapper&gt;,
+    <span class="doccomment">/// Data
+    </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;Vec&lt;UfeHex&gt;&quot;</span>)]
+    </span><span class="kw">pub </span>data: Vec&lt;Felt252Wrapper&gt;,
+}
+
+<span class="attr">#[serde_with::serde_as]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize))]
+</span><span class="kw">pub struct </span>MessageToL1 {
+    <span class="doccomment">/// The address of the L2 contract sending the message
+    </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>)]
+    </span><span class="kw">pub </span>from_address: Felt252Wrapper,
+    <span class="doccomment">/// The target L1 address the message is sent to
+    </span><span class="kw">pub </span>to_address: EthAddress,
+    <span class="doccomment">/// The payload of the message
+    </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;Vec&lt;UfeHex&gt;&quot;</span>)]
+    </span><span class="kw">pub </span>payload: Vec&lt;Felt252Wrapper&gt;,
+}
+
+<span class="attr">#[serde_with::serde_as]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize))]
+</span><span class="kw">pub struct </span>OrderedMessage {
+    <span class="doccomment">/// The order of the message within the transaction
+    </span><span class="kw">pub </span>order: u64,
+    <span class="doccomment">/// The address of the L2 contract sending the message
+    </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>)]
+    </span><span class="kw">pub </span>from_address: Felt252Wrapper,
+    <span class="doccomment">/// The target L1 address the message is sent to
+    </span><span class="kw">pub </span>to_address: EthAddress,
+    <span class="doccomment">/// The payload of the message
+    </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;Vec&lt;UfeHex&gt;&quot;</span>)]
+    </span><span class="kw">pub </span>payload: Vec&lt;Felt252Wrapper&gt;,
 }
 
 <span class="attr">#[serde_with::serde_as]
@@ -431,16 +595,19 @@
     <span class="doccomment">/// The calls made by this invocation
     </span><span class="kw">pub </span>calls: Vec&lt;FunctionInvocation&gt;,
     <span class="doccomment">/// The events emitted in this invocation
-    </span><span class="kw">pub </span>events: Vec&lt;EventContent&gt;,
+    </span><span class="kw">pub </span>events: Vec&lt;OrderedEvent&gt;,
     <span class="doccomment">/// The messages sent by this invocation to L1
-    </span><span class="kw">pub </span>messages: Vec&lt;MessageL2ToL1&gt;,
+    </span><span class="kw">pub </span>messages: Vec&lt;OrderedMessage&gt;,
+    <span class="doccomment">/// Resources consumed by the internal call
+    </span><span class="kw">pub </span>execution_resources: StarknetRPCExecutionResources,
 }
 
 <span class="kw">impl </span>TryFrom&lt;<span class="kw-2">&amp;</span>CallInfo&gt; <span class="kw">for </span>FunctionInvocation {
     <span class="kw">type </span>Error = TransactionExecutionError;
 
     <span class="kw">fn </span>try_from(call_info: <span class="kw-2">&amp;</span>CallInfo) -&gt; TransactionExecutionResult&lt;FunctionInvocation&gt; {
-        <span class="kw">let </span>messages = ordered_l2_to_l1_messages(call_info);
+        <span class="kw">let </span>messages = ordered_messages(call_info);
+        <span class="kw">let </span>events = events_to_ordered_events(<span class="kw-2">&amp;</span>call_info.execution.events);
 
         <span class="kw">let </span>inner_calls = call_info
             .inner_calls
@@ -460,29 +627,52 @@
             call_type: call_info.call.call_type.into(),
             result: call_info.execution.retdata.<span class="number">0</span>.iter().map(|x| (<span class="kw-2">*</span>x).into()).collect(),
             calls: inner_calls,
-            events: call_info.execution.events.iter().map(|event| event.event.clone()).collect(),
+            events,
             messages,
+            execution_resources: StarknetRPCExecutionResources::default(),
         })
     }
 }
 
-<span class="kw">fn </span>ordered_l2_to_l1_messages(call_info: <span class="kw-2">&amp;</span>CallInfo) -&gt; Vec&lt;MessageL2ToL1&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>messages = BTreeMap::new();
+<span class="kw">fn </span>ordered_messages(call_info: <span class="kw-2">&amp;</span>CallInfo) -&gt; Vec&lt;OrderedMessage&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>messages = Vec::new();
 
-    <span class="kw">for </span>call <span class="kw">in </span>call_info.into_iter() {
-        <span class="kw">for </span>OrderedL2ToL1Message { order, message } <span class="kw">in </span><span class="kw-2">&amp;</span>call.execution.l2_to_l1_messages {
-            messages.insert(
-                order,
-                MessageL2ToL1 {
-                    payload: message.payload.<span class="number">0</span>.to_vec(),
-                    to_address: message.to_address,
-                    from_address: ContractAddress(PatriciaKey(call.call.storage_address.<span class="number">0.0</span>)),
-                },
-            );
-        }
+    <span class="kw">for </span>(index, message) <span class="kw">in </span>call_info.execution.l2_to_l1_messages.iter().enumerate() {
+        messages.push(OrderedMessage {
+            order: index <span class="kw">as </span>u64,
+            payload: message.message.payload.<span class="number">0</span>.iter().map(|x| (<span class="kw-2">*</span>x).into()).collect(),
+            to_address: message.message.to_address,
+            from_address: call_info.call.storage_address.<span class="number">0.0</span>.into(),
+        });
     }
 
-    messages.into_values().collect()
+    messages
+}
+
+<span class="kw">fn </span>events_to_ordered_events(ordered_events: <span class="kw-2">&amp;</span>[blockifier::execution::entry_point::OrderedEvent]) -&gt; Vec&lt;OrderedEvent&gt; {
+    ordered_events
+        .iter()
+        .map(|event| OrderedEvent {
+            order: event.order <span class="kw">as </span>u64, <span class="comment">// Convert usize to u64
+            </span>keys: event
+                .event
+                .keys
+                .iter()
+                .map(|key| {
+                    Felt252Wrapper::from(key.<span class="number">0</span>) <span class="comment">// Convert StarkFelt to Felt252Wrapper
+                </span>})
+                .collect(),
+            data: event
+                .event
+                .data
+                .<span class="number">0
+                </span>.iter()
+                .map(|data_item| {
+                    Felt252Wrapper::from(<span class="kw-2">*</span>data_item) <span class="comment">// Convert StarkFelt to Felt252Wrapper
+                </span>})
+                .collect(),
+        })
+        .collect()
 }
 
 <span class="attr">#[derive(Debug, Clone)]
@@ -513,6 +703,8 @@
     </span>Call,
     <span class="attr">#[serde(rename = <span class="string">&quot;LIBRARY_CALL&quot;</span>)]
     </span>LibraryCall,
+    <span class="attr">#[serde(rename = <span class="string">&quot;DELEGATE&quot;</span>)]
+    </span>Delegate,
 }
 
 <span class="kw">impl </span>From&lt;blockifier::execution::entry_point::CallType&gt; <span class="kw">for </span>CallType {

@@ -108,9 +108,15 @@
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 
 <span class="kw">use </span>blockifier::block_context::BlockContext;
+<span class="kw">use </span>mp_fee::ResourcePrice;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_hashers::HasherT;
 <span class="kw">use </span>sp_core::U256;
@@ -145,6 +151,8 @@
     </span><span class="kw">pub </span>event_commitment: StarkHash,
     <span class="doccomment">/// The version of the Starknet protocol used when creating this block
     </span><span class="kw">pub </span>protocol_version: u8,
+    <span class="doccomment">/// l1 gas price for this block
+    </span><span class="kw">pub </span>l1_gas_price: ResourcePrice,
     <span class="doccomment">/// Extraneous data that might be useful for running transactions
     </span><span class="kw">pub </span>extra_data: <span class="prelude-ty">Option</span>&lt;U256&gt;,
 }
@@ -164,6 +172,7 @@
         event_count: u128,
         event_commitment: StarkHash,
         protocol_version: u8,
+        l1_gas_price: ResourcePrice,
         extra_data: <span class="prelude-ty">Option</span>&lt;U256&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
@@ -177,6 +186,7 @@
             event_count,
             event_commitment,
             protocol_version,
+            l1_gas_price,
             extra_data,
         }
     }

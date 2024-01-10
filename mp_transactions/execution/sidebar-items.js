@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["ExecutionConfig","ValidateExecuteCallInfo"],"trait":["Execute","GetAccountTransactionContext","GetTransactionCalldata","GetTxType","SimulateTxVersionOffset","Validate"]};
+window.SIDEBAR_ITEMS = {"struct":["ExecutionConfig","StarknetRPCExecutionResources","ValidateExecuteCallInfo"],"trait":["Execute","GetAccountTransactionContext","GetTransactionCalldata","GetTxType","SimulateTxVersionOffset","Validate"]};

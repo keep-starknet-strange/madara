@@ -26,7 +26,7 @@ var srcIndex = JSON.parse('{\
 "mp_sequencer_address":["",[],["lib.rs"]],\
 "mp_simulations":["",[],["lib.rs"]],\
 "mp_snos_output":["",[],["codec.rs","felt_reader.rs","lib.rs"]],\
-"mp_state":["",[],["lib.rs"]],\
+"mp_state":["",[],["lib.rs","rpc.rs"]],\
 "mp_storage":["",[],["lib.rs"]],\
 "mp_transactions":["",[],["compute_hash.rs","conversions.rs","execution.rs","from_broadcasted_transactions.rs","getters.rs","lib.rs","to_starknet_core_transaction.rs"]],\
 "pallet_starknet":["",[],["blockifier_state_adapter.rs","execution_config.rs","genesis_loader.rs","lib.rs","transaction_validation.rs","types.rs","utils.rs"]],\

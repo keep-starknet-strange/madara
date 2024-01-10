@@ -187,10 +187,12 @@
 <a href="#187" id="187">187</a>
 <a href="#188" id="188">188</a>
 <a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>ethers::prelude::abigen;
 <span class="kw">use </span>ethers::types::{Address, Bytes, U256};
 <span class="kw">use </span>ethers::utils::keccak256;
 <span class="kw">use </span>mc_settlement::ethereum::convert_felt_to_u256;
+<span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_messages::{MessageL1ToL2, MessageL2ToL1};
 <span class="kw">use </span>mp_snos_output::SnosCodec;
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
@@ -271,16 +273,16 @@
     </span><span class="kw">pub fn </span>sn_goerli() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             <span class="comment">// See SN_OS_PROGRAM_HASH constant
-            </span>program_hash: StarkFelt::from(
+            </span>program_hash: StarkFelt::from(Felt252Wrapper::from(
                 FieldElement::from_hex_be(<span class="string">&quot;0x41fc2a467ef8649580631912517edcab7674173f1dbfa2e9b64fbcd82bc4d79&quot;</span>).unwrap(),
-            ),
+            )),
             <span class="comment">// Hash version:        SN_OS_CONFIG_HASH_VERSION (settlement)
             // Chain ID:            SN_GOERLI_CHAIN_ID (pallet config)
             // Fee token address:   0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 (genesis config)
-            </span>config_hash: StarkFelt::from(
+            </span>config_hash: StarkFelt::from(Felt252Wrapper::from(
                 FieldElement::from_hex_be(<span class="string">&quot;0x036f5e4ea4dd042801c8841e3db8e654124305da0f11824fc1db60c405dbb39f&quot;</span>)
                     .unwrap(),
-            ),
+            )),
             ..Default::default()
         }
     }

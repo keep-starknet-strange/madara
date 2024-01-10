@@ -577,12 +577,12 @@
 /// for details.
 </span><span class="kw">pub fn </span>calculate_event_hash&lt;H: HasherT&gt;(event: <span class="kw-2">&amp;</span>Event) -&gt; FieldElement {
     <span class="kw">let </span>keys_hash = H::compute_hash_on_elements(
-        <span class="kw-2">&amp;</span>event.content.keys.iter().map(|key| FieldElement::from(key.<span class="number">0</span>)).collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
+        <span class="kw-2">&amp;</span>event.content.keys.iter().map(|key| Felt252Wrapper::from(key.<span class="number">0</span>).into()).collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
     );
     <span class="kw">let </span>data_hash = H::compute_hash_on_elements(
-        <span class="kw-2">&amp;</span>event.content.data.<span class="number">0</span>.iter().map(|data| FieldElement::from(<span class="kw-2">*</span>data)).collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
+        <span class="kw-2">&amp;</span>event.content.data.<span class="number">0</span>.iter().map(|data| Felt252Wrapper::from(<span class="kw-2">*</span>data).into()).collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
     );
-    <span class="kw">let </span>from_address = FieldElement::from(event.from_address.<span class="number">0.0</span>);
+    <span class="kw">let </span>from_address = Felt252Wrapper::from(event.from_address.<span class="number">0.0</span>).into();
     H::compute_hash_on_elements(<span class="kw-2">&amp;</span>[from_address, keys_hash, data_hash])
 }
 

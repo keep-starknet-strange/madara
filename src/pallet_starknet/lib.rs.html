@@ -1229,6 +1229,18 @@
 <a href="#1229" id="1229">1229</a>
 <a href="#1230" id="1230">1230</a>
 <a href="#1231" id="1231">1231</a>
+<a href="#1232" id="1232">1232</a>
+<a href="#1233" id="1233">1233</a>
+<a href="#1234" id="1234">1234</a>
+<a href="#1235" id="1235">1235</a>
+<a href="#1236" id="1236">1236</a>
+<a href="#1237" id="1237">1237</a>
+<a href="#1238" id="1238">1238</a>
+<a href="#1239" id="1239">1239</a>
+<a href="#1240" id="1240">1240</a>
+<a href="#1241" id="1241">1241</a>
+<a href="#1242" id="1242">1242</a>
+<a href="#1243" id="1243">1243</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1310,7 +1322,7 @@
 <span class="kw">use </span>frame_system::pallet_prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>mp_block::{Block <span class="kw">as </span>StarknetBlock, Header <span class="kw">as </span>StarknetHeader};
 <span class="kw">use </span>mp_digest_log::MADARA_ENGINE_ID;
-<span class="kw">use </span>mp_fee::INITIAL_GAS;
+<span class="kw">use </span>mp_fee::{ResourcePrice, INITIAL_GAS};
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_hashers::HasherT;
 <span class="kw">use </span>mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
@@ -1318,6 +1330,7 @@
     DeclareTransactionTrace, DeployAccountTransactionTrace, FeeEstimate, FunctionInvocation, InvokeTransactionTrace,
     SimulatedTransaction, SimulationFlags, TransactionTrace,
 };
+<span class="kw">use </span>mp_state::rpc::StateDiff;
 <span class="kw">use </span>mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 <span class="kw">use </span>mp_transactions::execution::Execute;
 <span class="kw">use </span>mp_transactions::{
@@ -2187,6 +2200,9 @@
         <span class="kw">let </span>protocol_version = T::ProtocolVersion::get();
         <span class="kw">let </span>extra_data = <span class="prelude-val">None</span>;
 
+        <span class="comment">// TODO: Compute l1_gas_price correctly
+        </span><span class="kw">let </span>l1_gas_price = ResourcePrice::default();
+
         <span class="kw">let </span>block = StarknetBlock::new(
             StarknetHeader::new(
                 parent_block_hash.into(),
@@ -2199,6 +2215,7 @@
                 events.len() <span class="kw">as </span>u128,
                 event_commitment.into(),
                 protocol_version,
+                l1_gas_price,
                 extra_data,
             ),
             transactions,
@@ -2376,6 +2393,7 @@
                             <span class="macro">log::error!</span>(<span class="string">&quot;Failed to convert fee transfer call info to function invocation: {}&quot;</span>, err);
                             Error::&lt;T&gt;::TransactionExecutionFailed
                         })<span class="question-mark">?</span>;
+
                     <span class="kw">let </span>transaction_trace = <span class="kw">match </span>tx {
                         UserTransaction::Invoke(<span class="kw">_</span>) =&gt; TransactionTrace::Invoke(InvokeTransactionTrace {
                             validate_invocation,
@@ -2387,10 +2405,14 @@
                                 tx_exec_info.revert_error.as_ref(),
                             )<span class="question-mark">?</span>,
                             fee_transfer_invocation,
+                            <span class="comment">// TODO(#1291): Compute state diff correctly
+                            </span>state_diff: <span class="prelude-val">Some</span>(StateDiff::default()),
                         }),
                         UserTransaction::Declare(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; TransactionTrace::Declare(DeclareTransactionTrace {
                             validate_invocation,
                             fee_transfer_invocation,
+                            <span class="comment">// TODO(#1291): Compute state diff correctly
+                            </span>state_diff: <span class="prelude-val">Some</span>(StateDiff::default()),
                         }),
                         UserTransaction::DeployAccount(<span class="kw">_</span>) =&gt; {
                             TransactionTrace::DeployAccount(DeployAccountTransactionTrace {
@@ -2403,6 +2425,8 @@
                                     .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TransactionExecutionFailed)<span class="question-mark">?</span>,
 
                                 fee_transfer_invocation,
+                                <span class="comment">// TODO(#1291): Compute state diff correctly
+                                </span>state_diff: <span class="prelude-val">Some</span>(StateDiff::default()),
                             })
                         }
                     };
@@ -2416,14 +2440,14 @@
                     results.push(SimulatedTransaction {
                         transaction_trace,
                         fee_estimation: FeeEstimate { gas_consumed, gas_price, overall_fee },
-                    })
+                    });
                 }
-                <span class="prelude-val">Err</span>(e) =&gt; {
-                    <span class="macro">log::error!</span>(<span class="string">&quot;Failed to simulate transactions: {:?}, error: {:?}&quot;</span>, tx, e);
+                <span class="prelude-val">Err</span>(_e) =&gt; {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed.into());
                 }
             }
         }
+
         <span class="prelude-val">Ok</span>(results)
     }
 
