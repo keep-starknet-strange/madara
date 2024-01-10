@@ -205,10 +205,11 @@ pub async fn update_state<B: BlockT, H: HasherT>(
     da_client: Arc<dyn DaClient + Send + Sync>,
     block_da_data: BlockDAData,
 ) -> Result<(), anyhow::Error> {
+    let block_hash = block_da_data.block_hash.clone();
     // store the state diff
     madara_backend
         .da()
-        .store_state_diff(&block_da_data.block_hash, state_diff_to_calldata(block_da_data.clone()))
+        .store_state_diff(&block_hash, state_diff_to_calldata(block_da_data))
         .map_err(|e| anyhow!("{e}"))?;
 
     // Query last written state
@@ -222,11 +223,11 @@ pub async fn update_state<B: BlockT, H: HasherT>(
             // Write the publish state diff of last_proved + 1
             log::info!("validity da mode not implemented");
         }
-        DaMode::Sovereign => match madara_backend.da().state_diff(&block_da_data.block_hash) {
+        DaMode::Sovereign => match madara_backend.da().state_diff(&block_hash) {
             Ok(state_diff) => {
                 da_client.publish_state_diff(state_diff).await.map_err(|e| anyhow!("DA PUBLISH ERROR: {e}"))?;
             }
-            Err(e) => Err(anyhow!("could not pull state diff for block {}: {}", block_da_data.block_hash, e))?,
+            Err(e) => Err(anyhow!("could not pull state diff for block {}: {}", block_hash, e))?,
         },
         DaMode::Volition => log::info!("volition da mode not implemented"),
     };
