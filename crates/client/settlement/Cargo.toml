@@ -34,6 +34,7 @@ sp-runtime = { workspace = true, default-features = true }
 mc-data-availability = { workspace = true, default-features = true }
 mp-block = { workspace = true, default-features = true }
 mp-digest-log = { workspace = true, features = ["std"] }
+mp-felt = { workspace = true, default-features = true }
 mp-hashers = { workspace = true, default-features = true }
 mp-messages = { workspace = true, default-features = true }
 mp-snos-output = { workspace = true, default-features = true }

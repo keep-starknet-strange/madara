@@ -1,6 +1,7 @@
 use alloc::sync::Arc;
 
 use blockifier::block_context::BlockContext;
+use mp_fee::ResourcePrice;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use sp_core::U256;
@@ -35,6 +36,8 @@ pub struct Header {
     pub event_commitment: StarkHash,
     /// The version of the Starknet protocol used when creating this block
     pub protocol_version: u8,
+    /// l1 gas price for this block
+    pub l1_gas_price: ResourcePrice,
     /// Extraneous data that might be useful for running transactions
     pub extra_data: Option<U256>,
 }
@@ -54,6 +57,7 @@ impl Header {
         event_count: u128,
         event_commitment: StarkHash,
         protocol_version: u8,
+        l1_gas_price: ResourcePrice,
         extra_data: Option<U256>,
     ) -> Self {
         Self {
@@ -67,6 +71,7 @@ impl Header {
             event_count,
             event_commitment,
             protocol_version,
+            l1_gas_price,
             extra_data,
         }
     }

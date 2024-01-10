@@ -25,10 +25,13 @@ use blockifier::transaction::transactions::{
 use mp_fee::{calculate_tx_fee, charge_fee, compute_transaction_resources};
 use mp_felt::Felt252Wrapper;
 use mp_state::StateChanges;
+use parity_scale_codec::{Decode, Encode};
+use serde::{Deserialize, Serialize};
 use starknet_api::api_core::{ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, Fee, TransactionSignature, TransactionVersion};
+use starknet_core::types::ExecutionResources as CoreExecutionResources;
 
 use super::SIMULATE_TX_VERSION_OFFSET;
 
@@ -88,6 +91,47 @@ pub trait SimulateTxVersionOffset {
 impl SimulateTxVersionOffset for TransactionVersion {
     fn apply_simulate_tx_version_offset(&self) -> TransactionVersion {
         Felt252Wrapper(Felt252Wrapper::from(self.0).0 + SIMULATE_TX_VERSION_OFFSET).into()
+    }
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Encode, Decode)]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "no_unknown_fields", serde(deny_unknown_fields))]
+pub struct StarknetRPCExecutionResources {
+    /// The number of cairo steps used
+    pub steps: u64,
+    /// The number of unused memory cells (each cell is roughly equivalent to a step)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub memory_holes: Option<u64>,
+    /// The number of range_check builtin instances
+    pub range_check_builtin_applications: u64,
+    /// The number of pedersen builtin instances
+    pub pedersen_builtin_applications: u64,
+    /// The number of poseidon builtin instances
+    pub poseidon_builtin_applications: u64,
+    /// The number of ec_op builtin instances
+    pub ec_op_builtin_applications: u64,
+    /// The number of ecdsa builtin instances
+    pub ecdsa_builtin_applications: u64,
+    /// The number of bitwise builtin instances
+    pub bitwise_builtin_applications: u64,
+    /// The number of keccak builtin instances
+    pub keccak_builtin_applications: u64,
+}
+
+impl From<StarknetRPCExecutionResources> for CoreExecutionResources {
+    fn from(resources: StarknetRPCExecutionResources) -> Self {
+        CoreExecutionResources {
+            steps: resources.steps,
+            memory_holes: resources.memory_holes,
+            range_check_builtin_applications: resources.range_check_builtin_applications,
+            pedersen_builtin_applications: resources.pedersen_builtin_applications,
+            poseidon_builtin_applications: resources.poseidon_builtin_applications,
+            ec_op_builtin_applications: resources.ec_op_builtin_applications,
+            ecdsa_builtin_applications: resources.ecdsa_builtin_applications,
+            bitwise_builtin_applications: resources.bitwise_builtin_applications,
+            keccak_builtin_applications: resources.keccak_builtin_applications,
+        }
     }
 }
 
