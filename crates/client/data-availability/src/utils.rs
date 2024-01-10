@@ -10,16 +10,15 @@ const NONCE_BASE: &str = "0x10000000000000000"; // 2 ^ 64
 /// DA calldata encoding:
 /// - https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/on-chain-data
 pub fn state_diff_to_calldata(mut block_da_data: BlockDAData) -> Vec<U256> {
-    let mut calldata: Vec<U256> = Vec::new();
-
-    // pushing the headers
-    calldata.push(U256::from_big_endian(&block_da_data.previous_state_root.0)); // prev merkle root
-    calldata.push(U256::from_big_endian(&block_da_data.new_state_root.0)); // new merkle root
-    calldata.push(U256::from(block_da_data.block_number)); // block number
-    calldata.push(U256::from_big_endian(&block_da_data.block_hash.0.0)); // block hash
-    calldata.push(U256::from_big_endian(&block_da_data.config_hash.0)); // config hash
-
-    calldata.push(U256::from(block_da_data.num_addr_accessed));
+    // pushing the headers and num_addr_accessed
+    let mut calldata: Vec<U256> = vec![
+        U256::from_big_endian(&block_da_data.previous_state_root.0), // prev merkle root
+        U256::from_big_endian(&block_da_data.new_state_root.0),      // new merkle root
+        U256::from(block_da_data.block_number),                      // block number
+        U256::from_big_endian(&block_da_data.block_hash.0.0),        // block hash
+        U256::from_big_endian(&block_da_data.config_hash.0),         // config hash,
+        U256::from(block_da_data.num_addr_accessed),                 // num_addr_accessed
+    ];
 
     // Loop over storage diffs
     for (addr, writes) in block_da_data.state_diff.storage_diffs {
