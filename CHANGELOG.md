@@ -2,6 +2,7 @@
 
 ## Next release
 
+- chore: feature flags for avail and celestia DA
 - feat(rpc): added support for v0.5.1 JSON-RPC specs
 - feat(rpc): added ordered messages/events in trace fields
 - feat(rpc): support for starknet.rs v0.5.1 version
