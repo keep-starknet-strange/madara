@@ -40,6 +40,7 @@ fn messages_to_l1_are_stored() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: u128::MAX,
             signature: vec![],
+            offset_version: false,
         };
 
         assert_ok!(Starknet::declare(RuntimeOrigin::none(), declare_tx.into(), contract_class));
@@ -61,6 +62,7 @@ fn messages_to_l1_are_stored() {
             nonce: Felt252Wrapper::ONE,
             max_fee: u128::MAX,
             signature: vec![],
+            offset_version: false,
         };
 
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), deploy_tx.into()));
@@ -78,6 +80,7 @@ fn messages_to_l1_are_stored() {
             nonce: Felt252Wrapper::TWO,
             max_fee: u128::MAX,
             signature: vec![],
+            offset_version: false,
         };
 
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), invoke_tx.clone().into()));

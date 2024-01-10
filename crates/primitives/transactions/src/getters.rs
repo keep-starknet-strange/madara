@@ -63,6 +63,14 @@ impl UserTransaction {
             UserTransaction::Invoke(tx) => tx.version(),
         }
     }
+
+    pub fn offset_version(&self) -> bool {
+        match self {
+            UserTransaction::Declare(tx, _) => tx.offset_version(),
+            UserTransaction::DeployAccount(tx) => tx.offset_version(),
+            UserTransaction::Invoke(tx) => tx.offset_version(),
+        }
+    }
 }
 
 impl DeclareTransaction {
@@ -121,6 +129,15 @@ impl DeclareTransaction {
             DeclareTransaction::V2(tx) => Some(&tx.compiled_class_hash),
         }
     }
+
+    pub fn offset_version(&self) -> bool {
+        match self {
+            // we don't accept V0 txs from the RPC
+            DeclareTransaction::V0(_) => false,
+            DeclareTransaction::V1(tx) => tx.offset_version,
+            DeclareTransaction::V2(tx) => tx.offset_version,
+        }
+    }
 }
 
 impl DeployAccountTransaction {
@@ -150,6 +167,10 @@ impl DeployAccountTransaction {
 
     pub fn class_hash(&self) -> &Felt252Wrapper {
         &self.class_hash
+    }
+
+    pub fn offset_version(&self) -> bool {
+        self.offset_version
     }
 }
 
@@ -193,6 +214,14 @@ impl InvokeTransaction {
         match self {
             InvokeTransaction::V0(_) => 0,
             InvokeTransaction::V1(_) => 1,
+        }
+    }
+
+    pub fn offset_version(&self) -> bool {
+        match self {
+            // we don't accept V0 txs from the RPC
+            InvokeTransaction::V0(_) => false,
+            InvokeTransaction::V1(tx) => tx.offset_version,
         }
     }
 }

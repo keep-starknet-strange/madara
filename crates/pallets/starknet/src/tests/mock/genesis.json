@@ -157,7 +157,8 @@
       "0x02356b628d108863baf8644c945d97bad70190af5957031f4852d00d0f690a77",
       "0x03bcec8de953ba8e305e2ce2db52c91504aefa7c56c91211873b4d6ba36e8c32",
       "No validation account",
-      null
+      null,
+      ""
     ]
   ],
   "storage": [

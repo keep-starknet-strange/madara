@@ -17,6 +17,7 @@ impl RuntimeExecutionConfigBuilder {
             disable_validation: false,
             disable_nonce_validation: T::DisableNonceValidation::get(),
             disable_transaction_fee: T::DisableTransactionFee::get(),
+            offset_version: false,
         })
     }
     #[must_use]
@@ -28,6 +29,12 @@ impl RuntimeExecutionConfigBuilder {
     pub fn with_simulation_mode(mut self, simulation_flags: &SimulationFlags) -> Self {
         self.0.disable_fee_charge = simulation_flags.skip_fee_charge;
         self.0.disable_validation = simulation_flags.skip_validate;
+        self
+    }
+
+    #[must_use]
+    pub fn with_offset_version(mut self) -> Self {
+        self.0.offset_version = true;
         self
     }
 
