@@ -3,18 +3,17 @@
 #[doc(hidden)]
 pub extern crate alloc;
 
-use alloc::collections::BTreeMap;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use blockifier::execution::entry_point::{CallInfo, OrderedL2ToL1Message};
+use blockifier::execution::entry_point::CallInfo;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionResult;
 use mp_felt::{Felt252Wrapper, UfeHex};
-use mp_messages::MessageL2ToL1;
-use starknet_api::api_core::{ContractAddress, PatriciaKey};
+use mp_state::rpc::StateDiff;
+use mp_transactions::execution::StarknetRPCExecutionResources;
+use starknet_api::api_core::EthAddress;
 use starknet_api::deprecated_contract_class::EntryPointType;
-use starknet_api::transaction::EventContent;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
@@ -70,11 +69,15 @@ pub struct SimulatedTransaction {
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-#[serde(untagged)]
+#[serde(tag = "type")]
 pub enum TransactionTrace {
+    #[serde(rename = "INVOKE")]
     Invoke(InvokeTransactionTrace),
+    #[serde(rename = "DEPLOY_ACCOUNT")]
     DeployAccount(DeployAccountTransactionTrace),
+    #[serde(rename = "L1_HANDLER")]
     L1Handler(L1HandlerTransactionTrace),
+    #[serde(rename = "DECLARE")]
     Declare(DeclareTransactionTrace),
 }
 
@@ -101,6 +104,9 @@ pub struct DeclareTransactionTrace {
     pub validate_invocation: Option<FunctionInvocation>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fee_transfer_invocation: Option<FunctionInvocation>,
+    /// The state diffs induced by the transaction
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state_diff: Option<StateDiff>,
 }
 
 #[derive(Debug, Clone)]
@@ -113,6 +119,9 @@ pub struct InvokeTransactionTrace {
     pub execute_invocation: ExecuteInvocation,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fee_transfer_invocation: Option<FunctionInvocation>,
+    /// The state diffs induced by the transaction
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state_diff: Option<StateDiff>,
 }
 
 #[derive(Debug, Clone)]
@@ -127,6 +136,9 @@ pub struct DeployAccountTransactionTrace {
     pub constructor_invocation: FunctionInvocation,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fee_transfer_invocation: Option<FunctionInvocation>,
+    /// The state diffs induced by the transaction
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state_diff: Option<StateDiff>,
 }
 
 #[derive(Debug, Clone)]
@@ -137,6 +149,62 @@ pub struct L1HandlerTransactionTrace {
     /// The trace of the __execute__ call or constructor call, depending on the transaction type
     /// (none for declare transactions)
     pub function_invocation: FunctionInvocation,
+    /// The state diffs induced by the transaction
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state_diff: Option<StateDiff>,
+}
+
+/// Orderedevent.
+///
+/// An event alongside its order within the transaction.
+#[serde_with::serde_as]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct OrderedEvent {
+    /// The order of the event within the transaction
+    pub order: u64,
+    /// Keys
+    #[serde_as(as = "Vec<UfeHex>")]
+    pub keys: Vec<Felt252Wrapper>,
+    /// Data
+    #[serde_as(as = "Vec<UfeHex>")]
+    pub data: Vec<Felt252Wrapper>,
+}
+
+#[serde_with::serde_as]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct MessageToL1 {
+    /// The address of the L2 contract sending the message
+    #[serde_as(as = "UfeHex")]
+    pub from_address: Felt252Wrapper,
+    /// The target L1 address the message is sent to
+    pub to_address: EthAddress,
+    /// The payload of the message
+    #[serde_as(as = "Vec<UfeHex>")]
+    pub payload: Vec<Felt252Wrapper>,
+}
+
+#[serde_with::serde_as]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct OrderedMessage {
+    /// The order of the message within the transaction
+    pub order: u64,
+    /// The address of the L2 contract sending the message
+    #[serde_as(as = "UfeHex")]
+    pub from_address: Felt252Wrapper,
+    /// The target L1 address the message is sent to
+    pub to_address: EthAddress,
+    /// The payload of the message
+    #[serde_as(as = "Vec<UfeHex>")]
+    pub payload: Vec<Felt252Wrapper>,
 }
 
 #[serde_with::serde_as]
@@ -168,16 +236,19 @@ pub struct FunctionInvocation {
     /// The calls made by this invocation
     pub calls: Vec<FunctionInvocation>,
     /// The events emitted in this invocation
-    pub events: Vec<EventContent>,
+    pub events: Vec<OrderedEvent>,
     /// The messages sent by this invocation to L1
-    pub messages: Vec<MessageL2ToL1>,
+    pub messages: Vec<OrderedMessage>,
+    /// Resources consumed by the internal call
+    pub execution_resources: StarknetRPCExecutionResources,
 }
 
 impl TryFrom<&CallInfo> for FunctionInvocation {
     type Error = TransactionExecutionError;
 
     fn try_from(call_info: &CallInfo) -> TransactionExecutionResult<FunctionInvocation> {
-        let messages = ordered_l2_to_l1_messages(call_info);
+        let messages = ordered_messages(call_info);
+        let events = events_to_ordered_events(&call_info.execution.events);
 
         let inner_calls = call_info
             .inner_calls
@@ -197,29 +268,52 @@ impl TryFrom<&CallInfo> for FunctionInvocation {
             call_type: call_info.call.call_type.into(),
             result: call_info.execution.retdata.0.iter().map(|x| (*x).into()).collect(),
             calls: inner_calls,
-            events: call_info.execution.events.iter().map(|event| event.event.clone()).collect(),
+            events,
             messages,
+            execution_resources: StarknetRPCExecutionResources::default(),
         })
     }
 }
 
-fn ordered_l2_to_l1_messages(call_info: &CallInfo) -> Vec<MessageL2ToL1> {
-    let mut messages = BTreeMap::new();
+fn ordered_messages(call_info: &CallInfo) -> Vec<OrderedMessage> {
+    let mut messages = Vec::new();
 
-    for call in call_info.into_iter() {
-        for OrderedL2ToL1Message { order, message } in &call.execution.l2_to_l1_messages {
-            messages.insert(
-                order,
-                MessageL2ToL1 {
-                    payload: message.payload.0.to_vec(),
-                    to_address: message.to_address,
-                    from_address: ContractAddress(PatriciaKey(call.call.storage_address.0.0)),
-                },
-            );
-        }
+    for (index, message) in call_info.execution.l2_to_l1_messages.iter().enumerate() {
+        messages.push(OrderedMessage {
+            order: index as u64,
+            payload: message.message.payload.0.iter().map(|x| (*x).into()).collect(),
+            to_address: message.message.to_address,
+            from_address: call_info.call.storage_address.0.0.into(),
+        });
     }
 
-    messages.into_values().collect()
+    messages
+}
+
+fn events_to_ordered_events(ordered_events: &[blockifier::execution::entry_point::OrderedEvent]) -> Vec<OrderedEvent> {
+    ordered_events
+        .iter()
+        .map(|event| OrderedEvent {
+            order: event.order as u64, // Convert usize to u64
+            keys: event
+                .event
+                .keys
+                .iter()
+                .map(|key| {
+                    Felt252Wrapper::from(key.0) // Convert StarkFelt to Felt252Wrapper
+                })
+                .collect(),
+            data: event
+                .event
+                .data
+                .0
+                .iter()
+                .map(|data_item| {
+                    Felt252Wrapper::from(*data_item) // Convert StarkFelt to Felt252Wrapper
+                })
+                .collect(),
+        })
+        .collect()
 }
 
 #[derive(Debug, Clone)]
@@ -250,6 +344,8 @@ pub enum CallType {
     Call,
     #[serde(rename = "LIBRARY_CALL")]
     LibraryCall,
+    #[serde(rename = "DELEGATE")]
+    Delegate,
 }
 
 impl From<blockifier::execution::entry_point::CallType> for CallType {

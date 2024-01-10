@@ -1,3 +1,4 @@
+//! Starknet state primitives.
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use blockifier::execution::contract_class::ContractClass;
@@ -8,6 +9,8 @@ use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonc
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::stdlib::collections::HashMap;
+
+pub mod rpc;
 
 type ContractClassMapping = HashMap<ClassHash, ContractClass>;
 

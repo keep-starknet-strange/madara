@@ -3,6 +3,7 @@ use std::sync::Arc;
 use futures::StreamExt;
 use futures_timer::Delay;
 use mp_block::Block as StarknetBlock;
+use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_messages::{MessageL1ToL2, MessageL2ToL1};
 use mp_snos_output::StarknetOsOutput;
