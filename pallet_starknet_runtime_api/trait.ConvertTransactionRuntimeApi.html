@@ -3,12 +3,12 @@
     fn <a href="#method.convert_transaction" class="fn">convert_transaction</a>(
         &amp;self,
         __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
-        transaction: <a class="enum" href="../mp_transactions/enum.UserTransaction.html" title="enum mp_transactions::UserTransaction">UserTransaction</a>
+        transaction: UserTransaction
     ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;&lt;Block as BlockT&gt;::Extrinsic, ApiError&gt; { ... }
 <span class="item-spacer"></span>    fn <a href="#method.convert_l1_transaction" class="fn">convert_l1_transaction</a>(
         &amp;self,
         __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
-        transaction: <a class="struct" href="../mp_transactions/struct.HandleL1MessageTransaction.html" title="struct mp_transactions::HandleL1MessageTransaction">HandleL1MessageTransaction</a>,
+        transaction: HandleL1MessageTransaction,
         fee: Fee
     ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;&lt;Block as BlockT&gt;::Extrinsic, ApiError&gt; { ... }
 <span class="item-spacer"></span>    fn <a href="#method.convert_error" class="fn">convert_error</a>(
@@ -19,12 +19,12 @@
 }</code></pre><h2 id="provided-methods" class="small-section-header">Provided Methods<a href="#provided-methods" class="anchor">§</a></h2><div class="methods"><details class="toggle method-toggle" open><summary><section id="method.convert_transaction" class="method"><a class="src rightside" href="../src/pallet_starknet_runtime_api/lib.rs.html#36-97">source</a><h4 class="code-header">fn <a href="#method.convert_transaction" class="fn">convert_transaction</a>(
     &amp;self,
     __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
-    transaction: <a class="enum" href="../mp_transactions/enum.UserTransaction.html" title="enum mp_transactions::UserTransaction">UserTransaction</a>
+    transaction: UserTransaction
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;&lt;Block as BlockT&gt;::Extrinsic, ApiError&gt;</h4></section></summary><div class="docblock"><p>Converts the transaction to an UncheckedExtrinsic for submission to the pool.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.convert_l1_transaction" class="method"><a class="src rightside" href="../src/pallet_starknet_runtime_api/lib.rs.html#36-97">source</a><h4 class="code-header">fn <a href="#method.convert_l1_transaction" class="fn">convert_l1_transaction</a>(
     &amp;self,
     __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
-    transaction: <a class="struct" href="../mp_transactions/struct.HandleL1MessageTransaction.html" title="struct mp_transactions::HandleL1MessageTransaction">HandleL1MessageTransaction</a>,
+    transaction: HandleL1MessageTransaction,
     fee: Fee
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;&lt;Block as BlockT&gt;::Extrinsic, ApiError&gt;</h4></section></summary><div class="docblock"><p>Converts the L1 Message transaction to an UncheckedExtrinsic for submission to the pool.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.convert_error" class="method"><a class="src rightside" href="../src/pallet_starknet_runtime_api/lib.rs.html#36-97">source</a><h4 class="code-header">fn <a href="#method.convert_error" class="fn">convert_error</a>(
