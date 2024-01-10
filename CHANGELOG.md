@@ -34,7 +34,7 @@
 - feat(settlement): e2e test with Madara node settling on Ethereum contract
 - refactor: use `map` in `estimate_fee` to stop computation on error
 - fix: `tempdir` crate has been deprecated; use `tempfile` instead
-- removed benchmarking folder and traces of CI pipeline
+- refactor: removed benchmarking folder and traces of CI pipeline
 
 ## v0.6.0
 
