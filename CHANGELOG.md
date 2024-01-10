@@ -2,6 +2,7 @@
 
 ## Next release
 
+- chore: add headers to da calldata, fix eth da in sovereign mode
 - feat: add sierra to casm class hash mapping to genesis assets
 - chore: remove ArgentMulticall from genesis assets
 - feat: remove `seq_addr_updated` from `GenesisData`
