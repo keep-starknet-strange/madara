@@ -857,7 +857,7 @@ where
             block_hash: block_hash.into(),
             parent_hash: Felt252Wrapper::from(parent_blockhash).into(),
             block_number: starknet_block.header().block_number,
-            new_root: Felt252Wrapper::from(starknet_block.header().global_state_root).into(),
+            new_root: Felt252Wrapper::from(self.backend.temporary_global_state_root_getter()).into(),
             timestamp: starknet_block.header().block_timestamp,
             sequencer_address: Felt252Wrapper::from(starknet_block.header().sequencer_address).into(),
             l1_gas_price: starknet_block.header().l1_gas_price.into(),
@@ -1097,7 +1097,7 @@ where
             block_hash: block_hash.into(),
             parent_hash: Felt252Wrapper::from(starknet_block.header().parent_block_hash).into(),
             block_number: starknet_block.header().block_number,
-            new_root: Felt252Wrapper::from(starknet_block.header().global_state_root).into(),
+            new_root: Felt252Wrapper::from(self.backend.temporary_global_state_root_getter()).into(),
             timestamp: starknet_block.header().block_timestamp,
             sequencer_address: Felt252Wrapper::from(starknet_block.header().sequencer_address).into(),
             transactions,
@@ -1144,14 +1144,14 @@ where
 
             let parent_block =
                 get_block_by_block_hash(self.client.as_ref(), substrate_parent_block_hash).unwrap_or_default();
-            Felt252Wrapper::from(parent_block.header().global_state_root).into()
+            Felt252Wrapper::from(self.backend.temporary_global_state_root_getter()).into()
         } else {
             FieldElement::default()
         };
 
         Ok(StateUpdate {
             block_hash: starknet_block.header().hash::<H>().into(),
-            new_root: Felt252Wrapper::from(starknet_block.header().global_state_root).into(),
+            new_root: Felt252Wrapper::from(self.backend.temporary_global_state_root_getter()).into(),
             old_root,
             state_diff: StateDiff {
                 storage_diffs: Vec::new(),

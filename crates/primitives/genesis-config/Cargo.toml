@@ -17,7 +17,7 @@ blockifier = { workspace = true, features = [
 ] }
 #
 # third party
-derive_more = { workspace = true }
+derive_more = { workspace = true, features = ["constructor"] }
 hex = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

@@ -2,6 +2,9 @@
 
 ## Next release
 
+- chore(primitives/commitment): remove crate
+- chore(primitives/block/header): remove starknet-trie dependent fields
+- refacto(primitives/db): add a temporary way to get a fake global state root
 - feat(rpc): added support for v0.5.1 JSON-RPC specs
 - feat(rpc): added ordered messages/events in trace fields
 - feat(rpc): support for starknet.rs v0.5.1 version
