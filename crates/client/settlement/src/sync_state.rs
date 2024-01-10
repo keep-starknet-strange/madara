@@ -180,14 +180,7 @@ where
             return Err(Error::ProgramHashMismatch { expected: program_hash, actual: starknet_spec.program_hash });
         }
 
-        let chain_id = substrate_client.runtime_api().chain_id(substrate_hash)?;
-        let fee_token_address = substrate_client.runtime_api().fee_token_address(substrate_hash)?;
-
-        let config_hash = pedersen_hash_array(&[
-            StarkFelt::from(FieldElement::from_byte_slice_be(SN_OS_CONFIG_HASH_VERSION.as_bytes()).unwrap()),
-            chain_id.into(),
-            fee_token_address.0.0,
-        ]);
+        let config_hash = substrate_client.runtime_api().config_hash(substrate_hash)?;
 
         if starknet_spec.config_hash != config_hash {
             return Err(Error::ConfigHashMismatch { expected: config_hash, actual: starknet_spec.config_hash });

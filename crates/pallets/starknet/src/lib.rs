@@ -98,7 +98,7 @@ use sp_runtime::DigestItem;
 use starknet_api::api_core::{ChainId, CompiledClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::deprecated_contract_class::EntryPointType;
-use starknet_api::hash::StarkFelt;
+use starknet_api::hash::{pedersen_hash_array, StarkFelt, StarkHash};
 use starknet_api::transaction::{MessageToL1, TransactionHash};
 use starknet_crypto::FieldElement;
 use transaction_validation::TxPriorityInfo;
@@ -112,6 +112,8 @@ pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
 pub const ETHEREUM_EXECUTION_RPC: &[u8] = b"starknet::ETHEREUM_EXECUTION_RPC";
 pub const ETHEREUM_CONSENSUS_RPC: &[u8] = b"starknet::ETHEREUM_CONSENSUS_RPC";
+
+pub const SN_OS_CONFIG_HASH_VERSION: &str = "StarknetOsConfig1";
 
 // syntactic sugar for logging.
 #[macro_export]
@@ -1223,6 +1225,14 @@ impl<T: Config> Pallet<T> {
 
     pub fn program_hash() -> Felt252Wrapper {
         T::ProgramHash::get()
+    }
+
+    pub fn config_hash() -> StarkHash {
+        pedersen_hash_array(&[
+            StarkFelt::from(FieldElement::from_byte_slice_be(SN_OS_CONFIG_HASH_VERSION.as_bytes()).unwrap()),
+            T::ChainId::get().into(),
+            Self::fee_token_address().0.0.into(),
+        ])
     }
 
     pub fn is_transaction_fee_disabled() -> bool {

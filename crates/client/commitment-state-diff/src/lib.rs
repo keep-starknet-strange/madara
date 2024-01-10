@@ -1,5 +1,7 @@
+use std::hash::Hash;
 use std::marker::PhantomData;
 use std::pin::Pin;
+use std::ptr::hash;
 use std::sync::Arc;
 use std::task::Poll;
 
@@ -16,11 +18,20 @@ use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::{Block as BlockT, Header};
 use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce, PatriciaKey};
 use starknet_api::block::BlockHash;
-use starknet_api::hash::StarkFelt;
+use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::state::{StorageKey as StarknetStorageKey, ThinStateDiff};
 use thiserror::Error;
 
-pub struct BlockDAData(pub BlockHash, pub ThinStateDiff, pub usize);
+#[derive(Clone)]
+pub struct BlockDAData {
+    pub block_hash: BlockHash,
+    pub state_diff: ThinStateDiff,
+    pub num_addr_accessed: usize,
+    pub block_number: u64,
+    pub config_hash: StarkHash,
+    pub new_state_root: StarkHash,
+    pub previous_state_root: StarkHash,
+}
 
 pub struct CommitmentStateDiffWorker<B: BlockT, C, H> {
     client: Arc<C>,
@@ -119,6 +130,8 @@ enum BuildCommitmentStateDiffError {
     BlockNotFound,
     #[error("digest log not found")]
     DigestLogNotFound(#[from] mp_digest_log::FindLogError),
+    #[error("failed to get config hash")]
+    FailedToGetConfigHash(#[from] sp_api::ApiError),
 }
 
 fn build_commitment_state_diff<B: BlockT, C, H>(
@@ -131,13 +144,6 @@ where
     C: HeaderBackend<B>,
     H: HasherT,
 {
-    let starknet_block_hash = {
-        let header = client.header(storage_notification.block)?.ok_or(BuildCommitmentStateDiffError::BlockNotFound)?;
-        let digest = header.digest();
-        let block = mp_digest_log::find_starknet_block(digest)?;
-        block.header().hash::<H>().into()
-    };
-
     let mut accessed_addrs: IndexSet<ContractAddress> = IndexSet::new();
     let mut commitment_state_diff = ThinStateDiff {
         declared_classes: IndexMap::new(),
@@ -216,5 +222,30 @@ where
         }
     }
 
-    Ok(BlockDAData(starknet_block_hash, commitment_state_diff, accessed_addrs.len()))
+    let (current_block, parent_block) = {
+        let header = client.header(storage_notification.block)?.ok_or(BuildCommitmentStateDiffError::BlockNotFound)?;
+        let digest = header.digest();
+        let block = mp_digest_log::find_starknet_block(digest)?;
+
+        // This function is not triggered for the genesis block (block 0),
+        // so we don't need to handle and edge case of no parent block
+        let parent_hash = header.parent_hash();
+        let parent_header =
+            client.header(parent_hash.to_owned())?.ok_or(BuildCommitmentStateDiffError::BlockNotFound)?;
+        let parent_block = mp_digest_log::find_starknet_block(parent_header.digest())?;
+
+        (block, parent_block)
+    };
+
+    let config_hash = client.runtime_api().config_hash(storage_notification.block)?;
+
+    Ok(BlockDAData {
+        block_hash: current_block.header().hash::<H>().into(),
+        state_diff: commitment_state_diff,
+        num_addr_accessed: accessed_addrs.len(),
+        block_number: current_block.header().block_number,
+        config_hash,
+        new_state_root: current_block.header().global_state_root,
+        previous_state_root: parent_block.header().global_state_root,
+    })
 }
