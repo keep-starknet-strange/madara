@@ -26,7 +26,7 @@ pub fn get_storage_key(
     let storage_key_offset = H256::from_low_u64_be(storage_key_offset);
     let mut storage_key = get_storage_var_address(storage_name, keys).unwrap();
     storage_key += FieldElement::from_bytes_be(&storage_key_offset.to_fixed_bytes()).unwrap();
-    (*address, StorageKey(PatriciaKey(storage_key.into())))
+    (*address, StorageKey(PatriciaKey(Felt252Wrapper::from(storage_key).into())))
 }
 
 #[derive(Copy, Clone)]

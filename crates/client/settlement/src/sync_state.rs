@@ -3,6 +3,7 @@ use std::sync::Arc;
 use futures::StreamExt;
 use futures_timer::Delay;
 use mp_block::Block as StarknetBlock;
+use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_messages::{MessageL1ToL2, MessageL2ToL1};
 use mp_snos_output::StarknetOsOutput;
@@ -184,7 +185,9 @@ where
         let fee_token_address = substrate_client.runtime_api().fee_token_address(substrate_hash)?;
 
         let config_hash = pedersen_hash_array(&[
-            StarkFelt::from(FieldElement::from_byte_slice_be(SN_OS_CONFIG_HASH_VERSION.as_bytes()).unwrap()),
+            StarkFelt::from(Felt252Wrapper::from(
+                FieldElement::from_byte_slice_be(SN_OS_CONFIG_HASH_VERSION.as_bytes()).unwrap(),
+            )),
             chain_id.into(),
             fee_token_address.0.0,
         ]);

@@ -29,7 +29,6 @@ const SIMULATE_TX_VERSION_OFFSET: FieldElement =
 // pub mod utils;
 use mp_felt::Felt252Wrapper;
 
-// TODO(antiyro): remove this when released: https://github.com/xJonathanLEI/starknet-rs/blame/fec81d126c58ff3dff6cbfd4b9e714913298e54e/starknet-core/src/types/serde_impls.rs#L175
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TransactionStatus {
