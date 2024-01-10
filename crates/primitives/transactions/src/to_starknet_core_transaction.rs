@@ -36,6 +36,7 @@ pub fn to_starknet_core_tx(
                     nonce,
                     class_hash,
                     sender_address,
+                    ..
                 }) => starknet_core::types::DeclareTransaction::V1(starknet_core::types::DeclareTransactionV1 {
                     transaction_hash,
                     max_fee: max_fee.into(),
@@ -51,6 +52,7 @@ pub fn to_starknet_core_tx(
                     class_hash,
                     sender_address,
                     compiled_class_hash,
+                    ..
                 }) => starknet_core::types::DeclareTransaction::V2(starknet_core::types::DeclareTransactionV2 {
                     transaction_hash,
                     max_fee: max_fee.into(),
@@ -99,6 +101,7 @@ pub fn to_starknet_core_tx(
                     nonce,
                     sender_address,
                     calldata,
+                    ..
                 }) => starknet_core::types::InvokeTransaction::V1(starknet_core::types::InvokeTransactionV1 {
                     transaction_hash,
                     max_fee: max_fee.into(),

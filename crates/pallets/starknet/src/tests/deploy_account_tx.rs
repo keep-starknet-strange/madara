@@ -35,6 +35,7 @@ fn given_contract_run_deploy_account_tx_works() {
             contract_address_salt: salt,
             constructor_calldata: calldata.0.iter().map(|e| Felt252Wrapper::from(*e)).collect(),
             class_hash: account_class_hash.into(),
+            offset_version: false,
         };
 
         let address = deploy_tx.account_address().into();
@@ -76,6 +77,7 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
             contract_address_salt: *SALT,
             constructor_calldata: calldata.0.iter().map(|e| Felt252Wrapper::from(*e)).collect(),
             class_hash: account_class_hash.into(),
+            offset_version: false,
         };
 
         let address = deploy_tx.account_address().into();
@@ -104,6 +106,7 @@ fn given_contract_run_deploy_account_tx_undeclared_then_it_fails() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: u128::MAX,
             signature: vec![],
+            offset_version: false,
         };
 
         assert_err!(
@@ -146,6 +149,7 @@ fn given_contract_run_deploy_account_openzeppelin_tx_works() {
             contract_address_salt: *SALT,
             constructor_calldata: calldata.0.iter().map(|e| Felt252Wrapper::from(*e)).collect(),
             class_hash: account_class_hash.into(),
+            offset_version: false,
         };
 
         let chain_id = Starknet::chain_id();
@@ -176,6 +180,7 @@ fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_
             contract_address_salt: *SALT,
             constructor_calldata: calldata.0.iter().map(|e| Felt252Wrapper::from(*e)).collect(),
             class_hash: account_class_hash.into(),
+            offset_version: false,
         };
         deploy_tx.signature = vec![Felt252Wrapper::ONE, Felt252Wrapper::ONE];
 
@@ -202,6 +207,7 @@ fn given_contract_run_deploy_account_argent_tx_works() {
             contract_address_salt: *SALT,
             constructor_calldata: calldata.0.iter().map(|e| Felt252Wrapper::from(*e)).collect(),
             class_hash: account_class_hash.into(),
+            offset_version: false,
         };
 
         let chain_id = Starknet::chain_id();
@@ -232,6 +238,7 @@ fn given_contract_run_deploy_account_argent_with_incorrect_signature_then_it_fai
             contract_address_salt: *SALT,
             constructor_calldata: calldata.0.iter().map(|e| Felt252Wrapper::from(*e)).collect(),
             class_hash: account_class_hash.into(),
+            offset_version: false,
         };
 
         deploy_tx.signature = vec![Felt252Wrapper::ONE, Felt252Wrapper::ONE];
@@ -261,6 +268,7 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
             contract_address_salt: *SALT,
             constructor_calldata: calldata,
             class_hash: proxy_class_hash.into(),
+            offset_version: false,
         };
 
         let tx_hash = deploy_tx.compute_hash::<<MockRuntime as Config>::SystemHash>(Starknet::chain_id(), false);
@@ -293,6 +301,7 @@ fn given_contract_run_deploy_account_braavos_tx_works_whis_hardware_signer() {
             contract_address_salt: *SALT,
             constructor_calldata: calldata,
             class_hash: proxy_class_hash.into(),
+            offset_version: false,
         };
 
         let tx_hash = deploy_tx.compute_hash::<<MockRuntime as Config>::SystemHash>(Starknet::chain_id(), false);
@@ -341,6 +350,7 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
             nonce: Felt252Wrapper::ZERO,
             max_fee: u128::MAX,
             signature: [Felt252Wrapper::ZERO; 10].to_vec(),
+            offset_version: false,
         };
 
         let address = deploy_tx.account_address().into();
