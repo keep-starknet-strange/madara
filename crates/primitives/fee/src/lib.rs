@@ -99,6 +99,7 @@ pub fn charge_fee<S: State + StateChanges>(
     resources: &ResourcesMapping,
     disable_transaction_fee: bool,
     disable_fee_charge: bool,
+    is_query: bool,
 ) -> TransactionExecutionResult<(Fee, Option<CallInfo>)> {
     // disable_transaction_fee flag implies that transaction fees have
     // been disabled and so we return 0 as the fees
@@ -109,13 +110,10 @@ pub fn charge_fee<S: State + StateChanges>(
     let actual_fee = calculate_tx_fee(resources, block_context)?;
 
     // Fee charging is skipped in the following cases:
-    //  1) If the tx version >= 0x100000000000000000000000000000000, the current transaction mode is a
-    //     estimate fee transaction, so we don't charge fees
+    //  1) if is_query is true, it's an estimate fee transaction, so we don't charge fees
     //  2) The disable_fee_charge flag is set
     // in both cases we return the actual fee.
-    if disable_fee_charge
-        || account_tx_context.version.0 >= StarkFelt::try_from("0x100000000000000000000000000000000").unwrap()
-    {
+    if disable_fee_charge || is_query {
         return Ok((actual_fee, None));
     }
 

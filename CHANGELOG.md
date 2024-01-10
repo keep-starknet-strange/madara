@@ -7,6 +7,8 @@
 - feat(rpc): support for starknet.rs v0.5.1 version
 - feat(rpc): added execution resources in trace fields
 - feat(rpc): added state diff field in trace fields
+- refactor: removed benchmarking folder and traces of CI pipeline
+- fix: decouple is_query into is_query and offset_version
 - feat: add sierra to casm class hash mapping to genesis assets
 - chore: remove ArgentMulticall from genesis assets
 - feat: remove `seq_addr_updated` from `GenesisData`

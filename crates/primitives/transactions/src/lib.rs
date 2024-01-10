@@ -120,6 +120,7 @@ pub struct InvokeTransactionV1 {
     pub nonce: Felt252Wrapper,
     pub sender_address: Felt252Wrapper,
     pub calldata: Vec<Felt252Wrapper>,
+    pub offset_version: bool,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, From)]
@@ -151,6 +152,7 @@ pub struct DeclareTransactionV1 {
     pub nonce: Felt252Wrapper,
     pub class_hash: Felt252Wrapper,
     pub sender_address: Felt252Wrapper,
+    pub offset_version: bool,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -163,6 +165,7 @@ pub struct DeclareTransactionV2 {
     pub class_hash: Felt252Wrapper,
     pub sender_address: Felt252Wrapper,
     pub compiled_class_hash: Felt252Wrapper,
+    pub offset_version: bool,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -175,6 +178,7 @@ pub struct DeployAccountTransaction {
     pub contract_address_salt: Felt252Wrapper,
     pub constructor_calldata: Vec<Felt252Wrapper>,
     pub class_hash: Felt252Wrapper,
+    pub offset_version: bool,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]

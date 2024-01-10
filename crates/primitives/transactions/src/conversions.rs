@@ -21,9 +21,9 @@ impl DeclareTransactionV0 {
         &self,
         chain_id: Felt252Wrapper,
         contract_class: ContractClass,
-        is_query: bool,
+        offset_version: bool,
     ) -> TransactionExecutionResult<btx::DeclareTransaction> {
-        let transaction_hash = self.compute_hash::<H>(chain_id, is_query);
+        let transaction_hash = self.compute_hash::<H>(chain_id, offset_version);
 
         btx::DeclareTransaction::new(
             sttx::DeclareTransaction::V0(sttx::DeclareTransactionV0V1 {
@@ -44,9 +44,9 @@ impl DeclareTransactionV1 {
         &self,
         chain_id: Felt252Wrapper,
         contract_class: ContractClass,
-        is_query: bool,
+        offset_version: bool,
     ) -> TransactionExecutionResult<btx::DeclareTransaction> {
-        let transaction_hash = self.compute_hash::<H>(chain_id, is_query);
+        let transaction_hash = self.compute_hash::<H>(chain_id, offset_version);
 
         btx::DeclareTransaction::new(
             sttx::DeclareTransaction::V1(sttx::DeclareTransactionV0V1 {
@@ -67,9 +67,9 @@ impl DeclareTransactionV2 {
         &self,
         chain_id: Felt252Wrapper,
         contract_class: ContractClass,
-        is_query: bool,
+        offset_version: bool,
     ) -> TransactionExecutionResult<btx::DeclareTransaction> {
-        let transaction_hash = self.compute_hash::<H>(chain_id, is_query);
+        let transaction_hash = self.compute_hash::<H>(chain_id, offset_version);
 
         btx::DeclareTransaction::new(
             sttx::DeclareTransaction::V2(sttx::DeclareTransactionV2 {
@@ -91,19 +91,23 @@ impl DeclareTransaction {
         &self,
         chain_id: Felt252Wrapper,
         contract_class: ContractClass,
-        is_query: bool,
+        offset_version: bool,
     ) -> TransactionExecutionResult<btx::DeclareTransaction> {
         match self {
-            DeclareTransaction::V0(tx) => tx.try_into_executable::<H>(chain_id, contract_class, is_query),
-            DeclareTransaction::V1(tx) => tx.try_into_executable::<H>(chain_id, contract_class, is_query),
-            DeclareTransaction::V2(tx) => tx.try_into_executable::<H>(chain_id, contract_class, is_query),
+            DeclareTransaction::V0(tx) => tx.try_into_executable::<H>(chain_id, contract_class, offset_version),
+            DeclareTransaction::V1(tx) => tx.try_into_executable::<H>(chain_id, contract_class, offset_version),
+            DeclareTransaction::V2(tx) => tx.try_into_executable::<H>(chain_id, contract_class, offset_version),
         }
     }
 }
 
 impl InvokeTransactionV0 {
-    pub fn into_executable<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> btx::InvokeTransaction {
-        let transaction_hash = self.compute_hash::<H>(chain_id, is_query);
+    pub fn into_executable<H: HasherT>(
+        &self,
+        chain_id: Felt252Wrapper,
+        offset_version: bool,
+    ) -> btx::InvokeTransaction {
+        let transaction_hash = self.compute_hash::<H>(chain_id, offset_version);
 
         btx::InvokeTransaction {
             tx: sttx::InvokeTransaction::V0(sttx::InvokeTransactionV0 {
@@ -119,8 +123,12 @@ impl InvokeTransactionV0 {
 }
 
 impl InvokeTransactionV1 {
-    pub fn into_executable<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> btx::InvokeTransaction {
-        let transaction_hash = self.compute_hash::<H>(chain_id, is_query);
+    pub fn into_executable<H: HasherT>(
+        &self,
+        chain_id: Felt252Wrapper,
+        offset_version: bool,
+    ) -> btx::InvokeTransaction {
+        let transaction_hash = self.compute_hash::<H>(chain_id, offset_version);
 
         btx::InvokeTransaction {
             tx: sttx::InvokeTransaction::V1(sttx::InvokeTransactionV1 {
@@ -136,10 +144,14 @@ impl InvokeTransactionV1 {
 }
 
 impl InvokeTransaction {
-    pub fn into_executable<H: HasherT>(&self, chain_id: Felt252Wrapper, is_query: bool) -> btx::InvokeTransaction {
+    pub fn into_executable<H: HasherT>(
+        &self,
+        chain_id: Felt252Wrapper,
+        offset_version: bool,
+    ) -> btx::InvokeTransaction {
         match self {
-            InvokeTransaction::V0(tx) => tx.into_executable::<H>(chain_id, is_query),
-            InvokeTransaction::V1(tx) => tx.into_executable::<H>(chain_id, is_query),
+            InvokeTransaction::V0(tx) => tx.into_executable::<H>(chain_id, offset_version),
+            InvokeTransaction::V1(tx) => tx.into_executable::<H>(chain_id, offset_version),
         }
     }
 }
@@ -148,11 +160,11 @@ impl DeployAccountTransaction {
     pub fn into_executable<H: HasherT>(
         &self,
         chain_id: Felt252Wrapper,
-        is_query: bool,
+        offset_version: bool,
     ) -> btx::DeployAccountTransaction {
         let account_address = self.get_account_address();
         let transaction_hash: Felt252Wrapper =
-            self.compute_hash_given_contract_address::<H>(chain_id.into(), account_address, is_query).into();
+            self.compute_hash_given_contract_address::<H>(chain_id.into(), account_address, offset_version).into();
         let contract_address: Felt252Wrapper = account_address.into();
 
         btx::DeployAccountTransaction {
@@ -176,9 +188,9 @@ impl HandleL1MessageTransaction {
         &self,
         chain_id: Felt252Wrapper,
         paid_fee_on_l1: Fee,
-        is_query: bool,
+        offset_version: bool,
     ) -> btx::L1HandlerTransaction {
-        let transaction_hash = self.compute_hash::<H>(chain_id, is_query);
+        let transaction_hash = self.compute_hash::<H>(chain_id, offset_version);
 
         let tx = sttx::L1HandlerTransaction {
             version: TransactionVersion(StarkFelt::from(0u8)),

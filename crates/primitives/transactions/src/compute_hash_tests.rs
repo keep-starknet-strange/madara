@@ -24,6 +24,7 @@ fn compute_contract_address_work_like_starknet_api_impl() {
         contract_address_salt: Felt252Wrapper::ZERO,
         constructor_calldata: vec![Felt252Wrapper::ONE, Felt252Wrapper::TWO],
         class_hash: Felt252Wrapper::THREE,
+        offset_version: false,
     };
 
     let address = tx.get_account_address();
@@ -54,6 +55,7 @@ fn test_deploy_account_tx_hash() {
         constructor_calldata: vec![Felt252Wrapper::ONE, Felt252Wrapper::TWO, Felt252Wrapper::THREE],
         contract_address_salt: Felt252Wrapper::ZERO,
         class_hash: Felt252Wrapper::THREE,
+        offset_version: false,
     };
 
     let tx_hash = transaction.compute_hash::<PedersenHasher>(chain_id, false);
@@ -116,6 +118,7 @@ fn test_declare_v1_tx_hash() {
         nonce: Felt252Wrapper::ZERO,
         class_hash: Felt252Wrapper::THREE,
         sender_address: Felt252Wrapper::from(19911991_u128),
+        offset_version: false,
     };
 
     let tx_hash = transaction.compute_hash::<PedersenHasher>(chain_id, false);
@@ -150,6 +153,7 @@ fn test_declare_v2_tx_hash() {
         class_hash: Felt252Wrapper::THREE,
         sender_address: Felt252Wrapper::from(19911991_u128),
         compiled_class_hash: Felt252Wrapper::THREE,
+        offset_version: false,
     };
 
     let tx_hash = transaction.compute_hash::<PedersenHasher>(chain_id, false);
@@ -216,6 +220,7 @@ fn test_invoke_tx_v1_hash() {
         nonce: Felt252Wrapper::ZERO,
         sender_address: Felt252Wrapper::from(19911991_u128),
         calldata: vec![Felt252Wrapper::ONE, Felt252Wrapper::TWO, Felt252Wrapper::THREE],
+        offset_version: false,
     };
 
     let tx_hash = transaction.compute_hash::<PedersenHasher>(chain_id, false);
