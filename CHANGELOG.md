@@ -1,7 +1,7 @@
 # Madara Changelog
 
 ## Next release
-
+- chore: added ca-certificate in DockerFile for SSL related issues 
 - refactor: removed benchmarking folder and traces of CI pipeline
 - fix: decouple is_query into is_query and offset_version
 - feat: add sierra to casm class hash mapping to genesis assets
