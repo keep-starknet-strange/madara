@@ -41,6 +41,7 @@ fn given_call_contract_call_works() {
             nonce: Felt252Wrapper::ZERO,
             calldata: constructor_calldata,
             max_fee: u128::MAX,
+            offset_version: false,
         };
 
         assert_ok!(Starknet::invoke(origin, deploy_transaction.into()));
