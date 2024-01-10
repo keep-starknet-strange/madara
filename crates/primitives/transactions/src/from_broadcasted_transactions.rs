@@ -80,6 +80,7 @@ impl TryFrom<BroadcastedDeclareTransaction> for UserTransaction {
                 nonce,
                 contract_class,
                 sender_address,
+                is_query,
                 ..
             }) => {
                 // Create a GzipDecoder to decompress the bytes
@@ -112,6 +113,7 @@ impl TryFrom<BroadcastedDeclareTransaction> for UserTransaction {
                     nonce: nonce.into(),
                     class_hash: class_hash.into(),
                     sender_address: sender_address.into(),
+                    offset_version: is_query,
                 });
 
                 let contract_class = instantiate_blockifier_contract_class(contract_class, decompressed_bytes)?;
@@ -125,6 +127,7 @@ impl TryFrom<BroadcastedDeclareTransaction> for UserTransaction {
                 contract_class,
                 sender_address,
                 compiled_class_hash,
+                is_query,
                 ..
             }) => {
                 let tx = DeclareTransaction::V2(DeclareTransactionV2 {
@@ -134,6 +137,7 @@ impl TryFrom<BroadcastedDeclareTransaction> for UserTransaction {
                     class_hash: contract_class.class_hash().into(),
                     sender_address: sender_address.into(),
                     compiled_class_hash: compiled_class_hash.into(),
+                    offset_version: is_query,
                 });
 
                 let casm_contract_class = flattened_sierra_to_casm_contract_class(contract_class)
@@ -321,6 +325,7 @@ impl TryFrom<BroadcastedInvokeTransaction> for UserTransaction {
             nonce: value.nonce.into(),
             sender_address: value.sender_address.into(),
             calldata: cast_vec_of_field_elements(value.calldata),
+            offset_version: value.is_query,
         })))
     }
 }
@@ -336,6 +341,7 @@ impl TryFrom<BroadcastedDeployAccountTransaction> for UserTransaction {
             contract_address_salt: tx.contract_address_salt.into(),
             constructor_calldata: cast_vec_of_field_elements(tx.constructor_calldata),
             class_hash: tx.class_hash.into(),
+            offset_version: tx.is_query,
         });
 
         Ok(tx)

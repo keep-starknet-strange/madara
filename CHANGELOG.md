@@ -3,6 +3,8 @@
 ## Next release
 
 - chore: add headers to da calldata, fix eth da in sovereign mode
+- refactor: removed benchmarking folder and traces of CI pipeline
+- fix: decouple is_query into is_query and offset_version
 - feat: add sierra to casm class hash mapping to genesis assets
 - chore: remove ArgentMulticall from genesis assets
 - feat: remove `seq_addr_updated` from `GenesisData`

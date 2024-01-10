@@ -1091,7 +1091,7 @@ impl<T: Config> Pallet<T> {
             &transactions,
             &Self::get_block_context(),
             chain_id,
-            &RuntimeExecutionConfigBuilder::new::<T>().with_query_mode().build(),
+            &mut RuntimeExecutionConfigBuilder::new::<T>().with_query_mode().build(),
         )?;
 
         let mut results = vec![];
@@ -1124,7 +1124,7 @@ impl<T: Config> Pallet<T> {
             &transactions,
             &Self::get_block_context(),
             chain_id,
-            &RuntimeExecutionConfigBuilder::new::<T>().with_simulation_mode(&simulation_flags).build(),
+            &mut RuntimeExecutionConfigBuilder::new::<T>().with_simulation_mode(&simulation_flags).build(),
         )?;
 
         fn get_function_invocation(
