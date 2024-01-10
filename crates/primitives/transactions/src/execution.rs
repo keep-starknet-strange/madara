@@ -380,7 +380,6 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
 
         // Nonce and fee check should be done before running user code.
         Self::handle_nonce_and_check_fee_balance(state, block_context, &account_tx_context, execution_config)?;
-        log::info!("this is the execution config: {:?}", execution_config);
 
         // execute
         let ValidateExecuteCallInfo { validate_call_info, execute_call_info, revert_error } = self.execute_inner(
