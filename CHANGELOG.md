@@ -2,6 +2,7 @@
 
 ## Next release
 
+- refactor: removed benchmarking folder and traces of CI pipeline
 - feat: add sierra to casm class hash mapping to genesis assets
 - chore: remove ArgentMulticall from genesis assets
 - feat: remove `seq_addr_updated` from `GenesisData`
@@ -35,7 +36,6 @@
 - refactor: use `map` in `estimate_fee` to stop computation on error
 - fix: `tempdir` crate has been deprecated; use `tempfile` instead
 - dev: add avail and celestia crates behind a feature flag
-- refactor: removed benchmarking folder and traces of CI pipeline
 
 ## v0.6.0
 
