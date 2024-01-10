@@ -2320,7 +2320,7 @@
             <span class="kw-2">&amp;</span>transactions,
             <span class="kw-2">&amp;</span><span class="self">Self</span>::get_block_context(),
             chain_id,
-            <span class="kw-2">&amp;</span>RuntimeExecutionConfigBuilder::new::&lt;T&gt;().with_query_mode().build(),
+            <span class="kw-2">&amp;mut </span>RuntimeExecutionConfigBuilder::new::&lt;T&gt;().with_query_mode().build(),
         )<span class="question-mark">?</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>results = <span class="macro">vec!</span>[];
@@ -2353,7 +2353,7 @@
             <span class="kw-2">&amp;</span>transactions,
             <span class="kw-2">&amp;</span><span class="self">Self</span>::get_block_context(),
             chain_id,
-            <span class="kw-2">&amp;</span>RuntimeExecutionConfigBuilder::new::&lt;T&gt;().with_simulation_mode(<span class="kw-2">&amp;</span>simulation_flags).build(),
+            <span class="kw-2">&amp;mut </span>RuntimeExecutionConfigBuilder::new::&lt;T&gt;().with_simulation_mode(<span class="kw-2">&amp;</span>simulation_flags).build(),
         )<span class="question-mark">?</span>;
 
         <span class="kw">fn </span>get_function_invocation(

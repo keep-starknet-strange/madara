@@ -57,6 +57,7 @@
 <a href="#57" id="57">57</a>
 <a href="#58" id="58">58</a>
 <a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::vec::Vec;
 
@@ -77,23 +78,24 @@
     txs: <span class="kw-2">&amp;</span>Vec&lt;UserTransaction&gt;,
     block_context: <span class="kw-2">&amp;</span>BlockContext,
     chain_id: Felt252Wrapper,
-    execution_config: <span class="kw-2">&amp;</span>ExecutionConfig,
+    execution_config: <span class="kw-2">&amp;mut </span>ExecutionConfig,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;TransactionExecutionResult&lt;TransactionExecutionInfo&gt;&gt;, Error&lt;T&gt;&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>execution_results = <span class="macro">vec!</span>[];
     storage::transactional::with_transaction(|| {
         <span class="kw">for </span>tx <span class="kw">in </span>txs {
+            execution_config.set_offset_version(tx.offset_version());
             <span class="kw">let </span>result = <span class="kw">match </span>tx {
                 UserTransaction::Declare(tx, contract_class) =&gt; tx
-                    .try_into_executable::&lt;T::SystemHash&gt;(chain_id, contract_class.clone(), execution_config.is_query)
+                    .try_into_executable::&lt;T::SystemHash&gt;(chain_id, contract_class.clone(), tx.offset_version())
                     .and_then(|exec| {
                         exec.execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), block_context, execution_config)
                     }),
                 UserTransaction::DeployAccount(tx) =&gt; {
-                    <span class="kw">let </span>executable = tx.into_executable::&lt;T::SystemHash&gt;(chain_id, execution_config.is_query);
+                    <span class="kw">let </span>executable = tx.into_executable::&lt;T::SystemHash&gt;(chain_id, tx.offset_version());
                     executable.execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), block_context, execution_config)
                 }
                 UserTransaction::Invoke(tx) =&gt; {
-                    <span class="kw">let </span>executable = tx.into_executable::&lt;T::SystemHash&gt;(chain_id, execution_config.is_query);
+                    <span class="kw">let </span>executable = tx.into_executable::&lt;T::SystemHash&gt;(chain_id, tx.offset_version());
                     executable.execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), block_context, execution_config)
                 }
             };

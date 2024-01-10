@@ -458,6 +458,12 @@
 <a href="#458" id="458">458</a>
 <a href="#459" id="459">459</a>
 <a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
+<a href="#463" id="463">463</a>
+<a href="#464" id="464">464</a>
+<a href="#465" id="465">465</a>
+<a href="#466" id="466">466</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>std::collections::HashMap;
 
@@ -540,6 +546,7 @@
                 nonce,
                 contract_class,
                 sender_address,
+                is_query,
                 ..
             }) =&gt; {
                 <span class="comment">// Create a GzipDecoder to decompress the bytes
@@ -572,6 +579,7 @@
                     nonce: nonce.into(),
                     class_hash: class_hash.into(),
                     sender_address: sender_address.into(),
+                    offset_version: is_query,
                 });
 
                 <span class="kw">let </span>contract_class = instantiate_blockifier_contract_class(contract_class, decompressed_bytes)<span class="question-mark">?</span>;
@@ -585,6 +593,7 @@
                 contract_class,
                 sender_address,
                 compiled_class_hash,
+                is_query,
                 ..
             }) =&gt; {
                 <span class="kw">let </span>tx = DeclareTransaction::V2(DeclareTransactionV2 {
@@ -594,6 +603,7 @@
                     class_hash: contract_class.class_hash().into(),
                     sender_address: sender_address.into(),
                     compiled_class_hash: compiled_class_hash.into(),
+                    offset_version: is_query,
                 });
 
                 <span class="kw">let </span>casm_contract_class = flattened_sierra_to_casm_contract_class(contract_class)
@@ -781,6 +791,7 @@
             nonce: value.nonce.into(),
             sender_address: value.sender_address.into(),
             calldata: cast_vec_of_field_elements(value.calldata),
+            offset_version: value.is_query,
         })))
     }
 }
@@ -796,6 +807,7 @@
             contract_address_salt: tx.contract_address_salt.into(),
             constructor_calldata: cast_vec_of_field_elements(tx.constructor_calldata),
             class_hash: tx.class_hash.into(),
+            offset_version: tx.is_query,
         });
 
         <span class="prelude-val">Ok</span>(tx)

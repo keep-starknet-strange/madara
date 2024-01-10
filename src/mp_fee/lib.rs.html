@@ -225,8 +225,6 @@
 <a href="#225" id="225">225</a>
 <a href="#226" id="226">226</a>
 <a href="#227" id="227">227</a>
-<a href="#228" id="228">228</a>
-<a href="#229" id="229">229</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet fee logic
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
@@ -309,6 +307,7 @@
     resources: <span class="kw-2">&amp;</span>ResourcesMapping,
     disable_transaction_fee: bool,
     disable_fee_charge: bool,
+    is_query: bool,
 ) -&gt; TransactionExecutionResult&lt;(Fee, <span class="prelude-ty">Option</span>&lt;CallInfo&gt;)&gt; {
     <span class="comment">// disable_transaction_fee flag implies that transaction fees have
     // been disabled and so we return 0 as the fees
@@ -319,13 +318,10 @@
     <span class="kw">let </span>actual_fee = calculate_tx_fee(resources, block_context)<span class="question-mark">?</span>;
 
     <span class="comment">// Fee charging is skipped in the following cases:
-    //  1) If the tx version &gt;= 0x100000000000000000000000000000000, the current transaction mode is a
-    //     estimate fee transaction, so we don&#39;t charge fees
+    //  1) if is_query is true, it&#39;s an estimate fee transaction, so we don&#39;t charge fees
     //  2) The disable_fee_charge flag is set
     // in both cases we return the actual fee.
-    </span><span class="kw">if </span>disable_fee_charge
-        || account_tx_context.version.<span class="number">0 </span>&gt;= StarkFelt::try_from(<span class="string">&quot;0x100000000000000000000000000000000&quot;</span>).unwrap()
-    {
+    </span><span class="kw">if </span>disable_fee_charge || is_query {
         <span class="kw">return </span><span class="prelude-val">Ok</span>((actual_fee, <span class="prelude-val">None</span>));
     }
 

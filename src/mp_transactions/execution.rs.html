@@ -729,6 +729,16 @@
 <a href="#729" id="729">729</a>
 <a href="#730" id="730">730</a>
 <a href="#731" id="731">731</a>
+<a href="#732" id="732">732</a>
+<a href="#733" id="733">733</a>
+<a href="#734" id="734">734</a>
+<a href="#735" id="735">735</a>
+<a href="#736" id="736">736</a>
+<a href="#737" id="737">737</a>
+<a href="#738" id="738">738</a>
+<a href="#739" id="739">739</a>
+<a href="#740" id="740">740</a>
+<a href="#741" id="741">741</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>alloc::vec;
@@ -773,6 +783,8 @@
 </span><span class="kw">pub struct </span>ExecutionConfig {
     <span class="doccomment">/// If true, the transaction is a query.
     </span><span class="kw">pub </span>is_query: bool,
+    <span class="doccomment">/// If true, the transaction version has the simulation offset.
+    </span><span class="kw">pub </span>offset_version: bool,
     <span class="doccomment">/// If true, transaction fee calculation and charging
     /// is disabled for all transactions.
     </span><span class="kw">pub </span>disable_transaction_fee: bool,
@@ -782,6 +794,12 @@
     </span><span class="kw">pub </span>disable_nonce_validation: bool,
     <span class="doccomment">/// If true, transaction validation is disabled for all transactions.
     </span><span class="kw">pub </span>disable_validation: bool,
+}
+
+<span class="kw">impl </span>ExecutionConfig {
+    <span class="kw">pub fn </span>set_offset_version(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: bool) {
+        <span class="self">self</span>.offset_version = value;
+    }
 }
 
 <span class="kw">pub struct </span>ValidateExecuteCallInfo {
@@ -801,7 +819,7 @@
 }
 
 <span class="kw">pub trait </span>GetAccountTransactionContext {
-    <span class="kw">fn </span>get_account_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, is_query: bool) -&gt; AccountTransactionContext;
+    <span class="kw">fn </span>get_account_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, offset_version: bool) -&gt; AccountTransactionContext;
 }
 
 <span class="kw">pub trait </span>SimulateTxVersionOffset {
@@ -815,9 +833,9 @@
 }
 
 <span class="kw">impl </span>GetAccountTransactionContext <span class="kw">for </span>DeclareTransaction {
-    <span class="kw">fn </span>get_account_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, is_query: bool) -&gt; AccountTransactionContext {
+    <span class="kw">fn </span>get_account_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, offset_version: bool) -&gt; AccountTransactionContext {
         <span class="kw">let </span><span class="kw-2">mut </span>version = <span class="self">self</span>.tx().version();
-        <span class="kw">if </span>is_query {
+        <span class="kw">if </span>offset_version {
             version = version.apply_simulate_tx_version_offset();
         }
 
@@ -833,9 +851,9 @@
 }
 
 <span class="kw">impl </span>GetAccountTransactionContext <span class="kw">for </span>DeployAccountTransaction {
-    <span class="kw">fn </span>get_account_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, is_query: bool) -&gt; AccountTransactionContext {
+    <span class="kw">fn </span>get_account_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, offset_version: bool) -&gt; AccountTransactionContext {
         <span class="kw">let </span><span class="kw-2">mut </span>version = <span class="self">self</span>.version();
-        <span class="kw">if </span>is_query {
+        <span class="kw">if </span>offset_version {
             version = version.apply_simulate_tx_version_offset();
         }
 
@@ -851,12 +869,12 @@
 }
 
 <span class="kw">impl </span>GetAccountTransactionContext <span class="kw">for </span>InvokeTransaction {
-    <span class="kw">fn </span>get_account_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, is_query: bool) -&gt; AccountTransactionContext {
+    <span class="kw">fn </span>get_account_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, offset_version: bool) -&gt; AccountTransactionContext {
         <span class="kw">let </span><span class="kw-2">mut </span>version = <span class="kw">match </span><span class="self">self</span>.tx {
             starknet_api::transaction::InvokeTransaction::V0(<span class="kw">_</span>) =&gt; TransactionVersion(StarkFelt::from(<span class="number">0u8</span>)),
             starknet_api::transaction::InvokeTransaction::V1(<span class="kw">_</span>) =&gt; TransactionVersion(StarkFelt::from(<span class="number">1u8</span>)),
         };
-        <span class="kw">if </span>is_query {
+        <span class="kw">if </span>offset_version {
             version = version.apply_simulate_tx_version_offset();
         }
 
@@ -882,9 +900,9 @@
 }
 
 <span class="kw">impl </span>GetAccountTransactionContext <span class="kw">for </span>L1HandlerTransaction {
-    <span class="kw">fn </span>get_account_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, is_query: bool) -&gt; AccountTransactionContext {
+    <span class="kw">fn </span>get_account_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, offset_version: bool) -&gt; AccountTransactionContext {
         <span class="kw">let </span><span class="kw-2">mut </span>version = <span class="self">self</span>.tx.version;
-        <span class="kw">if </span>is_query {
+        <span class="kw">if </span>offset_version {
             version = version.apply_simulate_tx_version_offset();
         }
 
@@ -969,9 +987,9 @@
         block_context: <span class="kw-2">&amp;</span>BlockContext,
         resources: <span class="kw-2">&amp;mut </span>ExecutionResources,
         remaining_gas: <span class="kw-2">&amp;mut </span>u64,
-        is_query: bool,
+        validate_tx: bool,
     ) -&gt; TransactionExecutionResult&lt;<span class="prelude-ty">Option</span>&lt;CallInfo&gt;&gt; {
-        <span class="kw">let </span>account_tx_context = <span class="self">self</span>.get_account_transaction_context(is_query);
+        <span class="kw">let </span>account_tx_context = <span class="self">self</span>.get_account_transaction_context(validate_tx);
         <span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(
             block_context.clone(),
             account_tx_context,
@@ -1099,7 +1117,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>execution_resources = ExecutionResources::default();
         <span class="kw">let </span><span class="kw-2">mut </span>remaining_gas = TX_INITIAL_AVAILABLE_GAS;
 
-        <span class="kw">let </span>account_tx_context = <span class="self">self</span>.get_account_transaction_context(execution_config.is_query);
+        <span class="kw">let </span>account_tx_context = <span class="self">self</span>.get_account_transaction_context(execution_config.offset_version);
 
         <span class="comment">// Nonce and fee check should be done before running user code.
         </span><span class="self">Self</span>::handle_nonce_and_check_fee_balance(state, block_context, <span class="kw-2">&amp;</span>account_tx_context, execution_config)<span class="question-mark">?</span>;
@@ -1163,6 +1181,7 @@
             <span class="kw-2">&amp;</span>actual_resources,
             execution_config.disable_transaction_fee,
             execution_config.disable_fee_charge,
+            execution_config.is_query,
         )<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>((actual_fee, fee_transfer_call_info, actual_resources))
@@ -1293,6 +1312,7 @@
         // so that the `constructor` method can initialize the account state
         </span><span class="kw">let </span>execute_call_info = <span class="self">self</span>.run_execute(state, resources, <span class="kw-2">&amp;mut </span>context, remaining_gas)<span class="question-mark">?</span>;
         <span class="kw">let </span>validate_call_info = <span class="kw">if </span>!disable_validation {
+            <span class="macro">log::info!</span>(<span class="string">&quot;this is the context for validation {:?}&quot;</span>, context);
             <span class="self">self</span>.validate_tx_inner(state, resources, remaining_gas, <span class="kw-2">&amp;mut </span>context, <span class="self">self</span>.calldata())<span class="question-mark">?
         </span>} <span class="kw">else </span>{
             <span class="prelude-val">None

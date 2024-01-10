@@ -187,6 +187,10 @@
 <a href="#187" id="187">187</a>
 <a href="#188" id="188">188</a>
 <a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
@@ -310,6 +314,7 @@
     <span class="kw">pub </span>nonce: Felt252Wrapper,
     <span class="kw">pub </span>sender_address: Felt252Wrapper,
     <span class="kw">pub </span>calldata: Vec&lt;Felt252Wrapper&gt;,
+    <span class="kw">pub </span>offset_version: bool,
 }
 
 <span class="attr">#[derive(Debug, Clone, Eq, PartialEq, From)]
@@ -341,6 +346,7 @@
     <span class="kw">pub </span>nonce: Felt252Wrapper,
     <span class="kw">pub </span>class_hash: Felt252Wrapper,
     <span class="kw">pub </span>sender_address: Felt252Wrapper,
+    <span class="kw">pub </span>offset_version: bool,
 }
 
 <span class="attr">#[derive(Debug, Clone, Eq, PartialEq)]
@@ -353,6 +359,7 @@
     <span class="kw">pub </span>class_hash: Felt252Wrapper,
     <span class="kw">pub </span>sender_address: Felt252Wrapper,
     <span class="kw">pub </span>compiled_class_hash: Felt252Wrapper,
+    <span class="kw">pub </span>offset_version: bool,
 }
 
 <span class="attr">#[derive(Debug, Clone, Eq, PartialEq)]
@@ -365,6 +372,7 @@
     <span class="kw">pub </span>contract_address_salt: Felt252Wrapper,
     <span class="kw">pub </span>constructor_calldata: Vec&lt;Felt252Wrapper&gt;,
     <span class="kw">pub </span>class_hash: Felt252Wrapper,
+    <span class="kw">pub </span>offset_version: bool,
 }
 
 <span class="attr">#[derive(Debug, Clone, Eq, PartialEq)]

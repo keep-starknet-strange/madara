@@ -125,6 +125,9 @@
 <a href="#125" id="125">125</a>
 <a href="#126" id="126">126</a>
 <a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::vec::Vec;
 
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
@@ -163,6 +166,7 @@
                     nonce,
                     class_hash,
                     sender_address,
+                    ..
                 }) =&gt; starknet_core::types::DeclareTransaction::V1(starknet_core::types::DeclareTransactionV1 {
                     transaction_hash,
                     max_fee: max_fee.into(),
@@ -178,6 +182,7 @@
                     class_hash,
                     sender_address,
                     compiled_class_hash,
+                    ..
                 }) =&gt; starknet_core::types::DeclareTransaction::V2(starknet_core::types::DeclareTransactionV2 {
                     transaction_hash,
                     max_fee: max_fee.into(),
@@ -226,6 +231,7 @@
                     nonce,
                     sender_address,
                     calldata,
+                    ..
                 }) =&gt; starknet_core::types::InvokeTransaction::V1(starknet_core::types::InvokeTransactionV1 {
                     transaction_hash,
                     max_fee: max_fee.into(),

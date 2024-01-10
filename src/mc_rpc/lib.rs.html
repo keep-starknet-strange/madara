@@ -1640,18 +1640,6 @@
 <a href="#1640" id="1640">1640</a>
 <a href="#1641" id="1641">1641</a>
 <a href="#1642" id="1642">1642</a>
-<a href="#1643" id="1643">1643</a>
-<a href="#1644" id="1644">1644</a>
-<a href="#1645" id="1645">1645</a>
-<a href="#1646" id="1646">1646</a>
-<a href="#1647" id="1647">1647</a>
-<a href="#1648" id="1648">1648</a>
-<a href="#1649" id="1649">1649</a>
-<a href="#1650" id="1650">1650</a>
-<a href="#1651" id="1651">1651</a>
-<a href="#1652" id="1652">1652</a>
-<a href="#1653" id="1653">1653</a>
-<a href="#1654" id="1654">1654</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -2591,18 +2579,6 @@
         request: Vec&lt;BroadcastedTransaction&gt;,
         block_id: BlockId,
     ) -&gt; RpcResult&lt;Vec&lt;FeeEstimate&gt;&gt; {
-        <span class="kw">let </span>is_query = request.iter().any(|tx| <span class="kw">match </span>tx {
-            BroadcastedTransaction::Invoke(invoke_tx) =&gt; invoke_tx.is_query,
-            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V1(tx_v1)) =&gt; tx_v1.is_query,
-            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V2(tx_v2)) =&gt; tx_v2.is_query,
-            BroadcastedTransaction::DeployAccount(deploy_tx) =&gt; deploy_tx.is_query,
-        });
-        <span class="kw">if </span>!is_query {
-            <span class="macro">log::error!</span>(
-                <span class="string">&quot;Got `is_query`: false. In a future version, this will fail fee estimation with UnsupportedTxVersion&quot;
-            </span>);
-        }
-
         <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
             StarknetRpcApiError::BlockNotFound
