@@ -14,14 +14,11 @@ use sp_api::{HeaderT, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
-use starknet_api::hash::{pedersen_hash_array, StarkFelt, StarkHash};
+use starknet_api::hash::StarkHash;
 use starknet_api::transaction::TransactionHash;
-use starknet_crypto::FieldElement;
 
 use crate::errors::Error;
 use crate::{Result, RetryStrategy, SettlementProvider, SettlementWorker, StarknetSpec, StarknetState};
-
-pub const SN_OS_CONFIG_HASH_VERSION: &str = "StarknetOsConfig1";
 
 impl<B, H, SC> SettlementWorker<B, H, SC>
 where

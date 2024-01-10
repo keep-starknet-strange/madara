@@ -9,7 +9,6 @@ use ethers::prelude::{abigen, SignerMiddleware};
 use ethers::providers::{Http, Provider};
 use ethers::signers::{LocalWallet, Signer};
 use ethers::types::{Address, I256, U256};
-use futures::SinkExt;
 
 use crate::utils::is_valid_http_endpoint;
 use crate::{DaClient, DaMode};
@@ -26,7 +25,7 @@ pub struct EthereumClient {
 impl DaClient for EthereumClient {
     async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()> {
         log::debug!("State Update: {:?}", state_diff);
-        let mut fmt_tx = match self.mode {
+        let fmt_tx = match self.mode {
             DaMode::Sovereign => {
                 abigen!(
                     STARKNET,

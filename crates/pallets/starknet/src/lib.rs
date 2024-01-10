@@ -1231,7 +1231,7 @@ impl<T: Config> Pallet<T> {
         pedersen_hash_array(&[
             StarkFelt::from(FieldElement::from_byte_slice_be(SN_OS_CONFIG_HASH_VERSION.as_bytes()).unwrap()),
             T::ChainId::get().into(),
-            Self::fee_token_address().0.0.into(),
+            Self::fee_token_address().0.0,
         ])
     }
 

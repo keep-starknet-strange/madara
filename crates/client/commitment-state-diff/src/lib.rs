@@ -1,7 +1,5 @@
-use std::hash::Hash;
 use std::marker::PhantomData;
 use std::pin::Pin;
-use std::ptr::hash;
 use std::sync::Arc;
 use std::task::Poll;
 
