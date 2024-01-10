@@ -54,16 +54,3 @@ jobs:
       SCARB_VERSION: "2.3.1"
     steps:
       - uses: keep-starknet-strange/starknet-foundry-compatibility-tests@main
-
-  # https://github.com/keep-starknet-strange/madara/issues/1097
-  # benchmark:
-  #   name: Run benchmarks
-  #   uses: ./.github/workflows/benchmarks.yml
-  #   needs: [rust_build, tests]
-  #   permissions:
-  #     # deployments permission to deploy GitHub pages website
-  #     deployments: write
-  #     # contents permission to update benchmark contents in gh-pages branch
-  #     contents: write
-  #     # post on the pull-request page
-  #     pull-requests: write

@@ -2,6 +2,7 @@
 
 ## Next release
 
+- refactor: removed benchmarking folder and traces of CI pipeline
 - fix: decouple is_query into is_query and offset_version
 - feat: add sierra to casm class hash mapping to genesis assets
 - chore: remove ArgentMulticall from genesis assets
