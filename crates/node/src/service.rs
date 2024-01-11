@@ -475,7 +475,12 @@ pub fn new_full(
         task_manager.spawn_essential_handle().spawn(
             "settlement-worker-sync-state",
             Some("madara"),
-            SettlementWorker::<_, StarknetHasher, _>::sync_state(client.clone(), settlement_provider, retry_strategy),
+            SettlementWorker::<_, StarknetHasher, _>::sync_state(
+                client.clone(),
+                settlement_provider,
+                madara_backend.clone(),
+                retry_strategy,
+            ),
         );
     }
 

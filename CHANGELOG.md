@@ -3,6 +3,9 @@
 ## Next release
 
 - chore: add headers to da calldata, fix eth da in sovereign mode
+- chore(primitives/commitment): remove crate
+- chore(primitives/block/header): remove starknet-trie dependent fields
+- refacto(primitives/db): add a temporary way to get a fake global state root
 - chore: feature flags for avail and celestia DA
 - feat(rpc): added support for v0.5.1 JSON-RPC specs
 - feat(rpc): added ordered messages/events in trace fields

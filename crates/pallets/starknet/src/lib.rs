@@ -948,14 +948,9 @@ impl<T: Config> Pallet<T> {
         let parent_block_hash = Self::parent_block_hash(&block_number);
         let events: Vec<StarknetEvent> = transaction_hashes.iter().flat_map(TxEvents::<T>::take).collect();
 
-        let global_state_root = Felt252Wrapper::default();
-
         let sequencer_address = Self::sequencer_address();
         let block_timestamp = Self::block_timestamp();
 
-        let chain_id = Self::chain_id();
-        let (transaction_commitment, event_commitment) =
-            mp_commitments::calculate_commitments::<T::SystemHash>(&transactions, &events, chain_id);
         let protocol_version = T::ProtocolVersion::get();
         let extra_data = None;
 
@@ -966,13 +961,10 @@ impl<T: Config> Pallet<T> {
             StarknetHeader::new(
                 parent_block_hash.into(),
                 block_number,
-                global_state_root.into(),
                 sequencer_address,
                 block_timestamp,
                 transaction_count as u128,
-                transaction_commitment.into(),
                 events.len() as u128,
-                event_commitment.into(),
                 protocol_version,
                 l1_gas_price,
                 extra_data,
