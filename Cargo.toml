@@ -16,7 +16,6 @@ members = [
   "crates/primitives/block",
   "crates/primitives/sequencer-address",
   "crates/primitives/storage",
-  "crates/primitives/commitments",
   "crates/primitives/chain-id",
   "crates/primitives/messages",
   "crates/primitives/program-hash",
@@ -50,7 +49,6 @@ default-members = [
   "crates/primitives/block",
   "crates/primitives/sequencer-address",
   "crates/primitives/storage",
-  "crates/primitives/commitments",
   "crates/primitives/chain-id",
   "crates/primitives/messages",
   "crates/primitives/program-hash",
@@ -176,7 +174,6 @@ mp-snos-output = { path = "crates/primitives/snos-output", default-features = fa
 mp-state = { path = "crates/primitives/state", default-features = false }
 mp-storage = { path = "crates/primitives/storage", default-features = false }
 mp-transactions = { path = "crates/primitives/transactions", default-features = false }
-mp-commitments = { path = "crates/primitives/commitments", default-features = false }
 mp-chain-id = { path = "crates/primitives/chain-id", default-features = false }
 mp-simulations = { path = "crates/primitives/simulations", default-features = false }
 mp-program-hash = { path = "crates/primitives/program-hash", default-features = false }
