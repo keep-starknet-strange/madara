@@ -97,22 +97,6 @@
 <a href="#97" id="97">97</a>
 <a href="#98" id="98">98</a>
 <a href="#99" id="99">99</a>
-<a href="#100" id="100">100</a>
-<a href="#101" id="101">101</a>
-<a href="#102" id="102">102</a>
-<a href="#103" id="103">103</a>
-<a href="#104" id="104">104</a>
-<a href="#105" id="105">105</a>
-<a href="#106" id="106">106</a>
-<a href="#107" id="107">107</a>
-<a href="#108" id="108">108</a>
-<a href="#109" id="109">109</a>
-<a href="#110" id="110">110</a>
-<a href="#111" id="111">111</a>
-<a href="#112" id="112">112</a>
-<a href="#113" id="113">113</a>
-<a href="#114" id="114">114</a>
-<a href="#115" id="115">115</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 
 <span class="kw">use </span>blockifier::block_context::BlockContext;
@@ -135,20 +119,14 @@
     </span><span class="kw">pub </span>parent_block_hash: StarkHash,
     <span class="doccomment">/// The number (height) of this block.
     </span><span class="kw">pub </span>block_number: u64,
-    <span class="doccomment">/// The state commitment after this block.
-    </span><span class="kw">pub </span>global_state_root: StarkHash,
     <span class="doccomment">/// The Starknet address of the sequencer who created this block.
     </span><span class="kw">pub </span>sequencer_address: ContractAddress,
     <span class="doccomment">/// The time the sequencer created this block before executing transactions
     </span><span class="kw">pub </span>block_timestamp: u64,
     <span class="doccomment">/// The number of transactions in a block
     </span><span class="kw">pub </span>transaction_count: u128,
-    <span class="doccomment">/// A commitment to the transactions included in the block
-    </span><span class="kw">pub </span>transaction_commitment: StarkHash,
     <span class="doccomment">/// The number of events
     </span><span class="kw">pub </span>event_count: u128,
-    <span class="doccomment">/// A commitment to the events produced in this block
-    </span><span class="kw">pub </span>event_commitment: StarkHash,
     <span class="doccomment">/// The version of the Starknet protocol used when creating this block
     </span><span class="kw">pub </span>protocol_version: u8,
     <span class="doccomment">/// l1 gas price for this block
@@ -164,13 +142,10 @@
     </span><span class="kw">pub fn </span>new(
         parent_block_hash: StarkHash,
         block_number: u64,
-        global_state_root: StarkHash,
         sequencer_address: ContractAddress,
         block_timestamp: u64,
         transaction_count: u128,
-        transaction_commitment: StarkHash,
         event_count: u128,
-        event_commitment: StarkHash,
         protocol_version: u8,
         l1_gas_price: ResourcePrice,
         extra_data: <span class="prelude-ty">Option</span>&lt;U256&gt;,
@@ -178,13 +153,10 @@
         <span class="self">Self </span>{
             parent_block_hash,
             block_number,
-            global_state_root,
             sequencer_address,
             block_timestamp,
             transaction_count,
-            transaction_commitment,
             event_count,
-            event_commitment,
             protocol_version,
             l1_gas_price,
             extra_data,
@@ -209,17 +181,13 @@
     }
 
     <span class="doccomment">/// Compute the hash of the header.
-    </span><span class="attr">#[must_use]
     </span><span class="kw">pub fn </span>hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Felt252Wrapper {
         <span class="kw">let </span>data: <span class="kw-2">&amp;</span>[Felt252Wrapper] = <span class="kw-2">&amp;</span>[
             <span class="self">self</span>.block_number.into(),
-            <span class="self">self</span>.global_state_root.into(),
             <span class="self">self</span>.sequencer_address.<span class="number">0.0</span>.into(),
             <span class="self">self</span>.block_timestamp.into(),
             <span class="self">self</span>.transaction_count.into(),
-            <span class="self">self</span>.transaction_commitment.into(),
             <span class="self">self</span>.event_count.into(),
-            <span class="self">self</span>.event_commitment.into(),
             <span class="self">self</span>.protocol_version.into(),
             Felt252Wrapper::ZERO,
             <span class="self">self</span>.parent_block_hash.into(),

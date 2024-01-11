@@ -717,6 +717,11 @@
 <a href="#717" id="717">717</a>
 <a href="#718" id="718">718</a>
 <a href="#719" id="719">719</a>
+<a href="#720" id="720">720</a>
+<a href="#721" id="721">721</a>
+<a href="#722" id="722">722</a>
+<a href="#723" id="723">723</a>
+<a href="#724" id="724">724</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
@@ -1194,7 +1199,12 @@
         task_manager.spawn_essential_handle().spawn(
             <span class="string">&quot;settlement-worker-sync-state&quot;</span>,
             <span class="prelude-val">Some</span>(<span class="string">&quot;madara&quot;</span>),
-            SettlementWorker::&lt;<span class="kw">_</span>, StarknetHasher, <span class="kw">_</span>&gt;::sync_state(client.clone(), settlement_provider, retry_strategy),
+            SettlementWorker::&lt;<span class="kw">_</span>, StarknetHasher, <span class="kw">_</span>&gt;::sync_state(
+                client.clone(),
+                settlement_provider,
+                madara_backend.clone(),
+                retry_strategy,
+            ),
         );
     }
 

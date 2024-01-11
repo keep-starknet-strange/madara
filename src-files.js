@@ -15,7 +15,6 @@ var srcIndex = JSON.parse('{\
 "mc_storage":["",[["overrides",[],["mod.rs","schema_v1_override.rs"]]],["lib.rs"]],\
 "mp_block":["",[],["header.rs","lib.rs"]],\
 "mp_chain_id":["",[],["lib.rs"]],\
-"mp_commitments":["",[["merkle_patricia_tree",[],["merkle_node.rs","merkle_tree.rs","mod.rs","ref_merkle_node.rs","ref_merkle_tree.rs"]]],["lib.rs"]],\
 "mp_digest_log":["",[],["error.rs","lib.rs"]],\
 "mp_fee":["",[],["lib.rs"]],\
 "mp_felt":["",[],["lib.rs","starkware_types_conversions.rs","with_serde.rs"]],\

@@ -144,6 +144,14 @@
 <a href="#144" id="144">144</a>
 <a href="#145" id="145">145</a>
 <a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A database backend storing data about madara chain
 //!
 //! # Usefulness
@@ -162,6 +170,7 @@
 
 <span class="kw">mod </span>mapping_db;
 <span class="kw">pub use </span>mapping_db::MappingCommitment;
+<span class="kw">use </span>starknet_api::hash::StarkHash;
 <span class="kw">mod </span>da_db;
 <span class="kw">mod </span>db_opening_utils;
 <span class="kw">mod </span>messaging_db;
@@ -288,6 +297,13 @@
     <span class="doccomment">/// Return the da database manager
     </span><span class="kw">pub fn </span>messaging(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Arc&lt;MessagingDb&lt;B&gt;&gt; {
         <span class="kw-2">&amp;</span><span class="self">self</span>.messaging
+    }
+
+    <span class="doccomment">/// In the future, we will compute the block global state root asynchronously in the client,
+    /// using the Starknet-Bonzai-trie.
+    /// That what replaces it for now :)
+    </span><span class="kw">pub fn </span>temporary_global_state_root_getter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StarkHash {
+        Default::default()
     }
 }
 </code></pre></div></section></main></body></html>
