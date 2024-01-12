@@ -205,7 +205,7 @@ pub async fn update_state<B: BlockT, H: HasherT>(
     da_client: Arc<dyn DaClient + Send + Sync>,
     block_da_data: BlockDAData,
 ) -> Result<(), anyhow::Error> {
-    let block_hash = block_da_data.block_hash.clone();
+    let block_hash = block_da_data.block_hash;
     // store the state diff
     madara_backend
         .da()
