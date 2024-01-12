@@ -1,8 +1,8 @@
 use std::path::{Path, PathBuf};
-use sha3::{Digest, Sha3_256};
 
 use sc_cli::{Error, Result, SubstrateCli};
 use sc_service::BasePath;
+use sha3::{Digest, Sha3_256};
 use url::Url;
 
 use crate::chain_spec::GENESIS_ASSETS_DIR;
