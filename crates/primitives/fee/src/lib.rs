@@ -196,7 +196,7 @@ pub fn extract_l1_gas_and_vm_usage(resources: &ResourcesMapping) -> (usize, Reso
     let l1_gas_usage =
         vm_resource_usage.remove(GAS_USAGE).expect("`ResourcesMapping` does not have the key `l1_gas_usage`.");
 
-    (l1_gas_usage, ResourcesMapping(vm_resource_usage))
+    (l1_gas_usage as usize, ResourcesMapping(vm_resource_usage))
 }
 
 /// Calculates the L1 gas consumed when submitting the underlying Cairo program to SHARP.

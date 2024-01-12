@@ -2,6 +2,7 @@
 
 ## Next release
 
+- refacto(simulate_tx): move logic to the client
 - chore: added ca-certificate in DockerFile for SSL related issues
 - chore(primitives/commitment): remove crate
 - chore(primitives/block/header): remove starknet-trie dependent fields
