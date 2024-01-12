@@ -3,6 +3,7 @@ use std::sync::Arc;
 use futures::StreamExt;
 use futures_timer::Delay;
 use mp_block::Block as StarknetBlock;
+use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_messages::{MessageL1ToL2, MessageL2ToL1};
 use mp_snos_output::StarknetOsOutput;
@@ -39,10 +40,11 @@ where
     pub async fn sync_state(
         substrate_client: Arc<SC>,
         settlement_provider: Box<dyn SettlementProvider<B>>,
+        madara_backend: Arc<mc_db::Backend<B>>,
         retry_strategy: Box<dyn RetryStrategy<B>>,
     ) {
         loop {
-            match Self::sync_state_loop(&substrate_client, settlement_provider.as_ref()).await {
+            match Self::sync_state_loop(&substrate_client, settlement_provider.as_ref(), &madara_backend).await {
                 Ok(()) => {
                     return;
                 }
@@ -79,7 +81,11 @@ where
     /// In case chain is stuck it won't update the state, even if there are pending blocks.
     /// It is ok, since it's not a normal condition, and generally we expect that the chain will
     /// advance indefinitely.
-    async fn sync_state_loop<SP>(substrate_client: &SC, settlement_provider: &SP) -> Result<(), B>
+    async fn sync_state_loop<SP>(
+        substrate_client: &SC,
+        settlement_provider: &SP,
+        madara_backend: &mc_db::Backend<B>,
+    ) -> Result<(), B>
     where
         SP: ?Sized + SettlementProvider<B>,
     {
@@ -98,7 +104,7 @@ where
 
         // If we haven't reached the settled level yet (e.g. syncing from scratch) this check will pass.
         // But we need to run it again once we are up to speed.
-        Self::verify_starknet_state(substrate_client, &last_settled_state)?;
+        Self::verify_starknet_state(substrate_client, &last_settled_state, madara_backend)?;
 
         let mut finality_notifications = substrate_client.finality_notification_stream();
         let mut sync_from: u64 = last_settled_state.block_number.try_into()?;
@@ -114,7 +120,7 @@ where
 
             if sync_from == sync_to {
                 log::info!("[settlement] Verifying state root for block {}", sync_to);
-                Self::verify_starknet_state(substrate_client, &last_settled_state)?;
+                Self::verify_starknet_state(substrate_client, &last_settled_state, madara_backend)?;
                 continue;
             }
 
@@ -134,6 +140,7 @@ where
                     &next_block,
                     substrate_block_hash,
                     starknet_spec.config_hash,
+                    madara_backend,
                 )
                 .await?;
 
@@ -184,7 +191,9 @@ where
         let fee_token_address = substrate_client.runtime_api().fee_token_address(substrate_hash)?;
 
         let config_hash = pedersen_hash_array(&[
-            StarkFelt::from(FieldElement::from_byte_slice_be(SN_OS_CONFIG_HASH_VERSION.as_bytes()).unwrap()),
+            StarkFelt::from(Felt252Wrapper::from(
+                FieldElement::from_byte_slice_be(SN_OS_CONFIG_HASH_VERSION.as_bytes()).unwrap(),
+            )),
             chain_id.into(),
             fee_token_address.0.0,
         ]);
@@ -201,12 +210,16 @@ where
     ///
     /// If Madara chain haven't reached the given block level yet, it returns OK, assuming that as
     /// soon as it catches up - this check will be done again.
-    fn verify_starknet_state(substrate_client: &SC, state: &StarknetState) -> Result<(), B> {
+    fn verify_starknet_state(
+        substrate_client: &SC,
+        state: &StarknetState,
+        madara_backend: &mc_db::Backend<B>,
+    ) -> Result<(), B> {
         let height: u64 = state.block_number.try_into()?;
 
         match Self::get_starknet_block(substrate_client, height) {
-            Ok((block, _)) => {
-                let state_root = block.header().global_state_root;
+            Ok((_block, _)) => {
+                let state_root = madara_backend.temporary_global_state_root_getter();
                 // Verify that current onchain state is consistent with corresponding Madara block
                 if state.state_root != state_root {
                     return Err(Error::StateRootMismatch { height, expected: state_root, actual: state.state_root });
@@ -238,13 +251,14 @@ where
         next_block: &StarknetBlock,
         substrate_block_hash: B::Hash,
         config_hash: StarkHash,
+        madara_backend: &mc_db::Backend<B>,
     ) -> Result<StarknetState, B>
     where
         SP: ?Sized + SettlementProvider<B>,
     {
         let next_state = StarknetState {
             block_number: next_block.header().block_number.into(),
-            state_root: next_block.header().global_state_root,
+            state_root: madara_backend.temporary_global_state_root_getter(),
         };
 
         let mut messages_to_l1: Vec<MessageL2ToL1> = Vec::new();

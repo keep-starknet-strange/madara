@@ -35,6 +35,7 @@ starknet_api = { workspace = true, default-features = true }
 madara-runtime = { workspace = true }
 madara-test-runner = { workspace = true }
 mc-settlement = { workspace = true }
+mp-felt = { workspace = true }
 mp-messages = { workspace = true }
 mp-snos-output = { workspace = true }
 

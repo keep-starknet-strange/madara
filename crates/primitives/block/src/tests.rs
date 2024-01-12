@@ -2,45 +2,44 @@ use core::convert::TryFrom;
 
 use mp_felt::Felt252Wrapper;
 use mp_hashers::pedersen::PedersenHasher;
-use sp_core::U256;
+use mp_hashers::HasherT;
 use starknet_api::api_core::{ChainId, ContractAddress, PatriciaKey};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::{StarkFelt, StarkHash};
 
 use crate::Header;
 
-fn generate_dummy_header() -> Header {
-    Header::new(
-        StarkFelt::from(1u128),
-        1,
-        StarkFelt::from(2u128),
-        ContractAddress::default(),
-        42,
-        0,
-        StarkFelt::from(3u128),
-        0,
-        StarkFelt::from(4u128),
-        1,
-        Some(U256::from(3)),
-    )
+fn generate_dummy_header() -> Vec<Felt252Wrapper> {
+    vec![
+        Felt252Wrapper::ONE,  // block_number
+        Felt252Wrapper::ONE,  // global_state_root
+        Felt252Wrapper::ONE,  // sequencer_address
+        Felt252Wrapper::ONE,  // block_timestamp
+        Felt252Wrapper::ONE,  // transaction_count
+        Felt252Wrapper::ONE,  // transaction_commitment
+        Felt252Wrapper::ONE,  // event_count
+        Felt252Wrapper::ONE,  // event_commitment
+        Felt252Wrapper::ZERO, // placeholder
+        Felt252Wrapper::ZERO, // placeholder
+        Felt252Wrapper::ONE,  // parent_block_hash
+    ]
 }
 
 #[test]
 fn test_header_hash() {
-    let header = generate_dummy_header();
+    let hash = <PedersenHasher as HasherT>::compute_hash_on_wrappers(&generate_dummy_header());
 
     let expected_hash =
-        Felt252Wrapper::from_hex_be("0x029da584545c7f3ebdb0c6aca74f0fba99156b1e31e9524c70b42776e50efda6").unwrap();
+        Felt252Wrapper::from_hex_be("0x001bef5f78bfd9122370a6bf9e3365b96362bef2bfd2b44b67707d8fbbf27bdc").unwrap();
 
-    assert_eq!(header.hash::<PedersenHasher>(), expected_hash);
+    assert_eq!(hash, expected_hash);
 }
 
 #[test]
 fn test_real_header_hash() {
     // Values taken from alpha-mainnet
-
-    let block_number = 86000;
-    let block_timestamp = 1687235884;
+    let block_number = 86000u32;
+    let block_timestamp = 1687235884u32;
     let global_state_root =
         StarkHash::try_from("0x006727a7aae8c38618a179aeebccd6302c67ad5f8528894d1dde794e9ae0bbfa").unwrap();
     let parent_block_hash =
@@ -48,33 +47,33 @@ fn test_real_header_hash() {
     let sequencer_address = ContractAddress(PatriciaKey(
         StarkFelt::try_from("0x1176a1bd84444c89232ec27754698e5d2e7e1a7f1539f12027f28b23ec9f3d8").unwrap(),
     ));
-    let transaction_count = 197;
+    let transaction_count = 197u32;
     let transaction_commitment =
         StarkFelt::try_from("0x70369cef825889dc005916dba67332b71f270b7af563d0433cee3342dda527d").unwrap();
-    let event_count = 1430;
+    let event_count = 1430u32;
     let event_commitment =
         StarkFelt::try_from("0x2043ba1ef46882ce1dbb17b501fffa4b71f87f618e8f394e9605959d92efdf6").unwrap();
-    let protocol_version = 0;
-    let extra_data = None;
+    let protocol_version = 0u32;
 
-    let header = Header::new(
-        parent_block_hash,
-        block_number,
-        global_state_root,
-        sequencer_address,
-        block_timestamp,
-        transaction_count,
-        transaction_commitment,
-        event_count,
-        event_commitment,
-        protocol_version,
-        extra_data,
-    );
+    let header: &[Felt252Wrapper] = &[
+        block_number.into(),
+        global_state_root.into(),
+        sequencer_address.into(),
+        block_timestamp.into(),
+        transaction_count.into(),
+        transaction_commitment.into(),
+        event_count.into(),
+        event_commitment.into(),
+        protocol_version.into(),
+        Felt252Wrapper::ZERO,
+        parent_block_hash.into(),
+    ];
 
     let expected_hash =
         Felt252Wrapper::from_hex_be("0x001d126ca058c7e546d59cf4e10728e4b023ca0fb368e8abcabf0b5335f4487a").unwrap();
+    let hash = <PedersenHasher as HasherT>::compute_hash_on_wrappers(header);
 
-    assert_eq!(header.hash::<PedersenHasher>(), expected_hash);
+    assert_eq!(hash, expected_hash);
 }
 
 #[test]

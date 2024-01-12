@@ -3,6 +3,15 @@
 ## Next release
 
 - chore: added ca-certificate in DockerFile for SSL related issues
+- chore(primitives/commitment): remove crate
+- chore(primitives/block/header): remove starknet-trie dependent fields
+- refacto(primitives/db): add a temporary way to get a fake global state root
+- chore: feature flags for avail and celestia DA
+- feat(rpc): added support for v0.5.1 JSON-RPC specs
+- feat(rpc): added ordered messages/events in trace fields
+- feat(rpc): support for starknet.rs v0.5.1 version
+- feat(rpc): added execution resources in trace fields
+- feat(rpc): added state diff field in trace fields
 - refactor: removed benchmarking folder and traces of CI pipeline
 - fix: decouple is_query into is_query and offset_version
 - feat: add sierra to casm class hash mapping to genesis assets
