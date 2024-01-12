@@ -47,6 +47,7 @@
 - fix: `tempdir` crate has been deprecated; use `tempfile` instead
 - dev: add avail and celestia crates behind a feature flag
 - dev: replace md5 with sha3_256 hash function
+
 ## v0.6.0
 
 - chore: release v0.6.0
