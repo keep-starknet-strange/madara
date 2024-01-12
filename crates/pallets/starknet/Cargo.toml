@@ -26,7 +26,7 @@ mp-program-hash = { workspace = true }
 mp-sequencer-address = { workspace = true, features = ["parity-scale-codec"] }
 mp-simulations = { workspace = true, features = [
   "parity-scale-codec",
-  "serde",
+  "scale-info",
 ] }
 mp-snos-output = { workspace = true, features = [
   "parity-scale-codec",

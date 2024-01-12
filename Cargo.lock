@@ -6846,17 +6846,9 @@ dependencies = [
 name = "mp-simulations"
 version = "0.6.0"
 dependencies = [
- "blockifier",
- "mp-felt",
- "mp-messages",
- "mp-state",
- "mp-transactions",
  "parity-scale-codec",
  "scale-info",
- "serde",
- "serde_with",
  "starknet-core",
- "starknet_api",
 ]
 
 [[package]]
