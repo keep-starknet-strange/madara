@@ -5,6 +5,7 @@ use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 use mc_genesis_data_provider::GenesisProvider;
 use mc_rpc_core::{StarknetReadRpcApiServer, StarknetTraceRpcApiServer};
+use mc_storage::StorageOverride;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
@@ -66,7 +67,7 @@ where
                 },
             )?;
 
-        let simulation_flags: SimulationFlags = simulation_flags.into();
+        let simulation_flags = SimulationFlags::from(simulation_flags);
 
         let res = self
             .client
@@ -81,7 +82,9 @@ where
                 StarknetRpcApiError::ContractError
             })?;
 
-        Ok(tx_execution_infos_to_simulated_transactions(tx_types, res).unwrap())
+        let storage_override = self.overrides.for_block_hash(self.client.as_ref(), substrate_block_hash);
+
+        Ok(tx_execution_infos_to_simulated_transactions(storage_override, substrate_block_hash, tx_types, res).unwrap())
     }
 }
 
@@ -94,19 +97,19 @@ pub enum ConvertCallInfoToExecuteInvocationError {
 }
 
 fn collect_call_info_ordered_messages(call_info: &CallInfo) -> Vec<starknet_core::types::OrderedMessage> {
-    let mut messages = Vec::new();
-
-    for (index, message) in call_info.execution.l2_to_l1_messages.iter().enumerate() {
-        messages.push(starknet_core::types::OrderedMessage {
+    call_info
+        .execution
+        .l2_to_l1_messages
+        .iter()
+        .enumerate()
+        .map(|(index, message)| starknet_core::types::OrderedMessage {
             order: index as u64,
             payload: message.message.payload.0.iter().map(|x| (*x).into()).collect(),
             to_address: FieldElement::from_byte_slice_be(message.message.to_address.0.to_fixed_bytes().as_slice())
                 .unwrap(),
             from_address: call_info.call.storage_address.0.0.into(),
-        });
-    }
-
-    messages
+        })
+        .collect()
 }
 
 fn blockifier_to_starknet_rs_ordered_events(
@@ -132,9 +135,13 @@ fn blockifier_to_starknet_rs_ordered_events(
 pub enum TryFuntionInvocationFromCallInfoError {
     #[error(transparent)]
     TransactionExecution(#[from] TransactionExecutionError),
+    #[error("No contract found at the Call contract_address")]
+    ContractNotFound,
 }
 
-fn try_get_funtion_invocation_from_call_info(
+fn try_get_funtion_invocation_from_call_info<B: BlockT>(
+    storage_override: &Box<dyn StorageOverride<B>>,
+    substrate_block_hash: B::Hash,
     call_info: &CallInfo,
 ) -> Result<starknet_core::types::FunctionInvocation, TryFuntionInvocationFromCallInfoError> {
     let messages = collect_call_info_ordered_messages(call_info);
@@ -143,8 +150,8 @@ fn try_get_funtion_invocation_from_call_info(
     let inner_calls = call_info
         .inner_calls
         .iter()
-        .map(|call| try_get_funtion_invocation_from_call_info(call))
-        .collect::<Result<_, TryFuntionInvocationFromCallInfoError>>()?;
+        .map(|call| try_get_funtion_invocation_from_call_info(storage_override, substrate_block_hash, call))
+        .collect::<Result<_, _>>()?;
 
     call_info.get_sorted_l2_to_l1_payloads_length()?;
 
@@ -165,14 +172,24 @@ fn try_get_funtion_invocation_from_call_info(
         blockifier::execution::entry_point::CallType::Delegate => starknet_core::types::CallType::Delegate,
     };
 
+    // Blockifier call info does not give use the class_hash "if it can be deducted from the storage
+    // address". We have to do this decution ourselves here
+    let class_hash = if let Some(class_hash) = call_info.call.class_hash {
+        class_hash.0.into()
+    } else {
+        let class_hash = storage_override
+            .contract_class_hash_by_address(substrate_block_hash, call_info.call.storage_address)
+            .ok_or_else(|| TryFuntionInvocationFromCallInfoError::ContractNotFound)?;
+
+        FieldElement::from_byte_slice_be(class_hash.0.bytes()).unwrap()
+    };
+
     Ok(starknet_core::types::FunctionInvocation {
         contract_address: call_info.call.storage_address.0.0.into(),
         entry_point_selector: call_info.call.entry_point_selector.0.into(),
         calldata: call_info.call.calldata.0.iter().map(|x| (*x).into()).collect(),
         caller_address: call_info.call.caller_address.0.0.into(),
-        // TODO: Blockifier call info does not give use the class_hash "if it can be deducted from the storage address"
-        // We have to do this deductive work ourselves somewhere
-        class_hash: call_info.call.class_hash.map(|x| x.0.into()).unwrap_or_default(),
+        class_hash,
         entry_point_type,
         call_type,
         result: call_info.execution.retdata.0.iter().map(|x| (*x).into()).collect(),
@@ -182,7 +199,9 @@ fn try_get_funtion_invocation_from_call_info(
     })
 }
 
-fn tx_execution_infos_to_simulated_transactions(
+fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
+    storage_override: &Box<dyn StorageOverride<B>>,
+    substrate_block_hash: B::Hash,
     tx_types: Vec<TxType>,
     transaction_execution_results: Vec<
         Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>,
@@ -195,10 +214,16 @@ fn tx_execution_infos_to_simulated_transactions(
                 // Both are safe to unwrap because blockifier states that
                 // `validate_call_info` and `fee_transfer_call_info` should only be `None` for `L1Handler`
                 // transactions
-                let validate_invocation =
-                    try_get_funtion_invocation_from_call_info(tx_exec_info.validate_call_info.as_ref().unwrap())?;
-                let fee_transfer_invocation =
-                    try_get_funtion_invocation_from_call_info(tx_exec_info.fee_transfer_call_info.as_ref().unwrap())?;
+                let validate_invocation = try_get_funtion_invocation_from_call_info(
+                    storage_override,
+                    substrate_block_hash,
+                    tx_exec_info.validate_call_info.as_ref().unwrap(),
+                )?;
+                let fee_transfer_invocation = try_get_funtion_invocation_from_call_info(
+                    storage_override,
+                    substrate_block_hash,
+                    tx_exec_info.fee_transfer_call_info.as_ref().unwrap(),
+                )?;
 
                 let transaction_trace = match tx_type {
                     TxType::Invoke => TransactionTrace::Invoke(InvokeTransactionTrace {
@@ -207,6 +232,8 @@ fn tx_execution_infos_to_simulated_transactions(
                             ExecuteInvocation::Reverted(RevertedInvocation { revert_reason: e.clone() })
                         } else {
                             ExecuteInvocation::Success(try_get_funtion_invocation_from_call_info(
+                                storage_override,
+                                substrate_block_hash,
                                 // Safe to unwrap because is only `None`  for `Declare` txs
                                 tx_exec_info.execute_call_info.as_ref().unwrap(),
                             )?)
@@ -225,6 +252,8 @@ fn tx_execution_infos_to_simulated_transactions(
                         TransactionTrace::DeployAccount(DeployAccountTransactionTrace {
                             validate_invocation: Some(validate_invocation),
                             constructor_invocation: try_get_funtion_invocation_from_call_info(
+                                storage_override,
+                                substrate_block_hash,
                                 // Safe to unwrap because is only `None`  for `Declare` txs
                                 &tx_exec_info.execute_call_info.as_ref().unwrap(),
                             )?,
