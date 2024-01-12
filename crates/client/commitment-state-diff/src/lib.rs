@@ -36,6 +36,7 @@ pub struct CommitmentStateDiffWorker<B: BlockT, C, H> {
     storage_event_stream: StorageEventStream<B::Hash>,
     tx: mpsc::Sender<BlockDAData>,
     msg: Option<BlockDAData>,
+    backend: Arc<mc_db::Backend<B>>,
     phantom: PhantomData<H>,
 }
 
@@ -43,11 +44,11 @@ impl<B: BlockT, C, H> CommitmentStateDiffWorker<B, C, H>
 where
     C: BlockchainEvents<B>,
 {
-    pub fn new(client: Arc<C>, tx: mpsc::Sender<BlockDAData>) -> Self {
+    pub fn new(client: Arc<C>, backend: Arc<mc_db::Backend<B>>, tx: mpsc::Sender<BlockDAData>) -> Self {
         let storage_event_stream = client
             .storage_changes_notification_stream(None, None)
             .expect("the node storage changes notification stream should be up and running");
-        Self { client, storage_event_stream, tx, msg: Default::default(), phantom: PhantomData }
+        Self { client, storage_event_stream, tx, msg: Default::default(), backend, phantom: PhantomData }
     }
 }
 
@@ -75,7 +76,11 @@ where
                 Poll::Ready(Some(storage_notification)) => {
                     let block_hash = storage_notification.block;
 
-                    match build_commitment_state_diff::<B, C, H>(self_as_mut.client.clone(), storage_notification) {
+                    match build_commitment_state_diff::<B, C, H>(
+                        self_as_mut.client.clone(),
+                        self_as_mut.backend.clone(),
+                        storage_notification,
+                    ) {
                         Ok(msg) => self_as_mut.msg = Some(msg),
                         Err(e) => {
                             log::error!(
@@ -134,6 +139,7 @@ enum BuildCommitmentStateDiffError {
 
 fn build_commitment_state_diff<B: BlockT, C, H>(
     client: Arc<C>,
+    backend: Arc<mc_db::Backend<B>>,
     storage_notification: StorageNotification<B::Hash>,
 ) -> Result<BlockDAData, BuildCommitmentStateDiffError>
 where
@@ -220,19 +226,10 @@ where
         }
     }
 
-    let (current_block, parent_block) = {
+    let current_block = {
         let header = client.header(storage_notification.block)?.ok_or(BuildCommitmentStateDiffError::BlockNotFound)?;
         let digest = header.digest();
-        let block = mp_digest_log::find_starknet_block(digest)?;
-
-        // This function is not triggered for the genesis block (block 0),
-        // so we don't need to handle and edge case of no parent block
-        let parent_hash = header.parent_hash();
-        let parent_header =
-            client.header(parent_hash.to_owned())?.ok_or(BuildCommitmentStateDiffError::BlockNotFound)?;
-        let parent_block = mp_digest_log::find_starknet_block(parent_header.digest())?;
-
-        (block, parent_block)
+        mp_digest_log::find_starknet_block(digest)?
     };
 
     let config_hash = client.runtime_api().config_hash(storage_notification.block)?;
@@ -243,7 +240,8 @@ where
         num_addr_accessed: accessed_addrs.len(),
         block_number: current_block.header().block_number,
         config_hash,
-        new_state_root: current_block.header().global_state_root,
-        previous_state_root: parent_block.header().global_state_root,
+        // TODO: fix when we implement state root
+        new_state_root: backend.temporary_global_state_root_getter(),
+        previous_state_root: backend.temporary_global_state_root_getter(),
     })
 }
