@@ -46,25 +46,25 @@ where
         transactions: Vec<BroadcastedTransaction>,
         simulation_flags: Vec<SimulationFlag>,
     ) -> RpcResult<Vec<SimulatedTransaction>> {
-        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
-            error!("'{e}'");
-            StarknetRpcApiError::BlockNotFound
-        })?;
-        let best_block_hash = self.client.info().best_hash;
+        let substrate_block_hash =
+            self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| StarknetRpcApiError::BlockNotFound)?;
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
+        let best_block_hash = self.client.info().best_hash;
 
-        let x = transactions.into_iter().map(|tx| match tx {
+        let tx_type_and_tx_iterator = transactions.into_iter().map(|tx| match tx {
             BroadcastedTransaction::Invoke(invoke_tx) => invoke_tx.try_into().map(|tx| (TxType::Invoke, tx)),
             BroadcastedTransaction::Declare(declare_tx) => declare_tx.try_into().map(|tx| (TxType::Declare, tx)),
             BroadcastedTransaction::DeployAccount(deploy_account_tx) => {
                 deploy_account_tx.try_into().map(|tx| (TxType::DeployAccount, tx))
             }
         });
-        let (tx_types, user_transactions) = itertools::process_results(x, |iter| iter.unzip::<_, _, Vec<_>, Vec<_>>())
-            .map_err(|e| {
-                error!("Failed to convert BroadcastedTransaction to UserTransaction: {e}");
-                StarknetRpcApiError::InternalServerError
-            })?;
+        let (tx_types, user_transactions) =
+            itertools::process_results(tx_type_and_tx_iterator, |iter| iter.unzip::<_, _, Vec<_>, Vec<_>>()).map_err(
+                |e| {
+                    error!("Failed to convert BroadcastedTransaction to UserTransaction: {e}");
+                    StarknetRpcApiError::InternalServerError
+                },
+            )?;
 
         let simulation_flags: SimulationFlags = simulation_flags.into();
 
@@ -81,37 +81,16 @@ where
                 StarknetRpcApiError::ContractError
             })?;
 
-        let x = tx_execution_infos_to_simulated_transactions(tx_types, res).unwrap();
-
-        Ok(x)
+        Ok(tx_execution_infos_to_simulated_transactions(tx_types, res).unwrap())
     }
 }
 
 #[derive(Error, Debug)]
 pub enum ConvertCallInfoToExecuteInvocationError {
-    #[error("Revert reason is missing")]
-    MissingRevertReason,
-    #[error("todo")]
-    ConversionFailed,
     #[error("One of the simulated transaction failed")]
     TransactionExecutionFailed,
     #[error(transparent)]
     GetFunctionInvocation(#[from] TryFuntionInvocationFromCallInfoError),
-}
-
-pub fn try_get_execute_invocation_from_call_info_and_revert_error(
-    call_info: &CallInfo,
-    revert_error: Option<&String>,
-) -> Result<ExecuteInvocation, ConvertCallInfoToExecuteInvocationError> {
-    if call_info.execution.failed {
-        return Ok(ExecuteInvocation::Reverted(RevertedInvocation {
-            revert_reason: revert_error.ok_or(ConvertCallInfoToExecuteInvocationError::MissingRevertReason)?.clone(),
-        }));
-    }
-    Ok(ExecuteInvocation::Success(
-        try_get_funtion_invocation_from_call_info(call_info)
-            .map_err(|_| ConvertCallInfoToExecuteInvocationError::ConversionFailed)?,
-    ))
 }
 
 fn collect_call_info_ordered_messages(call_info: &CallInfo) -> Vec<starknet_core::types::OrderedMessage> {
@@ -224,10 +203,14 @@ fn tx_execution_infos_to_simulated_transactions(
                 let transaction_trace = match tx_type {
                     TxType::Invoke => TransactionTrace::Invoke(InvokeTransactionTrace {
                         validate_invocation: Some(validate_invocation),
-                        execute_invocation: try_get_execute_invocation_from_call_info_and_revert_error(
-                            &tx_exec_info.execute_call_info.as_ref().unwrap(), // Safe cos is `None` only for `Declare`
-                            tx_exec_info.revert_error.as_ref(),
-                        )?,
+                        execute_invocation: if let Some(e) = &tx_exec_info.revert_error {
+                            ExecuteInvocation::Reverted(RevertedInvocation { revert_reason: e.clone() })
+                        } else {
+                            ExecuteInvocation::Success(try_get_funtion_invocation_from_call_info(
+                                // Safe to unwrap because is only `None`  for `Declare` txs
+                                tx_exec_info.execute_call_info.as_ref().unwrap(),
+                            )?)
+                        },
                         fee_transfer_invocation: Some(fee_transfer_invocation),
                         // TODO(#1291): Compute state diff correctly
                         state_diff: None,
@@ -242,8 +225,8 @@ fn tx_execution_infos_to_simulated_transactions(
                         TransactionTrace::DeployAccount(DeployAccountTransactionTrace {
                             validate_invocation: Some(validate_invocation),
                             constructor_invocation: try_get_funtion_invocation_from_call_info(
-                                &tx_exec_info.execute_call_info.as_ref().unwrap(), /* Safe coz is `None` only for
-                                                                                    * `Declare` */
+                                // Safe to unwrap because is only `None`  for `Declare` txs
+                                &tx_exec_info.execute_call_info.as_ref().unwrap(),
                             )?,
                             fee_transfer_invocation: Some(fee_transfer_invocation),
                             // TODO(#1291): Compute state diff correctly
