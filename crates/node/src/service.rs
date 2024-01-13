@@ -17,7 +17,6 @@ use mc_data_availability::avail::{config::AvailConfig, AvailClient};
 #[cfg(feature = "celestia")]
 use mc_data_availability::celestia::{config::CelestiaConfig, CelestiaClient};
 use mc_data_availability::ethereum::config::EthereumConfig;
-use mc_data_availability::ethereum::EthereumClient;
 use mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker};
 use mc_genesis_data_provider::OnDiskGenesisConfig;
 use mc_l1_messages::config::L1MessagesWorkerConfig;
@@ -424,7 +423,7 @@ pub fn new_full(
     let (commitment_state_diff_tx, commitment_state_diff_rx) = mpsc::channel(5);
 
     // initialize data availability worker
-    if let Some((da_layer, da_path)) = da_layer {
+    if let Some((_da_layer, _da_path)) = da_layer {
         task_manager.spawn_essential_handle().spawn(
             "commitment-state-diff",
             Some("madara"),
