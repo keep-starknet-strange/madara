@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use ethers::providers::{Http, Provider, StreamExt};
 use ethers::types::U256;
+use mc_db::messaging_db::LastSyncedEventBlock;
 use mp_transactions::HandleL1MessageTransaction;
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::HeaderBackend;
@@ -15,7 +16,6 @@ use starknet_api::transaction::Fee;
 use crate::config::L1MessagesWorkerConfig;
 use crate::contract::{L1Contract, LogMessageToL2Filter};
 use crate::error::L1MessagesWorkerError;
-use mc_db::messaging_db::LastSyncedEventBlock;
 
 const TX_SOURCE: TransactionSource = TransactionSource::External;
 
@@ -60,7 +60,9 @@ pub async fn run_worker<C, P, B>(
             meta.log_index
         );
 
-        match process_l1_message(event, &client, &pool, &backend, &meta.block_number.as_u64(), &meta.log_index.as_u64()).await {
+        match process_l1_message(event, &client, &pool, &backend, &meta.block_number.as_u64(), &meta.log_index.as_u64())
+            .await
+        {
             Ok(Some(tx_hash)) => {
                 log::info!(
                     "⟠ L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?} submitted, transaction \
@@ -134,10 +136,16 @@ where
         L1MessagesWorkerError::SubmitTxError(e)
     })?;
 
-    backend.messaging().update_last_synced_l1_block_with_event(&LastSyncedEventBlock::new(l1_block_number.to_owned(), event_index.to_owned())).map_err(|e| {
-        log::error!("⟠ Failed to save last L1 synced block: {:?}", e);
-        L1MessagesWorkerError::DatabaseError(e)
-    })?;
+    backend
+        .messaging()
+        .update_last_synced_l1_block_with_event(&LastSyncedEventBlock::new(
+            l1_block_number.to_owned(),
+            event_index.to_owned(),
+        ))
+        .map_err(|e| {
+            log::error!("⟠ Failed to save last L1 synced block: {:?}", e);
+            L1MessagesWorkerError::DatabaseError(e)
+        })?;
 
     Ok(Some(tx_hash))
 }

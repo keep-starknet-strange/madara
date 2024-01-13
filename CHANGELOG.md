@@ -2,6 +2,7 @@
 
 ## Next release
 
+- refactor: rename LAST_SYNCED_L1_BLOCK to be more clear
 - fix: `prove_current_block` is called after `update_state`
 - ci: add foundry ci task to push workflow
 - fix: first tx for non deployed account is valid
