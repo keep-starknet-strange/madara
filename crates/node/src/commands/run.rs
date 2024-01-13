@@ -2,10 +2,10 @@ use std::path::PathBuf;
 
 use clap::ValueHint::FilePath;
 use madara_runtime::SealingMode;
-use mc_data_availability::avail::config::AvailConfig;
-use mc_data_availability::avail::AvailClient;
-use mc_data_availability::celestia::config::CelestiaConfig;
-use mc_data_availability::celestia::CelestiaClient;
+#[cfg(feature = "avail")]
+use mc_data_availability::avail::{config::AvailConfig, AvailClient};
+#[cfg(feature = "celestia")]
+use mc_data_availability::celestia::{config::CelestiaConfig, CelestiaClient};
 use mc_data_availability::ethereum::config::EthereumConfig;
 use mc_data_availability::ethereum::EthereumClient;
 use mc_data_availability::{DaClient, DaLayer};
@@ -127,6 +127,7 @@ impl ExtendedRunCmd {
 
 fn init_da_client(da_layer: DaLayer, da_path: PathBuf) -> Result<Box<dyn DaClient + Send + Sync>> {
     let da_client: Box<dyn DaClient + Send + Sync> = match da_layer {
+        #[cfg(feature = "celestia")]
         DaLayer::Celestia => {
             let celestia_conf = CelestiaConfig::try_from(&da_path)?;
             Box::new(CelestiaClient::try_from(celestia_conf).map_err(|e| sc_cli::Error::Input(e.to_string()))?)
@@ -135,6 +136,7 @@ fn init_da_client(da_layer: DaLayer, da_path: PathBuf) -> Result<Box<dyn DaClien
             let ethereum_conf = EthereumConfig::try_from(&da_path)?;
             Box::new(EthereumClient::try_from(ethereum_conf)?)
         }
+        #[cfg(feature = "avail")]
         DaLayer::Avail => {
             let avail_conf = AvailConfig::try_from(&da_path)?;
             Box::new(AvailClient::try_from(avail_conf).map_err(|e| sc_cli::Error::Input(e.to_string()))?)
@@ -150,13 +152,13 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
     }
     let runner = cli.create_runner(&cli.run.base)?;
 
-    let (da_config, _da_client) = match cli.run.da_layer {
+    let (da_config, da_client) = match cli.run.da_layer {
         Some(da_layer) => {
             let da_conf = cli.run.clone().da_conf.unwrap_or({
                 let path_base_path = cli.run.base_path()?;
-                let path_da_conf_json = path_base_path.path().join("chains/dev/ethereum.json");
+                let path_da_conf_json = path_base_path.path().join("chains/dev").join(format!("{da_layer}.json"));
                 if !path_da_conf_json.exists() {
-                    return Err(sc_cli::Error::Input("no file ethereum.json in base_path".to_string()));
+                    return Err(sc_cli::Error::Input(format!("no file {da_layer}.json in base_path")));
                 }
                 path_da_conf_json
             });

@@ -43,6 +43,18 @@ pub enum DaLayer {
     Avail,
 }
 
+impl Display for DaLayer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            #[cfg(feature = "celestia")]
+            DaLayer::Celestia => Display::fmt("Celestia", f),
+            DaLayer::Ethereum => Display::fmt("Ethereum",f),
+            #[cfg(feature = "avail")]
+            DaLayer::Avail => Display::fmt("Avail",f),
+        }
+    }
+}
+
 /// Data availability modes in which Madara can be initialized.
 ///
 /// Default only mode currently implemented is Sovereing.
