@@ -48,9 +48,9 @@ impl Display for DaLayer {
         match self {
             #[cfg(feature = "celestia")]
             DaLayer::Celestia => Display::fmt("Celestia", f),
-            DaLayer::Ethereum => Display::fmt("Ethereum",f),
+            DaLayer::Ethereum => Display::fmt("Ethereum", f),
             #[cfg(feature = "avail")]
-            DaLayer::Avail => Display::fmt("Avail",f),
+            DaLayer::Avail => Display::fmt("Avail", f),
         }
     }
 }

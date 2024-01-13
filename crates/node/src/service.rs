@@ -273,6 +273,7 @@ pub fn new_full(
     config: Configuration,
     sealing: SealingMode,
     da_layer: Option<(DaLayer, PathBuf)>,
+    da_client: Option<Box<dyn DaClient + Send + Sync>>,
     cache_more_things: bool,
     l1_messages_worker_config: Option<L1MessagesWorkerConfig>,
     settlement_config: Option<(SettlementLayer, PathBuf)>,
@@ -435,33 +436,18 @@ pub fn new_full(
             .for_each(|()| future::ready(())),
         );
 
-        let da_client: Arc<dyn DaClient + Send + Sync> = match da_layer {
-            #[cfg(feature = "celestia")]
-            DaLayer::Celestia => {
-                let celestia_conf = CelestiaConfig::try_from(&da_path)?;
-                Arc::new(CelestiaClient::try_from(celestia_conf).map_err(|e| ServiceError::Other(e.to_string()))?)
-            }
-            DaLayer::Ethereum => {
-                let ethereum_conf = EthereumConfig::try_from(&da_path)?;
-                Arc::new(EthereumClient::try_from(ethereum_conf)?)
-            }
-            #[cfg(feature = "avail")]
-            DaLayer::Avail => {
-                let avail_conf = AvailConfig::try_from(&da_path)?;
-                Arc::new(AvailClient::try_from(avail_conf).map_err(|e| ServiceError::Other(e.to_string()))?)
-            }
-        };
-
-        task_manager.spawn_essential_handle().spawn(
-            "da-worker",
-            Some(MADARA_TASK_GROUP),
-            DataAvailabilityWorker::<_, StarknetHasher>::prove_current_block(
-                da_client,
-                prometheus_registry.clone(),
-                commitment_state_diff_rx,
-                madara_backend.clone(),
-            ),
-        );
+        if let Some(da_client) = da_client {
+            task_manager.spawn_essential_handle().spawn(
+                "da-worker",
+                Some(MADARA_TASK_GROUP),
+                DataAvailabilityWorker::<_, StarknetHasher>::prove_current_block(
+                    da_client.into(),
+                    prometheus_registry.clone(),
+                    commitment_state_diff_rx,
+                    madara_backend.clone(),
+                ),
+            );
+        }
     };
 
     // initialize settlement worker
