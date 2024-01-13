@@ -23,6 +23,7 @@ COPY --from=builder /madara/target/release/madara /madara-bin
 RUN apt-get -y update; \
     apt-get install -y --no-install-recommends \
         curl; \
+    apt-get install -y ca-certificates; \
     apt-get autoremove -y; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*

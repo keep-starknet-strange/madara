@@ -2,6 +2,7 @@
 
 ## Next release
 
+- chore: added ca-certificate in DockerFile for SSL related issues
 - chore(primitives/commitment): remove crate
 - chore(primitives/block/header): remove starknet-trie dependent fields
 - refacto(primitives/db): add a temporary way to get a fake global state root
