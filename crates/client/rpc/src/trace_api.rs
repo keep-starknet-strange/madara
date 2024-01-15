@@ -83,8 +83,18 @@ where
             })?;
 
         let storage_override = self.overrides.for_block_hash(self.client.as_ref(), substrate_block_hash);
+        let simulated_transactions =
+            tx_execution_infos_to_simulated_transactions(storage_override, substrate_block_hash, tx_types, res)
+                .map_err(|e| match e {
+                    ConvertCallInfoToExecuteInvocationError::TransactionExecutionFailed => {
+                        StarknetRpcApiError::ContractError
+                    }
+                    ConvertCallInfoToExecuteInvocationError::GetFunctionInvocation(_) => {
+                        StarknetRpcApiError::InternalServerError
+                    }
+                })?;
 
-        Ok(tx_execution_infos_to_simulated_transactions(storage_override, substrate_block_hash, tx_types, res).unwrap())
+        Ok(simulated_transactions)
     }
 }
 
@@ -211,23 +221,28 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
     for (tx_type, res) in tx_types.iter().zip(transaction_execution_results.iter()) {
         match res {
             Ok(tx_exec_info) => {
-                // Both are safe to unwrap because blockifier states that
-                // `validate_call_info` and `fee_transfer_call_info` should only be `None` for `L1Handler`
-                // transactions
-                let validate_invocation = try_get_funtion_invocation_from_call_info(
-                    storage_override,
-                    substrate_block_hash,
-                    tx_exec_info.validate_call_info.as_ref().unwrap(),
-                )?;
-                let fee_transfer_invocation = try_get_funtion_invocation_from_call_info(
-                    storage_override,
-                    substrate_block_hash,
-                    tx_exec_info.fee_transfer_call_info.as_ref().unwrap(),
-                )?;
+                // If simulated with `SimulationFlag::SkipValidate` this will be `None`
+                // therefore we cannot unwrap it
+                let validate_invocation = tx_exec_info
+                    .validate_call_info
+                    .as_ref()
+                    .map(|call_info| {
+                        try_get_funtion_invocation_from_call_info(storage_override, substrate_block_hash, call_info)
+                    })
+                    .transpose()?;
+                // If simulated with `SimulationFlag::SkipFeeCharge` this will be `None`
+                // therefore we cannot unwrap it
+                let fee_transfer_invocation = tx_exec_info
+                    .fee_transfer_call_info
+                    .as_ref()
+                    .map(|call_info| {
+                        try_get_funtion_invocation_from_call_info(storage_override, substrate_block_hash, call_info)
+                    })
+                    .transpose()?;
 
                 let transaction_trace = match tx_type {
                     TxType::Invoke => TransactionTrace::Invoke(InvokeTransactionTrace {
-                        validate_invocation: Some(validate_invocation),
+                        validate_invocation,
                         execute_invocation: if let Some(e) = &tx_exec_info.revert_error {
                             ExecuteInvocation::Reverted(RevertedInvocation { revert_reason: e.clone() })
                         } else {
@@ -238,26 +253,26 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
                                 tx_exec_info.execute_call_info.as_ref().unwrap(),
                             )?)
                         },
-                        fee_transfer_invocation: Some(fee_transfer_invocation),
+                        fee_transfer_invocation,
                         // TODO(#1291): Compute state diff correctly
                         state_diff: None,
                     }),
                     TxType::Declare => TransactionTrace::Declare(DeclareTransactionTrace {
-                        validate_invocation: Some(validate_invocation),
-                        fee_transfer_invocation: Some(fee_transfer_invocation),
+                        validate_invocation,
+                        fee_transfer_invocation,
                         // TODO(#1291): Compute state diff correctly
                         state_diff: None,
                     }),
                     TxType::DeployAccount => {
                         TransactionTrace::DeployAccount(DeployAccountTransactionTrace {
-                            validate_invocation: Some(validate_invocation),
+                            validate_invocation,
                             constructor_invocation: try_get_funtion_invocation_from_call_info(
                                 storage_override,
                                 substrate_block_hash,
                                 // Safe to unwrap because is only `None`  for `Declare` txs
                                 &tx_exec_info.execute_call_info.as_ref().unwrap(),
                             )?,
-                            fee_transfer_invocation: Some(fee_transfer_invocation),
+                            fee_transfer_invocation,
                             // TODO(#1291): Compute state diff correctly
                             state_diff: None,
                         })

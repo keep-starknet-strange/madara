@@ -1090,7 +1090,7 @@ impl<T: Config> Pallet<T> {
                 Ok(tx_exec_info) => {
                     log!(info, "Successfully estimated fee: {:?}", tx_exec_info);
                     if let Some(l1_gas_usage) = tx_exec_info.actual_resources.0.get("l1_gas_usage") {
-                        results.push((tx_exec_info.actual_fee.0 as u64, *l1_gas_usage as u64));
+                        results.push((tx_exec_info.actual_fee.0 as u64, *l1_gas_usage));
                     } else {
                         return Err(Error::<T>::TransactionExecutionFailed.into());
                     }
