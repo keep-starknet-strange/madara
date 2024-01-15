@@ -48,6 +48,7 @@
 - refactor: use `map` in `estimate_fee` to stop computation on error
 - fix: `tempdir` crate has been deprecated; use `tempfile` instead
 - dev: add avail and celestia crates behind a feature flag
+- dev: replace md5 with sha3_256 hash function
 
 ## v0.6.0
 
