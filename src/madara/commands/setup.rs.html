@@ -208,10 +208,14 @@
 <a href="#208" id="208">208</a>
 <a href="#209" id="209">209</a>
 <a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::{Path, PathBuf};
 
 <span class="kw">use </span>sc_cli::{Error, <span class="prelude-ty">Result</span>, SubstrateCli};
 <span class="kw">use </span>sc_service::BasePath;
+<span class="kw">use </span>sha3::{Digest, Sha3_256};
 <span class="kw">use </span>url::Url;
 
 <span class="kw">use </span><span class="kw">crate</span>::chain_spec::GENESIS_ASSETS_DIR;
@@ -223,7 +227,7 @@
 
 /// The index.json must follow the format of the official index.json
 /// (https://github.com/keep-starknet-strange/madara/blob/main/configs/index.json)
-/// Where the `md5` and `url` fields are optional
+/// Where the `sha3_256` and `url` fields are optional
 </span><span class="attr">#[derive(Debug, clap::Args)]
 #[group(required = <span class="bool-val">true</span>, multiple = <span class="bool-val">false</span>)]
 </span><span class="kw">pub struct </span>SetupSource {
@@ -383,9 +387,11 @@
         <span class="kw">for </span>asset <span class="kw">in </span><span class="kw-2">&amp;</span>configs.genesis_assets {
             <span class="kw">let </span>asset_file_content = config_source.load_asset(asset)<span class="question-mark">?</span>;
 
-            <span class="comment">// Verify it&#39;s md5
-            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(file_hash) = <span class="kw-2">&amp;</span>asset.md5 {
-                <span class="kw">let </span>digest = md5::compute(<span class="kw-2">&amp;</span>asset_file_content);
+            <span class="comment">// Verify it&#39;s sha3_256
+            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(file_hash) = <span class="kw-2">&amp;</span>asset.sha3_256 {
+                <span class="kw">let </span><span class="kw-2">mut </span>hasher = Sha3_256::new();
+                hasher.update(<span class="kw-2">&amp;</span>asset_file_content);
+                <span class="kw">let </span>digest = hasher.finalize();
                 <span class="kw">let </span>hash = <span class="macro">format!</span>(<span class="string">&quot;{:x}&quot;</span>, digest);
                 <span class="kw">if </span>hash != <span class="kw-2">*</span>file_hash {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Input(<span class="macro">format!</span>(
