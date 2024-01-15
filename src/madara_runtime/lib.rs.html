@@ -491,6 +491,7 @@
 <a href="#491" id="491">491</a>
 <a href="#492" id="492">492</a>
 <a href="#493" id="493">493</a>
+<a href="#494" id="494">494</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don&#39;t support yet validity proofs and state updates to
@@ -511,6 +512,7 @@
 <span class="kw">mod </span>types;
 
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
+<span class="kw">use </span>blockifier::transaction::objects::TransactionExecutionInfo;
 <span class="kw">pub use </span>config::<span class="kw-2">*</span>;
 <span class="kw">pub use </span>frame_support::traits::{ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness, StorageInfo};
 <span class="kw">pub use </span>frame_support::weights::constants::{
@@ -521,7 +523,7 @@
 <span class="kw">pub use </span>frame_system::Call <span class="kw">as </span>SystemCall;
 <span class="kw">use </span>frame_system::{EventRecord, Phase};
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
-<span class="kw">use </span>mp_simulations::{SimulatedTransaction, SimulationFlags};
+<span class="kw">use </span>mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
 <span class="kw">use </span>mp_transactions::compute_hash::ComputeTransactionHash;
 <span class="kw">use </span>mp_transactions::{HandleL1MessageTransaction, Transaction, UserTransaction};
 <span class="kw">use </span>pallet_grandpa::{fg_primitives, AuthorityId <span class="kw">as </span>GrandpaId, AuthorityList <span class="kw">as </span>GrandpaAuthorityList};
@@ -768,7 +770,7 @@
             Starknet::estimate_fee(transactions)
         }
 
-        <span class="kw">fn </span>simulate_transactions(transactions: Vec&lt;UserTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;SimulatedTransaction&gt;, DispatchError&gt; {
+        <span class="kw">fn </span>simulate_transactions(transactions: Vec&lt;UserTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;&gt;, DispatchError&gt; {
             Starknet::simulate_transactions(transactions, simulation_flags)
         }
 

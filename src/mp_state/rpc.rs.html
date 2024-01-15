@@ -119,12 +119,6 @@
 <a href="#119" id="119">119</a>
 <a href="#120" id="120">120</a>
 <a href="#121" id="121">121</a>
-<a href="#122" id="122">122</a>
-<a href="#123" id="123">123</a>
-<a href="#124" id="124">124</a>
-<a href="#125" id="125">125</a>
-<a href="#126" id="126">126</a>
-<a href="#127" id="127">127</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet rpc state primitives.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
@@ -133,64 +127,61 @@
 
 <span class="kw">use </span>alloc::vec::Vec;
 
-<span class="kw">use </span>mp_felt::{Felt252Wrapper, UfeHex};
-<span class="kw">use </span>serde_with::serde_as;
+<span class="kw">use </span>mp_felt::Felt252Wrapper;
+<span class="attr">#[cfg(feature = <span class="string">&quot;serde&quot;</span>)]
+</span><span class="kw">use </span>mp_felt::UfeHex;
 
 <span class="doccomment">/// Replaced class.
 ///
 /// The list of contracts whose class was replaced.
-</span><span class="attr">#[serde_with::serde_as]
-#[derive(Debug, Clone)]
+</span><span class="attr">#[derive(Debug, Clone)]
 #[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
-#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize))]
+#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize), serde_with::serde_as)]
 </span><span class="kw">pub struct </span>ReplacedClassItem {
     <span class="doccomment">/// The address of the contract whose class was replaced
-    </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>)]
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>))]
     </span><span class="kw">pub </span>contract_address: Felt252Wrapper,
     <span class="doccomment">/// The new class hash
-    </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>)]
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>))]
     </span><span class="kw">pub </span>class_hash: Felt252Wrapper,
 }
 
 <span class="doccomment">/// Deployed contract item.
-</span><span class="attr">#[serde_with::serde_as]
-#[derive(Debug, Clone)]
+</span><span class="attr">#[derive(Debug, Clone)]
 #[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
-#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize))]
+#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize), serde_with::serde_as)]
 </span><span class="kw">pub struct </span>DeployedContractItem {
     <span class="doccomment">/// The address of the contract
-    </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>)]
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>))]
     </span><span class="kw">pub </span>address: Felt252Wrapper,
     <span class="doccomment">/// The hash of the contract code
-    </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>)]
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>))]
     </span><span class="kw">pub </span>class_hash: Felt252Wrapper,
 }
 
 <span class="doccomment">/// New classes.
 ///
 /// The declared class hash and compiled class hash.
-</span><span class="attr">#[serde_with::serde_as]
-#[derive(Debug, Clone)]
+</span><span class="attr">#[derive(Debug, Clone)]
 #[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
-#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize))]
+#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize), serde_with::serde_as)]
 </span><span class="kw">pub struct </span>DeclaredClassItem {
     <span class="doccomment">/// The hash of the declared class
-    </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>)]
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>))]
     </span><span class="kw">pub </span>class_hash: Felt252Wrapper,
     <span class="doccomment">/// The cairo assembly hash corresponding to the declared class
-    </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>)]
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>))]
     </span><span class="kw">pub </span>compiled_class_hash: Felt252Wrapper,
 }
 
 <span class="doccomment">/// Contract storage diff item.
-</span><span class="attr">#[serde_with::serde_as]
-#[derive(Debug, Clone)]
+</span><span class="attr">#[derive(Debug, Clone)]
 #[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
-#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize))]
+#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize), serde_with::serde_as)]
 </span><span class="kw">pub struct </span>ContractStorageDiffItem {
     <span class="doccomment">/// The contract address for which the storage changed
     </span><span class="kw">pub </span>address: Felt252Wrapper,
@@ -199,49 +190,46 @@
 }
 
 <span class="doccomment">/// Storage diff item.
-</span><span class="attr">#[serde_with::serde_as]
-#[derive(Debug, Clone)]
+</span><span class="attr">#[derive(Debug, Clone)]
 #[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
-#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize))]
+#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize), serde_with::serde_as)]
 </span><span class="kw">pub struct </span>StorageEntry {
     <span class="doccomment">/// The key of the changed value
-    </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>)]
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>))]
     </span><span class="kw">pub </span>key: Felt252Wrapper,
     <span class="doccomment">/// The new value applied to the given address
-    </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>)]
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>))]
     </span><span class="kw">pub </span>value: Felt252Wrapper,
 }
 
 <span class="doccomment">/// Nonce update.
 ///
 /// The updated nonce per contract address.
-</span><span class="attr">#[serde_with::serde_as]
-#[derive(Debug, Clone)]
+</span><span class="attr">#[derive(Debug, Clone)]
 #[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
-#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize))]
+#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize), serde_with::serde_as)]
 </span><span class="kw">pub struct </span>NonceUpdate {
     <span class="doccomment">/// The address of the contract
-    </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>)]
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>))]
     </span><span class="kw">pub </span>contract_address: Felt252Wrapper,
     <span class="doccomment">/// The nonce for the given address at the end of the block
-    </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>)]
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>))]
     </span><span class="kw">pub </span>nonce: Felt252Wrapper,
 }
 
 <span class="doccomment">/// The change in state applied in this block, given as a mapping of addresses to the new values
 /// and/or new contracts.
-</span><span class="attr">#[serde_with::serde_as]
-#[derive(Default, Debug, Clone)]
+</span><span class="attr">#[derive(Default, Debug, Clone)]
 #[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
-#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize))]
+#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize), serde_with::serde_as)]
 </span><span class="kw">pub struct </span>StateDiff {
     <span class="doccomment">/// Storage diffs
     </span><span class="kw">pub </span>storage_diffs: Vec&lt;ContractStorageDiffItem&gt;,
     <span class="doccomment">/// Deprecated declared classes
-    </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;Vec&lt;UfeHex&gt;&quot;</span>)]
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>))]
     </span><span class="kw">pub </span>deprecated_declared_classes: Vec&lt;Felt252Wrapper&gt;,
     <span class="doccomment">/// Declared classes
     </span><span class="kw">pub </span>declared_classes: Vec&lt;DeclaredClassItem&gt;,

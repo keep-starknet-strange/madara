@@ -442,7 +442,7 @@
     <span class="kw">let </span>l1_gas_usage =
         vm_resource_usage.remove(GAS_USAGE).expect(<span class="string">&quot;`ResourcesMapping` does not have the key `l1_gas_usage`.&quot;</span>);
 
-    (l1_gas_usage, ResourcesMapping(vm_resource_usage))
+    (l1_gas_usage <span class="kw">as </span>usize, ResourcesMapping(vm_resource_usage))
 }
 
 <span class="doccomment">/// Calculates the L1 gas consumed when submitting the underlying Cairo program to SHARP.

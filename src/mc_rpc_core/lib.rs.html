@@ -175,7 +175,6 @@
 <a href="#175" id="175">175</a>
 <a href="#176" id="176">176</a>
 <a href="#177" id="177">177</a>
-<a href="#178" id="178">178</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC API trait and types
 //!
 //! Starkware maintains [a description of the Starknet API](https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json)
@@ -192,7 +191,6 @@
 
 <span class="kw">pub mod </span>utils;
 
-<span class="kw">use </span>mp_simulations::{SimulatedTransaction, SimulationFlag};
 <span class="kw">use </span>mp_transactions::TransactionStatus;
 <span class="kw">use </span>pallet_starknet::genesis_loader::PredeployedAccount;
 <span class="kw">use </span>starknet_core::serde::unsigned_field_element::UfeHex;
@@ -201,7 +199,7 @@
     BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall,
     InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt,
-    StateUpdate, SyncStatusType, Transaction,
+    SimulatedTransaction, SimulationFlag, StateUpdate, SyncStatusType, Transaction,
 };
 
 <span class="attr">#[serde_as]

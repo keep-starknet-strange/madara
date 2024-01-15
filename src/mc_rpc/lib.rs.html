@@ -1643,23 +1643,6 @@
 <a href="#1643" id="1643">1643</a>
 <a href="#1644" id="1644">1644</a>
 <a href="#1645" id="1645">1645</a>
-<a href="#1646" id="1646">1646</a>
-<a href="#1647" id="1647">1647</a>
-<a href="#1648" id="1648">1648</a>
-<a href="#1649" id="1649">1649</a>
-<a href="#1650" id="1650">1650</a>
-<a href="#1651" id="1651">1651</a>
-<a href="#1652" id="1652">1652</a>
-<a href="#1653" id="1653">1653</a>
-<a href="#1654" id="1654">1654</a>
-<a href="#1655" id="1655">1655</a>
-<a href="#1656" id="1656">1656</a>
-<a href="#1657" id="1657">1657</a>
-<a href="#1658" id="1658">1658</a>
-<a href="#1659" id="1659">1659</a>
-<a href="#1660" id="1660">1660</a>
-<a href="#1661" id="1661">1661</a>
-<a href="#1662" id="1662">1662</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1668,6 +1651,7 @@
 <span class="kw">mod </span>errors;
 <span class="kw">mod </span>events;
 <span class="kw">mod </span>madara_backend_client;
+<span class="kw">mod </span>trace_api;
 <span class="kw">mod </span>types;
 <span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::sync::Arc;
@@ -1686,9 +1670,7 @@
 <span class="kw">use </span>mc_storage::OverrideHandle;
 <span class="kw">use </span>mp_felt::{Felt252Wrapper, Felt252WrapperError};
 <span class="kw">use </span>mp_hashers::HasherT;
-<span class="kw">use </span>mp_simulations::{SimulatedTransaction, SimulationFlag, SimulationFlags};
 <span class="kw">use </span>mp_transactions::compute_hash::ComputeTransactionHash;
-<span class="kw">use </span>mp_transactions::execution::StarknetRPCExecutionResources;
 <span class="kw">use </span>mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
 <span class="kw">use </span>mp_transactions::{TransactionStatus, UserTransaction};
 <span class="kw">use </span>pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
@@ -1710,10 +1692,11 @@
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
     DeclareTransactionReceipt, DeclareTransactionResult, DeployAccountTransactionReceipt,
-    DeployAccountTransactionResult, EventFilterWithPage, EventsPage, ExecutionResult, FeeEstimate, FieldElement,
-    FunctionCall, Hash256, InvokeTransactionReceipt, InvokeTransactionResult, L1HandlerTransactionReceipt,
-    MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateDiff, StateUpdate,
-    SyncStatus, SyncStatusType, Transaction, TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
+    DeployAccountTransactionResult, EventFilterWithPage, EventsPage, ExecutionResources, ExecutionResult, FeeEstimate,
+    FieldElement, FunctionCall, Hash256, InvokeTransactionReceipt, InvokeTransactionResult,
+    L1HandlerTransactionReceipt, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
+    MaybePendingTransactionReceipt, StateDiff, StateUpdate, SyncStatus, SyncStatusType, Transaction,
+    TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
 };
 <span class="kw">use </span>starknet_core::utils::get_selector_from_name;
 
@@ -3101,9 +3084,6 @@
             }
         };
 
-        <span class="comment">// TODO(#1291): compute execution_resources correctly to the receipt
-        </span><span class="kw">let </span>execution_resources = StarknetRPCExecutionResources::default();
-
         <span class="comment">// TODO(#1291): compute message hash correctly to L1HandlerTransactionReceipt
         </span><span class="kw">let </span>message_hash: Hash256 = Hash256::from_felt(<span class="kw-2">&amp;</span>FieldElement::default());
 
@@ -3153,7 +3133,8 @@
             }
         }
 
-        <span class="kw">let </span>receipt = <span class="kw">match </span>transaction {
+        <span class="comment">// TODO: use actual execution ressources
+        </span><span class="kw">let </span>receipt = <span class="kw">match </span>transaction {
             mp_transactions::Transaction::Declare(<span class="kw">_</span>) =&gt; TransactionReceipt::Declare(DeclareTransactionReceipt {
                 transaction_hash,
                 actual_fee,
@@ -3163,7 +3144,17 @@
                 messages_sent: messages.into_iter().map(message_conversion).collect(),
                 events: events_converted,
                 execution_result,
-                execution_resources: execution_resources.into(),
+                execution_resources: ExecutionResources {
+                    steps: <span class="number">0</span>,
+                    memory_holes: <span class="prelude-val">None</span>,
+                    range_check_builtin_applications: <span class="number">0</span>,
+                    pedersen_builtin_applications: <span class="number">0</span>,
+                    poseidon_builtin_applications: <span class="number">0</span>,
+                    ec_op_builtin_applications: <span class="number">0</span>,
+                    ecdsa_builtin_applications: <span class="number">0</span>,
+                    bitwise_builtin_applications: <span class="number">0</span>,
+                    keccak_builtin_applications: <span class="number">0</span>,
+                },
             }),
             mp_transactions::Transaction::DeployAccount(tx) =&gt; {
                 TransactionReceipt::DeployAccount(DeployAccountTransactionReceipt {
@@ -3176,7 +3167,17 @@
                     events: events_converted,
                     contract_address: tx.get_account_address(),
                     execution_result,
-                    execution_resources: execution_resources.into(),
+                    execution_resources: ExecutionResources {
+                        steps: <span class="number">0</span>,
+                        memory_holes: <span class="prelude-val">None</span>,
+                        range_check_builtin_applications: <span class="number">0</span>,
+                        pedersen_builtin_applications: <span class="number">0</span>,
+                        poseidon_builtin_applications: <span class="number">0</span>,
+                        ec_op_builtin_applications: <span class="number">0</span>,
+                        ecdsa_builtin_applications: <span class="number">0</span>,
+                        bitwise_builtin_applications: <span class="number">0</span>,
+                        keccak_builtin_applications: <span class="number">0</span>,
+                    },
                 })
             }
             mp_transactions::Transaction::Invoke(<span class="kw">_</span>) =&gt; TransactionReceipt::Invoke(InvokeTransactionReceipt {
@@ -3188,7 +3189,17 @@
                 messages_sent: messages.into_iter().map(message_conversion).collect(),
                 events: events_converted,
                 execution_result,
-                execution_resources: execution_resources.into(),
+                execution_resources: ExecutionResources {
+                    steps: <span class="number">0</span>,
+                    memory_holes: <span class="prelude-val">None</span>,
+                    range_check_builtin_applications: <span class="number">0</span>,
+                    pedersen_builtin_applications: <span class="number">0</span>,
+                    poseidon_builtin_applications: <span class="number">0</span>,
+                    ec_op_builtin_applications: <span class="number">0</span>,
+                    ecdsa_builtin_applications: <span class="number">0</span>,
+                    bitwise_builtin_applications: <span class="number">0</span>,
+                    keccak_builtin_applications: <span class="number">0</span>,
+                },
             }),
             mp_transactions::Transaction::L1Handler(<span class="kw">_</span>) =&gt; TransactionReceipt::L1Handler(L1HandlerTransactionReceipt {
                 message_hash,
@@ -3200,66 +3211,21 @@
                 messages_sent: messages.into_iter().map(message_conversion).collect(),
                 events: events_converted,
                 execution_result,
-                execution_resources: execution_resources.into(),
+                execution_resources: ExecutionResources {
+                    steps: <span class="number">0</span>,
+                    memory_holes: <span class="prelude-val">None</span>,
+                    range_check_builtin_applications: <span class="number">0</span>,
+                    pedersen_builtin_applications: <span class="number">0</span>,
+                    poseidon_builtin_applications: <span class="number">0</span>,
+                    ec_op_builtin_applications: <span class="number">0</span>,
+                    ecdsa_builtin_applications: <span class="number">0</span>,
+                    bitwise_builtin_applications: <span class="number">0</span>,
+                    keccak_builtin_applications: <span class="number">0</span>,
+                },
             }),
         };
 
         <span class="prelude-val">Ok</span>(MaybePendingTransactionReceipt::Receipt(receipt))
-    }
-}
-
-<span class="attr">#[async_trait]
-#[allow(unused_variables)]
-</span><span class="kw">impl</span>&lt;A, B, BE, G, C, P, H&gt; StarknetTraceRpcApiServer <span class="kw">for </span>Starknet&lt;A, B, BE, G, C, P, H&gt;
-<span class="kw">where
-    </span>A: ChainApi&lt;Block = B&gt; + <span class="lifetime">&#39;static</span>,
-    B: BlockT,
-    BE: Backend&lt;B&gt; + <span class="lifetime">&#39;static</span>,
-    G: GenesisProvider + Send + Sync + <span class="lifetime">&#39;static</span>,
-    C: HeaderBackend&lt;B&gt; + BlockBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt; + <span class="lifetime">&#39;static</span>,
-    C: ProvideRuntimeApi&lt;B&gt;,
-    C::Api: StarknetRuntimeApi&lt;B&gt; + ConvertTransactionRuntimeApi&lt;B&gt;,
-    P: TransactionPool&lt;Block = B&gt; + <span class="lifetime">&#39;static</span>,
-    H: HasherT + Send + Sync + <span class="lifetime">&#39;static</span>,
-{
-    <span class="kw">async fn </span>simulate_transactions(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        block_id: BlockId,
-        transactions: Vec&lt;BroadcastedTransaction&gt;,
-        simulation_flags: Vec&lt;SimulationFlag&gt;,
-    ) -&gt; RpcResult&lt;Vec&lt;SimulatedTransaction&gt;&gt; {
-        <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
-            <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
-            StarknetRpcApiError::BlockNotFound
-        })<span class="question-mark">?</span>;
-        <span class="kw">let </span>best_block_hash = <span class="self">self</span>.client.info().best_hash;
-        <span class="kw">let </span>chain_id = Felt252Wrapper(<span class="self">self</span>.chain_id()<span class="question-mark">?</span>.<span class="number">0</span>);
-
-        <span class="kw">let </span><span class="kw-2">mut </span>user_transactions = <span class="macro">vec!</span>[];
-        <span class="kw">for </span>tx <span class="kw">in </span>transactions {
-            <span class="kw">let </span>tx = tx.try_into().map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to convert BroadcastedTransaction to UserTransaction: {e}&quot;</span>);
-                StarknetRpcApiError::InternalServerError
-            })<span class="question-mark">?</span>;
-            user_transactions.push(tx);
-        }
-
-        <span class="kw">let </span>simulation_flags: SimulationFlags = simulation_flags.into();
-
-        <span class="kw">let </span>fee_estimates = <span class="self">self
-            </span>.client
-            .runtime_api()
-            .simulate_transactions(substrate_block_hash, user_transactions, simulation_flags)
-            .map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;Request parameters error: {e}&quot;</span>);
-                StarknetRpcApiError::InternalServerError
-            })<span class="question-mark">?
-            </span>.map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to call function: {:#?}&quot;</span>, e);
-                StarknetRpcApiError::ContractError
-            })<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(fee_estimates)
     }
 }
 
