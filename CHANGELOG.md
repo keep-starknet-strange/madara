@@ -3,6 +3,7 @@
 ## Next release
 
 - chore: add headers to da calldata, fix eth da in sovereign mode
+- refacto(simulate_tx): move logic to the client
 - chore: added ca-certificate in DockerFile for SSL related issues
 - chore(primitives/commitment): remove crate
 - chore(primitives/block/header): remove starknet-trie dependent fields
@@ -48,6 +49,7 @@
 - refactor: use `map` in `estimate_fee` to stop computation on error
 - fix: `tempdir` crate has been deprecated; use `tempfile` instead
 - dev: add avail and celestia crates behind a feature flag
+- dev: replace md5 with sha3_256 hash function
 
 ## v0.6.0
 

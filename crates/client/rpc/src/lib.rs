@@ -6,6 +6,7 @@ mod constants;
 mod errors;
 mod events;
 mod madara_backend_client;
+mod trace_api;
 mod types;
 use std::marker::PhantomData;
 use std::sync::Arc;
@@ -24,9 +25,7 @@ pub use mc_rpc_core::{
 use mc_storage::OverrideHandle;
 use mp_felt::{Felt252Wrapper, Felt252WrapperError};
 use mp_hashers::HasherT;
-use mp_simulations::{SimulatedTransaction, SimulationFlag, SimulationFlags};
 use mp_transactions::compute_hash::ComputeTransactionHash;
-use mp_transactions::execution::StarknetRPCExecutionResources;
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
 use mp_transactions::{TransactionStatus, UserTransaction};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
@@ -48,10 +47,11 @@ use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
     DeclareTransactionReceipt, DeclareTransactionResult, DeployAccountTransactionReceipt,
-    DeployAccountTransactionResult, EventFilterWithPage, EventsPage, ExecutionResult, FeeEstimate, FieldElement,
-    FunctionCall, Hash256, InvokeTransactionReceipt, InvokeTransactionResult, L1HandlerTransactionReceipt,
-    MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateDiff, StateUpdate,
-    SyncStatus, SyncStatusType, Transaction, TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
+    DeployAccountTransactionResult, EventFilterWithPage, EventsPage, ExecutionResources, ExecutionResult, FeeEstimate,
+    FieldElement, FunctionCall, Hash256, InvokeTransactionReceipt, InvokeTransactionResult,
+    L1HandlerTransactionReceipt, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
+    MaybePendingTransactionReceipt, StateDiff, StateUpdate, SyncStatus, SyncStatusType, Transaction,
+    TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
 };
 use starknet_core::utils::get_selector_from_name;
 
@@ -1439,9 +1439,6 @@ where
             }
         };
 
-        // TODO(#1291): compute execution_resources correctly to the receipt
-        let execution_resources = StarknetRPCExecutionResources::default();
-
         // TODO(#1291): compute message hash correctly to L1HandlerTransactionReceipt
         let message_hash: Hash256 = Hash256::from_felt(&FieldElement::default());
 
@@ -1491,6 +1488,7 @@ where
             }
         }
 
+        // TODO: use actual execution ressources
         let receipt = match transaction {
             mp_transactions::Transaction::Declare(_) => TransactionReceipt::Declare(DeclareTransactionReceipt {
                 transaction_hash,
@@ -1501,7 +1499,17 @@ where
                 messages_sent: messages.into_iter().map(message_conversion).collect(),
                 events: events_converted,
                 execution_result,
-                execution_resources: execution_resources.into(),
+                execution_resources: ExecutionResources {
+                    steps: 0,
+                    memory_holes: None,
+                    range_check_builtin_applications: 0,
+                    pedersen_builtin_applications: 0,
+                    poseidon_builtin_applications: 0,
+                    ec_op_builtin_applications: 0,
+                    ecdsa_builtin_applications: 0,
+                    bitwise_builtin_applications: 0,
+                    keccak_builtin_applications: 0,
+                },
             }),
             mp_transactions::Transaction::DeployAccount(tx) => {
                 TransactionReceipt::DeployAccount(DeployAccountTransactionReceipt {
@@ -1514,7 +1522,17 @@ where
                     events: events_converted,
                     contract_address: tx.get_account_address(),
                     execution_result,
-                    execution_resources: execution_resources.into(),
+                    execution_resources: ExecutionResources {
+                        steps: 0,
+                        memory_holes: None,
+                        range_check_builtin_applications: 0,
+                        pedersen_builtin_applications: 0,
+                        poseidon_builtin_applications: 0,
+                        ec_op_builtin_applications: 0,
+                        ecdsa_builtin_applications: 0,
+                        bitwise_builtin_applications: 0,
+                        keccak_builtin_applications: 0,
+                    },
                 })
             }
             mp_transactions::Transaction::Invoke(_) => TransactionReceipt::Invoke(InvokeTransactionReceipt {
@@ -1526,7 +1544,17 @@ where
                 messages_sent: messages.into_iter().map(message_conversion).collect(),
                 events: events_converted,
                 execution_result,
-                execution_resources: execution_resources.into(),
+                execution_resources: ExecutionResources {
+                    steps: 0,
+                    memory_holes: None,
+                    range_check_builtin_applications: 0,
+                    pedersen_builtin_applications: 0,
+                    poseidon_builtin_applications: 0,
+                    ec_op_builtin_applications: 0,
+                    ecdsa_builtin_applications: 0,
+                    bitwise_builtin_applications: 0,
+                    keccak_builtin_applications: 0,
+                },
             }),
             mp_transactions::Transaction::L1Handler(_) => TransactionReceipt::L1Handler(L1HandlerTransactionReceipt {
                 message_hash,
@@ -1538,66 +1566,21 @@ where
                 messages_sent: messages.into_iter().map(message_conversion).collect(),
                 events: events_converted,
                 execution_result,
-                execution_resources: execution_resources.into(),
+                execution_resources: ExecutionResources {
+                    steps: 0,
+                    memory_holes: None,
+                    range_check_builtin_applications: 0,
+                    pedersen_builtin_applications: 0,
+                    poseidon_builtin_applications: 0,
+                    ec_op_builtin_applications: 0,
+                    ecdsa_builtin_applications: 0,
+                    bitwise_builtin_applications: 0,
+                    keccak_builtin_applications: 0,
+                },
             }),
         };
 
         Ok(MaybePendingTransactionReceipt::Receipt(receipt))
-    }
-}
-
-#[async_trait]
-#[allow(unused_variables)]
-impl<A, B, BE, G, C, P, H> StarknetTraceRpcApiServer for Starknet<A, B, BE, G, C, P, H>
-where
-    A: ChainApi<Block = B> + 'static,
-    B: BlockT,
-    BE: Backend<B> + 'static,
-    G: GenesisProvider + Send + Sync + 'static,
-    C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
-    C: ProvideRuntimeApi<B>,
-    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
-    P: TransactionPool<Block = B> + 'static,
-    H: HasherT + Send + Sync + 'static,
-{
-    async fn simulate_transactions(
-        &self,
-        block_id: BlockId,
-        transactions: Vec<BroadcastedTransaction>,
-        simulation_flags: Vec<SimulationFlag>,
-    ) -> RpcResult<Vec<SimulatedTransaction>> {
-        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
-            error!("'{e}'");
-            StarknetRpcApiError::BlockNotFound
-        })?;
-        let best_block_hash = self.client.info().best_hash;
-        let chain_id = Felt252Wrapper(self.chain_id()?.0);
-
-        let mut user_transactions = vec![];
-        for tx in transactions {
-            let tx = tx.try_into().map_err(|e| {
-                error!("Failed to convert BroadcastedTransaction to UserTransaction: {e}");
-                StarknetRpcApiError::InternalServerError
-            })?;
-            user_transactions.push(tx);
-        }
-
-        let simulation_flags: SimulationFlags = simulation_flags.into();
-
-        let fee_estimates = self
-            .client
-            .runtime_api()
-            .simulate_transactions(substrate_block_hash, user_transactions, simulation_flags)
-            .map_err(|e| {
-                error!("Request parameters error: {e}");
-                StarknetRpcApiError::InternalServerError
-            })?
-            .map_err(|e| {
-                error!("Failed to call function: {:#?}", e);
-                StarknetRpcApiError::ContractError
-            })?;
-
-        Ok(fee_estimates)
     }
 }
 

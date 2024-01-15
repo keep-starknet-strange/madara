@@ -33,7 +33,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::large_enum_variant)]
 
-use blockifier::transaction::objects::TransactionExecutionResult;
 /// Starknet pallet.
 /// Definition of the pallet's runtime storage items, events, errors, and dispatchable
 /// functions.
@@ -51,11 +50,6 @@ pub mod transaction_validation;
 /// The Starknet pallet's runtime custom types.
 pub mod types;
 
-use blockifier::execution::entry_point::{CallEntryPoint, CallType, EntryPointExecutionContext};
-use blockifier::state::cached_state::ContractStorageKey;
-use starknet_api::state::StorageKey;
-use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee};
-
 #[cfg(test)]
 mod tests;
 mod utils;
@@ -71,8 +65,12 @@ use alloc::vec::Vec;
 
 use blockifier::block_context::BlockContext;
 use blockifier::execution::contract_class::ContractClass;
-use blockifier::execution::entry_point::{CallInfo, ExecutionResources};
+use blockifier::execution::entry_point::{
+    CallEntryPoint, CallInfo, CallType, EntryPointExecutionContext, ExecutionResources,
+};
 use blockifier::execution::errors::{EntryPointExecutionError, PreExecutionError};
+use blockifier::state::cached_state::ContractStorageKey;
+use blockifier::transaction::objects::TransactionExecutionInfo;
 use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
 use frame_support::traits::Time;
@@ -83,11 +81,7 @@ use mp_fee::{ResourcePrice, INITIAL_GAS};
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
-use mp_simulations::{
-    DeclareTransactionTrace, DeployAccountTransactionTrace, FeeEstimate, FunctionInvocation, InvokeTransactionTrace,
-    SimulatedTransaction, SimulationFlags, TransactionTrace,
-};
-use mp_state::rpc::StateDiff;
+use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_transactions::execution::Execute;
 use mp_transactions::{
@@ -100,14 +94,15 @@ use starknet_api::api_core::{ChainId, CompiledClassHash, ContractAddress, EntryP
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
-use starknet_api::transaction::{MessageToL1, TransactionHash};
+use starknet_api::state::StorageKey;
+use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash};
 use starknet_crypto::FieldElement;
 use transaction_validation::TxPriorityInfo;
 
 use crate::alloc::string::ToString;
 use crate::execution_config::RuntimeExecutionConfigBuilder;
 use crate::types::{CasmClassHash, SierraClassHash, StorageSlot};
-use crate::utils::{convert_call_info_to_execute_invocation, execute_txs_and_rollback};
+use crate::utils::execute_txs_and_rollback;
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
@@ -440,7 +435,7 @@ pub mod pallet {
         Unimplemented,
         MissingRevertReason,
         MissingCallInfo,
-        TransactionalExecutionFailed,
+        FailedToCreateATransactionalStorageExecution,
         L1MessageAlreadyExecuted,
     }
 
@@ -1097,7 +1092,7 @@ impl<T: Config> Pallet<T> {
                 Ok(tx_exec_info) => {
                     log!(info, "Successfully estimated fee: {:?}", tx_exec_info);
                     if let Some(l1_gas_usage) = tx_exec_info.actual_resources.0.get("l1_gas_usage") {
-                        results.push((tx_exec_info.actual_fee.0 as u64, *l1_gas_usage as u64));
+                        results.push((tx_exec_info.actual_fee.0 as u64, *l1_gas_usage));
                     } else {
                         return Err(Error::<T>::TransactionExecutionFailed.into());
                     }
@@ -1114,92 +1109,18 @@ impl<T: Config> Pallet<T> {
     pub fn simulate_transactions(
         transactions: Vec<UserTransaction>,
         simulation_flags: SimulationFlags,
-    ) -> Result<Vec<SimulatedTransaction>, DispatchError> {
+    ) -> Result<Vec<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>>, DispatchError>
+    {
         let chain_id = Self::chain_id();
 
-        let execution_results = execute_txs_and_rollback::<T>(
+        let tx_execution_results = execute_txs_and_rollback::<T>(
             &transactions,
             &Self::get_block_context(),
             chain_id,
             &mut RuntimeExecutionConfigBuilder::new::<T>().with_simulation_mode(&simulation_flags).build(),
         )?;
 
-        fn get_function_invocation(
-            call_info: Option<&CallInfo>,
-        ) -> TransactionExecutionResult<Option<FunctionInvocation>> {
-            call_info.map(FunctionInvocation::try_from).transpose()
-        }
-
-        let mut results = vec![];
-        for (tx, res) in transactions.iter().zip(execution_results.iter()) {
-            match res {
-                Ok(tx_exec_info) => {
-                    let validate_invocation = get_function_invocation(tx_exec_info.validate_call_info.as_ref())
-                        .map_err(|err| {
-                            log::error!("Failed to convert validate call info to function invocation: {}", err);
-                            Error::<T>::TransactionExecutionFailed
-                        })?;
-                    let fee_transfer_invocation = get_function_invocation(tx_exec_info.fee_transfer_call_info.as_ref())
-                        .map_err(|err| {
-                            log::error!("Failed to convert fee transfer call info to function invocation: {}", err);
-                            Error::<T>::TransactionExecutionFailed
-                        })?;
-
-                    let transaction_trace = match tx {
-                        UserTransaction::Invoke(_) => TransactionTrace::Invoke(InvokeTransactionTrace {
-                            validate_invocation,
-                            execute_invocation: convert_call_info_to_execute_invocation::<T>(
-                                tx_exec_info
-                                    .execute_call_info
-                                    .as_ref()
-                                    .ok_or(Error::<T>::TransactionExecutionFailed)?,
-                                tx_exec_info.revert_error.as_ref(),
-                            )?,
-                            fee_transfer_invocation,
-                            // TODO(#1291): Compute state diff correctly
-                            state_diff: Some(StateDiff::default()),
-                        }),
-                        UserTransaction::Declare(_, _) => TransactionTrace::Declare(DeclareTransactionTrace {
-                            validate_invocation,
-                            fee_transfer_invocation,
-                            // TODO(#1291): Compute state diff correctly
-                            state_diff: Some(StateDiff::default()),
-                        }),
-                        UserTransaction::DeployAccount(_) => {
-                            TransactionTrace::DeployAccount(DeployAccountTransactionTrace {
-                                validate_invocation,
-                                constructor_invocation: tx_exec_info
-                                    .execute_call_info
-                                    .as_ref()
-                                    .ok_or(Error::<T>::TransactionExecutionFailed)?
-                                    .try_into()
-                                    .map_err(|_| Error::<T>::TransactionExecutionFailed)?,
-
-                                fee_transfer_invocation,
-                                // TODO(#1291): Compute state diff correctly
-                                state_diff: Some(StateDiff::default()),
-                            })
-                        }
-                    };
-                    let gas_consumed = tx_exec_info
-                        .execute_call_info
-                        .as_ref()
-                        .map(|x| x.execution.gas_consumed)
-                        .ok_or(Error::<T>::TransactionExecutionFailed)?;
-                    let overall_fee = tx_exec_info.actual_fee.0 as u64;
-                    let gas_price = if gas_consumed > 0 { overall_fee / gas_consumed } else { 0 };
-                    results.push(SimulatedTransaction {
-                        transaction_trace,
-                        fee_estimation: FeeEstimate { gas_consumed, gas_price, overall_fee },
-                    });
-                }
-                Err(_e) => {
-                    return Err(Error::<T>::TransactionExecutionFailed.into());
-                }
-            }
-        }
-
-        Ok(results)
+        Ok(tx_execution_results)
     }
 
     pub fn emit_and_store_tx_and_fees_events(

@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 
 use sc_cli::{Error, Result, SubstrateCli};
 use sc_service::BasePath;
+use sha3::{Digest, Sha3_256};
 use url::Url;
 
 use crate::chain_spec::GENESIS_ASSETS_DIR;
@@ -13,7 +14,7 @@ use crate::{configs, constants};
 
 /// The index.json must follow the format of the official index.json
 /// (https://github.com/keep-starknet-strange/madara/blob/main/configs/index.json)
-/// Where the `md5` and `url` fields are optional
+/// Where the `sha3_256` and `url` fields are optional
 #[derive(Debug, clap::Args)]
 #[group(required = true, multiple = false)]
 pub struct SetupSource {
@@ -173,9 +174,11 @@ impl SetupCmd {
         for asset in &configs.genesis_assets {
             let asset_file_content = config_source.load_asset(asset)?;
 
-            // Verify it's md5
-            if let Some(file_hash) = &asset.md5 {
-                let digest = md5::compute(&asset_file_content);
+            // Verify it's sha3_256
+            if let Some(file_hash) = &asset.sha3_256 {
+                let mut hasher = Sha3_256::new();
+                hasher.update(&asset_file_content);
+                let digest = hasher.finalize();
                 let hash = format!("{:x}", digest);
                 if hash != *file_hash {
                     return Err(Error::Input(format!(
