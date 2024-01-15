@@ -269,6 +269,7 @@ subxt = "0.29"
 assert_matches = "1.5.0"
 async-lock = "3.1.0"
 rustc-hex = { version = "2.0.0" }
+itertools = "0.12.0"
 
 [patch."https://github.com/w3f/ring-vrf"]
 bandersnatch_vrfs = { git = "https://github.com/w3f/ring-vrf?rev=3ddc20", version = "0.0.4", rev = "3ddc20" }
