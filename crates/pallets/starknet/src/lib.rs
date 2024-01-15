@@ -99,7 +99,7 @@ use sp_runtime::DigestItem;
 use starknet_api::api_core::{ChainId, CompiledClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::deprecated_contract_class::EntryPointType;
-use starknet_api::hash::{pedersen_hash_array, StarkFelt, StarkHash};
+use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{MessageToL1, TransactionHash};
 use starknet_crypto::FieldElement;
 use transaction_validation::TxPriorityInfo;
@@ -1232,11 +1232,12 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn config_hash() -> StarkHash {
-        pedersen_hash_array(&[
-            StarkFelt::from(FieldElement::from_byte_slice_be(SN_OS_CONFIG_HASH_VERSION.as_bytes()).unwrap()),
+        T::SystemHash::compute_hash_on_elements(&[
+            FieldElement::from_byte_slice_be(SN_OS_CONFIG_HASH_VERSION.as_bytes()).unwrap(),
             T::ChainId::get().into(),
-            Self::fee_token_address().0.0,
+            Self::fee_token_address().0.0.into(),
         ])
+        .into()
     }
 
     pub fn is_transaction_fee_disabled() -> bool {
