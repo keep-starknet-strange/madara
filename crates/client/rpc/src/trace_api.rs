@@ -84,7 +84,7 @@ where
 
         let storage_override = self.overrides.for_block_hash(self.client.as_ref(), substrate_block_hash);
         let simulated_transactions =
-            tx_execution_infos_to_simulated_transactions(storage_override, substrate_block_hash, tx_types, res)
+            tx_execution_infos_to_simulated_transactions(&**storage_override, substrate_block_hash, tx_types, res)
                 .map_err(|e| match e {
                     ConvertCallInfoToExecuteInvocationError::TransactionExecutionFailed => {
                         StarknetRpcApiError::ContractError
@@ -150,7 +150,7 @@ pub enum TryFuntionInvocationFromCallInfoError {
 }
 
 fn try_get_funtion_invocation_from_call_info<B: BlockT>(
-    storage_override: &Box<dyn StorageOverride<B>>,
+    storage_override: &dyn StorageOverride<B>,
     substrate_block_hash: B::Hash,
     call_info: &CallInfo,
 ) -> Result<starknet_core::types::FunctionInvocation, TryFuntionInvocationFromCallInfoError> {
@@ -210,7 +210,7 @@ fn try_get_funtion_invocation_from_call_info<B: BlockT>(
 }
 
 fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
-    storage_override: &Box<dyn StorageOverride<B>>,
+    storage_override: &dyn StorageOverride<B>,
     substrate_block_hash: B::Hash,
     tx_types: Vec<TxType>,
     transaction_execution_results: Vec<
@@ -270,7 +270,7 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
                                 storage_override,
                                 substrate_block_hash,
                                 // Safe to unwrap because is only `None`  for `Declare` txs
-                                &tx_exec_info.execute_call_info.as_ref().unwrap(),
+                                tx_exec_info.execute_call_info.as_ref().unwrap(),
                             )?,
                             fee_transfer_invocation,
                             // TODO(#1291): Compute state diff correctly
