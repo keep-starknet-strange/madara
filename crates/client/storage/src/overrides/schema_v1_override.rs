@@ -117,6 +117,11 @@ where
     }
 
     fn nonce(&self, block_hash: <B as BlockT>::Hash, address: ContractAddress) -> Option<Nonce> {
+        // Check if the contract exists at the given address
+        if self.contract_class_hash_by_address(block_hash, address).is_none() {
+            return None;
+        }
+
         let storage_nonce_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_NONCE);
         let nonce = self.query_storage::<Nonce>(
             block_hash,
@@ -125,7 +130,7 @@ where
 
         match nonce {
             Some(nonce) => Some(nonce),
-            _ => None,
+            None => Some(Nonce::default()),
         }
     }
 }
