@@ -129,8 +129,8 @@ where
                 }
             }
         }
-        while let Some(BlockDAData(starknet_block_hash, csd, num_addr_accessed)) = state_diffs_rx.next().await {
-            log::info!("Received state diff for block {starknet_block_hash}");
+        while let Some(block_da_data) = state_diffs_rx.next().await {
+            log::info!("Received state diff for block {}", block_da_data.block_hash);
 
             let da_metrics = da_metrics.clone();
             let da_client = da_client.clone();
@@ -138,17 +138,20 @@ where
             tokio::spawn(async move {
                 let prove_state_start = time::Instant::now();
 
-                if let Err(err) =
-                    prove(da_client.get_mode(), starknet_block_hash, &csd, num_addr_accessed, madara_backend.clone())
-                        .await
+                if let Err(err) = prove(
+                    da_client.get_mode(),
+                    block_da_data.block_hash,
+                    &block_da_data.state_diff,
+                    block_da_data.num_addr_accessed,
+                    madara_backend.clone(),
+                )
+                .await
                 {
                     log::error!("Failed to prove block: {err}");
                 }
                 let prove_state_end = time::Instant::now();
 
-                if let Err(err) =
-                    update_state::<B, H>(madara_backend, da_client, starknet_block_hash, csd, num_addr_accessed).await
-                {
+                if let Err(err) = update_state::<B, H>(madara_backend, da_client, block_da_data).await {
                     log::error!("Failed to update the DA state: {err}");
                 };
                 let update_state_end = time::Instant::now();
@@ -200,14 +203,13 @@ pub async fn prove<B: BlockT>(
 pub async fn update_state<B: BlockT, H: HasherT>(
     madara_backend: Arc<mc_db::Backend<B>>,
     da_client: Arc<dyn DaClient + Send + Sync>,
-    starknet_block_hash: BlockHash,
-    csd: ThinStateDiff,
-    num_addr_accessed: usize,
+    block_da_data: BlockDAData,
 ) -> Result<(), anyhow::Error> {
+    let block_hash = block_da_data.block_hash;
     // store the state diff
     madara_backend
         .da()
-        .store_state_diff(&starknet_block_hash, state_diff_to_calldata(csd, num_addr_accessed))
+        .store_state_diff(&block_hash, state_diff_to_calldata(block_da_data))
         .map_err(|e| anyhow!("{e}"))?;
 
     // Query last written state
@@ -221,11 +223,11 @@ pub async fn update_state<B: BlockT, H: HasherT>(
             // Write the publish state diff of last_proved + 1
             log::info!("validity da mode not implemented");
         }
-        DaMode::Sovereign => match madara_backend.da().state_diff(&starknet_block_hash) {
+        DaMode::Sovereign => match madara_backend.da().state_diff(&block_hash) {
             Ok(state_diff) => {
                 da_client.publish_state_diff(state_diff).await.map_err(|e| anyhow!("DA PUBLISH ERROR: {e}"))?;
             }
-            Err(e) => Err(anyhow!("could not pull state diff for block {starknet_block_hash}: {e}"))?,
+            Err(e) => Err(anyhow!("could not pull state diff for block {}: {}", block_hash, e))?,
         },
         DaMode::Volition => log::info!("volition da mode not implemented"),
     };

@@ -53,7 +53,7 @@ pub use sp_runtime::{Perbill, Permill};
 use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
-use starknet_api::hash::StarkFelt;
+use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash};
 /// Import the types.
@@ -262,6 +262,10 @@ impl_runtime_apis! {
 
         fn program_hash() -> Felt252Wrapper {
             Starknet::program_hash()
+        }
+
+        fn config_hash() -> StarkHash {
+            Starknet::config_hash()
         }
 
         fn fee_token_address() -> ContractAddress {
