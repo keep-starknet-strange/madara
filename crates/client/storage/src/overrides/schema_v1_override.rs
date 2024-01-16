@@ -125,7 +125,7 @@ where
 
         match nonce {
             Some(nonce) => Some(nonce),
-            None => Some(Nonce::default()),
+            _ => None,
         }
     }
 }

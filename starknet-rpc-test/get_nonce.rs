@@ -36,6 +36,24 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
 
 #[rstest]
 #[tokio::test]
+async fn fail_non_existing_contract(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
+
+    assert_matches!(
+        rpc
+        .get_nonce(
+            BlockId::Tag(BlockTag::Latest),
+            FieldElement::from_hex_be("0x51e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00").unwrap(),
+        )
+        .await,
+        Err(ProviderError::StarknetError(StarknetErrorWithMessage { code: MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::ContractNotFound
+    );
+    
+    Ok(())
+}
+
+#[rstest]
+#[tokio::test]
 async fn work_ok_non_used_contract_address(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
