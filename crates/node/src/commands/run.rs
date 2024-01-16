@@ -152,11 +152,16 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
     }
     let runner = cli.create_runner(&cli.run.base)?;
 
+    let chain_name = match cli.run.base.shared_params.chain {
+        Some(ref x) => x,
+        None => "dev"
+    };
+
     let (da_config, da_client) = match cli.run.da_layer {
         Some(da_layer) => {
             let da_conf = cli.run.clone().da_conf.unwrap_or({
                 let path_base_path = cli.run.base_path()?;
-                let path_da_conf_json = path_base_path.path().join("chains/dev").join(format!("{da_layer}.json"));
+                let path_da_conf_json = path_base_path.path().join("chains/".to_owned() + chain_name).join(format!("{da_layer}.json"));
                 if !path_da_conf_json.exists() {
                     return Err(sc_cli::Error::Input(format!("no file {da_layer}.json in base_path")));
                 }
@@ -178,7 +183,7 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
         Some(SettlementLayer::Ethereum) => {
             let settlement_conf = cli.run.clone().settlement_conf.unwrap_or({
                 let path_base_path = cli.run.base_path()?;
-                let path_sett_conf_json = path_base_path.path().join("settlement_conf.json");
+                let path_sett_conf_json = path_base_path.path().join("chains/".to_owned() + chain_name).join("settlement_conf.json");
                 if !path_sett_conf_json.exists() {
                     return Err(sc_cli::Error::Input("no file settlement_conf in base_path".to_string()));
                 }
