@@ -282,25 +282,11 @@
 <a href="#282" id="282">282</a>
 <a href="#283" id="283">283</a>
 <a href="#284" id="284">284</a>
-<a href="#285" id="285">285</a>
-<a href="#286" id="286">286</a>
-<a href="#287" id="287">287</a>
-<a href="#288" id="288">288</a>
-<a href="#289" id="289">289</a>
-<a href="#290" id="290">290</a>
-<a href="#291" id="291">291</a>
-<a href="#292" id="292">292</a>
-<a href="#293" id="293">293</a>
-<a href="#294" id="294">294</a>
-<a href="#295" id="295">295</a>
-<a href="#296" id="296">296</a>
-<a href="#297" id="297">297</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>futures::StreamExt;
 <span class="kw">use </span>futures_timer::Delay;
 <span class="kw">use </span>mp_block::Block <span class="kw">as </span>StarknetBlock;
-<span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_hashers::HasherT;
 <span class="kw">use </span>mp_messages::{MessageL1ToL2, MessageL2ToL1};
 <span class="kw">use </span>mp_snos_output::StarknetOsOutput;
@@ -312,14 +298,11 @@
 <span class="kw">use </span>sp_arithmetic::traits::UniqueSaturatedInto;
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
 <span class="kw">use </span>sp_runtime::traits::Block <span class="kw">as </span>BlockT;
-<span class="kw">use </span>starknet_api::hash::{pedersen_hash_array, StarkFelt, StarkHash};
+<span class="kw">use </span>starknet_api::hash::StarkHash;
 <span class="kw">use </span>starknet_api::transaction::TransactionHash;
-<span class="kw">use </span>starknet_crypto::FieldElement;
 
 <span class="kw">use </span><span class="kw">crate</span>::errors::Error;
 <span class="kw">use crate</span>::{<span class="prelude-ty">Result</span>, RetryStrategy, SettlementProvider, SettlementWorker, StarknetSpec, StarknetState};
-
-<span class="kw">pub const </span>SN_OS_CONFIG_HASH_VERSION: <span class="kw-2">&amp;</span>str = <span class="string">&quot;StarknetOsConfig1&quot;</span>;
 
 <span class="kw">impl</span>&lt;B, H, SC&gt; SettlementWorker&lt;B, H, SC&gt;
 <span class="kw">where
@@ -484,16 +467,7 @@
             <span class="kw">return </span><span class="prelude-val">Err</span>(Error::ProgramHashMismatch { expected: program_hash, actual: starknet_spec.program_hash });
         }
 
-        <span class="kw">let </span>chain_id = substrate_client.runtime_api().chain_id(substrate_hash)<span class="question-mark">?</span>;
-        <span class="kw">let </span>fee_token_address = substrate_client.runtime_api().fee_token_address(substrate_hash)<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>config_hash = pedersen_hash_array(<span class="kw-2">&amp;</span>[
-            StarkFelt::from(Felt252Wrapper::from(
-                FieldElement::from_byte_slice_be(SN_OS_CONFIG_HASH_VERSION.as_bytes()).unwrap(),
-            )),
-            chain_id.into(),
-            fee_token_address.<span class="number">0.0</span>,
-        ]);
+        <span class="kw">let </span>config_hash = substrate_client.runtime_api().config_hash(substrate_hash)<span class="question-mark">?</span>;
 
         <span class="kw">if </span>starknet_spec.config_hash != config_hash {
             <span class="kw">return </span><span class="prelude-val">Err</span>(Error::ConfigHashMismatch { expected: config_hash, actual: starknet_spec.config_hash });

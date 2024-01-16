@@ -89,6 +89,22 @@
 <a href="#89" id="89">89</a>
 <a href="#90" id="90">90</a>
 <a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
 </pre></div><pre class="rust"><code><span class="kw">pub mod </span>config;
 
 <span class="kw">use </span>std::collections::HashMap;
@@ -115,16 +131,32 @@
 <span class="attr">#[async_trait]
 </span><span class="kw">impl </span>DaClient <span class="kw">for </span>EthereumClient {
     <span class="kw">async fn </span>publish_state_diff(<span class="kw-2">&amp;</span><span class="self">self</span>, state_diff: Vec&lt;U256&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="macro">abigen!</span>(
-            STARKNET,
-            <span class="string">r#&quot;[
-                function updateState(uint256[] calldata programOutput, uint256 onchainDataHash, uint256 onchainDataSize) external
-            ]&quot;#</span>,
-        );
+        <span class="macro">log::debug!</span>(<span class="string">&quot;State Update: {:?}&quot;</span>, state_diff);
+        <span class="kw">let </span>fmt_tx = <span class="kw">match </span><span class="self">self</span>.mode {
+            DaMode::Sovereign =&gt; {
+                <span class="macro">abigen!</span>(
+                    STARKNET,
+                    <span class="string">r#&quot;[
+                        function updateState(uint256[] calldata programOutput) external
+                    ]&quot;#</span>,
+                );
 
-        <span class="kw">let </span>core_contracts = STARKNET::new(<span class="self">self</span>.cc_address, <span class="self">self</span>.signer.clone());
+                <span class="kw">let </span>core_contracts = STARKNET::new(<span class="self">self</span>.cc_address, <span class="self">self</span>.signer.clone());
+                core_contracts.update_state(state_diff)
+            }
+            <span class="kw">_ </span>=&gt; {
+                <span class="macro">abigen!</span>(
+                    STARKNET,
+                    <span class="string">r#&quot;[
+                        function updateState(uint256[] calldata programOutput, uint256 onchainDataHash, uint256 onchainDataSize) external
+                    ]&quot;#</span>,
+                );
 
-        <span class="kw">let </span>fmt_tx = core_contracts.update_state(state_diff, U256::default(), U256::default());
+                <span class="kw">let </span>core_contracts = STARKNET::new(<span class="self">self</span>.cc_address, <span class="self">self</span>.signer.clone());
+                core_contracts.update_state(state_diff, U256::default(), U256::default())
+            }
+        };
+
         <span class="kw">let </span>tx = fmt_tx
             .send()
             .<span class="kw">await
@@ -132,7 +164,7 @@
             </span>.<span class="kw">await
             </span>.map_err(|e| <span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;ethereum poll update err: {e}&quot;</span>))<span class="question-mark">?</span>;
 
-        <span class="macro">log::info!</span>(<span class="string">&quot;State Update: {:?}&quot;</span>, tx);
+        <span class="macro">log::debug!</span>(<span class="string">&quot;State Update: {:?}&quot;</span>, tx);
         <span class="prelude-val">Ok</span>(())
     }
 

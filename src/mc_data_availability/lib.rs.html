@@ -232,6 +232,8 @@
 <a href="#232" id="232">232</a>
 <a href="#233" id="233">233</a>
 <a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
 </pre></div><pre class="rust"><code><span class="attr">#[cfg(feature = <span class="string">&quot;avail&quot;</span>)]
 </span><span class="kw">pub mod </span>avail;
 <span class="attr">#[cfg(feature = <span class="string">&quot;celestia&quot;</span>)]
@@ -363,8 +365,8 @@
                 }
             }
         }
-        <span class="kw">while let </span><span class="prelude-val">Some</span>(BlockDAData(starknet_block_hash, csd, num_addr_accessed)) = state_diffs_rx.next().<span class="kw">await </span>{
-            <span class="macro">log::info!</span>(<span class="string">&quot;Received state diff for block {starknet_block_hash}&quot;</span>);
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(block_da_data) = state_diffs_rx.next().<span class="kw">await </span>{
+            <span class="macro">log::info!</span>(<span class="string">&quot;Received state diff for block {}&quot;</span>, block_da_data.block_hash);
 
             <span class="kw">let </span>da_metrics = da_metrics.clone();
             <span class="kw">let </span>da_client = da_client.clone();
@@ -372,17 +374,20 @@
             tokio::spawn(<span class="kw">async move </span>{
                 <span class="kw">let </span>prove_state_start = time::Instant::now();
 
-                <span class="kw">if let </span><span class="prelude-val">Err</span>(err) =
-                    prove(da_client.get_mode(), starknet_block_hash, <span class="kw-2">&amp;</span>csd, num_addr_accessed, madara_backend.clone())
-                        .<span class="kw">await
+                <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = prove(
+                    da_client.get_mode(),
+                    block_da_data.block_hash,
+                    <span class="kw-2">&amp;</span>block_da_data.state_diff,
+                    block_da_data.num_addr_accessed,
+                    madara_backend.clone(),
+                )
+                .<span class="kw">await
                 </span>{
                     <span class="macro">log::error!</span>(<span class="string">&quot;Failed to prove block: {err}&quot;</span>);
                 }
                 <span class="kw">let </span>prove_state_end = time::Instant::now();
 
-                <span class="kw">if let </span><span class="prelude-val">Err</span>(err) =
-                    update_state::&lt;B, H&gt;(madara_backend, da_client, starknet_block_hash, csd, num_addr_accessed).<span class="kw">await
-                </span>{
+                <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = update_state::&lt;B, H&gt;(madara_backend, da_client, block_da_data).<span class="kw">await </span>{
                     <span class="macro">log::error!</span>(<span class="string">&quot;Failed to update the DA state: {err}&quot;</span>);
                 };
                 <span class="kw">let </span>update_state_end = time::Instant::now();
@@ -434,14 +439,13 @@
 <span class="kw">pub async fn </span>update_state&lt;B: BlockT, H: HasherT&gt;(
     madara_backend: Arc&lt;mc_db::Backend&lt;B&gt;&gt;,
     da_client: Arc&lt;<span class="kw">dyn </span>DaClient + Send + Sync&gt;,
-    starknet_block_hash: BlockHash,
-    csd: ThinStateDiff,
-    num_addr_accessed: usize,
+    block_da_data: BlockDAData,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), anyhow::Error&gt; {
+    <span class="kw">let </span>block_hash = block_da_data.block_hash;
     <span class="comment">// store the state diff
     </span>madara_backend
         .da()
-        .store_state_diff(<span class="kw-2">&amp;</span>starknet_block_hash, state_diff_to_calldata(csd, num_addr_accessed))
+        .store_state_diff(<span class="kw-2">&amp;</span>block_hash, state_diff_to_calldata(block_da_data))
         .map_err(|e| <span class="macro">anyhow!</span>(<span class="string">&quot;{e}&quot;</span>))<span class="question-mark">?</span>;
 
     <span class="comment">// Query last written state
@@ -455,11 +459,11 @@
             // Write the publish state diff of last_proved + 1
             </span><span class="macro">log::info!</span>(<span class="string">&quot;validity da mode not implemented&quot;</span>);
         }
-        DaMode::Sovereign =&gt; <span class="kw">match </span>madara_backend.da().state_diff(<span class="kw-2">&amp;</span>starknet_block_hash) {
+        DaMode::Sovereign =&gt; <span class="kw">match </span>madara_backend.da().state_diff(<span class="kw-2">&amp;</span>block_hash) {
             <span class="prelude-val">Ok</span>(state_diff) =&gt; {
                 da_client.publish_state_diff(state_diff).<span class="kw">await</span>.map_err(|e| <span class="macro">anyhow!</span>(<span class="string">&quot;DA PUBLISH ERROR: {e}&quot;</span>))<span class="question-mark">?</span>;
             }
-            <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">&quot;could not pull state diff for block {starknet_block_hash}: {e}&quot;</span>))<span class="question-mark">?</span>,
+            <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">&quot;could not pull state diff for block {}: {}&quot;</span>, block_hash, e))<span class="question-mark">?</span>,
         },
         DaMode::Volition =&gt; <span class="macro">log::info!</span>(<span class="string">&quot;volition da mode not implemented&quot;</span>),
     };

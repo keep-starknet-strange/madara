@@ -132,10 +132,24 @@
 <a href="#132" id="132">132</a>
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>ethers::types::U256;
+<span class="kw">use </span>mc_commitment_state_diff::BlockDAData;
 <span class="kw">use </span>starknet_api::api_core::{Nonce, PatriciaKey};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
-<span class="kw">use </span>starknet_api::state::ThinStateDiff;
 <span class="kw">use </span>url::{ParseError, Url};
 
 <span class="kw">const </span>CLASS_FLAG_TRUE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;0x100000000000000000000000000000001&quot;</span>; <span class="comment">// 2 ^ 128 + 1
@@ -143,18 +157,28 @@
 
 </span><span class="doccomment">/// DA calldata encoding:
 /// - https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/on-chain-data
-</span><span class="kw">pub fn </span>state_diff_to_calldata(<span class="kw-2">mut </span>state_diff: ThinStateDiff, num_addrs_accessed: usize) -&gt; Vec&lt;U256&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>calldata: Vec&lt;U256&gt; = Vec::new();
-
-    calldata.push(U256::from(num_addrs_accessed));
+</span><span class="kw">pub fn </span>state_diff_to_calldata(<span class="kw-2">mut </span>block_da_data: BlockDAData) -&gt; Vec&lt;U256&gt; {
+    <span class="comment">// pushing the headers and num_addr_accessed
+    </span><span class="kw">let </span><span class="kw-2">mut </span>calldata: Vec&lt;U256&gt; = <span class="macro">vec!</span>[
+        U256::from_big_endian(<span class="kw-2">&amp;</span>block_da_data.previous_state_root.<span class="number">0</span>), <span class="comment">// prev merkle root
+        </span>U256::from_big_endian(<span class="kw-2">&amp;</span>block_da_data.new_state_root.<span class="number">0</span>),      <span class="comment">// new merkle root
+        </span>U256::from(block_da_data.block_number),                      <span class="comment">// block number
+        </span>U256::from_big_endian(<span class="kw-2">&amp;</span>block_da_data.block_hash.<span class="number">0.0</span>),        <span class="comment">// block hash
+        </span>U256::from_big_endian(<span class="kw-2">&amp;</span>block_da_data.config_hash.<span class="number">0</span>),         <span class="comment">// config hash,
+        </span>U256::from(block_da_data.num_addr_accessed),                 <span class="comment">// num_addr_accessed
+    </span>];
 
     <span class="comment">// Loop over storage diffs
-    </span><span class="kw">for </span>(addr, writes) <span class="kw">in </span>state_diff.storage_diffs {
+    </span><span class="kw">for </span>(addr, writes) <span class="kw">in </span>block_da_data.state_diff.storage_diffs {
         calldata.push(U256::from_big_endian(<span class="kw-2">&amp;</span>addr.<span class="number">0</span>.key().<span class="number">0</span>));
 
-        <span class="kw">let </span>class_flag = state_diff.deployed_contracts.get(<span class="kw-2">&amp;</span>addr).or_else(|| state_diff.replaced_classes.get(<span class="kw-2">&amp;</span>addr));
+        <span class="kw">let </span>class_flag = block_da_data
+            .state_diff
+            .deployed_contracts
+            .get(<span class="kw-2">&amp;</span>addr)
+            .or_else(|| block_da_data.state_diff.replaced_classes.get(<span class="kw-2">&amp;</span>addr));
 
-        <span class="kw">let </span>nonce = state_diff.nonces.remove(<span class="kw-2">&amp;</span>addr);
+        <span class="kw">let </span>nonce = block_da_data.state_diff.nonces.remove(<span class="kw-2">&amp;</span>addr);
         calldata.push(da_word(class_flag.is_some(), nonce, writes.len() <span class="kw">as </span>u64));
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(class_hash) = class_flag {
@@ -168,10 +192,14 @@
     }
 
     <span class="comment">// Handle nonces
-    </span><span class="kw">for </span>(addr, nonce) <span class="kw">in </span>state_diff.nonces {
+    </span><span class="kw">for </span>(addr, nonce) <span class="kw">in </span>block_da_data.state_diff.nonces {
         calldata.push(U256::from_big_endian(<span class="kw-2">&amp;</span>addr.<span class="number">0</span>.key().<span class="number">0</span>));
 
-        <span class="kw">let </span>class_flag = state_diff.deployed_contracts.get(<span class="kw-2">&amp;</span>addr).or_else(|| state_diff.replaced_classes.get(<span class="kw-2">&amp;</span>addr));
+        <span class="kw">let </span>class_flag = block_da_data
+            .state_diff
+            .deployed_contracts
+            .get(<span class="kw-2">&amp;</span>addr)
+            .or_else(|| block_da_data.state_diff.replaced_classes.get(<span class="kw-2">&amp;</span>addr));
 
         calldata.push(da_word(class_flag.is_some(), <span class="prelude-val">Some</span>(nonce), <span class="number">0_u64</span>));
         <span class="kw">if let </span><span class="prelude-val">Some</span>(class_hash) = class_flag {
@@ -180,7 +208,7 @@
     }
 
     <span class="comment">// Handle deployed contracts
-    </span><span class="kw">for </span>(addr, class_hash) <span class="kw">in </span>state_diff.deployed_contracts {
+    </span><span class="kw">for </span>(addr, class_hash) <span class="kw">in </span>block_da_data.state_diff.deployed_contracts {
         calldata.push(U256::from_big_endian(<span class="kw-2">&amp;</span>addr.<span class="number">0</span>.key().<span class="number">0</span>));
 
         calldata.push(da_word(<span class="bool-val">true</span>, <span class="prelude-val">None</span>, <span class="number">0_u64</span>));
@@ -188,9 +216,9 @@
     }
 
     <span class="comment">// Handle replaced classes
-    </span>calldata.push(U256::from(state_diff.declared_classes.len()));
+    </span>calldata.push(U256::from(block_da_data.state_diff.declared_classes.len()));
 
-    <span class="kw">for </span>(class_hash, compiled_class_hash) <span class="kw">in </span><span class="kw-2">&amp;</span>state_diff.declared_classes {
+    <span class="kw">for </span>(class_hash, compiled_class_hash) <span class="kw">in </span><span class="kw-2">&amp;</span>block_da_data.state_diff.declared_classes {
         calldata.push(U256::from_big_endian(class_hash.<span class="number">0</span>.bytes()));
         calldata.push(U256::from_big_endian(compiled_class_hash.<span class="number">0</span>.bytes()));
     }
