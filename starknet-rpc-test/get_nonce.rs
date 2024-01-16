@@ -48,7 +48,7 @@ async fn fail_non_existing_contract(madara: &ThreadSafeMadaraClient) -> Result<(
         .await,
         Err(ProviderError::StarknetError(StarknetErrorWithMessage { code: MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::ContractNotFound
     );
-    
+
     Ok(())
 }
 
