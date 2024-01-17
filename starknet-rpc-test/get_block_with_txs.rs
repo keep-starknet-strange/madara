@@ -108,17 +108,17 @@ async fn works_with_deploy_account_txn(madara: &ThreadSafeMadaraClient) -> Resul
 
         let funding_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
         let account_address = account_deploy_txn.address();
-        
+
         // We execute the funding in a different block, because we have no way to guarantee the tx execution
         // order once in the mempool
         madara_write_lock
-        .create_block_with_txs(vec![Transaction::Execution(funding_account.transfer_tokens(
-            account_address,
-            max_fee,
-            None,
-        ))])
-        .await?;
-    
+            .create_block_with_txs(vec![Transaction::Execution(funding_account.transfer_tokens(
+                account_address,
+                max_fee,
+                None,
+            ))])
+            .await?;
+
         let deploy_nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account_deploy_txn.address()).await?;
         madara_write_lock.create_block_with_txs(vec![Transaction::AccountDeployment(account_deploy_txn)]).await?;
 
