@@ -3,7 +3,6 @@ extern crate starknet_rpc_test;
 use anyhow::anyhow;
 use assert_matches::assert_matches;
 use rstest::rstest;
-use starknet_accounts::Account;
 use starknet_core::types::{BlockId, BlockTag, MaybePendingStateUpdate, NonceUpdate, StarknetError};
 use starknet_ff::FieldElement;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;

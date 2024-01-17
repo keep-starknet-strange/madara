@@ -251,7 +251,8 @@ where
     C: ProvideRuntimeApi<B> + HeaderBackend<B>,
     C::Api: StarknetRuntimeApi<B>,
 {
-    let mut offset = 0;
+    // Offset is set to 5 as the 5 first items are part of the DA header.
+    let mut offset = 5;
     let num_contract_updates = encoded_diff[offset].low_u64();
     offset += 1;
 
