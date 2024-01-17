@@ -204,7 +204,7 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
     runner.run_node_until_exit(|config| async move {
         let sealing = cli.run.sealing.map(Into::into).unwrap_or_default();
         let cache = cli.run.cache;
-        service::new_full(config, sealing, da_config, da_client, cache, l1_messages_worker_config, settlement_config)
+        service::new_full(config, sealing, da_client, cache, l1_messages_worker_config, settlement_config)
             .map_err(sc_cli::Error::Service)
     })
 }

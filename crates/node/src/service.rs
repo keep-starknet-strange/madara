@@ -271,7 +271,6 @@ where
 pub fn new_full(
     config: Configuration,
     sealing: SealingMode,
-    da_layer: Option<(DaLayer, PathBuf)>,
     da_client: Option<Box<dyn DaClient + Send + Sync>>,
     cache_more_things: bool,
     l1_messages_worker_config: Option<L1MessagesWorkerConfig>,
@@ -423,7 +422,7 @@ pub fn new_full(
     let (commitment_state_diff_tx, commitment_state_diff_rx) = mpsc::channel(5);
 
     // initialize data availability worker
-    if let Some((_da_layer, _da_path)) = da_layer {
+    if let Some(da_client) = da_client {
         task_manager.spawn_essential_handle().spawn(
             "commitment-state-diff",
             Some("madara"),
@@ -434,20 +433,17 @@ pub fn new_full(
             )
             .for_each(|()| future::ready(())),
         );
-
-        if let Some(da_client) = da_client {
-            task_manager.spawn_essential_handle().spawn(
-                "da-worker",
-                Some(MADARA_TASK_GROUP),
-                DataAvailabilityWorker::<_, StarknetHasher>::prove_current_block(
-                    da_client.into(),
-                    prometheus_registry.clone(),
-                    commitment_state_diff_rx,
-                    madara_backend.clone(),
-                ),
-            );
-        }
-    };
+        task_manager.spawn_essential_handle().spawn(
+            "da-worker",
+            Some(MADARA_TASK_GROUP),
+            DataAvailabilityWorker::<_, StarknetHasher>::prove_current_block(
+                da_client.into(),
+                prometheus_registry.clone(),
+                commitment_state_diff_rx,
+                madara_backend.clone(),
+            ),
+        );
+    }
 
     // initialize settlement worker
     if let Some((layer_kind, config_path)) = settlement_config {
