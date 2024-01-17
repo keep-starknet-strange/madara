@@ -9,7 +9,7 @@ jobs:
   genesis-docs:
     name: Genesis documentation
     runs-on: ubuntu-latest
-    if: ${{ github.event.label.name != 'ignore-docs' }}
+    if: startsWith(github.event.ref, 'refs/tags/ignore-docs')
     steps:
       - uses: actions/checkout@v3
         with:
@@ -25,8 +25,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install sha3sum
+        run: sudo apt-get install libdigest-sha3-perl
       - name: Verify hashes
         run: |
-          for f in $(find configs/genesis-assets/ -type f -not -path configs/index.json); do
-            cat configs/index.json | grep $(md5sum $f | awk '{print $1}')
+          for f in $(find configs/genesis-assets -type f -not -path configs/index.json); do
+            cat configs/index.json | grep $(sha3sum -a 256 $f | awk '{print $1}')
           done

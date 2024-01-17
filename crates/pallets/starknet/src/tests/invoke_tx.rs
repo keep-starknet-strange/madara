@@ -42,6 +42,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: u128::MAX,
             signature: vec![],
+            offset_version: false,
         };
 
         assert_err!(Starknet::invoke(none_origin, transaction.into()), Error::<MockRuntime>::AccountNotDeployed);
@@ -76,8 +77,8 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                     from_address: Starknet::fee_token_address(),
                     content: EventContent {
                         keys: vec![EventKey(
-                            StarkFelt::try_from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap())
-                                .unwrap(),
+                            Felt252Wrapper::from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap())
+                                .into(),
                         )],
                         data: EventData(vec![
                             StarkFelt::try_from(BLOCKIFIER_ACCOUNT_ADDRESS).unwrap(),
@@ -121,7 +122,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
             from_address: Starknet::fee_token_address(),
             content: EventContent {
                 keys: vec![EventKey(
-                    StarkFelt::try_from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap()).unwrap(),
+                    StarkFelt::try_from(Felt252Wrapper::from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap())).unwrap(),
                 )],
                 data: EventData(vec![
                     StarkFelt::try_from("0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0").unwrap(), // From
@@ -171,6 +172,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: u128::MAX,
             signature: vec![],
+            offset_version: false,
         };
 
         let none_origin = RuntimeOrigin::none();
@@ -197,6 +199,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
             nonce: Felt252Wrapper::ONE,
             max_fee: u128::MAX,
             signature: vec![],
+            offset_version: false,
         };
 
         let none_origin = RuntimeOrigin::none();
@@ -425,6 +428,7 @@ fn given_account_not_deployed_invoke_tx_works_for_nonce_one() {
             nonce: Felt252Wrapper::ONE,
             max_fee: u128::MAX,
             signature: vec![],
+            offset_version: false,
         };
 
         assert_ok!(Starknet::validate_unsigned(
@@ -448,6 +452,7 @@ fn given_account_not_deployed_invoke_tx_fails_for_nonce_not_one() {
             nonce: Felt252Wrapper::TWO,
             max_fee: u128::MAX,
             signature: vec![],
+            offset_version: false,
         };
 
         assert_eq!(

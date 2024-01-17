@@ -16,7 +16,6 @@ members = [
   "crates/primitives/block",
   "crates/primitives/sequencer-address",
   "crates/primitives/storage",
-  "crates/primitives/commitments",
   "crates/primitives/chain-id",
   "crates/primitives/messages",
   "crates/primitives/program-hash",
@@ -50,7 +49,6 @@ default-members = [
   "crates/primitives/block",
   "crates/primitives/sequencer-address",
   "crates/primitives/storage",
-  "crates/primitives/commitments",
   "crates/primitives/chain-id",
   "crates/primitives/messages",
   "crates/primitives/program-hash",
@@ -176,7 +174,6 @@ mp-snos-output = { path = "crates/primitives/snos-output", default-features = fa
 mp-state = { path = "crates/primitives/state", default-features = false }
 mp-storage = { path = "crates/primitives/storage", default-features = false }
 mp-transactions = { path = "crates/primitives/transactions", default-features = false }
-mp-commitments = { path = "crates/primitives/commitments", default-features = false }
 mp-chain-id = { path = "crates/primitives/chain-id", default-features = false }
 mp-simulations = { path = "crates/primitives/simulations", default-features = false }
 mp-program-hash = { path = "crates/primitives/program-hash", default-features = false }
@@ -206,13 +203,13 @@ cairo-vm = { git = "https://github.com/keep-starknet-strange/cairo-rs", branch =
   "cairo-1-hints",
   "parity-scale-codec",
 ] }
-starknet-crypto = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "a35ce22", default-features = false }
-starknet-core = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "a35ce22", default-features = false }
-starknet-providers = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "a35ce22", default-features = false }
-starknet-ff = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "a35ce22", default-features = false }
-starknet-signers = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "a35ce22", default-features = false }
-starknet-accounts = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "a35ce22", default-features = false }
-starknet-contract = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "a35ce22", default-features = false }
+starknet-crypto = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "64ebc36", default-features = false }
+starknet-core = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "64ebc36", default-features = false }
+starknet-providers = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "64ebc36", default-features = false }
+starknet-ff = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "64ebc36", default-features = false }
+starknet-signers = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "64ebc36", default-features = false }
+starknet-accounts = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "64ebc36", default-features = false }
+starknet-contract = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "64ebc36", default-features = false }
 
 blockifier = { git = "https://github.com/keep-starknet-strange/blockifier", branch = "no_std-support-7578442", default-features = false, features = [
   "parity-scale-codec",
@@ -246,7 +243,7 @@ jsonrpsee = { version = "0.16.3", default-features = false }
 clap = { version = "4.4.8", default-features = false }
 futures = { version = "0.3.29", default-features = false }
 futures-timer = { version = "3.0.2", default-features = false }
-md5 = { version = "0.7.0", default-features = false }
+sha3 = { version = "0.10.8", default-features = false }
 reqwest = { version = "0.11.22", default-features = false }
 serde = { version = "1.0.192", default-features = false }
 serde_json = { version = "1.0.108", default-features = false }
@@ -272,6 +269,7 @@ subxt = "0.29"
 assert_matches = "1.5.0"
 async-lock = "3.1.0"
 rustc-hex = { version = "2.0.0" }
+itertools = "0.12.0"
 
 [patch."https://github.com/w3f/ring-vrf"]
 bandersnatch_vrfs = { git = "https://github.com/w3f/ring-vrf?rev=3ddc20", version = "0.0.4", rev = "3ddc20" }

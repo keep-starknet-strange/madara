@@ -9,6 +9,7 @@
 use alloc::sync::Arc;
 
 use blockifier::execution::contract_class::ContractClass;
+use blockifier::transaction::objects::TransactionExecutionInfo;
 use mp_felt::Felt252Wrapper;
 use mp_transactions::{HandleL1MessageTransaction, Transaction, UserTransaction};
 use sp_api::BlockT;
@@ -16,11 +17,11 @@ pub extern crate alloc;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use mp_simulations::{SimulatedTransaction, SimulationFlags};
+use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
 use sp_runtime::DispatchError;
 use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
-use starknet_api::hash::StarkFelt;
+use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash};
 
@@ -49,12 +50,14 @@ sp_api::decl_runtime_apis! {
         fn chain_id() -> Felt252Wrapper;
         /// Returns the Starknet OS Cairo program hash.
         fn program_hash() -> Felt252Wrapper;
+        /// Returns the Starknet config hash.
+        fn config_hash() -> StarkHash;
         /// Returns the fee token address.
         fn fee_token_address() -> ContractAddress;
         /// Returns fee estimate
         fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError>;
         /// Simulates transactions and returns their trace
-        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<SimulatedTransaction>, DispatchError>;
+        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>>, DispatchError>;
         /// Filters extrinsic transactions to return only Starknet transactions
         ///
         /// To support runtime upgrades, the client must be unaware of the specific extrinsic

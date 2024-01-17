@@ -34,6 +34,7 @@ fn given_contract_declare_tx_works_once_not_twice() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: u128::MAX,
             signature: vec![],
+            offset_version: false,
         };
 
         assert_ok!(Starknet::declare(none_origin.clone(), transaction.clone().into(), erc20_class.clone()));
@@ -67,6 +68,7 @@ fn given_contract_declare_tx_fails_sender_not_deployed() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: u128::MAX,
             signature: vec![],
+            offset_version: false,
         };
 
         assert_err!(
@@ -116,6 +118,7 @@ fn given_contract_declare_on_openzeppelin_account_with_incorrect_signature_then_
             nonce: Felt252Wrapper::ZERO,
             class_hash: erc20_class_hash,
             sender_address: account_addr.into(),
+            offset_version: false,
         };
 
         assert_matches!(
@@ -174,6 +177,7 @@ fn given_contract_declare_on_braavos_account_with_incorrect_signature_then_it_fa
             nonce: Felt252Wrapper::ZERO,
             class_hash: erc20_class_hash,
             sender_address: account_addr.into(),
+            offset_version: false,
         };
 
         assert_matches!(
@@ -232,6 +236,7 @@ fn given_contract_declare_on_argent_account_with_incorrect_signature_then_it_fai
             nonce: Felt252Wrapper::ZERO,
             class_hash: erc20_class_hash,
             sender_address: account_addr.into(),
+            offset_version: false,
         };
 
         assert_matches!(
@@ -259,7 +264,7 @@ fn given_contract_declare_on_cairo_1_no_validate_account_then_it_works() {
 
         let hello_starknet_class = get_contract_class("HelloStarknet.casm.json", 1);
         let hello_starknet_class_hash =
-            Felt252Wrapper::from_hex_be("0x010bd93d6a001480047a4474daf84aaa33be4c5419a6e0e8f0330348cb61faac").unwrap();
+            Felt252Wrapper::from_hex_be("0x05518b17fb5c84683ba37eba8a682b7a6f330911c2216c52c6badff69cc2ec13").unwrap();
         let hello_starknet_compiled_class_hash =
             Felt252Wrapper::from_hex_be("0x00df4d3042eec107abe704619f13d92bbe01a58029311b7a1886b23dcbb4ea87").unwrap();
 
@@ -270,6 +275,7 @@ fn given_contract_declare_on_cairo_1_no_validate_account_then_it_works() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: u128::MAX,
             signature: vec![],
+            offset_version: false,
         };
 
         let chain_id = Starknet::chain_id();

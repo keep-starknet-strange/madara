@@ -16,9 +16,11 @@ pub use error::DbError;
 
 mod mapping_db;
 pub use mapping_db::MappingCommitment;
+use starknet_api::hash::StarkHash;
 mod da_db;
 mod db_opening_utils;
-pub mod messaging_db;
+mod messaging_db;
+pub use messaging_db::LastSyncedEventBlock;
 mod meta_db;
 
 use std::marker::PhantomData;
@@ -142,5 +144,12 @@ impl<B: BlockT> Backend<B> {
     /// Return the da database manager
     pub fn messaging(&self) -> &Arc<MessagingDb<B>> {
         &self.messaging
+    }
+
+    /// In the future, we will compute the block global state root asynchronously in the client,
+    /// using the Starknet-Bonzai-trie.
+    /// That what replaces it for now :)
+    pub fn temporary_global_state_root_getter(&self) -> StarkHash {
+        Default::default()
     }
 }

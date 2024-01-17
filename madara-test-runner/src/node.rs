@@ -53,7 +53,7 @@ impl MadaraNode {
     /// The node is run in `release` mode.
     /// Parameters to the node can be passed with the `params` argument.
     fn cargo_run(root_dir: &Path, params: Vec<&str>) -> Child {
-        let arguments = [vec!["run".into(), "--release", "--"], params].concat();
+        let arguments = [vec!["run", "--release", "--"], params].concat();
 
         let (stdout, stderr) = if env::var("MADARA_LOG").is_ok() {
             let logs_dir = Path::join(root_dir, Path::new("target/madara-log"));
@@ -78,7 +78,7 @@ impl MadaraNode {
         let base_path_arg = base_path.map(|arg| format!("--base-path={}", arg.display()));
         let settlement_arg = settlement.map(|arg| format!("--settlement={arg}"));
         let rpc_port_arg = format!("--rpc-port={port}");
-        let chain_arg = format!("--chain=dev");
+        let chain_arg = "--chain=dev";
         let from_local_arg = format!("--from-local={}", repository_root.join("configs").display());
 
         // Codeblock to drop `setup_args` and be able to borrow again for `run_args`
@@ -92,7 +92,7 @@ impl MadaraNode {
                 Self::cargo_run(repository_root.as_path(), setup_args).wait().expect("Failed to setup Madara node");
 
             if !setup_res.success() {
-                panic!("Madara setup failed with {} (check out stderr logs)", setup_res.to_string());
+                panic!("Madara setup failed with {} (check out stderr logs)", setup_res);
             }
         }
 

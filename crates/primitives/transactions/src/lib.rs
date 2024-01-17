@@ -29,7 +29,6 @@ const SIMULATE_TX_VERSION_OFFSET: FieldElement =
 // pub mod utils;
 use mp_felt::Felt252Wrapper;
 
-// TODO(antiyro): remove this when released: https://github.com/xJonathanLEI/starknet-rs/blame/fec81d126c58ff3dff6cbfd4b9e714913298e54e/starknet-core/src/types/serde_impls.rs#L175
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TransactionStatus {
@@ -121,6 +120,7 @@ pub struct InvokeTransactionV1 {
     pub nonce: Felt252Wrapper,
     pub sender_address: Felt252Wrapper,
     pub calldata: Vec<Felt252Wrapper>,
+    pub offset_version: bool,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, From)]
@@ -152,6 +152,7 @@ pub struct DeclareTransactionV1 {
     pub nonce: Felt252Wrapper,
     pub class_hash: Felt252Wrapper,
     pub sender_address: Felt252Wrapper,
+    pub offset_version: bool,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -164,6 +165,7 @@ pub struct DeclareTransactionV2 {
     pub class_hash: Felt252Wrapper,
     pub sender_address: Felt252Wrapper,
     pub compiled_class_hash: Felt252Wrapper,
+    pub offset_version: bool,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -176,6 +178,7 @@ pub struct DeployAccountTransaction {
     pub contract_address_salt: Felt252Wrapper,
     pub constructor_calldata: Vec<Felt252Wrapper>,
     pub class_hash: Felt252Wrapper,
+    pub offset_version: bool,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]

@@ -3,67 +3,63 @@
   "genesis_assets": [
     {
       "name": "Account.json",
-      "md5": "bbdfc1b69f76e9c2784db6d8b697dc56"
+      "sha3_256": "a9ed535995a91877c952e16b055d7ab7500949ee070df2c0636b87bf2d5111d4"
     },
     {
       "name": "AccountBaseImpl.json",
-      "md5": "517db50da627d5cf290aa53c402cea39"
+      "sha3_256": "61c236a95d69beccdf7be0a4b1f33f813405a4afdab834fffa80ddf8760fa745"
     },
     {
       "name": "ArgentAccount.json",
-      "md5": "fb96b0c9993878c6a5a5cabf8ce9b3c9"
-    },
-    {
-      "name": "ArgentMulticall.casm.json",
-      "md5": "506d699bd1e11853a336784bd9dd7be4"
+      "sha3_256": "c84648bb4ef70513be3aacea5f5a1bc64dd9dcad0662978e0acc7590754d8bd9"
     },
     {
       "name": "CallAggregator.json",
-      "md5": "3f418be1aab5ebd4a591e815af65533a"
+      "sha3_256": "8c653ded4d1917ba878d30193c4a7c4c62cc9454a0a990a695a97b757bad1c7f"
     },
     {
       "name": "ERC20.json",
-      "md5": "bb4b9492b9ac173cc8648899f82fb4b5"
+      "sha3_256": "4855ca0abaf813d36eec3a556de5314ac700646ba28becda4632b1c7748283b2"
     },
     {
       "name": "ERC721.json",
-      "md5": "921c01faed5df5b24a80e52a3b469330"
+      "sha3_256": "8189c5f2448bfe96343d98681313597e2c732c25a601f46948f0837fa99d0c10"
     },
     {
       "name": "genesis.json",
-      "md5": "19f69e5c1019a289af40873c251587e8"
+      "sha3_256": "7292bb7e82a4104f86acb991cbb7a82b756a193c2f82e66cf05176cdfde0049d"
     },
     {
       "name": "NoValidateAccount.casm.json",
-      "md5": "a6d73f38cec68964187e7c5a217dcac2"
+      "sha3_256": "023592635fd3a534ec6c45b49e442b72d24994e2b19524dfbff4bb8540c53876"
     },
     {
       "name": "NoValidateAccount.json",
-      "md5": "8049765b03c864c1f743ebcfbac0b721"
+      "sha3_256": "c33991e486f6afb575fcaa8c643e0978444422801a92d5173c108b1726a94a52"
     },
     {
       "name": "OpenzeppelinAccount.json",
-      "md5": "afac329e2b9d0525dd0e481591a0e98b"
+      "sha3_256": "71eba832aee6e48bb1028c62c9862ef75f5811044331100582192d2a20e5b65b"
     },
     {
       "name": "Proxy.json",
-      "md5": "cd2bf3a51f319124f7506327ccd4045d"
+      "sha3_256": "c717ea7d26af62fe699190fce606afea2a27bf545e1974e6a39cef441d79353b"
     },
     {
       "name": "test.json",
-      "md5": "3b96fc40d4fee4921c0ee44f3af5cec5"
+      "sha3_256": "0687b75f03b6c3c998fd51b0748bc0dde875080a69095b39e3987bd6fd425c2a"
     },
     {
       "name": "UniversalDeployer.json",
-      "md5": "d917baa8b1455f946d095d467dcdba47"
+      "sha3_256": "ba6680986e5ec7590ec8205bbfb0b71bc93a8d221faeb3d597ed293d1a6f9206"
     },
     {
       "name": "ArgentAccountCairoOne.json",
-      "md5": "6f245cc2e6d8e03fec53d363872d2b9c"
+      "sha3_256": "6cd527da0953b22f5af3613c248133777a3d08408a2c1e8bb4e23b4c96f7d006"
     },
     {
       "name": "ArgentAccountCairoOne.casm.json",
-      "md5": "27978b53c8589808be0347879a66da0d"
+      "sha3_256": "65cc25c726ae33deb94c8e9f6ac1cbe526d40dcdda8e7b0ebbed56cc19ed61d9"
     }
   ]
 }

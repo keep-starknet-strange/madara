@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use ethers::providers::{Http, Provider, StreamExt};
 use ethers::types::U256;
-use mc_db::messaging_db::LastSyncedEventBlock;
 use mp_transactions::HandleL1MessageTransaction;
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::HeaderBackend;
@@ -138,7 +137,7 @@ where
 
     backend
         .messaging()
-        .update_last_synced_l1_block_with_event(&LastSyncedEventBlock::new(
+        .update_last_synced_l1_block_with_event(&mc_db::LastSyncedEventBlock::new(
             l1_block_number.to_owned(),
             event_index.to_owned(),
         ))

@@ -29,6 +29,7 @@ use starknet_api::calldata;
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, Fee};
+use starknet_core::types::ResourcePrice as CoreResourcePrice;
 
 /// Initial gas for a transaction
 pub const INITIAL_GAS: u64 = u64::MAX;
@@ -52,6 +53,24 @@ pub const TRANSFER_SELECTOR_HASH: [u8; 32] = [
     0, 131, 175, 211, 244, 202, 237, 198, 238, 191, 68, 36, 111, 229, 78, 56, 201, 94, 49, 121, 165, 236, 158, 168, 23,
     64, 236, 165, 180, 130, 209, 46,
 ]; // starknet_keccak(TRANSFER_SELECTOR_NAME.as_bytes()).to_le_bytes();
+
+#[serde_with::serde_as]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct ResourcePrice {
+    /// The price of one unit of the given resource, denominated in fri (10^-18 strk)
+    pub price_in_strk: Option<u64>,
+    /// The price of one unit of the given resource, denominated in wei
+    pub price_in_wei: u64,
+}
+
+impl From<ResourcePrice> for CoreResourcePrice {
+    fn from(item: ResourcePrice) -> Self {
+        CoreResourcePrice { price_in_strk: item.price_in_strk, price_in_wei: item.price_in_wei }
+    }
+}
 
 /// Gets the transaction resources.
 pub fn compute_transaction_resources<S: State + StateChanges>(
@@ -80,6 +99,7 @@ pub fn charge_fee<S: State + StateChanges>(
     resources: &ResourcesMapping,
     disable_transaction_fee: bool,
     disable_fee_charge: bool,
+    is_query: bool,
 ) -> TransactionExecutionResult<(Fee, Option<CallInfo>)> {
     // disable_transaction_fee flag implies that transaction fees have
     // been disabled and so we return 0 as the fees
@@ -90,13 +110,10 @@ pub fn charge_fee<S: State + StateChanges>(
     let actual_fee = calculate_tx_fee(resources, block_context)?;
 
     // Fee charging is skipped in the following cases:
-    //  1) If the tx version >= 0x100000000000000000000000000000000, the current transaction mode is a
-    //     estimate fee transaction, so we don't charge fees
+    //  1) if is_query is true, it's an estimate fee transaction, so we don't charge fees
     //  2) The disable_fee_charge flag is set
     // in both cases we return the actual fee.
-    if disable_fee_charge
-        || account_tx_context.version.0 >= StarkFelt::try_from("0x100000000000000000000000000000000").unwrap()
-    {
+    if disable_fee_charge || is_query {
         return Ok((actual_fee, None));
     }
 
@@ -179,7 +196,7 @@ pub fn extract_l1_gas_and_vm_usage(resources: &ResourcesMapping) -> (usize, Reso
     let l1_gas_usage =
         vm_resource_usage.remove(GAS_USAGE).expect("`ResourcesMapping` does not have the key `l1_gas_usage`.");
 
-    (l1_gas_usage, ResourcesMapping(vm_resource_usage))
+    (l1_gas_usage as usize, ResourcesMapping(vm_resource_usage))
 }
 
 /// Calculates the L1 gas consumed when submitting the underlying Cairo program to SHARP.

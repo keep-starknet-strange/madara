@@ -1,7 +1,7 @@
 use ethers::types::U256;
+use mc_commitment_state_diff::BlockDAData;
 use starknet_api::api_core::{Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
-use starknet_api::state::ThinStateDiff;
 use url::{ParseError, Url};
 
 const CLASS_FLAG_TRUE: &str = "0x100000000000000000000000000000001"; // 2 ^ 128 + 1
@@ -9,18 +9,28 @@ const NONCE_BASE: &str = "0x10000000000000000"; // 2 ^ 64
 
 /// DA calldata encoding:
 /// - https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/on-chain-data
-pub fn state_diff_to_calldata(mut state_diff: ThinStateDiff, num_addrs_accessed: usize) -> Vec<U256> {
-    let mut calldata: Vec<U256> = Vec::new();
-
-    calldata.push(U256::from(num_addrs_accessed));
+pub fn state_diff_to_calldata(mut block_da_data: BlockDAData) -> Vec<U256> {
+    // pushing the headers and num_addr_accessed
+    let mut calldata: Vec<U256> = vec![
+        U256::from_big_endian(&block_da_data.previous_state_root.0), // prev merkle root
+        U256::from_big_endian(&block_da_data.new_state_root.0),      // new merkle root
+        U256::from(block_da_data.block_number),                      // block number
+        U256::from_big_endian(&block_da_data.block_hash.0.0),        // block hash
+        U256::from_big_endian(&block_da_data.config_hash.0),         // config hash,
+        U256::from(block_da_data.num_addr_accessed),                 // num_addr_accessed
+    ];
 
     // Loop over storage diffs
-    for (addr, writes) in state_diff.storage_diffs {
+    for (addr, writes) in block_da_data.state_diff.storage_diffs {
         calldata.push(U256::from_big_endian(&addr.0.key().0));
 
-        let class_flag = state_diff.deployed_contracts.get(&addr).or_else(|| state_diff.replaced_classes.get(&addr));
+        let class_flag = block_da_data
+            .state_diff
+            .deployed_contracts
+            .get(&addr)
+            .or_else(|| block_da_data.state_diff.replaced_classes.get(&addr));
 
-        let nonce = state_diff.nonces.remove(&addr);
+        let nonce = block_da_data.state_diff.nonces.remove(&addr);
         calldata.push(da_word(class_flag.is_some(), nonce, writes.len() as u64));
 
         if let Some(class_hash) = class_flag {
@@ -34,10 +44,14 @@ pub fn state_diff_to_calldata(mut state_diff: ThinStateDiff, num_addrs_accessed:
     }
 
     // Handle nonces
-    for (addr, nonce) in state_diff.nonces {
+    for (addr, nonce) in block_da_data.state_diff.nonces {
         calldata.push(U256::from_big_endian(&addr.0.key().0));
 
-        let class_flag = state_diff.deployed_contracts.get(&addr).or_else(|| state_diff.replaced_classes.get(&addr));
+        let class_flag = block_da_data
+            .state_diff
+            .deployed_contracts
+            .get(&addr)
+            .or_else(|| block_da_data.state_diff.replaced_classes.get(&addr));
 
         calldata.push(da_word(class_flag.is_some(), Some(nonce), 0_u64));
         if let Some(class_hash) = class_flag {
@@ -46,7 +60,7 @@ pub fn state_diff_to_calldata(mut state_diff: ThinStateDiff, num_addrs_accessed:
     }
 
     // Handle deployed contracts
-    for (addr, class_hash) in state_diff.deployed_contracts {
+    for (addr, class_hash) in block_da_data.state_diff.deployed_contracts {
         calldata.push(U256::from_big_endian(&addr.0.key().0));
 
         calldata.push(da_word(true, None, 0_u64));
@@ -54,9 +68,9 @@ pub fn state_diff_to_calldata(mut state_diff: ThinStateDiff, num_addrs_accessed:
     }
 
     // Handle replaced classes
-    calldata.push(U256::from(state_diff.declared_classes.len()));
+    calldata.push(U256::from(block_da_data.state_diff.declared_classes.len()));
 
-    for (class_hash, compiled_class_hash) in &state_diff.declared_classes {
+    for (class_hash, compiled_class_hash) in &block_da_data.state_diff.declared_classes {
         calldata.push(U256::from_big_endian(class_hash.0.bytes()));
         calldata.push(U256::from_big_endian(compiled_class_hash.0.bytes()));
     }
