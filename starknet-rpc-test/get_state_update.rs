@@ -63,9 +63,9 @@ async fn returns_correct_state_diff(madara: &ThreadSafeMadaraClient) -> Result<(
     assert_eq!(state_update.old_root, FieldElement::ZERO);
     assert_eq!(state_update.new_root, FieldElement::ZERO);
 
-    assert_eq!(state_update.state_diff.nonces.len(), 1);
+    assert_eq!(state_update.state_diff.nonces.len(), 2);
     assert_eq!(
-        state_update.state_diff.nonces[0],
+        state_update.state_diff.nonces[1],
         NonceUpdate { contract_address: sender_account_address, nonce: new_nonce }
     );
 

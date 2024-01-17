@@ -6307,6 +6307,7 @@ dependencies = [
  "mp-storage",
  "pallet-starknet-runtime-api",
  "reqwest",
+ "rstest",
  "sc-client-api",
  "serde",
  "serde_json",

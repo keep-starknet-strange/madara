@@ -66,6 +66,9 @@ clap = { workspace = true, features = ["derive"], optional = true }
 sp-keyring = { workspace = true, optional = true }
 subxt = { workspace = true, optional = true }
 
+[dev-dependencies]
+rstest = { workspace = true }
+
 [features]
 default = []
 clap = ["dep:clap"]
