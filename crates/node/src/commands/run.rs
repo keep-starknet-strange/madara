@@ -108,9 +108,9 @@ pub struct ExtendedRunCmd {
     #[clap(flatten)]
     pub l1_messages_worker: L1Messages,
 
-    /// When enable, the node will sync state from l1,
-    #[clap(long)]
-    pub sync_from_l1: Option<String>,
+    /// Path to a file containing the configuration for sync state from l1.
+    #[clap(long, value_hint = FilePath)]
+    pub sync_from_l1_conf: Option<PathBuf>,
 }
 
 impl ExtendedRunCmd {
@@ -165,11 +165,10 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
         }
     };
 
-    let sync_from_l1_config = cli.run.sync_from_l1.clone().map(PathBuf::from);
-
     runner.run_node_until_exit(|config| async move {
         let sealing = cli.run.sealing.map(Into::into).unwrap_or_default();
         let cache = cli.run.cache;
+        let sync_from_l1_config = cli.run.sync_from_l1_conf;
         service::new_full(
             config,
             sealing,
