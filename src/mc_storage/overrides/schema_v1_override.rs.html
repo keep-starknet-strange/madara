@@ -129,6 +129,8 @@
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
 <a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::sync::Arc;
 
@@ -248,6 +250,8 @@
     }
 
     <span class="kw">fn </span>nonce(<span class="kw-2">&amp;</span><span class="self">self</span>, block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash, address: ContractAddress) -&gt; <span class="prelude-ty">Option</span>&lt;Nonce&gt; {
+        <span class="self">self</span>.contract_class_hash_by_address(block_hash, address)<span class="question-mark">?</span>;
+
         <span class="kw">let </span>storage_nonce_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_NONCE);
         <span class="kw">let </span>nonce = <span class="self">self</span>.query_storage::&lt;Nonce&gt;(
             block_hash,
