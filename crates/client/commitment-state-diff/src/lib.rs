@@ -84,7 +84,7 @@ where
                         Ok(msg) => self_as_mut.msg = Some(msg),
                         Err(e) => {
                             log::error!(
-                                "Block with substrate hash `{block_hash}` skiped. Failed to compute commitment state \
+                                "Block with substrate hash `{block_hash}` skipped. Failed to compute commitment state \
                                  diff: {e}",
                             );
 

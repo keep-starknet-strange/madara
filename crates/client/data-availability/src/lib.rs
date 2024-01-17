@@ -45,7 +45,7 @@ pub enum DaLayer {
 
 /// Data availability modes in which Madara can be initialized.
 ///
-/// Default only mode currently implemented is Sovereing.
+/// Default only mode currently implemented is Sovereign.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum DaMode {
     /// Full Validity Rollup
@@ -96,7 +96,7 @@ pub trait DaClient: Send + Sync {
 
 /// The client worker for DA related tasks
 ///
-/// Listen to new block state diff and spawn new threads to execute each block flow concurently.
+/// Listen to new block state diff and spawn new threads to execute each block flow concurrently.
 /// The flow goes as follow:
 /// 1. Prove. Do nothing if node is run in sovereign mode
 /// 2. Updata

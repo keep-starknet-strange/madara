@@ -108,7 +108,7 @@ pub struct StarknetContract {
 
 impl StarknetContract {
     pub async fn deploy(sandbox: &EthereumSandbox) -> Self {
-        // First we deploy the Starknet contract (no explicit contructor)
+        // First we deploy the Starknet contract (no explicit constructor)
         let snos_contract = sandbox.deploy(STARKNET_VALIDIUM, ()).await;
 
         // Then we deploy a simple delegate proxy to interact with Starknet contract (initialized with its
