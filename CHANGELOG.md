@@ -2,6 +2,7 @@
 
 ## Next release
 
+- feat(rpc): added `get_state_update` real values from DA db
 - refacto(simulate_tx): move logic to the client
 - chore: added ca-certificate in DockerFile for SSL related issues
 - chore(primitives/commitment): remove crate
