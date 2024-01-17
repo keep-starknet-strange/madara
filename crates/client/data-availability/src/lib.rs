@@ -1,3 +1,5 @@
+//#[cfg(feature = "eigenda")]
+pub mod eigenda;
 #[cfg(feature = "avail")]
 pub mod avail;
 #[cfg(feature = "celestia")]
@@ -41,6 +43,8 @@ pub enum DaLayer {
     Ethereum,
     #[cfg(feature = "avail")]
     Avail,
+    #[cfg(feature = "eigenda")]
+    EigenDa,
 }
 
 /// Data availability modes in which Madara can be initialized.

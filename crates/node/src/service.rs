@@ -12,6 +12,8 @@ use futures::prelude::*;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi, SealingMode, StarknetHasher};
 use mc_commitment_state_diff::CommitmentStateDiffWorker;
+#[cfg(feature = "eigenda")]
+use mc_data_availability::eigenda::{config::EigenDaConfig, EigenDaClient}
 #[cfg(feature = "avail")]
 use mc_data_availability::avail::{config::AvailConfig, AvailClient};
 #[cfg(feature = "celestia")]
@@ -449,6 +451,11 @@ pub fn new_full(
             DaLayer::Avail => {
                 let avail_conf = AvailConfig::try_from(&da_path)?;
                 Arc::new(AvailClient::try_from(avail_conf).map_err(|e| ServiceError::Other(e.to_string()))?)
+            }
+            #[cfg(feature = "eigenda")]
+            DaLayer::EigenDa => {
+                let eigenda_conf = EigenDaConfig::try_from(&da_path)?;
+                Arc::new(EigenDaClient::try_from(eigenda_config).map_err(|e| ServiceError::Other(e.to_string()))?)
             }
         };
 
