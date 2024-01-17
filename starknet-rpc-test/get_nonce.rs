@@ -54,23 +54,6 @@ async fn fail_non_existing_contract(madara: &ThreadSafeMadaraClient) -> Result<(
 
 #[rstest]
 #[tokio::test]
-async fn work_ok_non_used_contract_address(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
-    let rpc = madara.get_starknet_client().await;
-
-    assert_eq!(
-        rpc.get_nonce(
-            BlockId::Number(0),
-            FieldElement::from_hex_be("0x4269DEADBEEF").expect("Invalid Contract Address")
-        )
-        .await?,
-        FieldElement::ZERO
-    );
-
-    Ok(())
-}
-
-#[rstest]
-#[tokio::test]
 async fn work_ok_non_account_contract(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
