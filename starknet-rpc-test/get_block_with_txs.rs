@@ -101,13 +101,14 @@ async fn works_with_deploy_account_txn(madara: &ThreadSafeMadaraClient) -> Resul
     let contract_address_salt = FieldElement::ONE;
     let max_fee = FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap();
 
-    let (deploy_nonce, block) = {
+    let (_deploy_nonce, block) = {
         let mut madara_write_lock = madara.write().await;
         let oz_factory = build_oz_account_factory(&rpc, "0x123", class_hash).await;
         let account_deploy_txn = build_deploy_account_tx(&oz_factory, FieldElement::ONE);
 
         let funding_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
         let account_address = account_deploy_txn.address();
+        let deploy_nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account_deploy_txn.address()).await?;
 
         // We execute the funding in a different block, because we have no way to guarantee the tx execution
         // order once in the mempool
@@ -119,7 +120,6 @@ async fn works_with_deploy_account_txn(madara: &ThreadSafeMadaraClient) -> Resul
             ))])
             .await?;
 
-        let deploy_nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account_deploy_txn.address()).await?;
         madara_write_lock.create_block_with_txs(vec![Transaction::AccountDeployment(account_deploy_txn)]).await?;
 
         let block = match rpc.get_block_with_txs(BlockId::Tag(BlockTag::Latest)).await.unwrap() {
@@ -135,7 +135,7 @@ async fn works_with_deploy_account_txn(madara: &ThreadSafeMadaraClient) -> Resul
         StarknetTransaction::DeployAccount(tx) => tx,
         _ => return Err(anyhow!("Expected an deploy transaction v1")),
     };
-    assert_eq!(tx.nonce, deploy_nonce);
+    assert_eq!(tx.nonce, 0u8.into());
     assert_eq!(tx.max_fee, max_fee);
     assert_eq!(tx.contract_address_salt, contract_address_salt);
     assert_eq!(tx.class_hash, class_hash);
