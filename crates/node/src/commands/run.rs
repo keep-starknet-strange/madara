@@ -157,7 +157,7 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
         None => "dev",
     };
 
-    let (_da_config, da_client) = match cli.run.da_layer {
+    let da_client = match cli.run.da_layer {
         Some(da_layer) => {
             let da_conf = cli.run.clone().da_conf.unwrap_or({
                 let path_base_path = cli.run.base_path()?;
@@ -169,11 +169,11 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
                 path_da_conf_json
             });
 
-            (Some((da_layer, da_conf.clone())), Some(init_da_client(da_layer, da_conf)?))
+            Some(init_da_client(da_layer, da_conf)?)
         }
         None => {
             log::info!("Madara initialized w/o DA layer");
-            (None, None)
+            None
         }
     };
 
