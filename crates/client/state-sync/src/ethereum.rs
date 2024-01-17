@@ -34,10 +34,10 @@ pub struct EthOrigin {
 #[derive(Debug)]
 pub struct StateUpdate {
     eth_origin: EthOrigin,
-    update: LogStateUpdate,
+    l2_state: LogStateUpdate,
 }
 
-/// Ethereum contract event representing a log state update.
+/// Ethereum contract event representing a log state update for l2.
 #[derive(Clone, Debug, PartialEq, Eq, EthEvent)]
 #[ethevent(name = "LogStateUpdate")]
 pub struct LogStateUpdate {
@@ -100,12 +100,6 @@ pub struct LogMemoryPageFactContinuous {
 pub struct LogMemoryPageFactContinuousWithTxHash {
     pub log_memory_page_fact_continuous: LogMemoryPageFactContinuous,
     pub tx_hash: H256,
-}
-
-impl Default for SyncStatus {
-    fn default() -> Self {
-        Self::SYNCING
-    }
 }
 
 /// Struct responsible for fetching and decoding Ethereum state information.
@@ -316,16 +310,15 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
                             eth_origin: EthOrigin {
                                 block_hash: log.block_hash.ok_or(Error::L1EventDecode)?,
                                 block_number: log.block_number.ok_or(Error::L1EventDecode)?.as_u64(),
-                                // transaction_hash: log.transaction_hash.ok_or(Error::L1EventDecode)?,
                                 transaction_index: log.transaction_index.ok_or(Error::L1EventDecode)?.as_u64(),
                             },
-                            update: log_state_update,
+                            l2_state: log_state_update,
                         })
                     })
                 })
                 .filter(|res| {
                     if let Ok(state_update) = res {
-                        if state_update.update.block_number.as_u64() < starknet_from {
+                        if state_update.l2_state.block_number.as_u64() < starknet_from {
                             return false;
                         }
                     }
@@ -585,7 +578,7 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
         C: ProvideRuntimeApi<B> + HeaderBackend<B>,
         C::Api: StarknetRuntimeApi<B>,
     {
-        debug!(target: LOG_TARGET,"~~ query state diff for starknet block {:#?}", state_update.update.block_number);
+        debug!(target: LOG_TARGET,"~~ query state diff for starknet block {:#?}", state_update.l2_state.block_number);
 
         let fact = self
             .query_state_transition_fact(
@@ -612,18 +605,18 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
             tx_input_data.append(&mut data)
         }
 
-        let state_diff = self.decode_state_diff(state_update.update.block_number.as_u64(), tx_input_data, client)?;
+        let state_diff = self.decode_state_diff(state_update.l2_state.block_number.as_u64(), tx_input_data, client)?;
 
-        debug!(target: LOG_TARGET,"~~ decode state diff for starknet block {}", state_update.update.block_number.as_u64());
+        debug!(target: LOG_TARGET,"~~ decode state diff for starknet block {}", state_update.l2_state.block_number.as_u64());
 
         Ok(FetchState {
             l1_l2_block_mapping: L1L2BlockMapping {
                 l1_block_hash: state_update.eth_origin.block_hash,
                 l1_block_number: state_update.eth_origin.block_number,
-                l2_block_hash: state_update.update.block_hash,
-                l2_block_number: state_update.update.block_number.as_u64(),
+                l2_block_hash: state_update.l2_state.block_hash,
+                l2_block_number: state_update.l2_state.block_number.as_u64(),
             },
-            post_state_root: state_update.update.global_root,
+            post_state_root: state_update.l2_state.global_root,
             state_diff,
         })
     }
@@ -641,7 +634,7 @@ impl<P: JsonRpcClient + Clone> StateFetcher for EthereumStateFetcher<P> {
 
         let state_updates = self.query_state_update(l1_from, l2_start).await?;
         let tasks = state_updates.iter().map(|updates| {
-            debug!(target: LOG_TARGET, "crate task fro update l1:{} l2: {}", updates.eth_origin.block_number, updates.update.block_number);
+            debug!(target: LOG_TARGET, "crate task fro update l1:{} l2: {}", updates.eth_origin.block_number, updates.l2_state.block_number);
             let client_clone = client.clone();
             let mut fetcher = self.clone();
             async move { fetcher.query_state_diff(updates, client_clone).await }

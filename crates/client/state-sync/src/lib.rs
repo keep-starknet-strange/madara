@@ -205,6 +205,12 @@ pub enum SyncStatus {
     SYNCED,
 }
 
+impl Default for SyncStatus {
+    fn default() -> Self {
+        Self::SYNCING
+    }
+}
+
 /// Creates and runs a state diff sync task along with a SyncOracle.
 ///
 /// This function initializes a state diff sync task and SyncOracle based on the provided
