@@ -3,6 +3,7 @@
 ## Next release
 
 - feat(rpc): added `get_state_update` real values from DA db
+- chore: add headers to da calldata, fix eth da in sovereign mode
 - refacto(simulate_tx): move logic to the client
 - chore: added ca-certificate in DockerFile for SSL related issues
 - chore(primitives/commitment): remove crate
@@ -50,6 +51,7 @@
 - fix: `tempdir` crate has been deprecated; use `tempfile` instead
 - dev: add avail and celestia crates behind a feature flag
 - dev: replace md5 with sha3_256 hash function
+- feat: fixing getNonce Rpc Call and adding a new test
 
 ## v0.6.0
 

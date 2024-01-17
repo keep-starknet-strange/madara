@@ -24,16 +24,32 @@ pub struct EthereumClient {
 #[async_trait]
 impl DaClient for EthereumClient {
     async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()> {
-        abigen!(
-            STARKNET,
-            r#"[
-                function updateState(uint256[] calldata programOutput, uint256 onchainDataHash, uint256 onchainDataSize) external
-            ]"#,
-        );
+        log::debug!("State Update: {:?}", state_diff);
+        let fmt_tx = match self.mode {
+            DaMode::Sovereign => {
+                abigen!(
+                    STARKNET,
+                    r#"[
+                        function updateState(uint256[] calldata programOutput) external
+                    ]"#,
+                );
 
-        let core_contracts = STARKNET::new(self.cc_address, self.signer.clone());
+                let core_contracts = STARKNET::new(self.cc_address, self.signer.clone());
+                core_contracts.update_state(state_diff)
+            }
+            _ => {
+                abigen!(
+                    STARKNET,
+                    r#"[
+                        function updateState(uint256[] calldata programOutput, uint256 onchainDataHash, uint256 onchainDataSize) external
+                    ]"#,
+                );
 
-        let fmt_tx = core_contracts.update_state(state_diff, U256::default(), U256::default());
+                let core_contracts = STARKNET::new(self.cc_address, self.signer.clone());
+                core_contracts.update_state(state_diff, U256::default(), U256::default())
+            }
+        };
+
         let tx = fmt_tx
             .send()
             .await
@@ -41,7 +57,7 @@ impl DaClient for EthereumClient {
             .await
             .map_err(|e| anyhow::anyhow!("ethereum poll update err: {e}"))?;
 
-        log::info!("State Update: {:?}", tx);
+        log::debug!("State Update: {:?}", tx);
         Ok(())
     }
 

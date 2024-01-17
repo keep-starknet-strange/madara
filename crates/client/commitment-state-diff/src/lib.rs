@@ -16,17 +16,27 @@ use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::{Block as BlockT, Header};
 use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce, PatriciaKey};
 use starknet_api::block::BlockHash;
-use starknet_api::hash::StarkFelt;
+use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::state::{StorageKey as StarknetStorageKey, ThinStateDiff};
 use thiserror::Error;
 
-pub struct BlockDAData(pub BlockHash, pub ThinStateDiff, pub usize);
+#[derive(Clone)]
+pub struct BlockDAData {
+    pub block_hash: BlockHash,
+    pub state_diff: ThinStateDiff,
+    pub num_addr_accessed: usize,
+    pub block_number: u64,
+    pub config_hash: StarkHash,
+    pub new_state_root: StarkHash,
+    pub previous_state_root: StarkHash,
+}
 
 pub struct CommitmentStateDiffWorker<B: BlockT, C, H> {
     client: Arc<C>,
     storage_event_stream: StorageEventStream<B::Hash>,
     tx: mpsc::Sender<BlockDAData>,
     msg: Option<BlockDAData>,
+    backend: Arc<mc_db::Backend<B>>,
     phantom: PhantomData<H>,
 }
 
@@ -34,11 +44,11 @@ impl<B: BlockT, C, H> CommitmentStateDiffWorker<B, C, H>
 where
     C: BlockchainEvents<B>,
 {
-    pub fn new(client: Arc<C>, tx: mpsc::Sender<BlockDAData>) -> Self {
+    pub fn new(client: Arc<C>, backend: Arc<mc_db::Backend<B>>, tx: mpsc::Sender<BlockDAData>) -> Self {
         let storage_event_stream = client
             .storage_changes_notification_stream(None, None)
             .expect("the node storage changes notification stream should be up and running");
-        Self { client, storage_event_stream, tx, msg: Default::default(), phantom: PhantomData }
+        Self { client, storage_event_stream, tx, msg: Default::default(), backend, phantom: PhantomData }
     }
 }
 
@@ -66,7 +76,11 @@ where
                 Poll::Ready(Some(storage_notification)) => {
                     let block_hash = storage_notification.block;
 
-                    match build_commitment_state_diff::<B, C, H>(self_as_mut.client.clone(), storage_notification) {
+                    match build_commitment_state_diff::<B, C, H>(
+                        self_as_mut.client.clone(),
+                        self_as_mut.backend.clone(),
+                        storage_notification,
+                    ) {
                         Ok(msg) => self_as_mut.msg = Some(msg),
                         Err(e) => {
                             log::error!(
@@ -119,10 +133,13 @@ enum BuildCommitmentStateDiffError {
     BlockNotFound,
     #[error("digest log not found")]
     DigestLogNotFound(#[from] mp_digest_log::FindLogError),
+    #[error("failed to get config hash")]
+    FailedToGetConfigHash(#[from] sp_api::ApiError),
 }
 
 fn build_commitment_state_diff<B: BlockT, C, H>(
     client: Arc<C>,
+    backend: Arc<mc_db::Backend<B>>,
     storage_notification: StorageNotification<B::Hash>,
 ) -> Result<BlockDAData, BuildCommitmentStateDiffError>
 where
@@ -131,13 +148,6 @@ where
     C: HeaderBackend<B>,
     H: HasherT,
 {
-    let starknet_block_hash = {
-        let header = client.header(storage_notification.block)?.ok_or(BuildCommitmentStateDiffError::BlockNotFound)?;
-        let digest = header.digest();
-        let block = mp_digest_log::find_starknet_block(digest)?;
-        block.header().hash::<H>().into()
-    };
-
     let mut accessed_addrs: IndexSet<ContractAddress> = IndexSet::new();
     let mut commitment_state_diff = ThinStateDiff {
         declared_classes: IndexMap::new(),
@@ -216,5 +226,22 @@ where
         }
     }
 
-    Ok(BlockDAData(starknet_block_hash, commitment_state_diff, accessed_addrs.len()))
+    let current_block = {
+        let header = client.header(storage_notification.block)?.ok_or(BuildCommitmentStateDiffError::BlockNotFound)?;
+        let digest = header.digest();
+        mp_digest_log::find_starknet_block(digest)?
+    };
+
+    let config_hash = client.runtime_api().config_hash(storage_notification.block)?;
+
+    Ok(BlockDAData {
+        block_hash: current_block.header().hash::<H>().into(),
+        state_diff: commitment_state_diff,
+        num_addr_accessed: accessed_addrs.len(),
+        block_number: current_block.header().block_number,
+        config_hash,
+        // TODO: fix when we implement state root
+        new_state_root: backend.temporary_global_state_root_getter(),
+        previous_state_root: backend.temporary_global_state_root_getter(),
+    })
 }

@@ -3,7 +3,6 @@ use std::sync::Arc;
 use futures::StreamExt;
 use futures_timer::Delay;
 use mp_block::Block as StarknetBlock;
-use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_messages::{MessageL1ToL2, MessageL2ToL1};
 use mp_snos_output::StarknetOsOutput;
@@ -15,14 +14,11 @@ use sp_api::{HeaderT, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
-use starknet_api::hash::{pedersen_hash_array, StarkFelt, StarkHash};
+use starknet_api::hash::StarkHash;
 use starknet_api::transaction::TransactionHash;
-use starknet_crypto::FieldElement;
 
 use crate::errors::Error;
 use crate::{Result, RetryStrategy, SettlementProvider, SettlementWorker, StarknetSpec, StarknetState};
-
-pub const SN_OS_CONFIG_HASH_VERSION: &str = "StarknetOsConfig1";
 
 impl<B, H, SC> SettlementWorker<B, H, SC>
 where
@@ -187,16 +183,7 @@ where
             return Err(Error::ProgramHashMismatch { expected: program_hash, actual: starknet_spec.program_hash });
         }
 
-        let chain_id = substrate_client.runtime_api().chain_id(substrate_hash)?;
-        let fee_token_address = substrate_client.runtime_api().fee_token_address(substrate_hash)?;
-
-        let config_hash = pedersen_hash_array(&[
-            StarkFelt::from(Felt252Wrapper::from(
-                FieldElement::from_byte_slice_be(SN_OS_CONFIG_HASH_VERSION.as_bytes()).unwrap(),
-            )),
-            chain_id.into(),
-            fee_token_address.0.0,
-        ]);
+        let config_hash = substrate_client.runtime_api().config_hash(substrate_hash)?;
 
         if starknet_spec.config_hash != config_hash {
             return Err(Error::ConfigHashMismatch { expected: config_hash, actual: starknet_spec.config_hash });

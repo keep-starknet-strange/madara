@@ -6269,6 +6269,7 @@ dependencies = [
  "futures",
  "indexmap 2.0.0-pre",
  "log",
+ "mc-db",
  "mp-digest-log",
  "mp-hashers",
  "mp-storage",

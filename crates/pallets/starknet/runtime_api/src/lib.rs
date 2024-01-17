@@ -21,7 +21,7 @@ use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationF
 use sp_runtime::DispatchError;
 use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
-use starknet_api::hash::StarkFelt;
+use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash};
 
@@ -50,6 +50,8 @@ sp_api::decl_runtime_apis! {
         fn chain_id() -> Felt252Wrapper;
         /// Returns the Starknet OS Cairo program hash.
         fn program_hash() -> Felt252Wrapper;
+        /// Returns the Starknet config hash.
+        fn config_hash() -> StarkHash;
         /// Returns the fee token address.
         fn fee_token_address() -> ContractAddress;
         /// Returns fee estimate
