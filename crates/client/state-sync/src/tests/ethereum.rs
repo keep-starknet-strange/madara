@@ -2,12 +2,20 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use ethers::providers::MockProvider;
-use ethers::types::{Address, Filter, U256};
+use ethers::types::{Address, Filter, H256, U256};
 use mc_db::L1L2BlockMapping;
 
 use crate::ethereum::EthereumStateFetcher;
 use crate::tests::writer::{create_temp_madara_backend, create_test_client};
-use crate::{run, u256_to_h256, StateFetcher, SyncStatus};
+use crate::{run, StateFetcher, SyncStatus};
+
+fn u256_to_h256(u256: U256) -> H256 {
+    let mut bytes = [0; 32];
+    u256.to_big_endian(&mut bytes);
+    let mut h256_bytes = [0; 32];
+    h256_bytes.copy_from_slice(&bytes[..32]);
+    H256::from(h256_bytes)
+}
 
 #[tokio::test]
 async fn test_fetch_and_decode_state_diff() {

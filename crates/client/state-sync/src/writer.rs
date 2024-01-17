@@ -71,7 +71,7 @@ where
     pub fn apply_state_diff(
         &self,
         starknet_block_number: u64,
-        starknet_block_hash: U256,
+        starknet_block_hash: H256,
         state_diff: &StateDiff,
     ) -> Result<(), Error> {
         let mut inner_state_diff = InnerStateDiff::default();
@@ -92,7 +92,6 @@ where
             inner_state_diff.commitment.address_to_nonce.insert(*contract_address, *nonce);
         }
 
-        let starknet_block_hash = u256_to_h256(starknet_block_hash);
         self.apply_inner_state_diff(starknet_block_number, starknet_block_hash, inner_state_diff)
     }
 

@@ -27,7 +27,6 @@ const LOG_SEARCH_STEP: u64 = 1000;
 pub struct EthOrigin {
     block_hash: H256,
     block_number: u64,
-    _transaction_hash: H256,
     transaction_index: u64,
 }
 
@@ -44,7 +43,7 @@ pub struct StateUpdate {
 pub struct LogStateUpdate {
     pub global_root: U256,
     pub block_number: I256,
-    pub block_hash: U256,
+    pub block_hash: H256,
 }
 
 /// Ethereum contract event representing a log state update in old contract.
@@ -317,7 +316,7 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
                             eth_origin: EthOrigin {
                                 block_hash: log.block_hash.ok_or(Error::L1EventDecode)?,
                                 block_number: log.block_number.ok_or(Error::L1EventDecode)?.as_u64(),
-                                _transaction_hash: log.transaction_hash.ok_or(Error::L1EventDecode)?,
+                                // transaction_hash: log.transaction_hash.ok_or(Error::L1EventDecode)?,
                                 transaction_index: log.transaction_index.ok_or(Error::L1EventDecode)?.as_u64(),
                             },
                             update: log_state_update,

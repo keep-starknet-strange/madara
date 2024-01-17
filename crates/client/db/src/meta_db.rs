@@ -3,17 +3,23 @@ use std::sync::Arc;
 
 // Substrate
 use scale_codec::{Decode, Encode};
-use sp_core::{H256, U256};
+use sp_core::H256;
 use sp_database::Database;
 use sp_runtime::traits::Block as BlockT;
 
 use crate::DbHash;
 
+/// The L1L2BlockMapping defines the mapping relationship between L2 and L1 blocks.
+///
+/// This mapping is visible and verifiable on L1. It is important to note that on Madara,
+/// L2 blocks (StarkNet blocks) are included within Substrate blocks. Therefore, the mapping
+/// here refers to the relationship between L1 blocks and L2 blocks, not the mapping between
+/// L2 blocks and Substrate blocks containing them.
 #[derive(Debug, Clone, PartialEq, Eq, Encode, Decode)]
 pub struct L1L2BlockMapping {
     pub l1_block_hash: H256,
     pub l1_block_number: u64,
-    pub l2_block_hash: U256,
+    pub l2_block_hash: H256,
     pub l2_block_number: u64,
 }
 
@@ -46,6 +52,7 @@ impl<B: BlockT> MetaDb<B> {
         Ok(())
     }
 
+    /// Store the mapping between the last L1 block and the corresponding L2 block.
     pub fn write_last_l1_l2_mapping(&self, mapping: &L1L2BlockMapping) -> Result<(), String> {
         let mut transaction = sp_database::Transaction::new();
 
@@ -55,6 +62,7 @@ impl<B: BlockT> MetaDb<B> {
         Ok(())
     }
 
+    /// Retrieve the mapping between the last L1 block and the corresponding L2 block.
     pub fn last_l1_l2_mapping(&self) -> Result<L1L2BlockMapping, String> {
         match self.db.get(crate::columns::META, crate::static_keys::LAST_L1_L1_HEADER_MAPPING) {
             Some(data) => L1L2BlockMapping::decode(&mut &data[..]).map_err(|e| e.to_string()),

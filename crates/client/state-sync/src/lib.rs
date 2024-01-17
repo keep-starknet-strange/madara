@@ -400,27 +400,6 @@ where
     future::select(Box::pin(fetcher_task), Box::pin(state_write_task)).map(|_| ())
 }
 
-/// Converts a U256 value to an H256 value.
-///
-/// This helper function takes a U256 value and converts it to an H256 value by
-/// converting the U256 value to a big-endian byte array, then copying the first
-/// 32 bytes into an H256 array to obtain the H256 value.
-///
-/// # Arguments
-///
-/// * `u256` - The U256 value to be converted to H256.
-///
-/// # Returns
-///
-/// An H256 value converted from the provided U256 value.
-fn u256_to_h256(u256: U256) -> H256 {
-    let mut bytes = [0; 32];
-    u256.to_big_endian(&mut bytes);
-    let mut h256_bytes = [0; 32];
-    h256_bytes.copy_from_slice(&bytes[..32]);
-    H256::from(h256_bytes)
-}
-
 /// Represents various error types that can occur during state synchronization or interaction with
 /// L1/L2 chains.
 #[derive(Debug, Clone)]
