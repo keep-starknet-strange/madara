@@ -15,6 +15,7 @@ use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use jsonrpsee::types::error::CallError;
 use log::error;
+use mc_data_availability::utils::decode_011_diff;
 use mc_db::Backend as MadaraBackend;
 use mc_genesis_data_provider::GenesisProvider;
 pub use mc_rpc_core::utils::*;
@@ -42,6 +43,7 @@ use sp_core::H256;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use sp_runtime::transaction_validity::InvalidTransaction;
 use sp_runtime::DispatchError;
+use starknet_api::block::BlockHash;
 use starknet_api::transaction::Calldata;
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
@@ -133,6 +135,8 @@ impl<A: ChainApi, B, BE, G, C, P, H> Starknet<A, B, BE, G, C, P, H>
 where
     B: BlockT,
     C: HeaderBackend<B> + 'static,
+    C: ProvideRuntimeApi<B>,
+    C::Api: StarknetRuntimeApi<B>,
     H: HasherT + Send + Sync + 'static,
 {
     pub fn current_block_hash(&self) -> Result<H256, ApiError> {
@@ -194,6 +198,25 @@ where
             error!("{err}");
             None
         })
+    }
+
+    /// Returns the state diff for the given block.
+    ///
+    /// # Arguments
+    ///
+    /// * `block_hash` - The hash of the block containing the state diff (starknet block).
+    fn get_state_diff(&self, block_hash: B::Hash, starknet_block_hash: &BlockHash) -> Result<StateDiff, String> {
+        let state_diff = self.backend.da().state_diff(starknet_block_hash).unwrap_or_else(|err| {
+            error!("{err}");
+            Vec::new()
+        });
+        let decoded_state_diff =
+            decode_011_diff(state_diff.as_slice(), block_hash, self.client.clone()).map_err(|err| {
+                error!("{err}");
+                "Failed to decode state diff".to_string()
+            })?;
+
+        Ok(decoded_state_diff)
     }
 }
 
@@ -1148,6 +1171,13 @@ where
         } else {
             FieldElement::default()
         };
+
+        let starknet_block_hash = BlockHash(starknet_block.header().hash::<H>().into());
+
+        let thin_state_diff = self.get_state_diff(substrate_block_hash, &starknet_block_hash).map_err(|e| {
+            error!("Failed to get state update. Substrate block hash: {substrate_block_hash}, error: {e}");
+            StarknetRpcApiError::InternalServerError
+        })?;
 
         Ok(StateUpdate {
             block_hash: starknet_block.header().hash::<H>().into(),

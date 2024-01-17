@@ -1,7 +1,19 @@
+use std::sync::Arc;
+
+use anyhow::Error;
 use ethers::types::U256;
-use starknet_api::api_core::{Nonce, PatriciaKey};
+use mp_felt::Felt252Wrapper;
+use pallet_starknet_runtime_api::StarknetRuntimeApi;
+use sp_api::{BlockT, ProvideRuntimeApi};
+use sp_blockchain::HeaderBackend;
+#[allow(unused_imports)]
+use starknet_api::api_core::{ClassHash, ContractAddress, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::ThinStateDiff;
+use starknet_core::types::{
+    ContractStorageDiffItem, DeclaredClassItem, DeployedContractItem, FieldElement, NonceUpdate, ReplacedClassItem,
+    StateDiff, StorageEntry,
+};
 use url::{ParseError, Url};
 
 const CLASS_FLAG_TRUE: &str = "0x100000000000000000000000000000001"; // 2 ^ 128 + 1
@@ -131,4 +143,168 @@ pub fn bytes_to_felt(raw: &[u8]) -> StarkFelt {
 
 pub fn bytes_to_key(raw: &[u8]) -> PatriciaKey {
     PatriciaKey(bytes_to_felt(raw))
+}
+
+/// Width of the field storing the number of storage updates in `U256`.
+#[allow(dead_code)]
+const NUM_STORAGE_UPDATES_WIDTH: u64 = 64; // Adjust this based on your logic
+
+/// Macro for converting a value of type `U256` to a StarkNet type.
+///
+/// Usually in starknet, some types like ClassHash and ContractClass can be directly converted from
+/// Felt252Wrapper, so we use this macro to convert U256 into Felt252Wrapper and then into the
+/// corresponding data.
+///
+/// # Arguments
+///
+/// * `$data` - The value to be converted.
+/// * `$target_type` - The StarkNet type to convert to.
+///
+/// # Returns
+///
+/// A `Result` containing the converted value or an `Error` if the conversion fails.
+///
+/// # Example
+///
+/// ```rust
+/// // Example usage
+/// let result = convert_to_starknet_type!(U256::from(1), ClassHash);
+/// ```
+macro_rules! convert_to_starknet_type {
+    ($data:expr, $target_type:ident) => {{
+        let result = Felt252Wrapper::try_from($data).map(|ft| $target_type::from(ft));
+        result
+    }};
+}
+
+/// Checks if a contract is deployed based on its address and block hash.
+///
+/// # Arguments
+///
+/// * `address` - Address of the contract.
+/// * `block_hash` - Hash of the block in which the contract is being checked.
+/// * `client` - StarkNet runtime client.
+///
+/// # Returns
+///
+/// A `Result` indicating whether the contract is deployed or not.
+///
+/// # Example
+///
+/// ```rust
+/// // Example usage
+/// let result = contract_deployed(address, block_hash, client);
+/// ```
+#[allow(unused)]
+fn contract_deployed<B, C>(address: ContractAddress, block_hash: B::Hash, client: Arc<C>) -> Result<bool, Error>
+where
+    B: BlockT,
+    C: ProvideRuntimeApi<B> + HeaderBackend<B>,
+    C::Api: StarknetRuntimeApi<B>,
+{
+    #[cfg(test)]
+    // When testing, we have only an empty client.
+    return Ok(false);
+
+    #[cfg(not(test))]
+    match client.runtime_api().contract_class_hash_by_address(block_hash, address) {
+        Ok(class_hash) => Ok(!class_hash.eq(&ClassHash::default())),
+        Err(e) => Ok(false),
+    }
+}
+
+/// Decodes a state difference using the 011 logic.
+///
+/// # Arguments
+///
+/// * `encoded_diff` - Encoded state difference data in the form of `U256` slices.
+/// * `block_hash` - Hash of the block in which the state difference occurred.
+/// * `client` - StarkNet runtime client.
+///
+/// # Returns
+///
+/// A `Result` containing the decoded `StateDiff` or an `Error` if decoding fails.
+///
+/// # Example
+///
+/// ```rust
+/// // Example usage
+/// let result = decode_011_diff(&encoded_diff, block_hash, client);
+/// ```
+pub fn decode_011_diff<B, C>(encoded_diff: &[U256], block_hash: B::Hash, client: Arc<C>) -> Result<StateDiff, Error>
+where
+    B: BlockT,
+    C: ProvideRuntimeApi<B> + HeaderBackend<B>,
+    C::Api: StarknetRuntimeApi<B>,
+{
+    let mut offset = 0;
+    let num_contract_updates = encoded_diff[offset].low_u64();
+    offset += 1;
+
+    let mut nonces = Vec::new();
+    let mut deployed_contracts = Vec::new();
+    let mut declared_classes = Vec::new();
+    let mut replaced_classes = Vec::new();
+    let mut storage_diffs = Vec::new();
+    let deprecated_declared_classes = Vec::new();
+
+    for _ in 0..num_contract_updates {
+        let address = convert_to_starknet_type!(encoded_diff[offset], ContractAddress)?;
+        offset += 1;
+
+        let summary = encoded_diff[offset];
+        offset += 1;
+
+        let num_storage_updates = summary.low_u64();
+        let class_info_flag = summary.bit(128);
+        let nonce_value = summary >> 64;
+
+        nonces.push(NonceUpdate {
+            contract_address: address.0.0.into(),
+            nonce: convert_to_starknet_type!(nonce_value, FieldElement)?,
+        });
+
+        if class_info_flag {
+            let class_hash = convert_to_starknet_type!(encoded_diff[offset], FieldElement)?;
+            offset += 1;
+            if contract_deployed(address, block_hash, client.clone())? {
+                replaced_classes.push(ReplacedClassItem { contract_address: address.0.0.into(), class_hash });
+            } else {
+                deployed_contracts.push(DeployedContractItem { address: address.0.0.into(), class_hash });
+            }
+        }
+
+        if num_storage_updates > 0 {
+            let mut storage_entries = Vec::new();
+            for _ in 0..num_storage_updates {
+                let key = convert_to_starknet_type!(encoded_diff[offset], FieldElement)?;
+                offset += 1;
+
+                storage_entries
+                    .push(StorageEntry { key, value: convert_to_starknet_type!(encoded_diff[offset], FieldElement)? });
+                offset += 1;
+            }
+            storage_diffs.push(ContractStorageDiffItem { address: address.0.0.into(), storage_entries });
+        }
+    }
+
+    let num_declared_classes = encoded_diff[offset].low_u64();
+    offset += 1;
+    for _ in 0..num_declared_classes {
+        let class_hash = convert_to_starknet_type!(encoded_diff[offset], FieldElement)?;
+        offset += 1;
+
+        let compiled_class_hash = convert_to_starknet_type!(encoded_diff[offset], FieldElement)?;
+        declared_classes.push(DeclaredClassItem { class_hash, compiled_class_hash });
+        offset += 1;
+    }
+
+    Ok(StateDiff {
+        deployed_contracts,
+        storage_diffs,
+        declared_classes,
+        deprecated_declared_classes,
+        nonces,
+        replaced_classes,
+    })
 }
