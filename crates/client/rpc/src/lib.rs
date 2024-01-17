@@ -1174,8 +1174,8 @@ where
 
         let starknet_block_hash = BlockHash(starknet_block.header().hash::<H>().into());
 
-        let thin_state_diff = self.get_state_diff(substrate_block_hash, &starknet_block_hash).map_err(|e| {
-            error!("Failed to get state update. Substrate block hash: {substrate_block_hash}, error: {e}");
+        let state_diff = self.get_state_diff(substrate_block_hash, &starknet_block_hash).map_err(|e| {
+            error!("Failed to get state diff. Substrate block hash: {substrate_block_hash}, error: {e}");
             StarknetRpcApiError::InternalServerError
         })?;
 
@@ -1183,14 +1183,7 @@ where
             block_hash: starknet_block.header().hash::<H>().into(),
             new_root: Felt252Wrapper::from(self.backend.temporary_global_state_root_getter()).into(),
             old_root,
-            state_diff: StateDiff {
-                storage_diffs: Vec::new(),
-                deprecated_declared_classes: Vec::new(),
-                declared_classes: Vec::new(),
-                deployed_contracts: Vec::new(),
-                replaced_classes: Vec::new(),
-                nonces: Vec::new(),
-            },
+            state_diff,
         })
     }
 
