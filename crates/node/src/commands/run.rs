@@ -157,7 +157,7 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
         None => "dev",
     };
 
-    let (da_config, da_client) = match cli.run.da_layer {
+    let (_da_config, da_client) = match cli.run.da_layer {
         Some(da_layer) => {
             let da_conf = cli.run.clone().da_conf.unwrap_or({
                 let path_base_path = cli.run.base_path()?;
