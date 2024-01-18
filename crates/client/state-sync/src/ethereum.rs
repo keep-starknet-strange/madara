@@ -6,8 +6,6 @@ use async_trait::async_trait;
 use ethers::abi::RawLog;
 use ethers::contract::{BaseContract, EthEvent, EthLogDecode};
 use ethers::core::abi::parse_abi;
-#[cfg(test)]
-use ethers::providers::MockProvider;
 use ethers::providers::{Http, JsonRpcClient, Middleware, Provider};
 use ethers::types::{Address, Filter, Log, H256, I256, U256};
 use log::{debug, info};
@@ -22,22 +20,30 @@ use super::*;
 const STATE_SEARCH_STEP: u64 = 10;
 const LOG_SEARCH_STEP: u64 = 1000;
 
-/// Represents the Ethereum origin information for state updates.
+/// Describes a transaction on the ethereum blockchain,
+/// this transaction triggered the StateUpdate event.
 #[derive(Debug)]
-pub struct EthOrigin {
+pub struct StateUpdateTxInfo {
     block_hash: H256,
     block_number: u64,
     transaction_index: u64,
 }
 
-/// Represents a state update, combining Ethereum origin information with log state update data.
+/// Represents a state update, combining ethereum transaction information with log state update
+/// data.
 #[derive(Debug)]
 pub struct StateUpdate {
-    eth_origin: EthOrigin,
+    l1_tx_info: StateUpdateTxInfo,
     l2_state: LogStateUpdate,
 }
 
 /// Ethereum contract event representing a log state update for l2.
+///
+/// In the testnet/mainnet, we noticed an upgrade in the Starknet Core contract,
+/// leading to an additional field in the LogStateUpdate event.
+/// This adjustment is made solely for forward compatibility with the older events.
+/// If there is no need to maintain consistency with the Starknet mainnet
+/// and testnet, you may safely ignore LogStateUpdateOld.
 #[derive(Clone, Debug, PartialEq, Eq, EthEvent)]
 #[ethevent(name = "LogStateUpdate")]
 pub struct LogStateUpdate {
@@ -105,22 +111,33 @@ pub struct LogMemoryPageFactContinuousWithTxHash {
 /// Struct responsible for fetching and decoding Ethereum state information.
 #[derive(Debug, Clone)]
 pub struct EthereumStateFetcher<P: JsonRpcClient> {
+    // HTTP provider for Ethereum
     http_provider: Provider<P>,
 
+    // Address of starknet core contract on l1.
     core_contract: Address,
 
+    // Address of starknet verifier contract on l1.
     verifier_contract: Address,
 
+    // Address of starknet memory page contract on l1,
+    // which store state diff of l2.
     memory_page_contract: Address,
 
-    eth_url_list: Vec<String>, // Ethereum Node URL List
+    // Ethereum Node URL List
+    eth_url_list: Vec<String>,
 
-    current_provider_index: Arc<Mutex<usize>>,
+    // The index of `eth_url_list`, which `http_provider` used for connect ethereum.
+    current_http_provider_index: Arc<Mutex<usize>>,
 
+    // The sync status.
     sync_status: Arc<Mutex<SyncStatus>>,
 
+    // The Starknet block height after which StarkNet starts using the v0.11 state diff format.
     v011_diff_format_height: u64,
 
+    // The Starknet block height after which constructor function details are excluded from the
+    // state diff during contract deployment.
     constructor_args_diff_height: u64,
 }
 
@@ -156,35 +173,7 @@ impl EthereumStateFetcher<Http> {
             verifier_contract,
             memory_page_contract,
             eth_url_list: eth_urls,
-            current_provider_index: Arc::new(Mutex::new(0)),
-            sync_status,
-            v011_diff_format_height,
-            constructor_args_diff_height,
-        })
-    }
-}
-
-#[cfg(test)]
-impl EthereumStateFetcher<MockProvider> {
-    pub fn mock(
-        core_contract: Address,
-        verifier_contract: Address,
-        memory_page_contract: Address,
-        eth_url_list: Vec<String>,
-        v011_diff_format_height: u64,
-        mock_provider: MockProvider,
-        sync_status: Arc<Mutex<SyncStatus>>,
-        constructor_args_diff_height: u64,
-    ) -> Result<Self, Error> {
-        let provider = Provider::<MockProvider>::new(mock_provider);
-
-        Ok(Self {
-            http_provider: provider,
-            core_contract,
-            verifier_contract,
-            memory_page_contract,
-            eth_url_list,
-            current_provider_index: Arc::new(Mutex::new(0)),
+            current_http_provider_index: Arc::new(Mutex::new(0)),
             sync_status,
             v011_diff_format_height,
             constructor_args_diff_height,
@@ -201,7 +190,7 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
         let mut retries = 0;
         loop {
             let provider = self
-                .current_provider_index
+                .current_http_provider_index
                 .lock()
                 .map(|index| {
                     let current_provider_url = &self.eth_url_list[*index];
@@ -218,7 +207,7 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
                     }
 
                     // change to next Ethereum node
-                    if let Ok(mut index) = self.current_provider_index.lock() {
+                    if let Ok(mut index) = self.current_http_provider_index.lock() {
                         *index = (*index + 1) % self.eth_url_list.len();
                     };
 
@@ -307,7 +296,7 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
                     let raw_log = RawLog { topics: log.topics.clone(), data: log.data.to_vec() };
                     decode_log_state_update(&raw_log).and_then(|log_state_update| {
                         Ok(StateUpdate {
-                            eth_origin: EthOrigin {
+                            l1_tx_info: StateUpdateTxInfo {
                                 block_hash: log.block_hash.ok_or(Error::L1EventDecode)?,
                                 block_number: log.block_number.ok_or(Error::L1EventDecode)?.as_u64(),
                                 transaction_index: log.transaction_index.ok_or(Error::L1EventDecode)?.as_u64(),
@@ -527,7 +516,6 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
     /// Decodes the StarkNet state diff from raw data.
     ///
     /// # Arguments
-    /// * `l1_block_number` - The L1 block number.
     /// * `starknet_block_number` - The StarkNet block number.
     /// * `data` - The raw data containing the state diff information.
     /// * `client` - The StarkNet runtime client.
@@ -582,18 +570,18 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
 
         let fact = self
             .query_state_transition_fact(
-                state_update.eth_origin.block_number,
-                state_update.eth_origin.transaction_index,
+                state_update.l1_tx_info.block_number,
+                state_update.l1_tx_info.transaction_index,
             )
             .await?;
 
-        let pages_hashes = self.query_memory_pages_hashes(state_update.eth_origin.block_number, fact).await?;
+        let pages_hashes = self.query_memory_pages_hashes(state_update.l1_tx_info.block_number, fact).await?;
 
         let mut pages_hashes =
             pages_hashes.pages_hashes.iter().map(|data| U256::from_big_endian(data)).collect::<Vec<_>>();
 
         let continuous_logs_with_tx_hash = self
-            .query_memory_page_fact_continuous_logs(state_update.eth_origin.block_number, &mut pages_hashes)
+            .query_memory_page_fact_continuous_logs(state_update.l1_tx_info.block_number, &mut pages_hashes)
             .await?;
 
         let mut tx_input_data = Vec::new();
@@ -605,14 +593,18 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
             tx_input_data.append(&mut data)
         }
 
-        let state_diff = self.decode_state_diff(state_update.l2_state.block_number.as_u64(), tx_input_data, client)?;
+        let state_diff = self.decode_state_diff(
+            state_update.l2_state.block_number.as_u64(),
+            tx_input_data,
+            client,
+        )?;
 
         debug!(target: LOG_TARGET,"~~ decode state diff for starknet block {}", state_update.l2_state.block_number.as_u64());
 
         Ok(FetchState {
             l1_l2_block_mapping: L1L2BlockMapping {
-                l1_block_hash: state_update.eth_origin.block_hash,
-                l1_block_number: state_update.eth_origin.block_number,
+                l1_block_hash: state_update.l1_tx_info.block_hash,
+                l1_block_number: state_update.l1_tx_info.block_number,
                 l2_block_hash: state_update.l2_state.block_hash,
                 l2_block_number: state_update.l2_state.block_number.as_u64(),
             },
@@ -634,7 +626,7 @@ impl<P: JsonRpcClient + Clone> StateFetcher for EthereumStateFetcher<P> {
 
         let state_updates = self.query_state_update(l1_from, l2_start).await?;
         let tasks = state_updates.iter().map(|updates| {
-            debug!(target: LOG_TARGET, "crate task fro update l1:{} l2: {}", updates.eth_origin.block_number, updates.l2_state.block_number);
+            debug!(target: LOG_TARGET, "crate task fro update l1:{} l2: {}", updates.l1_tx_info.block_number, updates.l2_state.block_number);
             let client_clone = client.clone();
             let mut fetcher = self.clone();
             async move { fetcher.query_state_diff(updates, client_clone).await }

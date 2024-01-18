@@ -1,7 +1,6 @@
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use ethers::providers::MockProvider;
 use ethers::types::{Address, Filter, H256, U256};
 use mc_db::L1L2BlockMapping;
 
@@ -129,31 +128,4 @@ async fn test_get_logs_retry() {
     let filter = filter.from_block(from).to_block(to);
 
     assert!(client.get_logs_retry(&filter).await.is_err());
-}
-
-#[tokio::test]
-async fn test_mock_fetch_and_decode_state_diff() {
-    let core_contract = "0xc662c410c0ecf747543f5ba90660f6abebd9c8c4".parse::<Address>().unwrap();
-    let verifier_contract = "0x47312450B3Ac8b5b8e247a6bB6d523e7605bDb60".parse::<Address>().unwrap();
-    let memory_page_contract = "0xdc1534eeBF8CEEe76E31C98F5f5e0F9979476c87".parse::<Address>().unwrap();
-
-    let eth_url_list = vec![
-        String::from("https://eth.llamarpc.com"),
-        String::from("https://eth-goerli.g.alchemy.com/v2/nMMxqPTld6cj0DUO-4Qj2cg88Dd1MUhH"),
-    ];
-
-    let sync_status = Arc::new(Mutex::new(SyncStatus::SYNCING));
-
-    let mock_provider = MockProvider::new();
-    let _mock_provider = EthereumStateFetcher::mock(
-        core_contract,
-        verifier_contract,
-        memory_page_contract,
-        eth_url_list,
-        28566,
-        mock_provider,
-        sync_status,
-        1000,
-    )
-    .unwrap();
 }
