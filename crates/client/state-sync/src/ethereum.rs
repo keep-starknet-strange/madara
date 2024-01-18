@@ -184,36 +184,65 @@ impl EthereumStateFetcher<Http> {
 }
 
 impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
+    /// Attempts to get Ethereum logs using the provided filter. If the initial attempt fails,
+    /// it will retry by cycling through a list of Ethereum nodes until a successful response is received.
+    ///
+    /// # Arguments
+    ///
+    /// * `filter`: The `Filter` object defining the criteria for fetching logs from the Ethereum network.
+    ///
+    /// # Returns
+    ///
+    /// A `Result<Vec<Log>, Error>` containing either the fetched logs or an error if all providers fail.
+
     pub async fn get_logs_retry(&mut self, filter: &Filter) -> Result<Vec<Log>, Error> {
+        // Try to fetch logs using the current HTTP provider.
         if let Ok(res) = self.http_provider.get_logs(filter).await {
             return Ok(res);
         }
 
         let mut retries = 0;
         loop {
+            // Get the current Ethereum node URL and create a Provider instance.
             let index = self.current_http_provider_index.load(Ordering::Relaxed);
             let provider = Provider::<Http>::try_from(&self.eth_url_list[index]).map_err(Error::from)?;
 
+            // Attempt to fetch logs using the current provider.
             match provider.get_logs(filter).await {
                 Ok(logs) => return Ok(logs),
                 Err(_e) => {
+                    // If all Ethereum nodes have been tried, return an error.
                     retries += 1;
                     if retries > self.eth_url_list.len() {
                         return Err(Error::MaxRetryReached);
                     }
 
+                    // change to next Ethereum node
                     self.current_http_provider_index.store((index + 1) % self.eth_url_list.len(), Ordering::Release);
 
                     // Calculate the wait time manually
                     let wait_time = self.calculate_backoff(retries);
 
+                    // Wait for the calculated duration before the next attempt.
                     sleep(wait_time).await;
                 }
             }
         }
     }
 
-    // Custom backoff calculation
+    /// Calculates the backoff delay based on an exponential formula with a maximum limit.
+    ///
+    /// # Arguments
+    ///
+    /// * `retries`: The number of retries attempted so far.
+    ///
+    /// # Returns
+    ///
+    /// A `Duration` representing the amount of time to wait before the next retry attempt.
+    ///
+    /// # Note
+    ///
+    /// This function implements a simple exponential backoff strategy with a cap at 10 seconds.
     pub fn calculate_backoff(&self, retries: usize) -> Duration {
         // A simple exponential backoff with a maximum delay of 10 seconds
         let base_delay = 1.0; // in seconds
