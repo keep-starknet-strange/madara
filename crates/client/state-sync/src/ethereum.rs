@@ -49,7 +49,7 @@ pub struct StateUpdate {
 pub struct LogStateUpdate {
     pub global_root: U256,
     pub block_number: I256,
-    pub block_hash: H256,
+    pub block_hash: U256,
 }
 
 /// Ethereum contract event representing a log state update in old contract.
@@ -237,11 +237,15 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
     }
 
     /// Queries Ethereum state updates within a specified range.
+    /// The range starts from `eth_from` and ends at `eth_from + STATE_SEARCH_STEP`.
     ///
     /// # Arguments
     ///
-    /// * `eth_from` - The starting block number on Ethereum.
-    /// * `starknet_from` - The starting block number on StarkNet.
+    /// * `eth_from` - The starting block for querying state updates log on ethereum.
+    /// * `starknet_from` - The block with the lowest starknet block number found in the logs.
+    /// If the state update log of starknet on ethereum contains blocks with numbers lower than
+    /// this, they will be discarded. This design is implemented to avoid processing blocks that
+    /// have already been handled in subsequent processes.
     ///
     /// # Returns
     ///
@@ -259,19 +263,14 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
             .address(self.core_contract)
             .events(vec!["LogStateUpdate(uint256,int256,uint256)", "LogStateUpdate(uint256,int256)"]);
 
-        let mut from = eth_from;
-        let mut to = eth_from + STATE_SEARCH_STEP;
-
-        // TODO: Using more precise criteria to determine whether it is in a syncing state.
-        if from > highest_eth_block_number {
-            from = highest_eth_block_number;
-
+        let mut from = if eth_from > highest_eth_block_number {
             self.sync_status
                 .lock()
                 .map(|mut status| {
                     *status = SyncStatus::SYNCED;
                 })
                 .map_err(|e| Error::Other(e.to_string()))?;
+            highest_eth_block_number
         } else {
             self.sync_status
                 .lock()
@@ -279,51 +278,56 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
                     *status = SyncStatus::SYNCING;
                 })
                 .map_err(|e| Error::Other(e.to_string()))?;
-        }
+            eth_from
+        };
 
+        let mut to = eth_from + STATE_SEARCH_STEP;
         if to > highest_eth_block_number {
             to = highest_eth_block_number
         }
 
+        let mut search_res = Vec::new();
         loop {
             let filter = filter.clone().from_block(from).to_block(to);
 
-            let updates: Result<Vec<StateUpdate>, Error> = self
-                .get_logs_retry(&filter)
-                .await?
-                .iter()
-                .map(|log| {
-                    let raw_log = RawLog { topics: log.topics.clone(), data: log.data.to_vec() };
-                    decode_log_state_update(&raw_log).and_then(|log_state_update| {
-                        Ok(StateUpdate {
-                            l1_tx_info: StateUpdateTxInfo {
-                                block_hash: log.block_hash.ok_or(Error::L1EventDecode)?,
-                                block_number: log.block_number.ok_or(Error::L1EventDecode)?.as_u64(),
-                                transaction_index: log.transaction_index.ok_or(Error::L1EventDecode)?.as_u64(),
-                            },
-                            l2_state: log_state_update,
-                        })
-                    })
-                })
-                .filter(|res| {
-                    if let Ok(state_update) = res {
-                        if state_update.l2_state.block_number.as_u64() < starknet_from {
-                            return false;
-                        }
-                    }
-                    true
-                })
-                .collect();
+            let state_update_logs = self.get_logs_retry(&filter).await?;
 
-            if let Ok(remind_state_updates) = updates {
-                if !remind_state_updates.is_empty() {
-                    return Ok(remind_state_updates);
+            for log in state_update_logs.iter() {
+                let raw_log = RawLog { topics: log.topics.clone(), data: log.data.to_vec() };
+                let state_update_log = decode_log_state_update(&raw_log).and_then(|log_state_update| {
+                    Ok(StateUpdate {
+                        l1_tx_info: StateUpdateTxInfo {
+                            block_hash: log.block_hash.ok_or(Error::L1EventDecode)?,
+                            block_number: log.block_number.ok_or(Error::L1EventDecode)?.as_u64(),
+                            transaction_index: log.transaction_index.ok_or(Error::L1EventDecode)?.as_u64(),
+                        },
+                        l2_state: log_state_update,
+                    })
+                })?;
+
+                if state_update_log.l2_state.block_number.as_u64() < starknet_from {
+                    continue;
                 }
+
+                search_res.push(state_update_log);
+            }
+
+            // If 'from' is equal to 'to', it means we have reached the highest block on ethereum.
+            if from == to {
+                break;
+            }
+
+            // If successfully query the state update log,
+            // break out of the loop and return the query results.
+            if !search_res.is_empty() {
+                break;
             }
 
             from = to;
             to = from + STATE_SEARCH_STEP;
         }
+
+        Ok(search_res)
     }
 
     /// Queries Ethereum logs for a specific state transition fact within a specified block range.
@@ -593,11 +597,7 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
             tx_input_data.append(&mut data)
         }
 
-        let state_diff = self.decode_state_diff(
-            state_update.l2_state.block_number.as_u64(),
-            tx_input_data,
-            client,
-        )?;
+        let state_diff = self.decode_state_diff(state_update.l2_state.block_number.as_u64(), tx_input_data, client)?;
 
         debug!(target: LOG_TARGET,"~~ decode state diff for starknet block {}", state_update.l2_state.block_number.as_u64());
 
@@ -605,13 +605,21 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
             l1_l2_block_mapping: L1L2BlockMapping {
                 l1_block_hash: state_update.l1_tx_info.block_hash,
                 l1_block_number: state_update.l1_tx_info.block_number,
-                l2_block_hash: state_update.l2_state.block_hash,
+                l2_block_hash: u256_to_h256(state_update.l2_state.block_hash),
                 l2_block_number: state_update.l2_state.block_number.as_u64(),
             },
             post_state_root: state_update.l2_state.global_root,
             state_diff,
         })
     }
+}
+
+pub(crate) fn u256_to_h256(u256: U256) -> H256 {
+    let mut bytes = [0; 32];
+    u256.to_big_endian(&mut bytes);
+    let mut h256_bytes = [0; 32];
+    h256_bytes.copy_from_slice(&bytes[..32]);
+    H256::from(h256_bytes)
 }
 
 #[async_trait]
