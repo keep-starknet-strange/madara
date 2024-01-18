@@ -237,7 +237,8 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
     }
 
     /// Queries Ethereum state updates within a specified range.
-    /// The range starts from `eth_from` and ends at `eth_from + STATE_SEARCH_STEP`.
+    /// The range starts from `eth_from` and increments by `STATE_SEARCH_STEP`
+    /// until the log is successfully queried.
     ///
     /// # Arguments
     ///
@@ -330,41 +331,34 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
         Ok(search_res)
     }
 
-    /// Queries Ethereum logs for a specific state transition fact within a specified block range.
+    /// Queries ethereum logs for a state transition fact in a specific ethereum block.
     ///
     /// # Arguments
     ///
-    /// * `eth_from` - The starting block number on Ethereum.
-    /// * `tx_index` - The transaction index within the block.
+    /// * `eth_block_number` - The specific ethereum block contains a state transition fact log.
+    /// * `tx_index` - The index of the transaction which trigger state transition fact log.
     ///
     /// # Returns
     ///
     /// A `Result` containing the fetched `LogStateTransitionFact` or an `Error` if the query fails.
     pub async fn query_state_transition_fact(
         &mut self,
-        eth_from: u64,
+        eth_block_number: u64,
         tx_index: u64,
     ) -> Result<LogStateTransitionFact, Error> {
         let filter = Filter::new()
             .address(self.core_contract)
             .event("LogStateTransitionFact(bytes32)")
-            .from_block(eth_from)
-            .to_block(eth_from);
+            .from_block(eth_block_number)
+            .to_block(eth_block_number);
 
         self.get_logs_retry(&filter)
             .await?
             .iter()
-            .find(|log| {
-                if let Some(index) = log.transaction_index {
-                    if index.as_u64() == tx_index {
-                        return true;
-                    }
-                }
-                false
-            })
+            .find(|log| log.transaction_index.is_some_and(|index| index.as_u64() == tx_index))
             .ok_or(Error::L1StateError(format!(
-                "can't find starknet state transition fact from block:{}, tx:{}",
-                eth_from, tx_index
+                "can't find starknet state transition fact for block:{}, tx:{}",
+                eth_block_number, tx_index
             )))
             .and_then(|log| {
                 <LogStateTransitionFact as EthLogDecode>::decode_log(&(log.topics.clone(), log.data.to_vec()).into())
@@ -372,7 +366,9 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
             })
     }
 
-    /// Queries Ethereum logs containing memory pages hashes for a specific state transition fact.
+    /// Find ethereum logs containing memory pages hashes for a specific state transition fact.
+    /// The range starts from `eth_from` and decreases by `LOG_SEARCH_STEP`
+    /// until the state transition fact is successfully queried.
     ///
     /// # Arguments
     ///
@@ -382,7 +378,7 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
     /// # Returns
     ///
     /// A `Result` containing the fetched `LogMemoryPagesHashes` or an `Error` if the query fails.
-    pub async fn query_memory_pages_hashes(
+    pub async fn find_memory_pages_hashes(
         &mut self,
         eth_from: u64,
         state_transition_fact: LogStateTransitionFact,
@@ -398,27 +394,16 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
             }
             let filter = filter.clone().from_block(from).to_block(to);
 
-            let res = self
-                .get_logs_retry(&filter)
-                .await?
-                .iter()
-                .find_map(|log| {
-                    match <LogMemoryPagesHashes as EthLogDecode>::decode_log(
-                        &(log.topics.clone(), log.data.to_vec()).into(),
-                    ) {
-                        Ok(pages_hashes) => {
-                            if pages_hashes.fact.eq(&state_transition_fact.fact) {
-                                return Some(pages_hashes);
-                            }
-                            None
-                        }
-                        Err(_) => None,
-                    }
-                })
-                .ok_or(Error::L1StateError("memory pages not found".to_string()));
+            let logs = self.get_logs_retry(&filter).await?;
 
-            if let Ok(pages_hashes) = res {
-                return Ok(pages_hashes);
+            for l in logs.iter() {
+                let pages_hashes =
+                    <LogMemoryPagesHashes as EthLogDecode>::decode_log(&(l.topics.clone(), l.data.to_vec()).into())
+                        .map_err(|_| Error::L1EventDecode)?;
+
+                if pages_hashes.fact.eq(&state_transition_fact.fact) {
+                    return Ok(pages_hashes);
+                }
             }
 
             to = from;
@@ -426,21 +411,25 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
         }
     }
 
-    /// Queries continuous logs of memory page facts within a specific Ethereum block range.
-    ///
+    /// Queries continuous logs of memory page facts within a specific ethereum block range.
+
+    ///     
     /// # Arguments
     ///
     /// * `eth_from` - The starting block number on Ethereum.
-    /// * `pages_hashes` - Mutable reference to a vector of memory pages hashes.
+    /// * `target_memory_pages_hashes` - Mutable reference to a vector of memory pages hashes.
+    /// When an element is found in Ethereum, it is removed from this vector.The process continues
+    /// until the vector is empty, indicating that all memory pages have been found.
+    ///
     ///
     /// # Returns
     ///
     /// A `Result` containing a vector of `LogMemoryPageFactContinuousWithTxHash` instances or an
     /// `Error` if the query fails.
-    pub async fn query_memory_page_fact_continuous_logs(
+    pub async fn find_memory_page_fact_continuous_logs(
         &mut self,
         eth_from: u64,
-        pages_hashes: &mut Vec<U256>,
+        mut target_memory_pages_hashes: Vec<U256>,
     ) -> Result<Vec<LogMemoryPageFactContinuousWithTxHash>, Error> {
         let filter = Filter::new()
             .address(self.memory_page_contract)
@@ -465,9 +454,17 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
                 let log_pages_fact_continuous = <LogMemoryPageFactContinuous as EthLogDecode>::decode_log(&raw_log)
                     .map_err(|_| Error::L1EventDecode)?;
 
-                let pages_hashes_len = pages_hashes.len();
-                pages_hashes.retain(|&elem| elem != log_pages_fact_continuous.memory_hash);
-                if pages_hashes_len != pages_hashes.len() {
+                let pages_hashes_len = target_memory_pages_hashes.len();
+
+                // If we find that the memory hash exists in target_memory_pages_hashes, it means we have found the
+                // memory hash. We then remove it from target_memory_pages_hashes. When all elements
+                // in target_memory_pages_hashes are removed, it signifies that all targets have
+                // been found.
+                target_memory_pages_hashes.retain(|&elem| elem != log_pages_fact_continuous.memory_hash);
+
+                // If the length of target_memory_pages_hashes changes, it indicates that
+                // `log_pages_fact_continuous` is the data we need.
+                if pages_hashes_len != target_memory_pages_hashes.len() {
                     memory_pages_hashes.push(LogMemoryPageFactContinuousWithTxHash {
                         log_memory_page_fact_continuous: log_pages_fact_continuous,
                         tx_hash: l.transaction_hash.ok_or(Error::L1EventDecode)?,
@@ -476,7 +473,7 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
             }
             match_pages_hashes.push(memory_pages_hashes);
 
-            if pages_hashes.is_empty() {
+            if target_memory_pages_hashes.is_empty() {
                 break;
             }
 
@@ -579,14 +576,12 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
             )
             .await?;
 
-        let pages_hashes = self.query_memory_pages_hashes(state_update.l1_tx_info.block_number, fact).await?;
+        let pages_hashes = self.find_memory_pages_hashes(state_update.l1_tx_info.block_number, fact).await?;
 
-        let mut pages_hashes =
-            pages_hashes.pages_hashes.iter().map(|data| U256::from_big_endian(data)).collect::<Vec<_>>();
+        let pages_hashes = pages_hashes.pages_hashes.iter().map(|data| U256::from_big_endian(data)).collect::<Vec<_>>();
 
-        let continuous_logs_with_tx_hash = self
-            .query_memory_page_fact_continuous_logs(state_update.l1_tx_info.block_number, &mut pages_hashes)
-            .await?;
+        let continuous_logs_with_tx_hash =
+            self.find_memory_page_fact_continuous_logs(state_update.l1_tx_info.block_number, pages_hashes).await?;
 
         let mut tx_input_data = Vec::new();
 
