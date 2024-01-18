@@ -517,7 +517,7 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
     /// Decodes the StarkNet state diff from raw data.
     ///
     /// # Arguments
-    /// * `starknet_block_number` - The StarkNet block number.
+    /// * `starknet_block_number` - The starknet block number.
     /// * `data` - The raw data containing the state diff information.
     /// * `client` - The StarkNet runtime client.
     ///
@@ -539,11 +539,13 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
             let with_constructor_args = starknet_block_number < self.constructor_args_diff_height;
             parser::decode_pre_011_diff(&data, with_constructor_args)
         } else {
-            let block_hash = client
+            let parent_block_hash = client
                 .block_hash_from_id(&BlockId::Number((starknet_block_number as u32).saturating_sub(1).into()))
                 .map_err(|_| Error::UnknownBlock)?
                 .unwrap_or_default();
-            parser::decode_011_diff(&data, block_hash, client)
+
+            // decode v0.11 state diff basic parent block.
+            parser::decode_011_diff(&data, parent_block_hash, client)
         }
     }
 
@@ -635,16 +637,7 @@ impl<P: JsonRpcClient + Clone> StateFetcher for EthereumStateFetcher<P> {
             async move { fetcher.query_state_diff(updates, client_clone).await }
         });
 
-        let fetched_states = futures::future::join_all(tasks).await;
-        let mut states_res = Vec::new();
-        for fetched_state in fetched_states {
-            match fetched_state {
-                Ok(state) => states_res.push(state),
-                Err(e) => return Err(e),
-            }
-        }
-
-        Ok(states_res)
+        futures::future::join_all(tasks).await.into_iter().collect()
     }
 
     async fn get_highest_block_number(&mut self) -> Result<u64, Error> {
