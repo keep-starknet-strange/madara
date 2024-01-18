@@ -6,6 +6,7 @@ use starknet_api::hash::StarkFelt;
 use starknet_api::state::{ContractClass, StorageKey};
 
 use super::*;
+use crate::errors::Error;
 
 /// Width of the field storing the number of storage updates in `U256`.
 #[allow(dead_code)]
@@ -34,9 +35,7 @@ const NUM_STORAGE_UPDATES_WIDTH: u64 = 64; // Adjust this based on your logic
 /// ```
 macro_rules! convert_to_starknet_type {
     ($data:expr, $target_type:ident) => {{
-        let result = Felt252Wrapper::try_from($data)
-            .map(|ft| $target_type::from(ft))
-            .map_err(|e| Error::TypeError(e.to_string()));
+        let result = Felt252Wrapper::try_from($data).map(|ft| $target_type::from(ft)).map_err(|e| Error::from(e));
         result
     }};
 }
@@ -229,7 +228,7 @@ pub fn decode_pre_011_diff(encoded_diff: &[U256], with_constructor_args: bool) -
                 nonces.insert(address, Nonce::from(contract_address));
             }
             Err(err) => {
-                return Err(Error::TypeError(err.to_string()));
+                return Err(Error::from(err));
             }
         }
         offset += 1;

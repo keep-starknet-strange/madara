@@ -30,6 +30,7 @@ use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey as StarknetStorageKey;
 
 use super::*;
+use crate::errors::Error;
 
 /// StateWriter is responsible for applying StarkNet state differences to the underlying blockchain
 /// state.
@@ -154,13 +155,11 @@ where
                 op.set_block_data(substrate_block.header, None, None, None, Best)?;
                 Ok(op)
             })
-            .map_err(|e| Error::ConstructTransaction(e.to_string()))?;
+            .map_err(Error::from)?;
 
-        self.substrate_backend
-            .begin_state_operation(&mut operation, block_info.best_hash)
-            .map_err(|e| Error::CommitStorage(e.to_string()))?;
+        self.substrate_backend.begin_state_operation(&mut operation, block_info.best_hash).map_err(Error::from)?;
 
-        self.substrate_backend.commit_operation(operation).map_err(|e| Error::CommitStorage(e.to_string()))?;
+        self.substrate_backend.commit_operation(operation).map_err(Error::from)?;
 
         self.madara_backend
             .mapping()
@@ -169,7 +168,7 @@ where
                 starknet_block_hash,
                 starknet_transaction_hashes: Vec::new(),
             })
-            .map_err(|e| Error::Other(e.to_string()))?;
+            .map_err(|e| Error::CommitMadara(e.to_string()))?;
 
         info!(target: LOG_TARGET, "~~ apply state diff. starknet block number: {}, starknet block hash: {:#?}", 
             starknet_block_number, starknet_block_hash);

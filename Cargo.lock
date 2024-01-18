@@ -6783,6 +6783,7 @@ dependencies = [
  "pallet-starknet",
  "pallet-starknet-runtime-api",
  "parity-scale-codec",
+ "parking_lot 0.12.1",
  "pretty_assertions",
  "project-root",
  "sc-block-builder",
@@ -6804,8 +6805,10 @@ dependencies = [
  "starknet_api",
  "substrate-test-client",
  "tempfile",
+ "thiserror",
  "tokio",
  "tokio-retry",
+ "url",
 ]
 
 [[package]]

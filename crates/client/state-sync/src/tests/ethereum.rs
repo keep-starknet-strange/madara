@@ -1,8 +1,9 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::Duration;
 
 use ethers::types::{Address, Filter, U256};
 use mc_db::L1L2BlockMapping;
+use parking_lot::Mutex;
 
 use crate::ethereum::{u256_to_h256, EthereumStateFetcher};
 use crate::tests::writer::{create_temp_madara_backend, create_test_client};

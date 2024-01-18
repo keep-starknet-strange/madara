@@ -1,5 +1,6 @@
 use std::result::Result;
-use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
@@ -9,12 +10,14 @@ use ethers::core::abi::parse_abi;
 use ethers::providers::{Http, JsonRpcClient, Middleware, Provider};
 use ethers::types::{Address, Filter, Log, H256, I256, U256};
 use log::{debug, info};
+use parking_lot::Mutex;
 use sp_runtime::generic::BlockId;
 use sp_runtime::traits::Block as BlockT;
 use starknet_api::state::StateDiff;
 use tokio::time::sleep;
 
 use super::*;
+use crate::errors::Error;
 
 /// Constants for state and log search steps
 const STATE_SEARCH_STEP: u64 = 10;
@@ -74,7 +77,7 @@ fn decode_log_state_update(raw_log: &RawLog) -> Result<LogStateUpdate, Error> {
         });
     }
 
-    Err(Error::L1EventDecode)
+    Err(Error::UnknownStateUpdateEvent)
 }
 
 /// Ethereum contract event representing a log state transition fact.
@@ -128,7 +131,7 @@ pub struct EthereumStateFetcher<P: JsonRpcClient> {
     eth_url_list: Vec<String>,
 
     // The index of `eth_url_list`, which `http_provider` used for connect ethereum.
-    current_http_provider_index: Arc<Mutex<usize>>,
+    current_http_provider_index: Arc<AtomicUsize>,
 
     // The sync status.
     sync_status: Arc<Mutex<SyncStatus>>,
@@ -164,8 +167,7 @@ impl EthereumStateFetcher<Http> {
         sync_status: Arc<Mutex<SyncStatus>>,
         constructor_args_diff_height: u64,
     ) -> Result<Self, Error> {
-        let provider =
-            Provider::<Http>::try_from(eth_urls[0].clone()).map_err(|e| Error::L1Connection(e.to_string()))?;
+        let provider = Provider::<Http>::try_from(eth_urls[0].clone()).map_err(Error::from)?;
 
         Ok(Self {
             http_provider: provider,
@@ -173,7 +175,7 @@ impl EthereumStateFetcher<Http> {
             verifier_contract,
             memory_page_contract,
             eth_url_list: eth_urls,
-            current_http_provider_index: Arc::new(Mutex::new(0)),
+            current_http_provider_index: Arc::new(AtomicUsize::new(0)),
             sync_status,
             v011_diff_format_height,
             constructor_args_diff_height,
@@ -189,27 +191,18 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
 
         let mut retries = 0;
         loop {
-            let provider = self
-                .current_http_provider_index
-                .lock()
-                .map(|index| {
-                    let current_provider_url = &self.eth_url_list[*index];
-                    Provider::<Http>::try_from(current_provider_url).map_err(|e| Error::L1Connection(e.to_string()))
-                })
-                .map_err(|e| Error::Other(e.to_string()))??;
+            let index = self.current_http_provider_index.load(Ordering::Relaxed);
+            let provider = Provider::<Http>::try_from(&self.eth_url_list[index]).map_err(Error::from)?;
 
             match provider.get_logs(filter).await {
                 Ok(logs) => return Ok(logs),
                 Err(_e) => {
                     retries += 1;
                     if retries > self.eth_url_list.len() {
-                        return Err(Error::L1Connection("All Ethereum nodes failed.".to_string()));
+                        return Err(Error::MaxRetryReached);
                     }
 
-                    // change to next Ethereum node
-                    if let Ok(mut index) = self.current_http_provider_index.lock() {
-                        *index = (*index + 1) % self.eth_url_list.len();
-                    };
+                    self.current_http_provider_index.store((index + 1) % self.eth_url_list.len(), Ordering::Release);
 
                     // Calculate the wait time manually
                     let wait_time = self.calculate_backoff(retries);
@@ -257,28 +250,17 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
         starknet_from: u64,
     ) -> Result<Vec<StateUpdate>, Error> {
         debug!(target: LOG_TARGET, "~~ query_state_update, eth_from {}, starknet_from {}", eth_from, starknet_from);
-        let highest_eth_block_number =
-            self.http_provider.get_block_number().await.map_err(|e| Error::L1Connection(e.to_string()))?.as_u64();
+        let highest_eth_block_number = self.http_provider.get_block_number().await.map_err(Error::from)?.as_u64();
 
         let filter = Filter::new()
             .address(self.core_contract)
             .events(vec!["LogStateUpdate(uint256,int256,uint256)", "LogStateUpdate(uint256,int256)"]);
 
         let mut from = if eth_from > highest_eth_block_number {
-            self.sync_status
-                .lock()
-                .map(|mut status| {
-                    *status = SyncStatus::SYNCED;
-                })
-                .map_err(|e| Error::Other(e.to_string()))?;
+            *self.sync_status.lock() = SyncStatus::SYNCED;
             highest_eth_block_number
         } else {
-            self.sync_status
-                .lock()
-                .map(|mut status| {
-                    *status = SyncStatus::SYNCING;
-                })
-                .map_err(|e| Error::Other(e.to_string()))?;
+            *self.sync_status.lock() = SyncStatus::SYNCING;
             eth_from
         };
 
@@ -298,9 +280,9 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
                 let state_update_log = decode_log_state_update(&raw_log).and_then(|log_state_update| {
                     Ok(StateUpdate {
                         l1_tx_info: StateUpdateTxInfo {
-                            block_hash: log.block_hash.ok_or(Error::L1EventDecode)?,
-                            block_number: log.block_number.ok_or(Error::L1EventDecode)?.as_u64(),
-                            transaction_index: log.transaction_index.ok_or(Error::L1EventDecode)?.as_u64(),
+                            block_hash: log.block_hash.ok_or(Error::EmptyValue)?,
+                            block_number: log.block_number.ok_or(Error::EmptyValue)?.as_u64(),
+                            transaction_index: log.transaction_index.ok_or(Error::EmptyValue)?.as_u64(),
                         },
                         l2_state: log_state_update,
                     })
@@ -356,13 +338,10 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
             .await?
             .iter()
             .find(|log| log.transaction_index.is_some_and(|index| index.as_u64() == tx_index))
-            .ok_or(Error::L1StateError(format!(
-                "can't find starknet state transition fact for block:{}, tx:{}",
-                eth_block_number, tx_index
-            )))
+            .ok_or(Error::FindFact { block_number: eth_block_number, tx_index })
             .and_then(|log| {
                 <LogStateTransitionFact as EthLogDecode>::decode_log(&(log.topics.clone(), log.data.to_vec()).into())
-                    .map_err(|_| Error::L1EventDecode)
+                    .map_err(Error::from)
             })
     }
 
@@ -390,7 +369,7 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
 
         loop {
             if to == 0 {
-                return Err(Error::Other(format!("find fact {:#?} failed", state_transition_fact)));
+                return Err(Error::BadStarknetFact);
             }
             let filter = filter.clone().from_block(from).to_block(to);
 
@@ -399,7 +378,7 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
             for l in logs.iter() {
                 let pages_hashes =
                     <LogMemoryPagesHashes as EthLogDecode>::decode_log(&(l.topics.clone(), l.data.to_vec()).into())
-                        .map_err(|_| Error::L1EventDecode)?;
+                        .map_err(Error::from)?;
 
                 if pages_hashes.fact.eq(&state_transition_fact.fact) {
                     return Ok(pages_hashes);
@@ -412,7 +391,6 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
     }
 
     /// Queries continuous logs of memory page facts within a specific ethereum block range.
-
     ///     
     /// # Arguments
     ///
@@ -442,7 +420,7 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
 
         loop {
             if to == 0 {
-                return Err(Error::Other(format!("find fact failed")));
+                return Err(Error::BadStarknetFact);
             }
             let filter = filter.clone().from_block(from).to_block(to);
 
@@ -451,8 +429,8 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
 
             for l in logs.iter() {
                 let raw_log = RawLog::from(l.clone());
-                let log_pages_fact_continuous = <LogMemoryPageFactContinuous as EthLogDecode>::decode_log(&raw_log)
-                    .map_err(|_| Error::L1EventDecode)?;
+                let log_pages_fact_continuous =
+                    <LogMemoryPageFactContinuous as EthLogDecode>::decode_log(&raw_log).map_err(Error::from)?;
 
                 let pages_hashes_len = target_memory_pages_hashes.len();
 
@@ -467,7 +445,7 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
                 if pages_hashes_len != target_memory_pages_hashes.len() {
                     memory_pages_hashes.push(LogMemoryPageFactContinuousWithTxHash {
                         log_memory_page_fact_continuous: log_pages_fact_continuous,
-                        tx_hash: l.transaction_hash.ok_or(Error::L1EventDecode)?,
+                        tx_hash: l.transaction_hash.ok_or(Error::EmptyValue)?,
                     })
                 }
             }
@@ -496,12 +474,7 @@ impl<P: JsonRpcClient + Clone> EthereumStateFetcher<P> {
     ///
     /// A `Result` containing the decoded state diff data or an `Error` if the query fails.
     pub async fn query_and_decode_transaction(&mut self, hash: H256) -> Result<Vec<U256>, Error> {
-        let tx = self
-            .http_provider
-            .get_transaction(hash)
-            .await
-            .map_err(|e| Error::L1Connection(e.to_string()))?
-            .ok_or(Error::Other("query transaction by hash get none".to_string()))?;
+        let tx = self.http_provider.get_transaction(hash).await.map_err(Error::from)?.ok_or(Error::EmptyValue)?;
 
         let abi = BaseContract::from(
             parse_abi(&["function registerContinuousMemoryPage(uint256 startAddr,uint256[] values,uint256 z,uint256 \
@@ -641,8 +614,7 @@ impl<P: JsonRpcClient + Clone> StateFetcher for EthereumStateFetcher<P> {
     }
 
     async fn get_highest_block_number(&mut self) -> Result<u64, Error> {
-        let highest_eth_block_number =
-            self.http_provider.get_block_number().await.map_err(|e| Error::L1Connection(e.to_string()))?.as_u64();
+        let highest_eth_block_number = self.http_provider.get_block_number().await.map_err(Error::from)?.as_u64();
         Ok(highest_eth_block_number)
     }
 }

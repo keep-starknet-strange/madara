@@ -77,6 +77,7 @@
 //! [`SyncStatusOracle`]: struct.SyncStatusOracle.html
 //! ```
 
+mod errors;
 mod ethereum;
 mod parser;
 mod writer;
@@ -87,17 +88,17 @@ mod tests;
 use std::cmp::Ordering;
 use std::fs::File;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
-use ethereum::EthereumStateFetcher;
 use ethers::types::{Address, H256, U256};
 use futures::channel::mpsc;
 use futures::prelude::*;
 use log::error;
 use mc_db::L1L2BlockMapping;
 use pallet_starknet_runtime_api::StarknetRuntimeApi;
+use parking_lot::Mutex;
 use sc_client_api::backend::Backend;
 use serde::{Deserialize, Serialize};
 use sp_api::ProvideRuntimeApi;
@@ -106,7 +107,10 @@ use sp_consensus::SyncOracle;
 use sp_runtime::generic::Header as GenericHeader;
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use starknet_api::state::StateDiff;
-use writer::StateWriter;
+
+use crate::errors::Error;
+use crate::ethereum::EthereumStateFetcher;
+use crate::writer::StateWriter;
 
 const LOG_TARGET: &str = "state-sync";
 
@@ -141,11 +145,11 @@ pub struct StateSyncConfig {
 }
 
 impl TryFrom<&PathBuf> for StateSyncConfig {
-    type Error = String;
+    type Error = Error;
 
     fn try_from(path: &PathBuf) -> Result<Self, Self::Error> {
-        let file = File::open(path).map_err(|e| format!("error opening state sync config: {e}"))?;
-        serde_json::from_reader(file).map_err(|e| format!("error parsing state sync config: {e}"))
+        let file = File::open(path).map_err(|e| Error::DeserializeConf(e.to_string()))?;
+        serde_json::from_reader(file).map_err(|e| Error::DeserializeConf(e.to_string()))
     }
 }
 
@@ -249,12 +253,13 @@ where
     C::Api: StarknetRuntimeApi<B>,
     BE: Backend<B> + 'static,
 {
-    let config = StateSyncConfig::try_from(&config_path).map_err(|e| Error::Other(e.to_string()))?;
+    let config = StateSyncConfig::try_from(&config_path)?;
 
-    let contract_address = config.core_contract.parse::<Address>().map_err(|e| Error::Other(e.to_string()))?;
-    let verifier_address = config.verifier_contract.parse::<Address>().map_err(|e| Error::Other(e.to_string()))?;
+    let contract_address = config.core_contract.parse::<Address>().map_err(|e| Error::ParseAddress(e.to_string()))?;
+    let verifier_address =
+        config.verifier_contract.parse::<Address>().map_err(|e| Error::ParseAddress(e.to_string()))?;
     let memory_page_address =
-        config.memory_page_contract.parse::<Address>().map_err(|e| Error::Other(e.to_string()))?;
+        config.memory_page_contract.parse::<Address>().map_err(|e| Error::ParseAddress(e.to_string()))?;
 
     let sync_status = Arc::new(Mutex::new(SyncStatus::SYNCING));
     let state_fetcher: EthereumStateFetcher<ethers::providers::Http> = EthereumStateFetcher::new(
@@ -285,7 +290,7 @@ where
         }
     }
 
-    madara_backend.meta().write_last_l1_l2_mapping(&mapping).map_err(|e| Error::Other(e.to_string()))?;
+    madara_backend.meta().write_last_l1_l2_mapping(&mapping).map_err(|e| Error::CommitMadara(e.to_string()))?;
 
     Ok((run(state_fetcher, madara_backend, substrate_client, substrate_backend), sync_status_oracle))
 }
@@ -406,30 +411,6 @@ where
     future::select(Box::pin(fetcher_task), Box::pin(state_write_task)).map(|_| ())
 }
 
-/// Represents various error types that can occur during state synchronization or interaction with
-/// L1/L2 chains.
-#[derive(Debug, Clone)]
-pub enum Error {
-    /// Error indicating that the data is already present in the chain.
-    AlreadyInChain,
-    /// Error indicating an unknown block or data on the chain.
-    UnknownBlock,
-    /// Error occurring during transaction construction with a specific message.
-    ConstructTransaction(String),
-    /// Error while committing data to storage with a specific message.
-    CommitStorage(String),
-    /// Error related to connection issues with L1 chain with a specific message.
-    L1Connection(String),
-    /// Error decoding an event from L1.
-    L1EventDecode,
-    /// Error related to state handling on L1 with a specific message.
-    L1StateError(String),
-    /// Error due to a type mismatch or inconsistency with a specific message.
-    TypeError(String),
-    /// Any other unspecified error with a specific message.
-    Other(String),
-}
-
 /// Represents a SyncStatusOracle used for querying synchronization status.
 struct SyncStatusOracle {
     sync_status: Arc<Mutex<SyncStatus>>,
@@ -437,7 +418,7 @@ struct SyncStatusOracle {
 
 impl SyncOracle for SyncStatusOracle {
     fn is_major_syncing(&self) -> bool {
-        self.sync_status.lock().map(|status| *status == SyncStatus::SYNCING).unwrap_or_default()
+        *self.sync_status.lock() == SyncStatus::SYNCING
     }
 
     fn is_offline(&self) -> bool {

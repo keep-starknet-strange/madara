@@ -15,6 +15,7 @@ futures = { workspace = true }
 hashbrown = { workspace = true }
 indexmap = { workspace = true }
 log = { workspace = true }
+parking_lot = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true, features = [
   "arbitrary_precision",
@@ -25,6 +26,8 @@ tokio = { workspace = true, features = [
   "test-util",
   "rt-multi-thread",
 ] }
+thiserror = { workspace = true }
+url = { workspace = true }
 
 scale-codec = { workspace = true, default-features = true, features = [
   "derive",
