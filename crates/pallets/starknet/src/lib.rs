@@ -98,11 +98,12 @@ use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash};
 use starknet_crypto::FieldElement;
 use transaction_validation::TxPriorityInfo;
+use utils::execute_txs_until_first_failed_and_rollback;
 
 use crate::alloc::string::ToString;
 use crate::execution_config::RuntimeExecutionConfigBuilder;
 use crate::types::{CasmClassHash, SierraClassHash, StorageSlot};
-use crate::utils::execute_txs_and_rollback;
+use crate::utils::execute_all_txs_and_rollback;
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
@@ -440,6 +441,7 @@ pub mod pallet {
         MissingCallInfo,
         FailedToCreateATransactionalStorageExecution,
         L1MessageAlreadyExecuted,
+        MissingL1GasUsage,
     }
 
     /// The Starknet pallet external functions.
@@ -1079,31 +1081,27 @@ impl<T: Config> Pallet<T> {
     pub fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
         let chain_id = Self::chain_id();
 
-        let execution_results = execute_txs_and_rollback::<T>(
+        let execution_infos = execute_txs_until_first_failed_and_rollback::<T>(
             &transactions,
             &Self::get_block_context(),
             chain_id,
             &mut RuntimeExecutionConfigBuilder::new::<T>().with_query_mode().build(),
-        )?;
+        )?
+        .map_err(|_| DispatchError::from(Error::<T>::TransactionExecutionFailed))?;
 
-        let mut results = vec![];
-        for res in execution_results {
-            match res {
-                Ok(tx_exec_info) => {
-                    log!(info, "Successfully estimated fee: {:?}", tx_exec_info);
-                    if let Some(l1_gas_usage) = tx_exec_info.actual_resources.0.get("l1_gas_usage") {
-                        results.push((tx_exec_info.actual_fee.0 as u64, *l1_gas_usage));
-                    } else {
-                        return Err(Error::<T>::TransactionExecutionFailed.into());
-                    }
-                }
-                Err(e) => {
-                    log!(info, "Failed to estimate fee: {:?}", e);
-                    return Err(Error::<T>::TransactionExecutionFailed.into());
-                }
-            }
-        }
-        Ok(results)
+        let fees = execution_infos
+            .into_iter()
+            .map(|exec_info| {
+                exec_info
+                    .actual_resources
+                    .0
+                    .get("l1_gas_usage")
+                    .ok_or_else(|| DispatchError::from(Error::<T>::MissingL1GasUsage))
+                    .map(|l1_gas_usage| (exec_info.actual_fee.0 as u64, *l1_gas_usage))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(fees)
     }
 
     /// Warning : this should only be called from the runtimeAPI, never from inside an extrinsic
@@ -1138,7 +1136,7 @@ impl<T: Config> Pallet<T> {
     {
         let chain_id = Self::chain_id();
 
-        let tx_execution_results = execute_txs_and_rollback::<T>(
+        let tx_execution_results = execute_all_txs_and_rollback::<T>(
             &transactions,
             &Self::get_block_context(),
             chain_id,
