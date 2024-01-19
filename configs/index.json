@@ -2,12 +2,12 @@
   "remote_base_path": "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/",
   "genesis_assets": [
     {
-      "name": "Account.json",
-      "sha3_256": "a9ed535995a91877c952e16b055d7ab7500949ee070df2c0636b87bf2d5111d4"
+      "name": "BraavosAccount.json",
+      "sha3_256": "dcbabf0b29b2530a7e5c4f809f9a3c18d8bbb7418cc72045d9d2763fb626263a"
     },
     {
-      "name": "AccountBaseImpl.json",
-      "sha3_256": "61c236a95d69beccdf7be0a4b1f33f813405a4afdab834fffa80ddf8760fa745"
+      "name": "BraavosAccountBaseImpl.json",
+      "sha3_256": "897c7fb300e4c7198470471471779b9eeb1265bcba4f02f5e85f962653d859a8"
     },
     {
       "name": "ArgentAccount.json",
@@ -27,7 +27,7 @@
     },
     {
       "name": "genesis.json",
-      "sha3_256": "7292bb7e82a4104f86acb991cbb7a82b756a193c2f82e66cf05176cdfde0049d"
+      "sha3_256": "9c192a806670b2b9415fca2d7b5511d78fb16d3e51ddf164d1803351ad3d57ef"
     },
     {
       "name": "NoValidateAccount.casm.json",
@@ -42,8 +42,8 @@
       "sha3_256": "71eba832aee6e48bb1028c62c9862ef75f5811044331100582192d2a20e5b65b"
     },
     {
-      "name": "Proxy.json",
-      "sha3_256": "c717ea7d26af62fe699190fce606afea2a27bf545e1974e6a39cef441d79353b"
+      "name": "BraavosProxy.json",
+      "sha3_256": "4c8766c5eb6d1be5c06aa2622410b0eb48bf34952cb627d946e31210f62c81f5"
     },
     {
       "name": "test.json",
@@ -60,6 +60,14 @@
     {
       "name": "ArgentAccountCairoOne.casm.json",
       "sha3_256": "65cc25c726ae33deb94c8e9f6ac1cbe526d40dcdda8e7b0ebbed56cc19ed61d9"
+    },
+    {
+      "name": "OpenZeppelinAccountCairoOne.casm.json",
+      "sha3_256": "09a3a35d33bbb33797345abbc0cd9908b6ae2efa30dd6a64263ea4aeeed8509e"
+    },
+    {
+      "name": "OpenZeppelinAccountCairoOne.sierra.json",
+      "sha3_256": "58a22e1f8d680e588ab725ae805ad5bba493e39825512da516b514cf0307574d"
     }
   ]
 }

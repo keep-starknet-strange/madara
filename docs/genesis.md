@@ -28,7 +28,7 @@ The below defines all hardcoded values set in the geneses:
 <!-- markdownlint-disable MD013 -->
 
 | Class hash                                                         | Definition                                     |
-| :----------------------------------------------------------------- | :--------------------------------------------- |
+| :----------------------------------------------------------------- |:-----------------------------------------------|
 | 0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f | No validation account class hash               |
 | 0x02f99bf9799ada84cd5ac0d0fe36b9d8f65efcb377cd2e8cf8309ad2daf15e4b | No validation account class hash cairo 1       |
 | 0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d | Argent account class hash                      |
@@ -43,6 +43,7 @@ The below defines all hardcoded values set in the geneses:
 | 0x077cc28ed3c661419fda16bf120fb81f1f8f28617f5543b05a86d63b0926bbf4 | ERC721 class hash                              |
 | 0x04569ffd48c2a3d455437c16dc843801fb896b1af845bc8bc7ba83ebc4358b7f | Universal deployer class hash                  |
 | 0x01a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003 | Argent Cairo 1 Account                         |
+| 0x04c6d6cf894f8bc96bb9c525e6853e5483177841f7388f74a46cfda6f028c755 | OpenZepplin Cairo 1 Account                    |
 
 <!-- markdownlint-disable MD013 -->
 

@@ -7,6 +7,10 @@
     [
       "0x01a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003",
       "0x0029787a427a423ffc5986d43e630077a176e4391fcef3ebf36014b154069ae4"
+    ],
+    [
+      "0x04c6d6cf894f8bc96bb9c525e6853e5483177841f7388f74a46cfda6f028c755",
+      "0x06910afff92798e29b93649f7627cd34a852e0f9b04b52c51850b438a730224e"
     ]
   ],
   "contract_classes": [
@@ -25,17 +29,13 @@
       }
     ],
     [
-      "0x0424b7f61e3c5dfd74400d96fdea7e1f0bf2757f31df04387eaa957f095dd7b9",
-      { "path": "genesis-assets/Proxy.json", "version": 0 }
-    ],
-    [
       "0x2c2b8f559e1221468140ad7b2352b1a5be32660d0bf1a3ae3a054a4ec5254e4",
-      { "path": "genesis-assets/Account.json", "version": 0 }
+      { "path": "genesis-assets/BraavosAccount.json", "version": 0 }
     ],
     [
       "0x5aa23d5bb71ddaa783da7ea79d405315bafa7cf0387a74f4593578c3e9e6570",
       {
-        "path": "genesis-assets/AccountBaseImpl.json",
+        "path": "genesis-assets/BraavosAccountBaseImpl.json",
         "version": 0
       }
     ],
@@ -48,7 +48,7 @@
     ],
     [
       "0x3131fa018d520a037686ce3efddeab8f28895662f019ca3ca18a626650f7d1e",
-      { "path": "genesis-assets/Proxy.json", "version": 0 }
+      { "path": "genesis-assets/BraavosProxy.json", "version": 0 }
     ],
     [
       "0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd",
@@ -93,9 +93,16 @@
       }
     ],
     [
-      "0x0029787a427a423ffc5986d43e630077a176e4391fcef3ebf36014b154069ae4",
+      "0x01a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003",
       {
         "path": "genesis-assets/ArgentAccountCairoOne.casm.json",
+        "version": 1
+      }
+    ],
+    [
+      "0x04c6d6cf894f8bc96bb9c525e6853e5483177841f7388f74a46cfda6f028c755",
+      {
+        "path": "genesis-assets/OpenZeppelinAccountCairoOne.casm.json",
         "version": 1
       }
     ]
