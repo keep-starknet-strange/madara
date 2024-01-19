@@ -2,6 +2,7 @@
 
 ## Next release
 
+- refactor: rename LAST_SYNCED_L1_BLOCK to be more clear
 - chore: add headers to da calldata, fix eth da in sovereign mode
 - refacto(simulate_tx): move logic to the client
 - chore: added ca-certificate in DockerFile for SSL related issues
