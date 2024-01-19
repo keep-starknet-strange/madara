@@ -3,11 +3,11 @@
   "genesis_assets": [
     {
       "name": "BraavosAccount.json",
-      "sha3_256": "dcbabf0b29b2530a7e5c4f809f9a3c18d8bbb7418cc72045d9d2763fb626263a"
+      "sha3_256": "60230bf6e005c242d8c871e5095f3c4d4d8f2b421c2a8fe26e34b833dd0c989e"
     },
     {
       "name": "BraavosAccountBaseImpl.json",
-      "sha3_256": "897c7fb300e4c7198470471471779b9eeb1265bcba4f02f5e85f962653d859a8"
+      "sha3_256": "13b917634166e8c0e229a92de3ea51309121c75bfdb457803549dc24a8f5a53d"
     },
     {
       "name": "ArgentAccount.json",
@@ -43,7 +43,7 @@
     },
     {
       "name": "BraavosProxy.json",
-      "sha3_256": "4c8766c5eb6d1be5c06aa2622410b0eb48bf34952cb627d946e31210f62c81f5"
+      "sha3_256": "cbfcff58ba4de538e1c369c886f6a6207a6b4c85dcd40e91cc670b0900763c9b"
     },
     {
       "name": "test.json",
@@ -63,11 +63,11 @@
     },
     {
       "name": "OpenZeppelinAccountCairoOne.casm.json",
-      "sha3_256": "09a3a35d33bbb33797345abbc0cd9908b6ae2efa30dd6a64263ea4aeeed8509e"
+      "sha3_256": "906e3ff2522fa7c70072da2ee4cf6462ad4604f1748347fd53eccb035d80af40"
     },
     {
       "name": "OpenZeppelinAccountCairoOne.sierra.json",
-      "sha3_256": "58a22e1f8d680e588ab725ae805ad5bba493e39825512da516b514cf0307574d"
+      "sha3_256": "145fdf2668cf6c36deb295ceea57c6005e43dd7b36be26d020928d1cc3462b5e"
     }
   ]
 }
