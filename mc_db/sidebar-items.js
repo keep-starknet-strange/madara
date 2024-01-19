@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["DbError"],"fn":["starknet_database_dir"],"mod":["static_keys"],"struct":["Backend","MappingCommitment"],"type":["DbHash"]};
+window.SIDEBAR_ITEMS = {"enum":["DbError"],"fn":["starknet_database_dir"],"mod":["static_keys"],"struct":["Backend","LastSyncedEventBlock","MappingCommitment"],"type":["DbHash"]};

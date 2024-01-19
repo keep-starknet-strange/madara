@@ -139,6 +139,15 @@
 <a href="#139" id="139">139</a>
 <a href="#140" id="140">140</a>
 <a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>ethers::providers::{Http, Provider, StreamExt};
@@ -175,7 +184,7 @@
     <span class="kw">let </span>l1_contract =
         L1Contract::new(<span class="kw-2">*</span>config.contract_address(), Arc::new(Provider::new(Http::new(config.provider().clone()))));
 
-    <span class="kw">let </span>last_synced_l1_block = <span class="kw">match </span>backend.messaging().last_synced_l1_block() {
+    <span class="kw">let </span>last_synced_event_block = <span class="kw">match </span>backend.messaging().last_synced_l1_block_with_event() {
         <span class="prelude-val">Ok</span>(blknum) =&gt; blknum,
         <span class="prelude-val">Err</span>(e) =&gt; {
             <span class="macro">log::error!</span>(<span class="string">&quot;⟠ Madara Messaging DB unavailable: {:?}&quot;</span>, e);
@@ -183,7 +192,7 @@
         }
     };
 
-    <span class="kw">let </span>events = l1_contract.events().from_block(last_synced_l1_block);
+    <span class="kw">let </span>events = l1_contract.events().from_block(last_synced_event_block.block_number);
     <span class="kw">let </span><span class="kw-2">mut </span>event_stream = <span class="kw">match </span>events.stream_with_meta().<span class="kw">await </span>{
         <span class="prelude-val">Ok</span>(stream) =&gt; stream,
         <span class="prelude-val">Err</span>(e) =&gt; {
@@ -200,7 +209,9 @@
             meta.log_index
         );
 
-        <span class="kw">match </span>process_l1_message(event, <span class="kw-2">&amp;</span>client, <span class="kw-2">&amp;</span>pool, <span class="kw-2">&amp;</span>backend, <span class="kw-2">&amp;</span>meta.block_number.as_u64()).<span class="kw">await </span>{
+        <span class="kw">match </span>process_l1_message(event, <span class="kw-2">&amp;</span>client, <span class="kw-2">&amp;</span>pool, <span class="kw-2">&amp;</span>backend, <span class="kw-2">&amp;</span>meta.block_number.as_u64(), <span class="kw-2">&amp;</span>meta.log_index.as_u64())
+            .<span class="kw">await
+        </span>{
             <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(tx_hash)) =&gt; {
                 <span class="macro">log::info!</span>(
                     <span class="string">&quot;⟠ L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?} submitted, transaction \
@@ -232,6 +243,7 @@
     pool: <span class="kw-2">&amp;</span>Arc&lt;P&gt;,
     backend: <span class="kw-2">&amp;</span>Arc&lt;mc_db::Backend&lt;B&gt;&gt;,
     l1_block_number: <span class="kw-2">&amp;</span>u64,
+    event_index: <span class="kw-2">&amp;</span>u64,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;P::Hash&gt;, L1MessagesWorkerError&lt;PE&gt;&gt;
 <span class="kw">where
     </span>B: BlockT,
@@ -273,10 +285,16 @@
         L1MessagesWorkerError::SubmitTxError(e)
     })<span class="question-mark">?</span>;
 
-    backend.messaging().update_last_synced_l1_block(l1_block_number).map_err(|e| {
-        <span class="macro">log::error!</span>(<span class="string">&quot;⟠ Failed to save last L1 synced block: {:?}&quot;</span>, e);
-        L1MessagesWorkerError::DatabaseError(e)
-    })<span class="question-mark">?</span>;
+    backend
+        .messaging()
+        .update_last_synced_l1_block_with_event(<span class="kw-2">&amp;</span>mc_db::LastSyncedEventBlock::new(
+            l1_block_number.to_owned(),
+            event_index.to_owned(),
+        ))
+        .map_err(|e| {
+            <span class="macro">log::error!</span>(<span class="string">&quot;⟠ Failed to save last L1 synced block: {:?}&quot;</span>, e);
+            L1MessagesWorkerError::DatabaseError(e)
+        })<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(tx_hash))
 }
