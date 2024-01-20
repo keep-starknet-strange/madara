@@ -17,6 +17,30 @@ use mp_transactions::Transaction;
 /// Block Transactions
 pub type BlockTransactions = Vec<Transaction>;
 
+/// Block tag.
+///
+/// A tag specifying a dynamic reference to a block.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+pub enum BlockTag {
+    #[cfg_attr(feature = "serde", serde(rename = "latest"))]
+    Latest,
+    #[cfg_attr(feature = "serde", serde(rename = "pending"))]
+    Pending,
+}
+
+/// Block Id
+/// Block hash, number or tag
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+pub enum BlockId {
+    Hash(Felt252Wrapper),
+    Number(u64),
+    Tag(BlockTag),
+}
+
 /// Starknet block definition.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]

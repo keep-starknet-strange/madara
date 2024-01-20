@@ -18,6 +18,7 @@ mod runtime_tests;
 mod types;
 
 use blockifier::execution::contract_class::ContractClass;
+use blockifier::transaction::objects::TransactionExecutionInfo;
 pub use config::*;
 pub use frame_support::traits::{ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness, StorageInfo};
 pub use frame_support::weights::constants::{
@@ -28,7 +29,7 @@ pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
 use frame_system::{EventRecord, Phase};
 use mp_felt::Felt252Wrapper;
-use mp_simulations::{SimulatedTransaction, SimulationFlags};
+use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::{HandleL1MessageTransaction, Transaction, UserTransaction};
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
@@ -52,7 +53,7 @@ pub use sp_runtime::{Perbill, Permill};
 use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
-use starknet_api::hash::StarkFelt;
+use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash};
 /// Import the types.
@@ -263,6 +264,10 @@ impl_runtime_apis! {
             Starknet::program_hash()
         }
 
+        fn config_hash() -> StarkHash {
+            Starknet::config_hash()
+        }
+
         fn fee_token_address() -> ContractAddress {
             Starknet::fee_token_address()
         }
@@ -275,7 +280,7 @@ impl_runtime_apis! {
             Starknet::estimate_fee(transactions)
         }
 
-        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<SimulatedTransaction>, DispatchError> {
+        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>>, DispatchError> {
             Starknet::simulate_transactions(transactions, simulation_flags)
         }
 

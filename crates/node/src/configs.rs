@@ -9,6 +9,6 @@ pub struct Configs {
 #[derive(Deserialize)]
 pub struct FileInfos {
     pub name: String,
-    pub md5: Option<String>,
+    pub sha3_256: Option<String>,
     pub url: Option<String>,
 }

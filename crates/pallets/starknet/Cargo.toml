@@ -17,7 +17,6 @@ targets = ["x86_64-unknown-linux-gnu"]
 # Madara primitives
 mp-block = { workspace = true }
 mp-chain-id = { workspace = true }
-mp-commitments = { workspace = true }
 mp-digest-log = { workspace = true }
 mp-fee = { workspace = true }
 mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
@@ -27,7 +26,7 @@ mp-program-hash = { workspace = true }
 mp-sequencer-address = { workspace = true, features = ["parity-scale-codec"] }
 mp-simulations = { workspace = true, features = [
   "parity-scale-codec",
-  "serde",
+  "scale-info",
 ] }
 mp-snos-output = { workspace = true, features = [
   "parity-scale-codec",

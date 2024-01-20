@@ -16,9 +16,11 @@ pub use error::DbError;
 
 mod mapping_db;
 pub use mapping_db::MappingCommitment;
+use starknet_api::hash::StarkHash;
 mod da_db;
 mod db_opening_utils;
 mod messaging_db;
+pub use messaging_db::LastSyncedEventBlock;
 mod meta_db;
 
 use std::marker::PhantomData;
@@ -67,7 +69,7 @@ pub(crate) mod columns {
 pub mod static_keys {
     pub const CURRENT_SYNCING_TIPS: &[u8] = b"CURRENT_SYNCING_TIPS";
     pub const LAST_PROVED_BLOCK: &[u8] = b"LAST_PROVED_BLOCK";
-    pub const LAST_SYNCED_L1_BLOCK: &[u8] = b"LAST_SYNCED_L1_BLOCK";
+    pub const LAST_SYNCED_L1_EVENT_BLOCK: &[u8] = b"LAST_SYNCED_L1_EVENT_BLOCK";
 }
 
 /// The Madara client database backend
@@ -142,5 +144,12 @@ impl<B: BlockT> Backend<B> {
     /// Return the da database manager
     pub fn messaging(&self) -> &Arc<MessagingDb<B>> {
         &self.messaging
+    }
+
+    /// In the future, we will compute the block global state root asynchronously in the client,
+    /// using the Starknet-Bonzai-trie.
+    /// That what replaces it for now :)
+    pub fn temporary_global_state_root_getter(&self) -> StarkHash {
+        Default::default()
     }
 }
