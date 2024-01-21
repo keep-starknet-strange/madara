@@ -20,9 +20,9 @@ If `ANVIL_ENDPOINT` environment variable is set, integration tests involving
 Ethereum contracts will try to attach to an already running Anvil.
 Otherwise, a new instance will be spawn for every test.  
 
-The default binary search location is `~/.foundry/bin/anvil`. Alternatively 
-you can specify the Anvil binary location by setting `ANVIL_PATH` environment 
+The default binary search location is `~/.foundry/bin/anvil`. Alternatively
+you can specify the Anvil binary location by setting `ANVIL_PATH` environment
 variable.
 
-IMPORTANT: make sure your local Anvil version uses a compatible `ethers-rs` 
+IMPORTANT: make sure your local Anvil version uses a compatible `ethers-rs`
 library version. In case of an issue, try to update both dependencies.
