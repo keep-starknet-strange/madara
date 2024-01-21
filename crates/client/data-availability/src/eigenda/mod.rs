@@ -5,11 +5,15 @@ use std::collections::HashMap;
 use std::thread;
 use std::time::Duration;
 use anyhow::Result;
+use serde_json;
 use async_trait::async_trait;
 use ethers::types::{I256, U256};
 use crate::{DaClient, DaMode};
 use crate::grpcurl_command;
-use crate::eigenda::blob::{DisperseBlobResponse, BlobStatusResponse, BlobStatus, BlobInfo};
+use crate::eigenda::blob::{
+    DisperseBlobPayload, DisperseBlobResponse, BlobStatusPayload, BlobStatusResponse, 
+    BlobStatus, //BlobInfo
+};
 
 #[macro_use]
 mod macros;
@@ -35,7 +39,7 @@ impl DaClient for EigenDaClient {
             thread::sleep(Duration::from_secs(5));
         }
         // TODO
-        // confirm the blob against the EigenDA contracts with blob_status_response.info(): &BlobInfo { BlobHeader, BlobVerificationProof }
+        // confirm the blob against the EigenDA contracts onchain with blob_status_response.info(): &BlobInfo { BlobHeader, BlobVerificationProof }
         // verifyBlob() is the primary function that needs to be invoked
         //      This function will take the blobHeader and blobVerificationProof as inputs and
         //      execute a series of checks to ensure the blob was signed for and stored properly in the EigenDA network.
@@ -58,8 +62,13 @@ impl DaClient for EigenDaClient {
 impl EigenDaClient {
     // EigenDA gRPC server(s) are not currently working with tonic
     // instead we use a macro to fork a command to the command line to send the gRPC requests
-    async fn disperse_blob(&self, state_diff: Vec<U256>) -> Result<DisperseBlobResponse, std::io::Error> {
-        let payload = self.create_disperse_blob_payload(state_diff);
+    async fn disperse_blob(&self, state_diff: Vec<U256>) -> Result<DisperseBlobResponse> {
+        let payload = serde_json::to_string(&DisperseBlobPayload::new(
+            state_diff, 
+            &self.config.quorum_id,
+            &self.config.adversary_threshold,
+            &self.config.quorum_threshold,
+        ))?;
         let output = grpcurl_command!(
             "-proto", &self.config.proto_path,
             "-d", &payload,
@@ -67,20 +76,16 @@ impl EigenDaClient {
             "disperser.Disperser/DisperseBlob"
         )?;
         if output.status.success() {
-            let disperse_blob_response: DisperseBlobResponse = String::from_utf8(output.stdout).map_err(|err| {
-                std::io::Error::new(std::io::ErrorKind::Other, err.to_string())
-            })?.into();
-            return Ok(disperse_blob_response)
+            let response: DisperseBlobResponse = serde_json::from_slice(&output.stdout)?;
+            return Ok(response)
         } else {
-            let error_message = String::from_utf8(output.stderr).map_err(|err| {
-                std::io::Error::new(std::io::ErrorKind::Other, err.to_string())
-            })?;
-            return Err(std::io::Error::new(std::io::ErrorKind::Other, error_message));
+            let error_message = String::from_utf8(output.stderr)?;
+            return Err(anyhow::anyhow!("gRPC call failed: {}", error_message));
         }
     }
 
-    async fn get_blob_status(&self, request_id: String) -> Result<BlobStatusResponse, std::io::Error> {
-        let payload = Self::create_get_blob_status_payload(request_id);
+    async fn get_blob_status(&self, request_id: String) -> Result<BlobStatusResponse> {
+        let payload = serde_json::to_string(&BlobStatusPayload::new(request_id))?;
         let output = grpcurl_command!(
             "-proto", &self.config.proto_path,
             "-d", &payload,
@@ -88,39 +93,12 @@ impl EigenDaClient {
             "disperser.Disperser/GetBlobStatus"
         )?;
         if output.status.success() {
-            let response: BlobStatusResponse = String::from_utf8(output.stdout).map_err(|err| {
-                std::io::Error::new(std::io::ErrorKind::Other, err.to_string())
-            })?.into();
+            let response: BlobStatusResponse = serde_json::from_slice(&output.stdout)?;
             return Ok(response);
         } else {
-            let error_message = String::from_utf8(output.stderr).map_err(|err| {
-                std::io::Error::new(std::io::ErrorKind::Other, err.to_string())
-            })?;
-            return Err(std::io::Error::new(std::io::ErrorKind::Other, error_message))
+            let error_message = String::from_utf8(output.stderr)?;
+            return Err(anyhow::anyhow!("gRPC call failed: {}", error_message))
         }
-    }
-
-    fn create_disperse_blob_payload(&self, state_diff: Vec<U256>) -> String {
-        let mut payload = String::new();
-        payload.push_str(r#"{"data":"#);
-        payload.push_str(&format!(r#""{:?}""#, state_diff));
-        payload.push_str(r#", "security_params":[{"quorum_id":"#);
-        payload.push_str(&self.config.quorum_id.to_string());
-        payload.push_str(r#","adversary_threshold":"#);
-        payload.push_str(&self.config.adversary_threshold.to_string());
-        payload.push_str(r#","quorum_threshold":"#);
-        payload.push_str(&self.config.quorum_threshold.to_string());
-        payload.push_str(r#"}]}"#);
-        payload
-    }
-
-    fn create_get_blob_status_payload(request_id: String) -> String {
-        let mut payload = String::new();
-        payload.push_str(r#"{"#);
-        payload.push_str(r#""request_id":"#);
-        payload.push_str(&format!(r#""{}""#, request_id));
-        payload.push_str(r#"}"#);
-        payload
     }
 }
 

@@ -1,6 +1,30 @@
 // this is a copy of types in the eigenda disperser API: https://github.com/Layr-Labs/eigenda/blob/master/api/proto/disperser/disperser.proto
 
 use serde::{Serialize, Deserialize};
+use ethers::types::U256;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct DisperseBlobPayload {
+    state_diff: Vec<U256>,
+    quorum_id: u32,
+    adversary_threshold: u32,
+    quorum_threshold: u32,
+}
+impl DisperseBlobPayload {
+    pub(crate) fn new(
+        state_diff: Vec<U256>,
+        quorum_id: &u32,
+        adversary_threshold: &u32, 
+        quorum_threshold: &u32,
+    ) -> Self {
+        DisperseBlobPayload { 
+            state_diff,
+            quorum_id: *quorum_id,
+            adversary_threshold: *adversary_threshold,
+            quorum_threshold: *quorum_threshold,
+        }
+    }
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DisperseBlobResponse {
@@ -16,33 +40,6 @@ impl DisperseBlobResponse {
         self.request_id.clone()
     }
 }
-impl Default for DisperseBlobResponse {
-    fn default() -> Self {
-        DisperseBlobResponse { status: Default::default(), request_id: Default::default() }
-    }
-}
-impl From<String> for DisperseBlobResponse {
-    fn from(value: String) -> Self {
-        if let Some(start_index) = value.find('{') {
-            let json_str = &value[start_index..];
-            println!("{}", &json_str);
-
-            let blob_response: Result<DisperseBlobResponse, serde_json::Error> = serde_json::from_str(json_str);
-
-            match blob_response {
-                Ok(response) => {
-                    return response
-                }
-                Err(err) => {
-                    println!("{}", &err);
-                    return DisperseBlobResponse::default() 
-                }
-            }
-        } else {
-            return DisperseBlobResponse::default()
-        }
-    }
-}
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
@@ -52,11 +49,21 @@ pub enum BlobStatus {
     Failed,
     Other(String)
 }
-impl Default for BlobStatus {
-    fn default() -> Self {
-        BlobStatus::Other("Default".to_string())
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct BlobStatusPayload {
+    request_id: String,
+}
+impl BlobStatusPayload {
+    pub(crate) fn new(
+        request_id: String,
+    ) -> Self {
+        BlobStatusPayload { 
+            request_id
+        }
     }
 }
+
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BlobStatusResponse {
@@ -71,32 +78,6 @@ impl BlobStatusResponse {
         &self.info
     }
 }
-impl Default for BlobStatusResponse {
-    fn default() -> Self {
-        BlobStatusResponse {
-            status: Default::default(),
-            info: Default::default()
-        }
-    }
-}
-impl From<String> for BlobStatusResponse {
-    fn from(value: String) -> Self {
-        if let Some(start_index) = value.find('{') {
-            let json_str = &value[start_index..];
-            let blob_status: Result<BlobStatusResponse, serde_json::Error> = serde_json::from_str(json_str);
-            match blob_status {
-                Ok(status) => {
-                    return status
-                }
-                Err(_) => {
-                    return BlobStatusResponse::default()
-                }
-            }
-        } else {
-            return BlobStatusResponse::default()
-        }
-    }
-}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BlobInfo {
@@ -109,14 +90,6 @@ impl BlobInfo {
     }
     pub fn blob_verification_proof(&self) -> &BlobVerificationProof {
         &self.blob_verification_proof
-    }
-}
-impl Default for BlobInfo {
-    fn default() -> Self {
-        BlobInfo {
-            blob_header: Default::default(),
-            blob_verification_proof: Default::default()
-        }
     }
 }
 
@@ -135,15 +108,6 @@ impl BlobHeader {
     }
     pub fn blob_quorum_params(&self) -> &Vec<BlobQuorumParams> {
         &self.blob_quorum_params
-    }
-}
-impl Default for BlobHeader {
-    fn default() -> Self {
-        BlobHeader { 
-            commitment: Default::default(),
-            data_length: Default::default(),
-            blob_quorum_params: Default::default()
-        }
     }
 }
 
