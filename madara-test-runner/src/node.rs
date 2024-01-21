@@ -23,14 +23,6 @@ pub struct MadaraTempDir {
 }
 
 impl MadaraTempDir {
-    pub fn new() -> Self {
-        let temp_dir = TempDir::with_prefix("madara").expect("Failed to create Madara path");
-        let data_path = temp_dir.path().join("chains/dev"); // data path
-        create_dir_all(&data_path).unwrap();
-
-        Self { temp_dir }
-    }
-
     pub fn base_path(&self) -> PathBuf {
         self.temp_dir.path().to_path_buf()
     }
@@ -41,6 +33,15 @@ impl MadaraTempDir {
 
     pub fn clear(self) {
         self.temp_dir.close().expect("Failed to clean up");
+    }
+}
+
+impl Default for MadaraTempDir {
+    fn default() -> Self {
+        let temp_dir = TempDir::with_prefix("madara").expect("Failed to create Madara path");
+        let data_path = temp_dir.path().join("chains/dev");
+        create_dir_all(data_path).expect("Failed to create data path");
+        Self { temp_dir }
     }
 }
 

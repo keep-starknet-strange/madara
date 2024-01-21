@@ -40,7 +40,7 @@ impl Context {
 impl AsyncTestContext for Context {
     async fn setup() -> Self {
         let starknet_sovereign = StarknetSovereign::deploy().await;
-        let madara_temp_dir = MadaraTempDir::new();
+        let madara_temp_dir = MadaraTempDir::default();
         Self { madara_temp_dir, starknet_sovereign }
     }
 

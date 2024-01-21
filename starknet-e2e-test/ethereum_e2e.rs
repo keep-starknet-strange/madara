@@ -23,7 +23,7 @@ async fn madara_with_sovereign_core_contract_on_ethereum() -> Result<(), anyhow:
     starknet_sovereign.initialize_for_goerli(0u64.into(), 0u64.into()).await;
 
     // Create tmp Madara path and write settlement config
-    let madara_temp_dir = MadaraTempDir::new();
+    let madara_temp_dir = MadaraTempDir::default();
     let settlement_conf = starknet_sovereign.create_settlement_conf(madara_temp_dir.data_path()).await;
 
     // Launch new Madara instance and connect to it
