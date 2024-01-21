@@ -1,12 +1,17 @@
+use std::fs::File;
+use std::path::PathBuf;
 use std::sync::Arc;
 
+use ethers::providers::Middleware;
 use ethers::types::{Address, I256, U256};
 use ethers::utils::keccak256;
+use mc_settlement::ethereum::client::EthereumConfig;
 use mc_settlement::ethereum::convert_felt_to_u256;
 use mp_felt::Felt252Wrapper;
 use mp_messages::{MessageL1ToL2, MessageL2ToL1};
 use mp_snos_output::SnosCodec;
 use starknet_api::hash::StarkFelt;
+use starknet_api::serde_utils::hex_str_from_bytes;
 use starknet_core_contract_client::clients::StarknetSovereignContractClient;
 use starknet_core_contract_client::interfaces::{
     CoreContractInitData, CoreContractState, OperatorTrait, ProxyInitializeData, ProxySupportTrait,
@@ -45,6 +50,22 @@ impl StarknetSovereign {
             .expect("Failed to deploy starknet contract");
 
         Self { _sandbox: sandbox, client }
+    }
+
+    pub async fn create_settlement_conf(&self, data_path: PathBuf) -> PathBuf {
+        let settlement_conf = EthereumConfig {
+            http_provider: self.client.client().provider().url().to_string(),
+            core_contracts: hex_str_from_bytes::<20, true>(self.client.address().0),
+            chain_id: self.client.client().get_chainid().await.expect("Failed to get sandbox chain ID").as_u64(),
+            poll_interval_ms: Some(10u64), // Default is 7s, we need to speed things up
+            ..Default::default()
+        };
+
+        let conf_path = data_path.join("eth-config.json");
+        let conf_file = File::create(&conf_path).expect("Failed to open file for writing");
+        serde_json::to_writer(conf_file, &settlement_conf).expect("Failed to write settlement config");
+
+        conf_path
     }
 
     pub async fn initialize_with(&self, init_data: CoreContractInitData) {

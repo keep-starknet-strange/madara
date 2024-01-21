@@ -10,6 +10,7 @@ use tokio::sync::Mutex;
 
 use crate::client::MadaraClient;
 use crate::node::MadaraNode;
+pub use crate::node::MadaraTempDir;
 
 lazy_static! {
     /// This is to prevent TOCTOU errors; i.e. one background madara node might find one

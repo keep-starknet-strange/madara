@@ -6,12 +6,43 @@ use std::path::{Path, PathBuf};
 use std::process::{Child, Command, ExitStatus, Stdio};
 use std::str::FromStr;
 
+use tempfile::TempDir;
 use url::Url;
 
 use crate::MadaraArgs;
 
 const MIN_PORT: u16 = 49_152;
 const MAX_PORT: u16 = 65_535;
+
+#[derive(Debug)]
+/// A helper struct for creating temporary Madara folders
+///
+/// The temporary directory is deleted when instance is dropped.
+pub struct MadaraTempDir {
+    temp_dir: TempDir,
+}
+
+impl MadaraTempDir {
+    pub fn new() -> Self {
+        let temp_dir = TempDir::with_prefix("madara").expect("Failed to create Madara path");
+        let data_path = temp_dir.path().join("chains/dev"); // data path
+        create_dir_all(&data_path).unwrap();
+
+        Self { temp_dir }
+    }
+
+    pub fn base_path(&self) -> PathBuf {
+        self.temp_dir.path().to_path_buf()
+    }
+
+    pub fn data_path(&self) -> PathBuf {
+        self.temp_dir.path().join("chains/dev")
+    }
+
+    pub fn clear(self) {
+        self.temp_dir.close().expect("Failed to clean up");
+    }
+}
 
 #[derive(Debug)]
 /// A wrapper over the Madara process handle, reqwest client and request counter
