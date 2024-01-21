@@ -4650,7 +4650,7 @@ dependencies = [
  "iana-time-zone-haiku",
  "js-sys",
  "wasm-bindgen",
- "windows-core 0.52.0",
+ "windows-core",
 ]
 
 [[package]]
@@ -9223,6 +9223,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "sandbox"
+version = "0.1.0"
+source = "git+https://github.com/m-kus/zaun?branch=feat/sandbox-unsafe-proxy#4c1bbd64ec75197a1084d18dd84a9139cf2baa13"
+dependencies = [
+ "dirs",
+ "ethers",
+ "hex",
+ "serde_json",
+ "starknet-core-contract-client",
+ "thiserror",
+]
+
+[[package]]
 name = "sc-allocator"
 version = "4.1.0-dev"
 source = "git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0#401f8a3e9448db854f5605b679fa085b8f445039"
@@ -12018,6 +12031,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "starknet-core-contract-client"
+version = "0.1.0"
+source = "git+https://github.com/m-kus/zaun?branch=feat/sandbox-unsafe-proxy#4c1bbd64ec75197a1084d18dd84a9139cf2baa13"
+dependencies = [
+ "async-trait",
+ "ethers",
+ "log",
+ "num-traits 0.2.17",
+ "thiserror",
+]
+
+[[package]]
 name = "starknet-crypto"
 version = "0.6.1"
 source = "git+https://github.com/xJonathanLEI/starknet-rs.git?rev=64ebc36#64ebc364c0c346e81b715c5b4a3b32ef37b055c8"
@@ -12099,7 +12124,6 @@ dependencies = [
  "assert_matches",
  "async-trait",
  "ethers",
- "ethers-solc",
  "flate2",
  "home",
  "madara-runtime",
@@ -12110,11 +12134,13 @@ dependencies = [
  "mp-snos-output",
  "reqwest",
  "rstest",
+ "sandbox",
  "serde",
  "serde_json",
  "starknet-accounts",
  "starknet-contract",
  "starknet-core",
+ "starknet-core-contract-client",
  "starknet-crypto 0.6.1 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=64ebc36)",
  "starknet-ff 0.3.5 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=64ebc36)",
  "starknet-providers",
@@ -13398,7 +13424,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.7",
- "rand 0.8.5",
+ "rand 0.7.3",
  "static_assertions",
 ]
 
@@ -14083,7 +14109,7 @@ version = "0.51.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca229916c5ee38c2f2bc1e9d8f04df975b4bd93f9955dc69fabb5d91270045c9"
 dependencies = [
- "windows-core 0.51.1",
+ "windows-core",
  "windows-targets 0.48.5",
 ]
 
@@ -14094,15 +14120,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1f8cf84f35d2db49a46868f947758c7a1138116f7fac3bc844f43ade1292e64"
 dependencies = [
  "windows-targets 0.48.5",
-]
-
-[[package]]
-name = "windows-core"
-version = "0.52.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33ab640c8d7e35bf8ba19b884ba838ceb4fba93a4e8c65a9059d08afcfc683d9"
-dependencies = [
- "windows-targets 0.52.0",
 ]
 
 [[package]]

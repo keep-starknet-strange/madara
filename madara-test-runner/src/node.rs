@@ -8,7 +8,7 @@ use std::str::FromStr;
 
 use url::Url;
 
-use crate::Settlement;
+use crate::MadaraArgs;
 
 const MIN_PORT: u16 = 49_152;
 const MAX_PORT: u16 = 65_535;
@@ -69,14 +69,15 @@ impl MadaraNode {
         Command::new("cargo").stdout(stdout).stderr(stderr).args(arguments).spawn().expect("Could not run Madara node")
     }
 
-    pub fn run(settlement: Option<Settlement>, base_path: Option<PathBuf>) -> Self {
+    pub fn run(args: MadaraArgs) -> Self {
         let port = get_free_port();
         let repository_root = &get_repository_root();
 
         std::env::set_current_dir(repository_root).expect("Failed to change working directory");
 
-        let base_path_arg = base_path.map(|arg| format!("--base-path={}", arg.display()));
-        let settlement_arg = settlement.map(|arg| format!("--settlement={arg}"));
+        let base_path_arg = args.base_path.map(|arg| format!("--base-path={}", arg.display()));
+        let settlement_arg = args.settlement.map(|arg| format!("--settlement={arg}"));
+        let settlement_conf_arg = args.settlement_conf.map(|arg| format!("--settlement-conf={}", arg.display()));
         let rpc_port_arg = format!("--rpc-port={port}");
         let chain_arg = "--chain=dev";
         let from_local_arg = format!("--from-local={}", repository_root.join("configs").display());
@@ -103,6 +104,9 @@ impl MadaraNode {
         if let Some(s) = &settlement_arg {
             run_args.push(s);
         };
+        if let Some(s) = &settlement_conf_arg {
+            run_args.push(s);
+        }
 
         let process = Self::cargo_run(repository_root.as_path(), run_args);
 
