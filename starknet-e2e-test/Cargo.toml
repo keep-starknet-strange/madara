@@ -38,8 +38,8 @@ mp-messages = { workspace = true }
 mp-snos-output = { workspace = true }
 
 # Zaun
-zaun-sandbox = { workspace = true }
 starknet-core-contract-client = { workspace = true }
+zaun-sandbox = { workspace = true }
 
 [[test]]
 name = "ethereum_core_contract"

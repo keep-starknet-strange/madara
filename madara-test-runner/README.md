@@ -1,7 +1,7 @@
 # Madara test runner
 
-Madara runner allows to launch a node with manual block sealing,
-and provides a convenient client for interacting with that node.
+Madara runner allows to launch a node with manual block sealing, and provides a
+convenient client for interacting with that node.
 
 ## Arguments
 
@@ -59,7 +59,8 @@ running Madara instance at a single point of time. In order to avoid concurrent
 access to e.g. config files you can override Madara base path and use unique
 temporary directories for each instance.
 
-Here is how you can do that using `test_context` crate and `MadaraTempDir` helper:
+Here is how you can do that using `test_context` crate and `MadaraTempDir`
+helper:
 
 ```rust
 use tempfile::TempDir;
