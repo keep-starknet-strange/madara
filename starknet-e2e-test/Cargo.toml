@@ -38,8 +38,8 @@ mp-messages = { workspace = true }
 mp-snos-output = { workspace = true }
 
 # Zaun
-zaun-sandbox = { git = "https://github.com/m-kus/zaun", branch = "feat/sandbox-unsafe-proxy", package = "sandbox" }
-starknet-core-contract-client = { git = "https://github.com/m-kus/zaun", branch = "feat/sandbox-unsafe-proxy" }
+zaun-sandbox = { workspace = true }
+starknet-core-contract-client = { workspace = true }
 
 [[test]]
 name = "ethereum_core_contract"
