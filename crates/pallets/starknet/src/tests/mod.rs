@@ -23,6 +23,7 @@ mod fees_disabled;
 mod invoke_tx;
 mod l1_handler_validation;
 mod l1_message;
+mod build_genesis_config;
 mod no_nonce_validation;
 mod query_tx;
 mod send_message;

@@ -376,10 +376,21 @@ pub mod pallet {
             }
 
             for (sierra_class_hash, casm_class_hash) in self.sierra_to_casm_class_hash.iter() {
+                assert!(
+                    ContractClasses::<T>::contains_key(casm_class_hash),
+                    "Class hash {} does not exist in contract_classes",
+                    casm_class_hash,
+                );
                 CompiledClassHashes::<T>::insert(sierra_class_hash, CompiledClassHash(casm_class_hash.0));
             }
 
             for (address, class_hash) in self.contracts.iter() {
+                assert!(
+                    ContractClasses::<T>::contains_key(class_hash),
+                    "Class hash {} does not exist in contract_classes",
+                    class_hash,
+                );
+
                 ContractClassHashes::<T>::insert(address, class_hash);
             }
 
