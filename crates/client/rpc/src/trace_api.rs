@@ -5,6 +5,7 @@ use blockifier::transaction::objects::TransactionExecutionInfo;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 use mc_genesis_data_provider::GenesisProvider;
+use mc_rpc_core::utils::to_rpc_state_diff;
 use mc_rpc_core::{StarknetReadRpcApiServer, StarknetTraceRpcApiServer};
 use mc_storage::StorageOverride;
 use mp_felt::Felt252Wrapper;
@@ -241,6 +242,8 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
                         try_get_funtion_invocation_from_call_info(storage_override, substrate_block_hash, call_info)
                     })
                     .transpose()?;
+
+                let state_diff = to_rpc_state_diff(state_diff)?;
 
                 let transaction_trace = match tx_type {
                     TxType::Invoke => TransactionTrace::Invoke(InvokeTransactionTrace {
