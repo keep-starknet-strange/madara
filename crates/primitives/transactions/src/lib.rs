@@ -65,10 +65,6 @@ impl From<TxType> for TransactionType {
     }
 }
 
-pub trait TransactionVersion {
-    fn version(&self) -> u8;
-}
-
 #[derive(Clone, Debug, Eq, PartialEq, From)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
@@ -76,17 +72,6 @@ pub enum UserTransaction {
     Declare(DeclareTransaction, ContractClass),
     DeployAccount(DeployAccountTransaction),
     Invoke(InvokeTransaction),
-}
-
-impl TransactionVersion for UserTransaction {
-    #[inline(always)]
-    fn version(&self) -> u8 {
-        match self {
-            UserTransaction::Declare(tx, _) => tx.version(),
-            UserTransaction::DeployAccount(tx) => tx.version(),
-            UserTransaction::Invoke(tx) => tx.version(),
-        }
-    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, From)]
@@ -99,18 +84,6 @@ pub enum Transaction {
     L1Handler(HandleL1MessageTransaction),
 }
 
-impl TransactionVersion for Transaction {
-    #[inline(always)]
-    fn version(&self) -> u8 {
-        match self {
-            Transaction::Declare(tx) => tx.version(),
-            Transaction::DeployAccount(tx) => tx.version(),
-            Transaction::Invoke(tx) => tx.version(),
-            Transaction::L1Handler(tx) => tx.version(),
-        }
-    }
-}
-
 #[derive(Clone, Debug, Eq, PartialEq, From)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
@@ -119,32 +92,12 @@ pub enum UserAndL1HandlerTransaction {
     L1Handler(HandleL1MessageTransaction, Fee),
 }
 
-impl TransactionVersion for UserAndL1HandlerTransaction {
-    #[inline(always)]
-    fn version(&self) -> u8 {
-        match self {
-            UserAndL1HandlerTransaction::User(tx) => tx.version(),
-            UserAndL1HandlerTransaction::L1Handler(tx, _) => tx.version(),
-        }
-    }
-}
-
 #[derive(Debug, Clone, Eq, PartialEq, From)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 pub enum InvokeTransaction {
     V0(InvokeTransactionV0),
     V1(InvokeTransactionV1),
-}
-
-impl TransactionVersion for InvokeTransaction {
-    #[inline(always)]
-    fn version(&self) -> u8 {
-        match self {
-            InvokeTransaction::V0(tx) => tx.version(),
-            InvokeTransaction::V1(tx) => tx.version(),
-        }
-    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -156,13 +109,6 @@ pub struct InvokeTransactionV0 {
     pub contract_address: Felt252Wrapper,
     pub entry_point_selector: Felt252Wrapper,
     pub calldata: Vec<Felt252Wrapper>,
-}
-
-impl TransactionVersion for InvokeTransactionV0 {
-    #[inline(always)]
-    fn version(&self) -> u8 {
-        0
-    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -177,13 +123,6 @@ pub struct InvokeTransactionV1 {
     pub offset_version: bool,
 }
 
-impl TransactionVersion for InvokeTransactionV1 {
-    #[inline(always)]
-    fn version(&self) -> u8 {
-        1
-    }
-}
-
 #[derive(Debug, Clone, Eq, PartialEq, From)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
@@ -191,17 +130,6 @@ pub enum DeclareTransaction {
     V0(DeclareTransactionV0),
     V1(DeclareTransactionV1),
     V2(DeclareTransactionV2),
-}
-
-impl TransactionVersion for DeclareTransaction {
-    #[inline(always)]
-    fn version(&self) -> u8 {
-        match self {
-            DeclareTransaction::V0(tx) => tx.version(),
-            DeclareTransaction::V1(tx) => tx.version(),
-            DeclareTransaction::V2(tx) => tx.version(),
-        }
-    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -215,13 +143,6 @@ pub struct DeclareTransactionV0 {
     pub sender_address: Felt252Wrapper,
 }
 
-impl TransactionVersion for DeclareTransactionV0 {
-    #[inline(always)]
-    fn version(&self) -> u8 {
-        0
-    }
-}
-
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
@@ -232,13 +153,6 @@ pub struct DeclareTransactionV1 {
     pub class_hash: Felt252Wrapper,
     pub sender_address: Felt252Wrapper,
     pub offset_version: bool,
-}
-
-impl TransactionVersion for DeclareTransactionV1 {
-    #[inline(always)]
-    fn version(&self) -> u8 {
-        1
-    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -254,13 +168,6 @@ pub struct DeclareTransactionV2 {
     pub offset_version: bool,
 }
 
-impl TransactionVersion for DeclareTransactionV2 {
-    #[inline(always)]
-    fn version(&self) -> u8 {
-        2
-    }
-}
-
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
@@ -274,13 +181,6 @@ pub struct DeployAccountTransaction {
     pub offset_version: bool,
 }
 
-impl TransactionVersion for DeployAccountTransaction {
-    #[inline(always)]
-    fn version(&self) -> u8 {
-        1
-    }
-}
-
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
@@ -289,11 +189,4 @@ pub struct HandleL1MessageTransaction {
     pub contract_address: Felt252Wrapper,
     pub entry_point_selector: Felt252Wrapper,
     pub calldata: Vec<Felt252Wrapper>,
-}
-
-impl TransactionVersion for HandleL1MessageTransaction {
-    #[inline(always)]
-    fn version(&self) -> u8 {
-        0
-    }
 }

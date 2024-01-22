@@ -3,6 +3,10 @@ use alloc::vec::Vec;
 use mp_felt::Felt252Wrapper;
 
 use super::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction, UserTransaction};
+use crate::{
+    DeclareTransactionV0, DeclareTransactionV1, DeclareTransactionV2, HandleL1MessageTransaction, InvokeTransactionV0,
+    InvokeTransactionV1, UserAndL1HandlerTransaction,
+};
 
 impl Transaction {
     pub fn signature(&self) -> Vec<Felt252Wrapper> {
@@ -56,14 +60,6 @@ impl UserTransaction {
         }
     }
 
-    pub fn version(&self) -> u8 {
-        match self {
-            UserTransaction::Declare(tx, _) => tx.version(),
-            UserTransaction::DeployAccount(tx) => tx.version(),
-            UserTransaction::Invoke(tx) => tx.version(),
-        }
-    }
-
     pub fn offset_version(&self) -> bool {
         match self {
             UserTransaction::Declare(tx, _) => tx.offset_version(),
@@ -103,14 +99,6 @@ impl DeclareTransaction {
             DeclareTransaction::V0(tx) => &tx.nonce,
             DeclareTransaction::V1(tx) => &tx.nonce,
             DeclareTransaction::V2(tx) => &tx.nonce,
-        }
-    }
-
-    pub fn version(&self) -> u8 {
-        match self {
-            DeclareTransaction::V0(_) => 0,
-            DeclareTransaction::V1(_) => 1,
-            DeclareTransaction::V2(_) => 2,
         }
     }
 
@@ -155,10 +143,6 @@ impl DeployAccountTransaction {
 
     pub fn nonce(&self) -> &Felt252Wrapper {
         &self.nonce
-    }
-
-    pub fn version(&self) -> u8 {
-        1
     }
 
     pub fn account_address(&self) -> Felt252Wrapper {
@@ -210,18 +194,118 @@ impl InvokeTransaction {
         }
     }
 
-    pub fn version(&self) -> u8 {
-        match self {
-            InvokeTransaction::V0(_) => 0,
-            InvokeTransaction::V1(_) => 1,
-        }
-    }
-
     pub fn offset_version(&self) -> bool {
         match self {
             // we don't accept V0 txs from the RPC
             InvokeTransaction::V0(_) => false,
             InvokeTransaction::V1(tx) => tx.offset_version,
         }
+    }
+}
+
+pub trait TransactionVersion {
+    fn version(&self) -> u8;
+}
+
+impl TransactionVersion for UserTransaction {
+    #[inline(always)]
+    fn version(&self) -> u8 {
+        match self {
+            UserTransaction::Declare(tx, _) => tx.version(),
+            UserTransaction::DeployAccount(tx) => tx.version(),
+            UserTransaction::Invoke(tx) => tx.version(),
+        }
+    }
+}
+
+impl TransactionVersion for Transaction {
+    #[inline(always)]
+    fn version(&self) -> u8 {
+        match self {
+            Transaction::Declare(tx) => tx.version(),
+            Transaction::DeployAccount(tx) => tx.version(),
+            Transaction::Invoke(tx) => tx.version(),
+            Transaction::L1Handler(tx) => tx.version(),
+        }
+    }
+}
+
+impl TransactionVersion for UserAndL1HandlerTransaction {
+    #[inline(always)]
+    fn version(&self) -> u8 {
+        match self {
+            UserAndL1HandlerTransaction::User(tx) => tx.version(),
+            UserAndL1HandlerTransaction::L1Handler(tx, _) => tx.version(),
+        }
+    }
+}
+
+impl TransactionVersion for InvokeTransaction {
+    #[inline(always)]
+    fn version(&self) -> u8 {
+        match self {
+            InvokeTransaction::V0(tx) => tx.version(),
+            InvokeTransaction::V1(tx) => tx.version(),
+        }
+    }
+}
+
+impl TransactionVersion for InvokeTransactionV0 {
+    #[inline(always)]
+    fn version(&self) -> u8 {
+        0
+    }
+}
+
+impl TransactionVersion for InvokeTransactionV1 {
+    #[inline(always)]
+    fn version(&self) -> u8 {
+        1
+    }
+}
+
+impl TransactionVersion for DeclareTransaction {
+    #[inline(always)]
+    fn version(&self) -> u8 {
+        match self {
+            DeclareTransaction::V0(tx) => tx.version(),
+            DeclareTransaction::V1(tx) => tx.version(),
+            DeclareTransaction::V2(tx) => tx.version(),
+        }
+    }
+}
+
+impl TransactionVersion for DeclareTransactionV0 {
+    #[inline(always)]
+    fn version(&self) -> u8 {
+        0
+    }
+}
+
+impl TransactionVersion for DeclareTransactionV1 {
+    #[inline(always)]
+    fn version(&self) -> u8 {
+        1
+    }
+}
+
+impl TransactionVersion for DeclareTransactionV2 {
+    #[inline(always)]
+    fn version(&self) -> u8 {
+        2
+    }
+}
+
+impl TransactionVersion for DeployAccountTransaction {
+    #[inline(always)]
+    fn version(&self) -> u8 {
+        1
+    }
+}
+
+impl TransactionVersion for HandleL1MessageTransaction {
+    #[inline(always)]
+    fn version(&self) -> u8 {
+        0
     }
 }
