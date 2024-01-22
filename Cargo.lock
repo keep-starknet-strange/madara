@@ -6150,6 +6150,7 @@ dependencies = [
  "frame-try-runtime",
  "mp-block",
  "mp-chain-id",
+ "mp-fee",
  "mp-felt",
  "mp-hashers",
  "mp-program-hash",
