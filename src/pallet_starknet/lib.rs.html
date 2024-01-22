@@ -1305,8 +1305,11 @@
         </span><span class="kw">type </span>RuntimeEvent: From&lt;Event&lt;<span class="self">Self</span>&gt;&gt; + IsType&lt;&lt;<span class="self">Self </span><span class="kw">as </span>frame_system::Config&gt;::RuntimeEvent&gt;;
         <span class="doccomment">/// The hashing function to use.
         </span><span class="kw">type </span>SystemHash: HasherT;
-        <span class="doccomment">/// The time idk what.
+        <span class="doccomment">/// The block time
         </span><span class="kw">type </span>TimestampProvider: Time;
+        <span class="doccomment">/// The gas price
+        </span><span class="attr">#[pallet::constant]
+        </span><span class="kw">type </span>L1GasPrice: Get&lt;ResourcePrice&gt;;
         <span class="doccomment">/// A configuration for base priority of unsigned transactions.
         ///
         /// This is exposed so that it can be tuned for particular runtime, when
@@ -1981,8 +1984,6 @@
         <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id_str();
 
         <span class="kw">let </span>vm_resource_fee_cost = Default::default();
-        <span class="comment">// FIXME: https://github.com/keep-starknet-strange/madara/issues/329
-        </span><span class="kw">let </span>gas_price = <span class="number">10</span>;
         BlockContext {
             block_number: BlockNumber(block_number),
             block_timestamp: BlockTimestamp(block_timestamp),
@@ -1992,7 +1993,7 @@
             vm_resource_fee_cost,
             invoke_tx_max_n_steps: T::InvokeTxMaxNSteps::get(),
             validate_max_n_steps: T::ValidateMaxNSteps::get(),
-            gas_price,
+            gas_price: T::L1GasPrice::get().price_in_wei,
             max_recursion_depth: T::MaxRecursionDepth::get(),
         }
     }
@@ -2116,8 +2117,7 @@
         <span class="kw">let </span>protocol_version = T::ProtocolVersion::get();
         <span class="kw">let </span>extra_data = <span class="prelude-val">None</span>;
 
-        <span class="comment">// TODO: Compute l1_gas_price correctly
-        </span><span class="kw">let </span>l1_gas_price = ResourcePrice::default();
+        <span class="kw">let </span>l1_gas_price = T::L1GasPrice::get();
 
         <span class="kw">let </span>block = StarknetBlock::new(
             StarknetHeader::new(

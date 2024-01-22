@@ -244,6 +244,8 @@
 <a href="#244" id="244">244</a>
 <a href="#245" id="245">245</a>
 <a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet fee logic
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
@@ -309,12 +311,14 @@
     <span class="doccomment">/// The price of one unit of the given resource, denominated in fri (10^-18 strk)
     </span><span class="kw">pub </span>price_in_strk: <span class="prelude-ty">Option</span>&lt;u64&gt;,
     <span class="doccomment">/// The price of one unit of the given resource, denominated in wei
-    </span><span class="kw">pub </span>price_in_wei: u64,
+    </span><span class="kw">pub </span>price_in_wei: u128,
 }
 
 <span class="kw">impl </span>From&lt;ResourcePrice&gt; <span class="kw">for </span>CoreResourcePrice {
     <span class="kw">fn </span>from(item: ResourcePrice) -&gt; <span class="self">Self </span>{
-        CoreResourcePrice { price_in_strk: item.price_in_strk, price_in_wei: item.price_in_wei }
+        <span class="comment">// TODO: when we rebase starknet-rs those field type will be FieldElements
+        // Get rid of the type conversions
+        </span>CoreResourcePrice { price_in_strk: item.price_in_strk, price_in_wei: item.price_in_wei <span class="kw">as </span>u64 }
     }
 }
 
