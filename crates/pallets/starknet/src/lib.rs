@@ -69,7 +69,7 @@ use blockifier::execution::entry_point::{
     CallEntryPoint, CallInfo, CallType, EntryPointExecutionContext, ExecutionResources,
 };
 use blockifier::execution::errors::{EntryPointExecutionError, PreExecutionError};
-use blockifier::state::cached_state::ContractStorageKey;
+use blockifier::state::cached_state::{CommitmentStateDiff, ContractStorageKey};
 use blockifier::transaction::objects::TransactionExecutionInfo;
 use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
@@ -1087,7 +1087,7 @@ impl<T: Config> Pallet<T> {
         )?;
 
         let mut results = vec![];
-        for res in execution_results {
+        for (res, _) in execution_results {
             match res {
                 Ok(tx_exec_info) => {
                     log!(info, "Successfully estimated fee: {:?}", tx_exec_info);
@@ -1109,8 +1109,10 @@ impl<T: Config> Pallet<T> {
     pub fn simulate_transactions(
         transactions: Vec<UserTransaction>,
         simulation_flags: SimulationFlags,
-    ) -> Result<Vec<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>>, DispatchError>
-    {
+    ) -> Result<
+        Vec<(Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, CommitmentStateDiff)>,
+        DispatchError,
+    > {
         let chain_id = Self::chain_id();
 
         let tx_execution_results = execute_txs_and_rollback::<T>(

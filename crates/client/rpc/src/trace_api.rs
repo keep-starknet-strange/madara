@@ -1,4 +1,5 @@
 use blockifier::execution::entry_point::CallInfo;
+use blockifier::state::cached_state::CommitmentStateDiff;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
 use jsonrpsee::core::{async_trait, RpcResult};
@@ -213,12 +214,13 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
     storage_override: &dyn StorageOverride<B>,
     substrate_block_hash: B::Hash,
     tx_types: Vec<TxType>,
-    transaction_execution_results: Vec<
+    transaction_execution_results: Vec<(
         Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>,
-    >,
+        CommitmentStateDiff,
+    )>,
 ) -> Result<Vec<SimulatedTransaction>, ConvertCallInfoToExecuteInvocationError> {
     let mut results = vec![];
-    for (tx_type, res) in tx_types.iter().zip(transaction_execution_results.iter()) {
+    for (tx_type, (res, state_diff)) in tx_types.iter().zip(transaction_execution_results.iter()) {
         match res {
             Ok(tx_exec_info) => {
                 // If simulated with `SimulationFlag::SkipValidate` this will be `None`
@@ -255,13 +257,13 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
                         },
                         fee_transfer_invocation,
                         // TODO(#1291): Compute state diff correctly
-                        state_diff: None,
+                        state_diff,
                     }),
                     TxType::Declare => TransactionTrace::Declare(DeclareTransactionTrace {
                         validate_invocation,
                         fee_transfer_invocation,
                         // TODO(#1291): Compute state diff correctly
-                        state_diff: None,
+                        state_diff,
                     }),
                     TxType::DeployAccount => {
                         TransactionTrace::DeployAccount(DeployAccountTransactionTrace {
@@ -274,7 +276,7 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
                             )?,
                             fee_transfer_invocation,
                             // TODO(#1291): Compute state diff correctly
-                            state_diff: None,
+                            state_diff,
                         })
                     }
                     TxType::L1Handler => unreachable!("L1Handler transactions cannot be simulated"),
