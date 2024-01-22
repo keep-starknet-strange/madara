@@ -58,7 +58,7 @@ sp_api::decl_runtime_apis! {
         /// Returns fee estimate
         fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError>;
         /// Simulates transactions and returns their trace
-        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, CommitmentStateDiff)>, DispatchError>;
+        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, Option<CommitmentStateDiff>)>, DispatchError>;
         /// Filters extrinsic transactions to return only Starknet transactions
         ///
         /// To support runtime upgrades, the client must be unaware of the specific extrinsic

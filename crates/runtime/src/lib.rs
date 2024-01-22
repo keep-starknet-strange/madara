@@ -281,7 +281,7 @@ impl_runtime_apis! {
             Starknet::estimate_fee(transactions)
         }
 
-        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, CommitmentStateDiff)>, DispatchError> {
+        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, Option<CommitmentStateDiff>)>, DispatchError> {
             Starknet::simulate_transactions(transactions, simulation_flags)
         }
 

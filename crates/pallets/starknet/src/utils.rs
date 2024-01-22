@@ -14,13 +14,30 @@ use sp_runtime::DispatchError;
 use crate::blockifier_state_adapter::{BlockifierStateAdapter, CachedBlockifierStateAdapter};
 use crate::{pallet, Error};
 
+/// Executes the given transactions and rolls back the state.
+///
+/// # Arguments
+///
+/// * `txs` - The transactions to execute.
+/// * `block_context` - The block context.
+/// * `chain_id` - The chain id.
+/// * `execution_config` - The execution config.
+/// * `with_state_diff` - Whether to return the state diff.
+///
+/// # Returns
+///
+/// A vector of execution results and state diffs if `with_state_diff` is true else None.
 pub fn execute_txs_and_rollback<T: pallet::Config>(
     txs: &Vec<UserTransaction>,
     block_context: &BlockContext,
     chain_id: Felt252Wrapper,
     execution_config: &mut ExecutionConfig,
+    with_state_diff: bool,
 ) -> Result<
-    Vec<(Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, CommitmentStateDiff)>,
+    Vec<(
+        Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>,
+        Option<CommitmentStateDiff>,
+    )>,
     Error<T>,
 > {
     let mut execution_results = vec![];
@@ -39,22 +56,19 @@ pub fn execute_txs_and_rollback<T: pallet::Config>(
                     }),
                 UserTransaction::DeployAccount(tx) => {
                     let executable = tx.into_executable::<T::SystemHash>(chain_id, tx.offset_version());
-                    let mut cached_state =
-                        CachedBlockifierStateAdapter(CachedState::from(BlockifierStateAdapter::<T>::default()));
                     let execution_result = executable.execute(&mut cached_state, block_context, execution_config);
                     execution_result
                 }
                 UserTransaction::Invoke(tx) => {
                     let executable = tx.into_executable::<T::SystemHash>(chain_id, tx.offset_version());
-                    let mut cached_state =
-                        CachedBlockifierStateAdapter(CachedState::from(BlockifierStateAdapter::<T>::default()));
                     let execution_result = executable.execute(&mut cached_state, block_context, execution_config);
                     execution_result
                 }
             }
             .map_err(|_| PlaceHolderErrorTypeForFailedStarknetExecution);
 
-            execution_results.push((result, cached_state.to_state_diff()));
+            let state_diff = if with_state_diff { Some(cached_state.to_state_diff()) } else { None };
+            execution_results.push((result, state_diff));
         }
         storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(()))
     })

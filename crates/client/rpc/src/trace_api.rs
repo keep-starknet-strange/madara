@@ -5,7 +5,7 @@ use blockifier::transaction::objects::TransactionExecutionInfo;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 use mc_genesis_data_provider::GenesisProvider;
-use mc_rpc_core::utils::to_rpc_state_diff;
+use mc_rpc_core::utils::blockifier_to_rpc_state_diff_types;
 use mc_rpc_core::{StarknetReadRpcApiServer, StarknetTraceRpcApiServer};
 use mc_storage::StorageOverride;
 use mp_felt::Felt252Wrapper;
@@ -217,7 +217,7 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
     tx_types: Vec<TxType>,
     transaction_execution_results: Vec<(
         Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>,
-        CommitmentStateDiff,
+        Option<CommitmentStateDiff>,
     )>,
 ) -> Result<Vec<SimulatedTransaction>, ConvertCallInfoToExecuteInvocationError> {
     let mut results = vec![];
@@ -243,7 +243,7 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
                     })
                     .transpose()?;
 
-                let state_diff = to_rpc_state_diff(state_diff)?;
+                let state_diff = state_diff.map(blockifier_to_rpc_state_diff_types).transpose()?;
 
                 let transaction_trace = match tx_type {
                     TxType::Invoke => TransactionTrace::Invoke(InvokeTransactionTrace {
@@ -259,13 +259,11 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
                             )?)
                         },
                         fee_transfer_invocation,
-                        // TODO(#1291): Compute state diff correctly
                         state_diff,
                     }),
                     TxType::Declare => TransactionTrace::Declare(DeclareTransactionTrace {
                         validate_invocation,
                         fee_transfer_invocation,
-                        // TODO(#1291): Compute state diff correctly
                         state_diff,
                     }),
                     TxType::DeployAccount => {

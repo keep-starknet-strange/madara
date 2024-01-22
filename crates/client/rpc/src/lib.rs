@@ -666,7 +666,7 @@ where
                 StarknetRpcApiError::ContractNotFound
             })?;
 
-        Ok(to_rpc_contract_class(contract_class).map_err(|e| {
+        Ok(blockifier_to_rpc_contract_class_types(contract_class).map_err(|e| {
             error!("Failed to convert contract class at '{contract_address}' to RPC contract class: {e}");
             StarknetRpcApiError::InvalidContractClass
         })?)
@@ -804,7 +804,7 @@ where
                 StarknetRpcApiError::ClassHashNotFound
             })?;
 
-        Ok(to_rpc_contract_class(contract_class).map_err(|e| {
+        Ok(blockifier_to_rpc_contract_class_types(contract_class).map_err(|e| {
             error!("Failed to convert contract class from hash '{class_hash}' to RPC contract class: {e}");
             StarknetRpcApiError::InternalServerError
         })?)

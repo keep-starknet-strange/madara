@@ -1084,6 +1084,7 @@ impl<T: Config> Pallet<T> {
             &Self::get_block_context(),
             chain_id,
             &mut RuntimeExecutionConfigBuilder::new::<T>().with_query_mode().build(),
+            false,
         )?;
 
         let mut results = vec![];
@@ -1110,7 +1111,10 @@ impl<T: Config> Pallet<T> {
         transactions: Vec<UserTransaction>,
         simulation_flags: SimulationFlags,
     ) -> Result<
-        Vec<(Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, CommitmentStateDiff)>,
+        Vec<(
+            Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>,
+            Option<CommitmentStateDiff>,
+        )>,
         DispatchError,
     > {
         let chain_id = Self::chain_id();
@@ -1120,6 +1124,7 @@ impl<T: Config> Pallet<T> {
             &Self::get_block_context(),
             chain_id,
             &mut RuntimeExecutionConfigBuilder::new::<T>().with_simulation_mode(&simulation_flags).build(),
+            true,
         )?;
 
         Ok(tx_execution_results)

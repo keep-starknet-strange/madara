@@ -25,7 +25,7 @@ use starknet_core::types::{
 };
 
 /// Returns a [`ContractClass`] from a [`BlockifierContractClass`]
-pub fn to_rpc_contract_class(contract_class: BlockifierContractClass) -> Result<ContractClass> {
+pub fn blockifier_to_rpc_contract_class_types(contract_class: BlockifierContractClass) -> Result<ContractClass> {
     match contract_class {
         BlockifierContractClass::V0(contract_class) => {
             let entry_points_by_type = to_legacy_entry_points_by_type(&contract_class.entry_points_by_type)?;
@@ -47,7 +47,7 @@ pub fn to_rpc_contract_class(contract_class: BlockifierContractClass) -> Result<
 }
 
 /// Returns a [`StateDiff`] from a [`CommitmentStateDiff`]
-pub fn to_rpc_state_diff(commitment_state_diff: CommitmentStateDiff) -> Result<StateDiff> {
+pub fn blockifier_to_rpc_state_diff_types(commitment_state_diff: CommitmentStateDiff) -> Result<StateDiff> {
     let storage_diffs: Vec<ContractStorageDiffItem> = commitment_state_diff
         .storage_updates
         .into_iter()
