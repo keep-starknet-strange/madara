@@ -1499,14 +1499,14 @@
         /// second element is the contract class hash.
         /// This can be used to start the chain with a set of pre-deployed contracts, for example in
         /// a test environment or in the case of a migration of an existing chain state.
-        </span><span class="kw">pub </span>contracts: Vec&lt;(ContractAddress, CasmClassHash)&gt;,
+        </span><span class="kw">pub </span>contracts: Vec&lt;(ContractAddress, SierraClassHash)&gt;,
         <span class="kw">pub </span>sierra_to_casm_class_hash: Vec&lt;(SierraClassHash, CasmClassHash)&gt;,
         <span class="doccomment">/// The contract classes to be deployed at genesis.
         /// This is a vector of tuples, where the first element is the contract class hash and the
         /// second element is the contract class definition.
         /// Same as `contracts`, this can be used to start the chain with a set of pre-deployed
         /// contracts classes.
-        </span><span class="kw">pub </span>contract_classes: Vec&lt;(CasmClassHash, ContractClass)&gt;,
+        </span><span class="kw">pub </span>contract_classes: Vec&lt;(SierraClassHash, ContractClass)&gt;,
         <span class="kw">pub </span>storage: Vec&lt;(ContractStorageKey, StarkFelt)&gt;,
         <span class="doccomment">/// The address of the fee token.
         /// Must be set to the address of the fee token ERC20 contract.

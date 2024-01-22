@@ -738,7 +738,6 @@
 <a href="#738" id="738">738</a>
 <a href="#739" id="739">739</a>
 <a href="#740" id="740">740</a>
-<a href="#741" id="741">741</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>alloc::vec;
@@ -1312,7 +1311,6 @@
         // so that the `constructor` method can initialize the account state
         </span><span class="kw">let </span>execute_call_info = <span class="self">self</span>.run_execute(state, resources, <span class="kw-2">&amp;mut </span>context, remaining_gas)<span class="question-mark">?</span>;
         <span class="kw">let </span>validate_call_info = <span class="kw">if </span>!disable_validation {
-            <span class="macro">log::info!</span>(<span class="string">&quot;this is the context for validation {:?}&quot;</span>, context);
             <span class="self">self</span>.validate_tx_inner(state, resources, remaining_gas, <span class="kw-2">&amp;mut </span>context, <span class="self">self</span>.calldata())<span class="question-mark">?
         </span>} <span class="kw">else </span>{
             <span class="prelude-val">None
