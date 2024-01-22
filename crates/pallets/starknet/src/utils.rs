@@ -38,7 +38,10 @@ pub fn execute_txs_and_rollback<T: pallet::Config>(
                     executable.execute(&mut BlockifierStateAdapter::<T>::default(), block_context, execution_config)
                 }
             }
-            .map_err(|_| PlaceHolderErrorTypeForFailedStarknetExecution);
+            .map_err(|e| {
+                log::info!("Failed to execute transaction: {:?}", e);
+                PlaceHolderErrorTypeForFailedStarknetExecution
+            });
 
             execution_results.push(result);
         }
