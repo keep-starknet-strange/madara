@@ -79,6 +79,7 @@ pub enum UserTransaction {
 }
 
 impl TransactionVersion for UserTransaction {
+    #[inline(always)]
     fn version(&self) -> u8 {
         match self {
             UserTransaction::Declare(tx, _) => tx.version(),
@@ -99,6 +100,7 @@ pub enum Transaction {
 }
 
 impl TransactionVersion for Transaction {
+    #[inline(always)]
     fn version(&self) -> u8 {
         match self {
             Transaction::Declare(tx) => tx.version(),
@@ -118,6 +120,7 @@ pub enum UserAndL1HandlerTransaction {
 }
 
 impl TransactionVersion for UserAndL1HandlerTransaction {
+    #[inline(always)]
     fn version(&self) -> u8 {
         match self {
             UserAndL1HandlerTransaction::User(tx) => tx.version(),
@@ -135,6 +138,7 @@ pub enum InvokeTransaction {
 }
 
 impl TransactionVersion for InvokeTransaction {
+    #[inline(always)]
     fn version(&self) -> u8 {
         match self {
             InvokeTransaction::V0(tx) => tx.version(),
@@ -155,6 +159,7 @@ pub struct InvokeTransactionV0 {
 }
 
 impl TransactionVersion for InvokeTransactionV0 {
+    #[inline(always)]
     fn version(&self) -> u8 {
         0
     }
@@ -173,6 +178,7 @@ pub struct InvokeTransactionV1 {
 }
 
 impl TransactionVersion for InvokeTransactionV1 {
+    #[inline(always)]
     fn version(&self) -> u8 {
         1
     }
@@ -188,6 +194,7 @@ pub enum DeclareTransaction {
 }
 
 impl TransactionVersion for DeclareTransaction {
+    #[inline(always)]
     fn version(&self) -> u8 {
         match self {
             DeclareTransaction::V0(tx) => tx.version(),
@@ -209,6 +216,7 @@ pub struct DeclareTransactionV0 {
 }
 
 impl TransactionVersion for DeclareTransactionV0 {
+    #[inline(always)]
     fn version(&self) -> u8 {
         0
     }
@@ -227,6 +235,7 @@ pub struct DeclareTransactionV1 {
 }
 
 impl TransactionVersion for DeclareTransactionV1 {
+    #[inline(always)]
     fn version(&self) -> u8 {
         1
     }
@@ -246,6 +255,7 @@ pub struct DeclareTransactionV2 {
 }
 
 impl TransactionVersion for DeclareTransactionV2 {
+    #[inline(always)]
     fn version(&self) -> u8 {
         2
     }
@@ -265,6 +275,7 @@ pub struct DeployAccountTransaction {
 }
 
 impl TransactionVersion for DeployAccountTransaction {
+    #[inline(always)]
     fn version(&self) -> u8 {
         1
     }
@@ -281,6 +292,7 @@ pub struct HandleL1MessageTransaction {
 }
 
 impl TransactionVersion for HandleL1MessageTransaction {
+    #[inline(always)]
     fn version(&self) -> u8 {
         0
     }
