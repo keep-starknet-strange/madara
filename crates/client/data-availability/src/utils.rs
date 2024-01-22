@@ -79,7 +79,7 @@ pub fn state_diff_to_calldata(mut block_da_data: BlockDAData) -> Vec<U256> {
         calldata.push(U256::from_big_endian(class_hash.0.bytes()));
     }
 
-    // Handle replaced classes
+    // Handle declared classes
     calldata.push(U256::from(block_da_data.state_diff.declared_classes.len()));
 
     for (class_hash, compiled_class_hash) in &block_da_data.state_diff.declared_classes {
@@ -336,6 +336,7 @@ mod tests {
     #[case(false, 1, 1, "18446744073709551617")]
     #[case(false, 1, 0, "18446744073709551616")]
     #[case(false, 0, 6, "6")]
+    #[case(true, 1, 0, "340282366920938463481821351505477763073")]
     fn da_word_works(
         #[case] class_flag: bool,
         #[case] new_nonce: u64,
