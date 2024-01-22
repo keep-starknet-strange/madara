@@ -79,6 +79,9 @@ impl BlobStatusResponse {
     }
 }
 
+// the following types are not currently being used
+// but will be needed to verify blob availability
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BlobInfo {
     blob_header: BlobHeader,
