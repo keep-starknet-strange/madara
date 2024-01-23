@@ -1127,7 +1127,7 @@ impl<T: Config> Pallet<T> {
             Err(Error::<T>::TransactionExecutionFailed.into())
         }
     }
-    
+
     pub fn simulate_transactions(
         transactions: Vec<UserTransaction>,
         simulation_flags: SimulationFlags,

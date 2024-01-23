@@ -90,6 +90,7 @@
 - chore(data-availability-avail): implement fire and forget, and add ws
   reconnection logic
 - chore: update `polkadot-sdk` to `release-polkadot-v1.3.0`
+- feat(rpc) : estimateMessageFee RPC call implementation
 
 ## v0.5.0
 

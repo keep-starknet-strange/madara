@@ -13,15 +13,14 @@ pub mod getters;
 #[cfg(feature = "client")]
 pub mod to_starknet_core_transaction;
 
-use core::fmt::Error;
-
 use alloc::vec::Vec;
+use core::fmt::Error;
 
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::transaction::transaction_types::TransactionType;
 use derive_more::From;
 use starknet_api::transaction::Fee;
-use starknet_core::types::{TransactionExecutionStatus, TransactionFinalityStatus, MsgFromL1};
+use starknet_core::types::{MsgFromL1, TransactionExecutionStatus, TransactionFinalityStatus};
 use starknet_ff::FieldElement;
 
 const SIMULATE_TX_VERSION_OFFSET: FieldElement =

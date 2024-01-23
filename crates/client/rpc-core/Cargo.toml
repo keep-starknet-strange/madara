@@ -47,8 +47,8 @@ sp-blockchain = { workspace = true, default-features = true }
 sp-core = { workspace = true }
 sp-runtime = { workspace = true, default-features = true }
 starknet-core = { workspace = true }
-starknet_api = { workspace = true, default-features = true }
 starknet-providers = { workspace = true }
+starknet_api = { workspace = true, default-features = true }
 thiserror = { workspace = true }
 
 [dev-dependencies]

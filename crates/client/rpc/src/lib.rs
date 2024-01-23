@@ -50,8 +50,8 @@ use starknet_core::types::{
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, ExecutionResources, ExecutionResult, FeeEstimate,
     FieldElement, FunctionCall, Hash256, InvokeTransactionReceipt, InvokeTransactionResult,
     L1HandlerTransactionReceipt, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
-    MaybePendingTransactionReceipt, StateDiff, StateUpdate, SyncStatus, SyncStatusType, Transaction,
-    TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt, MsgFromL1,
+    MaybePendingTransactionReceipt, MsgFromL1, StateDiff, StateUpdate, SyncStatus, SyncStatusType, Transaction,
+    TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
 };
 use starknet_core::utils::get_selector_from_name;
 
@@ -987,17 +987,13 @@ where
     /// # Returns
     ///
     /// * `fee_estimation` - the fee estimation (gas consumed, gas price, overall fee, unit)
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// BlockNotFound : If the specified block does not exist.
     /// ContractNotFound : If the specified contract address does not exist.
     /// ContractError : If there is an error with the contract.
-    async fn estimate_message_fee(
-        &self,
-        message: MsgFromL1,
-        block_id: BlockId,
-    ) -> RpcResult<FeeEstimate> {
+    async fn estimate_message_fee(&self, message: MsgFromL1, block_id: BlockId) -> RpcResult<FeeEstimate> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -1025,7 +1021,7 @@ where
 
         let estimate = FeeEstimate { gas_price: 10, gas_consumed: fee_estimate.1, overall_fee: fee_estimate.0 };
 
-        Ok(estimate)    
+        Ok(estimate)
     }
 
     /// Get the details of a transaction by a given block id and index.

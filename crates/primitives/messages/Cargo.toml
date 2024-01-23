@@ -12,8 +12,8 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 mp-transactions = { workspace = true }
-starknet_api = { workspace = true }
 starknet-core = { workspace = true }
+starknet_api = { workspace = true }
 
 # Optional
 parity-scale-codec = { workspace = true, features = [
