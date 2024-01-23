@@ -206,11 +206,9 @@ pub async fn update_state<B: BlockT, H: HasherT>(
     block_da_data: BlockDAData,
 ) -> Result<(), anyhow::Error> {
     let block_hash = block_da_data.block_hash;
+    let calldata = state_diff_to_calldata(block_da_data);
     // store the state diff
-    madara_backend
-        .da()
-        .store_state_diff(&block_hash, state_diff_to_calldata(block_da_data))
-        .map_err(|e| anyhow!("{e}"))?;
+    madara_backend.da().store_state_diff(&block_hash, calldata.clone()).map_err(|e| anyhow!("{e}"))?;
 
     // Query last written state
     // TODO: this value will be used to ensure the correct state diff is being written in
@@ -221,15 +219,12 @@ pub async fn update_state<B: BlockT, H: HasherT>(
         DaMode::Validity => {
             // Check the SHARP status of last_proved + 1
             // Write the publish state diff of last_proved + 1
-            log::info!("validity da mode not implemented");
+            log::info!("[VALIDITY] not implemented");
         }
-        DaMode::Sovereign => match madara_backend.da().state_diff(&block_hash) {
-            Ok(state_diff) => {
-                da_client.publish_state_diff(state_diff).await.map_err(|e| anyhow!("DA PUBLISH ERROR: {e}"))?;
-            }
-            Err(e) => Err(anyhow!("could not pull state diff for block {}: {}", block_hash, e))?,
-        },
-        DaMode::Volition => log::info!("volition da mode not implemented"),
+        DaMode::Sovereign => {
+            da_client.publish_state_diff(calldata).await.map_err(|e| anyhow!("[SOVEREIGN] publish error: {e}"))?
+        }
+        DaMode::Volition => log::info!("[VOLITION] not implemented"),
     };
 
     Ok(())
