@@ -87,18 +87,26 @@ pub struct ExtendedRunCmd {
     pub sealing: Option<Sealing>,
 
     /// Choose a supported DA Layer
-    #[clap(long, ignore_case = true, requires = "da_conf")]
+    #[clap(long, ignore_case = true)]
     pub da_layer: Option<DaLayer>,
 
     /// Path to a file containing the DA configuration
+    ///
+    /// If `da_layer` is `Some` and `da_conf` is `None` we will try to read one at
+    /// `<chain_config_directory>/<da_layer_name>.json`. If it's not there, an error will be
+    /// returned.
     #[clap(long, value_hint = FilePath, requires = "da_layer")]
     pub da_conf: Option<PathBuf>,
 
     /// Choose a supported settlement layer
-    #[clap(long, ignore_case = true, requires = "settlement_conf")]
+    #[clap(long, ignore_case = true)]
     pub settlement: Option<SettlementLayer>,
 
     /// Path to a file containing the settlement configuration
+    ///
+    /// If `settlement` is `Some` and `settlement_conf` is `None` we will try to read one at
+    /// `<chain_config_directory>/settlement_conf.json`. If it's not there, an error will be
+    /// returned.
     #[clap(long, value_hint = FilePath, requires = "settlement")]
     pub settlement_conf: Option<PathBuf>,
 
@@ -116,12 +124,34 @@ pub struct ExtendedRunCmd {
 }
 
 impl ExtendedRunCmd {
+    /// The substrate base directory on your machine
+    ///
+    /// Will be different depending on your OS
     pub fn base_path(&self) -> Result<BasePath> {
         Ok(self
             .base
             .shared_params
             .base_path()?
             .unwrap_or_else(|| BasePath::from_project("", "", &<Cli as SubstrateCli>::executable_name())))
+    }
+
+    /// The chain name
+    ///
+    /// Will use `""` (empty sting) if none is provided
+    fn chain_id(&self) -> &str {
+        match &self.base.shared_params.chain {
+            Some(s) => &s,
+            None => "",
+        }
+    }
+
+    /// The path of the configuration folder of your chain
+    ///
+    /// "<base_path>/chains/<my_chain_id>"
+    fn chain_config_dir(&self) -> Result<PathBuf> {
+        let chain_id = self.chain_id();
+        let chain_config_dir = self.base_path()?.config_dir(&chain_id);
+        Ok(chain_config_dir)
     }
 }
 
@@ -152,17 +182,12 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
     }
     let runner = cli.create_runner(&cli.run.base)?;
 
-    let chain_name = match cli.run.base.shared_params.chain {
-        Some(ref x) => x,
-        None => "dev",
-    };
+    let chain_config_dir = cli.run.chain_config_dir()?;
 
     let da_client = match cli.run.da_layer {
         Some(da_layer) => {
             let da_conf = cli.run.clone().da_conf.unwrap_or({
-                let path_base_path = cli.run.base_path()?;
-                let path_da_conf_json =
-                    path_base_path.path().join("chains/".to_owned() + chain_name).join(format!("{da_layer}.json"));
+                let path_da_conf_json = chain_config_dir.join(format!("{da_layer}.json"));
                 if !path_da_conf_json.exists() {
                     return Err(sc_cli::Error::Input(format!("no file {da_layer}.json in base_path")));
                 }
@@ -183,9 +208,7 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
     let settlement_config: Option<(SettlementLayer, PathBuf)> = match cli.run.settlement {
         Some(SettlementLayer::Ethereum) => {
             let settlement_conf = cli.run.clone().settlement_conf.unwrap_or({
-                let path_base_path = cli.run.base_path()?;
-                let path_sett_conf_json =
-                    path_base_path.path().join("chains/".to_owned() + chain_name).join("settlement_conf.json");
+                let path_sett_conf_json = chain_config_dir.join("settlement_conf.json");
                 if !path_sett_conf_json.exists() {
                     return Err(sc_cli::Error::Input("no file settlement_conf in base_path".to_string()));
                 }
