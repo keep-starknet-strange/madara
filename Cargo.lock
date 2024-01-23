@@ -6818,6 +6818,7 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_with",
+ "starknet-core",
  "starknet_api",
 ]
 

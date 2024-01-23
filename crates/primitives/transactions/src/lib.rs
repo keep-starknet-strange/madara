@@ -13,13 +13,15 @@ pub mod getters;
 #[cfg(feature = "client")]
 pub mod to_starknet_core_transaction;
 
+use core::fmt::Error;
+
 use alloc::vec::Vec;
 
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::transaction::transaction_types::TransactionType;
 use derive_more::From;
 use starknet_api::transaction::Fee;
-use starknet_core::types::{TransactionExecutionStatus, TransactionFinalityStatus};
+use starknet_core::types::{TransactionExecutionStatus, TransactionFinalityStatus, MsgFromL1};
 use starknet_ff::FieldElement;
 
 const SIMULATE_TX_VERSION_OFFSET: FieldElement =
@@ -189,4 +191,18 @@ pub struct HandleL1MessageTransaction {
     pub contract_address: Felt252Wrapper,
     pub entry_point_selector: Felt252Wrapper,
     pub calldata: Vec<Felt252Wrapper>,
+}
+
+impl TryFrom<MsgFromL1> for HandleL1MessageTransaction {
+    type Error = Error;
+
+    fn try_from(msg: MsgFromL1) -> Result<Self, Self::Error> {
+        let calldata = msg.payload.into_iter().map(|felt| felt.into()).collect();
+        Ok(Self {
+            contract_address: msg.to_address.into(),
+            nonce: 0u32.into(),
+            entry_point_selector: msg.entry_point_selector.into(),
+            calldata,
+        })
+    }
 }

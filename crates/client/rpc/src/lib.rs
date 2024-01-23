@@ -54,7 +54,6 @@ use starknet_core::types::{
     TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt, MsgFromL1,
 };
 use starknet_core::utils::get_selector_from_name;
-use starknet_providers::sequencer::models::L1ToL2Message;
 
 use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
 use crate::types::RpcEventFilter;
