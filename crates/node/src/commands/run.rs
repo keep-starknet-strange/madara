@@ -140,7 +140,7 @@ impl ExtendedRunCmd {
     /// Will use `""` (empty sting) if none is provided
     fn chain_id(&self) -> &str {
         match &self.base.shared_params.chain {
-            Some(s) => &s,
+            Some(s) => s,
             None => "",
         }
     }
@@ -150,7 +150,7 @@ impl ExtendedRunCmd {
     /// "<base_path>/chains/<my_chain_id>"
     fn chain_config_dir(&self) -> Result<PathBuf> {
         let chain_id = self.chain_id();
-        let chain_config_dir = self.base_path()?.config_dir(&chain_id);
+        let chain_config_dir = self.base_path()?.config_dir(chain_id);
         Ok(chain_config_dir)
     }
 }
