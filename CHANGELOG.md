@@ -2,6 +2,7 @@
 
 ## Next release
 
+- dev: check that class exist before using it in BuildGenesisConfig
 - feat(client): on `add_declare_transaction` store sierra contract classes in
   the madara backend
 - chore: use struct error in client/db
