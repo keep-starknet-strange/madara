@@ -51,9 +51,10 @@ use starknet_core::types::{
     FieldElement, FunctionCall, Hash256, InvokeTransactionReceipt, InvokeTransactionResult,
     L1HandlerTransactionReceipt, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
     MaybePendingTransactionReceipt, StateDiff, StateUpdate, SyncStatus, SyncStatusType, Transaction,
-    TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
+    TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt, MsgFromL1,
 };
 use starknet_core::utils::get_selector_from_name;
+use starknet_providers::sequencer::models::L1ToL2Message;
 
 use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
 use crate::types::RpcEventFilter;
@@ -975,6 +976,57 @@ where
             .collect();
 
         Ok(estimates)
+    }
+
+    /// Estimate the L2 fee of a message sent on L1
+    ///
+    /// # Arguments
+    ///
+    /// * `message` - starknet transaction request
+    /// * `block_id` - hash of the requested block, number (height), or tag
+    ///
+    /// # Returns
+    ///
+    /// * `fee_estimation` - the fee estimation (gas consumed, gas price, overall fee, unit)
+    /// 
+    /// # Errors
+    /// 
+    /// BlockNotFound : If the specified block does not exist.
+    /// ContractNotFound : If the specified contract address does not exist.
+    /// ContractError : If there is an error with the contract.
+    async fn estimate_message_fee(
+        &self,
+        message: MsgFromL1,
+        block_id: BlockId,
+    ) -> RpcResult<FeeEstimate> {
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+        let best_block_hash = self.client.info().best_hash;
+        let chain_id = Felt252Wrapper(self.chain_id()?.0);
+
+        let message = message.try_into().map_err(|e| {
+            error!("Failed to convert MsgFromL1 to UserTransaction: {e}");
+            StarknetRpcApiError::InternalServerError
+        })?;
+
+        let fee_estimate = self
+            .client
+            .runtime_api()
+            .estimate_message_fee(substrate_block_hash, message)
+            .map_err(|e| {
+                error!("Request parameters error: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?
+            .map_err(|e| {
+                error!("Failed to call function: {:#?}", e);
+                StarknetRpcApiError::ContractError
+            })?;
+
+        let estimate = FeeEstimate { gas_price: 10, gas_consumed: fee_estimate.1, overall_fee: fee_estimate.0 };
+
+        Ok(estimate)    
     }
 
     /// Get the details of a transaction by a given block id and index.

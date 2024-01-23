@@ -15,15 +15,14 @@ use serde_with::serde_as;
 pub mod utils;
 
 use mp_transactions::TransactionStatus;
+// use mp_messages::MessageL1ToL2;
 use pallet_starknet::genesis_loader::PredeployedAccount;
+//use starknet_api::transaction::L1ToL2Payload;
 use starknet_core::serde::unsigned_field_element::UfeHex;
 use starknet_core::types::{
-    BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
-    BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
-    DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall,
-    InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt,
-    SimulatedTransaction, SimulationFlag, StateUpdate, SyncStatusType, Transaction,
+    BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult, DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, MsgFromL1, SimulatedTransaction, SimulationFlag, StateUpdate, SyncStatusType, Transaction
 };
+use starknet_providers::sequencer::models::L1ToL2Message;
 
 #[serde_as]
 #[derive(Serialize, Deserialize)]
@@ -138,6 +137,14 @@ pub trait StarknetReadRpcApi {
         request: Vec<BroadcastedTransaction>,
         block_id: BlockId,
     ) -> RpcResult<Vec<FeeEstimate>>;
+
+    /// Estimate the L2 fee of a message sent on L1
+    #[method(name = "estimateMessageFee")]
+    async fn estimate_message_fee(
+        &self,
+        message: MsgFromL1,
+        block_id: BlockId,
+    ) -> RpcResult<FeeEstimate>;
 
     /// Get the details of a transaction by a given block id and index
     #[method(name = "getTransactionByBlockIdAndIndex")]

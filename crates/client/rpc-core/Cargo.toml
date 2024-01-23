@@ -34,6 +34,7 @@ mp-block = { workspace = true }
 mp-digest-log = { workspace = true }
 mp-felt = { workspace = true }
 mp-genesis-config = { workspace = true }
+mp-messages = { workspace = true }
 mp-simulations = { workspace = true }
 mp-transactions = { workspace = true, features = ["serde"] }
 num-bigint = { workspace = true }
@@ -47,6 +48,7 @@ sp-core = { workspace = true }
 sp-runtime = { workspace = true, default-features = true }
 starknet-core = { workspace = true }
 starknet_api = { workspace = true, default-features = true }
+starknet-providers = { workspace = true }
 thiserror = { workspace = true }
 
 [dev-dependencies]

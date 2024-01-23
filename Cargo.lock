@@ -6439,6 +6439,7 @@ dependencies = [
  "sp-runtime 24.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
  "starknet-core",
  "starknet-ff 0.3.5 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=64ebc36)",
+ "starknet-providers",
  "starknet_api",
  "thiserror",
  "tokio",
@@ -6464,6 +6465,7 @@ dependencies = [
  "mp-digest-log",
  "mp-felt",
  "mp-genesis-config",
+ "mp-messages",
  "mp-simulations",
  "mp-transactions",
  "num-bigint",
@@ -6476,6 +6478,7 @@ dependencies = [
  "sp-core 21.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
  "sp-runtime 24.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
  "starknet-core",
+ "starknet-providers",
  "starknet_api",
  "thiserror",
 ]
