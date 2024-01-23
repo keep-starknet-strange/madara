@@ -138,8 +138,11 @@ pub mod pallet {
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// The hashing function to use.
         type SystemHash: HasherT;
-        /// The time idk what.
+        /// The block time
         type TimestampProvider: Time;
+        /// The gas price
+        #[pallet::constant]
+        type L1GasPrice: Get<ResourcePrice>;
         /// A configuration for base priority of unsigned transactions.
         ///
         /// This is exposed so that it can be tuned for particular runtime, when
@@ -814,8 +817,6 @@ impl<T: Config> Pallet<T> {
         let chain_id = Self::chain_id_str();
 
         let vm_resource_fee_cost = Default::default();
-        // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
-        let gas_price = 10;
         BlockContext {
             block_number: BlockNumber(block_number),
             block_timestamp: BlockTimestamp(block_timestamp),
@@ -825,7 +826,7 @@ impl<T: Config> Pallet<T> {
             vm_resource_fee_cost,
             invoke_tx_max_n_steps: T::InvokeTxMaxNSteps::get(),
             validate_max_n_steps: T::ValidateMaxNSteps::get(),
-            gas_price,
+            gas_price: T::L1GasPrice::get().price_in_wei,
             max_recursion_depth: T::MaxRecursionDepth::get(),
         }
     }
@@ -949,8 +950,7 @@ impl<T: Config> Pallet<T> {
         let protocol_version = T::ProtocolVersion::get();
         let extra_data = None;
 
-        // TODO: Compute l1_gas_price correctly
-        let l1_gas_price = ResourcePrice::default();
+        let l1_gas_price = T::L1GasPrice::get();
 
         let block = StarknetBlock::new(
             StarknetHeader::new(
