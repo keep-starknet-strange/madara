@@ -50,7 +50,7 @@ impl DaClient for CelestiaClient {
     }
 
     fn get_da_metric_labels(&self) -> HashMap<String, String> {
-        [("name".into(), "celesia".into())].iter().cloned().collect()
+        [("name".into(), "celestia".into())].iter().cloned().collect()
     }
 }
 
