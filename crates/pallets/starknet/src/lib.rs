@@ -138,8 +138,11 @@ pub mod pallet {
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// The hashing function to use.
         type SystemHash: HasherT;
-        /// The time idk what.
+        /// The block time
         type TimestampProvider: Time;
+        /// The gas price
+        #[pallet::constant]
+        type L1GasPrice: Get<ResourcePrice>;
         /// A configuration for base priority of unsigned transactions.
         ///
         /// This is exposed so that it can be tuned for particular runtime, when
@@ -332,14 +335,14 @@ pub mod pallet {
         /// second element is the contract class hash.
         /// This can be used to start the chain with a set of pre-deployed contracts, for example in
         /// a test environment or in the case of a migration of an existing chain state.
-        pub contracts: Vec<(ContractAddress, CasmClassHash)>,
+        pub contracts: Vec<(ContractAddress, SierraClassHash)>,
         pub sierra_to_casm_class_hash: Vec<(SierraClassHash, CasmClassHash)>,
         /// The contract classes to be deployed at genesis.
         /// This is a vector of tuples, where the first element is the contract class hash and the
         /// second element is the contract class definition.
         /// Same as `contracts`, this can be used to start the chain with a set of pre-deployed
         /// contracts classes.
-        pub contract_classes: Vec<(CasmClassHash, ContractClass)>,
+        pub contract_classes: Vec<(SierraClassHash, ContractClass)>,
         pub storage: Vec<(ContractStorageKey, StarkFelt)>,
         /// The address of the fee token.
         /// Must be set to the address of the fee token ERC20 contract.
@@ -814,8 +817,6 @@ impl<T: Config> Pallet<T> {
         let chain_id = Self::chain_id_str();
 
         let vm_resource_fee_cost = Default::default();
-        // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
-        let gas_price = 10;
         BlockContext {
             block_number: BlockNumber(block_number),
             block_timestamp: BlockTimestamp(block_timestamp),
@@ -825,7 +826,7 @@ impl<T: Config> Pallet<T> {
             vm_resource_fee_cost,
             invoke_tx_max_n_steps: T::InvokeTxMaxNSteps::get(),
             validate_max_n_steps: T::ValidateMaxNSteps::get(),
-            gas_price,
+            gas_price: T::L1GasPrice::get().price_in_wei,
             max_recursion_depth: T::MaxRecursionDepth::get(),
         }
     }
@@ -949,8 +950,7 @@ impl<T: Config> Pallet<T> {
         let protocol_version = T::ProtocolVersion::get();
         let extra_data = None;
 
-        // TODO: Compute l1_gas_price correctly
-        let l1_gas_price = ResourcePrice::default();
+        let l1_gas_price = T::L1GasPrice::get();
 
         let block = StarknetBlock::new(
             StarknetHeader::new(
