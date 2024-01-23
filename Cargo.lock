@@ -6465,7 +6465,6 @@ dependencies = [
  "mp-digest-log",
  "mp-felt",
  "mp-genesis-config",
- "mp-messages",
  "mp-simulations",
  "mp-transactions",
  "num-bigint",

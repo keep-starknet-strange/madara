@@ -27,7 +27,7 @@ pub struct MessageL2ToL1 {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-#[cfg_attr(feature = "serde", serde_with::serde_as, derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde_with::serde_as, derive(serde::Serialize))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 /// Message sent to L2 by calling Starknet smart contract on Ethereum

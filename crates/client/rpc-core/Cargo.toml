@@ -34,7 +34,6 @@ mp-block = { workspace = true }
 mp-digest-log = { workspace = true }
 mp-felt = { workspace = true }
 mp-genesis-config = { workspace = true }
-mp-messages = { workspace = true }
 mp-simulations = { workspace = true }
 mp-transactions = { workspace = true, features = ["serde"] }
 num-bigint = { workspace = true }
