@@ -63,12 +63,14 @@ pub struct ResourcePrice {
     /// The price of one unit of the given resource, denominated in fri (10^-18 strk)
     pub price_in_strk: Option<u64>,
     /// The price of one unit of the given resource, denominated in wei
-    pub price_in_wei: u64,
+    pub price_in_wei: u128,
 }
 
 impl From<ResourcePrice> for CoreResourcePrice {
     fn from(item: ResourcePrice) -> Self {
-        CoreResourcePrice { price_in_strk: item.price_in_strk, price_in_wei: item.price_in_wei }
+        // TODO: when we rebase starknet-rs those field type will be FieldElements
+        // Get rid of the type conversions
+        CoreResourcePrice { price_in_strk: item.price_in_strk, price_in_wei: item.price_in_wei as u64 }
     }
 }
 

@@ -3,6 +3,9 @@
 ## Next release
 
 - feat(rpc): added state diff  real value in trace api
+- feat: types in `mp-transactions` impl a method to get their version
+- feat: make L1 gas price a `const` of the `RuntimeConfig`
+- fix: broken class hashes and contracts in genesis
 - refactor: rename LAST_SYNCED_L1_BLOCK to be more clear
 - chore: add headers to da calldata, fix eth da in sovereign mode
 - refacto(simulate_tx): move logic to the client

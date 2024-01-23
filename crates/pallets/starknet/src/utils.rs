@@ -65,7 +65,10 @@ pub fn execute_txs_and_rollback<T: pallet::Config>(
                     execution_result
                 }
             }
-            .map_err(|_| PlaceHolderErrorTypeForFailedStarknetExecution);
+            .map_err(|e| {
+                log::info!("Failed to execute transaction: {:?}", e);
+                PlaceHolderErrorTypeForFailedStarknetExecution
+            });
 
             let state_diff = if with_state_diff { Some(cached_state.to_state_diff()) } else { None };
             execution_results.push((result, state_diff));
