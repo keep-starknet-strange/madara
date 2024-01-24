@@ -1086,23 +1086,24 @@ impl<T: Config> Pallet<T> {
             &mut RuntimeExecutionConfigBuilder::new::<T>().with_query_mode().build(),
         )?;
 
-        let mut results = vec![];
-        for res in execution_results {
-            match res {
-                Ok(tx_exec_info) => {
-                    log!(info, "Successfully estimated fee: {:?}", tx_exec_info);
-                    if let Some(l1_gas_usage) = tx_exec_info.actual_resources.0.get("l1_gas_usage") {
-                        results.push((tx_exec_info.actual_fee.0 as u64, *l1_gas_usage));
-                    } else {
-                        return Err(Error::<T>::TransactionExecutionFailed.into());
-                    }
-                }
-                Err(e) => {
-                    log!(info, "Failed to estimate fee: {:?}", e);
-                    return Err(Error::<T>::TransactionExecutionFailed.into());
-                }
-            }
-        }
+        let results: Vec<(u64, u64)> = execution_results
+			.into_iter()
+			.map(|res| {
+				match res {
+					Ok(tx_exec_info) => {
+						log!(info, "Successfully estimated fee: {:?}", tx_exec_info);
+						tx_exec_info.actual_resources.0
+							.get("l1_gas_usage")
+							.map(|l1_gas_usage| (tx_exec_info.actual_fee.0 as u64, *l1_gas_usage))
+							.ok_or(Error::<T>::TransactionExecutionFailed)
+					}
+					Err(e) => {
+						log!(info, "Failed to estimate fee: {:?}", e);
+						Err(Error::<T>::TransactionExecutionFailed.into())
+					}
+				}
+			})
+			.collect::<Result<Vec<_>, _>>()?;
         Ok(results)
     }
 
