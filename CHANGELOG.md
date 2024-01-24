@@ -2,6 +2,7 @@
 
 ## Next release
 
+- dev: fix linter warning in README.md
 - fix: remove waiting loop from `getTxReceipt`
 - feat: types in `mp-transactions` impl a method to get their version
 - feat: make L1 gas price a `const` of the `RuntimeConfig`
@@ -56,7 +57,6 @@
 - dev: add avail and celestia crates behind a feature flag
 - dev: replace md5 with sha3_256 hash function
 - feat: fixing getNonce Rpc Call and adding a new test
-- dev: fix linter warning in README.md
 
 ## v0.6.0
 
