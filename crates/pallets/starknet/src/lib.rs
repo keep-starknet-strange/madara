@@ -1127,7 +1127,7 @@ impl<T: Config> Pallet<T> {
         if let Some(l1_gas_usage) = tx_execution_infos.actual_resources.0.get("l1_gas_usage") {
             Ok((gas_price, tx_execution_infos.actual_fee.0 as u64, *l1_gas_usage))
         } else {
-            Err(Error::<T>::TransactionExecutionFailed.into())
+            Err(Error::<T>::MissingCallInfo.into())
         }
     }
 
