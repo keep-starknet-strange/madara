@@ -15,7 +15,6 @@ use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use jsonrpsee::types::error::CallError;
 use log::error;
-use mc_db::Backend as MadaraBackend;
 use mc_genesis_data_provider::GenesisProvider;
 pub use mc_rpc_core::utils::*;
 pub use mc_rpc_core::{
@@ -1371,49 +1370,15 @@ where
         &self,
         transaction_hash: FieldElement,
     ) -> RpcResult<MaybePendingTransactionReceipt> {
-        async fn wait_for_tx_inclusion<B: sp_api::BlockT>(
-            madara_backend: Arc<MadaraBackend<B>>,
-            transaction_hash: FieldElement,
-        ) -> Result<<B as BlockT>::Hash, StarknetRpcApiError> {
-            let substrate_block_hash;
-
-            loop {
-                let substrate_block_hash_from_db = madara_backend
-                    .mapping()
-                    .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
-                    .map_err(|e| {
-                        error!("Failed to interact with db backend error: {e}");
-                        StarknetRpcApiError::InternalServerError
-                    })?;
-
-                match substrate_block_hash_from_db {
-                    Some(block_hash) => {
-                        substrate_block_hash = block_hash;
-                        break;
-                    }
-                    None => {
-                        // TODO: hardcoded to match the blocktime; make it dynamic
-                        tokio::time::sleep(std::time::Duration::from_millis(6000)).await;
-                        continue;
-                    }
-                };
-            }
-
-            Ok(substrate_block_hash)
-        }
-
-        let substrate_block_hash = match tokio::time::timeout(
-            std::time::Duration::from_millis(60000),
-            wait_for_tx_inclusion(self.backend.clone(), transaction_hash),
-        )
-        .await
-        {
-            Err(_) => {
-                error!("did not receive tx hash within 1 minute");
-                return Err(StarknetRpcApiError::TxnHashNotFound.into());
-            }
-            Ok(res) => res,
-        }?;
+        let substrate_block_hash = self
+            .backend
+            .mapping()
+            .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
+            .map_err(|e| {
+                error!("Failed to interact with db backend error: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?
+            .ok_or(StarknetRpcApiError::TxnHashNotFound)?;
 
         let starknet_block: mp_block::Block =
             get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
