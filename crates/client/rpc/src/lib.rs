@@ -56,7 +56,6 @@ use starknet_core::utils::get_selector_from_name;
 
 use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
 use crate::types::RpcEventFilter;
-use anyhow::anyhow;
 
 /// A Starknet RPC server for Madara
 pub struct Starknet<A: ChainApi, B: BlockT, BE, G, C, P, H> {
@@ -856,7 +855,7 @@ where
                     BlockStatus::AcceptedOnL2
                 }
             },
-            Err(e) => Err(CallError::Failed(anyhow!("couldn't retrieve block from l1 : {}", e)) )?,
+            Err(e) => Err(CallError::Failed(anyhow::anyhow!("couldn't retrieve block from l1 : {}", e)) )?,
         };
 
         let parent_blockhash = starknet_block.header().parent_block_hash;
