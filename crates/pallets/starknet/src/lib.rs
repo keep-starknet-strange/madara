@@ -377,7 +377,7 @@ pub mod pallet {
 
             for (sierra_class_hash, casm_class_hash) in self.sierra_to_casm_class_hash.iter() {
                 assert!(
-                    ContractClasses::<T>::contains_key(casm_class_hash),
+                    ContractClasses::<T>::contains_key(sierra_class_hash),
                     "Class hash {} does not exist in contract_classes",
                     casm_class_hash,
                 );
