@@ -56,6 +56,7 @@ use starknet_core::utils::get_selector_from_name;
 
 use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
 use crate::types::RpcEventFilter;
+use anyhow::anyhow;
 
 /// A Starknet RPC server for Madara
 pub struct Starknet<A: ChainApi, B: BlockT, BE, G, C, P, H> {
@@ -847,12 +848,16 @@ where
         } else {
             starknet_block.transactions_hashes::<H>(chain_id.0.into()).map(FieldElement::from).collect()
         };
+        let last_l1_block = match self.backend.messaging().last_synced_l1_block_with_event() {
+            Ok(block) => block,
+            Err(e) => Err(anyhow!("couldn't retrieve block from l1 : {}", e)) ?,
+        };
+        let block_status = if last_l1_block.block_number >= starknet_block.header().block_number {BlockStatus::AcceptedOnL1} else {BlockStatus::AcceptedOnL2};
 
         let parent_blockhash = starknet_block.header().parent_block_hash;
         let block_with_tx_hashes = BlockWithTxHashes {
             transactions: transaction_hashes,
-            // TODO: Status hardcoded, get status from block
-            status: BlockStatus::AcceptedOnL2,
+            status: block_status,
             block_hash: block_hash.into(),
             parent_hash: Felt252Wrapper::from(parent_blockhash).into(),
             block_number: starknet_block.header().block_number,
