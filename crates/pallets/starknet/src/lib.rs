@@ -1106,15 +1106,18 @@ impl<T: Config> Pallet<T> {
         Ok(results)
     }
 
-    pub fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u64, u64), DispatchError> {
+    /// Warning : this should only be called from the runtimeAPI, never from inside an extrinsic
+    /// execution flow
+    pub fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u64, u64, u64), DispatchError> {
         let chain_id = Self::chain_id();
         let transaction = message.into_executable::<T::SystemHash>(chain_id, Fee::default(), true);
+        let gas_price: u64 = T::L1GasPrice::get().price_in_wei.try_into().unwrap();
 
         let tx_execution_infos = transaction
             .execute(
                 &mut BlockifierStateAdapter::<T>::default(),
                 &Self::get_block_context(),
-                &RuntimeExecutionConfigBuilder::new::<T>().with_query_mode().build(),
+                &RuntimeExecutionConfigBuilder::new::<T>().with_query_mode().with_disable_nonce_validation().build(),
             )
             .map_err(|e| {
                 log::error!("failed to execute invoke tx: {:?}", e);
@@ -1122,7 +1125,7 @@ impl<T: Config> Pallet<T> {
             })?;
 
         if let Some(l1_gas_usage) = tx_execution_infos.actual_resources.0.get("l1_gas_usage") {
-            Ok((tx_execution_infos.actual_fee.0 as u64, *l1_gas_usage))
+            Ok((gas_price, tx_execution_infos.actual_fee.0 as u64, *l1_gas_usage))
         } else {
             Err(Error::<T>::TransactionExecutionFailed.into())
         }

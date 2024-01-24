@@ -14,7 +14,6 @@ pub mod getters;
 pub mod to_starknet_core_transaction;
 
 use alloc::vec::Vec;
-use core::fmt::Error;
 
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::transaction::transaction_types::TransactionType;
@@ -192,16 +191,14 @@ pub struct HandleL1MessageTransaction {
     pub calldata: Vec<Felt252Wrapper>,
 }
 
-impl TryFrom<MsgFromL1> for HandleL1MessageTransaction {
-    type Error = Error;
-
-    fn try_from(msg: MsgFromL1) -> Result<Self, Self::Error> {
+impl From<MsgFromL1> for HandleL1MessageTransaction {
+    fn from(msg: MsgFromL1) -> Self {
         let calldata = msg.payload.into_iter().map(|felt| felt.into()).collect();
-        Ok(Self {
+        Self {
             contract_address: msg.to_address.into(),
             nonce: 0u32.into(),
             entry_point_selector: msg.entry_point_selector.into(),
             calldata,
-        })
+        }
     }
 }

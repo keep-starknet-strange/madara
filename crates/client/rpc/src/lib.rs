@@ -981,12 +981,12 @@ where
     ///
     /// # Arguments
     ///
-    /// * `message` - starknet transaction request
-    /// * `block_id` - hash of the requested block, number (height), or tag
+    /// * `message` - the message to estimate
+    /// * `block_id` - hash, number (height), or tag of the requested block
     ///
     /// # Returns
     ///
-    /// * `fee_estimation` - the fee estimation (gas consumed, gas price, overall fee, unit)
+    /// * `FeeEstimate` - the fee estimation (gas consumed, gas price, overall fee, unit)
     ///
     /// # Errors
     ///
@@ -998,7 +998,6 @@ where
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
         })?;
-        let best_block_hash = self.client.info().best_hash;
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
         let message = message.try_into().map_err(|e| {
@@ -1011,15 +1010,16 @@ where
             .runtime_api()
             .estimate_message_fee(substrate_block_hash, message)
             .map_err(|e| {
-                error!("Request parameters error: {e}");
+                error!("Runtime api error: {e}");
                 StarknetRpcApiError::InternalServerError
             })?
             .map_err(|e| {
-                error!("Failed to call function: {:#?}", e);
+                error!("function execution failed: {:#?}", e);
                 StarknetRpcApiError::ContractError
             })?;
 
-        let estimate = FeeEstimate { gas_price: 10, gas_consumed: fee_estimate.1, overall_fee: fee_estimate.0 };
+        let estimate =
+            FeeEstimate { gas_price: fee_estimate.0, gas_consumed: fee_estimate.2, overall_fee: fee_estimate.1 };
 
         Ok(estimate)
     }
