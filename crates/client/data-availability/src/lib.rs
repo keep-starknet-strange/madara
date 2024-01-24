@@ -27,7 +27,7 @@ use serde::{Deserialize, Serialize};
 use sp_runtime::traits::Block as BlockT;
 use starknet_api::block::BlockHash;
 use starknet_api::state::ThinStateDiff;
-use utils::state_diff_to_calldata;
+use utils::block_data_to_calldata;
 
 use crate::da_metrics::DaMetrics;
 
@@ -206,7 +206,7 @@ pub async fn update_state<B: BlockT, H: HasherT>(
     block_da_data: BlockDAData,
 ) -> Result<(), anyhow::Error> {
     let block_hash = block_da_data.block_hash;
-    let calldata = state_diff_to_calldata(block_da_data);
+    let calldata = block_data_to_calldata(block_da_data);
     // store the state diff
     madara_backend.da().store_state_diff(&block_hash, calldata.clone()).map_err(|e| anyhow!("{e}"))?;
 

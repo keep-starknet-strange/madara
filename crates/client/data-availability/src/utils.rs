@@ -21,7 +21,7 @@ const NONCE_BASE: &str = "0xFFFFFFFFFFFFFFFF"; // 2 ^ 64 - 1
 
 /// DA calldata encoding:
 /// - https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/on-chain-data
-pub fn state_diff_to_calldata(mut block_da_data: BlockDAData) -> Vec<U256> {
+pub fn block_data_to_calldata(mut block_da_data: BlockDAData) -> Vec<U256> {
     // pushing the headers and num_addr_accessed
     let mut calldata: Vec<U256> = vec![
         U256::from_big_endian(&block_da_data.previous_state_root.0), // prev merkle root
@@ -228,7 +228,7 @@ where
     }
 }
 
-/// Decodes a state difference using the 011 logic.
+/// Decodes a state difference using the starknet v0.11.0 logic.
 ///
 /// # Arguments
 ///
