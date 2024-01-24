@@ -2,7 +2,7 @@
 
 ## Next release
 
-- feat(rpc): added state diff  real value in trace api
+- feat(rpc): added state diff real value in trace api
 - fix: remove waiting loop from `getTxReceipt`
 - feat: types in `mp-transactions` impl a method to get their version
 - feat: make L1 gas price a `const` of the `RuntimeConfig`
