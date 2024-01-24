@@ -217,7 +217,7 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
     tx_types: Vec<TxType>,
     transaction_execution_results: Vec<(
         Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>,
-        Option<CommitmentStateDiff>,
+        CommitmentStateDiff,
     )>,
 ) -> Result<Vec<SimulatedTransaction>, ConvertCallInfoToExecuteInvocationError> {
     let mut results = vec![];
@@ -243,8 +243,6 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
                     })
                     .transpose()?;
 
-                let state_diff = state_diff.map(blockifier_to_rpc_state_diff_types).transpose()?;
-
                 let transaction_trace = match tx_type {
                     TxType::Invoke => TransactionTrace::Invoke(InvokeTransactionTrace {
                         validate_invocation,
@@ -259,12 +257,12 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
                             )?)
                         },
                         fee_transfer_invocation,
-                        state_diff,
+                        state_diff: Some(state_diff),
                     }),
                     TxType::Declare => TransactionTrace::Declare(DeclareTransactionTrace {
                         validate_invocation,
                         fee_transfer_invocation,
-                        state_diff,
+                        state_diff: Some(state_diff),
                     }),
                     TxType::DeployAccount => {
                         TransactionTrace::DeployAccount(DeployAccountTransactionTrace {
@@ -276,8 +274,7 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
                                 tx_exec_info.execute_call_info.as_ref().unwrap(),
                             )?,
                             fee_transfer_invocation,
-                            // TODO(#1291): Compute state diff correctly
-                            state_diff,
+                            state_diff: Some(state_diff),
                         })
                     }
                     TxType::L1Handler => unreachable!("L1Handler transactions cannot be simulated"),

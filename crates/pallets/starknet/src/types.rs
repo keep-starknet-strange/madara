@@ -1,6 +1,8 @@
 //! Starknet pallet custom types.
 use blockifier::execution::contract_class::ContractClass;
+use blockifier::transaction::objects::TransactionExecutionInfo;
 use mp_felt::Felt252Wrapper;
+use mp_simulations::PlaceHolderErrorTypeForFailedStarknetExecution;
 use sp_core::ConstU32;
 use sp_std::vec::Vec;
 use starknet_api::api_core::{ClassHash, ContractAddress};
@@ -21,6 +23,8 @@ pub type StorageSlot = (StorageKey, Felt252Wrapper);
 
 pub type CasmClassHash = ClassHash;
 pub type SierraClassHash = ClassHash;
+
+pub type TransactionSimulationResult = Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>;
 
 /// Declare Transaction Output
 #[derive(Clone, Debug, PartialEq, Eq, parity_scale_codec::Encode, parity_scale_codec::Decode, scale_info::TypeInfo)]

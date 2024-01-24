@@ -70,7 +70,6 @@ use blockifier::execution::entry_point::{
 };
 use blockifier::execution::errors::{EntryPointExecutionError, PreExecutionError};
 use blockifier::state::cached_state::{CommitmentStateDiff, ContractStorageKey};
-use blockifier::transaction::objects::TransactionExecutionInfo;
 use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
 use frame_support::traits::Time;
@@ -81,7 +80,7 @@ use mp_fee::{ResourcePrice, INITIAL_GAS};
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
-use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
+use mp_simulations::SimulationFlags;
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_transactions::execution::Execute;
 use mp_transactions::{
@@ -98,10 +97,11 @@ use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash};
 use starknet_crypto::FieldElement;
 use transaction_validation::TxPriorityInfo;
+use utils::execute_txs_and_rollback_with_state_diff;
 
 use crate::alloc::string::ToString;
 use crate::execution_config::RuntimeExecutionConfigBuilder;
-use crate::types::{CasmClassHash, SierraClassHash, StorageSlot};
+use crate::types::{CasmClassHash, SierraClassHash, StorageSlot, TransactionSimulationResult};
 use crate::utils::execute_txs_and_rollback;
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
@@ -1084,11 +1084,10 @@ impl<T: Config> Pallet<T> {
             &Self::get_block_context(),
             chain_id,
             &mut RuntimeExecutionConfigBuilder::new::<T>().with_query_mode().build(),
-            false,
         )?;
 
         let mut results = vec![];
-        for (res, _) in execution_results {
+        for res in execution_results {
             match res {
                 Ok(tx_exec_info) => {
                     log!(info, "Successfully estimated fee: {:?}", tx_exec_info);
@@ -1110,21 +1109,14 @@ impl<T: Config> Pallet<T> {
     pub fn simulate_transactions(
         transactions: Vec<UserTransaction>,
         simulation_flags: SimulationFlags,
-    ) -> Result<
-        Vec<(
-            Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>,
-            Option<CommitmentStateDiff>,
-        )>,
-        DispatchError,
-    > {
+    ) -> Result<Vec<(TransactionSimulationResult, CommitmentStateDiff)>, DispatchError> {
         let chain_id = Self::chain_id();
 
-        let tx_execution_results = execute_txs_and_rollback::<T>(
+        let tx_execution_results = execute_txs_and_rollback_with_state_diff::<T>(
             &transactions,
             &Self::get_block_context(),
             chain_id,
             &mut RuntimeExecutionConfigBuilder::new::<T>().with_simulation_mode(&simulation_flags).build(),
-            true,
         )?;
 
         Ok(tx_execution_results)
