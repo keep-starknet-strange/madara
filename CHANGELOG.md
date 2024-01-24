@@ -2,6 +2,7 @@
 
 ## Next release
 
+- refactor: issue #1315 refactor estimate_fee in pallets/starknet/src/lib.rs
 - fix: remove waiting loop from `getTxReceipt`
 - feat: types in `mp-transactions` impl a method to get their version
 - feat: make L1 gas price a `const` of the `RuntimeConfig`
