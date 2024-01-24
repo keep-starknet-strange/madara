@@ -848,11 +848,16 @@ where
         } else {
             starknet_block.transactions_hashes::<H>(chain_id.0.into()).map(FieldElement::from).collect()
         };
-        let last_l1_block = match self.backend.messaging().last_synced_l1_block_with_event() {
-            Ok(block) => block,
+        let block_status = match self.backend.messaging().last_synced_l1_block_with_event() {
+            Ok(l1_block) => {
+                if l1_block.block_number >= starknet_block.header().block_number {
+                    BlockStatus::AcceptedOnL1
+                } else {
+                    BlockStatus::AcceptedOnL2
+                }
+            },
             Err(e) => Err(anyhow!("couldn't retrieve block from l1 : {}", e)) ?,
         };
-        let block_status = if last_l1_block.block_number >= starknet_block.header().block_number {BlockStatus::AcceptedOnL1} else {BlockStatus::AcceptedOnL2};
 
         let parent_blockhash = starknet_block.header().parent_block_hash;
         let block_with_tx_hashes = BlockWithTxHashes {
