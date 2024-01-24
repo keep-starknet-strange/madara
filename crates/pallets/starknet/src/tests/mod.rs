@@ -14,6 +14,7 @@ use crate::tests::utils::sign_message_hash;
 use crate::{Config, Nonces};
 
 mod account_helper;
+mod build_genesis_config;
 mod call_contract;
 mod declare_tx;
 mod deploy_account_tx;
@@ -23,7 +24,6 @@ mod fees_disabled;
 mod invoke_tx;
 mod l1_handler_validation;
 mod l1_message;
-mod build_genesis_config;
 mod no_nonce_validation;
 mod query_tx;
 mod send_message;
