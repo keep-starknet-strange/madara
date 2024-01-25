@@ -28,6 +28,7 @@ use sp_runtime::traits::Block as BlockT;
 use starknet_api::block::BlockHash;
 use starknet_api::state::ThinStateDiff;
 use utils::state_diff_to_calldata;
+use thiserror::Error;
 
 use crate::da_metrics::DaMetrics;
 
@@ -41,6 +42,31 @@ pub enum DaLayer {
     Ethereum,
     #[cfg(feature = "avail")]
     Avail,
+}
+
+// Idea: use an argument with the corresponding da source
+
+#[derive(Error, Debug)]
+pub enum DaLayerErr {
+    #[error("config issue {0}")]
+    Config(String),
+    #[error("blob issue {0}")]
+    Blob(String),
+    #[error("client issue {0}")]
+    Client(String),
+    #[error("issue {0}")]
+    Other(String),
+}
+#[derive(Error, Debug)]
+pub struct DaError {
+    layer: DaLayer,
+    error: DaLayerErr,
+}
+
+impl std::fmt::Display for DaError{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "fail in layer {:?}: {}", self.layer, self.error)
+    }
 }
 
 /// Data availability modes in which Madara can be initialized.
