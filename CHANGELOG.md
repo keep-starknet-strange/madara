@@ -57,6 +57,7 @@
 - dev: add avail and celestia crates behind a feature flag
 - dev: replace md5 with sha3_256 hash function
 - feat: fixing getNonce Rpc Call and adding a new test
+- feat(rpc) : estimateMessageFee RPC call implementation
 
 ## v0.6.0
 
@@ -93,10 +94,8 @@
 - chore: deprecate `madara-app` and `madara-dev-explorer` modules
 - chore(data-availability-avail): implement fire and forget, and add ws
   reconnection logic
-- chore: update `polkadot-sdk` to `release-polkadot-v1.3.0` <<<<<<< HEAD
-- # feat(rpc) : estimateMessageFee RPC call implementation
+- chore: update `polkadot-sdk` to `release-polkadot-v1.3.0`
 - feat: fallback default file for DA and Settlement configuration files
-  > > > > > > > 30980a4d21857d3bac7c5bcf4e3a2d6dc63bf5ce
 
 ## v0.5.0
 
