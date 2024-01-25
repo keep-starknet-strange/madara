@@ -286,7 +286,9 @@ impl_runtime_apis! {
         }
 
         fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(TransactionSimulationResult, CommitmentStateDiff)>, DispatchError> {
-            Starknet::simulate_transactions(transactions, simulation_flags)
+            let txs = Starknet::simulate_transactions(transactions, simulation_flags);
+            log::info!("is_ok: {:#?}", txs.as_ref().unwrap()[1].0.is_ok());
+            txs
         }
 
         fn get_starknet_events_and_their_associated_tx_hash(block_extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper) -> Vec<(Felt252Wrapper, StarknetEvent)> {
