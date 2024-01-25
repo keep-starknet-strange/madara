@@ -854,8 +854,8 @@ where
                 } else {
                     BlockStatus::AcceptedOnL2
                 }
-            },
-            Err(e) => Err(CallError::Failed(anyhow::anyhow!("couldn't retrieve block from l1 : {}", e)) )?,
+            }
+            Err(e) => Err(CallError::Failed(anyhow::anyhow!("couldn't retrieve block from l1 : {}", e)))?,
         };
 
         let parent_blockhash = starknet_block.header().parent_block_hash;
