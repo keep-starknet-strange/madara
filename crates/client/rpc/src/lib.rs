@@ -855,7 +855,10 @@ where
                     BlockStatus::AcceptedOnL2
                 }
             }
-            Err(e) => Err(CallError::Failed(anyhow::anyhow!("couldn't retrieve block from l1 : {}", e)))?,
+            Err(e) => {
+                error!("Failed to get last synced l1 block, error: {e}");
+                Err(StarknetRpcApiError::InternalServerError)?
+            }
         };
 
         let parent_blockhash = starknet_block.header().parent_block_hash;
