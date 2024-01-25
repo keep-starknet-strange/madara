@@ -7,6 +7,7 @@ use alloc::vec::Vec;
 use blockifier::block_context::BlockContext;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
+use frame_support::storage;
 use mp_felt::Felt252Wrapper;
 use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
 use mp_transactions::execution::{Execute, ExecutionConfig};
@@ -20,8 +21,16 @@ use crate::execution_config::RuntimeExecutionConfigBuilder;
 use crate::{Config, Error, Pallet};
 
 impl<T: Config> Pallet<T> {
-    /// Estimate the fee associated with transaction
     pub fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
+        storage::transactional::with_transaction(|| {
+            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::estimate_fee_inner(
+                transactions,
+            )))
+        })
+        .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?
+    }
+
+    fn estimate_fee_inner(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
         let transactions_len = transactions.len();
         let chain_id = Self::chain_id();
         let block_context = Self::get_block_context();
@@ -66,8 +75,21 @@ impl<T: Config> Pallet<T> {
 
         Ok(fees)
     }
-
     pub fn simulate_transactions(
+        transactions: Vec<UserTransaction>,
+        simulation_flags: &SimulationFlags,
+    ) -> Result<Vec<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>>, DispatchError>
+    {
+        storage::transactional::with_transaction(|| {
+            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::simulate_transactions_inner(
+                transactions,
+                simulation_flags,
+            )))
+        })
+        .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?
+    }
+
+    fn simulate_transactions_inner(
         transactions: Vec<UserTransaction>,
         simulation_flags: &SimulationFlags,
     ) -> Result<Vec<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>>, DispatchError>
@@ -93,6 +115,15 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), DispatchError> {
+        storage::transactional::with_transaction(|| {
+            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::estimate_message_fee_inner(
+                message,
+            )))
+        })
+        .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?
+    }
+
+    fn estimate_message_fee_inner(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), DispatchError> {
         let chain_id = Self::chain_id();
 
         let tx_execution_infos = message
