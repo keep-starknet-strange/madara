@@ -1608,6 +1608,18 @@
 <a href="#1608" id="1608">1608</a>
 <a href="#1609" id="1609">1609</a>
 <a href="#1610" id="1610">1610</a>
+<a href="#1611" id="1611">1611</a>
+<a href="#1612" id="1612">1612</a>
+<a href="#1613" id="1613">1613</a>
+<a href="#1614" id="1614">1614</a>
+<a href="#1615" id="1615">1615</a>
+<a href="#1616" id="1616">1616</a>
+<a href="#1617" id="1617">1617</a>
+<a href="#1618" id="1618">1618</a>
+<a href="#1619" id="1619">1619</a>
+<a href="#1620" id="1620">1620</a>
+<a href="#1621" id="1621">1621</a>
+<a href="#1622" id="1622">1622</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -2457,12 +2469,24 @@
         } <span class="kw">else </span>{
             starknet_block.transactions_hashes::&lt;H&gt;(chain_id.<span class="number">0</span>.into()).map(FieldElement::from).collect()
         };
+        <span class="kw">let </span>block_status = <span class="kw">match </span><span class="self">self</span>.backend.messaging().last_synced_l1_block_with_event() {
+            <span class="prelude-val">Ok</span>(l1_block) =&gt; {
+                <span class="kw">if </span>l1_block.block_number &gt;= starknet_block.header().block_number {
+                    BlockStatus::AcceptedOnL1
+                } <span class="kw">else </span>{
+                    BlockStatus::AcceptedOnL2
+                }
+            }
+            <span class="prelude-val">Err</span>(e) =&gt; {
+                <span class="macro">error!</span>(<span class="string">&quot;Failed to get last synced l1 block, error: {e}&quot;</span>);
+                <span class="prelude-val">Err</span>(StarknetRpcApiError::InternalServerError)<span class="question-mark">?
+            </span>}
+        };
 
         <span class="kw">let </span>parent_blockhash = starknet_block.header().parent_block_hash;
         <span class="kw">let </span>block_with_tx_hashes = BlockWithTxHashes {
             transactions: transaction_hashes,
-            <span class="comment">// TODO: Status hardcoded, get status from block
-            </span>status: BlockStatus::AcceptedOnL2,
+            status: block_status,
             block_hash: block_hash.into(),
             parent_hash: Felt252Wrapper::from(parent_blockhash).into(),
             block_number: starknet_block.header().block_number,
