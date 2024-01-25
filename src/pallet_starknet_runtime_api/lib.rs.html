@@ -217,7 +217,7 @@
         <span class="doccomment">/// Returns fee estimate
         </span><span class="kw">fn </span>estimate_fee(transactions: Vec&lt;UserTransaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(u64, u64)&gt;, DispatchError&gt;;
         <span class="doccomment">/// Returns message fee estimate
-        </span><span class="kw">fn </span>estimate_message_fee(message: HandleL1MessageTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u64, u64, u64), DispatchError&gt;;
+        </span><span class="kw">fn </span>estimate_message_fee(message: HandleL1MessageTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u128, u64, u64), DispatchError&gt;;
         <span class="doccomment">/// Simulates transactions and returns their trace
         </span><span class="kw">fn </span>simulate_transactions(transactions: Vec&lt;UserTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;&gt;, DispatchError&gt;;
         <span class="doccomment">/// Filters extrinsic transactions to return only Starknet transactions

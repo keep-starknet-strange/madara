@@ -1667,6 +1667,9 @@
 <a href="#1667" id="1667">1667</a>
 <a href="#1668" id="1668">1668</a>
 <a href="#1669" id="1669">1669</a>
+<a href="#1670" id="1670">1670</a>
+<a href="#1671" id="1671">1671</a>
+<a href="#1672" id="1672">1672</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -2698,8 +2701,11 @@
                 StarknetRpcApiError::ContractError
             })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>estimate =
-            FeeEstimate { gas_price: fee_estimate.<span class="number">0</span>, gas_consumed: fee_estimate.<span class="number">2</span>, overall_fee: fee_estimate.<span class="number">1 </span>};
+        <span class="kw">let </span>estimate = FeeEstimate {
+            gas_price: fee_estimate.<span class="number">0</span>.try_into().map_err(|<span class="kw">_</span>| StarknetRpcApiError::InternalServerError)<span class="question-mark">?</span>,
+            gas_consumed: fee_estimate.<span class="number">2</span>,
+            overall_fee: fee_estimate.<span class="number">1</span>,
+        };
 
         <span class="prelude-val">Ok</span>(estimate)
     }

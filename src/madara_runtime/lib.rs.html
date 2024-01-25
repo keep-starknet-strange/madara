@@ -782,12 +782,12 @@
             Starknet::estimate_fee(transactions)
         }
 
-        <span class="kw">fn </span>estimate_message_fee(message: HandleL1MessageTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u64, u64, u64), DispatchError&gt; {
+        <span class="kw">fn </span>estimate_message_fee(message: HandleL1MessageTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u128, u64, u64), DispatchError&gt; {
             Starknet::estimate_message_fee(message)
         }
 
         <span class="kw">fn </span>simulate_transactions(transactions: Vec&lt;UserTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;&gt;, DispatchError&gt; {
-            Starknet::simulate_transactions(transactions, simulation_flags)
+            Starknet::simulate_transactions(transactions, <span class="kw-2">&amp;</span>simulation_flags)
         }
 
         <span class="kw">fn </span>get_starknet_events_and_their_associated_tx_hash(block_extrinsics: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;, chain_id: Felt252Wrapper) -&gt; Vec&lt;(Felt252Wrapper, StarknetEvent)&gt; {
