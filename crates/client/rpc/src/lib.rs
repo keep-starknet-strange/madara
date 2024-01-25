@@ -847,12 +847,24 @@ where
         } else {
             starknet_block.transactions_hashes::<H>(chain_id.0.into()).map(FieldElement::from).collect()
         };
+        let block_status = match self.backend.messaging().last_synced_l1_block_with_event() {
+            Ok(l1_block) => {
+                if l1_block.block_number >= starknet_block.header().block_number {
+                    BlockStatus::AcceptedOnL1
+                } else {
+                    BlockStatus::AcceptedOnL2
+                }
+            }
+            Err(e) => {
+                error!("Failed to get last synced l1 block, error: {e}");
+                Err(StarknetRpcApiError::InternalServerError)?
+            }
+        };
 
         let parent_blockhash = starknet_block.header().parent_block_hash;
         let block_with_tx_hashes = BlockWithTxHashes {
             transactions: transaction_hashes,
-            // TODO: Status hardcoded, get status from block
-            status: BlockStatus::AcceptedOnL2,
+            status: block_status,
             block_hash: block_hash.into(),
             parent_hash: Felt252Wrapper::from(parent_blockhash).into(),
             block_number: starknet_block.header().block_number,
