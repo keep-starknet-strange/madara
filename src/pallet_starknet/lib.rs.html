@@ -1165,6 +1165,31 @@
 <a href="#1165" id="1165">1165</a>
 <a href="#1166" id="1166">1166</a>
 <a href="#1167" id="1167">1167</a>
+<a href="#1168" id="1168">1168</a>
+<a href="#1169" id="1169">1169</a>
+<a href="#1170" id="1170">1170</a>
+<a href="#1171" id="1171">1171</a>
+<a href="#1172" id="1172">1172</a>
+<a href="#1173" id="1173">1173</a>
+<a href="#1174" id="1174">1174</a>
+<a href="#1175" id="1175">1175</a>
+<a href="#1176" id="1176">1176</a>
+<a href="#1177" id="1177">1177</a>
+<a href="#1178" id="1178">1178</a>
+<a href="#1179" id="1179">1179</a>
+<a href="#1180" id="1180">1180</a>
+<a href="#1181" id="1181">1181</a>
+<a href="#1182" id="1182">1182</a>
+<a href="#1183" id="1183">1183</a>
+<a href="#1184" id="1184">1184</a>
+<a href="#1185" id="1185">1185</a>
+<a href="#1186" id="1186">1186</a>
+<a href="#1187" id="1187">1187</a>
+<a href="#1188" id="1188">1188</a>
+<a href="#1189" id="1189">1189</a>
+<a href="#1190" id="1190">1190</a>
+<a href="#1191" id="1191">1191</a>
+<a href="#1192" id="1192">1192</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -2271,6 +2296,31 @@
             }
         }
         <span class="prelude-val">Ok</span>(results)
+    }
+
+    <span class="doccomment">/// Warning : this should only be called from the runtimeAPI, never from inside an extrinsic
+    /// execution flow
+    </span><span class="kw">pub fn </span>estimate_message_fee(message: HandleL1MessageTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u64, u64, u64), DispatchError&gt; {
+        <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
+        <span class="kw">let </span>transaction = message.into_executable::&lt;T::SystemHash&gt;(chain_id, Fee::default(), <span class="bool-val">true</span>);
+        <span class="kw">let </span>gas_price: u64 = T::L1GasPrice::get().price_in_wei.try_into().unwrap();
+
+        <span class="kw">let </span>tx_execution_infos = transaction
+            .execute(
+                <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
+                <span class="kw-2">&amp;</span><span class="self">Self</span>::get_block_context(),
+                <span class="kw-2">&amp;</span>RuntimeExecutionConfigBuilder::new::&lt;T&gt;().with_query_mode().with_disable_nonce_validation().build(),
+            )
+            .map_err(|e| {
+                <span class="macro">log::error!</span>(<span class="string">&quot;failed to execute invoke tx: {:?}&quot;</span>, e);
+                Error::&lt;T&gt;::TransactionExecutionFailed
+            })<span class="question-mark">?</span>;
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(l1_gas_usage) = tx_execution_infos.actual_resources.<span class="number">0</span>.get(<span class="string">&quot;l1_gas_usage&quot;</span>) {
+            <span class="prelude-val">Ok</span>((gas_price, tx_execution_infos.actual_fee.<span class="number">0 </span><span class="kw">as </span>u64, <span class="kw-2">*</span>l1_gas_usage))
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed.into())
+        }
     }
 
     <span class="kw">pub fn </span>simulate_transactions(

@@ -496,6 +496,10 @@
 <a href="#496" id="496">496</a>
 <a href="#497" id="497">497</a>
 <a href="#498" id="498">498</a>
+<a href="#499" id="499">499</a>
+<a href="#500" id="500">500</a>
+<a href="#501" id="501">501</a>
+<a href="#502" id="502">502</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don&#39;t support yet validity proofs and state updates to
@@ -776,6 +780,10 @@
 
         <span class="kw">fn </span>estimate_fee(transactions: Vec&lt;UserTransaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(u64, u64)&gt;, DispatchError&gt; {
             Starknet::estimate_fee(transactions)
+        }
+
+        <span class="kw">fn </span>estimate_message_fee(message: HandleL1MessageTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u64, u64, u64), DispatchError&gt; {
+            Starknet::estimate_message_fee(message)
         }
 
         <span class="kw">fn </span>simulate_transactions(transactions: Vec&lt;UserTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;&gt;, DispatchError&gt; {

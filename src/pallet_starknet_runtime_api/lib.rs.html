@@ -156,6 +156,8 @@
 <a href="#156" id="156">156</a>
 <a href="#157" id="157">157</a>
 <a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Definition of the runtime API for the Starknet pallet.
 
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
@@ -214,6 +216,8 @@
         </span><span class="kw">fn </span>fee_token_address() -&gt; ContractAddress;
         <span class="doccomment">/// Returns fee estimate
         </span><span class="kw">fn </span>estimate_fee(transactions: Vec&lt;UserTransaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(u64, u64)&gt;, DispatchError&gt;;
+        <span class="doccomment">/// Returns message fee estimate
+        </span><span class="kw">fn </span>estimate_message_fee(message: HandleL1MessageTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u64, u64, u64), DispatchError&gt;;
         <span class="doccomment">/// Simulates transactions and returns their trace
         </span><span class="kw">fn </span>simulate_transactions(transactions: Vec&lt;UserTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;&gt;, DispatchError&gt;;
         <span class="doccomment">/// Filters extrinsic transactions to return only Starknet transactions

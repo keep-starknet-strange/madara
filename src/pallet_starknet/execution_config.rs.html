@@ -42,6 +42,10 @@
 <a href="#42" id="42">42</a>
 <a href="#43" id="43">43</a>
 <a href="#44" id="44">44</a>
+<a href="#45" id="45">45</a>
+<a href="#46" id="46">46</a>
+<a href="#47" id="47">47</a>
+<a href="#48" id="48">48</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>mp_simulations::SimulationFlags;
 <span class="kw">use </span>mp_transactions::execution::ExecutionConfig;
 <span class="kw">use </span>sp_core::Get;
@@ -75,7 +79,11 @@
         <span class="self">self</span>.<span class="number">0</span>.disable_validation = simulation_flags.skip_validate;
         <span class="self">self
     </span>}
-
+    <span class="attr">#[must_use]
+    </span><span class="kw">pub fn </span>with_disable_nonce_validation(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.<span class="number">0</span>.disable_nonce_validation = <span class="bool-val">true</span>;
+        <span class="self">self
+    </span>}
     <span class="attr">#[must_use]
     </span><span class="kw">pub fn </span>with_offset_version(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
         <span class="self">self</span>.<span class="number">0</span>.offset_version = <span class="bool-val">true</span>;

@@ -190,6 +190,18 @@
 <a href="#190" id="190">190</a>
 <a href="#191" id="191">191</a>
 <a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
@@ -211,7 +223,7 @@
 <span class="kw">use </span>blockifier::transaction::transaction_types::TransactionType;
 <span class="kw">use </span>derive_more::From;
 <span class="kw">use </span>starknet_api::transaction::Fee;
-<span class="kw">use </span>starknet_core::types::{TransactionExecutionStatus, TransactionFinalityStatus};
+<span class="kw">use </span>starknet_core::types::{MsgFromL1, TransactionExecutionStatus, TransactionFinalityStatus};
 <span class="kw">use </span>starknet_ff::FieldElement;
 
 <span class="kw">const </span>SIMULATE_TX_VERSION_OFFSET: FieldElement =
@@ -381,5 +393,17 @@
     <span class="kw">pub </span>contract_address: Felt252Wrapper,
     <span class="kw">pub </span>entry_point_selector: Felt252Wrapper,
     <span class="kw">pub </span>calldata: Vec&lt;Felt252Wrapper&gt;,
+}
+
+<span class="kw">impl </span>From&lt;MsgFromL1&gt; <span class="kw">for </span>HandleL1MessageTransaction {
+    <span class="kw">fn </span>from(msg: MsgFromL1) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>calldata = msg.payload.into_iter().map(|felt| felt.into()).collect();
+        <span class="self">Self </span>{
+            contract_address: msg.to_address.into(),
+            nonce: <span class="number">0u32</span>.into(),
+            entry_point_selector: msg.entry_point_selector.into(),
+            calldata,
+        }
+    }
 }
 </code></pre></div></section></main></body></html>
