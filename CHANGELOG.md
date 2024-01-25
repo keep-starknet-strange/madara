@@ -2,6 +2,7 @@
 
 ## Next release
 
+- dev: fix linter warning in README.md
 - fix: remove waiting loop from `getTxReceipt`
 - feat: types in `mp-transactions` impl a method to get their version
 - feat: make L1 gas price a `const` of the `RuntimeConfig`
@@ -92,8 +93,10 @@
 - chore: deprecate `madara-app` and `madara-dev-explorer` modules
 - chore(data-availability-avail): implement fire and forget, and add ws
   reconnection logic
-- chore: update `polkadot-sdk` to `release-polkadot-v1.3.0`
-- feat(rpc) : estimateMessageFee RPC call implementation
+- chore: update `polkadot-sdk` to `release-polkadot-v1.3.0` <<<<<<< HEAD
+- # feat(rpc) : estimateMessageFee RPC call implementation
+- feat: fallback default file for DA and Settlement configuration files
+  > > > > > > > 30980a4d21857d3bac7c5bcf4e3a2d6dc63bf5ce
 
 ## v0.5.0
 
