@@ -84,17 +84,25 @@ pub fn execute_txs_until_first_failed_and_rollback<T: pallet::Config>(
             // simple with the error handling
             match result {
                 Ok(tx_info) if !tx_info.is_reverted() => execution_infos.push(tx_info),
-                _ => break,
+                Err(e) => {
+                    log::error!("Transaction execution failed during dry run: {e}");
+                    break;
+                }
+                Ok(tx_info) => {
+                    log::error!("Transaction execution reverted during dry run: {}", tx_info.revert_error.unwrap());
+                    break;
+                }
             };
         }
         storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(()))
     })
     .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?;
 
-    // All transation were successfully executed
     Ok(if execution_infos.len() == txs.len() {
+        // All transation were successfully executed
         Ok(execution_infos)
     } else {
+        // One Tx failed
         Err(PlaceHolderErrorTypeForFailedStarknetExecution)
     })
 }
