@@ -45,6 +45,9 @@ pub mod blockifier_state_adapter;
 pub mod execution_config;
 #[cfg(feature = "std")]
 pub mod genesis_loader;
+/// The method used to implement the starknet RPC trace API.
+/// They should never be used out of the RuntimeAPI.
+pub mod simulations;
 /// Transaction validation logic.
 pub mod transaction_validation;
 /// The Starknet pallet's runtime custom types.
@@ -52,7 +55,6 @@ pub mod types;
 
 #[cfg(test)]
 mod tests;
-mod utils;
 
 #[macro_use]
 pub extern crate alloc;
@@ -70,7 +72,6 @@ use blockifier::execution::entry_point::{
 };
 use blockifier::execution::errors::{EntryPointExecutionError, PreExecutionError};
 use blockifier::state::cached_state::ContractStorageKey;
-use blockifier::transaction::objects::TransactionExecutionInfo;
 use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
 use frame_support::traits::Time;
@@ -81,7 +82,6 @@ use mp_fee::{ResourcePrice, INITIAL_GAS};
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
-use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_transactions::execution::Execute;
 use mp_transactions::{
@@ -98,12 +98,10 @@ use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash};
 use starknet_crypto::FieldElement;
 use transaction_validation::TxPriorityInfo;
-use utils::execute_txs_until_first_failed_and_rollback;
 
 use crate::alloc::string::ToString;
 use crate::execution_config::RuntimeExecutionConfigBuilder;
 use crate::types::{CasmClassHash, SierraClassHash, StorageSlot};
-use crate::utils::execute_all_txs_and_rollback;
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
@@ -1077,33 +1075,6 @@ impl<T: Config> Pallet<T> {
         next_order
     }
 
-    /// Estimate the fee associated with transaction
-    pub fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
-        let chain_id = Self::chain_id();
-
-        let execution_infos = execute_txs_until_first_failed_and_rollback::<T>(
-            &transactions,
-            &Self::get_block_context(),
-            chain_id,
-            &mut RuntimeExecutionConfigBuilder::new::<T>().with_query_mode().build(),
-        )?
-        .map_err(|_| DispatchError::from(Error::<T>::TransactionExecutionFailed))?;
-
-        let fees = execution_infos
-            .into_iter()
-            .map(|exec_info| {
-                exec_info
-                    .actual_resources
-                    .0
-                    .get("l1_gas_usage")
-                    .ok_or_else(|| DispatchError::from(Error::<T>::MissingL1GasUsage))
-                    .map(|l1_gas_usage| (exec_info.actual_fee.0 as u64, *l1_gas_usage))
-            })
-            .collect::<Result<Vec<_>, _>>()?;
-
-        Ok(fees)
-    }
-
     /// Warning : this should only be called from the runtimeAPI, never from inside an extrinsic
     /// execution flow
     pub fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u64, u64, u64), DispatchError> {
@@ -1127,23 +1098,6 @@ impl<T: Config> Pallet<T> {
         } else {
             Err(Error::<T>::TransactionExecutionFailed.into())
         }
-    }
-
-    pub fn simulate_transactions(
-        transactions: Vec<UserTransaction>,
-        simulation_flags: SimulationFlags,
-    ) -> Result<Vec<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>>, DispatchError>
-    {
-        let chain_id = Self::chain_id();
-
-        let tx_execution_results = execute_all_txs_and_rollback::<T>(
-            &transactions,
-            &Self::get_block_context(),
-            chain_id,
-            &mut RuntimeExecutionConfigBuilder::new::<T>().with_simulation_mode(&simulation_flags).build(),
-        )?;
-
-        Ok(tx_execution_results)
     }
 
     pub fn emit_and_store_tx_and_fees_events(
