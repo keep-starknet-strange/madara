@@ -234,6 +234,18 @@
 <a href="#234" id="234">234</a>
 <a href="#235" id="235">235</a>
 <a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
 </pre></div><pre class="rust"><code><span class="attr">#[cfg(feature = <span class="string">&quot;avail&quot;</span>)]
 </span><span class="kw">pub mod </span>avail;
 <span class="attr">#[cfg(feature = <span class="string">&quot;celestia&quot;</span>)]
@@ -277,6 +289,18 @@
     Ethereum,
     <span class="attr">#[cfg(feature = <span class="string">&quot;avail&quot;</span>)]
     </span>Avail,
+}
+
+<span class="kw">impl </span>Display <span class="kw">for </span>DaLayer {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="attr">#[cfg(feature = <span class="string">&quot;celestia&quot;</span>)]
+            </span>DaLayer::Celestia =&gt; Display::fmt(<span class="string">&quot;Celestia&quot;</span>, f),
+            DaLayer::Ethereum =&gt; Display::fmt(<span class="string">&quot;Ethereum&quot;</span>, f),
+            <span class="attr">#[cfg(feature = <span class="string">&quot;avail&quot;</span>)]
+            </span>DaLayer::Avail =&gt; Display::fmt(<span class="string">&quot;Avail&quot;</span>, f),
+        }
+    }
 }
 
 <span class="doccomment">/// Data availability modes in which Madara can be initialized.
