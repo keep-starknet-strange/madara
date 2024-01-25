@@ -45,6 +45,8 @@ pub mod blockifier_state_adapter;
 pub mod execution_config;
 #[cfg(feature = "std")]
 pub mod genesis_loader;
+/// Simulation, estimations and execution trace logic.
+pub mod simulations;
 /// Transaction validation logic.
 pub mod transaction_validation;
 /// The Starknet pallet's runtime custom types.
@@ -52,7 +54,6 @@ pub mod types;
 
 #[cfg(test)]
 mod tests;
-mod utils;
 
 #[macro_use]
 pub extern crate alloc;
@@ -70,7 +71,6 @@ use blockifier::execution::entry_point::{
 };
 use blockifier::execution::errors::{EntryPointExecutionError, PreExecutionError};
 use blockifier::state::cached_state::ContractStorageKey;
-use blockifier::transaction::objects::TransactionExecutionInfo;
 use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
 use frame_support::traits::Time;
@@ -81,7 +81,6 @@ use mp_fee::{ResourcePrice, INITIAL_GAS};
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
-use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_transactions::execution::Execute;
 use mp_transactions::{
@@ -102,7 +101,6 @@ use transaction_validation::TxPriorityInfo;
 use crate::alloc::string::ToString;
 use crate::execution_config::RuntimeExecutionConfigBuilder;
 use crate::types::{CasmClassHash, SierraClassHash, StorageSlot};
-use crate::utils::execute_txs_and_rollback;
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
@@ -440,6 +438,7 @@ pub mod pallet {
         MissingCallInfo,
         FailedToCreateATransactionalStorageExecution,
         L1MessageAlreadyExecuted,
+        MissingL1GasUsage,
     }
 
     /// The Starknet pallet external functions.
@@ -1073,79 +1072,6 @@ impl<T: Config> Pallet<T> {
         }
 
         next_order
-    }
-
-    /// Estimate the fee associated with transaction
-    pub fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
-        let chain_id = Self::chain_id();
-
-        let execution_results = execute_txs_and_rollback::<T>(
-            &transactions,
-            &Self::get_block_context(),
-            chain_id,
-            &mut RuntimeExecutionConfigBuilder::new::<T>().with_query_mode().build(),
-        )?;
-
-        let mut results = vec![];
-        for res in execution_results {
-            match res {
-                Ok(tx_exec_info) => {
-                    log!(info, "Successfully estimated fee: {:?}", tx_exec_info);
-                    if let Some(l1_gas_usage) = tx_exec_info.actual_resources.0.get("l1_gas_usage") {
-                        results.push((tx_exec_info.actual_fee.0 as u64, *l1_gas_usage));
-                    } else {
-                        return Err(Error::<T>::TransactionExecutionFailed.into());
-                    }
-                }
-                Err(e) => {
-                    log!(info, "Failed to estimate fee: {:?}", e);
-                    return Err(Error::<T>::TransactionExecutionFailed.into());
-                }
-            }
-        }
-        Ok(results)
-    }
-
-    /// Warning : this should only be called from the runtimeAPI, never from inside an extrinsic
-    /// execution flow
-    pub fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u64, u64, u64), DispatchError> {
-        let chain_id = Self::chain_id();
-        let transaction = message.into_executable::<T::SystemHash>(chain_id, Fee::default(), true);
-        let gas_price: u64 = T::L1GasPrice::get().price_in_wei.try_into().unwrap();
-
-        let tx_execution_infos = transaction
-            .execute(
-                &mut BlockifierStateAdapter::<T>::default(),
-                &Self::get_block_context(),
-                &RuntimeExecutionConfigBuilder::new::<T>().with_query_mode().with_disable_nonce_validation().build(),
-            )
-            .map_err(|e| {
-                log::error!("failed to execute invoke tx: {:?}", e);
-                Error::<T>::TransactionExecutionFailed
-            })?;
-
-        if let Some(l1_gas_usage) = tx_execution_infos.actual_resources.0.get("l1_gas_usage") {
-            Ok((gas_price, tx_execution_infos.actual_fee.0 as u64, *l1_gas_usage))
-        } else {
-            Err(Error::<T>::TransactionExecutionFailed.into())
-        }
-    }
-
-    pub fn simulate_transactions(
-        transactions: Vec<UserTransaction>,
-        simulation_flags: SimulationFlags,
-    ) -> Result<Vec<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>>, DispatchError>
-    {
-        let chain_id = Self::chain_id();
-
-        let tx_execution_results = execute_txs_and_rollback::<T>(
-            &transactions,
-            &Self::get_block_context(),
-            chain_id,
-            &mut RuntimeExecutionConfigBuilder::new::<T>().with_simulation_mode(&simulation_flags).build(),
-        )?;
-
-        Ok(tx_execution_results)
     }
 
     pub fn emit_and_store_tx_and_fees_events(
