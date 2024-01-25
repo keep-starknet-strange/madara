@@ -186,13 +186,21 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
 
     let da_client = match cli.run.da_layer {
         Some(da_layer) => {
-            let da_conf = cli.run.clone().da_conf.unwrap_or({
-                let path_da_conf_json = chain_config_dir.join(format!("{da_layer}.json"));
-                if !path_da_conf_json.exists() {
-                    return Err(sc_cli::Error::Input(format!("no file {da_layer}.json in base_path")));
+            let da_conf = match cli.run.clone().da_conf {
+                Some(da_conf) => da_conf,
+                None => {
+                    let path_da_conf_json = chain_config_dir.join(format!("{}.json", da_layer));
+                    if !path_da_conf_json.exists() {
+                        return Err(sc_cli::Error::Input(format!(
+                            "no file {} in base_path",
+                            path_da_conf_json.to_string_lossy()
+                        )));
+                    }
+                    path_da_conf_json
                 }
-                path_da_conf_json
-            });
+            };
+
+            log::info!("Initializing DA client with layer: {:?}", da_layer);
 
             Some(init_da_client(da_layer, da_conf)?)
         }
