@@ -45,8 +45,7 @@ pub mod blockifier_state_adapter;
 pub mod execution_config;
 #[cfg(feature = "std")]
 pub mod genesis_loader;
-/// The method used to implement the starknet RPC trace API.
-/// They should never be used out of the RuntimeAPI.
+/// Simulation, estimations and execution trace logic.
 pub mod simulations;
 /// Transaction validation logic.
 pub mod transaction_validation;

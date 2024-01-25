@@ -1,7 +1,3 @@
-// All the method defined there should only be called from the RuntimeAPI,
-// never from some extrinsic body, otherwise they will alter the chain state.
-// I can't emphasis enought how important it is.
-
 use alloc::vec::Vec;
 
 use blockifier::block_context::BlockContext;
