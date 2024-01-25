@@ -1029,8 +1029,11 @@ where
                 StarknetRpcApiError::ContractError
             })?;
 
-        let estimate =
-            FeeEstimate { gas_price: fee_estimate.0, gas_consumed: fee_estimate.2, overall_fee: fee_estimate.1 };
+        let estimate = FeeEstimate {
+            gas_price: fee_estimate.0.try_into().map_err(|_| StarknetRpcApiError::InternalServerError)?,
+            gas_consumed: fee_estimate.2,
+            overall_fee: fee_estimate.1,
+        };
 
         Ok(estimate)
     }
