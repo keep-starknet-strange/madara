@@ -17,12 +17,12 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 anyhow = { workspace = true }
-blockifier = { workspace = true, default-features = false }
+blockifier = { workspace = true, default-features = true }
 cairo-lang-casm = { workspace = true }
 cairo-lang-casm-contract-class = { workspace = true }
 cairo-lang-starknet = { workspace = true }
 cairo-lang-utils = { workspace = true }
-cairo-vm = { workspace = true, default-features = false }
+cairo-vm = { workspace = true, default-features = true }
 flate2 = { workspace = true }
 frame-support = { workspace = true }
 hex = { workspace = true, default-features = true }
