@@ -11,7 +11,6 @@
 //! and it should contain the starknet block. Pushing more log will make it impossible for this set
 //! of reader functions to operate properly.
 
-#![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::large_enum_variant)]
 #![deny(unused_crate_dependencies)]
 

@@ -1,5 +1,4 @@
 //! L1-L2 messages types definition
-#![cfg_attr(not(feature = "std"), no_std)]
 
 #[doc(hidden)]
 pub extern crate alloc;

@@ -1,5 +1,4 @@
 //! Starknet state primitives.
-#![cfg_attr(not(feature = "std"), no_std)]
 
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::state::cached_state::{ContractStorageKey, StateChangesCount};

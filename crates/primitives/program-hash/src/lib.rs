@@ -1,5 +1,4 @@
 //! Traits for Starknet OS program hash.
-#![cfg_attr(not(feature = "std"), no_std)]
 
 use mp_felt::Felt252Wrapper;
 

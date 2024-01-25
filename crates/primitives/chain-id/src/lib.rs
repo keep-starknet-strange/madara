@@ -1,5 +1,4 @@
 //! Traits for chain ids.
-#![cfg_attr(not(feature = "std"), no_std)]
 
 use mp_felt::Felt252Wrapper;
 
