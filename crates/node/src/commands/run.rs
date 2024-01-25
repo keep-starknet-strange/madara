@@ -215,13 +215,21 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
 
     let settlement_config: Option<(SettlementLayer, PathBuf)> = match cli.run.settlement {
         Some(SettlementLayer::Ethereum) => {
-            let settlement_conf = cli.run.clone().settlement_conf.unwrap_or({
-                let path_sett_conf_json = chain_config_dir.join("settlement_conf.json");
-                if !path_sett_conf_json.exists() {
-                    return Err(sc_cli::Error::Input("no file settlement_conf in base_path".to_string()));
+            let settlement_conf = match cli.run.clone().settlement_conf {
+                Some(settlement_conf) => settlement_conf,
+                None => {
+                    let path_settlement_conf_json = chain_config_dir.join("settlement_conf.json");
+                    if !path_settlement_conf_json.exists() {
+                        return Err(sc_cli::Error::Input(format!(
+                            "no file {} in base_path",
+                            path_settlement_conf_json.to_string_lossy()
+                        )));
+                    }
+                    path_settlement_conf_json
                 }
-                path_sett_conf_json
-            });
+            };
+
+            log::info!("Initializing settlement client with layer: {:?}", SettlementLayer::Ethereum);
 
             Some((SettlementLayer::Ethereum, settlement_conf))
         }
