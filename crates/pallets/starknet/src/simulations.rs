@@ -4,9 +4,12 @@
 
 use alloc::vec::Vec;
 
+use blockifier::block_context::BlockContext;
+use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
+use mp_felt::Felt252Wrapper;
 use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
-use mp_transactions::execution::Execute;
+use mp_transactions::execution::{Execute, ExecutionConfig};
 use mp_transactions::UserTransaction;
 use sp_runtime::DispatchError;
 
@@ -26,31 +29,8 @@ impl<T: Config> Pallet<T> {
             .into_iter()
             .map(|tx| {
                 execution_config.set_offset_version(tx.offset_version());
-                let execution_info_res = match tx {
-                    UserTransaction::Declare(tx, contract_class) => tx
-                        .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), tx.offset_version())
-                        .and_then(|exec| {
-                            exec.execute(&mut BlockifierStateAdapter::<T>::default(), &block_context, &execution_config)
-                        }),
-                    UserTransaction::DeployAccount(tx) => {
-                        let executable = tx.into_executable::<T::SystemHash>(chain_id, tx.offset_version());
-                        executable.execute(
-                            &mut BlockifierStateAdapter::<T>::default(),
-                            &block_context,
-                            &execution_config,
-                        )
-                    }
-                    UserTransaction::Invoke(tx) => {
-                        let executable = tx.into_executable::<T::SystemHash>(chain_id, tx.offset_version());
-                        executable.execute(
-                            &mut BlockifierStateAdapter::<T>::default(),
-                            &block_context,
-                            &execution_config,
-                        )
-                    }
-                };
 
-                match execution_info_res {
+                match Self::execute_transaction(tx, chain_id, &block_context, &execution_config) {
                     Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
                     Err(e) => {
                         log::error!("Transaction execution failed during fee estimation: {e}");
@@ -99,30 +79,8 @@ impl<T: Config> Pallet<T> {
             .into_iter()
             .map(|tx| {
                 execution_config.set_offset_version(tx.offset_version());
-                match tx {
-                    UserTransaction::Declare(tx, contract_class) => tx
-                        .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), tx.offset_version())
-                        .and_then(|exec| {
-                            exec.execute(&mut BlockifierStateAdapter::<T>::default(), &block_context, &execution_config)
-                        }),
-                    UserTransaction::DeployAccount(tx) => {
-                        let executable = tx.into_executable::<T::SystemHash>(chain_id, tx.offset_version());
-                        executable.execute(
-                            &mut BlockifierStateAdapter::<T>::default(),
-                            &block_context,
-                            &execution_config,
-                        )
-                    }
-                    UserTransaction::Invoke(tx) => {
-                        let executable = tx.into_executable::<T::SystemHash>(chain_id, tx.offset_version());
-                        executable.execute(
-                            &mut BlockifierStateAdapter::<T>::default(),
-                            &block_context,
-                            &execution_config,
-                        )
-                    }
-                }
-                .map_err(|e| {
+
+                Self::execute_transaction(tx, chain_id, &block_context, &execution_config).map_err(|e| {
                     log::error!("Transaction execution failed during simulation: {e}");
                     PlaceHolderErrorTypeForFailedStarknetExecution
                 })
@@ -130,5 +88,28 @@ impl<T: Config> Pallet<T> {
             .collect();
 
         Ok(tx_execution_results)
+    }
+
+    fn execute_transaction(
+        transaction: UserTransaction,
+        chain_id: Felt252Wrapper,
+        block_context: &BlockContext,
+        execution_config: &ExecutionConfig,
+    ) -> Result<TransactionExecutionInfo, TransactionExecutionError> {
+        match transaction {
+            UserTransaction::Declare(tx, contract_class) => {
+                tx.try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), tx.offset_version()).and_then(
+                    |exec| exec.execute(&mut BlockifierStateAdapter::<T>::default(), block_context, execution_config),
+                )
+            }
+            UserTransaction::DeployAccount(tx) => {
+                let executable = tx.into_executable::<T::SystemHash>(chain_id, tx.offset_version());
+                executable.execute(&mut BlockifierStateAdapter::<T>::default(), block_context, execution_config)
+            }
+            UserTransaction::Invoke(tx) => {
+                let executable = tx.into_executable::<T::SystemHash>(chain_id, tx.offset_version());
+                executable.execute(&mut BlockifierStateAdapter::<T>::default(), block_context, execution_config)
+            }
+        }
     }
 }
