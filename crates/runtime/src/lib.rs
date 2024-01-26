@@ -17,6 +17,7 @@ mod pallets;
 mod runtime_tests;
 mod types;
 
+use bitvec::prelude::*;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::transaction::objects::TransactionExecutionInfo;
 pub use config::*;
@@ -58,7 +59,11 @@ use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash};
 /// Import the types.
 pub use types::*;
-
+pub fn test_std_dep() -> bool {
+    let mut bv = bitvec![u8, Msb0;];
+    bv.push(false);
+    true
+}
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
     pub struct Runtime {
@@ -113,38 +118,46 @@ mod benches {
 impl_runtime_apis! {
     impl sp_api::Core<Block> for Runtime {
         fn version() -> RuntimeVersion {
+            test_std_dep();
             VERSION
         }
 
         fn execute_block(block: Block) {
+            test_std_dep();
             Executive::execute_block(block);
         }
 
         fn initialize_block(header: &<Block as BlockT>::Header) {
+            test_std_dep();
             Executive::initialize_block(header)
         }
     }
 
     impl sp_api::Metadata<Block> for Runtime {
         fn metadata() -> OpaqueMetadata {
+            test_std_dep();
             OpaqueMetadata::new(Runtime::metadata().into())
         }
 
         fn metadata_at_version(version: u32) -> Option<OpaqueMetadata> {
+            test_std_dep();
             Runtime::metadata_at_version(version)
         }
 
         fn metadata_versions() -> sp_std::vec::Vec<u32> {
+            test_std_dep();
             Runtime::metadata_versions()
         }
     }
 
     impl sp_block_builder::BlockBuilder<Block> for Runtime {
         fn apply_extrinsic(extrinsic: <Block as BlockT>::Extrinsic) -> ApplyExtrinsicResult {
+            test_std_dep();
             Executive::apply_extrinsic(extrinsic)
         }
 
         fn finalize_block() -> <Block as BlockT>::Header {
+            test_std_dep();
             Executive::finalize_block()
         }
 
@@ -241,10 +254,12 @@ impl_runtime_apis! {
         }
 
         fn call(address: ContractAddress, function_selector: EntryPointSelector, calldata: Calldata) -> Result<Vec<Felt252Wrapper>, DispatchError> {
+            test_std_dep();
             Starknet::call_contract(address, function_selector, calldata)
         }
 
         fn nonce(address: ContractAddress) -> Nonce{
+            test_std_dep();
             Starknet::nonce(address)
         }
 
@@ -269,27 +284,33 @@ impl_runtime_apis! {
         }
 
         fn fee_token_address() -> ContractAddress {
+            test_std_dep();
             Starknet::fee_token_address()
         }
 
         fn is_transaction_fee_disabled() -> bool {
+            test_std_dep();
             Starknet::is_transaction_fee_disabled()
         }
 
         fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
+            test_std_dep();
             Starknet::estimate_fee(transactions)
         }
 
         fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), DispatchError> {
+            test_std_dep();
             Starknet::estimate_message_fee(message)
         }
 
         fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>>, DispatchError> {
+            test_std_dep();
             Starknet::simulate_transactions(transactions, &simulation_flags)
         }
 
         fn get_starknet_events_and_their_associated_tx_hash(block_extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper) -> Vec<(Felt252Wrapper, StarknetEvent)> {
             System::read_events_no_consensus().filter_map(|event_record| {
+                test_std_dep();
                 let (phase, event) = match *event_record {
                     EventRecord { event: RuntimeEvent::Starknet(Event::StarknetEvent(event)), phase, .. } => (phase, event),
                     _ => return None,
@@ -314,6 +335,7 @@ impl_runtime_apis! {
         }
 
         fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction> {
+            test_std_dep();
             xts.into_iter().filter_map(|xt| match xt.function {
                 RuntimeCall::Starknet( invoke { transaction }) => Some(Transaction::Invoke(transaction)),
                 RuntimeCall::Starknet( declare { transaction, .. }) => Some(Transaction::Declare(transaction)),
