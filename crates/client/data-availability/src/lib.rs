@@ -236,9 +236,10 @@ pub async fn update_state<B: BlockT, H: HasherT>(
             log::info!("validity da mode not implemented");
         }
         DaMode::Sovereign => match madara_backend.da().state_diff(&block_hash) {
-            Ok(state_diff) => {
+            Ok(Some(state_diff)) => {
                 da_client.publish_state_diff(state_diff).await.map_err(|e| anyhow!("DA PUBLISH ERROR: {e}"))?;
             }
+            Ok(None) => Err(anyhow!("there is no state diff stored for block {}", block_hash))?,
             Err(e) => Err(anyhow!("could not pull state diff for block {}: {}", block_hash, e))?,
         },
         DaMode::Volition => log::info!("volition da mode not implemented"),

@@ -10,8 +10,10 @@ use cairo_lang_starknet::contract_class::{
 };
 use cairo_lang_starknet::contract_class_into_casm_contract_class::StarknetSierraCompilationError;
 use cairo_lang_utils::bigint::BigUintAsHex;
+use indexmap::IndexMap;
 use mp_block::Block as StarknetBlock;
 use mp_digest_log::find_starknet_block;
+use mp_felt::Felt252Wrapper;
 use num_bigint::{BigInt, BigUint, Sign};
 use sp_api::{BlockT, HeaderT};
 use sp_blockchain::HeaderBackend;
@@ -117,6 +119,36 @@ pub fn flattened_sierra_to_casm_contract_class(
     Ok(casm_contract_class)
 }
 
+pub fn flattened_sierra_to_sierra_contract_class(
+    flattened_sierra: Arc<FlattenedSierraClass>,
+) -> starknet_api::state::ContractClass {
+    let mut entry_point_by_type =
+        IndexMap::<starknet_api::state::EntryPointType, Vec<starknet_api::state::EntryPoint>>::with_capacity(3);
+    for sierra_entrypoint in flattened_sierra.entry_points_by_type.constructor.iter() {
+        entry_point_by_type
+            .entry(starknet_api::state::EntryPointType::Constructor)
+            .or_default()
+            .push(rpc_entry_point_to_starknet_api_entry_point(sierra_entrypoint));
+    }
+    for sierra_entrypoint in flattened_sierra.entry_points_by_type.external.iter() {
+        entry_point_by_type
+            .entry(starknet_api::state::EntryPointType::External)
+            .or_default()
+            .push(rpc_entry_point_to_starknet_api_entry_point(sierra_entrypoint));
+    }
+    for sierra_entrypoint in flattened_sierra.entry_points_by_type.l1_handler.iter() {
+        entry_point_by_type
+            .entry(starknet_api::state::EntryPointType::L1Handler)
+            .or_default()
+            .push(rpc_entry_point_to_starknet_api_entry_point(sierra_entrypoint));
+    }
+    starknet_api::state::ContractClass {
+        sierra_program: flattened_sierra.sierra_program.iter().map(|f| Felt252Wrapper(*f).into()).collect(),
+        entry_point_by_type,
+        abi: flattened_sierra.abi.clone(),
+    }
+}
+
 /// Converts a [FieldElement] to a [BigUint]
 fn field_element_to_big_uint(value: &FieldElement) -> BigUint {
     BigInt::from_bytes_be(Sign::Plus, &value.to_bytes_be()).to_biguint().unwrap()
@@ -125,6 +157,13 @@ fn field_element_to_big_uint(value: &FieldElement) -> BigUint {
 /// Converts a [FieldElement] to a [BigUintAsHex]
 fn field_element_to_big_uint_as_hex(value: &FieldElement) -> BigUintAsHex {
     BigUintAsHex { value: field_element_to_big_uint(value) }
+}
+
+fn rpc_entry_point_to_starknet_api_entry_point(value: &SierraEntryPoint) -> starknet_api::state::EntryPoint {
+    starknet_api::state::EntryPoint {
+        function_idx: starknet_api::state::FunctionIndex(value.function_idx),
+        selector: Felt252Wrapper(value.selector).into(),
+    }
 }
 
 /// Converts a [EntryPointsByType] to a [ContractEntryPoints]

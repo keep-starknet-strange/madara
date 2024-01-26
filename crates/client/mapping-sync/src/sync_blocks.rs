@@ -9,7 +9,7 @@ use sp_blockchain::{Backend as _, HeaderBackend};
 use sp_core::H256;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT, Zero};
 
-fn sync_block<B: BlockT, C, BE, H>(client: &C, backend: &mc_db::Backend<B>, header: &B::Header) -> Result<(), String>
+fn sync_block<B: BlockT, C, BE, H>(client: &C, backend: &mc_db::Backend<B>, header: &B::Header) -> anyhow::Result<()>
 where
     C: HeaderBackend<B> + StorageProvider<B, BE>,
     C: ProvideRuntimeApi<B>,
@@ -32,15 +32,12 @@ where
                     let storage_starknet_block_hash = storage_starknet_block.header().hash::<H>();
                     // Ensure the two blocks sources (chain storage and block digest) agree on the block content
                     if digest_starknet_block_hash != storage_starknet_block_hash {
-                        Err(format!(
+                        Err(anyhow::anyhow!(
                             "Starknet block hash mismatch: madara consensus digest ({digest_starknet_block_hash:?}), \
                              db state ({storage_starknet_block_hash:?})"
                         ))
                     } else {
-                        let chain_id = client
-                            .runtime_api()
-                            .chain_id(substrate_block_hash)
-                            .map_err(|_| "Failed to fetch chain_id through the runtime api")?;
+                        let chain_id = client.runtime_api().chain_id(substrate_block_hash)?;
 
                         // Success, we write the Starknet to Substate hashes mapping to db
                         let mapping_commitment = mc_db::MappingCommitment {
@@ -53,16 +50,16 @@ where
                                 .collect(),
                         };
 
-                        backend.mapping().write_hashes(mapping_commitment)
+                        backend.mapping().write_hashes(mapping_commitment).map_err(|e| anyhow::anyhow!(e))
                     }
                 }
                 // If there is not Starknet block in this Substrate block, we write it in the db
-                None => backend.mapping().write_none(substrate_block_hash),
+                None => backend.mapping().write_none(substrate_block_hash).map_err(|e| anyhow::anyhow!(e)),
             }
         }
         // If there is not Starknet block in this Substrate block, we write it in the db
-        Err(FindLogError::NotLog) => backend.mapping().write_none(substrate_block_hash),
-        Err(FindLogError::MultipleLogs) => Err("Multiple logs found".to_string()),
+        Err(FindLogError::NotLog) => backend.mapping().write_none(substrate_block_hash).map_err(|e| anyhow::anyhow!(e)),
+        Err(FindLogError::MultipleLogs) => Err(anyhow::anyhow!("Multiple logs found")),
     }
 }
 
@@ -70,7 +67,7 @@ fn sync_genesis_block<B: BlockT, C, H>(
     _client: &C,
     backend: &mc_db::Backend<B>,
     header: &B::Header,
-) -> Result<(), String>
+) -> anyhow::Result<()>
 where
     C: HeaderBackend<B>,
     B: BlockT,
@@ -80,8 +77,10 @@ where
 
     let block = match find_starknet_block(header.digest()) {
         Ok(block) => block,
-        Err(FindLogError::NotLog) => return backend.mapping().write_none(substrate_block_hash),
-        Err(FindLogError::MultipleLogs) => return Err("Multiple logs found".to_string()),
+        Err(FindLogError::NotLog) => {
+            return backend.mapping().write_none(substrate_block_hash).map_err(|e| anyhow::anyhow!(e));
+        }
+        Err(FindLogError::MultipleLogs) => return Err(anyhow::anyhow!("Multiple logs found")),
     };
     let block_hash = block.header().hash::<H>();
     let mapping_commitment = mc_db::MappingCommitment::<B> {
@@ -100,7 +99,7 @@ fn sync_one_block<B: BlockT, C, BE, H>(
     substrate_backend: &BE,
     madara_backend: &mc_db::Backend<B>,
     sync_from: <B::Header as HeaderT>::Number,
-) -> Result<bool, String>
+) -> anyhow::Result<bool>
 where
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
@@ -111,7 +110,7 @@ where
     let mut current_syncing_tips = madara_backend.meta().current_syncing_tips()?;
 
     if current_syncing_tips.is_empty() {
-        let mut leaves = substrate_backend.blockchain().leaves().map_err(|e| format!("{:?}", e))?;
+        let mut leaves = substrate_backend.blockchain().leaves()?;
         if leaves.is_empty() {
             return Ok(false);
         }
@@ -155,7 +154,7 @@ pub fn sync_blocks<B: BlockT, C, BE, H>(
     madara_backend: &mc_db::Backend<B>,
     limit: usize,
     sync_from: <B::Header as HeaderT>::Number,
-) -> Result<bool, String>
+) -> anyhow::Result<bool>
 where
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
@@ -177,7 +176,7 @@ fn fetch_header<B: BlockT, BE>(
     madara_backend: &mc_db::Backend<B>,
     checking_tip: B::Hash,
     sync_from: <B::Header as HeaderT>::Number,
-) -> Result<Option<B::Header>, String>
+) -> anyhow::Result<Option<B::Header>>
 where
     BE: HeaderBackend<B>,
 {
@@ -188,6 +187,6 @@ where
     match substrate_backend.header(checking_tip) {
         Ok(Some(checking_header)) if checking_header.number() >= &sync_from => Ok(Some(checking_header)),
         Ok(Some(_)) => Ok(None),
-        Ok(None) | Err(_) => Err("Header not found".to_string()),
+        Ok(None) | Err(_) => Err(anyhow::anyhow!("Header not found")),
     }
 }
