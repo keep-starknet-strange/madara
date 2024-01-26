@@ -66,7 +66,7 @@ blockifier = { workspace = true }
 starknet-core = { workspace = true }
 starknet-ff = { workspace = true }
 starknet_api = { workspace = true }
-bitvec = { workspace = true, default-features = true}
+bitvec = { workspace = true, default-features = true }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }
