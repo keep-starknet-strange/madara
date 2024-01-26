@@ -286,7 +286,7 @@ impl_runtime_apis! {
         }
 
         fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(TransactionSimulationResult, CommitmentStateDiff)>, DispatchError> {
-            let txs = Starknet::simulate_transactions(transactions, simulation_flags);
+            let txs = Starknet::simulate_transactions(transactions, &simulation_flags);
             log::info!("is_ok: {:#?}", txs.as_ref().unwrap()[1].0.is_ok());
             txs
         }

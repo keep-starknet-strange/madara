@@ -35,6 +35,8 @@ pub enum StarknetTransactionExecutionError {
     ContractError,
 }
 
+type TransactionSimulationResult = Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>;
+
 sp_api::decl_runtime_apis! {
     pub trait StarknetRuntimeApi {
         /// Returns the nonce associated with the given address in the given block
@@ -60,7 +62,7 @@ sp_api::decl_runtime_apis! {
         /// Returns message fee estimate
         fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), DispatchError>;
         /// Simulates transactions and returns their trace
-        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, CommitmentStateDiff)>, DispatchError>;
+        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(TransactionSimulationResult, CommitmentStateDiff)>, DispatchError>;
         /// Filters extrinsic transactions to return only Starknet transactions
         ///
         /// To support runtime upgrades, the client must be unaware of the specific extrinsic

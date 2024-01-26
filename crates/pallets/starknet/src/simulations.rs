@@ -1,6 +1,8 @@
 use alloc::vec::Vec;
 
 use blockifier::block_context::BlockContext;
+use blockifier::state::cached_state::{CachedState, CommitmentStateDiff};
+use blockifier::state::state_api::State;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
 use frame_support::storage;
@@ -12,8 +14,9 @@ use sp_core::Get;
 use sp_runtime::DispatchError;
 use starknet_api::transaction::Fee;
 
-use crate::blockifier_state_adapter::BlockifierStateAdapter;
+use crate::blockifier_state_adapter::{BlockifierStateAdapter, CachedBlockifierStateAdapter};
 use crate::execution_config::RuntimeExecutionConfigBuilder;
+use crate::types::TransactionSimulationResult;
 use crate::{Config, Error, Pallet};
 
 impl<T: Config> Pallet<T> {
@@ -74,8 +77,7 @@ impl<T: Config> Pallet<T> {
     pub fn simulate_transactions(
         transactions: Vec<UserTransaction>,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Vec<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>>, DispatchError>
-    {
+    ) -> Result<Vec<(TransactionSimulationResult, CommitmentStateDiff)>, DispatchError> {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::simulate_transactions_inner(
                 transactions,
@@ -88,8 +90,7 @@ impl<T: Config> Pallet<T> {
     fn simulate_transactions_inner(
         transactions: Vec<UserTransaction>,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Vec<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>>, DispatchError>
-    {
+    ) -> Result<Vec<(TransactionSimulationResult, CommitmentStateDiff)>, DispatchError> {
         let chain_id = Self::chain_id();
         let block_context = Self::get_block_context();
         let mut execution_config =
@@ -100,10 +101,12 @@ impl<T: Config> Pallet<T> {
             .map(|tx| {
                 execution_config.set_offset_version(tx.offset_version());
 
-                Self::execute_transaction(tx, chain_id, &block_context, &execution_config).map_err(|e| {
+                let res = Self::execute_transaction_with_state_diff(tx, chain_id, &block_context, &execution_config);
+                let result = res.0.map_err(|e| {
                     log::error!("Transaction execution failed during simulation: {e}");
                     PlaceHolderErrorTypeForFailedStarknetExecution
-                })
+                });
+                (result, res.1)
             })
             .collect();
 
@@ -162,5 +165,29 @@ impl<T: Config> Pallet<T> {
                 executable.execute(&mut BlockifierStateAdapter::<T>::default(), block_context, execution_config)
             }
         }
+    }
+
+    fn execute_transaction_with_state_diff(
+        transaction: UserTransaction,
+        chain_id: Felt252Wrapper,
+        block_context: &BlockContext,
+        execution_config: &ExecutionConfig,
+    ) -> (Result<TransactionExecutionInfo, TransactionExecutionError>, CommitmentStateDiff) {
+        let mut cached_state = CachedBlockifierStateAdapter(CachedState::from(BlockifierStateAdapter::<T>::default()));
+        let result = match transaction {
+            UserTransaction::Declare(tx, contract_class) => tx
+                .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), tx.offset_version())
+                .and_then(|exec| exec.execute(&mut cached_state, block_context, execution_config)),
+            UserTransaction::DeployAccount(tx) => {
+                let executable = tx.into_executable::<T::SystemHash>(chain_id, tx.offset_version());
+                executable.execute(&mut cached_state, block_context, execution_config)
+            }
+            UserTransaction::Invoke(tx) => {
+                let executable = tx.into_executable::<T::SystemHash>(chain_id, tx.offset_version());
+                executable.execute(&mut cached_state, block_context, execution_config)
+            }
+        };
+
+        (result, cached_state.to_state_diff())
     }
 }
