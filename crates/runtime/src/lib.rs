@@ -7,7 +7,7 @@
 
 // Make the WASM binary available.
 #[cfg(feature = "std")]
-//include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+// include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 pub const WASM_BINARY: Option<&[u8]> = Some(&[]);
 
 /// Runtime modules.

@@ -7,7 +7,6 @@
 //! The [`Felt252Wrapper`] implements the traits for SCALE encoding, and wrap
 //! the [`FieldElement`] type from starknet-ff.
 
-
 #[doc(hidden)]
 pub extern crate alloc;
 
