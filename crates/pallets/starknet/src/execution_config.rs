@@ -31,7 +31,11 @@ impl RuntimeExecutionConfigBuilder {
         self.0.disable_validation = simulation_flags.skip_validate;
         self
     }
-
+    #[must_use]
+    pub fn with_disable_nonce_validation(mut self) -> Self {
+        self.0.disable_nonce_validation = true;
+        self
+    }
     #[must_use]
     pub fn with_offset_version(mut self) -> Self {
         self.0.offset_version = true;

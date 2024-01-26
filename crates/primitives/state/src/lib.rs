@@ -1,5 +1,8 @@
 //! Starknet state primitives.
 
+#[doc(hidden)]
+extern crate alloc;
+
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::state::cached_state::{ContractStorageKey, StateChangesCount};
 use blockifier::state::errors::StateError;

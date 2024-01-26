@@ -1,8 +1,5 @@
 //! Starknet rpc state primitives.
 
-#[doc(hidden)]
-pub extern crate alloc;
-
 use alloc::vec::Vec;
 
 use mp_felt::Felt252Wrapper;

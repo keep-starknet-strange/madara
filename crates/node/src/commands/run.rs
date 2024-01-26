@@ -2,7 +2,13 @@ use std::path::PathBuf;
 
 use clap::ValueHint::FilePath;
 use madara_runtime::SealingMode;
-use mc_data_availability::DaLayer;
+#[cfg(feature = "avail")]
+use mc_data_availability::avail::{config::AvailConfig, AvailClient};
+#[cfg(feature = "celestia")]
+use mc_data_availability::celestia::{config::CelestiaConfig, CelestiaClient};
+use mc_data_availability::ethereum::config::EthereumConfig;
+use mc_data_availability::ethereum::EthereumClient;
+use mc_data_availability::{DaClient, DaLayer};
 use mc_l1_messages::config::{L1MessagesWorkerConfig, L1MessagesWorkerConfigError};
 use mc_settlement::SettlementLayer;
 use sc_cli::{Result, RpcMethods, RunCmd, SubstrateCli};
@@ -81,18 +87,26 @@ pub struct ExtendedRunCmd {
     pub sealing: Option<Sealing>,
 
     /// Choose a supported DA Layer
-    #[clap(long, ignore_case = true, requires = "da_conf")]
+    #[clap(long, ignore_case = true)]
     pub da_layer: Option<DaLayer>,
 
     /// Path to a file containing the DA configuration
+    ///
+    /// If `da_layer` is `Some` and `da_conf` is `None` we will try to read one at
+    /// `<chain_config_directory>/<da_layer_name>.json`. If it's not there, an error will be
+    /// returned.
     #[clap(long, value_hint = FilePath, requires = "da_layer")]
     pub da_conf: Option<PathBuf>,
 
     /// Choose a supported settlement layer
-    #[clap(long, ignore_case = true, requires = "settlement_conf")]
+    #[clap(long, ignore_case = true)]
     pub settlement: Option<SettlementLayer>,
 
     /// Path to a file containing the settlement configuration
+    ///
+    /// If `settlement` is `Some` and `settlement_conf` is `None` we will try to read one at
+    /// `<chain_config_directory>/settlement_conf.json`. If it's not there, an error will be
+    /// returned.
     #[clap(long, value_hint = FilePath, requires = "settlement")]
     pub settlement_conf: Option<PathBuf>,
 
@@ -110,6 +124,9 @@ pub struct ExtendedRunCmd {
 }
 
 impl ExtendedRunCmd {
+    /// The substrate base directory on your machine
+    ///
+    /// Will be different depending on your OS
     pub fn base_path(&self) -> Result<BasePath> {
         Ok(self
             .base
@@ -117,6 +134,46 @@ impl ExtendedRunCmd {
             .base_path()?
             .unwrap_or_else(|| BasePath::from_project("", "", &<Cli as SubstrateCli>::executable_name())))
     }
+
+    /// The chain name
+    ///
+    /// Will use `""` (empty sting) if none is provided
+    fn chain_id(&self) -> &str {
+        match &self.base.shared_params.chain {
+            Some(s) => s,
+            None => "",
+        }
+    }
+
+    /// The path of the configuration folder of your chain
+    ///
+    /// "<base_path>/chains/<my_chain_id>"
+    fn chain_config_dir(&self) -> Result<PathBuf> {
+        let chain_id = self.chain_id();
+        let chain_config_dir = self.base_path()?.config_dir(chain_id);
+        Ok(chain_config_dir)
+    }
+}
+
+fn init_da_client(da_layer: DaLayer, da_path: PathBuf) -> Result<Box<dyn DaClient + Send + Sync>> {
+    let da_client: Box<dyn DaClient + Send + Sync> = match da_layer {
+        #[cfg(feature = "celestia")]
+        DaLayer::Celestia => {
+            let celestia_conf = CelestiaConfig::try_from(&da_path)?;
+            Box::new(CelestiaClient::try_from(celestia_conf).map_err(|e| sc_cli::Error::Input(e.to_string()))?)
+        }
+        DaLayer::Ethereum => {
+            let ethereum_conf = EthereumConfig::try_from(&da_path)?;
+            Box::new(EthereumClient::try_from(ethereum_conf)?)
+        }
+        #[cfg(feature = "avail")]
+        DaLayer::Avail => {
+            let avail_conf = AvailConfig::try_from(&da_path)?;
+            Box::new(AvailClient::try_from(avail_conf).map_err(|e| sc_cli::Error::Input(e.to_string()))?)
+        }
+    };
+
+    Ok(da_client)
 }
 
 pub fn run_node(mut cli: Cli) -> Result<()> {
@@ -125,15 +182,19 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
     }
     let runner = cli.create_runner(&cli.run.base)?;
 
-    let da_config: Option<(DaLayer, PathBuf)> = match cli.run.da_layer {
-        Some(da_layer) => {
-            let da_conf = cli.run.da_conf.expect("clap requires da_conf when da_layer is present");
-            if !da_conf.exists() {
-                log::info!("{} does not contain DA config", da_conf.display());
-                return Err("DA config not available".into());
-            }
+    let chain_config_dir = cli.run.chain_config_dir()?;
 
-            Some((da_layer, da_conf))
+    let da_client = match cli.run.da_layer {
+        Some(da_layer) => {
+            let da_conf = cli.run.clone().da_conf.unwrap_or({
+                let path_da_conf_json = chain_config_dir.join(format!("{da_layer}.json"));
+                if !path_da_conf_json.exists() {
+                    return Err(sc_cli::Error::Input(format!("no file {da_layer}.json in base_path")));
+                }
+                path_da_conf_json
+            });
+
+            Some(init_da_client(da_layer, da_conf)?)
         }
         None => {
             log::info!("Madara initialized w/o DA layer");
@@ -146,15 +207,17 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
 
     let settlement_config: Option<(SettlementLayer, PathBuf)> = match cli.run.settlement {
         Some(SettlementLayer::Ethereum) => {
-            let settlement_conf = cli.run.settlement_conf.expect("clap requires da_conf when settlement is present");
-            if !settlement_conf.exists() {
-                return Err(sc_cli::Error::Input(format!(
-                    "Ethereum config not found at {}",
-                    settlement_conf.display()
-                )));
-            }
+            let settlement_conf = cli.run.clone().settlement_conf.unwrap_or({
+                let path_sett_conf_json = chain_config_dir.join("settlement_conf.json");
+                if !path_sett_conf_json.exists() {
+                    return Err(sc_cli::Error::Input("no file settlement_conf in base_path".to_string()));
+                }
+                path_sett_conf_json
+            });
+
             Some((SettlementLayer::Ethereum, settlement_conf))
         }
+
         None => {
             log::info!("Madara initialized w/o settlement layer");
             None
@@ -164,7 +227,7 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
     runner.run_node_until_exit(|config| async move {
         let sealing = cli.run.sealing.map(Into::into).unwrap_or_default();
         let cache = cli.run.cache;
-        service::new_full(config, sealing, da_config, cache, l1_messages_worker_config, settlement_config)
+        service::new_full(config, sealing, da_client, cache, l1_messages_worker_config, settlement_config)
             .map_err(sc_cli::Error::Service)
     })
 }

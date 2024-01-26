@@ -6506,6 +6506,7 @@ dependencies = [
  "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "starknet-core",
+ "starknet-providers",
  "starknet_api",
  "thiserror",
 ]
@@ -6854,6 +6855,7 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_with",
+ "starknet-core",
  "starknet_api",
 ]
 
