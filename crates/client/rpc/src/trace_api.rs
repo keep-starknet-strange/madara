@@ -84,8 +84,6 @@ where
                 StarknetRpcApiError::ContractError
             })?;
 
-        log::info!("is_ok: {:#?}", res[1].0.is_ok());
-
         let storage_override = self.overrides.for_block_hash(self.client.as_ref(), substrate_block_hash);
         let simulated_transactions =
             tx_execution_infos_to_simulated_transactions(&**storage_override, substrate_block_hash, tx_types, res)
@@ -223,10 +221,9 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
     )>,
 ) -> Result<Vec<SimulatedTransaction>, ConvertCallInfoToExecuteInvocationError> {
     let mut results = vec![];
-    for (tx_type, (res, state_diff)) in tx_types.iter().zip(transaction_execution_results.iter()) {
+    for (tx_type, (res, state_diff)) in tx_types.iter().zip(transaction_execution_results.into_iter()) {
         match res {
             Ok(tx_exec_info) => {
-                // println!("tx_exec_info: {:#?}", tx_exec_info);
                 // If simulated with `SimulationFlag::SkipValidate` this will be `None`
                 // therefore we cannot unwrap it
                 let validate_invocation = tx_exec_info
@@ -246,7 +243,7 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
                     })
                     .transpose()?;
 
-                let state_diff = blockifier_to_rpc_state_diff_types(state_diff.clone()).ok();
+                let state_diff = blockifier_to_rpc_state_diff_types(state_diff).ok();
 
                 let transaction_trace = match tx_type {
                     TxType::Invoke => TransactionTrace::Invoke(InvokeTransactionTrace {

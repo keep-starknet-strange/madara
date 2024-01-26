@@ -6142,7 +6142,6 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "log",
  "mp-block",
  "mp-chain-id",
  "mp-fee",
