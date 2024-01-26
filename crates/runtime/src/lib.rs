@@ -281,7 +281,7 @@ impl_runtime_apis! {
             Starknet::estimate_fee(transactions)
         }
 
-        fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u64, u64, u64), DispatchError> {
+        fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), DispatchError> {
             Starknet::estimate_message_fee(message)
         }
 
