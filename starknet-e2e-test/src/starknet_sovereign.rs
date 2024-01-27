@@ -36,6 +36,11 @@ impl StarknetSovereign {
         self.client.client()
     }
 
+    /// Attach to an existing Anvil instance or spawn a new one
+    /// and then deploy:
+    ///     - Starknet core contract (sovereign mode)
+    ///     - Unsafe delegate proxy (no access restrictions)
+    /// All the following interactions will be made thorugh the proxy
     pub async fn deploy() -> Self {
         // Try to attach to an already running sandbox (GitHub CI case)
         // otherwise spawn new sandbox instance
@@ -52,6 +57,14 @@ impl StarknetSovereign {
         Self { _sandbox: sandbox, client }
     }
 
+    /// Write Ethereum settlement config to the specified Madara data folder
+    /// (usually <base-path>/chains/<chain-id>/). The settlement config contains:
+    ///     - Anvil endpoint and chain ID
+    ///     - Delegate proxy contract address
+    ///     - Sequencer private key (Anvil defaults)
+    ///     - Transaction poll interval (reduced for testing purposes)
+    ///
+    /// Returns path to the settlement config (has to be passed as a Madara node argument)
     pub async fn create_settlement_conf(&self, data_path: PathBuf) -> PathBuf {
         let settlement_conf = EthereumConfig {
             http_provider: self.client.client().provider().url().to_string(),
@@ -68,6 +81,9 @@ impl StarknetSovereign {
         conf_path
     }
 
+    /// Initialize Starknet core contract with the specified data.
+    ///
+    /// Also register Anvil default account as an operator.
     pub async fn initialize_with(&self, init_data: CoreContractInitData) {
         let data = ProxyInitializeData::<0> { sub_contract_addresses: [], eic_address: Default::default(), init_data };
 
@@ -76,6 +92,10 @@ impl StarknetSovereign {
         self.client.register_operator(self.client.client().address()).await.expect("Failed to register operator");
     }
 
+    /// Initialize Starknet core contract with the specified program and config hashes.
+    /// The rest of parameters will be left default.
+    ///
+    /// Also register Anvil default account as an operator.
     pub async fn initialize(&self, program_hash: StarkFelt, config_hash: StarkFelt) {
         self.initialize_with(CoreContractInitData {
             program_hash: convert_felt_to_u256(program_hash),
@@ -85,6 +105,10 @@ impl StarknetSovereign {
         .await;
     }
 
+    /// Initialize Starknet core contract with the specified block number and state root hash.
+    /// The program and config hashes will be set according to the Madara Goerli configuration.
+    ///
+    /// Also register Anvil default account as an operator.
     pub async fn initialize_for_goerli(&self, block_number: StarkFelt, state_root: StarkFelt) {
         // See SN_OS_PROGRAM_HASH constant
         let program_hash = StarkFelt::from(Felt252Wrapper::from(

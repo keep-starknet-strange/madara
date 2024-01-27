@@ -13,7 +13,7 @@ use tokio::time::sleep;
 
 #[rstest]
 #[tokio::test]
-async fn madara_with_sovereign_core_contract_on_ethereum() -> Result<(), anyhow::Error> {
+async fn madara_advances_ethereum_settlement_contract_state_in_sovereign_mode() -> Result<(), anyhow::Error> {
     // Troubleshooting:
     // RUST_LOG=mc_settlement=trace MADARA_LOG=1 cargo test --package starknet-e2e-test
     // works_with_initialized_contract -- --nocapture
@@ -38,7 +38,7 @@ async fn madara_with_sovereign_core_contract_on_ethereum() -> Result<(), anyhow:
     sleep(Duration::from_millis(300)).await;
 
     let client = StarknetContractClient::new(starknet_sovereign.address(), starknet_sovereign.client());
-    let state = SettlementProvider::<Block>::get_state(&client).await.expect("Failed to get state");
+    let state = SettlementProvider::<Block>::get_state(&client).await?;
 
     assert_eq!(state, StarknetState { block_number: 3u64.into(), state_root: 0u64.into() });
 
