@@ -39,7 +39,7 @@ impl StarknetSovereign {
     pub async fn deploy() -> Self {
         // Try to attach to an already running sandbox (GitHub CI case)
         // otherwise spawn new sandbox instance
-        let sandbox = if let Some(endpoint) = std::env::var("ANVIL_ENDPOINT").ok() {
+        let sandbox = if let Ok(endpoint) = std::env::var("ANVIL_ENDPOINT") {
             EthereumSandbox::attach(Some(endpoint)).expect("Failed to attach to sandbox")
         } else {
             EthereumSandbox::spawn(None)

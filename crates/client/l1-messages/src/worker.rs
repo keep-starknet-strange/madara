@@ -32,7 +32,7 @@ pub async fn run_worker<C, P, B>(
 {
     log::info!("⟠ Starting L1 Messages Worker with settings: {:?}", config);
 
-    let l1_contract = StarknetMessagingEvents::new(
+    let event_listener = StarknetMessagingEvents::new(
         *config.contract_address(),
         Arc::new(Provider::new(Http::new(config.provider().clone()))),
     );
@@ -45,7 +45,7 @@ pub async fn run_worker<C, P, B>(
         }
     };
 
-    let events = l1_contract.event::<LogMessageToL2Filter>().from_block(last_synced_event_block.block_number);
+    let events = event_listener.event::<LogMessageToL2Filter>().from_block(last_synced_event_block.block_number);
     let mut event_stream = match events.stream_with_meta().await {
         Ok(stream) => stream,
         Err(e) => {
