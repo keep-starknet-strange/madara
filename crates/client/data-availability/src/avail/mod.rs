@@ -36,10 +36,7 @@ pub fn try_build_avail_subxt(conf: &config::AvailConfig) -> Result<OnlineClient<
     let client =
         futures::executor::block_on(async { build_client(conf.ws_provider.as_str(), conf.validate_codegen).await })
             .map_err(|e| DaErr(
-                DALayer::Avail,
-                DaLayerErr::Client(
-                    format!("initialization: {e}")
-                )
+                Client(ClientErr::FailedWsConnection(e))
             ))?;
 
     Ok(client)
@@ -50,10 +47,7 @@ impl SubxtClient {
         self.client = match build_client(self.config.ws_provider.as_str(), self.config.validate_codegen).await {
             Ok(i) => i,
             Err(e) => return DaErr(
-                DALayer::Avail,
-                DaLayerErr::Client(
-                    format!("endpoint restart: {e}")
-                )
+                Client(ClientErr::FailedWsConnection(e))
             ),
         };
 
@@ -70,12 +64,7 @@ impl TryFrom<config::AvailConfig> for SubxtClient {
 
     fn try_from(conf: config::AvailConfig) -> Result<Self, Self::Error> {
         Ok(Self { 
-            client: try_build_avail_subxt(&conf).map_err(|e| DaErr(
-                DALayer::Avail,
-                DaLayerErr::Config(
-                    format!("client cannot be built: {e}")
-                )
-            )), 
+            client: try_build_avail_subxt(&conf),
             config: conf 
         })
     }
@@ -83,10 +72,12 @@ impl TryFrom<config::AvailConfig> for SubxtClient {
 
 #[async_trait]
 impl DaClient for AvailClient {
-    async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()> {
+    async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<(), DaError> {
         let bytes = get_bytes_from_state_diff(&state_diff);
         let bytes = BoundedVec(bytes);
-        self.publish_data(&bytes).await?;
+        self.publish_data(&bytes).await.map_err(|e| DaErr(
+            Client(ClientErr::FailedSubmission(e))
+        ))?;
 
         Ok(())
     }
@@ -121,10 +112,7 @@ impl AvailClient {
                 }
 
                 return DaErr(
-                    DALayer::Avail,
-                    DaLayerErr::Client(
-                        format!("Websocket fail: {e}")
-                    )
+                    Config(ConfigErr::FailedWsConnection(e))
                 );
             }
         };
@@ -138,18 +126,14 @@ impl TryFrom<config::AvailConfig> for AvailClient {
 
     fn try_from(conf: config::AvailConfig) -> Result<Self, Self::Error> {
         let signer = signer_from_seed(conf.seed.as_str()).map_err(|e| DaErr(
-            DALayer::Avail,
-            DaErr::Config(
-                format!("seed failure: {e}")
-            )
+            Config(ConfigErr::FailedParsing(e))
         ))?;
 
         let app_id = AppId(conf.app_id);
 
         Ok(Self {
             ws_client: Arc::new(Mutex::new(SubxtClient::try_from(conf.clone()).map_err(|e| DaErr(
-                DALayer::Avail,
-                DaErr::Config(format!("cannot build client with conf: {e}"))
+                Client(ClientErr::FailedWsConnection(e))
             )))),
             app_id,
             signer,
@@ -161,10 +145,7 @@ impl TryFrom<config::AvailConfig> for AvailClient {
 fn signer_from_seed(seed: &str) -> Result<AvailPairSigner, DaErr> {
     let pair = <Pair as subxt::ext::sp_core::Pair>::from_string(seed, None)
         .map_err(|e| DaErr(
-            DALayer::Avail,
-            DaErr::Config(
-                format!("seed failure: {e}")
-            )
+            Config(ConfigErr::FailedParsing(e))
         ))?;
 
     let signer = AvailPairSigner::new(pair);

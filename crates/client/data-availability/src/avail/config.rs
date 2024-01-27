@@ -28,16 +28,10 @@ impl TryFrom<&PathBuf> for AvailConfig {
     type Error = DaErr;
     fn try_from(path: &PathBuf) -> Result<Self, Self::Error> {
         let file = File::open(path).map_err(|e| DaErr(
-            DaLayer::Avail, 
-            DaLayerErr::Config(
-                format!("Opening: {e}")
-            )
+            Config(ConfigErr::FailedOpening(e))
         ))?;
         serde_json::from_reader(file).map_err(|e| DaErr(
-            DaLayer::Avail, 
-            DaLayerErr::Config(
-                format!("Parsing: {e}")
-            )
+            Config(ConfigErr::FailedParsing(e))
         ))
     }
 }

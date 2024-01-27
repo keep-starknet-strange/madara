@@ -44,28 +44,38 @@ pub enum DaLayer {
     Avail,
 }
 
-// Idea: use an argument with the corresponding da source
+#[derive(Error, Debug)]
+pub enum ClientErr{
+    #[error("failed connecting http: {0}")]
+    FailedHttpConnection(String),
+    #[error("failed connecting websocket: {0}")]
+    FailedWsConnection(String),
+    #[error("failed submitting data through client: {0}")]
+    FailedSubmission(String),
+    #[error("failed fetching data through client: {0}")]
+    FailedFetching(String),
+}
 
 #[derive(Error, Debug)]
-pub enum DaLayerErr {
-    #[error("config issue {0}")]
-    Config(String),
-    #[error("blob issue {0}")]
-    Blob(String),
-    #[error("client issue {0}")]
-    Client(String),
-    #[error("issue {0}")]
-    Other(String),
+pub enum ConfigErr{
+    #[error("failed opening config: {0}")]
+    FailedOpening(String),
+    #[error("failed parsing config: {0}")]
+    FailedParsing(String),
 }
+
 #[derive(Error, Debug)]
-pub struct DaError {
-    layer: DaLayer,
-    error: DaLayerErr,
+pub enum DaError {
+    Config(ConfigErr),
+    Client(ClientErr),
 }
 
 impl std::fmt::Display for DaError{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "fail in layer {:?}: {}", self.layer, self.error)
+        match self {
+            DaError::Config(e) => write!(f, "Config error: {:?}", e),
+            DaError::Client(e) => write!(f, "Client error: {:?}", e),
+        }
     }
 }
 
