@@ -571,7 +571,6 @@ impl Execute for DeployAccountTransaction {
         // so that the `constructor` method can initialize the account state
         let execute_call_info = self.run_execute(state, resources, &mut context, remaining_gas)?;
         let validate_call_info = if !disable_validation {
-            log::info!("this is the context for validation {:?}", context);
             self.validate_tx_inner(state, resources, remaining_gas, &mut context, self.calldata())?
         } else {
             None

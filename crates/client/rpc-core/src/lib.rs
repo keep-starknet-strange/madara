@@ -22,7 +22,7 @@ use starknet_core::types::{
     BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall,
     InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt,
-    SimulatedTransaction, SimulationFlag, StateUpdate, SyncStatusType, Transaction,
+    MsgFromL1, SimulatedTransaction, SimulationFlag, StateUpdate, SyncStatusType, Transaction,
 };
 
 #[serde_as]
@@ -138,6 +138,10 @@ pub trait StarknetReadRpcApi {
         request: Vec<BroadcastedTransaction>,
         block_id: BlockId,
     ) -> RpcResult<Vec<FeeEstimate>>;
+
+    /// Estimate the L2 fee of a message sent on L1
+    #[method(name = "estimateMessageFee")]
+    async fn estimate_message_fee(&self, message: MsgFromL1, block_id: BlockId) -> RpcResult<FeeEstimate>;
 
     /// Get the details of a transaction by a given block id and index
     #[method(name = "getTransactionByBlockIdAndIndex")]

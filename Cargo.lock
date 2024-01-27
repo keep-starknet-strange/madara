@@ -6150,6 +6150,7 @@ dependencies = [
  "frame-try-runtime",
  "mp-block",
  "mp-chain-id",
+ "mp-fee",
  "mp-felt",
  "mp-hashers",
  "mp-program-hash",
@@ -6478,6 +6479,7 @@ dependencies = [
  "sp-core 21.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
  "sp-runtime 24.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
  "starknet-core",
+ "starknet-providers",
  "starknet_api",
  "thiserror",
 ]
@@ -6818,6 +6820,7 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_with",
+ "starknet-core",
  "starknet_api",
 ]
 

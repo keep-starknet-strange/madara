@@ -15,7 +15,6 @@ use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use jsonrpsee::types::error::CallError;
 use log::error;
-use mc_db::Backend as MadaraBackend;
 use mc_genesis_data_provider::GenesisProvider;
 pub use mc_rpc_core::utils::*;
 pub use mc_rpc_core::{
@@ -50,7 +49,7 @@ use starknet_core::types::{
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, ExecutionResources, ExecutionResult, FeeEstimate,
     FieldElement, FunctionCall, Hash256, InvokeTransactionReceipt, InvokeTransactionResult,
     L1HandlerTransactionReceipt, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
-    MaybePendingTransactionReceipt, StateDiff, StateUpdate, SyncStatus, SyncStatusType, Transaction,
+    MaybePendingTransactionReceipt, MsgFromL1, StateDiff, StateUpdate, SyncStatus, SyncStatusType, Transaction,
     TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
 };
 use starknet_core::utils::get_selector_from_name;
@@ -848,12 +847,24 @@ where
         } else {
             starknet_block.transactions_hashes::<H>(chain_id.0.into()).map(FieldElement::from).collect()
         };
+        let block_status = match self.backend.messaging().last_synced_l1_block_with_event() {
+            Ok(l1_block) => {
+                if l1_block.block_number >= starknet_block.header().block_number {
+                    BlockStatus::AcceptedOnL1
+                } else {
+                    BlockStatus::AcceptedOnL2
+                }
+            }
+            Err(e) => {
+                error!("Failed to get last synced l1 block, error: {e}");
+                Err(StarknetRpcApiError::InternalServerError)?
+            }
+        };
 
         let parent_blockhash = starknet_block.header().parent_block_hash;
         let block_with_tx_hashes = BlockWithTxHashes {
             transactions: transaction_hashes,
-            // TODO: Status hardcoded, get status from block
-            status: BlockStatus::AcceptedOnL2,
+            status: block_status,
             block_hash: block_hash.into(),
             parent_hash: Felt252Wrapper::from(parent_blockhash).into(),
             block_number: starknet_block.header().block_number,
@@ -975,6 +986,56 @@ where
             .collect();
 
         Ok(estimates)
+    }
+
+    /// Estimate the L2 fee of a message sent on L1
+    ///
+    /// # Arguments
+    ///
+    /// * `message` - the message to estimate
+    /// * `block_id` - hash, number (height), or tag of the requested block
+    ///
+    /// # Returns
+    ///
+    /// * `FeeEstimate` - the fee estimation (gas consumed, gas price, overall fee, unit)
+    ///
+    /// # Errors
+    ///
+    /// BlockNotFound : If the specified block does not exist.
+    /// ContractNotFound : If the specified contract address does not exist.
+    /// ContractError : If there is an error with the contract.
+    async fn estimate_message_fee(&self, message: MsgFromL1, block_id: BlockId) -> RpcResult<FeeEstimate> {
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+        let chain_id = Felt252Wrapper(self.chain_id()?.0);
+
+        let message = message.try_into().map_err(|e| {
+            error!("Failed to convert MsgFromL1 to UserTransaction: {e}");
+            StarknetRpcApiError::InternalServerError
+        })?;
+
+        let fee_estimate = self
+            .client
+            .runtime_api()
+            .estimate_message_fee(substrate_block_hash, message)
+            .map_err(|e| {
+                error!("Runtime api error: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?
+            .map_err(|e| {
+                error!("function execution failed: {:#?}", e);
+                StarknetRpcApiError::ContractError
+            })?;
+
+        let estimate = FeeEstimate {
+            gas_price: fee_estimate.0.try_into().map_err(|_| StarknetRpcApiError::InternalServerError)?,
+            gas_consumed: fee_estimate.2,
+            overall_fee: fee_estimate.1,
+        };
+
+        Ok(estimate)
     }
 
     /// Get the details of a transaction by a given block id and index.
@@ -1324,49 +1385,15 @@ where
         &self,
         transaction_hash: FieldElement,
     ) -> RpcResult<MaybePendingTransactionReceipt> {
-        async fn wait_for_tx_inclusion<B: sp_api::BlockT>(
-            madara_backend: Arc<MadaraBackend<B>>,
-            transaction_hash: FieldElement,
-        ) -> Result<<B as BlockT>::Hash, StarknetRpcApiError> {
-            let substrate_block_hash;
-
-            loop {
-                let substrate_block_hash_from_db = madara_backend
-                    .mapping()
-                    .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
-                    .map_err(|e| {
-                        error!("Failed to interact with db backend error: {e}");
-                        StarknetRpcApiError::InternalServerError
-                    })?;
-
-                match substrate_block_hash_from_db {
-                    Some(block_hash) => {
-                        substrate_block_hash = block_hash;
-                        break;
-                    }
-                    None => {
-                        // TODO: hardcoded to match the blocktime; make it dynamic
-                        tokio::time::sleep(std::time::Duration::from_millis(6000)).await;
-                        continue;
-                    }
-                };
-            }
-
-            Ok(substrate_block_hash)
-        }
-
-        let substrate_block_hash = match tokio::time::timeout(
-            std::time::Duration::from_millis(60000),
-            wait_for_tx_inclusion(self.backend.clone(), transaction_hash),
-        )
-        .await
-        {
-            Err(_) => {
-                error!("did not receive tx hash within 1 minute");
-                return Err(StarknetRpcApiError::TxnHashNotFound.into());
-            }
-            Ok(res) => res,
-        }?;
+        let substrate_block_hash = self
+            .backend
+            .mapping()
+            .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
+            .map_err(|e| {
+                error!("Failed to interact with db backend error: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?
+            .ok_or(StarknetRpcApiError::TxnHashNotFound)?;
 
         let starknet_block: mp_block::Block =
             get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
