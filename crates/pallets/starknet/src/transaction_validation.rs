@@ -58,7 +58,7 @@ impl<OuterOrigin: Into<Result<RawOrigin, OuterOrigin>> + From<RawOrigin>> Ensure
 #[derive(Debug)]
 pub enum TxPriorityInfo {
     InvokeV0,
-    L1Handler,
+    L1Handler { messaging_address: Felt252Wrapper, nonce: Felt252Wrapper },
     RegularTxs { sender_address: Felt252Wrapper, transaction_nonce: Felt252Wrapper, sender_nonce: Felt252Wrapper },
 }
 
@@ -95,7 +95,11 @@ impl<T: Config> Pallet<T> {
             }
             UserAndL1HandlerTransaction::L1Handler(tx, _fee) => {
                 Self::ensure_l1_message_not_executed(&Nonce(StarkFelt::from(tx.nonce)))?;
-                Ok(TxPriorityInfo::L1Handler)
+
+                Ok(TxPriorityInfo::L1Handler {
+                    messaging_address: tx.messaging_address.clone(),
+                    nonce: tx.nonce.into(),
+                })
             }
         }
     }

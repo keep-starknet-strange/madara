@@ -187,6 +187,7 @@ pub struct DeployAccountTransaction {
 pub struct HandleL1MessageTransaction {
     pub nonce: u64,
     pub contract_address: Felt252Wrapper,
+    pub messaging_address: Felt252Wrapper,
     pub entry_point_selector: Felt252Wrapper,
     pub calldata: Vec<Felt252Wrapper>,
 }

@@ -51,35 +51,37 @@ pub async fn run_worker<C, P, B>(
         }
     };
 
-    while let Some(Ok((event, meta))) = event_stream.next().await {
-        log::info!(
-            "⟠ Processing L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?}",
-            meta.block_number,
-            meta.transaction_hash,
-            meta.log_index
-        );
+    loop {
+        if let Some(Ok((event, meta))) = event_stream.next().await {
+            log::info!(
+                "⟠ Processing L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?}",
+                meta.block_number,
+                meta.transaction_hash,
+                meta.log_index
+            );
 
-        match process_l1_message(event, &client, &pool, &backend, &meta.block_number.as_u64()).await {
-            Ok(Some(tx_hash)) => {
-                log::info!(
-                    "⟠ L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?} submitted, transaction \
-                     hash on L2: {:?}",
-                    meta.block_number,
-                    meta.transaction_hash,
-                    meta.log_index,
-                    tx_hash
-                );
-            }
-            Ok(None) => {}
-            Err(e) => {
-                log::error!(
-                    "⟠ Unexpected error while processing L1 Message from block: {:?}, transaction_hash: {:?}, \
-                     log_index: {:?}, error: {:?}",
-                    meta.block_number,
-                    meta.transaction_hash,
-                    meta.log_index,
-                    e
-                )
+            match process_l1_message(event, &client, &pool, &backend, &meta.block_number.as_u64()).await {
+                Ok(Some(tx_hash)) => {
+                    log::info!(
+                        "⟠ L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?} submitted, \
+                         transaction hash on L2: {:?}",
+                        meta.block_number,
+                        meta.transaction_hash,
+                        meta.log_index,
+                        tx_hash
+                    );
+                }
+                Ok(None) => {}
+                Err(e) => {
+                    log::error!(
+                        "⟠ Unexpected error while processing L1 Message from block: {:?}, transaction_hash: {:?}, \
+                         log_index: {:?}, error: {:?}",
+                        meta.block_number,
+                        meta.transaction_hash,
+                        meta.log_index,
+                        e
+                    )
+                }
             }
         }
     }
