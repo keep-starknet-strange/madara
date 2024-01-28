@@ -9231,7 +9231,7 @@ dependencies = [
 [[package]]
 name = "sandbox"
 version = "0.1.0"
-source = "git+https://github.com/m-kus/zaun?branch=feat/sandbox-unsafe-proxy#4c1bbd64ec75197a1084d18dd84a9139cf2baa13"
+source = "git+https://github.com/keep-starknet-strange/zaun#9fe421790165166b714c4ef95c79ad49a959a05a"
 dependencies = [
  "dirs",
  "ethers",
@@ -12039,7 +12039,7 @@ dependencies = [
 [[package]]
 name = "starknet-core-contract-client"
 version = "0.1.0"
-source = "git+https://github.com/m-kus/zaun?branch=feat/sandbox-unsafe-proxy#4c1bbd64ec75197a1084d18dd84a9139cf2baa13"
+source = "git+https://github.com/keep-starknet-strange/zaun#9fe421790165166b714c4ef95c79ad49a959a05a"
 dependencies = [
  "async-trait",
  "ethers",
