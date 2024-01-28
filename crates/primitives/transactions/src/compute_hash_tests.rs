@@ -251,6 +251,7 @@ fn test_handle_l1_message_tx_hash() {
     let transaction = HandleL1MessageTransaction {
         nonce: Default::default(),
         contract_address: Default::default(),
+        messaging_address: Default::default(),
         entry_point_selector: Default::default(),
         calldata: Default::default(),
     };

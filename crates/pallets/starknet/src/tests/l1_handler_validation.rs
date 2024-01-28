@@ -34,13 +34,17 @@ fn should_accept_unused_nonce() {
         let transaction = HandleL1MessageTransaction {
             nonce,
             contract_address: Default::default(),
+            messaging_address: Default::default(),
             entry_point_selector: Default::default(),
             calldata: Default::default(),
         };
 
         let tx = UserAndL1HandlerTransaction::L1Handler(transaction, Fee(100));
 
-        assert_matches!(Starknet::validate_unsigned_tx_nonce(&tx), Ok(TxPriorityInfo::L1Handler));
+        assert_matches!(
+            Starknet::validate_unsigned_tx_nonce(&tx),
+            Ok(TxPriorityInfo::L1Handler { messaging_address: _, nonce: _ })
+        );
     });
 }
 
@@ -53,6 +57,7 @@ fn should_reject_used_nonce() {
         let transaction = HandleL1MessageTransaction {
             nonce,
             contract_address: Default::default(),
+            messaging_address: Default::default(),
             entry_point_selector: Default::default(),
             calldata: Default::default(),
         };
@@ -74,6 +79,7 @@ fn should_accept_valid_unsigned_l1_message_tx() {
         let transaction = HandleL1MessageTransaction {
             nonce,
             contract_address: Default::default(),
+            messaging_address: Default::default(),
             entry_point_selector: Default::default(),
             calldata: Default::default(),
         };
