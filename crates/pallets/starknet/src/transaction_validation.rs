@@ -96,10 +96,7 @@ impl<T: Config> Pallet<T> {
             UserAndL1HandlerTransaction::L1Handler(tx, _fee) => {
                 Self::ensure_l1_message_not_executed(&Nonce(StarkFelt::from(tx.nonce)))?;
 
-                Ok(TxPriorityInfo::L1Handler {
-                    messaging_address: tx.messaging_address.clone(),
-                    nonce: tx.nonce.into(),
-                })
+                Ok(TxPriorityInfo::L1Handler { messaging_address: tx.messaging_address, nonce: tx.nonce.into() })
             }
         }
     }
