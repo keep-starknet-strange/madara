@@ -187,7 +187,6 @@ pub struct DeployAccountTransaction {
 pub struct HandleL1MessageTransaction {
     pub nonce: u64,
     pub contract_address: Felt252Wrapper,
-    pub messaging_address: Felt252Wrapper,
     pub entry_point_selector: Felt252Wrapper,
     pub calldata: Vec<Felt252Wrapper>,
 }
@@ -195,15 +194,7 @@ pub struct HandleL1MessageTransaction {
 impl From<MsgFromL1> for HandleL1MessageTransaction {
     fn from(msg: MsgFromL1) -> Self {
         let calldata = msg.payload.into_iter().map(|felt| felt.into()).collect();
-        let messaging_address =
-            match Felt252Wrapper::try_from(sp_core::U256::from_big_endian(msg.from_address.as_bytes())) {
-                Ok(msg) => msg,
-                Err(err) => {
-                    panic!("Failed to parse messaging address: {}", err);
-                }
-            };
         Self {
-            messaging_address,
             contract_address: msg.to_address.into(),
             nonce: 0u32.into(),
             entry_point_selector: msg.entry_point_selector.into(),

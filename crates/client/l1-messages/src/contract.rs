@@ -20,17 +20,12 @@ pub enum L1EventToTransactionError {
     InvalidEntryPointSelector(Felt252WrapperError),
     #[error("Failed to convert Nonce param from L1 Event: `{0}`")]
     InvalidNonce(Felt252WrapperError),
-    #[error("Failed to convert Messaging Address from L1 Event: `{0}`")]
-    InvalidMessagingAddress(Felt252WrapperError),
 }
 
 impl TryFrom<LogMessageToL2Filter> for HandleL1MessageTransaction {
     type Error = L1EventToTransactionError;
 
     fn try_from(event: LogMessageToL2Filter) -> Result<Self, Self::Error> {
-        let messaging_address = Felt252Wrapper::try_from(sp_core::U256::from_big_endian(event.from_address.as_bytes()))
-            .map_err(L1EventToTransactionError::InvalidMessagingAddress)?;
-
         // L2 contract to call.
         let contract_address = Felt252Wrapper::try_from(sp_core::U256(event.to_address.0))
             .map_err(L1EventToTransactionError::InvalidContractAddress)?;
@@ -52,6 +47,6 @@ impl TryFrom<LogMessageToL2Filter> for HandleL1MessageTransaction {
             .collect::<Result<Vec<Felt252Wrapper>, Felt252WrapperError>>()
             .map_err(L1EventToTransactionError::InvalidCalldata)?;
 
-        Ok(HandleL1MessageTransaction { nonce, contract_address, messaging_address, entry_point_selector, calldata })
+        Ok(HandleL1MessageTransaction { nonce, contract_address, entry_point_selector, calldata })
     }
 }

@@ -757,9 +757,9 @@ pub mod pallet {
                             .and_requires((sender_address, Felt252Wrapper(transaction_nonce.0 - FieldElement::ONE)));
                     }
                 }
-                TxPriorityInfo::L1Handler { messaging_address, nonce } => {
+                TxPriorityInfo::L1Handler { nonce } => {
                     valid_transaction_builder =
-                        valid_transaction_builder.and_provides((messaging_address, Felt252Wrapper(nonce.0)));
+                        valid_transaction_builder.and_provides(("0x0", Felt252Wrapper(nonce.0)));
                 }
                 _ => {}
             }

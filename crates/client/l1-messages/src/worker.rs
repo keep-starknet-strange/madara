@@ -51,8 +51,8 @@ pub async fn run_worker<C, P, B>(
         }
     };
 
-    loop {
-        if let Some(Ok((event, meta))) = event_stream.next().await {
+    while let Some(event_res) = event_stream.next().await {
+        if let Ok((event, meta)) = event_res {
             log::info!(
                 "⟠ Processing L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?}",
                 meta.block_number,

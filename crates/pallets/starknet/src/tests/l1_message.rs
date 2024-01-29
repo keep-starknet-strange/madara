@@ -20,7 +20,6 @@ fn verify_tx_validity() {
         let transaction = HandleL1MessageTransaction {
             nonce: Default::default(),
             contract_address: Default::default(),
-            messaging_address: Default::default(),
             entry_point_selector: Default::default(),
             calldata: Default::default(),
         };
@@ -53,7 +52,6 @@ fn should_reject_used_nonce() {
         let transaction = HandleL1MessageTransaction {
             nonce,
             contract_address: Default::default(),
-            messaging_address: Default::default(),
             entry_point_selector: Default::default(),
             calldata: Default::default(),
         };
@@ -82,7 +80,6 @@ fn should_reject_zero_fee() {
         let transaction = HandleL1MessageTransaction {
             nonce,
             contract_address: Default::default(),
-            messaging_address: Default::default(),
             entry_point_selector: Default::default(),
             calldata: Default::default(),
         };
@@ -109,7 +106,6 @@ fn work() {
         let transaction = HandleL1MessageTransaction {
             nonce: 1,
             contract_address,
-			messaging_address: from_address,
             entry_point_selector: Felt252Wrapper::from_hex_be(
                 "0x014093c40d95d0a3641c087f7d48d55160e1a58bc7c07b0d2323efeeb3087269", // test_l1_handler_store_under_caller_address
             )
@@ -141,7 +137,6 @@ fn fail_if_no_fee() {
         let transaction = HandleL1MessageTransaction {
             nonce: 1,
             contract_address,
-            messaging_address: from_address,
             entry_point_selector: Felt252Wrapper::from_hex_be(
                 "0x014093c40d95d0a3641c087f7d48d55160e1a58bc7c07b0d2323efeeb3087269",
             )
