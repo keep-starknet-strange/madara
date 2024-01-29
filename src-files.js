@@ -5,7 +5,7 @@ var srcIndex = JSON.parse('{\
 "madara_test_runner":["",[],["client.rs","lib.rs","node.rs"]],\
 "mc_commitment_state_diff":["",[],["lib.rs"]],\
 "mc_data_availability":["",[["ethereum",[],["config.rs","mod.rs"]],["sharp",[],["mod.rs"]]],["da_metrics.rs","lib.rs","utils.rs"]],\
-"mc_db":["",[["db_opening_utils",[],["mod.rs","parity_db_adapter.rs"]]],["da_db.rs","error.rs","lib.rs","mapping_db.rs","messaging_db.rs","meta_db.rs"]],\
+"mc_db":["",[["db_opening_utils",[],["mod.rs","parity_db_adapter.rs"]]],["da_db.rs","error.rs","lib.rs","mapping_db.rs","messaging_db.rs","meta_db.rs","sierra_classes_db.rs"]],\
 "mc_genesis_data_provider":["",[],["constants.rs","lib.rs"]],\
 "mc_l1_messages":["",[],["config.rs","contract.rs","error.rs","lib.rs","worker.rs"]],\
 "mc_mapping_sync":["",[],["lib.rs","sync_blocks.rs"]],\

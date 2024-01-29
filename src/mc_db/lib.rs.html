@@ -153,6 +153,19 @@
 <a href="#153" id="153">153</a>
 <a href="#154" id="154">154</a>
 <a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A database backend storing data about madara chain
 //!
 //! # Usefulness
@@ -171,10 +184,12 @@
 
 <span class="kw">mod </span>mapping_db;
 <span class="kw">pub use </span>mapping_db::MappingCommitment;
+<span class="kw">use </span>sierra_classes_db::SierraClassesDb;
 <span class="kw">use </span>starknet_api::hash::StarkHash;
 <span class="kw">mod </span>da_db;
 <span class="kw">mod </span>db_opening_utils;
 <span class="kw">mod </span>messaging_db;
+<span class="kw">mod </span>sierra_classes_db;
 <span class="kw">pub use </span>messaging_db::LastSyncedEventBlock;
 <span class="kw">mod </span>meta_db;
 
@@ -204,13 +219,14 @@
     </span><span class="comment">// ===== /!\ ===================================================================================
     // MUST BE INCREMENTED WHEN A NEW COLUMN IN ADDED
     // ===== /!\ ===================================================================================
-    </span><span class="kw">pub const </span>NUM_COLUMNS: u32 = <span class="number">7</span>;
+    </span><span class="kw">pub const </span>NUM_COLUMNS: u32 = <span class="number">8</span>;
 
     <span class="kw">pub const </span>META: u32 = <span class="number">0</span>;
     <span class="kw">pub const </span>BLOCK_MAPPING: u32 = <span class="number">1</span>;
     <span class="kw">pub const </span>TRANSACTION_MAPPING: u32 = <span class="number">2</span>;
     <span class="kw">pub const </span>SYNCED_MAPPING: u32 = <span class="number">3</span>;
     <span class="kw">pub const </span>DA: u32 = <span class="number">4</span>;
+
     <span class="doccomment">/// This column is used to map starknet block hashes to a list of transaction hashes that are
     /// contained in the block.
     ///
@@ -219,6 +235,9 @@
 
     <span class="doccomment">/// This column contains last synchronized L1 block.
     </span><span class="kw">pub const </span>MESSAGING: u32 = <span class="number">6</span>;
+
+    <span class="doccomment">/// This column contains the Sierra contract classes
+    </span><span class="kw">pub const </span>SIERRA_CONTRACT_CLASSES: u32 = <span class="number">7</span>;
 }
 
 <span class="kw">pub mod </span>static_keys {
@@ -237,6 +256,7 @@
     mapping: Arc&lt;MappingDb&lt;B&gt;&gt;,
     da: Arc&lt;DaDb&lt;B&gt;&gt;,
     messaging: Arc&lt;MessagingDb&lt;B&gt;&gt;,
+    sierra_classes: Arc&lt;SierraClassesDb&lt;B&gt;&gt;,
 }
 
 <span class="doccomment">/// Returns the Starknet database directory.
@@ -278,6 +298,7 @@
             meta: Arc::new(MetaDb { db: db.clone(), _marker: PhantomData }),
             da: Arc::new(DaDb { db: db.clone(), _marker: PhantomData }),
             messaging: Arc::new(MessagingDb { db: db.clone(), _marker: PhantomData }),
+            sierra_classes: Arc::new(SierraClassesDb { db: db.clone(), _marker: PhantomData }),
         })
     }
 
@@ -299,6 +320,11 @@
     <span class="doccomment">/// Return the da database manager
     </span><span class="kw">pub fn </span>messaging(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Arc&lt;MessagingDb&lt;B&gt;&gt; {
         <span class="kw-2">&amp;</span><span class="self">self</span>.messaging
+    }
+
+    <span class="doccomment">/// Return the sierra classes database manager
+    </span><span class="kw">pub fn </span>sierra_classes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Arc&lt;SierraClassesDb&lt;B&gt;&gt; {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.sierra_classes
     }
 
     <span class="doccomment">/// In the future, we will compute the block global state root asynchronously in the client,

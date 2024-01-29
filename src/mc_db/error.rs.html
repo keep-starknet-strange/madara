@@ -5,11 +5,19 @@
 <a href="#5" id="5">5</a>
 <a href="#6" id="6">6</a>
 <a href="#7" id="7">7</a>
+<a href="#8" id="8">8</a>
+<a href="#9" id="9">9</a>
+<a href="#10" id="10">10</a>
+<a href="#11" id="11">11</a>
 </pre></div><pre class="rust"><code><span class="attr">#[derive(thiserror::Error, Debug)]
 </span><span class="kw">pub enum </span>DbError {
     <span class="attr">#[error(<span class="string">&quot;Failed to commit DB Update: `{0}`&quot;</span>)]
     </span>CommitError(<span class="attr">#[from] </span>sp_database::error::DatabaseError),
     <span class="attr">#[error(<span class="string">&quot;Failed to deserialize DB Data: `{0}`&quot;</span>)]
-    </span>DeserializeError(<span class="attr">#[from] </span>scale_codec::Error),
+    </span>DeserializeError(<span class="attr">#[from] </span>parity_scale_codec::Error),
+    <span class="attr">#[error(<span class="string">&quot;Failed to build Uuid: `{0}`&quot;</span>)]
+    </span>Uuid(<span class="attr">#[from] </span>uuid::Error),
+    <span class="attr">#[error(<span class="string">&quot;A value was queryied that was not initialized at column: `{0}` key: `{1}`&quot;</span>)]
+    </span>ValueNotInitialized(u32, String),
 }
 </code></pre></div></section></main></body></html>

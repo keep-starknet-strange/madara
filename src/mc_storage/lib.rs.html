@@ -70,8 +70,8 @@
 <span class="kw">use </span>mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 <span class="kw">pub use </span>overrides::<span class="kw-2">*</span>;
 <span class="kw">use </span>pallet_starknet_runtime_api::StarknetRuntimeApi;
+<span class="kw">use </span>parity_scale_codec::Decode;
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
-<span class="kw">use </span>scale_codec::Decode;
 <span class="kw">use </span>sp_api::ProvideRuntimeApi;
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
 <span class="kw">use </span>sp_runtime::traits::Block <span class="kw">as </span>BlockT;

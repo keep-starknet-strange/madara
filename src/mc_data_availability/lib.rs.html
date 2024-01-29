@@ -246,6 +246,7 @@
 <a href="#246" id="246">246</a>
 <a href="#247" id="247">247</a>
 <a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
 </pre></div><pre class="rust"><code><span class="attr">#[cfg(feature = <span class="string">&quot;avail&quot;</span>)]
 </span><span class="kw">pub mod </span>avail;
 <span class="attr">#[cfg(feature = <span class="string">&quot;celestia&quot;</span>)]
@@ -484,9 +485,10 @@
             </span><span class="macro">log::info!</span>(<span class="string">&quot;validity da mode not implemented&quot;</span>);
         }
         DaMode::Sovereign =&gt; <span class="kw">match </span>madara_backend.da().state_diff(<span class="kw-2">&amp;</span>block_hash) {
-            <span class="prelude-val">Ok</span>(state_diff) =&gt; {
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(state_diff)) =&gt; {
                 da_client.publish_state_diff(state_diff).<span class="kw">await</span>.map_err(|e| <span class="macro">anyhow!</span>(<span class="string">&quot;DA PUBLISH ERROR: {e}&quot;</span>))<span class="question-mark">?</span>;
             }
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">&quot;there is no state diff stored for block {}&quot;</span>, block_hash))<span class="question-mark">?</span>,
             <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">&quot;could not pull state diff for block {}: {}&quot;</span>, block_hash, e))<span class="question-mark">?</span>,
         },
         DaMode::Volition =&gt; <span class="macro">log::info!</span>(<span class="string">&quot;volition da mode not implemented&quot;</span>),

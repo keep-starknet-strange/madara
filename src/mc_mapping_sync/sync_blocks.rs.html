@@ -190,7 +190,6 @@
 <a href="#190" id="190">190</a>
 <a href="#191" id="191">191</a>
 <a href="#192" id="192">192</a>
-<a href="#193" id="193">193</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>mc_rpc_core::utils::get_block_by_block_hash;
 <span class="kw">use </span>mp_digest_log::{find_starknet_block, FindLogError};
 <span class="kw">use </span>mp_hashers::HasherT;
@@ -202,7 +201,7 @@
 <span class="kw">use </span>sp_core::H256;
 <span class="kw">use </span>sp_runtime::traits::{Block <span class="kw">as </span>BlockT, Header <span class="kw">as </span>HeaderT, Zero};
 
-<span class="kw">fn </span>sync_block&lt;B: BlockT, C, BE, H&gt;(client: <span class="kw-2">&amp;</span>C, backend: <span class="kw-2">&amp;</span>mc_db::Backend&lt;B&gt;, header: <span class="kw-2">&amp;</span>B::Header) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt;
+<span class="kw">fn </span>sync_block&lt;B: BlockT, C, BE, H&gt;(client: <span class="kw-2">&amp;</span>C, backend: <span class="kw-2">&amp;</span>mc_db::Backend&lt;B&gt;, header: <span class="kw-2">&amp;</span>B::Header) -&gt; anyhow::Result&lt;()&gt;
 <span class="kw">where
     </span>C: HeaderBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt;,
     C: ProvideRuntimeApi&lt;B&gt;,
@@ -225,15 +224,12 @@
                     <span class="kw">let </span>storage_starknet_block_hash = storage_starknet_block.header().hash::&lt;H&gt;();
                     <span class="comment">// Ensure the two blocks sources (chain storage and block digest) agree on the block content
                     </span><span class="kw">if </span>digest_starknet_block_hash != storage_starknet_block_hash {
-                        <span class="prelude-val">Err</span>(<span class="macro">format!</span>(
+                        <span class="prelude-val">Err</span>(<span class="macro">anyhow::anyhow!</span>(
                             <span class="string">&quot;Starknet block hash mismatch: madara consensus digest ({digest_starknet_block_hash:?}), \
                              db state ({storage_starknet_block_hash:?})&quot;
                         </span>))
                     } <span class="kw">else </span>{
-                        <span class="kw">let </span>chain_id = client
-                            .runtime_api()
-                            .chain_id(substrate_block_hash)
-                            .map_err(|<span class="kw">_</span>| <span class="string">&quot;Failed to fetch chain_id through the runtime api&quot;</span>)<span class="question-mark">?</span>;
+                        <span class="kw">let </span>chain_id = client.runtime_api().chain_id(substrate_block_hash)<span class="question-mark">?</span>;
 
                         <span class="comment">// Success, we write the Starknet to Substate hashes mapping to db
                         </span><span class="kw">let </span>mapping_commitment = mc_db::MappingCommitment {
@@ -246,16 +242,16 @@
                                 .collect(),
                         };
 
-                        backend.mapping().write_hashes(mapping_commitment)
+                        backend.mapping().write_hashes(mapping_commitment).map_err(|e| <span class="macro">anyhow::anyhow!</span>(e))
                     }
                 }
                 <span class="comment">// If there is not Starknet block in this Substrate block, we write it in the db
-                </span><span class="prelude-val">None </span>=&gt; backend.mapping().write_none(substrate_block_hash),
+                </span><span class="prelude-val">None </span>=&gt; backend.mapping().write_none(substrate_block_hash).map_err(|e| <span class="macro">anyhow::anyhow!</span>(e)),
             }
         }
         <span class="comment">// If there is not Starknet block in this Substrate block, we write it in the db
-        </span><span class="prelude-val">Err</span>(FindLogError::NotLog) =&gt; backend.mapping().write_none(substrate_block_hash),
-        <span class="prelude-val">Err</span>(FindLogError::MultipleLogs) =&gt; <span class="prelude-val">Err</span>(<span class="string">&quot;Multiple logs found&quot;</span>.to_string()),
+        </span><span class="prelude-val">Err</span>(FindLogError::NotLog) =&gt; backend.mapping().write_none(substrate_block_hash).map_err(|e| <span class="macro">anyhow::anyhow!</span>(e)),
+        <span class="prelude-val">Err</span>(FindLogError::MultipleLogs) =&gt; <span class="prelude-val">Err</span>(<span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;Multiple logs found&quot;</span>)),
     }
 }
 
@@ -263,7 +259,7 @@
     _client: <span class="kw-2">&amp;</span>C,
     backend: <span class="kw-2">&amp;</span>mc_db::Backend&lt;B&gt;,
     header: <span class="kw-2">&amp;</span>B::Header,
-) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt;
+) -&gt; anyhow::Result&lt;()&gt;
 <span class="kw">where
     </span>C: HeaderBackend&lt;B&gt;,
     B: BlockT,
@@ -273,8 +269,10 @@
 
     <span class="kw">let </span>block = <span class="kw">match </span>find_starknet_block(header.digest()) {
         <span class="prelude-val">Ok</span>(block) =&gt; block,
-        <span class="prelude-val">Err</span>(FindLogError::NotLog) =&gt; <span class="kw">return </span>backend.mapping().write_none(substrate_block_hash),
-        <span class="prelude-val">Err</span>(FindLogError::MultipleLogs) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">&quot;Multiple logs found&quot;</span>.to_string()),
+        <span class="prelude-val">Err</span>(FindLogError::NotLog) =&gt; {
+            <span class="kw">return </span>backend.mapping().write_none(substrate_block_hash).map_err(|e| <span class="macro">anyhow::anyhow!</span>(e));
+        }
+        <span class="prelude-val">Err</span>(FindLogError::MultipleLogs) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;Multiple logs found&quot;</span>)),
     };
     <span class="kw">let </span>block_hash = block.header().hash::&lt;H&gt;();
     <span class="kw">let </span>mapping_commitment = mc_db::MappingCommitment::&lt;B&gt; {
@@ -293,7 +291,7 @@
     substrate_backend: <span class="kw-2">&amp;</span>BE,
     madara_backend: <span class="kw-2">&amp;</span>mc_db::Backend&lt;B&gt;,
     sync_from: &lt;B::Header <span class="kw">as </span>HeaderT&gt;::Number,
-) -&gt; <span class="prelude-ty">Result</span>&lt;bool, String&gt;
+) -&gt; anyhow::Result&lt;bool&gt;
 <span class="kw">where
     </span>C: ProvideRuntimeApi&lt;B&gt;,
     C::Api: StarknetRuntimeApi&lt;B&gt;,
@@ -304,7 +302,7 @@
     <span class="kw">let </span><span class="kw-2">mut </span>current_syncing_tips = madara_backend.meta().current_syncing_tips()<span class="question-mark">?</span>;
 
     <span class="kw">if </span>current_syncing_tips.is_empty() {
-        <span class="kw">let </span><span class="kw-2">mut </span>leaves = substrate_backend.blockchain().leaves().map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, e))<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>leaves = substrate_backend.blockchain().leaves()<span class="question-mark">?</span>;
         <span class="kw">if </span>leaves.is_empty() {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">false</span>);
         }
@@ -348,7 +346,7 @@
     madara_backend: <span class="kw-2">&amp;</span>mc_db::Backend&lt;B&gt;,
     limit: usize,
     sync_from: &lt;B::Header <span class="kw">as </span>HeaderT&gt;::Number,
-) -&gt; <span class="prelude-ty">Result</span>&lt;bool, String&gt;
+) -&gt; anyhow::Result&lt;bool&gt;
 <span class="kw">where
     </span>C: ProvideRuntimeApi&lt;B&gt;,
     C::Api: StarknetRuntimeApi&lt;B&gt;,
@@ -370,7 +368,7 @@
     madara_backend: <span class="kw-2">&amp;</span>mc_db::Backend&lt;B&gt;,
     checking_tip: B::Hash,
     sync_from: &lt;B::Header <span class="kw">as </span>HeaderT&gt;::Number,
-) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;B::Header&gt;, String&gt;
+) -&gt; anyhow::Result&lt;<span class="prelude-ty">Option</span>&lt;B::Header&gt;&gt;
 <span class="kw">where
     </span>BE: HeaderBackend&lt;B&gt;,
 {
@@ -381,7 +379,7 @@
     <span class="kw">match </span>substrate_backend.header(checking_tip) {
         <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(checking_header)) <span class="kw">if </span>checking_header.number() &gt;= <span class="kw-2">&amp;</span>sync_from =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(checking_header)),
         <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="kw">_</span>)) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-        <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) | <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(<span class="string">&quot;Header not found&quot;</span>.to_string()),
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) | <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(<span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;Header not found&quot;</span>)),
     }
 }
 </code></pre></div></section></main></body></html>

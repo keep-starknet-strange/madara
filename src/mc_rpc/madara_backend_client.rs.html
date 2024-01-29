@@ -77,7 +77,7 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::errors::StarknetRpcApiError;
 
-<span class="kw">pub fn </span>load_hash&lt;B: BlockT, C&gt;(client: <span class="kw-2">&amp;</span>C, backend: <span class="kw-2">&amp;</span>mc_db::Backend&lt;B&gt;, hash: H256) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;B::Hash&gt;, String&gt;
+<span class="kw">pub fn </span>load_hash&lt;B: BlockT, C&gt;(client: <span class="kw-2">&amp;</span>C, backend: <span class="kw-2">&amp;</span>mc_db::Backend&lt;B&gt;, hash: H256) -&gt; anyhow::Result&lt;<span class="prelude-ty">Option</span>&lt;B::Hash&gt;&gt;
 <span class="kw">where
     </span>B: BlockT,
     C: HeaderBackend&lt;B&gt; + <span class="lifetime">&#39;static</span>,

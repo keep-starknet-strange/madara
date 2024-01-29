@@ -158,12 +158,12 @@
 <span class="kw">use </span>std::sync::{Arc, Mutex};
 
 <span class="comment">// Substrate
-</span><span class="kw">use </span>scale_codec::{Decode, Encode};
+</span><span class="kw">use </span>parity_scale_codec::{Decode, Encode};
 <span class="kw">use </span>sp_core::H256;
 <span class="kw">use </span>sp_database::Database;
 <span class="kw">use </span>sp_runtime::traits::Block <span class="kw">as </span>BlockT;
 
-<span class="kw">use </span><span class="kw">crate</span>::DbHash;
+<span class="kw">use crate</span>::{DbError, DbHash};
 
 <span class="doccomment">/// The mapping to write in db
 </span><span class="attr">#[derive(Debug)]
@@ -189,9 +189,9 @@
     }
 
     <span class="doccomment">/// Check if the given block hash has already been processed
-    </span><span class="kw">pub fn </span>is_synced(<span class="kw-2">&amp;</span><span class="self">self</span>, block_hash: <span class="kw-2">&amp;</span>B::Hash) -&gt; <span class="prelude-ty">Result</span>&lt;bool, String&gt; {
+    </span><span class="kw">pub fn </span>is_synced(<span class="kw-2">&amp;</span><span class="self">self</span>, block_hash: <span class="kw-2">&amp;</span>B::Hash) -&gt; <span class="prelude-ty">Result</span>&lt;bool, DbError&gt; {
         <span class="kw">match </span><span class="self">self</span>.db.get(<span class="kw">crate</span>::columns::SYNCED_MAPPING, <span class="kw-2">&amp;</span>block_hash.encode()) {
-            <span class="prelude-val">Some</span>(raw) =&gt; <span class="prelude-val">Ok</span>(bool::decode(<span class="kw-2">&amp;mut &amp;</span>raw[..]).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, e))<span class="question-mark">?</span>),
+            <span class="prelude-val">Some</span>(raw) =&gt; <span class="prelude-val">Ok</span>(bool::decode(<span class="kw-2">&amp;mut &amp;</span>raw[..])<span class="question-mark">?</span>),
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>),
         }
     }
@@ -200,28 +200,28 @@
     ///
     /// Under some circumstances it can return multiples blocks hashes, meaning that the result has
     /// to be checked against the actual blockchain state in order to find the good one.
-    </span><span class="kw">pub fn </span>block_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, starknet_block_hash: <span class="kw-2">&amp;</span>H256) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;B::Hash&gt;&gt;, String&gt; {
+    </span><span class="kw">pub fn </span>block_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, starknet_block_hash: <span class="kw-2">&amp;</span>H256) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;B::Hash&gt;&gt;, DbError&gt; {
         <span class="kw">match </span><span class="self">self</span>.db.get(<span class="kw">crate</span>::columns::BLOCK_MAPPING, <span class="kw-2">&amp;</span>starknet_block_hash.encode()) {
-            <span class="prelude-val">Some</span>(raw) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Vec::&lt;B::Hash&gt;::decode(<span class="kw-2">&amp;mut &amp;</span>raw[..]).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, e))<span class="question-mark">?</span>)),
+            <span class="prelude-val">Some</span>(raw) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Vec::&lt;B::Hash&gt;::decode(<span class="kw-2">&amp;mut &amp;</span>raw[..])<span class="question-mark">?</span>)),
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
         }
     }
 
     <span class="doccomment">/// Register that a Substrate block has been seen, without it containing a Starknet one
-    </span><span class="kw">pub fn </span>write_none(<span class="kw-2">&amp;</span><span class="self">self</span>, block_hash: B::Hash) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+    </span><span class="kw">pub fn </span>write_none(<span class="kw-2">&amp;</span><span class="self">self</span>, block_hash: B::Hash) -&gt; <span class="prelude-ty">Result</span>&lt;(), DbError&gt; {
         <span class="kw">let </span>_lock = <span class="self">self</span>.write_lock.lock();
 
         <span class="kw">let </span><span class="kw-2">mut </span>transaction = sp_database::Transaction::new();
 
         transaction.set(<span class="kw">crate</span>::columns::SYNCED_MAPPING, <span class="kw-2">&amp;</span>block_hash.encode(), <span class="kw-2">&amp;</span><span class="bool-val">true</span>.encode());
 
-        <span class="self">self</span>.db.commit(transaction).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, e))<span class="question-mark">?</span>;
+        <span class="self">self</span>.db.commit(transaction)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }
 
     <span class="doccomment">/// Register that a Substate block has been seen and map it to the Statknet block it contains
-    </span><span class="kw">pub fn </span>write_hashes(<span class="kw-2">&amp;</span><span class="self">self</span>, commitment: MappingCommitment&lt;B&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+    </span><span class="kw">pub fn </span>write_hashes(<span class="kw-2">&amp;</span><span class="self">self</span>, commitment: MappingCommitment&lt;B&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), DbError&gt; {
         <span class="kw">let </span>_lock = <span class="self">self</span>.write_lock.lock();
 
         <span class="kw">let </span><span class="kw-2">mut </span>transaction = sp_database::Transaction::new();
@@ -264,7 +264,7 @@
             );
         }
 
-        <span class="self">self</span>.db.commit(transaction).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, e))<span class="question-mark">?</span>;
+        <span class="self">self</span>.db.commit(transaction)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }
@@ -277,9 +277,9 @@
     /// * `transaction_hash` - the transaction hash to search for. H256 is used here because it&#39;s a
     ///   native type of substrate, and we are sure it&#39;s SCALE encoding is optimized and will not
     ///   change.
-    </span><span class="kw">pub fn </span>block_hash_from_transaction_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, transaction_hash: H256) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;B::Hash&gt;, String&gt; {
+    </span><span class="kw">pub fn </span>block_hash_from_transaction_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, transaction_hash: H256) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;B::Hash&gt;, DbError&gt; {
         <span class="kw">match </span><span class="self">self</span>.db.get(<span class="kw">crate</span>::columns::TRANSACTION_MAPPING, <span class="kw-2">&amp;</span>transaction_hash.encode()) {
-            <span class="prelude-val">Some</span>(raw) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(&lt;B::Hash&gt;::decode(<span class="kw-2">&amp;mut &amp;</span>raw[..]).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, e))<span class="question-mark">?</span>)),
+            <span class="prelude-val">Some</span>(raw) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(&lt;B::Hash&gt;::decode(<span class="kw-2">&amp;mut &amp;</span>raw[..])<span class="question-mark">?</span>)),
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
         }
     }
@@ -298,14 +298,14 @@
     ///
     /// - The cache is disabled.
     /// - The provided `starknet_hash` is not present in the cache.
-    </span><span class="kw">pub fn </span>cached_transaction_hashes_from_block_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, starknet_hash: H256) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;H256&gt;&gt;, String&gt; {
+    </span><span class="kw">pub fn </span>cached_transaction_hashes_from_block_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, starknet_hash: H256) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;H256&gt;&gt;, DbError&gt; {
         <span class="kw">if </span>!<span class="self">self</span>.cache_more_things {
             <span class="comment">// The cache is not enabled, no need to even touch the database.
             </span><span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
         }
 
         <span class="kw">match </span><span class="self">self</span>.db.get(<span class="kw">crate</span>::columns::STARKNET_TRANSACTION_HASHES_CACHE, <span class="kw-2">&amp;</span>starknet_hash.encode()) {
-            <span class="prelude-val">Some</span>(raw) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Vec::&lt;H256&gt;::decode(<span class="kw-2">&amp;mut &amp;</span>raw[..]).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, e))<span class="question-mark">?</span>)),
+            <span class="prelude-val">Some</span>(raw) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Vec::&lt;H256&gt;::decode(<span class="kw-2">&amp;mut &amp;</span>raw[..])<span class="question-mark">?</span>)),
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
         }
     }
