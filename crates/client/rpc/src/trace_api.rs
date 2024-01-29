@@ -111,8 +111,7 @@ where
             transactions_array.push(transaction.clone());
         }
 
-        // call runtimeAPi traceBlock with substrate_block_hash and tx_list
-        let simulation_flags = vec![]; // Replace with actual simulation flags if needed
+        let simulation_flags = [SimulationFlag::SkipValidate, SimulationFlag::SkipFeeCharge];
         let res = self.simulate_transactions(block_id, transactions_array, simulation_flags.clone());
 
         // Transform vector of TransactionExecutionInfo into traces vector of TransactionTraceWithHash

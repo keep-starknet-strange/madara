@@ -255,19 +255,11 @@ async fn simulate_trace_block_transactions(madara: &ThreadSafeMadaraClient) -> R
     }
 
     // Step 1: Fetch block n - 1
-    // let block_number_n_minus_1 = res.block_number - 1;
-
-    // Step 2: Calculate n - 1
-    // Fetch all the transactions at block height (n)
-    let transactions_in_block_n = rpc
-    .get_block_with_txs(BlockId::Tag(BlockTag::Latest))
-    .await?;
-    println!("transaction in block n");
-    println!("{:?}", &transactions_in_block_n);
+    let block_number_n_minus_1 = res.block_number - 1;
 
     let traced_transactions = rpc
         .trace_block_transactions(
-            BlockId::Tag(BlockTag::Latest)
+            BlockId::Number(block_number_n_minus_1)
         )
         .await?;
 
