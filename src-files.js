@@ -30,7 +30,7 @@ var srcIndex = JSON.parse('{\
 "mp_transactions":["",[],["compute_hash.rs","conversions.rs","execution.rs","from_broadcasted_transactions.rs","getters.rs","lib.rs","to_starknet_core_transaction.rs"]],\
 "pallet_starknet":["",[],["blockifier_state_adapter.rs","execution_config.rs","genesis_loader.rs","lib.rs","simulations.rs","transaction_validation.rs","types.rs"]],\
 "pallet_starknet_runtime_api":["",[],["lib.rs"]],\
-"starknet_e2e_test":["",[],["ethereum_sandbox.rs","lib.rs","starknet_contract.rs"]],\
+"starknet_e2e_test":["",[],["lib.rs","starknet_sovereign.rs"]],\
 "starknet_rpc_test":["",[],["constants.rs","fixtures.rs","lib.rs","utils.rs"]]\
 }');
 createSrcSidebar();

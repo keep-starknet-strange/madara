@@ -24,7 +24,7 @@
 <a href="#24" id="24">24</a>
 <a href="#25" id="25">25</a>
 <a href="#26" id="26">26</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::client::LocalMiddleware;
+</pre></div><pre class="rust"><code><span class="kw">use </span>starknet_core_contract_client::LocalWalletSignerMiddleware;
 
 <span class="doccomment">/// Ethereum client error type.
 </span><span class="attr">#[derive(thiserror::Error, Debug)]
@@ -40,7 +40,7 @@
     </span>HexParser(<span class="attr">#[from] </span>rustc_hex::FromHexError),
 
     <span class="attr">#[error(<span class="string">&quot;Error while interacting with contract: {0}&quot;</span>)]
-    </span>Contract(<span class="attr">#[from] </span>ethers::contract::ContractError&lt;LocalMiddleware&gt;),
+    </span>Contract(<span class="attr">#[from] </span>ethers::contract::ContractError&lt;LocalWalletSignerMiddleware&gt;),
 
     <span class="attr">#[error(<span class="string">&quot;HTTP provider error: {0}&quot;</span>)]
     </span>Provider(<span class="attr">#[from] </span>ethers::providers::ProviderError),

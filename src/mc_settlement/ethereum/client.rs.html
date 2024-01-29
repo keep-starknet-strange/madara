@@ -93,24 +93,16 @@
 <a href="#93" id="93">93</a>
 <a href="#94" id="94">94</a>
 <a href="#95" id="95">95</a>
-<a href="#96" id="96">96</a>
-<a href="#97" id="97">97</a>
-<a href="#98" id="98">98</a>
-<a href="#99" id="99">99</a>
-<a href="#100" id="100">100</a>
-<a href="#101" id="101">101</a>
-<a href="#102" id="102">102</a>
-<a href="#103" id="103">103</a>
-<a href="#104" id="104">104</a>
-<a href="#105" id="105">105</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::time::Duration;
 
-<span class="kw">use </span>ethers::prelude::{abigen, SignerMiddleware};
+<span class="kw">use </span>ethers::prelude::SignerMiddleware;
 <span class="kw">use </span>ethers::providers::{Http, Provider};
 <span class="kw">use </span>ethers::signers::{LocalWallet, Signer};
 <span class="kw">use </span>ethers::types::{Address, TransactionReceipt, I256, U256};
 <span class="kw">pub use </span>mc_data_availability::ethereum::config::EthereumConfig;
+<span class="kw">use </span>starknet_core_contract_client::interfaces::StarknetSovereignContract;
+<span class="kw">use </span>starknet_core_contract_client::LocalWalletSignerMiddleware;
 
 <span class="kw">use </span><span class="kw">crate</span>::ethereum::errors::{Error, <span class="prelude-ty">Result</span>};
 
@@ -142,26 +134,14 @@
 //
 // Read this great overview to learn more about SNOS:
 // https://hackmd.io/@pragma/ByP-iux1T
-</span><span class="macro">abigen!</span>(
-    StarknetContract,
-    <span class="string">r#&quot;[
-        function programHash() public view returns (uint256)
-        function stateBlockNumber() external view returns (int256)
-        function stateRoot() external view returns (uint256)
-        function configHash() public view returns (uint256)
-        function updateState(uint256[] calldata programOutput) external
-    ]&quot;#</span>,
-);
 
-<span class="kw">pub type </span>LocalMiddleware = SignerMiddleware&lt;Provider&lt;Http&gt;, LocalWallet&gt;;
-
-<span class="kw">pub struct </span>StarknetContractClient {
-    contract: StarknetContract&lt;LocalMiddleware&gt;,
+</span><span class="kw">pub struct </span>StarknetContractClient {
+    contract: StarknetSovereignContract&lt;LocalWalletSignerMiddleware&gt;,
 }
 
 <span class="kw">impl </span>StarknetContractClient {
-    <span class="kw">pub fn </span>new(address: Address, client: Arc&lt;LocalMiddleware&gt;) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ contract: StarknetContract::new(address, client) }
+    <span class="kw">pub fn </span>new(address: Address, client: Arc&lt;LocalWalletSignerMiddleware&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ contract: StarknetSovereignContract::new(address, client) }
     }
 
     <span class="kw">pub async fn </span>state_block_number(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;I256&gt; {

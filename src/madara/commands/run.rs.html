@@ -472,14 +472,14 @@
 
     <span class="kw">let </span>settlement_config: <span class="prelude-ty">Option</span>&lt;(SettlementLayer, PathBuf)&gt; = <span class="kw">match </span>cli.run.settlement {
         <span class="prelude-val">Some</span>(SettlementLayer::Ethereum) =&gt; {
-            <span class="kw">let </span>settlement_conf = cli.run.clone().settlement_conf.unwrap_or({
-                <span class="kw">let </span>path_sett_conf_json = chain_config_dir.join(<span class="string">&quot;settlement_conf.json&quot;</span>);
-                <span class="kw">if </span>!path_sett_conf_json.exists() {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(sc_cli::Error::Input(<span class="string">&quot;no file settlement_conf in base_path&quot;</span>.to_string()));
-                }
-                path_sett_conf_json
-            });
-
+            <span class="kw">let </span>settlement_conf =
+                cli.run.clone().settlement_conf.unwrap_or_else(|| chain_config_dir.join(<span class="string">&quot;settlement_conf.json&quot;</span>));
+            <span class="kw">if </span>!settlement_conf.exists() {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(sc_cli::Error::Input(<span class="macro">format!</span>(
+                    <span class="string">&quot;Settlement config does not exist: {}&quot;</span>,
+                    settlement_conf.display()
+                )));
+            }
             <span class="prelude-val">Some</span>((SettlementLayer::Ethereum, settlement_conf))
         }
 

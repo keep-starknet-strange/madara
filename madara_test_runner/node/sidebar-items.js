@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["MadaraNode"]};
+window.SIDEBAR_ITEMS = {"struct":["MadaraNode","MadaraTempDir"]};

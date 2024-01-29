@@ -148,6 +148,9 @@
 <a href="#148" id="148">148</a>
 <a href="#149" id="149">149</a>
 <a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>ethers::providers::{Http, Provider, StreamExt};
@@ -161,9 +164,10 @@
 <span class="kw">use </span>starknet_api::api_core::Nonce;
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_api::transaction::Fee;
+<span class="kw">use </span>starknet_core_contract_client::interfaces::{LogMessageToL2Filter, StarknetMessagingEvents};
 
 <span class="kw">use </span><span class="kw">crate</span>::config::L1MessagesWorkerConfig;
-<span class="kw">use </span><span class="kw">crate</span>::contract::{L1Contract, LogMessageToL2Filter};
+<span class="kw">use </span><span class="kw">crate</span>::contract::parse_handle_l1_message_transaction;
 <span class="kw">use </span><span class="kw">crate</span>::error::L1MessagesWorkerError;
 
 <span class="kw">const </span>TX_SOURCE: TransactionSource = TransactionSource::External;
@@ -181,8 +185,10 @@
 {
     <span class="macro">log::info!</span>(<span class="string">&quot;⟠ Starting L1 Messages Worker with settings: {:?}&quot;</span>, config);
 
-    <span class="kw">let </span>l1_contract =
-        L1Contract::new(<span class="kw-2">*</span>config.contract_address(), Arc::new(Provider::new(Http::new(config.provider().clone()))));
+    <span class="kw">let </span>event_listener = StarknetMessagingEvents::new(
+        <span class="kw-2">*</span>config.contract_address(),
+        Arc::new(Provider::new(Http::new(config.provider().clone()))),
+    );
 
     <span class="kw">let </span>last_synced_event_block = <span class="kw">match </span>backend.messaging().last_synced_l1_block_with_event() {
         <span class="prelude-val">Ok</span>(blknum) =&gt; blknum,
@@ -192,7 +198,7 @@
         }
     };
 
-    <span class="kw">let </span>events = l1_contract.events().from_block(last_synced_event_block.block_number);
+    <span class="kw">let </span>events = event_listener.event::&lt;LogMessageToL2Filter&gt;().from_block(last_synced_event_block.block_number);
     <span class="kw">let </span><span class="kw-2">mut </span>event_stream = <span class="kw">match </span>events.stream_with_meta().<span class="kw">await </span>{
         <span class="prelude-val">Ok</span>(stream) =&gt; stream,
         <span class="prelude-val">Err</span>(e) =&gt; {
@@ -259,7 +265,7 @@
     } <span class="kw">else </span>{
         Fee(event.fee.as_u128())
     };
-    <span class="kw">let </span>transaction: HandleL1MessageTransaction = event.try_into()<span class="question-mark">?</span>;
+    <span class="kw">let </span>transaction: HandleL1MessageTransaction = parse_handle_l1_message_transaction(event)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>best_block_hash = client.info().best_hash;
 

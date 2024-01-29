@@ -68,6 +68,15 @@
 <a href="#68" id="68">68</a>
 <a href="#69" id="69">69</a>
 <a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
 </pre></div><pre class="rust"><code><span class="kw">pub mod </span>client;
 <span class="kw">pub mod </span>node;
 
@@ -80,6 +89,7 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::client::MadaraClient;
 <span class="kw">use </span><span class="kw">crate</span>::node::MadaraNode;
+<span class="kw">pub use </span><span class="kw">crate</span>::node::MadaraTempDir;
 
 <span class="macro">lazy_static! </span>{
     <span class="doccomment">/// This is to prevent TOCTOU errors; i.e. one background madara node might find one
@@ -90,22 +100,30 @@
     </span><span class="kw">static </span><span class="kw-2">ref </span>FREE_PORT_ATTRIBUTION_MUTEX: Mutex&lt;()&gt; = Mutex::new(());
 }
 
-<span class="attr">#[derive(Display, Clone)]
+<span class="attr">#[derive(Debug, Display, Clone)]
 </span><span class="kw">pub enum </span>Settlement {
     Ethereum,
 }
 
-<span class="kw">pub struct </span>MadaraRunner {
+<span class="attr">#[derive(Debug)]
+</span><span class="kw">pub struct </span>MadaraRunner {
     _node: MadaraNode,
     client: MadaraClient,
 }
 
+<span class="attr">#[derive(Debug, Clone, Default)]
+</span><span class="kw">pub struct </span>MadaraArgs {
+    <span class="kw">pub </span>settlement: <span class="prelude-ty">Option</span>&lt;Settlement&gt;,
+    <span class="kw">pub </span>settlement_conf: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
+    <span class="kw">pub </span>base_path: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
+}
+
 <span class="kw">impl </span>MadaraRunner {
-    <span class="kw">pub async fn </span>new(settlement: <span class="prelude-ty">Option</span>&lt;Settlement&gt;, base_path: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub async fn </span>new(args: MadaraArgs) -&gt; <span class="self">Self </span>{
         <span class="comment">// we keep the reference, otherwise the mutex unlocks immediately
         </span><span class="kw">let </span>_mutex_guard = FREE_PORT_ATTRIBUTION_MUTEX.lock().<span class="kw">await</span>;
 
-        <span class="kw">let </span><span class="kw-2">mut </span>node = MadaraNode::run(settlement, base_path);
+        <span class="kw">let </span><span class="kw-2">mut </span>node = MadaraNode::run(args);
         <span class="kw">let </span>client = MadaraClient::new(node.url());
 
         <span class="comment">// Wait until node is ready

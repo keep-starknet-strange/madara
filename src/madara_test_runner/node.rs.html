@@ -117,6 +117,42 @@
 <a href="#117" id="117">117</a>
 <a href="#118" id="118">118</a>
 <a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::env;
 <span class="kw">use </span>std::fmt::Debug;
 <span class="kw">use </span>std::fs::{create_dir_all, File};
@@ -125,12 +161,44 @@
 <span class="kw">use </span>std::process::{Child, Command, ExitStatus, Stdio};
 <span class="kw">use </span>std::str::FromStr;
 
+<span class="kw">use </span>tempfile::TempDir;
 <span class="kw">use </span>url::Url;
 
-<span class="kw">use </span><span class="kw">crate</span>::Settlement;
+<span class="kw">use </span><span class="kw">crate</span>::MadaraArgs;
 
 <span class="kw">const </span>MIN_PORT: u16 = <span class="number">49_152</span>;
 <span class="kw">const </span>MAX_PORT: u16 = <span class="number">65_535</span>;
+
+<span class="attr">#[derive(Debug)]
+</span><span class="doccomment">/// A helper struct for creating temporary Madara folders
+///
+/// The temporary directory is deleted when instance is dropped.
+</span><span class="kw">pub struct </span>MadaraTempDir {
+    temp_dir: TempDir,
+}
+
+<span class="kw">impl </span>MadaraTempDir {
+    <span class="kw">pub fn </span>base_path(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PathBuf {
+        <span class="self">self</span>.temp_dir.path().to_path_buf()
+    }
+
+    <span class="kw">pub fn </span>data_path(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PathBuf {
+        <span class="self">self</span>.temp_dir.path().join(<span class="string">&quot;chains/dev&quot;</span>)
+    }
+
+    <span class="kw">pub fn </span>clear(<span class="self">self</span>) {
+        <span class="self">self</span>.temp_dir.close().expect(<span class="string">&quot;Failed to clean up&quot;</span>);
+    }
+}
+
+<span class="kw">impl </span>Default <span class="kw">for </span>MadaraTempDir {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>temp_dir = TempDir::with_prefix(<span class="string">&quot;madara&quot;</span>).expect(<span class="string">&quot;Failed to create Madara path&quot;</span>);
+        <span class="kw">let </span>data_path = temp_dir.path().join(<span class="string">&quot;chains/dev&quot;</span>);
+        create_dir_all(data_path).expect(<span class="string">&quot;Failed to create data path&quot;</span>);
+        <span class="self">Self </span>{ temp_dir }
+    }
+}
 
 <span class="attr">#[derive(Debug)]
 </span><span class="doccomment">/// A wrapper over the Madara process handle, reqwest client and request counter
@@ -188,14 +256,15 @@
         Command::new(<span class="string">&quot;cargo&quot;</span>).stdout(stdout).stderr(stderr).args(arguments).spawn().expect(<span class="string">&quot;Could not run Madara node&quot;</span>)
     }
 
-    <span class="kw">pub fn </span>run(settlement: <span class="prelude-ty">Option</span>&lt;Settlement&gt;, base_path: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>run(args: MadaraArgs) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>port = get_free_port();
         <span class="kw">let </span>repository_root = <span class="kw-2">&amp;</span>get_repository_root();
 
         std::env::set_current_dir(repository_root).expect(<span class="string">&quot;Failed to change working directory&quot;</span>);
 
-        <span class="kw">let </span>base_path_arg = base_path.map(|arg| <span class="macro">format!</span>(<span class="string">&quot;--base-path={}&quot;</span>, arg.display()));
-        <span class="kw">let </span>settlement_arg = settlement.map(|arg| <span class="macro">format!</span>(<span class="string">&quot;--settlement={arg}&quot;</span>));
+        <span class="kw">let </span>base_path_arg = args.base_path.map(|arg| <span class="macro">format!</span>(<span class="string">&quot;--base-path={}&quot;</span>, arg.display()));
+        <span class="kw">let </span>settlement_arg = args.settlement.map(|arg| <span class="macro">format!</span>(<span class="string">&quot;--settlement={arg}&quot;</span>));
+        <span class="kw">let </span>settlement_conf_arg = args.settlement_conf.map(|arg| <span class="macro">format!</span>(<span class="string">&quot;--settlement-conf={}&quot;</span>, arg.display()));
         <span class="kw">let </span>rpc_port_arg = <span class="macro">format!</span>(<span class="string">&quot;--rpc-port={port}&quot;</span>);
         <span class="kw">let </span>chain_arg = <span class="string">&quot;--chain=dev&quot;</span>;
         <span class="kw">let </span>from_local_arg = <span class="macro">format!</span>(<span class="string">&quot;--from-local={}&quot;</span>, repository_root.join(<span class="string">&quot;configs&quot;</span>).display());
@@ -222,6 +291,9 @@
         <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = <span class="kw-2">&amp;</span>settlement_arg {
             run_args.push(s);
         };
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = <span class="kw-2">&amp;</span>settlement_conf_arg {
+            run_args.push(s);
+        }
 
         <span class="kw">let </span>process = <span class="self">Self</span>::cargo_run(repository_root.as_path(), run_args);
 
