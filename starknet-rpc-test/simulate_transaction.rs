@@ -4,7 +4,7 @@ use assert_matches::assert_matches;
 use rstest::rstest;
 use starknet_accounts::{Call, ConnectedAccount};
 use starknet_core::types::{
-    BlockId, BlockTag, BroadcastedInvokeTransaction, BroadcastedTransaction, SimulationFlag, StarknetError,
+    BlockId, BlockTag, BroadcastedInvokeTransaction, BroadcastedTransaction, SimulationFlag, StarknetError
 };
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
@@ -13,6 +13,7 @@ use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessa
 use starknet_rpc_test::constants::{ACCOUNT_CONTRACT, ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE, TEST_CONTRACT_ADDRESS};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{build_single_owner_account, AccountActions};
+// use starknet_core::types::TransactionTrace;
 
 #[rstest]
 #[tokio::test]
@@ -237,6 +238,40 @@ async fn works_ok_without_max_fee_with_skip_fee_charge(madara: &ThreadSafeMadara
     assert_eq!(simulations[0].fee_estimation.gas_consumed, 0);
     assert_eq!(simulations[0].fee_estimation.overall_fee, 420);
     assert_eq!(simulations[0].fee_estimation.gas_price, 0);
+
+    Ok(())
+}
+
+#[rstest]
+#[tokio::test]
+async fn simulate_trace_block_transactions(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
+
+    let res = rpc.block_hash_and_number().await?;
+
+    // Ensure we are not trying to get the hash for block number 0
+    if res.block_number == 0 {
+        return Err(anyhow::anyhow!("There is no block before the genesis block"));
+    }
+
+    // Step 1: Fetch block n - 1
+    // let block_number_n_minus_1 = res.block_number - 1;
+
+    // Step 2: Calculate n - 1
+    // Fetch all the transactions at block height (n)
+    let transactions_in_block_n = rpc
+    .get_block_with_txs(BlockId::Tag(BlockTag::Latest))
+    .await?;
+    println!("transaction in block n");
+    println!("{:?}", &transactions_in_block_n);
+
+    let traced_transactions = rpc
+        .trace_block_transactions(
+            BlockId::Tag(BlockTag::Latest)
+        )
+        .await?;
+
+    println!("{:?}", traced_transactions);
 
     Ok(())
 }

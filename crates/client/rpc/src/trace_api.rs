@@ -19,7 +19,7 @@ use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
 use starknet_core::types::{
     BlockId, BroadcastedTransaction, DeclareTransactionTrace, DeployAccountTransactionTrace, ExecuteInvocation,
-    FeeEstimate, InvokeTransactionTrace, RevertedInvocation, SimulatedTransaction, SimulationFlag, TransactionTrace,
+    FeeEstimate, InvokeTransactionTrace, RevertedInvocation, SimulatedTransaction, SimulationFlag, TransactionTrace, TransactionTraceWithHash, BlockTag, MaybePendingBlockWithTxs
 };
 use starknet_ff::FieldElement;
 use thiserror::Error;
@@ -96,7 +96,49 @@ where
 
         Ok(simulated_transactions)
     }
-}
+
+    async fn trace_block_transactions(
+        &self,
+        block_id: BlockId
+    ) -> RpcResult<Vec<TransactionTraceWithHash>> {
+        let transactions_in_block_n = self
+        .get_block_with_txs(BlockId::Tag(BlockTag::Latest))
+        .map_err(|_| StarknetRpcApiError::BlockNotFound)?;
+
+        let MaybePendingBlockWithTxs::Block(block_with_txs) = transactions_in_block_n;
+        let mut transactions_array = Vec::new();
+        for transaction in &block_with_txs.transactions {
+            transactions_array.push(transaction.clone());
+        }
+
+        // call runtimeAPi traceBlock with substrate_block_hash and tx_list
+        let simulation_flags = vec![]; // Replace with actual simulation flags if needed
+        let res = self.simulate_transactions(block_id, transactions_array, simulation_flags.clone());
+
+        // Transform vector of TransactionExecutionInfo into traces vector of TransactionTraceWithHash
+        let transaction_traces_with_hash: Result<Vec<TransactionTraceWithHash>, _> = res.into_iter().map(|simulated_transaction| {
+            // Generate or retrieve the transaction hash
+            let transaction_hash = calculate_hash(&simulated_transaction);
+        
+            // Create a new TransactionTraceWithHash
+            Ok(TransactionTraceWithHash {
+                transaction_hash,
+                trace_root: simulated_transaction.trace_root,
+            })
+        }).collect();
+        
+        let transaction_traces_with_hash = transaction_traces_with_hash?;
+
+        Ok(transaction_traces)
+    }
+
+    // write calculate_hash
+    fn calculate_hash(simulated_transaction: &SimulatedTransaction) -> TransactionHash {
+        // TODO: Logic for hash function and which field to convert hash 
+        let mut hasher = Sha256::new();
+        hasher.update(simulated_transaction.transaction_trace);
+        hasher.finalize()
+    }
 
 #[derive(Error, Debug)]
 pub enum ConvertCallInfoToExecuteInvocationError {

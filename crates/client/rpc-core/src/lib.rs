@@ -22,7 +22,7 @@ use starknet_core::types::{
     BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall,
     InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt,
-    MsgFromL1, SimulatedTransaction, SimulationFlag, StateUpdate, SyncStatusType, Transaction,
+    MsgFromL1, SimulatedTransaction, SimulationFlag, StateUpdate, SyncStatusType, Transaction, TransactionTraceWithHash
 };
 
 #[serde_as]
@@ -165,6 +165,13 @@ pub trait StarknetReadRpcApi {
         &self,
         transaction_hash: FieldElement,
     ) -> RpcResult<MaybePendingTransactionReceipt>;
+
+    /// Returns the traces for all transactions in the given block
+    #[method(name = "traceBlockTransactions")]
+    async fn trace_block_transactions(
+        &self,
+        block_id: BlockId,
+    ) -> RpcResult<Vec<TransactionTraceWithHash>>;
 }
 
 /// Starknet trace rpc interface.
