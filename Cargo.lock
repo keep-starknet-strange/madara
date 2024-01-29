@@ -6386,6 +6386,7 @@ dependencies = [
 name = "mc-mapping-sync"
 version = "0.6.0"
 dependencies = [
+ "anyhow",
  "futures",
  "futures-timer",
  "log",
@@ -6462,6 +6463,7 @@ dependencies = [
  "flate2",
  "frame-support",
  "hex",
+ "indexmap 2.0.0-pre",
  "jsonrpsee 0.16.3",
  "mp-block",
  "mp-digest-log",
@@ -12244,7 +12246,7 @@ dependencies = [
 [[package]]
 name = "starknet_api"
 version = "0.4.1"
-source = "git+https://github.com/keep-starknet-strange/starknet-api?branch=no_std-support-dc83f05#3415c832bb0cd72d1764dcd9ce803ddf932895ef"
+source = "git+https://github.com/keep-starknet-strange/starknet-api?branch=no_std-support-dc83f05#c76154572057fb53b31f3a29a24e2469ca721d51"
 dependencies = [
  "cairo-lang-casm-contract-class",
  "derive_more",

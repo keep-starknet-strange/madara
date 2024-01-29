@@ -2,6 +2,9 @@
 
 ## Next release
 
+- feat(client): on `add_declare_transaction` store sierra contract classes in
+  the madara backend
+- chore: use struct error in client/db
 - fix: don't ignore Sierra to CASM mapping in genesis config
 - refacto: early exit txs fee estimation when one fails
 - dev: fix linter warning in README.md
