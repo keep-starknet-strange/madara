@@ -268,6 +268,12 @@ where
     ) -> RpcResult<DeclareTransactionResult> {
         let best_block_hash = self.client.info().best_hash;
 
+        let opt_sierra_contract_class = if let BroadcastedDeclareTransaction::V2(ref tx) = declare_transaction {
+            Some(flattened_sierra_to_sierra_contract_class(tx.contract_class.clone()))
+        } else {
+            None
+        };
+
         let transaction: UserTransaction = declare_transaction.try_into().map_err(|e| {
             error!("Failed to convert BroadcastedDeclareTransaction to UserTransaction, error: {e}");
             StarknetRpcApiError::InternalServerError
@@ -294,10 +300,20 @@ where
 
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
-        Ok(DeclareTransactionResult {
-            transaction_hash: transaction.compute_hash::<H>(chain_id, false).into(),
-            class_hash: class_hash.0,
-        })
+        let tx_hash = transaction.compute_hash::<H>(chain_id, false).into();
+
+        if let Some(sierra_contract_class) = opt_sierra_contract_class {
+            if let Some(e) = self
+                .backend
+                .sierra_classes()
+                .store_sierra_class(Felt252Wrapper::from(class_hash.0).into(), sierra_contract_class)
+                .err()
+            {
+                log::error!("Failed to store the sierra contract class for declare tx `{tx_hash:x}`: {e}")
+            }
+        }
+
+        Ok(DeclareTransactionResult { transaction_hash: tx_hash, class_hash: class_hash.0 })
     }
 
     /// Add an Invoke Transaction to invoke a contract function

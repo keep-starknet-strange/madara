@@ -26,6 +26,7 @@ cairo-vm = { workspace = true, default-features = false }
 flate2 = { workspace = true }
 frame-support = { workspace = true }
 hex = { workspace = true, default-features = true }
+indexmap = { workspace = true, default-features = true }
 jsonrpsee = { workspace = true, features = [
   "server",
   "macros",
