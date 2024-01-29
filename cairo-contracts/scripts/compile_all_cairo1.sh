@@ -1,6 +1,11 @@
 #!/bin/bash
 
 
+
+# Define the URLs for the Linux and Mac archives
+LINUX_ARCHIVE_URL="https://github.com/starkware-libs/cairo/releases/download/v2.5.0/release-x86_64-unknown-linux-musl.tar.gz"
+MAC_ARCHIVE_URL="https://github.com/starkware-libs/cairo/releases/download/v2.5.0/release-aarch64-apple-darwin.tar"
+
 # Function to determine the Operating System
 detect_os() {
     OS=$(uname -s)
@@ -11,13 +16,7 @@ detect_os() {
     esac
 }
 
-# Define the URLs for the Linux and Mac archives
-LINUX_ARCHIVE_URL="https://github.com/starkware-libs/cairo/releases/download/v2.5.0/release-x86_64-unknown-linux-musl.tar.gz"
-MAC_ARCHIVE_URL="https://github.com/starkware-libs/cairo/releases/download/v2.5.0/release-aarch64-apple-darwin.tar"
-
-
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
-
 
 # Function to find the project root directory
 find_project_root() {
@@ -35,7 +34,7 @@ find_project_root() {
 
 ROOT_DIR=$(find_project_root)
 
-echo "madara root dir is : $EXTRACT_DIR"
+echo "madara root dir is : $ROOT_DIR"
 
 # Detect the operating system
 OS=$(detect_os)
@@ -50,14 +49,15 @@ else
     exit 1
 fi
 
-echo "your os is $OS, continuing ..."
+echo "OS Detected : $OS"
+echo "Downloading binairies ...\n"
 # 1. GET BINARIES
 
 # Define the URL of the archive and the directory to extract to
 EXTRACT_DIR="$ROOT_DIR/cairo-contracts/scripts/bin"
 
 # Download the archive
-wget "$ARCHIVE_URL" -O /tmp/archive.tar.gz
+wget "$ARCHIVE_URL" -O /tmp/cairo_binaries.tar.gz
 
 # Check if download was successful
 if [ $? -eq 0 ]; then
@@ -67,7 +67,7 @@ if [ $? -eq 0 ]; then
     mkdir -p "$EXTRACT_DIR"
 
     # Extract the archive to the specified directory
-    tar -xzf /tmp/archive.tar.gz -C "$EXTRACT_DIR"
+    tar -xzf /tmp/cairo_binaries.tar.gz -C "$EXTRACT_DIR"
 
     # Check if extraction was successful
     if [ $? -eq 0 ]; then
@@ -80,32 +80,53 @@ else
 fi
 
 # Clean up
-rm /tmp/archive.tar.gz
+rm /tmp/cairo_binaries.tar.gz
 
 # 2. COMPILE CONTRACTS
 
 export MADARA_CAIRO_ONE_SRC_DIR="$ROOT_DIR/cairo-contracts/src/cairo_1"
-export MADARA_CAIRO_ONE_OUTPUT_DIR="$ROOT_DIR/configs/genesis-assets/cairo_1"
-export MADARA_STARKNET_COMPILE_BINARY="$SCRIPT_DIR/bin/cairo/bin/starknet-compile"
+export MADARA_CAIRO_ONE_SIERRA_OUTPUT_DIR="$ROOT_DIR/configs/genesis-assets/cairo_1_sierra"
+export MADARA_CAIRO_ONE_CASM_OUTPUT_DIR="$ROOT_DIR/configs/genesis-assets"
 
-mkdir -p $MADARA_CAIRO_ONE_OUTPUT_DIR
+export MADARA_STARKNET_COMPILE_BINARY="$SCRIPT_DIR/bin/cairo/bin/starknet-compile"
+export MADARA_STARKNET_SIERRA_COMPILE_BINARY="$SCRIPT_DIR/bin/cairo/bin/starknet-sierra-compile"
+
 # Location of starknet-compile
 
-compile_cairo1() {
+compile_cairo1_sierra() {
     local file="$1"
     local base_name=$(basename "$file" .cairo)
-    local output_file="$MADARA_CAIRO_ONE_OUTPUT_DIR/$base_name""CairoOne.json"
+    local output_file="$MADARA_CAIRO_ONE_SIERRA_OUTPUT_DIR/$base_name""CairoOne.sierra.json"
 
     # Run starknet-compile
     echo "$MADARA_STARKNET_COMPILE_BINARY" --single-file "$file" "$output_file"
     "$MADARA_STARKNET_COMPILE_BINARY" --single-file "$file" "$output_file"
 }
 
+compile_cairo1_casm() {
+    local file="$1"
+    local base_name=$(basename "$file" .sierra.json)
+    local output_file="$MADARA_CAIRO_ONE_CASM_OUTPUT_DIR/$base_name"".casm.json"
+
+    # Run starknet-compile
+    echo "$MADARA_STARKNET_SIERRA_COMPILE_BINARY" "$file" "$output_file"
+    "$MADARA_STARKNET_SIERRA_COMPILE_BINARY" "$file" "$output_file"
+}
+
 # Export the function so it's available to find -exec
-export -f compile_cairo1
+export -f compile_cairo1_sierra
+export -f compile_cairo1_casm
 
-# Find all files and apply the command to each
-find "$MADARA_CAIRO_ONE_SRC_DIR" -type f -name "*.cairo" -exec bash -c 'compile_cairo1 "$0"' {} \;
+echo "Compiling cairo 1 contract contained in $MADARA_CAIRO_ONE_SRC_DIR to $MADARA_CAIRO_ONE_SIERRA_OUTPUT_DIR"
 
+mkdir -p $MADARA_CAIRO_ONE_SIERRA_OUTPUT_DIR
+find "$MADARA_CAIRO_ONE_SRC_DIR" -type f -name "*.cairo" -exec bash -c 'compile_cairo1_sierra "$0"' {} \;
+
+echo "Compiling sierra contract contained in $MADARA_CAIRO_ONE_SIERRA_OUTPUT_DIR to $MADARA_CAIRO_ONE_CASM_OUTPUT_DIR"
+find "$MADARA_CAIRO_ONE_SIERRA_OUTPUT_DIR" -type f -name "*sierra.json" -exec bash -c 'compile_cairo1_casm "$0"' {} \;
+
+mv $MADARA_CAIRO_ONE_SIERRA_OUTPUT_DIR/* $MADARA_CAIRO_ONE_CASM_OUTPUT_DIR
+
+rm -r $MADARA_CAIRO_ONE_SIERRA_OUTPUT_DIR
 # Delete binaries
 rm -r "$SCRIPT_DIR/bin"
