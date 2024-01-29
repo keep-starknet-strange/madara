@@ -415,7 +415,7 @@ fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails
 }
 
 #[test]
-fn given_account_not_deployed_invoke_tx_works_for_nonce_one() {
+fn given_account_not_deployed_invoke_tx_validate_works_for_nonce_one() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 

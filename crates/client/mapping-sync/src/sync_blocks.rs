@@ -6,7 +6,6 @@ use pallet_starknet_runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Backend as _, HeaderBackend};
-use sp_core::H256;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT, Zero};
 
 fn sync_block<B: BlockT, C, BE, H>(client: &C, backend: &mc_db::Backend<B>, header: &B::Header) -> anyhow::Result<()>
@@ -46,7 +45,7 @@ where
                             starknet_transaction_hashes: digest_starknet_block
                                 .transactions()
                                 .iter()
-                                .map(|tx| H256::from(tx.compute_hash::<H>(chain_id, false)))
+                                .map(|tx| tx.compute_hash::<H>(chain_id, false).into())
                                 .collect(),
                         };
 
