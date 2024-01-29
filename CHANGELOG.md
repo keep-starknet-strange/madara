@@ -59,6 +59,8 @@
 - dev: add avail and celestia crates behind a feature flag
 - dev: replace md5 with sha3_256 hash function
 - feat: fixing getNonce Rpc Call and adding a new test
+- refactor: use Zaun crate for Starknet core contract bindings
+- refactor: use Anvil sandbox from Zaun crate
 - feat(rpc) : estimateMessageFee RPC call implementation
 
 ## v0.6.0
