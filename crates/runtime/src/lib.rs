@@ -56,6 +56,7 @@ use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, Non
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash};
+use starknet_core::types::TransactionTraceWithHash;
 /// Import the types.
 pub use types::*;
 
@@ -287,6 +288,10 @@ impl_runtime_apis! {
         fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>>, DispatchError> {
             Starknet::simulate_transactions(transactions, &simulation_flags)
         }
+
+        // fn trace_block_transactions() -> Result<Vec<Result<TransactionTraceWithHash, PlaceHolderErrorTypeForFailedStarknetExecution>>, DispatchError> {
+        //     Starknet::trace_block_transactions()
+        // }
 
         fn get_starknet_events_and_their_associated_tx_hash(block_extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper) -> Vec<(Felt252Wrapper, StarknetEvent)> {
             System::read_events_no_consensus().filter_map(|event_record| {
