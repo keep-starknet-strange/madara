@@ -16,10 +16,12 @@ pub use error::DbError;
 
 mod mapping_db;
 pub use mapping_db::MappingCommitment;
+use sierra_classes_db::SierraClassesDb;
 use starknet_api::hash::StarkHash;
 mod da_db;
 mod db_opening_utils;
 mod messaging_db;
+mod sierra_classes_db;
 pub use messaging_db::LastSyncedEventBlock;
 mod meta_db;
 
@@ -49,13 +51,14 @@ pub(crate) mod columns {
     // ===== /!\ ===================================================================================
     // MUST BE INCREMENTED WHEN A NEW COLUMN IN ADDED
     // ===== /!\ ===================================================================================
-    pub const NUM_COLUMNS: u32 = 7;
+    pub const NUM_COLUMNS: u32 = 8;
 
     pub const META: u32 = 0;
     pub const BLOCK_MAPPING: u32 = 1;
     pub const TRANSACTION_MAPPING: u32 = 2;
     pub const SYNCED_MAPPING: u32 = 3;
     pub const DA: u32 = 4;
+
     /// This column is used to map starknet block hashes to a list of transaction hashes that are
     /// contained in the block.
     ///
@@ -64,6 +67,9 @@ pub(crate) mod columns {
 
     /// This column contains last synchronized L1 block.
     pub const MESSAGING: u32 = 6;
+
+    /// This column contains the Sierra contract classes
+    pub const SIERRA_CONTRACT_CLASSES: u32 = 7;
 }
 
 pub mod static_keys {
@@ -82,6 +88,7 @@ pub struct Backend<B: BlockT> {
     mapping: Arc<MappingDb<B>>,
     da: Arc<DaDb<B>>,
     messaging: Arc<MessagingDb<B>>,
+    sierra_classes: Arc<SierraClassesDb<B>>,
 }
 
 /// Returns the Starknet database directory.
@@ -123,6 +130,7 @@ impl<B: BlockT> Backend<B> {
             meta: Arc::new(MetaDb { db: db.clone(), _marker: PhantomData }),
             da: Arc::new(DaDb { db: db.clone(), _marker: PhantomData }),
             messaging: Arc::new(MessagingDb { db: db.clone(), _marker: PhantomData }),
+            sierra_classes: Arc::new(SierraClassesDb { db: db.clone(), _marker: PhantomData }),
         })
     }
 
@@ -144,6 +152,11 @@ impl<B: BlockT> Backend<B> {
     /// Return the da database manager
     pub fn messaging(&self) -> &Arc<MessagingDb<B>> {
         &self.messaging
+    }
+
+    /// Return the sierra classes database manager
+    pub fn sierra_classes(&self) -> &Arc<SierraClassesDb<B>> {
+        &self.sierra_classes
     }
 
     /// In the future, we will compute the block global state root asynchronously in the client,

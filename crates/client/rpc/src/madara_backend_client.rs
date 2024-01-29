@@ -8,7 +8,7 @@ use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 
 use crate::errors::StarknetRpcApiError;
 
-pub fn load_hash<B: BlockT, C>(client: &C, backend: &mc_db::Backend<B>, hash: H256) -> Result<Option<B::Hash>, String>
+pub fn load_hash<B: BlockT, C>(client: &C, backend: &mc_db::Backend<B>, hash: H256) -> anyhow::Result<Option<B::Hash>>
 where
     B: BlockT,
     C: HeaderBackend<B> + 'static,
