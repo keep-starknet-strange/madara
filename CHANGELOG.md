@@ -3,6 +3,7 @@
 ## Next release
 
 - dev: make Madara std compatible
+- fix: don't ignore Sierra to CASM mapping in genesis config
 - refacto: early exit txs fee estimation when one fails
 - dev: fix linter warning in README.md
 - fix: remove waiting loop from `getTxReceipt`
