@@ -49,6 +49,9 @@ pallet-starknet-runtime-api = { workspace = true, default-features = true }
 # Ethereum
 ethers = { workspace = true }
 
+# Zaun
+starknet-core-contract-client = { workspace = true }
+
 # Others
 log = { workspace = true }
 rustc-hex = { workspace = true }

@@ -8,18 +8,15 @@ use mp_snos_output::StarknetOsOutput;
 use rstest::rstest;
 use starknet_api::api_core::{ContractAddress, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
-use starknet_e2e_test::ethereum_sandbox::EthereumSandbox;
-use starknet_e2e_test::starknet_contract::{InitData, StarknetContract};
+use starknet_e2e_test::starknet_sovereign::StarknetSovereign;
 
 #[rstest]
 #[tokio::test]
 async fn starknet_core_contract_is_initialized() -> anyhow::Result<()> {
-    let sandbox = EthereumSandbox::new();
-    let starknet_contract = StarknetContract::deploy(&sandbox).await;
+    let starknet_sovereign = StarknetSovereign::deploy().await;
+    starknet_sovereign.initialize(1u64.into(), 1u64.into()).await;
 
-    starknet_contract.initialize(&sandbox, InitData::one()).await;
-
-    let starknet = StarknetContractClient::new(starknet_contract.address(), sandbox.client());
+    let starknet = StarknetContractClient::new(starknet_sovereign.address(), starknet_sovereign.client());
 
     let spec = SettlementProvider::<Block>::get_chain_spec(&starknet).await.expect("Failed to get chain spec");
     assert_eq!(spec, StarknetSpec { program_hash: 1u64.into(), config_hash: 1u64.into() });
@@ -33,12 +30,10 @@ async fn starknet_core_contract_is_initialized() -> anyhow::Result<()> {
 #[rstest]
 #[tokio::test]
 async fn starknet_core_contract_advances_state() -> anyhow::Result<()> {
-    let sandbox = EthereumSandbox::new();
-    let starknet_contract = StarknetContract::deploy(&sandbox).await;
+    let starknet_sovereign = StarknetSovereign::deploy().await;
+    starknet_sovereign.initialize(1u64.into(), 1u64.into()).await;
 
-    starknet_contract.initialize(&sandbox, InitData::one()).await;
-
-    let starknet = StarknetContractClient::new(starknet_contract.address(), sandbox.client());
+    let starknet = StarknetContractClient::new(starknet_sovereign.address(), starknet_sovereign.client());
 
     // Now let's transition the state from block 0 to 1 (state root 0 -> 1)
     let program_output = StarknetOsOutput {
@@ -62,14 +57,12 @@ async fn starknet_core_contract_sends_messages_to_l2() -> anyhow::Result<()> {
     // In this test we do not check Starknet messaging logic, but rather that all our encodings are
     // correct
 
-    let sandbox = EthereumSandbox::new();
-    let starknet_contract = StarknetContract::deploy(&sandbox).await;
-
-    starknet_contract.initialize(&sandbox, InitData::one()).await;
+    let starknet_sovereign = StarknetSovereign::deploy().await;
+    starknet_sovereign.initialize(1u64.into(), 1u64.into()).await;
 
     // Converting our EOA address to felt
     let mut from_address = [0u8; 32];
-    from_address[12..32].copy_from_slice(sandbox.address().as_bytes());
+    from_address[12..32].copy_from_slice(starknet_sovereign.client().address().as_bytes());
 
     let message = MessageL1ToL2 {
         from_address: ContractAddress(PatriciaKey(StarkFelt::new(from_address).unwrap())),
@@ -80,10 +73,10 @@ async fn starknet_core_contract_sends_messages_to_l2() -> anyhow::Result<()> {
     };
 
     // Sending message to L2 (this will update msg hash table)
-    starknet_contract.send_message_to_l2(&sandbox, &message).await;
-    assert!(starknet_contract.message_to_l2_exists(&sandbox, &message).await);
+    starknet_sovereign.send_message_to_l2(&message).await;
+    assert!(starknet_sovereign.message_to_l2_exists(&message).await);
 
-    let starknet = StarknetContractClient::new(starknet_contract.address(), sandbox.client());
+    let starknet = StarknetContractClient::new(starknet_sovereign.address(), starknet_sovereign.client());
 
     let program_output = StarknetOsOutput {
         new_state_root: 1u64.into(),
@@ -97,7 +90,7 @@ async fn starknet_core_contract_sends_messages_to_l2() -> anyhow::Result<()> {
     SettlementProvider::<Block>::update_state(&starknet, program_output).await.expect("Failed to update state");
 
     // At this point the counter has to be reset
-    assert!(!starknet_contract.message_to_l2_exists(&sandbox, &message).await);
+    assert!(!starknet_sovereign.message_to_l2_exists(&message).await);
 
     Ok(())
 }
@@ -108,17 +101,15 @@ async fn starknet_core_contract_consumes_messages_from_l2() -> anyhow::Result<()
     // In this test we do not check Starknet messaging logic, but rather that all our encodings are
     // correct
 
-    let sandbox = EthereumSandbox::new();
-    let starknet_contract = StarknetContract::deploy(&sandbox).await;
-
-    starknet_contract.initialize(&sandbox, InitData::one()).await;
+    let starknet_sovereign = StarknetSovereign::deploy().await;
+    starknet_sovereign.initialize(1u64.into(), 1u64.into()).await;
 
     let message = MessageL2ToL1 {
         from_address: 1u64.into(),
         to_address: StarkFelt::from(2u64).try_into().unwrap(),
         payload: vec![3u64.into()],
     };
-    let starknet = StarknetContractClient::new(starknet_contract.address(), sandbox.client());
+    let starknet = StarknetContractClient::new(starknet_sovereign.address(), starknet_sovereign.client());
 
     let program_output = StarknetOsOutput {
         new_state_root: 1u64.into(),
@@ -131,7 +122,7 @@ async fn starknet_core_contract_consumes_messages_from_l2() -> anyhow::Result<()
     // During the state update, the message will be consumed (removed from hash table)
     SettlementProvider::<Block>::update_state(&starknet, program_output).await.expect("Failed to update state");
 
-    assert!(starknet_contract.message_to_l1_exists(&sandbox, &message).await);
+    assert!(starknet_sovereign.message_to_l1_exists(&message).await);
 
     Ok(())
 }

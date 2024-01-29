@@ -38,6 +38,9 @@ sp-runtime = { workspace = true, default-features = true }
 sc-client-api = { workspace = true, default-features = true }
 sc-transaction-pool-api = { workspace = true, default-features = true }
 
+# Zaun
+starknet-core-contract-client = { workspace = true }
+
 # Other third party dependencies
 ethers = { workspace = true }
 serde = { workspace = true, default-features = true }

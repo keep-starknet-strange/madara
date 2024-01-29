@@ -1,11 +1,13 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use ethers::prelude::{abigen, SignerMiddleware};
+use ethers::prelude::SignerMiddleware;
 use ethers::providers::{Http, Provider};
 use ethers::signers::{LocalWallet, Signer};
 use ethers::types::{Address, TransactionReceipt, I256, U256};
 pub use mc_data_availability::ethereum::config::EthereumConfig;
+use starknet_core_contract_client::interfaces::StarknetSovereignContract;
+use starknet_core_contract_client::LocalWalletSignerMiddleware;
 
 use crate::ethereum::errors::{Error, Result};
 
@@ -37,26 +39,14 @@ use crate::ethereum::errors::{Error, Result};
 //
 // Read this great overview to learn more about SNOS:
 // https://hackmd.io/@pragma/ByP-iux1T
-abigen!(
-    StarknetContract,
-    r#"[
-        function programHash() public view returns (uint256)
-        function stateBlockNumber() external view returns (int256)
-        function stateRoot() external view returns (uint256)
-        function configHash() public view returns (uint256)
-        function updateState(uint256[] calldata programOutput) external
-    ]"#,
-);
-
-pub type LocalMiddleware = SignerMiddleware<Provider<Http>, LocalWallet>;
 
 pub struct StarknetContractClient {
-    contract: StarknetContract<LocalMiddleware>,
+    contract: StarknetSovereignContract<LocalWalletSignerMiddleware>,
 }
 
 impl StarknetContractClient {
-    pub fn new(address: Address, client: Arc<LocalMiddleware>) -> Self {
-        Self { contract: StarknetContract::new(address, client) }
+    pub fn new(address: Address, client: Arc<LocalWalletSignerMiddleware>) -> Self {
+        Self { contract: StarknetSovereignContract::new(address, client) }
     }
 
     pub async fn state_block_number(&self) -> Result<I256> {

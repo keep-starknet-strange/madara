@@ -330,6 +330,10 @@ cairo-lang-utils = { git = "https://github.com/keep-starknet-strange/cairo.git",
 ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "f0e5b194f09c533feb10d1a686ddb9e5946ec107" }
 ethers-solc = { git = "https://github.com/gakonst/ethers-rs", rev = "f0e5b194f09c533feb10d1a686ddb9e5946ec107" }
 
+# Zaun
+zaun-sandbox = { git = "https://github.com/keep-starknet-strange/zaun", package = "sandbox" }
+starknet-core-contract-client = { git = "https://github.com/keep-starknet-strange/zaun" }
+
 # Other third party dependencies
 anyhow = "1.0.75"
 flate2 = "1.0.28"
@@ -383,6 +387,7 @@ assert_matches = "1.5.0"
 async-lock = "3.1.0"
 rustc-hex = { version = "2.0.0" }
 itertools = "0.12.0"
+tempfile = "3.2"
 
 [patch."https://github.com/w3f/ring-vrf"]
 bandersnatch_vrfs = { git = "https://github.com/w3f/ring-vrf?rev=3ddc20", version = "0.0.4", rev = "3ddc20" }
