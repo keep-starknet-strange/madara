@@ -6390,6 +6390,7 @@ dependencies = [
 name = "mc-mapping-sync"
 version = "0.6.0"
 dependencies = [
+ "anyhow",
  "futures",
  "futures-timer",
  "log",
@@ -6466,6 +6467,7 @@ dependencies = [
  "flate2",
  "frame-support",
  "hex",
+ "indexmap 2.0.0-pre",
  "jsonrpsee 0.16.3",
  "mp-block",
  "mp-digest-log",

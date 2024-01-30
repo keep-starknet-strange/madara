@@ -3,6 +3,10 @@
 ## Next release
 
 - dev: make Madara std compatible
+- fix(cli): repair broken cli for da conf
+- feat(client): on `add_declare_transaction` store sierra contract classes in
+  the madara backend
+- chore: use struct error in client/db
 - fix: don't ignore Sierra to CASM mapping in genesis config
 - refacto: early exit txs fee estimation when one fails
 - dev: fix linter warning in README.md
@@ -267,3 +271,4 @@
 - feat: add `madara_tsukuyomi` as a submodule
 - branding: use new logo in the README
 - dev: Get the block status from the actual block in get_block_with_tx_hashes
+- fix: l1-l2 messaging
