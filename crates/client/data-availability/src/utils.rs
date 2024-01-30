@@ -160,10 +160,6 @@ pub fn bytes_to_key(raw: &[u8]) -> PatriciaKey {
     PatriciaKey(bytes_to_felt(raw))
 }
 
-/// Width of the field storing the number of storage updates in `U256`.
-#[allow(dead_code)]
-const NUM_STORAGE_UPDATES_WIDTH: u64 = 64; // Adjust this based on your logic
-
 /// Macro for converting a value of type `U256` to a StarkNet type.
 ///
 /// Usually in starknet, some types like ClassHash and ContractClass can be directly converted from
@@ -183,9 +179,9 @@ const NUM_STORAGE_UPDATES_WIDTH: u64 = 64; // Adjust this based on your logic
 ///
 /// ```rust
 /// // Example usage
-/// let result = convert_to_starknet_type!(U256::from(1), ClassHash);
+/// let result = try_convert_to_starknet_type!(U256::from(1), ClassHash);
 /// ```
-macro_rules! convert_to_starknet_type {
+macro_rules! try_convert_to_starknet_type {
     ($data:expr, $target_type:ident) => {{
         let result = Felt252Wrapper::try_from($data).map(|ft| $target_type::from(ft));
         result
@@ -210,25 +206,20 @@ macro_rules! convert_to_starknet_type {
 /// // Example usage
 /// let result = contract_deployed(address, block_hash, client);
 /// ```
-#[allow(unused)]
 fn contract_deployed<B, C>(address: ContractAddress, block_hash: B::Hash, client: Arc<C>) -> Result<bool, Error>
 where
     B: BlockT,
     C: ProvideRuntimeApi<B> + HeaderBackend<B>,
     C::Api: StarknetRuntimeApi<B>,
 {
-    #[cfg(test)]
-    // When testing, we have only an empty client.
-    return Ok(false);
-
-    #[cfg(not(test))]
     match client.runtime_api().contract_class_hash_by_address(block_hash, address) {
         Ok(class_hash) => Ok(!class_hash.eq(&ClassHash::default())),
-        Err(e) => Ok(false),
+        Err(_) => Ok(false),
     }
 }
 
 /// Decodes a state difference using the starknet v0.11.0 logic.
+/// see https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/on-chain-data
 ///
 /// # Arguments
 ///
@@ -246,6 +237,8 @@ where
 /// // Example usage
 /// let result = decode_011_diff(&encoded_diff, block_hash, client);
 /// ```
+///
+/// Note: Deprecated classes are not supported in this version.
 pub fn decode_011_diff<B, C>(encoded_diff: &[U256], block_hash: B::Hash, client: Arc<C>) -> Result<StateDiff, Error>
 where
     B: BlockT,
@@ -264,25 +257,34 @@ where
     let mut storage_diffs = Vec::new();
     let deprecated_declared_classes = Vec::new();
 
+    // Loop through the contract updates.
     for _ in 0..num_contract_updates {
-        let address = convert_to_starknet_type!(encoded_diff[offset], ContractAddress)?;
+        // Read the contract address.
+        let address = try_convert_to_starknet_type!(encoded_diff[offset], ContractAddress)?;
         offset += 1;
 
+        // Read the "da word"
+        // cc "A single 32-byte word that includes the nonce and the following meta information about the
+        // update"
         let summary = encoded_diff[offset];
         offset += 1;
 
+        // Decode the "da word"
         let num_storage_updates = summary.low_u64();
         let class_info_flag = summary.bit(128);
         let nonce_value = summary >> 64;
 
+        // Store the nonce update.
         nonces.push(NonceUpdate {
             contract_address: address.0.0.into(),
-            nonce: convert_to_starknet_type!(nonce_value, FieldElement)?,
+            nonce: try_convert_to_starknet_type!(nonce_value, FieldElement)?,
         });
 
+        // If the class info flag is set, we should treat the next item as the class hash.
         if class_info_flag {
-            let class_hash = convert_to_starknet_type!(encoded_diff[offset], FieldElement)?;
+            let class_hash = try_convert_to_starknet_type!(encoded_diff[offset], FieldElement)?;
             offset += 1;
+            // Check if the contract is deployed or replaced.
             if contract_deployed(address, block_hash, client.clone())? {
                 replaced_classes.push(ReplacedClassItem { contract_address: address.0.0.into(), class_hash });
             } else {
@@ -290,27 +292,34 @@ where
             }
         }
 
+        // If the number of storage updates is greater than 0, we should read the storage updates.
         if num_storage_updates > 0 {
             let mut storage_entries = Vec::new();
             for _ in 0..num_storage_updates {
-                let key = convert_to_starknet_type!(encoded_diff[offset], FieldElement)?;
+                // Read the storage key and value.
+                let key = try_convert_to_starknet_type!(encoded_diff[offset], FieldElement)?;
                 offset += 1;
 
-                storage_entries
-                    .push(StorageEntry { key, value: convert_to_starknet_type!(encoded_diff[offset], FieldElement)? });
+                storage_entries.push(StorageEntry {
+                    key,
+                    value: try_convert_to_starknet_type!(encoded_diff[offset], FieldElement)?,
+                });
                 offset += 1;
             }
             storage_diffs.push(ContractStorageDiffItem { address: address.0.0.into(), storage_entries });
         }
     }
 
+    // Read the number of declared classes.
     let num_declared_classes = encoded_diff[offset].low_u64();
     offset += 1;
+
+    // Loop through the declared classes.
     for _ in 0..num_declared_classes {
-        let class_hash = convert_to_starknet_type!(encoded_diff[offset], FieldElement)?;
+        let class_hash = try_convert_to_starknet_type!(encoded_diff[offset], FieldElement)?;
         offset += 1;
 
-        let compiled_class_hash = convert_to_starknet_type!(encoded_diff[offset], FieldElement)?;
+        let compiled_class_hash = try_convert_to_starknet_type!(encoded_diff[offset], FieldElement)?;
         declared_classes.push(DeclaredClassItem { class_hash, compiled_class_hash });
         offset += 1;
     }

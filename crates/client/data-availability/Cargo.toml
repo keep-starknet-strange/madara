@@ -43,7 +43,7 @@ blockifier = { workspace = true, default-features = true }
 mc-commitment-state-diff = { workspace = true, default-features = true }
 mc-db = { workspace = true, default-features = true }
 pallet-starknet-runtime-api = { workspace = true, features = ["std"] }
-starknet-core = { workspace = true }
+starknet-core = { workspace = true, features = ["std"] }
 starknet_api = { workspace = true, default-features = true }
 
 # Ethereum
