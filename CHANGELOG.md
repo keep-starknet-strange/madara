@@ -269,3 +269,4 @@
 - feat: add `madara_tsukuyomi` as a submodule
 - branding: use new logo in the README
 - dev: Get the block status from the actual block in get_block_with_tx_hashes
+- fix: l1-l2 messaging
