@@ -8,6 +8,7 @@ use mc_data_availability::avail::{config::AvailConfig, AvailClient};
 use mc_data_availability::celestia::{config::CelestiaConfig, CelestiaClient};
 use mc_data_availability::ethereum::config::EthereumConfig;
 use mc_data_availability::ethereum::EthereumClient;
+use mc_data_availability::near::{config::NearConfig, NearClient};
 use mc_data_availability::{DaClient, DaLayer};
 use mc_l1_messages::config::{L1MessagesWorkerConfig, L1MessagesWorkerConfigError};
 use mc_settlement::SettlementLayer;
@@ -170,6 +171,10 @@ fn init_da_client(da_layer: DaLayer, da_path: PathBuf) -> Result<Box<dyn DaClien
         DaLayer::Avail => {
             let avail_conf = AvailConfig::try_from(&da_path)?;
             Box::new(AvailClient::try_from(avail_conf).map_err(|e| sc_cli::Error::Input(e.to_string()))?)
+        }
+        DaLayer::Near => {
+            let near_conf = NearConfig::try_from(&da_path)?;
+            Box::new(NearClient::new_blocking(near_conf).map_err(|e| sc_cli::Error::Input(e.to_string()))?)
         }
     };
 

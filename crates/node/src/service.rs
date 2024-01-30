@@ -12,17 +12,10 @@ use futures::prelude::*;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi, SealingMode, StarknetHasher};
 use mc_commitment_state_diff::CommitmentStateDiffWorker;
-#[cfg(feature = "avail")]
-use mc_data_availability::avail::{config::AvailConfig, AvailClient};
-#[cfg(feature = "celestia")]
-use mc_data_availability::celestia::{config::CelestiaConfig, CelestiaClient};
 use mc_data_availability::ethereum::config::EthereumConfig;
+use mc_data_availability::{DaClient, DataAvailabilityWorker};
 use mc_genesis_data_provider::OnDiskGenesisConfig;
 use mc_l1_messages::config::L1MessagesWorkerConfig;
-use mc_data_availability::ethereum::EthereumClient;
-// use mc_data_availability::near::config::NearConfig;
-// use mc_data_availability::near::NearClient;
-use mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker};
 use mc_mapping_sync::MappingSyncWorker;
 use mc_settlement::errors::RetryOnRecoverableErrors;
 use mc_settlement::ethereum::StarknetContractClient;

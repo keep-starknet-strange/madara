@@ -1,0 +1,10 @@
+{
+    "account_id": "<...>",
+    "secret_key": "ed25519:<...>",
+    "contract_id": "<...>",
+    "network": "<Testnet|Mainnet>",
+    "namespace": {
+        "version": 12345,
+        "id": 12345
+    }
+}

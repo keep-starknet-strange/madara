@@ -17,7 +17,6 @@ use std::time;
 
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use ethers::types::{I256, U256};
 use futures::channel::mpsc;
 use futures::StreamExt;
 use mc_commitment_state_diff::BlockDAData;
@@ -42,7 +41,7 @@ pub enum DaLayer {
     Ethereum,
     #[cfg(feature = "avail")]
     Avail,
-    // Near,
+    Near,
 }
 
 impl Display for DaLayer {
@@ -53,7 +52,7 @@ impl Display for DaLayer {
             DaLayer::Ethereum => Display::fmt("Ethereum", f),
             #[cfg(feature = "avail")]
             DaLayer::Avail => Display::fmt("Avail", f),
-            // DaLayer::Near => Display::fmt("NEAR", f),
+            DaLayer::Near => Display::fmt("NEAR", f),
         }
     }
 }

@@ -3,7 +3,6 @@ extern crate da_test;
 use std::vec;
 
 use da_test::fixtures::da_client;
-use ethers::types::I256;
 use mc_data_availability::DaClient;
 use rstest::rstest;
 use starknet_ff::FieldElement;
@@ -45,7 +44,7 @@ async fn publish_to_da_layer(
     // Check the state diff that has been published to the DA layer
     let published_block_number = da_client.last_published_state().await?;
 
-    assert_eq!(published_block_number, I256::from(block_number));
+    assert_eq!(&published_block_number[..], &block_number.to_be_bytes());
 
     Ok(())
 }
