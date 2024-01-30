@@ -2,6 +2,7 @@
 
 ## Next release
 
+- fix: get_block_by_block_hash then default rather than error
 - feat(client): on `add_declare_transaction` store sierra contract classes in
   the madara backend
 - chore: use struct error in client/db
