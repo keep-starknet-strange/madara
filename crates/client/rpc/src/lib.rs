@@ -137,8 +137,10 @@ where
     pub fn current_block_hash(&self) -> Result<H256, ApiError> {
         let substrate_block_hash = self.client.info().best_hash;
 
-        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)
-        .ok_or(ApiError::UnknownBlock(format!("Failed to get Starknet block for Substrate block hash '{substrate_block_hash}' ")))?;
+        let starknet_block =
+            get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or(ApiError::UnknownBlock(
+                format!("Failed to get Starknet block for Substrate block hash '{substrate_block_hash}' "),
+            ))?;
 
         Ok(starknet_block.header().hash::<H>().into())
     }
@@ -1437,12 +1439,12 @@ where
             })?
             .ok_or(StarknetRpcApiError::TxnHashNotFound)?;
 
-        let starknet_block: mp_block::Block =
-            get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
+        let starknet_block: mp_block::Block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)
+            .ok_or_else(|| {
                 error!("Block not found");
                 StarknetRpcApiError::BlockNotFound
             })?;
-            
+
         let block_header = starknet_block.header();
         let block_hash = block_header.hash::<H>().into();
         let block_number = block_header.block_number;
