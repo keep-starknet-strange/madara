@@ -186,14 +186,21 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
 
     let da_client = match cli.run.da_layer {
         Some(da_layer) => {
-            let da_conf = cli.run.clone().da_conf.unwrap_or({
-                let path_da_conf_json = chain_config_dir.join(format!("{da_layer}.json"));
-                if !path_da_conf_json.exists() {
-                    return Err(sc_cli::Error::Input(format!("no file {da_layer}.json in base_path")));
+            let da_conf = match cli.run.clone().da_conf {
+                Some(da_conf) => da_conf,
+                None => {
+                    let path_da_conf_json = chain_config_dir.join(format!("{}.json", da_layer));
+                    if !path_da_conf_json.exists() {
+                        return Err(sc_cli::Error::Input(format!(
+                            "no file {} in base_path",
+                            path_da_conf_json.to_string_lossy()
+                        )));
+                    }
+                    path_da_conf_json
                 }
-                path_da_conf_json
-            });
+            };
 
+            log::info!("Initializing DA client with layer: {:?}", da_layer);
             Some(init_da_client(da_layer, da_conf)?)
         }
         None => {
@@ -207,14 +214,21 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
 
     let settlement_config: Option<(SettlementLayer, PathBuf)> = match cli.run.settlement {
         Some(SettlementLayer::Ethereum) => {
-            let settlement_conf =
-                cli.run.clone().settlement_conf.unwrap_or_else(|| chain_config_dir.join("settlement_conf.json"));
-            if !settlement_conf.exists() {
-                return Err(sc_cli::Error::Input(format!(
-                    "Settlement config does not exist: {}",
-                    settlement_conf.display()
-                )));
-            }
+            let settlement_conf = match cli.run.clone().settlement_conf {
+                Some(settlement_conf) => settlement_conf,
+                None => {
+                    let path_settlement_conf_json = chain_config_dir.join("settlement_conf.json");
+                    if !path_settlement_conf_json.exists() {
+                        return Err(sc_cli::Error::Input(format!(
+                            "no file {} in base_path",
+                            path_settlement_conf_json.to_string_lossy()
+                        )));
+                    }
+                    path_settlement_conf_json
+                }
+            };
+
+            log::info!("Initializing settlement client with layer: {:?}", SettlementLayer::Ethereum);
             Some((SettlementLayer::Ethereum, settlement_conf))
         }
 
