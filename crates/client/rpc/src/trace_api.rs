@@ -2,6 +2,7 @@ use blockifier::execution::entry_point::CallInfo;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
 use jsonrpsee::core::{async_trait, RpcResult};
+use lazy_static::lazy_static;
 use log::error;
 use mc_genesis_data_provider::GenesisProvider;
 use mc_rpc_core::{StarknetReadRpcApiServer, StarknetTraceRpcApiServer};
@@ -22,6 +23,8 @@ use starknet_core::types::{
     FeeEstimate, InvokeTransactionTrace, RevertedInvocation, SimulatedTransaction, SimulationFlag, TransactionTrace,
 };
 use starknet_ff::FieldElement;
+use std::collections::HashMap;
+use std::sync::Mutex;
 use thiserror::Error;
 
 use crate::errors::StarknetRpcApiError;
@@ -149,6 +152,10 @@ pub enum TryFuntionInvocationFromCallInfoError {
     ContractNotFound,
 }
 
+lazy_static! {
+    static ref CLASS_HASH_CACHE: Mutex<HashMap<starknet_api::api_core::ContractAddress, FieldElement>> = Mutex::new(HashMap::new());
+}
+
 fn try_get_funtion_invocation_from_call_info<B: BlockT>(
     storage_override: &dyn StorageOverride<B>,
     substrate_block_hash: B::Hash,
@@ -187,11 +194,19 @@ fn try_get_funtion_invocation_from_call_info<B: BlockT>(
     let class_hash = if let Some(class_hash) = call_info.call.class_hash {
         class_hash.0.into()
     } else {
-        let class_hash = storage_override
-            .contract_class_hash_by_address(substrate_block_hash, call_info.call.storage_address)
-            .ok_or_else(|| TryFuntionInvocationFromCallInfoError::ContractNotFound)?;
+        if let Some(cached_hash) = CLASS_HASH_CACHE.lock().unwrap().get(&call_info.call.storage_address) {
+            cached_hash.clone()
+        } else {
+            // Compute and cache the class hash
+            let computed_hash = storage_override
+                .contract_class_hash_by_address(substrate_block_hash, call_info.call.storage_address)
+                .ok_or_else(|| TryFuntionInvocationFromCallInfoError::ContractNotFound)?;
 
-        FieldElement::from_byte_slice_be(class_hash.0.bytes()).unwrap()
+            let field_element = FieldElement::from_byte_slice_be(computed_hash.0.bytes()).unwrap();
+            CLASS_HASH_CACHE.lock().unwrap().insert(call_info.call.storage_address, field_element.clone());
+
+            field_element
+        }
     };
 
     Ok(starknet_core::types::FunctionInvocation {
