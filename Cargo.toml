@@ -222,48 +222,20 @@ pallet-starknet-runtime-api = { path = "crates/pallets/starknet/runtime_api", de
 ] }
 # Madara primtitives
 mp-genesis-config = { path = "crates/primitives/genesis-config", default-features = false }
-mp-digest-log = { path = "crates/primitives/digest-log", default-features = false, features = [
-  "std",
-] }
-mp-block = { path = "crates/primitives/block", default-features = false, features = [
-  "std",
-] }
-mp-fee = { path = "crates/primitives/fee", default-features = false, features = [
-  "std",
-] }
-mp-felt = { path = "crates/primitives/felt", default-features = false, features = [
-  "std",
-] }
-mp-hashers = { path = "crates/primitives/hashers", default-features = false, features = [
-  "std",
-] }
-mp-sequencer-address = { path = "crates/primitives/sequencer-address", default-features = false, features = [
-  "std",
-] }
-mp-snos-output = { path = "crates/primitives/snos-output", default-features = false, features = [
-  "std",
-] }
-mp-state = { path = "crates/primitives/state", default-features = false, features = [
-  "std",
-] }
-mp-storage = { path = "crates/primitives/storage", default-features = false, features = [
-  "std",
-] }
-mp-transactions = { path = "crates/primitives/transactions", default-features = false, features = [
-  "std",
-] }
-mp-chain-id = { path = "crates/primitives/chain-id", default-features = false, features = [
-  "std",
-] }
-mp-simulations = { path = "crates/primitives/simulations", default-features = false, features = [
-  "std",
-] }
-mp-program-hash = { path = "crates/primitives/program-hash", default-features = false, features = [
-  "std",
-] }
-mp-messages = { path = "crates/primitives/messages", default-features = false, features = [
-  "std",
-] }
+mp-digest-log = { path = "crates/primitives/digest-log", default-features = false }
+mp-block = { path = "crates/primitives/block", default-features = false }
+mp-fee = { path = "crates/primitives/fee", default-features = false }
+mp-felt = { path = "crates/primitives/felt", default-features = false }
+mp-hashers = { path = "crates/primitives/hashers", default-features = false }
+mp-sequencer-address = { path = "crates/primitives/sequencer-address", default-features = false }
+mp-snos-output = { path = "crates/primitives/snos-output", default-features = false }
+mp-state = { path = "crates/primitives/state", default-features = false }
+mp-storage = { path = "crates/primitives/storage", default-features = false }
+mp-transactions = { path = "crates/primitives/transactions", default-features = false }
+mp-chain-id = { path = "crates/primitives/chain-id", default-features = false }
+mp-simulations = { path = "crates/primitives/simulations", default-features = false }
+mp-program-hash = { path = "crates/primitives/program-hash", default-features = false }
+mp-messages = { path = "crates/primitives/messages", default-features = false }
 
 # Madara client
 mc-genesis-data-provider = { path = "crates/client/genesis-data-provider" }
