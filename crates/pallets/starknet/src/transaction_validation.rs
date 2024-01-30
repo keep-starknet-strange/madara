@@ -55,7 +55,7 @@ impl<OuterOrigin: Into<Result<RawOrigin, OuterOrigin>> + From<RawOrigin>> Ensure
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum TxPriorityInfo {
     InvokeV0,
     L1Handler { nonce: Felt252Wrapper },

@@ -1,4 +1,5 @@
 use assert_matches::assert_matches;
+use mp_felt::Felt252Wrapper;
 use mp_transactions::{HandleL1MessageTransaction, UserAndL1HandlerTransaction};
 use sp_runtime::transaction_validity::InvalidTransaction;
 use starknet_api::api_core::Nonce;
@@ -40,7 +41,10 @@ fn should_accept_unused_nonce() {
 
         let tx = UserAndL1HandlerTransaction::L1Handler(transaction, Fee(100));
 
-        assert_matches!(Starknet::validate_unsigned_tx_nonce(&tx), Ok(TxPriorityInfo::L1Handler { nonce: _ }));
+        assert_eq!(
+            Starknet::validate_unsigned_tx_nonce(&tx),
+            Ok(TxPriorityInfo::L1Handler { nonce: Felt252Wrapper::ONE })
+        );
     });
 }
 

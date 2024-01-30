@@ -759,7 +759,7 @@ pub mod pallet {
                 }
                 TxPriorityInfo::L1Handler { nonce } => {
                     valid_transaction_builder =
-                        valid_transaction_builder.and_provides(("0x0", Felt252Wrapper(nonce.0)));
+                        valid_transaction_builder.and_provides((Felt252Wrapper::ZERO, Felt252Wrapper(nonce.0)));
                 }
                 _ => {}
             }
