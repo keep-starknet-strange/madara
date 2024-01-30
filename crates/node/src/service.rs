@@ -20,8 +20,8 @@ use mc_data_availability::ethereum::config::EthereumConfig;
 use mc_genesis_data_provider::OnDiskGenesisConfig;
 use mc_l1_messages::config::L1MessagesWorkerConfig;
 use mc_data_availability::ethereum::EthereumClient;
-use mc_data_availability::near::config::NearConfig;
-use mc_data_availability::near::NearClient;
+// use mc_data_availability::near::config::NearConfig;
+// use mc_data_availability::near::NearClient;
 use mc_data_availability::{DaClient, DaLayer, DataAvailabilityWorker};
 use mc_mapping_sync::MappingSyncWorker;
 use mc_settlement::errors::RetryOnRecoverableErrors;
@@ -456,10 +456,6 @@ pub fn new_full(
                 Box::new(
                     StarknetContractClient::try_from(ethereum_conf).map_err(|e| ServiceError::Other(e.to_string()))?,
                 )
-            }
-            DaLayer::Near => {
-                let near_conf = NearConfig::try_from(&da_path)?;
-                Box::new(NearClient::new_blocking(near_conf).map_err(|e| ServiceError::Other(e.to_string()))?)
             }
         };
         let retry_strategy = Box::new(RetryOnRecoverableErrors { delay: DEFAULT_SETTLEMENT_RETRY_INTERVAL });

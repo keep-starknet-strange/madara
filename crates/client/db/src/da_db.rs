@@ -21,14 +21,14 @@ pub struct DaDb<B: BlockT> {
 
 // TODO: purge old cairo job keys
 impl<B: BlockT> DaDb<B> {
-    pub fn state_diff(&self, block_hash: &BlockHash) -> Result<Option<Vec<U256>>, DbError> {
+    pub fn state_diff(&self, block_hash: &BlockHash) -> Result<Option<bytes::Bytes>, DbError> {
         match self.db.get(crate::columns::DA, block_hash.0.bytes()) {
-            Some(raw) => Ok(Some(Vec::<U256>::decode(&mut &raw[..])?)),
+            Some(raw) => Ok(Some(raw.into())),
             None => Ok(None),
         }
     }
 
-    pub fn store_state_diff(&self, block_hash: &BlockHash, diff: Vec<U256>) -> Result<(), DbError> {
+    pub fn store_state_diff(&self, block_hash: &BlockHash, diff: bytes::Bytes) -> Result<(), DbError> {
         let mut transaction = sp_database::Transaction::new();
 
         transaction.set(crate::columns::DA, block_hash.0.bytes(), &diff.encode());

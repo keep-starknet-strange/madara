@@ -25,6 +25,8 @@ pub struct EthereumClient {
 impl DaClient for EthereumClient {
     async fn publish_state_diff(&self, state_diff: bytes::Bytes) -> Result<()> {
         log::debug!("State Update: {:?}", state_diff);
+        let state_diff = try_bytes_to_vec_u256(state_diff)?;
+
         let fmt_tx = match self.mode {
             DaMode::Sovereign => {
                 abigen!(
@@ -50,8 +52,6 @@ impl DaClient for EthereumClient {
             }
         };
 
-        let state_diff = try_bytes_to_vec_u256(state_diff)?;
-        let fmt_tx = core_contracts.update_state(state_diff, U256::default(), U256::default());
         let tx = fmt_tx
             .send()
             .await

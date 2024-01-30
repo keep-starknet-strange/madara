@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::collections::HashMap;
 
 use anyhow::Result;
 use async_trait::async_trait;
@@ -73,5 +74,9 @@ impl DaClient for NearClient {
             // There is no known last-published state
             Ok(bytes::Bytes::new())
         }
+    }
+
+    fn get_da_metric_labels(&self) -> HashMap<String, String> {
+        HashMap::from([("name".to_string(), "near".to_string())])
     }
 }

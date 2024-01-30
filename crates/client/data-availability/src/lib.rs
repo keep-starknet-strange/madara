@@ -28,8 +28,7 @@ use serde::{Deserialize, Serialize};
 use sp_runtime::traits::Block as BlockT;
 use starknet_api::block::BlockHash;
 use starknet_api::state::ThinStateDiff;
-use utils::state_diff_to_calldata;
-use utils::u256_to_bytes;
+use utils::{state_diff_to_calldata, u256_to_bytes};
 
 use crate::da_metrics::DaMetrics;
 
@@ -43,7 +42,7 @@ pub enum DaLayer {
     Ethereum,
     #[cfg(feature = "avail")]
     Avail,
-    Near,
+    // Near,
 }
 
 impl Display for DaLayer {
@@ -54,6 +53,7 @@ impl Display for DaLayer {
             DaLayer::Ethereum => Display::fmt("Ethereum", f),
             #[cfg(feature = "avail")]
             DaLayer::Avail => Display::fmt("Avail", f),
+            // DaLayer::Near => Display::fmt("NEAR", f),
         }
     }
 }
@@ -224,7 +224,10 @@ pub async fn update_state<B: BlockT, H: HasherT>(
     // store the state diff
     madara_backend
         .da()
-        .store_state_diff(&block_hash, state_diff_to_calldata(block_da_data))
+        .store_state_diff(
+            &block_hash,
+            state_diff_to_calldata(block_da_data).into_iter().flat_map(u256_to_bytes).collect(),
+        )
         .map_err(|e| anyhow!("{e}"))?;
 
     // Query last written state
