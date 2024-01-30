@@ -3,6 +3,7 @@ pub mod avail;
 #[cfg(feature = "celestia")]
 pub mod celestia;
 pub mod ethereum;
+#[cfg(feature = "near")]
 pub mod near;
 mod sharp;
 pub mod utils;
@@ -41,6 +42,7 @@ pub enum DaLayer {
     Ethereum,
     #[cfg(feature = "avail")]
     Avail,
+    #[cfg(feature = "near")]
     Near,
 }
 
@@ -52,6 +54,7 @@ impl Display for DaLayer {
             DaLayer::Ethereum => Display::fmt("Ethereum", f),
             #[cfg(feature = "avail")]
             DaLayer::Avail => Display::fmt("Avail", f),
+            #[cfg(feature = "near")]
             DaLayer::Near => Display::fmt("NEAR", f),
         }
     }

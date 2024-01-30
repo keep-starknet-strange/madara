@@ -287,5 +287,4 @@ near-crypto = { git = "https://github.com/encody/nearcore", branch = "madara-com
 near-primitives = { git = "https://github.com/encody/nearcore", branch = "madara-compat" }
 near-primitives-core = { git = "https://github.com/encody/nearcore", branch = "madara-compat" }
 near-jsonrpc-primitives = { git = "https://github.com/encody/nearcore", branch = "madara-compat" }
-
 near-jsonrpc-client = { git = "https://github.com/encody/near-jsonrpc-client-rs", branch = "madara-compat" }

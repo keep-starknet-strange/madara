@@ -6,6 +6,7 @@ use mc_data_availability::avail::{config::AvailConfig, AvailClient};
 use mc_data_availability::celestia::{config::CelestiaConfig, CelestiaClient};
 use mc_data_availability::ethereum::config::EthereumConfig;
 use mc_data_availability::ethereum::EthereumClient;
+#[cfg(feature = "near")]
 use mc_data_availability::near::{config::NearConfig, NearClient};
 use mc_data_availability::{DaClient, DaLayer};
 
@@ -14,6 +15,7 @@ use crate::constants::AVAIL_DA_CONFIG;
 #[cfg(feature = "celestia")]
 use crate::constants::CELESTIA_DA_CONFIG;
 use crate::constants::ETHEREUM_DA_CONFIG;
+#[cfg(feature = "near")]
 use crate::constants::NEAR_DA_CONFIG;
 
 pub fn get_da_client(da_layer: DaLayer) -> Box<dyn DaClient + Send + Sync> {
@@ -34,8 +36,9 @@ pub fn get_da_client(da_layer: DaLayer) -> Box<dyn DaClient + Send + Sync> {
             let avail_conf = AvailConfig::try_from(&da_path).expect("Failed to read Avail config");
             Box::new(AvailClient::try_from(avail_conf).expect("Failed to create Avail client"))
         }
+        #[cfg(feature = "near")]
         DaLayer::Near => {
-            let near_conf = NearConfig::try_from(&da_path).expect("Failed to read Near config");
+            let near_conf = NearConfig::try_from(&da_path).expect("Failed to read NEAR config");
             Box::new(NearClient::new_blocking(near_conf).expect("Failed to create NEAR client"))
         }
     };
@@ -50,6 +53,7 @@ pub(crate) fn get_da_path(da_layer: DaLayer) -> PathBuf {
         DaLayer::Ethereum => ETHEREUM_DA_CONFIG.into(),
         #[cfg(feature = "avail")]
         DaLayer::Avail => AVAIL_DA_CONFIG.into(),
+        #[cfg(feature = "near")]
         DaLayer::Near => NEAR_DA_CONFIG.into(),
     }
 }

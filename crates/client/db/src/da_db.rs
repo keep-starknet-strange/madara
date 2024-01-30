@@ -1,7 +1,6 @@
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-use ethers::types::U256;
 // Substrate
 use parity_scale_codec::{Decode, Encode};
 use sp_database::Database;
