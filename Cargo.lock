@@ -6144,7 +6144,6 @@ dependencies = [
 name = "madara-runtime"
 version = "0.6.0"
 dependencies = [
- "bitvec",
  "blockifier",
  "frame-benchmarking",
  "frame-executive",
