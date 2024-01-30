@@ -151,6 +151,15 @@
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
 <a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>ethers::providers::{Http, Provider, StreamExt};
@@ -207,37 +216,46 @@
         }
     };
 
-    <span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>((event, meta))) = event_stream.next().<span class="kw">await </span>{
-        <span class="macro">log::info!</span>(
-            <span class="string">&quot;⟠ Processing L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?}&quot;</span>,
-            meta.block_number,
-            meta.transaction_hash,
-            meta.log_index
-        );
+    <span class="kw">while let </span><span class="prelude-val">Some</span>(event_res) = event_stream.next().<span class="kw">await </span>{
+        <span class="kw">if let </span><span class="prelude-val">Ok</span>((event, meta)) = event_res {
+            <span class="macro">log::info!</span>(
+                <span class="string">&quot;⟠ Processing L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?}&quot;</span>,
+                meta.block_number,
+                meta.transaction_hash,
+                meta.log_index
+            );
 
-        <span class="kw">match </span>process_l1_message(event, <span class="kw-2">&amp;</span>client, <span class="kw-2">&amp;</span>pool, <span class="kw-2">&amp;</span>backend, <span class="kw-2">&amp;</span>meta.block_number.as_u64(), <span class="kw-2">&amp;</span>meta.log_index.as_u64())
+            <span class="kw">match </span>process_l1_message(
+                event,
+                <span class="kw-2">&amp;</span>client,
+                <span class="kw-2">&amp;</span>pool,
+                <span class="kw-2">&amp;</span>backend,
+                <span class="kw-2">&amp;</span>meta.block_number.as_u64(),
+                <span class="kw-2">&amp;</span>meta.log_index.as_u64(),
+            )
             .<span class="kw">await
-        </span>{
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(tx_hash)) =&gt; {
-                <span class="macro">log::info!</span>(
-                    <span class="string">&quot;⟠ L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?} submitted, transaction \
-                     hash on L2: {:?}&quot;</span>,
-                    meta.block_number,
-                    meta.transaction_hash,
-                    meta.log_index,
-                    tx_hash
-                );
-            }
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; {}
-            <span class="prelude-val">Err</span>(e) =&gt; {
-                <span class="macro">log::error!</span>(
-                    <span class="string">&quot;⟠ Unexpected error while processing L1 Message from block: {:?}, transaction_hash: {:?}, \
-                     log_index: {:?}, error: {:?}&quot;</span>,
-                    meta.block_number,
-                    meta.transaction_hash,
-                    meta.log_index,
-                    e
-                )
+            </span>{
+                <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(tx_hash)) =&gt; {
+                    <span class="macro">log::info!</span>(
+                        <span class="string">&quot;⟠ L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?} submitted, \
+                         transaction hash on L2: {:?}&quot;</span>,
+                        meta.block_number,
+                        meta.transaction_hash,
+                        meta.log_index,
+                        tx_hash
+                    );
+                }
+                <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; {}
+                <span class="prelude-val">Err</span>(e) =&gt; {
+                    <span class="macro">log::error!</span>(
+                        <span class="string">&quot;⟠ Unexpected error while processing L1 Message from block: {:?}, transaction_hash: {:?}, \
+                         log_index: {:?}, error: {:?}&quot;</span>,
+                        meta.block_number,
+                        meta.transaction_hash,
+                        meta.log_index,
+                        e
+                    )
+                }
             }
         }
     }

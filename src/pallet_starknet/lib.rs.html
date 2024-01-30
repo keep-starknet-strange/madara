@@ -1116,6 +1116,13 @@
 <a href="#1116" id="1116">1116</a>
 <a href="#1117" id="1117">1117</a>
 <a href="#1118" id="1118">1118</a>
+<a href="#1119" id="1119">1119</a>
+<a href="#1120" id="1120">1120</a>
+<a href="#1121" id="1121">1121</a>
+<a href="#1122" id="1122">1122</a>
+<a href="#1123" id="1123">1123</a>
+<a href="#1124" id="1124">1124</a>
+<a href="#1125" id="1125">1125</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1865,14 +1872,21 @@
                 .longevity(T::TransactionLongevity::get())
                 .propagate(<span class="bool-val">true</span>);
 
-            <span class="comment">// Make sure txs from same account are executed in correct order (nonce based ordering)
-            </span><span class="kw">if let </span>TxPriorityInfo::RegularTxs { sender_address, transaction_nonce, sender_nonce } = tx_priority_info {
-                valid_transaction_builder =
-                    valid_transaction_builder.and_provides((sender_address, Felt252Wrapper(transaction_nonce.<span class="number">0</span>)));
-                <span class="kw">if </span>transaction_nonce &gt; sender_nonce {
-                    valid_transaction_builder = valid_transaction_builder
-                        .and_requires((sender_address, Felt252Wrapper(transaction_nonce.<span class="number">0 </span>- FieldElement::ONE)));
+            <span class="kw">match </span>tx_priority_info {
+                <span class="comment">// Make sure txs from same account are executed in correct order (nonce based ordering)
+                </span>TxPriorityInfo::RegularTxs { sender_address, transaction_nonce, sender_nonce } =&gt; {
+                    valid_transaction_builder =
+                        valid_transaction_builder.and_provides((sender_address, Felt252Wrapper(transaction_nonce.<span class="number">0</span>)));
+                    <span class="kw">if </span>transaction_nonce &gt; sender_nonce {
+                        valid_transaction_builder = valid_transaction_builder
+                            .and_requires((sender_address, Felt252Wrapper(transaction_nonce.<span class="number">0 </span>- FieldElement::ONE)));
+                    }
                 }
+                TxPriorityInfo::L1Handler { nonce } =&gt; {
+                    valid_transaction_builder =
+                        valid_transaction_builder.and_provides((Felt252Wrapper::ZERO, Felt252Wrapper(nonce.<span class="number">0</span>)));
+                }
+                <span class="kw">_ </span>=&gt; {}
             }
 
             valid_transaction_builder.build()
