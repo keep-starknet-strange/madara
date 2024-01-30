@@ -62,7 +62,6 @@ mp-program-hash = { workspace = true }
 mp-simulations = { workspace = true }
 mp-transactions = { workspace = true }
 # Starknet dependencies
-bitvec = { workspace = true }
 blockifier = { workspace = true }
 starknet-core = { workspace = true }
 starknet-ff = { workspace = true }
