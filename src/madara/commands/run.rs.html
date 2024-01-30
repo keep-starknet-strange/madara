@@ -263,6 +263,20 @@
 <a href="#263" id="263">263</a>
 <a href="#264" id="264">264</a>
 <a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
 
 <span class="kw">use </span>clap::ValueHint::FilePath;
@@ -451,14 +465,21 @@
 
     <span class="kw">let </span>da_client = <span class="kw">match </span>cli.run.da_layer {
         <span class="prelude-val">Some</span>(da_layer) =&gt; {
-            <span class="kw">let </span>da_conf = cli.run.clone().da_conf.unwrap_or({
-                <span class="kw">let </span>path_da_conf_json = chain_config_dir.join(<span class="macro">format!</span>(<span class="string">&quot;{da_layer}.json&quot;</span>));
-                <span class="kw">if </span>!path_da_conf_json.exists() {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(sc_cli::Error::Input(<span class="macro">format!</span>(<span class="string">&quot;no file {da_layer}.json in base_path&quot;</span>)));
+            <span class="kw">let </span>da_conf = <span class="kw">match </span>cli.run.clone().da_conf {
+                <span class="prelude-val">Some</span>(da_conf) =&gt; da_conf,
+                <span class="prelude-val">None </span>=&gt; {
+                    <span class="kw">let </span>path_da_conf_json = chain_config_dir.join(<span class="macro">format!</span>(<span class="string">&quot;{}.json&quot;</span>, da_layer));
+                    <span class="kw">if </span>!path_da_conf_json.exists() {
+                        <span class="kw">return </span><span class="prelude-val">Err</span>(sc_cli::Error::Input(<span class="macro">format!</span>(
+                            <span class="string">&quot;no file {} in base_path&quot;</span>,
+                            path_da_conf_json.to_string_lossy()
+                        )));
+                    }
+                    path_da_conf_json
                 }
-                path_da_conf_json
-            });
+            };
 
+            <span class="macro">log::info!</span>(<span class="string">&quot;Initializing DA client with layer: {:?}&quot;</span>, da_layer);
             <span class="prelude-val">Some</span>(init_da_client(da_layer, da_conf)<span class="question-mark">?</span>)
         }
         <span class="prelude-val">None </span>=&gt; {
@@ -472,14 +493,21 @@
 
     <span class="kw">let </span>settlement_config: <span class="prelude-ty">Option</span>&lt;(SettlementLayer, PathBuf)&gt; = <span class="kw">match </span>cli.run.settlement {
         <span class="prelude-val">Some</span>(SettlementLayer::Ethereum) =&gt; {
-            <span class="kw">let </span>settlement_conf =
-                cli.run.clone().settlement_conf.unwrap_or_else(|| chain_config_dir.join(<span class="string">&quot;settlement_conf.json&quot;</span>));
-            <span class="kw">if </span>!settlement_conf.exists() {
-                <span class="kw">return </span><span class="prelude-val">Err</span>(sc_cli::Error::Input(<span class="macro">format!</span>(
-                    <span class="string">&quot;Settlement config does not exist: {}&quot;</span>,
-                    settlement_conf.display()
-                )));
-            }
+            <span class="kw">let </span>settlement_conf = <span class="kw">match </span>cli.run.clone().settlement_conf {
+                <span class="prelude-val">Some</span>(settlement_conf) =&gt; settlement_conf,
+                <span class="prelude-val">None </span>=&gt; {
+                    <span class="kw">let </span>path_settlement_conf_json = chain_config_dir.join(<span class="string">&quot;settlement_conf.json&quot;</span>);
+                    <span class="kw">if </span>!path_settlement_conf_json.exists() {
+                        <span class="kw">return </span><span class="prelude-val">Err</span>(sc_cli::Error::Input(<span class="macro">format!</span>(
+                            <span class="string">&quot;no file {} in base_path&quot;</span>,
+                            path_settlement_conf_json.to_string_lossy()
+                        )));
+                    }
+                    path_settlement_conf_json
+                }
+            };
+
+            <span class="macro">log::info!</span>(<span class="string">&quot;Initializing settlement client with layer: {:?}&quot;</span>, SettlementLayer::Ethereum);
             <span class="prelude-val">Some</span>((SettlementLayer::Ethereum, settlement_conf))
         }
 
