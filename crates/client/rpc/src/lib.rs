@@ -137,7 +137,8 @@ where
     pub fn current_block_hash(&self) -> Result<H256, ApiError> {
         let substrate_block_hash = self.client.info().best_hash;
 
-        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)
+        .ok_or(ApiError::UnknownBlock(format!("Failed to get Starknet block for Substrate block hash '{substrate_block_hash}' ")))?;
 
         Ok(starknet_block.header().hash::<H>().into())
     }
@@ -471,7 +472,10 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
+            error!("Block not found");
+            StarknetRpcApiError::BlockNotFound
+        })?;
 
         Ok(starknet_block.header().transaction_count)
     }
@@ -843,7 +847,11 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
+            error!("Block not found");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+
         let chain_id = self.chain_id()?;
         let starknet_version = starknet_block.header().protocol_version;
         let l1_gas_price = starknet_block.header().l1_gas_price;
@@ -1081,7 +1089,10 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
+            error!("Block not found");
+            StarknetRpcApiError::BlockNotFound
+        })?;
 
         let transaction =
             starknet_block.transactions().get(index as usize).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
@@ -1136,7 +1147,11 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
+            error!("Block not found");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+
         let block_hash = starknet_block.header().hash::<H>();
         let starknet_version = starknet_block.header().protocol_version;
 
@@ -1209,7 +1224,10 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
+            error!("Block not found");
+            StarknetRpcApiError::BlockNotFound
+        })?;
 
         let old_root = if starknet_block.header().block_number > 0 {
             let parent_block_hash = Felt252Wrapper::from(starknet_block.header().parent_block_hash).into();
@@ -1220,7 +1238,11 @@ where
                 })?;
 
             let parent_block =
-                get_block_by_block_hash(self.client.as_ref(), substrate_parent_block_hash).unwrap_or_default();
+                get_block_by_block_hash(self.client.as_ref(), substrate_parent_block_hash).ok_or_else(|| {
+                    error!("Block not found");
+                    StarknetRpcApiError::BlockNotFound
+                })?;
+
             Felt252Wrapper::from(self.backend.temporary_global_state_root_getter()).into()
         } else {
             FieldElement::default()
@@ -1354,7 +1376,11 @@ where
             None => return Err(StarknetRpcApiError::TxnHashNotFound.into()),
         };
 
-        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
+            error!("Block not found");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+
         let chain_id = self.chain_id()?.0.into();
 
         let find_tx =
@@ -1412,7 +1438,11 @@ where
             .ok_or(StarknetRpcApiError::TxnHashNotFound)?;
 
         let starknet_block: mp_block::Block =
-            get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+            get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
+                error!("Block not found");
+                StarknetRpcApiError::BlockNotFound
+            })?;
+            
         let block_header = starknet_block.header();
         let block_hash = block_header.hash::<H>().into();
         let block_number = block_header.block_number;
