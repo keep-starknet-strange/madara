@@ -190,7 +190,7 @@ where
     /// * `block_hash` - The hash of the block containing the transactions (starknet block).
     fn get_cached_transaction_hashes(&self, block_hash: H256) -> Option<Vec<H256>> {
         self.backend.mapping().cached_transaction_hashes_from_block_hash(block_hash).unwrap_or_else(|err| {
-            error!("{err}");
+            error!("Failed to read from cache: {err}");
             None
         })
     }
