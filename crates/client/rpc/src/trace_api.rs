@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use blockifier::execution::entry_point::CallInfo;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
@@ -23,7 +25,6 @@ use starknet_core::types::{
     FeeEstimate, InvokeTransactionTrace, RevertedInvocation, SimulatedTransaction, SimulationFlag, TransactionTrace,
 };
 use starknet_ff::FieldElement;
-use std::collections::HashMap;
 use thiserror::Error;
 
 use crate::errors::StarknetRpcApiError;
@@ -155,7 +156,7 @@ fn try_get_funtion_invocation_from_call_info<B: BlockT>(
     storage_override: &dyn StorageOverride<B>,
     substrate_block_hash: B::Hash,
     call_info: &CallInfo,
-    class_hash_cache: &mut HashMap<ContractAddress, FieldElement>
+    class_hash_cache: &mut HashMap<ContractAddress, FieldElement>,
 ) -> Result<starknet_core::types::FunctionInvocation, TryFuntionInvocationFromCallInfoError> {
     let messages = collect_call_info_ordered_messages(call_info);
     let events = blockifier_to_starknet_rs_ordered_events(&call_info.execution.events);
@@ -163,7 +164,9 @@ fn try_get_funtion_invocation_from_call_info<B: BlockT>(
     let inner_calls = call_info
         .inner_calls
         .iter()
-        .map(|call| try_get_funtion_invocation_from_call_info(storage_override, substrate_block_hash, call, class_hash_cache))
+        .map(|call| {
+            try_get_funtion_invocation_from_call_info(storage_override, substrate_block_hash, call, class_hash_cache)
+        })
         .collect::<Result<_, _>>()?;
 
     call_info.get_sorted_l2_to_l1_payloads_length()?;
@@ -229,7 +232,7 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
     >,
 ) -> Result<Vec<SimulatedTransaction>, ConvertCallInfoToExecuteInvocationError> {
     let mut results = vec![];
-    let mut class_hash_cache:HashMap<ContractAddress, FieldElement> = HashMap::new();
+    let mut class_hash_cache: HashMap<ContractAddress, FieldElement> = HashMap::new();
     for (tx_type, res) in tx_types.iter().zip(transaction_execution_results.iter()) {
         match res {
             Ok(tx_exec_info) => {
@@ -239,7 +242,12 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
                     .validate_call_info
                     .as_ref()
                     .map(|call_info| {
-                        try_get_funtion_invocation_from_call_info(storage_override, substrate_block_hash, call_info, &mut class_hash_cache)
+                        try_get_funtion_invocation_from_call_info(
+                            storage_override,
+                            substrate_block_hash,
+                            call_info,
+                            &mut class_hash_cache,
+                        )
                     })
                     .transpose()?;
                 // If simulated with `SimulationFlag::SkipFeeCharge` this will be `None`
@@ -248,7 +256,12 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
                     .fee_transfer_call_info
                     .as_ref()
                     .map(|call_info| {
-                        try_get_funtion_invocation_from_call_info(storage_override, substrate_block_hash, call_info, &mut class_hash_cache)
+                        try_get_funtion_invocation_from_call_info(
+                            storage_override,
+                            substrate_block_hash,
+                            call_info,
+                            &mut class_hash_cache,
+                        )
                     })
                     .transpose()?;
 
