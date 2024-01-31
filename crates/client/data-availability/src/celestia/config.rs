@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use serde::Deserialize;
 
-use crate::DaMode;
+use crate::{DaMode, DaError};
 
 pub const DEFAULT_CELESTIA_NODE: &str = "127.0.0.1:26658";
 pub const DEFAULT_NID: &str = "Madara";
@@ -23,11 +23,15 @@ pub struct CelestiaConfig {
 }
 
 impl TryFrom<&PathBuf> for CelestiaConfig {
-    type Error = String;
+    type Error = DaError;
 
     fn try_from(path: &PathBuf) -> Result<Self, Self::Error> {
-        let file = File::open(path).map_err(|e| format!("error opening da config: {e}"))?;
-        serde_json::from_reader(file).map_err(|e| format!("error parsing da config: {e}"))
+        let file = File::open(path).map_err(|e| 
+            DaError::FailedOpeningConfig(e)
+        )?;
+        serde_json::from_reader(file).map_err(|e|
+            DaError::FailedParsingConfig(e)
+        )
     }
 }
 

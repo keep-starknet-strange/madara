@@ -45,38 +45,21 @@ pub enum DaLayer {
 }
 
 #[derive(Error, Debug)]
-pub enum ClientErr{
-    #[error("failed connecting http: {0}")]
-    FailedHttpConnection(String),
-    #[error("failed connecting websocket: {0}")]
-    FailedWsConnection(String),
-    #[error("failed submitting data through client: {0}")]
-    FailedSubmission(String),
-    #[error("failed fetching data through client: {0}")]
-    FailedFetching(String),
-}
-
-#[derive(Error, Debug)]
-pub enum ConfigErr{
-    #[error("failed opening config: {0}")]
-    FailedOpening(String),
-    #[error("failed parsing config: {0}")]
-    FailedParsing(String),
-}
-
-#[derive(Error, Debug)]
 pub enum DaError {
-    Config(ConfigErr),
-    Client(ClientErr),
-}
-
-impl std::fmt::Display for DaError{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            DaError::Config(e) => write!(f, "Config error: {:?}", e),
-            DaError::Client(e) => write!(f, "Client error: {:?}", e),
-        }
-    }
+    #[error("failed opening config: {0}")]
+    FailedOpeningConfig(std::io::Error),
+    #[error("failed parsing config: {0}")]
+    FailedParsingConfig(serde_json::Error),
+    #[error("failed converting parameter: {0}")]
+    FailedConversion(anyhow::Error),
+    #[error("failed building client: {0}")]
+    FailedBuildingClient(anyhow::Error),
+    #[error("failed submitting data through client: {0}")]
+    FailedDataSubmission(anyhow::Error),
+    #[error("failed fetching data through client: {0}")]
+    FailedDataFetching(anyhow::Error),
+    #[error("failed validating data: {0}")]
+    FailedDataValidation(anyhow::Error),
 }
 
 /// Data availability modes in which Madara can be initialized.

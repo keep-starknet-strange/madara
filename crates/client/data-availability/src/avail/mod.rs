@@ -15,7 +15,7 @@ use subxt::ext::sp_core::sr25519::Pair;
 use subxt::OnlineClient;
 
 use crate::utils::get_bytes_from_state_diff;
-use crate::{DaClient, DaMode, DaLayer, DaLayerErr, DaError};
+use crate::{DaClient, DaMode, DaLayer, DaError};
 
 type AvailPairSigner = subxt::tx::PairSigner<AvailConfig, Pair>;
 
@@ -32,23 +32,21 @@ pub struct SubxtClient {
     config: config::AvailConfig,
 }
 
-pub fn try_build_avail_subxt(conf: &config::AvailConfig) -> Result<OnlineClient<AvailConfig>, DaErr> {
+pub fn try_build_avail_subxt(conf: &config::AvailConfig) -> Result<OnlineClient<AvailConfig>, DaError> {
     let client =
         futures::executor::block_on(async { build_client(conf.ws_provider.as_str(), conf.validate_codegen).await })
-            .map_err(|e| DaErr(
-                Client(ClientErr::FailedWsConnection(e))
-            ))?;
+            .map_err(|e|
+                DaError::FailedBuildingClient(e.into())
+            )?;
 
     Ok(client)
 }
 
 impl SubxtClient {
-    pub async fn restart(&mut self) -> Result<(), DaErr> {
+    pub async fn restart(&mut self) -> Result<(), DaError> {
         self.client = match build_client(self.config.ws_provider.as_str(), self.config.validate_codegen).await {
             Ok(i) => i,
-            Err(e) => return DaErr(
-                Client(ClientErr::FailedWsConnection(e))
-            ),
+            Err(e) => return DaError::FailedBuildingClient(e.into()),
         };
 
         Ok(())
@@ -60,11 +58,11 @@ impl SubxtClient {
 }
 
 impl TryFrom<config::AvailConfig> for SubxtClient {
-    type Error = DaErr;
+    type Error = DaError;
 
     fn try_from(conf: config::AvailConfig) -> Result<Self, Self::Error> {
         Ok(Self { 
-            client: try_build_avail_subxt(&conf),
+            client: try_build_avail_subxt(&conf)?,
             config: conf 
         })
     }
@@ -75,9 +73,7 @@ impl DaClient for AvailClient {
     async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<(), DaError> {
         let bytes = get_bytes_from_state_diff(&state_diff);
         let bytes = BoundedVec(bytes);
-        self.publish_data(&bytes).await.map_err(|e| DaErr(
-            Client(ClientErr::FailedSubmission(e))
-        ))?;
+        self.publish_data(&bytes).await?;
 
         Ok(())
     }
@@ -98,7 +94,7 @@ impl DaClient for AvailClient {
 }
 
 impl AvailClient {
-    async fn publish_data(&self, bytes: &BoundedVec<u8>) -> Result<(), DaErr> {
+    async fn publish_data(&self, bytes: &BoundedVec<u8>) -> Result<(), DaError> {
         let mut ws_client = self.ws_client.lock().await;
 
         let data_transfer = AvailApi::tx().data_availability().submit_data(bytes.clone());
@@ -111,9 +107,7 @@ impl AvailClient {
                     let _ = ws_client.restart().await;
                 }
 
-                return DaErr(
-                    Config(ConfigErr::FailedWsConnection(e))
-                );
+                return DaError::FailedBuildingClient(e.into());
             }
         };
 
@@ -122,19 +116,15 @@ impl AvailClient {
 }
 
 impl TryFrom<config::AvailConfig> for AvailClient {
-    type Error = DaErr;
+    type Error = DaError;
 
     fn try_from(conf: config::AvailConfig) -> Result<Self, Self::Error> {
-        let signer = signer_from_seed(conf.seed.as_str()).map_err(|e| DaErr(
-            Config(ConfigErr::FailedParsing(e))
-        ))?;
+        let signer = signer_from_seed(conf.seed.as_str())?;
 
         let app_id = AppId(conf.app_id);
 
         Ok(Self {
-            ws_client: Arc::new(Mutex::new(SubxtClient::try_from(conf.clone()).map_err(|e| DaErr(
-                Client(ClientErr::FailedWsConnection(e))
-            )))),
+            ws_client: Arc::new(Mutex::new(SubxtClient::try_from(conf.clone())?)),
             app_id,
             signer,
             mode: conf.mode,
@@ -142,11 +132,9 @@ impl TryFrom<config::AvailConfig> for AvailClient {
     }
 }
 
-fn signer_from_seed(seed: &str) -> Result<AvailPairSigner, DaErr> {
+fn signer_from_seed(seed: &str) -> Result<AvailPairSigner, DaError> {
     let pair = <Pair as subxt::ext::sp_core::Pair>::from_string(seed, None)
-        .map_err(|e| DaErr(
-            Config(ConfigErr::FailedParsing(e))
-        ))?;
+        .map_err(|e| DaError::FailedConversion(e.into()))?;
 
     let signer = AvailPairSigner::new(pair);
     Ok(signer)
