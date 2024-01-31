@@ -29,7 +29,7 @@ impl DaClient for CelestiaClient {
         )?;
 
         let submitted_height = self.publish_data(&blob).await.map_err(|e| 
-            DataError::FailedDataSubmission(e.into())
+            DaError::FailedDataSubmission(e.into())
         )?;
 
         // blocking call, awaiting on server side (Celestia Node) that a block with our data is included
@@ -60,7 +60,7 @@ impl DaClient for CelestiaClient {
 }
 
 impl CelestiaClient {
-    async fn publish_data(&self, blob: &Blob) -> Result<u64> {
+    async fn publish_data(&self, blob: &Blob) -> Result<u64, DaError> {
         self.http_client
             .blob_submit(&[blob.clone()], SubmitOptions::default())
             .await
@@ -81,12 +81,12 @@ impl CelestiaClient {
     }
 
     async fn verify_blob_was_included(&self, submitted_height: u64, blob: Blob) -> Result<(), DaError> {
-        let received_blob = self.http_client.blob_get(submitted_height, self.nid, blob.commitment).await.map_err(|e| DaError(
-            Client(ClientError::FailedFetching(e))
-        ));
+        let received_blob = self.http_client.blob_get(submitted_height, self.nid, blob.commitment).await.map_err(|e| 
+            DaError::FailedDataFetching(e.into())
+        )?;
         received_blob.validate().map_err(|e| 
             DaError::FailedDataValidation(e.into())
-        );
+        )?;
         Ok(())
     }
 }

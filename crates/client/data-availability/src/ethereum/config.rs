@@ -30,14 +30,14 @@ pub struct EthereumConfig {
 }
 
 impl TryFrom<&PathBuf> for EthereumConfig {
-    type Error = DaError;
+    type Error = String;
 
     fn try_from(path: &PathBuf) -> Result<Self, Self::Error> {
         let file = File::open(path).map_err(|e|
-            DaError::FailedOpeningConfig(e)
+            DaError::FailedOpeningConfig(e).to_string()
         )?;
         serde_json::from_reader(file).map_err(|e| 
-            DaError::FailedParsingConfig(e)
+            DaError::FailedParsingConfig(e).to_string()
         )
     }
 }
