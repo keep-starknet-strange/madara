@@ -51,7 +51,6 @@ jsonrpsee = { workspace = true, default-features = true, features = [
   "server",
   "macros",
 ] }
-lazy_static = { workspace = true }
 log = { workspace = true, default-features = true }
 mp-block = { workspace = true, default-features = true }
 mp-fee = { workspace = true, default-features = true }

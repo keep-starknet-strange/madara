@@ -2,7 +2,6 @@ use blockifier::execution::entry_point::CallInfo;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
 use jsonrpsee::core::{async_trait, RpcResult};
-use lazy_static::lazy_static;
 use log::error;
 use mc_genesis_data_provider::GenesisProvider;
 use mc_rpc_core::{StarknetReadRpcApiServer, StarknetTraceRpcApiServer};
@@ -18,13 +17,13 @@ use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
+use starknet_api::api_core::ContractAddress;
 use starknet_core::types::{
     BlockId, BroadcastedTransaction, DeclareTransactionTrace, DeployAccountTransactionTrace, ExecuteInvocation,
     FeeEstimate, InvokeTransactionTrace, RevertedInvocation, SimulatedTransaction, SimulationFlag, TransactionTrace,
 };
 use starknet_ff::FieldElement;
 use std::collections::HashMap;
-use std::sync::Mutex;
 use thiserror::Error;
 
 use crate::errors::StarknetRpcApiError;
@@ -152,14 +151,11 @@ pub enum TryFuntionInvocationFromCallInfoError {
     ContractNotFound,
 }
 
-lazy_static! {
-    static ref CLASS_HASH_CACHE: Mutex<HashMap<starknet_api::api_core::ContractAddress, FieldElement>> = Mutex::new(HashMap::new());
-}
-
 fn try_get_funtion_invocation_from_call_info<B: BlockT>(
     storage_override: &dyn StorageOverride<B>,
     substrate_block_hash: B::Hash,
     call_info: &CallInfo,
+    class_hash_cache: &mut HashMap<ContractAddress, FieldElement>
 ) -> Result<starknet_core::types::FunctionInvocation, TryFuntionInvocationFromCallInfoError> {
     let messages = collect_call_info_ordered_messages(call_info);
     let events = blockifier_to_starknet_rs_ordered_events(&call_info.execution.events);
@@ -167,7 +163,7 @@ fn try_get_funtion_invocation_from_call_info<B: BlockT>(
     let inner_calls = call_info
         .inner_calls
         .iter()
-        .map(|call| try_get_funtion_invocation_from_call_info(storage_override, substrate_block_hash, call))
+        .map(|call| try_get_funtion_invocation_from_call_info(storage_override, substrate_block_hash, call, class_hash_cache))
         .collect::<Result<_, _>>()?;
 
     call_info.get_sorted_l2_to_l1_payloads_length()?;
@@ -194,7 +190,7 @@ fn try_get_funtion_invocation_from_call_info<B: BlockT>(
     let class_hash = if let Some(class_hash) = call_info.call.class_hash {
         class_hash.0.into()
     } else {
-        if let Some(cached_hash) = CLASS_HASH_CACHE.lock().unwrap().get(&call_info.call.storage_address) {
+        if let Some(cached_hash) = class_hash_cache.get(&call_info.call.storage_address) {
             cached_hash.clone()
         } else {
             // Compute and cache the class hash
@@ -203,7 +199,7 @@ fn try_get_funtion_invocation_from_call_info<B: BlockT>(
                 .ok_or_else(|| TryFuntionInvocationFromCallInfoError::ContractNotFound)?;
 
             let field_element = FieldElement::from_byte_slice_be(computed_hash.0.bytes()).unwrap();
-            CLASS_HASH_CACHE.lock().unwrap().insert(call_info.call.storage_address, field_element.clone());
+            class_hash_cache.insert(call_info.call.storage_address, field_element.clone());
 
             field_element
         }
@@ -233,6 +229,7 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
     >,
 ) -> Result<Vec<SimulatedTransaction>, ConvertCallInfoToExecuteInvocationError> {
     let mut results = vec![];
+    let mut class_hash_cache:HashMap<ContractAddress, FieldElement> = HashMap::new();
     for (tx_type, res) in tx_types.iter().zip(transaction_execution_results.iter()) {
         match res {
             Ok(tx_exec_info) => {
@@ -242,7 +239,7 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
                     .validate_call_info
                     .as_ref()
                     .map(|call_info| {
-                        try_get_funtion_invocation_from_call_info(storage_override, substrate_block_hash, call_info)
+                        try_get_funtion_invocation_from_call_info(storage_override, substrate_block_hash, call_info, &mut class_hash_cache)
                     })
                     .transpose()?;
                 // If simulated with `SimulationFlag::SkipFeeCharge` this will be `None`
@@ -251,7 +248,7 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
                     .fee_transfer_call_info
                     .as_ref()
                     .map(|call_info| {
-                        try_get_funtion_invocation_from_call_info(storage_override, substrate_block_hash, call_info)
+                        try_get_funtion_invocation_from_call_info(storage_override, substrate_block_hash, call_info, &mut class_hash_cache)
                     })
                     .transpose()?;
 
@@ -266,6 +263,7 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
                                 substrate_block_hash,
                                 // Safe to unwrap because is only `None`  for `Declare` txs
                                 tx_exec_info.execute_call_info.as_ref().unwrap(),
+                                &mut class_hash_cache,
                             )?)
                         },
                         fee_transfer_invocation,
@@ -286,6 +284,7 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
                                 substrate_block_hash,
                                 // Safe to unwrap because is only `None`  for `Declare` txs
                                 tx_exec_info.execute_call_info.as_ref().unwrap(),
+                                &mut class_hash_cache,
                             )?,
                             fee_transfer_invocation,
                             // TODO(#1291): Compute state diff correctly
