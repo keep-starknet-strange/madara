@@ -122,8 +122,8 @@ where
             .into_iter()
             .map(|(tx_hash, event)| EmittedEvent {
                 from_address: Felt252Wrapper::from(event.from_address).0,
-                keys: event.content.keys.clone().into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
-                data: event.content.data.0.clone().into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
+                keys: event.content.keys.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
+                data: event.content.data.0.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
                 block_hash: block_hash.0,
                 block_number,
                 transaction_hash: tx_hash.0,
