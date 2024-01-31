@@ -1443,28 +1443,57 @@ where
                 StarknetRpcApiError::InternalServerError
             })?;
         let txn_hashes = self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into());
-        let (tx_index, transaction) = transactions
-            .iter()
-            .enumerate()
-            .find(|(index, tx)| {
-                if let Some(txn_hashes) = &txn_hashes {
-                    // safe to unwrap here as we stored the transaction hash by
-                    let tx_hash: Felt252Wrapper =
-                        (&txn_hashes[*index].0).try_into().expect("Failed to get transaction hash");
-                    tx_hash == transaction_hash.into()
-                } else {
-                    let transaction = &transactions[*index];
-                    let tx_hash = transaction.compute_hash::<H>(chain_id, false);
-                    tx_hash == transaction_hash.into()
+        let mut tx_index = None;
+        let mut transaction = None;
+        for (index, tx) in transactions.iter().enumerate() {
+            let tx_hash: Option<Felt252Wrapper> = match txn_hashes {
+                Some(ref txn_hashes) => {
+                    let tx_hash_h256 = txn_hashes
+                        .get(index)
+                        .ok_or_else(|| {
+                            error!(
+                                "Failed to get transaction hash from cached transaction hashes. Substrate block hash: \
+                                 {substrate_block_hash}, transaction idx: {index}"
+                            );
+                            StarknetRpcApiError::InternalServerError
+                        })?
+                        .clone();
+                    Some((&tx_hash_h256.0).try_into().map_err(|e| {
+                        error!(
+                            "Failed to convert transaction hash from cached transaction hashes. Substrate block hash: \
+                             {substrate_block_hash}, transaction idx: {index}, error: {e}"
+                        );
+                        StarknetRpcApiError::InternalServerError
+                    })?)
                 }
-            })
-            .ok_or_else(|| {
-                error!(
-                    "Failed to find transaction hash in block. Substrate block hash: {substrate_block_hash}, \
-                     transaction hash: {transaction_hash}"
-                );
-                StarknetRpcApiError::InternalServerError
-            })?;
+                None => {
+                    let transaction = &transactions.get(index).ok_or_else(|| {
+                        error!(
+                            "Failed to get transaction from transactions. Substrate block hash: \
+                             {substrate_block_hash}, transaction idx: {index}"
+                        );
+                        StarknetRpcApiError::InternalServerError
+                    })?;
+                    Some(transaction.compute_hash::<H>(chain_id, false))
+                }
+            };
+            if let Some(tx_hash) = tx_hash {
+                if tx_hash == transaction_hash.into() {
+                    tx_index = Some(index);
+                    transaction = Some(tx);
+                    break;
+                }
+            }
+        }
+        if tx_index == None || transaction == None {
+            error!(
+                "Failed to find transaction hash in block. Substrate block hash: {substrate_block_hash}, transaction \
+                 hash: {transaction_hash}"
+            );
+            return Err(StarknetRpcApiError::InternalServerError.into());
+        }
+        let tx_index = tx_index.unwrap();
+        let transaction = transaction.unwrap();
         // adding the inherents count to the tx_index to get the correct index in the block
         let tx_index = tx_index + block_extrinsics_len - transactions.len();
 
