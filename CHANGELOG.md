@@ -2,6 +2,7 @@
 
 ## Next release
 
+- fix: cairo1 contracts should be identified by their sierra class hash
 - fix(cli): repair broken cli for da conf
 - feat(client): on `add_declare_transaction` store sierra contract classes in
   the madara backend
