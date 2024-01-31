@@ -192,20 +192,18 @@ fn try_get_funtion_invocation_from_call_info<B: BlockT>(
     // address". We have to do this decution ourselves here
     let class_hash = if let Some(class_hash) = call_info.call.class_hash {
         class_hash.0.into()
+    } else if let Some(cached_hash) = class_hash_cache.get(&call_info.call.storage_address) {
+        *cached_hash
     } else {
-        if let Some(cached_hash) = class_hash_cache.get(&call_info.call.storage_address) {
-            cached_hash.clone()
-        } else {
-            // Compute and cache the class hash
-            let computed_hash = storage_override
-                .contract_class_hash_by_address(substrate_block_hash, call_info.call.storage_address)
-                .ok_or_else(|| TryFuntionInvocationFromCallInfoError::ContractNotFound)?;
+        // Compute and cache the class hash
+        let computed_hash = storage_override
+            .contract_class_hash_by_address(substrate_block_hash, call_info.call.storage_address)
+            .ok_or_else(|| TryFuntionInvocationFromCallInfoError::ContractNotFound)?;
 
-            let field_element = FieldElement::from_byte_slice_be(computed_hash.0.bytes()).unwrap();
-            class_hash_cache.insert(call_info.call.storage_address, field_element.clone());
+        let field_element = FieldElement::from_byte_slice_be(computed_hash.0.bytes()).unwrap();
+        class_hash_cache.insert(call_info.call.storage_address, field_element);
 
-            field_element
-        }
+        field_element
     };
 
     Ok(starknet_core::types::FunctionInvocation {
