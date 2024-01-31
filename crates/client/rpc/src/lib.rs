@@ -1436,23 +1436,42 @@ where
                 StarknetRpcApiError::InternalServerError
             })?;
 
-        let (tx_index, transaction) = self
-            .client
-            .runtime_api()
-            .get_index_and_tx_for_tx_hash(substrate_block_hash, block_extrinsics, chain_id, transaction_hash.into())
-            .map_err(|e| {
+        let block_extrinsics_len = block_extrinsics.len();
+        let transactions =
+            self.client.runtime_api().extrinsic_filter(substrate_block_hash, block_extrinsics).map_err(|e| {
+                error!("Failed to filter extrinsics. Substrate block hash: {substrate_block_hash}, error: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?;
+        let txn_hashes = self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into());
+        let (tx_index, transaction) = transactions
+            .iter()
+            .enumerate()
+            .find(|(index, tx)| {
+                if let Some(txn_hashes) = &txn_hashes {
+                    // safe to unwrap here as we stored the transaction hash by
+                    let tx_hash: Felt252Wrapper =
+                        (&txn_hashes[*index].0).try_into().expect("Failed to get transaction hash");
+                    tx_hash == transaction_hash.into()
+                } else {
+                    let transaction = &transactions[*index];
+                    let tx_hash = transaction.compute_hash::<H>(chain_id, false);
+                    tx_hash == transaction_hash.into()
+                }
+            })
+            .ok_or_else(|| {
                 error!(
-                    "Failed to get index for transaction hash. Substrate block hash: {substrate_block_hash}, \
-                     transaction hash: {transaction_hash}, error: {e}"
+                    "Failed to find transaction hash in block. Substrate block hash: {substrate_block_hash}, \
+                     transaction hash: {transaction_hash}"
                 );
                 StarknetRpcApiError::InternalServerError
-            })?
-            .expect("the transaction should be present in the substrate extrinsics"); // not reachable
+            })?;
+        // adding the inherents count to the tx_index to get the correct index in the block
+        let tx_index = tx_index + block_extrinsics_len - transactions.len();
 
         let events = self
             .client
             .runtime_api()
-            .get_events_for_tx_by_index(substrate_block_hash, tx_index)
+            .get_events_for_tx_by_index(substrate_block_hash, tx_index as u32)
             .map_err(|e| {
                 error!(
                     "Failed to get events for transaction index. Substrate block hash: {substrate_block_hash}, \

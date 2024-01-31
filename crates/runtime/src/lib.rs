@@ -288,28 +288,18 @@ impl_runtime_apis! {
             Starknet::simulate_transactions(transactions, &simulation_flags)
         }
 
-        fn get_starknet_events_and_their_associated_tx_hash(block_extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper) -> Vec<(Felt252Wrapper, StarknetEvent)> {
+        fn get_starknet_events_and_their_associated_tx_index() -> Vec<(u32, StarknetEvent)> {
             System::read_events_no_consensus().filter_map(|event_record| {
                 let (phase, event) = match *event_record {
                     EventRecord { event: RuntimeEvent::Starknet(Event::StarknetEvent(event)), phase, .. } => (phase, event),
                     _ => return None,
                 };
-
                 let index = match phase {
                     Phase::ApplyExtrinsic(idx) => {idx},
                     _ => return None
 
                 };
-                let extrinsic = &block_extrinsics[index as usize];
-                let tx_hash = match &extrinsic.function {
-                    RuntimeCall::Starknet( invoke { transaction }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false),
-                    RuntimeCall::Starknet( declare { transaction, .. }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false),
-                    RuntimeCall::Starknet( deploy_account { transaction }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false),
-                    RuntimeCall::Starknet( consume_l1_message { transaction, .. }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false),
-                    _ => return None,
-                };
-
-                Some((tx_hash, event))
+                Some((index, event))
             }).collect()
         }
 

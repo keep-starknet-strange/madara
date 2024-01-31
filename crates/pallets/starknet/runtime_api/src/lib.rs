@@ -76,7 +76,7 @@ sp_api::decl_runtime_apis! {
         /// Return the list of StarknetEvent evmitted during this block, along with the hash of the starknet transaction they bellong to
         ///
         /// `block_extrinsics` is the list of all the extrinsic executed during this block, it is used in order to match
-        fn get_starknet_events_and_their_associated_tx_hash(block_extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper) -> Vec<(Felt252Wrapper, StarknetEvent)>;
+        fn get_starknet_events_and_their_associated_tx_index() -> Vec<(u32, StarknetEvent)>;
         /// Return the outcome of the tx execution
         fn get_tx_execution_outcome(tx_hash: TransactionHash) -> Option<Vec<u8>>;
         /// Return the block context
