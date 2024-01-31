@@ -9,13 +9,14 @@ use avail_subxt::api::runtime_types::avail_core::AppId;
 use avail_subxt::api::runtime_types::bounded_collections::bounded_vec::BoundedVec;
 use avail_subxt::avail::Client as AvailSubxtClient;
 use avail_subxt::primitives::AvailExtrinsicParams;
-use avail_subxt::{api as AvailApi, build_client, AvailConfig};
+use avail_subxt::{api as AvailApi, build_client, AvailConfig, Call};
 use ethers::types::{I256, U256};
 use futures::lock::Mutex;
+use sp_core::H256;
 use subxt::ext::sp_core::sr25519::Pair;
 use subxt::OnlineClient;
 
-use crate::utils::get_bytes_from_state_diff;
+use crate::utils::{get_bytes_from_state_diff, try_bytes_to_vec_u256, u256_to_bytes};
 use crate::{DaClient, DaMode};
 
 type AvailPairSigner = subxt::tx::PairSigner<AvailConfig, Pair>;
@@ -66,7 +67,8 @@ impl TryFrom<config::AvailConfig> for SubxtClient {
 
 #[async_trait]
 impl DaClient for AvailClient {
-    async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()> {
+    async fn publish_state_diff(&self, state_diff: bytes::Bytes) -> Result<()> {
+        let state_diff = try_bytes_to_vec_u256(state_diff)?;
         let bytes = get_bytes_from_state_diff(&state_diff);
         let bytes = BoundedVec(bytes);
         self.publish_data(&bytes).await?;
@@ -76,8 +78,8 @@ impl DaClient for AvailClient {
 
     // state diff can be published w/o verification of last state for the time being
     // may change in subsequent DaMode implementations
-    async fn last_published_state(&self) -> Result<I256> {
-        Ok(I256::from(1))
+    async fn last_published_state(&self) -> Result<bytes::Bytes> {
+        Ok(u256_to_bytes(U256::one()))
     }
 
     fn get_mode(&self) -> DaMode {

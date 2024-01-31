@@ -12,6 +12,7 @@ use ethers::types::{I256, U256};
 use jsonrpsee::http_client::{HeaderMap, HeaderValue, HttpClient, HttpClientBuilder};
 use reqwest::header;
 
+use crate::utils::{try_bytes_to_vec_u256, u256_to_bytes};
 use crate::{DaClient, DaMode};
 
 #[derive(Clone, Debug)]
@@ -23,7 +24,8 @@ pub struct CelestiaClient {
 
 #[async_trait]
 impl DaClient for CelestiaClient {
-    async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()> {
+    async fn publish_state_diff(&self, state_diff: bytes::Bytes) -> Result<()> {
+        let state_diff = try_bytes_to_vec_u256(state_diff)?;
         let blob = self.get_blob_from_state_diff(state_diff).map_err(|e| anyhow::anyhow!("celestia error: {e}"))?;
 
         let submitted_height = self.publish_data(&blob).await.map_err(|e| anyhow::anyhow!("celestia error: {e}"))?;
@@ -41,8 +43,8 @@ impl DaClient for CelestiaClient {
         Ok(())
     }
 
-    async fn last_published_state(&self) -> Result<I256> {
-        Ok(I256::from(1))
+    async fn last_published_state(&self) -> Result<bytes::Bytes> {
+        Ok(u256_to_bytes(U256::one()))
     }
 
     fn get_mode(&self) -> DaMode {

@@ -14,6 +14,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
+bytes = { workspace = true, features = ["std"] }
 futures = "0.3.21"
 indexmap = { workspace = true }
 jsonrpsee = { version = "0.20.0", features = [
@@ -64,8 +65,17 @@ clap = { workspace = true, features = ["derive"], optional = true }
 sp-keyring = { workspace = true, optional = true }
 subxt = { workspace = true, optional = true }
 
+# NEAR Protocol
+near-crypto = { git = "https://github.com/near/nearcore", rev = "46dc4374157a40b3bdd1ef88139b95b69d500bd4", optional = true }
+near-jsonrpc-client = { git = "https://github.com/encody/near-jsonrpc-client-rs", branch = "madara-compat", optional = true }
+near-jsonrpc-primitives = { git = "https://github.com/near/nearcore", rev = "46dc4374157a40b3bdd1ef88139b95b69d500bd4", optional = true }
+near-primitives = { git = "https://github.com/near/nearcore", rev = "46dc4374157a40b3bdd1ef88139b95b69d500bd4", optional = true }
+near-da-rpc = { git = "https://github.com/near/rollup-data-availability", branch = "madara-compat", optional = true }
+near-da-primitives = { git = "https://github.com/near/rollup-data-availability", branch = "madara-compat", optional = true }
+
 [features]
 default = []
 clap = ["dep:clap"]
 avail = ["dep:avail-subxt", "dep:sp-keyring", "dep:subxt"]
 celestia = ["dep:celestia-rpc", "dep:celestia-types"]
+near = ["dep:near-crypto", "dep:near-jsonrpc-client", "dep:near-jsonrpc-primitives", "dep:near-primitives", "dep:near-da-rpc", "dep:near-da-primitives"]
