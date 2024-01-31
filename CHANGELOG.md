@@ -2,6 +2,7 @@
 
 ## Next release
 
+- dev: optimize tx trace creation
 - fix(cli): repair broken cli for da conf
 - feat(client): on `add_declare_transaction` store sierra contract classes in
   the madara backend
