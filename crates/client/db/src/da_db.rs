@@ -1,7 +1,6 @@
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-use ethers::types::U256;
 // Substrate
 use scale_codec::{Decode, Encode};
 use sp_database::Database;
@@ -9,6 +8,7 @@ use sp_runtime::traits::Block as BlockT;
 // Starknet
 use starknet_api::block::BlockHash;
 use starknet_api::hash::StarkFelt;
+use starknet_api::state::ThinStateDiff;
 use uuid::Uuid;
 
 use crate::DbHash;
@@ -21,14 +21,14 @@ pub struct DaDb<B: BlockT> {
 
 // TODO: purge old cairo job keys
 impl<B: BlockT> DaDb<B> {
-    pub fn state_diff(&self, block_hash: &BlockHash) -> Result<Vec<U256>, String> {
+    pub fn state_diff(&self, block_hash: &BlockHash) -> Result<ThinStateDiff, String> {
         match self.db.get(crate::columns::DA, block_hash.0.bytes()) {
-            Some(raw) => Ok(Vec::<U256>::decode(&mut &raw[..]).map_err(|e| format!("{:?}", e))?),
+            Some(raw) => Ok(ThinStateDiff::decode(&mut &raw[..]).map_err(|e| format!("{:?}", e))?),
             None => Err(String::from("can't write state diff")),
         }
     }
 
-    pub fn store_state_diff(&self, block_hash: &BlockHash, diff: Vec<U256>) -> Result<(), String> {
+    pub fn store_state_diff(&self, block_hash: &BlockHash, diff: ThinStateDiff) -> Result<(), String> {
         let mut transaction = sp_database::Transaction::new();
 
         transaction.set(crate::columns::DA, block_hash.0.bytes(), &diff.encode());

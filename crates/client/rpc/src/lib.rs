@@ -15,7 +15,6 @@ use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use jsonrpsee::types::error::CallError;
 use log::error;
-use mc_data_availability::utils::decode_011_diff;
 use mc_db::Backend as MadaraBackend;
 use mc_genesis_data_provider::GenesisProvider;
 pub use mc_rpc_core::utils::*;
@@ -44,6 +43,7 @@ use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use sp_runtime::transaction_validity::InvalidTransaction;
 use sp_runtime::DispatchError;
 use starknet_api::block::BlockHash;
+use starknet_api::state::ThinStateDiff;
 use starknet_api::transaction::Calldata;
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
@@ -208,15 +208,12 @@ where
     fn get_state_diff(&self, block_hash: B::Hash, starknet_block_hash: &BlockHash) -> Result<StateDiff, String> {
         let state_diff = self.backend.da().state_diff(starknet_block_hash).unwrap_or_else(|err| {
             error!("{err}");
-            Vec::new()
+            ThinStateDiff::default()
         });
-        let decoded_state_diff =
-            decode_011_diff(state_diff.as_slice(), block_hash, self.client.clone()).map_err(|err| {
-                error!("{err}");
-                "Failed to decode state diff".to_string()
-            })?;
 
-        Ok(decoded_state_diff)
+        let rpc_state_diff = to_rpc_state_diff(state_diff);
+
+        Ok(rpc_state_diff)
     }
 }
 

@@ -208,7 +208,7 @@ pub async fn update_state<B: BlockT, H: HasherT>(
     let block_hash = block_da_data.block_hash;
     let calldata = block_data_to_calldata(block_da_data);
     // store the state diff
-    madara_backend.da().store_state_diff(&block_hash, calldata.clone()).map_err(|e| anyhow!("{e}"))?;
+    madara_backend.da().store_state_diff(&block_hash, block_da_data.state_diff).map_err(|e| anyhow!("{e}"))?;
 
     // Query last written state
     // TODO: this value will be used to ensure the correct state diff is being written in
