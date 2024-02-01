@@ -204,19 +204,9 @@ where
     ///
     /// # Arguments
     ///
-    /// * `block_hash` - The hash of the block containing the state diff (starknet block).
+    /// * `starknet_block_hash` - The hash of the block containing the state diff (starknet block).
     fn get_state_diff(&self, starknet_block_hash: &BlockHash) -> Result<StateDiff, String> {
-        let state_diff = self.backend.da().state_diff(starknet_block_hash).unwrap_or_else(|err| {
-            error!("{err}");
-            ThinStateDiff {
-                deployed_contracts: IndexMap::with_capacity_and_hasher(0, Default::default()),
-                storage_diffs: IndexMap::with_capacity_and_hasher(0, Default::default()),
-                declared_classes: IndexMap::with_capacity_and_hasher(0, Default::default()),
-                deprecated_declared_classes: Vec::with_capacity(0),
-                nonces: IndexMap::with_capacity_and_hasher(0, Default::default()),
-                replaced_classes: IndexMap::with_capacity_and_hasher(0, Default::default()),
-            }
-        });
+        let state_diff = self.backend.da().state_diff(starknet_block_hash)?;
 
         let rpc_state_diff = to_rpc_state_diff(state_diff);
 
