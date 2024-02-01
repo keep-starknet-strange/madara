@@ -194,6 +194,36 @@ where
             None
         })
     }
+
+    fn try_txn_hash_from_cache(
+        &self,
+        tx_index: usize,
+        cached_transactions: &Option<Vec<H256>>,
+        transactions: &Vec<mp_transactions::Transaction>,
+        chain_id: Felt252Wrapper,
+    ) -> Result<Felt252Wrapper, StarknetRpcApiError> {
+        if let Some(txn_hashes) = &cached_transactions {
+            let txn_hash = (&txn_hashes
+                .get(tx_index)
+                .ok_or_else(|| {
+                    error!("Failed to retrieve transaction hash from cache, invalid index {}", tx_index);
+                    StarknetRpcApiError::InternalServerError
+                })?
+                .0)
+                .try_into()
+                .map_err(|_| {
+                    error!("Failed to convert transaction hash");
+                    StarknetRpcApiError::InternalServerError
+                })?;
+            Ok(txn_hash)
+        } else {
+            let transaction = &transactions.get(tx_index).ok_or_else(|| {
+                error!("Failed to retrieve transaction hash from starknet txs, invalid index {}", tx_index);
+                StarknetRpcApiError::InternalServerError
+            })?;
+            Ok(transaction.compute_hash::<H>(chain_id, false))
+        }
+    }
 }
 
 /// Taken from https://github.com/paritytech/substrate/blob/master/client/rpc/src/author/mod.rs#L78
@@ -1446,43 +1476,11 @@ where
         let mut tx_index = None;
         let mut transaction = None;
         for (index, tx) in transactions.iter().enumerate() {
-            let tx_hash: Option<Felt252Wrapper> = match txn_hashes {
-                Some(ref txn_hashes) => {
-                    let tx_hash_h256 = txn_hashes
-                        .get(index)
-                        .ok_or_else(|| {
-                            error!(
-                                "Failed to get transaction hash from cached transaction hashes. Substrate block hash: \
-                                 {substrate_block_hash}, transaction idx: {index}"
-                            );
-                            StarknetRpcApiError::InternalServerError
-                        })?
-                        .clone();
-                    Some((&tx_hash_h256.0).try_into().map_err(|e| {
-                        error!(
-                            "Failed to convert transaction hash from cached transaction hashes. Substrate block hash: \
-                             {substrate_block_hash}, transaction idx: {index}, error: {e}"
-                        );
-                        StarknetRpcApiError::InternalServerError
-                    })?)
-                }
-                None => {
-                    let transaction = &transactions.get(index).ok_or_else(|| {
-                        error!(
-                            "Failed to get transaction from transactions. Substrate block hash: \
-                             {substrate_block_hash}, transaction idx: {index}"
-                        );
-                        StarknetRpcApiError::InternalServerError
-                    })?;
-                    Some(transaction.compute_hash::<H>(chain_id, false))
-                }
-            };
-            if let Some(tx_hash) = tx_hash {
-                if tx_hash == transaction_hash.into() {
-                    tx_index = Some(index);
-                    transaction = Some(tx);
-                    break;
-                }
+            let tx_hash = self.try_txn_hash_from_cache(index, &txn_hashes, &transactions, chain_id)?;
+            if tx_hash == transaction_hash.into() {
+                tx_index = Some(index);
+                transaction = Some(tx);
+                break;
             }
         }
         if tx_index == None || transaction == None {

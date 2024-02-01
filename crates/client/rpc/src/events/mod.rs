@@ -90,28 +90,8 @@ where
         let mut tx_hash_and_events: Vec<(Felt252Wrapper, starknet_api::transaction::Event)> = vec![];
         for (index, event) in index_and_events {
             let tx_index = index as usize - inherent_count;
-            if let Some(txn_hashes) = &txn_hashes {
-                let tx_hash = (&txn_hashes
-                    .get(tx_index)
-                    .ok_or_else(|| {
-                        error!("Failed to retrieve transaction hash from cache, invalid index {}", tx_index);
-                        StarknetRpcApiError::InternalServerError
-                    })?
-                    .0)
-                    .try_into()
-                    .map_err(|_| {
-                        error!("Failed to convert transaction hash");
-                        StarknetRpcApiError::InternalServerError
-                    })?;
-                tx_hash_and_events.push((tx_hash, event));
-            } else {
-                let transaction = &starknet_txs.get(tx_index).ok_or_else(|| {
-                    error!("Failed to retrieve transaction hash from starknet txs, invalid index {}", tx_index);
-                    StarknetRpcApiError::InternalServerError
-                })?;
-                let tx_hash = transaction.compute_hash::<H>(chain_id, false);
-                tx_hash_and_events.push((tx_hash, event));
-            }
+            let tx_hash = self.try_txn_hash_from_cache(tx_index, &txn_hashes, &starknet_txs, chain_id)?;
+            tx_hash_and_events.push((tx_hash, event));
         }
 
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)
