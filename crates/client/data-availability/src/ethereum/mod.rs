@@ -82,24 +82,24 @@ impl DaClient for EthereumClient {
 }
 
 impl TryFrom<config::EthereumConfig> for EthereumClient {
-    type Error = String;
+    type Error = DaError;
 
     fn try_from(conf: config::EthereumConfig) -> Result<Self, Self::Error> {
         if !is_valid_http_endpoint(&conf.http_provider) {
-            return Err(DaError::FailedBuildingClient(anyhow::Error::msg("invalid http endpoint")).to_string());
+            return Err(DaError::FailedBuildingClient(anyhow::anyhow!("invalid http endpoint, received {}", &conf.http_provider)));
         }
 
-        let provider = Provider::<Http>::try_from(conf.http_provider).map_err(|e| DaError::FailedBuildingClient(e.into()).to_string())?;
+        let provider = Provider::<Http>::try_from(conf.http_provider).map_err(|e| DaError::FailedBuildingClient(e.into()))?;
 
         let wallet: LocalWallet = conf
             .sequencer_key
             .parse::<LocalWallet>()
-            .map_err(|e| DaError::FailedConversion(e.into()).to_string())?
+            .map_err(|e| DaError::FailedConversion(e.into()))?
             .with_chain_id(conf.chain_id);
 
         let signer = Arc::new(SignerMiddleware::new(provider.clone(), wallet));
 
-        let cc_address: Address = conf.core_contracts.parse::<Address>().map_err(|e| DaError::FailedConversion(e.into()).to_string())?;
+        let cc_address: Address = conf.core_contracts.parse::<Address>().map_err(|e| DaError::FailedConversion(e.into()))?;
 
         Ok(Self { http_provider: provider, signer, cc_address, mode: conf.mode })
     }
