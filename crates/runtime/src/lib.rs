@@ -2,7 +2,6 @@
 //! public Starknet L2.
 //! For now this is the same because we don't support yet validity proofs and state updates to
 //! another layer.
-#![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
