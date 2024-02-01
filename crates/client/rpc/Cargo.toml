@@ -47,6 +47,7 @@ starknet_api = { workspace = true, default-features = false }
 # Others
 anyhow = { workspace = true }
 hex = { workspace = true, default-features = true }
+indexmap = { workspace = true, default-features = true }
 itertools = { workspace = true }
 jsonrpsee = { workspace = true, default-features = true, features = [
   "server",
@@ -61,7 +62,6 @@ mp-simulations = { workspace = true }
 mp-transactions = { workspace = true, features = ["client"] }
 serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }
-indexmap = { workspace = true, default-features = true }
 tokio = { workspace = true, default-features = true, features = ["time"] }
 
 [dev-dependencies]
