@@ -3,6 +3,8 @@
 ## Next release
 
 - fix: get_block_by_block_hash then default rather than error
+- fix: cairo1 contracts should be identified by their sierra class hash
+- fix(cli): repair broken cli for da conf
 - feat(client): on `add_declare_transaction` store sierra contract classes in
   the madara backend
 - chore: use struct error in client/db
@@ -270,3 +272,4 @@
 - feat: add `madara_tsukuyomi` as a submodule
 - branding: use new logo in the README
 - dev: Get the block status from the actual block in get_block_with_tx_hashes
+- fix: l1-l2 messaging
