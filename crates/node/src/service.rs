@@ -442,8 +442,8 @@ pub fn new_full(
                 Arc::new(CelestiaClient::try_from(celestia_conf).map_err(|e| ServiceError::Other(e.to_string()))?)
             }
             DaLayer::Ethereum => {
-                let ethereum_conf = EthereumConfig::try_from(&da_path)?;
-                Arc::new(EthereumClient::try_from(ethereum_conf)?)
+                let ethereum_conf = EthereumConfig::try_from(&da_path).map_err(|e| e.to_string())?;
+                Arc::new(EthereumClient::try_from(ethereum_conf).map_err(|e| e.to_string())?)
             }
             #[cfg(feature = "avail")]
             DaLayer::Avail => {
@@ -468,7 +468,7 @@ pub fn new_full(
     if let Some((layer_kind, config_path)) = settlement_config {
         let settlement_provider: Box<dyn SettlementProvider<_>> = match layer_kind {
             SettlementLayer::Ethereum => {
-                let ethereum_conf = EthereumConfig::try_from(&config_path)?;
+                let ethereum_conf = EthereumConfig::try_from(&config_path).map_err(|e| ServiceError::Other(e.to_string()))?;
                 Box::new(
                     StarknetContractClient::try_from(ethereum_conf).map_err(|e| ServiceError::Other(e.to_string()))?,
                 )
