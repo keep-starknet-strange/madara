@@ -28,7 +28,7 @@ impl<B: BlockT> DaDb<B> {
         }
     }
 
-    pub fn store_state_diff(&self, block_hash: &BlockHash, diff: ThinStateDiff) -> Result<(), String> {
+    pub fn store_state_diff(&self, block_hash: &BlockHash, diff: &ThinStateDiff) -> Result<(), DbError> {
         let mut transaction = sp_database::Transaction::new();
 
         transaction.set(crate::columns::DA, block_hash.0.bytes(), &diff.encode());

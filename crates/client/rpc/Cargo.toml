@@ -61,6 +61,7 @@ mp-simulations = { workspace = true }
 mp-transactions = { workspace = true, features = ["client"] }
 serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }
+indexmap = { workspace = true, default-features = true }
 tokio = { workspace = true, default-features = true, features = ["time"] }
 
 [dev-dependencies]

@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::io::Write;
+use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
 use blockifier::execution::contract_class::ContractClass as BlockifierContractClass;
@@ -22,7 +23,7 @@ use starknet_core::types::contract::{CompiledClass, CompiledClassEntrypoint, Com
 use starknet_core::types::{
     CompressedLegacyContractClass, ContractClass, ContractStorageDiffItem, DeclaredClassItem, DeployedContractItem,
     EntryPointsByType, FieldElement, FlattenedSierraClass, FromByteArrayError, LegacyContractEntryPoint,
-    LegacyEntryPointsByType, NonceUpdate, ReplacedClassItem, StateDiff, StorageEntry,
+    LegacyEntryPointsByType, NonceUpdate, ReplacedClassItem, SierraEntryPoint, StateDiff, StorageEntry,
 };
 
 /// Returns a [`ContractClass`] from a [`BlockifierContractClass`]

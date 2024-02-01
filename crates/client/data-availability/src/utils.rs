@@ -1,19 +1,7 @@
-use std::sync::Arc;
-
-use anyhow::Error;
 use ethers::types::U256;
 use mc_commitment_state_diff::BlockDAData;
-use mp_felt::Felt252Wrapper;
-use pallet_starknet_runtime_api::StarknetRuntimeApi;
-use sp_api::{BlockT, ProvideRuntimeApi};
-use sp_blockchain::HeaderBackend;
-#[allow(unused_imports)]
-use starknet_api::api_core::{ClassHash, ContractAddress, Nonce, PatriciaKey};
+use starknet_api::api_core::{Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
-use starknet_core::types::{
-    ContractStorageDiffItem, DeclaredClassItem, DeployedContractItem, FieldElement, NonceUpdate, ReplacedClassItem,
-    StateDiff, StorageEntry,
-};
 use url::{ParseError, Url};
 
 const CLASS_FLAG_TRUE: &str = "0x100000000000000000000000000000001"; // 2 ^ 128 + 1

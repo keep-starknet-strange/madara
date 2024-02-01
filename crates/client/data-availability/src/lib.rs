@@ -218,9 +218,9 @@ pub async fn update_state<B: BlockT, H: HasherT>(
     block_da_data: BlockDAData,
 ) -> Result<(), anyhow::Error> {
     let block_hash = block_da_data.block_hash;
-    let calldata = block_data_to_calldata(block_da_data);
+
     // store the state diff
-    madara_backend.da().store_state_diff(&block_hash, block_da_data.state_diff).map_err(|e| anyhow!("{e}"))?;
+    madara_backend.da().store_state_diff(&block_hash, &block_da_data.state_diff).map_err(|e| anyhow!("{e}"))?;
 
     // Query last written state
     // TODO: this value will be used to ensure the correct state diff is being written in
@@ -234,6 +234,7 @@ pub async fn update_state<B: BlockT, H: HasherT>(
             log::info!("[VALIDITY] not implemented");
         }
         DaMode::Sovereign => {
+            let calldata = block_data_to_calldata(block_da_data);
             da_client.publish_state_diff(calldata).await.map_err(|e| anyhow!("[SOVEREIGN] publish error: {e}"))?
         }
         DaMode::Volition => log::info!("[VOLITION] not implemented"),

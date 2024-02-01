@@ -12,6 +12,7 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 use errors::StarknetRpcApiError;
+use indexmap::IndexMap;
 use jsonrpsee::core::{async_trait, RpcResult};
 use jsonrpsee::types::error::CallError;
 use log::error;
@@ -204,10 +205,17 @@ where
     /// # Arguments
     ///
     /// * `block_hash` - The hash of the block containing the state diff (starknet block).
-    fn get_state_diff(&self, block_hash: B::Hash, starknet_block_hash: &BlockHash) -> Result<StateDiff, String> {
+    fn get_state_diff(&self, starknet_block_hash: &BlockHash) -> Result<StateDiff, String> {
         let state_diff = self.backend.da().state_diff(starknet_block_hash).unwrap_or_else(|err| {
             error!("{err}");
-            ThinStateDiff::default()
+            ThinStateDiff {
+                deployed_contracts: IndexMap::with_capacity_and_hasher(0, Default::default()),
+                storage_diffs: IndexMap::with_capacity_and_hasher(0, Default::default()),
+                declared_classes: IndexMap::with_capacity_and_hasher(0, Default::default()),
+                deprecated_declared_classes: Vec::with_capacity(0),
+                nonces: IndexMap::with_capacity_and_hasher(0, Default::default()),
+                replaced_classes: IndexMap::with_capacity_and_hasher(0, Default::default()),
+            }
         });
 
         let rpc_state_diff = to_rpc_state_diff(state_diff);
@@ -1248,8 +1256,8 @@ where
 
         let starknet_block_hash = BlockHash(starknet_block.header().hash::<H>().into());
 
-        let state_diff = self.get_state_diff(substrate_block_hash, &starknet_block_hash).map_err(|e| {
-            error!("Failed to get state diff. Substrate block hash: {substrate_block_hash}, error: {e}");
+        let state_diff = self.get_state_diff(&starknet_block_hash).map_err(|e| {
+            error!("Failed to get state diff. Starknet block hash: {starknet_block_hash}, error: {e}");
             StarknetRpcApiError::InternalServerError
         })?;
 
