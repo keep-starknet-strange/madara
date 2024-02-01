@@ -1483,7 +1483,7 @@ where
                 break;
             }
         }
-        if tx_index == None || transaction == None {
+        if tx_index.is_none() || transaction.is_none() {
             error!(
                 "Failed to find transaction hash in block. Substrate block hash: {substrate_block_hash}, transaction \
                  hash: {transaction_hash}"
