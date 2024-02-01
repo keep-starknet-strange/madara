@@ -199,7 +199,7 @@ where
         &self,
         tx_index: usize,
         cached_transactions: &Option<Vec<H256>>,
-        transactions: &Vec<mp_transactions::Transaction>,
+        transactions: &[mp_transactions::Transaction],
         chain_id: Felt252Wrapper,
     ) -> Result<Felt252Wrapper, StarknetRpcApiError> {
         if let Some(txn_hashes) = &cached_transactions {
