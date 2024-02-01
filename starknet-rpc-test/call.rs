@@ -147,7 +147,7 @@ async fn works_on_mutable_call_without_modifying_storage(madara: &ThreadSafeMada
         let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
 
         let (declare_tx, class_hash, _) =
-            account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
+            account.declare_contract("./contracts/counter.sierra.json", "./contracts/counter.casm.json");
         let contract_factory = ContractFactory::new(class_hash, account.clone());
 
         // manually setting fee else estimate_fee will be called and it will fail

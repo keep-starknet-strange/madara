@@ -63,9 +63,9 @@ async fn returns_correct_state_diff_transfer(madara: &ThreadSafeMadaraClient) ->
     assert_eq!(state_update.old_root, FieldElement::ZERO);
     assert_eq!(state_update.new_root, FieldElement::ZERO);
 
-    assert_eq!(state_update.state_diff.nonces.len(), 2);
+    assert_eq!(state_update.state_diff.nonces.len(), 1);
     assert_eq!(
-        state_update.state_diff.nonces[1],
+        state_update.state_diff.nonces[0],
         NonceUpdate { contract_address: sender_account_address, nonce: new_nonce }
     );
 
@@ -79,7 +79,7 @@ async fn returns_correct_state_diff_declare(madara: &ThreadSafeMadaraClient) -> 
 
     let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let (declare_tx, expected_class_hash, expected_compiled_class_hash) = account
-        .declare_contract("./contracts/Counter1/Counter1.sierra.json", "./contracts/Counter1/Counter1.casm.json");
+        .declare_contract("./contracts/counter6/Counter6.sierra.json", "./contracts/counter6/Counter6.casm.json");
 
     let (state_update, block_hash) = {
         let mut madara_write_lock = madara.write().await;
