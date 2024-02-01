@@ -4,9 +4,16 @@ use std::io::Write;
 use anyhow::{anyhow, Result};
 use blockifier::execution::contract_class::ContractClass as BlockifierContractClass;
 use cairo_lang_casm_contract_class::{CasmContractClass, CasmContractEntryPoint, CasmContractEntryPoints};
+use cairo_lang_starknet::contract_class::{
+    ContractClass as SierraContractClass, ContractEntryPoint, ContractEntryPoints,
+};
+use cairo_lang_starknet::contract_class_into_casm_contract_class::StarknetSierraCompilationError;
+use cairo_lang_utils::bigint::BigUintAsHex;
+use indexmap::IndexMap;
 use mp_block::Block as StarknetBlock;
 use mp_digest_log::find_starknet_block;
-use num_bigint::BigUint;
+use mp_felt::Felt252Wrapper;
+use num_bigint::{BigInt, BigUint, Sign};
 use sp_api::{BlockT, HeaderT};
 use sp_blockchain::HeaderBackend;
 use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
@@ -139,6 +146,87 @@ where
     let digest = header.digest();
     let block = find_starknet_block(digest).ok()?;
     Some(block)
+}
+
+// Utils to convert Flattened Sierra to Casm Contract Class
+
+/// Converts a [FlattenedSierraClass] to a [CasmContractClass]
+pub fn flattened_sierra_to_casm_contract_class(
+    flattened_sierra: Arc<FlattenedSierraClass>,
+) -> Result<CasmContractClass, StarknetSierraCompilationError> {
+    let sierra_contract_class = SierraContractClass {
+        sierra_program: flattened_sierra.sierra_program.iter().map(field_element_to_big_uint_as_hex).collect(),
+        sierra_program_debug_info: None,
+        contract_class_version: flattened_sierra.contract_class_version.clone(),
+        entry_points_by_type: entry_points_by_type_to_contract_entry_points(
+            flattened_sierra.entry_points_by_type.clone(),
+        ),
+        abi: None, // we can convert the ABI but for now, to convert to Casm, the ABI isn't needed
+    };
+    let casm_contract_class = sierra_contract_class.into_casm_contract_class(false)?;
+    Ok(casm_contract_class)
+}
+
+pub fn flattened_sierra_to_sierra_contract_class(
+    flattened_sierra: Arc<FlattenedSierraClass>,
+) -> starknet_api::state::ContractClass {
+    let mut entry_point_by_type =
+        IndexMap::<starknet_api::state::EntryPointType, Vec<starknet_api::state::EntryPoint>>::with_capacity(3);
+    for sierra_entrypoint in flattened_sierra.entry_points_by_type.constructor.iter() {
+        entry_point_by_type
+            .entry(starknet_api::state::EntryPointType::Constructor)
+            .or_default()
+            .push(rpc_entry_point_to_starknet_api_entry_point(sierra_entrypoint));
+    }
+    for sierra_entrypoint in flattened_sierra.entry_points_by_type.external.iter() {
+        entry_point_by_type
+            .entry(starknet_api::state::EntryPointType::External)
+            .or_default()
+            .push(rpc_entry_point_to_starknet_api_entry_point(sierra_entrypoint));
+    }
+    for sierra_entrypoint in flattened_sierra.entry_points_by_type.l1_handler.iter() {
+        entry_point_by_type
+            .entry(starknet_api::state::EntryPointType::L1Handler)
+            .or_default()
+            .push(rpc_entry_point_to_starknet_api_entry_point(sierra_entrypoint));
+    }
+    starknet_api::state::ContractClass {
+        sierra_program: flattened_sierra.sierra_program.iter().map(|f| Felt252Wrapper(*f).into()).collect(),
+        entry_point_by_type,
+        abi: flattened_sierra.abi.clone(),
+    }
+}
+
+/// Converts a [FieldElement] to a [BigUint]
+fn field_element_to_big_uint(value: &FieldElement) -> BigUint {
+    BigInt::from_bytes_be(Sign::Plus, &value.to_bytes_be()).to_biguint().unwrap()
+}
+
+/// Converts a [FieldElement] to a [BigUintAsHex]
+fn field_element_to_big_uint_as_hex(value: &FieldElement) -> BigUintAsHex {
+    BigUintAsHex { value: field_element_to_big_uint(value) }
+}
+
+fn rpc_entry_point_to_starknet_api_entry_point(value: &SierraEntryPoint) -> starknet_api::state::EntryPoint {
+    starknet_api::state::EntryPoint {
+        function_idx: starknet_api::state::FunctionIndex(value.function_idx),
+        selector: Felt252Wrapper(value.selector).into(),
+    }
+}
+
+/// Converts a [EntryPointsByType] to a [ContractEntryPoints]
+fn entry_points_by_type_to_contract_entry_points(value: EntryPointsByType) -> ContractEntryPoints {
+    fn sierra_entry_point_to_contract_entry_point(value: SierraEntryPoint) -> ContractEntryPoint {
+        ContractEntryPoint {
+            function_idx: value.function_idx.try_into().unwrap(),
+            selector: field_element_to_big_uint(&value.selector),
+        }
+    }
+    ContractEntryPoints {
+        constructor: value.constructor.iter().map(|x| sierra_entry_point_to_contract_entry_point(x.clone())).collect(),
+        external: value.external.iter().map(|x| sierra_entry_point_to_contract_entry_point(x.clone())).collect(),
+        l1_handler: value.l1_handler.iter().map(|x| sierra_entry_point_to_contract_entry_point(x.clone())).collect(),
+    }
 }
 
 // Utils to convert Casm contract class to Compiled class

@@ -10,6 +10,7 @@ use tokio::sync::Mutex;
 
 use crate::client::MadaraClient;
 use crate::node::MadaraNode;
+pub use crate::node::MadaraTempDir;
 
 lazy_static! {
     /// This is to prevent TOCTOU errors; i.e. one background madara node might find one
@@ -20,22 +21,30 @@ lazy_static! {
     static ref FREE_PORT_ATTRIBUTION_MUTEX: Mutex<()> = Mutex::new(());
 }
 
-#[derive(Display, Clone)]
+#[derive(Debug, Display, Clone)]
 pub enum Settlement {
     Ethereum,
 }
 
+#[derive(Debug)]
 pub struct MadaraRunner {
     _node: MadaraNode,
     client: MadaraClient,
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct MadaraArgs {
+    pub settlement: Option<Settlement>,
+    pub settlement_conf: Option<PathBuf>,
+    pub base_path: Option<PathBuf>,
+}
+
 impl MadaraRunner {
-    pub async fn new(settlement: Option<Settlement>, base_path: Option<PathBuf>) -> Self {
+    pub async fn new(args: MadaraArgs) -> Self {
         // we keep the reference, otherwise the mutex unlocks immediately
         let _mutex_guard = FREE_PORT_ATTRIBUTION_MUTEX.lock().await;
 
-        let mut node = MadaraNode::run(settlement, base_path);
+        let mut node = MadaraNode::run(args);
         let client = MadaraClient::new(node.url());
 
         // Wait until node is ready

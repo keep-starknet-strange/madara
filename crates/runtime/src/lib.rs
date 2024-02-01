@@ -280,8 +280,12 @@ impl_runtime_apis! {
             Starknet::estimate_fee(transactions)
         }
 
+        fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), DispatchError> {
+            Starknet::estimate_message_fee(message)
+        }
+
         fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>>, DispatchError> {
-            Starknet::simulate_transactions(transactions, simulation_flags)
+            Starknet::simulate_transactions(transactions, &simulation_flags)
         }
 
         fn get_starknet_events_and_their_associated_tx_hash(block_extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper) -> Vec<(Felt252Wrapper, StarknetEvent)> {

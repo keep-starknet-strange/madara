@@ -31,6 +31,17 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
                 }
             })
             .collect::<Vec<_>>();
+        let sierra_to_casm_class_hash = loader
+            .data()
+            .sierra_class_hash_to_casm_class_hash
+            .clone()
+            .into_iter()
+            .map(|(sierra_hash, casm_hash)| {
+                let sierra_hash = Felt252Wrapper(sierra_hash.0).into();
+                let casm_hash = Felt252Wrapper(casm_hash.0).into();
+                (sierra_hash, casm_hash)
+            })
+            .collect::<Vec<_>>();
         let contracts = loader
             .data()
             .contracts
@@ -55,7 +66,14 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
             .collect::<Vec<_>>();
         let fee_token_address = Felt252Wrapper(loader.data().fee_token_address.0).into();
 
-        GenesisConfig { contracts, contract_classes, storage, fee_token_address, ..Default::default() }
+        GenesisConfig {
+            contracts,
+            contract_classes,
+            sierra_to_casm_class_hash,
+            storage,
+            fee_token_address,
+            ..Default::default()
+        }
     }
 }
 

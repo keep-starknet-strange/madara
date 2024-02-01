@@ -1,4 +1,4 @@
-use super::client::LocalMiddleware;
+use starknet_core_contract_client::LocalWalletSignerMiddleware;
 
 /// Ethereum client error type.
 #[derive(thiserror::Error, Debug)]
@@ -14,7 +14,7 @@ pub enum Error {
     HexParser(#[from] rustc_hex::FromHexError),
 
     #[error("Error while interacting with contract: {0}")]
-    Contract(#[from] ethers::contract::ContractError<LocalMiddleware>),
+    Contract(#[from] ethers::contract::ContractError<LocalWalletSignerMiddleware>),
 
     #[error("HTTP provider error: {0}")]
     Provider(#[from] ethers::providers::ProviderError),

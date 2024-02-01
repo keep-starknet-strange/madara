@@ -5,9 +5,9 @@ use blockifier::execution::contract_class::ContractClass;
 use mp_storage::{
     PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_NONCE, STARKNET_STORAGE,
 };
+use parity_scale_codec::{Decode, Encode};
 // Substrate
 use sc_client_api::backend::{Backend, StorageProvider};
-use scale_codec::{Decode, Encode};
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
 use sp_storage::StorageKey;

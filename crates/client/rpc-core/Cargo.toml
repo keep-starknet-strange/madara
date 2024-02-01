@@ -26,6 +26,7 @@ cairo-vm = { workspace = true, default-features = false }
 flate2 = { workspace = true }
 frame-support = { workspace = true }
 hex = { workspace = true, default-features = true }
+indexmap = { workspace = true, default-features = true }
 jsonrpsee = { workspace = true, features = [
   "server",
   "macros",
@@ -46,6 +47,7 @@ sp-blockchain = { workspace = true, default-features = true }
 sp-core = { workspace = true }
 sp-runtime = { workspace = true, default-features = true }
 starknet-core = { workspace = true }
+starknet-providers = { workspace = true }
 starknet_api = { workspace = true, default-features = true }
 thiserror = { workspace = true }
 
