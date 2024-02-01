@@ -27,7 +27,7 @@ where
             // Read the runtime storage in order to find the Starknet block stored under this Substrate block
             let opt_storage_starknet_block = get_block_by_block_hash(client, substrate_block_hash);
             match opt_storage_starknet_block {
-                Some(storage_starknet_block) => {
+                Ok(storage_starknet_block) => {
                     let digest_starknet_block_hash = digest_starknet_block.header().hash::<H>();
                     let storage_starknet_block_hash = storage_starknet_block.header().hash::<H>();
                     // Ensure the two blocks sources (chain storage and block digest) agree on the block content
@@ -54,7 +54,7 @@ where
                     }
                 }
                 // If there is not Starknet block in this Substrate block, we write it in the db
-                None => backend.mapping().write_none(substrate_block_hash).map_err(|e| anyhow::anyhow!(e)),
+                Err(_) => backend.mapping().write_none(substrate_block_hash).map_err(|e| anyhow::anyhow!(e)),
             }
         }
         // If there is not Starknet block in this Substrate block, we write it in the db

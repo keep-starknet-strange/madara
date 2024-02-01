@@ -75,8 +75,11 @@ where
                 StarknetRpcApiError::InternalServerError
             })?;
 
-        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)
-            .ok_or(StarknetRpcApiError::BlockNotFound)?;
+        let starknet_block = match get_block_by_block_hash(self.client.as_ref(), substrate_block_hash) {
+            Ok(block) => block,
+            Err(_) => return Err(StarknetRpcApiError::BlockNotFound),
+        };
+
         let block_hash = starknet_block.header().hash::<H>();
 
         let emitted_events = tx_hash_and_events
