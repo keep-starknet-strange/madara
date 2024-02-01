@@ -126,10 +126,10 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
     /// There is no reason to use it in the current implementation of the trait
     fn to_state_diff(&self) -> CommitmentStateDiff {
         CommitmentStateDiff {
-            address_to_class_hash: IndexMap::with_capacity_and_hasher(0, Default::default()),
-            address_to_nonce: IndexMap::with_capacity_and_hasher(0, Default::default()),
-            storage_updates: IndexMap::with_capacity_and_hasher(0, Default::default()),
-            class_hash_to_compiled_class_hash: IndexMap::with_capacity_and_hasher(0, Default::default()),
+            address_to_class_hash: IndexMap::new(),
+            address_to_nonce: IndexMap::new(),
+            storage_updates: IndexMap::new(),
+            class_hash_to_compiled_class_hash: IndexMap::new(),
         }
     }
 }
