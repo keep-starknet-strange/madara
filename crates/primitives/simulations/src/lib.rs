@@ -1,3 +1,5 @@
+#![cfg_attr(not(feature = "std"), no_std)]
+
 #[doc(hidden)]
 pub extern crate alloc;
 

@@ -1,4 +1,5 @@
 //! Starknet state primitives.
+#![cfg_attr(not(feature = "std"), no_std)]
 
 #[doc(hidden)]
 extern crate alloc;
