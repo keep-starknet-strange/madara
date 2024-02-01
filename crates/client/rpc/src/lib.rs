@@ -12,7 +12,6 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 use errors::StarknetRpcApiError;
-use indexmap::IndexMap;
 use jsonrpsee::core::{async_trait, RpcResult};
 use jsonrpsee::types::error::CallError;
 use log::error;
@@ -43,7 +42,6 @@ use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use sp_runtime::transaction_validity::InvalidTransaction;
 use sp_runtime::DispatchError;
 use starknet_api::block::BlockHash;
-use starknet_api::state::ThinStateDiff;
 use starknet_api::transaction::Calldata;
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
