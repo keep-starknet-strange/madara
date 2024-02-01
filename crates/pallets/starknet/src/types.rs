@@ -21,6 +21,7 @@ pub type StorageSlot = (StorageKey, Felt252Wrapper);
 
 pub type CasmClassHash = ClassHash;
 pub type SierraClassHash = ClassHash;
+pub type SierraOrCasmClassHash = ClassHash;
 
 /// Declare Transaction Output
 #[derive(Clone, Debug, PartialEq, Eq, parity_scale_codec::Encode, parity_scale_codec::Decode, scale_info::TypeInfo)]
