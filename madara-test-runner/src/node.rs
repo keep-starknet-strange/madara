@@ -6,12 +6,44 @@ use std::path::{Path, PathBuf};
 use std::process::{Child, Command, ExitStatus, Stdio};
 use std::str::FromStr;
 
+use tempfile::TempDir;
 use url::Url;
 
-use crate::Settlement;
+use crate::MadaraArgs;
 
 const MIN_PORT: u16 = 49_152;
 const MAX_PORT: u16 = 65_535;
+
+#[derive(Debug)]
+/// A helper struct for creating temporary Madara folders
+///
+/// The temporary directory is deleted when instance is dropped.
+pub struct MadaraTempDir {
+    temp_dir: TempDir,
+}
+
+impl MadaraTempDir {
+    pub fn base_path(&self) -> PathBuf {
+        self.temp_dir.path().to_path_buf()
+    }
+
+    pub fn data_path(&self) -> PathBuf {
+        self.temp_dir.path().join("chains/dev")
+    }
+
+    pub fn clear(self) {
+        self.temp_dir.close().expect("Failed to clean up");
+    }
+}
+
+impl Default for MadaraTempDir {
+    fn default() -> Self {
+        let temp_dir = TempDir::with_prefix("madara").expect("Failed to create Madara path");
+        let data_path = temp_dir.path().join("chains/dev");
+        create_dir_all(data_path).expect("Failed to create data path");
+        Self { temp_dir }
+    }
+}
 
 #[derive(Debug)]
 /// A wrapper over the Madara process handle, reqwest client and request counter
@@ -69,14 +101,15 @@ impl MadaraNode {
         Command::new("cargo").stdout(stdout).stderr(stderr).args(arguments).spawn().expect("Could not run Madara node")
     }
 
-    pub fn run(settlement: Option<Settlement>, base_path: Option<PathBuf>) -> Self {
+    pub fn run(args: MadaraArgs) -> Self {
         let port = get_free_port();
         let repository_root = &get_repository_root();
 
         std::env::set_current_dir(repository_root).expect("Failed to change working directory");
 
-        let base_path_arg = base_path.map(|arg| format!("--base-path={}", arg.display()));
-        let settlement_arg = settlement.map(|arg| format!("--settlement={arg}"));
+        let base_path_arg = args.base_path.map(|arg| format!("--base-path={}", arg.display()));
+        let settlement_arg = args.settlement.map(|arg| format!("--settlement={arg}"));
+        let settlement_conf_arg = args.settlement_conf.map(|arg| format!("--settlement-conf={}", arg.display()));
         let rpc_port_arg = format!("--rpc-port={port}");
         let chain_arg = "--chain=dev";
         let from_local_arg = format!("--from-local={}", repository_root.join("configs").display());
@@ -103,6 +136,9 @@ impl MadaraNode {
         if let Some(s) = &settlement_arg {
             run_args.push(s);
         };
+        if let Some(s) = &settlement_conf_arg {
+            run_args.push(s);
+        }
 
         let process = Self::cargo_run(repository_root.as_path(), run_args);
 

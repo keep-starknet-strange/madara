@@ -2,13 +2,13 @@
 //! public Starknet L2.
 //! For now this is the same because we don't support yet validity proofs and state updates to
 //! another layer.
-#![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
 // Make the WASM binary available.
 #[cfg(feature = "std")]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+// include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+pub const WASM_BINARY: Option<&[u8]> = Some(&[]);
 
 /// Runtime modules.
 mod config;
@@ -30,14 +30,13 @@ pub use frame_system::Call as SystemCall;
 use frame_system::{EventRecord, Phase};
 use mp_felt::Felt252Wrapper;
 use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
-use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::{HandleL1MessageTransaction, Transaction, UserTransaction};
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the Starknet pallet.
 pub use pallet_starknet;
 use pallet_starknet::pallet::Error as PalletError;
 use pallet_starknet::Call::{consume_l1_message, declare, deploy_account, invoke};
-use pallet_starknet::{Config, Event};
+use pallet_starknet::Event;
 use pallet_starknet_runtime_api::StarknetTransactionExecutionError;
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_api::impl_runtime_apis;
@@ -280,32 +279,26 @@ impl_runtime_apis! {
             Starknet::estimate_fee(transactions)
         }
 
-        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>>, DispatchError> {
-            Starknet::simulate_transactions(transactions, simulation_flags)
+        fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), DispatchError> {
+            Starknet::estimate_message_fee(message)
         }
 
-        fn get_starknet_events_and_their_associated_tx_hash(block_extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper) -> Vec<(Felt252Wrapper, StarknetEvent)> {
+        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>>, DispatchError> {
+            Starknet::simulate_transactions(transactions, &simulation_flags)
+        }
+
+        fn get_starknet_events_and_their_associated_tx_index() -> Vec<(u32, StarknetEvent)> {
             System::read_events_no_consensus().filter_map(|event_record| {
                 let (phase, event) = match *event_record {
                     EventRecord { event: RuntimeEvent::Starknet(Event::StarknetEvent(event)), phase, .. } => (phase, event),
                     _ => return None,
                 };
-
                 let index = match phase {
                     Phase::ApplyExtrinsic(idx) => {idx},
                     _ => return None
 
                 };
-                let extrinsic = &block_extrinsics[index as usize];
-                let tx_hash = match &extrinsic.function {
-                    RuntimeCall::Starknet( invoke { transaction }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false),
-                    RuntimeCall::Starknet( declare { transaction, .. }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false),
-                    RuntimeCall::Starknet( deploy_account { transaction }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false),
-                    RuntimeCall::Starknet( consume_l1_message { transaction, .. }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false),
-                    _ => return None,
-                };
-
-                Some((tx_hash, event))
+                Some((index, event))
             }).collect()
         }
 
@@ -317,31 +310,6 @@ impl_runtime_apis! {
                 RuntimeCall::Starknet( consume_l1_message { transaction, .. }) => Some(Transaction::L1Handler(transaction)),
                 _ => None
             }).collect::<Vec<Transaction>>()
-        }
-
-        fn get_index_and_tx_for_tx_hash(extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper, tx_hash: Felt252Wrapper) -> Option<(u32, Transaction)> {
-            // Find our tx and it's index
-            let (tx_index, tx) =  extrinsics.into_iter().enumerate().find(|(_, xt)| {
-                let computed_tx_hash = match &xt.function {
-                    RuntimeCall::Starknet( invoke { transaction }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false),
-                    RuntimeCall::Starknet( declare { transaction, .. }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false),
-                    RuntimeCall::Starknet( deploy_account { transaction }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false),
-                    RuntimeCall::Starknet( consume_l1_message { transaction, .. }) => transaction.compute_hash::<<Runtime as Config>::SystemHash>(chain_id, false),
-                    _ => return false
-                };
-
-                computed_tx_hash == tx_hash
-            })?;
-            let transaction = match tx.function {
-                RuntimeCall::Starknet( invoke { transaction }) => Transaction::Invoke(transaction),
-                RuntimeCall::Starknet( declare { transaction, .. }) => Transaction::Declare(transaction),
-                RuntimeCall::Starknet( deploy_account { transaction }) => Transaction::DeployAccount(transaction),
-                RuntimeCall::Starknet( consume_l1_message { transaction, .. }) => Transaction::L1Handler(transaction),
-                _ => unreachable!("The previous match made sure that at this point tx is one of those starknet calls"),
-            };
-
-            let tx_index = u32::try_from(tx_index).expect("unexpected number of transactions");
-            Some((tx_index, transaction))
         }
 
         fn get_events_for_tx_by_index(tx_index: u32) -> Option<Vec<StarknetEvent>> {
@@ -456,7 +424,7 @@ impl_runtime_apis! {
         fn dispatch_benchmark(
             config: frame_benchmarking::BenchmarkConfig
         ) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-            use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch, TrackedStorageKey};
+            use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch};
 
             use frame_system_benchmarking::Pallet as SystemBench;
             use baseline::Pallet as BaselineBench;
@@ -465,7 +433,7 @@ impl_runtime_apis! {
             impl baseline::Config for Runtime {}
 
             use frame_support::traits::WhitelistedStorageKeys;
-            let whitelist: Vec<TrackedStorageKey> = AllPalletsWithSystem::whitelisted_storage_keys();
+            let whitelist: Vec<_> = AllPalletsWithSystem::whitelisted_storage_keys();
 
             let mut batches = Vec::<BenchmarkBatch>::new();
             let params = (&config, &whitelist);

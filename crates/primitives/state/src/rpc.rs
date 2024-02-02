@@ -1,8 +1,4 @@
 //! Starknet rpc state primitives.
-#![cfg_attr(not(feature = "std"), no_std)]
-
-#[doc(hidden)]
-pub extern crate alloc;
 
 use alloc::vec::Vec;
 
