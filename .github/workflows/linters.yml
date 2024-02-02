@@ -30,4 +30,4 @@ jobs:
       - name: Checkout toml files
         uses: actions/checkout@v3
       - name: Run toml check
-        run: npx @taplo/cli fmt --config ./taplo/taplo.toml --check
+        run: npx @taplo/cli@0.5.2 fmt --config ./taplo/taplo.toml --check

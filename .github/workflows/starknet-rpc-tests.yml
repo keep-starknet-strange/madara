@@ -31,9 +31,17 @@ jobs:
       - name: Setup dev chain
         run: |
           ./target/release/madara setup --chain=dev --from-local=configs
-      - name: Run rpc test
+      - name: Run rpc test without cache
         run: |-
           ./target/release/madara --dev --sealing=manual &
+          MADARA_RUN_PID=$!
+          while ! echo exit | nc localhost 9944; do sleep 1; done
+          cd starknet-rpc-test
+          cargo test
+          kill $MADARA_RUN_PID
+      - name: Run rpc test with cache
+        run: |-
+          ./target/release/madara --dev --sealing=manual --cache &
           MADARA_RUN_PID=$!
           while ! echo exit | nc localhost 9944; do sleep 1; done
           cd starknet-rpc-test
