@@ -11,9 +11,10 @@ use sp_runtime::traits::Block as BlockT;
 use starknet_api::api_core::Nonce;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::Fee;
+use starknet_core_contract_client::interfaces::{LogMessageToL2Filter, StarknetMessagingEvents};
 
 use crate::config::L1MessagesWorkerConfig;
-use crate::contract::{L1Contract, LogMessageToL2Filter};
+use crate::contract::parse_handle_l1_message_transaction;
 use crate::error::L1MessagesWorkerError;
 
 const TX_SOURCE: TransactionSource = TransactionSource::External;
@@ -31,8 +32,10 @@ pub async fn run_worker<C, P, B>(
 {
     log::info!("⟠ Starting L1 Messages Worker with settings: {:?}", config);
 
-    let l1_contract =
-        L1Contract::new(*config.contract_address(), Arc::new(Provider::new(Http::new(config.provider().clone()))));
+    let event_listener = StarknetMessagingEvents::new(
+        *config.contract_address(),
+        Arc::new(Provider::new(Http::new(config.provider().clone()))),
+    );
 
     let last_synced_event_block = match backend.messaging().last_synced_l1_block_with_event() {
         Ok(blknum) => blknum,
@@ -42,7 +45,7 @@ pub async fn run_worker<C, P, B>(
         }
     };
 
-    let events = l1_contract.events().from_block(last_synced_event_block.block_number);
+    let events = event_listener.event::<LogMessageToL2Filter>().from_block(last_synced_event_block.block_number);
     let mut event_stream = match events.stream_with_meta().await {
         Ok(stream) => stream,
         Err(e) => {
@@ -51,37 +54,46 @@ pub async fn run_worker<C, P, B>(
         }
     };
 
-    while let Some(Ok((event, meta))) = event_stream.next().await {
-        log::info!(
-            "⟠ Processing L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?}",
-            meta.block_number,
-            meta.transaction_hash,
-            meta.log_index
-        );
+    while let Some(event_res) = event_stream.next().await {
+        if let Ok((event, meta)) = event_res {
+            log::info!(
+                "⟠ Processing L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?}",
+                meta.block_number,
+                meta.transaction_hash,
+                meta.log_index
+            );
 
-        match process_l1_message(event, &client, &pool, &backend, &meta.block_number.as_u64(), &meta.log_index.as_u64())
+            match process_l1_message(
+                event,
+                &client,
+                &pool,
+                &backend,
+                &meta.block_number.as_u64(),
+                &meta.log_index.as_u64(),
+            )
             .await
-        {
-            Ok(Some(tx_hash)) => {
-                log::info!(
-                    "⟠ L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?} submitted, transaction \
-                     hash on L2: {:?}",
-                    meta.block_number,
-                    meta.transaction_hash,
-                    meta.log_index,
-                    tx_hash
-                );
-            }
-            Ok(None) => {}
-            Err(e) => {
-                log::error!(
-                    "⟠ Unexpected error while processing L1 Message from block: {:?}, transaction_hash: {:?}, \
-                     log_index: {:?}, error: {:?}",
-                    meta.block_number,
-                    meta.transaction_hash,
-                    meta.log_index,
-                    e
-                )
+            {
+                Ok(Some(tx_hash)) => {
+                    log::info!(
+                        "⟠ L1 Message from block: {:?}, transaction_hash: {:?}, log_index: {:?} submitted, \
+                         transaction hash on L2: {:?}",
+                        meta.block_number,
+                        meta.transaction_hash,
+                        meta.log_index,
+                        tx_hash
+                    );
+                }
+                Ok(None) => {}
+                Err(e) => {
+                    log::error!(
+                        "⟠ Unexpected error while processing L1 Message from block: {:?}, transaction_hash: {:?}, \
+                         log_index: {:?}, error: {:?}",
+                        meta.block_number,
+                        meta.transaction_hash,
+                        meta.log_index,
+                        e
+                    )
+                }
             }
         }
     }
@@ -109,7 +121,7 @@ where
     } else {
         Fee(event.fee.as_u128())
     };
-    let transaction: HandleL1MessageTransaction = event.try_into()?;
+    let transaction: HandleL1MessageTransaction = parse_handle_l1_message_transaction(event)?;
 
     let best_block_hash = client.info().best_hash;
 

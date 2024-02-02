@@ -64,6 +64,18 @@ pub enum DaError {
     InvalidHttpEndpoint(String)
 }
 
+impl Display for DaLayer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            #[cfg(feature = "celestia")]
+            DaLayer::Celestia => Display::fmt("Celestia", f),
+            DaLayer::Ethereum => Display::fmt("Ethereum", f),
+            #[cfg(feature = "avail")]
+            DaLayer::Avail => Display::fmt("Avail", f),
+        }
+    }
+}
+
 /// Data availability modes in which Madara can be initialized.
 ///
 /// Default only mode currently implemented is Sovereing.
@@ -245,9 +257,10 @@ pub async fn update_state<B: BlockT, H: HasherT>(
             log::info!("validity da mode not implemented");
         }
         DaMode::Sovereign => match madara_backend.da().state_diff(&block_hash) {
-            Ok(state_diff) => {
+            Ok(Some(state_diff)) => {
                 da_client.publish_state_diff(state_diff).await.map_err(|e| anyhow!("DA PUBLISH ERROR: {e}"))?;
             }
+            Ok(None) => Err(anyhow!("there is no state diff stored for block {}", block_hash))?,
             Err(e) => Err(anyhow!("could not pull state diff for block {}: {}", block_hash, e))?,
         },
         DaMode::Volition => log::info!("volition da mode not implemented"),
