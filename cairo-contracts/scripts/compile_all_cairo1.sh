@@ -89,10 +89,10 @@ fi
 # Clean up
 rm /tmp/cairo_binaries.tar.gz
 
-# 2. COMPILE CONTRACTS
+# 2. COMPILE CAIRO 1 CONTRACTS
 
 export MADARA_CAIRO_ONE_SRC_DIR="$ROOT_DIR/cairo-contracts/src/cairo_1"
-export MADARA_CAIRO_ONE_OUTPUT_DIR="$ROOT_DIR/configs/genesis-assets"
+export MADARA_CAIRO_ONE_OUTPUT_DIR="$ROOT_DIR/cairo-contracts/compiled_contract/cairo_1"
 
 export MADARA_STARKNET_COMPILE_BINARY="$SCRIPT_DIR/bin/cairo/bin/starknet-compile"
 export MADARA_STARKNET_SIERRA_COMPILE_BINARY="$SCRIPT_DIR/bin/cairo/bin/starknet-sierra-compile"
@@ -132,5 +132,95 @@ echo "Compiling sierra to CASM\n"
 find "$MADARA_CAIRO_ONE_OUTPUT_DIR" -type f -name "*sierra.json" -exec bash -c 'compile_cairo1_casm "$0"' {} \;
 
 
-# Delete compiler binaries
+# 3. COMPILE CAIRO 0 CONTRACTS
+echo "\033[31mCAIRO ZERO\033[0m"
+
+# a. Check/Install everything needed
+# Save the original PATH
+ORIGINAL_PATH=$PATH
+
+# Prepend the pyenv shims directory to the PATH
+export PATH="$HOME/.pyenv/shims:$PATH"
+eval "$(pyenv init --path)"
+eval "$(pyenv init -)"
+
+echo $(which starknet-compile-deprecated)
+# Function to check if a command exists
+command_exists() {
+    command -v "$1" &> /dev/null
+}
+
+# Function to install PyEnv
+install_pyenv() {
+    echo "Installing pyenv..."
+    curl https://pyenv.run | bash
+
+    # Add pyenv to path
+    export PATH="$HOME/.pyenv/bin:$PATH"
+    eval "$(pyenv init --path)"
+    eval "$(pyenv virtualenv-init -)"
+}
+
+# Function to check Python version
+check_python_version() {
+    PYTHON_VERSION=$(python --version 2>&1 | awk '{print $2}')
+    DESIRED_VERSION="3.9"
+
+    if [[ "$PYTHON_VERSION" == "$DESIRED_VERSION"* ]]; then
+        echo "Python $DESIRED_VERSION is already installed."
+    else
+        echo "Python $DESIRED_VERSION is not installed."
+        install_python_3_9
+    fi
+}
+
+# Function to install Python 3.9 using pyenv
+install_python_3_9() {
+    echo "Installing Python 3.9..."
+    pyenv install 3.9
+    pyenv global 3.9
+}
+
+# Check and install required tools
+echo "Checking for Python >=3.9,<3.10..."
+if ! command_exists python || ! python --version | grep -E "3\.9\.[0-9]+" > /dev/null; then
+    echo "Required Python version not found."
+    if ! command_exists pyenv; then
+        install_pyenv
+    fi
+    check_python_version
+else
+    echo "Required Python version is already installed."
+fi
+
+# Check and install dependencies
+echo "Installing dependencies..."
+python -m pip install "cairo-lang>=0.11,<0.12" "starknet-py>=0.16,<0.17" "openzeppelin-cairo-contracts>=0.6.1,<0.7"
+
+echo "Setup complete."
+
+
+
+MADARA_CAIRO_ZERO_OUTPUT_DIR="$ROOT_DIR/cairo-contracts/compiled_contract/cairo_0"
+mkdir -p $MADARA_CAIRO_ZERO_OUTPUT_DIR
+
+MADARA_CONTRACT_PATH="$ROOT_DIR/cairo-contracts"
+
+base_folder=$MADARA_CONTRACT_PATH/src
+exclude_folder=$MADARA_CAIRO_ONE_SRC_DIR
+
+# Use find to get all .cairo files in base_folder, excluding exclude_folder
+# Then, use a loop to process each file
+find "$base_folder" -type f -name "*.cairo" | grep -vF "$base_folder/cairo_1" | while read -r file_path; do
+    # echo "Processing: $file_path"
+    file_name=$(basename "$file_path" .cairo)
+    echo "starknet-compile-deprecated $file_path --output $MADARA_CAIRO_ZERO_OUTPUT_DIR/$file_name.json --cairo_path $MADARA_CONTRACT_PATH --no_debug_info $(echo $file_name | awk '{print tolower($0)}' | grep -q "account" && echo "--account_contract")"
+    starknet-compile-deprecated $file_path --output $MADARA_CAIRO_ZERO_OUTPUT_DIR/$file_name.json --cairo_path $MADARA_CONTRACT_PATH --no_debug_info $(echo $file_name | awk '{print tolower($0)}' | grep -q "account" && echo "--account_contract")
+
+    done
+
+
+
+# X. Restore path and Delete compiler binaries
 rm -r "$SCRIPT_DIR/bin"
+export PATH=$ORIGINAL_PATH
