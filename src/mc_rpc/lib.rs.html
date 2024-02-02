@@ -1686,6 +1686,52 @@
 <a href="#1686" id="1686">1686</a>
 <a href="#1687" id="1687">1687</a>
 <a href="#1688" id="1688">1688</a>
+<a href="#1689" id="1689">1689</a>
+<a href="#1690" id="1690">1690</a>
+<a href="#1691" id="1691">1691</a>
+<a href="#1692" id="1692">1692</a>
+<a href="#1693" id="1693">1693</a>
+<a href="#1694" id="1694">1694</a>
+<a href="#1695" id="1695">1695</a>
+<a href="#1696" id="1696">1696</a>
+<a href="#1697" id="1697">1697</a>
+<a href="#1698" id="1698">1698</a>
+<a href="#1699" id="1699">1699</a>
+<a href="#1700" id="1700">1700</a>
+<a href="#1701" id="1701">1701</a>
+<a href="#1702" id="1702">1702</a>
+<a href="#1703" id="1703">1703</a>
+<a href="#1704" id="1704">1704</a>
+<a href="#1705" id="1705">1705</a>
+<a href="#1706" id="1706">1706</a>
+<a href="#1707" id="1707">1707</a>
+<a href="#1708" id="1708">1708</a>
+<a href="#1709" id="1709">1709</a>
+<a href="#1710" id="1710">1710</a>
+<a href="#1711" id="1711">1711</a>
+<a href="#1712" id="1712">1712</a>
+<a href="#1713" id="1713">1713</a>
+<a href="#1714" id="1714">1714</a>
+<a href="#1715" id="1715">1715</a>
+<a href="#1716" id="1716">1716</a>
+<a href="#1717" id="1717">1717</a>
+<a href="#1718" id="1718">1718</a>
+<a href="#1719" id="1719">1719</a>
+<a href="#1720" id="1720">1720</a>
+<a href="#1721" id="1721">1721</a>
+<a href="#1722" id="1722">1722</a>
+<a href="#1723" id="1723">1723</a>
+<a href="#1724" id="1724">1724</a>
+<a href="#1725" id="1725">1725</a>
+<a href="#1726" id="1726">1726</a>
+<a href="#1727" id="1727">1727</a>
+<a href="#1728" id="1728">1728</a>
+<a href="#1729" id="1729">1729</a>
+<a href="#1730" id="1730">1730</a>
+<a href="#1731" id="1731">1731</a>
+<a href="#1732" id="1732">1732</a>
+<a href="#1733" id="1733">1733</a>
+<a href="#1734" id="1734">1734</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1878,9 +1924,39 @@
     /// * `block_hash` - The hash of the block containing the transactions (starknet block).
     </span><span class="kw">fn </span>get_cached_transaction_hashes(<span class="kw-2">&amp;</span><span class="self">self</span>, block_hash: H256) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;H256&gt;&gt; {
         <span class="self">self</span>.backend.mapping().cached_transaction_hashes_from_block_hash(block_hash).unwrap_or_else(|err| {
-            <span class="macro">error!</span>(<span class="string">&quot;{err}&quot;</span>);
+            <span class="macro">error!</span>(<span class="string">&quot;Failed to read from cache: {err}&quot;</span>);
             <span class="prelude-val">None
         </span>})
+    }
+
+    <span class="kw">fn </span>try_txn_hash_from_cache(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        tx_index: usize,
+        cached_transactions: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;Vec&lt;H256&gt;&gt;,
+        transactions: <span class="kw-2">&amp;</span>[mp_transactions::Transaction],
+        chain_id: Felt252Wrapper,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Felt252Wrapper, StarknetRpcApiError&gt; {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(txn_hashes) = <span class="kw-2">&amp;</span>cached_transactions {
+            <span class="kw">let </span>txn_hash = (<span class="kw-2">&amp;</span>txn_hashes
+                .get(tx_index)
+                .ok_or_else(|| {
+                    <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve transaction hash from cache, invalid index {}&quot;</span>, tx_index);
+                    StarknetRpcApiError::InternalServerError
+                })<span class="question-mark">?
+                </span>.<span class="number">0</span>)
+                .try_into()
+                .map_err(|<span class="kw">_</span>| {
+                    <span class="macro">error!</span>(<span class="string">&quot;Failed to convert transaction hash&quot;</span>);
+                    StarknetRpcApiError::InternalServerError
+                })<span class="question-mark">?</span>;
+            <span class="prelude-val">Ok</span>(txn_hash)
+        } <span class="kw">else </span>{
+            <span class="kw">let </span>transaction = <span class="kw-2">&amp;</span>transactions.get(tx_index).ok_or_else(|| {
+                <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve transaction hash from starknet txs, invalid index {}&quot;</span>, tx_index);
+                StarknetRpcApiError::InternalServerError
+            })<span class="question-mark">?</span>;
+            <span class="prelude-val">Ok</span>(transaction.compute_hash::&lt;H&gt;(chain_id, <span class="bool-val">false</span>))
+        }
     }
 }
 
@@ -3124,23 +3200,39 @@
                 StarknetRpcApiError::InternalServerError
             })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>(tx_index, transaction) = <span class="self">self
-            </span>.client
-            .runtime_api()
-            .get_index_and_tx_for_tx_hash(substrate_block_hash, block_extrinsics, chain_id, transaction_hash.into())
-            .map_err(|e| {
-                <span class="macro">error!</span>(
-                    <span class="string">&quot;Failed to get index for transaction hash. Substrate block hash: {substrate_block_hash}, \
-                     transaction hash: {transaction_hash}, error: {e}&quot;
-                </span>);
+        <span class="kw">let </span>block_extrinsics_len = block_extrinsics.len();
+        <span class="kw">let </span>transactions =
+            <span class="self">self</span>.client.runtime_api().extrinsic_filter(substrate_block_hash, block_extrinsics).map_err(|e| {
+                <span class="macro">error!</span>(<span class="string">&quot;Failed to filter extrinsics. Substrate block hash: {substrate_block_hash}, error: {e}&quot;</span>);
                 StarknetRpcApiError::InternalServerError
-            })<span class="question-mark">?
-            </span>.expect(<span class="string">&quot;the transaction should be present in the substrate extrinsics&quot;</span>); <span class="comment">// not reachable
+            })<span class="question-mark">?</span>;
+        <span class="kw">let </span>txn_hashes = <span class="self">self</span>.get_cached_transaction_hashes(starknet_block.header().hash::&lt;H&gt;().into());
+        <span class="kw">let </span><span class="kw-2">mut </span>tx_index = <span class="prelude-val">None</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>transaction = <span class="prelude-val">None</span>;
+        <span class="kw">for </span>(index, tx) <span class="kw">in </span>transactions.iter().enumerate() {
+            <span class="kw">let </span>tx_hash = <span class="self">self</span>.try_txn_hash_from_cache(index, <span class="kw-2">&amp;</span>txn_hashes, <span class="kw-2">&amp;</span>transactions, chain_id)<span class="question-mark">?</span>;
+            <span class="kw">if </span>tx_hash == transaction_hash.into() {
+                tx_index = <span class="prelude-val">Some</span>(index);
+                transaction = <span class="prelude-val">Some</span>(tx);
+                <span class="kw">break</span>;
+            }
+        }
+        <span class="kw">if </span>tx_index.is_none() || transaction.is_none() {
+            <span class="macro">error!</span>(
+                <span class="string">&quot;Failed to find transaction hash in block. Substrate block hash: {substrate_block_hash}, transaction \
+                 hash: {transaction_hash}&quot;
+            </span>);
+            <span class="kw">return </span><span class="prelude-val">Err</span>(StarknetRpcApiError::InternalServerError.into());
+        }
+        <span class="kw">let </span>tx_index = tx_index.unwrap();
+        <span class="kw">let </span>transaction = transaction.unwrap();
+        <span class="comment">// adding the inherents count to the tx_index to get the correct index in the block
+        </span><span class="kw">let </span>tx_index = tx_index + block_extrinsics_len - transactions.len();
 
-        </span><span class="kw">let </span>events = <span class="self">self
+        <span class="kw">let </span>events = <span class="self">self
             </span>.client
             .runtime_api()
-            .get_events_for_tx_by_index(substrate_block_hash, tx_index)
+            .get_events_for_tx_by_index(substrate_block_hash, tx_index <span class="kw">as </span>u32)
             .map_err(|e| {
                 <span class="macro">error!</span>(
                     <span class="string">&quot;Failed to get events for transaction index. Substrate block hash: {substrate_block_hash}, \

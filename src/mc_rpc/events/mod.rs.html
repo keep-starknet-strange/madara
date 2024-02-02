@@ -205,6 +205,24 @@
 <a href="#205" id="205">205</a>
 <a href="#206" id="206">206</a>
 <a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
 </pre></div><pre class="rust"><code><span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests;
 
@@ -270,17 +288,35 @@
             StarknetRpcApiError::InternalServerError
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>tx_hash_and_events = <span class="self">self
-            </span>.client
-            .runtime_api()
-            .get_starknet_events_and_their_associated_tx_hash(substrate_block_hash, block_extrinsics, chain_id)
-            .map_err(|e| {
-                <span class="macro">error!</span>(
-                    <span class="string">&quot;Failed to retrieve starknet events and their associated transaction hash. Substrate block hash: \
-                     {substrate_block_hash}, chain ID: {chain_id:?}, error: {e}&quot;
-                </span>);
+        <span class="kw">let </span>index_and_events =
+            <span class="self">self</span>.client.runtime_api().get_starknet_events_and_their_associated_tx_index(substrate_block_hash).map_err(
+                |e| {
+                    <span class="macro">error!</span>(
+                        <span class="string">&quot;Failed to retrieve starknet events and their associated transaction index. Substrate block \
+                         hash: {substrate_block_hash}, chain ID: {chain_id:?}, error: {e}&quot;
+                    </span>);
+                    StarknetRpcApiError::InternalServerError
+                },
+            )<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>starknet_block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).ok_or_else(|| {
+            <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve starknet block from substrate block hash&quot;</span>);
+            StarknetRpcApiError::InternalServerError
+        })<span class="question-mark">?</span>;
+        <span class="kw">let </span>txn_hashes = <span class="self">self</span>.get_cached_transaction_hashes(starknet_block.header().hash::&lt;H&gt;().into());
+        <span class="kw">let </span>block_extrinsics_len = block_extrinsics.len();
+        <span class="kw">let </span>starknet_txs =
+            <span class="self">self</span>.client.runtime_api().extrinsic_filter(substrate_block_hash, block_extrinsics).map_err(|e| {
+                <span class="macro">error!</span>(<span class="string">&quot;Failed to filter extrinsics. Substrate block hash: {substrate_block_hash}, error: {e}&quot;</span>);
                 StarknetRpcApiError::InternalServerError
             })<span class="question-mark">?</span>;
+        <span class="kw">let </span>inherent_count = block_extrinsics_len - starknet_txs.len();
+        <span class="kw">let </span><span class="kw-2">mut </span>tx_hash_and_events: Vec&lt;(Felt252Wrapper, starknet_api::transaction::Event)&gt; = <span class="macro">vec!</span>[];
+        <span class="kw">for </span>(index, event) <span class="kw">in </span>index_and_events {
+            <span class="kw">let </span>tx_index = index <span class="kw">as </span>usize - inherent_count;
+            <span class="kw">let </span>tx_hash = <span class="self">self</span>.try_txn_hash_from_cache(tx_index, <span class="kw-2">&amp;</span>txn_hashes, <span class="kw-2">&amp;</span>starknet_txs, chain_id)<span class="question-mark">?</span>;
+            tx_hash_and_events.push((tx_hash, event));
+        }
 
         <span class="kw">let </span>starknet_block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
             .ok_or(StarknetRpcApiError::BlockNotFound)<span class="question-mark">?</span>;
