@@ -12,7 +12,7 @@ use ethers::types::{I256, U256};
 use jsonrpsee::http_client::{HeaderMap, HeaderValue, HttpClient, HttpClientBuilder};
 use reqwest::header;
 
-use crate::{DaClient, DaMode, DaError};
+use crate::{DaClient, DaError, DaMode};
 
 #[derive(Clone, Debug)]
 pub struct CelestiaClient {
@@ -24,24 +24,17 @@ pub struct CelestiaClient {
 #[async_trait]
 impl DaClient for CelestiaClient {
     async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<(), DaError> {
-        let blob = self.get_blob_from_state_diff(state_diff).map_err(|e| 
-            DaError::FailedDataFetching(e.into())
-        )?;
+        let blob = self.get_blob_from_state_diff(state_diff).map_err(|e| DaError::FailedDataFetching(e.into()))?;
 
-        let submitted_height = self.publish_data(&blob).await.map_err(|e| 
-            DaError::FailedDataSubmission(e.into())
-        )?;
+        let submitted_height = self.publish_data(&blob).await.map_err(|e| DaError::FailedDataSubmission(e.into()))?;
 
         // blocking call, awaiting on server side (Celestia Node) that a block with our data is included
         self.http_client
             .header_wait_for_height(submitted_height)
             .await
-            .map_err(|e| 
-                DaError::FailedDataFetching(e.into())
-            )?;
+            .map_err(|e| DaError::FailedDataFetching(e.into()))?;
 
-        self.verify_blob_was_included(submitted_height, blob)
-            .await?;
+        self.verify_blob_was_included(submitted_height, blob).await?;
 
         Ok(())
     }
@@ -81,12 +74,12 @@ impl CelestiaClient {
     }
 
     async fn verify_blob_was_included(&self, submitted_height: u64, blob: Blob) -> Result<(), DaError> {
-        let received_blob = self.http_client.blob_get(submitted_height, self.nid, blob.commitment).await.map_err(|e| 
-            DaError::FailedDataFetching(e.into())
-        )?;
-        received_blob.validate().map_err(|e| 
-            DaError::FailedDataValidation(e.into())
-        )?;
+        let received_blob = self
+            .http_client
+            .blob_get(submitted_height, self.nid, blob.commitment)
+            .await
+            .map_err(|e| DaError::FailedDataFetching(e.into()))?;
+        received_blob.validate().map_err(|e| DaError::FailedDataValidation(e.into()))?;
         Ok(())
     }
 }
@@ -113,9 +106,7 @@ impl TryFrom<config::CelestiaConfig> for CelestiaClient {
         let bytes = conf.nid.as_bytes();
 
         // Create a new Namespace from these bytes
-        let nid = Namespace::new_v0(bytes).map_err(|e| 
-            DaError::FailedBuildingClient(e.into())
-        )?;
+        let nid = Namespace::new_v0(bytes).map_err(|e| DaError::FailedBuildingClient(e.into()))?;
 
         Ok(Self { http_client, nid, mode: conf.mode })
     }

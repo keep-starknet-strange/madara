@@ -163,7 +163,7 @@ fn init_da_client(da_layer: DaLayer, da_path: PathBuf) -> Result<Box<dyn DaClien
             Box::new(CelestiaClient::try_from(celestia_conf).map_err(|e| sc_cli::Error::Input(e.to_string()))?)
         }
         DaLayer::Ethereum => {
-            let ethereum_conf = EthereumConfig::try_from(&da_path).map_err(|e| e.to_string())?;;
+            let ethereum_conf = EthereumConfig::try_from(&da_path).map_err(|e| e.to_string())?;
             Box::new(EthereumClient::try_from(ethereum_conf).map_err(|e| e.to_string())?)
         }
         #[cfg(feature = "avail")]

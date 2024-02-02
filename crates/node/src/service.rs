@@ -449,7 +449,8 @@ pub fn new_full(
     if let Some((layer_kind, config_path)) = settlement_config {
         let settlement_provider: Box<dyn SettlementProvider<_>> = match layer_kind {
             SettlementLayer::Ethereum => {
-                let ethereum_conf = EthereumConfig::try_from(&config_path).map_err(|e| ServiceError::Other(e.to_string()))?;
+                let ethereum_conf =
+                    EthereumConfig::try_from(&config_path).map_err(|e| ServiceError::Other(e.to_string()))?;
                 Box::new(
                     StarknetContractClient::try_from(ethereum_conf).map_err(|e| ServiceError::Other(e.to_string()))?,
                 )

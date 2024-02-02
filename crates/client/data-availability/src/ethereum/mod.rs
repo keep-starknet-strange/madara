@@ -10,7 +10,7 @@ use ethers::signers::{LocalWallet, Signer};
 use ethers::types::{Address, I256, U256};
 
 use crate::utils::is_valid_http_endpoint;
-use crate::{DaClient, DaMode, DaError};
+use crate::{DaClient, DaError, DaMode};
 
 #[derive(Clone, Debug)]
 pub struct EthereumClient {
@@ -89,7 +89,8 @@ impl TryFrom<config::EthereumConfig> for EthereumClient {
             return Err(DaError::InvalidHttpEndpoint(conf.http_provider));
         }
 
-        let provider = Provider::<Http>::try_from(conf.http_provider).map_err(|e| DaError::FailedBuildingClient(e.into()))?;
+        let provider =
+            Provider::<Http>::try_from(conf.http_provider).map_err(|e| DaError::FailedBuildingClient(e.into()))?;
 
         let wallet: LocalWallet = conf
             .sequencer_key
@@ -99,7 +100,8 @@ impl TryFrom<config::EthereumConfig> for EthereumClient {
 
         let signer = Arc::new(SignerMiddleware::new(provider.clone(), wallet));
 
-        let cc_address: Address = conf.core_contracts.parse::<Address>().map_err(|e| DaError::FailedConversion(e.into()))?;
+        let cc_address: Address =
+            conf.core_contracts.parse::<Address>().map_err(|e| DaError::FailedConversion(e.into()))?;
 
         Ok(Self { http_provider: provider, signer, cc_address, mode: conf.mode })
     }

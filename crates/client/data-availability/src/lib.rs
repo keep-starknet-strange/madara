@@ -27,8 +27,8 @@ use serde::{Deserialize, Serialize};
 use sp_runtime::traits::Block as BlockT;
 use starknet_api::block::BlockHash;
 use starknet_api::state::ThinStateDiff;
-use utils::state_diff_to_calldata;
 use thiserror::Error;
+use utils::state_diff_to_calldata;
 
 use crate::da_metrics::DaMetrics;
 
@@ -61,7 +61,7 @@ pub enum DaError {
     #[error("failed validating data: {0}")]
     FailedDataValidation(anyhow::Error),
     #[error("Invalid http endpoint: {0}")]
-    InvalidHttpEndpoint(String)
+    InvalidHttpEndpoint(String),
 }
 
 impl Display for DaLayer {

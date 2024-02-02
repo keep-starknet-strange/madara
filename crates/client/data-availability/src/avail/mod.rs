@@ -15,7 +15,7 @@ use subxt::ext::sp_core::sr25519::Pair;
 use subxt::OnlineClient;
 
 use crate::utils::get_bytes_from_state_diff;
-use crate::{DaClient, DaMode, DaLayer, DaError};
+use crate::{DaClient, DaError, DaLayer, DaMode};
 
 type AvailPairSigner = subxt::tx::PairSigner<AvailConfig, Pair>;
 
@@ -35,9 +35,7 @@ pub struct SubxtClient {
 pub fn try_build_avail_subxt(conf: &config::AvailConfig) -> Result<OnlineClient<AvailConfig>, DaError> {
     let client =
         futures::executor::block_on(async { build_client(conf.ws_provider.as_str(), conf.validate_codegen).await })
-            .map_err(|e|
-                DaError::FailedBuildingClient(e.into())
-            )?;
+            .map_err(|e| DaError::FailedBuildingClient(e.into()))?;
 
     Ok(client)
 }
@@ -61,10 +59,7 @@ impl TryFrom<config::AvailConfig> for SubxtClient {
     type Error = DaError;
 
     fn try_from(conf: config::AvailConfig) -> Result<Self, Self::Error> {
-        Ok(Self { 
-            client: try_build_avail_subxt(&conf)?,
-            config: conf 
-        })
+        Ok(Self { client: try_build_avail_subxt(&conf)?, config: conf })
     }
 }
 
