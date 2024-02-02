@@ -266,7 +266,8 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::unbounded]
     #[pallet::getter(fn contract_class_by_class_hash)]
-    pub(super) type ContractClasses<T: Config> = StorageMap<_, Identity, SierraOrCasmClassHash, ContractClass, OptionQuery>;
+    pub(super) type ContractClasses<T: Config> =
+        StorageMap<_, Identity, SierraOrCasmClassHash, ContractClass, OptionQuery>;
 
     /// Mapping from Starknet Sierra class hash to  Casm compiled contract class.
     /// Safe to use `Identity` as the key is already a hash.
@@ -381,8 +382,10 @@ pub mod pallet {
                 let is_casm_hash_in_contracts = ContractClasses::<T>::contains_key(casm_class_hash);
                 assert!(
                     is_sierra_hash_in_contracts || is_casm_hash_in_contracts,
-                    "Neither Sierra {} nor Casm class hash {} from sierra_class_hash_to_casm_class_hash do not exist in contract_classes",
-                    sierra_class_hash, casm_class_hash,
+                    "Neither Sierra {} nor Casm class hash {} from sierra_class_hash_to_casm_class_hash do not exist \
+                     in contract_classes",
+                    sierra_class_hash,
+                    casm_class_hash,
                 );
                 CompiledClassHashes::<T>::insert(sierra_class_hash, CompiledClassHash(casm_class_hash.0));
             }
