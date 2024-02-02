@@ -468,13 +468,13 @@
 //! public Starknet L2.
 //! For now this is the same because we don&#39;t support yet validity proofs and state updates to
 //! another layer.
-</span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 </span><span class="comment">// `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 </span><span class="attr">#![recursion_limit = <span class="string">&quot;256&quot;</span>]
 
 </span><span class="comment">// Make the WASM binary available.
 </span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="macro">include!</span>(<span class="macro">concat!</span>(<span class="macro">env!</span>(<span class="string">&quot;OUT_DIR&quot;</span>), <span class="string">&quot;/wasm_binary.rs&quot;</span>));
+</span><span class="comment">// include!(concat!(env!(&quot;OUT_DIR&quot;), &quot;/wasm_binary.rs&quot;));
+</span><span class="kw">pub const </span>WASM_BINARY: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[u8]&gt; = <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>[]);
 
 <span class="doccomment">/// Runtime modules.
 </span><span class="kw">mod </span>config;
@@ -890,7 +890,7 @@
         <span class="kw">fn </span>dispatch_benchmark(
             config: frame_benchmarking::BenchmarkConfig
         ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;frame_benchmarking::BenchmarkBatch&gt;, sp_runtime::RuntimeString&gt; {
-            <span class="kw">use </span>frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch, TrackedStorageKey};
+            <span class="kw">use </span>frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch};
 
             <span class="kw">use </span>frame_system_benchmarking::Pallet <span class="kw">as </span>SystemBench;
             <span class="kw">use </span>baseline::Pallet <span class="kw">as </span>BaselineBench;
@@ -899,7 +899,7 @@
             <span class="kw">impl </span>baseline::Config <span class="kw">for </span>Runtime {}
 
             <span class="kw">use </span>frame_support::traits::WhitelistedStorageKeys;
-            <span class="kw">let </span>whitelist: Vec&lt;TrackedStorageKey&gt; = AllPalletsWithSystem::whitelisted_storage_keys();
+            <span class="kw">let </span>whitelist: Vec&lt;<span class="kw">_</span>&gt; = AllPalletsWithSystem::whitelisted_storage_keys();
 
             <span class="kw">let </span><span class="kw-2">mut </span>batches = Vec::&lt;BenchmarkBatch&gt;::new();
             <span class="kw">let </span>params = (<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;</span>whitelist);

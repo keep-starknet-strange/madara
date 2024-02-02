@@ -317,7 +317,7 @@
                     }
                     <span class="attr">#[cfg(feature = <span class="string">&quot;runtime-benchmarks&quot;</span>)]
                     </span>BenchmarkCmd::Storage(cmd) =&gt; {
-                        <span class="kw">let </span>(client, backend, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = service::new_chain_ops(<span class="kw-2">&amp;mut </span>config)<span class="question-mark">?</span>;
+                        <span class="kw">let </span>(client, backend, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = service::new_chain_ops(<span class="kw-2">&amp;mut </span>config, cli.run.cache)<span class="question-mark">?</span>;
                         <span class="kw">let </span>db = backend.expose_db();
                         <span class="kw">let </span>storage = backend.expose_storage();
 

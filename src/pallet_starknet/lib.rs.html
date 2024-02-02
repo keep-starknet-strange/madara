@@ -1122,7 +1122,6 @@
 <a href="#1122" id="1122">1122</a>
 <a href="#1123" id="1123">1123</a>
 <a href="#1124" id="1124">1124</a>
-<a href="#1125" id="1125">1125</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1155,8 +1154,7 @@
 //! invoke, ...), which allow users to interact with the pallet and invoke state changes. These
 //! functions are annotated with weight and return a DispatchResult.
 </span><span class="comment">// Ensure we&#39;re `no_std` when compiling for Wasm.
-</span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
-#![allow(clippy::large_enum_variant)]
+</span><span class="attr">#![allow(clippy::large_enum_variant)]
 
 </span><span class="doccomment">/// Starknet pallet.
 /// Definition of the pallet&#39;s runtime storage items, events, errors, and dispatchable
