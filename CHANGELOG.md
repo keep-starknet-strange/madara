@@ -2,6 +2,7 @@
 
 ## Next release
 
+- dev: make Madara std compatible
 - CI: fix taplo version
 - chore: add cache usage for `getEvents` and `getTransactionReceipt`
 - fix: cairo1 contracts should be identified by their sierra class hash

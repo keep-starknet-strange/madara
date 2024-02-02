@@ -134,7 +134,7 @@ pub fn run() -> sc_cli::Result<()> {
                     }
                     #[cfg(feature = "runtime-benchmarks")]
                     BenchmarkCmd::Storage(cmd) => {
-                        let (client, backend, _, _, _) = service::new_chain_ops(&mut config)?;
+                        let (client, backend, _, _, _) = service::new_chain_ops(&mut config, cli.run.cache)?;
                         let db = backend.expose_db();
                         let storage = backend.expose_storage();
 
