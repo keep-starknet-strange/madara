@@ -86,7 +86,7 @@ impl TryFrom<config::EthereumConfig> for EthereumClient {
 
     fn try_from(conf: config::EthereumConfig) -> Result<Self, Self::Error> {
         if !is_valid_http_endpoint(&conf.http_provider) {
-            return Err(DaError::FailedBuildingClient(anyhow::anyhow!("invalid http endpoint, received {}", &conf.http_provider)));
+            return Err(DaError::InvalidHttpEndpoint(conf.http_provider));
         }
 
         let provider = Provider::<Http>::try_from(conf.http_provider).map_err(|e| DaError::FailedBuildingClient(e.into()))?;

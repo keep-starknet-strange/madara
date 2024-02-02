@@ -60,6 +60,8 @@ pub enum DaError {
     FailedDataFetching(anyhow::Error),
     #[error("failed validating data: {0}")]
     FailedDataValidation(anyhow::Error),
+    #[error("Invalid http endpoint: {0}")]
+    InvalidHttpEndpoint(String)
 }
 
 /// Data availability modes in which Madara can be initialized.
