@@ -22,7 +22,7 @@ pub use mc_rpc_core::{
     StarknetWriteRpcApiServer,
 };
 use mc_storage::OverrideHandle;
-use mp_felt::Felt252Wrapper;
+use mp_felt::{Felt252Wrapper, Felt252WrapperError};
 use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
@@ -33,7 +33,7 @@ use sc_client_api::BlockBackend;
 use sc_network_sync::SyncingService;
 use sc_transaction_pool::{ChainApi, Pool};
 use sc_transaction_pool_api::error::{Error as PoolError, IntoPoolError};
-use sc_transaction_pool_api::{TransactionPool, TransactionSource};
+use sc_transaction_pool_api::{InPoolTransaction, TransactionPool, TransactionSource};
 use sp_api::ProvideRuntimeApi;
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
@@ -51,8 +51,8 @@ use starknet_core::types::{
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, ExecutionResources, ExecutionResult, FeeEstimate,
     FieldElement, FunctionCall, Hash256, InvokeTransactionReceipt, InvokeTransactionResult,
     L1HandlerTransactionReceipt, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
-    MaybePendingTransactionReceipt, MsgFromL1, StateDiff, StateUpdate, SyncStatus, SyncStatusType, Transaction,
-    TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
+    MaybePendingTransactionReceipt, MsgFromL1, PendingBlockWithTxHashes, StateDiff, StateUpdate, SyncStatus,
+    SyncStatusType, Transaction, TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
 };
 use starknet_core::utils::get_selector_from_name;
 
@@ -890,6 +890,12 @@ where
     /// a pending block with transaction hashes, depending on the state of the requested block.
     /// In case the block is not found, returns a `StarknetRpcApiError` with `BlockNotFound`.
     fn get_block_with_tx_hashes(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxHashes> {
+        if is_pending_block(block_id) {
+            let pending_block =
+                prepare_pending_block_with_tx_hashes::<B, C, P, H>(self.client.clone(), self.pool.clone())?;
+            return Ok(MaybePendingBlockWithTxHashes::PendingBlock(pending_block));
+        }
+
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -1579,7 +1585,7 @@ where
             }
         }
 
-        // TODO: use actual execution ressources
+        // TODO: use actual execution resources
         let receipt = match transaction {
             mp_transactions::Transaction::Declare(_) => TransactionReceipt::Declare(DeclareTransactionReceipt {
                 transaction_hash,
@@ -1674,6 +1680,76 @@ where
         Ok(MaybePendingTransactionReceipt::Receipt(receipt))
     }
 }
+fn prepare_pending_block_with_tx_hashes<B, C, P, H>(
+    client: Arc<C>,
+    pool: Arc<P>,
+) -> Result<PendingBlockWithTxHashes, CallError>
+where
+    B: BlockT,
+    H: HasherT + Send + Sync + 'static,
+    C: ProvideRuntimeApi<B>,
+    C: HeaderBackend<B> + 'static,
+    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
+    P: TransactionPool<Block = B> + 'static,
+{
+    let parent_hash = client.info().best_hash;
+    let latest_block = get_block_by_block_hash(client.as_ref(), parent_hash).unwrap_or_default();
+    let latest_block_header = latest_block.header();
+    let transactions = get_pending_txs_hashes(pool.as_ref());
+    let transactions = prepare_pending_txs_hashes::<P, B>(&transactions).map_err(CallError::Failed)?;
+
+    let pending_block = PendingBlockWithTxHashes {
+        transactions,
+        l1_gas_price: latest_block_header.l1_gas_price.into(),
+        parent_hash: latest_block_header.hash::<H>().into(),
+        sequencer_address: Felt252Wrapper::from(latest_block_header.sequencer_address).into(),
+        starknet_version: latest_block_header.protocol_version.to_string(),
+        timestamp: calculate_pending_block_timestamp(),
+    };
+    Ok(pending_block)
+}
+
+#[allow(dead_code)]
+fn get_pending_txs<P, B>(pool: &P) -> Vec<<B as BlockT>::Extrinsic>
+where
+    P: TransactionPool<Block = B> + 'static,
+    B: BlockT,
+    <B as BlockT>::Extrinsic: Send + Sync + 'static,
+{
+    pool.ready().map(|tx| tx.data().clone()).collect()
+}
+
+fn get_pending_txs_hashes<P, B>(pool: &P) -> Vec<<P as TransactionPool>::Hash>
+where
+    P: TransactionPool<Block = B> + 'static,
+    B: BlockT,
+{
+    pool.ready().map(|tx| tx.hash().clone()).collect()
+}
+
+fn prepare_pending_txs_hashes<P, B>(hashes: &[<P as TransactionPool>::Hash]) -> Result<Vec<FieldElement>, anyhow::Error>
+where
+    P: TransactionPool<Block = B> + 'static,
+    B: BlockT,
+{
+    hashes
+        .iter()
+        .map(|hash| {
+            tx_hash_to_felt::<P, B>(hash)
+                .map_err(|e| anyhow::anyhow!("The hash is an invalid felt: '{:#?}', error: '{:?}'", hash, e))
+        })
+        .collect::<Result<Vec<FieldElement>, anyhow::Error>>()
+}
+
+fn tx_hash_to_felt<P, B>(hash: &<P as TransactionPool>::Hash) -> Result<FieldElement, Felt252WrapperError>
+where
+    P: TransactionPool<Block = B> + 'static,
+    B: BlockT,
+    <B as BlockT>::Extrinsic: Send + Sync + 'static,
+{
+    let hash_hex = format!("{:x?}", hash);
+    Felt252Wrapper::from_hex_be(&hash_hex).map(|f| f.0)
+}
 
 async fn submit_extrinsic<P, B>(
     pool: Arc<P>,
@@ -1729,4 +1805,14 @@ where
             Err(_) => Err(StarknetRpcApiError::InternalServerError),
         },
     }
+}
+
+/// The current timestamp in seconds.
+fn calculate_pending_block_timestamp() -> u64 {
+    let timestamp_in_millisecond = sp_timestamp::InherentDataProvider::from_system_time().as_millis();
+    timestamp_in_millisecond / 1000
+}
+
+fn is_pending_block(block_id: BlockId) -> bool {
+    block_id == BlockId::Tag(BlockTag::Pending)
 }

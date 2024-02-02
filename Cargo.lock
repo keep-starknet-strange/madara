@@ -6457,6 +6457,7 @@ dependencies = [
  "sp-blockchain",
  "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
+ "sp-timestamp",
  "starknet-core",
  "starknet-ff 0.3.5 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=64ebc36)",
  "starknet_api",
