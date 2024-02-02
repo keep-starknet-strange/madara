@@ -2,6 +2,7 @@
 
 ## Next release
 
+- feat(client/data-availability): implement custom error handling 
 - fix: remove waiting loop from `getTxReceipt`
 - feat: types in `mp-transactions` impl a method to get their version
 - feat: make L1 gas price a `const` of the `RuntimeConfig`
