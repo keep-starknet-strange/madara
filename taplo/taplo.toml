@@ -1,5 +1,5 @@
 include = ["**/*.toml"]
-exclude = ["**/bad.toml"]
+exclude = ["target/**/*.toml"]
 
 [formatting]
 align_entries = false

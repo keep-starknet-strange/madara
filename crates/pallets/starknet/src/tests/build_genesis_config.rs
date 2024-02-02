@@ -28,7 +28,7 @@ fn works_when_casm_clash_hash_in_mapping_is_known() {
 }
 
 #[test]
-#[should_panic(expected = "does not exist in contract_classes")]
+#[should_panic(expected = "do not exist in contract_classes")]
 fn fail_with_unknown_class_hash_in_sierra_mappings() {
     let mut t = frame_system::GenesisConfig::<default_mock::MockRuntime>::default().build_storage().unwrap();
     let genesis: GenesisConfig<default_mock::MockRuntime> = GenesisConfig {
