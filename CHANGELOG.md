@@ -2,7 +2,6 @@
 
 ## Next release
 
-
 - dev: check that class exist before using it in BuildGenesisConfig
 - fix: cairo1 contracts should be identified by their sierra class hash
 - fix(cli): repair broken cli for da conf
