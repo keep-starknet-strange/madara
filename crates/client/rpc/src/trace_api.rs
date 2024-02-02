@@ -200,10 +200,10 @@ fn try_get_funtion_invocation_from_call_info<B: BlockT>(
             .contract_class_hash_by_address(substrate_block_hash, call_info.call.storage_address)
             .ok_or_else(|| TryFuntionInvocationFromCallInfoError::ContractNotFound)?;
 
-        let field_element = FieldElement::from_byte_slice_be(computed_hash.0.bytes()).unwrap();
-        class_hash_cache.insert(call_info.call.storage_address, field_element);
+        let computed_hash = FieldElement::from_byte_slice_be(computed_hash.0.bytes()).unwrap();
+        class_hash_cache.insert(call_info.call.storage_address, computed_hash);
 
-        field_element
+        computed_hash
     };
 
     Ok(starknet_core::types::FunctionInvocation {
