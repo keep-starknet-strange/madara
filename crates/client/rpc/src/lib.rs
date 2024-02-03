@@ -51,8 +51,8 @@ use starknet_core::types::{
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, ExecutionResources, ExecutionResult, FeeEstimate,
     FieldElement, FunctionCall, Hash256, InvokeTransactionReceipt, InvokeTransactionResult,
     L1HandlerTransactionReceipt, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
-    MaybePendingTransactionReceipt, MsgFromL1, PendingBlockWithTxHashes, StateDiff, StateUpdate, SyncStatus,
-    SyncStatusType, Transaction, TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
+    MaybePendingTransactionReceipt, MsgFromL1, PendingBlockWithTxHashes, PendingBlockWithTxs, StateDiff, StateUpdate,
+    SyncStatus, SyncStatusType, Transaction, TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
 };
 use starknet_core::utils::get_selector_from_name;
 
@@ -1177,6 +1177,15 @@ where
     /// transactions. In case the specified block is not found, returns a `StarknetRpcApiError` with
     /// `BlockNotFound`.
     fn get_block_with_txs(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxs> {
+        let chain_id = self.chain_id()?;
+        let chain_id = Felt252Wrapper(chain_id.0);
+
+        if is_pending_block(block_id) {
+            let pending_block =
+                prepare_pending_block_with_txs::<B, C, P, H>(self.client.clone(), self.pool.clone(), chain_id)?;
+            return Ok(MaybePendingBlockWithTxs::PendingBlock(pending_block));
+        }
+
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("Block not found: '{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -1186,9 +1195,6 @@ where
 
         let block_hash = starknet_block.header().hash::<H>();
         let starknet_version = starknet_block.header().protocol_version;
-
-        let chain_id = self.chain_id()?;
-        let chain_id = Felt252Wrapper(chain_id.0);
 
         let opt_cached_transaction_hashes =
             self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into());
@@ -1695,8 +1701,9 @@ where
     let parent_hash = client.info().best_hash;
     let latest_block = get_block_by_block_hash(client.as_ref(), parent_hash).unwrap_or_default();
     let latest_block_header = latest_block.header();
-    let transactions = get_pending_txs_hashes(pool.as_ref());
-    let transactions = prepare_pending_txs_hashes::<P, B>(&transactions).map_err(CallError::Failed)?;
+    let transactions = get_pending_tx_hashes(pool.as_ref());
+    // TODO filter Starknet transactions
+    let transactions = prepare_pending_tx_hashes::<P, B>(&transactions).map_err(CallError::Failed)?;
 
     let pending_block = PendingBlockWithTxHashes {
         transactions,
@@ -1709,7 +1716,44 @@ where
     Ok(pending_block)
 }
 
-#[allow(dead_code)]
+fn prepare_pending_block_with_txs<B, C, P, H>(
+    client: Arc<C>,
+    pool: Arc<P>,
+    chain_id: Felt252Wrapper,
+) -> Result<PendingBlockWithTxs, CallError>
+where
+    B: BlockT,
+    H: HasherT + Send + Sync + 'static,
+    C: ProvideRuntimeApi<B>,
+    C: HeaderBackend<B> + 'static,
+    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
+    P: TransactionPool<Block = B> + 'static,
+{
+    let parent_hash = client.info().best_hash;
+    let latest_block = get_block_by_block_hash(client.as_ref(), parent_hash).unwrap_or_default();
+    let latest_block_header = latest_block.header();
+    let transactions = get_pending_txs(pool.as_ref());
+
+    let transactions = client
+        .runtime_api()
+        .extrinsic_filter(parent_hash, transactions)
+        .map_err(|e| anyhow::anyhow!("Unexpected error while filtering Pending Starknet Transactions: {:?}", e))
+        .map_err(CallError::Failed)?
+        .iter()
+        .map(|tx| to_starknet_core_tx(tx.clone(), tx.compute_hash::<H>(chain_id.0.into(), false).0))
+        .collect::<Vec<_>>();
+
+    let pending_block = PendingBlockWithTxs {
+        transactions,
+        l1_gas_price: latest_block_header.l1_gas_price.into(),
+        parent_hash: latest_block_header.hash::<H>().into(),
+        sequencer_address: Felt252Wrapper::from(latest_block_header.sequencer_address).into(),
+        starknet_version: latest_block_header.protocol_version.to_string(),
+        timestamp: calculate_pending_block_timestamp(),
+    };
+    Ok(pending_block)
+}
+
 fn get_pending_txs<P, B>(pool: &P) -> Vec<<B as BlockT>::Extrinsic>
 where
     P: TransactionPool<Block = B> + 'static,
@@ -1719,7 +1763,7 @@ where
     pool.ready().map(|tx| tx.data().clone()).collect()
 }
 
-fn get_pending_txs_hashes<P, B>(pool: &P) -> Vec<<P as TransactionPool>::Hash>
+fn get_pending_tx_hashes<P, B>(pool: &P) -> Vec<<P as TransactionPool>::Hash>
 where
     P: TransactionPool<Block = B> + 'static,
     B: BlockT,
@@ -1727,7 +1771,7 @@ where
     pool.ready().map(|tx| tx.hash().clone()).collect()
 }
 
-fn prepare_pending_txs_hashes<P, B>(hashes: &[<P as TransactionPool>::Hash]) -> Result<Vec<FieldElement>, anyhow::Error>
+fn prepare_pending_tx_hashes<P, B>(hashes: &[<P as TransactionPool>::Hash]) -> Result<Vec<FieldElement>, anyhow::Error>
 where
     P: TransactionPool<Block = B> + 'static,
     B: BlockT,
