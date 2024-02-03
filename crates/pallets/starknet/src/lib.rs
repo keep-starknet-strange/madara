@@ -30,7 +30,6 @@
 //! invoke, ...), which allow users to interact with the pallet and invoke state changes. These
 //! functions are annotated with weight and return a DispatchResult.
 // Ensure we're `no_std` when compiling for Wasm.
-#![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::large_enum_variant)]
 
 /// Starknet pallet.
@@ -747,14 +746,21 @@ pub mod pallet {
                 .longevity(T::TransactionLongevity::get())
                 .propagate(true);
 
-            // Make sure txs from same account are executed in correct order (nonce based ordering)
-            if let TxPriorityInfo::RegularTxs { sender_address, transaction_nonce, sender_nonce } = tx_priority_info {
-                valid_transaction_builder =
-                    valid_transaction_builder.and_provides((sender_address, Felt252Wrapper(transaction_nonce.0)));
-                if transaction_nonce > sender_nonce {
-                    valid_transaction_builder = valid_transaction_builder
-                        .and_requires((sender_address, Felt252Wrapper(transaction_nonce.0 - FieldElement::ONE)));
+            match tx_priority_info {
+                // Make sure txs from same account are executed in correct order (nonce based ordering)
+                TxPriorityInfo::RegularTxs { sender_address, transaction_nonce, sender_nonce } => {
+                    valid_transaction_builder =
+                        valid_transaction_builder.and_provides((sender_address, Felt252Wrapper(transaction_nonce.0)));
+                    if transaction_nonce > sender_nonce {
+                        valid_transaction_builder = valid_transaction_builder
+                            .and_requires((sender_address, Felt252Wrapper(transaction_nonce.0 - FieldElement::ONE)));
+                    }
                 }
+                TxPriorityInfo::L1Handler { nonce } => {
+                    valid_transaction_builder =
+                        valid_transaction_builder.and_provides((Felt252Wrapper::ZERO, Felt252Wrapper(nonce.0)));
+                }
+                _ => {}
             }
 
             valid_transaction_builder.build()

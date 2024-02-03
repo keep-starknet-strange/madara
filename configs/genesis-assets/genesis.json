@@ -58,7 +58,7 @@
       }
     ],
     [
-      "0x02f99bf9799ada84cd5ac0d0fe36b9d8f65efcb377cd2e8cf8309ad2daf15e4b",
+      "0x035ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276",
       {
         "path": "genesis-assets/NoValidateAccount.casm.json",
         "version": 1
@@ -122,7 +122,7 @@
     ],
     [
       "0x4",
-      "0x02f99bf9799ada84cd5ac0d0fe36b9d8f65efcb377cd2e8cf8309ad2daf15e4b"
+      "0x035ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276"
     ],
     [
       "0x1111",
@@ -175,7 +175,7 @@
     },
     {
       "contract_address": "0x4",
-      "class_hash": "0x02f99bf9799ada84cd5ac0d0fe36b9d8f65efcb377cd2e8cf8309ad2daf15e4b",
+      "class_hash": "0x035ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276",
       "name": "No Validation Account (cairo 1)",
       "private_key": null,
       "public_key": "0x0"

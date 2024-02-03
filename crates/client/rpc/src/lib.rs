@@ -190,9 +190,39 @@ where
     /// * `block_hash` - The hash of the block containing the transactions (starknet block).
     fn get_cached_transaction_hashes(&self, block_hash: H256) -> Option<Vec<H256>> {
         self.backend.mapping().cached_transaction_hashes_from_block_hash(block_hash).unwrap_or_else(|err| {
-            error!("{err}");
+            error!("Failed to read from cache: {err}");
             None
         })
+    }
+
+    fn try_txn_hash_from_cache(
+        &self,
+        tx_index: usize,
+        cached_transactions: &Option<Vec<H256>>,
+        transactions: &[mp_transactions::Transaction],
+        chain_id: Felt252Wrapper,
+    ) -> Result<Felt252Wrapper, StarknetRpcApiError> {
+        if let Some(txn_hashes) = &cached_transactions {
+            let txn_hash = (&txn_hashes
+                .get(tx_index)
+                .ok_or_else(|| {
+                    error!("Failed to retrieve transaction hash from cache, invalid index {}", tx_index);
+                    StarknetRpcApiError::InternalServerError
+                })?
+                .0)
+                .try_into()
+                .map_err(|_| {
+                    error!("Failed to convert transaction hash");
+                    StarknetRpcApiError::InternalServerError
+                })?;
+            Ok(txn_hash)
+        } else {
+            let transaction = &transactions.get(tx_index).ok_or_else(|| {
+                error!("Failed to retrieve transaction hash from starknet txs, invalid index {}", tx_index);
+                StarknetRpcApiError::InternalServerError
+            })?;
+            Ok(transaction.compute_hash::<H>(chain_id, false))
+        }
     }
 }
 
@@ -1436,23 +1466,39 @@ where
                 StarknetRpcApiError::InternalServerError
             })?;
 
-        let (tx_index, transaction) = self
-            .client
-            .runtime_api()
-            .get_index_and_tx_for_tx_hash(substrate_block_hash, block_extrinsics, chain_id, transaction_hash.into())
-            .map_err(|e| {
-                error!(
-                    "Failed to get index for transaction hash. Substrate block hash: {substrate_block_hash}, \
-                     transaction hash: {transaction_hash}, error: {e}"
-                );
+        let block_extrinsics_len = block_extrinsics.len();
+        let transactions =
+            self.client.runtime_api().extrinsic_filter(substrate_block_hash, block_extrinsics).map_err(|e| {
+                error!("Failed to filter extrinsics. Substrate block hash: {substrate_block_hash}, error: {e}");
                 StarknetRpcApiError::InternalServerError
-            })?
-            .expect("the transaction should be present in the substrate extrinsics"); // not reachable
+            })?;
+        let txn_hashes = self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into());
+        let mut tx_index = None;
+        let mut transaction = None;
+        for (index, tx) in transactions.iter().enumerate() {
+            let tx_hash = self.try_txn_hash_from_cache(index, &txn_hashes, &transactions, chain_id)?;
+            if tx_hash == transaction_hash.into() {
+                tx_index = Some(index);
+                transaction = Some(tx);
+                break;
+            }
+        }
+        if tx_index.is_none() || transaction.is_none() {
+            error!(
+                "Failed to find transaction hash in block. Substrate block hash: {substrate_block_hash}, transaction \
+                 hash: {transaction_hash}"
+            );
+            return Err(StarknetRpcApiError::InternalServerError.into());
+        }
+        let tx_index = tx_index.unwrap();
+        let transaction = transaction.unwrap();
+        // adding the inherents count to the tx_index to get the correct index in the block
+        let tx_index = tx_index + block_extrinsics_len - transactions.len();
 
         let events = self
             .client
             .runtime_api()
-            .get_events_for_tx_by_index(substrate_block_hash, tx_index)
+            .get_events_for_tx_by_index(substrate_block_hash, tx_index as u32)
             .map_err(|e| {
                 error!(
                     "Failed to get events for transaction index. Substrate block hash: {substrate_block_hash}, \
