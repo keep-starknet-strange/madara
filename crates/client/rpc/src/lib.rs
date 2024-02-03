@@ -890,9 +890,14 @@ where
     /// a pending block with transaction hashes, depending on the state of the requested block.
     /// In case the block is not found, returns a `StarknetRpcApiError` with `BlockNotFound`.
     fn get_block_with_tx_hashes(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxHashes> {
+        let chain_id = self.chain_id()?;
+
         if is_pending_block(block_id) {
-            let pending_block =
-                prepare_pending_block_with_tx_hashes::<B, C, P, H>(self.client.clone(), self.pool.clone())?;
+            let pending_block = prepare_pending_block_with_tx_hashes::<B, C, P, H>(
+                self.client.clone(),
+                self.pool.clone(),
+                Felt252Wrapper(chain_id.0),
+            )?;
             return Ok(MaybePendingBlockWithTxHashes::PendingBlock(pending_block));
         }
 
@@ -902,8 +907,6 @@ where
         })?;
 
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)?;
-
-        let chain_id = self.chain_id()?;
         let starknet_version = starknet_block.header().protocol_version;
         let l1_gas_price = starknet_block.header().l1_gas_price;
         let block_hash = starknet_block.header().hash::<H>();
@@ -1689,6 +1692,7 @@ where
 fn prepare_pending_block_with_tx_hashes<B, C, P, H>(
     client: Arc<C>,
     pool: Arc<P>,
+    chain_id: Felt252Wrapper,
 ) -> Result<PendingBlockWithTxHashes, CallError>
 where
     B: BlockT,
@@ -1701,9 +1705,10 @@ where
     let parent_hash = client.info().best_hash;
     let latest_block = get_block_by_block_hash(client.as_ref(), parent_hash).unwrap_or_default();
     let latest_block_header = latest_block.header();
-    let transactions = get_pending_tx_hashes(pool.as_ref());
-    // TODO filter Starknet transactions
-    let transactions = prepare_pending_tx_hashes::<P, B>(&transactions).map_err(CallError::Failed)?;
+    let transactions = get_pending_txs::<B, C, P>(client.as_ref(), pool.as_ref(), parent_hash)?
+        .iter()
+        .map(|tx| tx.compute_hash::<H>(chain_id.0.into(), false).0)
+        .collect::<Vec<_>>();
 
     let pending_block = PendingBlockWithTxHashes {
         transactions,
@@ -1732,13 +1737,8 @@ where
     let parent_hash = client.info().best_hash;
     let latest_block = get_block_by_block_hash(client.as_ref(), parent_hash).unwrap_or_default();
     let latest_block_header = latest_block.header();
-    let transactions = get_pending_txs(pool.as_ref());
 
-    let transactions = client
-        .runtime_api()
-        .extrinsic_filter(parent_hash, transactions)
-        .map_err(|e| anyhow::anyhow!("Unexpected error while filtering Pending Starknet Transactions: {:?}", e))
-        .map_err(CallError::Failed)?
+    let transactions = get_pending_txs::<B, C, P>(client.as_ref(), pool.as_ref(), parent_hash)?
         .iter()
         .map(|tx| to_starknet_core_tx(tx.clone(), tx.compute_hash::<H>(chain_id.0.into(), false).0))
         .collect::<Vec<_>>();
@@ -1754,45 +1754,31 @@ where
     Ok(pending_block)
 }
 
-fn get_pending_txs<P, B>(pool: &P) -> Vec<<B as BlockT>::Extrinsic>
+fn get_pending_txs<B, C, P>(
+    client: &C,
+    pool: &P,
+    latest_block: B::Hash,
+) -> Result<Vec<mp_transactions::Transaction>, CallError>
 where
-    P: TransactionPool<Block = B> + 'static,
     B: BlockT,
-    <B as BlockT>::Extrinsic: Send + Sync + 'static,
+    C: ProvideRuntimeApi<B>,
+    C: HeaderBackend<B> + 'static,
+    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
+    P: TransactionPool<Block = B> + 'static,
 {
-    pool.ready().map(|tx| tx.data().clone()).collect()
-}
+    // Fetch all Pending Txs from Transaction Pool
+    // Operates as RPC Call `author_pendingExtrinsics`
+    // See https://github.com/paritytech/polkadot-sdk/blob/release-polkadot-v1.6.0/substrate/client/rpc/src/author/mod.rs#L153-L155
+    // But fetches pending transactions as Vec<B::Extrinsic>
+    let pending_transactions: Vec<B::Extrinsic> = pool.ready().map(|tx| tx.data().clone()).collect();
 
-fn get_pending_tx_hashes<P, B>(pool: &P) -> Vec<<P as TransactionPool>::Hash>
-where
-    P: TransactionPool<Block = B> + 'static,
-    B: BlockT,
-{
-    pool.ready().map(|tx| tx.hash().clone()).collect()
-}
-
-fn prepare_pending_tx_hashes<P, B>(hashes: &[<P as TransactionPool>::Hash]) -> Result<Vec<FieldElement>, anyhow::Error>
-where
-    P: TransactionPool<Block = B> + 'static,
-    B: BlockT,
-{
-    hashes
-        .iter()
-        .map(|hash| {
-            tx_hash_to_felt::<P, B>(hash)
-                .map_err(|e| anyhow::anyhow!("The hash is an invalid felt: '{:#?}', error: '{:?}'", hash, e))
-        })
-        .collect::<Result<Vec<FieldElement>, anyhow::Error>>()
-}
-
-fn tx_hash_to_felt<P, B>(hash: &<P as TransactionPool>::Hash) -> Result<FieldElement, Felt252WrapperError>
-where
-    P: TransactionPool<Block = B> + 'static,
-    B: BlockT,
-    <B as BlockT>::Extrinsic: Send + Sync + 'static,
-{
-    let hash_hex = format!("{:x?}", hash);
-    Felt252Wrapper::from_hex_be(&hash_hex).map(|f| f.0)
+    // Use Runtime API to filter all Pending Txs
+    // And get only Starknet Txs (Pallet Starknet calls) as Vec<mp_transactions::Transaction>
+    client
+        .runtime_api()
+        .extrinsic_filter(latest_block, pending_transactions)
+        .map_err(|e| anyhow::anyhow!("Unexpected error while filtering Pending Starknet Transactions: {:?}", e))
+        .map_err(CallError::Failed)
 }
 
 async fn submit_extrinsic<P, B>(
