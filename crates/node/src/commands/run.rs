@@ -170,7 +170,6 @@ fn init_da_client(da_layer: DaLayer, da_path: &Path) -> Result<Box<dyn DaClient 
             let ethereum_conf: EthereumConfig =
                 serde_json::from_reader(file).map_err(|e| sc_cli::Error::Input(e.to_string()))?;
             Box::new(EthereumClient::try_from(ethereum_conf).map_err(|e| sc_cli::Error::Input(e.to_string()))?)
-
         }
         #[cfg(feature = "avail")]
         DaLayer::Avail => {
