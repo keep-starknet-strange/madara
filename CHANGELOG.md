@@ -3,6 +3,11 @@
 ## Next release
 
 - feat(rpc): added `get_state_update` real values from DA db
+- refacto: remove abusive `TryInto` impl
+- dev: optimize tx trace creation
+- dev: make Madara std compatible
+- CI: fix taplo version
+- chore: add cache usage for `getEvents` and `getTransactionReceipt`
 - fix: cairo1 contracts should be identified by their sierra class hash
 - fix(cli): repair broken cli for da conf
 - feat(client): on `add_declare_transaction` store sierra contract classes in
@@ -273,3 +278,4 @@
 - branding: use new logo in the README
 - dev: Get the block status from the actual block in get_block_with_tx_hashes
 - fix: l1-l2 messaging
+- dev : clean contracts and compiled files
