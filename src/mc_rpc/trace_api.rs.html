@@ -299,7 +299,34 @@
 <a href="#299" id="299">299</a>
 <a href="#300" id="300">300</a>
 <a href="#301" id="301">301</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>blockifier::execution::entry_point::CallInfo;
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
+
+<span class="kw">use </span>blockifier::execution::entry_point::CallInfo;
 <span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>blockifier::transaction::objects::TransactionExecutionInfo;
 <span class="kw">use </span>jsonrpsee::core::{async_trait, RpcResult};
@@ -318,6 +345,7 @@
 <span class="kw">use </span>sp_api::ProvideRuntimeApi;
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
 <span class="kw">use </span>sp_runtime::traits::Block <span class="kw">as </span>BlockT;
+<span class="kw">use </span>starknet_api::api_core::ContractAddress;
 <span class="kw">use </span>starknet_core::types::{
     BlockId, BroadcastedTransaction, DeclareTransactionTrace, DeployAccountTransactionTrace, ExecuteInvocation,
     FeeEstimate, InvokeTransactionTrace, RevertedInvocation, SimulatedTransaction, SimulationFlag, TransactionTrace,
@@ -454,6 +482,7 @@
     storage_override: <span class="kw-2">&amp;</span><span class="kw">dyn </span>StorageOverride&lt;B&gt;,
     substrate_block_hash: B::Hash,
     call_info: <span class="kw-2">&amp;</span>CallInfo,
+    class_hash_cache: <span class="kw-2">&amp;mut </span>HashMap&lt;ContractAddress, FieldElement&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;starknet_core::types::FunctionInvocation, TryFuntionInvocationFromCallInfoError&gt; {
     <span class="kw">let </span>messages = collect_call_info_ordered_messages(call_info);
     <span class="kw">let </span>events = blockifier_to_starknet_rs_ordered_events(<span class="kw-2">&amp;</span>call_info.execution.events);
@@ -461,7 +490,9 @@
     <span class="kw">let </span>inner_calls = call_info
         .inner_calls
         .iter()
-        .map(|call| try_get_funtion_invocation_from_call_info(storage_override, substrate_block_hash, call))
+        .map(|call| {
+            try_get_funtion_invocation_from_call_info(storage_override, substrate_block_hash, call, class_hash_cache)
+        })
         .collect::&lt;<span class="prelude-ty">Result</span>&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>;
 
     call_info.get_sorted_l2_to_l1_payloads_length()<span class="question-mark">?</span>;
@@ -487,12 +518,18 @@
     // address&quot;. We have to do this decution ourselves here
     </span><span class="kw">let </span>class_hash = <span class="kw">if let </span><span class="prelude-val">Some</span>(class_hash) = call_info.call.class_hash {
         class_hash.<span class="number">0</span>.into()
+    } <span class="kw">else if let </span><span class="prelude-val">Some</span>(cached_hash) = class_hash_cache.get(<span class="kw-2">&amp;</span>call_info.call.storage_address) {
+        <span class="kw-2">*</span>cached_hash
     } <span class="kw">else </span>{
-        <span class="kw">let </span>class_hash = storage_override
+        <span class="comment">// Compute and cache the class hash
+        </span><span class="kw">let </span>computed_hash = storage_override
             .contract_class_hash_by_address(substrate_block_hash, call_info.call.storage_address)
             .ok_or_else(|| TryFuntionInvocationFromCallInfoError::ContractNotFound)<span class="question-mark">?</span>;
 
-        FieldElement::from_byte_slice_be(class_hash.<span class="number">0</span>.bytes()).unwrap()
+        <span class="kw">let </span>computed_hash = FieldElement::from_byte_slice_be(computed_hash.<span class="number">0</span>.bytes()).unwrap();
+        class_hash_cache.insert(call_info.call.storage_address, computed_hash);
+
+        computed_hash
     };
 
     <span class="prelude-val">Ok</span>(starknet_core::types::FunctionInvocation {
@@ -519,6 +556,7 @@
     &gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;SimulatedTransaction&gt;, ConvertCallInfoToExecuteInvocationError&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>results = <span class="macro">vec!</span>[];
+    <span class="kw">let </span><span class="kw-2">mut </span>class_hash_cache: HashMap&lt;ContractAddress, FieldElement&gt; = HashMap::new();
     <span class="kw">for </span>(tx_type, res) <span class="kw">in </span>tx_types.iter().zip(transaction_execution_results.iter()) {
         <span class="kw">match </span>res {
             <span class="prelude-val">Ok</span>(tx_exec_info) =&gt; {
@@ -528,7 +566,12 @@
                     .validate_call_info
                     .as_ref()
                     .map(|call_info| {
-                        try_get_funtion_invocation_from_call_info(storage_override, substrate_block_hash, call_info)
+                        try_get_funtion_invocation_from_call_info(
+                            storage_override,
+                            substrate_block_hash,
+                            call_info,
+                            <span class="kw-2">&amp;mut </span>class_hash_cache,
+                        )
                     })
                     .transpose()<span class="question-mark">?</span>;
                 <span class="comment">// If simulated with `SimulationFlag::SkipFeeCharge` this will be `None`
@@ -537,7 +580,12 @@
                     .fee_transfer_call_info
                     .as_ref()
                     .map(|call_info| {
-                        try_get_funtion_invocation_from_call_info(storage_override, substrate_block_hash, call_info)
+                        try_get_funtion_invocation_from_call_info(
+                            storage_override,
+                            substrate_block_hash,
+                            call_info,
+                            <span class="kw-2">&amp;mut </span>class_hash_cache,
+                        )
                     })
                     .transpose()<span class="question-mark">?</span>;
 
@@ -552,6 +600,7 @@
                                 substrate_block_hash,
                                 <span class="comment">// Safe to unwrap because is only `None`  for `Declare` txs
                                 </span>tx_exec_info.execute_call_info.as_ref().unwrap(),
+                                <span class="kw-2">&amp;mut </span>class_hash_cache,
                             )<span class="question-mark">?</span>)
                         },
                         fee_transfer_invocation,
@@ -572,6 +621,7 @@
                                 substrate_block_hash,
                                 <span class="comment">// Safe to unwrap because is only `None`  for `Declare` txs
                                 </span>tx_exec_info.execute_call_info.as_ref().unwrap(),
+                                <span class="kw-2">&amp;mut </span>class_hash_cache,
                             )<span class="question-mark">?</span>,
                             fee_transfer_invocation,
                             <span class="comment">// TODO(#1291): Compute state diff correctly

@@ -277,7 +277,14 @@
 <a href="#277" id="277">277</a>
 <a href="#278" id="278">278</a>
 <a href="#279" id="279">279</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::fs::File;
+<span class="kw">use </span>std::path::{Path, PathBuf};
 
 <span class="kw">use </span>clap::ValueHint::FilePath;
 <span class="kw">use </span>madara_runtime::SealingMode;
@@ -434,20 +441,25 @@
     }
 }
 
-<span class="kw">fn </span>init_da_client(da_layer: DaLayer, da_path: PathBuf) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>DaClient + Send + Sync&gt;&gt; {
+<span class="kw">fn </span>init_da_client(da_layer: DaLayer, da_path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>DaClient + Send + Sync&gt;&gt; {
+    <span class="kw">let </span>file = File::open(da_path)<span class="question-mark">?</span>;
+
     <span class="kw">let </span>da_client: Box&lt;<span class="kw">dyn </span>DaClient + Send + Sync&gt; = <span class="kw">match </span>da_layer {
         <span class="attr">#[cfg(feature = <span class="string">&quot;celestia&quot;</span>)]
         </span>DaLayer::Celestia =&gt; {
-            <span class="kw">let </span>celestia_conf = CelestiaConfig::try_from(<span class="kw-2">&amp;</span>da_path)<span class="question-mark">?</span>;
+            <span class="kw">let </span>celestia_conf: CelestiaConfig =
+                serde_json::from_reader(file).map_err(|e| sc_cli::Error::Input(e.to_string()))<span class="question-mark">?</span>;
             Box::new(CelestiaClient::try_from(celestia_conf).map_err(|e| sc_cli::Error::Input(e.to_string()))<span class="question-mark">?</span>)
         }
         DaLayer::Ethereum =&gt; {
-            <span class="kw">let </span>ethereum_conf = EthereumConfig::try_from(<span class="kw-2">&amp;</span>da_path)<span class="question-mark">?</span>;
+            <span class="kw">let </span>ethereum_conf: EthereumConfig =
+                serde_json::from_reader(file).map_err(|e| sc_cli::Error::Input(e.to_string()))<span class="question-mark">?</span>;
             Box::new(EthereumClient::try_from(ethereum_conf)<span class="question-mark">?</span>)
         }
         <span class="attr">#[cfg(feature = <span class="string">&quot;avail&quot;</span>)]
         </span>DaLayer::Avail =&gt; {
-            <span class="kw">let </span>avail_conf = AvailConfig::try_from(<span class="kw-2">&amp;</span>da_path)<span class="question-mark">?</span>;
+            <span class="kw">let </span>avail_conf: AvailConfig =
+                serde_json::from_reader(file).map_err(|e| sc_cli::Error::Input(e.to_string()))<span class="question-mark">?</span>;
             Box::new(AvailClient::try_from(avail_conf).map_err(|e| sc_cli::Error::Input(e.to_string()))<span class="question-mark">?</span>)
         }
     };
@@ -480,7 +492,7 @@
             };
 
             <span class="macro">log::info!</span>(<span class="string">&quot;Initializing DA client with layer: {:?}&quot;</span>, da_layer);
-            <span class="prelude-val">Some</span>(init_da_client(da_layer, da_conf)<span class="question-mark">?</span>)
+            <span class="prelude-val">Some</span>(init_da_client(da_layer, <span class="kw-2">&amp;</span>da_conf)<span class="question-mark">?</span>)
         }
         <span class="prelude-val">None </span>=&gt; {
             <span class="macro">log::info!</span>(<span class="string">&quot;Madara initialized w/o DA layer&quot;</span>);
