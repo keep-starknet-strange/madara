@@ -1,6 +1,3 @@
-use std::fs::File;
-use std::path::PathBuf;
-
 use serde::{Deserialize, Serialize};
 
 use crate::DaMode;
@@ -27,15 +24,6 @@ pub struct EthereumConfig {
     pub mode: DaMode,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub poll_interval_ms: Option<u64>,
-}
-
-impl TryFrom<&PathBuf> for EthereumConfig {
-    type Error = String;
-
-    fn try_from(path: &PathBuf) -> Result<Self, Self::Error> {
-        let file = File::open(path).map_err(|e| format!("error opening da config: {e}"))?;
-        serde_json::from_reader(file).map_err(|e| format!("error parsing da config: {e}"))
-    }
 }
 
 fn default_http() -> String {
