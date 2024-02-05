@@ -41,6 +41,7 @@ use sp_core::H256;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use sp_runtime::transaction_validity::InvalidTransaction;
 use sp_runtime::DispatchError;
+use starknet_api::block::BlockHash;
 use starknet_api::transaction::Calldata;
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
@@ -132,6 +133,8 @@ impl<A: ChainApi, B, BE, G, C, P, H> Starknet<A, B, BE, G, C, P, H>
 where
     B: BlockT,
     C: HeaderBackend<B> + 'static,
+    C: ProvideRuntimeApi<B>,
+    C::Api: StarknetRuntimeApi<B>,
     H: HasherT + Send + Sync + 'static,
 {
     pub fn current_block_hash(&self) -> Result<H256, ApiError> {
@@ -193,6 +196,19 @@ where
             error!("Failed to read from cache: {err}");
             None
         })
+    }
+
+    /// Returns the state diff for the given block.
+    ///
+    /// # Arguments
+    ///
+    /// * `starknet_block_hash` - The hash of the block containing the state diff (starknet block).
+    fn get_state_diff(&self, starknet_block_hash: &BlockHash) -> Result<StateDiff, String> {
+        let state_diff = self.backend.da().state_diff(starknet_block_hash)?;
+
+        let rpc_state_diff = to_rpc_state_diff(state_diff);
+
+        Ok(rpc_state_diff)
     }
 
     fn try_txn_hash_from_cache(
@@ -1256,18 +1272,18 @@ where
             FieldElement::default()
         };
 
+        let starknet_block_hash = BlockHash(starknet_block.header().hash::<H>().into());
+
+        let state_diff = self.get_state_diff(&starknet_block_hash).map_err(|e| {
+            error!("Failed to get state diff. Starknet block hash: {starknet_block_hash}, error: {e}");
+            StarknetRpcApiError::InternalServerError
+        })?;
+
         Ok(StateUpdate {
             block_hash: starknet_block.header().hash::<H>().into(),
             new_root: Felt252Wrapper::from(self.backend.temporary_global_state_root_getter()).into(),
             old_root,
-            state_diff: StateDiff {
-                storage_diffs: Vec::new(),
-                deprecated_declared_classes: Vec::new(),
-                declared_classes: Vec::new(),
-                deployed_contracts: Vec::new(),
-                replaced_classes: Vec::new(),
-                nonces: Vec::new(),
-            },
+            state_diff,
         })
     }
 

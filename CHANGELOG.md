@@ -2,6 +2,8 @@
 
 ## Next release
 
+- feat(rpc): added `get_state_update` real values from DA db
+
 ## v0.7.0
 
 - chore: release v0.7.0
