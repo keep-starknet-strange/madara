@@ -17,7 +17,8 @@ fn works_when_sierra_clash_hash_in_mapping_is_known() {
 }
 
 #[test]
-fn works_when_casm_clash_hash_in_mapping_is_known() {
+#[should_panic(expected = "does not exist in contract_classes")]
+fn fails_when_only_casm_clash_hash_in_mapping_is_known() {
     let mut t = frame_system::GenesisConfig::<default_mock::MockRuntime>::default().build_storage().unwrap();
     let genesis: GenesisConfig<default_mock::MockRuntime> = GenesisConfig {
         sierra_to_casm_class_hash: vec![(ClassHash(1u8.into()), ClassHash(42u8.into()))],
@@ -28,7 +29,7 @@ fn works_when_casm_clash_hash_in_mapping_is_known() {
 }
 
 #[test]
-#[should_panic(expected = "do not exist in contract_classes")]
+#[should_panic(expected = "does not exist in contract_classes")]
 fn fail_with_unknown_class_hash_in_sierra_mappings() {
     let mut t = frame_system::GenesisConfig::<default_mock::MockRuntime>::default().build_storage().unwrap();
     let genesis: GenesisConfig<default_mock::MockRuntime> = GenesisConfig {

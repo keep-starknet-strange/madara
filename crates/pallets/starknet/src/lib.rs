@@ -377,15 +377,10 @@ pub mod pallet {
             }
 
             for (sierra_class_hash, casm_class_hash) in self.sierra_to_casm_class_hash.iter() {
-                // ContractClasses can be indexed both by Sierra and Casm hashes, so both should be checked
-                let is_sierra_hash_in_contracts = ContractClasses::<T>::contains_key(sierra_class_hash);
-                let is_casm_hash_in_contracts = ContractClasses::<T>::contains_key(casm_class_hash);
                 assert!(
-                    is_sierra_hash_in_contracts || is_casm_hash_in_contracts,
-                    "Neither Sierra {} nor Casm class hash {} from sierra_class_hash_to_casm_class_hash do not exist \
-                     in contract_classes",
+                    ContractClasses::<T>::contains_key(sierra_class_hash),
+                    "Sierra class hash {} does not exist in contract_classes",
                     sierra_class_hash,
-                    casm_class_hash,
                 );
                 CompiledClassHashes::<T>::insert(sierra_class_hash, CompiledClassHash(casm_class_hash.0));
             }
