@@ -29,7 +29,7 @@ mod Account {
     }
 
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     fn __validate_deploy__(
         self: @ContractState,
         class_hash: felt252,
@@ -39,7 +39,6 @@ mod Account {
         self.validate_transaction()
     }
 
-    #[external(v0)]
     impl AccountContractImpl of starknet::account::AccountContract<ContractState> {
         fn __validate_declare__(self: @ContractState, class_hash: felt252) -> felt252 {
             self.validate_transaction()
@@ -64,9 +63,9 @@ mod Account {
                         let mut res = call_contract_syscall(
                             address: call.to,
                             entry_point_selector: call.selector,
-                            calldata: call.calldata.span()
+                            calldata: call.calldata
                         )
-                            .unwrap_syscall();
+                            .unwrap();
                         result.append(res);
                     },
                     Option::None(()) => {

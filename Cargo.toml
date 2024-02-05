@@ -79,7 +79,7 @@ incremental = true
 authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
 edition = "2021"
 repository = "https://github.com/keep-starknet-strange/madara/"
-version = "0.6.0"
+version = "0.7.0"
 
 [workspace.dependencies]
 # Substrate frame dependencies

@@ -3,6 +3,11 @@
 ## Next release
 
 - feat(client/data-availability): implement custom error handling
+
+## v0.7.0
+
+- chore: release v0.7.0
+- refacto: remove abusive `TryInto` impl
 - dev: optimize tx trace creation
 - dev: make Madara std compatible
 - CI: fix taplo version
@@ -277,3 +282,4 @@
 - branding: use new logo in the README
 - dev: Get the block status from the actual block in get_block_with_tx_hashes
 - fix: l1-l2 messaging
+- dev : clean contracts and compiled files
