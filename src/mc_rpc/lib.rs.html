@@ -1732,6 +1732,22 @@
 <a href="#1732" id="1732">1732</a>
 <a href="#1733" id="1733">1733</a>
 <a href="#1734" id="1734">1734</a>
+<a href="#1735" id="1735">1735</a>
+<a href="#1736" id="1736">1736</a>
+<a href="#1737" id="1737">1737</a>
+<a href="#1738" id="1738">1738</a>
+<a href="#1739" id="1739">1739</a>
+<a href="#1740" id="1740">1740</a>
+<a href="#1741" id="1741">1741</a>
+<a href="#1742" id="1742">1742</a>
+<a href="#1743" id="1743">1743</a>
+<a href="#1744" id="1744">1744</a>
+<a href="#1745" id="1745">1745</a>
+<a href="#1746" id="1746">1746</a>
+<a href="#1747" id="1747">1747</a>
+<a href="#1748" id="1748">1748</a>
+<a href="#1749" id="1749">1749</a>
+<a href="#1750" id="1750">1750</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1775,6 +1791,7 @@
 <span class="kw">use </span>sp_runtime::traits::{Block <span class="kw">as </span>BlockT, Header <span class="kw">as </span>HeaderT};
 <span class="kw">use </span>sp_runtime::transaction_validity::InvalidTransaction;
 <span class="kw">use </span>sp_runtime::DispatchError;
+<span class="kw">use </span>starknet_api::block::BlockHash;
 <span class="kw">use </span>starknet_api::transaction::Calldata;
 <span class="kw">use </span>starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
@@ -1866,6 +1883,8 @@
 <span class="kw">where
     </span>B: BlockT,
     C: HeaderBackend&lt;B&gt; + <span class="lifetime">&#39;static</span>,
+    C: ProvideRuntimeApi&lt;B&gt;,
+    C::Api: StarknetRuntimeApi&lt;B&gt;,
     H: HasherT + Send + Sync + <span class="lifetime">&#39;static</span>,
 {
     <span class="kw">pub fn </span>current_block_hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;H256, ApiError&gt; {
@@ -1927,6 +1946,19 @@
             <span class="macro">error!</span>(<span class="string">&quot;Failed to read from cache: {err}&quot;</span>);
             <span class="prelude-val">None
         </span>})
+    }
+
+    <span class="doccomment">/// Returns the state diff for the given block.
+    ///
+    /// # Arguments
+    ///
+    /// * `starknet_block_hash` - The hash of the block containing the state diff (starknet block).
+    </span><span class="kw">fn </span>get_state_diff(<span class="kw-2">&amp;</span><span class="self">self</span>, starknet_block_hash: <span class="kw-2">&amp;</span>BlockHash) -&gt; <span class="prelude-ty">Result</span>&lt;StateDiff, String&gt; {
+        <span class="kw">let </span>state_diff = <span class="self">self</span>.backend.da().state_diff(starknet_block_hash)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>rpc_state_diff = to_rpc_state_diff(state_diff);
+
+        <span class="prelude-val">Ok</span>(rpc_state_diff)
     }
 
     <span class="kw">fn </span>try_txn_hash_from_cache(
@@ -2990,18 +3022,18 @@
             FieldElement::default()
         };
 
+        <span class="kw">let </span>starknet_block_hash = BlockHash(starknet_block.header().hash::&lt;H&gt;().into());
+
+        <span class="kw">let </span>state_diff = <span class="self">self</span>.get_state_diff(<span class="kw-2">&amp;</span>starknet_block_hash).map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;Failed to get state diff. Starknet block hash: {starknet_block_hash}, error: {e}&quot;</span>);
+            StarknetRpcApiError::InternalServerError
+        })<span class="question-mark">?</span>;
+
         <span class="prelude-val">Ok</span>(StateUpdate {
             block_hash: starknet_block.header().hash::&lt;H&gt;().into(),
             new_root: Felt252Wrapper::from(<span class="self">self</span>.backend.temporary_global_state_root_getter()).into(),
             old_root,
-            state_diff: StateDiff {
-                storage_diffs: Vec::new(),
-                deprecated_declared_classes: Vec::new(),
-                declared_classes: Vec::new(),
-                deployed_contracts: Vec::new(),
-                replaced_classes: Vec::new(),
-                nonces: Vec::new(),
-            },
+            state_diff,
         })
     }
 

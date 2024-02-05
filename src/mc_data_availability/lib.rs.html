@@ -242,11 +242,6 @@
 <a href="#242" id="242">242</a>
 <a href="#243" id="243">243</a>
 <a href="#244" id="244">244</a>
-<a href="#245" id="245">245</a>
-<a href="#246" id="246">246</a>
-<a href="#247" id="247">247</a>
-<a href="#248" id="248">248</a>
-<a href="#249" id="249">249</a>
 </pre></div><pre class="rust"><code><span class="attr">#[cfg(feature = <span class="string">&quot;avail&quot;</span>)]
 </span><span class="kw">pub mod </span>avail;
 <span class="attr">#[cfg(feature = <span class="string">&quot;celestia&quot;</span>)]
@@ -276,7 +271,7 @@
 <span class="kw">use </span>sp_runtime::traits::Block <span class="kw">as </span>BlockT;
 <span class="kw">use </span>starknet_api::block::BlockHash;
 <span class="kw">use </span>starknet_api::state::ThinStateDiff;
-<span class="kw">use </span>utils::state_diff_to_calldata;
+<span class="kw">use </span>utils::block_data_to_calldata;
 
 <span class="kw">use </span><span class="kw">crate</span>::da_metrics::DaMetrics;
 
@@ -467,11 +462,9 @@
     block_da_data: BlockDAData,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), anyhow::Error&gt; {
     <span class="kw">let </span>block_hash = block_da_data.block_hash;
+
     <span class="comment">// store the state diff
-    </span>madara_backend
-        .da()
-        .store_state_diff(<span class="kw-2">&amp;</span>block_hash, state_diff_to_calldata(block_da_data))
-        .map_err(|e| <span class="macro">anyhow!</span>(<span class="string">&quot;{e}&quot;</span>))<span class="question-mark">?</span>;
+    </span>madara_backend.da().store_state_diff(<span class="kw-2">&amp;</span>block_hash, <span class="kw-2">&amp;</span>block_da_data.state_diff).map_err(|e| <span class="macro">anyhow!</span>(<span class="string">&quot;{e}&quot;</span>))<span class="question-mark">?</span>;
 
     <span class="comment">// Query last written state
     // TODO: this value will be used to ensure the correct state diff is being written in
@@ -482,16 +475,13 @@
         DaMode::Validity =&gt; {
             <span class="comment">// Check the SHARP status of last_proved + 1
             // Write the publish state diff of last_proved + 1
-            </span><span class="macro">log::info!</span>(<span class="string">&quot;validity da mode not implemented&quot;</span>);
+            </span><span class="macro">log::info!</span>(<span class="string">&quot;[VALIDITY] not implemented&quot;</span>);
         }
-        DaMode::Sovereign =&gt; <span class="kw">match </span>madara_backend.da().state_diff(<span class="kw-2">&amp;</span>block_hash) {
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(state_diff)) =&gt; {
-                da_client.publish_state_diff(state_diff).<span class="kw">await</span>.map_err(|e| <span class="macro">anyhow!</span>(<span class="string">&quot;DA PUBLISH ERROR: {e}&quot;</span>))<span class="question-mark">?</span>;
-            }
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">&quot;there is no state diff stored for block {}&quot;</span>, block_hash))<span class="question-mark">?</span>,
-            <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">&quot;could not pull state diff for block {}: {}&quot;</span>, block_hash, e))<span class="question-mark">?</span>,
-        },
-        DaMode::Volition =&gt; <span class="macro">log::info!</span>(<span class="string">&quot;volition da mode not implemented&quot;</span>),
+        DaMode::Sovereign =&gt; {
+            <span class="kw">let </span>calldata = block_data_to_calldata(block_da_data);
+            da_client.publish_state_diff(calldata).<span class="kw">await</span>.map_err(|e| <span class="macro">anyhow!</span>(<span class="string">&quot;[SOVEREIGN] publish error: {e}&quot;</span>))<span class="question-mark">?
+        </span>}
+        DaMode::Volition =&gt; <span class="macro">log::info!</span>(<span class="string">&quot;[VOLITION] not implemented&quot;</span>),
     };
 
     <span class="prelude-val">Ok</span>(())
