@@ -3,6 +3,7 @@
 ## Next release
 
 - feat(client/data-availability): implement custom error handling
+- dev: optimize tx trace creation
 - dev: make Madara std compatible
 - CI: fix taplo version
 - chore: add cache usage for `getEvents` and `getTransactionReceipt`
