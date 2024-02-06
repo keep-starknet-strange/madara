@@ -12252,6 +12252,7 @@ dependencies = [
  "starknet-ff 0.3.5 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=64ebc36)",
  "starknet-providers",
  "starknet-signers",
+ "starknet_api",
  "thiserror",
  "tokio",
  "url",
