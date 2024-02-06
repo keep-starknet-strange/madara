@@ -22,7 +22,7 @@ pub use mc_rpc_core::{
     StarknetWriteRpcApiServer,
 };
 use mc_storage::OverrideHandle;
-use mp_felt::{Felt252Wrapper, Felt252WrapperError};
+use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
@@ -50,9 +50,10 @@ use starknet_core::types::{
     DeclareTransactionReceipt, DeclareTransactionResult, DeployAccountTransactionReceipt,
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, ExecutionResources, ExecutionResult, FeeEstimate,
     FieldElement, FunctionCall, Hash256, InvokeTransactionReceipt, InvokeTransactionResult,
-    L1HandlerTransactionReceipt, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
-    MaybePendingTransactionReceipt, MsgFromL1, PendingBlockWithTxHashes, PendingBlockWithTxs, StateDiff, StateUpdate,
-    SyncStatus, SyncStatusType, Transaction, TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
+    L1HandlerTransactionReceipt, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingStateUpdate,
+    MaybePendingTransactionReceipt, MsgFromL1, PendingBlockWithTxHashes, PendingBlockWithTxs, PendingStateUpdate,
+    StateDiff, StateUpdate, SyncStatus, SyncStatusType, Transaction, TransactionExecutionStatus,
+    TransactionFinalityStatus, TransactionReceipt,
 };
 use starknet_core::utils::get_selector_from_name;
 
@@ -1252,7 +1253,25 @@ where
     /// the state of the network as a result of the block's execution. This can include a confirmed
     /// state update or a pending state update. If the block is not found, returns a
     /// `StarknetRpcApiError` with `BlockNotFound`.
-    fn get_state_update(&self, block_id: BlockId) -> RpcResult<StateUpdate> {
+    fn get_state_update(&self, block_id: BlockId) -> RpcResult<MaybePendingStateUpdate> {
+        if is_pending_block(block_id) {
+            let state_diff = StateDiff {
+                storage_diffs: Vec::new(),
+                deprecated_declared_classes: Vec::new(),
+                declared_classes: Vec::new(),
+                deployed_contracts: Vec::new(),
+                replaced_classes: Vec::new(),
+                nonces: Vec::new(),
+            };
+
+            let latest_block = self.client.info().best_hash;
+            let latest_block = get_block_by_block_hash(self.client.as_ref(), latest_block).unwrap_or_default();
+            let old_root = self.backend.temporary_global_state_root_getter().into();
+            let pending_state_update = PendingStateUpdate { old_root, state_diff };
+
+            return Ok(MaybePendingStateUpdate::PendingUpdate(pending_state_update));
+        }
+
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -1282,12 +1301,14 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        Ok(StateUpdate {
+        let state_update = StateUpdate {
             block_hash: starknet_block.header().hash::<H>().into(),
             new_root: Felt252Wrapper::from(self.backend.temporary_global_state_root_getter()).into(),
             old_root,
             state_diff,
-        })
+        };
+
+        Ok(MaybePendingStateUpdate::Update(state_update))
     }
 
     /// Returns all events matching the given filter.
