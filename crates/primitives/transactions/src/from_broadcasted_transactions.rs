@@ -65,6 +65,24 @@ impl TryFrom<BroadcastedTransaction> for UserTransaction {
 fn cast_vec_of_field_elements(data: Vec<FieldElement>) -> Vec<Felt252Wrapper> {
     // Non-copy but less dangerous than transmute
     // https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
+
+    // Unsafe code but all invariants are checked:
+
+    // 1. ptr must have been allocated using the global allocator -> our vec is allocated with the
+    //    Global allocator.
+    // 2. T needs to have the same alignment as what ptr was allocated with -> Felt252Wrapper uses
+    //    transparent representation of the inner type.
+    // 3. The allocated size in bytes needs to be the same as the pointer -> As FieldElement and
+    //    Felt252Wrapper have the same size, and capacity is taken directly from the data Vector, we
+    //    will have the same capacity.
+    // 4. Length needs to be less than or equal to capacity -> vec.len() is always less than or equal to
+    //    vec.capacity()
+    // 5. The first length values must be properly initialized values of type T -> our vector contains
+    //    only properly initialized FieldElement
+    // 6. capacity needs to be the capacity that the pointer was allocated with -> vec.as_mut_ptr()
+    //    returns a pointer to memory having at least capacity initialized memory
+    // 7. The allocated size in bytes must be no larger than isize::MAX -> capacity of a vector can't be
+    //    > isize::MAX
     let mut data = core::mem::ManuallyDrop::new(data);
     unsafe { alloc::vec::Vec::from_raw_parts(data.as_mut_ptr() as *mut Felt252Wrapper, data.len(), data.capacity()) }
 }
