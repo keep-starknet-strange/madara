@@ -74,9 +74,9 @@ where
                 },
             )?;
 
-        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).or_else(|e| {
+        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).map_err(|e| {
             error!("Failed to retrieve starknet block from substrate block hash: error: {e}");
-            Err(StarknetRpcApiError::InternalServerError)
+            StarknetRpcApiError::InternalServerError
         })?;
         let txn_hashes = self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into());
         let block_extrinsics_len = block_extrinsics.len();
