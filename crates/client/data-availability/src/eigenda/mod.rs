@@ -4,6 +4,7 @@ pub mod blob;
 use std::collections::HashMap;
 use std::thread;
 use std::time::Duration;
+use tokio::time::timeout;
 use anyhow::Result;
 use serde_json;
 use async_trait::async_trait;
@@ -33,16 +34,28 @@ impl DaClient for EigenDaClient {
         // Confirmation can take up to a few minutes after the blob has been initially sent to the disperser, depending on network conditions.
         // for more info see https://docs.eigenlayer.xyz/eigenda-guides/eigenda-rollup-user-guides/building-on-top-of-eigenda
         let mut blob_status_response: BlobStatusResponse;
+        let timeout_duration = Duration::from_secs(300);
         while blob_status != &BlobStatus::Confirmed {
-            blob_status_response = self.get_blob_status(disperse_blob_response.request_id()).await?;
-            blob_status = blob_status_response.status();
-            thread::sleep(Duration::from_secs(5));
+            match timeout(timeout_duration, self.get_blob_status(disperse_blob_response.request_id())).await {
+                Ok(Ok(response)) => {
+                    blob_status_response = response;
+                    blob_status = blob_status_response.status();
+                    if blob_status == &BlobStatus::Failed || matches!(blob_status, &BlobStatus::Other(_)) {
+                        return Err(anyhow::anyhow!("Blob rejected by EigenDA {:?}", blob_status));
+                    }
+                    thread::sleep(Duration::from_secs(5));
+                },
+                Ok(Err(_)) => {
+                    // get_blob_status gRPC call fail
+                    // forward error to stderr?
+                    // should we just return the error and give up on eigenda if the grpc call fails?
+                    thread::sleep(Duration::from_secs(5));
+                },
+                Err(elapsed) => {
+                    return Err(anyhow::anyhow!("timeout error: {}", elapsed))
+                }
+            }
         }
-        // TODO
-        // confirm the blob against the EigenDA contracts onchain with blob_status_response.info(): &BlobInfo { BlobHeader, BlobVerificationProof }
-        // verifyBlob() is the primary function that needs to be invoked
-        //      This function will take the blobHeader and blobVerificationProof as inputs and
-        //      execute a series of checks to ensure the blob was signed for and stored properly in the EigenDA network.
         Ok(())
     }
 
@@ -80,7 +93,7 @@ impl EigenDaClient {
             return Ok(response)
         } else {
             let error_message = String::from_utf8(output.stderr)?;
-            return Err(anyhow::anyhow!("gRPC call failed: {}", error_message));
+            return Err(anyhow::anyhow!("disperse_blob gRPC call failed: {}", error_message));
         }
     }
 
@@ -97,7 +110,7 @@ impl EigenDaClient {
             return Ok(response);
         } else {
             let error_message = String::from_utf8(output.stderr)?;
-            return Err(anyhow::anyhow!("gRPC call failed: {}", error_message))
+            return Err(anyhow::anyhow!("get_blob_status gRPC call failed: {}", error_message))
         }
     }
 }
