@@ -74,7 +74,7 @@ where
                 },
             )?;
 
-        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
+        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).or_else(|| {
             error!("Failed to retrieve starknet block from substrate block hash");
             StarknetRpcApiError::InternalServerError
         })?;
