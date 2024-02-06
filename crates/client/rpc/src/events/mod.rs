@@ -63,17 +63,35 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let tx_hash_and_events = self
-            .client
-            .runtime_api()
-            .get_starknet_events_and_their_associated_tx_hash(substrate_block_hash, block_extrinsics, chain_id)
-            .map_err(|e| {
-                error!(
-                    "Failed to retrieve starknet events and their associated transaction hash. Substrate block hash: \
-                     {substrate_block_hash}, chain ID: {chain_id:?}, error: {e}"
-                );
+        let index_and_events =
+            self.client.runtime_api().get_starknet_events_and_their_associated_tx_index(substrate_block_hash).map_err(
+                |e| {
+                    error!(
+                        "Failed to retrieve starknet events and their associated transaction index. Substrate block \
+                         hash: {substrate_block_hash}, chain ID: {chain_id:?}, error: {e}"
+                    );
+                    StarknetRpcApiError::InternalServerError
+                },
+            )?;
+
+        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
+            error!("Failed to retrieve starknet block from substrate block hash");
+            StarknetRpcApiError::InternalServerError
+        })?;
+        let txn_hashes = self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into());
+        let block_extrinsics_len = block_extrinsics.len();
+        let starknet_txs =
+            self.client.runtime_api().extrinsic_filter(substrate_block_hash, block_extrinsics).map_err(|e| {
+                error!("Failed to filter extrinsics. Substrate block hash: {substrate_block_hash}, error: {e}");
                 StarknetRpcApiError::InternalServerError
             })?;
+        let inherent_count = block_extrinsics_len - starknet_txs.len();
+        let mut tx_hash_and_events: Vec<(Felt252Wrapper, starknet_api::transaction::Event)> = vec![];
+        for (index, event) in index_and_events {
+            let tx_index = index as usize - inherent_count;
+            let tx_hash = self.try_txn_hash_from_cache(tx_index, &txn_hashes, &starknet_txs, chain_id)?;
+            tx_hash_and_events.push((tx_hash, event));
+        }
 
         let starknet_block = match get_block_by_block_hash(self.client.as_ref(), substrate_block_hash) {
             Ok(block) => block,

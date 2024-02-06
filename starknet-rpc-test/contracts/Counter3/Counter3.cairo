@@ -1,5 +1,5 @@
 #[starknet::contract]
-mod Counter3 {
+mod Counter {
     #[storage]
     struct Storage {
         balance_3: felt252, 
