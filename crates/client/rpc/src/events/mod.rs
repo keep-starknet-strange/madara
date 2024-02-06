@@ -23,8 +23,9 @@ use crate::errors::StarknetRpcApiError;
 use crate::types::{ContinuationToken, RpcEventFilter};
 use crate::Starknet;
 
-impl<A: ChainApi, B, BE, G, C, P, H> Starknet<A, B, BE, G, C, P, H>
+impl<A, B, BE, G, C, P, H> Starknet<A, B, BE, G, C, P, H>
 where
+    A: ChainApi<Block = B> + 'static,
     B: BlockT,
     C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
@@ -58,21 +59,12 @@ where
             })?
             .ok_or(StarknetRpcApiError::BlockNotFound)?;
 
-        let chain_id = self.client.runtime_api().chain_id(substrate_block_hash).map_err(|_| {
+        let chain_id = self.get_chain_id(substrate_block_hash).map_err(|_| {
             error!("Failed to retrieve chain id");
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let index_and_events =
-            self.client.runtime_api().get_starknet_events_and_their_associated_tx_index(substrate_block_hash).map_err(
-                |e| {
-                    error!(
-                        "Failed to retrieve starknet events and their associated transaction index. Substrate block \
-                         hash: {substrate_block_hash}, chain ID: {chain_id:?}, error: {e}"
-                    );
-                    StarknetRpcApiError::InternalServerError
-                },
-            )?;
+        let index_and_events = self.get_starknet_events_and_their_associated_tx_index(substrate_block_hash)?;
 
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).map_err(|e| {
             error!("Failed to retrieve starknet block from substrate block hash: error: {e}");
@@ -80,11 +72,7 @@ where
         })?;
         let txn_hashes = self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into());
         let block_extrinsics_len = block_extrinsics.len();
-        let starknet_txs =
-            self.client.runtime_api().extrinsic_filter(substrate_block_hash, block_extrinsics).map_err(|e| {
-                error!("Failed to filter extrinsics. Substrate block hash: {substrate_block_hash}, error: {e}");
-                StarknetRpcApiError::InternalServerError
-            })?;
+        let starknet_txs = self.filter_extrinsics(substrate_block_hash, block_extrinsics)?;
         let inherent_count = block_extrinsics_len - starknet_txs.len();
         let mut tx_hash_and_events: Vec<(Felt252Wrapper, starknet_api::transaction::Event)> = vec![];
         for (index, event) in index_and_events {

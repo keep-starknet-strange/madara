@@ -118,7 +118,7 @@ where
                 Transaction::DeployAccount(deploy_account_tx) => {
                     Ok(UserOrL1HandlerTransaction::User(UserTransaction::DeployAccount(deploy_account_tx.clone())))
                 }
-                Transaction::Declare(declare_tx) => {
+                Transaction::Declare(declare_tx, _) => {
                     let class_hash = ClassHash::from(*declare_tx.class_hash());
 
                     match declare_tx {

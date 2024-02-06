@@ -6,8 +6,10 @@ mod constants;
 mod errors;
 mod events;
 mod madara_backend_client;
+mod runtime_api;
 mod trace_api;
 mod types;
+
 use std::marker::PhantomData;
 use std::sync::Arc;
 
@@ -26,7 +28,7 @@ use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
-use mp_transactions::{TransactionStatus, UserTransaction};
+use mp_transactions::{HandleL1MessageTransaction, TransactionStatus, UserTransaction};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::BlockBackend;
@@ -51,9 +53,10 @@ use starknet_core::types::{
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, ExecutionResources, ExecutionResult, FeeEstimate,
     FieldElement, FunctionCall, Hash256, InvokeTransactionReceipt, InvokeTransactionResult,
     L1HandlerTransactionReceipt, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingStateUpdate,
-    MaybePendingTransactionReceipt, MsgFromL1, PendingBlockWithTxHashes, PendingBlockWithTxs, PendingStateUpdate,
-    StateDiff, StateUpdate, SyncStatus, SyncStatusType, Transaction, TransactionExecutionStatus,
-    TransactionFinalityStatus, TransactionReceipt,
+    MaybePendingTransactionReceipt, MsgFromL1, PendingBlockWithTxHashes, PendingBlockWithTxs,
+    PendingDeclareTransactionReceipt, PendingDeployAccountTransactionReceipt, PendingInvokeTransactionReceipt,
+    PendingL1HandlerTransactionReceipt, PendingStateUpdate, PendingTransactionReceipt, StateDiff, StateUpdate,
+    SyncStatus, SyncStatusType, Transaction, TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
 };
 use starknet_core::utils::get_selector_from_name;
 
@@ -348,7 +351,7 @@ where
             return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
         }
 
-        let extrinsic = convert_tx_to_extrinsic(self.client.clone(), best_block_hash, transaction.clone()).await?;
+        let extrinsic = self.convert_tx_to_extrinsic(best_block_hash, transaction.clone())?;
 
         submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
 
@@ -390,7 +393,7 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let extrinsic = convert_tx_to_extrinsic(self.client.clone(), best_block_hash, transaction.clone()).await?;
+        let extrinsic = self.convert_tx_to_extrinsic(best_block_hash, transaction.clone())?;
 
         submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
 
@@ -420,7 +423,7 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let extrinsic = convert_tx_to_extrinsic(self.client.clone(), best_block_hash, transaction.clone()).await?;
+        let extrinsic = self.convert_tx_to_extrinsic(best_block_hash, transaction.clone())?;
 
         submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
 
@@ -678,11 +681,11 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let runtime_api = self.client.runtime_api();
-
         let calldata = Calldata(Arc::new(request.calldata.iter().map(|x| Felt252Wrapper::from(*x).into()).collect()));
 
-        let result = runtime_api
+        let result = self
+            .client
+            .runtime_api()
             .call(
                 substrate_block_hash,
                 Felt252Wrapper(request.contract_address).into(),
@@ -694,7 +697,7 @@ where
                 StarknetRpcApiError::InternalServerError
             })?;
 
-        let result = convert_error(self.client.clone(), substrate_block_hash, result)?;
+        let result = self.convert_error(substrate_block_hash, result)?;
 
         Ok(result.iter().map(|x| format!("{:#x}", x.0)).collect())
     }
@@ -894,11 +897,7 @@ where
         let chain_id = self.chain_id()?;
 
         if is_pending_block(block_id) {
-            let pending_block = prepare_pending_block_with_tx_hashes::<B, C, P, H>(
-                self.client.clone(),
-                self.pool.clone(),
-                Felt252Wrapper(chain_id.0),
-            )?;
+            let pending_block = self.prepare_pending_block_with_tx_hashes(Felt252Wrapper(chain_id.0))?;
             return Ok(MaybePendingBlockWithTxHashes::PendingBlock(pending_block));
         }
 
@@ -1003,11 +1002,8 @@ where
     /// Returns the chain id this node is connected to. The chain id is returned as a specific type,
     /// defined by the Starknet protocol, indicating the particular network.
     fn chain_id(&self) -> RpcResult<Felt> {
-        let best_block_hash = self.client.info().best_hash;
-        let chain_id = self.client.runtime_api().chain_id(best_block_hash).map_err(|e| {
-            error!("Failed to fetch chain_id with best_block_hash: {best_block_hash}, error: {e}");
-            StarknetRpcApiError::InternalServerError
-        })?;
+        let best_block_hash = self.get_best_block_hash();
+        let chain_id = self.get_chain_id(best_block_hash)?;
 
         Ok(Felt(chain_id.0))
     }
@@ -1031,7 +1027,7 @@ where
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
         })?;
-        let best_block_hash = self.client.info().best_hash;
+        let best_block_hash = self.get_best_block_hash();
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
         let transactions =
@@ -1040,18 +1036,7 @@ where
                 StarknetRpcApiError::InternalServerError
             })?;
 
-        let fee_estimates = self
-            .client
-            .runtime_api()
-            .estimate_fee(substrate_block_hash, transactions)
-            .map_err(|e| {
-                error!("Request parameters error: {e}");
-                StarknetRpcApiError::InternalServerError
-            })?
-            .map_err(|e| {
-                error!("Failed to call function: {:#?}", e);
-                StarknetRpcApiError::ContractError
-            })?;
+        let fee_estimates = self.estimate_fee(best_block_hash, transactions)?;
 
         let estimates = fee_estimates
             .into_iter()
@@ -1185,8 +1170,7 @@ where
         let chain_id = Felt252Wrapper(chain_id.0);
 
         if is_pending_block(block_id) {
-            let pending_block =
-                prepare_pending_block_with_txs::<B, C, P, H>(self.client.clone(), self.pool.clone(), chain_id)?;
+            let pending_block = self.prepare_pending_block_with_txs(chain_id)?;
             return Ok(MaybePendingBlockWithTxs::PendingBlock(pending_block));
         }
 
@@ -1469,18 +1453,107 @@ where
         &self,
         transaction_hash: FieldElement,
     ) -> RpcResult<MaybePendingTransactionReceipt> {
-        let substrate_block_hash = self
-            .backend
-            .mapping()
-            .block_hash_from_transaction_hash(transaction_hash.into())
-            .map_err(|e| {
+        let chain_id = self.chain_id()?.0.into();
+        let receipt =
+            match self.backend.mapping().block_hash_from_transaction_hash(transaction_hash.into()).map_err(|e| {
                 error!("Failed to interact with db backend error: {e}");
                 StarknetRpcApiError::InternalServerError
-            })?
-            .ok_or(StarknetRpcApiError::TxnHashNotFound)?;
+            })? {
+                Some(substrate_block_hash) => {
+                    self.prepare_tx_receipt(chain_id, transaction_hash, substrate_block_hash).await?
+                }
+                // Try to find pending Tx
+                None => self.get_pending_transaction_receipt(chain_id, transaction_hash).await.map_err(|e| {
+                    error!("Failed to find pending tx with hash: {transaction_hash}: {e}");
+                    StarknetRpcApiError::TxnHashNotFound
+                })?,
+            };
+        Ok(receipt)
+    }
+}
 
-        let starknet_block: mp_block::Block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)?;
+/// RPC Helper methods
+impl<A, B, BE, G, C, P, H> Starknet<A, B, BE, G, C, P, H>
+where
+    A: ChainApi<Block = B> + 'static,
+    B: BlockT,
+    P: TransactionPool<Block = B> + 'static,
+    BE: Backend<B> + 'static,
+    C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
+    C: ProvideRuntimeApi<B>,
+    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
+    G: GenesisProvider + Send + Sync + 'static,
+    H: HasherT + Send + Sync + 'static,
+{
+    fn prepare_pending_block_with_tx_hashes(
+        &self,
+        chain_id: Felt252Wrapper,
+    ) -> Result<PendingBlockWithTxHashes, StarknetRpcApiError> {
+        let parent_hash = self.client.info().best_hash;
+        let latest_block = get_block_by_block_hash(self.client.as_ref(), parent_hash).unwrap_or_default();
+        let latest_block_header = latest_block.header();
+        let transactions = self
+            .get_pending_txs(parent_hash)?
+            .iter()
+            .map(|tx| tx.compute_hash::<H>(chain_id.0.into(), false).0)
+            .collect::<Vec<_>>();
 
+        let pending_block = PendingBlockWithTxHashes {
+            transactions,
+            l1_gas_price: latest_block_header.l1_gas_price.into(),
+            parent_hash: latest_block_header.hash::<H>().into(),
+            sequencer_address: Felt252Wrapper::from(latest_block_header.sequencer_address).into(),
+            starknet_version: latest_block_header.protocol_version.to_string(),
+            timestamp: calculate_pending_block_timestamp(),
+        };
+        Ok(pending_block)
+    }
+
+    fn prepare_pending_block_with_txs(
+        &self,
+        chain_id: Felt252Wrapper,
+    ) -> Result<PendingBlockWithTxs, StarknetRpcApiError> {
+        let parent_hash = self.client.info().best_hash;
+        let latest_block = get_block_by_block_hash(self.client.as_ref(), parent_hash).unwrap_or_default();
+        let latest_block_header = latest_block.header();
+
+        let transactions = self
+            .get_pending_txs(parent_hash)?
+            .iter()
+            .map(|tx| to_starknet_core_tx(tx.clone(), tx.compute_hash::<H>(chain_id.0.into(), false).0))
+            .collect::<Vec<_>>();
+
+        let pending_block = PendingBlockWithTxs {
+            transactions,
+            l1_gas_price: latest_block_header.l1_gas_price.into(),
+            parent_hash: latest_block_header.hash::<H>().into(),
+            sequencer_address: Felt252Wrapper::from(latest_block_header.sequencer_address).into(),
+            starknet_version: latest_block_header.protocol_version.to_string(),
+            timestamp: calculate_pending_block_timestamp(),
+        };
+        Ok(pending_block)
+    }
+
+    fn get_pending_txs(&self, latest_block: B::Hash) -> Result<Vec<mp_transactions::Transaction>, StarknetRpcApiError> {
+        // Fetch all Pending Txs from Transaction Pool
+        // Operates as RPC Call `author_pendingExtrinsics`
+        // See https://github.com/paritytech/polkadot-sdk/blob/release-polkadot-v1.6.0/substrate/client/rpc/src/author/mod.rs#L153-L155
+        // But fetches pending transactions as Vec<B::Extrinsic>
+        let pending_transactions: Vec<B::Extrinsic> = self.pool.ready().map(|tx| tx.data().clone()).collect();
+
+        // Use Runtime API to filter all Pending Txs
+        // And get only Starknet Txs (Pallet Starknet calls) as Vec<mp_transactions::Transaction>
+        self.filter_extrinsics(latest_block, pending_transactions)
+    }
+
+    async fn prepare_tx_receipt(
+        &self,
+        chain_id: Felt252Wrapper,
+        transaction_hash: FieldElement,
+        substrate_block_hash: B::Hash,
+    ) -> Result<MaybePendingTransactionReceipt, StarknetRpcApiError> {
+        let starknet_block: mp_block::Block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)
+            .map_err(|_e| StarknetRpcApiError::BlockNotFound)?;
         let block_header = starknet_block.header();
         let block_hash = block_header.hash::<H>().into();
         let block_number = block_header.block_number;
@@ -1494,22 +1567,10 @@ where
             })?
             .ok_or(StarknetRpcApiError::BlockNotFound)?;
 
-        let chain_id = self.chain_id()?.0.into();
-
-        let starknet_version = starknet_block.header().protocol_version;
-
-        let fee_disabled =
-            self.client.runtime_api().is_transaction_fee_disabled(substrate_block_hash).map_err(|e| {
-                error!("Failed to get check fee disabled. Substrate block hash: {substrate_block_hash}, error: {e}");
-                StarknetRpcApiError::InternalServerError
-            })?;
+        let fee_disabled = self.is_transaction_fee_disabled(substrate_block_hash)?;
 
         let block_extrinsics_len = block_extrinsics.len();
-        let transactions =
-            self.client.runtime_api().extrinsic_filter(substrate_block_hash, block_extrinsics).map_err(|e| {
-                error!("Failed to filter extrinsics. Substrate block hash: {substrate_block_hash}, error: {e}");
-                StarknetRpcApiError::InternalServerError
-            })?;
+        let transactions = self.filter_extrinsics(substrate_block_hash, block_extrinsics)?;
         let txn_hashes = self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into());
         let mut tx_index = None;
         let mut transaction = None;
@@ -1526,56 +1587,21 @@ where
                 "Failed to find transaction hash in block. Substrate block hash: {substrate_block_hash}, transaction \
                  hash: {transaction_hash}"
             );
-            return Err(StarknetRpcApiError::InternalServerError.into());
+            return Err(StarknetRpcApiError::InternalServerError);
         }
         let tx_index = tx_index.unwrap();
         let transaction = transaction.unwrap();
         // adding the inherents count to the tx_index to get the correct index in the block
         let tx_index = tx_index + block_extrinsics_len - transactions.len();
 
-        let events = self
-            .client
-            .runtime_api()
-            .get_events_for_tx_by_index(substrate_block_hash, tx_index as u32)
-            .map_err(|e| {
-                error!(
-                    "Failed to get events for transaction index. Substrate block hash: {substrate_block_hash}, \
-                     transaction idx: {tx_index}, error: {e}"
-                );
-                StarknetRpcApiError::InternalServerError
-            })?
-            .expect("the transaction should be present in the substrate extrinsics"); // not reachable
+        let events = self.get_events_for_tx_by_index(substrate_block_hash, tx_index as u32)?;
 
         let execution_result = {
-            let revert_error = self
-                .client
-                .runtime_api()
-                .get_tx_execution_outcome(substrate_block_hash, Felt252Wrapper(transaction_hash).into())
-                .map_err(|e| {
-                    error!(
-                        "Failed to get transaction execution outcome. Substrate block hash: {substrate_block_hash}, \
-                         transaction hash: {transaction_hash}, error: {e}"
-                    );
-                    StarknetRpcApiError::InternalServerError
-                })?;
+            let revert_error = self.get_tx_execution_outcome(substrate_block_hash, transaction_hash)?;
 
-            match revert_error {
-                None => ExecutionResult::Succeeded,
-                // This is safe because the message is a Vec<u8> build from a String
-                Some(message) => ExecutionResult::Reverted { reason: unsafe { String::from_utf8_unchecked(message) } },
-            }
+            // This is safe because the message is a Vec<u8> build from a String
+            translate_revert_error(revert_error.map(|message| unsafe { String::from_utf8_unchecked(message) }))
         };
-
-        // TODO(#1291): compute message hash correctly to L1HandlerTransactionReceipt
-        let message_hash: Hash256 = Hash256::from_felt(&FieldElement::default());
-
-        fn event_conversion(event: starknet_api::transaction::Event) -> starknet_core::types::Event {
-            starknet_core::types::Event {
-                from_address: Felt252Wrapper::from(event.from_address).0,
-                keys: event.content.keys.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
-                data: event.content.data.0.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
-            }
-        }
 
         let events_converted: Vec<starknet_core::types::Event> =
             events.clone().into_iter().map(event_conversion).collect();
@@ -1596,47 +1622,24 @@ where
             events_converted.last().unwrap().data[2]
         };
 
-        let messages = self
-            .client
-            .runtime_api()
-            .get_tx_messages_to_l1(substrate_block_hash, Felt252Wrapper(transaction_hash).into())
-            .map_err(|e| {
-                error!("'{e}'");
-                StarknetRpcApiError::InternalServerError
-            })?;
+        let messages = self.get_tx_messages_to_l1(substrate_block_hash, transaction_hash)?;
 
-        fn message_conversion(message: starknet_api::transaction::MessageToL1) -> starknet_core::types::MsgToL1 {
-            let mut to_address = [0u8; 32];
-            to_address[12..32].copy_from_slice(message.to_address.0.as_bytes());
-            starknet_core::types::MsgToL1 {
-                from_address: Felt252Wrapper::from(message.from_address).0,
-                to_address: FieldElement::from_bytes_be(&to_address).unwrap(),
-                payload: message.payload.0.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
-            }
-        }
+        let messages_sent = messages.into_iter().map(message_conversion).collect();
 
         // TODO: use actual execution resources
+        let execution_resources = get_execution_resources();
+
         let receipt = match transaction {
-            mp_transactions::Transaction::Declare(_) => TransactionReceipt::Declare(DeclareTransactionReceipt {
+            mp_transactions::Transaction::Declare(_, _) => TransactionReceipt::Declare(DeclareTransactionReceipt {
                 transaction_hash,
                 actual_fee,
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
                 block_hash,
                 block_number,
-                messages_sent: messages.into_iter().map(message_conversion).collect(),
+                messages_sent,
                 events: events_converted,
                 execution_result,
-                execution_resources: ExecutionResources {
-                    steps: 0,
-                    memory_holes: None,
-                    range_check_builtin_applications: 0,
-                    pedersen_builtin_applications: 0,
-                    poseidon_builtin_applications: 0,
-                    ec_op_builtin_applications: 0,
-                    ecdsa_builtin_applications: 0,
-                    bitwise_builtin_applications: 0,
-                    keccak_builtin_applications: 0,
-                },
+                execution_resources,
             }),
             mp_transactions::Transaction::DeployAccount(tx) => {
                 TransactionReceipt::DeployAccount(DeployAccountTransactionReceipt {
@@ -1645,21 +1648,11 @@ where
                     finality_status: TransactionFinalityStatus::AcceptedOnL2,
                     block_hash,
                     block_number,
-                    messages_sent: messages.into_iter().map(message_conversion).collect(),
+                    messages_sent,
                     events: events_converted,
                     contract_address: tx.get_account_address(),
                     execution_result,
-                    execution_resources: ExecutionResources {
-                        steps: 0,
-                        memory_holes: None,
-                        range_check_builtin_applications: 0,
-                        pedersen_builtin_applications: 0,
-                        poseidon_builtin_applications: 0,
-                        ec_op_builtin_applications: 0,
-                        ecdsa_builtin_applications: 0,
-                        bitwise_builtin_applications: 0,
-                        keccak_builtin_applications: 0,
-                    },
+                    execution_resources,
                 })
             }
             mp_transactions::Transaction::Invoke(_) => TransactionReceipt::Invoke(InvokeTransactionReceipt {
@@ -1668,138 +1661,173 @@ where
                 finality_status: TransactionFinalityStatus::AcceptedOnL2,
                 block_hash,
                 block_number,
-                messages_sent: messages.into_iter().map(message_conversion).collect(),
+                messages_sent,
                 events: events_converted,
                 execution_result,
-                execution_resources: ExecutionResources {
-                    steps: 0,
-                    memory_holes: None,
-                    range_check_builtin_applications: 0,
-                    pedersen_builtin_applications: 0,
-                    poseidon_builtin_applications: 0,
-                    ec_op_builtin_applications: 0,
-                    ecdsa_builtin_applications: 0,
-                    bitwise_builtin_applications: 0,
-                    keccak_builtin_applications: 0,
-                },
+                execution_resources,
             }),
-            mp_transactions::Transaction::L1Handler(_) => TransactionReceipt::L1Handler(L1HandlerTransactionReceipt {
-                message_hash,
-                transaction_hash,
-                actual_fee,
-                finality_status: TransactionFinalityStatus::AcceptedOnL2,
-                block_hash,
-                block_number,
-                messages_sent: messages.into_iter().map(message_conversion).collect(),
-                events: events_converted,
-                execution_result,
-                execution_resources: ExecutionResources {
-                    steps: 0,
-                    memory_holes: None,
-                    range_check_builtin_applications: 0,
-                    pedersen_builtin_applications: 0,
-                    poseidon_builtin_applications: 0,
-                    ec_op_builtin_applications: 0,
-                    ecdsa_builtin_applications: 0,
-                    bitwise_builtin_applications: 0,
-                    keccak_builtin_applications: 0,
-                },
-            }),
+            mp_transactions::Transaction::L1Handler(ref tx) => {
+                TransactionReceipt::L1Handler(L1HandlerTransactionReceipt {
+                    message_hash: calculate_l1_message_hash(tx),
+                    transaction_hash,
+                    actual_fee,
+                    finality_status: TransactionFinalityStatus::AcceptedOnL2,
+                    block_hash,
+                    block_number,
+                    messages_sent,
+                    events: events_converted,
+                    execution_result,
+                    execution_resources,
+                })
+            }
         };
 
         Ok(MaybePendingTransactionReceipt::Receipt(receipt))
     }
-}
-fn prepare_pending_block_with_tx_hashes<B, C, P, H>(
-    client: Arc<C>,
-    pool: Arc<P>,
-    chain_id: Felt252Wrapper,
-) -> Result<PendingBlockWithTxHashes, CallError>
-where
-    B: BlockT,
-    H: HasherT + Send + Sync + 'static,
-    C: ProvideRuntimeApi<B>,
-    C: HeaderBackend<B> + 'static,
-    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
-    P: TransactionPool<Block = B> + 'static,
-{
-    let parent_hash = client.info().best_hash;
-    let latest_block = get_block_by_block_hash(client.as_ref(), parent_hash).unwrap_or_default();
-    let latest_block_header = latest_block.header();
-    let transactions = get_pending_txs::<B, C, P>(client.as_ref(), pool.as_ref(), parent_hash)?
-        .iter()
-        .map(|tx| tx.compute_hash::<H>(chain_id.0.into(), false).0)
-        .collect::<Vec<_>>();
 
-    let pending_block = PendingBlockWithTxHashes {
-        transactions,
-        l1_gas_price: latest_block_header.l1_gas_price.into(),
-        parent_hash: latest_block_header.hash::<H>().into(),
-        sequencer_address: Felt252Wrapper::from(latest_block_header.sequencer_address).into(),
-        starknet_version: latest_block_header.protocol_version.to_string(),
-        timestamp: calculate_pending_block_timestamp(),
-    };
-    Ok(pending_block)
-}
+    fn get_events_for_tx_by_index(
+        &self,
+        substrate_block_hash: B::Hash,
+        tx_index: u32,
+    ) -> Result<Vec<starknet_api::transaction::Event>, StarknetRpcApiError> {
+        let events = self
+            .client
+            .runtime_api()
+            .get_events_for_tx_by_index(substrate_block_hash, tx_index)
+            .map_err(|e| {
+                error!(
+                    "Failed to get events for transaction index. Substrate block hash: {substrate_block_hash}, \
+                     transaction idx: {tx_index}, error: {e}"
+                );
+                StarknetRpcApiError::InternalServerError
+            })?
+            .expect("the transaction should be present in the substrate extrinsics"); // not reachable
+        Ok(events)
+    }
 
-fn prepare_pending_block_with_txs<B, C, P, H>(
-    client: Arc<C>,
-    pool: Arc<P>,
-    chain_id: Felt252Wrapper,
-) -> Result<PendingBlockWithTxs, CallError>
-where
-    B: BlockT,
-    H: HasherT + Send + Sync + 'static,
-    C: ProvideRuntimeApi<B>,
-    C: HeaderBackend<B> + 'static,
-    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
-    P: TransactionPool<Block = B> + 'static,
-{
-    let parent_hash = client.info().best_hash;
-    let latest_block = get_block_by_block_hash(client.as_ref(), parent_hash).unwrap_or_default();
-    let latest_block_header = latest_block.header();
+    fn get_tx_execution_outcome(
+        &self,
+        substrate_block_hash: B::Hash,
+        transaction_hash: FieldElement,
+    ) -> Result<Option<Vec<u8>>, StarknetRpcApiError> {
+        self.client
+            .runtime_api()
+            .get_tx_execution_outcome(substrate_block_hash, Felt252Wrapper(transaction_hash).into())
+            .map_err(|e| {
+                error!(
+                    "Failed to get transaction execution outcome. Substrate block hash: {substrate_block_hash}, \
+                     transaction hash: {transaction_hash}, error: {e}"
+                );
+                StarknetRpcApiError::InternalServerError
+            })
+    }
 
-    let transactions = get_pending_txs::<B, C, P>(client.as_ref(), pool.as_ref(), parent_hash)?
-        .iter()
-        .map(|tx| to_starknet_core_tx(tx.clone(), tx.compute_hash::<H>(chain_id.0.into(), false).0))
-        .collect::<Vec<_>>();
+    fn find_pending_tx(
+        &self,
+        chain_id: Felt252Wrapper,
+        tx_hash: FieldElement,
+    ) -> Result<Option<mp_transactions::Transaction>, StarknetRpcApiError> {
+        let parent_hash = self.client.info().best_hash;
 
-    let pending_block = PendingBlockWithTxs {
-        transactions,
-        l1_gas_price: latest_block_header.l1_gas_price.into(),
-        parent_hash: latest_block_header.hash::<H>().into(),
-        sequencer_address: Felt252Wrapper::from(latest_block_header.sequencer_address).into(),
-        starknet_version: latest_block_header.protocol_version.to_string(),
-        timestamp: calculate_pending_block_timestamp(),
-    };
-    Ok(pending_block)
-}
+        let pending_tx = self
+            .get_pending_txs(parent_hash)?
+            .iter()
+            .find(|&tx| tx.compute_hash::<H>(chain_id.0.into(), false).0 == tx_hash)
+            .cloned();
 
-fn get_pending_txs<B, C, P>(
-    client: &C,
-    pool: &P,
-    latest_block: B::Hash,
-) -> Result<Vec<mp_transactions::Transaction>, CallError>
-where
-    B: BlockT,
-    C: ProvideRuntimeApi<B>,
-    C: HeaderBackend<B> + 'static,
-    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
-    P: TransactionPool<Block = B> + 'static,
-{
-    // Fetch all Pending Txs from Transaction Pool
-    // Operates as RPC Call `author_pendingExtrinsics`
-    // See https://github.com/paritytech/polkadot-sdk/blob/release-polkadot-v1.6.0/substrate/client/rpc/src/author/mod.rs#L153-L155
-    // But fetches pending transactions as Vec<B::Extrinsic>
-    let pending_transactions: Vec<B::Extrinsic> = pool.ready().map(|tx| tx.data().clone()).collect();
+        Ok(pending_tx)
+    }
 
-    // Use Runtime API to filter all Pending Txs
-    // And get only Starknet Txs (Pallet Starknet calls) as Vec<mp_transactions::Transaction>
-    client
-        .runtime_api()
-        .extrinsic_filter(latest_block, pending_transactions)
-        .map_err(|e| anyhow::anyhow!("Unexpected error while filtering Pending Starknet Transactions: {:?}", e))
-        .map_err(CallError::Failed)
+    async fn get_pending_transaction_receipt(
+        &self,
+        chain_id: Felt252Wrapper,
+        transaction_hash: FieldElement,
+    ) -> Result<MaybePendingTransactionReceipt, StarknetRpcApiError> {
+        let pending_tx =
+            self.find_pending_tx(chain_id, transaction_hash)?.ok_or(StarknetRpcApiError::TxnHashNotFound)?;
+
+        // TODO -- no way of getting messages sent to L1 for the tx
+        let messages_sent = Vec::new();
+        // TODO -- no  way of getting events for the tx
+        let events = Vec::new();
+
+        // TODO -- should Tx be simulated with `skip_validate`?
+        let skip_validate = false;
+
+        let skip_fee_charge = self.is_transaction_fee_disabled(self.get_best_block_hash())?;
+
+        let simulation = self.simulate_pending_tx(pending_tx.clone(), skip_validate, skip_fee_charge)?;
+        let actual_fee = simulation.actual_fee.0.into();
+        let execution_result = translate_revert_error(simulation.revert_error);
+
+        let execution_resources = get_execution_resources();
+
+        let receipt = match pending_tx {
+            mp_transactions::Transaction::Declare(_tx, _contract_class) => {
+                let receipt = PendingDeclareTransactionReceipt {
+                    transaction_hash,
+                    actual_fee,
+                    messages_sent,
+                    events,
+                    execution_resources,
+                    execution_result,
+                };
+                PendingTransactionReceipt::Declare(receipt)
+            }
+            mp_transactions::Transaction::DeployAccount(ref tx) => {
+                let contract_address = tx.get_account_address();
+                let receipt = PendingDeployAccountTransactionReceipt {
+                    transaction_hash,
+                    actual_fee,
+                    messages_sent,
+                    events,
+                    execution_resources,
+                    execution_result,
+                    contract_address,
+                };
+                PendingTransactionReceipt::DeployAccount(receipt)
+            }
+            mp_transactions::Transaction::Invoke(_tx) => {
+                let receipt = PendingInvokeTransactionReceipt {
+                    transaction_hash,
+                    actual_fee,
+                    messages_sent,
+                    events,
+                    execution_resources,
+                    execution_result,
+                };
+                PendingTransactionReceipt::Invoke(receipt)
+            }
+            mp_transactions::Transaction::L1Handler(ref tx) => {
+                let receipt = PendingL1HandlerTransactionReceipt {
+                    message_hash: calculate_l1_message_hash(tx),
+                    transaction_hash,
+                    actual_fee,
+                    messages_sent,
+                    events,
+                    execution_resources,
+                    execution_result,
+                };
+                PendingTransactionReceipt::L1Handler(receipt)
+            }
+        };
+
+        Ok(MaybePendingTransactionReceipt::PendingReceipt(receipt))
+    }
+
+    fn convert_error<T>(
+        &self,
+        best_block_hash: <B as BlockT>::Hash,
+        call_result: Result<T, DispatchError>,
+    ) -> Result<T, StarknetRpcApiError> {
+        match call_result {
+            Ok(val) => Ok(val),
+            Err(e) => {
+                let starknet_error = self.convert_dispatch_error(best_block_hash, e)?;
+                Err(starknet_error.into())
+            }
+        }
+    }
 }
 
 async fn submit_extrinsic<P, B>(
@@ -1821,43 +1849,6 @@ where
     })
 }
 
-async fn convert_tx_to_extrinsic<C, B>(
-    client: Arc<C>,
-    best_block_hash: <B as BlockT>::Hash,
-    transaction: UserTransaction,
-) -> Result<<B as BlockT>::Extrinsic, StarknetRpcApiError>
-where
-    B: BlockT,
-    C: ProvideRuntimeApi<B>,
-    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
-{
-    let extrinsic = client.runtime_api().convert_transaction(best_block_hash, transaction).map_err(|e| {
-        error!("Failed to convert transaction: {:?}", e);
-        StarknetRpcApiError::InternalServerError
-    })?;
-
-    Ok(extrinsic)
-}
-
-fn convert_error<C, B, T>(
-    client: Arc<C>,
-    best_block_hash: <B as BlockT>::Hash,
-    call_result: Result<T, DispatchError>,
-) -> Result<T, StarknetRpcApiError>
-where
-    B: BlockT,
-    C: ProvideRuntimeApi<B>,
-    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
-{
-    match call_result {
-        Ok(val) => Ok(val),
-        Err(e) => match client.runtime_api().convert_error(best_block_hash, e) {
-            Ok(starknet_error) => Err(starknet_error.into()),
-            Err(_) => Err(StarknetRpcApiError::InternalServerError),
-        },
-    }
-}
-
 /// The current timestamp in seconds.
 fn calculate_pending_block_timestamp() -> u64 {
     let timestamp_in_millisecond = sp_timestamp::InherentDataProvider::from_system_time().as_millis();
@@ -1866,4 +1857,48 @@ fn calculate_pending_block_timestamp() -> u64 {
 
 fn is_pending_block(block_id: BlockId) -> bool {
     block_id == BlockId::Tag(BlockTag::Pending)
+}
+
+fn calculate_l1_message_hash(_tx: &HandleL1MessageTransaction) -> Hash256 {
+    // TODO(#1291): compute message hash correctly to L1HandlerTransactionReceipt
+    Hash256::from_felt(&FieldElement::default())
+}
+
+fn event_conversion(event: starknet_api::transaction::Event) -> starknet_core::types::Event {
+    starknet_core::types::Event {
+        from_address: Felt252Wrapper::from(event.from_address).0,
+        keys: event.content.keys.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
+        data: event.content.data.0.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
+    }
+}
+
+fn message_conversion(message: starknet_api::transaction::MessageToL1) -> starknet_core::types::MsgToL1 {
+    let mut to_address = [0u8; 32];
+    to_address[12..32].copy_from_slice(message.to_address.0.as_bytes());
+    starknet_core::types::MsgToL1 {
+        from_address: Felt252Wrapper::from(message.from_address).0,
+        to_address: FieldElement::from_bytes_be(&to_address).unwrap(),
+        payload: message.payload.0.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
+    }
+}
+
+fn get_execution_resources() -> ExecutionResources {
+    ExecutionResources {
+        steps: 0,
+        memory_holes: None,
+        range_check_builtin_applications: 0,
+        pedersen_builtin_applications: 0,
+        poseidon_builtin_applications: 0,
+        ec_op_builtin_applications: 0,
+        ecdsa_builtin_applications: 0,
+        bitwise_builtin_applications: 0,
+        keccak_builtin_applications: 0,
+    }
+}
+
+fn translate_revert_error(revert_error: Option<String>) -> ExecutionResult {
+    match revert_error {
+        None => ExecutionResult::Succeeded,
+        Some(message) => ExecutionResult::Reverted { reason: message },
+    }
 }
