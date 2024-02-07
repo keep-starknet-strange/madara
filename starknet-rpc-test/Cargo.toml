@@ -16,7 +16,6 @@ rstest = "0.18.1"
 serde = { version = "1.0.192", features = ["derive"] }
 serde_json = "1.0.108"
 starknet-accounts = { workspace = true }
-starknet_api = { workspace = true }
 starknet-contract = { workspace = true }
 starknet-core = { workspace = true }
 starknet-crypto = { workspace = true }
