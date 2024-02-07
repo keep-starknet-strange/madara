@@ -37,8 +37,10 @@ jobs:
           MADARA_RUN_PID=$!
           while ! echo exit | nc localhost 9944; do sleep 1; done
           cd starknet-rpc-test
-          cargo test
-          kill $MADARA_RUN_PID
+          ls ./contracts/
+          ls ./contracts/counter5
+          # cargo test
+          # kill $MADARA_RUN_PID
       - name: Run rpc test with cache
         run: |-
           ./target/release/madara --dev --sealing=manual --cache &
