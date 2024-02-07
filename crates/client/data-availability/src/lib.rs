@@ -28,7 +28,7 @@ use sp_runtime::traits::Block as BlockT;
 use starknet_api::block::BlockHash;
 use starknet_api::state::ThinStateDiff;
 use thiserror::Error;
-use utils::{block_data_to_calldata, state_diff_to_calldata};
+use utils::block_data_to_calldata;
 
 use crate::da_metrics::DaMetrics;
 
