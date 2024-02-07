@@ -52,6 +52,10 @@ impl pallet_starknet::Config for Runtime {
     type L1GasPrice = L1GasPrice;
 }
 
+impl pallet_rancici::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+}
+
 /// --------------------------------------
 /// FRAME SYSTEM PALLET
 /// --------------------------------------

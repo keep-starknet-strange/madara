@@ -1,0 +1,29 @@
+warning: /Users/filipmoldvai/workspace/mvpworkshop/starknet/nasa-madara/ticking-madara/crates/pallets/rancici/Cargo.toml: dependency (sp-api) specified without providing a local path, Git repository, version, or workspace dependency to use. This will be considered an error in future versions
+warning: /Users/filipmoldvai/workspace/mvpworkshop/starknet/nasa-madara/ticking-madara/crates/pallets/rancici/Cargo.toml: unused manifest key: dependencies.sp-api.worskpace
+    Updating git repository `https://github.com/w3f/ring-vrf?rev=3ddc20`
+    Updating git repository `https://github.com/w3f/ring-vrf`
+   Compiling madara-runtime v0.6.0 (/Users/filipmoldvai/workspace/mvpworkshop/starknet/nasa-madara/ticking-madara/crates/runtime)
+   Compiling pallet-rancici v0.6.0 (/Users/filipmoldvai/workspace/mvpworkshop/starknet/nasa-madara/ticking-madara/crates/pallets/rancici)
+warning: unused import: `frame_support::traits::Time`
+  --> crates/pallets/rancici/src/lib.rs:11:5
+   |
+11 | use frame_support::traits::Time;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: `pallet-rancici` (lib) generated 1 warning
+warning: unused import: `pallet_rancici::Event as RanciciEvent`
+  --> crates/runtime/src/lib.rs:37:5
+   |
+37 | use pallet_rancici::Event as RanciciEvent;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+   Compiling mc-storage v0.6.0 (/Users/filipmoldvai/workspace/mvpworkshop/starknet/nasa-madara/ticking-madara/crates/client/storage)
+   Compiling mc-rpc v0.6.0 (/Users/filipmoldvai/workspace/mvpworkshop/starknet/nasa-madara/ticking-madara/crates/client/rpc)
+   Compiling mc-mapping-sync v0.6.0 (/Users/filipmoldvai/workspace/mvpworkshop/starknet/nasa-madara/ticking-madara/crates/client/mapping-sync)
+warning: `madara-runtime` (lib) generated 1 warning (run `cargo fix --lib -p madara-runtime` to apply 1 suggestion)
+   Compiling madara v0.6.0 (/Users/filipmoldvai/workspace/mvpworkshop/starknet/nasa-madara/ticking-madara/crates/node)
+    Finished release [optimized] target(s) in 1m 05s

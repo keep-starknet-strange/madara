@@ -4,8 +4,8 @@ version.workspace = true
 edition.workspace = true
 description = "Madara runtime."
 authors = [
-  "Abdelhamid Bakhta <@abdelhamidbakhta>",
-  "Substrate DevHub <https://github.com/substrate-developer-hub>",
+	"Abdelhamid Bakhta <@abdelhamidbakhta>",
+	"Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
 license = "MIT"
@@ -52,6 +52,9 @@ frame-system-benchmarking = { workspace = true, optional = true }
 pallet-starknet = { workspace = true }
 pallet-starknet-runtime-api = { workspace = true }
 
+# Hackathon pallet
+pallet-rancici = { workspace = true }
+
 # Madara Primitives
 mp-block = { workspace = true }
 mp-chain-id = { workspace = true }
@@ -72,61 +75,67 @@ substrate-wasm-builder = { workspace = true }
 
 [features]
 std = [
-  # Madara pallets
-  "pallet-starknet/std",
-  # Frame dependencies
-  "frame-try-runtime?/std",
-  "frame-system-benchmarking?/std",
-  "frame-benchmarking?/std",
-  "frame-executive/std",
-  "frame-support/std",
-  "frame-system-rpc-runtime-api/std",
-  "frame-system/std",
-  "frame-try-runtime/std",
-  # Frame pallets dependencies
-  "pallet-aura/std",
-  "pallet-grandpa/std",
-  "pallet-timestamp/std",
-  # Substrate primitives dependencies
-  "sp-api/std",
-  "sp-block-builder/std",
-  "sp-consensus-aura/std",
-  "sp-core/std",
-  "sp-inherents/std",
-  "sp-offchain/std",
-  "sp-runtime/std",
-  "sp-session/std",
-  "sp-std/std",
-  "sp-transaction-pool/std",
-  "sp-version/std",
-  # 3rd party dependencies
-  "parity-scale-codec/std",
-  "scale-info/std",
-  "blockifier/std",
-  "starknet_api/std",
+	# Madara pallets
+	"pallet-starknet/std",
+	# Hackathon pallet
+	"pallet-rancici/std",
+	# Frame dependencies
+	"frame-try-runtime?/std",
+	"frame-system-benchmarking?/std",
+	"frame-benchmarking?/std",
+	"frame-executive/std",
+	"frame-support/std",
+	"frame-system-rpc-runtime-api/std",
+	"frame-system/std",
+	"frame-try-runtime/std",
+	# Frame pallets dependencies
+	"pallet-aura/std",
+	"pallet-grandpa/std",
+	"pallet-timestamp/std",
+	# Substrate primitives dependencies
+	"sp-api/std",
+	"sp-block-builder/std",
+	"sp-consensus-aura/std",
+	"sp-core/std",
+	"sp-inherents/std",
+	"sp-offchain/std",
+	"sp-runtime/std",
+	"sp-session/std",
+	"sp-std/std",
+	"sp-transaction-pool/std",
+	"sp-version/std",
+	# 3rd party dependencies
+	"parity-scale-codec/std",
+	"scale-info/std",
+	"blockifier/std",
+	"starknet_api/std",
 ]
 try-runtime = [
-  "pallet-timestamp/try-runtime",
-  "frame-try-runtime/try-runtime",
-  "frame-executive/try-runtime",
-  "frame-system/try-runtime",
-  "frame-support/try-runtime",
-  "pallet-aura/try-runtime",
-  "pallet-grandpa/try-runtime",
-  # Madara pallets
-  "pallet-starknet/try-runtime",
+	"pallet-timestamp/try-runtime",
+	"frame-try-runtime/try-runtime",
+	"frame-executive/try-runtime",
+	"frame-system/try-runtime",
+	"frame-support/try-runtime",
+	"pallet-aura/try-runtime",
+	"pallet-grandpa/try-runtime",
+	# Madara pallets
+	"pallet-starknet/try-runtime",
+	# Hackathon pallet
+	"pallet-rancici/try-runtime",
 ]
 default = ["std"]
 madara-state-root = []
 disable-transaction-fee = []
 runtime-benchmarks = [
-  "frame-benchmarking/runtime-benchmarks",
-  "frame-support/runtime-benchmarks",
-  "frame-system-benchmarking/runtime-benchmarks",
-  "frame-system/runtime-benchmarks",
-  "pallet-grandpa/runtime-benchmarks",
-  "pallet-timestamp/runtime-benchmarks",
-  "sp-runtime/runtime-benchmarks",
-  # Madara pallets
-  "pallet-starknet/runtime-benchmarks",
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system-benchmarking/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-grandpa/runtime-benchmarks",
+	"pallet-timestamp/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	# Madara pallets
+	"pallet-starknet/runtime-benchmarks",
+	# Hackathon pallet
+	"pallet-rancici/runtime-benchmarks",
 ]

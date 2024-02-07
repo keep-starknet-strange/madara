@@ -1,0 +1,37 @@
+[package]
+name = "pallet-rancici"
+edition.workspace = true
+version.workspace = true
+description = "Pallet for Taikai Hackathon 2024 project Rancici"
+authors = ["Filip Moldvai <@fmol2y>"]
+homepage = "https://github.com/MVPWorkshop/ticking-madara"
+license = "MIT"
+publish = false
+repository = "https://github.com/MVPWorkshop/ticking-madara"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+frame-benchmarking = { workspace = true, optional = true }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+parity-scale-codec = { workspace = true }
+scale-info = { workspace = true }
+sp-api = { worskpace = true }
+starknet-core = { workspace = true }
+starknet-crypto = { workspace = true, features = ["alloc"] }
+starknet_api = { workspace = true, features = [
+	"scale-info",
+	"parity-scale-codec",
+] }
+rand = { workspace = true }
+
+[features]
+default = ["std"]
+std = ["frame-support/std", "frame-system/std", "frame-benchmarking?/std"]
+runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
+
+try-runtime = ["frame-support/try-runtime"]

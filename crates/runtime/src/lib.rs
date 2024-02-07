@@ -32,6 +32,9 @@ use mp_felt::Felt252Wrapper;
 use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
 use mp_transactions::{HandleL1MessageTransaction, Transaction, UserTransaction};
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
+/// Import rancici pallet
+pub use pallet_rancici;
+use pallet_rancici::Event as RanciciEvent;
 /// Import the Starknet pallet.
 pub use pallet_starknet;
 use pallet_starknet::pallet::Error as PalletError;
@@ -67,6 +70,7 @@ construct_runtime!(
         Grandpa: pallet_grandpa,
         // Include Starknet pallet.
         Starknet: pallet_starknet,
+        Rancici: pallet_rancici,
     }
 );
 

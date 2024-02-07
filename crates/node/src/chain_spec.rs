@@ -186,5 +186,6 @@ fn testnet_genesis(
         },
         /// Starknet Genesis configuration.
         starknet: starknet_genesis_config,
+        rancici: Default::default(),
     }
 }
