@@ -2,7 +2,6 @@ pub mod config;
 pub mod blob;
 
 use std::collections::HashMap;
-use std::thread;
 use std::time::Duration;
 use tokio::time::timeout;
 use anyhow::Result;
@@ -28,34 +27,51 @@ pub struct EigenDaClient {
 impl DaClient for EigenDaClient {
     async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()> {
         let disperse_blob_response = self.disperse_blob(state_diff).await?;
-        let mut blob_status = disperse_blob_response.status();
         // Best practice is for users to poll the GetBlobStatus service to monitor status of the Blobs as needed. 
         // Rollups may Polling once every 5-10 seconds to monitor the status of a blob until it has successfully dispersed on the network with status of CONFIRMED. 
         // Confirmation can take up to a few minutes after the blob has been initially sent to the disperser, depending on network conditions.
         // for more info see https://docs.eigenlayer.xyz/eigenda-guides/eigenda-rollup-user-guides/building-on-top-of-eigenda
-        let mut blob_status_response: BlobStatusResponse;
         let timeout_duration = Duration::from_secs(300);
-        while blob_status != &BlobStatus::Confirmed {
+        loop {
             match timeout(timeout_duration, self.get_blob_status(disperse_blob_response.request_id())).await {
-                Ok(Ok(response)) => {
-                    blob_status_response = response;
-                    blob_status = blob_status_response.status();
+                Ok(Ok(blob_status_response)) => {
+                    let blob_status = blob_status_response.status();
                     if blob_status == &BlobStatus::Failed || matches!(blob_status, &BlobStatus::Other(_)) {
                         return Err(anyhow::anyhow!("Blob rejected by EigenDA {:?}", blob_status));
                     }
-                    thread::sleep(Duration::from_secs(5));
+                    if blob_status == &BlobStatus::Confirmed {
+                        break;
+                    }
+                    tokio::time::sleep(Duration::from_secs(5)).await;
                 },
-                Ok(Err(_)) => {
-                    // get_blob_status gRPC call fail
-                    // forward error to stderr?
-                    // should we just return the error and give up on eigenda if the grpc call fails?
-                    thread::sleep(Duration::from_secs(5));
+                Ok(Err(err)) => {
+                    eprintln!("Error occurred while polling blob status: {:?}", err);
+                    tokio::time::sleep(Duration::from_secs(5)).await; // should we just return the error and give up on eigenda if the grpc call fails?
                 },
                 Err(elapsed) => {
-                    return Err(anyhow::anyhow!("timeout error: {}", elapsed))
+                    return Err(anyhow::anyhow!("get_blob_status timeout error: {}", elapsed))
                 }
             }
         }
+        // TODO (v1)
+        // part 1
+        // query for latest finalised block num
+
+
+        // part 2
+        // query EigenDAServiceManager contract on Ethereum for BatchConfirmed event 
+        //     batch_header_hash = BlobInfo.BlobVerificationProof.BatchMetadata.batch_header_hash
+        // note that non-archive nodes may not have this if it is too far back
+
+
+        // part 3        
+        // if query returns result then bridge ??event?? to Starknet to be used later in verifier contract
+
+        // TODO (v2)
+        // confirm the blob against the EigenDA contracts onchain with blob_status_response.info(): &BlobInfo { BlobHeader, BlobVerificationProof }
+        // verifyBlob() is the primary function that needs to be invoked
+        //      This function will take the blobHeader and blobVerificationProof as inputs and
+        //      execute a series of checks to ensure the blob was signed for and stored properly in the EigenDA network.
         Ok(())
     }
 
