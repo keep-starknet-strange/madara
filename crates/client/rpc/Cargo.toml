@@ -22,6 +22,7 @@ mc-genesis-data-provider = { workspace = true }
 pallet-starknet = { workspace = true, default-features = true }
 pallet-starknet-runtime-api = { workspace = true, default-features = true }
 # Madara client
+mc-data-availability = { workspace = true }
 mc-db = { workspace = true }
 mc-rpc-core = { workspace = true }
 mc-storage = { workspace = true }
@@ -46,6 +47,7 @@ starknet_api = { workspace = true, default-features = true }
 # Others
 anyhow = { workspace = true }
 hex = { workspace = true, default-features = true }
+indexmap = { workspace = true, default-features = true }
 itertools = { workspace = true }
 jsonrpsee = { workspace = true, default-features = true, features = [
   "server",

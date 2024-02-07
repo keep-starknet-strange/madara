@@ -113,3 +113,7 @@ path = "estimate_fee.rs"
 [[test]]
 name = "starknet_simulate_transaction"
 path = "simulate_transaction.rs"
+
+[[test]]
+name = "starknet_get_state_update"
+path = "get_state_update.rs"

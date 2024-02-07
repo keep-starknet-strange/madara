@@ -33,7 +33,7 @@ jobs:
           ./target/release/madara setup --chain=dev --from-local=configs
       - name: Run rpc test without cache
         run: |-
-          ./target/release/madara --dev --sealing=manual &
+          ./target/release/madara --dev --sealing=manual --da-layer=ethereum --da-conf=examples/da-confs/ethereum.json &
           MADARA_RUN_PID=$!
           while ! echo exit | nc localhost 9944; do sleep 1; done
           cd starknet-rpc-test

@@ -123,7 +123,7 @@ async fn work_with_declare_transaction(madara: &ThreadSafeMadaraClient) -> Resul
         let mut madara_write_lock = madara.write().await;
         let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
         let (declare_tx, _, _) = account
-            .declare_contract("./contracts/Counter4/Counter4.sierra.json", "./contracts/Counter4/Counter4.casm.json");
+            .declare_contract("./contracts/counter4/Counter4.sierra.json", "./contracts/counter4/Counter4.casm.json");
 
         madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?
     };

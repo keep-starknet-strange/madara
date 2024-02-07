@@ -28,7 +28,7 @@ use sp_runtime::traits::Block as BlockT;
 use starknet_api::block::BlockHash;
 use starknet_api::state::ThinStateDiff;
 use thiserror::Error;
-use utils::state_diff_to_calldata;
+use utils::{block_data_to_calldata, state_diff_to_calldata};
 
 use crate::da_metrics::DaMetrics;
 
@@ -239,11 +239,9 @@ pub async fn update_state<B: BlockT, H: HasherT>(
     block_da_data: BlockDAData,
 ) -> Result<(), anyhow::Error> {
     let block_hash = block_da_data.block_hash;
+
     // store the state diff
-    madara_backend
-        .da()
-        .store_state_diff(&block_hash, state_diff_to_calldata(block_da_data))
-        .map_err(|e| anyhow!("{e}"))?;
+    madara_backend.da().store_state_diff(&block_hash, &block_da_data.state_diff).map_err(|e| anyhow!("{e}"))?;
 
     // Query last written state
     // TODO: this value will be used to ensure the correct state diff is being written in
@@ -254,16 +252,13 @@ pub async fn update_state<B: BlockT, H: HasherT>(
         DaMode::Validity => {
             // Check the SHARP status of last_proved + 1
             // Write the publish state diff of last_proved + 1
-            log::info!("validity da mode not implemented");
+            log::info!("[VALIDITY] not implemented");
         }
-        DaMode::Sovereign => match madara_backend.da().state_diff(&block_hash) {
-            Ok(Some(state_diff)) => {
-                da_client.publish_state_diff(state_diff).await.map_err(|e| anyhow!("DA PUBLISH ERROR: {e}"))?;
-            }
-            Ok(None) => Err(anyhow!("there is no state diff stored for block {}", block_hash))?,
-            Err(e) => Err(anyhow!("could not pull state diff for block {}: {}", block_hash, e))?,
-        },
-        DaMode::Volition => log::info!("volition da mode not implemented"),
+        DaMode::Sovereign => {
+            let calldata = block_data_to_calldata(block_da_data);
+            da_client.publish_state_diff(calldata).await.map_err(|e| anyhow!("[SOVEREIGN] publish error: {e}"))?
+        }
+        DaMode::Volition => log::info!("[VOLITION] not implemented"),
     };
 
     Ok(())

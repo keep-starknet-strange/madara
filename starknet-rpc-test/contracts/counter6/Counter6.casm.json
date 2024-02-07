@@ -284,7 +284,7 @@
     "0x1d",
     "0x48287ffd7fff8000",
     "0x482480017fff8000",
-    "0x0",
+    "0x6",
     "0x48127ff97fff8000",
     "0x48127ff97fff8000",
     "0x482480017ffd8000",
@@ -347,7 +347,7 @@
     "0x480680017fff8000",
     "0x0",
     "0x480680017fff8000",
-    "0x904f2833296109453ae83969e306a0ffe26d05f3d29af52bcc8fe626ac1d6b",
+    "0x29983b959dd95632b4fdc41af1ae5c201fa659ef70f8a9c78886f819d013ebe",
     "0x480680017fff8000",
     "0x53746f7261676552656164",
     "0x400280007ffd7fff",
@@ -396,7 +396,7 @@
     "0x480680017fff8000",
     "0x0",
     "0x480680017fff8000",
-    "0x904f2833296109453ae83969e306a0ffe26d05f3d29af52bcc8fe626ac1d6b",
+    "0x29983b959dd95632b4fdc41af1ae5c201fa659ef70f8a9c78886f819d013ebe",
     "0x480680017fff8000",
     "0x53746f726167655772697465",
     "0x400280007ffc7fff",
@@ -555,12 +555,12 @@
   "entry_points_by_type": {
     "EXTERNAL": [
       {
-        "selector": "0xb61015b8f0a9aa3e16e55c2d2094e84095c29c1376bd5a44680c1449e63575",
+        "selector": "0x80e27f44eb29dd3c6179c87738d70608b7829cf5c59bd9603726de329ecf3c",
         "offset": 0,
         "builtins": ["range_check"]
       },
       {
-        "selector": "0x113e3540ab23de9f67c67a9c0ee7796d0ebb8afafdba2af272927e34f1713e2",
+        "selector": "0x2be1f0cd40a8d4132d02c5f57e379c7e53a040dd27ab98bc811b637b0008122",
         "offset": 127,
         "builtins": ["range_check"]
       }
