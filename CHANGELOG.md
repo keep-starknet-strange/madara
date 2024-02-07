@@ -3,6 +3,7 @@
 ## Next release
 
 - feat(rpc): added `get_state_update` real values from DA db
+- feat: add transparent representation to `Felt252Wrapper`
 
 ## v0.7.0
 
