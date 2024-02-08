@@ -54,3 +54,8 @@ jobs:
       SCARB_VERSION: "2.3.1"
     steps:
       - uses: keep-starknet-strange/starknet-foundry-compatibility-tests@main
+
+  gomu-gomu-tests:
+    name: Run gomu gomu performance tests
+    uses: ./.github/workflows/gomu-gomu-tests.yml
+    needs: madara_commands
