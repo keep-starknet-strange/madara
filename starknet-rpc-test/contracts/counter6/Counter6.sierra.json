@@ -34,10 +34,10 @@
     "0x90d0203c41ad646d024845257a6eceb2f8b59b29ce7420dd518053d2edeedc",
     "0x53746f7261676541646472657373",
     "0x53746f726167654261736541646472657373",
-    "0x20ff6e48ce00abe39d8e3c47fe5f6934ff4ffc564f51c8cfb11f5d4989a0ccf",
+    "0x18311d3585b443683e45d21722d26cc9199067eb5e14abc2a9ce50cbfa53ce0",
     "0x800000000000000f00000000000000000000000000000003",
     "0xc",
-    "0x39438ad163ae11795c99a05436b266016a4d210a852c95f106f0e82ada3d6cd",
+    "0x1df7c67d3a57810c54dcf811e307c6ddb6a124694b2046fadad3288f0f67d0e",
     "0xd",
     "0x426f78",
     "0x800000000000000700000000000000000000000000000001",
@@ -51,9 +51,9 @@
     "0x1baeba72e79e9db2587cf44fedb2f3700b2075a5e8e39a562584862c4b71f62",
     "0x13",
     "0x14",
-    "0x91b53cd7d1f331c897e86bd435418b9800d25e52836eeb1ddd77b0fbee9f21",
+    "0x3ae7ff102078229d964d2b6f7eff57fbf1a6be1e5bf186a96a1b7e352f75bf5",
     "0x16",
-    "0x12374a530a17b4b80217d0f9aae2a7d7f853a8caefde5804c2f26123bd78ada",
+    "0x49d1f06bbb4956b3228be91eed566c117b992f5f77cbdee36cd0c276f7b6c4",
     "0x17",
     "0x4275696c74696e436f737473",
     "0x53797374656d",
@@ -103,7 +103,7 @@
     "0x7",
     "0xe",
     "0x73746f726167655f626173655f616464726573735f636f6e7374",
-    "0x904f2833296109453ae83969e306a0ffe26d05f3d29af52bcc8fe626ac1d6b",
+    "0x29983b959dd95632b4fdc41af1ae5c201fa659ef70f8a9c78886f819d013ebe",
     "0x73746f726167655f616464726573735f66726f6d5f62617365",
     "0xa",
     "0x73746f726167655f726561645f73797363616c6c",
@@ -233,7 +233,7 @@
     "0xc080856130e083b0f08083a0c0808402608083e5508083c0f0e083b2c0808",
     "0x595708083c08125708124b0808084a05585708083a2908083a05125708124b",
     "0x1c0808402c08083e08123d08124b3d08083a05123d08124b0c0808440c0808",
-    "0x4a1e08083e5d08083c5c0e083b0812084705120847055b5a0e083b1c08083a",
+    "0x4a1e08083e5d08083c5c0e083b081208475a120847055b5a0e083b1c08083a",
     "0x5508124b2608084a1c08084208125208124b5208083a05125208124b2e0808",
     "0x8124b05626108083a05605f12085e0808083a08125508124b5508083a0512",
     "0x83a05125c08124b05640c0e083b6308084408126308124b6308083a051263",
@@ -363,11 +363,11 @@
       ],
       [10, "StorageAddress"],
       [11, "StorageBaseAddress"],
-      [12, "counter0::Counter::balance_0::ContractMemberState"],
-      [13, "Tuple<counter0::Counter::balance_0::ContractMemberState, Unit>"],
+      [12, "counter6::Counter::balance_6::ContractMemberState"],
+      [13, "Tuple<counter6::Counter::balance_6::ContractMemberState, Unit>"],
       [
         14,
-        "core::panics::PanicResult::<(counter0::Counter::balance_0::ContractMemberState, ())>"
+        "core::panics::PanicResult::<(counter6::Counter::balance_6::ContractMemberState, ())>"
       ],
       [15, "Box<felt252>"],
       [16, "core::option::Option::<core::box::Box::<@core::felt252>>"],
@@ -376,11 +376,11 @@
       [19, "Snapshot<Array<felt252>>"],
       [20, "core::array::Span::<core::felt252>"],
       [21, "Tuple<core::array::Span::<core::felt252>>"],
-      [22, "counter0::Counter::ContractState"],
-      [23, "Tuple<counter0::Counter::ContractState, Unit>"],
+      [22, "counter6::Counter::ContractState"],
+      [23, "Tuple<counter6::Counter::ContractState, Unit>"],
       [
         24,
-        "core::panics::PanicResult::<(counter0::Counter::ContractState, ())>"
+        "core::panics::PanicResult::<(counter6::Counter::ContractState, ())>"
       ],
       [25, "BuiltinCosts"],
       [26, "System"],
@@ -433,16 +433,16 @@
       [28, "withdraw_gas_all"],
       [
         29,
-        "struct_construct<counter0::Counter::balance_0::ContractMemberState>"
+        "struct_construct<counter6::Counter::balance_6::ContractMemberState>"
       ],
-      [30, "struct_construct<counter0::Counter::ContractState>"],
-      [31, "store_temp<counter0::Counter::ContractState>"],
-      [32, "function_call<user@counter0::Counter::increase_balance_0>"],
+      [30, "struct_construct<counter6::Counter::ContractState>"],
+      [31, "store_temp<counter6::Counter::ContractState>"],
+      [32, "function_call<user@counter6::Counter::increase_balance_6>"],
       [
         33,
-        "enum_match<core::panics::PanicResult::<(counter0::Counter::ContractState, ())>>"
+        "enum_match<core::panics::PanicResult::<(counter6::Counter::ContractState, ())>>"
       ],
-      [34, "drop<Tuple<counter0::Counter::ContractState, Unit>>"],
+      [34, "drop<Tuple<counter6::Counter::ContractState, Unit>>"],
       [35, "snapshot_take<Array<felt252>>"],
       [36, "drop<Array<felt252>>"],
       [37, "struct_construct<core::array::Span::<core::felt252>>"],
@@ -458,9 +458,9 @@
         43,
         "felt252_const<485748461484230571791265682659113160264223489397539653310998840191492913>"
       ],
-      [44, "snapshot_take<counter0::Counter::ContractState>"],
-      [45, "drop<counter0::Counter::ContractState>"],
-      [46, "function_call<user@counter0::Counter::get_balance_0>"],
+      [44, "snapshot_take<counter6::Counter::ContractState>"],
+      [45, "drop<counter6::Counter::ContractState>"],
+      [46, "function_call<user@counter6::Counter::get_balance_6>"],
       [47, "enum_match<core::panics::PanicResult::<(core::felt252,)>>"],
       [48, "struct_deconstruct<Tuple<felt252>>"],
       [49, "snapshot_take<felt252>"],
@@ -491,42 +491,42 @@
       [62, "enum_init<core::option::Option::<core::felt252>, 0>"],
       [63, "store_temp<core::option::Option::<core::felt252>>"],
       [64, "enum_init<core::option::Option::<core::felt252>, 1>"],
-      [65, "struct_deconstruct<counter0::Counter::ContractState>"],
-      [66, "snapshot_take<counter0::Counter::balance_0::ContractMemberState>"],
-      [67, "store_temp<counter0::Counter::balance_0::ContractMemberState>"],
+      [65, "struct_deconstruct<counter6::Counter::ContractState>"],
+      [66, "snapshot_take<counter6::Counter::balance_6::ContractMemberState>"],
+      [67, "store_temp<counter6::Counter::balance_6::ContractMemberState>"],
       [
         68,
-        "function_call<user@counter0::Counter::balance_0::InternalContractMemberStateImpl::read>"
+        "function_call<user@counter6::Counter::balance_6::InternalContractMemberStateImpl::read>"
       ],
       [69, "felt252_add"],
-      [70, "felt252_const<0>"],
+      [70, "felt252_const<6>"],
       [71, "felt252_const<1>"],
       [
         72,
-        "function_call<user@counter0::Counter::balance_0::InternalContractMemberStateImpl::write>"
+        "function_call<user@counter6::Counter::balance_6::InternalContractMemberStateImpl::write>"
       ],
       [
         73,
-        "enum_match<core::panics::PanicResult::<(counter0::Counter::balance_0::ContractMemberState, ())>>"
+        "enum_match<core::panics::PanicResult::<(counter6::Counter::balance_6::ContractMemberState, ())>>"
       ],
       [
         74,
-        "struct_deconstruct<Tuple<counter0::Counter::balance_0::ContractMemberState, Unit>>"
+        "struct_deconstruct<Tuple<counter6::Counter::balance_6::ContractMemberState, Unit>>"
       ],
-      [75, "struct_construct<Tuple<counter0::Counter::ContractState, Unit>>"],
+      [75, "struct_construct<Tuple<counter6::Counter::ContractState, Unit>>"],
       [
         76,
-        "enum_init<core::panics::PanicResult::<(counter0::Counter::ContractState, ())>, 0>"
+        "enum_init<core::panics::PanicResult::<(counter6::Counter::ContractState, ())>, 0>"
       ],
       [
         77,
-        "store_temp<core::panics::PanicResult::<(counter0::Counter::ContractState, ())>>"
+        "store_temp<core::panics::PanicResult::<(counter6::Counter::ContractState, ())>>"
       ],
       [
         78,
-        "enum_init<core::panics::PanicResult::<(counter0::Counter::ContractState, ())>, 1>"
+        "enum_init<core::panics::PanicResult::<(counter6::Counter::ContractState, ())>, 1>"
       ],
-      [79, "drop<counter0::Counter::balance_0::ContractMemberState>"],
+      [79, "drop<counter6::Counter::balance_6::ContractMemberState>"],
       [80, "struct_construct<Tuple<felt252>>"],
       [81, "enum_init<core::panics::PanicResult::<(core::felt252,)>, 0>"],
       [82, "store_temp<core::panics::PanicResult::<(core::felt252,)>>"],
@@ -534,7 +534,7 @@
       [84, "store_temp<Unit>"],
       [
         85,
-        "storage_base_address_const<254972299075299712015478855430390632050936182311486400521237190787151437163>"
+        "storage_base_address_const<1175862423903136707454667483804259068019046972062653775737794027701785411262>"
       ],
       [86, "storage_address_from_base"],
       [87, "store_temp<StorageAddress>"],
@@ -584,19 +584,19 @@
       [101, "struct_deconstruct<Tuple<Unit>>"],
       [
         102,
-        "struct_construct<Tuple<counter0::Counter::balance_0::ContractMemberState, Unit>>"
+        "struct_construct<Tuple<counter6::Counter::balance_6::ContractMemberState, Unit>>"
       ],
       [
         103,
-        "enum_init<core::panics::PanicResult::<(counter0::Counter::balance_0::ContractMemberState, ())>, 0>"
+        "enum_init<core::panics::PanicResult::<(counter6::Counter::balance_6::ContractMemberState, ())>, 0>"
       ],
       [
         104,
-        "store_temp<core::panics::PanicResult::<(counter0::Counter::balance_0::ContractMemberState, ())>>"
+        "store_temp<core::panics::PanicResult::<(counter6::Counter::balance_6::ContractMemberState, ())>>"
       ],
       [
         105,
-        "enum_init<core::panics::PanicResult::<(counter0::Counter::balance_0::ContractMemberState, ())>, 1>"
+        "enum_init<core::panics::PanicResult::<(counter6::Counter::balance_6::ContractMemberState, ())>, 1>"
       ],
       [
         106,
@@ -612,19 +612,19 @@
       [111, "enum_init<core::panics::PanicResult::<((),)>, 1>"]
     ],
     "user_func_names": [
-      [0, "counter0::Counter::__wrapper_increase_balance_0"],
-      [1, "counter0::Counter::__wrapper_get_balance_0"],
+      [0, "counter6::Counter::__wrapper_increase_balance_6"],
+      [1, "counter6::Counter::__wrapper_get_balance_6"],
       [2, "core::Felt252Serde::deserialize"],
-      [3, "counter0::Counter::increase_balance_0"],
-      [4, "counter0::Counter::get_balance_0"],
+      [3, "counter6::Counter::increase_balance_6"],
+      [4, "counter6::Counter::get_balance_6"],
       [5, "core::Felt252Serde::serialize"],
       [
         6,
-        "counter0::Counter::balance_0::InternalContractMemberStateImpl::read"
+        "counter6::Counter::balance_6::InternalContractMemberStateImpl::read"
       ],
       [
         7,
-        "counter0::Counter::balance_0::InternalContractMemberStateImpl::write"
+        "counter6::Counter::balance_6::InternalContractMemberStateImpl::write"
       ],
       [
         8,
@@ -637,11 +637,11 @@
   "entry_points_by_type": {
     "EXTERNAL": [
       {
-        "selector": "0xb61015b8f0a9aa3e16e55c2d2094e84095c29c1376bd5a44680c1449e63575",
+        "selector": "0x80e27f44eb29dd3c6179c87738d70608b7829cf5c59bd9603726de329ecf3c",
         "function_idx": 0
       },
       {
-        "selector": "0x113e3540ab23de9f67c67a9c0ee7796d0ebb8afafdba2af272927e34f1713e2",
+        "selector": "0x2be1f0cd40a8d4132d02c5f57e379c7e53a040dd27ab98bc811b637b0008122",
         "function_idx": 1
       }
     ],
@@ -651,21 +651,21 @@
   "abi": [
     {
       "type": "function",
-      "name": "increase_balance_0",
+      "name": "increase_balance_6",
       "inputs": [{ "name": "amount", "type": "core::felt252" }],
       "outputs": [],
       "state_mutability": "external"
     },
     {
       "type": "function",
-      "name": "get_balance_0",
+      "name": "get_balance_6",
       "inputs": [],
       "outputs": [{ "type": "core::felt252" }],
       "state_mutability": "view"
     },
     {
       "type": "event",
-      "name": "counter0::Counter::Event",
+      "name": "counter6::Counter::Event",
       "kind": "enum",
       "variants": []
     }

@@ -2,6 +2,15 @@
 
 ## Next release
 
+- feat(client/data-availability): implement custom error handling
+- fix: get_block_by_block_hash then default rather than error
+- feat(rpc): added `get_state_update` real values from DA db
+
+## v0.7.0
+
+- chore: release v0.7.0
+- refacto: remove abusive `TryInto` impl
+- dev: optimize tx trace creation
 - dev: make Madara std compatible
 - dev: check that class exist before using it in BuildGenesisConfig
 - CI: fix taplo version
@@ -276,3 +285,4 @@
 - branding: use new logo in the README
 - dev: Get the block status from the actual block in get_block_with_tx_hashes
 - fix: l1-l2 messaging
+- dev : clean contracts and compiled files

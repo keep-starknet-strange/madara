@@ -273,6 +273,7 @@ Thanks goes to these wonderful people
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/antiyro"><img src="https://avatars.githubusercontent.com/u/74653697?v=4?s=100" width="100px;" alt="antiyro"/><br /><sub><b>antiyro</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=antiyro" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/azurwastaken"><img src="https://avatars.githubusercontent.com/u/30268138?v=4?s=100" width="100px;" alt="azurwastaken"/><br /><sub><b>azurwastaken</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=azurwastaken" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

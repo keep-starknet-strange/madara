@@ -22,7 +22,7 @@ async fn fail_validation_step(madara: &ThreadSafeMadaraClient) -> Result<(), any
         // using incorrect private key to generate the wrong signature
         let account = build_single_owner_account(&rpc, "0x1234", ARGENT_CONTRACT_ADDRESS, true);
         let (declare_tx, _, _) =
-            account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
+            account.declare_contract("./contracts/counter.sierra.json", "./contracts/counter.casm.json");
 
         let mut madara_write_lock = madara.write().await;
         madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?
@@ -50,7 +50,7 @@ async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraCli
 
     let oz_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, OZ_CONTRACT_ADDRESS, true);
     let (declare_tx, expected_class_hash, _) = oz_account
-        .declare_contract("./contracts/Counter5/Counter5.sierra.json", "./contracts/Counter5/Counter5.casm.json");
+        .declare_contract("./contracts/counter5/Counter5.sierra.json", "./contracts/counter5/Counter5.casm.json");
 
     let (block_number, txs) = {
         let mut madara_write_lock = madara.write().await;
@@ -91,7 +91,7 @@ async fn works_with_storage_change(madara: &ThreadSafeMadaraClient) -> Result<()
 
     let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let (declare_tx, expected_class_hash, _) = account
-        .declare_contract("./contracts/Counter1/Counter1.sierra.json", "./contracts/Counter1/Counter1.casm.json");
+        .declare_contract("./contracts/counter1/Counter1.sierra.json", "./contracts/counter1/Counter1.casm.json");
 
     let (mut txs, block_number) = {
         let mut madara_write_lock = madara.write().await;
@@ -126,7 +126,7 @@ async fn fails_already_declared(madara: &ThreadSafeMadaraClient) -> Result<(), a
     // first declaration works
     let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let (declare_tx, _, _) = account
-        .declare_contract("./contracts/Counter2/Counter2.sierra.json", "./contracts/Counter2/Counter2.casm.json");
+        .declare_contract("./contracts/counter2/Counter2.sierra.json", "./contracts/counter2/Counter2.casm.json");
 
     let mut madara_write_lock = madara.write().await;
     // The first one will fail too for now
@@ -137,7 +137,7 @@ async fn fails_already_declared(madara: &ThreadSafeMadaraClient) -> Result<(), a
 
     // second declaration fails
     let (declare_tx, _, _) = account
-        .declare_contract("./contracts/Counter2/Counter2.sierra.json", "./contracts/Counter2/Counter2.casm.json");
+        .declare_contract("./contracts/counter2/Counter2.sierra.json", "./contracts/counter2/Counter2.casm.json");
 
     let mut txs = madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
 

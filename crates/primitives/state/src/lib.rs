@@ -13,8 +13,6 @@ use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::stdlib::collections::HashMap;
 
-pub mod rpc;
-
 type ContractClassMapping = HashMap<ClassHash, ContractClass>;
 
 /// This trait allows to get the state changes of a starknet tx and therefore enables computing the
