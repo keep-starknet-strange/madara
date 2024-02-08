@@ -488,6 +488,7 @@
 <a href="#488" id="488">488</a>
 <a href="#489" id="489">489</a>
 <a href="#490" id="490">490</a>
+<a href="#491" id="491">491</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! # Felt252 - FieldElement wrapper.
 //!
 //! Starknet base type is a [`FieldElement`] from starknet-ff crate.
@@ -524,6 +525,7 @@
 
 <span class="attr">#[derive(Clone, Debug, PartialEq, PartialOrd, Ord, Hash, Eq, Copy)]
 #[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
+#[repr(transparent)]
 </span><span class="kw">pub struct </span>Felt252Wrapper(<span class="kw">pub </span>FieldElement);
 
 <span class="kw">impl </span>Felt252Wrapper {

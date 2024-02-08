@@ -225,9 +225,45 @@
 <a href="#225" id="225">225</a>
 <a href="#226" id="226">226</a>
 <a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::future::Future;
 <span class="kw">use </span>std::sync::Arc;
 
+<span class="kw">use </span>assert_matches::assert_matches;
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>starknet_accounts::{
     Account, AccountFactory, Call, ConnectedAccount, Execution, OpenZeppelinAccountFactory, SingleOwnerAccount,
@@ -235,16 +271,19 @@
 <span class="kw">use </span>starknet_core::chain_id;
 <span class="kw">use </span>starknet_core::types::contract::legacy::LegacyContractClass;
 <span class="kw">use </span>starknet_core::types::contract::{CompiledClass, SierraClass};
-<span class="kw">use </span>starknet_core::types::{BlockId, BlockTag, BroadcastedInvokeTransaction, FieldElement, FunctionCall, MsgToL1};
+<span class="kw">use </span>starknet_core::types::{
+    BlockId, BlockTag, BroadcastedInvokeTransaction, FieldElement, FunctionCall, MaybePendingTransactionReceipt,
+    MsgToL1, TransactionReceipt,
+};
 <span class="kw">use </span>starknet_core::utils::get_selector_from_name;
 <span class="kw">use </span>starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
-<span class="kw">use </span>starknet_providers::Provider;
+<span class="kw">use </span>starknet_providers::{Provider, ProviderError};
 <span class="kw">use </span>starknet_signers::{LocalWallet, SigningKey};
 
 <span class="kw">use </span><span class="kw">crate</span>::constants::{FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE};
 <span class="kw">use crate</span>::{
-    RpcAccount, RpcOzAccountFactory, TransactionAccountDeployment, TransactionDeclaration, TransactionExecution,
-    TransactionLegacyDeclaration,
+    RpcAccount, RpcOzAccountFactory, SendTransactionError, TransactionAccountDeployment, TransactionDeclaration,
+    TransactionExecution, TransactionLegacyDeclaration, TransactionResult,
 };
 
 <span class="kw">pub struct </span>U256 {
@@ -451,5 +490,36 @@
     }
 
     <span class="macro">panic!</span>(<span class="string">&quot;Max poll count exceeded.&quot;</span>);
+}
+
+<span class="kw">type </span>TransactionReceiptResult = <span class="prelude-ty">Result</span>&lt;MaybePendingTransactionReceipt, ProviderError&gt;;
+
+<span class="kw">pub async fn </span>get_transaction_receipt(
+    rpc: <span class="kw-2">&amp;</span>JsonRpcClient&lt;HttpTransport&gt;,
+    transaction_hash: FieldElement,
+) -&gt; TransactionReceiptResult {
+    <span class="comment">// there is a delay between the transaction being available at the client
+    // and the sealing of the block, hence sleeping for 100ms
+    </span>assert_poll(|| <span class="kw">async </span>{ rpc.get_transaction_receipt(transaction_hash).<span class="kw">await</span>.is_ok() }, <span class="number">100</span>, <span class="number">20</span>).<span class="kw">await</span>;
+
+    rpc.get_transaction_receipt(transaction_hash).<span class="kw">await
+</span>}
+
+<span class="kw">pub async fn </span>get_contract_address_from_deploy_tx(
+    rpc: <span class="kw-2">&amp;</span>JsonRpcClient&lt;HttpTransport&gt;,
+    tx: <span class="prelude-ty">Result</span>&lt;TransactionResult, SendTransactionError&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;FieldElement, ProviderError&gt; {
+    <span class="kw">let </span>deploy_tx_hash = <span class="macro">assert_matches!</span>(
+        <span class="kw-2">&amp;</span>tx,
+        <span class="prelude-val">Ok</span>(TransactionResult::Execution(rpc_response)) =&gt; rpc_response.transaction_hash
+    );
+
+    <span class="kw">let </span>deploy_tx_receipt = get_transaction_receipt(rpc, deploy_tx_hash).<span class="kw">await</span><span class="question-mark">?</span>;
+
+    <span class="kw">let </span>contract_address = <span class="macro">assert_matches!</span>(
+        deploy_tx_receipt,
+        MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) =&gt; receipt.events[<span class="number">0</span>].data[<span class="number">0</span>]
+    );
+    <span class="prelude-val">Ok</span>(contract_address)
 }
 </code></pre></div></section></main></body></html>

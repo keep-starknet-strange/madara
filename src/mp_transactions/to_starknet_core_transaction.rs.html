@@ -128,6 +128,24 @@
 <a href="#128" id="128">128</a>
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::vec::Vec;
 
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
@@ -136,6 +154,24 @@
 <span class="kw">fn </span>cast_vec_of_felt_252_wrappers(data: Vec&lt;Felt252Wrapper&gt;) -&gt; Vec&lt;FieldElement&gt; {
     <span class="comment">// Non-copy but less dangerous than transmute
     // https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
+
+    // Unsafe code but all invariants are checked:
+
+    // 1. ptr must have been allocated using the global allocator -&gt; data is allocated with the Global
+    //    allocator.
+    // 2. T needs to have the same alignment as what ptr was allocated with -&gt; Felt252Wrapper uses
+    //    transparent representation of the inner type.
+    // 3. The allocated size in bytes needs to be the same as the pointer -&gt; As FieldElement and
+    //    Felt252Wrapper have the same size, and capacity is taken directly from the data Vector, we
+    //    will have the same allocated byte size.
+    // 4. Length needs to be less than or equal to capacity -&gt; data.len() is always less than or equal
+    //    to data.capacity()
+    // 5. The first length values must be properly initialized values of type T -&gt; ok since we use data
+    //    which was correctly allocated
+    // 6. capacity needs to be the capacity that the pointer was allocated with -&gt; data.as_mut_ptr()
+    //    returns a pointer to memory having at least capacity initialized memory
+    // 7. The allocated size in bytes must be no larger than isize::MAX -&gt; data.capacity() will never be
+    //    bigger than isize::MAX (https://doc.rust-lang.org/std/vec/struct.Vec.html#panics-7)
     </span><span class="kw">let </span><span class="kw-2">mut </span>data = core::mem::ManuallyDrop::new(data);
     <span class="kw">unsafe </span>{ alloc::vec::Vec::from_raw_parts(data.as_mut_ptr() <span class="kw">as </span><span class="kw-2">*mut </span>FieldElement, data.len(), data.capacity()) }
 }
