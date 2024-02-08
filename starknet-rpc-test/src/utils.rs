@@ -252,7 +252,7 @@ pub async fn get_contract_address_from_deploy_tx(
         Ok(TransactionResult::Execution(rpc_response)) => rpc_response.transaction_hash
     );
 
-    let deploy_tx_receipt = get_transaction_receipt(&rpc, deploy_tx_hash).await?;
+    let deploy_tx_receipt = get_transaction_receipt(rpc, deploy_tx_hash).await?;
 
     let contract_address = assert_matches!(
         deploy_tx_receipt,

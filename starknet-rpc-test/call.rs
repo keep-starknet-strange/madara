@@ -167,8 +167,7 @@ async fn works_on_mutable_call_without_modifying_storage(madara: &ThreadSafeMada
         madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
         let mut txs = madara_write_lock.create_block_with_txs(vec![Transaction::Execution(deploy_tx)]).await?;
         let deploy_tx_result = txs.pop().unwrap();
-        let contract_address = get_contract_address_from_deploy_tx(&rpc, deploy_tx_result).await?;
-        contract_address
+        get_contract_address_from_deploy_tx(&rpc, deploy_tx_result).await?
     };
 
     let read_balance = || async {
