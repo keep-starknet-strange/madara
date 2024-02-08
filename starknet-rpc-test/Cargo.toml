@@ -119,5 +119,5 @@ name = "starknet_get_state_update"
 path = "get_state_update.rs"
 
 [[test]]
-name = "starknet_trance_block"
+name = "starknet_trace_block_transactions"
 path = "trace_block.rs"

@@ -31,7 +31,7 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
 
 #[rstest]
 #[tokio::test]
-async fn work(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+async fn work_for_one_invoke_tx(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
     // Create a block with one tx

@@ -8,7 +8,7 @@
 - feat(rpc): added `get_state_update` real values from DA db
 - feat: add transparent representation to `Felt252Wrapper`
 - feat(rpc/trace_api): add `trace_block_transaction`
-- chore(runtime_api): remove unused `filter_extrinsic`
+- chore(db): changed the way hashes are encoded
 
 ## v0.7.0
 

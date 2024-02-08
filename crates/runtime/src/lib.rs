@@ -338,7 +338,7 @@ impl_runtime_apis! {
                 _ => unreachable!("The previous match made sure that at this point tx is one of those starknet calls"),
             };
 
-            let tx_index = u32::try_from(tx_index).expect("unexpected number of transactions");
+            let tx_index = u32::try_from(tx_index).expect("More that u32::MAX extrinsics have been passed. That's too much. You should not be doing that.");
             Some((tx_index, transaction))
         }
 
