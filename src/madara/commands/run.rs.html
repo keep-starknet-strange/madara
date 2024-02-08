@@ -454,7 +454,7 @@
         DaLayer::Ethereum =&gt; {
             <span class="kw">let </span>ethereum_conf: EthereumConfig =
                 serde_json::from_reader(file).map_err(|e| sc_cli::Error::Input(e.to_string()))<span class="question-mark">?</span>;
-            Box::new(EthereumClient::try_from(ethereum_conf)<span class="question-mark">?</span>)
+            Box::new(EthereumClient::try_from(ethereum_conf).map_err(|e| sc_cli::Error::Input(e.to_string()))<span class="question-mark">?</span>)
         }
         <span class="attr">#[cfg(feature = <span class="string">&quot;avail&quot;</span>)]
         </span>DaLayer::Avail =&gt; {

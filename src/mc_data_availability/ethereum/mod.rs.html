@@ -105,12 +105,12 @@
 <a href="#105" id="105">105</a>
 <a href="#106" id="106">106</a>
 <a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
 </pre></div><pre class="rust"><code><span class="kw">pub mod </span>config;
 
 <span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>anyhow::Result;
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>ethers::prelude::{abigen, SignerMiddleware};
 <span class="kw">use </span>ethers::providers::{Http, Provider};
@@ -118,7 +118,7 @@
 <span class="kw">use </span>ethers::types::{Address, I256, U256};
 
 <span class="kw">use </span><span class="kw">crate</span>::utils::is_valid_http_endpoint;
-<span class="kw">use crate</span>::{DaClient, DaMode};
+<span class="kw">use crate</span>::{DaClient, DaError, DaMode};
 
 <span class="attr">#[derive(Clone, Debug)]
 </span><span class="kw">pub struct </span>EthereumClient {
@@ -130,7 +130,7 @@
 
 <span class="attr">#[async_trait]
 </span><span class="kw">impl </span>DaClient <span class="kw">for </span>EthereumClient {
-    <span class="kw">async fn </span>publish_state_diff(<span class="kw-2">&amp;</span><span class="self">self</span>, state_diff: Vec&lt;U256&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">async fn </span>publish_state_diff(<span class="kw-2">&amp;</span><span class="self">self</span>, state_diff: Vec&lt;U256&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), anyhow::Error&gt; {
         <span class="macro">log::debug!</span>(<span class="string">&quot;State Update: {:?}&quot;</span>, state_diff);
         <span class="kw">let </span>fmt_tx = <span class="kw">match </span><span class="self">self</span>.mode {
             DaMode::Sovereign =&gt; {
@@ -160,15 +160,15 @@
         <span class="kw">let </span>tx = fmt_tx
             .send()
             .<span class="kw">await
-            </span>.map_err(|e| <span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;ethereum send update err: {e}&quot;</span>))<span class="question-mark">?
+            </span>.map_err(|e| DaError::FailedDataSubmission(e.into()))<span class="question-mark">?
             </span>.<span class="kw">await
-            </span>.map_err(|e| <span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;ethereum poll update err: {e}&quot;</span>))<span class="question-mark">?</span>;
+            </span>.map_err(|e| DaError::FailedDataSubmission(e.into()))<span class="question-mark">?</span>;
 
         <span class="macro">log::debug!</span>(<span class="string">&quot;State Update: {:?}&quot;</span>, tx);
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">async fn </span>last_published_state(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;I256&gt; {
+    <span class="kw">async fn </span>last_published_state(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;I256, anyhow::Error&gt; {
         <span class="macro">abigen!</span>(
             STARKNET,
             <span class="string">r#&quot;[
@@ -177,7 +177,7 @@
         );
 
         <span class="kw">let </span>contract = STARKNET::new(<span class="self">self</span>.cc_address, <span class="self">self</span>.http_provider.clone().into());
-        contract.state_block_number().call().<span class="kw">await</span>.map_err(|e| <span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;ethereum contract err: {e}&quot;</span>))
+        <span class="prelude-val">Ok</span>(contract.state_block_number().call().<span class="kw">await</span>.map_err(|e| DaError::FailedDataSubmission(e.into()))<span class="question-mark">?</span>)
     }
 
     <span class="kw">fn </span>get_mode(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; DaMode {
@@ -190,24 +190,26 @@
 }
 
 <span class="kw">impl </span>TryFrom&lt;config::EthereumConfig&gt; <span class="kw">for </span>EthereumClient {
-    <span class="kw">type </span>Error = String;
+    <span class="kw">type </span>Error = DaError;
 
     <span class="kw">fn </span>try_from(conf: config::EthereumConfig) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
         <span class="kw">if </span>!is_valid_http_endpoint(<span class="kw-2">&amp;</span>conf.http_provider) {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;invalid http endpoint, received {}&quot;</span>, <span class="kw-2">&amp;</span>conf.http_provider));
+            <span class="kw">return </span><span class="prelude-val">Err</span>(DaError::InvalidHttpEndpoint(conf.http_provider));
         }
 
-        <span class="kw">let </span>provider = Provider::&lt;Http&gt;::try_from(conf.http_provider).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;ethereum error: {e}&quot;</span>))<span class="question-mark">?</span>;
+        <span class="kw">let </span>provider =
+            Provider::&lt;Http&gt;::try_from(conf.http_provider).map_err(|e| DaError::FailedBuildingClient(e.into()))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>wallet: LocalWallet = conf
             .sequencer_key
             .parse::&lt;LocalWallet&gt;()
-            .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;ethereum error: {e}&quot;</span>))<span class="question-mark">?
+            .map_err(|e| DaError::FailedConversion(e.into()))<span class="question-mark">?
             </span>.with_chain_id(conf.chain_id);
 
         <span class="kw">let </span>signer = Arc::new(SignerMiddleware::new(provider.clone(), wallet));
 
-        <span class="kw">let </span>cc_address: Address = conf.core_contracts.parse().map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;ethereum error: {e}&quot;</span>))<span class="question-mark">?</span>;
+        <span class="kw">let </span>cc_address: Address =
+            conf.core_contracts.parse::&lt;Address&gt;().map_err(|e| DaError::FailedConversion(e.into()))<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ http_provider: provider, signer, cc_address, mode: conf.mode })
     }
