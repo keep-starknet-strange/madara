@@ -74,8 +74,8 @@ where
                 },
             )?;
 
-        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
-            error!("Failed to retrieve starknet block from substrate block hash");
+        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).map_err(|e| {
+            error!("Failed to retrieve starknet block from substrate block hash: error: {e}");
             StarknetRpcApiError::InternalServerError
         })?;
         let txn_hashes = self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into());
@@ -93,8 +93,11 @@ where
             tx_hash_and_events.push((tx_hash, event));
         }
 
-        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)
-            .ok_or(StarknetRpcApiError::BlockNotFound)?;
+        let starknet_block = match get_block_by_block_hash(self.client.as_ref(), substrate_block_hash) {
+            Ok(block) => block,
+            Err(_) => return Err(StarknetRpcApiError::BlockNotFound),
+        };
+
         let block_hash = starknet_block.header().hash::<H>();
 
         let emitted_events = tx_hash_and_events
