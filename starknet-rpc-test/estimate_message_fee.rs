@@ -9,6 +9,7 @@ use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{L1_CONTRACT_ADDRESS, TEST_CONTRACT_ADDRESS};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
+
 #[rstest]
 #[tokio::test]
 async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
@@ -49,22 +50,23 @@ async fn fail_if_message_fail(madara: &ThreadSafeMadaraClient) -> Result<(), any
     Ok(())
 }
 
-// #[rstest]
-// #[tokio::test]
-// async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
-//     let rpc = madara.get_starknet_client().await;
+#[rstest]
+#[tokio::test]
+async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
 
-// Not sure is doable for the moment
-// TODO : Implement this test case using the test_l1_handler_store_under_caller_address cairo
-// function.   iniate a message between L1 and L2 and estimate it using a message that will look
-// like this :
+    let message: MsgFromL1 = MsgFromL1 {
+        from_address: EthAddress::from_hex(L1_CONTRACT_ADDRESS).unwrap(),
+        to_address: 3u64.into(),
+        entry_point_selector: 2u64.into(),
+        payload: vec![1u64.into()],
+    };
 
-//   let message: MsgFromL1 = MsgFromL1 {
-//     from_address: EthAddress::from_hex(L1_CONTRACT_ADDRESS).unwrap(),
-//     to_address: FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
-//     entry_point_selector: get_selector_from_name("sqrt").unwrap(),
-//     payload: vec![FieldElement::ZERO],
-// };
+    let fee = rpc.estimate_message_fee(message, BlockId::Tag(BlockTag::Latest)).await?;
 
-//     Ok(())
-// }
+    assert_eq!(fee.gas_consumed, 0);
+    assert_eq!(fee.gas_price, 0);
+    assert_eq!(fee.overall_fee, 0);
+
+    Ok(())
+}
