@@ -6,6 +6,7 @@
 - feat(client/data-availability): implement custom error handling
 - fix: get_block_by_block_hash then default rather than error
 - feat(rpc): added `get_state_update` real values from DA db
+- feat: add transparent representation to `Felt252Wrapper`
 
 ## v0.7.0
 
