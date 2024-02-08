@@ -2,6 +2,7 @@
 
 ## Next release
 
+- feat(client/data-availability): implement custom error handling
 - feat(rpc): added `get_state_update` real values from DA db
 
 ## v0.7.0

@@ -12,7 +12,7 @@ use ethers::types::{I256, U256};
 use jsonrpsee::http_client::{HeaderMap, HeaderValue, HttpClient, HttpClientBuilder};
 use reqwest::header;
 
-use crate::{DaClient, DaMode};
+use crate::{DaClient, DaError, DaMode};
 
 #[derive(Clone, Debug)]
 pub struct CelestiaClient {
@@ -23,20 +23,18 @@ pub struct CelestiaClient {
 
 #[async_trait]
 impl DaClient for CelestiaClient {
-    async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()> {
-        let blob = self.get_blob_from_state_diff(state_diff).map_err(|e| anyhow::anyhow!("celestia error: {e}"))?;
+    async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<(), DaError> {
+        let blob = self.get_blob_from_state_diff(state_diff).map_err(|e| DaError::FailedDataFetching(e.into()))?;
 
-        let submitted_height = self.publish_data(&blob).await.map_err(|e| anyhow::anyhow!("celestia error: {e}"))?;
+        let submitted_height = self.publish_data(&blob).await.map_err(|e| DaError::FailedDataSubmission(e.into()))?;
 
         // blocking call, awaiting on server side (Celestia Node) that a block with our data is included
         self.http_client
             .header_wait_for_height(submitted_height)
             .await
-            .map_err(|e| anyhow::anyhow!("celestia da error: {e}"))?;
+            .map_err(|e| DaError::FailedDataFetching(e.into()))?;
 
-        self.verify_blob_was_included(submitted_height, blob)
-            .await
-            .map_err(|e| anyhow::anyhow!("celestia error: {e}"))?;
+        self.verify_blob_was_included(submitted_height, blob).await?;
 
         Ok(())
     }
@@ -50,16 +48,16 @@ impl DaClient for CelestiaClient {
     }
 
     fn get_da_metric_labels(&self) -> HashMap<String, String> {
-        [("name".into(), "celesia".into())].iter().cloned().collect()
+        [("name".into(), "celestia".into())].iter().cloned().collect()
     }
 }
 
 impl CelestiaClient {
-    async fn publish_data(&self, blob: &Blob) -> Result<u64> {
+    async fn publish_data(&self, blob: &Blob) -> Result<u64, DaError> {
         self.http_client
             .blob_submit(&[blob.clone()], SubmitOptions::default())
             .await
-            .map_err(|e| anyhow::anyhow!("could not submit blob {e}"))
+            .map_err(|e| DaError::FailedDataSubmission(e.into()))
     }
 
     fn get_blob_from_state_diff(&self, state_diff: Vec<U256>) -> CelestiaTypesResult<Blob> {
@@ -75,15 +73,19 @@ impl CelestiaClient {
         Blob::new(self.nid, state_diff_bytes)
     }
 
-    async fn verify_blob_was_included(&self, submitted_height: u64, blob: Blob) -> Result<()> {
-        let received_blob = self.http_client.blob_get(submitted_height, self.nid, blob.commitment).await.unwrap();
-        received_blob.validate()?;
+    async fn verify_blob_was_included(&self, submitted_height: u64, blob: Blob) -> Result<(), DaError> {
+        let received_blob = self
+            .http_client
+            .blob_get(submitted_height, self.nid, blob.commitment)
+            .await
+            .map_err(|e| DaError::FailedDataFetching(e.into()))?;
+        received_blob.validate().map_err(|e| DaError::FailedDataValidation(e.into()))?;
         Ok(())
     }
 }
 
 impl TryFrom<config::CelestiaConfig> for CelestiaClient {
-    type Error = anyhow::Error;
+    type Error = DaError;
 
     fn try_from(conf: config::CelestiaConfig) -> Result<Self, Self::Error> {
         // Borrowed the below code from https://github.com/eigerco/lumina/blob/ccc5b9bfeac632cccd32d35ecb7b7d51d71fbb87/rpc/src/client.rs#L41.
@@ -98,13 +100,13 @@ impl TryFrom<config::CelestiaConfig> for CelestiaClient {
         let http_client = HttpClientBuilder::default()
             .set_headers(headers)
             .build(conf.http_provider.as_str())
-            .map_err(|e| anyhow::anyhow!("could not init http client: {e}"))?;
+            .map_err(|e| DaError::FailedBuildingClient(e.into()))?;
 
         // Convert the input string to bytes
         let bytes = conf.nid.as_bytes();
 
         // Create a new Namespace from these bytes
-        let nid = Namespace::new_v0(bytes).map_err(|e| anyhow::anyhow!("could not init namespace: {e}"))?;
+        let nid = Namespace::new_v0(bytes).map_err(|e| DaError::FailedBuildingClient(e.into()))?;
 
         Ok(Self { http_client, nid, mode: conf.mode })
     }
