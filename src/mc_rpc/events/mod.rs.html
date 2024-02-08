@@ -223,6 +223,9 @@
 <a href="#223" id="223">223</a>
 <a href="#224" id="224">224</a>
 <a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
 </pre></div><pre class="rust"><code><span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests;
 
@@ -299,8 +302,8 @@
                 },
             )<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>starknet_block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).ok_or_else(|| {
-            <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve starknet block from substrate block hash&quot;</span>);
+        <span class="kw">let </span>starknet_block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve starknet block from substrate block hash: error: {e}&quot;</span>);
             StarknetRpcApiError::InternalServerError
         })<span class="question-mark">?</span>;
         <span class="kw">let </span>txn_hashes = <span class="self">self</span>.get_cached_transaction_hashes(starknet_block.header().hash::&lt;H&gt;().into());
@@ -318,8 +321,11 @@
             tx_hash_and_events.push((tx_hash, event));
         }
 
-        <span class="kw">let </span>starknet_block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
-            .ok_or(StarknetRpcApiError::BlockNotFound)<span class="question-mark">?</span>;
+        <span class="kw">let </span>starknet_block = <span class="kw">match </span>get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash) {
+            <span class="prelude-val">Ok</span>(block) =&gt; block,
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(StarknetRpcApiError::BlockNotFound),
+        };
+
         <span class="kw">let </span>block_hash = starknet_block.header().hash::&lt;H&gt;();
 
         <span class="kw">let </span>emitted_events = tx_hash_and_events

@@ -271,6 +271,7 @@
 <a href="#271" id="271">271</a>
 <a href="#272" id="272">272</a>
 <a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::io::Write;
 <span class="kw">use </span>std::sync::Arc;
@@ -411,15 +412,16 @@
 }
 
 <span class="doccomment">/// Returns the current Starknet block from the block header&#39;s digest
-</span><span class="kw">pub fn </span>get_block_by_block_hash&lt;B, C&gt;(client: <span class="kw-2">&amp;</span>C, block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash) -&gt; <span class="prelude-ty">Option</span>&lt;StarknetBlock&gt;
+</span><span class="kw">pub fn </span>get_block_by_block_hash&lt;B, C&gt;(client: <span class="kw-2">&amp;</span>C, block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash) -&gt; <span class="prelude-ty">Result</span>&lt;StarknetBlock&gt;
 <span class="kw">where
     </span>B: BlockT,
     C: HeaderBackend&lt;B&gt;,
 {
-    <span class="kw">let </span>header = client.header(block_hash).ok().flatten()<span class="question-mark">?</span>;
+    <span class="kw">let </span>header =
+        client.header(block_hash).ok().flatten().ok_or_else(|| anyhow::Error::msg(<span class="string">&quot;Failed to retrieve header&quot;</span>))<span class="question-mark">?</span>;
     <span class="kw">let </span>digest = header.digest();
-    <span class="kw">let </span>block = find_starknet_block(digest).ok()<span class="question-mark">?</span>;
-    <span class="prelude-val">Some</span>(block)
+    <span class="kw">let </span>block = find_starknet_block(digest)<span class="question-mark">?</span>;
+    <span class="prelude-val">Ok</span>(block)
 }
 
 <span class="comment">// Utils to convert Flattened Sierra to Casm Contract Class
