@@ -27,6 +27,7 @@ use serde::{Deserialize, Serialize};
 use sp_runtime::traits::Block as BlockT;
 use starknet_api::block::BlockHash;
 use starknet_api::state::ThinStateDiff;
+use thiserror::Error;
 use utils::block_data_to_calldata;
 
 use crate::da_metrics::DaMetrics;
@@ -41,6 +42,26 @@ pub enum DaLayer {
     Ethereum,
     #[cfg(feature = "avail")]
     Avail,
+}
+
+#[derive(Error, Debug)]
+pub enum DaError {
+    #[error("failed opening config: {0}")]
+    FailedOpeningConfig(std::io::Error),
+    #[error("failed parsing config: {0}")]
+    FailedParsingConfig(serde_json::Error),
+    #[error("failed converting parameter: {0}")]
+    FailedConversion(anyhow::Error),
+    #[error("failed building client: {0}")]
+    FailedBuildingClient(anyhow::Error),
+    #[error("failed submitting data through client: {0}")]
+    FailedDataSubmission(anyhow::Error),
+    #[error("failed fetching data through client: {0}")]
+    FailedDataFetching(anyhow::Error),
+    #[error("failed validating data: {0}")]
+    FailedDataValidation(anyhow::Error),
+    #[error("Invalid http endpoint: {0}")]
+    InvalidHttpEndpoint(String),
 }
 
 impl Display for DaLayer {
