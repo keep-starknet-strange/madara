@@ -166,6 +166,18 @@
 <a href="#166" id="166">166</a>
 <a href="#167" id="167">167</a>
 <a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A database backend storing data about madara chain
 //!
 //! # Usefulness
@@ -191,6 +203,7 @@
 <span class="kw">mod </span>messaging_db;
 <span class="kw">mod </span>sierra_classes_db;
 <span class="kw">pub use </span>messaging_db::LastSyncedEventBlock;
+<span class="kw">mod </span>l1_handler_tx_fee;
 <span class="kw">mod </span>meta_db;
 
 <span class="kw">use </span>std::marker::PhantomData;
@@ -198,6 +211,7 @@
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>da_db::DaDb;
+<span class="kw">use </span>l1_handler_tx_fee::L1HandlerTxFeeDb;
 <span class="kw">use </span>mapping_db::MappingDb;
 <span class="kw">use </span>messaging_db::MessagingDb;
 <span class="kw">use </span>meta_db::MetaDb;
@@ -219,7 +233,7 @@
     </span><span class="comment">// ===== /!\ ===================================================================================
     // MUST BE INCREMENTED WHEN A NEW COLUMN IN ADDED
     // ===== /!\ ===================================================================================
-    </span><span class="kw">pub const </span>NUM_COLUMNS: u32 = <span class="number">8</span>;
+    </span><span class="kw">pub const </span>NUM_COLUMNS: u32 = <span class="number">9</span>;
 
     <span class="kw">pub const </span>META: u32 = <span class="number">0</span>;
     <span class="kw">pub const </span>BLOCK_MAPPING: u32 = <span class="number">1</span>;
@@ -238,6 +252,9 @@
 
     <span class="doccomment">/// This column contains the Sierra contract classes
     </span><span class="kw">pub const </span>SIERRA_CONTRACT_CLASSES: u32 = <span class="number">7</span>;
+
+    <span class="doccomment">/// This column stores the fee paid on l1 for L1Handler transactions
+    </span><span class="kw">pub const </span>L1_HANDLER_PAID_FEE: u32 = <span class="number">8</span>;
 }
 
 <span class="kw">pub mod </span>static_keys {
@@ -254,9 +271,10 @@
 </span><span class="kw">pub struct </span>Backend&lt;B: BlockT&gt; {
     meta: Arc&lt;MetaDb&lt;B&gt;&gt;,
     mapping: Arc&lt;MappingDb&lt;B&gt;&gt;,
-    da: Arc&lt;DaDb&lt;B&gt;&gt;,
-    messaging: Arc&lt;MessagingDb&lt;B&gt;&gt;,
-    sierra_classes: Arc&lt;SierraClassesDb&lt;B&gt;&gt;,
+    da: Arc&lt;DaDb&gt;,
+    messaging: Arc&lt;MessagingDb&gt;,
+    sierra_classes: Arc&lt;SierraClassesDb&gt;,
+    l1_handler_paid_fee: Arc&lt;L1HandlerTxFeeDb&gt;,
 }
 
 <span class="doccomment">/// Returns the Starknet database directory.
@@ -296,9 +314,10 @@
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             mapping: Arc::new(MappingDb::new(db.clone(), cache_more_things)),
             meta: Arc::new(MetaDb { db: db.clone(), _marker: PhantomData }),
-            da: Arc::new(DaDb { db: db.clone(), _marker: PhantomData }),
-            messaging: Arc::new(MessagingDb { db: db.clone(), _marker: PhantomData }),
-            sierra_classes: Arc::new(SierraClassesDb { db: db.clone(), _marker: PhantomData }),
+            da: Arc::new(DaDb { db: db.clone() }),
+            messaging: Arc::new(MessagingDb { db: db.clone() }),
+            sierra_classes: Arc::new(SierraClassesDb { db: db.clone() }),
+            l1_handler_paid_fee: Arc::new(L1HandlerTxFeeDb { db: db.clone() }),
         })
     }
 
@@ -313,18 +332,23 @@
     }
 
     <span class="doccomment">/// Return the da database manager
-    </span><span class="kw">pub fn </span>da(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Arc&lt;DaDb&lt;B&gt;&gt; {
+    </span><span class="kw">pub fn </span>da(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Arc&lt;DaDb&gt; {
         <span class="kw-2">&amp;</span><span class="self">self</span>.da
     }
 
     <span class="doccomment">/// Return the da database manager
-    </span><span class="kw">pub fn </span>messaging(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Arc&lt;MessagingDb&lt;B&gt;&gt; {
+    </span><span class="kw">pub fn </span>messaging(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Arc&lt;MessagingDb&gt; {
         <span class="kw-2">&amp;</span><span class="self">self</span>.messaging
     }
 
     <span class="doccomment">/// Return the sierra classes database manager
-    </span><span class="kw">pub fn </span>sierra_classes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Arc&lt;SierraClassesDb&lt;B&gt;&gt; {
+    </span><span class="kw">pub fn </span>sierra_classes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Arc&lt;SierraClassesDb&gt; {
         <span class="kw-2">&amp;</span><span class="self">self</span>.sierra_classes
+    }
+
+    <span class="doccomment">/// Return l1 handler tx paid fee database manager
+    </span><span class="kw">pub fn </span>l1_handler_paid_fee(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Arc&lt;L1HandlerTxFeeDb&gt; {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.l1_handler_paid_fee
     }
 
     <span class="doccomment">/// In the future, we will compute the block global state root asynchronously in the client,

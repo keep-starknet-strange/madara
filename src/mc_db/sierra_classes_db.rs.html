@@ -33,28 +33,22 @@
 <a href="#33" id="33">33</a>
 <a href="#34" id="34">34</a>
 <a href="#35" id="35">35</a>
-<a href="#36" id="36">36</a>
-<a href="#37" id="37">37</a>
-<a href="#38" id="38">38</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::marker::PhantomData;
-<span class="kw">use </span>std::sync::Arc;
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>parity_scale_codec::{Decode, Encode};
 <span class="kw">use </span>sp_database::Database;
-<span class="kw">use </span>sp_runtime::traits::Block <span class="kw">as </span>BlockT;
-<span class="kw">use </span>starknet_api::hash::StarkFelt;
+<span class="kw">use </span>starknet_api::api_core::ClassHash;
 <span class="kw">use </span>starknet_api::state::ContractClass;
 
 <span class="kw">use crate</span>::{DbError, DbHash};
 
 <span class="doccomment">/// Allow interaction with the sierra classes db
-</span><span class="kw">pub struct </span>SierraClassesDb&lt;B: BlockT&gt; {
+</span><span class="kw">pub struct </span>SierraClassesDb {
     <span class="kw">pub</span>(<span class="kw">crate</span>) db: Arc&lt;<span class="kw">dyn </span>Database&lt;DbHash&gt;&gt;,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) _marker: PhantomData&lt;B&gt;,
 }
 
-<span class="kw">impl</span>&lt;B: BlockT&gt; SierraClassesDb&lt;B&gt; {
-    <span class="kw">pub fn </span>store_sierra_class(<span class="kw-2">&amp;</span><span class="self">self</span>, class_hash: StarkFelt, class: ContractClass) -&gt; <span class="prelude-ty">Result</span>&lt;(), DbError&gt; {
+<span class="kw">impl </span>SierraClassesDb {
+    <span class="kw">pub fn </span>store_sierra_class(<span class="kw-2">&amp;</span><span class="self">self</span>, class_hash: ClassHash, class: ContractClass) -&gt; <span class="prelude-ty">Result</span>&lt;(), DbError&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>transaction = sp_database::Transaction::new();
 
         transaction.set(<span class="kw">crate</span>::columns::SIERRA_CONTRACT_CLASSES, <span class="kw-2">&amp;</span>class_hash.encode(), <span class="kw-2">&amp;</span>class.encode());
@@ -64,7 +58,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">pub fn </span>get_sierra_class(<span class="kw-2">&amp;</span><span class="self">self</span>, class_hash: StarkFelt) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;ContractClass&gt;, DbError&gt; {
+    <span class="kw">pub fn </span>get_sierra_class(<span class="kw-2">&amp;</span><span class="self">self</span>, class_hash: ClassHash) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;ContractClass&gt;, DbError&gt; {
         <span class="kw">let </span>opt_contract_class = <span class="self">self
             </span>.db
             .get(<span class="kw">crate</span>::columns::SIERRA_CONTRACT_CLASSES, <span class="kw-2">&amp;</span>class_hash.encode())

@@ -154,14 +154,17 @@
 <a href="#154" id="154">154</a>
 <a href="#155" id="155">155</a>
 <a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::sync::{Arc, Mutex};
 
 <span class="comment">// Substrate
 </span><span class="kw">use </span>parity_scale_codec::{Decode, Encode};
-<span class="kw">use </span>sp_core::H256;
 <span class="kw">use </span>sp_database::Database;
 <span class="kw">use </span>sp_runtime::traits::Block <span class="kw">as </span>BlockT;
+<span class="kw">use </span>starknet_api::hash::StarkHash;
 
 <span class="kw">use crate</span>::{DbError, DbHash};
 
@@ -169,8 +172,8 @@
 </span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>MappingCommitment&lt;B: BlockT&gt; {
     <span class="kw">pub </span>block_hash: B::Hash,
-    <span class="kw">pub </span>starknet_block_hash: H256,
-    <span class="kw">pub </span>starknet_transaction_hashes: Vec&lt;H256&gt;,
+    <span class="kw">pub </span>starknet_block_hash: StarkHash,
+    <span class="kw">pub </span>starknet_transaction_hashes: Vec&lt;StarkHash&gt;,
 }
 
 <span class="doccomment">/// Allow interaction with the mapping db
@@ -200,7 +203,7 @@
     ///
     /// Under some circumstances it can return multiples blocks hashes, meaning that the result has
     /// to be checked against the actual blockchain state in order to find the good one.
-    </span><span class="kw">pub fn </span>block_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, starknet_block_hash: <span class="kw-2">&amp;</span>H256) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;B::Hash&gt;&gt;, DbError&gt; {
+    </span><span class="kw">pub fn </span>block_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, starknet_block_hash: StarkHash) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;B::Hash&gt;&gt;, DbError&gt; {
         <span class="kw">match </span><span class="self">self</span>.db.get(<span class="kw">crate</span>::columns::BLOCK_MAPPING, <span class="kw-2">&amp;</span>starknet_block_hash.encode()) {
             <span class="prelude-val">Some</span>(raw) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Vec::&lt;B::Hash&gt;::decode(<span class="kw-2">&amp;mut &amp;</span>raw[..])<span class="question-mark">?</span>)),
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
@@ -226,7 +229,7 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>transaction = sp_database::Transaction::new();
 
-        <span class="kw">let </span>substrate_hashes = <span class="kw">match </span><span class="self">self</span>.block_hash(<span class="kw-2">&amp;</span>commitment.starknet_block_hash) {
+        <span class="kw">let </span>substrate_hashes = <span class="kw">match </span><span class="self">self</span>.block_hash(commitment.starknet_block_hash) {
             <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="kw-2">mut </span>data)) =&gt; {
                 data.push(commitment.block_hash);
                 <span class="macro">log::warn!</span>(
@@ -277,7 +280,7 @@
     /// * `transaction_hash` - the transaction hash to search for. H256 is used here because it&#39;s a
     ///   native type of substrate, and we are sure it&#39;s SCALE encoding is optimized and will not
     ///   change.
-    </span><span class="kw">pub fn </span>block_hash_from_transaction_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, transaction_hash: H256) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;B::Hash&gt;, DbError&gt; {
+    </span><span class="kw">pub fn </span>block_hash_from_transaction_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, transaction_hash: StarkHash) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;B::Hash&gt;, DbError&gt; {
         <span class="kw">match </span><span class="self">self</span>.db.get(<span class="kw">crate</span>::columns::TRANSACTION_MAPPING, <span class="kw-2">&amp;</span>transaction_hash.encode()) {
             <span class="prelude-val">Some</span>(raw) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(&lt;B::Hash&gt;::decode(<span class="kw-2">&amp;mut &amp;</span>raw[..])<span class="question-mark">?</span>)),
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
@@ -298,14 +301,17 @@
     ///
     /// - The cache is disabled.
     /// - The provided `starknet_hash` is not present in the cache.
-    </span><span class="kw">pub fn </span>cached_transaction_hashes_from_block_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, starknet_hash: H256) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;H256&gt;&gt;, DbError&gt; {
+    </span><span class="kw">pub fn </span>cached_transaction_hashes_from_block_hash(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        starknet_block_hash: StarkHash,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;StarkHash&gt;&gt;, DbError&gt; {
         <span class="kw">if </span>!<span class="self">self</span>.cache_more_things {
             <span class="comment">// The cache is not enabled, no need to even touch the database.
             </span><span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
         }
 
-        <span class="kw">match </span><span class="self">self</span>.db.get(<span class="kw">crate</span>::columns::STARKNET_TRANSACTION_HASHES_CACHE, <span class="kw-2">&amp;</span>starknet_hash.encode()) {
-            <span class="prelude-val">Some</span>(raw) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Vec::&lt;H256&gt;::decode(<span class="kw-2">&amp;mut &amp;</span>raw[..])<span class="question-mark">?</span>)),
+        <span class="kw">match </span><span class="self">self</span>.db.get(<span class="kw">crate</span>::columns::STARKNET_TRANSACTION_HASHES_CACHE, <span class="kw-2">&amp;</span>starknet_block_hash.encode()) {
+            <span class="prelude-val">Some</span>(raw) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Vec::&lt;StarkHash&gt;::decode(<span class="kw-2">&amp;mut &amp;</span>raw[..])<span class="question-mark">?</span>)),
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
         }
     }

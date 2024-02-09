@@ -225,10 +225,10 @@
 
 <span class="kw">impl</span>&lt;T: Config&gt; Pallet&lt;T&gt; {
     <span class="kw">pub fn </span>validate_unsigned_tx_nonce(
-        transaction: <span class="kw-2">&amp;</span>UserAndL1HandlerTransaction,
+        transaction: <span class="kw-2">&amp;</span>UserOrL1HandlerTransaction,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;TxPriorityInfo, InvalidTransaction&gt; {
         <span class="kw">match </span>transaction {
-            UserAndL1HandlerTransaction::User(tx) =&gt; {
+            UserOrL1HandlerTransaction::User(tx) =&gt; {
                 <span class="kw">let </span>sender_address: ContractAddress = tx.sender_address().into();
                 <span class="kw">let </span>sender_nonce: Felt252Wrapper = Pallet::&lt;T&gt;::nonce(sender_address).into();
                 <span class="kw">let </span>transaction_nonce = <span class="kw">match </span>tx.nonce() {
@@ -254,7 +254,7 @@
 
                 <span class="prelude-val">Ok</span>(TxPriorityInfo::RegularTxs { sender_address: tx.sender_address(), transaction_nonce, sender_nonce })
             }
-            UserAndL1HandlerTransaction::L1Handler(tx, _fee) =&gt; {
+            UserOrL1HandlerTransaction::L1Handler(tx, _fee) =&gt; {
                 <span class="self">Self</span>::ensure_l1_message_not_executed(<span class="kw-2">&amp;</span>Nonce(StarkFelt::from(tx.nonce)))<span class="question-mark">?</span>;
 
                 <span class="prelude-val">Ok</span>(TxPriorityInfo::L1Handler { nonce: tx.nonce.into() })
@@ -262,7 +262,7 @@
         }
     }
 
-    <span class="kw">pub fn </span>validate_unsigned_tx(transaction: <span class="kw-2">&amp;</span>UserAndL1HandlerTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(), InvalidTransaction&gt; {
+    <span class="kw">pub fn </span>validate_unsigned_tx(transaction: <span class="kw-2">&amp;</span>UserOrL1HandlerTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(), InvalidTransaction&gt; {
         <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
         <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
         <span class="kw">let </span><span class="kw-2">mut </span>state: BlockifierStateAdapter&lt;T&gt; = BlockifierStateAdapter::&lt;T&gt;::default();
@@ -270,7 +270,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>initial_gas = blockifier::abi::constants::INITIAL_GAS_COST;
 
         <span class="kw">match </span>transaction {
-            UserAndL1HandlerTransaction::User(transaction) =&gt; {
+            UserOrL1HandlerTransaction::User(transaction) =&gt; {
                 <span class="kw">let </span>validation_result =
                     <span class="kw">match </span>transaction {
                         <span class="comment">// There is no way to validate it before the account is actuallly deployed
@@ -302,7 +302,7 @@
                     validation_result
                 }
             }
-            UserAndL1HandlerTransaction::L1Handler(<span class="kw">_</span>, fee) =&gt; {
+            UserOrL1HandlerTransaction::L1Handler(<span class="kw">_</span>, fee) =&gt; {
                 <span class="comment">// The tx will fail if no fee have been paid
                 </span><span class="kw">if </span>fee.<span class="number">0 </span>== <span class="number">0 </span>{
                     <span class="kw">return </span><span class="prelude-val">Err</span>(InvalidTransaction::Payment);

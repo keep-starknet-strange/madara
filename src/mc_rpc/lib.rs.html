@@ -1730,30 +1730,6 @@
 <a href="#1730" id="1730">1730</a>
 <a href="#1731" id="1731">1731</a>
 <a href="#1732" id="1732">1732</a>
-<a href="#1733" id="1733">1733</a>
-<a href="#1734" id="1734">1734</a>
-<a href="#1735" id="1735">1735</a>
-<a href="#1736" id="1736">1736</a>
-<a href="#1737" id="1737">1737</a>
-<a href="#1738" id="1738">1738</a>
-<a href="#1739" id="1739">1739</a>
-<a href="#1740" id="1740">1740</a>
-<a href="#1741" id="1741">1741</a>
-<a href="#1742" id="1742">1742</a>
-<a href="#1743" id="1743">1743</a>
-<a href="#1744" id="1744">1744</a>
-<a href="#1745" id="1745">1745</a>
-<a href="#1746" id="1746">1746</a>
-<a href="#1747" id="1747">1747</a>
-<a href="#1748" id="1748">1748</a>
-<a href="#1749" id="1749">1749</a>
-<a href="#1750" id="1750">1750</a>
-<a href="#1751" id="1751">1751</a>
-<a href="#1752" id="1752">1752</a>
-<a href="#1753" id="1753">1753</a>
-<a href="#1754" id="1754">1754</a>
-<a href="#1755" id="1755">1755</a>
-<a href="#1756" id="1756">1756</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1778,7 +1754,7 @@
     StarknetWriteRpcApiServer,
 };
 <span class="kw">use </span>mc_storage::OverrideHandle;
-<span class="kw">use </span>mp_felt::{Felt252Wrapper, Felt252WrapperError};
+<span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_hashers::HasherT;
 <span class="kw">use </span>mp_transactions::compute_hash::ComputeTransactionHash;
 <span class="kw">use </span>mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
@@ -1798,6 +1774,7 @@
 <span class="kw">use </span>sp_runtime::transaction_validity::InvalidTransaction;
 <span class="kw">use </span>sp_runtime::DispatchError;
 <span class="kw">use </span>starknet_api::block::BlockHash;
+<span class="kw">use </span>starknet_api::hash::StarkHash;
 <span class="kw">use </span>starknet_api::transaction::Calldata;
 <span class="kw">use </span>starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
@@ -1906,12 +1883,11 @@
     <span class="doccomment">/// Returns the substrate block hash corresponding to the given Starknet block id
     </span><span class="kw">fn </span>substrate_block_hash_from_starknet_block(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId) -&gt; <span class="prelude-ty">Result</span>&lt;B::Hash, StarknetRpcApiError&gt; {
         <span class="kw">match </span>block_id {
-            BlockId::Hash(h) =&gt; madara_backend_client::load_hash(
-                <span class="self">self</span>.client.as_ref(),
-                <span class="kw-2">&amp;</span><span class="self">self</span>.backend,
-                H256::from_slice(<span class="kw-2">&amp;</span>h.to_bytes_be()[..<span class="number">32</span>]),
-            )
-            .map_err(|<span class="kw">_</span>| StarknetRpcApiError::BlockNotFound)<span class="question-mark">?</span>,
+            BlockId::Hash(h) =&gt; madara_backend_client::load_hash(<span class="self">self</span>.client.as_ref(), <span class="kw-2">&amp;</span><span class="self">self</span>.backend, h.into())
+                .map_err(|e| {
+                    <span class="macro">error!</span>(<span class="string">&quot;Failed to load Starknet block hash for Substrate block with hash &#39;{h}&#39;: {e}&quot;</span>);
+                    StarknetRpcApiError::BlockNotFound
+                })<span class="question-mark">?</span>,
             BlockId::Number(n) =&gt; <span class="self">self
                 </span>.client
                 .hash(UniqueSaturatedInto::unique_saturated_into(n))
@@ -1951,7 +1927,7 @@
     /// # Arguments
     ///
     /// * `block_hash` - The hash of the block containing the transactions (starknet block).
-    </span><span class="kw">fn </span>get_cached_transaction_hashes(<span class="kw-2">&amp;</span><span class="self">self</span>, block_hash: H256) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;H256&gt;&gt; {
+    </span><span class="kw">fn </span>get_cached_transaction_hashes(<span class="kw-2">&amp;</span><span class="self">self</span>, block_hash: StarkHash) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;StarkHash&gt;&gt; {
         <span class="self">self</span>.backend.mapping().cached_transaction_hashes_from_block_hash(block_hash).unwrap_or_else(|err| {
             <span class="macro">error!</span>(<span class="string">&quot;Failed to read from cache: {err}&quot;</span>);
             <span class="prelude-val">None
@@ -1963,8 +1939,11 @@
     /// # Arguments
     ///
     /// * `starknet_block_hash` - The hash of the block containing the state diff (starknet block).
-    </span><span class="kw">fn </span>get_state_diff(<span class="kw-2">&amp;</span><span class="self">self</span>, starknet_block_hash: <span class="kw-2">&amp;</span>BlockHash) -&gt; <span class="prelude-ty">Result</span>&lt;StateDiff, String&gt; {
-        <span class="kw">let </span>state_diff = <span class="self">self</span>.backend.da().state_diff(starknet_block_hash)<span class="question-mark">?</span>;
+    </span><span class="kw">fn </span>get_state_diff(<span class="kw-2">&amp;</span><span class="self">self</span>, starknet_block_hash: <span class="kw-2">&amp;</span>BlockHash) -&gt; <span class="prelude-ty">Result</span>&lt;StateDiff, StarknetRpcApiError&gt; {
+        <span class="kw">let </span>state_diff = <span class="self">self</span>.backend.da().state_diff(starknet_block_hash).map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve state diff from cache for block with hash {}: {e}&quot;</span>, starknet_block_hash);
+            StarknetRpcApiError::InternalServerError
+        })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>rpc_state_diff = to_rpc_state_diff(state_diff);
 
@@ -1974,7 +1953,7 @@
     <span class="kw">fn </span>try_txn_hash_from_cache(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         tx_index: usize,
-        cached_transactions: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;Vec&lt;H256&gt;&gt;,
+        cached_transactions: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;Vec&lt;StarkHash&gt;&gt;,
         transactions: <span class="kw-2">&amp;</span>[mp_transactions::Transaction],
         chain_id: Felt252Wrapper,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Felt252Wrapper, StarknetRpcApiError&gt; {
@@ -2304,7 +2283,7 @@
         <span class="kw">let </span>substrate_block_hash = <span class="self">self
             </span>.backend
             .mapping()
-            .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
+            .block_hash_from_transaction_hash(Felt252Wrapper(transaction_hash).into())
             .map_err(|e| {
                 <span class="macro">error!</span>(<span class="string">&quot;Failed to get transaction&#39;s substrate block hash from mapping_db: {e}&quot;</span>);
                 StarknetRpcApiError::TxnHashNotFound
@@ -2658,12 +2637,7 @@
         <span class="kw">let </span>transaction_hashes = <span class="kw">if let </span><span class="prelude-val">Some</span>(tx_hashes) = <span class="self">self</span>.get_cached_transaction_hashes(block_hash.into()) {
             <span class="kw">let </span><span class="kw-2">mut </span>v = Vec::with_capacity(tx_hashes.len());
             <span class="kw">for </span>tx_hash <span class="kw">in </span>tx_hashes {
-                v.push(h256_to_felt(tx_hash).map_err(|e| {
-                    CallError::Failed(<span class="macro">anyhow::anyhow!</span>(
-                        <span class="string">&quot;The hash cached for block with hash {block_hash:?} is an invalid felt: &#39;{tx_hash}&#39;. The \
-                         caching db has probably been tempered&quot;
-                    </span>))
-                })<span class="question-mark">?</span>);
+                v.push(FieldElement::from(tx_hash));
             }
             v
         } <span class="kw">else </span>{
@@ -2897,20 +2871,12 @@
             <span class="self">self</span>.get_cached_transaction_hashes(starknet_block.header().hash::&lt;H&gt;().into());
 
         <span class="kw">let </span>transaction_hash = <span class="kw">if let </span><span class="prelude-val">Some</span>(cached_tx_hashes) = opt_cached_transaction_hashes {
-            cached_tx_hashes
-                .get(index <span class="kw">as </span>usize)
-                .map(|<span class="kw-2">&amp;</span>h| h256_to_felt(h))
-                .ok_or(CallError::Failed(<span class="macro">anyhow::anyhow!</span>(
+            cached_tx_hashes.get(index <span class="kw">as </span>usize).map(|<span class="kw-2">&amp;</span>fe| FieldElement::from(fe)).ok_or(CallError::Failed(
+                <span class="macro">anyhow::anyhow!</span>(
                     <span class="string">&quot;Number of cached tx hashes does not match the number of transactions in block with id {:?}&quot;</span>,
                     block_id
-                )))<span class="question-mark">?
-                </span>.map_err(|e| {
-                    CallError::Failed(<span class="macro">anyhow::anyhow!</span>(
-                        <span class="string">&quot;The hash cached for tx at index {index} of block with id {:?} is an invalid felt. The \
-                         caching db has probably been tempered&quot;</span>,
-                        block_id
-                    ))
-                })<span class="question-mark">?
+                ),
+            ))<span class="question-mark">?
         </span>} <span class="kw">else </span>{
             transaction.compute_hash::&lt;H&gt;(chain_id.<span class="number">0</span>.into(), <span class="bool-val">false</span>).<span class="number">0
         </span>};
@@ -2955,19 +2921,12 @@
         <span class="kw">let </span><span class="kw-2">mut </span>transactions = Vec::with_capacity(starknet_block.transactions().len());
         <span class="kw">for </span>(index, tx) <span class="kw">in </span>starknet_block.transactions().iter().enumerate() {
             <span class="kw">let </span>tx_hash = <span class="kw">if let </span><span class="prelude-val">Some</span>(cached_tx_hashes) = opt_cached_transaction_hashes.as_ref() {
-                cached_tx_hashes
-                    .get(index)
-                    .map(|<span class="kw-2">&amp;</span>h| h256_to_felt(h))
-                    .ok_or(CallError::Failed(<span class="macro">anyhow::anyhow!</span>(
+                cached_tx_hashes.get(index).map(|<span class="kw-2">&amp;</span>h| FieldElement::from(h)).ok_or(CallError::Failed(
+                    <span class="macro">anyhow::anyhow!</span>(
                         <span class="string">&quot;Number of cached tx hashes does not match the number of transactions in block with hash {:?}&quot;</span>,
                         block_hash
-                    )))<span class="question-mark">?
-                    </span>.map_err(|e| {
-                        CallError::Failed(<span class="macro">anyhow::anyhow!</span>(
-                            <span class="string">&quot;The hash cached for tx at index {index} of block with hash {block_hash:?} is an invalid \
-                             felt. The caching db has probably been tempered&quot;
-                        </span>))
-                    })<span class="question-mark">?
+                    ),
+                ))<span class="question-mark">?
             </span>} <span class="kw">else </span>{
                 tx.compute_hash::&lt;H&gt;(chain_id.<span class="number">0</span>.into(), <span class="bool-val">false</span>).<span class="number">0
             </span>};
@@ -3147,11 +3106,8 @@
     /// - `TOO_MANY_KEYS_IN_FILTER` if there are too many keys in the filter, which may exceed the
     ///   system&#39;s capacity.
     </span><span class="kw">fn </span>get_transaction_by_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, transaction_hash: FieldElement) -&gt; RpcResult&lt;Transaction&gt; {
-        <span class="kw">let </span>substrate_block_hash_from_db = <span class="self">self
-            </span>.backend
-            .mapping()
-            .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
-            .map_err(|e| {
+        <span class="kw">let </span>substrate_block_hash_from_db =
+            <span class="self">self</span>.backend.mapping().block_hash_from_transaction_hash(transaction_hash.into()).map_err(|e| {
                 <span class="macro">error!</span>(<span class="string">&quot;Failed to get transaction&#39;s substrate block hash from mapping_db: {e}&quot;</span>);
                 StarknetRpcApiError::TxnHashNotFound
             })<span class="question-mark">?</span>;
@@ -3212,7 +3168,7 @@
         <span class="kw">let </span>substrate_block_hash = <span class="self">self
             </span>.backend
             .mapping()
-            .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
+            .block_hash_from_transaction_hash(transaction_hash.into())
             .map_err(|e| {
                 <span class="macro">error!</span>(<span class="string">&quot;Failed to interact with db backend error: {e}&quot;</span>);
                 StarknetRpcApiError::InternalServerError
@@ -3505,9 +3461,5 @@
             <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(StarknetRpcApiError::InternalServerError),
         },
     }
-}
-
-<span class="kw">fn </span>h256_to_felt(h256: H256) -&gt; <span class="prelude-ty">Result</span>&lt;FieldElement, Felt252WrapperError&gt; {
-    Felt252Wrapper::try_from(h256).map(|f| f.<span class="number">0</span>)
 }
 </code></pre></div></section></main></body></html>

@@ -1208,7 +1208,7 @@
 <span class="kw">use </span>mp_transactions::execution::Execute;
 <span class="kw">use </span>mp_transactions::{
     DeclareTransaction, DeployAccountTransaction, HandleL1MessageTransaction, InvokeTransaction, Transaction,
-    UserAndL1HandlerTransaction, UserTransaction,
+    UserOrL1HandlerTransaction, UserTransaction,
 };
 <span class="kw">use </span>sp_runtime::traits::UniqueSaturatedInto;
 <span class="kw">use </span>sp_runtime::DigestItem;
@@ -1917,7 +1917,7 @@
     /// # Returns
     ///
     /// The transaction
-    </span><span class="kw">fn </span>get_call_transaction(call: Call&lt;T&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;UserAndL1HandlerTransaction, ()&gt; {
+    </span><span class="kw">fn </span>get_call_transaction(call: Call&lt;T&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;UserOrL1HandlerTransaction, ()&gt; {
         <span class="kw">let </span>tx = <span class="kw">match </span>call {
             Call::&lt;T&gt;::invoke { transaction } =&gt; UserTransaction::Invoke(transaction).into(),
             Call::&lt;T&gt;::declare { transaction, contract_class } =&gt; {
@@ -1925,7 +1925,7 @@
             }
             Call::&lt;T&gt;::deploy_account { transaction } =&gt; UserTransaction::DeployAccount(transaction).into(),
             Call::&lt;T&gt;::consume_l1_message { transaction, paid_fee_on_l1 } =&gt; {
-                UserAndL1HandlerTransaction::L1Handler(transaction, paid_fee_on_l1)
+                UserOrL1HandlerTransaction::L1Handler(transaction, paid_fee_on_l1)
             }
             <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(()),
         };

@@ -316,7 +316,7 @@
 <span class="kw">use super</span>::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction, UserTransaction};
 <span class="kw">use crate</span>::{
     DeclareTransactionV0, DeclareTransactionV1, DeclareTransactionV2, HandleL1MessageTransaction, InvokeTransactionV0,
-    InvokeTransactionV1, UserAndL1HandlerTransaction,
+    InvokeTransactionV1, UserOrL1HandlerTransaction,
 };
 
 <span class="kw">impl </span>Transaction {
@@ -541,12 +541,12 @@
     }
 }
 
-<span class="kw">impl </span>TransactionVersion <span class="kw">for </span>UserAndL1HandlerTransaction {
+<span class="kw">impl </span>TransactionVersion <span class="kw">for </span>UserOrL1HandlerTransaction {
     <span class="attr">#[inline(always)]
     </span><span class="kw">fn </span>version(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u8 {
         <span class="kw">match </span><span class="self">self </span>{
-            UserAndL1HandlerTransaction::User(tx) =&gt; tx.version(),
-            UserAndL1HandlerTransaction::L1Handler(tx, <span class="kw">_</span>) =&gt; tx.version(),
+            UserOrL1HandlerTransaction::User(tx) =&gt; tx.version(),
+            UserOrL1HandlerTransaction::L1Handler(tx, <span class="kw">_</span>) =&gt; tx.version(),
         }
     }
 }

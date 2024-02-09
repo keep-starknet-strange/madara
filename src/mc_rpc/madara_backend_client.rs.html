@@ -67,22 +67,33 @@
 <a href="#67" id="67">67</a>
 <a href="#68" id="68">68</a>
 <a href="#69" id="69">69</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>mc_rpc_core::utils::get_block_by_block_hash;
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>mc_db::DbError;
+<span class="kw">use </span>mc_rpc_core::utils::get_block_by_block_hash;
 <span class="kw">use </span>mp_block::Block;
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>sp_api::BlockId;
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
-<span class="kw">use </span>sp_core::H256;
 <span class="kw">use </span>sp_runtime::traits::{Block <span class="kw">as </span>BlockT, Header <span class="kw">as </span>HeaderT};
+<span class="kw">use </span>starknet_api::hash::StarkHash;
 
 <span class="kw">use </span><span class="kw">crate</span>::errors::StarknetRpcApiError;
 
-<span class="kw">pub fn </span>load_hash&lt;B: BlockT, C&gt;(client: <span class="kw-2">&amp;</span>C, backend: <span class="kw-2">&amp;</span>mc_db::Backend&lt;B&gt;, hash: H256) -&gt; anyhow::Result&lt;<span class="prelude-ty">Option</span>&lt;B::Hash&gt;&gt;
+<span class="kw">pub fn </span>load_hash&lt;B: BlockT, C&gt;(
+    client: <span class="kw-2">&amp;</span>C,
+    backend: <span class="kw-2">&amp;</span>mc_db::Backend&lt;B&gt;,
+    hash: StarkHash,
+) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;B::Hash&gt;, DbError&gt;
 <span class="kw">where
     </span>B: BlockT,
     C: HeaderBackend&lt;B&gt; + <span class="lifetime">&#39;static</span>,
 {
-    <span class="kw">let </span>substrate_hashes = backend.mapping().block_hash(<span class="kw-2">&amp;</span>hash)<span class="question-mark">?</span>;
+    <span class="kw">let </span>substrate_hashes = backend.mapping().block_hash(hash)<span class="question-mark">?</span>;
 
     <span class="kw">if let </span><span class="prelude-val">Some</span>(substrate_hashes) = substrate_hashes {
         <span class="kw">for </span>substrate_hash <span class="kw">in </span>substrate_hashes {
@@ -91,6 +102,7 @@
             }
         }
     }
+
     <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
 }
 
