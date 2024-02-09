@@ -9,31 +9,17 @@ use starknet_core::types::{
 };
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
-use starknet_providers::jsonrpc::HttpTransport;
-use starknet_providers::{JsonRpcClient, Provider, ProviderError};
+use starknet_providers::Provider;
 use starknet_rpc_test::constants::{
     ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, FEE_TOKEN_ADDRESS, SEQUENCER_ADDRESS, SIGNER_PRIVATE,
     UDC_ADDRESS,
 };
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{
-    assert_eq_msg_to_l1, assert_poll, build_deploy_account_tx, build_oz_account_factory, build_single_owner_account,
-    AccountActions,
+    assert_eq_msg_to_l1, build_deploy_account_tx, build_oz_account_factory, build_single_owner_account,
+    get_contract_address_from_deploy_tx, get_transaction_receipt, AccountActions,
 };
 use starknet_rpc_test::{Transaction, TransactionResult};
-
-type TransactionReceiptResult = Result<MaybePendingTransactionReceipt, ProviderError>;
-
-async fn get_transaction_receipt(
-    rpc: &JsonRpcClient<HttpTransport>,
-    transaction_hash: FieldElement,
-) -> TransactionReceiptResult {
-    // there is a delay between the transaction being available at the client
-    // and the sealing of the block, hence sleeping for 100ms
-    assert_poll(|| async { rpc.get_transaction_receipt(transaction_hash).await.is_ok() }, 100, 20).await;
-
-    rpc.get_transaction_receipt(transaction_hash).await
-}
 
 #[rstest]
 #[tokio::test]
@@ -122,8 +108,10 @@ async fn work_with_declare_transaction(madara: &ThreadSafeMadaraClient) -> Resul
     let mut txs = {
         let mut madara_write_lock = madara.write().await;
         let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
-        let (declare_tx, _, _) = account
-            .declare_contract("./contracts/Counter4/Counter4.sierra.json", "./contracts/Counter4/Counter4.casm.json");
+        let (declare_tx, _, _) = account.declare_contract(
+            "./contracts/counter7/counter7.contract_class.json",
+            "./contracts/counter7/counter7.compiled_contract_class.json",
+        );
 
         madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?
     };
@@ -342,24 +330,14 @@ async fn work_with_messages_to_l1(madara: &ThreadSafeMadaraClient) -> Result<(),
         None,
     );
 
-    let txs = {
+    let mut txs = {
         let mut madara_write_lock = madara.write().await;
         madara_write_lock.create_block_with_txs(vec![Transaction::Execution(deploy_tx)]).await?
     };
 
     // 4. Now, we need to get the deployed contract address
-
-    let deploy_tx_hash = assert_matches!(
-        &txs[0],
-        Ok(TransactionResult::Execution(rpc_response)) => rpc_response.transaction_hash
-    );
-
-    let deploy_tx_receipt = get_transaction_receipt(&rpc, deploy_tx_hash).await?;
-
-    let contract_address = assert_matches!(
-        deploy_tx_receipt,
-        MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) => receipt.events[0].data[0]
-    );
+    let deploy_tx_result = txs.pop().unwrap();
+    let contract_address = get_contract_address_from_deploy_tx(&rpc, deploy_tx_result).await?;
 
     // 5. Sending message to L1
 

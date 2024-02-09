@@ -25,6 +25,7 @@ mod l1_handler_validation;
 mod l1_message;
 mod no_nonce_validation;
 mod query_tx;
+mod re_execute_transactions;
 mod send_message;
 mod sequencer_address;
 

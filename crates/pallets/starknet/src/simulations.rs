@@ -7,7 +7,7 @@ use frame_support::storage;
 use mp_felt::Felt252Wrapper;
 use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
 use mp_transactions::execution::{Execute, ExecutionConfig};
-use mp_transactions::{HandleL1MessageTransaction, UserTransaction};
+use mp_transactions::{HandleL1MessageTransaction, UserOrL1HandlerTransaction, UserTransaction};
 use sp_core::Get;
 use sp_runtime::DispatchError;
 use starknet_api::transaction::Fee;
@@ -37,7 +37,7 @@ impl<T: Config> Pallet<T> {
             .map(|tx| {
                 execution_config.set_offset_version(tx.offset_version());
 
-                match Self::execute_transaction(tx, chain_id, &block_context, &execution_config) {
+                match Self::execute_user_transaction(tx, chain_id, &block_context, &execution_config) {
                     Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
                     Err(e) => {
                         log::error!("Transaction execution failed during fee estimation: {e}");
@@ -100,7 +100,7 @@ impl<T: Config> Pallet<T> {
             .map(|tx| {
                 execution_config.set_offset_version(tx.offset_version());
 
-                Self::execute_transaction(tx, chain_id, &block_context, &execution_config).map_err(|e| {
+                Self::execute_user_transaction(tx, chain_id, &block_context, &execution_config).map_err(|e| {
                     log::error!("Transaction execution failed during simulation: {e}");
                     PlaceHolderErrorTypeForFailedStarknetExecution
                 })
@@ -141,7 +141,73 @@ impl<T: Config> Pallet<T> {
         }
     }
 
-    fn execute_transaction(
+    pub fn re_execute_transactions(
+        transactions: Vec<UserOrL1HandlerTransaction>,
+    ) -> Result<Result<Vec<TransactionExecutionInfo>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError>
+    {
+        storage::transactional::with_transaction(|| {
+            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::re_execute_transactions_inner(
+                transactions,
+            )))
+        })
+        .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?
+    }
+
+    fn re_execute_transactions_inner(
+        transactions: Vec<UserOrL1HandlerTransaction>,
+    ) -> Result<Result<Vec<TransactionExecutionInfo>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError>
+    {
+        let chain_id = Self::chain_id();
+        let block_context = Self::get_block_context();
+        let execution_config = RuntimeExecutionConfigBuilder::new::<T>().build();
+
+        let execution_infos = transactions
+            .iter()
+            .map(|user_or_l1_tx| match user_or_l1_tx {
+                UserOrL1HandlerTransaction::User(tx) => match tx {
+                    UserTransaction::Declare(tx, contract_class) => tx
+                        .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), false)
+                        .map_err(|e| {
+                            log::error!("Failed to reexecute a tx: {}", e);
+                            PlaceHolderErrorTypeForFailedStarknetExecution
+                        })
+                        .and_then(|executable| {
+                            executable
+                                .execute(&mut BlockifierStateAdapter::<T>::default(), &block_context, &execution_config)
+                                .map_err(|e| {
+                                    log::error!("Failed to reexecute a tx: {}", e);
+                                    PlaceHolderErrorTypeForFailedStarknetExecution
+                                })
+                        }),
+                    UserTransaction::DeployAccount(tx) => tx
+                        .into_executable::<T::SystemHash>(chain_id, false)
+                        .execute(&mut BlockifierStateAdapter::<T>::default(), &block_context, &execution_config)
+                        .map_err(|e| {
+                            log::error!("Failed to reexecute a tx: {}", e);
+                            PlaceHolderErrorTypeForFailedStarknetExecution
+                        }),
+                    UserTransaction::Invoke(tx) => tx
+                        .into_executable::<T::SystemHash>(chain_id, false)
+                        .execute(&mut BlockifierStateAdapter::<T>::default(), &block_context, &execution_config)
+                        .map_err(|e| {
+                            log::error!("Failed to reexecute a tx: {}", e);
+                            PlaceHolderErrorTypeForFailedStarknetExecution
+                        }),
+                },
+                UserOrL1HandlerTransaction::L1Handler(tx, fee) => tx
+                    .into_executable::<T::SystemHash>(chain_id, *fee, false)
+                    .execute(&mut BlockifierStateAdapter::<T>::default(), &block_context, &execution_config)
+                    .map_err(|e| {
+                        log::error!("Failed to reexecute a tx: {}", e);
+                        PlaceHolderErrorTypeForFailedStarknetExecution
+                    }),
+            })
+            .collect::<Result<Vec<_>, _>>();
+
+        Ok(execution_infos)
+    }
+
+    fn execute_user_transaction(
         transaction: UserTransaction,
         chain_id: Felt252Wrapper,
         block_context: &BlockContext,

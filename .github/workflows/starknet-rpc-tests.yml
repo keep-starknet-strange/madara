@@ -24,6 +24,9 @@ jobs:
             ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
             github.run_id }}
           fail-on-cache-miss: true
+      - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "2.3.1"
       - name: Setup build deps
         run: |
           sudo apt-get update
@@ -31,9 +34,12 @@ jobs:
       - name: Setup dev chain
         run: |
           ./target/release/madara setup --chain=dev --from-local=configs
+      - name: Compile contracts for rpc-tests
+        run: |
+          cd starknet-rpc-test/contracts && ./generate_declare_contracts.sh 8
       - name: Run rpc test without cache
         run: |-
-          ./target/release/madara --dev --sealing=manual &
+          ./target/release/madara --dev --sealing=manual --da-layer=ethereum --da-conf=examples/da-confs/ethereum.json &
           MADARA_RUN_PID=$!
           while ! echo exit | nc localhost 9944; do sleep 1; done
           cd starknet-rpc-test
@@ -41,7 +47,7 @@ jobs:
           kill $MADARA_RUN_PID
       - name: Run rpc test with cache
         run: |-
-          ./target/release/madara --dev --sealing=manual --cache &
+          ./target/release/madara --dev --sealing=manual --cache --da-layer=ethereum --da-conf=examples/da-confs/ethereum.json &
           MADARA_RUN_PID=$!
           while ! echo exit | nc localhost 9944; do sleep 1; done
           cd starknet-rpc-test

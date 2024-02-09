@@ -1,4 +1,5 @@
-use std::path::PathBuf;
+use std::fs::File;
+use std::path::{Path, PathBuf};
 
 use clap::ValueHint::FilePath;
 use madara_runtime::SealingMode;
@@ -155,20 +156,25 @@ impl ExtendedRunCmd {
     }
 }
 
-fn init_da_client(da_layer: DaLayer, da_path: PathBuf) -> Result<Box<dyn DaClient + Send + Sync>> {
+fn init_da_client(da_layer: DaLayer, da_path: &Path) -> Result<Box<dyn DaClient + Send + Sync>> {
+    let file = File::open(da_path)?;
+
     let da_client: Box<dyn DaClient + Send + Sync> = match da_layer {
         #[cfg(feature = "celestia")]
         DaLayer::Celestia => {
-            let celestia_conf = CelestiaConfig::try_from(&da_path)?;
+            let celestia_conf: CelestiaConfig =
+                serde_json::from_reader(file).map_err(|e| sc_cli::Error::Input(e.to_string()))?;
             Box::new(CelestiaClient::try_from(celestia_conf).map_err(|e| sc_cli::Error::Input(e.to_string()))?)
         }
         DaLayer::Ethereum => {
-            let ethereum_conf = EthereumConfig::try_from(&da_path)?;
-            Box::new(EthereumClient::try_from(ethereum_conf)?)
+            let ethereum_conf: EthereumConfig =
+                serde_json::from_reader(file).map_err(|e| sc_cli::Error::Input(e.to_string()))?;
+            Box::new(EthereumClient::try_from(ethereum_conf).map_err(|e| sc_cli::Error::Input(e.to_string()))?)
         }
         #[cfg(feature = "avail")]
         DaLayer::Avail => {
-            let avail_conf = AvailConfig::try_from(&da_path)?;
+            let avail_conf: AvailConfig =
+                serde_json::from_reader(file).map_err(|e| sc_cli::Error::Input(e.to_string()))?;
             Box::new(AvailClient::try_from(avail_conf).map_err(|e| sc_cli::Error::Input(e.to_string()))?)
         }
     };
@@ -201,7 +207,7 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
             };
 
             log::info!("Initializing DA client with layer: {:?}", da_layer);
-            Some(init_da_client(da_layer, da_conf)?)
+            Some(init_da_client(da_layer, &da_conf)?)
         }
         None => {
             log::info!("Madara initialized w/o DA layer");

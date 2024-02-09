@@ -1,7 +1,7 @@
 # Genesis
 
 The genesis of the chain can be found in the [configs]
-(<https://github.com/keep-starknet-strange/madara/tree/main/configs/genesis_assets>)
+(<https://github.com/keep-starknet-strange/madara/tree/main/configs/genesis-assets>)
 folder. The genesis is defined in the form of a JSON file containing the
 following:
 
@@ -17,11 +17,11 @@ following:
 - storage: list of tuples containing the storage key and the storage value.
   Please note that the storage key is itself a tuple, containing the contract
   address for which storage is set and the
-  [Starknet storage key](https://docs.starknet.io/documentation/architecture_and_concepts/Contracts/contract-storage/#storage_variables).
+  [Starknet storage key](https://docs.starknet.io/documentation/architecture_and_concepts/Smart_Contracts/contract-storage/#storage_variables).
 
 The below defines all hardcoded values set in the geneses:
 
-## Node genesis [link](https://github.com/keep-starknet-strange/madara/tree/main/crates/node/src/genesis_assets/genesis.json)
+## Node genesis [link](https://github.com/keep-starknet-strange/madara/tree/main/configs/genesis-assets/genesis.json)
 
 ### Contract classes node genesis
 

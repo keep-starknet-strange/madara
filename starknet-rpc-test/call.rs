@@ -15,7 +15,7 @@ use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{build_single_owner_account, AccountActions};
+use starknet_rpc_test::utils::{build_single_owner_account, get_contract_address_from_deploy_tx, AccountActions};
 use starknet_rpc_test::Transaction;
 
 #[rstest]
@@ -142,12 +142,14 @@ async fn works_on_correct_call_with_calldata(madara: &ThreadSafeMadaraClient) ->
 async fn works_on_mutable_call_without_modifying_storage(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-    {
+    let contract_address = {
         let mut madara_write_lock = madara.write().await;
         let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
 
-        let (declare_tx, class_hash, _) =
-            account.declare_contract("./contracts/Counter.sierra.json", "./contracts/Counter.casm.json");
+        let (declare_tx, class_hash, _) = account.declare_contract(
+            "./contracts/counter4/counter4.contract_class.json",
+            "./contracts/counter4/counter4.compiled_contract_class.json",
+        );
         let contract_factory = ContractFactory::new(class_hash, account.clone());
 
         // manually setting fee else estimate_fee will be called and it will fail
@@ -163,12 +165,10 @@ async fn works_on_mutable_call_without_modifying_storage(madara: &ThreadSafeMada
 
         // declare and deploy contract
         madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
-        madara_write_lock.create_block_with_txs(vec![Transaction::Execution(deploy_tx)]).await?;
-    }
-
-    // address of deployed contract (will always be the same for 0 salt)
-    let contract_address =
-        FieldElement::from_hex_be("0x0226d81ce04c3c7081fe05f51b32b75210aad1ea8be8bce566f26d25d5ffb4c3").unwrap();
+        let mut txs = madara_write_lock.create_block_with_txs(vec![Transaction::Execution(deploy_tx)]).await?;
+        let deploy_tx_result = txs.pop().unwrap();
+        get_contract_address_from_deploy_tx(&rpc, deploy_tx_result).await?
+    };
 
     let read_balance = || async {
         rpc.call(

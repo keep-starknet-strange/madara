@@ -1,6 +1,7 @@
 use std::future::Future;
 use std::sync::Arc;
 
+use assert_matches::assert_matches;
 use async_trait::async_trait;
 use starknet_accounts::{
     Account, AccountFactory, Call, ConnectedAccount, Execution, OpenZeppelinAccountFactory, SingleOwnerAccount,
@@ -8,16 +9,19 @@ use starknet_accounts::{
 use starknet_core::chain_id;
 use starknet_core::types::contract::legacy::LegacyContractClass;
 use starknet_core::types::contract::{CompiledClass, SierraClass};
-use starknet_core::types::{BlockId, BlockTag, BroadcastedInvokeTransaction, FieldElement, FunctionCall, MsgToL1};
+use starknet_core::types::{
+    BlockId, BlockTag, BroadcastedInvokeTransaction, FieldElement, FunctionCall, MaybePendingTransactionReceipt,
+    MsgToL1, TransactionReceipt,
+};
 use starknet_core::utils::get_selector_from_name;
 use starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
-use starknet_providers::Provider;
+use starknet_providers::{Provider, ProviderError};
 use starknet_signers::{LocalWallet, SigningKey};
 
 use crate::constants::{FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE};
 use crate::{
-    RpcAccount, RpcOzAccountFactory, TransactionAccountDeployment, TransactionDeclaration, TransactionExecution,
-    TransactionLegacyDeclaration,
+    RpcAccount, RpcOzAccountFactory, SendTransactionError, TransactionAccountDeployment, TransactionDeclaration,
+    TransactionExecution, TransactionLegacyDeclaration, TransactionResult,
 };
 
 pub struct U256 {
@@ -224,4 +228,35 @@ where
     }
 
     panic!("Max poll count exceeded.");
+}
+
+type TransactionReceiptResult = Result<MaybePendingTransactionReceipt, ProviderError>;
+
+pub async fn get_transaction_receipt(
+    rpc: &JsonRpcClient<HttpTransport>,
+    transaction_hash: FieldElement,
+) -> TransactionReceiptResult {
+    // there is a delay between the transaction being available at the client
+    // and the sealing of the block, hence sleeping for 100ms
+    assert_poll(|| async { rpc.get_transaction_receipt(transaction_hash).await.is_ok() }, 100, 20).await;
+
+    rpc.get_transaction_receipt(transaction_hash).await
+}
+
+pub async fn get_contract_address_from_deploy_tx(
+    rpc: &JsonRpcClient<HttpTransport>,
+    tx: Result<TransactionResult, SendTransactionError>,
+) -> Result<FieldElement, ProviderError> {
+    let deploy_tx_hash = assert_matches!(
+        &tx,
+        Ok(TransactionResult::Execution(rpc_response)) => rpc_response.transaction_hash
+    );
+
+    let deploy_tx_receipt = get_transaction_receipt(rpc, deploy_tx_hash).await?;
+
+    let contract_address = assert_matches!(
+        deploy_tx_receipt,
+        MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) => receipt.events[0].data[0]
+    );
+    Ok(contract_address)
 }

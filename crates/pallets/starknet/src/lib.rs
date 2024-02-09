@@ -30,7 +30,6 @@
 //! invoke, ...), which allow users to interact with the pallet and invoke state changes. These
 //! functions are annotated with weight and return a DispatchResult.
 // Ensure we're `no_std` when compiling for Wasm.
-#![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::large_enum_variant)]
 
 /// Starknet pallet.
@@ -85,7 +84,7 @@ use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_transactions::execution::Execute;
 use mp_transactions::{
     DeclareTransaction, DeployAccountTransaction, HandleL1MessageTransaction, InvokeTransaction, Transaction,
-    UserAndL1HandlerTransaction, UserTransaction,
+    UserOrL1HandlerTransaction, UserTransaction,
 };
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
@@ -794,7 +793,7 @@ impl<T: Config> Pallet<T> {
     /// # Returns
     ///
     /// The transaction
-    fn get_call_transaction(call: Call<T>) -> Result<UserAndL1HandlerTransaction, ()> {
+    fn get_call_transaction(call: Call<T>) -> Result<UserOrL1HandlerTransaction, ()> {
         let tx = match call {
             Call::<T>::invoke { transaction } => UserTransaction::Invoke(transaction).into(),
             Call::<T>::declare { transaction, contract_class } => {
@@ -802,7 +801,7 @@ impl<T: Config> Pallet<T> {
             }
             Call::<T>::deploy_account { transaction } => UserTransaction::DeployAccount(transaction).into(),
             Call::<T>::consume_l1_message { transaction, paid_fee_on_l1 } => {
-                UserAndL1HandlerTransaction::L1Handler(transaction, paid_fee_on_l1)
+                UserOrL1HandlerTransaction::L1Handler(transaction, paid_fee_on_l1)
             }
             _ => return Err(()),
         };

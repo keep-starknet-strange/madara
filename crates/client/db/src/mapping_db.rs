@@ -3,9 +3,9 @@ use std::sync::{Arc, Mutex};
 
 // Substrate
 use parity_scale_codec::{Decode, Encode};
-use sp_core::H256;
 use sp_database::Database;
 use sp_runtime::traits::Block as BlockT;
+use starknet_api::hash::StarkHash;
 
 use crate::{DbError, DbHash};
 
@@ -13,8 +13,8 @@ use crate::{DbError, DbHash};
 #[derive(Debug)]
 pub struct MappingCommitment<B: BlockT> {
     pub block_hash: B::Hash,
-    pub starknet_block_hash: H256,
-    pub starknet_transaction_hashes: Vec<H256>,
+    pub starknet_block_hash: StarkHash,
+    pub starknet_transaction_hashes: Vec<StarkHash>,
 }
 
 /// Allow interaction with the mapping db
@@ -44,7 +44,7 @@ impl<B: BlockT> MappingDb<B> {
     ///
     /// Under some circumstances it can return multiples blocks hashes, meaning that the result has
     /// to be checked against the actual blockchain state in order to find the good one.
-    pub fn block_hash(&self, starknet_block_hash: &H256) -> Result<Option<Vec<B::Hash>>, DbError> {
+    pub fn block_hash(&self, starknet_block_hash: StarkHash) -> Result<Option<Vec<B::Hash>>, DbError> {
         match self.db.get(crate::columns::BLOCK_MAPPING, &starknet_block_hash.encode()) {
             Some(raw) => Ok(Some(Vec::<B::Hash>::decode(&mut &raw[..])?)),
             None => Ok(None),
@@ -70,7 +70,7 @@ impl<B: BlockT> MappingDb<B> {
 
         let mut transaction = sp_database::Transaction::new();
 
-        let substrate_hashes = match self.block_hash(&commitment.starknet_block_hash) {
+        let substrate_hashes = match self.block_hash(commitment.starknet_block_hash) {
             Ok(Some(mut data)) => {
                 data.push(commitment.block_hash);
                 log::warn!(
@@ -121,7 +121,7 @@ impl<B: BlockT> MappingDb<B> {
     /// * `transaction_hash` - the transaction hash to search for. H256 is used here because it's a
     ///   native type of substrate, and we are sure it's SCALE encoding is optimized and will not
     ///   change.
-    pub fn block_hash_from_transaction_hash(&self, transaction_hash: H256) -> Result<Option<B::Hash>, DbError> {
+    pub fn block_hash_from_transaction_hash(&self, transaction_hash: StarkHash) -> Result<Option<B::Hash>, DbError> {
         match self.db.get(crate::columns::TRANSACTION_MAPPING, &transaction_hash.encode()) {
             Some(raw) => Ok(Some(<B::Hash>::decode(&mut &raw[..])?)),
             None => Ok(None),
@@ -142,14 +142,17 @@ impl<B: BlockT> MappingDb<B> {
     ///
     /// - The cache is disabled.
     /// - The provided `starknet_hash` is not present in the cache.
-    pub fn cached_transaction_hashes_from_block_hash(&self, starknet_hash: H256) -> Result<Option<Vec<H256>>, DbError> {
+    pub fn cached_transaction_hashes_from_block_hash(
+        &self,
+        starknet_block_hash: StarkHash,
+    ) -> Result<Option<Vec<StarkHash>>, DbError> {
         if !self.cache_more_things {
             // The cache is not enabled, no need to even touch the database.
             return Ok(None);
         }
 
-        match self.db.get(crate::columns::STARKNET_TRANSACTION_HASHES_CACHE, &starknet_hash.encode()) {
-            Some(raw) => Ok(Some(Vec::<H256>::decode(&mut &raw[..])?)),
+        match self.db.get(crate::columns::STARKNET_TRANSACTION_HASHES_CACHE, &starknet_block_hash.encode()) {
+            Some(raw) => Ok(Some(Vec::<StarkHash>::decode(&mut &raw[..])?)),
             None => Ok(None),
         }
     }

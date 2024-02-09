@@ -25,7 +25,7 @@ log = { workspace = true }
 reqwest = { version = "0.11.18", features = ["blocking", "json"] }
 serde = { workspace = true, default-features = true }
 serde_json = { workspace = true, default-features = true }
-thiserror = { workspace = true }
+thiserror.workspace = true
 tokio = { version = "1", features = ["full"] }
 url = { workspace = true }
 uuid = { version = "1.4.0", features = ["v4", "serde"] }
@@ -43,6 +43,7 @@ blockifier = { workspace = true, default-features = true }
 mc-commitment-state-diff = { workspace = true, default-features = true }
 mc-db = { workspace = true, default-features = true }
 pallet-starknet-runtime-api = { workspace = true, features = ["std"] }
+starknet-core = { workspace = true, features = ["std"] }
 starknet_api = { workspace = true, default-features = true }
 
 # Ethereum
@@ -50,6 +51,7 @@ ethers = { workspace = true }
 
 # Madara
 mp-digest-log = { workspace = true, default-features = true }
+mp-felt = { workspace = true, default-features = true }
 mp-hashers = { workspace = true, default-features = true }
 mp-storage = { workspace = true, default-features = true }
 
@@ -63,6 +65,9 @@ celestia-types = { git = "https://github.com/eigerco/lumina", rev = "ccc5b9bfeac
 clap = { workspace = true, features = ["derive"], optional = true }
 sp-keyring = { workspace = true, optional = true }
 subxt = { workspace = true, optional = true }
+
+[dev-dependencies]
+rstest = { workspace = true }
 
 [features]
 default = []

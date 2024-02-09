@@ -18,10 +18,12 @@ use num_bigint::{BigInt, BigUint, Sign};
 use sp_api::{BlockT, HeaderT};
 use sp_blockchain::HeaderBackend;
 use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
+use starknet_api::state::ThinStateDiff;
 use starknet_core::types::contract::{CompiledClass, CompiledClassEntrypoint, CompiledClassEntrypointList};
 use starknet_core::types::{
-    CompressedLegacyContractClass, ContractClass, EntryPointsByType, FieldElement, FlattenedSierraClass,
-    FromByteArrayError, LegacyContractEntryPoint, LegacyEntryPointsByType, SierraEntryPoint,
+    CompressedLegacyContractClass, ContractClass, ContractStorageDiffItem, DeclaredClassItem, DeployedContractItem,
+    EntryPointsByType, FieldElement, FlattenedSierraClass, FromByteArrayError, LegacyContractEntryPoint,
+    LegacyEntryPointsByType, NonceUpdate, ReplacedClassItem, SierraEntryPoint, StateDiff, StorageEntry,
 };
 
 /// Returns a [`ContractClass`] from a [`BlockifierContractClass`]
@@ -43,6 +45,53 @@ pub fn to_rpc_contract_class(contract_class: BlockifierContractClass) -> Result<
             entry_points_by_type: EntryPointsByType { constructor: vec![], external: vec![], l1_handler: vec![] }, /* TODO: add entry_points_by_type */
             abi: String::from("{}"), // FIXME: https://github.com/keep-starknet-strange/madara/issues/790
         })),
+    }
+}
+
+/// Returns a [`StateDiff`] from a [`ThinStateDiff`]
+pub fn to_rpc_state_diff(thin_state_diff: ThinStateDiff) -> StateDiff {
+    let nonces = thin_state_diff
+        .nonces
+        .iter()
+        .map(|x| NonceUpdate { contract_address: x.0.0.0.into(), nonce: x.1.0.into() })
+        .collect();
+
+    let storage_diffs = thin_state_diff
+        .storage_diffs
+        .iter()
+        .map(|x| ContractStorageDiffItem {
+            address: x.0.0.0.into(),
+            storage_entries: x.1.iter().map(|y| StorageEntry { key: y.0.0.0.into(), value: (*y.1).into() }).collect(),
+        })
+        .collect();
+
+    let deprecated_declared_classes = thin_state_diff.deprecated_declared_classes.iter().map(|x| x.0.into()).collect();
+
+    let declared_classes = thin_state_diff
+        .declared_classes
+        .iter()
+        .map(|x| DeclaredClassItem { class_hash: x.0.0.into(), compiled_class_hash: x.1.0.into() })
+        .collect();
+
+    let deployed_contracts = thin_state_diff
+        .deployed_contracts
+        .iter()
+        .map(|x| DeployedContractItem { address: x.0.0.0.into(), class_hash: x.1.0.into() })
+        .collect();
+
+    let replaced_classes = thin_state_diff
+        .replaced_classes
+        .iter()
+        .map(|x| ReplacedClassItem { contract_address: x.0.0.0.into(), class_hash: x.1.0.into() })
+        .collect();
+
+    StateDiff {
+        nonces,
+        storage_diffs,
+        deprecated_declared_classes,
+        declared_classes,
+        deployed_contracts,
+        replaced_classes,
     }
 }
 
@@ -89,15 +138,16 @@ fn to_legacy_entry_point(entry_point: EntryPoint) -> Result<LegacyContractEntryP
 }
 
 /// Returns the current Starknet block from the block header's digest
-pub fn get_block_by_block_hash<B, C>(client: &C, block_hash: <B as BlockT>::Hash) -> Option<StarknetBlock>
+pub fn get_block_by_block_hash<B, C>(client: &C, block_hash: <B as BlockT>::Hash) -> Result<StarknetBlock>
 where
     B: BlockT,
     C: HeaderBackend<B>,
 {
-    let header = client.header(block_hash).ok().flatten()?;
+    let header =
+        client.header(block_hash).ok().flatten().ok_or_else(|| anyhow::Error::msg("Failed to retrieve header"))?;
     let digest = header.digest();
-    let block = find_starknet_block(digest).ok()?;
-    Some(block)
+    let block = find_starknet_block(digest)?;
+    Ok(block)
 }
 
 // Utils to convert Flattened Sierra to Casm Contract Class
