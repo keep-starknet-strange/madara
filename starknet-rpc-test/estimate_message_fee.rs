@@ -57,8 +57,11 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
 
     let message: MsgFromL1 = MsgFromL1 {
         from_address: EthAddress::from_hex(L1_CONTRACT_ADDRESS).unwrap(),
-        to_address: 3u64.into(),
-        entry_point_selector: 2u64.into(),
+        to_address: FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
+        entry_point_selector: FieldElement::from_hex_be(
+            "0x014093c40d95d0a3641c087f7d48d55160e1a58bc7c07b0d2323efeeb3087269",
+        )
+        .unwrap(),
         payload: vec![1u64.into()],
     };
 
