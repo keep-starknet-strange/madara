@@ -1,5 +1,6 @@
 use assert_matches::assert_matches;
-use mp_transactions::{HandleL1MessageTransaction, UserAndL1HandlerTransaction};
+use mp_felt::Felt252Wrapper;
+use mp_transactions::{HandleL1MessageTransaction, UserOrL1HandlerTransaction};
 use sp_runtime::transaction_validity::InvalidTransaction;
 use starknet_api::api_core::Nonce;
 use starknet_api::hash::StarkFelt;
@@ -38,9 +39,12 @@ fn should_accept_unused_nonce() {
             calldata: Default::default(),
         };
 
-        let tx = UserAndL1HandlerTransaction::L1Handler(transaction, Fee(100));
+        let tx = UserOrL1HandlerTransaction::L1Handler(transaction, Fee(100));
 
-        assert_matches!(Starknet::validate_unsigned_tx_nonce(&tx), Ok(TxPriorityInfo::L1Handler));
+        assert_eq!(
+            Starknet::validate_unsigned_tx_nonce(&tx),
+            Ok(TxPriorityInfo::L1Handler { nonce: Felt252Wrapper::ONE })
+        );
     });
 }
 
@@ -57,7 +61,7 @@ fn should_reject_used_nonce() {
             calldata: Default::default(),
         };
 
-        let tx = UserAndL1HandlerTransaction::L1Handler(transaction, Fee(100));
+        let tx = UserOrL1HandlerTransaction::L1Handler(transaction, Fee(100));
 
         L1Messages::<MockRuntime>::mutate(|nonces| nonces.insert(Nonce(nonce.into())));
 
@@ -78,7 +82,7 @@ fn should_accept_valid_unsigned_l1_message_tx() {
             calldata: Default::default(),
         };
 
-        let tx = UserAndL1HandlerTransaction::L1Handler(transaction, Fee(100));
+        let tx = UserOrL1HandlerTransaction::L1Handler(transaction, Fee(100));
 
         assert!(Starknet::validate_unsigned_tx(&tx).is_ok());
     });

@@ -158,8 +158,10 @@ async fn works_with_declare_txn(madara: &ThreadSafeMadaraClient) -> Result<(), a
 
         let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
         let nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account.address()).await?;
-        let (declare_tx, class_hash, compiled_class_hash) = account
-            .declare_contract("./contracts/Counter3/Counter3.sierra.json", "./contracts/Counter3/Counter3.casm.json");
+        let (declare_tx, class_hash, compiled_class_hash) = account.declare_contract(
+            "./contracts/counter5/counter5.contract_class.json",
+            "./contracts/counter5/counter5.compiled_contract_class.json",
+        );
 
         madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
 

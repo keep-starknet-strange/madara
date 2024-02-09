@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use crate::DaMode;
+use crate::{DaError, DaMode};
 
 pub const DEFAULT_ETHEREUM_NODE: &str = "127.0.0.1:8545";
 // default key derived from starting anvil as follows:
@@ -30,11 +30,11 @@ pub struct EthereumConfig {
 }
 
 impl TryFrom<&PathBuf> for EthereumConfig {
-    type Error = String;
+    type Error = DaError;
 
     fn try_from(path: &PathBuf) -> Result<Self, Self::Error> {
-        let file = File::open(path).map_err(|e| format!("error opening da config: {e}"))?;
-        serde_json::from_reader(file).map_err(|e| format!("error parsing da config: {e}"))
+        let file = File::open(path).map_err(DaError::FailedOpeningConfig)?;
+        serde_json::from_reader(file).map_err(DaError::FailedParsingConfig)
     }
 }
 

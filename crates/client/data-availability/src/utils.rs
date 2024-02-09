@@ -5,11 +5,11 @@ use starknet_api::hash::StarkFelt;
 use url::{ParseError, Url};
 
 const CLASS_FLAG_TRUE: &str = "0x100000000000000000000000000000001"; // 2 ^ 128 + 1
-const NONCE_BASE: &str = "0x10000000000000000"; // 2 ^ 64
+const NONCE_BASE: &str = "0xFFFFFFFFFFFFFFFF"; // 2 ^ 64 - 1
 
 /// DA calldata encoding:
 /// - https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/on-chain-data
-pub fn state_diff_to_calldata(mut block_da_data: BlockDAData) -> Vec<U256> {
+pub fn block_data_to_calldata(mut block_da_data: BlockDAData) -> Vec<U256> {
     // pushing the headers and num_addr_accessed
     let mut calldata: Vec<U256> = vec![
         U256::from_big_endian(&block_da_data.previous_state_root.0), // prev merkle root
@@ -67,7 +67,7 @@ pub fn state_diff_to_calldata(mut block_da_data: BlockDAData) -> Vec<U256> {
         calldata.push(U256::from_big_endian(class_hash.0.bytes()));
     }
 
-    // Handle replaced classes
+    // Handle declared classes
     calldata.push(U256::from(block_da_data.state_diff.declared_classes.len()));
 
     for (class_hash, compiled_class_hash) in &block_da_data.state_diff.declared_classes {
@@ -90,6 +90,7 @@ pub fn da_word(class_flag: bool, nonce_change: Option<Nonce>, num_changes: u64) 
     if let Some(new_nonce) = nonce_change {
         word += U256::from_big_endian(new_nonce.0.bytes()) + U256::from_str_radix(NONCE_BASE, 16).unwrap();
     }
+
     word += U256::from(num_changes);
 
     word
@@ -145,4 +146,29 @@ pub fn bytes_to_felt(raw: &[u8]) -> StarkFelt {
 
 pub fn bytes_to_key(raw: &[u8]) -> PatriciaKey {
     PatriciaKey(bytes_to_felt(raw))
+}
+
+#[cfg(test)]
+mod tests {
+    use rstest::rstest;
+    use starknet_api::stark_felt;
+
+    use super::*;
+
+    #[rstest]
+    #[case(false, 1, 1, "18446744073709551617")]
+    #[case(false, 1, 0, "18446744073709551616")]
+    #[case(false, 0, 6, "6")]
+    #[case(true, 1, 0, "340282366920938463481821351505477763073")]
+    fn da_word_works(
+        #[case] class_flag: bool,
+        #[case] new_nonce: u64,
+        #[case] num_changes: u64,
+        #[case] expected: String,
+    ) {
+        let new_nonce = if new_nonce > 0 { Some(Nonce(stark_felt!(new_nonce))) } else { None };
+        let da_word = da_word(class_flag, new_nonce, num_changes);
+        let expected = U256::from_str_radix(&expected, 10).unwrap();
+        assert_eq!(da_word, expected);
+    }
 }

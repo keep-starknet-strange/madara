@@ -11,17 +11,20 @@ use cairo_lang_starknet::contract_class::{
 };
 use cairo_lang_starknet::contract_class_into_casm_contract_class::StarknetSierraCompilationError;
 use cairo_lang_utils::bigint::BigUintAsHex;
+use indexmap::IndexMap;
 use mp_block::Block as StarknetBlock;
 use mp_digest_log::find_starknet_block;
+use mp_felt::Felt252Wrapper;
 use num_bigint::{BigInt, BigUint, Sign};
 use sp_api::{BlockT, HeaderT};
 use sp_blockchain::HeaderBackend;
 use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
+use starknet_api::state::ThinStateDiff;
 use starknet_core::types::contract::{CompiledClass, CompiledClassEntrypoint, CompiledClassEntrypointList};
 use starknet_core::types::{
     CompressedLegacyContractClass, ContractClass, ContractStorageDiffItem, DeclaredClassItem, DeployedContractItem,
     EntryPointsByType, FieldElement, FlattenedSierraClass, FromByteArrayError, LegacyContractEntryPoint,
-    LegacyEntryPointsByType, NonceUpdate, SierraEntryPoint, StateDiff, StorageEntry,
+    LegacyEntryPointsByType, NonceUpdate, ReplacedClassItem, SierraEntryPoint, StateDiff, StorageEntry,
 };
 
 /// Returns a [`ContractClass`] from a [`BlockifierContractClass`]
@@ -94,6 +97,53 @@ pub fn blockifier_to_rpc_state_diff_types(commitment_state_diff: CommitmentState
     })
 }
 
+/// Returns a [`StateDiff`] from a [`ThinStateDiff`]
+pub fn to_rpc_state_diff(thin_state_diff: ThinStateDiff) -> StateDiff {
+    let nonces = thin_state_diff
+        .nonces
+        .iter()
+        .map(|x| NonceUpdate { contract_address: x.0.0.0.into(), nonce: x.1.0.into() })
+        .collect();
+
+    let storage_diffs = thin_state_diff
+        .storage_diffs
+        .iter()
+        .map(|x| ContractStorageDiffItem {
+            address: x.0.0.0.into(),
+            storage_entries: x.1.iter().map(|y| StorageEntry { key: y.0.0.0.into(), value: (*y.1).into() }).collect(),
+        })
+        .collect();
+
+    let deprecated_declared_classes = thin_state_diff.deprecated_declared_classes.iter().map(|x| x.0.into()).collect();
+
+    let declared_classes = thin_state_diff
+        .declared_classes
+        .iter()
+        .map(|x| DeclaredClassItem { class_hash: x.0.0.into(), compiled_class_hash: x.1.0.into() })
+        .collect();
+
+    let deployed_contracts = thin_state_diff
+        .deployed_contracts
+        .iter()
+        .map(|x| DeployedContractItem { address: x.0.0.0.into(), class_hash: x.1.0.into() })
+        .collect();
+
+    let replaced_classes = thin_state_diff
+        .replaced_classes
+        .iter()
+        .map(|x| ReplacedClassItem { contract_address: x.0.0.0.into(), class_hash: x.1.0.into() })
+        .collect();
+
+    StateDiff {
+        nonces,
+        storage_diffs,
+        deprecated_declared_classes,
+        declared_classes,
+        deployed_contracts,
+        replaced_classes,
+    }
+}
+
 /// Returns a compressed vector of bytes
 pub(crate) fn compress(data: &[u8]) -> Result<Vec<u8>> {
     let mut gzip_encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
@@ -137,15 +187,16 @@ fn to_legacy_entry_point(entry_point: EntryPoint) -> Result<LegacyContractEntryP
 }
 
 /// Returns the current Starknet block from the block header's digest
-pub fn get_block_by_block_hash<B, C>(client: &C, block_hash: <B as BlockT>::Hash) -> Option<StarknetBlock>
+pub fn get_block_by_block_hash<B, C>(client: &C, block_hash: <B as BlockT>::Hash) -> Result<StarknetBlock>
 where
     B: BlockT,
     C: HeaderBackend<B>,
 {
-    let header = client.header(block_hash).ok().flatten()?;
+    let header =
+        client.header(block_hash).ok().flatten().ok_or_else(|| anyhow::Error::msg("Failed to retrieve header"))?;
     let digest = header.digest();
-    let block = find_starknet_block(digest).ok()?;
-    Some(block)
+    let block = find_starknet_block(digest)?;
+    Ok(block)
 }
 
 // Utils to convert Flattened Sierra to Casm Contract Class
@@ -167,6 +218,36 @@ pub fn flattened_sierra_to_casm_contract_class(
     Ok(casm_contract_class)
 }
 
+pub fn flattened_sierra_to_sierra_contract_class(
+    flattened_sierra: Arc<FlattenedSierraClass>,
+) -> starknet_api::state::ContractClass {
+    let mut entry_point_by_type =
+        IndexMap::<starknet_api::state::EntryPointType, Vec<starknet_api::state::EntryPoint>>::with_capacity(3);
+    for sierra_entrypoint in flattened_sierra.entry_points_by_type.constructor.iter() {
+        entry_point_by_type
+            .entry(starknet_api::state::EntryPointType::Constructor)
+            .or_default()
+            .push(rpc_entry_point_to_starknet_api_entry_point(sierra_entrypoint));
+    }
+    for sierra_entrypoint in flattened_sierra.entry_points_by_type.external.iter() {
+        entry_point_by_type
+            .entry(starknet_api::state::EntryPointType::External)
+            .or_default()
+            .push(rpc_entry_point_to_starknet_api_entry_point(sierra_entrypoint));
+    }
+    for sierra_entrypoint in flattened_sierra.entry_points_by_type.l1_handler.iter() {
+        entry_point_by_type
+            .entry(starknet_api::state::EntryPointType::L1Handler)
+            .or_default()
+            .push(rpc_entry_point_to_starknet_api_entry_point(sierra_entrypoint));
+    }
+    starknet_api::state::ContractClass {
+        sierra_program: flattened_sierra.sierra_program.iter().map(|f| Felt252Wrapper(*f).into()).collect(),
+        entry_point_by_type,
+        abi: flattened_sierra.abi.clone(),
+    }
+}
+
 /// Converts a [FieldElement] to a [BigUint]
 fn field_element_to_big_uint(value: &FieldElement) -> BigUint {
     BigInt::from_bytes_be(Sign::Plus, &value.to_bytes_be()).to_biguint().unwrap()
@@ -175,6 +256,13 @@ fn field_element_to_big_uint(value: &FieldElement) -> BigUint {
 /// Converts a [FieldElement] to a [BigUintAsHex]
 fn field_element_to_big_uint_as_hex(value: &FieldElement) -> BigUintAsHex {
     BigUintAsHex { value: field_element_to_big_uint(value) }
+}
+
+fn rpc_entry_point_to_starknet_api_entry_point(value: &SierraEntryPoint) -> starknet_api::state::EntryPoint {
+    starknet_api::state::EntryPoint {
+        function_idx: starknet_api::state::FunctionIndex(value.function_idx),
+        selector: Felt252Wrapper(value.selector).into(),
+    }
 }
 
 /// Converts a [EntryPointsByType] to a [ContractEntryPoints]

@@ -3,7 +3,6 @@ pub mod config;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use avail_subxt::api::runtime_types::avail_core::AppId;
 use avail_subxt::api::runtime_types::bounded_collections::bounded_vec::BoundedVec;
@@ -16,7 +15,7 @@ use subxt::ext::sp_core::sr25519::Pair;
 use subxt::OnlineClient;
 
 use crate::utils::get_bytes_from_state_diff;
-use crate::{DaClient, DaMode};
+use crate::{DaClient, DaError, DaLayer, DaMode};
 
 type AvailPairSigner = subxt::tx::PairSigner<AvailConfig, Pair>;
 
@@ -33,19 +32,19 @@ pub struct SubxtClient {
     config: config::AvailConfig,
 }
 
-pub fn try_build_avail_subxt(conf: &config::AvailConfig) -> Result<OnlineClient<AvailConfig>> {
+pub fn try_build_avail_subxt(conf: &config::AvailConfig) -> Result<OnlineClient<AvailConfig>, DaError> {
     let client =
         futures::executor::block_on(async { build_client(conf.ws_provider.as_str(), conf.validate_codegen).await })
-            .map_err(|e| anyhow::anyhow!("DA Layer error: could not initialize ws endpoint {e}"))?;
+            .map_err(|e| DaError::FailedBuildingClient(e.into()))?;
 
     Ok(client)
 }
 
 impl SubxtClient {
-    pub async fn restart(&mut self) -> Result<(), anyhow::Error> {
+    pub async fn restart(&mut self) -> Result<(), DaError> {
         self.client = match build_client(self.config.ws_provider.as_str(), self.config.validate_codegen).await {
             Ok(i) => i,
-            Err(e) => return Err(anyhow!("DA Layer error: could not restart ws endpoint {e}")),
+            Err(e) => return DaError::FailedBuildingClient(e.into()),
         };
 
         Ok(())
@@ -57,7 +56,7 @@ impl SubxtClient {
 }
 
 impl TryFrom<config::AvailConfig> for SubxtClient {
-    type Error = anyhow::Error;
+    type Error = DaError;
 
     fn try_from(conf: config::AvailConfig) -> Result<Self, Self::Error> {
         Ok(Self { client: try_build_avail_subxt(&conf)?, config: conf })
@@ -66,7 +65,7 @@ impl TryFrom<config::AvailConfig> for SubxtClient {
 
 #[async_trait]
 impl DaClient for AvailClient {
-    async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()> {
+    async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<(), DaError> {
         let bytes = get_bytes_from_state_diff(&state_diff);
         let bytes = BoundedVec(bytes);
         self.publish_data(&bytes).await?;
@@ -90,7 +89,7 @@ impl DaClient for AvailClient {
 }
 
 impl AvailClient {
-    async fn publish_data(&self, bytes: &BoundedVec<u8>) -> Result<()> {
+    async fn publish_data(&self, bytes: &BoundedVec<u8>) -> Result<(), DaError> {
         let mut ws_client = self.ws_client.lock().await;
 
         let data_transfer = AvailApi::tx().data_availability().submit_data(bytes.clone());
@@ -103,7 +102,7 @@ impl AvailClient {
                     let _ = ws_client.restart().await;
                 }
 
-                return Err(anyhow!("DA Layer error : failed due to closed websocket connection {e}"));
+                return DaError::FailedBuildingClient(e.into());
             }
         };
 
@@ -112,7 +111,7 @@ impl AvailClient {
 }
 
 impl TryFrom<config::AvailConfig> for AvailClient {
-    type Error = anyhow::Error;
+    type Error = DaError;
 
     fn try_from(conf: config::AvailConfig) -> Result<Self, Self::Error> {
         let signer = signer_from_seed(conf.seed.as_str())?;
@@ -128,8 +127,10 @@ impl TryFrom<config::AvailConfig> for AvailClient {
     }
 }
 
-fn signer_from_seed(seed: &str) -> Result<AvailPairSigner> {
-    let pair = <Pair as subxt::ext::sp_core::Pair>::from_string(seed, None)?;
+fn signer_from_seed(seed: &str) -> Result<AvailPairSigner, DaError> {
+    let pair = <Pair as subxt::ext::sp_core::Pair>::from_string(seed, None)
+        .map_err(|e| DaError::FailedConversion(e.into()))?;
+
     let signer = AvailPairSigner::new(pair);
     Ok(signer)
 }
