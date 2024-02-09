@@ -1,0 +1,25 @@
+[package]
+name = "pallet-rancici-runtime-api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+frame-support = { workspace = true }
+starknet_api = { workspace = true, features = [
+	"parity-scale-codec",
+	"scale-info",
+] }
+sp-api = { workspace = true }
+sp-runtime = { workspace = true }
+parity-scale-codec = { workspace = true, features = ["derive"] }
+scale-info = { workspace = true, features = ["derive"] }
+
+[features]
+default = ["std"]
+std = [
+	"sp-api/std",
+	"sp-runtime/std",
+	"starknet_api/std",
+	"scale-info/std",
+	"parity-scale-codec/std",
+]

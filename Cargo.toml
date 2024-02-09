@@ -3,6 +3,7 @@ resolver = "2"
 members = [
 	"crates/node",
 	"crates/runtime",
+	"crates/pallets/rancici/runtime_api/",
 	"crates/pallets/rancici",
 	"crates/pallets/starknet/runtime_api/",
 	"crates/pallets/starknet",
@@ -38,6 +39,7 @@ members = [
 default-members = [
 	"crates/node",
 	"crates/runtime",
+	"crates/pallets/rancici/runtime_api/",
 	"crates/pallets/rancici",
 	"crates/pallets/starknet/runtime_api/",
 	"crates/pallets/starknet",
@@ -166,6 +168,7 @@ pallet-starknet = { path = "crates/pallets/starknet", default-features = false }
 pallet-starknet-runtime-api = { path = "crates/pallets/starknet/runtime_api", default-features = false }
 # Hackathon pallet
 pallet-rancici = { path = "crates/pallets/rancici", default-features = false }
+pallet-rancici-runtime-api = { path = "crates/pallets/rancici/runtime_api", default-features = false }
 # Madara primtitives
 mp-genesis-config = { path = "crates/primitives/genesis-config", default-features = false }
 mp-digest-log = { path = "crates/primitives/digest-log", default-features = false }

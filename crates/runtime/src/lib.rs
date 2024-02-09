@@ -406,6 +406,15 @@ impl_runtime_apis! {
         }
     }
 
+    impl pallet_rancici::RanciciRuntimeApi<Block> for Runtime {
+        fn join_pool(player: ContractAddress, xp: u64) -> DispatchResult {
+            Rancici::join_pool(player, xp)
+        }
+        fn player_pool() -> Vec<(ContractAddress, u64)> {
+            Rancici::player_pool()
+        }
+    }
+
     #[cfg(feature = "runtime-benchmarks")]
     impl frame_benchmarking::Benchmark<Block> for Runtime {
         fn benchmark_metadata(extra: bool) -> (

@@ -6109,6 +6109,7 @@ dependencies = [
  "mp-sequencer-address",
  "mp-transactions",
  "pallet-rancici",
+ "pallet-rancici-runtime-api",
  "pallet-starknet",
  "pallet-starknet-runtime-api",
  "parity-scale-codec",
@@ -6179,6 +6180,7 @@ dependencies = [
  "pallet-aura",
  "pallet-grandpa",
  "pallet-rancici",
+ "pallet-rancici-runtime-api",
  "pallet-starknet",
  "pallet-starknet-runtime-api",
  "pallet-timestamp",
@@ -7615,6 +7617,18 @@ dependencies = [
  "sp-api 25.0.0",
  "starknet-core",
  "starknet-crypto 0.6.1 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=64ebc36)",
+ "starknet_api",
+]
+
+[[package]]
+name = "pallet-rancici-runtime-api"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-api 4.0.0-dev",
+ "sp-runtime 24.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.3.0)",
  "starknet_api",
 ]
 

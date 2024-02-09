@@ -54,6 +54,7 @@ pallet-starknet-runtime-api = { workspace = true }
 
 # Hackathon pallet
 pallet-rancici = { workspace = true }
+pallet-rancici-runtime-api = { workspace = true }
 
 # Madara Primitives
 mp-block = { workspace = true }
