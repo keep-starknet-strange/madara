@@ -22,7 +22,7 @@ pub use mc_rpc_core::{
     StarknetWriteRpcApiServer,
 };
 use mc_storage::OverrideHandle;
-use mp_felt::{Felt252Wrapper, Felt252WrapperError};
+use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
@@ -42,6 +42,7 @@ use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use sp_runtime::transaction_validity::InvalidTransaction;
 use sp_runtime::DispatchError;
 use starknet_api::block::BlockHash;
+use starknet_api::hash::StarkHash;
 use starknet_api::transaction::Calldata;
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
@@ -150,12 +151,11 @@ where
     /// Returns the substrate block hash corresponding to the given Starknet block id
     fn substrate_block_hash_from_starknet_block(&self, block_id: BlockId) -> Result<B::Hash, StarknetRpcApiError> {
         match block_id {
-            BlockId::Hash(h) => madara_backend_client::load_hash(
-                self.client.as_ref(),
-                &self.backend,
-                H256::from_slice(&h.to_bytes_be()[..32]),
-            )
-            .map_err(|_| StarknetRpcApiError::BlockNotFound)?,
+            BlockId::Hash(h) => madara_backend_client::load_hash(self.client.as_ref(), &self.backend, h.into())
+                .map_err(|e| {
+                    error!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}");
+                    StarknetRpcApiError::BlockNotFound
+                })?,
             BlockId::Number(n) => self
                 .client
                 .hash(UniqueSaturatedInto::unique_saturated_into(n))
@@ -195,7 +195,7 @@ where
     /// # Arguments
     ///
     /// * `block_hash` - The hash of the block containing the transactions (starknet block).
-    fn get_cached_transaction_hashes(&self, block_hash: H256) -> Option<Vec<H256>> {
+    fn get_cached_transaction_hashes(&self, block_hash: StarkHash) -> Option<Vec<StarkHash>> {
         self.backend.mapping().cached_transaction_hashes_from_block_hash(block_hash).unwrap_or_else(|err| {
             error!("Failed to read from cache: {err}");
             None
@@ -207,8 +207,11 @@ where
     /// # Arguments
     ///
     /// * `starknet_block_hash` - The hash of the block containing the state diff (starknet block).
-    fn get_state_diff(&self, starknet_block_hash: &BlockHash) -> Result<StateDiff, String> {
-        let state_diff = self.backend.da().state_diff(starknet_block_hash)?;
+    fn get_state_diff(&self, starknet_block_hash: &BlockHash) -> Result<StateDiff, StarknetRpcApiError> {
+        let state_diff = self.backend.da().state_diff(starknet_block_hash).map_err(|e| {
+            error!("Failed to retrieve state diff from cache for block with hash {}: {e}", starknet_block_hash);
+            StarknetRpcApiError::InternalServerError
+        })?;
 
         let rpc_state_diff = to_rpc_state_diff(state_diff);
 
@@ -218,7 +221,7 @@ where
     fn try_txn_hash_from_cache(
         &self,
         tx_index: usize,
-        cached_transactions: &Option<Vec<H256>>,
+        cached_transactions: &Option<Vec<StarkHash>>,
         transactions: &[mp_transactions::Transaction],
         chain_id: Felt252Wrapper,
     ) -> Result<Felt252Wrapper, StarknetRpcApiError> {
@@ -548,7 +551,7 @@ where
         let substrate_block_hash = self
             .backend
             .mapping()
-            .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
+            .block_hash_from_transaction_hash(Felt252Wrapper(transaction_hash).into())
             .map_err(|e| {
                 error!("Failed to get transaction's substrate block hash from mapping_db: {e}");
                 StarknetRpcApiError::TxnHashNotFound
@@ -902,12 +905,7 @@ where
         let transaction_hashes = if let Some(tx_hashes) = self.get_cached_transaction_hashes(block_hash.into()) {
             let mut v = Vec::with_capacity(tx_hashes.len());
             for tx_hash in tx_hashes {
-                v.push(h256_to_felt(tx_hash).map_err(|e| {
-                    CallError::Failed(anyhow::anyhow!(
-                        "The hash cached for block with hash {block_hash:?} is an invalid felt: '{tx_hash}'. The \
-                         caching db has probably been tempered"
-                    ))
-                })?);
+                v.push(FieldElement::from(tx_hash));
             }
             v
         } else {
@@ -1141,20 +1139,12 @@ where
             self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into());
 
         let transaction_hash = if let Some(cached_tx_hashes) = opt_cached_transaction_hashes {
-            cached_tx_hashes
-                .get(index as usize)
-                .map(|&h| h256_to_felt(h))
-                .ok_or(CallError::Failed(anyhow::anyhow!(
+            cached_tx_hashes.get(index as usize).map(|&fe| FieldElement::from(fe)).ok_or(CallError::Failed(
+                anyhow::anyhow!(
                     "Number of cached tx hashes does not match the number of transactions in block with id {:?}",
                     block_id
-                )))?
-                .map_err(|e| {
-                    CallError::Failed(anyhow::anyhow!(
-                        "The hash cached for tx at index {index} of block with id {:?} is an invalid felt. The \
-                         caching db has probably been tempered",
-                        block_id
-                    ))
-                })?
+                ),
+            ))?
         } else {
             transaction.compute_hash::<H>(chain_id.0.into(), false).0
         };
@@ -1199,19 +1189,12 @@ where
         let mut transactions = Vec::with_capacity(starknet_block.transactions().len());
         for (index, tx) in starknet_block.transactions().iter().enumerate() {
             let tx_hash = if let Some(cached_tx_hashes) = opt_cached_transaction_hashes.as_ref() {
-                cached_tx_hashes
-                    .get(index)
-                    .map(|&h| h256_to_felt(h))
-                    .ok_or(CallError::Failed(anyhow::anyhow!(
+                cached_tx_hashes.get(index).map(|&h| FieldElement::from(h)).ok_or(CallError::Failed(
+                    anyhow::anyhow!(
                         "Number of cached tx hashes does not match the number of transactions in block with hash {:?}",
                         block_hash
-                    )))?
-                    .map_err(|e| {
-                        CallError::Failed(anyhow::anyhow!(
-                            "The hash cached for tx at index {index} of block with hash {block_hash:?} is an invalid \
-                             felt. The caching db has probably been tempered"
-                        ))
-                    })?
+                    ),
+                ))?
             } else {
                 tx.compute_hash::<H>(chain_id.0.into(), false).0
             };
@@ -1391,11 +1374,8 @@ where
     /// - `TOO_MANY_KEYS_IN_FILTER` if there are too many keys in the filter, which may exceed the
     ///   system's capacity.
     fn get_transaction_by_hash(&self, transaction_hash: FieldElement) -> RpcResult<Transaction> {
-        let substrate_block_hash_from_db = self
-            .backend
-            .mapping()
-            .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
-            .map_err(|e| {
+        let substrate_block_hash_from_db =
+            self.backend.mapping().block_hash_from_transaction_hash(transaction_hash.into()).map_err(|e| {
                 error!("Failed to get transaction's substrate block hash from mapping_db: {e}");
                 StarknetRpcApiError::TxnHashNotFound
             })?;
@@ -1456,7 +1436,7 @@ where
         let substrate_block_hash = self
             .backend
             .mapping()
-            .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
+            .block_hash_from_transaction_hash(transaction_hash.into())
             .map_err(|e| {
                 error!("Failed to interact with db backend error: {e}");
                 StarknetRpcApiError::InternalServerError
@@ -1749,8 +1729,4 @@ where
             Err(_) => Err(StarknetRpcApiError::InternalServerError),
         },
     }
-}
-
-fn h256_to_felt(h256: H256) -> Result<FieldElement, Felt252WrapperError> {
-    Felt252Wrapper::try_from(h256).map(|f| f.0)
 }

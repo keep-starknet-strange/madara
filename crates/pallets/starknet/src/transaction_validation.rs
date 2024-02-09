@@ -64,10 +64,10 @@ pub enum TxPriorityInfo {
 
 impl<T: Config> Pallet<T> {
     pub fn validate_unsigned_tx_nonce(
-        transaction: &UserAndL1HandlerTransaction,
+        transaction: &UserOrL1HandlerTransaction,
     ) -> Result<TxPriorityInfo, InvalidTransaction> {
         match transaction {
-            UserAndL1HandlerTransaction::User(tx) => {
+            UserOrL1HandlerTransaction::User(tx) => {
                 let sender_address: ContractAddress = tx.sender_address().into();
                 let sender_nonce: Felt252Wrapper = Pallet::<T>::nonce(sender_address).into();
                 let transaction_nonce = match tx.nonce() {
@@ -93,7 +93,7 @@ impl<T: Config> Pallet<T> {
 
                 Ok(TxPriorityInfo::RegularTxs { sender_address: tx.sender_address(), transaction_nonce, sender_nonce })
             }
-            UserAndL1HandlerTransaction::L1Handler(tx, _fee) => {
+            UserOrL1HandlerTransaction::L1Handler(tx, _fee) => {
                 Self::ensure_l1_message_not_executed(&Nonce(StarkFelt::from(tx.nonce)))?;
 
                 Ok(TxPriorityInfo::L1Handler { nonce: tx.nonce.into() })
@@ -101,7 +101,7 @@ impl<T: Config> Pallet<T> {
         }
     }
 
-    pub fn validate_unsigned_tx(transaction: &UserAndL1HandlerTransaction) -> Result<(), InvalidTransaction> {
+    pub fn validate_unsigned_tx(transaction: &UserOrL1HandlerTransaction) -> Result<(), InvalidTransaction> {
         let chain_id = Self::chain_id();
         let block_context = Self::get_block_context();
         let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();
@@ -109,7 +109,7 @@ impl<T: Config> Pallet<T> {
         let mut initial_gas = blockifier::abi::constants::INITIAL_GAS_COST;
 
         match transaction {
-            UserAndL1HandlerTransaction::User(transaction) => {
+            UserOrL1HandlerTransaction::User(transaction) => {
                 let validation_result =
                     match transaction {
                         // There is no way to validate it before the account is actuallly deployed
@@ -141,7 +141,7 @@ impl<T: Config> Pallet<T> {
                     validation_result
                 }
             }
-            UserAndL1HandlerTransaction::L1Handler(_, fee) => {
+            UserOrL1HandlerTransaction::L1Handler(_, fee) => {
                 // The tx will fail if no fee have been paid
                 if fee.0 == 0 {
                     return Err(InvalidTransaction::Payment);

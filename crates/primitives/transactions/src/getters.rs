@@ -5,7 +5,7 @@ use mp_felt::Felt252Wrapper;
 use super::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction, UserTransaction};
 use crate::{
     DeclareTransactionV0, DeclareTransactionV1, DeclareTransactionV2, HandleL1MessageTransaction, InvokeTransactionV0,
-    InvokeTransactionV1, UserAndL1HandlerTransaction,
+    InvokeTransactionV1, UserOrL1HandlerTransaction,
 };
 
 impl Transaction {
@@ -230,12 +230,12 @@ impl TransactionVersion for Transaction {
     }
 }
 
-impl TransactionVersion for UserAndL1HandlerTransaction {
+impl TransactionVersion for UserOrL1HandlerTransaction {
     #[inline(always)]
     fn version(&self) -> u8 {
         match self {
-            UserAndL1HandlerTransaction::User(tx) => tx.version(),
-            UserAndL1HandlerTransaction::L1Handler(tx, _) => tx.version(),
+            UserOrL1HandlerTransaction::User(tx) => tx.version(),
+            UserOrL1HandlerTransaction::L1Handler(tx, _) => tx.version(),
         }
     }
 }

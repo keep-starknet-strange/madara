@@ -7,6 +7,8 @@
 - fix: get_block_by_block_hash then default rather than error
 - feat(rpc): added `get_state_update` real values from DA db
 - feat: add transparent representation to `Felt252Wrapper`
+- feat(rpc/trace_api): add `trace_block_transaction`
+- chore(db): changed the way hashes are encoded
 
 ## v0.7.0
 
@@ -80,7 +82,7 @@
 - feat: fixing getNonce Rpc Call and adding a new test
 - refactor: use Zaun crate for Starknet core contract bindings
 - refactor: use Anvil sandbox from Zaun crate
-- feat(rpc) : estimateMessageFee RPC call implementation
+- feat(rpc): estimateMessageFee RPC call implementation
 
 ## v0.6.0
 

@@ -12,6 +12,8 @@ pub const UDC_ADDRESS: &str = "0x041a78e741e5af2fec34b695679bc6891742439f7afb848
 // https://github.com/keep-starknet-strange/madara/blob/main/crates/node/src/chain_spec.rs#L185-L186
 pub const ACCOUNT_CONTRACT_CLASS_HASH: &str = "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f";
 pub const ARGENT_PROXY_CLASS_HASH: &str = "0x0424b7f61e3c5dfd74400d96fdea7e1f0bf2757f31df04387eaa957f095dd7b9";
+pub const ARGENT_ACCOUNT_CLASS_HASH_CAIRO_0: &str =
+    "0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d";
 pub const SIGNER_PUBLIC: &str = "0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2";
 pub const SIGNER_PRIVATE: &str = "0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d";
 pub const SALT: &str = "0x0000000000000000000000000000000000000000000000000000000000001111";

@@ -1,10 +1,8 @@
-use std::marker::PhantomData;
 use std::sync::Arc;
 
 // Substrate
 use parity_scale_codec::{Decode, Encode};
 use sp_database::Database;
-use sp_runtime::traits::Block as BlockT;
 // Starknet
 use starknet_api::block::BlockHash;
 use starknet_api::hash::StarkFelt;
@@ -14,17 +12,16 @@ use uuid::Uuid;
 use crate::{DbError, DbHash};
 
 // The fact db stores DA facts that need to be written to L1
-pub struct DaDb<B: BlockT> {
+pub struct DaDb {
     pub(crate) db: Arc<dyn Database<DbHash>>,
-    pub(crate) _marker: PhantomData<B>,
 }
 
 // TODO: purge old cairo job keys
-impl<B: BlockT> DaDb<B> {
-    pub fn state_diff(&self, block_hash: &BlockHash) -> Result<ThinStateDiff, String> {
+impl DaDb {
+    pub fn state_diff(&self, block_hash: &BlockHash) -> Result<ThinStateDiff, DbError> {
         match self.db.get(crate::columns::DA, block_hash.0.bytes()) {
-            Some(raw) => Ok(ThinStateDiff::decode(&mut &raw[..]).map_err(|e| format!("{:?}", e))?),
-            None => Err(String::from("can't write state diff")),
+            Some(raw) => Ok(ThinStateDiff::decode(&mut &raw[..])?),
+            None => Err(DbError::ValueNotInitialized(crate::columns::DA, block_hash.to_string())),
         }
     }
 
