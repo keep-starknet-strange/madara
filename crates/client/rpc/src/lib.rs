@@ -28,7 +28,7 @@ use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
-use mp_transactions::{HandleL1MessageTransaction, TransactionStatus, UserTransaction};
+use mp_transactions::{TransactionStatus, UserTransaction};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::BlockBackend;
@@ -1600,11 +1600,13 @@ where
             let revert_error = self.get_tx_execution_outcome(substrate_block_hash, transaction_hash)?;
 
             // This is safe because the message is a Vec<u8> build from a String
-            translate_revert_error(revert_error.map(|message| unsafe { String::from_utf8_unchecked(message) }))
+            revert_error_to_execution_result(
+                revert_error.map(|message| unsafe { String::from_utf8_unchecked(message) }),
+            )
         };
 
         let events_converted: Vec<starknet_core::types::Event> =
-            events.clone().into_iter().map(event_conversion).collect();
+            events.clone().into_iter().map(starknet_api_to_starknet_core_event).collect();
 
         let actual_fee = if fee_disabled {
             FieldElement::ZERO
@@ -1624,7 +1626,7 @@ where
 
         let messages = self.get_tx_messages_to_l1(substrate_block_hash, transaction_hash)?;
 
-        let messages_sent = messages.into_iter().map(message_conversion).collect();
+        let messages_sent = messages.into_iter().map(starknet_api_to_starknet_core_message_to_l1).collect();
 
         // TODO: use actual execution resources
         let execution_resources = get_execution_resources();
@@ -1668,7 +1670,7 @@ where
             }),
             mp_transactions::Transaction::L1Handler(ref tx) => {
                 TransactionReceipt::L1Handler(L1HandlerTransactionReceipt {
-                    message_hash: calculate_l1_message_hash(tx),
+                    message_hash: Hash256::from_felt(&tx.compute_hash::<H>(chain_id, false).0),
                     transaction_hash,
                     actual_fee,
                     finality_status: TransactionFinalityStatus::AcceptedOnL2,
@@ -1758,7 +1760,7 @@ where
 
         let simulation = self.simulate_pending_tx(pending_tx.clone(), skip_validate, skip_fee_charge)?;
         let actual_fee = simulation.actual_fee.0.into();
-        let execution_result = translate_revert_error(simulation.revert_error);
+        let execution_result = revert_error_to_execution_result(simulation.revert_error);
 
         let execution_resources = get_execution_resources();
 
@@ -1800,7 +1802,7 @@ where
             }
             mp_transactions::Transaction::L1Handler(ref tx) => {
                 let receipt = PendingL1HandlerTransactionReceipt {
-                    message_hash: calculate_l1_message_hash(tx),
+                    message_hash: Hash256::from_felt(&tx.compute_hash::<H>(chain_id, false).0),
                     transaction_hash,
                     actual_fee,
                     messages_sent,
@@ -1859,12 +1861,7 @@ fn is_pending_block(block_id: BlockId) -> bool {
     block_id == BlockId::Tag(BlockTag::Pending)
 }
 
-fn calculate_l1_message_hash(_tx: &HandleL1MessageTransaction) -> Hash256 {
-    // TODO(#1291): compute message hash correctly to L1HandlerTransactionReceipt
-    Hash256::from_felt(&FieldElement::default())
-}
-
-fn event_conversion(event: starknet_api::transaction::Event) -> starknet_core::types::Event {
+fn starknet_api_to_starknet_core_event(event: starknet_api::transaction::Event) -> starknet_core::types::Event {
     starknet_core::types::Event {
         from_address: Felt252Wrapper::from(event.from_address).0,
         keys: event.content.keys.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
@@ -1872,7 +1869,9 @@ fn event_conversion(event: starknet_api::transaction::Event) -> starknet_core::t
     }
 }
 
-fn message_conversion(message: starknet_api::transaction::MessageToL1) -> starknet_core::types::MsgToL1 {
+fn starknet_api_to_starknet_core_message_to_l1(
+    message: starknet_api::transaction::MessageToL1,
+) -> starknet_core::types::MsgToL1 {
     let mut to_address = [0u8; 32];
     to_address[12..32].copy_from_slice(message.to_address.0.as_bytes());
     starknet_core::types::MsgToL1 {
@@ -1896,7 +1895,7 @@ fn get_execution_resources() -> ExecutionResources {
     }
 }
 
-fn translate_revert_error(revert_error: Option<String>) -> ExecutionResult {
+fn revert_error_to_execution_result(revert_error: Option<String>) -> ExecutionResult {
     match revert_error {
         None => ExecutionResult::Succeeded,
         Some(message) => ExecutionResult::Reverted { reason: message },
