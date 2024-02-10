@@ -34,6 +34,7 @@ pub use crate::with_serde::*;
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Ord, Hash, Eq, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[repr(transparent)]
 pub struct Felt252Wrapper(pub FieldElement);
 
 impl Felt252Wrapper {

@@ -1,19 +1,24 @@
+use mc_db::DbError;
 use mc_rpc_core::utils::get_block_by_block_hash;
 use mp_block::Block;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sp_api::BlockId;
 use sp_blockchain::HeaderBackend;
-use sp_core::H256;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
+use starknet_api::hash::StarkHash;
 
 use crate::errors::StarknetRpcApiError;
 
-pub fn load_hash<B: BlockT, C>(client: &C, backend: &mc_db::Backend<B>, hash: H256) -> anyhow::Result<Option<B::Hash>>
+pub fn load_hash<B: BlockT, C>(
+    client: &C,
+    backend: &mc_db::Backend<B>,
+    hash: StarkHash,
+) -> Result<Option<B::Hash>, DbError>
 where
     B: BlockT,
     C: HeaderBackend<B> + 'static,
 {
-    let substrate_hashes = backend.mapping().block_hash(&hash)?;
+    let substrate_hashes = backend.mapping().block_hash(hash)?;
 
     if let Some(substrate_hashes) = substrate_hashes {
         for substrate_hash in substrate_hashes {
@@ -22,6 +27,7 @@ where
             }
         }
     }
+
     Ok(None)
 }
 

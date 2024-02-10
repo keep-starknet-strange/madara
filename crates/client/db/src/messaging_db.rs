@@ -1,17 +1,14 @@
-use std::marker::PhantomData;
 use std::sync::Arc;
 
 // Substrate
 use parity_scale_codec::{Decode, Encode};
 use sp_database::Database;
-use sp_runtime::traits::Block as BlockT;
 
 use crate::error::DbError;
 use crate::DbHash;
 
-pub struct MessagingDb<B: BlockT> {
+pub struct MessagingDb {
     pub(crate) db: Arc<dyn Database<DbHash>>,
-    pub(crate) _marker: PhantomData<B>,
 }
 
 #[derive(Encode, Decode)]
@@ -26,7 +23,7 @@ impl LastSyncedEventBlock {
     }
 }
 
-impl<B: BlockT> MessagingDb<B> {
+impl MessagingDb {
     pub fn last_synced_l1_block_with_event(&self) -> Result<LastSyncedEventBlock, DbError> {
         match self.db.get(crate::columns::MESSAGING, crate::static_keys::LAST_SYNCED_L1_EVENT_BLOCK) {
             Some(raw) => Ok(LastSyncedEventBlock::decode(&mut &raw[..])?),

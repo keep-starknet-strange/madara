@@ -25,7 +25,7 @@ Madara node exposes a number of capabilities:
   the state of the network. Substrate makes it possible to supply custom
   consensus engines and also ships with several consensus mechanisms that have
   been built on top of
-  [Web3 Foundation research](https://research.web3.foundation/en/latest/polkadot/NPoS/index.html).
+  [Web3 Foundation research](https://research.web3.foundation/Polkadot/protocols/NPoS).
 - RPC Server: A remote procedure call (RPC) server is used to interact with
   Substrate nodes.
 

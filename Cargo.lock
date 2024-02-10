@@ -6874,6 +6874,10 @@ dependencies = [
 name = "mp-simulations"
 version = "0.7.0"
 dependencies = [
+ "blockifier",
+ "derive_more",
+ "mp-felt",
+ "mp-transactions",
  "parity-scale-codec",
  "scale-info",
  "starknet-core",

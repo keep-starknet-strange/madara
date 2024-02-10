@@ -229,6 +229,10 @@ able to target your new endpoint.
 
 ### Run your integration tests
 
+Prior to running the test, you will need to run the
+generate_declare_contracts.sh script
+`cd starknet-rpc-test/contracts && ./generate_declare_contracts.sh 8`
+
 To run the tests, simply run
 `cargo test -p starknet-rpc-test -- test <test_file> -- <test_name> --exact --nocapture --test-threads=1`.
 
