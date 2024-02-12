@@ -3,8 +3,11 @@ use std::path::PathBuf;
 use serde::Deserialize;
 use crate::DaMode;
 
+const DEFAULT_EIGENDA_CONTRACT: &str = "0xa3b1689Ab85409B15e07d2ED50A6EA9905074Ee5";
+const DEFAULT_ETHEREUM_NODE: &str = "127.0.0.1:8545";
 const DEFAULT_PROTO_PATH: &str = "/proto/disperser/disperser.proto";
-const DEFAULT_EIGEN_NODE: &str = "disperser-goerli.eigenda.xyz:443";    // local node?
+// rollups will eventually run their own disperser
+const DEFAULT_DISPERSER: &str = "disperser-goerli.eigenda.xyz:443";
 const DEFAULT_QUORUM_ID: u32 = 0;
 // thresholds set according to https://docs.eigenlayer.xyz/eigenda-guides/eigenda-rollup-user-guides/system-performance-and-customization
 const DEFAULT_ADVERSARY_THRESHOLD: u32 = 33;
@@ -14,6 +17,10 @@ const DEFAULT_QUORUM_THRESHOLD: u32 = 80;
 pub struct EigenDaConfig {
     #[serde(default = "default_grpc")]
     pub grpc_provider: String,
+    #[serde(default = "default_eth_rpc")]
+    pub eth_rpc_provider: String,
+    #[serde[default = "default_eigenda_contract"]]
+    pub eigenda_contract: String,
     #[serde(default = "default_proto_path")]
     pub proto_path: String,
     //pub security_params: Vec<SecurityParams>,
@@ -38,7 +45,15 @@ impl TryFrom<&PathBuf> for EigenDaConfig {
 }
 
 fn default_grpc() -> String {
-    format!("https://{DEFAULT_EIGEN_NODE}")
+    format!("https://{DEFAULT_DISPERSER}")
+}
+
+fn default_eth_rpc() -> String {
+    format!("http://{DEFAULT_ETHEREUM_NODE}")
+}
+
+fn default_eigenda_contract() -> String {
+    format!("{DEFAULT_EIGENDA_CONTRACT}")
 }
 
 fn default_proto_path() -> String {
@@ -61,6 +76,8 @@ impl Default for EigenDaConfig {
     fn default() -> Self {
         Self {
             grpc_provider: default_grpc(),
+            eth_rpc_provider: default_eth_rpc(),
+            eigenda_contract: default_eigenda_contract(),
             proto_path: default_proto_path(),
             quorum_id: default_quorum_id(),
             adversary_threshold: default_adversary_threshold(),

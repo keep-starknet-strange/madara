@@ -122,6 +122,11 @@ pub struct BlobVerificationProof {
     inclusion_proof: String, 
     quorum_indexes: String, 
 }
+impl BlobVerificationProof {
+    pub fn batch_metadata(&self) -> &BatchMetadata {
+        &self.batch_metadata
+    }
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct BlobQuorumParams {
@@ -138,6 +143,11 @@ pub struct BatchMetadata {
     fee: String,
     confirmation_block_number: u128,
     batch_header_hash: String,
+}
+impl BatchMetadata {
+    pub fn batch_header_hash(&self) -> &String {
+        &self.batch_header_hash
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
