@@ -50,6 +50,7 @@
 <a href="#50" id="50">50</a>
 <a href="#51" id="51">51</a>
 <a href="#52" id="52">52</a>
+<a href="#53" id="53">53</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet pallet custom types.
 </span><span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
@@ -73,6 +74,7 @@
 
 <span class="kw">pub type </span>CasmClassHash = ClassHash;
 <span class="kw">pub type </span>SierraClassHash = ClassHash;
+<span class="kw">pub type </span>SierraOrCasmClassHash = ClassHash;
 
 <span class="doccomment">/// Declare Transaction Output
 </span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, parity_scale_codec::Encode, parity_scale_codec::Decode, scale_info::TypeInfo)]

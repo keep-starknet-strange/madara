@@ -1122,6 +1122,18 @@
 <a href="#1122" id="1122">1122</a>
 <a href="#1123" id="1123">1123</a>
 <a href="#1124" id="1124">1124</a>
+<a href="#1125" id="1125">1125</a>
+<a href="#1126" id="1126">1126</a>
+<a href="#1127" id="1127">1127</a>
+<a href="#1128" id="1128">1128</a>
+<a href="#1129" id="1129">1129</a>
+<a href="#1130" id="1130">1130</a>
+<a href="#1131" id="1131">1131</a>
+<a href="#1132" id="1132">1132</a>
+<a href="#1133" id="1133">1133</a>
+<a href="#1134" id="1134">1134</a>
+<a href="#1135" id="1135">1135</a>
+<a href="#1136" id="1136">1136</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1223,7 +1235,7 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::alloc::string::ToString;
 <span class="kw">use </span><span class="kw">crate</span>::execution_config::RuntimeExecutionConfigBuilder;
-<span class="kw">use </span><span class="kw">crate</span>::types::{CasmClassHash, SierraClassHash, StorageSlot};
+<span class="kw">use </span><span class="kw">crate</span>::types::{CasmClassHash, SierraClassHash, SierraOrCasmClassHash, StorageSlot};
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>LOG_TARGET: <span class="kw-2">&amp;</span>str = <span class="string">&quot;runtime::starknet&quot;</span>;
 
@@ -1389,7 +1401,8 @@
     </span><span class="attr">#[pallet::storage]
     #[pallet::unbounded]
     #[pallet::getter(<span class="kw">fn </span>contract_class_by_class_hash)]
-    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>ContractClasses&lt;T: Config&gt; = StorageMap&lt;<span class="kw">_</span>, Identity, CasmClassHash, ContractClass, OptionQuery&gt;;
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>ContractClasses&lt;T: Config&gt; =
+        StorageMap&lt;<span class="kw">_</span>, Identity, SierraOrCasmClassHash, ContractClass, OptionQuery&gt;;
 
     <span class="doccomment">/// Mapping from Starknet Sierra class hash to  Casm compiled contract class.
     /// Safe to use `Identity` as the key is already a hash.
@@ -1499,10 +1512,21 @@
             }
 
             <span class="kw">for </span>(sierra_class_hash, casm_class_hash) <span class="kw">in </span><span class="self">self</span>.sierra_to_casm_class_hash.iter() {
+                <span class="macro">assert!</span>(
+                    ContractClasses::&lt;T&gt;::contains_key(sierra_class_hash),
+                    <span class="string">&quot;Sierra class hash {} does not exist in contract_classes&quot;</span>,
+                    sierra_class_hash,
+                );
                 CompiledClassHashes::&lt;T&gt;::insert(sierra_class_hash, CompiledClassHash(casm_class_hash.<span class="number">0</span>));
             }
 
             <span class="kw">for </span>(address, class_hash) <span class="kw">in </span><span class="self">self</span>.contracts.iter() {
+                <span class="macro">assert!</span>(
+                    ContractClasses::&lt;T&gt;::contains_key(class_hash),
+                    <span class="string">&quot;Class hash {} does not exist in contract_classes&quot;</span>,
+                    class_hash,
+                );
+
                 ContractClassHashes::&lt;T&gt;::insert(address, class_hash);
             }
 
