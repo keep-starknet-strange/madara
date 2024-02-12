@@ -104,7 +104,7 @@ fn re_execute_tx_ok() {
                 .unwrap(),
             _ => unreachable!(),
         };
-        assert_eq!(res[0], first_invoke_tx_info);
+        assert_eq!(res[0].0, first_invoke_tx_info);
         let second_invoke_tx_info = match txs.get(1).unwrap() {
             UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::Invoke(invoke_tx)) => invoke_tx
                 .into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, false)
@@ -116,7 +116,7 @@ fn re_execute_tx_ok() {
                 .unwrap(),
             _ => unreachable!(),
         };
-        assert_eq!(res[1], second_invoke_tx_info);
+        assert_eq!(res[1].0, second_invoke_tx_info);
         let declare_tx_info = match txs.get(2).unwrap() {
             UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::Declare(declare_tx, cc)) => declare_tx
                 .try_into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, cc.clone(), false)
@@ -129,7 +129,7 @@ fn re_execute_tx_ok() {
                 .unwrap(),
             _ => unreachable!(),
         };
-        assert_eq!(res[2], declare_tx_info);
+        assert_eq!(res[2].0, declare_tx_info);
         let deploy_account_tx_info = match txs.get(3).unwrap() {
             UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::DeployAccount(deploy_account_tx)) => {
                 deploy_account_tx
@@ -143,7 +143,7 @@ fn re_execute_tx_ok() {
             }
             _ => unreachable!(),
         };
-        assert_eq!(res[3], deploy_account_tx_info);
+        assert_eq!(res[3].0, deploy_account_tx_info);
         let handle_l1_message_tx_info = match txs.get(4).unwrap() {
             UserOrL1HandlerTransaction::L1Handler(l1_tx, fee) => l1_tx
                 .into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, *fee, false)
@@ -155,6 +155,6 @@ fn re_execute_tx_ok() {
                 .unwrap(),
             _ => unreachable!(),
         };
-        assert_eq!(res[4], handle_l1_message_tx_info);
+        assert_eq!(res[4].0, handle_l1_message_tx_info);
     });
 }
