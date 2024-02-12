@@ -11,6 +11,7 @@ use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::{HandleL1MessageTransaction, UserOrL1HandlerTransaction, UserTransaction};
 use sp_core::Get;
 use sp_runtime::DispatchError;
+use mp_hashers::HasherT;
 use starknet_api::transaction::{Fee, TransactionHash};
 
 use crate::blockifier_state_adapter::BlockifierStateAdapter;
@@ -214,7 +215,7 @@ impl<T: Config> Pallet<T> {
     ) -> Result<Result<Vec<TransactionExecutionInfo>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError>
     {
         storage::transactional::with_transaction(|| {
-            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::re_execute_transaction_inner(
+            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::re_execute_transaction_inner<HasherT>(
                 transactions, tx_hash
             )))
         })
@@ -229,12 +230,12 @@ impl<T: Config> Pallet<T> {
         let offset_version = false;
         let block_context = Self::get_block_context();
         let execution_config = RuntimeExecutionConfigBuilder::new::<T>().build();
-        let tx_hash_as_felt: Felt252Wrapper = Felt252Wrapper::from(tx_hash);
+        let tx_hash_as_felt = Felt252Wrapper::from(tx_hash);
     
         let mut collected_info = Vec::new();
     
         for user_or_l1_tx in transactions.iter() {
-            let current_tx_hash = user_or_l1_tx.compute_hash(chain_id, offset_version);
+            let current_tx_hash = user_or_l1_tx.compute_hash::<H>(chain_id, offset_version);
     
             let exec_result = match user_or_l1_tx {
                 UserOrL1HandlerTransaction::User(tx) => match tx {

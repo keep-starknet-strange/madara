@@ -284,6 +284,11 @@ impl_runtime_apis! {
             Starknet::re_execute_transactions(transactions)
         }
 
+        fn re_execute_transaction(
+            transactions: Vec<UserOrL1HandlerTransaction>,
+            tx_hash: TransactionHash,
+        ) -> Result<Result<Vec<TransactionExecutionInfo>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError>
+
         fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), DispatchError> {
             Starknet::estimate_message_fee(message)
         }

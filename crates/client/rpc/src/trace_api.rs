@@ -248,7 +248,6 @@ where
     }
 
     async fn trace_transaction(&self, transaction_hash: FieldElement) -> RpcResult<TransactionTraceWithHash> {
-
         let substrate_block_hash = self
             .backend
             .mapping()
@@ -374,30 +373,29 @@ where
                 );
                 StarknetRpcApiError::InternalServerError
             })?;
-        
-        // let storage_override = self.overrides.for_block_hash(self.client.as_ref(), substrate_block_hash);
-        // let chain_id = Felt252Wrapper(self.chain_id()?.0);
-    
-        // let traces = execution_infos
-        //     .into_iter()
-        //         .enumerate()
-        //     .map(|(tx_idx, tx_exec_info)| {
-        //         tx_execution_infos_to_tx_trace(
-        //             &**storage_override,
-        //             substrate_block_hash,
-        //             TxType::from(block_transactions.get(tx_idx).unwrap()),
-        //             &tx_exec_info,
-        //         )
-        //         .map(|trace_root| TransactionTraceWithHash {
-        //             transaction_hash: block_transactions[tx_idx].compute_hash::<H>(chain_id, false).into(),
-        //             trace_root,                    })
-        //     })
-        //     .collect::<Result<Vec<_>, _>>()
-        //     .map_err(StarknetRpcApiError::from)?;
-            
-        // let trace = traces.into_iter().find(|trace| trace.transaction_hash == transaction_hash).unwrap();
 
-        // Ok(trace)
+        let storage_override = self.overrides.for_block_hash(self.client.as_ref(), substrate_block_hash);
+        let chain_id = Felt252Wrapper(self.chain_id()?.0);
+
+        let traces = execution_infos
+            .into_iter()
+            .enumerate()
+            .map(|(tx_idx, tx_exec_info)| {
+                tx_execution_infos_to_tx_trace(
+                    &**storage_override,
+                    substrate_block_hash,
+                    TxType::from(block_transactions.get(tx_idx).unwrap()),
+                    &tx_exec_info,
+                )
+                .map(|trace_root| TransactionTraceWithHash {
+                    transaction_hash: block_transactions[tx_idx].compute_hash::<H>(chain_id, false).into(),
+                    trace_root,
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(StarknetRpcApiError::from)?;
+
+        Ok(traces[0])
     }
 }
 
