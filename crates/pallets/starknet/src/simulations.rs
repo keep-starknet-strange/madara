@@ -7,7 +7,7 @@ use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
 use frame_support::storage;
 use mp_felt::Felt252Wrapper;
-use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
+use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult};
 use mp_transactions::execution::{Execute, ExecutionConfig};
 use mp_transactions::{HandleL1MessageTransaction, UserOrL1HandlerTransaction, UserTransaction};
 use sp_core::Get;
@@ -16,7 +16,6 @@ use starknet_api::transaction::Fee;
 
 use crate::blockifier_state_adapter::{BlockifierStateAdapter, CachedBlockifierStateAdapter};
 use crate::execution_config::RuntimeExecutionConfigBuilder;
-use crate::types::TransactionSimulationResult;
 use crate::{Config, Error, Pallet};
 
 impl<T: Config> Pallet<T> {

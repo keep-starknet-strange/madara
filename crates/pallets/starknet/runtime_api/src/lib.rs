@@ -17,7 +17,7 @@ pub extern crate alloc;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
+use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult};
 use sp_runtime::DispatchError;
 use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
@@ -33,8 +33,6 @@ pub enum StarknetTransactionExecutionError {
     InvalidContractClass,
     ContractError,
 }
-
-type TransactionSimulationResult = Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>;
 
 sp_api::decl_runtime_apis! {
     pub trait StarknetRuntimeApi {

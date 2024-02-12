@@ -49,6 +49,9 @@ async fn returns_correct_state_diff_transfer(madara: &ThreadSafeMadaraClient) ->
             ))])
             .await?;
 
+        // sleep 1s (make sure state diff is received before)
+        tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
+
         let state_update = match rpc.get_state_update(BlockId::Tag(BlockTag::Latest)).await.unwrap() {
             MaybePendingStateUpdate::Update(update) => update,
             MaybePendingStateUpdate::PendingUpdate(_) => return Err(anyhow!("Expected update, got pending update")),
@@ -87,6 +90,9 @@ async fn returns_correct_state_diff_declare(madara: &ThreadSafeMadaraClient) -> 
         let mut madara_write_lock = madara.write().await;
 
         madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
+
+        // sleep 1s (make sure state diff is received before)
+        tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
 
         let state_update = match rpc.get_state_update(BlockId::Tag(BlockTag::Latest)).await.unwrap() {
             MaybePendingStateUpdate::Update(update) => update,

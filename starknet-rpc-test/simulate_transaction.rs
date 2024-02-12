@@ -112,8 +112,10 @@ async fn fail_if_one_txn_cannot_be_executed(madara: &ThreadSafeMadaraClient) -> 
 async fn works_ok_on_no_validate(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
+    let sender_address = FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap();
+
     let tx = BroadcastedInvokeTransaction {
-        sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap(),
+        sender_address,
         calldata: vec![
             FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
             get_selector_from_name("sqrt").unwrap(),
@@ -206,11 +208,13 @@ async fn works_ok_on_validate_without_signature_with_skip_validate(
 async fn works_ok_without_max_fee_with_skip_fee_charge(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
+    let sender_address = FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap();
+
     let tx = BroadcastedInvokeTransaction {
         max_fee: FieldElement::from(0u8),
         signature: vec![],
         nonce: FieldElement::ZERO,
-        sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap(),
+        sender_address,
         calldata: vec![
             FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
             get_selector_from_name("sqrt").unwrap(),
