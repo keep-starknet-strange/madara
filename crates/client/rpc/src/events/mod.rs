@@ -92,29 +92,8 @@ where
                 })
                 .map(|event| emitted_events.push(event))
                 .collect::<Vec<_>>();
-        }; //.into_iter().flatten().collect();
+        };
 
-        // let emitted_events = txn_hashes
-        //     .into_iter()
-        //     .flat_map(|tx_hash|
-        //         runtime_api.get_events_for_tx_by_hash(substrate_block_hash, TransactionHash(tx_hash))
-        //             .map_err(|e| {
-        //                 error!("Failed to retrieve starknet events for transaction: error: {e}");
-        //                 StarknetRpcApiError::InternalServerError
-        //             })?
-        //             .into_iter()
-        //             .map(|event| EmittedEvent {
-        //                 from_address: Felt252Wrapper::from(event.from_address).0,
-        //                 keys: event.content.keys.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
-        //                 data: event.content.data.0.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
-        //                 block_hash: block_hash.0,
-        //                 block_number,
-        //                 transaction_hash: tx_hash.into(), // into
-        //             })
-        //             .collect::<Vec<_>>()
-        //     )
-        //     .collect();
-        //
         Ok(emitted_events)
     }
 

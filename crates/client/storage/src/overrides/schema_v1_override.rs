@@ -14,6 +14,7 @@ use sp_storage::StorageKey;
 use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey as StarknetStorageKey;
+use starknet_api::transaction::{TransactionHash, Event as StarknetEvent};
 
 use super::{storage_key_build, storage_prefix_build, StorageOverride};
 
@@ -129,5 +130,8 @@ where
             Some(nonce) => Some(nonce),
             None => Some(Nonce::default()),
         }
+    }
+
+    fn get_events_for_tx_by_hash(&self, block_hash: <B as BlockT>::Hash, tx_hash: TransactionHash) -> Option<Vec<StarknetEvent>> {}
     }
 }

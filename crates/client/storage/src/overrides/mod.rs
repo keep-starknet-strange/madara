@@ -13,6 +13,8 @@ use sp_runtime::traits::Block as BlockT;
 use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
+use starknet_api::transaction::{TransactionHash, Event as StarknetEvent};
+
 
 mod schema_v1_override;
 
@@ -75,6 +77,8 @@ pub trait StorageOverride<B: BlockT>: Send + Sync {
     ) -> Option<ContractClass>;
     /// Returns the nonce for a provided contract address and block hash.
     fn nonce(&self, block_hash: B::Hash, address: ContractAddress) -> Option<Nonce>;
+
+    fn get_events_for_tx_by_hash(&self, block_hash: <B as BlockT>::Hash, tx_hash: TransactionHash) -> Option<Vec<StarknetEvent>>;
 }
 
 /// Returns the storage prefix given the pallet module name and the storage name
@@ -179,5 +183,9 @@ where
     /// * `Some(nonce)` - The nonce for the provided contract address and block hash
     fn nonce(&self, block_hash: <B as BlockT>::Hash, contract_address: ContractAddress) -> Option<Nonce> {
         self.client.runtime_api().nonce(block_hash, contract_address).ok()
+    }
+
+    fn get_events_for_tx_by_hash(&self, block_hash: <B as BlockT>::Hash, tx_hash: TransactionHash) -> Option<Vec<StarknetEvent>> {
+        self.client.runtime_api().get_events_for_tx_by_hash(block_hash, tx_hash).ok()
     }
 }
