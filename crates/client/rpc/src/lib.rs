@@ -10,9 +10,11 @@ mod runtime_api;
 mod trace_api;
 mod types;
 
+use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
+use blockifier::transaction::objects::ResourcesMapping;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use jsonrpsee::types::error::CallError;
@@ -323,7 +325,7 @@ where
         &self,
         declare_transaction: BroadcastedDeclareTransaction,
     ) -> RpcResult<DeclareTransactionResult> {
-        let best_block_hash = self.client.info().best_hash;
+        let best_block_hash = self.get_best_block_hash();
 
         let opt_sierra_contract_class = if let BroadcastedDeclareTransaction::V2(ref tx) = declare_transaction {
             Some(flattened_sierra_to_sierra_contract_class(tx.contract_class.clone()))
@@ -340,7 +342,7 @@ where
             _ => Err(StarknetRpcApiError::InternalServerError)?,
         };
 
-        let current_block_hash = self.client.info().best_hash;
+        let current_block_hash = self.get_best_block_hash();
         let contract_class = self
             .overrides
             .for_block_hash(self.client.as_ref(), current_block_hash)
@@ -386,7 +388,7 @@ where
         &self,
         invoke_transaction: BroadcastedInvokeTransaction,
     ) -> RpcResult<InvokeTransactionResult> {
-        let best_block_hash = self.client.info().best_hash;
+        let best_block_hash = self.get_best_block_hash();
 
         let transaction: UserTransaction = invoke_transaction.try_into().map_err(|e| {
             error!("Failed to convert BroadcastedInvokeTransaction to UserTransaction: {e}");
@@ -416,7 +418,7 @@ where
         &self,
         deploy_account_transaction: BroadcastedDeployAccountTransaction,
     ) -> RpcResult<DeployAccountTransactionResult> {
-        let best_block_hash = self.client.info().best_hash;
+        let best_block_hash = self.get_best_block_hash();
 
         let transaction: UserTransaction = deploy_account_transaction.try_into().map_err(|e| {
             error!("Failed to convert BroadcastedDeployAccountTransaction to UserTransaction, error: {e}",);
@@ -1220,7 +1222,7 @@ where
                 nonces: Vec::new(),
             };
 
-            let latest_block = self.client.info().best_hash;
+            let latest_block = self.get_best_block_hash();
             let latest_block = get_block_by_block_hash(self.client.as_ref(), latest_block).unwrap_or_default();
             let old_root = self.backend.temporary_global_state_root_getter().into();
             let pending_state_update = PendingStateUpdate { old_root, state_diff };
@@ -1461,7 +1463,7 @@ where
         &self,
         chain_id: Felt252Wrapper,
     ) -> Result<PendingBlockWithTxHashes, StarknetRpcApiError> {
-        let parent_hash = self.client.info().best_hash;
+        let parent_hash = self.get_best_block_hash();
         let latest_block = get_block_by_block_hash(self.client.as_ref(), parent_hash).unwrap_or_default();
         let latest_block_header = latest_block.header();
         let transactions = self
@@ -1485,7 +1487,7 @@ where
         &self,
         chain_id: Felt252Wrapper,
     ) -> Result<PendingBlockWithTxs, StarknetRpcApiError> {
-        let parent_hash = self.client.info().best_hash;
+        let parent_hash = self.get_best_block_hash();
         let latest_block = get_block_by_block_hash(self.client.as_ref(), parent_hash).unwrap_or_default();
         let latest_block_header = latest_block.header();
 
@@ -1600,8 +1602,18 @@ where
 
         let messages_sent = messages.into_iter().map(starknet_api_to_starknet_core_message_to_l1).collect();
 
-        // TODO: use actual execution resources
-        let execution_resources = get_execution_resources();
+        // TODO
+        // Is any better way to get execution resources of processed tx?
+        let skip_validate = true;
+        // let parent_block_hash = Felt252Wrapper::from().into();
+        let parent_block_hash = self
+            .substrate_block_hash_from_starknet_block(BlockId::Hash(block_header.parent_block_hash.into()))
+            .map_err(|e| {
+                error!("Parent Block not found: {e}");
+                StarknetRpcApiError::BlockNotFound
+            })?;
+        let simulation = self.simulate_tx(parent_block_hash, transaction.clone(), skip_validate, fee_disabled)?;
+        let execution_resources = actual_resources_to_execution_resources(simulation.actual_resources);
 
         let receipt = match transaction {
             mp_transactions::Transaction::Declare(_, _) => TransactionReceipt::Declare(DeclareTransactionReceipt {
@@ -1683,10 +1695,10 @@ where
         chain_id: Felt252Wrapper,
         tx_hash: FieldElement,
     ) -> Result<Option<mp_transactions::Transaction>, StarknetRpcApiError> {
-        let parent_hash = self.client.info().best_hash;
+        let latest_block = self.get_best_block_hash();
 
         let pending_tx = self
-            .get_pending_txs(parent_hash)?
+            .get_pending_txs(latest_block)?
             .iter()
             .find(|&tx| tx.compute_hash::<H>(chain_id.0.into(), false).0 == tx_hash)
             .cloned();
@@ -1708,15 +1720,13 @@ where
         let events = Vec::new();
 
         // TODO -- should Tx be simulated with `skip_validate`?
-        let skip_validate = false;
-
+        let skip_validate = true;
         let skip_fee_charge = self.is_transaction_fee_disabled(self.get_best_block_hash())?;
-
-        let simulation = self.simulate_pending_tx(pending_tx.clone(), skip_validate, skip_fee_charge)?;
+        let simulation =
+            self.simulate_tx(self.get_best_block_hash(), pending_tx.clone(), skip_validate, skip_fee_charge)?;
         let actual_fee = simulation.actual_fee.0.into();
         let execution_result = revert_error_to_execution_result(simulation.revert_error);
-
-        let execution_resources = get_execution_resources();
+        let execution_resources = actual_resources_to_execution_resources(simulation.actual_resources);
 
         let receipt = match pending_tx {
             mp_transactions::Transaction::Declare(_tx, _contract_class) => {
@@ -1835,23 +1845,28 @@ fn starknet_api_to_starknet_core_message_to_l1(
     }
 }
 
-fn get_execution_resources() -> ExecutionResources {
-    ExecutionResources {
-        steps: 0,
-        memory_holes: None,
-        range_check_builtin_applications: 0,
-        pedersen_builtin_applications: 0,
-        poseidon_builtin_applications: 0,
-        ec_op_builtin_applications: 0,
-        ecdsa_builtin_applications: 0,
-        bitwise_builtin_applications: 0,
-        keccak_builtin_applications: 0,
-    }
-}
-
 fn revert_error_to_execution_result(revert_error: Option<String>) -> ExecutionResult {
     match revert_error {
         None => ExecutionResult::Succeeded,
         Some(message) => ExecutionResult::Reverted { reason: message },
+    }
+}
+
+fn actual_resources_to_execution_resources(resources: ResourcesMapping) -> ExecutionResources {
+    let resources = resources.0.into_iter().map(|(k, v)| (k.to_lowercase(), v)).collect::<HashMap<String, u64>>();
+    // Based on `VM_RESOURCE_FEE_COSTS`
+    // in crates/primitives/fee/src/lib.rs
+    ExecutionResources {
+        steps: *resources.get("n_steps").unwrap_or(&0),
+        // Missing param
+        memory_holes: None,
+        range_check_builtin_applications: *resources.get("range_check_builtin").unwrap_or(&0),
+        pedersen_builtin_applications: *resources.get("pedersen_builtin").unwrap_or(&0),
+        poseidon_builtin_applications: *resources.get("poseidon_builtin").unwrap_or(&0),
+        ec_op_builtin_applications: *resources.get("ec_op_builtin").unwrap_or(&0),
+        ecdsa_builtin_applications: *resources.get("ecdsa_builtin").unwrap_or(&0),
+        bitwise_builtin_applications: *resources.get("bitwise_builtin").unwrap_or(&0),
+        // Missing param
+        keccak_builtin_applications: 0,
     }
 }

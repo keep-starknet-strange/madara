@@ -12,8 +12,7 @@ use mp_transactions::{HandleL1MessageTransaction, Transaction, UserTransaction};
 use pallet_starknet_runtime_api::{
     ConvertTransactionRuntimeApi, StarknetRuntimeApi, StarknetTransactionExecutionError,
 };
-use sc_client_api::backend::{Backend, StorageProvider};
-use sc_client_api::BlockBackend;
+use sc_client_api::backend::Backend;
 use sc_transaction_pool::ChainApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
@@ -32,7 +31,7 @@ where
     A: ChainApi<Block = B> + 'static,
     B: BlockT,
     BE: Backend<B>,
-    C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
+    C: HeaderBackend<B> + 'static,
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     H: HasherT + Send + Sync + 'static,
@@ -189,32 +188,32 @@ where
         })
     }
 
-    pub fn simulate_pending_tx(
+    pub fn simulate_tx(
         &self,
+        block_hash: B::Hash,
         tx: Transaction,
         skip_validate: bool,
         skip_fee_charge: bool,
     ) -> RpcApiResult<TransactionExecutionInfo> {
         let simulations_flags = SimulationFlags { skip_validate, skip_fee_charge };
-        let latest_block_hash = self.client.info().best_hash;
         match tx {
             Transaction::Declare(tx, contract_class) => {
                 let tx = UserTransaction::Declare(tx, contract_class);
-                self.simulate_pending_user_tx(latest_block_hash, tx, simulations_flags)
+                self.simulate_user_tx(block_hash, tx, simulations_flags)
             }
             Transaction::DeployAccount(tx) => {
                 let tx = UserTransaction::DeployAccount(tx);
-                self.simulate_pending_user_tx(latest_block_hash, tx, simulations_flags)
+                self.simulate_user_tx(block_hash, tx, simulations_flags)
             }
             Transaction::Invoke(tx) => {
                 let tx = UserTransaction::Invoke(tx);
-                self.simulate_pending_user_tx(latest_block_hash, tx, simulations_flags)
+                self.simulate_user_tx(block_hash, tx, simulations_flags)
             }
-            Transaction::L1Handler(tx) => self.simulate_pending_l1_tx(latest_block_hash, tx, simulations_flags),
+            Transaction::L1Handler(tx) => self.simulate_l1_tx(block_hash, tx, simulations_flags),
         }
     }
 
-    fn simulate_pending_user_tx(
+    fn simulate_user_tx(
         &self,
         block_hash: B::Hash,
         tx: UserTransaction,
@@ -240,7 +239,7 @@ where
             })
     }
 
-    fn simulate_pending_l1_tx(
+    fn simulate_l1_tx(
         &self,
         block_hash: B::Hash,
         tx: HandleL1MessageTransaction,
