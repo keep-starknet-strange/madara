@@ -70,6 +70,8 @@ sp_api::decl_runtime_apis! {
         fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction>;
         /// Re-execute a block and return the TransactionExecutionInfos of every transaction in it, in the same order
         fn re_execute_transactions(transactions: Vec<UserOrL1HandlerTransaction>) -> Result<Result<Vec<TransactionExecutionInfo>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError>;
+        /// Re-execute a block until the given transaction hash and return the TransactionExecutionInfo of the given transaction
+        fn re_execute_transaction(transactions: Vec<UserOrL1HandlerTransaction>, tx_hash: TransactionHash) -> Result<Result<Vec<TransactionExecutionInfo>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError>;
 
         fn get_index_and_tx_for_tx_hash(xts: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper, tx_hash: Felt252Wrapper) -> Option<(u32, Transaction)>;
         /// Returns events, call with index from get_index_and_tx_for_tx_hash method
