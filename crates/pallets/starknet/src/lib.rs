@@ -684,7 +684,7 @@ pub mod pallet {
             // Ensure that L1 Message has not been executed
             Self::ensure_l1_message_not_executed(&nonce).map_err(|_| Error::<T>::L1MessageAlreadyExecuted)?;
 
-            // Store infornamtion about message being processed
+            // Store information about message being processed
             // The next instruction executes the message
             // Either successfully  or not
             L1Messages::<T>::mutate(|nonces| nonces.insert(nonce));

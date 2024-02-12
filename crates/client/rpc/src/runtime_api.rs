@@ -19,6 +19,8 @@ use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
 use sp_runtime::DispatchError;
+use starknet_api::api_core::{ContractAddress, EntryPointSelector};
+use starknet_api::transaction::{Calldata, Event, TransactionHash};
 use starknet_core::types::FieldElement;
 
 use crate::{Starknet, StarknetRpcApiError};
@@ -35,6 +37,65 @@ where
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     H: HasherT + Send + Sync + 'static,
 {
+    pub fn do_call(
+        &self,
+        best_block_hash: B::Hash,
+        contract_address: ContractAddress,
+        entry_point_selector: EntryPointSelector,
+        calldata: Calldata,
+    ) -> RpcApiResult<Result<Vec<Felt252Wrapper>, sp_runtime::DispatchError>> {
+        self.client.runtime_api().call(best_block_hash, contract_address, entry_point_selector, calldata).map_err(|e| {
+            error!("Request parameters error: {e}");
+            StarknetRpcApiError::InternalServerError
+        })
+    }
+
+    pub fn do_estimate_message_fee(
+        &self,
+        block_hash: B::Hash,
+        message: HandleL1MessageTransaction,
+    ) -> RpcApiResult<(u128, u64, u64)> {
+        self.client
+            .runtime_api()
+            .estimate_message_fee(block_hash, message)
+            .map_err(|e| {
+                error!("Runtime Api error: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?
+            .map_err(|e| {
+                error!("Function execution failed: {:#?}", e);
+                StarknetRpcApiError::ContractError
+            })
+    }
+
+    pub fn do_get_tx_execution_outcome(
+        &self,
+        block_hash: B::Hash,
+        tx_hash: TransactionHash,
+    ) -> RpcApiResult<Option<Vec<u8>>> {
+        self.client.runtime_api().get_tx_execution_outcome(block_hash, tx_hash).map_err(|e| {
+            error!(
+                "Failed to get transaction execution outcome. Substrate block hash: {block_hash}, transaction hash: \
+                 {tx_hash}, error: {e}"
+            );
+            StarknetRpcApiError::InternalServerError
+        })
+    }
+
+    pub fn do_get_events_for_tx_by_index(
+        &self,
+        block_hash: B::Hash,
+        tx_index: u32,
+    ) -> RpcApiResult<Option<Vec<Event>>> {
+        self.client.runtime_api().get_events_for_tx_by_index(block_hash, tx_index).map_err(|e| {
+            error!(
+                "Failed to get events for transaction index. Substrate block hash: {block_hash}, transaction idx: \
+                 {tx_index}, error: {e}"
+            );
+            StarknetRpcApiError::InternalServerError
+        })
+    }
+
     pub fn get_starknet_events_and_their_associated_tx_index(
         &self,
         block_hash: B::Hash,
@@ -135,34 +196,35 @@ where
         skip_fee_charge: bool,
     ) -> RpcApiResult<TransactionExecutionInfo> {
         let simulations_flags = SimulationFlags { skip_validate, skip_fee_charge };
+        let latest_block_hash = self.client.info().best_hash;
         match tx {
             Transaction::Declare(tx, contract_class) => {
                 let tx = UserTransaction::Declare(tx, contract_class);
-                self.simulate_pending_user_tx(tx, simulations_flags)
+                self.simulate_pending_user_tx(latest_block_hash, tx, simulations_flags)
             }
             Transaction::DeployAccount(tx) => {
                 let tx = UserTransaction::DeployAccount(tx);
-                self.simulate_pending_user_tx(tx, simulations_flags)
+                self.simulate_pending_user_tx(latest_block_hash, tx, simulations_flags)
             }
             Transaction::Invoke(tx) => {
                 let tx = UserTransaction::Invoke(tx);
-                self.simulate_pending_user_tx(tx, simulations_flags)
+                self.simulate_pending_user_tx(latest_block_hash, tx, simulations_flags)
             }
-            Transaction::L1Handler(tx) => self.simulate_pending_l1_tx(tx, simulations_flags),
+            Transaction::L1Handler(tx) => self.simulate_pending_l1_tx(latest_block_hash, tx, simulations_flags),
         }
     }
 
     fn simulate_pending_user_tx(
         &self,
+        block_hash: B::Hash,
         tx: UserTransaction,
         simulations_flags: SimulationFlags,
     ) -> RpcApiResult<TransactionExecutionInfo> {
-        let latest_block_hash = self.client.info().best_hash;
-        // Simulated a single Tx
+        // Simulate a single User Transaction
         // So the result should have single element in vector (index 0)
         self.client
             .runtime_api()
-            .simulate_transactions(latest_block_hash, vec![tx], simulations_flags)
+            .simulate_transactions(block_hash, vec![tx], simulations_flags)
             .map_err(|e| {
                 error!("Request parameters error: {e}");
                 StarknetRpcApiError::InternalServerError
@@ -180,20 +242,25 @@ where
 
     fn simulate_pending_l1_tx(
         &self,
-        _tx: HandleL1MessageTransaction,
-        _simulations_flags: SimulationFlags,
+        block_hash: B::Hash,
+        tx: HandleL1MessageTransaction,
+        simulations_flags: SimulationFlags,
     ) -> RpcApiResult<TransactionExecutionInfo> {
-        // Neither Runtime nor Starknet Pallet provides a way for simulating `HandleL1MessageTransaction`
-        // Just for compatibility
-        let simulation = TransactionExecutionInfo {
-            validate_call_info: None,
-            execute_call_info: None,
-            fee_transfer_call_info: None,
-            actual_fee: Default::default(),
-            actual_resources: Default::default(),
-            revert_error: None,
-        };
-
-        Ok(simulation)
+        // Simulated a single HandleL1MessageTransaction
+        self.client
+            .runtime_api()
+            .simulate_message(block_hash, tx, simulations_flags)
+            .map_err(|e| {
+                error!("Request parameters error: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?
+            .map_err(|e| {
+                error!("Failed to call function: {:#?}", e);
+                StarknetRpcApiError::ContractError
+            })?
+            .map_err(|e| {
+                error!("Failed to simulate L1 Message: {:?}", e);
+                StarknetRpcApiError::InternalServerError
+            })
     }
 }

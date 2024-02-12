@@ -292,6 +292,10 @@ impl_runtime_apis! {
             Starknet::simulate_transactions(transactions, &simulation_flags)
         }
 
+        fn simulate_message(message: HandleL1MessageTransaction, simulation_flags: SimulationFlags) -> Result<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError> {
+            Starknet::simulate_message(message, &simulation_flags)
+        }
+
         fn get_starknet_events_and_their_associated_tx_index() -> Vec<(u32, StarknetEvent)> {
             System::read_events_no_consensus().filter_map(|event_record| {
                 let (phase, event) = match *event_record {

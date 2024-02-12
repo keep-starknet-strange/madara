@@ -582,17 +582,7 @@ where
             };
 
         let execution_status = {
-            let revert_error = self
-                .client
-                .runtime_api()
-                .get_tx_execution_outcome(substrate_block_hash, Felt252Wrapper(transaction_hash).into())
-                .map_err(|e| {
-                    error!(
-                        "Failed to get transaction execution outcome. Substrate block hash: {substrate_block_hash}, \
-                         transaction hash: {transaction_hash}, error: {e}"
-                    );
-                    StarknetRpcApiError::InternalServerError
-                })?;
+            let revert_error = self.get_tx_execution_outcome(substrate_block_hash, transaction_hash)?;
 
             if revert_error.is_none() {
                 TransactionExecutionStatus::Succeeded
@@ -683,19 +673,12 @@ where
 
         let calldata = Calldata(Arc::new(request.calldata.iter().map(|x| Felt252Wrapper::from(*x).into()).collect()));
 
-        let result = self
-            .client
-            .runtime_api()
-            .call(
-                substrate_block_hash,
-                Felt252Wrapper(request.contract_address).into(),
-                Felt252Wrapper(request.entry_point_selector).into(),
-                calldata,
-            )
-            .map_err(|e| {
-                error!("Request parameters error: {e}");
-                StarknetRpcApiError::InternalServerError
-            })?;
+        let result = self.do_call(
+            substrate_block_hash,
+            Felt252Wrapper(request.contract_address).into(),
+            Felt252Wrapper(request.entry_point_selector).into(),
+            calldata,
+        )?;
 
         let result = self.convert_error(substrate_block_hash, result)?;
 
@@ -1075,18 +1058,7 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let fee_estimate = self
-            .client
-            .runtime_api()
-            .estimate_message_fee(substrate_block_hash, message)
-            .map_err(|e| {
-                error!("Runtime api error: {e}");
-                StarknetRpcApiError::InternalServerError
-            })?
-            .map_err(|e| {
-                error!("function execution failed: {:#?}", e);
-                StarknetRpcApiError::ContractError
-            })?;
+        let fee_estimate = self.do_estimate_message_fee(substrate_block_hash, message)?;
 
         let estimate = FeeEstimate {
             gas_price: fee_estimate.0.try_into().map_err(|_| StarknetRpcApiError::InternalServerError)?,
@@ -1693,16 +1665,7 @@ where
         tx_index: u32,
     ) -> Result<Vec<starknet_api::transaction::Event>, StarknetRpcApiError> {
         let events = self
-            .client
-            .runtime_api()
-            .get_events_for_tx_by_index(substrate_block_hash, tx_index)
-            .map_err(|e| {
-                error!(
-                    "Failed to get events for transaction index. Substrate block hash: {substrate_block_hash}, \
-                     transaction idx: {tx_index}, error: {e}"
-                );
-                StarknetRpcApiError::InternalServerError
-            })?
+            .do_get_events_for_tx_by_index(substrate_block_hash, tx_index)?
             .expect("the transaction should be present in the substrate extrinsics"); // not reachable
         Ok(events)
     }
@@ -1712,16 +1675,7 @@ where
         substrate_block_hash: B::Hash,
         transaction_hash: FieldElement,
     ) -> Result<Option<Vec<u8>>, StarknetRpcApiError> {
-        self.client
-            .runtime_api()
-            .get_tx_execution_outcome(substrate_block_hash, Felt252Wrapper(transaction_hash).into())
-            .map_err(|e| {
-                error!(
-                    "Failed to get transaction execution outcome. Substrate block hash: {substrate_block_hash}, \
-                     transaction hash: {transaction_hash}, error: {e}"
-                );
-                StarknetRpcApiError::InternalServerError
-            })
+        self.do_get_tx_execution_outcome(substrate_block_hash, Felt252Wrapper(transaction_hash).into())
     }
 
     fn find_pending_tx(
