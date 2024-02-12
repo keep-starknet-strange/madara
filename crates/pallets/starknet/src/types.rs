@@ -23,6 +23,7 @@ pub type StorageSlot = (StorageKey, Felt252Wrapper);
 
 pub type CasmClassHash = ClassHash;
 pub type SierraClassHash = ClassHash;
+pub type SierraOrCasmClassHash = ClassHash;
 
 pub type TransactionSimulationResult = Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>;
 

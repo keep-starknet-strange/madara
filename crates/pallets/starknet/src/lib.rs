@@ -99,7 +99,7 @@ use transaction_validation::TxPriorityInfo;
 
 use crate::alloc::string::ToString;
 use crate::execution_config::RuntimeExecutionConfigBuilder;
-use crate::types::{CasmClassHash, SierraClassHash, StorageSlot};
+use crate::types::{CasmClassHash, SierraClassHash, SierraOrCasmClassHash, StorageSlot};
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
@@ -265,7 +265,8 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::unbounded]
     #[pallet::getter(fn contract_class_by_class_hash)]
-    pub(super) type ContractClasses<T: Config> = StorageMap<_, Identity, CasmClassHash, ContractClass, OptionQuery>;
+    pub(super) type ContractClasses<T: Config> =
+        StorageMap<_, Identity, SierraOrCasmClassHash, ContractClass, OptionQuery>;
 
     /// Mapping from Starknet Sierra class hash to  Casm compiled contract class.
     /// Safe to use `Identity` as the key is already a hash.
@@ -375,10 +376,21 @@ pub mod pallet {
             }
 
             for (sierra_class_hash, casm_class_hash) in self.sierra_to_casm_class_hash.iter() {
+                assert!(
+                    ContractClasses::<T>::contains_key(sierra_class_hash),
+                    "Sierra class hash {} does not exist in contract_classes",
+                    sierra_class_hash,
+                );
                 CompiledClassHashes::<T>::insert(sierra_class_hash, CompiledClassHash(casm_class_hash.0));
             }
 
             for (address, class_hash) in self.contracts.iter() {
+                assert!(
+                    ContractClasses::<T>::contains_key(class_hash),
+                    "Class hash {} does not exist in contract_classes",
+                    class_hash,
+                );
+
                 ContractClassHashes::<T>::insert(address, class_hash);
             }
 

@@ -17,6 +17,7 @@
 - refacto: remove abusive `TryInto` impl
 - dev: optimize tx trace creation
 - dev: make Madara std compatible
+- dev: check that class exist before using it in BuildGenesisConfig
 - CI: fix taplo version
 - chore: add cache usage for `getEvents` and `getTransactionReceipt`
 - fix: cairo1 contracts should be identified by their sierra class hash
