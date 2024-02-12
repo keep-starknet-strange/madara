@@ -325,13 +325,6 @@ pub mod pallet {
     #[pallet::getter(fn l1_messages)]
     pub(super) type L1Messages<T: Config> = StorageValue<_, BTreeSet<Nonce>, ValueQuery>;
 
-    /// Events deposited for the current block.
-    /// NOTE: The item is unbound and should therefore never be read on chain.
-    /// It could otherwise inflate the PoV size of a block.
-    #[pallet::storage]
-    #[pallet::unbounded]
-    pub(super) type Events<T: Config> = StorageValue<_, Vec<StarknetEvent>, ValueQuery>;
-
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
@@ -893,7 +886,10 @@ impl<T: Config> Pallet<T> {
     /// Get the number of events in the block.
     #[inline(always)]
     pub fn event_count() -> u128 {
-        TxEvents::<T>::iter_values().map(|v| v.len() as u128).sum()
+        Self::pending_hashes()
+            .iter()
+            .map(|tx_hash| TxEvents::<T>::get(tx_hash).len() as u128)
+            .sum()
     }
 
     /// Call a smart contract function.
@@ -964,7 +960,10 @@ impl<T: Config> Pallet<T> {
         let transaction_count = transactions.len();
 
         let parent_block_hash = Self::parent_block_hash(&block_number);
-        let events: Vec<StarknetEvent> = transaction_hashes.iter().flat_map(TxEvents::<T>::get).collect();
+        let events_count = transaction_hashes
+            .iter()
+            .map(|tx_hash| TxEvents::<T>::get(tx_hash).len() as u128)
+            .sum();
 
         let sequencer_address = Self::sequencer_address();
         let block_timestamp = Self::block_timestamp();
@@ -981,7 +980,7 @@ impl<T: Config> Pallet<T> {
                 sequencer_address,
                 block_timestamp,
                 transaction_count as u128,
-                events.len() as u128,
+                events_count,
                 protocol_version,
                 l1_gas_price,
                 extra_data,
