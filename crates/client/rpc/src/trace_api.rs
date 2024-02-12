@@ -27,7 +27,7 @@ use starknet_api::api_core::{ClassHash, ContractAddress};
 use starknet_core::types::{
     BlockId, BroadcastedTransaction, DeclareTransactionTrace, DeployAccountTransactionTrace, ExecuteInvocation,
     FeeEstimate, InvokeTransactionTrace, L1HandlerTransactionTrace, RevertedInvocation, SimulatedTransaction,
-    SimulationFlag, TransactionTrace, TransactionTraceWithHash,
+    SimulationFlag, StateDiff, TransactionTrace, TransactionTraceWithHash,
 };
 use starknet_ff::FieldElement;
 use thiserror::Error;
@@ -227,13 +227,16 @@ where
         let traces = execution_infos
             .into_iter()
             .enumerate()
-            .map(|(tx_idx, tx_exec_info)| {
+            .map(|(tx_idx, (tx_exec_info, commitment_state_diff))| {
+                let state_diff = blockifier_to_rpc_state_diff_types(commitment_state_diff)
+                    .map_err(|_| ConvertCallInfoToExecuteInvocationError::ConvertStateDiffFailed)?;
                 tx_execution_infos_to_tx_trace(
                     &**storage_override,
                     substrate_block_hash,
                     // Safe to unwrap coz re_execute returns exactly one ExecutionInfo for each tx
                     TxType::from(block_transactions.get(tx_idx).unwrap()),
                     &tx_exec_info,
+                    Some(state_diff),
                 )
                 .map(|trace_root| TransactionTraceWithHash {
                     transaction_hash: block_transactions[tx_idx].compute_hash::<H>(chain_id, false).into(),
@@ -253,6 +256,8 @@ pub enum ConvertCallInfoToExecuteInvocationError {
     TransactionExecutionFailed,
     #[error(transparent)]
     GetFunctionInvocation(#[from] TryFuntionInvocationFromCallInfoError),
+    #[error("Failed to convert state diff")]
+    ConvertStateDiffFailed,
 }
 
 impl From<ConvertCallInfoToExecuteInvocationError> for StarknetRpcApiError {
@@ -262,6 +267,7 @@ impl From<ConvertCallInfoToExecuteInvocationError> for StarknetRpcApiError {
             ConvertCallInfoToExecuteInvocationError::GetFunctionInvocation(_) => {
                 StarknetRpcApiError::InternalServerError
             }
+            ConvertCallInfoToExecuteInvocationError::ConvertStateDiffFailed => StarknetRpcApiError::InternalServerError,
         }
     }
 }
@@ -383,6 +389,7 @@ fn tx_execution_infos_to_tx_trace<B: BlockT>(
     substrate_block_hash: B::Hash,
     tx_type: TxType,
     tx_exec_info: &TransactionExecutionInfo,
+    state_diff: Option<StateDiff>,
 ) -> Result<TransactionTrace, ConvertCallInfoToExecuteInvocationError> {
     let mut class_hash_cache: HashMap<ContractAddress, FieldElement> = HashMap::new();
 
@@ -430,14 +437,12 @@ fn tx_execution_infos_to_tx_trace<B: BlockT>(
                 )?)
             },
             fee_transfer_invocation,
-            // TODO(#1291): Compute state diff correctly
-            state_diff: None,
+            state_diff,
         }),
         TxType::Declare => TransactionTrace::Declare(DeclareTransactionTrace {
             validate_invocation,
             fee_transfer_invocation,
-            // TODO(#1291): Compute state diff correctly
-            state_diff: None,
+            state_diff,
         }),
         TxType::DeployAccount => {
             TransactionTrace::DeployAccount(DeployAccountTransactionTrace {
@@ -450,8 +455,7 @@ fn tx_execution_infos_to_tx_trace<B: BlockT>(
                     &mut class_hash_cache,
                 )?,
                 fee_transfer_invocation,
-                // TODO(#1291): Compute state diff correctly
-                state_diff: None,
+                state_diff,
             })
         }
         TxType::L1Handler => TransactionTrace::L1Handler(L1HandlerTransactionTrace {
@@ -482,12 +486,15 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
     for (tx_type, (res, state_diff)) in tx_types.into_iter().zip(transaction_execution_results.into_iter()) {
         match res {
             Ok(tx_exec_info) => {
+                let state_diff = blockifier_to_rpc_state_diff_types(state_diff)
+                    .map_err(|_| ConvertCallInfoToExecuteInvocationError::ConvertStateDiffFailed)?;
+
                 let transaction_trace = tx_execution_infos_to_tx_trace(
                     storage_override,
                     substrate_block_hash,
                     tx_type,
                     &tx_exec_info,
-                    state_diff,
+                    Some(state_diff),
                 )?;
                 let gas_consumed =
                     tx_exec_info.execute_call_info.as_ref().map(|x| x.execution.gas_consumed).unwrap_or_default();

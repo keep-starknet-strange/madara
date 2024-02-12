@@ -146,8 +146,10 @@ impl<T: Config> Pallet<T> {
 
     pub fn re_execute_transactions(
         transactions: Vec<UserOrL1HandlerTransaction>,
-    ) -> Result<Result<Vec<TransactionExecutionInfo>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError>
-    {
+    ) -> Result<
+        Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, PlaceHolderErrorTypeForFailedStarknetExecution>,
+        DispatchError,
+    > {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::re_execute_transactions_inner(
                 transactions,
@@ -158,54 +160,59 @@ impl<T: Config> Pallet<T> {
 
     fn re_execute_transactions_inner(
         transactions: Vec<UserOrL1HandlerTransaction>,
-    ) -> Result<Result<Vec<TransactionExecutionInfo>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError>
-    {
+    ) -> Result<
+        Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, PlaceHolderErrorTypeForFailedStarknetExecution>,
+        DispatchError,
+    > {
         let chain_id = Self::chain_id();
         let block_context = Self::get_block_context();
         let execution_config = RuntimeExecutionConfigBuilder::new::<T>().build();
 
         let execution_infos = transactions
             .iter()
-            .map(|user_or_l1_tx| match user_or_l1_tx {
-                UserOrL1HandlerTransaction::User(tx) => match tx {
-                    UserTransaction::Declare(tx, contract_class) => tx
-                        .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), false)
-                        .map_err(|e| {
-                            log::error!("Failed to reexecute a tx: {}", e);
-                            PlaceHolderErrorTypeForFailedStarknetExecution
-                        })
-                        .and_then(|executable| {
-                            executable
-                                .execute(&mut BlockifierStateAdapter::<T>::default(), &block_context, &execution_config)
-                                .map_err(|e| {
+            .map(|user_or_l1_tx| {
+                let mut cached_state =
+                    CachedBlockifierStateAdapter(CachedState::from(BlockifierStateAdapter::<T>::default()));
+                let res = match user_or_l1_tx {
+                    UserOrL1HandlerTransaction::User(tx) => match tx {
+                        UserTransaction::Declare(tx, contract_class) => tx
+                            .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), false)
+                            .map_err(|e| {
+                                log::error!("Failed to reexecute a tx: {}", e);
+                                PlaceHolderErrorTypeForFailedStarknetExecution
+                            })
+                            .and_then(|executable| {
+                                executable.execute(&mut cached_state, &block_context, &execution_config).map_err(|e| {
                                     log::error!("Failed to reexecute a tx: {}", e);
                                     PlaceHolderErrorTypeForFailedStarknetExecution
                                 })
-                        }),
-                    UserTransaction::DeployAccount(tx) => tx
-                        .into_executable::<T::SystemHash>(chain_id, false)
-                        .execute(&mut BlockifierStateAdapter::<T>::default(), &block_context, &execution_config)
+                            }),
+                        UserTransaction::DeployAccount(tx) => tx
+                            .into_executable::<T::SystemHash>(chain_id, false)
+                            .execute(&mut cached_state, &block_context, &execution_config)
+                            .map_err(|e| {
+                                log::error!("Failed to reexecute a tx: {}", e);
+                                PlaceHolderErrorTypeForFailedStarknetExecution
+                            }),
+                        UserTransaction::Invoke(tx) => tx
+                            .into_executable::<T::SystemHash>(chain_id, false)
+                            .execute(&mut cached_state, &block_context, &execution_config)
+                            .map_err(|e| {
+                                log::error!("Failed to reexecute a tx: {}", e);
+                                PlaceHolderErrorTypeForFailedStarknetExecution
+                            }),
+                    },
+                    UserOrL1HandlerTransaction::L1Handler(tx, fee) => tx
+                        .into_executable::<T::SystemHash>(chain_id, *fee, false)
+                        .execute(&mut cached_state, &block_context, &execution_config)
                         .map_err(|e| {
                             log::error!("Failed to reexecute a tx: {}", e);
                             PlaceHolderErrorTypeForFailedStarknetExecution
                         }),
-                    UserTransaction::Invoke(tx) => tx
-                        .into_executable::<T::SystemHash>(chain_id, false)
-                        .execute(&mut BlockifierStateAdapter::<T>::default(), &block_context, &execution_config)
-                        .map_err(|e| {
-                            log::error!("Failed to reexecute a tx: {}", e);
-                            PlaceHolderErrorTypeForFailedStarknetExecution
-                        }),
-                },
-                UserOrL1HandlerTransaction::L1Handler(tx, fee) => tx
-                    .into_executable::<T::SystemHash>(chain_id, *fee, false)
-                    .execute(&mut BlockifierStateAdapter::<T>::default(), &block_context, &execution_config)
-                    .map_err(|e| {
-                        log::error!("Failed to reexecute a tx: {}", e);
-                        PlaceHolderErrorTypeForFailedStarknetExecution
-                    }),
+                };
+                res.map(|r| (r, cached_state.to_state_diff()))
             })
-            .collect::<Result<Vec<_>, _>>();
+            .collect();
 
         Ok(execution_infos)
     }
