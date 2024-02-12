@@ -15,7 +15,7 @@
     },
     {
       "name": "BraavosCallAggregator.json",
-      "sha3_256": "df537f2e82a53deff75d9bab05e7caeb536fd01eae629b65aa276ced79a84dac"
+      "sha3_256": "8c653ded4d1917ba878d30193c4a7c4c62cc9454a0a990a695a97b757bad1c7f"
     },
     {
       "name": "ERC20.json",
@@ -27,7 +27,7 @@
     },
     {
       "name": "genesis.json",
-      "sha3_256": "d1269c639f68fa0ddd9c85ad9bd529ccffc85531a0dc26457b89ca0d30c747c0"
+      "sha3_256": "954b26a63a70ba92cbc79028fbdaf4f70105ba32ff71b60a24ecce775b4dd90c"
     },
     {
       "name": "NoValidateAccount.casm.json",
