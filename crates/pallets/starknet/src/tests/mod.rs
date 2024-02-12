@@ -14,6 +14,7 @@ use crate::tests::utils::sign_message_hash;
 use crate::{Config, Nonces};
 
 mod account_helper;
+mod build_genesis_config;
 mod call_contract;
 mod declare_tx;
 mod deploy_account_tx;
