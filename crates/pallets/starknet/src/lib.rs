@@ -325,6 +325,13 @@ pub mod pallet {
     #[pallet::getter(fn l1_messages)]
     pub(super) type L1Messages<T: Config> = StorageValue<_, BTreeSet<Nonce>, ValueQuery>;
 
+    /// Events deposited for the current block.
+    /// NOTE: The item is unbound and should therefore never be read on chain.
+    /// It could otherwise inflate the PoV size of a block.
+    #[pallet::storage]
+    #[pallet::unbounded]
+    pub(super) type Events<T: Config> = StorageValue<_, Vec<StarknetEvent>, ValueQuery>;
+
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
@@ -412,8 +419,6 @@ pub mod pallet {
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         KeepStarknetStrange,
-        /// Regular Starknet event
-        StarknetEvent(StarknetEvent),
         /// Emitted when fee token address is changed.
         /// This is emitted by the `set_fee_token_address` extrinsic.
         /// [old_fee_token_address, new_fee_token_address]
@@ -959,7 +964,7 @@ impl<T: Config> Pallet<T> {
         let transaction_count = transactions.len();
 
         let parent_block_hash = Self::parent_block_hash(&block_number);
-        let events: Vec<StarknetEvent> = transaction_hashes.iter().flat_map(TxEvents::<T>::take).collect();
+        let events: Vec<StarknetEvent> = transaction_hashes.iter().flat_map(TxEvents::<T>::get).collect();
 
         let sequencer_address = Self::sequencer_address();
         let block_timestamp = Self::block_timestamp();
@@ -988,7 +993,7 @@ impl<T: Config> Pallet<T> {
         BlockHash::<T>::insert(block_number, blockhash);
 
         // Kill pending storage.
-        // There is no need to kill `TxEvents` as we used `take` while iterating over it.
+        // There is no need to kill `TxEvents` as we use them.
         Pending::<T>::kill();
         PendingHashes::<T>::kill();
 
@@ -1069,7 +1074,6 @@ impl<T: Config> Pallet<T> {
                         from_address: call_info.call.storage_address,
                         content: ordered_event.event.clone(),
                     };
-                    Self::deposit_event(Event::<T>::StarknetEvent(event.clone()));
                     TxEvents::<T>::append(tx_hash, event);
                     next_order += 1;
                     event_idx += 1;
