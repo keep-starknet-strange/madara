@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 
 use blockifier::block_context::BlockContext;
-use blockifier::state::cached_state::{CachedState, CommitmentStateDiff};
+use blockifier::state::cached_state::CommitmentStateDiff;
 use blockifier::state::state_api::State;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
@@ -170,8 +170,7 @@ impl<T: Config> Pallet<T> {
         let execution_infos = transactions
             .iter()
             .map(|user_or_l1_tx| {
-                let mut cached_state =
-                    CachedBlockifierStateAdapter(CachedState::from(BlockifierStateAdapter::<T>::default()));
+                let mut cached_state = CachedBlockifierStateAdapter(BlockifierStateAdapter::<T>::default());
                 let res = match user_or_l1_tx {
                     UserOrL1HandlerTransaction::User(tx) => match tx {
                         UserTransaction::Declare(tx, contract_class) => tx
@@ -245,7 +244,7 @@ impl<T: Config> Pallet<T> {
         block_context: &BlockContext,
         execution_config: &ExecutionConfig,
     ) -> (Result<TransactionExecutionInfo, TransactionExecutionError>, CommitmentStateDiff) {
-        let mut cached_state = CachedBlockifierStateAdapter(CachedState::from(BlockifierStateAdapter::<T>::default()));
+        let mut cached_state = CachedBlockifierStateAdapter(BlockifierStateAdapter::<T>::default());
         let result = match transaction {
             UserTransaction::Declare(tx, contract_class) => tx
                 .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), tx.offset_version())
