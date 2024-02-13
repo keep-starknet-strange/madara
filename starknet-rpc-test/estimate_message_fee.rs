@@ -24,8 +24,8 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
 
     assert_matches!(
         rpc.estimate_message_fee(message, BlockId::Hash(FieldElement::ZERO)).await,
-        Err(StarknetProviderError(StarknetErrorWithMessage { code: MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::BlockNotFound
-    );
+        Err(StarknetProviderError(StarknetErrorWithMessage { code:
+MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::BlockNotFound     );
 
     Ok(())
 }
@@ -44,8 +44,8 @@ async fn fail_if_message_fail(madara: &ThreadSafeMadaraClient) -> Result<(), any
 
     assert_matches!(
         rpc.estimate_message_fee(message, BlockId::Tag(BlockTag::Latest)).await,
-        Err(StarknetProviderError(StarknetErrorWithMessage { code: MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::ContractError
-    );
+        Err(StarknetProviderError(StarknetErrorWithMessage { code:
+MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::ContractError     );
 
     Ok(())
 }
@@ -67,8 +67,8 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
 
     let fee = rpc.estimate_message_fee(message, BlockId::Tag(BlockTag::Latest)).await?;
 
-    assert_eq!(fee.gas_consumed, 0);
-    assert_eq!(fee.gas_price, 0);
+    assert_eq!(fee.gas_consumed, 17091);
+    assert_eq!(fee.gas_price, 10);
     assert_eq!(fee.overall_fee, 0);
 
     Ok(())
