@@ -214,7 +214,9 @@ pub struct HandleL1MessageTransaction {
 
 impl From<MsgFromL1> for HandleL1MessageTransaction {
     fn from(msg: MsgFromL1) -> Self {
-        let calldata = msg.payload.into_iter().map(|felt| felt.into()).collect();
+        let calldata =
+            std::iter::once(msg.from_address.into()).chain(msg.payload.into_iter().map(|felt| felt.into())).collect();
+
         Self {
             contract_address: msg.to_address.into(),
             nonce: 0u32.into(),
