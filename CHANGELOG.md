@@ -11,6 +11,7 @@
 - feat: add transparent representation to `Felt252Wrapper`
 - feat(rpc/trace_api): add `trace_block_transaction`
 - chore(db): changed the way hashes are encoded
+- feat(runtime): moved StarkEvents from Substrate events to runtime storage
 
 ## v0.7.0
 
