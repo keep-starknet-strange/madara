@@ -3,10 +3,11 @@ pub mod blob;
 
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
-use reqwest::blocking::Client;
+use reqwest::Error;
+use reqwest::blocking::{Client, Response};
 use anyhow::Result;
 use serde_json;
-use serde_json::json;
+use serde_json::{json, Value};
 use serde::{Serialize, Deserialize};
 use async_trait::async_trait;
 use ethers::types::{I256, U256};
@@ -31,7 +32,7 @@ pub struct EigenDaClient {
 #[async_trait]
 impl DaClient for EigenDaClient {
     async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()> {
-        let from_block = self.get_ethereum_block_num().unwrap().result;
+        let from_block = self.get_block_num().unwrap().result;
         let disperse_blob_response = self.disperse_blob(state_diff)?;
         let timeout_duration = Duration::from_secs(TIMEOUT_DURATION);
         let start_time = Instant::now();
@@ -46,17 +47,22 @@ impl DaClient for EigenDaClient {
                             tokio::time::sleep(Duration::from_secs(5)).await;
                         }
                         BlobStatus::Confirmed => {
-                            let to_block = self.get_ethereum_block_num().unwrap().result;
-                            let event = self.get_batch_confirmation_event(
+                            let to_block = self.get_block_num().unwrap().result;
+                            let event = self.get_batch_confirmed_event(
                                 blob_status_response.info().blob_verification_proof().batch_metadata().batch_header_hash(),
                                 &from_block,
                                 &to_block
                             ).unwrap();
                             assert!(event.result.len() == 1);
                             // BRIDGE TO STARKNET
+                            // calling the sendMessageToL2 function on the Starknet Core
+                            // L1 → L2 messages are payable on L1, by sending ETH with the call to the payable function sendMessageToL2 on the Starknet Core Contract.
+                            // DATA - The compiled code of a contract OR the hash of the invoked method signature and encoded parameters.
+                            self.bridge_to_starknet(&event.result[0].transaction_hash);
+                            // wait and query for confirmation?
                         }
                         BlobStatus::Failed | BlobStatus::Other(_) => {
-                            return Err(anyhow::anyhow!("blob rejected by EigenDA: {:?}", blob_status_response));
+                            return Err(anyhow::anyhow!("blob not accepted by EigenDA: {:?}", blob_status_response));
                         }
                     }
                 }
@@ -66,10 +72,10 @@ impl DaClient for EigenDaClient {
                 }
             }
         }
-        // v1 (current): 
+        // v1 (completed): 
         //      (disperser executes verifyBlob from EigenDABlobUtils.sol on Ethereum and emits batchConfirmed event)
         //      rollup queries for batchConfirmed event on a finalised Ethereum block
-        //      rollup bridges batchConfirmed event to Starknet TODO
+        //      rollup bridges batchConfirmed event to Starknet
         // v2: 
         //      rollup executes verifyBlob from EigenDABlobUtils.cairo on Starknet ? or will the disperser also do this??
         //      (rollup verifier contract (on Starknet) will read from the contract storage)
@@ -130,26 +136,22 @@ impl EigenDaClient {
         }
     }
 
-    fn get_ethereum_block_num(&self) -> Result<BlockNumberResponse, reqwest::Error> {
+    fn get_block_num(&self) -> Result<EthereumResponse, Error> {
         let request_data = json!({
             "jsonrpc": "2.0",
             "method": "eth_blockNumber",
             "id": 1
         });
-        let client = Client::new();
-        let response = client
-            .post(&self.config.eth_rpc_provider)
-            .body(request_data.to_string())
-            .send()?;
-        response.json::<BlockNumberResponse>()
+        let response = self.send_request(request_data)?;
+        response.json::<EthereumResponse>()
     }
 
-    fn get_batch_confirmation_event(
+    fn get_batch_confirmed_event(
         &self, 
         batch_header_hash: &String,
         from_block: &String,
         to_block: &String,
-    ) -> Result<GetLogsResponse, reqwest::Error> {
+    ) -> Result<GetLogsResponse, Error> {
         let request_data = json!({
             "jsonrpc": "2.0",
             "method": "eth_getLogs",
@@ -166,17 +168,44 @@ impl EigenDaClient {
             ],
             "id": 1
         });
+        let response = self.send_request(request_data)?;
+        response.json::<GetLogsResponse>()
+    }
+
+    fn bridge_to_starknet(
+        &self,
+        input: &String,
+    ) -> Result<EthereumResponse, Error> {
+        let request_data = json!({
+            "jsonrpc": "2.0",
+            "method": "eth_sendTransaction",
+            "params": [
+                {
+                    "from": "0x1", // !!!
+                    "input": input
+                }
+            ],
+            "id": 1
+        });
+        let response = self.send_request(request_data)?;
+        response.json::<EthereumResponse>()
+    }
+
+    fn send_request(
+        &self,
+        request_data: Value,
+    ) -> Result<Response, Error> {
         let client = Client::new();
         let response = client
             .post(&self.config.eth_rpc_provider)
             .body(request_data.to_string())
-            .send()?;
-        response.json::<GetLogsResponse>()
+            .send();
+        response
     }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct BlockNumberResponse {
+struct EthereumResponse {
     jsonrpc: String,
     id: i32,
     pub result: String
