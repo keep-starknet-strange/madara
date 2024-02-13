@@ -1498,9 +1498,9 @@ where
             .get_events_for_tx_by_hash(substrate_block_hash, Felt252Wrapper(transaction_hash).into())
             .map_err(|e| {
                 error!(
-                        "Failed to get transaction events. Substrate block hash: {substrate_block_hash}, \
-                         transaction hash: {transaction_hash}, error: {e}"
-                    );
+                    "Failed to get transaction events. Substrate block hash: {substrate_block_hash}, transaction \
+                     hash: {transaction_hash}, error: {e}"
+                );
                 StarknetRpcApiError::InternalServerError
             })?;
 

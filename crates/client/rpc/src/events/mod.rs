@@ -9,6 +9,7 @@ use log::error;
 use mc_rpc_core::utils::get_block_by_block_hash;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
+use mp_transactions::compute_hash::ComputeTransactionHash;
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::BlockBackend;
@@ -19,7 +20,6 @@ use sp_runtime::traits::Block as BlockT;
 use starknet_api::transaction::TransactionHash;
 use starknet_core::types::{BlockId, EmittedEvent, EventsPage};
 use starknet_ff::FieldElement;
-use mp_transactions::compute_hash::ComputeTransactionHash;
 
 use crate::errors::StarknetRpcApiError;
 use crate::types::{ContinuationToken, RpcEventFilter};
@@ -64,11 +64,7 @@ where
             if let Some(tx_hashes) = self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into()) {
                 tx_hashes
             } else {
-                starknet_block
-                    .transactions()
-                    .iter()
-                    .map(|tx| tx.compute_hash::<H>(chain_id, false).into())
-                    .collect()
+                starknet_block.transactions().iter().map(|tx| tx.compute_hash::<H>(chain_id, false).into()).collect()
             };
         let runtime_api = self.client.runtime_api();
 
@@ -76,7 +72,8 @@ where
 
         let mut emitted_events: Vec<EmittedEvent> = vec![];
         for tx_hash in txn_hashes {
-            let _ = runtime_api.get_events_for_tx_by_hash(substrate_block_hash, TransactionHash(tx_hash))
+            let _ = runtime_api
+                .get_events_for_tx_by_hash(substrate_block_hash, TransactionHash(tx_hash))
                 .map_err(|e| {
                     error!("Failed to retrieve starknet events for transaction: error: {e}");
                     StarknetRpcApiError::InternalServerError
@@ -92,7 +89,7 @@ where
                 })
                 .map(|event| emitted_events.push(event))
                 .collect::<Vec<_>>();
-        };
+        }
 
         Ok(emitted_events)
     }

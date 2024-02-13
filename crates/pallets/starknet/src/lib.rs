@@ -886,10 +886,7 @@ impl<T: Config> Pallet<T> {
     /// Get the number of events in the block.
     #[inline(always)]
     pub fn event_count() -> u128 {
-        Self::pending_hashes()
-            .iter()
-            .map(|tx_hash| TxEvents::<T>::get(tx_hash).len() as u128)
-            .sum()
+        Self::pending_hashes().iter().map(|tx_hash| TxEvents::<T>::get(tx_hash).len() as u128).sum()
     }
 
     /// Call a smart contract function.
@@ -960,10 +957,7 @@ impl<T: Config> Pallet<T> {
         let transaction_count = transactions.len();
 
         let parent_block_hash = Self::parent_block_hash(&block_number);
-        let events_count = transaction_hashes
-            .iter()
-            .map(|tx_hash| TxEvents::<T>::get(tx_hash).len() as u128)
-            .sum();
+        let events_count = transaction_hashes.iter().map(|tx_hash| TxEvents::<T>::get(tx_hash).len() as u128).sum();
 
         let sequencer_address = Self::sequencer_address();
         let block_timestamp = Self::block_timestamp();

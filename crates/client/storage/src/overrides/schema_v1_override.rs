@@ -3,7 +3,8 @@ use std::sync::Arc;
 
 use blockifier::execution::contract_class::ContractClass;
 use mp_storage::{
-    PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_NONCE, STARKNET_STORAGE, STARKNET_TX_EVENTS
+    PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_NONCE, STARKNET_STORAGE,
+    STARKNET_TX_EVENTS,
 };
 use parity_scale_codec::{Decode, Encode};
 // Substrate
@@ -14,7 +15,7 @@ use sp_storage::StorageKey;
 use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey as StarknetStorageKey;
-use starknet_api::transaction::{TransactionHash, Event as StarknetEvent};
+use starknet_api::transaction::{Event as StarknetEvent, TransactionHash};
 
 use super::{storage_key_build, storage_prefix_build, StorageOverride};
 
@@ -132,7 +133,11 @@ where
         }
     }
 
-    fn get_events_for_tx_by_hash(&self, block_hash: <B as BlockT>::Hash, tx_hash: TransactionHash) -> Option<Vec<StarknetEvent>> {
+    fn get_events_for_tx_by_hash(
+        &self,
+        block_hash: <B as BlockT>::Hash,
+        tx_hash: TransactionHash,
+    ) -> Option<Vec<StarknetEvent>> {
         let storage_tx_events_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_TX_EVENTS);
         self.query_storage::<Vec<StarknetEvent>>(
             block_hash,

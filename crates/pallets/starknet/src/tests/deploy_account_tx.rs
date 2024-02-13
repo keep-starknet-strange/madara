@@ -53,7 +53,7 @@ fn given_contract_run_deploy_account_tx_works() {
                     Felt252Wrapper::from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap()).into(),
                 )],
                 data: EventData(vec![
-                    address.0.0,                                 // From
+                    address.0.0,                            // From
                     StarkFelt::try_from("0xdead").unwrap(), // To
                     StarkFelt::try_from("0x195a").unwrap(), // Amount low
                     StarkFelt::from(0u128),                 // Amount high
