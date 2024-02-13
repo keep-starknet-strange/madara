@@ -45,7 +45,7 @@ jobs:
       - name: Run gomu gomu test
         run: |-
           set -v -x +e
-          ./target/release/madara --dev --pool-limit=100000 --pool-kbytes=500000 &
+          ./target/release/madara --dev --pool-limit=100000 --pool-kbytes=500000  > madara.log 2>&1 &
           MADARA_RUN_PID=$!
           while ! echo exit | nc localhost 9944; do sleep 1; done
           pwd
