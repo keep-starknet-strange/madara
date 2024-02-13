@@ -230,6 +230,17 @@
 <a href="#230" id="230">230</a>
 <a href="#231" id="231">231</a>
 <a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::vec::Vec;
 
 <span class="kw">use </span>blockifier::block_context::BlockContext;
@@ -354,17 +365,28 @@
     <span class="kw">fn </span>estimate_message_fee_inner(message: HandleL1MessageTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u128, u64, u64), DispatchError&gt; {
         <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
 
-        <span class="kw">let </span>tx_execution_infos = message
-            .into_executable::&lt;T::SystemHash&gt;(chain_id, Fee::default(), <span class="bool-val">true</span>)
-            .execute(
-                <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
-                <span class="kw-2">&amp;</span><span class="self">Self</span>::get_block_context(),
-                <span class="kw-2">&amp;</span>RuntimeExecutionConfigBuilder::new::&lt;T&gt;().with_query_mode().with_disable_nonce_validation().build(),
-            )
-            .map_err(|e| {
-                <span class="macro">log::error!</span>(<span class="string">&quot;L1 message execution failed during fee estimation: {}&quot;</span>, e);
-                Error::&lt;T&gt;::TransactionExecutionFailed
-            })<span class="question-mark">?</span>;
+        <span class="kw">let </span>tx_execution_infos = <span class="kw">match </span>message.into_executable::&lt;T::SystemHash&gt;(chain_id, Fee(u128::MAX), <span class="bool-val">true</span>).execute(
+            <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
+            <span class="kw-2">&amp;</span><span class="self">Self</span>::get_block_context(),
+            <span class="kw-2">&amp;</span>RuntimeExecutionConfigBuilder::new::&lt;T&gt;().with_query_mode().with_disable_nonce_validation().build(),
+        ) {
+            <span class="prelude-val">Ok</span>(execution_info) <span class="kw">if </span>!execution_info.is_reverted() =&gt; <span class="prelude-val">Ok</span>(execution_info),
+            <span class="prelude-val">Err</span>(e) =&gt; {
+                <span class="macro">log::error!</span>(
+                    <span class="string">&quot;Transaction execution failed during fee estimation: {e} {:?}&quot;</span>,
+                    std::error::Error::source(<span class="kw-2">&amp;</span>e)
+                );
+                <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed)
+            }
+            <span class="prelude-val">Ok</span>(execution_info) =&gt; {
+                <span class="macro">log::error!</span>(
+                    <span class="string">&quot;Transaction execution reverted during fee estimation: {}&quot;</span>,
+                    <span class="comment">// Safe due to the `match` branch order
+                    </span>execution_info.revert_error.unwrap()
+                );
+                <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed)
+            }
+        }<span class="question-mark">?</span>;
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(l1_gas_usage) = tx_execution_infos.actual_resources.<span class="number">0</span>.get(<span class="string">&quot;l1_gas_usage&quot;</span>) {
             <span class="prelude-val">Ok</span>((T::L1GasPrice::get().price_in_wei, tx_execution_infos.actual_fee.<span class="number">0 </span><span class="kw">as </span>u64, <span class="kw-2">*</span>l1_gas_usage))

@@ -37,7 +37,7 @@
     A: ChainApi&lt;Block = B&gt; + 'static,
     B: BlockT,
     BE: Backend&lt;B&gt; + 'static,
-    G: GenesisProvider + <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html" title="trait core::marker::Sync">Sync</a> + 'static,
+    G: <a class="trait" href="../mc_genesis_data_provider/trait.GenesisProvider.html" title="trait mc_genesis_data_provider::GenesisProvider">GenesisProvider</a> + <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html" title="trait core::marker::Sync">Sync</a> + 'static,
     C: HeaderBackend&lt;B&gt; + BlockBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt; + 'static + ProvideRuntimeApi&lt;B&gt;,
     C::Api: StarknetRuntimeApi&lt;B&gt; + ConvertTransactionRuntimeApi&lt;B&gt;,
     P: TransactionPool&lt;Block = B&gt; + 'static,
