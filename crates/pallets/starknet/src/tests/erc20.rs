@@ -100,7 +100,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 },
                 from_address: sender_account,
             },
-            events[1].clone().try_into().unwrap(),
+            events[1],
         );
         let expected_fee_transfer_event = StarknetEvent {
             content: EventContent {

@@ -409,7 +409,7 @@ pub mod pallet {
     /// EVENTS
     /// See: `<https://docs.substrate.io/main-docs/build/events-errors/>`
     #[pallet::event]
-    #[pallet::generate_deposit(pub(super) fn deposit_event)]
+    // #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         KeepStarknetStrange,
         /// Emitted when fee token address is changed.

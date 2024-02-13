@@ -43,7 +43,6 @@ fn internal_and_external_events_are_emitted_in_the_right_order() {
 
         let chain_id = Starknet::chain_id();
         let tx_hash = emit_event_transaction.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false);
-        // todo
         let events = Starknet::tx_events(TransactionHash::from(tx_hash));
         let event_emitters: Vec<Felt252Wrapper> =
             events.iter().map(|event| Felt252Wrapper::from(event.from_address)).collect();
