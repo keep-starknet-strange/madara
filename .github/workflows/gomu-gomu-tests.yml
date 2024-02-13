@@ -34,13 +34,11 @@ jobs:
           cd ..
           git clone https://github.com/keep-starknet-strange/gomu-gomu-no-gatling.git
           cd gomu-gomu-no-gatling
-          pwd
           cargo install --path .
 
       - name: Setup dev chain
         run: |
-          cd ..
-          cd madara
+          cd ../madara
           ./target/release/madara setup --chain=dev --from-local=configs
       - name: Run gomu gomu test
         run: |-
@@ -48,7 +46,6 @@ jobs:
           ./target/release/madara --dev --pool-limit=100000 --pool-kbytes=500000  > madara.log 2>&1 &
           MADARA_RUN_PID=$!
           while ! echo exit | nc localhost 9944; do sleep 1; done
-          pwd
           cd ../gomu-gomu-no-gatling
           RUST_LOG=info cargo run -- shoot -c config/default.yaml
           kill $MADARA_RUN_PID
