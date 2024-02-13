@@ -1858,15 +1858,13 @@ fn actual_resources_to_execution_resources(resources: ResourcesMapping) -> Execu
     // in crates/primitives/fee/src/lib.rs
     ExecutionResources {
         steps: *resources.get("n_steps").unwrap_or(&0),
-        // Missing param
-        memory_holes: None,
+        memory_holes: resources.get("memory_holes").copied(),
         range_check_builtin_applications: *resources.get("range_check_builtin").unwrap_or(&0),
         pedersen_builtin_applications: *resources.get("pedersen_builtin").unwrap_or(&0),
         poseidon_builtin_applications: *resources.get("poseidon_builtin").unwrap_or(&0),
         ec_op_builtin_applications: *resources.get("ec_op_builtin").unwrap_or(&0),
         ecdsa_builtin_applications: *resources.get("ecdsa_builtin").unwrap_or(&0),
         bitwise_builtin_applications: *resources.get("bitwise_builtin").unwrap_or(&0),
-        // Missing param
-        keccak_builtin_applications: 0,
+        keccak_builtin_applications: *resources.get("keccak_builtin").unwrap_or(&0),
     }
 }
