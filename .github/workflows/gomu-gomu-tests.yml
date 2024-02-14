@@ -6,7 +6,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest-32-cores
+    runs-on: ubuntu-latest
     env:
       BINARY_PATH: ../target/release/madara
     steps:
@@ -43,7 +43,7 @@ jobs:
       - name: Run gomu gomu test
         run: |-
           set -v -x +e
-          ./target/release/madara --dev --pool-limit=100000 --pool-kbytes=500000  > madara.log 2>&1 &
+          ./target/release/madara --dev --cache --pool-limit=100000 --pool-kbytes=500000  > madara.log 2>&1 &
           MADARA_RUN_PID=$!
           while ! echo exit | nc localhost 9944; do sleep 1; done
           cd ../gomu-gomu-no-gatling
