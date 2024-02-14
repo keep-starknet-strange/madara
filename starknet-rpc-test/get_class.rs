@@ -89,7 +89,6 @@ async fn work_ok_retrieving_class_for_contract_version_0(madara: &ThreadSafeMada
     Ok(())
 }
 
-#[ignore = "conversion between contract class types is incomplete"]
 #[rstest]
 #[tokio::test]
 async fn work_ok_retrieving_class_for_contract_version_1(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
