@@ -11,6 +11,7 @@
 - feat: add transparent representation to `Felt252Wrapper`
 - feat(rpc/trace_api): add `trace_block_transaction`
 - chore(db): changed the way hashes are encoded
+- ci: add gomu gomu no gatling perfomrance test
 
 ## v0.7.0
 
