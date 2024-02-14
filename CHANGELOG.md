@@ -2,6 +2,8 @@
 
 ## Next release
 
+- refactor: test ignore removed from
+  work_ok_retrieving_class_for_contract_version_1 test
 - feat(rpc): add tests for estimateMessageFee RPC call
 - refacto: rename braavos call aggregator contract
 - fix: updating outdated links to external resources in documentation
