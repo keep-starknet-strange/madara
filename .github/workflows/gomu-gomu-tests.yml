@@ -1,4 +1,4 @@
-name: Gomu Gomu no Gatling Performance Tests
+name: Task - Gomu Gomu no Gatling Performance Tests
 
 on:
   workflow_dispatch:
