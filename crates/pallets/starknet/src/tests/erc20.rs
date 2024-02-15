@@ -197,7 +197,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             )),
         };
 
-        pretty_assertions::assert_eq!(expected_event, events[events.len() - 2]); //.event.clone().try_into().unwrap()
+        pretty_assertions::assert_eq!(expected_event, events[events.len() - 2]);
         // Check fee transfer.
         let expected_fee_transfer_event = StarknetEvent {
             content: EventContent {
@@ -205,7 +205,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     StarkFelt::try_from(Felt252Wrapper::from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap())).unwrap(),
                 )],
                 data: EventData(vec![
-                    sender_account.0 .0,                         // From
+                    sender_account.0 .0,                    // From
                     StarkFelt::try_from("0xdead").unwrap(), // Sequencer address
                     StarkFelt::try_from("0xf118").unwrap(), // Amount low
                     StarkFelt::from(0u128),                 // Amount high

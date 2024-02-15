@@ -986,7 +986,7 @@ impl<T: Config> Pallet<T> {
         BlockHash::<T>::insert(block_number, blockhash);
 
         // Kill pending storage.
-        // There is no need to kill `TxEvents` as we use them.
+        // There is no need to kill `TxEvents` as we store them.
         Pending::<T>::kill();
         PendingHashes::<T>::kill();
 
