@@ -3,8 +3,10 @@ use std::path::PathBuf;
 use serde::Deserialize;
 use crate::DaMode;
 
+pub const DEFAULT_SEQUENCER_KEY: &str = "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 const DEFAULT_EIGENDA_CONTRACT: &str = "0xa3b1689Ab85409B15e07d2ED50A6EA9905074Ee5";
 const DEFAULT_ETHEREUM_NODE: &str = "127.0.0.1:8545";
+pub const DEFAULT_CHAIN_ID: u64 = 31337;
 const DEFAULT_PROTO_PATH: &str = "/proto/disperser/disperser.proto";
 // rollups will eventually run their own disperser
 const DEFAULT_DISPERSER: &str = "disperser-goerli.eigenda.xyz:443";
@@ -23,6 +25,10 @@ pub struct EigenDaConfig {
     pub eigenda_contract: String,
     #[serde(default = "default_proto_path")]
     pub proto_path: String,
+    #[serde(default = "default_sequencer_key")]
+    pub sequencer_key: String,
+    #[serde(default = "default_chain_id")]
+    pub chain_id: u64,
     //pub security_params: Vec<SecurityParams>,
     // can have multiple security params but only one per quorum
     // for now we have one set of security params
@@ -72,6 +78,14 @@ fn default_quorum_threshold() -> u32 {
     DEFAULT_QUORUM_THRESHOLD
 }
 
+fn default_sequencer_key() -> String {
+    DEFAULT_SEQUENCER_KEY.to_string()
+}
+
+fn default_chain_id() -> u64 {
+    DEFAULT_CHAIN_ID
+}
+
 impl Default for EigenDaConfig {
     fn default() -> Self {
         Self {
@@ -79,6 +93,8 @@ impl Default for EigenDaConfig {
             eth_rpc_provider: default_eth_rpc(),
             eigenda_contract: default_eigenda_contract(),
             proto_path: default_proto_path(),
+            sequencer_key: default_sequencer_key(),
+            chain_id: default_chain_id(),
             quorum_id: default_quorum_id(),
             adversary_threshold: default_adversary_threshold(),
             quorum_threshold: default_quorum_threshold(),
