@@ -11,6 +11,7 @@ jobs:
       BINARY_PATH: ../target/release/madara
     steps:
       - uses: actions/checkout@v3
+
       - uses: actions/cache@v3
         with:
           path: |
@@ -28,18 +29,21 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y clang llvm libudev-dev protobuf-compiler libssl-dev pkg-config
+
       - name: Setup gomu gomu
         run: |
           set -v -x +e
           cd ..
-          git clone https://github.com/keep-starknet-strange/gomu-gomu-no-gatling.git
+          git clone https://github.com/LimeChain/gomu-gomu-no-gatling.git
           cd gomu-gomu-no-gatling
+          git checkout goose_bugs
           cargo install --path .
 
       - name: Setup dev chain
         run: |
           cd ../madara
           ./target/release/madara setup --chain=dev --from-local=configs
+
       - name: Run gomu gomu test
         run: |-
           set -v -x +e
