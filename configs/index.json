@@ -14,7 +14,7 @@
       "sha3_256": "c84648bb4ef70513be3aacea5f5a1bc64dd9dcad0662978e0acc7590754d8bd9"
     },
     {
-      "name": "CallAggregator.json",
+      "name": "BraavosCallAggregator.json",
       "sha3_256": "8c653ded4d1917ba878d30193c4a7c4c62cc9454a0a990a695a97b757bad1c7f"
     },
     {
@@ -27,7 +27,7 @@
     },
     {
       "name": "genesis.json",
-      "sha3_256": "ea9fc56ec07d59558bf83750604d2a84efc4e1b702f044a874e97662d0b68ff1"
+      "sha3_256": "954b26a63a70ba92cbc79028fbdaf4f70105ba32ff71b60a24ecce775b4dd90c"
     },
     {
       "name": "NoValidateAccount.casm.json",
