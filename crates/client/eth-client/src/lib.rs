@@ -1,9 +1,9 @@
 //! Ethereum configuration primitives and base Ethers client constructors.
-//! 
+//!
 //! If you need to interact with Ethereum in your service, the suggested w/f is the following:
 //!     - Import Ethers bindings for particular contract interface(s) from the Zaun crate;
-//!     - Use config type from this crate as is or extend it, inheriting top-level sections,
-//!       so that different services can reuse a single JSON file;
+//!     - Use config type from this crate as is or extend it, inheriting top-level sections, so that
+//!       different services can reuse a single JSON file;
 //!     - Construct Ethers client (middleware) using the config and initialize the high-level
 //!       bindings imported from Zaun.
 
@@ -32,7 +32,7 @@ impl TryFrom<EthereumProviderConfig> for Provider<Http> {
                 }
 
                 Ok(provider)
-            } //_ => Err(Error::UnexpectedProviderVariant),
+            }
         }
     }
 }
@@ -44,7 +44,7 @@ impl TryFrom<EthereumWalletConfig> for LocalWallet {
         match config {
             EthereumWalletConfig::Local(config) => {
                 Ok(config.private_key.parse::<LocalWallet>()?.with_chain_id(config.chain_id))
-            } //_ => Err(Error::UnexpectedWalletVariant),
+            }
         }
     }
 }

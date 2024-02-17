@@ -115,7 +115,7 @@ impl Default for EthereumWalletConfig {
 
 impl StarknetContracts {
     pub fn core_contract(&self) -> Result<Address, Error> {
-        self.core_contract.as_ref().ok_or(Error::UndefinedContractAddress("verifier"))?.parse().map_err(Into::into)
+        self.core_contract.as_ref().ok_or(Error::UndefinedContractAddress("core"))?.parse().map_err(Into::into)
     }
 
     pub fn verifier_contract(&self) -> Result<Address, Error> {
@@ -135,7 +135,7 @@ impl TryFrom<&PathBuf> for EthereumClientConfig {
     type Error = Error;
 
     fn try_from(path: &PathBuf) -> Result<Self, Self::Error> {
-        let file = File::open(path).map_err(|e| Error::ReadFromFile(e))?;
-        serde_json::from_reader(file).map_err(|e| Error::JsonDecode(e))
+        let file = File::open(path).map_err(Error::ReadFromFile)?;
+        serde_json::from_reader(file).map_err(Error::JsonDecode)
     }
 }

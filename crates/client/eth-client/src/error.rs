@@ -6,10 +6,6 @@ pub enum Error {
     EthersWallet(#[from] ethers::signers::WalletError),
     #[error("Failed to parse hex string: {0}")]
     ParseFromHex(#[from] rustc_hex::FromHexError),
-    #[error("Unexpected wallet configuration")]
-    UnexpectedWalletVariant,
-    #[error("Unexpected provider configuration")]
-    UnexpectedProviderVariant,
     #[error("Undefined {0} contract address")]
     UndefinedContractAddress(&'static str),
     #[error("Failed to read config from file: {0}")]

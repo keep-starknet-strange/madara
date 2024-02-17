@@ -12,7 +12,7 @@ use crate::{DaClient, DaError, DaMode};
 
 #[derive(Clone, Debug)]
 pub struct EthereumDaClient {
-    // TODO: memory pages contract client (from zaun?)
+    // TODO: memory pages contract client (from zaun)
     core_contract: StarknetSovereignContract<Provider<Http>>,
     mode: DaMode,
 }
@@ -22,7 +22,7 @@ impl DaClient for EthereumDaClient {
     async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<(), anyhow::Error> {
         log::debug!("State diff: {:?}", state_diff);
         // TODO(validity): split into pages and submit one by one using `registerContinuousMemoryPage`
-        // method Store diff hash & size in the Madara backend so that the settlement worker can
+        // method. Store diff hash & size in the Madara backend so that the settlement worker can
         // submit that together with state updates.
         Ok(())
     }
