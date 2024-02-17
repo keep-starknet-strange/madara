@@ -12,10 +12,9 @@ use futures::prelude::*;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi, SealingMode, StarknetHasher};
 use mc_commitment_state_diff::CommitmentStateDiffWorker;
-use mc_data_availability::ethereum::config::EthereumConfig;
 use mc_data_availability::{DaClient, DataAvailabilityWorker};
+use mc_eth_client::config::EthereumClientConfig;
 use mc_genesis_data_provider::OnDiskGenesisConfig;
-use mc_l1_messages::config::L1MessagesWorkerConfig;
 use mc_mapping_sync::MappingSyncWorker;
 use mc_settlement::errors::RetryOnRecoverableErrors;
 use mc_settlement::ethereum::StarknetContractClient;
@@ -269,7 +268,6 @@ pub fn new_full(
     sealing: SealingMode,
     da_client: Option<Box<dyn DaClient + Send + Sync>>,
     cache_more_things: bool,
-    l1_messages_worker_config: Option<L1MessagesWorkerConfig>,
     settlement_config: Option<(SettlementLayer, PathBuf)>,
 ) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
@@ -441,13 +439,12 @@ pub fn new_full(
         );
     }
 
-    // initialize settlement worker
+    // initialize settlement workers
     if let Some((layer_kind, config_path)) = settlement_config {
         let settlement_provider: Box<dyn SettlementProvider<_>> = match layer_kind {
             SettlementLayer::Ethereum => {
-                let file = std::fs::File::open(config_path)?;
-                let ethereum_conf: EthereumConfig =
-                    serde_json::from_reader(file).map_err(|e| ServiceError::Other(e.to_string()))?;
+                let ethereum_conf =
+                    EthereumClientConfig::try_from(&config_path).map_err(|e| ServiceError::Other(e.to_string()))?;
                 Box::new(
                     StarknetContractClient::try_from(ethereum_conf).map_err(|e| ServiceError::Other(e.to_string()))?,
                 )
@@ -457,7 +454,7 @@ pub fn new_full(
 
         task_manager.spawn_essential_handle().spawn(
             "settlement-worker-sync-state",
-            Some("madara"),
+            Some(MADARA_TASK_GROUP),
             SettlementWorker::<_, StarknetHasher, _>::sync_state(
                 client.clone(),
                 settlement_provider,
@@ -465,6 +462,23 @@ pub fn new_full(
                 retry_strategy,
             ),
         );
+
+        // TODO: make L1 message handling part of the SettlementProvider, support multiple layer options
+        if layer_kind == SettlementLayer::Ethereum {
+            let ethereum_conf =
+                EthereumClientConfig::try_from(&config_path).map_err(|e| ServiceError::Other(e.to_string()))?;
+
+            task_manager.spawn_handle().spawn(
+                "settlement-worker-sync-l1-messages",
+                Some(MADARA_TASK_GROUP),
+                mc_l1_messages::worker::run_worker(
+                    ethereum_conf,
+                    client.clone(),
+                    transaction_pool.clone(),
+                    madara_backend.clone(),
+                ),
+            );
+        }
     }
 
     if role.is_authority() {
@@ -591,13 +605,6 @@ pub fn new_full(
         );
     }
 
-    if let Some(l1_messages_worker_config) = l1_messages_worker_config {
-        task_manager.spawn_handle().spawn(
-            "ethereum-core-contract-events-listener",
-            Some(MADARA_TASK_GROUP),
-            mc_l1_messages::worker::run_worker(l1_messages_worker_config, client, transaction_pool, madara_backend),
-        );
-    }
     network_starter.start_network();
     Ok(task_manager)
 }

@@ -6089,6 +6089,7 @@ dependencies = [
  "mc-commitment-state-diff",
  "mc-data-availability",
  "mc-db",
+ "mc-eth-client",
  "mc-genesis-data-provider",
  "mc-l1-messages",
  "mc-mapping-sync",
@@ -6314,6 +6315,7 @@ dependencies = [
  "log",
  "mc-commitment-state-diff",
  "mc-db",
+ "mc-eth-client",
  "mp-digest-log",
  "mp-felt",
  "mp-hashers",
@@ -6331,6 +6333,7 @@ dependencies = [
  "sp-keyring",
  "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "starknet-core",
+ "starknet-core-contract-client",
  "starknet_api",
  "substrate-prometheus-endpoint",
  "subxt",
@@ -6359,6 +6362,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "mc-eth-client"
+version = "0.1.0"
+dependencies = [
+ "ethers",
+ "rustc-hex",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "url",
+]
+
+[[package]]
 name = "mc-genesis-data-provider"
 version = "0.7.0"
 dependencies = [
@@ -6379,6 +6394,7 @@ dependencies = [
  "ethers",
  "log",
  "mc-db",
+ "mc-eth-client",
  "mp-felt",
  "mp-transactions",
  "pallet-starknet-runtime-api",
@@ -6512,8 +6528,8 @@ dependencies = [
  "futures",
  "futures-timer",
  "log",
- "mc-data-availability",
  "mc-db",
+ "mc-eth-client",
  "mp-block",
  "mp-digest-log",
  "mp-felt",
@@ -12165,6 +12181,7 @@ dependencies = [
  "home",
  "madara-runtime",
  "madara-test-runner",
+ "mc-eth-client",
  "mc-settlement",
  "mp-felt",
  "mp-messages",

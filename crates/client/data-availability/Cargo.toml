@@ -40,6 +40,7 @@ sp-runtime = { workspace = true, features = ["std"] }
 
 # Starknet
 blockifier = { workspace = true, default-features = true }
+mc-eth-client = { workspace = true, default-features = true }
 mc-commitment-state-diff = { workspace = true, default-features = true }
 mc-db = { workspace = true, default-features = true }
 pallet-starknet-runtime-api = { workspace = true, features = ["std"] }
@@ -54,6 +55,9 @@ mp-digest-log = { workspace = true, default-features = true }
 mp-felt = { workspace = true, default-features = true }
 mp-hashers = { workspace = true, default-features = true }
 mp-storage = { workspace = true, default-features = true }
+
+# Zaun
+starknet-core-contract-client = { workspace = true }
 
 # Prometheus
 prometheus-endpoint = { workspace = true }

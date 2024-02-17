@@ -85,6 +85,7 @@ madara-runtime = { workspace = true }
 mc-commitment-state-diff = { workspace = true }
 mc-data-availability = { workspace = true, features = ["clap"] }
 mc-db = { workspace = true }
+mc-eth-client = { workspace = true, default-features = true }
 mc-l1-messages = { workspace = true }
 mc-mapping-sync = { workspace = true }
 mc-rpc = { workspace = true }

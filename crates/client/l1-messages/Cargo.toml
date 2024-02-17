@@ -23,6 +23,7 @@ pallet-starknet-runtime-api = { workspace = true, default-features = true }
 starknet_api = { workspace = true, default-features = true }
 
 # Starknet
+mc-eth-client = { workspace = true, default-features = true }
 mc-db = { workspace = true, default-features = true }
 
 # Madara Primitives
