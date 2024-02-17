@@ -1,6 +1,5 @@
 use mp_felt::{Felt252Wrapper, Felt252WrapperError};
 use mp_transactions::HandleL1MessageTransaction;
-use starknet_api::hash::StarkFelt;
 use starknet_core_contract_client::interfaces::LogMessageToL2Filter;
 
 #[derive(thiserror::Error, Debug, PartialEq)]
