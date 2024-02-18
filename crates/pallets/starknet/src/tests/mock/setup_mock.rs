@@ -72,7 +72,6 @@ macro_rules! mock_runtime {
 				pub const DisableTransactionFee: bool = $disable_transaction_fee;
                 pub const DisableNonceValidation: bool = $disable_nonce_validation;
 				pub const ProtocolVersion: u8 = 0;
-                pub const ChainId: Felt252Wrapper = mp_chain_id::SN_GOERLI_CHAIN_ID;
                 pub const MaxRecursionDepth: u32 = 50;
 				pub const ProgramHash: Felt252Wrapper = mp_program_hash::SN_OS_PROGRAM_HASH;
 				pub const L1GasPrice: ResourcePrice = ResourcePrice { price_in_strk: None, price_in_wei: 10 };
@@ -89,7 +88,6 @@ macro_rules! mock_runtime {
 				type DisableTransactionFee = DisableTransactionFee;
                 type DisableNonceValidation = DisableNonceValidation;
 				type ProtocolVersion = ProtocolVersion;
-                type ChainId = ChainId;
                 type MaxRecursionDepth = MaxRecursionDepth;
 				type ProgramHash = ProgramHash;
 				type L1GasPrice = L1GasPrice;
