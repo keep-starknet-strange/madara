@@ -296,5 +296,5 @@
     ]
   ],
   "fee_token_address": "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
-  "chain_id": "Felt252Wrapper(FieldElement { inner: 0x0000000000000000000000000000000000000000000000534e5f474f45524c49 })"
+  "chain_id": "MADARA"
 }
