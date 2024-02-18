@@ -6,7 +6,7 @@ use mp_felt::Felt252Wrapper;
 use mp_genesis_config::ContractClass;
 pub use mp_genesis_config::{GenesisData, GenesisLoader, HexFelt, PredeployedAccount};
 
-use crate::GenesisConfig;
+use crate::{GenesisConfig, Pallet};
 
 impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
     fn from(loader: GenesisLoader) -> Self {
@@ -67,6 +67,8 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
             .collect::<Vec<_>>();
         let fee_token_address = Felt252Wrapper(loader.data().fee_token_address.0).into();
 
+        let chain_id = loader.data().chain_id;
+
 
         let chain_id = match loader.data().chain_id.as_ref() {
             "MADARA" | "Madara" => {
@@ -80,6 +82,7 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
             },
             _ => panic!("Inavalid chain id try `MADARA` or `GOERLI` or `STARKNET_MAINNET`"),
         };
+
 
         GenesisConfig {
             contracts,

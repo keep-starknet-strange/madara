@@ -337,8 +337,6 @@ pub mod pallet {
            MADARA_CHAIN_ID
         }
     }
-
-
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
