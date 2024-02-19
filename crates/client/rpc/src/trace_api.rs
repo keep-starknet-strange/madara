@@ -14,7 +14,6 @@ use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
 use mp_transactions::compute_hash::ComputeTransactionHash;
-use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
 use mp_transactions::{DeclareTransaction, Transaction, TxType, UserOrL1HandlerTransaction, UserTransaction};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::{Backend, BlockBackend, StorageProvider};
@@ -24,7 +23,6 @@ use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
 use starknet_api::api_core::{ClassHash, ContractAddress};
-use starknet_api::transaction::TransactionHash;
 use starknet_core::types::{
     BlockId, BroadcastedTransaction, DeclareTransactionTrace, DeployAccountTransactionTrace, ExecuteInvocation,
     FeeEstimate, InvokeTransactionTrace, L1HandlerTransactionTrace, RevertedInvocation, SimulatedTransaction,
@@ -259,10 +257,15 @@ where
             .ok_or(StarknetRpcApiError::TxnHashNotFound)?;
 
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)?;
+        let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
-        let block_transactions = starknet_block
+        let block_until_tx = starknet_block
             .transactions()
             .iter()
+            .take_while(|tx| {
+                let tx_hash = tx.compute_hash::<H>(chain_id, false);
+                tx_hash != transaction_hash.into()
+            })
             .map(|tx| match tx {
                 Transaction::Invoke(invoke_tx) => {
                     RpcResult::Ok(UserOrL1HandlerTransaction::User(UserTransaction::Invoke(invoke_tx.clone())))
@@ -352,12 +355,12 @@ where
             })
         }?;
 
-        let tx_hash: TransactionHash = transaction_hash.into();
+        // let tx_hash: TransactionHash = transaction_hash.into();
 
         let execution_infos = self
             .client
             .runtime_api()
-            .re_execute_transactions(previous_block_substrate_hash, block_transactions.clone(), tx_hash)
+            .re_execute_transactions(previous_block_substrate_hash, block_until_tx.clone())
             .map_err(|e| {
                 error!("Failed to execute runtime API call: {e}");
                 StarknetRpcApiError::InternalServerError
@@ -384,18 +387,20 @@ where
                 tx_execution_infos_to_tx_trace(
                     &**storage_override,
                     substrate_block_hash,
-                    TxType::from(block_transactions.get(tx_idx).unwrap()),
+                    TxType::from(block_until_tx.get(tx_idx).unwrap()),
                     &tx_exec_info,
                 )
                 .map(|trace_root| TransactionTraceWithHash {
-                    transaction_hash: block_transactions[tx_idx].compute_hash::<H>(chain_id, false).into(),
+                    transaction_hash: block_until_tx[tx_idx].compute_hash::<H>(chain_id, false).into(),
                     trace_root,
                 })
             })
             .collect::<Result<Vec<_>, _>>()
             .map_err(StarknetRpcApiError::from)?;
 
-        Ok(traces[0])
+        let tx_trace = traces.last().map(|trace| trace.clone()).ok_or(StarknetRpcApiError::TxnHashNotFound)?;
+
+        Ok(tx_trace)
     }
 }
 
