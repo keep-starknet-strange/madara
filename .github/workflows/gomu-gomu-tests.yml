@@ -51,10 +51,5 @@ jobs:
           MADARA_RUN_PID=$!
           while ! echo exit | nc localhost 9944; do sleep 1; done
           cd ../gomu-gomu-no-gatling
-
-          # Increase default number of transactions
-          sed -i 's/num_erc20_transfers: 1000/num_erc20_transfers: 10000/' config/default.yaml
-          sed -i 's/num_erc721_mints: 1000/num_erc721_mints: 10000/' config/default.yaml
-
           RUST_LOG=info cargo run -- shoot -c config/default.yaml
           kill $MADARA_RUN_PID
