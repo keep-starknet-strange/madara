@@ -398,6 +398,8 @@ where
             .collect::<Result<Vec<_>, _>>()
             .map_err(StarknetRpcApiError::from)?;
 
+        /// Here the error should never been triggered because we already know that our TxVector is
+        /// not empty
         let tx_trace = traces.last().map(|trace| trace.clone()).ok_or(StarknetRpcApiError::TxnHashNotFound)?;
 
         Ok(tx_trace)
