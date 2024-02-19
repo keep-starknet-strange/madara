@@ -1599,7 +1599,7 @@ dependencies = [
 [[package]]
 name = "cairo-take_until_unbalanced"
 version = "0.29.0"
-source = "git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-21eff70#53dfed63ce010e9de8fb39e31f96b3034682762d"
+source = "git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-21eff70#f79edcaef28da6ff881942a0275374964831f21e"
 dependencies = [
  "nom",
 ]
@@ -1607,7 +1607,7 @@ dependencies = [
 [[package]]
 name = "cairo-vm"
 version = "0.8.5"
-source = "git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-21eff70#53dfed63ce010e9de8fb39e31f96b3034682762d"
+source = "git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-21eff70#f79edcaef28da6ff881942a0275374964831f21e"
 dependencies = [
  "anyhow",
  "ark-ff 0.4.2",
