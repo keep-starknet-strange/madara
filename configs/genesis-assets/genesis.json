@@ -42,7 +42,7 @@
     [
       "0x07db5c2c2676c2a5bfc892ee4f596b49514e3056a0eee8ad125870b4fb1dd909",
       {
-        "path": "genesis-assets/CallAggregator.json",
+        "path": "genesis-assets/BraavosCallAggregator.json",
         "version": 0
       }
     ],

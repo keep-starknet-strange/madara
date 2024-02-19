@@ -136,6 +136,13 @@ impl TryFrom<&[u8]> for Felt252Wrapper {
     }
 }
 
+/// [`EthAddress`] to [`Felt252Wrapper`].
+impl From<starknet_core::types::EthAddress> for Felt252Wrapper {
+    fn from(value: starknet_core::types::EthAddress) -> Self {
+        Self(FieldElement::from(value))
+    }
+}
+
 /// [`u64`] to [`Felt252Wrapper`].
 impl From<u64> for Felt252Wrapper {
     fn from(value: u64) -> Self {

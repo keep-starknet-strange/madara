@@ -2,6 +2,8 @@
 
 ## Next release
 
+- feat(rpc): add tests for estimateMessageFee RPC call
+- refacto: rename braavos call aggregator contract
 - fix: updating outdated links to external resources in documentation
 - feat(client/data-availability): implement custom error handling
 - fix: get_block_by_block_hash then default rather than error
@@ -84,7 +86,7 @@
 - feat: fixing getNonce Rpc Call and adding a new test
 - refactor: use Zaun crate for Starknet core contract bindings
 - refactor: use Anvil sandbox from Zaun crate
-- feat(rpc): estimateMessageFee RPC call implementation
+- feat(rpc) : estimateMessageFee RPC call implementation
 
 ## v0.6.0
 
