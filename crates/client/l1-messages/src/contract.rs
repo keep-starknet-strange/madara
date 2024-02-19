@@ -38,15 +38,16 @@ pub fn parse_handle_l1_message_transaction(
         .try_into()
         .map_err(L1EventToTransactionError::InvalidNonce)?;
 
-    let mut calldata: Vec<Felt252Wrapper> = vec![from_address];
-    calldata.extend(
-        event
-            .payload
-            .iter()
-            .map(|param| Felt252Wrapper::try_from(sp_core::U256(param.0)))
-            .collect::<Result<Vec<Felt252Wrapper>, Felt252WrapperError>>()
-            .map_err(L1EventToTransactionError::InvalidCalldata)?,
-    );
+    let event_payload: Vec<Felt252Wrapper> = event
+        .payload
+        .iter()
+        .map(|param| Felt252Wrapper::try_from(sp_core::U256(param.0)))
+        .collect::<Result<Vec<Felt252Wrapper>, Felt252WrapperError>>()
+        .map_err(L1EventToTransactionError::InvalidCalldata)?;
+
+    let mut calldata: Vec<Felt252Wrapper> = Vec::with_capacity(event.payload.len() + 1);
+    calldata.push(from_address);
+    event_payload.iter().collect_into(&mut calldata);
 
     Ok(HandleL1MessageTransaction { nonce, contract_address, entry_point_selector, calldata })
 }
