@@ -355,8 +355,6 @@ where
             })
         }?;
 
-        // let tx_hash: TransactionHash = transaction_hash.into();
-
         let execution_infos = self
             .client
             .runtime_api()
