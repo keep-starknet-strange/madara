@@ -34,9 +34,8 @@ jobs:
         run: |
           set -v -x +e
           cd ..
-          git clone https://github.com/LimeChain/gomu-gomu-no-gatling.git
+          git clone https://github.com/keep-starknet-strange/gomu-gomu-no-gatling.git
           cd gomu-gomu-no-gatling
-          git checkout goose_bugs
           cargo install --path .
 
       - name: Setup dev chain
