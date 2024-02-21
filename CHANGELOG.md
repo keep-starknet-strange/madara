@@ -2,6 +2,7 @@
 
 ## Next release
 
+- feat(rpc): support for pending state
 - test(rpc): disable state_diff tests
 - feat(rpc): add tests for estimateMessageFee RPC call
 - refacto: rename braavos call aggregator contract

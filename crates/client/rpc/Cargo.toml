@@ -36,6 +36,8 @@ sp-arithmetic = { workspace = true, default-features = true }
 sp-blockchain = { workspace = true, default-features = true }
 sp-core = { workspace = true, default-features = true }
 sp-runtime = { workspace = true, default-features = true }
+sp-timestamp = { workspace = true, default-features = true }
+
 # Substrate client
 sc-client-api = { workspace = true, default-features = true }
 sc-network-sync = { workspace = true }

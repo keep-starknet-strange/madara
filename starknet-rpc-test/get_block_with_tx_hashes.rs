@@ -57,3 +57,35 @@ async fn works_with_correct_block(madara: &ThreadSafeMadaraClient) -> Result<(),
 
     Ok(())
 }
+
+#[rstest]
+#[tokio::test]
+async fn works_for_pending_block(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+    let rpc = madara.get_starknet_client().await;
+
+    let recipient = FieldElement::from_hex_be("0x12345").unwrap();
+    let pending_block = {
+        let mut madara_write_lock = madara.write().await;
+        let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+
+        madara_write_lock
+            .submit_txs(vec![Transaction::Execution(account.transfer_tokens(recipient, FieldElement::ONE, None))])
+            .await;
+
+        let pending_block = match rpc.get_block_with_tx_hashes(BlockId::Tag(BlockTag::Pending)).await.unwrap() {
+            MaybePendingBlockWithTxHashes::Block(_) => {
+                return Err(anyhow!("Expected pending block, got already created block"));
+            }
+            MaybePendingBlockWithTxHashes::PendingBlock(pending_block) => pending_block,
+        };
+
+        // Create block with pending txs to clear state
+        madara_write_lock.create_block_with_pending_txs().await?;
+
+        pending_block
+    };
+
+    assert_eq!(pending_block.transactions.len(), 1);
+
+    Ok(())
+}

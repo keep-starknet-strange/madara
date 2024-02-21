@@ -263,7 +263,7 @@ impl ComputeTransactionHash for HandleL1MessageTransaction {
 impl ComputeTransactionHash for Transaction {
     fn compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, offset_version: bool) -> Felt252Wrapper {
         match self {
-            Transaction::Declare(tx) => tx.compute_hash::<H>(chain_id, offset_version),
+            Transaction::Declare(tx, _contract_class) => tx.compute_hash::<H>(chain_id, offset_version),
             Transaction::DeployAccount(tx) => tx.compute_hash::<H>(chain_id, offset_version),
             Transaction::Invoke(tx) => tx.compute_hash::<H>(chain_id, offset_version),
             Transaction::L1Handler(tx) => tx.compute_hash::<H>(chain_id, offset_version),

@@ -36,7 +36,7 @@ jobs:
           ./target/release/madara setup --chain=dev --from-local=configs
       - name: Compile contracts for rpc-tests
         run: |
-          cd starknet-rpc-test/contracts && ./generate_declare_contracts.sh 8
+          cd starknet-rpc-test/contracts && ./generate_declare_contracts.sh 10
       - name: Run rpc test without cache
         run: |-
           ./target/release/madara --dev --sealing=manual --da-layer=ethereum --da-conf=examples/da-confs/ethereum.json &
