@@ -241,6 +241,52 @@
 <a href="#241" id="241">241</a>
 <a href="#242" id="242">242</a>
 <a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::vec::Vec;
 
 <span class="kw">use </span>blockifier::block_context::BlockContext;
@@ -353,6 +399,39 @@
         <span class="prelude-val">Ok</span>(tx_execution_results)
     }
 
+    <span class="kw">pub fn </span>simulate_message(
+        message: HandleL1MessageTransaction,
+        simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt; {
+        storage::transactional::with_transaction(|| {
+            storage::TransactionOutcome::Rollback(<span class="prelude-ty">Result</span>::&lt;<span class="kw">_</span>, DispatchError&gt;::Ok(<span class="self">Self</span>::simulate_message_inner(
+                message,
+                simulation_flags,
+            )))
+        })
+        .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::FailedToCreateATransactionalStorageExecution)<span class="question-mark">?
+    </span>}
+
+    <span class="kw">fn </span>simulate_message_inner(
+        message: HandleL1MessageTransaction,
+        simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt; {
+        <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
+        <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
+        <span class="kw">let </span><span class="kw-2">mut </span>execution_config =
+            RuntimeExecutionConfigBuilder::new::&lt;T&gt;().with_simulation_mode(simulation_flags).build();
+
+        <span class="comment">// Follow `offset` from Pallet Starknet where it is set to false
+        </span>execution_config.set_offset_version(<span class="bool-val">false</span>);
+        <span class="kw">let </span>tx_execution_result =
+            <span class="self">Self</span>::execute_message(message, chain_id, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>execution_config).map_err(|e| {
+                <span class="macro">log::error!</span>(<span class="string">&quot;Transaction execution failed during simulation: {e}&quot;</span>);
+                PlaceHolderErrorTypeForFailedStarknetExecution
+            });
+
+        <span class="prelude-val">Ok</span>(tx_execution_result)
+    }
+
     <span class="kw">pub fn </span>estimate_message_fee(message: HandleL1MessageTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u128, u64, u64), DispatchError&gt; {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(<span class="prelude-ty">Result</span>::&lt;<span class="kw">_</span>, DispatchError&gt;::Ok(<span class="self">Self</span>::estimate_message_fee_inner(
@@ -365,28 +444,30 @@
     <span class="kw">fn </span>estimate_message_fee_inner(message: HandleL1MessageTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u128, u64, u64), DispatchError&gt; {
         <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
 
-        <span class="kw">let </span>tx_execution_infos = <span class="kw">match </span>message.into_executable::&lt;T::SystemHash&gt;(chain_id, Fee(u128::MAX), <span class="bool-val">true</span>).execute(
-            <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
-            <span class="kw-2">&amp;</span><span class="self">Self</span>::get_block_context(),
-            <span class="kw-2">&amp;</span>RuntimeExecutionConfigBuilder::new::&lt;T&gt;().with_query_mode().with_disable_nonce_validation().build(),
-        ) {
-            <span class="prelude-val">Ok</span>(execution_info) <span class="kw">if </span>!execution_info.is_reverted() =&gt; <span class="prelude-val">Ok</span>(execution_info),
-            <span class="prelude-val">Err</span>(e) =&gt; {
-                <span class="macro">log::error!</span>(
-                    <span class="string">&quot;Transaction execution failed during fee estimation: {e} {:?}&quot;</span>,
-                    std::error::Error::source(<span class="kw-2">&amp;</span>e)
-                );
-                <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed)
-            }
-            <span class="prelude-val">Ok</span>(execution_info) =&gt; {
-                <span class="macro">log::error!</span>(
-                    <span class="string">&quot;Transaction execution reverted during fee estimation: {}&quot;</span>,
-                    <span class="comment">// Safe due to the `match` branch order
-                    </span>execution_info.revert_error.unwrap()
-                );
-                <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed)
-            }
-        }<span class="question-mark">?</span>;
+        <span class="comment">// Follow `offset` from Pallet Starknet where it is set to false
+        </span><span class="kw">let </span>tx_execution_infos =
+            <span class="kw">match </span>message.into_executable::&lt;T::SystemHash&gt;(chain_id, Fee(u128::MAX), <span class="bool-val">false</span>).execute(
+                <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
+                <span class="kw-2">&amp;</span><span class="self">Self</span>::get_block_context(),
+                <span class="kw-2">&amp;</span>RuntimeExecutionConfigBuilder::new::&lt;T&gt;().with_query_mode().with_disable_nonce_validation().build(),
+            ) {
+                <span class="prelude-val">Ok</span>(execution_info) <span class="kw">if </span>!execution_info.is_reverted() =&gt; <span class="prelude-val">Ok</span>(execution_info),
+                <span class="prelude-val">Err</span>(e) =&gt; {
+                    <span class="macro">log::error!</span>(
+                        <span class="string">&quot;Transaction execution failed during fee estimation: {e} {:?}&quot;</span>,
+                        std::error::Error::source(<span class="kw-2">&amp;</span>e)
+                    );
+                    <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed)
+                }
+                <span class="prelude-val">Ok</span>(execution_info) =&gt; {
+                    <span class="macro">log::error!</span>(
+                        <span class="string">&quot;Transaction execution reverted during fee estimation: {}&quot;</span>,
+                        <span class="comment">// Safe due to the `match` branch order
+                        </span>execution_info.revert_error.unwrap()
+                    );
+                    <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed)
+                }
+            }<span class="question-mark">?</span>;
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(l1_gas_usage) = tx_execution_infos.actual_resources.<span class="number">0</span>.get(<span class="string">&quot;l1_gas_usage&quot;</span>) {
             <span class="prelude-val">Ok</span>((T::L1GasPrice::get().price_in_wei, tx_execution_infos.actual_fee.<span class="number">0 </span><span class="kw">as </span>u64, <span class="kw-2">*</span>l1_gas_usage))
@@ -482,6 +563,17 @@
                 executable.execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), block_context, execution_config)
             }
         }
+    }
+
+    <span class="kw">fn </span>execute_message(
+        message: HandleL1MessageTransaction,
+        chain_id: Felt252Wrapper,
+        block_context: <span class="kw-2">&amp;</span>BlockContext,
+        execution_config: <span class="kw-2">&amp;</span>ExecutionConfig,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, TransactionExecutionError&gt; {
+        <span class="comment">// Follow `offset` from Pallet Starknet where it is set to false
+        </span><span class="kw">let </span>executable = message.into_executable::&lt;T::SystemHash&gt;(chain_id, Fee::default(), <span class="bool-val">false</span>);
+        executable.execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), block_context, execution_config)
     }
 }
 </code></pre></div></section></main></body></html>

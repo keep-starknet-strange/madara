@@ -326,7 +326,7 @@
 #[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
 </span><span class="kw">pub enum </span>Transaction {
-    Declare(DeclareTransaction),
+    Declare(DeclareTransaction, ContractClass),
     DeployAccount(DeployAccountTransaction),
     Invoke(InvokeTransaction),
     L1Handler(HandleL1MessageTransaction),

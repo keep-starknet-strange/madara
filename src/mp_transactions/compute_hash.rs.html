@@ -558,7 +558,7 @@
 <span class="kw">impl </span>ComputeTransactionHash <span class="kw">for </span>Transaction {
     <span class="kw">fn </span>compute_hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; Felt252Wrapper {
         <span class="kw">match </span><span class="self">self </span>{
-            Transaction::Declare(tx) =&gt; tx.compute_hash::&lt;H&gt;(chain_id, offset_version),
+            Transaction::Declare(tx, _contract_class) =&gt; tx.compute_hash::&lt;H&gt;(chain_id, offset_version),
             Transaction::DeployAccount(tx) =&gt; tx.compute_hash::&lt;H&gt;(chain_id, offset_version),
             Transaction::Invoke(tx) =&gt; tx.compute_hash::&lt;H&gt;(chain_id, offset_version),
             Transaction::L1Handler(tx) =&gt; tx.compute_hash::&lt;H&gt;(chain_id, offset_version),

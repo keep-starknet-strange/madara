@@ -560,7 +560,7 @@
         <span class="kw">let </span>substrate_block_hash =
             <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| StarknetRpcApiError::BlockNotFound)<span class="question-mark">?</span>;
         <span class="kw">let </span>chain_id = Felt252Wrapper(<span class="self">self</span>.chain_id()<span class="question-mark">?</span>.<span class="number">0</span>);
-        <span class="kw">let </span>best_block_hash = <span class="self">self</span>.client.info().best_hash;
+        <span class="kw">let </span>best_block_hash = <span class="self">self</span>.get_best_block_hash();
 
         <span class="kw">let </span>tx_type_and_tx_iterator = transactions.into_iter().map(|tx| <span class="kw">match </span>tx {
             BroadcastedTransaction::Invoke(invoke_tx) =&gt; invoke_tx.try_into().map(|tx| (TxType::Invoke, tx)),
@@ -621,7 +621,7 @@
                 Transaction::DeployAccount(deploy_account_tx) =&gt; {
                     <span class="prelude-val">Ok</span>(UserOrL1HandlerTransaction::User(UserTransaction::DeployAccount(deploy_account_tx.clone())))
                 }
-                Transaction::Declare(declare_tx) =&gt; {
+                Transaction::Declare(declare_tx, <span class="kw">_</span>) =&gt; {
                     <span class="kw">let </span>class_hash = ClassHash::from(<span class="kw-2">*</span>declare_tx.class_hash());
 
                     <span class="kw">match </span>declare_tx {

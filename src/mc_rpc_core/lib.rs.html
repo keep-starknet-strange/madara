@@ -207,8 +207,8 @@
     BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
     BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall,
-    InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt,
-    MsgFromL1, SimulatedTransaction, SimulationFlag, StateUpdate, SyncStatusType, Transaction,
+    InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingStateUpdate,
+    MaybePendingTransactionReceipt, MsgFromL1, SimulatedTransaction, SimulationFlag, SyncStatusType, Transaction,
     TransactionTraceWithHash,
 };
 
@@ -336,7 +336,7 @@
 
     <span class="doccomment">/// Get the information about the result of executing the requested block
     </span><span class="attr">#[method(name = <span class="string">&quot;getStateUpdate&quot;</span>)]
-    </span><span class="kw">fn </span>get_state_update(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId) -&gt; RpcResult&lt;StateUpdate&gt;;
+    </span><span class="kw">fn </span>get_state_update(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId) -&gt; RpcResult&lt;MaybePendingStateUpdate&gt;;
 
     <span class="doccomment">/// Returns all events matching the given filter
     </span><span class="attr">#[method(name = <span class="string">&quot;getEvents&quot;</span>)]

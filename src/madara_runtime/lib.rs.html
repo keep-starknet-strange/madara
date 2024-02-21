@@ -494,6 +494,10 @@
 <a href="#494" id="494">494</a>
 <a href="#495" id="495">495</a>
 <a href="#496" id="496">496</a>
+<a href="#497" id="497">497</a>
+<a href="#498" id="498">498</a>
+<a href="#499" id="499">499</a>
+<a href="#500" id="500">500</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don&#39;t support yet validity proofs and state updates to
@@ -788,6 +792,10 @@
             Starknet::simulate_transactions(transactions, <span class="kw-2">&amp;</span>simulation_flags)
         }
 
+        <span class="kw">fn </span>simulate_message(message: HandleL1MessageTransaction, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt; {
+            Starknet::simulate_message(message, <span class="kw-2">&amp;</span>simulation_flags)
+        }
+
         <span class="kw">fn </span>get_starknet_events_and_their_associated_tx_index() -&gt; Vec&lt;(u32, StarknetEvent)&gt; {
             System::read_events_no_consensus().filter_map(|event_record| {
                 <span class="kw">let </span>(phase, event) = <span class="kw">match </span><span class="kw-2">*</span>event_record {
@@ -806,7 +814,7 @@
         <span class="kw">fn </span>extrinsic_filter(xts: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;) -&gt; Vec&lt;Transaction&gt; {
             xts.into_iter().filter_map(|xt| <span class="kw">match </span>xt.function {
                 RuntimeCall::Starknet( invoke { transaction }) =&gt; <span class="prelude-val">Some</span>(Transaction::Invoke(transaction)),
-                RuntimeCall::Starknet( declare { transaction, .. }) =&gt; <span class="prelude-val">Some</span>(Transaction::Declare(transaction)),
+                RuntimeCall::Starknet( declare { transaction, contract_class }) =&gt; <span class="prelude-val">Some</span>(Transaction::Declare(transaction, contract_class)),
                 RuntimeCall::Starknet( deploy_account { transaction }) =&gt; <span class="prelude-val">Some</span>(Transaction::DeployAccount(transaction)),
                 RuntimeCall::Starknet( consume_l1_message { transaction, .. }) =&gt; <span class="prelude-val">Some</span>(Transaction::L1Handler(transaction)),
                 <span class="kw">_ </span>=&gt; <span class="prelude-val">None
@@ -828,7 +836,7 @@
             })<span class="question-mark">?</span>;
             <span class="kw">let </span>transaction = <span class="kw">match </span>tx.function {
                 RuntimeCall::Starknet( invoke { transaction }) =&gt; Transaction::Invoke(transaction),
-                RuntimeCall::Starknet( declare { transaction, .. }) =&gt; Transaction::Declare(transaction),
+                RuntimeCall::Starknet( declare { transaction, contract_class }) =&gt; Transaction::Declare(transaction, contract_class),
                 RuntimeCall::Starknet( deploy_account { transaction }) =&gt; Transaction::DeployAccount(transaction),
                 RuntimeCall::Starknet( consume_l1_message { transaction, .. }) =&gt; Transaction::L1Handler(transaction),
                 <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;The previous match made sure that at this point tx is one of those starknet calls&quot;</span>),

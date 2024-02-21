@@ -181,7 +181,7 @@
     transaction_hash: FieldElement,
 ) -&gt; starknet_core::types::Transaction {
     <span class="kw">match </span>tx {
-        <span class="kw">super</span>::Transaction::Declare(tx) =&gt; {
+        <span class="kw">super</span>::Transaction::Declare(tx, _contract_class) =&gt; {
             <span class="kw">let </span>tx = <span class="kw">match </span>tx {
                 <span class="kw">super</span>::DeclareTransaction::V0(<span class="kw">super</span>::DeclareTransactionV0 {
                     max_fee,

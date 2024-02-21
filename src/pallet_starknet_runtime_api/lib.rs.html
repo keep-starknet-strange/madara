@@ -160,6 +160,8 @@
 <a href="#160" id="160">160</a>
 <a href="#161" id="161">161</a>
 <a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Definition of the runtime API for the Starknet pallet.
 
 </span><span class="comment">// Adding allow unused type parameters to avoid clippy errors
@@ -221,6 +223,8 @@
         </span><span class="kw">fn </span>estimate_message_fee(message: HandleL1MessageTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u128, u64, u64), DispatchError&gt;;
         <span class="doccomment">/// Simulates transactions and returns their trace
         </span><span class="kw">fn </span>simulate_transactions(transactions: Vec&lt;UserTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;&gt;, DispatchError&gt;;
+        <span class="doccomment">/// Simulates single L1 Message and returns its trace
+        </span><span class="kw">fn </span>simulate_message(message: HandleL1MessageTransaction, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt;;
         <span class="doccomment">/// Filters extrinsic transactions to return only Starknet transactions
         ///
         /// To support runtime upgrades, the client must be unaware of the specific extrinsic

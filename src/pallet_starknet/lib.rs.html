@@ -1134,6 +1134,10 @@
 <a href="#1134" id="1134">1134</a>
 <a href="#1135" id="1135">1135</a>
 <a href="#1136" id="1136">1136</a>
+<a href="#1137" id="1137">1137</a>
+<a href="#1138" id="1138">1138</a>
+<a href="#1139" id="1139">1139</a>
+<a href="#1140" id="1140">1140</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1695,7 +1699,7 @@
             <span class="kw">let </span>input_transaction = transaction;
             <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
             <span class="kw">let </span>transaction = input_transaction
-                .try_into_executable::&lt;T::SystemHash&gt;(chain_id, contract_class, <span class="bool-val">false</span>)
+                .try_into_executable::&lt;T::SystemHash&gt;(chain_id, contract_class.clone(), <span class="bool-val">false</span>)
                 .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::InvalidContractClassForThisDeclareVersion)<span class="question-mark">?</span>;
 
             <span class="comment">// Check class hash is not already declared
@@ -1724,7 +1728,11 @@
                 <span class="kw-2">&amp;</span>tx_execution_infos.execute_call_info,
                 <span class="kw-2">&amp;</span>tx_execution_infos.fee_transfer_call_info,
             );
-            <span class="self">Self</span>::store_transaction(tx_hash, Transaction::Declare(input_transaction), tx_execution_infos.revert_error);
+            <span class="self">Self</span>::store_transaction(
+                tx_hash,
+                Transaction::Declare(input_transaction, contract_class),
+                tx_execution_infos.revert_error,
+            );
 
             <span class="prelude-val">Ok</span>(())
         }
@@ -1816,7 +1824,7 @@
             <span class="comment">// Ensure that L1 Message has not been executed
             </span><span class="self">Self</span>::ensure_l1_message_not_executed(<span class="kw-2">&amp;</span>nonce).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::L1MessageAlreadyExecuted)<span class="question-mark">?</span>;
 
-            <span class="comment">// Store infornamtion about message being processed
+            <span class="comment">// Store information about message being processed
             // The next instruction executes the message
             // Either successfully  or not
             </span>L1Messages::&lt;T&gt;::mutate(|nonces| nonces.insert(nonce));

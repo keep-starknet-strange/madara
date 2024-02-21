@@ -199,6 +199,20 @@
 <a href="#199" id="199">199</a>
 <a href="#200" id="200">200</a>
 <a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
 </pre></div><pre class="rust"><code><span class="attr">#![feature(assert_matches)]
 
 </span><span class="kw">use </span>std::cell::Cell;
@@ -349,9 +363,17 @@
     }
 
     <span class="kw">pub async fn </span>create_empty_block(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; anyhow::Result&lt;()&gt; {
+        <span class="self">self</span>.do_create_block(<span class="bool-val">true</span>, <span class="bool-val">true</span>).<span class="kw">await
+    </span>}
+
+    <span class="kw">pub async fn </span>create_block_with_pending_txs(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; anyhow::Result&lt;()&gt; {
+        <span class="self">self</span>.do_create_block(<span class="bool-val">false</span>, <span class="bool-val">true</span>).<span class="kw">await
+    </span>}
+
+    <span class="kw">async fn </span>do_create_block(<span class="kw-2">&amp;mut </span><span class="self">self</span>, empty: bool, finalize: bool) -&gt; anyhow::Result&lt;()&gt; {
         <span class="kw">let </span>body = <span class="macro">json!</span>({
             <span class="string">&quot;method&quot;</span>: <span class="string">&quot;engine_createBlock&quot;</span>,
-            <span class="string">&quot;params&quot;</span>: [<span class="bool-val">true</span>, <span class="bool-val">true</span>],
+            <span class="string">&quot;params&quot;</span>: [empty, finalize],
         });
 
         <span class="kw">let </span>response = <span class="self">self</span>.call_rpc(body).<span class="kw">await</span><span class="question-mark">?</span>;
@@ -363,20 +385,26 @@
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         transactions: Vec&lt;Transaction&lt;<span class="lifetime">&#39;_</span>&gt;&gt;,
     ) -&gt; anyhow::Result&lt;Vec&lt;<span class="prelude-ty">Result</span>&lt;TransactionResult, SendTransactionError&gt;&gt;&gt; {
-        <span class="kw">let </span>body = <span class="macro">json!</span>({
-            <span class="string">&quot;method&quot;</span>: <span class="string">&quot;engine_createBlock&quot;</span>,
-            <span class="string">&quot;params&quot;</span>: [<span class="bool-val">false</span>, <span class="bool-val">true</span>],
-        });
-
         <span class="kw">let </span><span class="kw-2">mut </span>results = Vec::new();
         <span class="kw">for </span>tx <span class="kw">in </span>transactions {
             <span class="kw">let </span>result = tx.send().<span class="kw">await</span>;
             results.push(result);
         }
 
-        <span class="kw">let </span>response = <span class="self">self</span>.call_rpc(body).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="comment">// TODO: read actual error from response
-        </span>response.status().is_success().then_some(results).ok_or(<span class="macro">anyhow!</span>(<span class="string">&quot;failed to create a new block&quot;</span>))
+        <span class="self">self</span>.do_create_block(<span class="bool-val">false</span>, <span class="bool-val">false</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(results)
+    }
+
+    <span class="kw">pub async fn </span>submit_txs(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        transactions: Vec&lt;Transaction&lt;<span class="lifetime">&#39;_</span>&gt;&gt;,
+    ) -&gt; Vec&lt;<span class="prelude-ty">Result</span>&lt;TransactionResult, SendTransactionError&gt;&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>results = Vec::new();
+        <span class="kw">for </span>tx <span class="kw">in </span>transactions {
+            <span class="kw">let </span>result = tx.send().<span class="kw">await</span>;
+            results.push(result);
+        }
+        results
     }
 
     <span class="kw">pub async fn </span>create_block_with_parent(<span class="kw-2">&amp;mut </span><span class="self">self</span>, parent_hash: <span class="kw-2">&amp;</span>str) -&gt; anyhow::Result&lt;()&gt; {

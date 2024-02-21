@@ -322,7 +322,7 @@
 <span class="kw">impl </span>Transaction {
     <span class="kw">pub fn </span>signature(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;Felt252Wrapper&gt; {
         <span class="kw">match </span><span class="self">self </span>{
-            Transaction::Declare(tx) =&gt; tx.signature().clone(),
+            Transaction::Declare(tx, _contract_class) =&gt; tx.signature().clone(),
             Transaction::DeployAccount(tx) =&gt; tx.signature().clone(),
             Transaction::Invoke(tx) =&gt; tx.signature().clone(),
             Transaction::L1Handler(<span class="kw">_</span>) =&gt; Vec::new(),
@@ -533,7 +533,7 @@
     <span class="attr">#[inline(always)]
     </span><span class="kw">fn </span>version(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u8 {
         <span class="kw">match </span><span class="self">self </span>{
-            Transaction::Declare(tx) =&gt; tx.version(),
+            Transaction::Declare(tx, _contract_class) =&gt; tx.version(),
             Transaction::DeployAccount(tx) =&gt; tx.version(),
             Transaction::Invoke(tx) =&gt; tx.version(),
             Transaction::L1Handler(tx) =&gt; tx.version(),
