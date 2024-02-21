@@ -405,22 +405,6 @@ pub mod pallet {
         }
     }
 
-    /// The Starknet pallet events.
-    /// EVENTS
-    /// See: `<https://docs.substrate.io/main-docs/build/events-errors/>`
-    #[pallet::event]
-    // #[pallet::generate_deposit(pub(super) fn deposit_event)]
-    pub enum Event<T: Config> {
-        KeepStarknetStrange,
-        /// Emitted when fee token address is changed.
-        /// This is emitted by the `set_fee_token_address` extrinsic.
-        /// [old_fee_token_address, new_fee_token_address]
-        FeeTokenAddressChanged {
-            old_fee_token_address: ContractAddress,
-            new_fee_token_address: ContractAddress,
-        },
-    }
-
     /// The Starknet pallet custom errors.
     /// ERRORS
     #[pallet::error]
@@ -986,7 +970,6 @@ impl<T: Config> Pallet<T> {
         BlockHash::<T>::insert(block_number, blockhash);
 
         // Kill pending storage.
-        // There is no need to kill `TxEvents` as we store them.
         Pending::<T>::kill();
         PendingHashes::<T>::kill();
 
