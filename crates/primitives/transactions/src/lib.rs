@@ -99,7 +99,7 @@ pub enum UserTransaction {
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 pub enum Transaction {
-    Declare(DeclareTransaction),
+    Declare(DeclareTransaction, ContractClass),
     DeployAccount(DeployAccountTransaction),
     Invoke(InvokeTransaction),
     L1Handler(HandleL1MessageTransaction),

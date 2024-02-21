@@ -292,6 +292,10 @@ impl_runtime_apis! {
             Starknet::simulate_transactions(transactions, &simulation_flags)
         }
 
+        fn simulate_message(message: HandleL1MessageTransaction, simulation_flags: SimulationFlags) -> Result<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError> {
+            Starknet::simulate_message(message, &simulation_flags)
+        }
+
         fn get_starknet_events_and_their_associated_tx_index() -> Vec<(u32, StarknetEvent)> {
             System::read_events_no_consensus().filter_map(|event_record| {
                 let (phase, event) = match *event_record {
@@ -310,7 +314,7 @@ impl_runtime_apis! {
         fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction> {
             xts.into_iter().filter_map(|xt| match xt.function {
                 RuntimeCall::Starknet( invoke { transaction }) => Some(Transaction::Invoke(transaction)),
-                RuntimeCall::Starknet( declare { transaction, .. }) => Some(Transaction::Declare(transaction)),
+                RuntimeCall::Starknet( declare { transaction, contract_class }) => Some(Transaction::Declare(transaction, contract_class)),
                 RuntimeCall::Starknet( deploy_account { transaction }) => Some(Transaction::DeployAccount(transaction)),
                 RuntimeCall::Starknet( consume_l1_message { transaction, .. }) => Some(Transaction::L1Handler(transaction)),
                 _ => None
@@ -332,7 +336,7 @@ impl_runtime_apis! {
             })?;
             let transaction = match tx.function {
                 RuntimeCall::Starknet( invoke { transaction }) => Transaction::Invoke(transaction),
-                RuntimeCall::Starknet( declare { transaction, .. }) => Transaction::Declare(transaction),
+                RuntimeCall::Starknet( declare { transaction, contract_class }) => Transaction::Declare(transaction, contract_class),
                 RuntimeCall::Starknet( deploy_account { transaction }) => Transaction::DeployAccount(transaction),
                 RuntimeCall::Starknet( consume_l1_message { transaction, .. }) => Transaction::L1Handler(transaction),
                 _ => unreachable!("The previous match made sure that at this point tx is one of those starknet calls"),
