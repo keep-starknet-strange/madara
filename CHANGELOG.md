@@ -2,6 +2,8 @@
 
 ## Next release
 
+- feat(rpc): support for pending state
+- test(rpc): disable state_diff tests
 - feat(rpc): add tests for estimateMessageFee RPC call
 - refacto: rename braavos call aggregator contract
 - fix: updating outdated links to external resources in documentation
@@ -11,6 +13,7 @@
 - feat: add transparent representation to `Felt252Wrapper`
 - feat(rpc/trace_api): add `trace_block_transaction`
 - chore(db): changed the way hashes are encoded
+- ci: add gomu gomu no gatling perfomrance test
 
 ## v0.7.0
 

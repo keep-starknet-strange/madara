@@ -91,15 +91,17 @@ fn test_declare_v0_tx_hash() {
 
     assert_eq!(tx_hash, expected_tx_hash);
 
+    let contract_class = ContractClass::V0(Default::default());
+
     let declare_v0_transaction = DeclareTransaction::V0(transaction);
     let tx_hash = declare_v0_transaction.compute_hash::<PedersenHasher>(chain_id, false);
     assert_eq!(tx_hash, expected_tx_hash);
 
-    let generic_transaction = Transaction::Declare(declare_v0_transaction.clone());
+    let generic_transaction = Transaction::Declare(declare_v0_transaction.clone(), contract_class.clone());
     let tx_hash = generic_transaction.compute_hash::<PedersenHasher>(chain_id, false);
     assert_eq!(tx_hash, expected_tx_hash);
 
-    let user_transaction = UserTransaction::Declare(declare_v0_transaction, ContractClass::V0(Default::default()));
+    let user_transaction = UserTransaction::Declare(declare_v0_transaction, contract_class);
     let tx_hash = user_transaction.compute_hash::<PedersenHasher>(chain_id, false);
     assert_eq!(tx_hash, expected_tx_hash);
 }
@@ -129,11 +131,12 @@ fn test_declare_v1_tx_hash() {
     let tx_hash = declare_v1_transaction.compute_hash::<PedersenHasher>(chain_id, false);
     assert_eq!(tx_hash, expected_tx_hash);
 
-    let generic_transaction = Transaction::Declare(declare_v1_transaction.clone());
+    let contract_class = ContractClass::V0(Default::default());
+    let generic_transaction = Transaction::Declare(declare_v1_transaction.clone(), contract_class.clone());
     let tx_hash = generic_transaction.compute_hash::<PedersenHasher>(chain_id, false);
     assert_eq!(tx_hash, expected_tx_hash);
 
-    let user_transaction = UserTransaction::Declare(declare_v1_transaction, ContractClass::V0(Default::default()));
+    let user_transaction = UserTransaction::Declare(declare_v1_transaction, contract_class);
     let tx_hash = user_transaction.compute_hash::<PedersenHasher>(chain_id, false);
     assert_eq!(tx_hash, expected_tx_hash);
 }
@@ -164,11 +167,12 @@ fn test_declare_v2_tx_hash() {
     let tx_hash = declare_v2_transaction.compute_hash::<PedersenHasher>(chain_id, false);
     assert_eq!(tx_hash, expected_tx_hash);
 
-    let generic_transaction = Transaction::Declare(declare_v2_transaction.clone());
+    let contract_class = ContractClass::V1(Default::default());
+    let generic_transaction = Transaction::Declare(declare_v2_transaction.clone(), contract_class.clone());
     let tx_hash = generic_transaction.compute_hash::<PedersenHasher>(chain_id, false);
     assert_eq!(tx_hash, expected_tx_hash);
 
-    let user_transaction = UserTransaction::Declare(declare_v2_transaction, ContractClass::V1(Default::default()));
+    let user_transaction = UserTransaction::Declare(declare_v2_transaction, contract_class);
     let tx_hash = user_transaction.compute_hash::<PedersenHasher>(chain_id, false);
     assert_eq!(tx_hash, expected_tx_hash);
 }

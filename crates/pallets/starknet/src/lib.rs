@@ -559,7 +559,7 @@ pub mod pallet {
             let input_transaction = transaction;
             let chain_id = Self::chain_id();
             let transaction = input_transaction
-                .try_into_executable::<T::SystemHash>(chain_id, contract_class, false)
+                .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), false)
                 .map_err(|_| Error::<T>::InvalidContractClassForThisDeclareVersion)?;
 
             // Check class hash is not already declared
@@ -588,7 +588,11 @@ pub mod pallet {
                 &tx_execution_infos.execute_call_info,
                 &tx_execution_infos.fee_transfer_call_info,
             );
-            Self::store_transaction(tx_hash, Transaction::Declare(input_transaction), tx_execution_infos.revert_error);
+            Self::store_transaction(
+                tx_hash,
+                Transaction::Declare(input_transaction, contract_class),
+                tx_execution_infos.revert_error,
+            );
 
             Ok(())
         }
@@ -680,7 +684,7 @@ pub mod pallet {
             // Ensure that L1 Message has not been executed
             Self::ensure_l1_message_not_executed(&nonce).map_err(|_| Error::<T>::L1MessageAlreadyExecuted)?;
 
-            // Store infornamtion about message being processed
+            // Store information about message being processed
             // The next instruction executes the message
             // Either successfully  or not
             L1Messages::<T>::mutate(|nonces| nonces.insert(nonce));
