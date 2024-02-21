@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group:
+    pr-checks-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   changelog:
     name: Enforce CHANGELOG
@@ -54,3 +59,8 @@ jobs:
       SCARB_VERSION: "2.3.1"
     steps:
       - uses: keep-starknet-strange/starknet-foundry-compatibility-tests@main
+
+  gomu-gomu-tests:
+    name: Run gomu gomu performance tests
+    uses: ./.github/workflows/gomu-gomu-tests.yml
+    needs: madara_commands

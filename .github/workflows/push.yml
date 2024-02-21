@@ -45,6 +45,11 @@ jobs:
     steps:
       - uses: keep-starknet-strange/starknet-foundry-compatibility-tests@main
 
+  gomu-gomu-tests:
+    name: Run gomu gomu performance tests
+    uses: ./.github/workflows/gomu-gomu-tests.yml
+    needs: madara_commands
+
   rustdoc:
     name: Deploy docs to GitHub Pages
     uses: ./.github/workflows/rustdoc.yml
