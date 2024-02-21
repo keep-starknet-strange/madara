@@ -25,8 +25,9 @@ use crate::errors::StarknetRpcApiError;
 use crate::types::{ContinuationToken, RpcEventFilter};
 use crate::Starknet;
 
-impl<A: ChainApi, B, BE, G, C, P, H> Starknet<A, B, BE, G, C, P, H>
+impl<A, B, BE, G, C, P, H> Starknet<A, B, BE, G, C, P, H>
 where
+    A: ChainApi<Block = B> + 'static,
     B: BlockT,
     C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
@@ -53,7 +54,7 @@ where
 
         let runtime_api = self.client.runtime_api();
 
-        let chain_id = runtime_api.chain_id(substrate_block_hash).map_err(|_| {
+        let chain_id = self.get_chain_id(substrate_block_hash).map_err(|_| {
             error!("Failed to retrieve chain id");
             StarknetRpcApiError::InternalServerError
         })?;

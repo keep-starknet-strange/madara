@@ -33,7 +33,7 @@ pub fn to_starknet_core_tx(
     transaction_hash: FieldElement,
 ) -> starknet_core::types::Transaction {
     match tx {
-        super::Transaction::Declare(tx) => {
+        super::Transaction::Declare(tx, _contract_class) => {
             let tx = match tx {
                 super::DeclareTransaction::V0(super::DeclareTransactionV0 {
                     max_fee,
