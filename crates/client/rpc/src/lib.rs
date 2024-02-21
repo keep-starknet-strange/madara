@@ -1543,7 +1543,6 @@ where
 
         let fee_disabled = self.is_transaction_fee_disabled(substrate_block_hash)?;
 
-        let block_extrinsics_len = block_extrinsics.len();
         let transactions = self.filter_extrinsics(substrate_block_hash, block_extrinsics)?;
         let txn_hashes = self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into());
         let mut transaction = None;
@@ -1671,9 +1670,7 @@ where
         substrate_block_hash: B::Hash,
         tx_hash: TransactionHash,
     ) -> Result<Vec<starknet_api::transaction::Event>, StarknetRpcApiError> {
-        let events = self
-            .do_get_events_for_tx_by_hash(substrate_block_hash, tx_hash)?
-            .expect("the transaction should be present in the substrate extrinsics"); // not reachable
+        let events = self.do_get_events_for_tx_by_hash(substrate_block_hash, tx_hash)?;
         Ok(events)
     }
 

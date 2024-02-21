@@ -4,7 +4,7 @@
 //! The code consists of the following sections:
 //! 1. Config: The trait Config is defined, which is used to configure the pallet by specifying the
 //! parameters and types on which it depends. The trait also includes associated types for
-//! RuntimeEvent, StateRoot, SystemHash, and TimestampProvider.
+//! StateRoot, SystemHash, and TimestampProvider.
 //!
 //! 2. Hooks: The Hooks trait is implemented for the pallet, which includes methods to be executed
 //! during the block lifecycle: on_finalize, on_initialize, on_runtime_upgrade, and offchain_worker.
@@ -131,8 +131,6 @@ pub mod pallet {
     /// mechanism and comply with starknet which uses an ER20 as fee token
     #[pallet::config]
     pub trait Config: frame_system::Config {
-        /// Because this pallet emits events, it depends on the runtime's definition of an event.
-        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// The hashing function to use.
         type SystemHash: HasherT;
         /// The block time
