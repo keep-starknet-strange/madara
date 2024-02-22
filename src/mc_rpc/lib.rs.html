@@ -1860,14 +1860,6 @@
 <a href="#1860" id="1860">1860</a>
 <a href="#1861" id="1861">1861</a>
 <a href="#1862" id="1862">1862</a>
-<a href="#1863" id="1863">1863</a>
-<a href="#1864" id="1864">1864</a>
-<a href="#1865" id="1865">1865</a>
-<a href="#1866" id="1866">1866</a>
-<a href="#1867" id="1867">1867</a>
-<a href="#1868" id="1868">1868</a>
-<a href="#1869" id="1869">1869</a>
-<a href="#1870" id="1870">1870</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1917,7 +1909,7 @@
 <span class="kw">use </span>sp_runtime::DispatchError;
 <span class="kw">use </span>starknet_api::block::BlockHash;
 <span class="kw">use </span>starknet_api::hash::StarkHash;
-<span class="kw">use </span>starknet_api::transaction::Calldata;
+<span class="kw">use </span>starknet_api::transaction::{Calldata, TransactionHash};
 <span class="kw">use </span>starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
@@ -3413,32 +3405,26 @@
 
         <span class="kw">let </span>fee_disabled = <span class="self">self</span>.is_transaction_fee_disabled(substrate_block_hash)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>block_extrinsics_len = block_extrinsics.len();
         <span class="kw">let </span>transactions = <span class="self">self</span>.filter_extrinsics(substrate_block_hash, block_extrinsics)<span class="question-mark">?</span>;
         <span class="kw">let </span>txn_hashes = <span class="self">self</span>.get_cached_transaction_hashes(starknet_block.header().hash::&lt;H&gt;().into());
-        <span class="kw">let </span><span class="kw-2">mut </span>tx_index = <span class="prelude-val">None</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>transaction = <span class="prelude-val">None</span>;
         <span class="kw">for </span>(index, tx) <span class="kw">in </span>transactions.iter().enumerate() {
             <span class="kw">let </span>tx_hash = <span class="self">self</span>.try_txn_hash_from_cache(index, <span class="kw-2">&amp;</span>txn_hashes, <span class="kw-2">&amp;</span>transactions, chain_id)<span class="question-mark">?</span>;
             <span class="kw">if </span>tx_hash == transaction_hash.into() {
-                tx_index = <span class="prelude-val">Some</span>(index);
                 transaction = <span class="prelude-val">Some</span>(tx);
                 <span class="kw">break</span>;
             }
         }
-        <span class="kw">if </span>tx_index.is_none() || transaction.is_none() {
+        <span class="kw">if </span>transaction.is_none() {
             <span class="macro">error!</span>(
                 <span class="string">&quot;Failed to find transaction hash in block. Substrate block hash: {substrate_block_hash}, transaction \
                  hash: {transaction_hash}&quot;
             </span>);
             <span class="kw">return </span><span class="prelude-val">Err</span>(StarknetRpcApiError::InternalServerError);
         }
-        <span class="kw">let </span>tx_index = tx_index.unwrap();
         <span class="kw">let </span>transaction = transaction.unwrap();
-        <span class="comment">// adding the inherents count to the tx_index to get the correct index in the block
-        </span><span class="kw">let </span>tx_index = tx_index + block_extrinsics_len - transactions.len();
 
-        <span class="kw">let </span>events = <span class="self">self</span>.get_events_for_tx_by_index(substrate_block_hash, tx_index <span class="kw">as </span>u32)<span class="question-mark">?</span>;
+        <span class="kw">let </span>events = <span class="self">self</span>.get_events_for_tx_by_hash(substrate_block_hash, Felt252Wrapper(transaction_hash).into())<span class="question-mark">?</span>;
 
         <span class="kw">let </span>execution_result = {
             <span class="kw">let </span>revert_error = <span class="self">self</span>.get_tx_execution_outcome(substrate_block_hash, transaction_hash)<span class="question-mark">?</span>;
@@ -3541,15 +3527,13 @@
         <span class="prelude-val">Ok</span>(MaybePendingTransactionReceipt::Receipt(receipt))
     }
 
-    <span class="kw">fn </span>get_events_for_tx_by_index(
+    <span class="kw">fn </span>get_events_for_tx_by_hash(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         substrate_block_hash: B::Hash,
-        tx_index: u32,
+        tx_hash: TransactionHash,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;starknet_api::transaction::Event&gt;, StarknetRpcApiError&gt; {
-        <span class="kw">let </span>events = <span class="self">self
-            </span>.do_get_events_for_tx_by_index(substrate_block_hash, tx_index)<span class="question-mark">?
-            </span>.expect(<span class="string">&quot;the transaction should be present in the substrate extrinsics&quot;</span>); <span class="comment">// not reachable
-        </span><span class="prelude-val">Ok</span>(events)
+        <span class="kw">let </span>events = <span class="self">self</span>.do_get_events_for_tx_by_hash(substrate_block_hash, tx_hash)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(events)
     }
 
     <span class="kw">fn </span>get_tx_execution_outcome(

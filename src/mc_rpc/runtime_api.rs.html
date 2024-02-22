@@ -250,19 +250,6 @@
 <a href="#250" id="250">250</a>
 <a href="#251" id="251">251</a>
 <a href="#252" id="252">252</a>
-<a href="#253" id="253">253</a>
-<a href="#254" id="254">254</a>
-<a href="#255" id="255">255</a>
-<a href="#256" id="256">256</a>
-<a href="#257" id="257">257</a>
-<a href="#258" id="258">258</a>
-<a href="#259" id="259">259</a>
-<a href="#260" id="260">260</a>
-<a href="#261" id="261">261</a>
-<a href="#262" id="262">262</a>
-<a href="#263" id="263">263</a>
-<a href="#264" id="264">264</a>
-<a href="#265" id="265">265</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>blockifier::transaction::objects::TransactionExecutionInfo;
 <span class="kw">use </span>log::error;
 <span class="kw">pub use </span>mc_rpc_core::utils::<span class="kw-2">*</span>;
@@ -346,28 +333,15 @@
         })
     }
 
-    <span class="kw">pub fn </span>do_get_events_for_tx_by_index(
+    <span class="kw">pub fn </span>do_get_events_for_tx_by_hash(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         block_hash: B::Hash,
-        tx_index: u32,
-    ) -&gt; RpcApiResult&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;Event&gt;&gt;&gt; {
-        <span class="self">self</span>.client.runtime_api().get_events_for_tx_by_index(block_hash, tx_index).map_err(|e| {
+        tx_hash: TransactionHash,
+    ) -&gt; RpcApiResult&lt;Vec&lt;Event&gt;&gt; {
+        <span class="self">self</span>.client.runtime_api().get_events_for_tx_by_hash(block_hash, tx_hash).map_err(|e| {
             <span class="macro">error!</span>(
-                <span class="string">&quot;Failed to get events for transaction index. Substrate block hash: {block_hash}, transaction idx: \
-                 {tx_index}, error: {e}&quot;
-            </span>);
-            StarknetRpcApiError::InternalServerError
-        })
-    }
-
-    <span class="kw">pub fn </span>get_starknet_events_and_their_associated_tx_index(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        block_hash: B::Hash,
-    ) -&gt; RpcApiResult&lt;Vec&lt;(u32, starknet_api::transaction::Event)&gt;&gt; {
-        <span class="self">self</span>.client.runtime_api().get_starknet_events_and_their_associated_tx_index(block_hash).map_err(|e| {
-            <span class="macro">error!</span>(
-                <span class="string">&quot;Failed to retrieve starknet events and their associated transaction index. Substrate block hash: \
-                 {block_hash}, error: {e}&quot;
+                <span class="string">&quot;Failed to get events for transaction hash. Substrate block hash: {block_hash}, transaction hash: \
+                 {tx_hash}, error: {e}&quot;
             </span>);
             StarknetRpcApiError::InternalServerError
         })

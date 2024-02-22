@@ -57,6 +57,8 @@
 <a href="#57" id="57">57</a>
 <a href="#58" id="58">58</a>
 <a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet storage primitives.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
@@ -90,6 +92,8 @@
 </span><span class="kw">pub const </span>STARKNET_STORAGE: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;StorageView&quot;</span>;
 <span class="doccomment">/// Compiled class hashes
 </span><span class="kw">pub const </span>STARKNET_COMPILED_CLASS_HASH: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;CompiledClassHashes&quot;</span>;
+<span class="doccomment">/// Starknet events
+</span><span class="kw">pub const </span>STARKNET_TX_EVENTS: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;TxEvents&quot;</span>;
 
 <span class="macro">lazy_static! </span>{
     <span class="kw">pub static </span><span class="kw-2">ref </span>SN_NONCE_PREFIX: Vec&lt;u8&gt; = [twox_128(PALLET_STARKNET), twox_128(STARKNET_NONCE)].concat();

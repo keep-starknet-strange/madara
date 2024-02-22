@@ -1116,35 +1116,13 @@
 <a href="#1116" id="1116">1116</a>
 <a href="#1117" id="1117">1117</a>
 <a href="#1118" id="1118">1118</a>
-<a href="#1119" id="1119">1119</a>
-<a href="#1120" id="1120">1120</a>
-<a href="#1121" id="1121">1121</a>
-<a href="#1122" id="1122">1122</a>
-<a href="#1123" id="1123">1123</a>
-<a href="#1124" id="1124">1124</a>
-<a href="#1125" id="1125">1125</a>
-<a href="#1126" id="1126">1126</a>
-<a href="#1127" id="1127">1127</a>
-<a href="#1128" id="1128">1128</a>
-<a href="#1129" id="1129">1129</a>
-<a href="#1130" id="1130">1130</a>
-<a href="#1131" id="1131">1131</a>
-<a href="#1132" id="1132">1132</a>
-<a href="#1133" id="1133">1133</a>
-<a href="#1134" id="1134">1134</a>
-<a href="#1135" id="1135">1135</a>
-<a href="#1136" id="1136">1136</a>
-<a href="#1137" id="1137">1137</a>
-<a href="#1138" id="1138">1138</a>
-<a href="#1139" id="1139">1139</a>
-<a href="#1140" id="1140">1140</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
 //! The code consists of the following sections:
 //! 1. Config: The trait Config is defined, which is used to configure the pallet by specifying the
 //! parameters and types on which it depends. The trait also includes associated types for
-//! RuntimeEvent, StateRoot, SystemHash, and TimestampProvider.
+//! StateRoot, SystemHash, and TimestampProvider.
 //!
 //! 2. Hooks: The Hooks trait is implemented for the pallet, which includes methods to be executed
 //! during the block lifecycle: on_finalize, on_initialize, on_runtime_upgrade, and offchain_worker.
@@ -1271,8 +1249,6 @@
     /// mechanism and comply with starknet which uses an ER20 as fee token
     </span><span class="attr">#[pallet::config]
     </span><span class="kw">pub trait </span>Config: frame_system::Config {
-        <span class="doccomment">/// Because this pallet emits events, it depends on the runtime&#39;s definition of an event.
-        </span><span class="kw">type </span>RuntimeEvent: From&lt;Event&lt;<span class="self">Self</span>&gt;&gt; + IsType&lt;&lt;<span class="self">Self </span><span class="kw">as </span>frame_system::Config&gt;::RuntimeEvent&gt;;
         <span class="doccomment">/// The hashing function to use.
         </span><span class="kw">type </span>SystemHash: HasherT;
         <span class="doccomment">/// The block time
@@ -1543,24 +1519,6 @@
             </span>FeeTokenAddress::&lt;T&gt;::set(<span class="self">self</span>.fee_token_address);
             SeqAddrUpdate::&lt;T&gt;::put(<span class="bool-val">true</span>);
         }
-    }
-
-    <span class="doccomment">/// The Starknet pallet events.
-    /// EVENTS
-    /// See: `&lt;https://docs.substrate.io/main-docs/build/events-errors/&gt;`
-    </span><span class="attr">#[pallet::event]
-    #[pallet::generate_deposit(<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>deposit_event)]
-    </span><span class="kw">pub enum </span>Event&lt;T: Config&gt; {
-        KeepStarknetStrange,
-        <span class="doccomment">/// Regular Starknet event
-        </span>StarknetEvent(StarknetEvent),
-        <span class="doccomment">/// Emitted when fee token address is changed.
-        /// This is emitted by the `set_fee_token_address` extrinsic.
-        /// [old_fee_token_address, new_fee_token_address]
-        </span>FeeTokenAddressChanged {
-            old_fee_token_address: ContractAddress,
-            new_fee_token_address: ContractAddress,
-        },
     }
 
     <span class="doccomment">/// The Starknet pallet custom errors.
@@ -2032,7 +1990,7 @@
     <span class="doccomment">/// Get the number of events in the block.
     </span><span class="attr">#[inline(always)]
     </span><span class="kw">pub fn </span>event_count() -&gt; u128 {
-        TxEvents::&lt;T&gt;::iter_values().map(|v| v.len() <span class="kw">as </span>u128).sum()
+        <span class="self">Self</span>::pending_hashes().iter().map(|tx_hash| TxEvents::&lt;T&gt;::get(tx_hash).len() <span class="kw">as </span>u128).sum()
     }
 
     <span class="doccomment">/// Call a smart contract function.
@@ -2103,7 +2061,7 @@
         <span class="kw">let </span>transaction_count = transactions.len();
 
         <span class="kw">let </span>parent_block_hash = <span class="self">Self</span>::parent_block_hash(<span class="kw-2">&amp;</span>block_number);
-        <span class="kw">let </span>events: Vec&lt;StarknetEvent&gt; = transaction_hashes.iter().flat_map(TxEvents::&lt;T&gt;::take).collect();
+        <span class="kw">let </span>events_count = transaction_hashes.iter().map(|tx_hash| TxEvents::&lt;T&gt;::get(tx_hash).len() <span class="kw">as </span>u128).sum();
 
         <span class="kw">let </span>sequencer_address = <span class="self">Self</span>::sequencer_address();
         <span class="kw">let </span>block_timestamp = <span class="self">Self</span>::block_timestamp();
@@ -2120,7 +2078,7 @@
                 sequencer_address,
                 block_timestamp,
                 transaction_count <span class="kw">as </span>u128,
-                events.len() <span class="kw">as </span>u128,
+                events_count,
                 protocol_version,
                 l1_gas_price,
                 extra_data,
@@ -2132,7 +2090,6 @@
         BlockHash::&lt;T&gt;::insert(block_number, blockhash);
 
         <span class="comment">// Kill pending storage.
-        // There is no need to kill `TxEvents` as we used `take` while iterating over it.
         </span>Pending::&lt;T&gt;::kill();
         PendingHashes::&lt;T&gt;::kill();
 
@@ -2213,7 +2170,6 @@
                         from_address: call_info.call.storage_address,
                         content: ordered_event.event.clone(),
                     };
-                    <span class="self">Self</span>::deposit_event(Event::&lt;T&gt;::StarknetEvent(event.clone()));
                     TxEvents::&lt;T&gt;::append(tx_hash, event);
                     next_order += <span class="number">1</span>;
                     event_idx += <span class="number">1</span>;

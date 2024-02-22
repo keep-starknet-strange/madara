@@ -131,12 +131,27 @@
 <a href="#131" id="131">131</a>
 <a href="#132" id="132">132</a>
 <a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>mp_storage::{
     PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_NONCE, STARKNET_STORAGE,
+    STARKNET_TX_EVENTS,
 };
 <span class="kw">use </span>parity_scale_codec::{Decode, Encode};
 <span class="comment">// Substrate
@@ -147,6 +162,7 @@
 <span class="kw">use </span>starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_api::state::StorageKey <span class="kw">as </span>StarknetStorageKey;
+<span class="kw">use </span>starknet_api::transaction::{Event <span class="kw">as </span>StarknetEvent, TransactionHash};
 
 <span class="kw">use super</span>::{storage_key_build, storage_prefix_build, StorageOverride};
 
@@ -262,6 +278,18 @@
             <span class="prelude-val">Some</span>(nonce) =&gt; <span class="prelude-val">Some</span>(nonce),
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Some</span>(Nonce::default()),
         }
+    }
+
+    <span class="kw">fn </span>get_events_for_tx_by_hash(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash,
+        tx_hash: TransactionHash,
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;StarknetEvent&gt;&gt; {
+        <span class="kw">let </span>storage_tx_events_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_TX_EVENTS);
+        <span class="self">self</span>.query_storage::&lt;Vec&lt;StarknetEvent&gt;&gt;(
+            block_hash,
+            <span class="kw-2">&amp;</span>StorageKey(storage_key_build(storage_tx_events_prefix, <span class="kw-2">&amp;</span><span class="self">self</span>.encode_storage_key(<span class="kw-2">&amp;</span>tx_hash))),
+        )
     }
 }
 </code></pre></div></section></main></body></html>

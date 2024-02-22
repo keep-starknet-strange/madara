@@ -157,11 +157,6 @@
 <a href="#157" id="157">157</a>
 <a href="#158" id="158">158</a>
 <a href="#159" id="159">159</a>
-<a href="#160" id="160">160</a>
-<a href="#161" id="161">161</a>
-<a href="#162" id="162">162</a>
-<a href="#163" id="163">163</a>
-<a href="#164" id="164">164</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Definition of the runtime API for the Starknet pallet.
 
 </span><span class="comment">// Adding allow unused type parameters to avoid clippy errors
@@ -238,13 +233,8 @@
         </span><span class="kw">fn </span>re_execute_transactions(transactions: Vec&lt;UserOrL1HandlerTransaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;TransactionExecutionInfo&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt;;
 
         <span class="kw">fn </span>get_index_and_tx_for_tx_hash(xts: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;, chain_id: Felt252Wrapper, tx_hash: Felt252Wrapper) -&gt; <span class="prelude-ty">Option</span>&lt;(u32, Transaction)&gt;;
-        <span class="doccomment">/// Returns events, call with index from get_index_and_tx_for_tx_hash method
-        </span><span class="kw">fn </span>get_events_for_tx_by_index(tx_index: u32) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;StarknetEvent&gt;&gt;;
 
-        <span class="doccomment">/// Return the list of StarknetEvent evmitted during this block, along with the hash of the starknet transaction they bellong to
-        ///
-        /// `block_extrinsics` is the list of all the extrinsic executed during this block, it is used in order to match
-        </span><span class="kw">fn </span>get_starknet_events_and_their_associated_tx_index() -&gt; Vec&lt;(u32, StarknetEvent)&gt;;
+        <span class="kw">fn </span>get_events_for_tx_by_hash(tx_hash: TransactionHash) -&gt; Vec&lt;StarknetEvent&gt;;
         <span class="doccomment">/// Return the outcome of the tx execution
         </span><span class="kw">fn </span>get_tx_execution_outcome(tx_hash: TransactionHash) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;;
         <span class="doccomment">/// Return the block context

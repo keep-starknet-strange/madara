@@ -181,6 +181,21 @@
 <a href="#181" id="181">181</a>
 <a href="#182" id="182">182</a>
 <a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::BTreeMap;
 <span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::sync::Arc;
@@ -196,6 +211,7 @@
 <span class="kw">use </span>starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_api::state::StorageKey;
+<span class="kw">use </span>starknet_api::transaction::{Event <span class="kw">as </span>StarknetEvent, TransactionHash};
 
 <span class="kw">mod </span>schema_v1_override;
 
@@ -258,6 +274,12 @@
     ) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClass&gt;;
     <span class="doccomment">/// Returns the nonce for a provided contract address and block hash.
     </span><span class="kw">fn </span>nonce(<span class="kw-2">&amp;</span><span class="self">self</span>, block_hash: B::Hash, address: ContractAddress) -&gt; <span class="prelude-ty">Option</span>&lt;Nonce&gt;;
+
+    <span class="kw">fn </span>get_events_for_tx_by_hash(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash,
+        tx_hash: TransactionHash,
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;StarknetEvent&gt;&gt;;
 }
 
 <span class="doccomment">/// Returns the storage prefix given the pallet module name and the storage name
@@ -362,6 +384,14 @@
     /// * `Some(nonce)` - The nonce for the provided contract address and block hash
     </span><span class="kw">fn </span>nonce(<span class="kw-2">&amp;</span><span class="self">self</span>, block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash, contract_address: ContractAddress) -&gt; <span class="prelude-ty">Option</span>&lt;Nonce&gt; {
         <span class="self">self</span>.client.runtime_api().nonce(block_hash, contract_address).ok()
+    }
+
+    <span class="kw">fn </span>get_events_for_tx_by_hash(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash,
+        tx_hash: TransactionHash,
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;StarknetEvent&gt;&gt; {
+        <span class="self">self</span>.client.runtime_api().get_events_for_tx_by_hash(block_hash, tx_hash).ok()
     }
 }
 </code></pre></div></section></main></body></html>
