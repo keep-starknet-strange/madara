@@ -2,6 +2,10 @@
 
 ## Next release
 
+- build: remove patch on `ring-vrf` dependecy
+- ci: use `production` profile binary in the workflows
+- feat(rpc): support for pending state
+- test(rpc): disable state_diff tests
 - feat(rpc): add tests for estimateMessageFee RPC call
 - refacto: rename braavos call aggregator contract
 - fix: updating outdated links to external resources in documentation
@@ -11,6 +15,8 @@
 - feat: add transparent representation to `Felt252Wrapper`
 - feat(rpc/trace_api): add `trace_block_transaction`
 - chore(db): changed the way hashes are encoded
+- ci: add gomu gomu no gatling perfomrance test
+- feat(runtime): moved StarkEvents from Substrate events to runtime storage
 - feat(rpc/trace_api): add `trace_transaction`
 
 ## v0.7.0
@@ -293,3 +299,4 @@
 - dev: Get the block status from the actual block in get_block_with_tx_hashes
 - fix: l1-l2 messaging
 - dev : clean contracts and compiled files
+- fix: add from_address in calldata of l1 message

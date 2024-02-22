@@ -33,7 +33,6 @@ use crate::*;
 
 /// Configure the Starknet pallet in pallets/starknet.
 impl pallet_starknet::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type SystemHash = StarknetHasher;
     type TimestampProvider = Timestamp;
     type UnsignedPriority = UnsignedPriority;
