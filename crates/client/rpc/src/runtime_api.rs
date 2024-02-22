@@ -81,28 +81,15 @@ where
         })
     }
 
-    pub fn do_get_events_for_tx_by_index(
+    pub fn do_get_events_for_tx_by_hash(
         &self,
         block_hash: B::Hash,
-        tx_index: u32,
-    ) -> RpcApiResult<Option<Vec<Event>>> {
-        self.client.runtime_api().get_events_for_tx_by_index(block_hash, tx_index).map_err(|e| {
+        tx_hash: TransactionHash,
+    ) -> RpcApiResult<Vec<Event>> {
+        self.client.runtime_api().get_events_for_tx_by_hash(block_hash, tx_hash).map_err(|e| {
             error!(
-                "Failed to get events for transaction index. Substrate block hash: {block_hash}, transaction idx: \
-                 {tx_index}, error: {e}"
-            );
-            StarknetRpcApiError::InternalServerError
-        })
-    }
-
-    pub fn get_starknet_events_and_their_associated_tx_index(
-        &self,
-        block_hash: B::Hash,
-    ) -> RpcApiResult<Vec<(u32, starknet_api::transaction::Event)>> {
-        self.client.runtime_api().get_starknet_events_and_their_associated_tx_index(block_hash).map_err(|e| {
-            error!(
-                "Failed to retrieve starknet events and their associated transaction index. Substrate block hash: \
-                 {block_hash}, error: {e}"
+                "Failed to get events for transaction hash. Substrate block hash: {block_hash}, transaction hash: \
+                 {tx_hash}, error: {e}"
             );
             StarknetRpcApiError::InternalServerError
         })

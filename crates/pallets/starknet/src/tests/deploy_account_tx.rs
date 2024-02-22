@@ -6,7 +6,7 @@ use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidityError};
 use starknet_api::api_core::{ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
-use starknet_api::transaction::{Event as StarknetEvent, EventContent, EventData, EventKey};
+use starknet_api::transaction::{Event as StarknetEvent, EventContent, EventData, EventKey, TransactionHash};
 use starknet_core::utils::get_selector_from_name;
 use starknet_crypto::FieldElement;
 
@@ -15,7 +15,7 @@ use super::mock::*;
 use super::utils::{sign_message_hash, sign_message_hash_braavos};
 use crate::tests::constants::{ACCOUNT_PUBLIC_KEY, SALT};
 use crate::tests::{get_deploy_account_dummy, set_infinite_tokens, set_nonce};
-use crate::{Config, Error, Event, StorageView};
+use crate::{Config, Error, StorageView};
 
 #[test]
 fn given_contract_run_deploy_account_tx_works() {
@@ -41,10 +41,13 @@ fn given_contract_run_deploy_account_tx_works() {
         let address = deploy_tx.account_address().into();
         set_infinite_tokens::<MockRuntime>(&address);
 
+        let chain_id = Starknet::chain_id();
+        let tx_hash = deploy_tx.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false);
+
         assert_ok!(Starknet::deploy_account(none_origin, deploy_tx));
         assert_eq!(Starknet::contract_class_hash_by_address(address), account_class_hash);
 
-        let expected_fee_transfer_event = Event::StarknetEvent(StarknetEvent {
+        let expected_fee_transfer_event = StarknetEvent {
             content: EventContent {
                 keys: vec![EventKey(
                     Felt252Wrapper::from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap()).into(),
@@ -57,9 +60,10 @@ fn given_contract_run_deploy_account_tx_works() {
                 ]),
             },
             from_address: Starknet::fee_token_address(),
-        })
-        .into();
-        System::assert_last_event(expected_fee_transfer_event)
+        };
+
+        let events = Starknet::tx_events(TransactionHash::from(tx_hash));
+        assert_eq!(expected_fee_transfer_event, events.last().unwrap().clone());
     });
 }
 

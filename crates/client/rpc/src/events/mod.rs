@@ -9,6 +9,7 @@ use log::error;
 use mc_rpc_core::utils::get_block_by_block_hash;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
+use mp_transactions::compute_hash::ComputeTransactionHash;
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::BlockBackend;
@@ -16,6 +17,7 @@ use sc_transaction_pool::ChainApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
+use starknet_api::transaction::TransactionHash;
 use starknet_core::types::{BlockId, EmittedEvent, EventsPage};
 use starknet_ff::FieldElement;
 
@@ -50,55 +52,44 @@ where
                 StarknetRpcApiError::BlockNotFound
             })?;
 
-        let block_extrinsics = self
-            .client
-            .block_body(substrate_block_hash)
-            .map_err(|e| {
-                error!("Failed to retrieve block body. Substrate block hash: {substrate_block_hash}, error: {e}");
-                StarknetRpcApiError::InternalServerError
-            })?
-            .ok_or(StarknetRpcApiError::BlockNotFound)?;
+        let runtime_api = self.client.runtime_api();
 
         let chain_id = self.get_chain_id(substrate_block_hash).map_err(|_| {
             error!("Failed to retrieve chain id");
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let index_and_events = self.get_starknet_events_and_their_associated_tx_index(substrate_block_hash)?;
-
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).map_err(|e| {
             error!("Failed to retrieve starknet block from substrate block hash: error: {e}");
             StarknetRpcApiError::InternalServerError
         })?;
-        let txn_hashes = self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into());
-        let block_extrinsics_len = block_extrinsics.len();
-        let starknet_txs = self.filter_extrinsics(substrate_block_hash, block_extrinsics)?;
-        let inherent_count = block_extrinsics_len - starknet_txs.len();
-        let mut tx_hash_and_events: Vec<(Felt252Wrapper, starknet_api::transaction::Event)> = vec![];
-        for (index, event) in index_and_events {
-            let tx_index = index as usize - inherent_count;
-            let tx_hash = self.try_txn_hash_from_cache(tx_index, &txn_hashes, &starknet_txs, chain_id)?;
-            tx_hash_and_events.push((tx_hash, event));
-        }
-
-        let starknet_block = match get_block_by_block_hash(self.client.as_ref(), substrate_block_hash) {
-            Ok(block) => block,
-            Err(_) => return Err(StarknetRpcApiError::BlockNotFound),
-        };
+        let txn_hashes =
+            if let Some(tx_hashes) = self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into()) {
+                tx_hashes
+            } else {
+                starknet_block.transactions().iter().map(|tx| tx.compute_hash::<H>(chain_id, false).into()).collect()
+            };
 
         let block_hash = starknet_block.header().hash::<H>();
 
-        let emitted_events = tx_hash_and_events
-            .into_iter()
-            .map(|(tx_hash, event)| EmittedEvent {
-                from_address: Felt252Wrapper::from(event.from_address).0,
-                keys: event.content.keys.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
-                data: event.content.data.0.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
-                block_hash: block_hash.0,
-                block_number,
-                transaction_hash: tx_hash.0,
-            })
-            .collect();
+        let mut emitted_events: Vec<EmittedEvent> = vec![];
+        for tx_hash in txn_hashes {
+            let raw_events =
+                runtime_api.get_events_for_tx_by_hash(substrate_block_hash, TransactionHash(tx_hash)).map_err(|e| {
+                    error!("Failed to retrieve starknet events for transaction: error: {e}");
+                    StarknetRpcApiError::InternalServerError
+                })?;
+            for event in raw_events {
+                emitted_events.push(EmittedEvent {
+                    from_address: Felt252Wrapper::from(event.from_address).0,
+                    keys: event.content.keys.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
+                    data: event.content.data.0.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
+                    block_hash: block_hash.0,
+                    block_number,
+                    transaction_hash: tx_hash.into(),
+                })
+            }
+        }
 
         Ok(emitted_events)
     }

@@ -78,7 +78,6 @@ macro_rules! mock_runtime {
             }
 
 			impl pallet_starknet::Config for MockRuntime {
-				type RuntimeEvent = RuntimeEvent;
 				type SystemHash = mp_hashers::pedersen::PedersenHasher;
 				type TimestampProvider = Timestamp;
 				type UnsignedPriority = UnsignedPriority;
