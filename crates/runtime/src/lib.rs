@@ -27,7 +27,6 @@ pub use frame_support::weights::constants::{
 pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
-use frame_system::{EventRecord, Phase};
 use mp_felt::Felt252Wrapper;
 use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
 use mp_transactions::compute_hash::ComputeTransactionHash;
@@ -37,7 +36,6 @@ use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as G
 pub use pallet_starknet;
 use pallet_starknet::pallet::Error as PalletError;
 use pallet_starknet::Call::{consume_l1_message, declare, deploy_account, invoke};
-use pallet_starknet::Event;
 use pallet_starknet_runtime_api::StarknetTransactionExecutionError;
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_api::impl_runtime_apis;
@@ -296,21 +294,6 @@ impl_runtime_apis! {
             Starknet::simulate_message(message, &simulation_flags)
         }
 
-        fn get_starknet_events_and_their_associated_tx_index() -> Vec<(u32, StarknetEvent)> {
-            System::read_events_no_consensus().filter_map(|event_record| {
-                let (phase, event) = match *event_record {
-                    EventRecord { event: RuntimeEvent::Starknet(Event::StarknetEvent(event)), phase, .. } => (phase, event),
-                    _ => return None,
-                };
-                let index = match phase {
-                    Phase::ApplyExtrinsic(idx) => {idx},
-                    _ => return None
-
-                };
-                Some((index, event))
-            }).collect()
-        }
-
         fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction> {
             xts.into_iter().filter_map(|xt| match xt.function {
                 RuntimeCall::Starknet( invoke { transaction }) => Some(Transaction::Invoke(transaction)),
@@ -346,40 +329,12 @@ impl_runtime_apis! {
             Some((tx_index, transaction))
         }
 
-        fn get_events_for_tx_by_index(tx_index: u32) -> Option<Vec<StarknetEvent>> {
-
-            // Skip all the events that are not related to our tx
-            let event_iter = System::read_events_no_consensus().filter_map(|event| {
-                match *event {
-                    EventRecord { event: RuntimeEvent::Starknet(Event::StarknetEvent(event)), phase, .. } => Some((phase, event)),
-                    _ => None,
-                }
-            }).skip_while(|(phase, _)| {
-                let index = match phase {
-                    Phase::ApplyExtrinsic(idx) => *idx,
-                    _ => return true
-                };
-
-                tx_index != index
-             });
-
-            // Collect all the events related to our tx
-            // Event from the same transaction are stored one after another
-            // so we can use take_while rather and early exit rather than filtering
-            let events = event_iter.take_while(|(phase, _)| {
-                let index = match phase {
-                    Phase::ApplyExtrinsic(idx) => *idx,
-                    _ => panic!("The previous iteration made sure at this point phase is of ApplyExtrinsic variant"),
-                };
-
-                tx_index == index
-            }).map(|(_, event)| event).collect();
-
-            Some(events)
-        }
-
         fn get_tx_messages_to_l1(tx_hash: TransactionHash) -> Vec<MessageToL1> {
             Starknet::tx_messages(tx_hash)
+        }
+
+        fn get_events_for_tx_by_hash(tx_hash: TransactionHash) -> Vec<StarknetEvent> {
+            Starknet::tx_events(tx_hash)
         }
 
         fn get_tx_execution_outcome(tx_hash: TransactionHash) -> Option<Vec<u8>> {
