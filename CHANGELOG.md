@@ -2,6 +2,7 @@
 
 ## Next release
 
+- refactor(rpc): use single arc instance of starknet rpc 
 - feat(rpc): support for pending state
 - test(rpc): disable state_diff tests
 - feat(rpc): add tests for estimateMessageFee RPC call
