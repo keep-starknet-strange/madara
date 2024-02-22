@@ -153,26 +153,38 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn re_execute_transactions(
-        transactions: Vec<UserOrL1HandlerTransaction>,
+        transactions_before: Vec<UserOrL1HandlerTransaction>,
+        transactions_to_trace: Vec<UserOrL1HandlerTransaction>,
     ) -> Result<Result<Vec<TransactionExecutionInfo>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError>
     {
-        storage::transactional::with_transaction(|| {
+        if !transactions_before.is_empty() {
+            let _ = storage::transactional::with_transaction(|| {
+                storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(
+                    Self::re_execute_transactions_inner(transactions_before),
+                ))
+            })
+            .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?;
+        }
+
+        let transactions_to_trace = storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::re_execute_transactions_inner(
-                transactions,
+                transactions_to_trace,
             )))
         })
-        .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?
+        .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?;
+
+        transactions_to_trace
     }
 
     fn re_execute_transactions_inner(
-        transactions: Vec<UserOrL1HandlerTransaction>,
+        transactions_to_trace: Vec<UserOrL1HandlerTransaction>,
     ) -> Result<Result<Vec<TransactionExecutionInfo>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError>
     {
         let chain_id = Self::chain_id();
         let block_context = Self::get_block_context();
         let execution_config = RuntimeExecutionConfigBuilder::new::<T>().build();
 
-        let execution_infos = transactions
+        let execution_infos = transactions_to_trace
             .iter()
             .map(|user_or_l1_tx| match user_or_l1_tx {
                 UserOrL1HandlerTransaction::User(tx) => match tx {
