@@ -2,7 +2,8 @@
 
 ## Next release
 
-- CI: use `production` profile binary in the workflows
+- build: remove patch on `ring-vrf` dependecy
+- ci: use `production` profile binary in the workflows
 - feat(rpc): support for pending state
 - test(rpc): disable state_diff tests
 - feat(rpc): add tests for estimateMessageFee RPC call
