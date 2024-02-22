@@ -16,7 +16,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: |
-            target/release/madara
+            target/production/madara
           key:
             ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
             github.run_id }}
