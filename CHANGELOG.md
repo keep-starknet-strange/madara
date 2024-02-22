@@ -3,6 +3,7 @@
 ## Next release
 
 - refactor(rpc): use single arc instance of starknet rpc
+- CI: use `production` profile binary in the workflows
 - feat(rpc): support for pending state
 - test(rpc): disable state_diff tests
 - feat(rpc): add tests for estimateMessageFee RPC call
