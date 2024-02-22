@@ -58,7 +58,7 @@ where
         let substrate_block_hash =
             self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| StarknetRpcApiError::BlockNotFound)?;
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
-        let best_block_hash = self.get_best_block_hash();
+        let best_block_hash = self.client.info().best_hash;
 
         let tx_type_and_tx_iterator = transactions.into_iter().map(|tx| match tx {
             BroadcastedTransaction::Invoke(invoke_tx) => invoke_tx.try_into().map(|tx| (TxType::Invoke, tx)),
@@ -546,7 +546,7 @@ where
         Transaction::DeployAccount(deploy_account_tx) => {
             Ok(UserOrL1HandlerTransaction::User(UserTransaction::DeployAccount(deploy_account_tx.clone())))
         }
-        Transaction::Declare(declare_tx) => {
+        Transaction::Declare(declare_tx, _) => {
             let class_hash = ClassHash::from(*declare_tx.class_hash());
 
             match declare_tx {
