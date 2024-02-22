@@ -9,7 +9,7 @@ jobs:
   rpc-tests:
     runs-on: ubuntu-latest
     env:
-      BINARY_PATH: ../target/release/madara
+      BINARY_PATH: ../target/production/madara
     steps:
       - uses: actions/checkout@v3
       - uses: Swatinem/rust-cache@v2
@@ -19,7 +19,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: |
-            target/release/madara
+            target/production/madara
           key:
             ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
             github.run_id }}
@@ -33,13 +33,13 @@ jobs:
           sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
       - name: Setup dev chain
         run: |
-          ./target/release/madara setup --chain=dev --from-local=configs
+          ./target/production/madara setup --chain=dev --from-local=configs
       - name: Compile contracts for rpc-tests
         run: |
           cd starknet-rpc-test/contracts && ./generate_declare_contracts.sh 10
       - name: Run rpc test without cache
         run: |-
-          ./target/release/madara --dev --sealing=manual --da-layer=ethereum --da-conf=examples/da-confs/ethereum.json &
+          ./target/production/madara --dev --sealing=manual --da-layer=ethereum --da-conf=examples/da-confs/ethereum.json &
           MADARA_RUN_PID=$!
           while ! echo exit | nc localhost 9944; do sleep 1; done
           cd starknet-rpc-test
@@ -47,7 +47,7 @@ jobs:
           kill $MADARA_RUN_PID
       - name: Run rpc test with cache
         run: |-
-          ./target/release/madara --dev --sealing=manual --cache --da-layer=ethereum --da-conf=examples/da-confs/ethereum.json &
+          ./target/production/madara --dev --sealing=manual --cache --da-layer=ethereum --da-conf=examples/da-confs/ethereum.json &
           MADARA_RUN_PID=$!
           while ! echo exit | nc localhost 9944; do sleep 1; done
           cd starknet-rpc-test
