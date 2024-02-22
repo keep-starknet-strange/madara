@@ -9,7 +9,7 @@ jobs:
   integration-tests:
     runs-on: ubuntu-latest
     env:
-      BINARY_PATH: ../target/release/madara
+      BINARY_PATH: ../target/production/madara
     steps:
       - uses: actions/checkout@v3
       - uses: Swatinem/rust-cache@v2
