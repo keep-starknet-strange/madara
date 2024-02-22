@@ -84,7 +84,7 @@ fn re_execute_tx_ok() {
         ];
 
         // Call the function we want to test
-        let res = Starknet::re_execute_transactions(txs.clone()).unwrap().unwrap();
+        let res = Starknet::re_execute_transactions(txs.clone(), txs.clone()).unwrap().unwrap();
 
         // Storage changes have been reverted
         assert_eq!(Starknet::nonce(invoke_sender_address), Nonce(Felt252Wrapper::ZERO.into()));
