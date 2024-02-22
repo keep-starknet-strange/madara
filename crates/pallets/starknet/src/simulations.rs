@@ -201,14 +201,12 @@ impl<T: Config> Pallet<T> {
             .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?;
         }
 
-        let transactions_to_trace = storage::transactional::with_transaction(|| {
+        storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::re_execute_transactions_inner(
                 transactions_to_trace,
             )))
         })
-        .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?;
-
-        transactions_to_trace
+        .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?
     }
 
     fn re_execute_transactions_inner(

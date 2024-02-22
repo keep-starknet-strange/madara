@@ -111,7 +111,7 @@ where
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
         let (block_transactions, empty_transactions) =
-            map_transaction_to_user_transaction(&self, starknet_block, substrate_block_hash, chain_id, None)?;
+            map_transaction_to_user_transaction(self, starknet_block, substrate_block_hash, chain_id, None)?;
 
         let previous_block_substrate_hash = get_previous_block_substrate_hash(self, substrate_block_hash)?;
 
@@ -179,7 +179,7 @@ where
         let transaction_hash_to_trace: Felt252Wrapper = transaction_hash.into();
 
         let (txs_to_execute_before, tx_to_trace) = map_transaction_to_user_transaction(
-            &self,
+            self,
             starknet_block,
             substrate_block_hash,
             chain_id,
