@@ -48,7 +48,7 @@ use sp_runtime::transaction_validity::InvalidTransaction;
 use sp_runtime::DispatchError;
 use starknet_api::block::BlockHash;
 use starknet_api::hash::StarkHash;
-use starknet_api::transaction::Calldata;
+use starknet_api::transaction::{Calldata, TransactionHash};
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
@@ -1544,32 +1544,26 @@ where
 
         let fee_disabled = self.is_transaction_fee_disabled(substrate_block_hash)?;
 
-        let block_extrinsics_len = block_extrinsics.len();
         let transactions = self.filter_extrinsics(substrate_block_hash, block_extrinsics)?;
         let txn_hashes = self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into());
-        let mut tx_index = None;
         let mut transaction = None;
         for (index, tx) in transactions.iter().enumerate() {
             let tx_hash = self.try_txn_hash_from_cache(index, &txn_hashes, &transactions, chain_id)?;
             if tx_hash == transaction_hash.into() {
-                tx_index = Some(index);
                 transaction = Some(tx);
                 break;
             }
         }
-        if tx_index.is_none() || transaction.is_none() {
+        if transaction.is_none() {
             error!(
                 "Failed to find transaction hash in block. Substrate block hash: {substrate_block_hash}, transaction \
                  hash: {transaction_hash}"
             );
             return Err(StarknetRpcApiError::InternalServerError);
         }
-        let tx_index = tx_index.unwrap();
         let transaction = transaction.unwrap();
-        // adding the inherents count to the tx_index to get the correct index in the block
-        let tx_index = tx_index + block_extrinsics_len - transactions.len();
 
-        let events = self.get_events_for_tx_by_index(substrate_block_hash, tx_index as u32)?;
+        let events = self.get_events_for_tx_by_hash(substrate_block_hash, Felt252Wrapper(transaction_hash).into())?;
 
         let execution_result = {
             let revert_error = self.get_tx_execution_outcome(substrate_block_hash, transaction_hash)?;
@@ -1672,14 +1666,12 @@ where
         Ok(MaybePendingTransactionReceipt::Receipt(receipt))
     }
 
-    fn get_events_for_tx_by_index(
+    fn get_events_for_tx_by_hash(
         &self,
         substrate_block_hash: B::Hash,
-        tx_index: u32,
+        tx_hash: TransactionHash,
     ) -> Result<Vec<starknet_api::transaction::Event>, StarknetRpcApiError> {
-        let events = self
-            .do_get_events_for_tx_by_index(substrate_block_hash, tx_index)?
-            .expect("the transaction should be present in the substrate extrinsics"); // not reachable
+        let events = self.do_get_events_for_tx_by_hash(substrate_block_hash, tx_hash)?;
         Ok(events)
     }
 

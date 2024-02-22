@@ -3,7 +3,8 @@
 ## Next release
 
 - refactor(rpc): use single arc instance of starknet rpc
-- CI: use `production` profile binary in the workflows
+- build: remove patch on `ring-vrf` dependecy
+- ci: use `production` profile binary in the workflows
 - feat(rpc): support for pending state
 - test(rpc): disable state_diff tests
 - feat(rpc): add tests for estimateMessageFee RPC call
@@ -16,6 +17,7 @@
 - feat(rpc/trace_api): add `trace_block_transaction`
 - chore(db): changed the way hashes are encoded
 - ci: add gomu gomu no gatling perfomrance test
+- feat(runtime): moved StarkEvents from Substrate events to runtime storage
 
 ## v0.7.0
 

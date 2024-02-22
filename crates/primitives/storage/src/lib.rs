@@ -31,6 +31,8 @@ pub const STARKNET_NONCE: &[u8] = b"Nonces";
 pub const STARKNET_STORAGE: &[u8] = b"StorageView";
 /// Compiled class hashes
 pub const STARKNET_COMPILED_CLASS_HASH: &[u8] = b"CompiledClassHashes";
+/// Starknet events
+pub const STARKNET_TX_EVENTS: &[u8] = b"TxEvents";
 
 lazy_static! {
     pub static ref SN_NONCE_PREFIX: Vec<u8> = [twox_128(PALLET_STARKNET), twox_128(STARKNET_NONCE)].concat();
