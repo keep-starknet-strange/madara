@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use jsonrpsee::core::{async_trait, RpcResult};
+use log::error;
 use mc_genesis_data_provider::GenesisProvider;
 pub use mc_rpc_core::{
     Felt, MadaraRpcApiServer, PredeployedAccountWithBalance, StarknetReadRpcApiServer, StarknetTraceRpcApiServer,
@@ -25,7 +26,7 @@ use starknet_core::types::{
     TransactionTraceWithHash,
 };
 
-use crate::Starknet;
+use crate::{Felt252Wrapper, Starknet, StarknetRpcApiError, UserTransaction};
 
 // Newtype Wrapper to escape Arc orphan rules
 pub struct Astarknet<A: ChainApi, B: BlockT, BE, G, C, P, H>(pub Arc<Starknet<A, B, BE, G, C, P, H>>);
@@ -353,7 +354,28 @@ where
         request: Vec<BroadcastedTransaction>,
         block_id: BlockId,
     ) -> RpcResult<Vec<FeeEstimate>> {
-        self.estimate_fee(request, block_id).await
+        let substrate_block_hash = self.0.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+        let best_block_hash = self.0.get_best_block_hash();
+        let chain_id = Felt252Wrapper(self.0.chain_id()?.0);
+
+        let transactions =
+            request.into_iter().map(|tx| tx.try_into()).collect::<Result<Vec<UserTransaction>, _>>().map_err(|e| {
+                error!("Failed to convert BroadcastedTransaction to UserTransaction: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?;
+
+        let fee_estimates = self.0.estimate_fee(best_block_hash, transactions)?;
+
+        let estimates = fee_estimates
+            .into_iter()
+			// FIXME: https://github.com/keep-starknet-strange/madara/issues/329
+            .map(|x| FeeEstimate { gas_price: 10, gas_consumed: x.1, overall_fee: x.0 })
+            .collect();
+
+        Ok(estimates)
     }
 
     /// Estimate the L2 fee of a message sent on L1
@@ -373,7 +395,7 @@ where
     /// ContractNotFound : If the specified contract address does not exist.
     /// ContractError : If there is an error with the contract.
     async fn estimate_message_fee(&self, message: MsgFromL1, block_id: BlockId) -> RpcResult<FeeEstimate> {
-        self.estimate_message_fee(message, block_id).await
+        self.0.estimate_message_fee(message, block_id).await
     }
 
     /// Get the details of a transaction by a given block id and index.
