@@ -13,7 +13,7 @@ use jsonrpsee::RpcModule;
 use madara_runtime::opaque::Block;
 use madara_runtime::{AccountId, Hash, Index, StarknetHasher};
 use mc_genesis_data_provider::GenesisProvider;
-use mc_rpc::Astarknet;
+use mc_rpc::astarknet::Astarknet;
 use sc_client_api::{Backend, BlockBackend, StorageProvider};
 use sc_consensus_manual_seal::rpc::EngineCommand;
 pub use sc_rpc_api::DenyUnsafe;
