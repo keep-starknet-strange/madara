@@ -7,6 +7,7 @@ mod errors;
 mod events;
 mod madara_backend_client;
 mod runtime_api;
+pub mod starknetrpcwrapper;
 mod trace_api;
 mod types;
 
