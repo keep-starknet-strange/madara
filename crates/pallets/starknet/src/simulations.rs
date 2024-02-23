@@ -188,13 +188,13 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn re_execute_transactions(
-        transactions: Vec<UserOrL1HandlerTransaction>,
+        transactions_before: Vec<UserOrL1HandlerTransaction>,
         transactions_to_trace: Vec<UserOrL1HandlerTransaction>,
     ) -> Result<Result<Vec<TransactionExecutionInfo>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError>
     {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::re_execute_transactions_inner(
-                transactions,
+                transactions_before,
                 transactions_to_trace,
             )))
         })
@@ -202,7 +202,7 @@ impl<T: Config> Pallet<T> {
     }
 
     fn re_execute_transactions_inner(
-        transactions: Vec<UserOrL1HandlerTransaction>,
+        transactions_before: Vec<UserOrL1HandlerTransaction>,
         transactions_to_trace: Vec<UserOrL1HandlerTransaction>,
     ) -> Result<Result<Vec<TransactionExecutionInfo>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError>
     {
@@ -210,11 +210,20 @@ impl<T: Config> Pallet<T> {
         let block_context = Self::get_block_context();
         let execution_config = RuntimeExecutionConfigBuilder::new::<T>().build();
 
-        let _execution = Self::re_execute_transactions_trace(chain_id, &block_context, &execution_config, transactions);
-        let execution_to_trace =
-            Self::re_execute_transactions_trace(chain_id, &block_context, &execution_config, transactions_to_trace);
+        let _transactions_before_exec_infos = Self::execute_user_or_l1_handler_transactions(
+            chain_id,
+            &block_context,
+            &execution_config,
+            transactions_before,
+        );
+        let transactions_exec_infos = Self::execute_user_or_l1_handler_transactions(
+            chain_id,
+            &block_context,
+            &execution_config,
+            transactions_to_trace,
+        );
 
-        Ok(execution_to_trace)
+        Ok(transactions_exec_infos)
     }
 
     fn execute_user_transaction(
@@ -251,7 +260,7 @@ impl<T: Config> Pallet<T> {
         executable.execute(&mut BlockifierStateAdapter::<T>::default(), block_context, execution_config)
     }
 
-    fn re_execute_transactions_trace(
+    fn execute_user_or_l1_handler_transactions(
         chain_id: Felt252Wrapper,
         block_context: &BlockContext,
         execution_config: &ExecutionConfig,
