@@ -28,15 +28,15 @@ use starknet_core::types::{
 use crate::Starknet;
 
 // Newtype Wrapper to escape Arc orphan rules
-pub struct Astarknet<A: ChainApi, B: BlockT, BE, G, C, P, H>(pub Arc<Starknet<A, B, BE, G, C, P, H>>);
+pub struct StarknetRpcWrapper<A: ChainApi, B: BlockT, BE, G, C, P, H>(pub Arc<Starknet<A, B, BE, G, C, P, H>>);
 
-impl<A: ChainApi, B: BlockT, BE, G, C, P, H> Clone for Astarknet<A, B, BE, G, C, P, H> {
+impl<A: ChainApi, B: BlockT, BE, G, C, P, H> Clone for StarknetRpcWrapper<A, B, BE, G, C, P, H> {
     fn clone(&self) -> Self {
-        Astarknet(self.0.clone())
+        StarknetRpcWrapper(self.0.clone())
     }
 }
 
-impl<A, B, BE, G, C, P, H> MadaraRpcApiServer for Astarknet<A, B, BE, G, C, P, H>
+impl<A, B, BE, G, C, P, H> MadaraRpcApiServer for StarknetRpcWrapper<A, B, BE, G, C, P, H>
 where
     A: ChainApi<Block = B> + 'static,
     B: BlockT,
@@ -55,7 +55,7 @@ where
 
 #[async_trait]
 #[allow(unused_variables)]
-impl<A, B, BE, G, C, P, H> StarknetReadRpcApiServer for Astarknet<A, B, BE, G, C, P, H>
+impl<A, B, BE, G, C, P, H> StarknetReadRpcApiServer for StarknetRpcWrapper<A, B, BE, G, C, P, H>
 where
     A: ChainApi<Block = B> + 'static,
     B: BlockT,
@@ -531,7 +531,7 @@ where
 }
 
 #[async_trait]
-impl<A, B, BE, G, C, P, H> StarknetWriteRpcApiServer for Astarknet<A, B, BE, G, C, P, H>
+impl<A, B, BE, G, C, P, H> StarknetWriteRpcApiServer for StarknetRpcWrapper<A, B, BE, G, C, P, H>
 where
     A: ChainApi<Block = B> + 'static,
     B: BlockT,
@@ -594,7 +594,7 @@ where
 }
 
 #[async_trait]
-impl<A, B, BE, G, C, P, H> StarknetTraceRpcApiServer for Astarknet<A, B, BE, G, C, P, H>
+impl<A, B, BE, G, C, P, H> StarknetTraceRpcApiServer for StarknetRpcWrapper<A, B, BE, G, C, P, H>
 where
     A: ChainApi<Block = B> + 'static,
     B: BlockT,

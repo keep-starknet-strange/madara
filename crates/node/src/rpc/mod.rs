@@ -13,7 +13,7 @@ use jsonrpsee::RpcModule;
 use madara_runtime::opaque::Block;
 use madara_runtime::{AccountId, Hash, Index, StarknetHasher};
 use mc_genesis_data_provider::GenesisProvider;
-use mc_rpc::astarknet::Astarknet;
+use mc_rpc::starknetrpcwrapper::StarknetRpcWrapper;
 use sc_client_api::{Backend, BlockBackend, StorageProvider};
 use sc_consensus_manual_seal::rpc::EngineCommand;
 pub use sc_rpc_api::DenyUnsafe;
@@ -72,9 +72,8 @@ where
 
     module.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())?;
 
-    // Arc<Starknet
-    let rpc_instance: Astarknet<_, _, _, _, _, _, StarknetHasher> =
-        Astarknet(Arc::new(Starknet::<_, _, _, _, _, _, StarknetHasher>::new(
+    let rpc_instance: StarknetRpcWrapper<_, _, _, _, _, _, StarknetHasher> =
+        StarknetRpcWrapper(Arc::new(Starknet::<_, _, _, _, _, _, StarknetHasher>::new(
             client,
             starknet_params.madara_backend,
             starknet_params.overrides,

@@ -2,12 +2,12 @@
 //!
 //! It uses the madara client and backend in order to answer queries.
 
-pub mod astarknet;
 mod constants;
 mod errors;
 mod events;
 mod madara_backend_client;
 mod runtime_api;
+pub mod starknetrpcwrapper;
 mod trace_api;
 mod types;
 
