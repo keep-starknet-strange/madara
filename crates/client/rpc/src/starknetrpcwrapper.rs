@@ -620,4 +620,9 @@ where
     async fn trace_block_transactions(&self, block_id: BlockId) -> RpcResult<Vec<TransactionTraceWithHash>> {
         self.0.trace_block_transactions(block_id).await
     }
+
+    /// Returns the executions traces of a specified transaction in the given block
+    async fn trace_transaction(&self, transaction_hash: FieldElement) -> RpcResult<TransactionTraceWithHash> {
+        self.0.trace_transaction(transaction_hash).await
+    }
 }
