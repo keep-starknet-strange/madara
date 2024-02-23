@@ -83,8 +83,10 @@ fn re_execute_tx_ok() {
             UserOrL1HandlerTransaction::L1Handler(handle_l1_tx, Fee(10)),
         ];
 
+        let txs_to_ignore: Vec<UserOrL1HandlerTransaction> = vec![];
+
         // Call the function we want to test
-        let res = Starknet::re_execute_transactions(txs.clone(), txs.clone()).unwrap().unwrap();
+        let res = Starknet::re_execute_transactions(txs_to_ignore, txs.clone()).unwrap().unwrap();
 
         // Storage changes have been reverted
         assert_eq!(Starknet::nonce(invoke_sender_address), Nonce(Felt252Wrapper::ZERO.into()));
