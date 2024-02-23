@@ -71,6 +71,10 @@ sp_api::decl_runtime_apis! {
         /// client to operate seamlessly while abstracting the extrinsic complexity.
         fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction>;
         /// Re-execute a block and return the TransactionExecutionInfos of every transaction in it, in the same order
+        /// This function is used to re-execute transactions from a block. We use 2 vectors of transactions,
+        /// the first contain transactions that we want to re-execute without getting their trace,
+        /// but have to execute in order to update the block state and the second vector
+        /// contain transactions that we want to re-execute and get their trace.
         fn re_execute_transactions(transactions_before: Vec<UserOrL1HandlerTransaction>, transactions_to_trace: Vec<UserOrL1HandlerTransaction>) -> Result<Result<Vec<TransactionExecutionInfo>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError>;
 
         fn get_index_and_tx_for_tx_hash(xts: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper, tx_hash: Felt252Wrapper) -> Option<(u32, Transaction)>;
