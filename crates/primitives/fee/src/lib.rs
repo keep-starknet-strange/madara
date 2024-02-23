@@ -245,6 +245,6 @@ mod vm_resource_fee_costs {
         assert_eq!(hm.get("bitwise_builtin"), Some(FixedU128::from_float(0.32)).as_ref());
         assert_eq!(hm.get("poseidon_builtin"), Some(FixedU128::from_float(0.16)).as_ref());
         assert_eq!(hm.get("ec_op_builtin"), Some(FixedU128::from_float(5.12)).as_ref());
-        assert_eq!(hm.get("keccak"), Some(FixedU128::from_float(5.12)).as_ref());
+        assert_eq!(hm.get("keccak_builtin"), Some(FixedU128::from_float(5.12)).as_ref());
     }
 }
