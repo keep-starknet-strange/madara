@@ -3,6 +3,7 @@
 ## Next release
 
 - chore: update cairo-vm commit and update gas per op
+- refactor(rpc): use single arc instance of starknet rpc
 - build: remove patch on `ring-vrf` dependecy
 - ci: use `production` profile binary in the workflows
 - feat(rpc): support for pending state
