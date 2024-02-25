@@ -2,11 +2,12 @@ use blockifier::execution::contract_class::ContractClass;
 use frame_support::assert_ok;
 use lazy_static::lazy_static;
 use mp_felt::Felt252Wrapper;
+use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::InvokeTransactionV1;
 use starknet_api::api_core::{ContractAddress, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
-use starknet_api::transaction::{Event as StarknetEvent, EventContent, EventData, EventKey};
+use starknet_api::transaction::{Event as StarknetEvent, EventContent, EventData, EventKey, TransactionHash};
 use starknet_core::utils::get_selector_from_name;
 
 use super::mock::default_mock::*;
@@ -14,7 +15,7 @@ use super::mock::*;
 use crate::tests::constants::TOKEN_CONTRACT_CLASS_HASH;
 use crate::tests::utils::{build_transfer_invoke_transaction, get_contract_class};
 use crate::types::BuildTransferInvokeTransaction;
-use crate::Event;
+use crate::Config;
 
 lazy_static! {
     static ref ERC20_CONTRACT_CLASS: ContractClass = get_contract_class("ERC20.json", 0);
@@ -55,8 +56,12 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         let expected_erc20_address =
             StarkFelt::try_from("0x00dc58c1280862c95964106ef9eba5d9ed8c0c16d05883093e4540f22b829dff").unwrap();
 
+        let chain_id = Starknet::chain_id();
+        let tx_hash = deploy_transaction.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false);
+
         assert_ok!(Starknet::invoke(origin.clone(), deploy_transaction.into()));
-        let events = System::events();
+
+        let events: Vec<StarknetEvent> = Starknet::tx_events(TransactionHash::from(tx_hash));
         // Expected events:
         // ERC20 -> Transfer
         // NoValidateAccount -> ContractDeployed
@@ -64,7 +69,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
 
         // Check transaction event (deployment)
         pretty_assertions::assert_eq!(
-            Event::<MockRuntime>::StarknetEvent(StarknetEvent {
+            StarknetEvent {
                 content: EventContent {
                     keys: vec![EventKey(
                         StarkFelt::try_from("0x026b160f10156dea0639bec90696772c640b9706a47f5b8c52ea1abe5858b34d")
@@ -94,10 +99,10 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     ]),
                 },
                 from_address: sender_account,
-            }),
-            events[1].event.clone().try_into().unwrap(),
+            },
+            events[1],
         );
-        let expected_fee_transfer_event = Event::StarknetEvent(StarknetEvent {
+        let expected_fee_transfer_event = StarknetEvent {
             content: EventContent {
                 keys: vec![EventKey(
                     Felt252Wrapper::from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap()).into(),
@@ -110,11 +115,11 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 ]),
             },
             from_address: Starknet::fee_token_address(),
-        });
+        };
         // Check fee transfer event
         pretty_assertions::assert_eq!(
             expected_fee_transfer_event,
-            events.last().unwrap().event.clone().try_into().unwrap()
+            events.last().unwrap().clone()
         );
         // TODO: use dynamic values to craft invoke transaction
         // Transfer some token
@@ -126,6 +131,9 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             amount_high: Felt252Wrapper::ZERO,
             nonce: Felt252Wrapper::ONE,
         });
+
+        let chain_id = Starknet::chain_id();
+        let tx_hash = transfer_transaction.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false);
 
         // Also asserts that the deployment has been saved.
         assert_ok!(Starknet::invoke(origin, transfer_transaction));
@@ -166,13 +174,13 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             StarkFelt::from(0u128)
         );
 
-        let events = System::events();
+        let events: Vec<StarknetEvent> = Starknet::tx_events(TransactionHash::from(tx_hash));
         // Expected events: (added on top of the past ones)
         // ERC20 -> Transfer
         // FeeToken -> Transfer
 
         // Check regular event.
-        let expected_event = Event::StarknetEvent(StarknetEvent {
+        let expected_event = StarknetEvent {
             content: EventContent {
                 keys: vec![EventKey(
                     StarkFelt::try_from(Felt252Wrapper::from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap())).unwrap(),
@@ -187,11 +195,11 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             from_address: ContractAddress(PatriciaKey(
                 StarkFelt::try_from("0x00dc58c1280862c95964106ef9eba5d9ed8c0c16d05883093e4540f22b829dff").unwrap(),
             )),
-        });
+        };
 
-        pretty_assertions::assert_eq!(expected_event, events[events.len() - 2].event.clone().try_into().unwrap());
+        pretty_assertions::assert_eq!(expected_event, events[events.len() - 2]);
         // Check fee transfer.
-        let expected_fee_transfer_event = Event::StarknetEvent(StarknetEvent {
+        let expected_fee_transfer_event = StarknetEvent {
             content: EventContent {
                 keys: vec![EventKey(
                     StarkFelt::try_from(Felt252Wrapper::from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap())).unwrap(),
@@ -204,10 +212,10 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 ]),
             },
             from_address: Starknet::fee_token_address(),
-        });
+        };
         pretty_assertions::assert_eq!(
             expected_fee_transfer_event,
-            events.last().unwrap().event.clone().try_into().unwrap()
+            events.last().unwrap().clone()
         );
     })
 }
