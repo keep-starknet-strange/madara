@@ -25,8 +25,7 @@ impl TryFrom<EthereumProviderConfig> for Provider<Http> {
     fn try_from(config: EthereumProviderConfig) -> Result<Self, Self::Error> {
         match config {
             EthereumProviderConfig::Http(config) => {
-                let mut provider =
-                    Provider::<Http>::try_from(config.rpc_endpoint).map_err(Error::ProviderUrlParse)?;
+                let mut provider = Provider::<Http>::try_from(config.rpc_endpoint).map_err(Error::ProviderUrlParse)?;
 
                 if let Some(poll_interval_ms) = config.tx_poll_interval_ms {
                     provider = provider.interval(Duration::from_millis(poll_interval_ms));

@@ -53,8 +53,7 @@ pub enum EthereumWalletConfig {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct StarknetContracts {
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub core_contract: Option<String>,
+    pub core_contract: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub verifier_contract: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -119,7 +118,7 @@ fn parse_contract_address(string: &String) -> Result<H160, Error> {
 
 impl StarknetContracts {
     pub fn core_contract(&self) -> Result<Address, Error> {
-        self.core_contract.as_ref().map(parse_contract_address).ok_or(Error::ContractAddressUndefined("core"))?
+        parse_contract_address(&self.core_contract)
     }
 
     pub fn verifier_contract(&self) -> Result<Address, Error> {

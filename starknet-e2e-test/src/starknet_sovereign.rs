@@ -79,7 +79,7 @@ impl StarknetSovereign {
                 ..Default::default() // Use Anvil default account
             })),
             contracts: StarknetContracts {
-                core_contract: Some(hex_str_from_bytes::<20, true>(self.client.address().0)),
+                core_contract: hex_str_from_bytes::<20, true>(self.client.address().0),
                 ..Default::default()
             },
         };
