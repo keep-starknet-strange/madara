@@ -15,7 +15,7 @@
 use std::fs::File;
 use std::path::PathBuf;
 
-use ethers::types::Address;
+use ethers::types::{Address, H160};
 use serde::{Deserialize, Serialize};
 
 use crate::error::Error;
@@ -113,29 +113,33 @@ impl Default for EthereumWalletConfig {
     }
 }
 
+fn parse_contract_address(string: &String) -> Result<H160, Error> {
+    string.parse().map_err(Error::ContractAddressParse)
+}
+
 impl StarknetContracts {
     pub fn core_contract(&self) -> Result<Address, Error> {
-        self.core_contract.as_ref().ok_or(Error::UndefinedContractAddress("core"))?.parse().map_err(Into::into)
+        self.core_contract.as_ref().map(parse_contract_address).ok_or(Error::ContractAddressUndefined("core"))?
     }
 
     pub fn verifier_contract(&self) -> Result<Address, Error> {
-        self.verifier_contract.as_ref().ok_or(Error::UndefinedContractAddress("verifier"))?.parse().map_err(Into::into)
+        self.verifier_contract
+            .as_ref()
+            .map(parse_contract_address)
+            .ok_or(Error::ContractAddressUndefined("verifier"))?
     }
 
     pub fn memory_pages_contract(&self) -> Result<Address, Error> {
         self.memory_pages_contract
             .as_ref()
-            .ok_or(Error::UndefinedContractAddress("memory pages"))?
-            .parse()
-            .map_err(Into::into)
+            .map(parse_contract_address)
+            .ok_or(Error::ContractAddressUndefined("memory pages"))?
     }
 }
 
-impl TryFrom<&PathBuf> for EthereumClientConfig {
-    type Error = Error;
-
-    fn try_from(path: &PathBuf) -> Result<Self, Self::Error> {
-        let file = File::open(path).map_err(Error::ReadFromFile)?;
-        serde_json::from_reader(file).map_err(Error::JsonDecode)
+impl EthereumClientConfig {
+    pub fn from_json_file(path: &PathBuf) -> Result<Self, Error> {
+        let file = File::open(path).map_err(Error::ConfigReadFromFile)?;
+        serde_json::from_reader(file).map_err(Error::ConfigDecodeFromJson)
     }
 }

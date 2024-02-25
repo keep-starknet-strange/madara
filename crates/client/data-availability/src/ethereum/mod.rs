@@ -12,7 +12,6 @@ use crate::{DaClient, DaError, DaMode};
 
 #[derive(Clone, Debug)]
 pub struct EthereumDaClient {
-    // TODO: memory pages contract client (from zaun)
     core_contract: StarknetSovereignContract<Provider<Http>>,
     mode: DaMode,
 }
@@ -21,9 +20,6 @@ pub struct EthereumDaClient {
 impl DaClient for EthereumDaClient {
     async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<(), anyhow::Error> {
         log::debug!("State diff: {:?}", state_diff);
-        // TODO(validity): split into pages and submit one by one using `registerContinuousMemoryPage`
-        // method. Store diff hash & size in the Madara backend so that the settlement worker can
-        // submit that together with state updates.
         Ok(())
     }
 
@@ -49,6 +45,10 @@ impl TryFrom<config::EthereumDaConfig> for EthereumDaClient {
     type Error = DaError;
 
     fn try_from(conf: config::EthereumDaConfig) -> Result<Self, Self::Error> {
+        // NOTE: only sovereign mode is supported (for now)
+        // In sovereign mode both proof and state diff are populated on-chain
+        // without verification. A full Madara node should be able to index
+        // from scratch using just that info: verify proof -> apply diff
         if conf.mode != DaMode::Sovereign {
             return Err(DaError::UnsupportedMode(conf.mode));
         }

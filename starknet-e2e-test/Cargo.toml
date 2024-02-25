@@ -32,7 +32,7 @@ starknet_api = { workspace = true, default-features = true }
 # Madara
 madara-runtime = { workspace = true }
 madara-test-runner = { workspace = true }
-mc-eth-client = { workspace = true, default-features = true }
+mc-eth-client = { workspace = true }
 mc-settlement = { workspace = true }
 mp-felt = { workspace = true }
 mp-messages = { workspace = true }

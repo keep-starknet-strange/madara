@@ -25,7 +25,8 @@ impl TryFrom<EthereumProviderConfig> for Provider<Http> {
     fn try_from(config: EthereumProviderConfig) -> Result<Self, Self::Error> {
         match config {
             EthereumProviderConfig::Http(config) => {
-                let mut provider = Provider::<Http>::try_from(config.rpc_endpoint)?;
+                let mut provider =
+                    Provider::<Http>::try_from(config.rpc_endpoint).map_err(Error::ProviderUrlParse)?;
 
                 if let Some(poll_interval_ms) = config.tx_poll_interval_ms {
                     provider = provider.interval(Duration::from_millis(poll_interval_ms));
@@ -42,9 +43,11 @@ impl TryFrom<EthereumWalletConfig> for LocalWallet {
 
     fn try_from(config: EthereumWalletConfig) -> Result<Self, Self::Error> {
         match config {
-            EthereumWalletConfig::Local(config) => {
-                Ok(config.private_key.parse::<LocalWallet>()?.with_chain_id(config.chain_id))
-            }
+            EthereumWalletConfig::Local(config) => Ok(config
+                .private_key
+                .parse::<LocalWallet>()
+                .map_err(Error::PrivateKeyParse)?
+                .with_chain_id(config.chain_id)),
         }
     }
 }

@@ -443,8 +443,8 @@ pub fn new_full(
     if let Some((layer_kind, config_path)) = settlement_config {
         let settlement_provider: Box<dyn SettlementProvider<_>> = match layer_kind {
             SettlementLayer::Ethereum => {
-                let ethereum_conf =
-                    EthereumClientConfig::try_from(&config_path).map_err(|e| ServiceError::Other(e.to_string()))?;
+                let ethereum_conf = EthereumClientConfig::from_json_file(&config_path)
+                    .map_err(|e| ServiceError::Other(e.to_string()))?;
                 Box::new(
                     StarknetContractClient::try_from(ethereum_conf).map_err(|e| ServiceError::Other(e.to_string()))?,
                 )
@@ -466,7 +466,7 @@ pub fn new_full(
         // TODO: make L1 message handling part of the SettlementProvider, support multiple layer options
         if layer_kind == SettlementLayer::Ethereum {
             let ethereum_conf =
-                EthereumClientConfig::try_from(&config_path).map_err(|e| ServiceError::Other(e.to_string()))?;
+                EthereumClientConfig::from_json_file(&config_path).map_err(|e| ServiceError::Other(e.to_string()))?;
 
             task_manager.spawn_handle().spawn(
                 "settlement-worker-sync-l1-messages",

@@ -24,7 +24,7 @@ starknet_api = { workspace = true, default-features = true }
 
 # Starknet
 mc-db = { workspace = true, default-features = true }
-mc-eth-client = { workspace = true, default-features = true }
+mc-eth-client = { workspace = true }
 
 # Madara Primitives
 mp-felt = { workspace = true, default-features = true }
