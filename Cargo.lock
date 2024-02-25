@@ -6139,6 +6139,7 @@ dependencies = [
  "sc-consensus-grandpa",
  "sc-consensus-manual-seal",
  "sc-executor",
+ "sc-finality-tendermint",
  "sc-keystore",
  "sc-network",
  "sc-network-sync",
@@ -6155,8 +6156,8 @@ dependencies = [
  "sp-block-builder",
  "sp-blockchain",
  "sp-consensus-aura",
- "sp-consensus-grandpa",
  "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
+ "sp-finality-tendermint",
  "sp-inherents",
  "sp-keyring",
  "sp-offchain",
@@ -9693,6 +9694,46 @@ dependencies = [
  "sp-runtime-interface 17.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-wasm-interface 14.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "wasmtime",
+]
+
+[[package]]
+name = "sc-finality-tendermint"
+version = "0.1.0"
+source = "git+https://github.com/aerius-labs/substrate-tendermint?branch=feat/madara#79ab21732da138ba34915b0562c542b68d683a47"
+dependencies = [
+ "ahash 0.7.7",
+ "async-trait",
+ "dyn-clone",
+ "finality-tendermint",
+ "fork-tree",
+ "futures",
+ "futures-timer",
+ "log",
+ "parity-scale-codec",
+ "parking_lot 0.12.1",
+ "rand 0.8.5",
+ "sc-block-builder",
+ "sc-chain-spec",
+ "sc-client-api",
+ "sc-consensus",
+ "sc-keystore",
+ "sc-network",
+ "sc-network-common",
+ "sc-network-gossip",
+ "sc-telemetry",
+ "sc-utils",
+ "serde_json",
+ "sp-api",
+ "sp-application-crypto 23.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
+ "sp-arithmetic 16.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
+ "sp-finality-tendermint",
+ "sp-keystore 0.27.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
+ "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
+ "substrate-prometheus-endpoint",
+ "thiserror",
 ]
 
 [[package]]

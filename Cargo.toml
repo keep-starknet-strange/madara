@@ -128,9 +128,6 @@ sp-consensus-aura = { git = "http://github.com/massalabs/polkadot-sdk", branch =
 sp-consensus = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
   "std",
 ] }
-sp-consensus-grandpa = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
-  "std",
-] }
 sp-timestamp = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
   "std",
 ] }
