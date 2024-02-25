@@ -34,7 +34,6 @@ frame-support = { workspace = true }
 frame-system = { workspace = true }
 frame-try-runtime = { workspace = true, optional = true }
 pallet-aura = { workspace = true }
-pallet-grandpa = { workspace = true }
 pallet-timestamp = { workspace = true }
 sp-core = { workspace = true }
 sp-runtime = { workspace = true }
@@ -66,6 +65,8 @@ blockifier = { workspace = true }
 starknet-core = { workspace = true }
 starknet-ff = { workspace = true }
 starknet_api = { workspace = true }
+# Tendermint Primitives
+pallet-tendermint = { workspace = true }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }
@@ -85,7 +86,7 @@ std = [
   "frame-try-runtime/std",
   # Frame pallets dependencies
   "pallet-aura/std",
-  "pallet-grandpa/std",
+  "pallet-tendermint/std",
   "pallet-timestamp/std",
   # Substrate primitives dependencies
   "sp-api/std",
@@ -112,7 +113,7 @@ try-runtime = [
   "frame-system/try-runtime",
   "frame-support/try-runtime",
   "pallet-aura/try-runtime",
-  "pallet-grandpa/try-runtime",
+  "pallet-tendermint/try-runtime",
   # Madara pallets
   "pallet-starknet/try-runtime",
 ]
@@ -124,7 +125,7 @@ runtime-benchmarks = [
   "frame-support/runtime-benchmarks",
   "frame-system-benchmarking/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
-  "pallet-grandpa/runtime-benchmarks",
+  "pallet-tendermint/runtime-benchmarks",
   "pallet-timestamp/runtime-benchmarks",
   "sp-runtime/runtime-benchmarks",
   # Madara pallets

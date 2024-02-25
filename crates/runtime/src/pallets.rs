@@ -128,16 +128,8 @@ impl pallet_aura::Config for Runtime {
 
 /// Deterministic finality mechanism used for block finalization.
 /// TODO: Comment and explain the rationale behind the configuration items.
-impl pallet_grandpa::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-
-    type WeightInfo = ();
-    type MaxAuthorities = ConstU32<32>;
-    type MaxSetIdSessionEntries = ConstU64<0>;
-    type MaxNominators = ConstU32<1000>;
-
-    type KeyOwnerProof = sp_core::Void;
-    type EquivocationReportSystem = ();
+impl pallet_tendermint::Config for Runtime {
+	type MaxAuthorities = ConstU32<32>;
 }
 
 /// --------------------------------------
