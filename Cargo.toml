@@ -212,7 +212,6 @@ prometheus-endpoint = { package = "substrate-prometheus-endpoint", version = "0.
 
 # Substrate Frame pallet
 pallet-aura = { default-features = true, git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-pallet-grandpa = { default-features = true, git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
 pallet-timestamp = { default-features = true, git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
 
 # Madara pallets
@@ -254,6 +253,11 @@ mc-eth-client = { path = "crates/client/eth-client" }
 
 # Madara runtime
 madara-runtime = { path = "crates/runtime" }
+
+# Tendermint
+pallet-tendermint = { version = "0.1.0", default-features = false, git = "https://github.com/aerius-labs/substrate-tendermint", branch = "feat/madara", features = ["std"]}
+sp-finality-tendermint = { version = "0.1.0", default-features = false, git = "https://github.com/aerius-labs/substrate-tendermint", branch = "feat/madara", features = ["std"] }
+sc-finality-tendermint ={ version = "0.1.0", default-features = false, git = "https://github.com/aerius-labs/substrate-tendermint", branch = "feat/madara" }
 
 # Madara test runner
 madara-test-runner = { path = "madara-test-runner" }

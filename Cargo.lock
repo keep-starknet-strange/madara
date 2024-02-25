@@ -3619,6 +3619,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "finality-tendermint"
+version = "0.1.0"
+source = "git+https://github.com/aerius-labs/substrate-tendermint?branch=feat/madara#79ab21732da138ba34915b0562c542b68d683a47"
+dependencies = [
+ "futures",
+ "futures-timer",
+ "log",
+ "num-traits 0.2.17",
+ "parity-scale-codec",
+ "parking_lot 0.12.1",
+ "scale-info",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "fixed-hash"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6179,9 +6195,9 @@ dependencies = [
  "mp-simulations",
  "mp-transactions",
  "pallet-aura",
- "pallet-grandpa",
  "pallet-starknet",
  "pallet-starknet-runtime-api",
+ "pallet-tendermint",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -7601,65 +7617,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-authorship"
-version = "4.0.0-dev"
-source = "git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std#a41673f8aa3f24d7ed8fb1f246a97551eca58837"
-dependencies = [
- "frame-support",
- "frame-system",
- "impl-trait-for-tuples",
- "parity-scale-codec",
- "scale-info",
- "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "sp-std 8.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
-]
-
-[[package]]
-name = "pallet-grandpa"
-version = "4.0.0-dev"
-source = "git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std#a41673f8aa3f24d7ed8fb1f246a97551eca58837"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log",
- "pallet-authorship",
- "pallet-session",
- "parity-scale-codec",
- "scale-info",
- "sp-application-crypto 23.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "sp-consensus-grandpa",
- "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "sp-io 23.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "sp-session",
- "sp-staking",
- "sp-std 8.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
-]
-
-[[package]]
-name = "pallet-session"
-version = "4.0.0-dev"
-source = "git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std#a41673f8aa3f24d7ed8fb1f246a97551eca58837"
-dependencies = [
- "frame-support",
- "frame-system",
- "impl-trait-for-tuples",
- "log",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "sp-io 23.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "sp-session",
- "sp-staking",
- "sp-state-machine 0.28.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "sp-std 8.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "sp-trie 22.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
-]
-
-[[package]]
 name = "pallet-starknet"
 version = "0.7.0"
 dependencies = [
@@ -7731,6 +7688,20 @@ dependencies = [
  "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "starknet-core",
  "starknet_api",
+]
+
+[[package]]
+name = "pallet-tendermint"
+version = "0.1.0"
+source = "git+https://github.com/aerius-labs/substrate-tendermint?branch=feat/madara#79ab21732da138ba34915b0562c542b68d683a47"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-finality-tendermint",
+ "sp-std 8.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
 ]
 
 [[package]]
@@ -11361,6 +11332,24 @@ dependencies = [
  "parity-scale-codec",
  "sp-std 8.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-storage 13.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
+]
+
+[[package]]
+name = "sp-finality-tendermint"
+version = "0.1.0"
+source = "git+https://github.com/aerius-labs/substrate-tendermint?branch=feat/madara#79ab21732da138ba34915b0562c542b68d683a47"
+dependencies = [
+ "finality-tendermint",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-api",
+ "sp-application-crypto 23.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
+ "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
+ "sp-keystore 0.27.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
+ "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
+ "sp-std 8.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
 ]
 
 [[package]]
