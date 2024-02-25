@@ -1,12 +1,12 @@
 use std::path::PathBuf;
 
-use madara_runtime::{AuraConfig, GrandpaConfig, RuntimeGenesisConfig, SealingMode, SystemConfig, WASM_BINARY};
+use madara_runtime::{AuraConfig, TendermintConfig, RuntimeGenesisConfig, SealingMode, SystemConfig, WASM_BINARY};
 use mp_felt::Felt252Wrapper;
 use pallet_starknet::genesis_loader::{GenesisData, GenesisLoader, HexFelt};
 use sc_service::{BasePath, ChainType};
 use serde::{Deserialize, Serialize};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_consensus_grandpa::AuthorityId as GrandpaId;
+use sp_finality_tendermint::AuthorityId as TendermintId;
 use sp_core::storage::Storage;
 use sp_core::{Pair, Public};
 use sp_state_machine::BasicExternalities;
@@ -51,8 +51,8 @@ pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Pu
 }
 
 /// Generate an Aura authority key.
-pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
-    (get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
+pub fn authority_keys_from_seed(s: &str) -> (AuraId, TendermintId) {
+    (get_from_seed::<AuraId>(s), get_from_seed::<TendermintId>(s))
 }
 
 pub fn development_config(sealing: SealingMode, base_path: BasePath) -> Result<DevChainSpec, String> {
@@ -166,7 +166,7 @@ fn load_genesis(data_path: PathBuf) -> GenesisLoader {
 fn testnet_genesis(
     genesis_loader: GenesisLoader,
     wasm_binary: &[u8],
-    initial_authorities: Vec<(AuraId, GrandpaId)>,
+    initial_authorities: Vec<(AuraId, TendermintId)>,
     _enable_println: bool,
 ) -> RuntimeGenesisConfig {
     let starknet_genesis_config: madara_runtime::pallet_starknet::GenesisConfig<_> = genesis_loader.into();
@@ -180,10 +180,10 @@ fn testnet_genesis(
         // Authority-based consensus protocol used for block production
         aura: AuraConfig { authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect() },
         // Deterministic finality mechanism used for block finalization
-        grandpa: GrandpaConfig {
-            authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect(),
-            _config: Default::default(),
-        },
+		tendermint: TendermintConfig {
+			authorities: initial_authorities.iter().map(|x| (x.1.clone())).collect(),
+			..Default::default()
+		},
         /// Starknet Genesis configuration.
         starknet: starknet_genesis_config,
     }

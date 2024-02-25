@@ -28,7 +28,7 @@ use sc_basic_authorship::ProposerFactory;
 use sc_client_api::{Backend, BlockBackend, BlockchainEvents, HeaderBackend};
 use sc_consensus::BasicQueue;
 use sc_consensus_aura::{SlotProportion, StartAuraParams};
-use sc_consensus_grandpa::{GrandpaBlockImport, SharedVoterState};
+use sc_finality_tendermint::{TendermintBlockImport, SharedVoterState};
 pub use sc_executor::NativeElseWasmExecutor;
 use sc_service::error::Error as ServiceError;
 use sc_service::{new_db_backend, Configuration, TaskManager, WarpSyncParams};
@@ -75,7 +75,7 @@ type BoxBlockImport = sc_consensus::BoxBlockImport<Block>;
 
 /// The minimum period of blocks on which justifications will be
 /// imported and generated.
-const GRANDPA_JUSTIFICATION_PERIOD: u32 = 512;
+const TENDERMINT_JUSTIFICATION_PERIOD: u32 = 512;
 
 #[allow(clippy::type_complexity)]
 pub fn new_partial<BIQ>(
@@ -91,7 +91,7 @@ pub fn new_partial<BIQ>(
         sc_transaction_pool::FullPool<Block, FullClient>,
         (
             BoxBlockImport,
-            sc_consensus_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
+            sc_finality_tendermint::LinkHalf<Block, FullClient, FullSelectChain>,
             Option<Telemetry>,
             Arc<MadaraBackend>,
         ),
@@ -106,7 +106,7 @@ where
         &Configuration,
         &TaskManager,
         Option<TelemetryHandle>,
-        GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
+		TendermintBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
         Arc<MadaraBackend>,
     ) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>,
 {
@@ -163,9 +163,8 @@ where
         client.clone(),
     );
 
-    let (grandpa_block_import, grandpa_link) = sc_consensus_grandpa::block_import(
+    let (tendermint_block_import, tendermint_link) = sc_finality_tendermint::block_import(
         client.clone(),
-        GRANDPA_JUSTIFICATION_PERIOD,
         &client as &Arc<_>,
         select_chain.clone(),
         telemetry.as_ref().map(|x| x.handle()),
@@ -178,7 +177,7 @@ where
         config,
         &task_manager,
         telemetry.as_ref().map(|x| x.handle()),
-        grandpa_block_import,
+        tendermint_block_import,
         madara_backend.clone(),
     )?;
 
@@ -190,17 +189,17 @@ where
         keystore_container,
         select_chain,
         transaction_pool,
-        other: (block_import, grandpa_link, telemetry, madara_backend),
+        other: (block_import, tendermint_link, telemetry, madara_backend),
     })
 }
 
-/// Build the import queue for the template runtime (aura + grandpa).
-pub fn build_aura_grandpa_import_queue(
+/// Build the import queue for the template runtime (aura + tendermint).
+pub fn build_aura_tendermint_import_queue(
     client: Arc<FullClient>,
     config: &Configuration,
     task_manager: &TaskManager,
     telemetry: Option<TelemetryHandle>,
-    grandpa_block_import: GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
+    tendermint_block_import: TendermintBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
     _madara_backend: Arc<MadaraBackend>,
 ) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>
 where
@@ -220,8 +219,8 @@ where
 
     let import_queue =
         sc_consensus_aura::import_queue::<AuraPair, _, _, _, _, _>(sc_consensus_aura::ImportQueueParams {
-            block_import: grandpa_block_import.clone(),
-            justification_import: Some(Box::new(grandpa_block_import.clone())),
+            block_import: tendermint_block_import.clone(),
+            justification_import: Some(Box::new(tendermint_block_import.clone())),
             client,
             create_inherent_data_providers,
             spawner: &task_manager.spawn_essential_handle(),
@@ -232,7 +231,7 @@ where
         })
         .map_err::<ServiceError, _>(Into::into)?;
 
-    Ok((import_queue, Box::new(grandpa_block_import)))
+    Ok((import_queue, Box::new(tendermint_block_import)))
 }
 
 /// Build the import queue for the template runtime (manual seal).
@@ -241,7 +240,7 @@ pub fn build_manual_seal_import_queue(
     config: &Configuration,
     task_manager: &TaskManager,
     _telemetry: Option<TelemetryHandle>,
-    _grandpa_block_import: GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
+    _tendermint_block_import: TendermintBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
     _madara_backend: Arc<MadaraBackend>,
 ) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>
 where
@@ -271,7 +270,7 @@ pub fn new_full(
     settlement_config: Option<(SettlementLayer, PathBuf)>,
 ) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
-        if sealing.is_default() { build_aura_grandpa_import_queue } else { build_manual_seal_import_queue };
+        if sealing.is_default() { build_aura_tendermint_import_queue } else { build_manual_seal_import_queue };
 
     let sc_service::PartialComponents {
         client,
@@ -281,28 +280,15 @@ pub fn new_full(
         keystore_container,
         select_chain,
         transaction_pool,
-        other: (block_import, grandpa_link, mut telemetry, madara_backend),
+        other: (block_import, tendermint_link, mut telemetry, madara_backend),
     } = new_partial(&config, build_import_queue, cache_more_things)?;
 
     let mut net_config = sc_network::config::FullNetworkConfiguration::new(&config.network);
 
-    let grandpa_protocol_name = sc_consensus_grandpa::protocol_standard_name(
+    let tendermint_protocol_name = sc_finality_tendermint::protocol_standard_name(
         &client.block_hash(0).ok().flatten().expect("Genesis block exists; qed"),
         &config.chain_spec,
     );
-
-    let warp_sync_params = if sealing.is_default() {
-        net_config
-            .add_notification_protocol(sc_consensus_grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone()));
-        let warp_sync = Arc::new(sc_consensus_grandpa::warp_proof::NetworkProvider::new(
-            backend.clone(),
-            grandpa_link.shared_authority_set().clone(),
-            Vec::default(),
-        ));
-        Some(WarpSyncParams::WithProvider(warp_sync))
-    } else {
-        None
-    };
 
     let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
         sc_service::build_network(sc_service::BuildNetworkParams {
@@ -313,7 +299,7 @@ pub fn new_full(
             spawn_handle: task_manager.spawn_handle(),
             import_queue,
             block_announce_validator_builder: None,
-            warp_sync_params,
+			warp_sync_params: None,
             block_relay: None,
         })?;
 
@@ -340,7 +326,7 @@ pub fn new_full(
     let force_authoring = config.force_authoring;
     let backoff_authoring_blocks: Option<()> = None;
     let name = config.network.node_name.clone();
-    let enable_grandpa = !config.disable_grandpa && sealing.is_default();
+    let enable_tendermint = !config.disable_grandpa && sealing.is_default();
     let prometheus_registry = config.prometheus_registry().cloned();
     let starting_block = client.info().best_number;
 
@@ -561,47 +547,45 @@ pub fn new_full(
         task_manager.spawn_essential_handle().spawn_blocking("aura", Some("block-authoring"), aura);
     }
 
-    if enable_grandpa {
+    if enable_tendermint {
         // if the node isn't actively participating in consensus then it doesn't
         // need a keystore, regardless of which protocol we use below.
         let keystore = if role.is_authority() { Some(keystore_container.keystore()) } else { None };
 
-        let grandpa_config = sc_consensus_grandpa::Config {
+        let tendermint_config = sc_finality_tendermint::Config {
             // FIXME #1578 make this available through chainspec
             gossip_duration: Duration::from_millis(333),
-            justification_generation_period: GRANDPA_JUSTIFICATION_PERIOD,
+            justification_period: TENDERMINT_JUSTIFICATION_PERIOD,
             name: Some(name),
             observer_enabled: false,
             keystore,
             local_role: role,
             telemetry: telemetry.as_ref().map(|x| x.handle()),
-            protocol_name: grandpa_protocol_name,
+            protocol_name: tendermint_protocol_name,
         };
 
-        // start the full GRANDPA voter
-        // NOTE: non-authorities could run the GRANDPA observer protocol, but at
+        // start the full Tendermint voter
+        // NOTE: non-authorities could run the Tendermint observer protocol, but at
         // this point the full voter should provide better guarantees of block
         // and vote data availability than the observer. The observer has not
         // been tested extensively yet and having most nodes in a network run it
         // could lead to finality stalls.
-        let grandpa_config = sc_consensus_grandpa::GrandpaParams {
-            config: grandpa_config,
-            link: grandpa_link,
-            network,
-            sync: Arc::new(sync_service),
-            voting_rule: sc_consensus_grandpa::VotingRulesBuilder::default().build(),
-            prometheus_registry,
-            shared_voter_state: SharedVoterState::empty(),
-            telemetry: telemetry.as_ref().map(|x| x.handle()),
-            offchain_tx_pool_factory: OffchainTransactionPoolFactory::new(transaction_pool.clone()),
-        };
+        let tendermint_config = sc_finality_tendermint::TendermintParams {
+			config: tendermint_config,
+			link: tendermint_link,
+			network,
+			sync: Arc::new(sync_service),
+			prometheus_registry,
+			shared_voter_state: SharedVoterState::empty(),
+			telemetry: telemetry.as_ref().map(|x| x.handle()),
+		};
 
-        // the GRANDPA voter task is considered infallible, i.e.
+        // the Tendermint voter task is considered infallible, i.e.
         // if it fails we take down the service with it.
         task_manager.spawn_essential_handle().spawn_blocking(
-            "grandpa-voter",
+            "tendermint-voter",
             None,
-            sc_consensus_grandpa::run_grandpa_voter(grandpa_config)?,
+            sc_finality_tendermint::run_tendermint_voter(tendermint_config)?,
         );
     }
 
@@ -709,6 +693,6 @@ type ChainOpsResult =
 pub fn new_chain_ops(config: &mut Configuration, cache_more_things: bool) -> ChainOpsResult {
     config.keystore = sc_service::config::KeystoreConfig::InMemory;
     let sc_service::PartialComponents { client, backend, import_queue, task_manager, other, .. } =
-        new_partial::<_>(config, build_aura_grandpa_import_queue, cache_more_things)?;
+        new_partial::<_>(config, build_aura_tendermint_import_queue, cache_more_things)?;
     Ok((client, backend, import_queue, task_manager, other.3))
 }

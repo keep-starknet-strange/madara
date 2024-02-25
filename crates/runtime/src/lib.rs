@@ -32,7 +32,7 @@ use mp_felt::Felt252Wrapper;
 use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult};
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::{HandleL1MessageTransaction, Transaction, UserOrL1HandlerTransaction, UserTransaction};
-use pallet_tendermint::{fg_primitives, AuthorityId as TendermintId, AuthorityList as TendermintAuthorityList};
+use pallet_tendermint::{fp_primitives, AuthorityId as TendermintId, AuthorityList as TendermintAuthorityList};
 /// Import the Starknet pallet.
 pub use pallet_starknet;
 use pallet_starknet::pallet::Error as PalletError;
