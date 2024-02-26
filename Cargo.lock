@@ -585,7 +585,7 @@ version = "2.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6afaa937395a620e33dc6a742c593c01aced20aa376ffb0f628121198578ccc7"
 dependencies = [
- "async-lock 3.2.0",
+ "async-lock 3.3.0",
  "cfg-if",
  "concurrent-queue",
  "futures-io",
@@ -609,9 +609,9 @@ dependencies = [
 
 [[package]]
 name = "async-lock"
-version = "3.2.0"
+version = "3.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7125e42787d53db9dd54261812ef17e937c95a51e4d291373b670342fa44310c"
+checksum = "d034b430882f8381900d3fe6f0aaa3ad94f2cb4ac519b429692a1bc2dda4ae7b"
 dependencies = [
  "event-listener 4.0.2",
  "event-listener-strategy",
@@ -2535,7 +2535,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "assert_matches",
- "async-lock 3.2.0",
+ "async-lock 3.3.0",
  "clap 4.4.13",
  "ethers",
  "flate2",
@@ -6208,7 +6208,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "assert_matches",
- "async-lock 3.2.0",
+ "async-lock 3.3.0",
  "async-trait",
  "derive_more",
  "flate2",
@@ -12249,7 +12249,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "assert_matches",
- "async-lock 3.2.0",
+ "async-lock 3.3.0",
  "async-trait",
  "flate2",
  "reqwest",

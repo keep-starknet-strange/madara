@@ -8,7 +8,7 @@ edition = "2021"
 
 anyhow = "1.0.80"
 assert_matches = "1.5.0"
-async-lock = "3.1.0"
+async-lock = "3.3.0"
 async-trait = { workspace = true }
 flate2 = { workspace = true }
 reqwest = "0.11.18"

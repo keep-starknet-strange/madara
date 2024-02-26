@@ -353,7 +353,7 @@ tokio = "1.36.0"
 openssl = { version = "0.10", features = ["vendored"] }
 subxt = "0.29"
 assert_matches = "1.5.0"
-async-lock = "3.1.0"
+async-lock = "3.3.0"
 rustc-hex = { version = "2.0.0" }
 itertools = "0.12.0"
 tempfile = "3.2"
