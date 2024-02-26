@@ -344,7 +344,7 @@ async-trait = "0.1.74"
 indexmap = { git = "https://github.com/bluss/indexmap", rev = "ca5f848e10c31e80aeaad0720d14aa2f6dd6cfb1", default-features = false, features = [
   "std",
 ] }
-num-traits = "0.2.17"
+num-traits = "0.2.18"
 num-bigint = "0.4.4"
 phf = { version = "0.11", default-features = false, features = ["std"] }
 url = "2.4.1"
