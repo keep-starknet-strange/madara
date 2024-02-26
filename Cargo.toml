@@ -349,7 +349,7 @@ num-bigint = "0.4.4"
 phf = { version = "0.11", default-features = false, features = ["std"] }
 url = "2.4.1"
 hashbrown = "0.14.2"
-tokio = "1.34.0"
+tokio = "1.36.0"
 openssl = { version = "0.10", features = ["vendored"] }
 subxt = "0.29"
 assert_matches = "1.5.0"
