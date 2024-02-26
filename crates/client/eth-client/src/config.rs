@@ -112,7 +112,7 @@ impl Default for EthereumWalletConfig {
     }
 }
 
-fn parse_contract_address(string: &String) -> Result<H160, Error> {
+fn parse_contract_address(string: &str) -> Result<H160, Error> {
     string.parse().map_err(Error::ContractAddressParse)
 }
 
