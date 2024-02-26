@@ -4946,9 +4946,9 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.12.0"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25db6b064527c5d482d0423354fcd07a89a2dfe07b67892e62411946db7f07b0"
+checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
 dependencies = [
  "either",
 ]
@@ -6439,7 +6439,7 @@ dependencies = [
  "frame-system",
  "hex",
  "indexmap 2.0.0-pre",
- "itertools 0.12.0",
+ "itertools 0.12.1",
  "jsonrpsee 0.16.3",
  "log",
  "mc-data-availability",
@@ -13470,7 +13470,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.7",
- "rand 0.7.3",
+ "rand 0.8.5",
  "static_assertions",
 ]
 
