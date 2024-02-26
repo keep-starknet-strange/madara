@@ -31,7 +31,7 @@ starknet_api = { workspace = true, default-features = true, features = [
   "parity-scale-codec",
 ] }
 thiserror = { workspace = true }
-uuid = "1.4.1"
+uuid = "1.7.0"
 
 [features]
 default = ["kvdb-rocksdb", "parity-db"]
