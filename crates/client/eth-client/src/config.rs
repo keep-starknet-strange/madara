@@ -124,14 +124,14 @@ impl StarknetContracts {
     pub fn verifier_contract(&self) -> Result<Address, Error> {
         self.verifier_contract
             .as_ref()
-            .map(parse_contract_address)
+            .map(|s| parse_contract_address(s))
             .ok_or(Error::ContractAddressUndefined("verifier"))?
     }
 
     pub fn memory_pages_contract(&self) -> Result<Address, Error> {
         self.memory_pages_contract
             .as_ref()
-            .map(parse_contract_address)
+            .map(|s| parse_contract_address(s))
             .ok_or(Error::ContractAddressUndefined("memory pages"))?
     }
 }
