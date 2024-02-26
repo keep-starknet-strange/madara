@@ -38,14 +38,15 @@ pub const FEE_TRANSFER_N_STORAGE_CHANGES: u8 = 2; // Sender and sequencer balanc
 /// Number of storage updates to actually charge for the fee transfer tx.
 pub const FEE_TRANSFER_N_STORAGE_CHANGES_TO_CHARGE: u8 = FEE_TRANSFER_N_STORAGE_CHANGES - 1; // Exclude the sequencer balance update, since it's charged once throughout the batch.
 
-pub static VM_RESOURCE_FEE_COSTS: [(&str, FixedU128); 7] = [
-    ("n_steps", FixedU128::from_inner(10_000_000_000_000_000)),
-    ("pedersen_builtin", FixedU128::from_inner(320_000_000_000_000_000)),
-    ("range_check_builtin", FixedU128::from_inner(160_000_000_000_000_000)),
-    ("ecdsa_builtin", FixedU128::from_inner(20_480_000_000_000_000_000)),
-    ("bitwise_builtin", FixedU128::from_inner(640_000_000_000_000_000)),
-    ("poseidon_builtin", FixedU128::from_inner(320_000_000_000_000_000)),
-    ("ec_op_builtin", FixedU128::from_inner(10_240_000_000_000_000_000)),
+pub static VM_RESOURCE_FEE_COSTS: [(&str, FixedU128); 8] = [
+    ("n_steps", FixedU128::from_inner(5_000_000_000_000_000)),
+    ("pedersen_builtin", FixedU128::from_inner(160_000_000_000_000_000)),
+    ("range_check_builtin", FixedU128::from_inner(80_000_000_000_000_000)),
+    ("ecdsa_builtin", FixedU128::from_inner(10_240_000_000_000_000_000)),
+    ("bitwise_builtin", FixedU128::from_inner(320_000_000_000_000_000)),
+    ("poseidon_builtin", FixedU128::from_inner(160_000_000_000_000_000)),
+    ("ec_op_builtin", FixedU128::from_inner(5_120_000_000_000_000_000)),
+    ("keccak_builtin", FixedU128::from_inner(5_120_000_000_000_000_000)),
 ];
 
 pub const TRANSFER_SELECTOR_NAME: &str = "Transfer";
@@ -237,12 +238,13 @@ mod vm_resource_fee_costs {
     fn check_values_as_floats() {
         let hm = HashMap::from(VM_RESOURCE_FEE_COSTS);
 
-        assert_eq!(hm.get("n_steps"), Some(FixedU128::from_float(0.01)).as_ref());
-        assert_eq!(hm.get("pedersen_builtin"), Some(FixedU128::from_float(0.32)).as_ref());
-        assert_eq!(hm.get("range_check_builtin"), Some(FixedU128::from_float(0.16)).as_ref());
-        assert_eq!(hm.get("ecdsa_builtin"), Some(FixedU128::from_float(20.48)).as_ref());
-        assert_eq!(hm.get("bitwise_builtin"), Some(FixedU128::from_float(0.64)).as_ref());
-        assert_eq!(hm.get("poseidon_builtin"), Some(FixedU128::from_float(0.32)).as_ref());
-        assert_eq!(hm.get("ec_op_builtin"), Some(FixedU128::from_float(10.24)).as_ref());
+        assert_eq!(hm.get("n_steps"), Some(FixedU128::from_float(0.005)).as_ref());
+        assert_eq!(hm.get("pedersen_builtin"), Some(FixedU128::from_float(0.16)).as_ref());
+        assert_eq!(hm.get("range_check_builtin"), Some(FixedU128::from_float(0.08)).as_ref());
+        assert_eq!(hm.get("ecdsa_builtin"), Some(FixedU128::from_float(10.24)).as_ref());
+        assert_eq!(hm.get("bitwise_builtin"), Some(FixedU128::from_float(0.32)).as_ref());
+        assert_eq!(hm.get("poseidon_builtin"), Some(FixedU128::from_float(0.16)).as_ref());
+        assert_eq!(hm.get("ec_op_builtin"), Some(FixedU128::from_float(5.12)).as_ref());
+        assert_eq!(hm.get("keccak_builtin"), Some(FixedU128::from_float(5.12)).as_ref());
     }
 }
