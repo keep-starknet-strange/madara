@@ -246,6 +246,8 @@
 <a href="#246" id="246">246</a>
 <a href="#247" id="247">247</a>
 <a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet fee logic
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
@@ -286,14 +288,15 @@
 </span><span class="doccomment">/// Number of storage updates to actually charge for the fee transfer tx.
 </span><span class="kw">pub const </span>FEE_TRANSFER_N_STORAGE_CHANGES_TO_CHARGE: u8 = FEE_TRANSFER_N_STORAGE_CHANGES - <span class="number">1</span>; <span class="comment">// Exclude the sequencer balance update, since it&#39;s charged once throughout the batch.
 
-</span><span class="kw">pub static </span>VM_RESOURCE_FEE_COSTS: [(<span class="kw-2">&amp;</span>str, FixedU128); <span class="number">7</span>] = [
-    (<span class="string">&quot;n_steps&quot;</span>, FixedU128::from_inner(<span class="number">10_000_000_000_000_000</span>)),
-    (<span class="string">&quot;pedersen_builtin&quot;</span>, FixedU128::from_inner(<span class="number">320_000_000_000_000_000</span>)),
-    (<span class="string">&quot;range_check_builtin&quot;</span>, FixedU128::from_inner(<span class="number">160_000_000_000_000_000</span>)),
-    (<span class="string">&quot;ecdsa_builtin&quot;</span>, FixedU128::from_inner(<span class="number">20_480_000_000_000_000_000</span>)),
-    (<span class="string">&quot;bitwise_builtin&quot;</span>, FixedU128::from_inner(<span class="number">640_000_000_000_000_000</span>)),
-    (<span class="string">&quot;poseidon_builtin&quot;</span>, FixedU128::from_inner(<span class="number">320_000_000_000_000_000</span>)),
-    (<span class="string">&quot;ec_op_builtin&quot;</span>, FixedU128::from_inner(<span class="number">10_240_000_000_000_000_000</span>)),
+</span><span class="kw">pub static </span>VM_RESOURCE_FEE_COSTS: [(<span class="kw-2">&amp;</span>str, FixedU128); <span class="number">8</span>] = [
+    (<span class="string">&quot;n_steps&quot;</span>, FixedU128::from_inner(<span class="number">5_000_000_000_000_000</span>)),
+    (<span class="string">&quot;pedersen_builtin&quot;</span>, FixedU128::from_inner(<span class="number">160_000_000_000_000_000</span>)),
+    (<span class="string">&quot;range_check_builtin&quot;</span>, FixedU128::from_inner(<span class="number">80_000_000_000_000_000</span>)),
+    (<span class="string">&quot;ecdsa_builtin&quot;</span>, FixedU128::from_inner(<span class="number">10_240_000_000_000_000_000</span>)),
+    (<span class="string">&quot;bitwise_builtin&quot;</span>, FixedU128::from_inner(<span class="number">320_000_000_000_000_000</span>)),
+    (<span class="string">&quot;poseidon_builtin&quot;</span>, FixedU128::from_inner(<span class="number">160_000_000_000_000_000</span>)),
+    (<span class="string">&quot;ec_op_builtin&quot;</span>, FixedU128::from_inner(<span class="number">5_120_000_000_000_000_000</span>)),
+    (<span class="string">&quot;keccak_builtin&quot;</span>, FixedU128::from_inner(<span class="number">5_120_000_000_000_000_000</span>)),
 ];
 
 <span class="kw">pub const </span>TRANSFER_SELECTOR_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;Transfer&quot;</span>;
@@ -485,13 +488,14 @@
     </span><span class="kw">fn </span>check_values_as_floats() {
         <span class="kw">let </span>hm = HashMap::from(VM_RESOURCE_FEE_COSTS);
 
-        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;n_steps&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">0.01</span>)).as_ref());
-        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;pedersen_builtin&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">0.32</span>)).as_ref());
-        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;range_check_builtin&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">0.16</span>)).as_ref());
-        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;ecdsa_builtin&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">20.48</span>)).as_ref());
-        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;bitwise_builtin&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">0.64</span>)).as_ref());
-        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;poseidon_builtin&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">0.32</span>)).as_ref());
-        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;ec_op_builtin&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">10.24</span>)).as_ref());
+        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;n_steps&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">0.005</span>)).as_ref());
+        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;pedersen_builtin&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">0.16</span>)).as_ref());
+        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;range_check_builtin&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">0.08</span>)).as_ref());
+        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;ecdsa_builtin&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">10.24</span>)).as_ref());
+        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;bitwise_builtin&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">0.32</span>)).as_ref());
+        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;poseidon_builtin&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">0.16</span>)).as_ref());
+        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;ec_op_builtin&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">5.12</span>)).as_ref());
+        <span class="macro">assert_eq!</span>(hm.get(<span class="string">&quot;keccak_builtin&quot;</span>), <span class="prelude-val">Some</span>(FixedU128::from_float(<span class="number">5.12</span>)).as_ref());
     }
 }
 </code></pre></div></section></main></body></html>
