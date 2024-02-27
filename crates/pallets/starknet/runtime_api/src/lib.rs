@@ -60,6 +60,8 @@ sp_api::decl_runtime_apis! {
         fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), DispatchError>;
         /// Simulates transactions and returns their trace
         fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(TransactionSimulationResult, CommitmentStateDiff)>, DispatchError>;
+        /// Simulates single L1 Message and returns its trace
+        fn simulate_message(message: HandleL1MessageTransaction, simulation_flags: SimulationFlags) -> Result<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError>;
         /// Filters extrinsic transactions to return only Starknet transactions
         ///
         /// To support runtime upgrades, the client must be unaware of the specific extrinsic
@@ -73,13 +75,8 @@ sp_api::decl_runtime_apis! {
         fn re_execute_transactions(transactions: Vec<UserOrL1HandlerTransaction>) -> Result<Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError>;
 
         fn get_index_and_tx_for_tx_hash(xts: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper, tx_hash: Felt252Wrapper) -> Option<(u32, Transaction)>;
-        /// Returns events, call with index from get_index_and_tx_for_tx_hash method
-        fn get_events_for_tx_by_index(tx_index: u32) -> Option<Vec<StarknetEvent>>;
 
-        /// Return the list of StarknetEvent evmitted during this block, along with the hash of the starknet transaction they bellong to
-        ///
-        /// `block_extrinsics` is the list of all the extrinsic executed during this block, it is used in order to match
-        fn get_starknet_events_and_their_associated_tx_index() -> Vec<(u32, StarknetEvent)>;
+        fn get_events_for_tx_by_hash(tx_hash: TransactionHash) -> Vec<StarknetEvent>;
         /// Return the outcome of the tx execution
         fn get_tx_execution_outcome(tx_hash: TransactionHash) -> Option<Vec<u8>>;
         /// Return the block context

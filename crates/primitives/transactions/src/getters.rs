@@ -11,7 +11,7 @@ use crate::{
 impl Transaction {
     pub fn signature(&self) -> Vec<Felt252Wrapper> {
         match self {
-            Transaction::Declare(tx) => tx.signature().clone(),
+            Transaction::Declare(tx, _contract_class) => tx.signature().clone(),
             Transaction::DeployAccount(tx) => tx.signature().clone(),
             Transaction::Invoke(tx) => tx.signature().clone(),
             Transaction::L1Handler(_) => Vec::new(),
@@ -222,7 +222,7 @@ impl TransactionVersion for Transaction {
     #[inline(always)]
     fn version(&self) -> u8 {
         match self {
-            Transaction::Declare(tx) => tx.version(),
+            Transaction::Declare(tx, _contract_class) => tx.version(),
             Transaction::DeployAccount(tx) => tx.version(),
             Transaction::Invoke(tx) => tx.version(),
             Transaction::L1Handler(tx) => tx.version(),

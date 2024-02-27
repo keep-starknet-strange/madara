@@ -122,7 +122,7 @@ async fn works_ok_on_no_validate(madara: &ThreadSafeMadaraClient) -> Result<(), 
             FieldElement::from_hex_be("1").unwrap(),
             FieldElement::from(81u8),
         ],
-        max_fee: FieldElement::from(420u16),
+        max_fee: FieldElement::from(210u16),
         signature: vec![],
         nonce: FieldElement::ZERO,
         is_query: false,
@@ -139,7 +139,7 @@ async fn works_ok_on_no_validate(madara: &ThreadSafeMadaraClient) -> Result<(), 
 
     assert_eq!(simulations.len(), 2);
     assert_eq!(simulations[0].fee_estimation.gas_consumed, 0);
-    assert_eq!(simulations[0].fee_estimation.overall_fee, 420);
+    assert_eq!(simulations[0].fee_estimation.overall_fee, 210);
     assert_eq!(simulations[0].fee_estimation.gas_price, 0);
 
     Ok(())
@@ -166,7 +166,7 @@ async fn works_ok_on_validate_with_signature(madara: &ThreadSafeMadaraClient) ->
 
     assert_eq!(simulations.len(), 1);
     assert_eq!(simulations[0].fee_estimation.gas_consumed, 0);
-    assert_eq!(simulations[0].fee_estimation.overall_fee, 480);
+    assert_eq!(simulations[0].fee_estimation.overall_fee, 240);
     assert_eq!(simulations[0].fee_estimation.gas_price, 0);
 
     Ok(())
@@ -197,7 +197,7 @@ async fn works_ok_on_validate_without_signature_with_skip_validate(
 
     assert_eq!(simulations.len(), 1);
     assert_eq!(simulations[0].fee_estimation.gas_consumed, 0);
-    assert_eq!(simulations[0].fee_estimation.overall_fee, 440);
+    assert_eq!(simulations[0].fee_estimation.overall_fee, 220);
     assert_eq!(simulations[0].fee_estimation.gas_price, 0);
 
     Ok(())
@@ -239,7 +239,7 @@ async fn works_ok_without_max_fee_with_skip_fee_charge(madara: &ThreadSafeMadara
 
     assert_eq!(simulations.len(), 2);
     assert_eq!(simulations[0].fee_estimation.gas_consumed, 0);
-    assert_eq!(simulations[0].fee_estimation.overall_fee, 420);
+    assert_eq!(simulations[0].fee_estimation.overall_fee, 210);
     assert_eq!(simulations[0].fee_estimation.gas_price, 0);
 
     Ok(())

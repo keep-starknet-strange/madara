@@ -58,6 +58,7 @@ async fn fail_non_existing_class_hash(madara: &ThreadSafeMadaraClient) -> Result
 
 #[rstest]
 #[tokio::test]
+#[ignore = "Waiting for issue #1469 to be solved"]
 async fn work_ok_retrieving_class_for_contract_version_0(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
