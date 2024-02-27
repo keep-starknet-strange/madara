@@ -114,6 +114,9 @@ async fn works_ok_on_no_validate(madara: &ThreadSafeMadaraClient) -> Result<(), 
 
     let sender_address = FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap();
 
+    let mut madara_write_lock = madara.write().await;
+    let _ = madara_write_lock.create_empty_block().await;
+
     let tx = BroadcastedInvokeTransaction {
         sender_address,
         calldata: vec![

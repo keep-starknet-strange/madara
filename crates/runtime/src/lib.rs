@@ -287,7 +287,7 @@ impl_runtime_apis! {
             Starknet::estimate_message_fee(message)
         }
 
-        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(TransactionSimulationResult, CommitmentStateDiff)>, DispatchError> {
+        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, DispatchError> {
             Starknet::simulate_transactions(transactions, &simulation_flags)
         }
 

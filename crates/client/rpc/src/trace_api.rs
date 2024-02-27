@@ -13,7 +13,7 @@ use mc_rpc_core::{StarknetReadRpcApiServer, StarknetTraceRpcApiServer};
 use mc_storage::StorageOverride;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
-use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
+use mp_simulations::{SimulationFlags, TransactionSimulationResult};
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::{DeclareTransaction, Transaction, TxType, UserOrL1HandlerTransaction, UserTransaction};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
@@ -89,6 +89,8 @@ where
                 error!("Failed to call function: {:#?}", e);
                 StarknetRpcApiError::ContractError
             })?;
+
+        println!("res: {:?}", res);
 
         let storage_override = self.overrides.for_block_hash(self.client.as_ref(), substrate_block_hash);
         let simulated_transactions =
@@ -477,13 +479,10 @@ fn tx_execution_infos_to_simulated_transactions<B: BlockT>(
     storage_override: &dyn StorageOverride<B>,
     substrate_block_hash: B::Hash,
     tx_types: Vec<TxType>,
-    transaction_execution_results: Vec<(
-        Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>,
-        CommitmentStateDiff,
-    )>,
+    transaction_execution_results: Vec<(CommitmentStateDiff, TransactionSimulationResult)>,
 ) -> Result<Vec<SimulatedTransaction>, ConvertCallInfoToExecuteInvocationError> {
     let mut results = vec![];
-    for (tx_type, (res, state_diff)) in tx_types.into_iter().zip(transaction_execution_results.into_iter()) {
+    for (tx_type, (state_diff, res)) in tx_types.into_iter().zip(transaction_execution_results.into_iter()) {
         match res {
             Ok(tx_exec_info) => {
                 let state_diff = blockifier_to_rpc_state_diff_types(state_diff)

@@ -76,7 +76,7 @@ impl<T: Config> Pallet<T> {
     pub fn simulate_transactions(
         transactions: Vec<UserTransaction>,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Vec<(TransactionSimulationResult, CommitmentStateDiff)>, DispatchError> {
+    ) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, DispatchError> {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::simulate_transactions_inner(
                 transactions,
@@ -89,13 +89,13 @@ impl<T: Config> Pallet<T> {
     fn simulate_transactions_inner(
         transactions: Vec<UserTransaction>,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Vec<(TransactionSimulationResult, CommitmentStateDiff)>, DispatchError> {
+    ) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, DispatchError> {
         let chain_id = Self::chain_id();
         let block_context = Self::get_block_context();
         let mut execution_config =
             RuntimeExecutionConfigBuilder::new::<T>().with_simulation_mode(simulation_flags).build();
 
-        let tx_execution_results = transactions
+        let tx_execution_results: Vec<(CommitmentStateDiff, TransactionSimulationResult)> = transactions
             .into_iter()
             .map(|tx| {
                 execution_config.set_offset_version(tx.offset_version());
@@ -105,9 +105,25 @@ impl<T: Config> Pallet<T> {
                     log::error!("Transaction execution failed during simulation: {e}");
                     PlaceHolderErrorTypeForFailedStarknetExecution
                 });
-                (result, res.1)
+                (res.1, result)
             })
             .collect();
+        println!("tx_execution_results: {:?}", tx_execution_results);
+        use parity_scale_codec::{Decode, Encode};
+        // let encoded = tx_execution_results[0].encode();
+        // let decoded = <(CommitmentStateDiff, TransactionSimulationResult)>::decode(&mut
+        // &encoded[..]).unwrap(); println!("decoded: {:?}", decoded);
+        // let to_encode = (tx_execution_results[0].0.clone(), tx_execution_results[0].0.clone());
+        // println!("to_encode: {:?}", to_encode.clone());
+        // let test = to_encode.encode();
+        // let decoded = <(CommitmentStateDiff, CommitmentStateDiff)>::decode(&mut &test[..]).unwrap();
+        // println!("decoded: {:?}", decoded);
+
+        let to_encode_simple = tx_execution_results[0].0.clone();
+        println!("to_encode_simple: {:?}", to_encode_simple.clone());
+        let test_simple = to_encode_simple.encode();
+        let decoded_simple = CommitmentStateDiff::decode(&mut &test_simple[..]).unwrap();
+        println!("decoded_simple: {:?}", decoded_simple);
 
         Ok(tx_execution_results)
     }
@@ -290,6 +306,7 @@ impl<T: Config> Pallet<T> {
         block_context: &BlockContext,
         execution_config: &ExecutionConfig,
     ) -> (Result<TransactionExecutionInfo, TransactionExecutionError>, CommitmentStateDiff) {
+        println!("block_context: {:?}", block_context);
         let mut cached_state = CachedBlockifierStateAdapter(BlockifierStateAdapter::<T>::default());
         let result = match transaction {
             UserTransaction::Declare(tx, contract_class) => tx
@@ -306,7 +323,8 @@ impl<T: Config> Pallet<T> {
         };
 
         (result, cached_state.to_state_diff())
-        
+    }
+
     fn execute_message(
         message: HandleL1MessageTransaction,
         chain_id: Felt252Wrapper,
