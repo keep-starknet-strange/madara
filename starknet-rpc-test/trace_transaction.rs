@@ -16,7 +16,6 @@ use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{build_single_owner_account, AccountActions};
 use starknet_rpc_test::Transaction;
 
-
 #[rstest]
 #[tokio::test]
 async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
@@ -36,7 +35,8 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
 async fn works_with_correct_transaction(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-    // Copy-pasted from add_invoke_transaction::work_with_storage_change and trace_block::work_for_one_invoke_tx
+    // Copy-pasted from add_invoke_transaction::work_with_storage_change and
+    // trace_block::work_for_one_invoke_tx
     let funding_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let recipient_account = FieldElement::from_hex_be("0x123").unwrap();
 
@@ -55,7 +55,7 @@ async fn works_with_correct_transaction(madara: &ThreadSafeMadaraClient) -> Resu
         rpc.block_number().await?
     };
 
-    //included in block
+    // included in block
 
     let included_tx = rpc.get_transaction_by_block_id_and_index(BlockId::Number(block_number), 0).await?;
     let included_tx_hash = included_tx.transaction_hash;
@@ -69,7 +69,7 @@ async fn works_with_correct_transaction(madara: &ThreadSafeMadaraClient) -> Resu
     // starkli selector transfer
     let transfer_selector =
         FieldElement::from_hex_be("0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e").unwrap();
-    
+
     // This is legacy starknet `__execute__` calls encoding
     let expected_calldata = vec![
         FieldElement::ONE,                                     // number of calls

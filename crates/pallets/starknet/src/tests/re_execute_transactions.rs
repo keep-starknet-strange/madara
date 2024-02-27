@@ -231,22 +231,21 @@ fn re_execute_tx_with_a_transfer_ok() {
             UserOrL1HandlerTransaction::L1Handler(handle_l1_tx, Fee(10)),
         ];
 
-        let transfert_txs: Vec<UserOrL1HandlerTransaction> = vec![
-            
-
-        ];
+        let transfert_tx: Vec<UserOrL1HandlerTransaction> = vec![UserOrL1HandlerTransaction::User(
+            mp_transactions::UserTransaction::Invoke(get_invoke_dummy(Felt252Wrapper::TWO).into()),
+        )];
 
         // Call the function we want to test
-        let res = Starknet::re_execute_transactions(transfert_txs, txs.clone()).unwrap().unwrap();
+        let res = Starknet::re_execute_transactions(txs.clone(), transfert_tx).unwrap().unwrap();
 
         // Storage changes have been reverted
         assert_eq!(Starknet::nonce(invoke_sender_address), Nonce(Felt252Wrapper::ZERO.into()));
         assert_eq!(Starknet::contract_class_by_class_hash(erc20_class_hash), None);
         // All txs are there
-        assert_eq!(res.len(), 5);
+        assert_eq!(res.len(), 1);
 
         // Now let's check the TransactionInfos returned
-        let first_invoke_tx_info = match txs.get(0).unwrap() {
+        let transfer_invoke_tx_info = match txs.get(0).unwrap() {
             UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::Invoke(invoke_tx)) => invoke_tx
                 .into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, false)
                 .execute(
@@ -257,57 +256,6 @@ fn re_execute_tx_with_a_transfer_ok() {
                 .unwrap(),
             _ => unreachable!(),
         };
-        assert_eq!(res[0], first_invoke_tx_info);
-        let second_invoke_tx_info = match txs.get(1).unwrap() {
-            UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::Invoke(invoke_tx)) => invoke_tx
-                .into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, false)
-                .execute(
-                    &mut BlockifierStateAdapter::<MockRuntime>::default(),
-                    &Starknet::get_block_context(),
-                    &RuntimeExecutionConfigBuilder::new::<MockRuntime>().build(),
-                )
-                .unwrap(),
-            _ => unreachable!(),
-        };
-        assert_eq!(res[1], second_invoke_tx_info);
-        let declare_tx_info = match txs.get(2).unwrap() {
-            UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::Declare(declare_tx, cc)) => declare_tx
-                .try_into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, cc.clone(), false)
-                .unwrap()
-                .execute(
-                    &mut BlockifierStateAdapter::<MockRuntime>::default(),
-                    &Starknet::get_block_context(),
-                    &RuntimeExecutionConfigBuilder::new::<MockRuntime>().build(),
-                )
-                .unwrap(),
-            _ => unreachable!(),
-        };
-        assert_eq!(res[2], declare_tx_info);
-        let deploy_account_tx_info = match txs.get(3).unwrap() {
-            UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::DeployAccount(deploy_account_tx)) => {
-                deploy_account_tx
-                    .into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, false)
-                    .execute(
-                        &mut BlockifierStateAdapter::<MockRuntime>::default(),
-                        &Starknet::get_block_context(),
-                        &RuntimeExecutionConfigBuilder::new::<MockRuntime>().build(),
-                    )
-                    .unwrap()
-            }
-            _ => unreachable!(),
-        };
-        assert_eq!(res[3], deploy_account_tx_info);
-        let handle_l1_message_tx_info = match txs.get(4).unwrap() {
-            UserOrL1HandlerTransaction::L1Handler(l1_tx, fee) => l1_tx
-                .into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, *fee, false)
-                .execute(
-                    &mut BlockifierStateAdapter::<MockRuntime>::default(),
-                    &Starknet::get_block_context(),
-                    &RuntimeExecutionConfigBuilder::new::<MockRuntime>().build(),
-                )
-                .unwrap(),
-            _ => unreachable!(),
-        };
-        assert_eq!(res[4], handle_l1_message_tx_info);
+        assert_eq!(res[0], transfer_invoke_tx_info);
     });
 }

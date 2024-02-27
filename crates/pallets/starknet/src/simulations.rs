@@ -266,18 +266,21 @@ impl<T: Config> Pallet<T> {
         execution_config: &ExecutionConfig,
         transactions: Vec<UserOrL1HandlerTransaction>,
     ) -> Result<Vec<TransactionExecutionInfo>, PlaceHolderErrorTypeForFailedStarknetExecution> {
-        
         let exec_transactions: Vec<Result<TransactionExecutionInfo, TransactionExecutionError>> = transactions
             .iter()
             .map(|user_or_l1_tx| match user_or_l1_tx {
                 UserOrL1HandlerTransaction::User(tx) => {
                     Self::execute_user_transaction(tx.clone(), chain_id, block_context, execution_config)
-                },
-                UserOrL1HandlerTransaction::L1Handler(tx,_fee) => {
+                }
+                UserOrL1HandlerTransaction::L1Handler(tx, _fee) => {
                     Self::execute_message(tx.clone(), chain_id, block_context, execution_config)
-                },
+                }
             })
             .collect();
+
+        if exec_transactions.len() != 0 {
+            println!("exec_transactions.len() = {}", exec_transactions.len());
+        }
 
         let mut execution_infos = Vec::with_capacity(exec_transactions.len());
         for result in exec_transactions {
@@ -286,7 +289,7 @@ impl<T: Config> Pallet<T> {
                 Err(_err) => return Err(PlaceHolderErrorTypeForFailedStarknetExecution),
             }
         }
-        
+
         Ok(execution_infos)
     }
 }
