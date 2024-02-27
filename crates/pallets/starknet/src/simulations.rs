@@ -256,7 +256,8 @@ impl<T: Config> Pallet<T> {
         execution_config: &ExecutionConfig,
     ) -> Result<TransactionExecutionInfo, TransactionExecutionError> {
         // Follow `offset` from Pallet Starknet where it is set to false
-        let executable = message.into_executable::<T::SystemHash>(chain_id, Fee::default(), false);
+        let fee = Fee(u128::MAX);
+        let executable = message.into_executable::<T::SystemHash>(chain_id, fee, false);
         executable.execute(&mut BlockifierStateAdapter::<T>::default(), block_context, execution_config)
     }
 
@@ -277,10 +278,6 @@ impl<T: Config> Pallet<T> {
                 }
             })
             .collect();
-
-        if exec_transactions.len() != 0 {
-            println!("exec_transactions.len() = {}", exec_transactions.len());
-        }
 
         let mut execution_infos = Vec::with_capacity(exec_transactions.len());
         for result in exec_transactions {

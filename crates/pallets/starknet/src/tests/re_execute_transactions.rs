@@ -231,21 +231,21 @@ fn re_execute_tx_with_a_transfer_ok() {
             UserOrL1HandlerTransaction::L1Handler(handle_l1_tx, Fee(10)),
         ];
 
-        let transfert_tx: Vec<UserOrL1HandlerTransaction> = vec![UserOrL1HandlerTransaction::User(
+        let transfer_tx: Vec<UserOrL1HandlerTransaction> = vec![UserOrL1HandlerTransaction::User(
             mp_transactions::UserTransaction::Invoke(get_invoke_dummy(Felt252Wrapper::TWO).into()),
         )];
 
         // Call the function we want to test
-        let res = Starknet::re_execute_transactions(txs.clone(), transfert_tx).unwrap().unwrap();
+        let res = Starknet::re_execute_transactions(txs.clone(), transfer_tx.clone()).unwrap().unwrap();
 
         // Storage changes have been reverted
         assert_eq!(Starknet::nonce(invoke_sender_address), Nonce(Felt252Wrapper::ZERO.into()));
         assert_eq!(Starknet::contract_class_by_class_hash(erc20_class_hash), None);
-        // All txs are there
+        // Here we only got the transfer tx
         assert_eq!(res.len(), 1);
 
         // Now let's check the TransactionInfos returned
-        let transfer_invoke_tx_info = match txs.get(0).unwrap() {
+        let transfer_invoke_tx_info = match transfer_tx.get(0).unwrap() {
             UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::Invoke(invoke_tx)) => invoke_tx
                 .into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, false)
                 .execute(
