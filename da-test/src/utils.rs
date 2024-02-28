@@ -5,8 +5,8 @@ use std::path::{Path, PathBuf};
 use mc_data_availability::avail::{config::AvailConfig, AvailClient};
 #[cfg(feature = "celestia")]
 use mc_data_availability::celestia::{config::CelestiaConfig, CelestiaClient};
-use mc_data_availability::ethereum::config::EthereumConfig;
-use mc_data_availability::ethereum::EthereumClient;
+use mc_data_availability::ethereum::config::EthereumDaConfig;
+use mc_data_availability::ethereum::EthereumDaClient;
 use mc_data_availability::{DaClient, DaLayer};
 use serde::de::DeserializeOwned;
 
@@ -31,8 +31,8 @@ pub fn get_da_client(da_layer: DaLayer) -> Box<dyn DaClient + Send + Sync> {
             Box::new(CelestiaClient::try_from(celestia_conf).expect("Failed to create Celestia client"))
         }
         DaLayer::Ethereum => {
-            let ethereum_conf = load_da_config::<EthereumConfig>(&da_path);
-            Box::new(EthereumClient::try_from(ethereum_conf).expect("Failed to create Ethereum client"))
+            let ethereum_conf = load_da_config::<EthereumDaConfig>(&da_path);
+            Box::new(EthereumDaClient::try_from(ethereum_conf).expect("Failed to create Ethereum client"))
         }
         #[cfg(feature = "avail")]
         DaLayer::Avail => {
