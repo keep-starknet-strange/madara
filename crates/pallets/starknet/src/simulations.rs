@@ -108,22 +108,6 @@ impl<T: Config> Pallet<T> {
                 (res.1, result)
             })
             .collect();
-        println!("tx_execution_results: {:?}", tx_execution_results);
-        use parity_scale_codec::{Decode, Encode};
-        // let encoded = tx_execution_results[0].encode();
-        // let decoded = <(CommitmentStateDiff, TransactionSimulationResult)>::decode(&mut
-        // &encoded[..]).unwrap(); println!("decoded: {:?}", decoded);
-        // let to_encode = (tx_execution_results[0].0.clone(), tx_execution_results[0].0.clone());
-        // println!("to_encode: {:?}", to_encode.clone());
-        // let test = to_encode.encode();
-        // let decoded = <(CommitmentStateDiff, CommitmentStateDiff)>::decode(&mut &test[..]).unwrap();
-        // println!("decoded: {:?}", decoded);
-
-        let to_encode_simple = tx_execution_results[0].0.clone();
-        println!("to_encode_simple: {:?}", to_encode_simple.clone());
-        let test_simple = to_encode_simple.encode();
-        let decoded_simple = CommitmentStateDiff::decode(&mut &test_simple[..]).unwrap();
-        println!("decoded_simple: {:?}", decoded_simple);
 
         Ok(tx_execution_results)
     }
@@ -306,7 +290,6 @@ impl<T: Config> Pallet<T> {
         block_context: &BlockContext,
         execution_config: &ExecutionConfig,
     ) -> (Result<TransactionExecutionInfo, TransactionExecutionError>, CommitmentStateDiff) {
-        println!("block_context: {:?}", block_context);
         let mut cached_state = CachedBlockifierStateAdapter(BlockifierStateAdapter::<T>::default());
         let result = match transaction {
             UserTransaction::Declare(tx, contract_class) => tx

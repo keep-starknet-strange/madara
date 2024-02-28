@@ -90,8 +90,6 @@ where
                 StarknetRpcApiError::ContractError
             })?;
 
-        println!("res: {:?}", res);
-
         let storage_override = self.overrides.for_block_hash(self.client.as_ref(), substrate_block_hash);
         let simulated_transactions =
             tx_execution_infos_to_simulated_transactions(&**storage_override, substrate_block_hash, tx_types, res)
