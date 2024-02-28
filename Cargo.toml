@@ -27,6 +27,7 @@ members = [
   "crates/client/storage",
   "crates/client/commitment-state-diff",
   "crates/client/settlement",
+  "crates/client/eth-client",
   "starknet-rpc-test",
   "da-test",
   "starknet-e2e-test",
@@ -60,6 +61,7 @@ default-members = [
   "crates/client/storage",
   "crates/client/commitment-state-diff",
   "crates/client/settlement",
+  "crates/client/eth-client",
 ]
 
 [profile.release]
@@ -248,6 +250,7 @@ mc-data-availability = { path = "crates/client/data-availability" }
 mc-commitment-state-diff = { path = "crates/client/commitment-state-diff" }
 mc-l1-messages = { path = "crates/client/l1-messages" }
 mc-settlement = { path = "crates/client/settlement" }
+mc-eth-client = { path = "crates/client/eth-client" }
 
 # Madara runtime
 madara-runtime = { path = "crates/runtime" }

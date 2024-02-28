@@ -7,10 +7,9 @@ use madara_runtime::SealingMode;
 use mc_data_availability::avail::{config::AvailConfig, AvailClient};
 #[cfg(feature = "celestia")]
 use mc_data_availability::celestia::{config::CelestiaConfig, CelestiaClient};
-use mc_data_availability::ethereum::config::EthereumConfig;
-use mc_data_availability::ethereum::EthereumClient;
+use mc_data_availability::ethereum::config::EthereumDaConfig;
+use mc_data_availability::ethereum::EthereumDaClient;
 use mc_data_availability::{DaClient, DaLayer};
-use mc_l1_messages::config::{L1MessagesWorkerConfig, L1MessagesWorkerConfigError};
 use mc_settlement::SettlementLayer;
 use sc_cli::{Result, RpcMethods, RunCmd, SubstrateCli};
 use sc_service::BasePath;
@@ -18,42 +17,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::cli::Cli;
 use crate::service;
-
-#[derive(Debug, Clone, clap::Args)]
-#[group(multiple = true)]
-pub struct L1MessagesParams {
-    /// Ethereum Provider (Node) Url
-    #[clap(
-        long,
-        value_hint=clap::ValueHint::Url,
-        conflicts_with="l1_messages_config",
-        requires="l1_contract_address",
-    )]
-    pub provider_url: Option<String>,
-
-    /// L1 Contract Address
-    #[clap(
-        long,
-        value_hint=clap::ValueHint::Other,
-        conflicts_with="l1_messages_config",
-        requires="provider_url",
-    )]
-    pub l1_contract_address: Option<String>,
-}
-
-#[derive(Debug, Clone, clap::Args)]
-pub struct L1Messages {
-    /// Path to configuration file for Ethereum Core Contract Events Listener
-    #[clap(
-        long,
-        conflicts_with_all=["provider_url", "l1_contract_address"],
-        value_hint=clap::ValueHint::FilePath,
-    )]
-    pub l1_messages_config: Option<PathBuf>,
-
-    #[clap(flatten)]
-    pub config_params: L1MessagesParams,
-}
 
 /// Available Sealing methods.
 #[derive(Debug, Copy, Clone, clap::ValueEnum, Default, Serialize, Deserialize)]
@@ -118,10 +81,6 @@ pub struct ExtendedRunCmd {
     /// increases the memory footprint of the node.
     #[clap(long)]
     pub cache: bool,
-
-    /// Configuration for L1 Messages (Syncing) Worker
-    #[clap(flatten)]
-    pub l1_messages_worker: L1Messages,
 }
 
 impl ExtendedRunCmd {
@@ -167,9 +126,9 @@ fn init_da_client(da_layer: DaLayer, da_path: &Path) -> Result<Box<dyn DaClient 
             Box::new(CelestiaClient::try_from(celestia_conf).map_err(|e| sc_cli::Error::Input(e.to_string()))?)
         }
         DaLayer::Ethereum => {
-            let ethereum_conf: EthereumConfig =
+            let ethereum_conf: EthereumDaConfig =
                 serde_json::from_reader(file).map_err(|e| sc_cli::Error::Input(e.to_string()))?;
-            Box::new(EthereumClient::try_from(ethereum_conf).map_err(|e| sc_cli::Error::Input(e.to_string()))?)
+            Box::new(EthereumDaClient::try_from(ethereum_conf).map_err(|e| sc_cli::Error::Input(e.to_string()))?)
         }
         #[cfg(feature = "avail")]
         DaLayer::Avail => {
@@ -215,9 +174,6 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
         }
     };
 
-    let l1_messages_worker_config = extract_l1_messages_worker_config(&cli.run.l1_messages_worker)
-        .map_err(|e| sc_cli::Error::Input(e.to_string()))?;
-
     let settlement_config: Option<(SettlementLayer, PathBuf)> = match cli.run.settlement {
         Some(SettlementLayer::Ethereum) => {
             let settlement_conf = match cli.run.clone().settlement_conf {
@@ -247,25 +203,8 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
     runner.run_node_until_exit(|config| async move {
         let sealing = cli.run.sealing.map(Into::into).unwrap_or_default();
         let cache = cli.run.cache;
-        service::new_full(config, sealing, da_client, cache, l1_messages_worker_config, settlement_config)
-            .map_err(sc_cli::Error::Service)
+        service::new_full(config, sealing, da_client, cache, settlement_config).map_err(sc_cli::Error::Service)
     })
-}
-
-fn extract_l1_messages_worker_config(
-    run_cmd: &L1Messages,
-) -> std::result::Result<Option<L1MessagesWorkerConfig>, L1MessagesWorkerConfigError> {
-    if let Some(ref config_path) = run_cmd.l1_messages_config {
-        let config = L1MessagesWorkerConfig::new_from_file(config_path)?;
-        return Ok(Some(config));
-    }
-
-    if let L1MessagesParams { provider_url: Some(url), l1_contract_address: Some(address) } = &run_cmd.config_params {
-        let config = L1MessagesWorkerConfig::new_from_params(url, address)?;
-        return Ok(Some(config));
-    }
-
-    Ok(None)
 }
 
 fn override_dev_environment(cmd: &mut ExtendedRunCmd) {
