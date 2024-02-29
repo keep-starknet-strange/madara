@@ -276,6 +276,7 @@ Thanks goes to these wonderful people
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/azurwastaken"><img src="https://avatars.githubusercontent.com/u/30268138?v=4?s=100" width="100px;" alt="azurwastaken"/><br /><sub><b>azurwastaken</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=azurwastaken" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/MrishoLukamba"><img src="https://avatars.githubusercontent.com/u/69342343?v=4" width="100px;" alt="azurwastaken"/><br /><sub><b>Mrisho Lukamba</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=MrishoLukamba" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/hhamud"><img src="https://avatars.githubusercontent.com/u/53880692?v=4?s=100" width="100px;" alt="hhamud"/><br /><sub><b>Hamza Hamud</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=hhamud" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/MrishoLukamba"><img src="https://avatars.githubusercontent.com/u/69342343?v=4" width="100px;" alt="azurwastaken"/><br /><sub><b>Mrisho Lukamba</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=MrishoLukamba" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
