@@ -2,6 +2,7 @@
 
 ## Next release
 
+- chore(rpc): clean trace api
 - feat(rpc): added state diff real value in trace api
 - chore: update cairo-vm commit and update gas per op
 - refactor(rpc): use single arc instance of starknet rpc
