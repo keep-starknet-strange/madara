@@ -16,7 +16,7 @@
 //!
 //! 4. Genesis Configuration: The GenesisConfig struct is defined, which is used to set up the
 //! initial state of the pallet during genesis. The struct includes fields for contracts,
-//! contract_classes, storage, fee_token_address, and _phantom. A GenesisBuild implementation is
+//! contract_classes, storage, fee_token_address, chain_id and _phantom. A GenesisBuild implementation is
 //! provided to build the initial state during genesis.
 //!
 //! 5. Events: A set of events are defined in the Event enum, including KeepStarknetStrange,
@@ -121,6 +121,8 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
+
+    use mp_chain_id::MADARA_CHAIN_ID;
 
     use super::*;
 
@@ -329,19 +331,16 @@ pub mod pallet {
     #[pallet::getter(fn chain_id)]
     pub type ChainIdStorage<T> = StorageValue<_, Felt252Wrapper, ValueQuery, DefaultChainId>;
 
-    /// Default ChainId SN_GOERLI_TESNET id
+    /// Default ChainId MADARA
     pub struct DefaultChainId {}
 
     impl Get<Felt252Wrapper> for DefaultChainId {
         fn get() -> Felt252Wrapper {
-            Felt252Wrapper(starknet_ff::FieldElement::from_mont([
-                3753493103916128178,
-                18446744073709548950,
-                18446744073709551615,
-                398700013197595345,
-            ]))
+           MADARA_CHAIN_ID
         }
     }
+
+
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {

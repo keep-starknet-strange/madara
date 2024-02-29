@@ -17,6 +17,8 @@ mod pallets;
 mod runtime_tests;
 mod types;
 
+pub use pallet_starknet::DefaultChainId;
+
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::transaction::objects::TransactionExecutionInfo;
 pub use config::*;

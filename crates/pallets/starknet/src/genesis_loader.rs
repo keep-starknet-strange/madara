@@ -1,11 +1,12 @@
 use std::vec::Vec;
 
 use blockifier::execution::contract_class::ContractClass as StarknetContractClass;
+use mp_chain_id::{MADARA_CHAIN_ID, SN_GOERLI_CHAIN_ID, SN_MAIN_CHAIN_ID};
 use mp_felt::Felt252Wrapper;
 use mp_genesis_config::ContractClass;
 pub use mp_genesis_config::{GenesisData, GenesisLoader, HexFelt, PredeployedAccount};
 
-use crate::{GenesisConfig, Pallet};
+use crate::GenesisConfig;
 
 impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
     fn from(loader: GenesisLoader) -> Self {
@@ -66,7 +67,19 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
             .collect::<Vec<_>>();
         let fee_token_address = Felt252Wrapper(loader.data().fee_token_address.0).into();
 
-        let chain_id = loader.data().chain_id;
+
+        let chain_id = match loader.data().chain_id.as_ref() {
+            "MADARA" | "Madara" => {
+                MADARA_CHAIN_ID
+            },
+            "GOERLI" | "Goerli" => {
+                SN_GOERLI_CHAIN_ID
+            },
+            "STARKNET_MAINNET" | "Starkent Mainnet" | "Starkent_Mainnet" => {
+                SN_MAIN_CHAIN_ID
+            },
+            _ => panic!("Inavalid chain id try `MADARA` or `GOERLI` or `STARKNET_MAINNET`"),
+        };
 
         GenesisConfig {
             contracts,
@@ -108,6 +121,8 @@ pub(crate) fn read_contract_class_from_json(json_str: &str, version: u8) -> Star
 mod tests {
     use starknet_crypto::FieldElement;
 
+    use crate::Pallet;
+
     use super::*;
 
     #[test]
@@ -140,7 +155,7 @@ mod tests {
             predeployed_accounts: Vec::new(),
             storage: vec![((contract_address, storage_key), storage_value)],
             fee_token_address,
-            chain_id: Pallet::<crate::tests::MockRuntime>::chain_id(),
+            chain_id: String::from("MADARA"),
         };
 
         // When

@@ -1,5 +1,3 @@
 {
   "eslint.workingDirectories": ["tests"],
-  "rust-analyzer.checkOnSave": false
-
 }

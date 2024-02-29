@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 
-use log::{log, Level};
 use madara_runtime::{AuraConfig, GrandpaConfig, RuntimeGenesisConfig, SealingMode, SystemConfig, WASM_BINARY};
 use mp_felt::Felt252Wrapper;
 use pallet_starknet::genesis_loader::{GenesisData, GenesisLoader, HexFelt};
@@ -31,6 +30,7 @@ pub struct DevGenesisExt {
     /// The sealing mode being used.
     sealing: SealingMode,
 }
+
 
 /// The `sealing` from the `DevGenesisExt` is passed to the runtime via the storage. The runtime
 /// can then use this information to adjust accordingly. This is just a common way to pass
@@ -160,7 +160,7 @@ fn load_genesis(data_path: PathBuf) -> GenesisLoader {
     log::debug!("🧪 Loading genesis data at : {}", genesis_path.display());
     let genesis_file_content = std::fs::read_to_string(genesis_path)
         .expect("Failed to read genesis file. Please run `madara setup` before opening an issue.");
-    let genesis_data: GenesisData = serde_json::from_str(&genesis_file_content).expect("Failed loading genesis");
+    let genesis_data:GenesisData = serde_json::from_str(&genesis_file_content).expect("Failed loading genesis");
     GenesisLoader::new(data_path, genesis_data)
 }
 
