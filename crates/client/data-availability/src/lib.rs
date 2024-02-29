@@ -62,6 +62,8 @@ pub enum DaError {
     FailedDataValidation(anyhow::Error),
     #[error("Invalid http endpoint: {0}")]
     InvalidHttpEndpoint(String),
+    #[error("Unsupported mode: {0}")]
+    UnsupportedMode(DaMode),
 }
 
 impl Display for DaLayer {

@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use ethers::providers::{Http, Provider, StreamExt};
 use ethers::types::U256;
+pub use mc_eth_client::config::EthereumClientConfig;
 use mp_transactions::HandleL1MessageTransaction;
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::HeaderBackend;
@@ -13,14 +14,21 @@ use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::Fee;
 use starknet_core_contract_client::interfaces::{LogMessageToL2Filter, StarknetMessagingEvents};
 
-use crate::config::L1MessagesWorkerConfig;
 use crate::contract::parse_handle_l1_message_transaction;
 use crate::error::L1MessagesWorkerError;
 
 const TX_SOURCE: TransactionSource = TransactionSource::External;
 
+fn create_event_listener(
+    config: EthereumClientConfig,
+) -> Result<StarknetMessagingEvents<Provider<Http>>, mc_eth_client::error::Error> {
+    let address = config.contracts.core_contract()?;
+    let provider: Provider<Http> = config.provider.try_into()?;
+    Ok(StarknetMessagingEvents::new(address, Arc::new(provider)))
+}
+
 pub async fn run_worker<C, P, B>(
-    config: L1MessagesWorkerConfig,
+    config: EthereumClientConfig,
     client: Arc<C>,
     pool: Arc<P>,
     backend: Arc<mc_db::Backend<B>>,
@@ -32,10 +40,13 @@ pub async fn run_worker<C, P, B>(
 {
     log::info!("⟠ Starting L1 Messages Worker with settings: {:?}", config);
 
-    let event_listener = StarknetMessagingEvents::new(
-        *config.contract_address(),
-        Arc::new(Provider::new(Http::new(config.provider().clone()))),
-    );
+    let event_listener = match create_event_listener(config) {
+        Ok(res) => res,
+        Err(e) => {
+            log::error!("⟠ Ethereum client config error: {:?}", e);
+            return;
+        }
+    };
 
     let last_synced_event_block = match backend.messaging().last_synced_l1_block_with_event() {
         Ok(blknum) => blknum,
