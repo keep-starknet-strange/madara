@@ -10,14 +10,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up Rust
-      uses: actions/setup-rust@v1
-      with:
-        toolchain: stable
+      - name: Set up Rust
+        uses: actions/setup-rust@v1
+        with:
+          toolchain: stable
 
-    - name: Build and run script
-      run: |
-        bash scripts/run_testnet.sh
+      - name: Build and run script
+        run: |
+          bash scripts/run_testnet.sh
