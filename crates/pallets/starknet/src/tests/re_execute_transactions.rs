@@ -175,7 +175,7 @@ fn re_execute_tx_ok() {
 //         // TEST ACCOUNT CONTRACT
 //         // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
 //         let salt =
-//             
+//
 // Felt252Wrapper::from_hex_be("0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463"
 // ).unwrap();         let (account_class_hash, calldata) =
 // account_helper(AccountType::V0(AccountTypeV0Inner::NoValidate));
@@ -198,14 +198,14 @@ fn re_execute_tx_ok() {
 //         let declare_tx =
 //             get_declare_dummy(chain_id, Felt252Wrapper::ZERO,
 // AccountType::V0(AccountTypeV0Inner::Openzeppelin));         let erc20_class_hash: CasmClassHash =
-//             
+//
 // Felt252Wrapper::from_hex_be("0x372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4")
 //                 .unwrap()
 //                 .into();
 //         let erc20_class = get_contract_class("ERC20.json", 0);
 
 //         let contract_address =
-//             
+//
 // Felt252Wrapper::from_hex_be("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7"
 // ).unwrap();         let from_address =
 // Felt252Wrapper::from_hex_be("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045").unwrap();
@@ -232,15 +232,15 @@ fn re_execute_tx_ok() {
 //             UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::Invoke(
 //                 get_invoke_dummy(Felt252Wrapper::ONE).into(),
 //             )),
-//             
+//
 // UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::Declare(declare_tx,
-// erc20_class)),             
+// erc20_class)),
 // UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::DeployAccount(deploy_tx)),
 //             UserOrL1HandlerTransaction::L1Handler(handle_l1_tx, Fee(10)),
 //         ];
 
 //         let transfer_tx: Vec<UserOrL1HandlerTransaction> = vec![UserOrL1HandlerTransaction::User(
-//             
+//
 // mp_transactions::UserTransaction::Invoke(get_invoke_dummy(Felt252Wrapper::TWO).into()),
 //         )];
 
