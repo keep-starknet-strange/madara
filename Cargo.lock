@@ -194,9 +194,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.79"
+version = "1.0.80"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "080e9890a082662b09c1ad45f567faeeb47f22b5fb23895fbe1e651e718e25ca"
+checksum = "5ad32ce52e4161730f7098c077cd2ed6229b5804ccf99e5366be1ab72a98b4e1"
 
 [[package]]
 name = "approx"
@@ -1599,7 +1599,7 @@ dependencies = [
 [[package]]
 name = "cairo-take_until_unbalanced"
 version = "0.29.0"
-source = "git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-21eff70#53dfed63ce010e9de8fb39e31f96b3034682762d"
+source = "git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-21eff70#f79edcaef28da6ff881942a0275374964831f21e"
 dependencies = [
  "nom",
 ]
@@ -1607,7 +1607,7 @@ dependencies = [
 [[package]]
 name = "cairo-vm"
 version = "0.8.5"
-source = "git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-21eff70#53dfed63ce010e9de8fb39e31f96b3034682762d"
+source = "git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-21eff70#f79edcaef28da6ff881942a0275374964831f21e"
 dependencies = [
  "anyhow",
  "ark-ff 0.4.2",
@@ -4112,9 +4112,9 @@ checksum = "38d84fa142264698cdce1a9f9172cf383a0c82de1bddcf3092901442c4097004"
 
 [[package]]
 name = "futures-timer"
-version = "3.0.2"
+version = "3.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e64b03909df88034c26dc1547e8970b91f98bdb65165d6a4e9110d94263dbb2c"
+checksum = "f288b0a4f20f9a56b5d1da57e2227c661b7b16168e2f72365f57b63326e29b24"
 dependencies = [
  "gloo-timers",
  "send_wrapper 0.4.0",
@@ -6099,6 +6099,7 @@ dependencies = [
  "mc-commitment-state-diff",
  "mc-data-availability",
  "mc-db",
+ "mc-eth-client",
  "mc-genesis-data-provider",
  "mc-l1-messages",
  "mc-mapping-sync",
@@ -6324,6 +6325,7 @@ dependencies = [
  "log",
  "mc-commitment-state-diff",
  "mc-db",
+ "mc-eth-client",
  "mp-digest-log",
  "mp-felt",
  "mp-hashers",
@@ -6341,13 +6343,14 @@ dependencies = [
  "sp-keyring",
  "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "starknet-core",
+ "starknet-core-contract-client",
  "starknet_api",
  "substrate-prometheus-endpoint",
  "subxt",
  "thiserror",
  "tokio",
  "url",
- "uuid 1.6.1",
+ "uuid 1.7.0",
 ]
 
 [[package]]
@@ -6365,7 +6368,19 @@ dependencies = [
  "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "starknet_api",
  "thiserror",
- "uuid 1.6.1",
+ "uuid 1.7.0",
+]
+
+[[package]]
+name = "mc-eth-client"
+version = "0.1.0"
+dependencies = [
+ "ethers",
+ "rustc-hex",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "url",
 ]
 
 [[package]]
@@ -6389,6 +6404,7 @@ dependencies = [
  "ethers",
  "log",
  "mc-db",
+ "mc-eth-client",
  "mp-felt",
  "mp-transactions",
  "pallet-starknet-runtime-api",
@@ -6523,8 +6539,8 @@ dependencies = [
  "futures",
  "futures-timer",
  "log",
- "mc-data-availability",
  "mc-db",
+ "mc-eth-client",
  "mp-block",
  "mp-digest-log",
  "mp-felt",
@@ -12176,6 +12192,7 @@ dependencies = [
  "home",
  "madara-runtime",
  "madara-test-runner",
+ "mc-eth-client",
  "mc-settlement",
  "mp-felt",
  "mp-messages",
@@ -12998,9 +13015,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.35.1"
+version = "1.36.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c89b4efa943be685f629b149f53829423f8f5531ea21249408e8e2f8671ec104"
+checksum = "61285f6515fa018fb2d1e46eb21223fff441ee8db5d0f1435e8ab4f5cdb80931"
 dependencies = [
  "backtrace",
  "bytes",
@@ -13470,7 +13487,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.7",
- "rand 0.7.3",
+ "rand 0.8.5",
  "static_assertions",
 ]
 
@@ -13627,9 +13644,9 @@ dependencies = [
 
 [[package]]
 name = "uuid"
-version = "1.6.1"
+version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e395fcf16a7a3d8127ec99782007af141946b4795001f876d54fb0d55978560"
+checksum = "f00cc9702ca12d3c81455259621e676d0f7251cec66a21e98fe2e9a37db93b2a"
 dependencies = [
  "getrandom 0.2.11",
  "serde",

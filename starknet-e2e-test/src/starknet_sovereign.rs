@@ -5,7 +5,10 @@ use std::sync::Arc;
 use ethers::providers::Middleware;
 use ethers::types::{Address, I256, U256};
 use ethers::utils::keccak256;
-use mc_settlement::ethereum::client::EthereumConfig;
+use mc_eth_client::config::{
+    EthereumClientConfig, EthereumProviderConfig, EthereumWalletConfig, HttpProviderConfig, LocalWalletConfig,
+    StarknetContracts,
+};
 use mc_settlement::ethereum::convert_felt_to_u256;
 use mp_felt::Felt252Wrapper;
 use mp_messages::{MessageL1ToL2, MessageL2ToL1};
@@ -66,12 +69,19 @@ impl StarknetSovereign {
     ///
     /// Returns path to the settlement config (has to be passed as a Madara node argument)
     pub async fn create_settlement_conf(&self, data_path: PathBuf) -> PathBuf {
-        let settlement_conf = EthereumConfig {
-            http_provider: self.client.client().provider().url().to_string(),
-            core_contracts: hex_str_from_bytes::<20, true>(self.client.address().0),
-            chain_id: self.client.client().get_chainid().await.expect("Failed to get sandbox chain ID").as_u64(),
-            poll_interval_ms: Some(10u64), // Default is 7s, we need to speed things up
-            ..Default::default()
+        let settlement_conf = EthereumClientConfig {
+            provider: EthereumProviderConfig::Http(HttpProviderConfig {
+                rpc_endpoint: self.client.client().provider().url().to_string(),
+                tx_poll_interval_ms: Some(10u64), // Default is 7s, we need to speed things up
+            }),
+            wallet: Some(EthereumWalletConfig::Local(LocalWalletConfig {
+                chain_id: self.client.client().get_chainid().await.expect("Failed to get sandbox chain ID").as_u64(),
+                ..Default::default() // Use Anvil default account
+            })),
+            contracts: StarknetContracts {
+                core_contract: hex_str_from_bytes::<20, true>(self.client.address().0),
+                ..Default::default()
+            },
         };
 
         let conf_path = data_path.join("eth-config.json");

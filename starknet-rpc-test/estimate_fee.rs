@@ -105,8 +105,8 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
 
     // TODO: instead execute the tx and check that the actual fee are the same as the estimated ones
     assert_eq!(estimates.len(), 2);
-    assert_eq!(estimates[0].overall_fee, 420);
-    assert_eq!(estimates[1].overall_fee, 420);
+    assert_eq!(estimates[0].overall_fee, 210);
+    assert_eq!(estimates[1].overall_fee, 210);
     // https://starkscan.co/block/5
     assert_eq!(estimates[0].gas_consumed, 0);
     assert_eq!(estimates[1].gas_consumed, 0);

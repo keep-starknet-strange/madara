@@ -2,6 +2,7 @@
 
 ## Next release
 
+- chore: update cairo-vm commit and update gas per op
 - refactor(rpc): use single arc instance of starknet rpc
 - build: remove patch on `ring-vrf` dependecy
 - ci: use `production` profile binary in the workflows
@@ -16,6 +17,7 @@
 - feat: add transparent representation to `Felt252Wrapper`
 - feat(rpc/trace_api): add `trace_block_transaction`
 - chore(db): changed the way hashes are encoded
+- refacto: reusable Eth client config for settlement/DA/other tasks
 - ci: add gomu gomu no gatling perfomrance test
 - feat(runtime): moved StarkEvents from Substrate events to runtime storage
 - feat(rpc/trace_api): add `trace_transaction`

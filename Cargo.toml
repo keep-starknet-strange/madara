@@ -27,6 +27,7 @@ members = [
   "crates/client/storage",
   "crates/client/commitment-state-diff",
   "crates/client/settlement",
+  "crates/client/eth-client",
   "starknet-rpc-test",
   "da-test",
   "starknet-e2e-test",
@@ -60,6 +61,7 @@ default-members = [
   "crates/client/storage",
   "crates/client/commitment-state-diff",
   "crates/client/settlement",
+  "crates/client/eth-client",
 ]
 
 [profile.release]
@@ -248,6 +250,7 @@ mc-data-availability = { path = "crates/client/data-availability" }
 mc-commitment-state-diff = { path = "crates/client/commitment-state-diff" }
 mc-l1-messages = { path = "crates/client/l1-messages" }
 mc-settlement = { path = "crates/client/settlement" }
+mc-eth-client = { path = "crates/client/eth-client" }
 
 # Madara runtime
 madara-runtime = { path = "crates/runtime" }
@@ -307,7 +310,7 @@ zaun-sandbox = { git = "https://github.com/keep-starknet-strange/zaun", package 
 starknet-core-contract-client = { git = "https://github.com/keep-starknet-strange/zaun" }
 
 # Other third party dependencies
-anyhow = "1.0.75"
+anyhow = "1.0.80"
 flate2 = "1.0.28"
 parity-scale-codec = { version = "3.2.2", default-features = false, features = [
   "std",
@@ -322,7 +325,7 @@ safe-mix = { version = "1.0", default-features = false, features = ["std"] }
 jsonrpsee = { version = "0.16.3", default-features = false }
 clap = { version = "4.4.8", default-features = false, features = ["std"] }
 futures = { version = "0.3.29", default-features = false, features = ["std"] }
-futures-timer = { version = "3.0.2", default-features = false }
+futures-timer = { version = "3.0.3", default-features = false }
 sha3 = { version = "0.10.8", default-features = false, features = ["std"] }
 reqwest = { version = "0.11.22", default-features = false }
 serde = { version = "1.0.192", default-features = false, features = ["std"] }
@@ -349,7 +352,7 @@ num-bigint = "0.4.4"
 phf = { version = "0.11", default-features = false, features = ["std"] }
 url = "2.4.1"
 hashbrown = "0.14.2"
-tokio = "1.34.0"
+tokio = "1.36.0"
 openssl = { version = "0.10", features = ["vendored"] }
 subxt = "0.29"
 assert_matches = "1.5.0"

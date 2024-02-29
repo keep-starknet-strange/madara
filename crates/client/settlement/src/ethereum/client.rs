@@ -1,11 +1,7 @@
 use std::sync::Arc;
-use std::time::Duration;
 
-use ethers::prelude::SignerMiddleware;
-use ethers::providers::{Http, Provider};
-use ethers::signers::{LocalWallet, Signer};
 use ethers::types::{Address, TransactionReceipt, I256, U256};
-pub use mc_data_availability::ethereum::config::EthereumConfig;
+pub use mc_eth_client::config::EthereumClientConfig;
 use starknet_core_contract_client::interfaces::StarknetSovereignContract;
 use starknet_core_contract_client::LocalWalletSignerMiddleware;
 
@@ -76,20 +72,12 @@ impl StarknetContractClient {
     }
 }
 
-impl TryFrom<EthereumConfig> for StarknetContractClient {
+impl TryFrom<EthereumClientConfig> for StarknetContractClient {
     type Error = Error;
 
-    fn try_from(config: EthereumConfig) -> Result<Self> {
-        let mut provider = Provider::<Http>::try_from(config.http_provider)?;
-
-        if let Some(poll_interval_ms) = config.poll_interval_ms {
-            provider = provider.interval(Duration::from_millis(poll_interval_ms));
-        }
-
-        let wallet: LocalWallet = config.sequencer_key.parse::<LocalWallet>()?.with_chain_id(config.chain_id);
-        let signer = Arc::new(SignerMiddleware::new(provider, wallet));
-        let address: Address = config.core_contracts.parse()?;
-
-        Ok(Self::new(address, signer))
+    fn try_from(config: EthereumClientConfig) -> Result<Self> {
+        let address = config.contracts.core_contract()?;
+        let client = Arc::new(config.try_into()?);
+        Ok(Self::new(address, client))
     }
 }
