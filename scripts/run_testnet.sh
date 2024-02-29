@@ -8,11 +8,11 @@ cleanup() {
     kill "$validator_pid" "$node_pid" 2>/dev/null
 }
 
+# Trap EXIT signal to ensure cleanup runs on script exit
+trap cleanup EXIT
+
 # build release
 cargo build --release
-
-# download configs
-./target/release/madara setup --from-remote
 
 # copy configs from local
 ./target/release/madara setup --from-local ./configs/ --chain=local --base-path /tmp/alice
