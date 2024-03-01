@@ -43,7 +43,7 @@ impl StarknetSovereign {
     /// and then deploy:
     ///     - Starknet core contract (sovereign mode)
     ///     - Unsafe delegate proxy (no access restrictions)
-    /// All the following interactions will be made thorugh the proxy
+    /// All the following interactions will be made through the proxy
     pub async fn deploy() -> Self {
         // Try to attach to an already running sandbox (GitHub CI case)
         // otherwise spawn new sandbox instance

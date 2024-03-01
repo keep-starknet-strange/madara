@@ -479,7 +479,7 @@ impl Execute for InvokeTransaction {
             None
         };
         let validate_execute_call_info = match self.tx {
-            // V0 tx cannot revert, we cannot charge the failling ones
+            // V0 tx cannot revert, we cannot charge the failing ones
             starknet_api::transaction::InvokeTransaction::V0(_) => {
                 let execute_call_info = self.run_execute(state, resources, &mut context, remaining_gas)?;
                 ValidateExecuteCallInfo::new_accepted(validate_call_info, execute_call_info)
@@ -527,7 +527,7 @@ impl Execute for DeclareTransaction {
             None
         };
         let validate_execute_call_info = match self.tx() {
-            // V0 tx cannot revert, we cannot charge the failling ones
+            // V0 tx cannot revert, we cannot charge the failing ones
             starknet_api::transaction::DeclareTransaction::V0(_) => {
                 let execute_call_info = self.run_execute(state, resources, &mut context, remaining_gas)?;
                 ValidateExecuteCallInfo::new_accepted(validate_call_info, execute_call_info)
