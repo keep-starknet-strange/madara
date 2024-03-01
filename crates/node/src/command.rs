@@ -1,5 +1,7 @@
-use std::fs::File;
+use std::env;
+use std::fs::{self, File};
 use std::io::Write;
+use std::path::PathBuf;
 
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use madara_runtime::Block;
@@ -14,17 +16,26 @@ use crate::constants::SHARINGAN_CHAIN_ID;
 use crate::{chain_spec, service};
 
 fn spit_spec_to_json(base_config: impl ChainSpec) -> Result<Box<dyn ChainSpec>, String> {
-    // find a better place for this tmp file
-    let temp_path = format!("{:?}-spec.json", base_config.chain_type());
-    let json_config = ChainSpec::as_json(&base_config, true).unwrap();
-    let f_o = File::open(temp_path.clone());
-    match f_o {
-        Ok(_) => Ok(Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(temp_path.clone()))?)),
-        Err(_) => {
-            let mut f = File::create(temp_path.clone()).expect("failed to create tmp file");
-            f.write_all(json_config.as_bytes()).expect("failed to write file");
-            Ok(Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(temp_path.clone()))?))
-        }
+    let mut temp_dir = match env::var_os("HOME") {
+        Some(home_dir) => PathBuf::from(home_dir),
+        None => return Err("Failed to get home directory".to_string()),
+    };
+
+    temp_dir.push(".madara");
+
+    fs::create_dir_all(&temp_dir).map_err(|e| format!("Failed to create directory: {}", e))?;
+
+    let temp_file_name = format!("{:?}-spec.json", base_config.chain_type());
+    let temp_file_path = temp_dir.join(temp_file_name);
+
+    let json_config = ChainSpec::as_json(&base_config, true).expect("failed to create json dump of chainspec");
+
+    if temp_file_path.exists() {
+        Ok(Box::new(chain_spec::ChainSpec::from_json_file(temp_file_path.clone())?))
+    } else {
+        let mut file = File::create(&temp_file_path).map_err(|e| format!("Failed to create temporary file: {}", e))?;
+        file.write_all(json_config.as_bytes()).map_err(|e| format!("Failed to write to temporary file: {}", e))?;
+        Ok(Box::new(chain_spec::ChainSpec::from_json_file(temp_file_path)?))
     }
 }
 
