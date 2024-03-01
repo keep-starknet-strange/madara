@@ -17,7 +17,7 @@ use crate::constants::CELESTIA_DA_CONFIG;
 use crate::constants::ETHEREUM_DA_CONFIG;
 
 fn load_da_config<C: DeserializeOwned>(path: &Path) -> C {
-    let file = File::open(path).expect("path shoud lead to an existing file");
+    let file = File::open(path).expect("path should lead to an existing file");
     serde_json::from_reader(file).expect("path content should be a valid DA config")
 }
 

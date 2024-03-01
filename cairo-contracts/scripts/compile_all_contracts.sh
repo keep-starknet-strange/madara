@@ -20,12 +20,12 @@
 #     - Compile all sierra to casm in the same folder
 #
 # CAIRO 0 :
-# /!\ As the cairo 0 compiler require some python package, this script automaticaly install some dependencies /!\
+# /!\ As the cairo 0 compiler require some python package, this script automatically install some dependencies /!\
 #     - We check if python is installed and if the current version of python is python 3.9
 #     - If there is no python or if its not the good version we install pyenv (a python version management tool)
 #     - with pyenv we install python 3.9 and set it to global
 #     - then we install the cairo compiler and all required dependencies with pip
-#     - We compile every contrat in cairo_contract/src except those in cairo_contract/src/cairo_1 and output them into
+#     - We compile every contract in cairo_contract/src except those in cairo_contract/src/cairo_1 and output them into
 #     compiled_contract/cairo_0
 #
 # dependencies:
