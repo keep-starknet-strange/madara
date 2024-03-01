@@ -1,7 +1,7 @@
 # Madara Changelog
 
 ## Next release
-
+- feat: added chain-id to the GenesisConfig in pallet-starknet
 - chore: update cairo-vm commit and update gas per op
 - refactor(rpc): use single arc instance of starknet rpc
 - build: remove patch on `ring-vrf` dependecy
