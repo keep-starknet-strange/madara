@@ -1,6 +1,9 @@
+use std::fs::File;
+use std::path::PathBuf;
+
 use serde::Deserialize;
 
-use crate::{DaError, DaLayer, DaMode};
+use crate::{DaError, DaMode};
 
 const DEFAULT_AVAIL_WS: &str = "ws://127.0.0.1:9945";
 const DEFAULT_APP_ID: u32 = 0;
@@ -22,10 +25,11 @@ pub struct AvailConfig {
 }
 
 impl TryFrom<&PathBuf> for AvailConfig {
-    type Error = DaErr;
+    type Error = DaError;
+    
     fn try_from(path: &PathBuf) -> Result<Self, Self::Error> {
-        let file = File::open(path).map_err(|e| DaError::FailedOpeningConfig(e))?;
-        serde_json::from_reader(file).map_err(|e| DaError::FailedParsingConfig(e))
+        let file = File::open(path).map_err(DaError::FailedOpeningConfig)?;
+        serde_json::from_reader(file).map_err(DaError::FailedParsingConfig)
     }
 }
 
