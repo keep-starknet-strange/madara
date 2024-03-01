@@ -39,7 +39,7 @@ impl DaClient for CelestiaClient {
         Ok(())
     }
 
-    async fn last_published_state(&self) -> Result<I256> {
+    async fn last_published_state(&self) -> Result<I256, anyhow::Error> {
         Ok(I256::from(1))
     }
 
