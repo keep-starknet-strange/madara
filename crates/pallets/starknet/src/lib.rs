@@ -419,9 +419,11 @@ pub mod pallet {
             FeeTokenAddress::<T>::set(self.fee_token_address);
             SeqAddrUpdate::<T>::put(true);
 
+
             ChainIdStorage::<T>::put(self.chain_id)
         }
     }
+
 
     /// The Starknet pallet custom errors.
     /// ERRORS
