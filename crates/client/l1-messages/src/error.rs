@@ -22,4 +22,6 @@ pub enum L1MessagesWorkerError<PE> {
     ToFeeError,
     #[error("Failed to convert L1 Message into L2 Transaction: `{0}`")]
     ToTransactionError(#[from] L1EventToTransactionError),
+    #[error("Ethereum client error: {0}")]
+    EthereumClient(#[from] mc_eth_client::error::Error),
 }

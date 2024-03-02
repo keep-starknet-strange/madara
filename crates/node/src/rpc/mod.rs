@@ -13,6 +13,7 @@ use jsonrpsee::RpcModule;
 use madara_runtime::opaque::Block;
 use madara_runtime::{AccountId, Hash, Index, StarknetHasher};
 use mc_genesis_data_provider::GenesisProvider;
+use mc_rpc::starknetrpcwrapper::StarknetRpcWrapper;
 use sc_client_api::{Backend, BlockBackend, StorageProvider};
 use sc_consensus_manual_seal::rpc::EngineCommand;
 pub use sc_rpc_api::DenyUnsafe;
@@ -70,46 +71,23 @@ where
     let FullDeps { client, pool, deny_unsafe, starknet: starknet_params, command_sink, graph, .. } = deps;
 
     module.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())?;
-    module.merge(MadaraRpcApiServer::into_rpc(Starknet::<_, _, _, _, _, _, StarknetHasher>::new(
-        client.clone(),
-        starknet_params.madara_backend.clone(),
-        starknet_params.overrides.clone(),
-        pool.clone(),
-        graph.clone(),
-        starknet_params.sync_service.clone(),
-        starknet_params.starting_block,
-        starknet_params.genesis_provider.clone(),
-    )))?;
-    module.merge(StarknetReadRpcApiServer::into_rpc(Starknet::<_, _, _, _, _, _, StarknetHasher>::new(
-        client.clone(),
-        starknet_params.madara_backend.clone(),
-        starknet_params.overrides.clone(),
-        pool.clone(),
-        graph.clone(),
-        starknet_params.sync_service.clone(),
-        starknet_params.starting_block,
-        starknet_params.genesis_provider.clone(),
-    )))?;
-    module.merge(StarknetWriteRpcApiServer::into_rpc(Starknet::<_, _, _, _, _, _, StarknetHasher>::new(
-        client.clone(),
-        starknet_params.madara_backend.clone(),
-        starknet_params.overrides.clone(),
-        pool.clone(),
-        graph.clone(),
-        starknet_params.sync_service.clone(),
-        starknet_params.starting_block,
-        starknet_params.genesis_provider.clone(),
-    )))?;
-    module.merge(StarknetTraceRpcApiServer::into_rpc(Starknet::<_, _, _, _, _, _, StarknetHasher>::new(
-        client,
-        starknet_params.madara_backend,
-        starknet_params.overrides,
-        pool,
-        graph,
-        starknet_params.sync_service,
-        starknet_params.starting_block,
-        starknet_params.genesis_provider,
-    )))?;
+
+    let rpc_instance: StarknetRpcWrapper<_, _, _, _, _, _, StarknetHasher> =
+        StarknetRpcWrapper(Arc::new(Starknet::<_, _, _, _, _, _, StarknetHasher>::new(
+            client,
+            starknet_params.madara_backend,
+            starknet_params.overrides,
+            pool,
+            graph,
+            starknet_params.sync_service,
+            starknet_params.starting_block,
+            starknet_params.genesis_provider,
+        )));
+
+    module.merge(MadaraRpcApiServer::into_rpc(rpc_instance.clone()))?;
+    module.merge(StarknetReadRpcApiServer::into_rpc(rpc_instance.clone()))?;
+    module.merge(StarknetWriteRpcApiServer::into_rpc(rpc_instance.clone()))?;
+    module.merge(StarknetTraceRpcApiServer::into_rpc(rpc_instance.clone()))?;
 
     if let Some(command_sink) = command_sink {
         module.merge(

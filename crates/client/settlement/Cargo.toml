@@ -31,8 +31,8 @@ sp-io = { workspace = true, default-features = true }
 sp-runtime = { workspace = true, default-features = true }
 
 # Starknet
-mc-data-availability = { workspace = true, default-features = true }
 mc-db = { workspace = true, default-features = true }
+mc-eth-client = { workspace = true }
 mp-block = { workspace = true, default-features = true }
 mp-digest-log = { workspace = true, features = ["std"] }
 mp-felt = { workspace = true, default-features = true }

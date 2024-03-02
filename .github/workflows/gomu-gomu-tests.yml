@@ -1,0 +1,54 @@
+name: Task - Gomu Gomu no Gatling Performance Tests
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      BINARY_PATH: ../target/production/madara
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            target/production/madara
+          key:
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
+            github.run_id }}
+          fail-on-cache-miss: true
+
+      - name: Setup rust toolchain
+        run: |
+          rustup target add x86_64-unknown-linux-gnu
+
+      - name: Setup build deps (linux)
+        run: |
+          sudo apt update
+          sudo apt install -y clang llvm libudev-dev protobuf-compiler libssl-dev pkg-config
+
+      - name: Setup gomu gomu
+        run: |
+          set -v -x +e
+          cd ..
+          git clone https://github.com/keep-starknet-strange/gomu-gomu-no-gatling.git
+          cd gomu-gomu-no-gatling
+          cargo install --path .
+
+      - name: Setup dev chain
+        run: |
+          cd ../madara
+          ./target/production/madara setup --chain=dev --from-local=configs
+
+      - name: Run gomu gomu test
+        run: |-
+          set -v -x +e
+          ./target/production/madara --dev --cache > madara.log 2>&1 &
+          MADARA_RUN_PID=$!
+          while ! echo exit | nc localhost 9944; do sleep 1; done
+          cd ../gomu-gomu-no-gatling
+          RUST_LOG=info cargo run -- shoot -c config/default.yaml
+          kill $MADARA_RUN_PID

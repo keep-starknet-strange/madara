@@ -4,7 +4,7 @@
 //! The code consists of the following sections:
 //! 1. Config: The trait Config is defined, which is used to configure the pallet by specifying the
 //! parameters and types on which it depends. The trait also includes associated types for
-//! RuntimeEvent, StateRoot, SystemHash, and TimestampProvider.
+//! StateRoot, SystemHash, and TimestampProvider.
 //!
 //! 2. Hooks: The Hooks trait is implemented for the pallet, which includes methods to be executed
 //! during the block lifecycle: on_finalize, on_initialize, on_runtime_upgrade, and offchain_worker.
@@ -131,8 +131,6 @@ pub mod pallet {
     /// mechanism and comply with starknet which uses an ER20 as fee token
     #[pallet::config]
     pub trait Config: frame_system::Config {
-        /// Because this pallet emits events, it depends on the runtime's definition of an event.
-        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// The hashing function to use.
         type SystemHash: HasherT;
         /// The block time
@@ -405,24 +403,6 @@ pub mod pallet {
         }
     }
 
-    /// The Starknet pallet events.
-    /// EVENTS
-    /// See: `<https://docs.substrate.io/main-docs/build/events-errors/>`
-    #[pallet::event]
-    #[pallet::generate_deposit(pub(super) fn deposit_event)]
-    pub enum Event<T: Config> {
-        KeepStarknetStrange,
-        /// Regular Starknet event
-        StarknetEvent(StarknetEvent),
-        /// Emitted when fee token address is changed.
-        /// This is emitted by the `set_fee_token_address` extrinsic.
-        /// [old_fee_token_address, new_fee_token_address]
-        FeeTokenAddressChanged {
-            old_fee_token_address: ContractAddress,
-            new_fee_token_address: ContractAddress,
-        },
-    }
-
     /// The Starknet pallet custom errors.
     /// ERRORS
     #[pallet::error]
@@ -559,7 +539,7 @@ pub mod pallet {
             let input_transaction = transaction;
             let chain_id = Self::chain_id();
             let transaction = input_transaction
-                .try_into_executable::<T::SystemHash>(chain_id, contract_class, false)
+                .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), false)
                 .map_err(|_| Error::<T>::InvalidContractClassForThisDeclareVersion)?;
 
             // Check class hash is not already declared
@@ -588,7 +568,11 @@ pub mod pallet {
                 &tx_execution_infos.execute_call_info,
                 &tx_execution_infos.fee_transfer_call_info,
             );
-            Self::store_transaction(tx_hash, Transaction::Declare(input_transaction), tx_execution_infos.revert_error);
+            Self::store_transaction(
+                tx_hash,
+                Transaction::Declare(input_transaction, contract_class),
+                tx_execution_infos.revert_error,
+            );
 
             Ok(())
         }
@@ -680,7 +664,7 @@ pub mod pallet {
             // Ensure that L1 Message has not been executed
             Self::ensure_l1_message_not_executed(&nonce).map_err(|_| Error::<T>::L1MessageAlreadyExecuted)?;
 
-            // Store infornamtion about message being processed
+            // Store information about message being processed
             // The next instruction executes the message
             // Either successfully  or not
             L1Messages::<T>::mutate(|nonces| nonces.insert(nonce));
@@ -888,7 +872,7 @@ impl<T: Config> Pallet<T> {
     /// Get the number of events in the block.
     #[inline(always)]
     pub fn event_count() -> u128 {
-        TxEvents::<T>::iter_values().map(|v| v.len() as u128).sum()
+        Self::pending_hashes().iter().map(|tx_hash| TxEvents::<T>::get(tx_hash).len() as u128).sum()
     }
 
     /// Call a smart contract function.
@@ -959,7 +943,7 @@ impl<T: Config> Pallet<T> {
         let transaction_count = transactions.len();
 
         let parent_block_hash = Self::parent_block_hash(&block_number);
-        let events: Vec<StarknetEvent> = transaction_hashes.iter().flat_map(TxEvents::<T>::take).collect();
+        let events_count = transaction_hashes.iter().map(|tx_hash| TxEvents::<T>::get(tx_hash).len() as u128).sum();
 
         let sequencer_address = Self::sequencer_address();
         let block_timestamp = Self::block_timestamp();
@@ -976,7 +960,7 @@ impl<T: Config> Pallet<T> {
                 sequencer_address,
                 block_timestamp,
                 transaction_count as u128,
-                events.len() as u128,
+                events_count,
                 protocol_version,
                 l1_gas_price,
                 extra_data,
@@ -988,7 +972,6 @@ impl<T: Config> Pallet<T> {
         BlockHash::<T>::insert(block_number, blockhash);
 
         // Kill pending storage.
-        // There is no need to kill `TxEvents` as we used `take` while iterating over it.
         Pending::<T>::kill();
         PendingHashes::<T>::kill();
 
@@ -1069,7 +1052,6 @@ impl<T: Config> Pallet<T> {
                         from_address: call_info.call.storage_address,
                         content: ordered_event.event.clone(),
                     };
-                    Self::deposit_event(Event::<T>::StarknetEvent(event.clone()));
                     TxEvents::<T>::append(tx_hash, event);
                     next_order += 1;
                     event_idx += 1;

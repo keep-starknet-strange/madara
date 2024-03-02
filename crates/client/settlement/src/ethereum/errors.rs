@@ -19,6 +19,9 @@ pub enum Error {
     #[error("HTTP provider error: {0}")]
     Provider(#[from] ethers::providers::ProviderError),
 
+    #[error("Ethereum client error: {0}")]
+    EthereumClient(#[from] mc_eth_client::error::Error),
+
     #[error("Failed to get transaction receipt")]
     MissingTransactionRecepit,
 }

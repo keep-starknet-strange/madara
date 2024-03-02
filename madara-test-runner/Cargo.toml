@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.72"
+anyhow = "1.0.80"
 assert_matches = "1.5.0"
 async-lock = "3.1.0"
 async-trait = "0.1"
@@ -25,7 +25,7 @@ starknet-signers = { workspace = true }
 starknet_api = { workspace = true, default-features = true }
 tempfile = { workspace = true }
 thiserror = { workspace = true }
-tokio = { version = "1.29.1", features = ["rt", "macros", "parking_lot"] }
+tokio = { version = "1.36.0", features = ["rt", "macros", "parking_lot"] }
 url = "2.4.1"
 
 # Temporary dependency

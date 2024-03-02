@@ -148,9 +148,17 @@ impl MadaraClient {
     }
 
     pub async fn create_empty_block(&mut self) -> anyhow::Result<()> {
+        self.do_create_block(true, true).await
+    }
+
+    pub async fn create_block_with_pending_txs(&mut self) -> anyhow::Result<()> {
+        self.do_create_block(false, true).await
+    }
+
+    async fn do_create_block(&mut self, empty: bool, finalize: bool) -> anyhow::Result<()> {
         let body = json!({
             "method": "engine_createBlock",
-            "params": [true, true],
+            "params": [empty, finalize],
         });
 
         let response = self.call_rpc(body).await?;
@@ -162,20 +170,26 @@ impl MadaraClient {
         &mut self,
         transactions: Vec<Transaction<'_>>,
     ) -> anyhow::Result<Vec<Result<TransactionResult, SendTransactionError>>> {
-        let body = json!({
-            "method": "engine_createBlock",
-            "params": [false, true],
-        });
-
         let mut results = Vec::new();
         for tx in transactions {
             let result = tx.send().await;
             results.push(result);
         }
 
-        let response = self.call_rpc(body).await?;
-        // TODO: read actual error from response
-        response.status().is_success().then_some(results).ok_or(anyhow!("failed to create a new block"))
+        self.do_create_block(false, false).await?;
+        Ok(results)
+    }
+
+    pub async fn submit_txs(
+        &mut self,
+        transactions: Vec<Transaction<'_>>,
+    ) -> Vec<Result<TransactionResult, SendTransactionError>> {
+        let mut results = Vec::new();
+        for tx in transactions {
+            let result = tx.send().await;
+            results.push(result);
+        }
+        results
     }
 
     pub async fn create_block_with_parent(&mut self, parent_hash: &str) -> anyhow::Result<()> {
