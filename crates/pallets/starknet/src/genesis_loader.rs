@@ -121,8 +121,6 @@ pub(crate) fn read_contract_class_from_json(json_str: &str, version: u8) -> Star
 mod tests {
     use starknet_crypto::FieldElement;
 
-    use crate::Pallet;
-
     use super::*;
 
     #[test]
@@ -162,7 +160,7 @@ mod tests {
         let serialized_loader = serde_json::to_string(&genesis_loader).unwrap();
 
         // Then
-        let expected = r#"{"contract_classes":[["0x1",{"path":"cairo-contracts/ERC20.json","version":0}]],"sierra_class_hash_to_casm_class_hash":[["0x2a","0x1"]],"contracts":[["0x2","0x1"]],"predeployed_accounts":[],"storage":[[["0x2","0x3"],"0x4"]],"fee_token_address":"0x5"}"#;
+        let expected = r#"{"contract_classes":[["0x1",{"path":"cairo-contracts/ERC20.json","version":0}]],"sierra_class_hash_to_casm_class_hash":[["0x2a","0x1"]],"contracts":[["0x2","0x1"]],"predeployed_accounts":[],"storage":[[["0x2","0x3"],"0x4"]],"fee_token_address":"0x5","chain_id":"MADARA"}"#;
         assert_eq!(expected, serialized_loader);
     }
 }
