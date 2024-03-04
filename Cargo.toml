@@ -207,7 +207,6 @@ substrate-test-runtime-client = { git = "https://github.com/massalabs/polkadot-s
 
 # Substrate build & tools dependencies
 substrate-build-script-utils = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-substrate-wasm-builder = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
 prometheus-endpoint = { package = "substrate-prometheus-endpoint", version = "0.10.0-dev", git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
 
 # Substrate Frame pallet
