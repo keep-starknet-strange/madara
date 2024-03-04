@@ -211,29 +211,40 @@ where
         let storage_override = self.overrides.for_block_hash(self.client.as_ref(), substrate_block_hash);
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
-        let traces = execution_infos
-            .into_iter()
-            .enumerate()
-            .map(|(tx_idx, tx_exec_info)| {
-                tx_execution_infos_to_tx_trace(
-                    &**storage_override,
-                    substrate_block_hash,
-                    TxType::from(txs_to_execute_before.get(tx_idx).unwrap()),
-                    &tx_exec_info,
-                )
-                .map(|trace_root| TransactionTraceWithHash {
-                    transaction_hash: txs_to_execute_before[tx_idx].compute_hash::<H>(chain_id, false).into(),
-                    trace_root,
-                })
-            })
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(StarknetRpcApiError::from)?;
+        // let traces = execution_infos
+        //     .into_iter()
+        //     .enumerate()
+        //     .map(|(tx_idx, tx_exec_info)| {
+        //         tx_execution_infos_to_tx_trace(
+        //             &**storage_override,
+        //             substrate_block_hash,
+        //             TxType::from(txs_to_execute_before.get(tx_idx).unwrap()),
+        //             &tx_exec_info,
+        //         )
+        //         .map(|trace_root| TransactionTraceWithHash {
+        //             transaction_hash: txs_to_execute_before[tx_idx].compute_hash::<H>(chain_id,
+        // false).into(),             trace_root,
+        //         })
+        //     })
+        //     .collect::<Result<Vec<_>, _>>()
+        //     .map_err(StarknetRpcApiError::from)?;
+        let trace = tx_execution_infos_to_tx_trace(
+            &**storage_override,
+            substrate_block_hash,
+            TxType::from(tx_to_trace.get(0).unwrap()),
+            &execution_infos[0],
+        )
+        .unwrap();
+
+        let tx_trace = TransactionTraceWithHash { transaction_hash, trace_root: trace };
+
+        Ok(tx_trace)
 
         // Here the error should never been triggered because we already know that our TxVector is
         // not empty
-        let tx_trace = traces.last().cloned().ok_or(StarknetRpcApiError::TxnHashNotFound)?;
+        // let tx_trace = traces.last().cloned().ok_or(StarknetRpcApiError::TxnHashNotFound)?;
 
-        Ok(tx_trace)
+        // Ok(tx_trace)
     }
 }
 
