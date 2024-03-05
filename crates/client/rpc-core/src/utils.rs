@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
 use blockifier::execution::contract_class::ContractClass as BlockifierContractClass;
+use blockifier::state::cached_state::CommitmentStateDiff;
 use cairo_lang_casm_contract_class::{CasmContractClass, CasmContractEntryPoint, CasmContractEntryPoints};
 use cairo_lang_starknet::contract_class::{
     ContractClass as SierraContractClass, ContractEntryPoint, ContractEntryPoints,
@@ -27,7 +28,7 @@ use starknet_core::types::{
 };
 
 /// Returns a [`ContractClass`] from a [`BlockifierContractClass`]
-pub fn to_rpc_contract_class(contract_class: BlockifierContractClass) -> Result<ContractClass> {
+pub fn blockifier_to_rpc_contract_class_types(contract_class: BlockifierContractClass) -> Result<ContractClass> {
     match contract_class {
         BlockifierContractClass::V0(contract_class) => {
             let entry_points_by_type = to_legacy_entry_points_by_type(&contract_class.entry_points_by_type)?;
@@ -46,6 +47,54 @@ pub fn to_rpc_contract_class(contract_class: BlockifierContractClass) -> Result<
             abi: String::from("{}"), // FIXME: https://github.com/keep-starknet-strange/madara/issues/790
         })),
     }
+}
+
+/// Returns a [`StateDiff`] from a [`CommitmentStateDiff`]
+pub fn blockifier_to_rpc_state_diff_types(commitment_state_diff: CommitmentStateDiff) -> Result<StateDiff> {
+    let storage_diffs: Vec<ContractStorageDiffItem> = commitment_state_diff
+        .storage_updates
+        .into_iter()
+        .map(|(address, storage_map)| {
+            let storage_entries = storage_map
+                .into_iter()
+                .map(|(key, value)| StorageEntry { key: key.0.0.into(), value: value.into() })
+                .collect();
+            ContractStorageDiffItem { address: address.0.0.into(), storage_entries }
+        })
+        .collect();
+
+    let declared_classes = commitment_state_diff
+        .class_hash_to_compiled_class_hash
+        .into_iter()
+        .map(|(class_hash, compiled_class_hash)| DeclaredClassItem {
+            class_hash: class_hash.0.into(),
+            compiled_class_hash: compiled_class_hash.0.into(),
+        })
+        .collect();
+
+    let deployed_contracts = commitment_state_diff
+        .address_to_class_hash
+        .into_iter()
+        .map(|(address, class_hash)| DeployedContractItem {
+            address: address.0.0.into(),
+            class_hash: class_hash.0.into(),
+        })
+        .collect();
+
+    let nonces = commitment_state_diff
+        .address_to_nonce
+        .into_iter()
+        .map(|(address, nonce)| NonceUpdate { contract_address: address.0.0.into(), nonce: nonce.0.into() })
+        .collect();
+
+    Ok(StateDiff {
+        storage_diffs,
+        deprecated_declared_classes: vec![],
+        declared_classes,
+        deployed_contracts,
+        replaced_classes: vec![],
+        nonces,
+    })
 }
 
 /// Returns a [`StateDiff`] from a [`ThinStateDiff`]

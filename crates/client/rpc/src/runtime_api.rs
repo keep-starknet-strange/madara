@@ -220,6 +220,7 @@ where
                 StarknetRpcApiError::ContractError
             })?
             .swap_remove(0)
+            .1
             .map_err(|e| {
                 error!("Failed to simulate User Transaction: {:?}", e);
                 StarknetRpcApiError::InternalServerError
