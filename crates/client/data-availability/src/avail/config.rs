@@ -26,7 +26,6 @@ pub struct AvailConfig {
 
 impl TryFrom<&PathBuf> for AvailConfig {
     type Error = DaError;
-    
     fn try_from(path: &PathBuf) -> Result<Self, Self::Error> {
         let file = File::open(path).map_err(DaError::FailedOpeningConfig)?;
         serde_json::from_reader(file).map_err(DaError::FailedParsingConfig)

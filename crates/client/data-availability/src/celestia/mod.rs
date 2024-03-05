@@ -95,7 +95,7 @@ impl TryFrom<config::CelestiaConfig> for CelestiaClient {
         if let Some(auth_token) = conf.auth_token {
             let val = match HeaderValue::from_str(&format!("Bearer {}", auth_token)) {
                 Ok(value) => value,
-                Err(e) => return Err(DaError::FailedConversion(e.into()))
+                Err(e) => return Err(DaError::FailedConversion(e.into())),
             };
             headers.insert(header::AUTHORIZATION, val);
         }
