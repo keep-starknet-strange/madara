@@ -7,6 +7,7 @@ use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 use mc_genesis_data_provider::GenesisProvider;
 use mc_rpc_core::utils::{blockifier_to_rpc_state_diff_types, get_block_by_block_hash};
+use mc_rpc_core::utils::{blockifier_to_rpc_state_diff_types, get_block_by_block_hash};
 use mc_rpc_core::{StarknetReadRpcApiServer, StarknetTraceRpcApiServer};
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
@@ -412,15 +413,23 @@ fn tx_execution_infos_to_tx_trace(
 fn tx_execution_infos_to_simulated_transactions(
     tx_types: Vec<TxType>,
     transaction_execution_results: Vec<(CommitmentStateDiff, TransactionSimulationResult)>,
+    transaction_execution_results: Vec<(CommitmentStateDiff, TransactionSimulationResult)>,
 ) -> Result<Vec<SimulatedTransaction>, ConvertCallInfoToExecuteInvocationError> {
     let mut results = vec![];
+    for (tx_type, (state_diff, res)) in tx_types.into_iter().zip(transaction_execution_results.into_iter()) {
     for (tx_type, (state_diff, res)) in tx_types.into_iter().zip(transaction_execution_results.into_iter()) {
         match res {
             Ok(tx_exec_info) => {
                 let state_diff = blockifier_to_rpc_state_diff_types(state_diff)
                     .map_err(|_| ConvertCallInfoToExecuteInvocationError::ConvertStateDiffFailed)?;
 
-                let transaction_trace = tx_execution_infos_to_tx_trace(tx_type, &tx_exec_info, Some(state_diff))?;
+                let transaction_trace = tx_execution_infos_to_tx_trace(
+                    storage_override,
+                    substrate_block_hash,
+                    tx_type,
+                    &tx_exec_info,
+                    Some(state_diff),
+                )?;
                 let gas_consumed =
                     tx_exec_info.execute_call_info.as_ref().map(|x| x.execution.gas_consumed).unwrap_or_default();
                 let overall_fee = tx_exec_info.actual_fee.0 as u64;
