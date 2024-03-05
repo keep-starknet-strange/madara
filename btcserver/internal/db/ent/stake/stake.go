@@ -21,10 +21,16 @@ const (
 	FieldDuration = "duration"
 	// FieldAmount holds the string denoting the amount field in the database.
 	FieldAmount = "amount"
-	// FieldRewardReceiver holds the string denoting the reward_receiver field in the database.
-	FieldRewardReceiver = "reward_receiver"
+	// FieldReceiver holds the string denoting the receiver field in the database.
+	FieldReceiver = "receiver"
+	// FieldFinalized holds the string denoting the finalized field in the database.
+	FieldFinalized = "finalized"
 	// FieldEnd holds the string denoting the end field in the database.
 	FieldEnd = "end"
+	// FieldBtcSig holds the string denoting the btc_sig field in the database.
+	FieldBtcSig = "btc_sig"
+	// FieldReceiverSig holds the string denoting the receiver_sig field in the database.
+	FieldReceiverSig = "receiver_sig"
 	// Table holds the table name of the stake in the database.
 	Table = "stakes"
 )
@@ -37,8 +43,11 @@ var Columns = []string{
 	FieldStart,
 	FieldDuration,
 	FieldAmount,
-	FieldRewardReceiver,
+	FieldReceiver,
+	FieldFinalized,
 	FieldEnd,
+	FieldBtcSig,
+	FieldReceiverSig,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -56,8 +65,8 @@ var (
 	StakerValidator func(string) error
 	// TxValidator is a validator for the "tx" field. It is called by the builders before save.
 	TxValidator func(string) error
-	// RewardReceiverValidator is a validator for the "reward_receiver" field. It is called by the builders before save.
-	RewardReceiverValidator func(string) error
+	// ReceiverValidator is a validator for the "receiver" field. It is called by the builders before save.
+	ReceiverValidator func(string) error
 	// DefaultEnd holds the default value on creation for the "end" field.
 	DefaultEnd bool
 )
@@ -95,12 +104,27 @@ func ByAmount(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAmount, opts...).ToFunc()
 }
 
-// ByRewardReceiver orders the results by the reward_receiver field.
-func ByRewardReceiver(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldRewardReceiver, opts...).ToFunc()
+// ByReceiver orders the results by the receiver field.
+func ByReceiver(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldReceiver, opts...).ToFunc()
+}
+
+// ByFinalized orders the results by the finalized field.
+func ByFinalized(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFinalized, opts...).ToFunc()
 }
 
 // ByEnd orders the results by the end field.
 func ByEnd(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEnd, opts...).ToFunc()
+}
+
+// ByBtcSig orders the results by the btc_sig field.
+func ByBtcSig(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBtcSig, opts...).ToFunc()
+}
+
+// ByReceiverSig orders the results by the receiver_sig field.
+func ByReceiverSig(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldReceiverSig, opts...).ToFunc()
 }

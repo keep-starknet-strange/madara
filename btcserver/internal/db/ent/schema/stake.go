@@ -14,11 +14,14 @@ func (Stake) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("staker").MaxLen(90),      // btc address
 		field.String("tx").MaxLen(66).Unique(), // btc transaction id len is 64byte, and len of prefix "0x" is 2byte.
-		field.Int64("start"),
-		field.Int64("duration"),
-		field.Int64("amount"),
-		field.String("reward_receiver").MaxLen(66), // starknet address length is 64byte, and length of prefix "0x" is 2byte.
-		field.Bool("end").Default(false),           // stake epoch is over.
+		field.Int64("start"),                   // btc stake start timestamp
+		field.Int64("duration"),                // btc stake end timestamp
+		field.Int64("amount"),                  // btc stake amount
+		field.String("receiver").MaxLen(66),    // starknet address to receive reward. length is 64byte, and length of prefix "0x" is 2byte.
+		field.Bool("finalized"),                // btc transaction weather finalized.
+		field.Bool("end").Default(false),       // stake epoch is over.
+		field.String("btc_sig"),                // signature for btc transaction.
+		field.String("receiver_sig"),           // signature for receiver address.
 	}
 }
 

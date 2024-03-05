@@ -21,15 +21,13 @@ func (c *Backend) CreateStake(
 		SetStart(start).
 		SetDuration(duration).
 		SetAmount(amount).
-		SetRewardReceiver(rewardReceiver).
+		SetReceiver(rewardReceiver).
 		Save(context.Background())
 
 	return err
 }
 
-func (c *Backend) QueryStakesByStaker(
-	staker string,
-) ([]*ent.Stake, error) {
+func (c *Backend) QueryStakesByStaker(staker string) ([]*ent.Stake, error) {
 	return c.dbClient.Stake.Query().Where(stake.StakerEQ(staker)).All(context.Background())
 }
 

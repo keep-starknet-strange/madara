@@ -49,9 +49,15 @@ func (sc *StakeCreate) SetAmount(i int64) *StakeCreate {
 	return sc
 }
 
-// SetRewardReceiver sets the "reward_receiver" field.
-func (sc *StakeCreate) SetRewardReceiver(s string) *StakeCreate {
-	sc.mutation.SetRewardReceiver(s)
+// SetReceiver sets the "receiver" field.
+func (sc *StakeCreate) SetReceiver(s string) *StakeCreate {
+	sc.mutation.SetReceiver(s)
+	return sc
+}
+
+// SetFinalized sets the "finalized" field.
+func (sc *StakeCreate) SetFinalized(b bool) *StakeCreate {
+	sc.mutation.SetFinalized(b)
 	return sc
 }
 
@@ -66,6 +72,18 @@ func (sc *StakeCreate) SetNillableEnd(b *bool) *StakeCreate {
 	if b != nil {
 		sc.SetEnd(*b)
 	}
+	return sc
+}
+
+// SetBtcSig sets the "btc_sig" field.
+func (sc *StakeCreate) SetBtcSig(s string) *StakeCreate {
+	sc.mutation.SetBtcSig(s)
+	return sc
+}
+
+// SetReceiverSig sets the "receiver_sig" field.
+func (sc *StakeCreate) SetReceiverSig(s string) *StakeCreate {
+	sc.mutation.SetReceiverSig(s)
 	return sc
 }
 
@@ -137,16 +155,25 @@ func (sc *StakeCreate) check() error {
 	if _, ok := sc.mutation.Amount(); !ok {
 		return &ValidationError{Name: "amount", err: errors.New(`ent: missing required field "Stake.amount"`)}
 	}
-	if _, ok := sc.mutation.RewardReceiver(); !ok {
-		return &ValidationError{Name: "reward_receiver", err: errors.New(`ent: missing required field "Stake.reward_receiver"`)}
+	if _, ok := sc.mutation.Receiver(); !ok {
+		return &ValidationError{Name: "receiver", err: errors.New(`ent: missing required field "Stake.receiver"`)}
 	}
-	if v, ok := sc.mutation.RewardReceiver(); ok {
-		if err := stake.RewardReceiverValidator(v); err != nil {
-			return &ValidationError{Name: "reward_receiver", err: fmt.Errorf(`ent: validator failed for field "Stake.reward_receiver": %w`, err)}
+	if v, ok := sc.mutation.Receiver(); ok {
+		if err := stake.ReceiverValidator(v); err != nil {
+			return &ValidationError{Name: "receiver", err: fmt.Errorf(`ent: validator failed for field "Stake.receiver": %w`, err)}
 		}
+	}
+	if _, ok := sc.mutation.Finalized(); !ok {
+		return &ValidationError{Name: "finalized", err: errors.New(`ent: missing required field "Stake.finalized"`)}
 	}
 	if _, ok := sc.mutation.End(); !ok {
 		return &ValidationError{Name: "end", err: errors.New(`ent: missing required field "Stake.end"`)}
+	}
+	if _, ok := sc.mutation.BtcSig(); !ok {
+		return &ValidationError{Name: "btc_sig", err: errors.New(`ent: missing required field "Stake.btc_sig"`)}
+	}
+	if _, ok := sc.mutation.ReceiverSig(); !ok {
+		return &ValidationError{Name: "receiver_sig", err: errors.New(`ent: missing required field "Stake.receiver_sig"`)}
 	}
 	return nil
 }
@@ -194,13 +221,25 @@ func (sc *StakeCreate) createSpec() (*Stake, *sqlgraph.CreateSpec) {
 		_spec.SetField(stake.FieldAmount, field.TypeInt64, value)
 		_node.Amount = value
 	}
-	if value, ok := sc.mutation.RewardReceiver(); ok {
-		_spec.SetField(stake.FieldRewardReceiver, field.TypeString, value)
-		_node.RewardReceiver = value
+	if value, ok := sc.mutation.Receiver(); ok {
+		_spec.SetField(stake.FieldReceiver, field.TypeString, value)
+		_node.Receiver = value
+	}
+	if value, ok := sc.mutation.Finalized(); ok {
+		_spec.SetField(stake.FieldFinalized, field.TypeBool, value)
+		_node.Finalized = value
 	}
 	if value, ok := sc.mutation.End(); ok {
 		_spec.SetField(stake.FieldEnd, field.TypeBool, value)
 		_node.End = value
+	}
+	if value, ok := sc.mutation.BtcSig(); ok {
+		_spec.SetField(stake.FieldBtcSig, field.TypeString, value)
+		_node.BtcSig = value
+	}
+	if value, ok := sc.mutation.ReceiverSig(); ok {
+		_spec.SetField(stake.FieldReceiverSig, field.TypeString, value)
+		_node.ReceiverSig = value
 	}
 	return _node, _spec
 }

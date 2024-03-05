@@ -118,16 +118,30 @@ func (su *StakeUpdate) AddAmount(i int64) *StakeUpdate {
 	return su
 }
 
-// SetRewardReceiver sets the "reward_receiver" field.
-func (su *StakeUpdate) SetRewardReceiver(s string) *StakeUpdate {
-	su.mutation.SetRewardReceiver(s)
+// SetReceiver sets the "receiver" field.
+func (su *StakeUpdate) SetReceiver(s string) *StakeUpdate {
+	su.mutation.SetReceiver(s)
 	return su
 }
 
-// SetNillableRewardReceiver sets the "reward_receiver" field if the given value is not nil.
-func (su *StakeUpdate) SetNillableRewardReceiver(s *string) *StakeUpdate {
+// SetNillableReceiver sets the "receiver" field if the given value is not nil.
+func (su *StakeUpdate) SetNillableReceiver(s *string) *StakeUpdate {
 	if s != nil {
-		su.SetRewardReceiver(*s)
+		su.SetReceiver(*s)
+	}
+	return su
+}
+
+// SetFinalized sets the "finalized" field.
+func (su *StakeUpdate) SetFinalized(b bool) *StakeUpdate {
+	su.mutation.SetFinalized(b)
+	return su
+}
+
+// SetNillableFinalized sets the "finalized" field if the given value is not nil.
+func (su *StakeUpdate) SetNillableFinalized(b *bool) *StakeUpdate {
+	if b != nil {
+		su.SetFinalized(*b)
 	}
 	return su
 }
@@ -142,6 +156,34 @@ func (su *StakeUpdate) SetEnd(b bool) *StakeUpdate {
 func (su *StakeUpdate) SetNillableEnd(b *bool) *StakeUpdate {
 	if b != nil {
 		su.SetEnd(*b)
+	}
+	return su
+}
+
+// SetBtcSig sets the "btc_sig" field.
+func (su *StakeUpdate) SetBtcSig(s string) *StakeUpdate {
+	su.mutation.SetBtcSig(s)
+	return su
+}
+
+// SetNillableBtcSig sets the "btc_sig" field if the given value is not nil.
+func (su *StakeUpdate) SetNillableBtcSig(s *string) *StakeUpdate {
+	if s != nil {
+		su.SetBtcSig(*s)
+	}
+	return su
+}
+
+// SetReceiverSig sets the "receiver_sig" field.
+func (su *StakeUpdate) SetReceiverSig(s string) *StakeUpdate {
+	su.mutation.SetReceiverSig(s)
+	return su
+}
+
+// SetNillableReceiverSig sets the "receiver_sig" field if the given value is not nil.
+func (su *StakeUpdate) SetNillableReceiverSig(s *string) *StakeUpdate {
+	if s != nil {
+		su.SetReceiverSig(*s)
 	}
 	return su
 }
@@ -190,9 +232,9 @@ func (su *StakeUpdate) check() error {
 			return &ValidationError{Name: "tx", err: fmt.Errorf(`ent: validator failed for field "Stake.tx": %w`, err)}
 		}
 	}
-	if v, ok := su.mutation.RewardReceiver(); ok {
-		if err := stake.RewardReceiverValidator(v); err != nil {
-			return &ValidationError{Name: "reward_receiver", err: fmt.Errorf(`ent: validator failed for field "Stake.reward_receiver": %w`, err)}
+	if v, ok := su.mutation.Receiver(); ok {
+		if err := stake.ReceiverValidator(v); err != nil {
+			return &ValidationError{Name: "receiver", err: fmt.Errorf(`ent: validator failed for field "Stake.receiver": %w`, err)}
 		}
 	}
 	return nil
@@ -234,11 +276,20 @@ func (su *StakeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := su.mutation.AddedAmount(); ok {
 		_spec.AddField(stake.FieldAmount, field.TypeInt64, value)
 	}
-	if value, ok := su.mutation.RewardReceiver(); ok {
-		_spec.SetField(stake.FieldRewardReceiver, field.TypeString, value)
+	if value, ok := su.mutation.Receiver(); ok {
+		_spec.SetField(stake.FieldReceiver, field.TypeString, value)
+	}
+	if value, ok := su.mutation.Finalized(); ok {
+		_spec.SetField(stake.FieldFinalized, field.TypeBool, value)
 	}
 	if value, ok := su.mutation.End(); ok {
 		_spec.SetField(stake.FieldEnd, field.TypeBool, value)
+	}
+	if value, ok := su.mutation.BtcSig(); ok {
+		_spec.SetField(stake.FieldBtcSig, field.TypeString, value)
+	}
+	if value, ok := su.mutation.ReceiverSig(); ok {
+		_spec.SetField(stake.FieldReceiverSig, field.TypeString, value)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, su.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -351,16 +402,30 @@ func (suo *StakeUpdateOne) AddAmount(i int64) *StakeUpdateOne {
 	return suo
 }
 
-// SetRewardReceiver sets the "reward_receiver" field.
-func (suo *StakeUpdateOne) SetRewardReceiver(s string) *StakeUpdateOne {
-	suo.mutation.SetRewardReceiver(s)
+// SetReceiver sets the "receiver" field.
+func (suo *StakeUpdateOne) SetReceiver(s string) *StakeUpdateOne {
+	suo.mutation.SetReceiver(s)
 	return suo
 }
 
-// SetNillableRewardReceiver sets the "reward_receiver" field if the given value is not nil.
-func (suo *StakeUpdateOne) SetNillableRewardReceiver(s *string) *StakeUpdateOne {
+// SetNillableReceiver sets the "receiver" field if the given value is not nil.
+func (suo *StakeUpdateOne) SetNillableReceiver(s *string) *StakeUpdateOne {
 	if s != nil {
-		suo.SetRewardReceiver(*s)
+		suo.SetReceiver(*s)
+	}
+	return suo
+}
+
+// SetFinalized sets the "finalized" field.
+func (suo *StakeUpdateOne) SetFinalized(b bool) *StakeUpdateOne {
+	suo.mutation.SetFinalized(b)
+	return suo
+}
+
+// SetNillableFinalized sets the "finalized" field if the given value is not nil.
+func (suo *StakeUpdateOne) SetNillableFinalized(b *bool) *StakeUpdateOne {
+	if b != nil {
+		suo.SetFinalized(*b)
 	}
 	return suo
 }
@@ -375,6 +440,34 @@ func (suo *StakeUpdateOne) SetEnd(b bool) *StakeUpdateOne {
 func (suo *StakeUpdateOne) SetNillableEnd(b *bool) *StakeUpdateOne {
 	if b != nil {
 		suo.SetEnd(*b)
+	}
+	return suo
+}
+
+// SetBtcSig sets the "btc_sig" field.
+func (suo *StakeUpdateOne) SetBtcSig(s string) *StakeUpdateOne {
+	suo.mutation.SetBtcSig(s)
+	return suo
+}
+
+// SetNillableBtcSig sets the "btc_sig" field if the given value is not nil.
+func (suo *StakeUpdateOne) SetNillableBtcSig(s *string) *StakeUpdateOne {
+	if s != nil {
+		suo.SetBtcSig(*s)
+	}
+	return suo
+}
+
+// SetReceiverSig sets the "receiver_sig" field.
+func (suo *StakeUpdateOne) SetReceiverSig(s string) *StakeUpdateOne {
+	suo.mutation.SetReceiverSig(s)
+	return suo
+}
+
+// SetNillableReceiverSig sets the "receiver_sig" field if the given value is not nil.
+func (suo *StakeUpdateOne) SetNillableReceiverSig(s *string) *StakeUpdateOne {
+	if s != nil {
+		suo.SetReceiverSig(*s)
 	}
 	return suo
 }
@@ -436,9 +529,9 @@ func (suo *StakeUpdateOne) check() error {
 			return &ValidationError{Name: "tx", err: fmt.Errorf(`ent: validator failed for field "Stake.tx": %w`, err)}
 		}
 	}
-	if v, ok := suo.mutation.RewardReceiver(); ok {
-		if err := stake.RewardReceiverValidator(v); err != nil {
-			return &ValidationError{Name: "reward_receiver", err: fmt.Errorf(`ent: validator failed for field "Stake.reward_receiver": %w`, err)}
+	if v, ok := suo.mutation.Receiver(); ok {
+		if err := stake.ReceiverValidator(v); err != nil {
+			return &ValidationError{Name: "receiver", err: fmt.Errorf(`ent: validator failed for field "Stake.receiver": %w`, err)}
 		}
 	}
 	return nil
@@ -497,11 +590,20 @@ func (suo *StakeUpdateOne) sqlSave(ctx context.Context) (_node *Stake, err error
 	if value, ok := suo.mutation.AddedAmount(); ok {
 		_spec.AddField(stake.FieldAmount, field.TypeInt64, value)
 	}
-	if value, ok := suo.mutation.RewardReceiver(); ok {
-		_spec.SetField(stake.FieldRewardReceiver, field.TypeString, value)
+	if value, ok := suo.mutation.Receiver(); ok {
+		_spec.SetField(stake.FieldReceiver, field.TypeString, value)
+	}
+	if value, ok := suo.mutation.Finalized(); ok {
+		_spec.SetField(stake.FieldFinalized, field.TypeBool, value)
 	}
 	if value, ok := suo.mutation.End(); ok {
 		_spec.SetField(stake.FieldEnd, field.TypeBool, value)
+	}
+	if value, ok := suo.mutation.BtcSig(); ok {
+		_spec.SetField(stake.FieldBtcSig, field.TypeString, value)
+	}
+	if value, ok := suo.mutation.ReceiverSig(); ok {
+		_spec.SetField(stake.FieldReceiverSig, field.TypeString, value)
 	}
 	_node = &Stake{config: suo.config}
 	_spec.Assign = _node.assignValues

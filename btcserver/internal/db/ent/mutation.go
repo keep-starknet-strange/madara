@@ -29,23 +29,26 @@ const (
 // StakeMutation represents an operation that mutates the Stake nodes in the graph.
 type StakeMutation struct {
 	config
-	op              Op
-	typ             string
-	id              *int
-	staker          *string
-	tx              *string
-	start           *int64
-	addstart        *int64
-	duration        *int64
-	addduration     *int64
-	amount          *int64
-	addamount       *int64
-	reward_receiver *string
-	end             *bool
-	clearedFields   map[string]struct{}
-	done            bool
-	oldValue        func(context.Context) (*Stake, error)
-	predicates      []predicate.Stake
+	op            Op
+	typ           string
+	id            *int
+	staker        *string
+	tx            *string
+	start         *int64
+	addstart      *int64
+	duration      *int64
+	addduration   *int64
+	amount        *int64
+	addamount     *int64
+	receiver      *string
+	finalized     *bool
+	end           *bool
+	btc_sig       *string
+	receiver_sig  *string
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*Stake, error)
+	predicates    []predicate.Stake
 }
 
 var _ ent.Mutation = (*StakeMutation)(nil)
@@ -386,40 +389,76 @@ func (m *StakeMutation) ResetAmount() {
 	m.addamount = nil
 }
 
-// SetRewardReceiver sets the "reward_receiver" field.
-func (m *StakeMutation) SetRewardReceiver(s string) {
-	m.reward_receiver = &s
+// SetReceiver sets the "receiver" field.
+func (m *StakeMutation) SetReceiver(s string) {
+	m.receiver = &s
 }
 
-// RewardReceiver returns the value of the "reward_receiver" field in the mutation.
-func (m *StakeMutation) RewardReceiver() (r string, exists bool) {
-	v := m.reward_receiver
+// Receiver returns the value of the "receiver" field in the mutation.
+func (m *StakeMutation) Receiver() (r string, exists bool) {
+	v := m.receiver
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldRewardReceiver returns the old "reward_receiver" field's value of the Stake entity.
+// OldReceiver returns the old "receiver" field's value of the Stake entity.
 // If the Stake object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *StakeMutation) OldRewardReceiver(ctx context.Context) (v string, err error) {
+func (m *StakeMutation) OldReceiver(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldRewardReceiver is only allowed on UpdateOne operations")
+		return v, errors.New("OldReceiver is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldRewardReceiver requires an ID field in the mutation")
+		return v, errors.New("OldReceiver requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldRewardReceiver: %w", err)
+		return v, fmt.Errorf("querying old value for OldReceiver: %w", err)
 	}
-	return oldValue.RewardReceiver, nil
+	return oldValue.Receiver, nil
 }
 
-// ResetRewardReceiver resets all changes to the "reward_receiver" field.
-func (m *StakeMutation) ResetRewardReceiver() {
-	m.reward_receiver = nil
+// ResetReceiver resets all changes to the "receiver" field.
+func (m *StakeMutation) ResetReceiver() {
+	m.receiver = nil
+}
+
+// SetFinalized sets the "finalized" field.
+func (m *StakeMutation) SetFinalized(b bool) {
+	m.finalized = &b
+}
+
+// Finalized returns the value of the "finalized" field in the mutation.
+func (m *StakeMutation) Finalized() (r bool, exists bool) {
+	v := m.finalized
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFinalized returns the old "finalized" field's value of the Stake entity.
+// If the Stake object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StakeMutation) OldFinalized(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFinalized is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFinalized requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFinalized: %w", err)
+	}
+	return oldValue.Finalized, nil
+}
+
+// ResetFinalized resets all changes to the "finalized" field.
+func (m *StakeMutation) ResetFinalized() {
+	m.finalized = nil
 }
 
 // SetEnd sets the "end" field.
@@ -458,6 +497,78 @@ func (m *StakeMutation) ResetEnd() {
 	m.end = nil
 }
 
+// SetBtcSig sets the "btc_sig" field.
+func (m *StakeMutation) SetBtcSig(s string) {
+	m.btc_sig = &s
+}
+
+// BtcSig returns the value of the "btc_sig" field in the mutation.
+func (m *StakeMutation) BtcSig() (r string, exists bool) {
+	v := m.btc_sig
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBtcSig returns the old "btc_sig" field's value of the Stake entity.
+// If the Stake object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StakeMutation) OldBtcSig(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBtcSig is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBtcSig requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBtcSig: %w", err)
+	}
+	return oldValue.BtcSig, nil
+}
+
+// ResetBtcSig resets all changes to the "btc_sig" field.
+func (m *StakeMutation) ResetBtcSig() {
+	m.btc_sig = nil
+}
+
+// SetReceiverSig sets the "receiver_sig" field.
+func (m *StakeMutation) SetReceiverSig(s string) {
+	m.receiver_sig = &s
+}
+
+// ReceiverSig returns the value of the "receiver_sig" field in the mutation.
+func (m *StakeMutation) ReceiverSig() (r string, exists bool) {
+	v := m.receiver_sig
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReceiverSig returns the old "receiver_sig" field's value of the Stake entity.
+// If the Stake object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StakeMutation) OldReceiverSig(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReceiverSig is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReceiverSig requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReceiverSig: %w", err)
+	}
+	return oldValue.ReceiverSig, nil
+}
+
+// ResetReceiverSig resets all changes to the "receiver_sig" field.
+func (m *StakeMutation) ResetReceiverSig() {
+	m.receiver_sig = nil
+}
+
 // Where appends a list predicates to the StakeMutation builder.
 func (m *StakeMutation) Where(ps ...predicate.Stake) {
 	m.predicates = append(m.predicates, ps...)
@@ -492,7 +603,7 @@ func (m *StakeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *StakeMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 10)
 	if m.staker != nil {
 		fields = append(fields, stake.FieldStaker)
 	}
@@ -508,11 +619,20 @@ func (m *StakeMutation) Fields() []string {
 	if m.amount != nil {
 		fields = append(fields, stake.FieldAmount)
 	}
-	if m.reward_receiver != nil {
-		fields = append(fields, stake.FieldRewardReceiver)
+	if m.receiver != nil {
+		fields = append(fields, stake.FieldReceiver)
+	}
+	if m.finalized != nil {
+		fields = append(fields, stake.FieldFinalized)
 	}
 	if m.end != nil {
 		fields = append(fields, stake.FieldEnd)
+	}
+	if m.btc_sig != nil {
+		fields = append(fields, stake.FieldBtcSig)
+	}
+	if m.receiver_sig != nil {
+		fields = append(fields, stake.FieldReceiverSig)
 	}
 	return fields
 }
@@ -532,10 +652,16 @@ func (m *StakeMutation) Field(name string) (ent.Value, bool) {
 		return m.Duration()
 	case stake.FieldAmount:
 		return m.Amount()
-	case stake.FieldRewardReceiver:
-		return m.RewardReceiver()
+	case stake.FieldReceiver:
+		return m.Receiver()
+	case stake.FieldFinalized:
+		return m.Finalized()
 	case stake.FieldEnd:
 		return m.End()
+	case stake.FieldBtcSig:
+		return m.BtcSig()
+	case stake.FieldReceiverSig:
+		return m.ReceiverSig()
 	}
 	return nil, false
 }
@@ -555,10 +681,16 @@ func (m *StakeMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldDuration(ctx)
 	case stake.FieldAmount:
 		return m.OldAmount(ctx)
-	case stake.FieldRewardReceiver:
-		return m.OldRewardReceiver(ctx)
+	case stake.FieldReceiver:
+		return m.OldReceiver(ctx)
+	case stake.FieldFinalized:
+		return m.OldFinalized(ctx)
 	case stake.FieldEnd:
 		return m.OldEnd(ctx)
+	case stake.FieldBtcSig:
+		return m.OldBtcSig(ctx)
+	case stake.FieldReceiverSig:
+		return m.OldReceiverSig(ctx)
 	}
 	return nil, fmt.Errorf("unknown Stake field %s", name)
 }
@@ -603,12 +735,19 @@ func (m *StakeMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetAmount(v)
 		return nil
-	case stake.FieldRewardReceiver:
+	case stake.FieldReceiver:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetRewardReceiver(v)
+		m.SetReceiver(v)
+		return nil
+	case stake.FieldFinalized:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFinalized(v)
 		return nil
 	case stake.FieldEnd:
 		v, ok := value.(bool)
@@ -616,6 +755,20 @@ func (m *StakeMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetEnd(v)
+		return nil
+	case stake.FieldBtcSig:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBtcSig(v)
+		return nil
+	case stake.FieldReceiverSig:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReceiverSig(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Stake field %s", name)
@@ -720,11 +873,20 @@ func (m *StakeMutation) ResetField(name string) error {
 	case stake.FieldAmount:
 		m.ResetAmount()
 		return nil
-	case stake.FieldRewardReceiver:
-		m.ResetRewardReceiver()
+	case stake.FieldReceiver:
+		m.ResetReceiver()
+		return nil
+	case stake.FieldFinalized:
+		m.ResetFinalized()
 		return nil
 	case stake.FieldEnd:
 		m.ResetEnd()
+		return nil
+	case stake.FieldBtcSig:
+		m.ResetBtcSig()
+		return nil
+	case stake.FieldReceiverSig:
+		m.ResetReceiverSig()
 		return nil
 	}
 	return fmt.Errorf("unknown Stake field %s", name)

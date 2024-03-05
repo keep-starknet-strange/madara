@@ -77,14 +77,29 @@ func Amount(v int64) predicate.Stake {
 	return predicate.Stake(sql.FieldEQ(FieldAmount, v))
 }
 
-// RewardReceiver applies equality check predicate on the "reward_receiver" field. It's identical to RewardReceiverEQ.
-func RewardReceiver(v string) predicate.Stake {
-	return predicate.Stake(sql.FieldEQ(FieldRewardReceiver, v))
+// Receiver applies equality check predicate on the "receiver" field. It's identical to ReceiverEQ.
+func Receiver(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldEQ(FieldReceiver, v))
+}
+
+// Finalized applies equality check predicate on the "finalized" field. It's identical to FinalizedEQ.
+func Finalized(v bool) predicate.Stake {
+	return predicate.Stake(sql.FieldEQ(FieldFinalized, v))
 }
 
 // End applies equality check predicate on the "end" field. It's identical to EndEQ.
 func End(v bool) predicate.Stake {
 	return predicate.Stake(sql.FieldEQ(FieldEnd, v))
+}
+
+// BtcSig applies equality check predicate on the "btc_sig" field. It's identical to BtcSigEQ.
+func BtcSig(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldEQ(FieldBtcSig, v))
+}
+
+// ReceiverSig applies equality check predicate on the "receiver_sig" field. It's identical to ReceiverSigEQ.
+func ReceiverSig(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldEQ(FieldReceiverSig, v))
 }
 
 // StakerEQ applies the EQ predicate on the "staker" field.
@@ -337,69 +352,79 @@ func AmountLTE(v int64) predicate.Stake {
 	return predicate.Stake(sql.FieldLTE(FieldAmount, v))
 }
 
-// RewardReceiverEQ applies the EQ predicate on the "reward_receiver" field.
-func RewardReceiverEQ(v string) predicate.Stake {
-	return predicate.Stake(sql.FieldEQ(FieldRewardReceiver, v))
+// ReceiverEQ applies the EQ predicate on the "receiver" field.
+func ReceiverEQ(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldEQ(FieldReceiver, v))
 }
 
-// RewardReceiverNEQ applies the NEQ predicate on the "reward_receiver" field.
-func RewardReceiverNEQ(v string) predicate.Stake {
-	return predicate.Stake(sql.FieldNEQ(FieldRewardReceiver, v))
+// ReceiverNEQ applies the NEQ predicate on the "receiver" field.
+func ReceiverNEQ(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldNEQ(FieldReceiver, v))
 }
 
-// RewardReceiverIn applies the In predicate on the "reward_receiver" field.
-func RewardReceiverIn(vs ...string) predicate.Stake {
-	return predicate.Stake(sql.FieldIn(FieldRewardReceiver, vs...))
+// ReceiverIn applies the In predicate on the "receiver" field.
+func ReceiverIn(vs ...string) predicate.Stake {
+	return predicate.Stake(sql.FieldIn(FieldReceiver, vs...))
 }
 
-// RewardReceiverNotIn applies the NotIn predicate on the "reward_receiver" field.
-func RewardReceiverNotIn(vs ...string) predicate.Stake {
-	return predicate.Stake(sql.FieldNotIn(FieldRewardReceiver, vs...))
+// ReceiverNotIn applies the NotIn predicate on the "receiver" field.
+func ReceiverNotIn(vs ...string) predicate.Stake {
+	return predicate.Stake(sql.FieldNotIn(FieldReceiver, vs...))
 }
 
-// RewardReceiverGT applies the GT predicate on the "reward_receiver" field.
-func RewardReceiverGT(v string) predicate.Stake {
-	return predicate.Stake(sql.FieldGT(FieldRewardReceiver, v))
+// ReceiverGT applies the GT predicate on the "receiver" field.
+func ReceiverGT(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldGT(FieldReceiver, v))
 }
 
-// RewardReceiverGTE applies the GTE predicate on the "reward_receiver" field.
-func RewardReceiverGTE(v string) predicate.Stake {
-	return predicate.Stake(sql.FieldGTE(FieldRewardReceiver, v))
+// ReceiverGTE applies the GTE predicate on the "receiver" field.
+func ReceiverGTE(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldGTE(FieldReceiver, v))
 }
 
-// RewardReceiverLT applies the LT predicate on the "reward_receiver" field.
-func RewardReceiverLT(v string) predicate.Stake {
-	return predicate.Stake(sql.FieldLT(FieldRewardReceiver, v))
+// ReceiverLT applies the LT predicate on the "receiver" field.
+func ReceiverLT(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldLT(FieldReceiver, v))
 }
 
-// RewardReceiverLTE applies the LTE predicate on the "reward_receiver" field.
-func RewardReceiverLTE(v string) predicate.Stake {
-	return predicate.Stake(sql.FieldLTE(FieldRewardReceiver, v))
+// ReceiverLTE applies the LTE predicate on the "receiver" field.
+func ReceiverLTE(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldLTE(FieldReceiver, v))
 }
 
-// RewardReceiverContains applies the Contains predicate on the "reward_receiver" field.
-func RewardReceiverContains(v string) predicate.Stake {
-	return predicate.Stake(sql.FieldContains(FieldRewardReceiver, v))
+// ReceiverContains applies the Contains predicate on the "receiver" field.
+func ReceiverContains(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldContains(FieldReceiver, v))
 }
 
-// RewardReceiverHasPrefix applies the HasPrefix predicate on the "reward_receiver" field.
-func RewardReceiverHasPrefix(v string) predicate.Stake {
-	return predicate.Stake(sql.FieldHasPrefix(FieldRewardReceiver, v))
+// ReceiverHasPrefix applies the HasPrefix predicate on the "receiver" field.
+func ReceiverHasPrefix(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldHasPrefix(FieldReceiver, v))
 }
 
-// RewardReceiverHasSuffix applies the HasSuffix predicate on the "reward_receiver" field.
-func RewardReceiverHasSuffix(v string) predicate.Stake {
-	return predicate.Stake(sql.FieldHasSuffix(FieldRewardReceiver, v))
+// ReceiverHasSuffix applies the HasSuffix predicate on the "receiver" field.
+func ReceiverHasSuffix(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldHasSuffix(FieldReceiver, v))
 }
 
-// RewardReceiverEqualFold applies the EqualFold predicate on the "reward_receiver" field.
-func RewardReceiverEqualFold(v string) predicate.Stake {
-	return predicate.Stake(sql.FieldEqualFold(FieldRewardReceiver, v))
+// ReceiverEqualFold applies the EqualFold predicate on the "receiver" field.
+func ReceiverEqualFold(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldEqualFold(FieldReceiver, v))
 }
 
-// RewardReceiverContainsFold applies the ContainsFold predicate on the "reward_receiver" field.
-func RewardReceiverContainsFold(v string) predicate.Stake {
-	return predicate.Stake(sql.FieldContainsFold(FieldRewardReceiver, v))
+// ReceiverContainsFold applies the ContainsFold predicate on the "receiver" field.
+func ReceiverContainsFold(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldContainsFold(FieldReceiver, v))
+}
+
+// FinalizedEQ applies the EQ predicate on the "finalized" field.
+func FinalizedEQ(v bool) predicate.Stake {
+	return predicate.Stake(sql.FieldEQ(FieldFinalized, v))
+}
+
+// FinalizedNEQ applies the NEQ predicate on the "finalized" field.
+func FinalizedNEQ(v bool) predicate.Stake {
+	return predicate.Stake(sql.FieldNEQ(FieldFinalized, v))
 }
 
 // EndEQ applies the EQ predicate on the "end" field.
@@ -410,6 +435,136 @@ func EndEQ(v bool) predicate.Stake {
 // EndNEQ applies the NEQ predicate on the "end" field.
 func EndNEQ(v bool) predicate.Stake {
 	return predicate.Stake(sql.FieldNEQ(FieldEnd, v))
+}
+
+// BtcSigEQ applies the EQ predicate on the "btc_sig" field.
+func BtcSigEQ(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldEQ(FieldBtcSig, v))
+}
+
+// BtcSigNEQ applies the NEQ predicate on the "btc_sig" field.
+func BtcSigNEQ(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldNEQ(FieldBtcSig, v))
+}
+
+// BtcSigIn applies the In predicate on the "btc_sig" field.
+func BtcSigIn(vs ...string) predicate.Stake {
+	return predicate.Stake(sql.FieldIn(FieldBtcSig, vs...))
+}
+
+// BtcSigNotIn applies the NotIn predicate on the "btc_sig" field.
+func BtcSigNotIn(vs ...string) predicate.Stake {
+	return predicate.Stake(sql.FieldNotIn(FieldBtcSig, vs...))
+}
+
+// BtcSigGT applies the GT predicate on the "btc_sig" field.
+func BtcSigGT(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldGT(FieldBtcSig, v))
+}
+
+// BtcSigGTE applies the GTE predicate on the "btc_sig" field.
+func BtcSigGTE(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldGTE(FieldBtcSig, v))
+}
+
+// BtcSigLT applies the LT predicate on the "btc_sig" field.
+func BtcSigLT(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldLT(FieldBtcSig, v))
+}
+
+// BtcSigLTE applies the LTE predicate on the "btc_sig" field.
+func BtcSigLTE(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldLTE(FieldBtcSig, v))
+}
+
+// BtcSigContains applies the Contains predicate on the "btc_sig" field.
+func BtcSigContains(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldContains(FieldBtcSig, v))
+}
+
+// BtcSigHasPrefix applies the HasPrefix predicate on the "btc_sig" field.
+func BtcSigHasPrefix(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldHasPrefix(FieldBtcSig, v))
+}
+
+// BtcSigHasSuffix applies the HasSuffix predicate on the "btc_sig" field.
+func BtcSigHasSuffix(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldHasSuffix(FieldBtcSig, v))
+}
+
+// BtcSigEqualFold applies the EqualFold predicate on the "btc_sig" field.
+func BtcSigEqualFold(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldEqualFold(FieldBtcSig, v))
+}
+
+// BtcSigContainsFold applies the ContainsFold predicate on the "btc_sig" field.
+func BtcSigContainsFold(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldContainsFold(FieldBtcSig, v))
+}
+
+// ReceiverSigEQ applies the EQ predicate on the "receiver_sig" field.
+func ReceiverSigEQ(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldEQ(FieldReceiverSig, v))
+}
+
+// ReceiverSigNEQ applies the NEQ predicate on the "receiver_sig" field.
+func ReceiverSigNEQ(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldNEQ(FieldReceiverSig, v))
+}
+
+// ReceiverSigIn applies the In predicate on the "receiver_sig" field.
+func ReceiverSigIn(vs ...string) predicate.Stake {
+	return predicate.Stake(sql.FieldIn(FieldReceiverSig, vs...))
+}
+
+// ReceiverSigNotIn applies the NotIn predicate on the "receiver_sig" field.
+func ReceiverSigNotIn(vs ...string) predicate.Stake {
+	return predicate.Stake(sql.FieldNotIn(FieldReceiverSig, vs...))
+}
+
+// ReceiverSigGT applies the GT predicate on the "receiver_sig" field.
+func ReceiverSigGT(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldGT(FieldReceiverSig, v))
+}
+
+// ReceiverSigGTE applies the GTE predicate on the "receiver_sig" field.
+func ReceiverSigGTE(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldGTE(FieldReceiverSig, v))
+}
+
+// ReceiverSigLT applies the LT predicate on the "receiver_sig" field.
+func ReceiverSigLT(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldLT(FieldReceiverSig, v))
+}
+
+// ReceiverSigLTE applies the LTE predicate on the "receiver_sig" field.
+func ReceiverSigLTE(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldLTE(FieldReceiverSig, v))
+}
+
+// ReceiverSigContains applies the Contains predicate on the "receiver_sig" field.
+func ReceiverSigContains(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldContains(FieldReceiverSig, v))
+}
+
+// ReceiverSigHasPrefix applies the HasPrefix predicate on the "receiver_sig" field.
+func ReceiverSigHasPrefix(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldHasPrefix(FieldReceiverSig, v))
+}
+
+// ReceiverSigHasSuffix applies the HasSuffix predicate on the "receiver_sig" field.
+func ReceiverSigHasSuffix(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldHasSuffix(FieldReceiverSig, v))
+}
+
+// ReceiverSigEqualFold applies the EqualFold predicate on the "receiver_sig" field.
+func ReceiverSigEqualFold(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldEqualFold(FieldReceiverSig, v))
+}
+
+// ReceiverSigContainsFold applies the ContainsFold predicate on the "receiver_sig" field.
+func ReceiverSigContainsFold(v string) predicate.Stake {
+	return predicate.Stake(sql.FieldContainsFold(FieldReceiverSig, v))
 }
 
 // And groups predicates with the AND operator between them.

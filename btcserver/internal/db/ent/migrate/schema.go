@@ -16,8 +16,11 @@ var (
 		{Name: "start", Type: field.TypeInt64},
 		{Name: "duration", Type: field.TypeInt64},
 		{Name: "amount", Type: field.TypeInt64},
-		{Name: "reward_receiver", Type: field.TypeString, Size: 66},
+		{Name: "receiver", Type: field.TypeString, Size: 66},
+		{Name: "finalized", Type: field.TypeBool},
 		{Name: "end", Type: field.TypeBool, Default: false},
+		{Name: "btc_sig", Type: field.TypeString},
+		{Name: "receiver_sig", Type: field.TypeString},
 	}
 	// StakesTable holds the schema information for the "stakes" table.
 	StakesTable = &schema.Table{
@@ -33,7 +36,7 @@ var (
 			{
 				Name:    "stake_end_tx",
 				Unique:  false,
-				Columns: []*schema.Column{StakesColumns[7], StakesColumns[2]},
+				Columns: []*schema.Column{StakesColumns[8], StakesColumns[2]},
 			},
 		},
 	}
