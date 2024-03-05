@@ -61,123 +61,38 @@
 <a href="#61" id="61">61</a>
 <a href="#62" id="62">62</a>
 <a href="#63" id="63">63</a>
-<a href="#64" id="64">64</a>
-<a href="#65" id="65">65</a>
-<a href="#66" id="66">66</a>
-<a href="#67" id="67">67</a>
-<a href="#68" id="68">68</a>
-<a href="#69" id="69">69</a>
-<a href="#70" id="70">70</a>
-<a href="#71" id="71">71</a>
-<a href="#72" id="72">72</a>
-<a href="#73" id="73">73</a>
-<a href="#74" id="74">74</a>
-<a href="#75" id="75">75</a>
-<a href="#76" id="76">76</a>
-<a href="#77" id="77">77</a>
-<a href="#78" id="78">78</a>
-<a href="#79" id="79">79</a>
-<a href="#80" id="80">80</a>
-<a href="#81" id="81">81</a>
-<a href="#82" id="82">82</a>
-<a href="#83" id="83">83</a>
-<a href="#84" id="84">84</a>
-<a href="#85" id="85">85</a>
-<a href="#86" id="86">86</a>
-<a href="#87" id="87">87</a>
-<a href="#88" id="88">88</a>
-<a href="#89" id="89">89</a>
-<a href="#90" id="90">90</a>
-<a href="#91" id="91">91</a>
-<a href="#92" id="92">92</a>
-<a href="#93" id="93">93</a>
-<a href="#94" id="94">94</a>
-<a href="#95" id="95">95</a>
-<a href="#96" id="96">96</a>
-<a href="#97" id="97">97</a>
-<a href="#98" id="98">98</a>
-<a href="#99" id="99">99</a>
-<a href="#100" id="100">100</a>
-<a href="#101" id="101">101</a>
-<a href="#102" id="102">102</a>
-<a href="#103" id="103">103</a>
-<a href="#104" id="104">104</a>
-<a href="#105" id="105">105</a>
-<a href="#106" id="106">106</a>
-<a href="#107" id="107">107</a>
-<a href="#108" id="108">108</a>
 </pre></div><pre class="rust"><code><span class="kw">pub mod </span>config;
 
 <span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>ethers::prelude::{abigen, SignerMiddleware};
 <span class="kw">use </span>ethers::providers::{Http, Provider};
-<span class="kw">use </span>ethers::signers::{LocalWallet, Signer};
-<span class="kw">use </span>ethers::types::{Address, I256, U256};
+<span class="kw">use </span>ethers::types::{I256, U256};
+<span class="kw">use </span>starknet_core_contract_client::interfaces::StarknetSovereignContract;
 
-<span class="kw">use </span><span class="kw">crate</span>::utils::is_valid_http_endpoint;
 <span class="kw">use crate</span>::{DaClient, DaError, DaMode};
 
 <span class="attr">#[derive(Clone, Debug)]
-</span><span class="kw">pub struct </span>EthereumClient {
-    http_provider: Provider&lt;Http&gt;,
-    signer: Arc&lt;SignerMiddleware&lt;Provider&lt;Http&gt;, LocalWallet&gt;&gt;,
-    cc_address: Address,
+</span><span class="kw">pub struct </span>EthereumDaClient {
+    core_contract: StarknetSovereignContract&lt;Provider&lt;Http&gt;&gt;,
     mode: DaMode,
 }
 
 <span class="attr">#[async_trait]
-</span><span class="kw">impl </span>DaClient <span class="kw">for </span>EthereumClient {
+</span><span class="kw">impl </span>DaClient <span class="kw">for </span>EthereumDaClient {
     <span class="kw">async fn </span>publish_state_diff(<span class="kw-2">&amp;</span><span class="self">self</span>, state_diff: Vec&lt;U256&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), anyhow::Error&gt; {
-        <span class="macro">log::debug!</span>(<span class="string">&quot;State Update: {:?}&quot;</span>, state_diff);
-        <span class="kw">let </span>fmt_tx = <span class="kw">match </span><span class="self">self</span>.mode {
-            DaMode::Sovereign =&gt; {
-                <span class="macro">abigen!</span>(
-                    STARKNET,
-                    <span class="string">r#&quot;[
-                        function updateState(uint256[] calldata programOutput) external
-                    ]&quot;#</span>,
-                );
-
-                <span class="kw">let </span>core_contracts = STARKNET::new(<span class="self">self</span>.cc_address, <span class="self">self</span>.signer.clone());
-                core_contracts.update_state(state_diff)
-            }
-            <span class="kw">_ </span>=&gt; {
-                <span class="macro">abigen!</span>(
-                    STARKNET,
-                    <span class="string">r#&quot;[
-                        function updateState(uint256[] calldata programOutput, uint256 onchainDataHash, uint256 onchainDataSize) external
-                    ]&quot;#</span>,
-                );
-
-                <span class="kw">let </span>core_contracts = STARKNET::new(<span class="self">self</span>.cc_address, <span class="self">self</span>.signer.clone());
-                core_contracts.update_state(state_diff, U256::default(), U256::default())
-            }
-        };
-
-        <span class="kw">let </span>tx = fmt_tx
-            .send()
-            .<span class="kw">await
-            </span>.map_err(|e| DaError::FailedDataSubmission(e.into()))<span class="question-mark">?
-            </span>.<span class="kw">await
-            </span>.map_err(|e| DaError::FailedDataSubmission(e.into()))<span class="question-mark">?</span>;
-
-        <span class="macro">log::debug!</span>(<span class="string">&quot;State Update: {:?}&quot;</span>, tx);
+        <span class="macro">log::debug!</span>(<span class="string">&quot;State diff: {:?}&quot;</span>, state_diff);
         <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">async fn </span>last_published_state(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;I256, anyhow::Error&gt; {
-        <span class="macro">abigen!</span>(
-            STARKNET,
-            <span class="string">r#&quot;[
-                function stateBlockNumber() external view returns (int256)
-            ]&quot;#</span>,
-        );
-
-        <span class="kw">let </span>contract = STARKNET::new(<span class="self">self</span>.cc_address, <span class="self">self</span>.http_provider.clone().into());
-        <span class="prelude-val">Ok</span>(contract.state_block_number().call().<span class="kw">await</span>.map_err(|e| DaError::FailedDataSubmission(e.into()))<span class="question-mark">?</span>)
+        <span class="self">self</span>.core_contract
+            .state_block_number()
+            .call()
+            .<span class="kw">await
+            </span>.map_err(|e| DaError::FailedDataSubmission(e.into()))
+            .map_err(Into::into)
     }
 
     <span class="kw">fn </span>get_mode(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; DaMode {
@@ -189,29 +104,24 @@
     }
 }
 
-<span class="kw">impl </span>TryFrom&lt;config::EthereumConfig&gt; <span class="kw">for </span>EthereumClient {
+<span class="kw">impl </span>TryFrom&lt;config::EthereumDaConfig&gt; <span class="kw">for </span>EthereumDaClient {
     <span class="kw">type </span>Error = DaError;
 
-    <span class="kw">fn </span>try_from(conf: config::EthereumConfig) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">if </span>!is_valid_http_endpoint(<span class="kw-2">&amp;</span>conf.http_provider) {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(DaError::InvalidHttpEndpoint(conf.http_provider));
+    <span class="kw">fn </span>try_from(conf: config::EthereumDaConfig) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+        <span class="comment">// NOTE: only sovereign mode is supported (for now)
+        // In sovereign mode both proof and state diff are populated on-chain
+        // without verification. A full Madara node should be able to index
+        // from scratch using just that info: verify proof -&gt; apply diff
+        </span><span class="kw">if </span>conf.mode != DaMode::Sovereign {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(DaError::UnsupportedMode(conf.mode));
         }
 
+        <span class="kw">let </span>address = conf.contracts.core_contract().map_err(|e| DaError::FailedConversion(e.into()))<span class="question-mark">?</span>;
         <span class="kw">let </span>provider =
-            Provider::&lt;Http&gt;::try_from(conf.http_provider).map_err(|e| DaError::FailedBuildingClient(e.into()))<span class="question-mark">?</span>;
+            Provider::&lt;Http&gt;::try_from(conf.provider).map_err(|e| DaError::FailedBuildingClient(e.into()))<span class="question-mark">?</span>;
+        <span class="kw">let </span>core_contract = StarknetSovereignContract::new(address, Arc::new(provider));
 
-        <span class="kw">let </span>wallet: LocalWallet = conf
-            .sequencer_key
-            .parse::&lt;LocalWallet&gt;()
-            .map_err(|e| DaError::FailedConversion(e.into()))<span class="question-mark">?
-            </span>.with_chain_id(conf.chain_id);
-
-        <span class="kw">let </span>signer = Arc::new(SignerMiddleware::new(provider.clone(), wallet));
-
-        <span class="kw">let </span>cc_address: Address =
-            conf.core_contracts.parse::&lt;Address&gt;().map_err(|e| DaError::FailedConversion(e.into()))<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ http_provider: provider, signer, cc_address, mode: conf.mode })
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ mode: conf.mode, core_contract })
     }
 }
 </code></pre></div></section></main></body></html>

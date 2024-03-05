@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["config"],"struct":["EthereumClient"]};
+window.SIDEBAR_ITEMS = {"mod":["config"],"struct":["EthereumDaClient"]};

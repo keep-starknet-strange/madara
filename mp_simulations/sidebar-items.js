@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["PlaceHolderErrorTypeForFailedStarknetExecution","SimulationFlags"]};
+window.SIDEBAR_ITEMS = {"struct":["PlaceHolderErrorTypeForFailedStarknetExecution","SimulationFlags"],"type":["TransactionSimulationResult"]};

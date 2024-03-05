@@ -272,12 +272,62 @@
 <a href="#272" id="272">272</a>
 <a href="#273" id="273">273</a>
 <a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::io::Write;
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>anyhow::{anyhow, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass <span class="kw">as </span>BlockifierContractClass;
+<span class="kw">use </span>blockifier::state::cached_state::CommitmentStateDiff;
 <span class="kw">use </span>cairo_lang_casm_contract_class::{CasmContractClass, CasmContractEntryPoint, CasmContractEntryPoints};
 <span class="kw">use </span>cairo_lang_starknet::contract_class::{
     ContractClass <span class="kw">as </span>SierraContractClass, ContractEntryPoint, ContractEntryPoints,
@@ -301,7 +351,7 @@
 };
 
 <span class="doccomment">/// Returns a [`ContractClass`] from a [`BlockifierContractClass`]
-</span><span class="kw">pub fn </span>to_rpc_contract_class(contract_class: BlockifierContractClass) -&gt; <span class="prelude-ty">Result</span>&lt;ContractClass&gt; {
+</span><span class="kw">pub fn </span>blockifier_to_rpc_contract_class_types(contract_class: BlockifierContractClass) -&gt; <span class="prelude-ty">Result</span>&lt;ContractClass&gt; {
     <span class="kw">match </span>contract_class {
         BlockifierContractClass::V0(contract_class) =&gt; {
             <span class="kw">let </span>entry_points_by_type = to_legacy_entry_points_by_type(<span class="kw-2">&amp;</span>contract_class.entry_points_by_type)<span class="question-mark">?</span>;
@@ -320,6 +370,54 @@
             </span>abi: String::from(<span class="string">&quot;{}&quot;</span>), <span class="comment">// FIXME: https://github.com/keep-starknet-strange/madara/issues/790
         </span>})),
     }
+}
+
+<span class="doccomment">/// Returns a [`StateDiff`] from a [`CommitmentStateDiff`]
+</span><span class="kw">pub fn </span>blockifier_to_rpc_state_diff_types(commitment_state_diff: CommitmentStateDiff) -&gt; <span class="prelude-ty">Result</span>&lt;StateDiff&gt; {
+    <span class="kw">let </span>storage_diffs: Vec&lt;ContractStorageDiffItem&gt; = commitment_state_diff
+        .storage_updates
+        .into_iter()
+        .map(|(address, storage_map)| {
+            <span class="kw">let </span>storage_entries = storage_map
+                .into_iter()
+                .map(|(key, value)| StorageEntry { key: key.<span class="number">0.0</span>.into(), value: value.into() })
+                .collect();
+            ContractStorageDiffItem { address: address.<span class="number">0.0</span>.into(), storage_entries }
+        })
+        .collect();
+
+    <span class="kw">let </span>declared_classes = commitment_state_diff
+        .class_hash_to_compiled_class_hash
+        .into_iter()
+        .map(|(class_hash, compiled_class_hash)| DeclaredClassItem {
+            class_hash: class_hash.<span class="number">0</span>.into(),
+            compiled_class_hash: compiled_class_hash.<span class="number">0</span>.into(),
+        })
+        .collect();
+
+    <span class="kw">let </span>deployed_contracts = commitment_state_diff
+        .address_to_class_hash
+        .into_iter()
+        .map(|(address, class_hash)| DeployedContractItem {
+            address: address.<span class="number">0.0</span>.into(),
+            class_hash: class_hash.<span class="number">0</span>.into(),
+        })
+        .collect();
+
+    <span class="kw">let </span>nonces = commitment_state_diff
+        .address_to_nonce
+        .into_iter()
+        .map(|(address, nonce)| NonceUpdate { contract_address: address.<span class="number">0.0</span>.into(), nonce: nonce.<span class="number">0</span>.into() })
+        .collect();
+
+    <span class="prelude-val">Ok</span>(StateDiff {
+        storage_diffs,
+        deprecated_declared_classes: <span class="macro">vec!</span>[],
+        declared_classes,
+        deployed_contracts,
+        replaced_classes: <span class="macro">vec!</span>[],
+        nonces,
+    })
 }
 
 <span class="doccomment">/// Returns a [`StateDiff`] from a [`ThinStateDiff`]

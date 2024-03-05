@@ -263,6 +263,8 @@
 <a href="#263" id="263">263</a>
 <a href="#264" id="264">264</a>
 <a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
 </pre></div><pre class="rust"><code><span class="attr">#[cfg(feature = <span class="string">&quot;avail&quot;</span>)]
 </span><span class="kw">pub mod </span>avail;
 <span class="attr">#[cfg(feature = <span class="string">&quot;celestia&quot;</span>)]
@@ -327,6 +329,8 @@
     </span>FailedDataValidation(anyhow::Error),
     <span class="attr">#[error(<span class="string">&quot;Invalid http endpoint: {0}&quot;</span>)]
     </span>InvalidHttpEndpoint(String),
+    <span class="attr">#[error(<span class="string">&quot;Unsupported mode: {0}&quot;</span>)]
+    </span>UnsupportedMode(DaMode),
 }
 
 <span class="kw">impl </span>Display <span class="kw">for </span>DaLayer {

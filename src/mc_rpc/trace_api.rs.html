@@ -501,21 +501,33 @@
 <a href="#501" id="501">501</a>
 <a href="#502" id="502">502</a>
 <a href="#503" id="503">503</a>
+<a href="#504" id="504">504</a>
+<a href="#505" id="505">505</a>
+<a href="#506" id="506">506</a>
+<a href="#507" id="507">507</a>
+<a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
 
 <span class="kw">use </span>blockifier::execution::contract_class::{ContractClass, ContractClassV1};
 <span class="kw">use </span>blockifier::execution::entry_point::CallInfo;
+<span class="kw">use </span>blockifier::state::cached_state::CommitmentStateDiff;
 <span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>blockifier::transaction::objects::TransactionExecutionInfo;
 <span class="kw">use </span>jsonrpsee::core::{async_trait, RpcResult};
 <span class="kw">use </span>log::error;
 <span class="kw">use </span>mc_genesis_data_provider::GenesisProvider;
-<span class="kw">use </span>mc_rpc_core::utils::get_block_by_block_hash;
+<span class="kw">use </span>mc_rpc_core::utils::{blockifier_to_rpc_state_diff_types, get_block_by_block_hash};
 <span class="kw">use </span>mc_rpc_core::{StarknetReadRpcApiServer, StarknetTraceRpcApiServer};
 <span class="kw">use </span>mc_storage::StorageOverride;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_hashers::HasherT;
-<span class="kw">use </span>mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
+<span class="kw">use </span>mp_simulations::{SimulationFlags, TransactionSimulationResult};
 <span class="kw">use </span>mp_transactions::compute_hash::ComputeTransactionHash;
 <span class="kw">use </span>mp_transactions::{DeclareTransaction, Transaction, TxType, UserOrL1HandlerTransaction, UserTransaction};
 <span class="kw">use </span>pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
@@ -529,7 +541,7 @@
 <span class="kw">use </span>starknet_core::types::{
     BlockId, BroadcastedTransaction, DeclareTransactionTrace, DeployAccountTransactionTrace, ExecuteInvocation,
     FeeEstimate, InvokeTransactionTrace, L1HandlerTransactionTrace, RevertedInvocation, SimulatedTransaction,
-    SimulationFlag, TransactionTrace, TransactionTraceWithHash,
+    SimulationFlag, StateDiff, TransactionTrace, TransactionTraceWithHash,
 };
 <span class="kw">use </span>starknet_ff::FieldElement;
 <span class="kw">use </span>thiserror::Error;
@@ -729,13 +741,16 @@
         <span class="kw">let </span>traces = execution_infos
             .into_iter()
             .enumerate()
-            .map(|(tx_idx, tx_exec_info)| {
+            .map(|(tx_idx, (tx_exec_info, commitment_state_diff))| {
+                <span class="kw">let </span>state_diff = blockifier_to_rpc_state_diff_types(commitment_state_diff)
+                    .map_err(|<span class="kw">_</span>| ConvertCallInfoToExecuteInvocationError::ConvertStateDiffFailed)<span class="question-mark">?</span>;
                 tx_execution_infos_to_tx_trace(
                     <span class="kw-2">&amp;**</span>storage_override,
                     substrate_block_hash,
                     <span class="comment">// Safe to unwrap coz re_execute returns exactly one ExecutionInfo for each tx
                     </span>TxType::from(block_transactions.get(tx_idx).unwrap()),
                     <span class="kw-2">&amp;</span>tx_exec_info,
+                    <span class="prelude-val">Some</span>(state_diff),
                 )
                 .map(|trace_root| TransactionTraceWithHash {
                     transaction_hash: block_transactions[tx_idx].compute_hash::&lt;H&gt;(chain_id, <span class="bool-val">false</span>).into(),
@@ -755,6 +770,8 @@
     </span>TransactionExecutionFailed,
     <span class="attr">#[error(transparent)]
     </span>GetFunctionInvocation(<span class="attr">#[from] </span>TryFuntionInvocationFromCallInfoError),
+    <span class="attr">#[error(<span class="string">&quot;Failed to convert state diff&quot;</span>)]
+    </span>ConvertStateDiffFailed,
 }
 
 <span class="kw">impl </span>From&lt;ConvertCallInfoToExecuteInvocationError&gt; <span class="kw">for </span>StarknetRpcApiError {
@@ -764,6 +781,7 @@
             ConvertCallInfoToExecuteInvocationError::GetFunctionInvocation(<span class="kw">_</span>) =&gt; {
                 StarknetRpcApiError::InternalServerError
             }
+            ConvertCallInfoToExecuteInvocationError::ConvertStateDiffFailed =&gt; StarknetRpcApiError::InternalServerError,
         }
     }
 }
@@ -885,6 +903,7 @@
     substrate_block_hash: B::Hash,
     tx_type: TxType,
     tx_exec_info: <span class="kw-2">&amp;</span>TransactionExecutionInfo,
+    state_diff: <span class="prelude-ty">Option</span>&lt;StateDiff&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;TransactionTrace, ConvertCallInfoToExecuteInvocationError&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>class_hash_cache: HashMap&lt;ContractAddress, FieldElement&gt; = HashMap::new();
 
@@ -932,14 +951,12 @@
                 )<span class="question-mark">?</span>)
             },
             fee_transfer_invocation,
-            <span class="comment">// TODO(#1291): Compute state diff correctly
-            </span>state_diff: <span class="prelude-val">None</span>,
+            state_diff,
         }),
         TxType::Declare =&gt; TransactionTrace::Declare(DeclareTransactionTrace {
             validate_invocation,
             fee_transfer_invocation,
-            <span class="comment">// TODO(#1291): Compute state diff correctly
-            </span>state_diff: <span class="prelude-val">None</span>,
+            state_diff,
         }),
         TxType::DeployAccount =&gt; {
             TransactionTrace::DeployAccount(DeployAccountTransactionTrace {
@@ -952,8 +969,7 @@
                     <span class="kw-2">&amp;mut </span>class_hash_cache,
                 )<span class="question-mark">?</span>,
                 fee_transfer_invocation,
-                <span class="comment">// TODO(#1291): Compute state diff correctly
-                </span>state_diff: <span class="prelude-val">None</span>,
+                state_diff,
             })
         }
         TxType::L1Handler =&gt; TransactionTrace::L1Handler(L1HandlerTransactionTrace {
@@ -975,16 +991,22 @@
     storage_override: <span class="kw-2">&amp;</span><span class="kw">dyn </span>StorageOverride&lt;B&gt;,
     substrate_block_hash: B::Hash,
     tx_types: Vec&lt;TxType&gt;,
-    transaction_execution_results: Vec&lt;
-        <span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;,
-    &gt;,
+    transaction_execution_results: Vec&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;SimulatedTransaction&gt;, ConvertCallInfoToExecuteInvocationError&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>results = <span class="macro">vec!</span>[];
-    <span class="kw">for </span>(tx_type, res) <span class="kw">in </span>tx_types.into_iter().zip(transaction_execution_results.into_iter()) {
+    <span class="kw">for </span>(tx_type, (state_diff, res)) <span class="kw">in </span>tx_types.into_iter().zip(transaction_execution_results.into_iter()) {
         <span class="kw">match </span>res {
             <span class="prelude-val">Ok</span>(tx_exec_info) =&gt; {
-                <span class="kw">let </span>transaction_trace =
-                    tx_execution_infos_to_tx_trace(storage_override, substrate_block_hash, tx_type, <span class="kw-2">&amp;</span>tx_exec_info)<span class="question-mark">?</span>;
+                <span class="kw">let </span>state_diff = blockifier_to_rpc_state_diff_types(state_diff)
+                    .map_err(|<span class="kw">_</span>| ConvertCallInfoToExecuteInvocationError::ConvertStateDiffFailed)<span class="question-mark">?</span>;
+
+                <span class="kw">let </span>transaction_trace = tx_execution_infos_to_tx_trace(
+                    storage_override,
+                    substrate_block_hash,
+                    tx_type,
+                    <span class="kw-2">&amp;</span>tx_exec_info,
+                    <span class="prelude-val">Some</span>(state_diff),
+                )<span class="question-mark">?</span>;
                 <span class="kw">let </span>gas_consumed =
                     tx_exec_info.execute_call_info.as_ref().map(|x| x.execution.gas_consumed).unwrap_or_default();
                 <span class="kw">let </span>overall_fee = tx_exec_info.actual_fee.<span class="number">0 </span><span class="kw">as </span>u64;

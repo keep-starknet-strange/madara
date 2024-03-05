@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Sealing"],"fn":["extract_l1_messages_worker_config","init_da_client","override_dev_environment","run_node"],"struct":["ExtendedRunCmd","L1Messages","L1MessagesParams"]};
+window.SIDEBAR_ITEMS = {"enum":["Sealing"],"fn":["init_da_client","override_dev_environment","run_node"],"struct":["ExtendedRunCmd"]};

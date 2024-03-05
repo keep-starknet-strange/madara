@@ -705,6 +705,13 @@
 <a href="#705" id="705">705</a>
 <a href="#706" id="706">706</a>
 <a href="#707" id="707">707</a>
+<a href="#708" id="708">708</a>
+<a href="#709" id="709">709</a>
+<a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
+<a href="#712" id="712">712</a>
+<a href="#713" id="713">713</a>
+<a href="#714" id="714">714</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
@@ -719,10 +726,9 @@
 <span class="kw">use </span>madara_runtime::opaque::Block;
 <span class="kw">use </span>madara_runtime::{<span class="self">self</span>, Hash, RuntimeApi, SealingMode, StarknetHasher};
 <span class="kw">use </span>mc_commitment_state_diff::CommitmentStateDiffWorker;
-<span class="kw">use </span>mc_data_availability::ethereum::config::EthereumConfig;
 <span class="kw">use </span>mc_data_availability::{DaClient, DataAvailabilityWorker};
+<span class="kw">use </span>mc_eth_client::config::EthereumClientConfig;
 <span class="kw">use </span>mc_genesis_data_provider::OnDiskGenesisConfig;
-<span class="kw">use </span>mc_l1_messages::config::L1MessagesWorkerConfig;
 <span class="kw">use </span>mc_mapping_sync::MappingSyncWorker;
 <span class="kw">use </span>mc_settlement::errors::RetryOnRecoverableErrors;
 <span class="kw">use </span>mc_settlement::ethereum::StarknetContractClient;
@@ -976,7 +982,6 @@
     sealing: SealingMode,
     da_client: <span class="prelude-ty">Option</span>&lt;Box&lt;<span class="kw">dyn </span>DaClient + Send + Sync&gt;&gt;,
     cache_more_things: bool,
-    l1_messages_worker_config: <span class="prelude-ty">Option</span>&lt;L1MessagesWorkerConfig&gt;,
     settlement_config: <span class="prelude-ty">Option</span>&lt;(SettlementLayer, PathBuf)&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;TaskManager, ServiceError&gt; {
     <span class="kw">let </span>build_import_queue =
@@ -1148,13 +1153,12 @@
         );
     }
 
-    <span class="comment">// initialize settlement worker
+    <span class="comment">// initialize settlement workers
     </span><span class="kw">if let </span><span class="prelude-val">Some</span>((layer_kind, config_path)) = settlement_config {
         <span class="kw">let </span>settlement_provider: Box&lt;<span class="kw">dyn </span>SettlementProvider&lt;<span class="kw">_</span>&gt;&gt; = <span class="kw">match </span>layer_kind {
             SettlementLayer::Ethereum =&gt; {
-                <span class="kw">let </span>file = std::fs::File::open(config_path)<span class="question-mark">?</span>;
-                <span class="kw">let </span>ethereum_conf: EthereumConfig =
-                    serde_json::from_reader(file).map_err(|e| ServiceError::Other(e.to_string()))<span class="question-mark">?</span>;
+                <span class="kw">let </span>ethereum_conf = EthereumClientConfig::from_json_file(<span class="kw-2">&amp;</span>config_path)
+                    .map_err(|e| ServiceError::Other(e.to_string()))<span class="question-mark">?</span>;
                 Box::new(
                     StarknetContractClient::try_from(ethereum_conf).map_err(|e| ServiceError::Other(e.to_string()))<span class="question-mark">?</span>,
                 )
@@ -1164,7 +1168,7 @@
 
         task_manager.spawn_essential_handle().spawn(
             <span class="string">&quot;settlement-worker-sync-state&quot;</span>,
-            <span class="prelude-val">Some</span>(<span class="string">&quot;madara&quot;</span>),
+            <span class="prelude-val">Some</span>(MADARA_TASK_GROUP),
             SettlementWorker::&lt;<span class="kw">_</span>, StarknetHasher, <span class="kw">_</span>&gt;::sync_state(
                 client.clone(),
                 settlement_provider,
@@ -1172,6 +1176,23 @@
                 retry_strategy,
             ),
         );
+
+        <span class="comment">// TODO: make L1 message handling part of the SettlementProvider, support multiple layer options
+        </span><span class="kw">if </span>layer_kind == SettlementLayer::Ethereum {
+            <span class="kw">let </span>ethereum_conf =
+                EthereumClientConfig::from_json_file(<span class="kw-2">&amp;</span>config_path).map_err(|e| ServiceError::Other(e.to_string()))<span class="question-mark">?</span>;
+
+            task_manager.spawn_handle().spawn(
+                <span class="string">&quot;settlement-worker-sync-l1-messages&quot;</span>,
+                <span class="prelude-val">Some</span>(MADARA_TASK_GROUP),
+                mc_l1_messages::worker::run_worker(
+                    ethereum_conf,
+                    client.clone(),
+                    transaction_pool.clone(),
+                    madara_backend.clone(),
+                ),
+            );
+        }
     }
 
     <span class="kw">if </span>role.is_authority() {
@@ -1298,13 +1319,6 @@
         );
     }
 
-    <span class="kw">if let </span><span class="prelude-val">Some</span>(l1_messages_worker_config) = l1_messages_worker_config {
-        task_manager.spawn_handle().spawn(
-            <span class="string">&quot;ethereum-core-contract-events-listener&quot;</span>,
-            <span class="prelude-val">Some</span>(MADARA_TASK_GROUP),
-            mc_l1_messages::worker::run_worker(l1_messages_worker_config, client, transaction_pool, madara_backend),
-        );
-    }
     network_starter.start_network();
     <span class="prelude-val">Ok</span>(task_manager)
 }

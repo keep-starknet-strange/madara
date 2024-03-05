@@ -60,8 +60,8 @@
 </span><span class="kw">use </span>mc_data_availability::avail::{config::AvailConfig, AvailClient};
 <span class="attr">#[cfg(feature = <span class="string">&quot;celestia&quot;</span>)]
 </span><span class="kw">use </span>mc_data_availability::celestia::{config::CelestiaConfig, CelestiaClient};
-<span class="kw">use </span>mc_data_availability::ethereum::config::EthereumConfig;
-<span class="kw">use </span>mc_data_availability::ethereum::EthereumClient;
+<span class="kw">use </span>mc_data_availability::ethereum::config::EthereumDaConfig;
+<span class="kw">use </span>mc_data_availability::ethereum::EthereumDaClient;
 <span class="kw">use </span>mc_data_availability::{DaClient, DaLayer};
 <span class="kw">use </span>serde::de::DeserializeOwned;
 
@@ -86,8 +86,8 @@
             Box::new(CelestiaClient::try_from(celestia_conf).expect(<span class="string">&quot;Failed to create Celestia client&quot;</span>))
         }
         DaLayer::Ethereum =&gt; {
-            <span class="kw">let </span>ethereum_conf = load_da_config::&lt;EthereumConfig&gt;(<span class="kw-2">&amp;</span>da_path);
-            Box::new(EthereumClient::try_from(ethereum_conf).expect(<span class="string">&quot;Failed to create Ethereum client&quot;</span>))
+            <span class="kw">let </span>ethereum_conf = load_da_config::&lt;EthereumDaConfig&gt;(<span class="kw-2">&amp;</span>da_path);
+            Box::new(EthereumDaClient::try_from(ethereum_conf).expect(<span class="string">&quot;Failed to create Ethereum client&quot;</span>))
         }
         <span class="attr">#[cfg(feature = <span class="string">&quot;avail&quot;</span>)]
         </span>DaLayer::Avail =&gt; {

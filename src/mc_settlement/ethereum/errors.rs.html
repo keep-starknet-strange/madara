@@ -24,6 +24,9 @@
 <a href="#24" id="24">24</a>
 <a href="#25" id="25">25</a>
 <a href="#26" id="26">26</a>
+<a href="#27" id="27">27</a>
+<a href="#28" id="28">28</a>
+<a href="#29" id="29">29</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>starknet_core_contract_client::LocalWalletSignerMiddleware;
 
 <span class="doccomment">/// Ethereum client error type.
@@ -44,6 +47,9 @@
 
     <span class="attr">#[error(<span class="string">&quot;HTTP provider error: {0}&quot;</span>)]
     </span>Provider(<span class="attr">#[from] </span>ethers::providers::ProviderError),
+
+    <span class="attr">#[error(<span class="string">&quot;Ethereum client error: {0}&quot;</span>)]
+    </span>EthereumClient(<span class="attr">#[from] </span>mc_eth_client::error::Error),
 
     <span class="attr">#[error(<span class="string">&quot;Failed to get transaction receipt&quot;</span>)]
     </span>MissingTransactionRecepit,

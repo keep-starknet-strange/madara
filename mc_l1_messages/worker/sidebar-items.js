@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["run_worker"]};
+window.SIDEBAR_ITEMS = {"fn":["run_worker"],"struct":["EthereumClientConfig"]};

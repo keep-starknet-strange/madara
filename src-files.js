@@ -6,8 +6,9 @@ var srcIndex = JSON.parse('{\
 "mc_commitment_state_diff":["",[],["lib.rs"]],\
 "mc_data_availability":["",[["ethereum",[],["config.rs","mod.rs"]],["sharp",[],["mod.rs"]]],["da_metrics.rs","lib.rs","utils.rs"]],\
 "mc_db":["",[["db_opening_utils",[],["mod.rs","parity_db_adapter.rs"]]],["da_db.rs","error.rs","l1_handler_tx_fee.rs","lib.rs","mapping_db.rs","messaging_db.rs","meta_db.rs","sierra_classes_db.rs"]],\
+"mc_eth_client":["",[],["config.rs","error.rs","lib.rs"]],\
 "mc_genesis_data_provider":["",[],["constants.rs","lib.rs"]],\
-"mc_l1_messages":["",[],["config.rs","contract.rs","error.rs","lib.rs","worker.rs"]],\
+"mc_l1_messages":["",[],["contract.rs","error.rs","lib.rs","worker.rs"]],\
 "mc_mapping_sync":["",[],["lib.rs","sync_blocks.rs"]],\
 "mc_rpc":["",[["events",[],["mod.rs"]]],["constants.rs","errors.rs","lib.rs","madara_backend_client.rs","runtime_api.rs","starknetrpcwrapper.rs","trace_api.rs","types.rs"]],\
 "mc_rpc_core":["",[],["lib.rs","utils.rs"]],\

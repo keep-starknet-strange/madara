@@ -169,6 +169,16 @@
 <a href="#169" id="169">169</a>
 <a href="#170" id="170">170</a>
 <a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::fs::File;
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::sync::Arc;
@@ -176,7 +186,10 @@
 <span class="kw">use </span>ethers::providers::Middleware;
 <span class="kw">use </span>ethers::types::{Address, I256, U256};
 <span class="kw">use </span>ethers::utils::keccak256;
-<span class="kw">use </span>mc_settlement::ethereum::client::EthereumConfig;
+<span class="kw">use </span>mc_eth_client::config::{
+    EthereumClientConfig, EthereumProviderConfig, EthereumWalletConfig, HttpProviderConfig, LocalWalletConfig,
+    StarknetContracts,
+};
 <span class="kw">use </span>mc_settlement::ethereum::convert_felt_to_u256;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_messages::{MessageL1ToL2, MessageL2ToL1};
@@ -237,12 +250,19 @@
     ///
     /// Returns path to the settlement config (has to be passed as a Madara node argument)
     </span><span class="kw">pub async fn </span>create_settlement_conf(<span class="kw-2">&amp;</span><span class="self">self</span>, data_path: PathBuf) -&gt; PathBuf {
-        <span class="kw">let </span>settlement_conf = EthereumConfig {
-            http_provider: <span class="self">self</span>.client.client().provider().url().to_string(),
-            core_contracts: hex_str_from_bytes::&lt;<span class="number">20</span>, <span class="bool-val">true</span>&gt;(<span class="self">self</span>.client.address().<span class="number">0</span>),
-            chain_id: <span class="self">self</span>.client.client().get_chainid().<span class="kw">await</span>.expect(<span class="string">&quot;Failed to get sandbox chain ID&quot;</span>).as_u64(),
-            poll_interval_ms: <span class="prelude-val">Some</span>(<span class="number">10u64</span>), <span class="comment">// Default is 7s, we need to speed things up
-            </span>..Default::default()
+        <span class="kw">let </span>settlement_conf = EthereumClientConfig {
+            provider: EthereumProviderConfig::Http(HttpProviderConfig {
+                rpc_endpoint: <span class="self">self</span>.client.client().provider().url().to_string(),
+                tx_poll_interval_ms: <span class="prelude-val">Some</span>(<span class="number">10u64</span>), <span class="comment">// Default is 7s, we need to speed things up
+            </span>}),
+            wallet: <span class="prelude-val">Some</span>(EthereumWalletConfig::Local(LocalWalletConfig {
+                chain_id: <span class="self">self</span>.client.client().get_chainid().<span class="kw">await</span>.expect(<span class="string">&quot;Failed to get sandbox chain ID&quot;</span>).as_u64(),
+                ..Default::default() <span class="comment">// Use Anvil default account
+            </span>})),
+            contracts: StarknetContracts {
+                core_contract: hex_str_from_bytes::&lt;<span class="number">20</span>, <span class="bool-val">true</span>&gt;(<span class="self">self</span>.client.address().<span class="number">0</span>),
+                ..Default::default()
+            },
         };
 
         <span class="kw">let </span>conf_path = data_path.join(<span class="string">&quot;eth-config.json&quot;</span>);

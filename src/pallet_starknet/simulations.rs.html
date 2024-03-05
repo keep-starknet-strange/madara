@@ -287,21 +287,55 @@
 <a href="#287" id="287">287</a>
 <a href="#288" id="288">288</a>
 <a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::vec::Vec;
 
 <span class="kw">use </span>blockifier::block_context::BlockContext;
+<span class="kw">use </span>blockifier::state::cached_state::CommitmentStateDiff;
+<span class="kw">use </span>blockifier::state::state_api::State;
 <span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>blockifier::transaction::objects::TransactionExecutionInfo;
 <span class="kw">use </span>frame_support::storage;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
-<span class="kw">use </span>mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
+<span class="kw">use </span>mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult};
 <span class="kw">use </span>mp_transactions::execution::{Execute, ExecutionConfig};
 <span class="kw">use </span>mp_transactions::{HandleL1MessageTransaction, UserOrL1HandlerTransaction, UserTransaction};
 <span class="kw">use </span>sp_core::Get;
 <span class="kw">use </span>sp_runtime::DispatchError;
 <span class="kw">use </span>starknet_api::transaction::Fee;
 
-<span class="kw">use </span><span class="kw">crate</span>::blockifier_state_adapter::BlockifierStateAdapter;
+<span class="kw">use </span><span class="kw">crate</span>::blockifier_state_adapter::{BlockifierStateAdapter, CachedBlockifierStateAdapter};
 <span class="kw">use </span><span class="kw">crate</span>::execution_config::RuntimeExecutionConfigBuilder;
 <span class="kw">use crate</span>::{Config, Error, Pallet};
 
@@ -363,8 +397,7 @@
     <span class="kw">pub fn </span>simulate_transactions(
         transactions: Vec&lt;UserTransaction&gt;,
         simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;&gt;, DispatchError&gt;
-    {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt;, DispatchError&gt; {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(<span class="prelude-ty">Result</span>::&lt;<span class="kw">_</span>, DispatchError&gt;::Ok(<span class="self">Self</span>::simulate_transactions_inner(
                 transactions,
@@ -377,22 +410,23 @@
     <span class="kw">fn </span>simulate_transactions_inner(
         transactions: Vec&lt;UserTransaction&gt;,
         simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;&gt;, DispatchError&gt;
-    {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt;, DispatchError&gt; {
         <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
         <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
         <span class="kw">let </span><span class="kw-2">mut </span>execution_config =
             RuntimeExecutionConfigBuilder::new::&lt;T&gt;().with_simulation_mode(simulation_flags).build();
 
-        <span class="kw">let </span>tx_execution_results = transactions
+        <span class="kw">let </span>tx_execution_results: Vec&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt; = transactions
             .into_iter()
             .map(|tx| {
                 execution_config.set_offset_version(tx.offset_version());
 
-                <span class="self">Self</span>::execute_user_transaction(tx, chain_id, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>execution_config).map_err(|e| {
+                <span class="kw">let </span>res = <span class="self">Self</span>::execute_transaction_with_state_diff(tx, chain_id, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>execution_config);
+                <span class="kw">let </span>result = res.<span class="number">0</span>.map_err(|e| {
                     <span class="macro">log::error!</span>(<span class="string">&quot;Transaction execution failed during simulation: {e}&quot;</span>);
                     PlaceHolderErrorTypeForFailedStarknetExecution
-                })
+                });
+                (res.<span class="number">1</span>, result)
             })
             .collect();
 
@@ -478,8 +512,10 @@
 
     <span class="kw">pub fn </span>re_execute_transactions(
         transactions: Vec&lt;UserOrL1HandlerTransaction&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;TransactionExecutionInfo&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt;
-    {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;
+        <span class="prelude-ty">Result</span>&lt;Vec&lt;(TransactionExecutionInfo, CommitmentStateDiff)&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;,
+        DispatchError,
+    &gt; {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(<span class="prelude-ty">Result</span>::&lt;<span class="kw">_</span>, DispatchError&gt;::Ok(<span class="self">Self</span>::re_execute_transactions_inner(
                 transactions,
@@ -490,54 +526,58 @@
 
     <span class="kw">fn </span>re_execute_transactions_inner(
         transactions: Vec&lt;UserOrL1HandlerTransaction&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;TransactionExecutionInfo&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt;
-    {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;
+        <span class="prelude-ty">Result</span>&lt;Vec&lt;(TransactionExecutionInfo, CommitmentStateDiff)&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;,
+        DispatchError,
+    &gt; {
         <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
         <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
         <span class="kw">let </span>execution_config = RuntimeExecutionConfigBuilder::new::&lt;T&gt;().build();
 
         <span class="kw">let </span>execution_infos = transactions
             .iter()
-            .map(|user_or_l1_tx| <span class="kw">match </span>user_or_l1_tx {
-                UserOrL1HandlerTransaction::User(tx) =&gt; <span class="kw">match </span>tx {
-                    UserTransaction::Declare(tx, contract_class) =&gt; tx
-                        .try_into_executable::&lt;T::SystemHash&gt;(chain_id, contract_class.clone(), <span class="bool-val">false</span>)
-                        .map_err(|e| {
-                            <span class="macro">log::error!</span>(<span class="string">&quot;Failed to reexecute a tx: {}&quot;</span>, e);
-                            PlaceHolderErrorTypeForFailedStarknetExecution
-                        })
-                        .and_then(|executable| {
-                            executable
-                                .execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>execution_config)
-                                .map_err(|e| {
+            .map(|user_or_l1_tx| {
+                <span class="kw">let </span><span class="kw-2">mut </span>cached_state = CachedBlockifierStateAdapter(BlockifierStateAdapter::&lt;T&gt;::default());
+                <span class="kw">let </span>res = <span class="kw">match </span>user_or_l1_tx {
+                    UserOrL1HandlerTransaction::User(tx) =&gt; <span class="kw">match </span>tx {
+                        UserTransaction::Declare(tx, contract_class) =&gt; tx
+                            .try_into_executable::&lt;T::SystemHash&gt;(chain_id, contract_class.clone(), <span class="bool-val">false</span>)
+                            .map_err(|e| {
+                                <span class="macro">log::error!</span>(<span class="string">&quot;Failed to reexecute a tx: {}&quot;</span>, e);
+                                PlaceHolderErrorTypeForFailedStarknetExecution
+                            })
+                            .and_then(|executable| {
+                                executable.execute(<span class="kw-2">&amp;mut </span>cached_state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>execution_config).map_err(|e| {
                                     <span class="macro">log::error!</span>(<span class="string">&quot;Failed to reexecute a tx: {}&quot;</span>, e);
                                     PlaceHolderErrorTypeForFailedStarknetExecution
                                 })
-                        }),
-                    UserTransaction::DeployAccount(tx) =&gt; tx
-                        .into_executable::&lt;T::SystemHash&gt;(chain_id, <span class="bool-val">false</span>)
-                        .execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>execution_config)
+                            }),
+                        UserTransaction::DeployAccount(tx) =&gt; tx
+                            .into_executable::&lt;T::SystemHash&gt;(chain_id, <span class="bool-val">false</span>)
+                            .execute(<span class="kw-2">&amp;mut </span>cached_state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>execution_config)
+                            .map_err(|e| {
+                                <span class="macro">log::error!</span>(<span class="string">&quot;Failed to reexecute a tx: {}&quot;</span>, e);
+                                PlaceHolderErrorTypeForFailedStarknetExecution
+                            }),
+                        UserTransaction::Invoke(tx) =&gt; tx
+                            .into_executable::&lt;T::SystemHash&gt;(chain_id, <span class="bool-val">false</span>)
+                            .execute(<span class="kw-2">&amp;mut </span>cached_state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>execution_config)
+                            .map_err(|e| {
+                                <span class="macro">log::error!</span>(<span class="string">&quot;Failed to reexecute a tx: {}&quot;</span>, e);
+                                PlaceHolderErrorTypeForFailedStarknetExecution
+                            }),
+                    },
+                    UserOrL1HandlerTransaction::L1Handler(tx, fee) =&gt; tx
+                        .into_executable::&lt;T::SystemHash&gt;(chain_id, <span class="kw-2">*</span>fee, <span class="bool-val">false</span>)
+                        .execute(<span class="kw-2">&amp;mut </span>cached_state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>execution_config)
                         .map_err(|e| {
                             <span class="macro">log::error!</span>(<span class="string">&quot;Failed to reexecute a tx: {}&quot;</span>, e);
                             PlaceHolderErrorTypeForFailedStarknetExecution
                         }),
-                    UserTransaction::Invoke(tx) =&gt; tx
-                        .into_executable::&lt;T::SystemHash&gt;(chain_id, <span class="bool-val">false</span>)
-                        .execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>execution_config)
-                        .map_err(|e| {
-                            <span class="macro">log::error!</span>(<span class="string">&quot;Failed to reexecute a tx: {}&quot;</span>, e);
-                            PlaceHolderErrorTypeForFailedStarknetExecution
-                        }),
-                },
-                UserOrL1HandlerTransaction::L1Handler(tx, fee) =&gt; tx
-                    .into_executable::&lt;T::SystemHash&gt;(chain_id, <span class="kw-2">*</span>fee, <span class="bool-val">false</span>)
-                    .execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>execution_config)
-                    .map_err(|e| {
-                        <span class="macro">log::error!</span>(<span class="string">&quot;Failed to reexecute a tx: {}&quot;</span>, e);
-                        PlaceHolderErrorTypeForFailedStarknetExecution
-                    }),
+                };
+                res.map(|r| (r, cached_state.to_state_diff()))
             })
-            .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, <span class="kw">_</span>&gt;&gt;();
+            .collect();
 
         <span class="prelude-val">Ok</span>(execution_infos)
     }
@@ -563,6 +603,30 @@
                 executable.execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), block_context, execution_config)
             }
         }
+    }
+
+    <span class="kw">fn </span>execute_transaction_with_state_diff(
+        transaction: UserTransaction,
+        chain_id: Felt252Wrapper,
+        block_context: <span class="kw-2">&amp;</span>BlockContext,
+        execution_config: <span class="kw-2">&amp;</span>ExecutionConfig,
+    ) -&gt; (<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, TransactionExecutionError&gt;, CommitmentStateDiff) {
+        <span class="kw">let </span><span class="kw-2">mut </span>cached_state = CachedBlockifierStateAdapter(BlockifierStateAdapter::&lt;T&gt;::default());
+        <span class="kw">let </span>result = <span class="kw">match </span>transaction {
+            UserTransaction::Declare(tx, contract_class) =&gt; tx
+                .try_into_executable::&lt;T::SystemHash&gt;(chain_id, contract_class.clone(), tx.offset_version())
+                .and_then(|exec| exec.execute(<span class="kw-2">&amp;mut </span>cached_state, block_context, execution_config)),
+            UserTransaction::DeployAccount(tx) =&gt; {
+                <span class="kw">let </span>executable = tx.into_executable::&lt;T::SystemHash&gt;(chain_id, tx.offset_version());
+                executable.execute(<span class="kw-2">&amp;mut </span>cached_state, block_context, execution_config)
+            }
+            UserTransaction::Invoke(tx) =&gt; {
+                <span class="kw">let </span>executable = tx.into_executable::&lt;T::SystemHash&gt;(chain_id, tx.offset_version());
+                executable.execute(<span class="kw-2">&amp;mut </span>cached_state, block_context, execution_config)
+            }
+        };
+
+        (result, cached_state.to_state_diff())
     }
 
     <span class="kw">fn </span>execute_message(

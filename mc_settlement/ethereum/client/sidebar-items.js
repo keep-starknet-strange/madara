@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["EthereumConfig","StarknetContractClient"]};
+window.SIDEBAR_ITEMS = {"struct":["EthereumClientConfig","StarknetContractClient"]};

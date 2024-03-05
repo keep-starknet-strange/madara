@@ -1,3 +1,3 @@
 (function() {var implementors = {
-"madara_runtime":[["impl VariantCount for <a class=\"enum\" href=\"madara_runtime/enum.RuntimeFreezeReason.html\" title=\"enum madara_runtime::RuntimeFreezeReason\">RuntimeFreezeReason</a>"],["impl VariantCount for <a class=\"enum\" href=\"madara_runtime/enum.RuntimeHoldReason.html\" title=\"enum madara_runtime::RuntimeHoldReason\">RuntimeHoldReason</a>"]]
+"madara_runtime":[["impl VariantCount for <a class=\"enum\" href=\"madara_runtime/enum.RuntimeHoldReason.html\" title=\"enum madara_runtime::RuntimeHoldReason\">RuntimeHoldReason</a>"],["impl VariantCount for <a class=\"enum\" href=\"madara_runtime/enum.RuntimeFreezeReason.html\" title=\"enum madara_runtime::RuntimeFreezeReason\">RuntimeFreezeReason</a>"]]
 };if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

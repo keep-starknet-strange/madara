@@ -453,6 +453,7 @@
 <a href="#453" id="453">453</a>
 <a href="#454" id="454">454</a>
 <a href="#455" id="455">455</a>
+<a href="#456" id="456">456</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don&#39;t support yet validity proofs and state updates to
@@ -473,6 +474,7 @@
 <span class="kw">mod </span>types;
 
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
+<span class="kw">use </span>blockifier::state::cached_state::CommitmentStateDiff;
 <span class="kw">use </span>blockifier::transaction::objects::TransactionExecutionInfo;
 <span class="kw">pub use </span>config::<span class="kw-2">*</span>;
 <span class="kw">pub use </span>frame_support::traits::{ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness, StorageInfo};
@@ -483,7 +485,7 @@
 <span class="kw">pub use </span>frame_support::{construct_runtime, parameter_types, StorageValue};
 <span class="kw">pub use </span>frame_system::Call <span class="kw">as </span>SystemCall;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
-<span class="kw">use </span>mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
+<span class="kw">use </span>mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult};
 <span class="kw">use </span>mp_transactions::compute_hash::ComputeTransactionHash;
 <span class="kw">use </span>mp_transactions::{HandleL1MessageTransaction, Transaction, UserOrL1HandlerTransaction, UserTransaction};
 <span class="kw">use </span>pallet_grandpa::{fg_primitives, AuthorityId <span class="kw">as </span>GrandpaId, AuthorityList <span class="kw">as </span>GrandpaAuthorityList};
@@ -733,7 +735,7 @@
             Starknet::estimate_fee(transactions)
         }
 
-        <span class="kw">fn </span>re_execute_transactions(transactions: Vec&lt;UserOrL1HandlerTransaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;TransactionExecutionInfo&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt; {
+        <span class="kw">fn </span>re_execute_transactions(transactions: Vec&lt;UserOrL1HandlerTransaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;(TransactionExecutionInfo, CommitmentStateDiff)&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt; {
             Starknet::re_execute_transactions(transactions)
         }
 
@@ -741,7 +743,7 @@
             Starknet::estimate_message_fee(message)
         }
 
-        <span class="kw">fn </span>simulate_transactions(transactions: Vec&lt;UserTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;&gt;, DispatchError&gt; {
+        <span class="kw">fn </span>simulate_transactions(transactions: Vec&lt;UserTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt;, DispatchError&gt; {
             Starknet::simulate_transactions(transactions, <span class="kw-2">&amp;</span>simulation_flags)
         }
 

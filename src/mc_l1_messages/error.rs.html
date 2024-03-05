@@ -23,6 +23,8 @@
 <a href="#23" id="23">23</a>
 <a href="#24" id="24">24</a>
 <a href="#25" id="25">25</a>
+<a href="#26" id="26">26</a>
+<a href="#27" id="27">27</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>mc_db::DbError;
 <span class="kw">use </span>sp_api::ApiError;
 <span class="kw">use </span>url::ParseError;
@@ -47,5 +49,7 @@
     </span>ToFeeError,
     <span class="attr">#[error(<span class="string">&quot;Failed to convert L1 Message into L2 Transaction: `{0}`&quot;</span>)]
     </span>ToTransactionError(<span class="attr">#[from] </span>L1EventToTransactionError),
+    <span class="attr">#[error(<span class="string">&quot;Ethereum client error: {0}&quot;</span>)]
+    </span>EthereumClient(<span class="attr">#[from] </span>mc_eth_client::error::Error),
 }
 </code></pre></div></section></main></body></html>

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["DEFAULT_CHAIN_ID","DEFAULT_ETHEREUM_NODE","DEFAULT_SEQUENCER_KEY","DEFAULT_STARKNET_CORE_CONTRACTS"],"struct":["EthereumConfig"]};
+window.SIDEBAR_ITEMS = {"struct":["EthereumDaConfig"]};

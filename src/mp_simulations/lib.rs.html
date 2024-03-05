@@ -42,6 +42,9 @@
 <a href="#42" id="42">42</a>
 <a href="#43" id="43">43</a>
 <a href="#44" id="44">44</a>
+<a href="#45" id="45">45</a>
+<a href="#46" id="46">46</a>
+<a href="#47" id="47">47</a>
 </pre></div><pre class="rust"><code><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
 #[doc(hidden)]
@@ -49,6 +52,7 @@
 
 <span class="kw">use </span>alloc::vec::Vec;
 
+<span class="kw">use </span>blockifier::transaction::objects::TransactionExecutionInfo;
 <span class="kw">use </span>starknet_core::types::SimulationFlag;
 
 <span class="comment">// TODO: This is a placeholder
@@ -59,6 +63,8 @@
 #[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
 #[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 </span><span class="kw">pub struct </span>PlaceHolderErrorTypeForFailedStarknetExecution;
+
+<span class="kw">pub type </span>TransactionSimulationResult = <span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;;
 
 <span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
