@@ -420,7 +420,7 @@ fn tx_execution_infos_to_simulated_transactions(
                 let state_diff = blockifier_to_rpc_state_diff_types(state_diff)
                     .map_err(|_| ConvertCallInfoToExecuteInvocationError::ConvertStateDiffFailed)?;
 
-                let transaction_trace = tx_execution_infos_to_tx_trace(tx_type, &tx_exec_info)?;
+                let transaction_trace = tx_execution_infos_to_tx_trace(tx_type, &tx_exec_info, Some(state_diff))?;
                 let gas_consumed =
                     tx_exec_info.execute_call_info.as_ref().map(|x| x.execution.gas_consumed).unwrap_or_default();
                 let overall_fee = tx_exec_info.actual_fee.0 as u64;
