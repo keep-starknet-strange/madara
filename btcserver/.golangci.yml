@@ -1,0 +1,24 @@
+linters:
+  disable-all: true
+  enable:
+    - dogsled
+    - errcheck
+    - exportloopref
+    - gci
+    - goconst
+    - gocritic
+    - gofumpt
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - misspell
+    - nakedret
+    - nolintlint
+    - revive
+    - staticcheck
+    - stylecheck
+    - thelper
+    - typecheck
+    - unconvert
+    - unused
