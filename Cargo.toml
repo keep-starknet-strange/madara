@@ -329,7 +329,7 @@ futures-timer = { version = "3.0.3", default-features = false }
 sha3 = { version = "0.10.8", default-features = false, features = ["std"] }
 reqwest = { version = "0.11.22", default-features = false }
 serde = { version = "1.0.192", default-features = false, features = ["std"] }
-serde_json = { version = "1.0.108", default-features = false, features = [
+serde_json = { version = "1.0.114", default-features = false, features = [
   "std",
 ] }
 serde_with = { version = "2.3.3", default-features = false }
