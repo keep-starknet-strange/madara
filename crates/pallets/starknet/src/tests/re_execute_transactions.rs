@@ -1,3 +1,4 @@
+use blockifier::state::state_api::State;
 use mp_felt::Felt252Wrapper;
 use mp_transactions::execution::Execute;
 use mp_transactions::{DeployAccountTransaction, HandleL1MessageTransaction, UserOrL1HandlerTransaction};
@@ -6,7 +7,7 @@ use starknet_api::transaction::Fee;
 
 use super::mock::default_mock::*;
 use super::mock::*;
-use crate::blockifier_state_adapter::BlockifierStateAdapter;
+use crate::blockifier_state_adapter::{BlockifierStateAdapter, CachedBlockifierStateAdapter};
 use crate::execution_config::RuntimeExecutionConfigBuilder;
 use crate::tests::utils::get_contract_class;
 use crate::tests::{constants, get_declare_dummy, get_invoke_dummy, set_infinite_tokens};
@@ -96,65 +97,83 @@ fn re_execute_tx_ok() {
 
         // Now let's check the TransactionInfos returned
         let first_invoke_tx_info = match txs.get(0).unwrap() {
-            UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::Invoke(invoke_tx)) => invoke_tx
-                .into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, false)
-                .execute(
-                    &mut BlockifierStateAdapter::<MockRuntime>::default(),
-                    &Starknet::get_block_context(),
-                    &RuntimeExecutionConfigBuilder::new::<MockRuntime>().build(),
-                )
-                .unwrap(),
+            UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::Invoke(invoke_tx)) => {
+                let mut state = CachedBlockifierStateAdapter(BlockifierStateAdapter::<MockRuntime>::default());
+                let tx_info = invoke_tx
+                    .into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, false)
+                    .execute(
+                        &mut state,
+                        &Starknet::get_block_context(),
+                        &RuntimeExecutionConfigBuilder::new::<MockRuntime>().build(),
+                    )
+                    .unwrap();
+                (tx_info, state.to_state_diff())
+            }
             _ => unreachable!(),
         };
         assert_eq!(res[0], first_invoke_tx_info);
         let second_invoke_tx_info = match txs.get(1).unwrap() {
-            UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::Invoke(invoke_tx)) => invoke_tx
-                .into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, false)
-                .execute(
-                    &mut BlockifierStateAdapter::<MockRuntime>::default(),
-                    &Starknet::get_block_context(),
-                    &RuntimeExecutionConfigBuilder::new::<MockRuntime>().build(),
-                )
-                .unwrap(),
+            UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::Invoke(invoke_tx)) => {
+                let mut state = CachedBlockifierStateAdapter(BlockifierStateAdapter::<MockRuntime>::default());
+                let tx_info = invoke_tx
+                    .into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, false)
+                    .execute(
+                        &mut state,
+                        &Starknet::get_block_context(),
+                        &RuntimeExecutionConfigBuilder::new::<MockRuntime>().build(),
+                    )
+                    .unwrap();
+                (tx_info, state.to_state_diff())
+            }
             _ => unreachable!(),
         };
         assert_eq!(res[1], second_invoke_tx_info);
         let declare_tx_info = match txs.get(2).unwrap() {
-            UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::Declare(declare_tx, cc)) => declare_tx
-                .try_into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, cc.clone(), false)
-                .unwrap()
-                .execute(
-                    &mut BlockifierStateAdapter::<MockRuntime>::default(),
-                    &Starknet::get_block_context(),
-                    &RuntimeExecutionConfigBuilder::new::<MockRuntime>().build(),
-                )
-                .unwrap(),
+            UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::Declare(declare_tx, cc)) => {
+                let mut state = CachedBlockifierStateAdapter(BlockifierStateAdapter::<MockRuntime>::default());
+                let tx_info = declare_tx
+                    .try_into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, cc.clone(), false)
+                    .unwrap()
+                    .execute(
+                        &mut state,
+                        &Starknet::get_block_context(),
+                        &RuntimeExecutionConfigBuilder::new::<MockRuntime>().build(),
+                    )
+                    .unwrap();
+                (tx_info, state.to_state_diff())
+            }
             _ => unreachable!(),
         };
         assert_eq!(res[2], declare_tx_info);
         let deploy_account_tx_info = match txs.get(3).unwrap() {
             UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::DeployAccount(deploy_account_tx)) => {
-                deploy_account_tx
+                let mut state = CachedBlockifierStateAdapter(BlockifierStateAdapter::<MockRuntime>::default());
+                let tx_info = deploy_account_tx
                     .into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, false)
                     .execute(
-                        &mut BlockifierStateAdapter::<MockRuntime>::default(),
+                        &mut state,
                         &Starknet::get_block_context(),
                         &RuntimeExecutionConfigBuilder::new::<MockRuntime>().build(),
                     )
-                    .unwrap()
+                    .unwrap();
+                (tx_info, state.to_state_diff())
             }
             _ => unreachable!(),
         };
         assert_eq!(res[3], deploy_account_tx_info);
         let handle_l1_message_tx_info = match txs.get(4).unwrap() {
-            UserOrL1HandlerTransaction::L1Handler(l1_tx, fee) => l1_tx
-                .into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, *fee, false)
-                .execute(
-                    &mut BlockifierStateAdapter::<MockRuntime>::default(),
-                    &Starknet::get_block_context(),
-                    &RuntimeExecutionConfigBuilder::new::<MockRuntime>().build(),
-                )
-                .unwrap(),
+            UserOrL1HandlerTransaction::L1Handler(l1_tx, fee) => {
+                let mut state = CachedBlockifierStateAdapter(BlockifierStateAdapter::<MockRuntime>::default());
+                let tx_info = l1_tx
+                    .into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, *fee, false)
+                    .execute(
+                        &mut state,
+                        &Starknet::get_block_context(),
+                        &RuntimeExecutionConfigBuilder::new::<MockRuntime>().build(),
+                    )
+                    .unwrap();
+                (tx_info, state.to_state_diff())
+            }
             _ => unreachable!(),
         };
         assert_eq!(res[4], handle_l1_message_tx_info);
