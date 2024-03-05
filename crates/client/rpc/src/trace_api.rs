@@ -313,11 +313,8 @@ fn try_get_function_invocation_from_call_info(
     let messages = collect_call_info_ordered_messages(call_info);
     let events = blockifier_to_starknet_rs_ordered_events(&call_info.execution.events);
 
-    let inner_calls = call_info
-        .inner_calls
-        .iter()
-        .map(|call| try_get_function_invocation_from_call_info(call))
-        .collect::<Result<_, _>>()?;
+    let inner_calls =
+        call_info.inner_calls.iter().map(try_get_function_invocation_from_call_info).collect::<Result<_, _>>()?;
 
     call_info.get_sorted_l2_to_l1_payloads_length()?;
 
@@ -363,18 +360,12 @@ fn tx_execution_infos_to_tx_trace(
 ) -> Result<TransactionTrace, ConvertCallInfoToExecuteInvocationError> {
     // If simulated with `SimulationFlag::SkipValidate` this will be `None`
     // therefore we cannot unwrap it
-    let validate_invocation = tx_exec_info
-        .validate_call_info
-        .as_ref()
-        .map(|call_info| try_get_function_invocation_from_call_info(call_info))
-        .transpose()?;
+    let validate_invocation =
+        tx_exec_info.validate_call_info.as_ref().map(try_get_function_invocation_from_call_info).transpose()?;
     // If simulated with `SimulationFlag::SkipFeeCharge` this will be `None`
     // therefore we cannot unwrap it
-    let fee_transfer_invocation = tx_exec_info
-        .fee_transfer_call_info
-        .as_ref()
-        .map(|call_info| try_get_function_invocation_from_call_info(call_info))
-        .transpose()?;
+    let fee_transfer_invocation =
+        tx_exec_info.fee_transfer_call_info.as_ref().map(try_get_function_invocation_from_call_info).transpose()?;
 
     let tx_trace = match tx_type {
         TxType::Invoke => TransactionTrace::Invoke(InvokeTransactionTrace {
