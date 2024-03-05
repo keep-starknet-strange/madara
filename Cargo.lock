@@ -12269,7 +12269,6 @@ dependencies = [
  "async-lock 3.2.0",
  "async-trait",
  "flate2",
- "log",
  "reqwest",
  "rstest",
  "serde",
