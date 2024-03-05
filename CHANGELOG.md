@@ -2,12 +2,10 @@
 
 ## Next release
 
-<<<<<<< HEAD
-
 - Fix(node): Fix creating a local testnet with multiple nodes fails using only
-  cli flags =======
+  cli flags
+- chore(rpc): clean trace api
 - feat(rpc): added state diff real value in trace api
-  > > > > > > > main
 - chore: update cairo-vm commit and update gas per op
 - refactor(rpc): use single arc instance of starknet rpc
 - build: remove patch on `ring-vrf` dependecy
