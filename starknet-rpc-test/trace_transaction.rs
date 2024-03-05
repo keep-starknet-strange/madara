@@ -1,6 +1,7 @@
 extern crate starknet_rpc_test;
 
 use assert_matches::assert_matches;
+use log::debug;
 use rstest::rstest;
 use starknet_core::types::{
     BlockId, CallType, EntryPointType, ExecuteInvocation, FunctionInvocation, InvokeTransactionTrace, StarknetError,
@@ -60,6 +61,8 @@ async fn works_with_correct_transaction(madara: &ThreadSafeMadaraClient) -> Resu
 
     let trace = rpc.trace_transaction(included_tx_hash).await?;
 
+    debug!("Trace: {:?}", trace);
+
     // starkli selector __execute__
     let execute_selector = FieldElement::from_hex_be(
         "
@@ -90,7 +93,6 @@ async fn works_with_correct_transaction(madara: &ThreadSafeMadaraClient) -> Resu
     let tx_hash = *included_tx.transaction_hash();
     let result = TransactionTraceWithHash { transaction_hash: tx_hash, trace_root: trace };
 
-    // assert_eq!(trace.len(), 1);
     assert_matches!(
             &result,
             TransactionTraceWithHash {
