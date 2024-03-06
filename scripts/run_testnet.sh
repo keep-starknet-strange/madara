@@ -53,6 +53,8 @@ specific_message="1 peers"
 # Check if the message is there in the file and fail if not
 if ! grep -q "$specific_message" validator_output.txt; then
     echo "Node failed to connect to validator"
+    cat validator_output.txt
+    cat node_output.txt
     exit 1
 fi
 
