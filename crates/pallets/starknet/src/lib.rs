@@ -16,8 +16,8 @@
 //!
 //! 4. Genesis Configuration: The GenesisConfig struct is defined, which is used to set up the
 //! initial state of the pallet during genesis. The struct includes fields for contracts,
-//! contract_classes, storage, fee_token_address, chain_id and _phantom. A GenesisBuild implementation is
-//! provided to build the initial state during genesis.
+//! contract_classes, storage, fee_token_address, chain_id and _phantom. A GenesisBuild
+//! implementation is provided to build the initial state during genesis.
 //!
 //! 5. Events: A set of events are defined in the Event enum, including KeepStarknetStrange,
 //! StarknetEvent, and FeeTokenAddressChanged. These events are emitted during the execution of
@@ -334,7 +334,7 @@ pub mod pallet {
 
     impl Get<Felt252Wrapper> for DefaultChainId {
         fn get() -> Felt252Wrapper {
-           MADARA_CHAIN_ID
+            MADARA_CHAIN_ID
         }
     }
     /// Starknet genesis configuration.
@@ -419,11 +419,9 @@ pub mod pallet {
             FeeTokenAddress::<T>::set(self.fee_token_address);
             SeqAddrUpdate::<T>::put(true);
 
-
             ChainIdStorage::<T>::put(self.chain_id)
         }
     }
-
 
     /// The Starknet pallet custom errors.
     /// ERRORS

@@ -68,18 +68,11 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
         let fee_token_address = Felt252Wrapper(loader.data().fee_token_address.0).into();
 
         let chain_id = match loader.data().chain_id.as_ref() {
-            "MADARA" | "Madara" => {
-                MADARA_CHAIN_ID
-            },
-            "GOERLI" | "Goerli" => {
-                SN_GOERLI_CHAIN_ID
-            },
-            "STARKNET_MAINNET" | "Starkent Mainnet" | "Starkent_Mainnet" => {
-                SN_MAIN_CHAIN_ID
-            },
+            "MADARA" | "Madara" => MADARA_CHAIN_ID,
+            "GOERLI" | "Goerli" => SN_GOERLI_CHAIN_ID,
+            "STARKNET_MAINNET" | "Starkent Mainnet" | "Starkent_Mainnet" => SN_MAIN_CHAIN_ID,
             _ => panic!("Inavalid chain id try `MADARA` or `GOERLI` or `STARKNET_MAINNET`"),
         };
-
 
         GenesisConfig {
             contracts,
