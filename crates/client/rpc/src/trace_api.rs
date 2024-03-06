@@ -7,7 +7,6 @@ use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 use mc_genesis_data_provider::GenesisProvider;
 use mc_rpc_core::utils::{blockifier_to_rpc_state_diff_types, get_block_by_block_hash};
-use mc_rpc_core::utils::{blockifier_to_rpc_state_diff_types, get_block_by_block_hash};
 use mc_rpc_core::{StarknetReadRpcApiServer, StarknetTraceRpcApiServer};
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
@@ -413,10 +412,8 @@ fn tx_execution_infos_to_tx_trace(
 fn tx_execution_infos_to_simulated_transactions(
     tx_types: Vec<TxType>,
     transaction_execution_results: Vec<(CommitmentStateDiff, TransactionSimulationResult)>,
-    transaction_execution_results: Vec<(CommitmentStateDiff, TransactionSimulationResult)>,
 ) -> Result<Vec<SimulatedTransaction>, ConvertCallInfoToExecuteInvocationError> {
     let mut results = vec![];
-    for (tx_type, (state_diff, res)) in tx_types.into_iter().zip(transaction_execution_results.into_iter()) {
     for (tx_type, (state_diff, res)) in tx_types.into_iter().zip(transaction_execution_results.into_iter()) {
         match res {
             Ok(tx_exec_info) => {
