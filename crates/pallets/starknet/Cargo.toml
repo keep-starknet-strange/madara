@@ -43,11 +43,11 @@ blockifier = { workspace = true, features = [
 ] }
 starknet-core = { workspace = true }
 starknet-crypto = { workspace = true, features = ["alloc"] }
+starknet-ff = { workspace = true }
 starknet_api = { workspace = true, features = [
   "scale-info",
   "parity-scale-codec",
 ] }
-starknet-ff = { workspace = true }
 
 # Substrate frame
 frame-benchmarking = { workspace = true, optional = true }
