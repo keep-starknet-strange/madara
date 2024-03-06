@@ -31,7 +31,6 @@ pub struct DevGenesisExt {
     sealing: SealingMode,
 }
 
-
 /// The `sealing` from the `DevGenesisExt` is passed to the runtime via the storage. The runtime
 /// can then use this information to adjust accordingly. This is just a common way to pass
 /// information from the chain spec to the runtime.
@@ -154,13 +153,12 @@ pub fn local_testnet_config(base_path: BasePath, chain_id: &str) -> Result<Chain
 }
 
 fn load_genesis(data_path: PathBuf) -> GenesisLoader {
-
     let genesis_path = data_path.join(GENESIS_ASSETS_DIR).join(GENESIS_ASSETS_FILE);
 
     log::debug!("🧪 Loading genesis data at : {}", genesis_path.display());
     let genesis_file_content = std::fs::read_to_string(genesis_path)
         .expect("Failed to read genesis file. Please run `madara setup` before opening an issue.");
-    let genesis_data:GenesisData = serde_json::from_str(&genesis_file_content).expect("Failed loading genesis");
+    let genesis_data: GenesisData = serde_json::from_str(&genesis_file_content).expect("Failed loading genesis");
     GenesisLoader::new(data_path, genesis_data)
 }
 

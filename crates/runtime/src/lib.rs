@@ -17,8 +17,6 @@ mod pallets;
 mod runtime_tests;
 mod types;
 
-pub use pallet_starknet::DefaultChainId;
-
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::state::cached_state::CommitmentStateDiff;
 use blockifier::transaction::objects::TransactionExecutionInfo;
@@ -39,6 +37,7 @@ use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as G
 pub use pallet_starknet;
 use pallet_starknet::pallet::Error as PalletError;
 use pallet_starknet::Call::{consume_l1_message, declare, deploy_account, invoke};
+pub use pallet_starknet::DefaultChainId;
 use pallet_starknet_runtime_api::StarknetTransactionExecutionError;
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_api::impl_runtime_apis;
