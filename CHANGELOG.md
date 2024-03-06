@@ -2,7 +2,6 @@
 
 ## Next release
 
-
 - feat: added chain-id to the GenesisConfig in pallet-starknet
 - chore(rpc): clean trace api
 - feat(rpc): added state diff real value in trace api
