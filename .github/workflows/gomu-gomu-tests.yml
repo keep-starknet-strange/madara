@@ -57,6 +57,7 @@ jobs:
         run: |
           set -v -x +e
           cd ../madara
+          #### Extract TPS, UOPS, Extrinsics and Steps from the report ####
           jq ' 
           .benches[] |= (.name as $benchName | .metrics[] |= (.name = .name + " ("+ $benchName + ")")) # Append benchmark name to each metric name
           | .benches[].metrics[].extra = .extra # set extra field for each metric
@@ -64,6 +65,15 @@ jobs:
           |map(.metrics)|add # merge metrics from different benches
           |map(select(.name | test("Average TPS|Average UOPS|Average Extrinsics|Average Steps"))) #filter only the metrics we want
           ' report.json > processed_report.json
+
+          #### Extract Failed from the report ####
+          jq ' 
+          .benches[] |= (.name as $benchName | .metrics[] |= (.name = .name + " ("+ $benchName + ")")) # Append benchmark name to each metric name
+          | .benches[].metrics[].extra = .extra # set extra field for each metric
+          |.benches # extract only benches
+          |map(.metrics)|add # merge metrics from different benches
+          |map(select(.name | test("Failed"))) #filter only the metrics we want
+          ' report.json > failed_report.json
 
       - name: Compare result
         uses: benchmark-action/github-action-benchmark@v1
@@ -77,6 +87,20 @@ jobs:
           comment-always: false
           comment-on-alert: false
           auto-push: true
+
+      - name: Check for failed requests
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: "customSmallerIsBetter"
+          output-file-path: ./failed_report.json
+          alert-threshold: "120%"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          fail-on-alert: true
+          summary-always: false
+          comment-always: false
+          comment-on-alert: true
+          auto-push: true
+          benchmark-data-dir-path: "dev/bench-failed"
 
       - name: Upload madara logs
         uses: actions/upload-artifact@v2
