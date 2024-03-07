@@ -2,6 +2,7 @@
 
 ## Next release
 
+- ci: add gomu gomu no gatling reports
 - feat: L1 gas price/fix
 
 ## v0.8.0
