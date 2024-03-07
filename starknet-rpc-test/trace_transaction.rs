@@ -53,10 +53,9 @@ async fn works_with_correct_transaction(madara: &ThreadSafeMadaraClient) -> Resu
 
         rpc.block_number().await?
     };
-    println!("block_number: {:?}", block_number);
 
     // included in block
-    let included_tx = rpc.get_transaction_by_block_id_and_index(BlockId::Number(block_number), 1).await?;
+    let included_tx = rpc.get_transaction_by_block_id_and_index(BlockId::Number(block_number), 0).await?;
     println!("included_tx: {:?}", included_tx);
     let included_tx_hash = included_tx.transaction_hash();
 
