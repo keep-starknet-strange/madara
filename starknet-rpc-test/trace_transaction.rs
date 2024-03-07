@@ -56,7 +56,6 @@ async fn works_with_correct_transaction(madara: &ThreadSafeMadaraClient) -> Resu
 
     // included in block
     let included_tx = rpc.get_transaction_by_block_id_and_index(BlockId::Number(block_number), 0).await?;
-    println!("included_tx: {:?}", included_tx);
     let included_tx_hash = included_tx.transaction_hash();
 
     let trace = rpc.trace_transaction(included_tx_hash).await?;
@@ -91,6 +90,24 @@ async fn works_with_correct_transaction(madara: &ThreadSafeMadaraClient) -> Resu
     let tx_hash = *included_tx.transaction_hash();
     let result = TransactionTraceWithHash { transaction_hash: tx_hash, trace_root: trace };
 
+    println!("Our Transaction: {:?} /// {:?} ", result.transaction_hash, result.trace_root);
+
+    // Perform a match to extract and print the InvokeTransactionTrace before the assert
+    if let TransactionTrace::Invoke(InvokeTransactionTrace {
+        execute_invocation: ExecuteInvocation::Success(FunctionInvocation {
+            contract_address, class_hash, entry_point_type, call_type, entry_point_selector, calldata, ..
+        }),
+        ..
+    }) = &result.trace_root
+    {
+        // Print the extracted variables
+        println!("Contract Address: {:?}", contract_address);
+        println!("Class Hash: {:?}", class_hash);
+        println!("Entry Point Type: {:?}", entry_point_type);
+        println!("Call Type: {:?}", call_type);
+        println!("Entry Point Selector: {:?}", entry_point_selector);
+        println!("Calldata: {:?}", calldata);
+    }
     assert_matches!(
             &result,
             TransactionTraceWithHash {
