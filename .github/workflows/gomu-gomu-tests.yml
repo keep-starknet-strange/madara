@@ -56,7 +56,7 @@ jobs:
       - name: Process results
         run: |
           set -v -x +e
-          cd ../madara
+          cd ../gomu-gomu-no-gatling
           #### Extract TPS, UOPS, Extrinsics and Steps from the report ####
           jq ' 
           .benches[] |= (.name as $benchName | .metrics[] |= (.name = .name + " ("+ $benchName + ")")) # Append benchmark name to each metric name
@@ -86,7 +86,7 @@ jobs:
           summary-always: true
           comment-always: true
           comment-on-alert: false
-          auto-push: true
+          auto-push: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Check for failed requests
         uses: benchmark-action/github-action-benchmark@v1
@@ -99,7 +99,7 @@ jobs:
           summary-always: false
           comment-always: false
           comment-on-alert: true
-          auto-push: true
+          auto-push: ${{ github.ref == 'refs/heads/main' }}
           benchmark-data-dir-path: "dev/bench-failed"
 
       - name: Upload madara logs
