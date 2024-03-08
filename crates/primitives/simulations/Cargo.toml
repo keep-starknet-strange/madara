@@ -25,7 +25,10 @@ scale-info = { workspace = true, optional = true }
 
 [features]
 default = ["std"]
-parity-scale-codec = ["dep:parity-scale-codec", "starknet_api/parity-scale-codec"]
+parity-scale-codec = [
+  "dep:parity-scale-codec",
+  "starknet_api/parity-scale-codec",
+]
 scale-info = ["dep:scale-info", "starknet_api/scale-info"]
 std = [
   "starknet-core/std",
