@@ -323,7 +323,7 @@ log = { version = "0.4.20", default-features = false, features = ["std"] }
 hex = { version = "0.4.3", default-features = false, features = ["std"] }
 safe-mix = { version = "1.0", default-features = false, features = ["std"] }
 jsonrpsee = { version = "0.16.3", default-features = false }
-clap = { version = "4.4.8", default-features = false, features = ["std"] }
+clap = { version = "4.5.2", default-features = false, features = ["std"] }
 futures = { version = "0.3.29", default-features = false, features = ["std"] }
 futures-timer = { version = "3.0.3", default-features = false }
 sha3 = { version = "0.10.8", default-features = false, features = ["std"] }

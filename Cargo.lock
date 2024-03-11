@@ -146,9 +146,9 @@ dependencies = [
 
 [[package]]
 name = "anstream"
-version = "0.6.5"
+version = "0.6.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d664a92ecae85fd0a7392615844904654d1d5f5514837f471ddef4a057aba1b6"
+checksum = "d96bd03f33fe50a863e394ee9718a706f988b9079b20c3784fb726e7678b62fb"
 dependencies = [
  "anstyle",
  "anstyle-parse",
@@ -1900,9 +1900,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.4.13"
+version = "4.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52bdc885e4cacc7f7c9eedc1ef6da641603180c783c41a15c264944deeaab642"
+checksum = "b230ab84b0ffdf890d5a10abdbc8b83ae1c4918275daea1ab8801f71536b2651"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -1910,21 +1910,21 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.4.12"
+version = "4.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb7fb5e4e979aec3be7791562fcba452f94ad85e954da024396433e0e25a79e9"
+checksum = "ae129e2e766ae0ec03484e609954119f123cc1fe650337e155d03b022f24f7b4"
 dependencies = [
  "anstream",
  "anstyle",
  "clap_lex",
- "strsim 0.10.0",
+ "strsim 0.11.0",
 ]
 
 [[package]]
 name = "clap_derive"
-version = "4.4.7"
+version = "4.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf9804afaaf59a91e75b022a30fb7229a7901f60c755489cc61c9b423b836442"
+checksum = "307bc0538d5f0f83b8248db3087aa92fe504e4691294d0c96c0eabc33f47ba47"
 dependencies = [
  "heck 0.4.1",
  "proc-macro2",
@@ -1934,9 +1934,9 @@ dependencies = [
 
 [[package]]
 name = "clap_lex"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "702fc72eb24e5a1e48ce58027a675bc24edd52096d5397d4aea7c6dd9eca0bd1"
+checksum = "98cc8fbded0c607b7ba9dd60cd98df59af97e84d24e49c8557331cfc26d301ce"
 
 [[package]]
 name = "codespan-reporting"
@@ -2536,7 +2536,7 @@ dependencies = [
  "anyhow",
  "assert_matches",
  "async-lock 3.2.0",
- "clap 4.4.13",
+ "clap 4.5.2",
  "ethers",
  "flate2",
  "lazy_static",
@@ -3743,7 +3743,7 @@ dependencies = [
  "Inflector",
  "array-bytes 6.2.2",
  "chrono",
- "clap 4.4.13",
+ "clap 4.5.2",
  "comfy-table",
  "frame-benchmarking",
  "frame-support",
@@ -6086,7 +6086,7 @@ version = "0.7.0"
 dependencies = [
  "async-trait",
  "blockifier",
- "clap 4.4.13",
+ "clap 4.5.2",
  "ethers",
  "frame-benchmarking",
  "frame-benchmarking-cli",
@@ -6317,7 +6317,7 @@ dependencies = [
  "blockifier",
  "celestia-rpc",
  "celestia-types",
- "clap 4.4.13",
+ "clap 4.5.2",
  "ethers",
  "futures",
  "indexmap 2.0.0-pre",
@@ -6534,7 +6534,7 @@ name = "mc-settlement"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "clap 4.4.13",
+ "clap 4.5.2",
  "ethers",
  "futures",
  "futures-timer",
@@ -9385,7 +9385,7 @@ source = "git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-
 dependencies = [
  "array-bytes 6.2.2",
  "chrono",
- "clap 4.4.13",
+ "clap 4.5.2",
  "fdlimit",
  "futures",
  "libp2p-identity 0.1.3",
@@ -12379,6 +12379,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 
 [[package]]
+name = "strsim"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5ee073c9e4cd00e28217186dbe12796d692868f432bf2e97ee73bed0c56dfa01"
+
+[[package]]
 name = "structopt"
 version = "0.3.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -13422,7 +13428,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std#a41673f8aa3f24d7ed8fb1f246a97551eca58837"
 dependencies = [
  "async-trait",
- "clap 4.4.13",
+ "clap 4.5.2",
  "frame-remote-externalities",
  "frame-try-runtime",
  "hex",
