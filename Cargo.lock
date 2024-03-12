@@ -4613,7 +4613,7 @@ dependencies = [
  "httpdate",
  "itoa",
  "pin-project-lite 0.2.13",
- "socket2 0.5.5",
+ "socket2 0.4.10",
  "tokio",
  "tower-service",
  "tracing",
@@ -4987,7 +4987,7 @@ dependencies = [
  "jsonrpsee-core 0.16.3",
  "jsonrpsee-http-client 0.16.3",
  "jsonrpsee-proc-macros 0.16.3",
- "jsonrpsee-server",
+ "jsonrpsee-server 0.16.3",
  "jsonrpsee-types 0.16.3",
  "jsonrpsee-wasm-client",
  "jsonrpsee-ws-client 0.16.3",
@@ -5003,8 +5003,10 @@ dependencies = [
  "jsonrpsee-core 0.20.3",
  "jsonrpsee-http-client 0.20.3",
  "jsonrpsee-proc-macros 0.20.3",
+ "jsonrpsee-server 0.20.3",
  "jsonrpsee-types 0.20.3",
  "jsonrpsee-ws-client 0.20.3",
+ "tokio",
  "tracing",
 ]
 
@@ -5096,9 +5098,12 @@ dependencies = [
  "futures-util",
  "hyper",
  "jsonrpsee-types 0.20.3",
+ "parking_lot 0.12.1",
+ "rand 0.8.5",
  "rustc-hash",
  "serde",
  "serde_json",
+ "soketto",
  "thiserror",
  "tokio",
  "tracing",
@@ -5184,6 +5189,29 @@ dependencies = [
  "serde",
  "serde_json",
  "soketto",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tower",
+ "tracing",
+]
+
+[[package]]
+name = "jsonrpsee-server"
+version = "0.20.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "82c39a00449c9ef3f50b84fc00fc4acba20ef8f559f07902244abf4c15c5ab9c"
+dependencies = [
+ "futures-util",
+ "http",
+ "hyper",
+ "jsonrpsee-core 0.20.3",
+ "jsonrpsee-types 0.20.3",
+ "route-recognizer",
+ "serde",
+ "serde_json",
+ "soketto",
+ "thiserror",
  "tokio",
  "tokio-stream",
  "tokio-util",
@@ -6093,7 +6121,7 @@ dependencies = [
  "frame-system",
  "futures",
  "hex",
- "jsonrpsee 0.16.3",
+ "jsonrpsee 0.20.3",
  "log",
  "madara-runtime",
  "mc-commitment-state-diff",
@@ -6388,7 +6416,7 @@ name = "mc-genesis-data-provider"
 version = "0.7.0"
 dependencies = [
  "anyhow",
- "jsonrpsee 0.16.3",
+ "jsonrpsee 0.20.3",
  "log",
  "mp-genesis-config",
  "pallet-starknet",
@@ -6456,7 +6484,7 @@ dependencies = [
  "hex",
  "indexmap 2.0.0-pre",
  "itertools 0.12.0",
- "jsonrpsee 0.16.3",
+ "jsonrpsee 0.20.3",
  "log",
  "mc-data-availability",
  "mc-db",
@@ -6507,7 +6535,7 @@ dependencies = [
  "frame-support",
  "hex",
  "indexmap 2.0.0-pre",
- "jsonrpsee 0.16.3",
+ "jsonrpsee 0.20.3",
  "mp-block",
  "mp-digest-log",
  "mp-felt",
@@ -8984,6 +9012,12 @@ dependencies = [
  "libc",
  "librocksdb-sys",
 ]
+
+[[package]]
+name = "route-recognizer"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "afab94fb28594581f62d981211a9a4d53cc8130bbcbbb89a0440d9b8e81a7746"
 
 [[package]]
 name = "rpassword"
@@ -13487,7 +13521,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.7",
- "rand 0.8.5",
+ "rand 0.7.3",
  "static_assertions",
 ]
 
