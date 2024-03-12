@@ -48,7 +48,7 @@ pub type StorageKey = HexFelt;
 pub type ContractStorageKey = (ContractAddress, StorageKey);
 pub type StorageValue = HexFelt;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct GenesisData {
     pub contract_classes: Vec<(ClassHash, ContractClass)>,
     pub sierra_class_hash_to_casm_class_hash: Vec<(ClassHash, ClassHash)>,
@@ -84,7 +84,7 @@ pub enum ContractClass {
 }
 
 /// A struct containing predeployed accounts info.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct PredeployedAccount {
     pub contract_address: ContractAddress,
     pub class_hash: ClassHash,
