@@ -31,7 +31,7 @@ use sc_consensus_aura::{SlotProportion, StartAuraParams};
 use sc_finality_tendermint::{TendermintBlockImport, SharedVoterState};
 pub use sc_executor::NativeElseWasmExecutor;
 use sc_service::error::Error as ServiceError;
-use sc_service::{new_db_backend, Configuration, TaskManager, WarpSyncParams};
+use sc_service::{new_db_backend, Configuration, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
 use sc_transaction_pool::FullPool;
 use sc_transaction_pool_api::OffchainTransactionPoolFactory;
@@ -283,7 +283,7 @@ pub fn new_full(
         other: (block_import, tendermint_link, mut telemetry, madara_backend),
     } = new_partial(&config, build_import_queue, cache_more_things)?;
 
-    let mut net_config = sc_network::config::FullNetworkConfiguration::new(&config.network);
+    let net_config = sc_network::config::FullNetworkConfiguration::new(&config.network);
 
     let tendermint_protocol_name = sc_finality_tendermint::protocol_standard_name(
         &client.block_hash(0).ok().flatten().expect("Genesis block exists; qed"),
