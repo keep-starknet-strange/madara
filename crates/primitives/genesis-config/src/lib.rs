@@ -4,7 +4,6 @@ use std::string::String;
 use std::vec::Vec;
 
 use blockifier::execution::contract_class::ContractClass as StarknetContractClass;
-use derive_more::Constructor;
 use mp_felt::Felt252Wrapper;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -59,13 +58,16 @@ pub struct GenesisData {
     pub fee_token_address: ContractAddress,
 }
 
-#[derive(Constructor)]
 pub struct GenesisLoader {
     base_path: PathBuf,
     data: GenesisData,
 }
 
 impl GenesisLoader {
+    pub fn new(base_path: PathBuf, data: GenesisData) -> Self {
+        Self { base_path, data }
+    }
+
     pub fn data(&self) -> &GenesisData {
         &self.data
     }

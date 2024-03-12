@@ -15,6 +15,21 @@ use crate::tests::get_invoke_dummy;
 use crate::{Config, SeqAddrUpdate, SequencerAddress};
 
 #[test]
+fn check_genesis_block_hash() {
+    let t = test_genesis_ext::<MockRuntime>().execute_with(|| {
+        let header = System::finalize();
+        header.hash()
+    });
+
+    let b = test_genesis_ext::<MockRuntime>().execute_with(|| {
+        let header = System::finalize();
+        header.hash()
+    });
+
+    assert_eq!(b, t)
+}
+
+#[test]
 fn store_block_no_pending_transactions_works() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         // initialize first block
