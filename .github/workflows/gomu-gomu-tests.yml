@@ -50,8 +50,6 @@ jobs:
           ./target/production/madara --dev > madara.log 2>&1 &
           MADARA_RUN_PID=$!
           while ! echo exit | nc localhost 9944; do sleep 1; done
-          # Wait for the first block to be produced (workaround for #1443)
-          until [[ "$(curl -s --request POST --url http://localhost:9944 --header 'accept: application/json' --header 'content-type: application/json' --data '{"id": 1, "jsonrpc": "2.0", "method": "starknet_blockNumber"}' | jq '.result')" -gt 1 ]]; do sleep 1; done
           cd ../gomu-gomu-no-gatling
           RUST_LOG=info cargo run -- shoot -c config/default.yaml
           kill $MADARA_RUN_PID
@@ -110,6 +108,8 @@ jobs:
       - name: Upload madara logs
         uses: actions/upload-artifact@v2
         with:
-          name: madara-log
-          path: madara.log
+          name: gomu-gomu-results
+          path: |
+            madara.log
+            ./gomu-gomu-no-gatling/report.json
         if: always()
