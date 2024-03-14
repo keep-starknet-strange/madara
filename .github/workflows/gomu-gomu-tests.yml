@@ -58,7 +58,7 @@ jobs:
         run: |
           set -v -x +e
           ls -lah
-          cd ../gomu-gomu-no-gatling
+          cp ../gomu-gomu-no-gatling/report.json ./
           ls -lah
           #### Extract TPS, UOPS, Extrinsics and Steps from the report ####
           jq ' 
@@ -67,7 +67,7 @@ jobs:
           |.benches # extract only benches
           |map(.metrics)|add # merge metrics from different benches
           |map(select(.name | test("Average TPS|Average UOPS|Average Extrinsics|Average Steps"))) #filter only the metrics we want
-          ' report.json > ../madara/processed_report.json
+          ' report.json > processed_report.json
 
           #### Extract Failed from the report ####
           jq ' 
@@ -76,7 +76,7 @@ jobs:
           |.benches # extract only benches
           |map(.metrics)|add # merge metrics from different benches
           |map(select(.name | test("Failed"))) #filter only the metrics we want
-          ' report.json > ../madara/failed_report.json
+          ' report.json > failed_report.json
 
       - name: Compare result
         uses: benchmark-action/github-action-benchmark@v1
@@ -111,5 +111,5 @@ jobs:
           name: gomu-gomu-results
           path: |
             madara.log
-            ./gomu-gomu-no-gatling/report.json
+            report.json
         if: always()
