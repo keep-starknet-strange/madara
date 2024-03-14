@@ -65,6 +65,13 @@
       }
     ],
     [
+      "0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd",
+      {
+        "path": "genesis-assets/Account0.json",
+        "version": 0
+      }
+    ],
+    [
       "0x04c5efa8dc6f0554da51f125d04e379ac41153a8b837391083a8dc3771a33388",
       {
         "path": "genesis-assets/test.json",
@@ -123,6 +130,10 @@
     [
       "0x4",
       "0x035ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276"
+    ],
+    [
+      "0x5",
+      "0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd"
     ],
     [
       "0x1111",
@@ -221,6 +232,13 @@
       [
         "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
         "0x45abe05a3e7fb0c2ae1fa912be22a7dbc4832915e00562e2783dee710b9e4bc"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+        "0x40795dc9acd6d37d07ba939bbafe8ff2d0a9b78de88db2c74b4eb57d757c0eb"
       ],
       "0xffffffffffffffffffffffffffffffff"
     ],

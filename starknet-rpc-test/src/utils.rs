@@ -256,7 +256,7 @@ pub async fn get_contract_address_from_deploy_tx(
 
     let contract_address = assert_matches!(
         deploy_tx_receipt,
-        MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) => receipt.events[0].data[0]
+        MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) => receipt.events[0].from_address
     );
     Ok(contract_address)
 }

@@ -9289,7 +9289,7 @@ dependencies = [
 [[package]]
 name = "sandbox"
 version = "0.1.0"
-source = "git+https://github.com/keep-starknet-strange/zaun#9fe421790165166b714c4ef95c79ad49a959a05a"
+source = "git+https://github.com/anshalshukla/zaun#4b4e6e0b2022bc91261e5d8a3e95dc73bddd2d5e"
 dependencies = [
  "dirs",
  "ethers",
@@ -12097,7 +12097,7 @@ dependencies = [
 [[package]]
 name = "starknet-core-contract-client"
 version = "0.1.0"
-source = "git+https://github.com/keep-starknet-strange/zaun#9fe421790165166b714c4ef95c79ad49a959a05a"
+source = "git+https://github.com/anshalshukla/zaun#4b4e6e0b2022bc91261e5d8a3e95dc73bddd2d5e"
 dependencies = [
  "async-trait",
  "ethers",
@@ -12197,6 +12197,7 @@ dependencies = [
  "mp-felt",
  "mp-messages",
  "mp-snos-output",
+ "rand 0.8.5",
  "reqwest",
  "rstest",
  "sandbox",
@@ -12209,6 +12210,7 @@ dependencies = [
  "starknet-crypto 0.6.1 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=64ebc36)",
  "starknet-ff 0.3.5 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=64ebc36)",
  "starknet-providers",
+ "starknet-rpc-test",
  "starknet-signers",
  "starknet_api",
  "test-context",
@@ -13487,7 +13489,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.7",
- "rand 0.8.5",
+ "rand 0.7.3",
  "static_assertions",
 ]
 

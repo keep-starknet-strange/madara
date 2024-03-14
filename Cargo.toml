@@ -238,6 +238,7 @@ mp-chain-id = { path = "crates/primitives/chain-id", default-features = false }
 mp-simulations = { path = "crates/primitives/simulations", default-features = false }
 mp-program-hash = { path = "crates/primitives/program-hash", default-features = false }
 mp-messages = { path = "crates/primitives/messages", default-features = false }
+starknet-rpc-test = { path = "starknet-rpc-test", default-features = false}
 
 # Madara client
 mc-genesis-data-provider = { path = "crates/client/genesis-data-provider" }
@@ -306,8 +307,8 @@ ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "f0e5b194f09c533f
 ethers-solc = { git = "https://github.com/gakonst/ethers-rs", rev = "f0e5b194f09c533feb10d1a686ddb9e5946ec107" }
 
 # Zaun
-zaun-sandbox = { git = "https://github.com/keep-starknet-strange/zaun", package = "sandbox" }
-starknet-core-contract-client = { git = "https://github.com/keep-starknet-strange/zaun" }
+zaun-sandbox = { git = "https://github.com/anshalshukla/zaun", package = "sandbox" }
+starknet-core-contract-client = { git = "https://github.com/anshalshukla/zaun" }
 
 # Other third party dependencies
 anyhow = "1.0.80"

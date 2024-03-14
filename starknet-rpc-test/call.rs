@@ -125,7 +125,7 @@ async fn works_on_correct_call_with_calldata(madara: &ThreadSafeMadaraClient) ->
             FunctionCall {
                 contract_address: FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(),
                 entry_point_selector: get_selector_from_name("balanceOf").unwrap(),
-                calldata: vec![FieldElement::TWO] // name function has no calldata
+                calldata: vec![FieldElement::TWO]
             },
             BlockId::Tag(BlockTag::Latest)
         )
