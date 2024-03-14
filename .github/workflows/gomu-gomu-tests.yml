@@ -36,7 +36,7 @@ jobs:
           cd ..
           git clone https://github.com/LimeChain/gomu-gomu-no-gatling.git
           cd gomu-gomu-no-gatling
-          git checkout metrics_px0_uops
+          git checkout read_metrics
           cargo install --path .
 
       - name: Setup dev chain
