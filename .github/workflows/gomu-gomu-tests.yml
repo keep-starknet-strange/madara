@@ -69,7 +69,7 @@ jobs:
           |.benches # extract only benches
           |map(.metrics)|add # merge metrics from different benches
           |map(select(.name | test("Average TPS|Average UOPS|Average Extrinsics|Average Steps"))) #filter only the metrics we want
-          ' report.json > processed_report.json
+          ' report.json > ../madara/processed_report.json
 
           #### Extract Failed from the report ####
           jq ' 
@@ -78,7 +78,7 @@ jobs:
           |.benches # extract only benches
           |map(.metrics)|add # merge metrics from different benches
           |map(select(.name | test("Failed"))) #filter only the metrics we want
-          ' report.json > failed_report.json
+          ' report.json > ../madara/failed_report.json
 
       - name: Compare result
         uses: benchmark-action/github-action-benchmark@v1
