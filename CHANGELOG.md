@@ -2,6 +2,7 @@
 
 ## Next release
 
+- ci: add gomu gomu no gatling reports
 - chore(rpc): clean trace api
 - feat(rpc): added state diff real value in trace api
 - chore: update cairo-vm commit and update gas per op
