@@ -57,9 +57,7 @@ jobs:
       - name: Process results
         run: |
           set -v -x +e
-          ls -lah
           cp ../gomu-gomu-no-gatling/report.json ./
-          ls -lah
           #### Extract TPS, UOPS, Extrinsics and Steps from the report ####
           jq ' 
           .benches[] |= (.name as $benchName | .metrics[] |= (.name = .name + " ("+ $benchName + ")")) # Append benchmark name to each metric name
@@ -69,28 +67,18 @@ jobs:
           |map(select(.name | test("Average TPS|Average UOPS|Average Extrinsics|Average Steps"))) #filter only the metrics we want
           ' report.json > processed_report.json
 
+      - name: Check for failed requests
+        run: |
+          set -v -x +e
           #### Extract Failed from the report ####
           jq ' 
           .benches[] |= (.name as $benchName | .metrics[] |= (.name = .name + " ("+ $benchName + ")")) # Append benchmark name to each metric name
           | .benches[].metrics[].extra = .extra # set extra field for each metric
           |.benches # extract only benches
           |map(.metrics)|add # merge metrics from different benches
-          |map(select(.name | test("Failed"))) #filter only the metrics we want
-          ' report.json > failed_report.json
-
-      - name: Check for failed requests
-        uses: benchmark-action/github-action-benchmark@v1
-        with:
-          tool: "customSmallerIsBetter"
-          output-file-path: ./failed_report.json
-          alert-threshold: "120%"
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          fail-on-alert: true
-          summary-always: false
-          comment-always: false
-          comment-on-alert: true
-          auto-push: ${{ github.ref == 'refs/heads/main' }}
-          benchmark-data-dir-path: "dev/bench-failed"
+          |map(select(.name | test("Failed"))) # filter only the metrics we want
+          |any(.[]; .value > 0) | if . then halt_error(1) else {} end # fail if there are failed requests
+          ' report.json
 
       - name: Compare result
         uses: benchmark-action/github-action-benchmark@v1
