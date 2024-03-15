@@ -92,6 +92,7 @@ jobs:
           comment-always: true
           comment-on-alert: false
           auto-push: ${{ github.ref == 'refs/heads/main' }}
+        if: always()
 
       - name: Upload madara logs
         uses: actions/upload-artifact@v2
