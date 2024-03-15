@@ -78,19 +78,6 @@ jobs:
           |map(select(.name | test("Failed"))) #filter only the metrics we want
           ' report.json > failed_report.json
 
-      - name: Compare result
-        uses: benchmark-action/github-action-benchmark@v1
-        with:
-          tool: "customBiggerIsBetter"
-          output-file-path: ./processed_report.json
-          alert-threshold: "120%"
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          fail-on-alert: true
-          summary-always: true
-          comment-always: true
-          comment-on-alert: false
-          auto-push: ${{ github.ref == 'refs/heads/main' }}
-
       - name: Check for failed requests
         uses: benchmark-action/github-action-benchmark@v1
         with:
@@ -104,6 +91,19 @@ jobs:
           comment-on-alert: true
           auto-push: ${{ github.ref == 'refs/heads/main' }}
           benchmark-data-dir-path: "dev/bench-failed"
+
+      - name: Compare result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: "customBiggerIsBetter"
+          output-file-path: ./processed_report.json
+          alert-threshold: "120%"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          fail-on-alert: true
+          summary-always: true
+          comment-always: true
+          comment-on-alert: false
+          auto-push: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Upload madara logs
         uses: actions/upload-artifact@v2
