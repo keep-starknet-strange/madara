@@ -26,7 +26,7 @@ starknet-core = { workspace = true }
 starknet-crypto = { workspace = true }
 starknet-ff = { workspace = true }
 starknet-providers = { workspace = true }
-starknet-rpc-test = {workspace = true}
+starknet-rpc-test = { workspace = true }
 starknet-signers = { workspace = true }
 starknet_api = { workspace = true, default-features = true }
 
@@ -40,9 +40,9 @@ mp-messages = { workspace = true }
 mp-snos-output = { workspace = true }
 
 # Zaun
+rand = "0.8.5"
 starknet-core-contract-client = { workspace = true }
 zaun-sandbox = { workspace = true }
-rand = "0.8.5"
 
 [[test]]
 name = "ethereum_core_contract"

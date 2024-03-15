@@ -21817,272 +21817,172 @@
       {
         "selector": "0xb2ef42a25c95687d1a3e7c2584885fd4058d102e05c44f65cf35988451bc8",
         "offset": 2400,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0xc30ffbeb949d3447fd4acd61251803e8ab9c8a777318abb5bd5fbf28015eb",
         "offset": 1238,
-        "builtins": [
-          "pedersen",
-          "range_check",
-          "poseidon"
-        ]
+        "builtins": ["pedersen", "range_check", "poseidon"]
       },
       {
         "selector": "0x151e58b29179122a728eab07c8847e5baf5802379c5db3a7d57a8263a7bd1d",
         "offset": 322,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x41b033f4a31df8067c24d1e9b550a2ce75fd4a29e1147af9752174f0e6cb20",
         "offset": 4529,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x4c4fb1ab068f6039d5780c68dd0fa2f8742cceb3426d19667778ca7f3518a9",
         "offset": 2896,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x80aa9fdbfaf9615e4afc7f5f722e265daca5ccc655360fa5ccacf9c267936d",
         "offset": 4276,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x83afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e",
         "offset": 3423,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x95604234097c6fe6314943092b1aa8fb6ee781cf32ac6d5b78d856f52a540f",
         "offset": 2537,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0xd63a78e4cd7fb4c41bc18d089154af78d400a5e837f270baea6cf8db18c8dd",
         "offset": 483,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x1557182e4359a1f0c6301278e8f5b35a776ab58d39892581e357578fb287836",
         "offset": 3004,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x16cc063b8338363cf388ce7fe1df408bf10f16cd51635d392e21d852fafb683",
         "offset": 4718,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x183420eb7aafd9caad318b543d9252c94857340f4768ac83cf4b6472f0bf515",
         "offset": 1989,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x1aaf3e6107dd1349c81543ff4221a326814f77dadcc5810807b74f1a49ded4e",
         "offset": 4884,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x1c67057e2995950900dbf33db0f5fc9904f5a18aae4a3768f721c43efe5d288",
         "offset": 0,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x1d13ab0a76d7407b1d5faccd4b3d8a9efe42f3d3c21766431d4fafb30f45bd4",
         "offset": 3944,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x1e888a1026b19c8c0b57c72d63ed1737106aa10034105b980ba117bd0c29fe1",
         "offset": 3257,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x1fa400a40ac35b4aa2c5383c3bb89afee2a9698b86ebb405cf25a6e63428605",
         "offset": 752,
-        "builtins": [
-          "pedersen",
-          "range_check",
-          "poseidon"
-        ]
+        "builtins": ["pedersen", "range_check", "poseidon"]
       },
       {
         "selector": "0x216b05c387bab9ac31918a3e61672f4618601f3c598a2f3f2710f37053e1ea4",
         "offset": 2785,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x219209e083275171774dab1df80982e9df2096516f06319c5c6d71ae0a8480c",
         "offset": 3778,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x225faa998b63ad3d277e950e8091f07d28a4c45ef6de7f3f7095e89be92d701",
         "offset": 2126,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x24643b0aa4f24549ae7cd884195db7950c3a79a96cb7f37bde40549723559d9",
         "offset": 2263,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x25a5317fee78a3601253266ed250be22974a6b6eb116c875a2596585df6a400",
         "offset": 1705,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x284a2f635301a0bf3a171bb8e4292667c6c70d23d48b0ae8ec4df336e84bccd",
         "offset": 644,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x2e4263afad30923c891518314c3c95dbe830a16874e8abc5777a9a20b54c76e",
         "offset": 4388,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x302e0454f48778e0ca3a2e714a289c4e8d8e03d614b370130abb1a524a47f22",
         "offset": 1565,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x30559321b47d576b645ed7bd24089943dd5fd3a359ecdd6fa8f05c1bab67d6b",
         "offset": 1400,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x338dd2002b6f7ac6471742691de72611381e3fc4ce2b0361c29d42cb2d53a90",
         "offset": 1076,
-        "builtins": [
-          "pedersen",
-          "range_check",
-          "poseidon"
-        ]
+        "builtins": ["pedersen", "range_check", "poseidon"]
       },
       {
         "selector": "0x33fe3600cdfaa48261a8c268c66363562da383d5dd26837ba63b66ebbc04e3c",
         "offset": 914,
-        "builtins": [
-          "pedersen",
-          "range_check",
-          "poseidon"
-        ]
+        "builtins": ["pedersen", "range_check", "poseidon"]
       },
       {
         "selector": "0x35a73cd311a05d46deda634c5ee045db92f811b4e74bca4437fcb5302b7af33",
         "offset": 3116,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x361458367e696363fbcc70777d07ebbd2394e89fd0adcaf147faccd1d294d60",
         "offset": 2674,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x3704ffe8fba161be0e994951751a5033b1462b918ff785c0a636be718dfdb68",
         "offset": 3589,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x37791de85f8a3be5014988a652f6cf025858f3532706c18f8cf24f2f81800d5",
         "offset": 1847,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x3a07502a2e0e18ad6178ca530615148b9892d000199dbb29e402c41913c3d1a",
         "offset": 161,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       },
       {
         "selector": "0x3b076186c19fe96221e4dfacd40c519f612eae02e0555e4e115a2a6cf2f1c1f",
         "offset": 4110,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       }
     ],
     "L1_HANDLER": [],
@@ -22090,10 +21990,7 @@
       {
         "selector": "0x28ffe4ff0f226a9107253e17a904099aa4f63a02a5621de0576e5aa71bc5194",
         "offset": 5050,
-        "builtins": [
-          "pedersen",
-          "range_check"
-        ]
+        "builtins": ["pedersen", "range_check"]
       }
     ]
   }

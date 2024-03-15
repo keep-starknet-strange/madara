@@ -238,7 +238,7 @@ mp-chain-id = { path = "crates/primitives/chain-id", default-features = false }
 mp-simulations = { path = "crates/primitives/simulations", default-features = false }
 mp-program-hash = { path = "crates/primitives/program-hash", default-features = false }
 mp-messages = { path = "crates/primitives/messages", default-features = false }
-starknet-rpc-test = { path = "starknet-rpc-test", default-features = false}
+starknet-rpc-test = { path = "starknet-rpc-test", default-features = false }
 
 # Madara client
 mc-genesis-data-provider = { path = "crates/client/genesis-data-provider" }
