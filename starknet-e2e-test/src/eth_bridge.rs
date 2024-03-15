@@ -22,7 +22,6 @@ use zaun_sandbox::EthereumSandbox;
 use crate::utils::madara_contract_call;
 
 pub struct StarknetLegacyEthBridge {
-    _sandbox: EthereumSandbox,
     client: StarknetEthBridgeContractClient,
 }
 
@@ -35,27 +34,12 @@ impl StarknetLegacyEthBridge {
         self.client.client()
     }
 
-    /// Attach to an existing Anvil instance or spawn a new one
-    /// and then deploy:
-    ///     - Starknet core contract (sovereign mode)
-    ///     - Unsafe delegate proxy (no access restrictions)
-    /// All the following interactions will be made through the proxy
-    pub async fn deploy() -> Self {
-        // Try to attach to an already running sandbox (GitHub CI case)
-        // otherwise spawn new sandbox instance
-        // let sandbox = if let Ok(endpoint) = std::env::var("ANVIL_ENDPOINT") {
-        //     EthereumSandbox::attach(Some(endpoint)).expect("Failed to attach to sandbox")
-        // } else {
-        //     EthereumSandbox::spawn(None)
-        // };
-        let endpoint: String = String::from("http://localhost:8545");
-        let sandbox = EthereumSandbox::attach(Some(endpoint)).expect("Failed to attach to sandbox");
-
-        let client = deploy_starknet_eth_bridge_behind_unsafe_proxy(sandbox.client())
+    pub async fn deploy(client: Arc<LocalWalletSignerMiddleware>) -> Self {
+        let client = deploy_starknet_eth_bridge_behind_unsafe_proxy(client.clone())
             .await
             .expect("Failed to deploy starknet contract");
 
-        Self { _sandbox: sandbox, client }
+        Self { client }
     }
 
     pub async fn deploy_l2_contracts(madara: &ThreadSafeMadaraClient) -> FieldElement {

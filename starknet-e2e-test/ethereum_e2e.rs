@@ -60,11 +60,11 @@ async fn madara_advances_ethereum_settlement_contract_state_in_sovereign_mode() 
 
 #[rstest]
 #[tokio::test]
-async fn legacy_bridge(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+async fn eth_bridge(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let starknet_sovereign = StarknetSovereign::deploy().await;
     starknet_sovereign.initialize_for_goerli(0u64.into(), 0u64.into()).await;
 
-    let eth_bridge = StarknetLegacyEthBridge::deploy().await;
+    let eth_bridge = StarknetLegacyEthBridge::deploy(starknet_sovereign.client().clone()).await;
     let l2_bridge_address = StarknetLegacyEthBridge::deploy_l2_contracts(&madara).await;
     let erc20_address = deploy_erc20_token_on_l2(&madara, l2_bridge_address).await;
 
@@ -115,7 +115,7 @@ async fn erc20_bridge(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Err
     let starknet_sovereign = StarknetSovereign::deploy().await;
     starknet_sovereign.initialize_for_goerli(0u64.into(), 0u64.into()).await;
 
-    let token_bridge = StarknetTokenBridge::deploy().await;
+    let token_bridge = StarknetTokenBridge::deploy(starknet_sovereign.client().clone()).await;
     let l2_bridge_address = StarknetTokenBridge::deploy_l2_contracts(&madara).await;
 
     token_bridge.initialize(starknet_sovereign.address()).await;

@@ -29,7 +29,6 @@ use zaun_sandbox::EthereumSandbox;
 use crate::utils::madara_contract_call;
 
 pub struct StarknetTokenBridge {
-    _sandbox: EthereumSandbox,
     manager: StarkgateManagerContractClient,
     registry: StarkgateRegistryContractClient,
     token_bridge: StarknetTokenBridgeContractClient,
@@ -63,35 +62,20 @@ impl StarknetTokenBridge {
         self.dai_erc20.client()
     }
 
-    /// Attach to an existing Anvil instance or spawn a new one
-    /// and then deploy:
-    ///     - Starknet core contract (sovereign mode)
-    ///     - Unsafe delegate proxy (no access restrictions)
-    /// All the following interactions will be made thorugh the proxy
-    pub async fn deploy() -> Self {
-        // Try to attach to an already running sandbox (GitHub CI case)
-        // otherwise spawn new sandbox instance
-        // let sandbox = if let Ok(endpoint) = std::env::var("ANVIL_ENDPOINT") {
-        //     EthereumSandbox::attach(Some(endpoint)).expect("Failed to attach to sandbox")
-        // } else {
-        //     EthereumSandbox::spawn(None)
-        // };
-        let endpoint: String = String::from("http://localhost:8545");
-        let sandbox = EthereumSandbox::attach(Some(endpoint)).expect("Failed to attach to sandbox");
-
-        let manager = deploy_starkgate_manager_behind_unsafe_proxy(sandbox.client())
+    pub async fn deploy(client: Arc<LocalWalletSignerMiddleware>) -> Self {
+        let manager = deploy_starkgate_manager_behind_unsafe_proxy(client.clone())
             .await
             .expect("Failed to deploy starkgate manager contract");
-        let registry = deploy_starkgate_registry_behind_unsafe_proxy(sandbox.client())
+        let registry = deploy_starkgate_registry_behind_unsafe_proxy(client.clone())
             .await
             .expect("Failed to deploy starkgate registry");
-        let token_bridge = deploy_starknet_token_bridge_behind_unsafe_proxy(sandbox.client())
+        let token_bridge = deploy_starknet_token_bridge_behind_unsafe_proxy(client.clone())
             .await
             .expect("Failed to deploy starknet contract");
         let dai_erc20 =
-            deploy_dai_erc20_behind_unsafe_proxy(sandbox.client()).await.expect("Failed to deploy dai erc20 contract");
+            deploy_dai_erc20_behind_unsafe_proxy(client.clone()).await.expect("Failed to deploy dai erc20 contract");
 
-        Self { _sandbox: sandbox, manager, registry, token_bridge, dai_erc20 }
+        Self { manager, registry, token_bridge, dai_erc20 }
     }
 
     pub async fn deploy_l2_contracts(madara: &ThreadSafeMadaraClient) -> FieldElement {
