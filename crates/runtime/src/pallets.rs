@@ -129,7 +129,7 @@ impl pallet_aura::Config for Runtime {
 /// Deterministic finality mechanism used for block finalization.
 /// TODO: Comment and explain the rationale behind the configuration items.
 impl pallet_tendermint::Config for Runtime {
-	type MaxAuthorities = ConstU32<32>;
+    type MaxAuthorities = ConstU32<32>;
 }
 
 /// --------------------------------------

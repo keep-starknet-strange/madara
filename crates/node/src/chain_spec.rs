@@ -1,14 +1,14 @@
 use std::path::PathBuf;
 
-use madara_runtime::{AuraConfig, TendermintConfig, RuntimeGenesisConfig, SealingMode, SystemConfig, WASM_BINARY};
+use madara_runtime::{AuraConfig, RuntimeGenesisConfig, SealingMode, SystemConfig, TendermintConfig, WASM_BINARY};
 use mp_felt::Felt252Wrapper;
 use pallet_starknet::genesis_loader::{GenesisData, GenesisLoader, HexFelt};
 use sc_service::{BasePath, ChainType};
 use serde::{Deserialize, Serialize};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_finality_tendermint::AuthorityId as TendermintId;
 use sp_core::storage::Storage;
 use sp_core::{Pair, Public};
+use sp_finality_tendermint::AuthorityId as TendermintId;
 use sp_state_machine::BasicExternalities;
 
 use crate::constants::DEV_CHAIN_ID;
@@ -180,10 +180,10 @@ fn testnet_genesis(
         // Authority-based consensus protocol used for block production
         aura: AuraConfig { authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect() },
         // Deterministic finality mechanism used for block finalization
-		tendermint: TendermintConfig {
-			authorities: initial_authorities.iter().map(|x| (x.1.clone())).collect(),
-			..Default::default()
-		},
+        tendermint: TendermintConfig {
+            authorities: initial_authorities.iter().map(|x| (x.1.clone())).collect(),
+            ..Default::default()
+        },
         /// Starknet Genesis configuration.
         starknet: starknet_genesis_config,
     }

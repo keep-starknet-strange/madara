@@ -28,8 +28,8 @@ use sc_basic_authorship::ProposerFactory;
 use sc_client_api::{Backend, BlockBackend, BlockchainEvents, HeaderBackend};
 use sc_consensus::BasicQueue;
 use sc_consensus_aura::{SlotProportion, StartAuraParams};
-use sc_finality_tendermint::{TendermintBlockImport, SharedVoterState};
 pub use sc_executor::NativeElseWasmExecutor;
+use sc_finality_tendermint::{SharedVoterState, TendermintBlockImport};
 use sc_service::error::Error as ServiceError;
 use sc_service::{new_db_backend, Configuration, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
@@ -106,7 +106,7 @@ where
         &Configuration,
         &TaskManager,
         Option<TelemetryHandle>,
-		TendermintBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
+        TendermintBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
         Arc<MadaraBackend>,
     ) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>,
 {
@@ -299,7 +299,7 @@ pub fn new_full(
             spawn_handle: task_manager.spawn_handle(),
             import_queue,
             block_announce_validator_builder: None,
-			warp_sync_params: None,
+            warp_sync_params: None,
             block_relay: None,
         })?;
 
@@ -571,14 +571,14 @@ pub fn new_full(
         // been tested extensively yet and having most nodes in a network run it
         // could lead to finality stalls.
         let tendermint_config = sc_finality_tendermint::TendermintParams {
-			config: tendermint_config,
-			link: tendermint_link,
-			network,
-			sync: Arc::new(sync_service),
-			prometheus_registry,
-			shared_voter_state: SharedVoterState::empty(),
-			telemetry: telemetry.as_ref().map(|x| x.handle()),
-		};
+            config: tendermint_config,
+            link: tendermint_link,
+            network,
+            sync: Arc::new(sync_service),
+            prometheus_registry,
+            shared_voter_state: SharedVoterState::empty(),
+            telemetry: telemetry.as_ref().map(|x| x.handle()),
+        };
 
         // the Tendermint voter task is considered infallible, i.e.
         // if it fails we take down the service with it.

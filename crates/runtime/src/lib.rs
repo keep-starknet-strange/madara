@@ -32,12 +32,12 @@ use mp_felt::Felt252Wrapper;
 use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult};
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::{HandleL1MessageTransaction, Transaction, UserOrL1HandlerTransaction, UserTransaction};
-use pallet_tendermint::{fp_primitives, AuthorityId as TendermintId, AuthorityList as TendermintAuthorityList};
 /// Import the Starknet pallet.
 pub use pallet_starknet;
 use pallet_starknet::pallet::Error as PalletError;
 use pallet_starknet::Call::{consume_l1_message, declare, deploy_account, invoke};
 use pallet_starknet_runtime_api::StarknetTransactionExecutionError;
+use pallet_tendermint::{fp_primitives, AuthorityId as TendermintId, AuthorityList as TendermintAuthorityList};
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -198,14 +198,14 @@ impl_runtime_apis! {
     }
 
     impl fp_primitives::TendermintApi<Block> for Runtime {
-		fn tendermint_authorities() -> TendermintAuthorityList {
-			Tendermint::authorities()
-		}
+        fn tendermint_authorities() -> TendermintAuthorityList {
+            Tendermint::authorities()
+        }
 
-		fn current_set_id() -> fp_primitives::SetId {
-			Tendermint::current_set_id()
-		}
-	}
+        fn current_set_id() -> fp_primitives::SetId {
+            Tendermint::current_set_id()
+        }
+    }
 
     impl frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Index> for Runtime {
         fn account_nonce(account: AccountId) -> Index {
