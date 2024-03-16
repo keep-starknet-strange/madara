@@ -7597,6 +7597,8 @@ dependencies = [
  "project-root",
  "reqwest",
  "sc-cli",
+ "sc-client-api",
+ "sc-service",
  "scale-info",
  "serde",
  "serde_json",

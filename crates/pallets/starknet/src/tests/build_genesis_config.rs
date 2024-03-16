@@ -56,7 +56,7 @@ fn fail_with_unknown_class_hash_in_contracts() {
 }
 
 #[test]
-fn check_genesis_class_hash() {
+fn check_genesis_storage() {
     // setup
     let project_root = project_root::get_project_root().unwrap().join("configs/");
     let genesis_path = project_root.join("genesis-assets/").join("genesis.json");
@@ -64,16 +64,20 @@ fn check_genesis_class_hash() {
 
     let genesis_data: GenesisData = serde_json::from_str(&genesis_file_content).unwrap();
     let genesis_loader = GenesisLoader::new(project_root.clone(), genesis_data.clone());
+    let genesis_loader_2 = GenesisLoader::new(project_root.clone(), genesis_data.clone());
+
+    assert_eq!(genesis_loader, genesis_loader_2);
 
     // test
     let mut t: Storage = frame_system::GenesisConfig::<default_mock::MockRuntime>::default().build_storage().unwrap();
     let mut t_2: Storage = frame_system::GenesisConfig::<default_mock::MockRuntime>::default().build_storage().unwrap();
 
     let genesis: GenesisConfig<default_mock::MockRuntime> = genesis_loader.into();
+    let genesis_2: GenesisConfig<default_mock::MockRuntime> = genesis_loader_2.into();
 
     genesis.assimilate_storage(&mut t).unwrap();
 
-    genesis.assimilate_storage(&mut t_2).unwrap();
+    genesis_2.assimilate_storage(&mut t_2).unwrap();
 
     assert_eq!(t.top, t_2.top);
     assert_eq!(t.children_default, t_2.children_default);

@@ -4,6 +4,8 @@ use frame_support::assert_ok;
 use mp_digest_log::{ensure_log, find_starknet_block};
 use mp_felt::Felt252Wrapper;
 use mp_sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
+use sp_runtime::codec::Decode;
+use sp_runtime::traits::Hash;
 use starknet_api::api_core::{ChainId, ContractAddress, PatriciaKey};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkFelt;
@@ -13,21 +15,6 @@ use super::mock::*;
 use crate::tests::constants::FEE_TOKEN_ADDRESS;
 use crate::tests::get_invoke_dummy;
 use crate::{Config, SeqAddrUpdate, SequencerAddress};
-
-#[test]
-fn check_genesis_block_hash() {
-    let t = test_genesis_ext::<MockRuntime>().execute_with(|| {
-        let header = System::finalize();
-        header.hash()
-    });
-
-    let b = test_genesis_ext::<MockRuntime>().execute_with(|| {
-        let header = System::finalize();
-        header.hash()
-    });
-
-    assert_eq!(b, t)
-}
 
 #[test]
 fn store_block_no_pending_transactions_works() {
