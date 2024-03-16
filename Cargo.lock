@@ -6226,6 +6226,7 @@ dependencies = [
  "starknet-providers",
  "starknet-rpc-test",
  "starknet-signers",
+ "starknet-test-utils",
  "starknet_api",
  "tempfile",
  "thiserror",
@@ -12210,8 +12211,8 @@ dependencies = [
  "starknet-crypto 0.6.1 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=64ebc36)",
  "starknet-ff 0.3.5 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=64ebc36)",
  "starknet-providers",
- "starknet-rpc-test",
  "starknet-signers",
+ "starknet-test-utils",
  "starknet_api",
  "test-context",
  "thiserror",
@@ -12282,6 +12283,7 @@ dependencies = [
  "starknet-ff 0.3.5 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=64ebc36)",
  "starknet-providers",
  "starknet-signers",
+ "starknet-test-utils",
  "thiserror",
  "tokio",
  "url",
@@ -12300,6 +12302,31 @@ dependencies = [
  "starknet-core",
  "starknet-crypto 0.6.1 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=64ebc36)",
  "thiserror",
+]
+
+[[package]]
+name = "starknet-test-utils"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "assert_matches",
+ "async-lock 3.2.0",
+ "async-trait",
+ "flate2",
+ "reqwest",
+ "rstest",
+ "serde",
+ "serde_json",
+ "starknet-accounts",
+ "starknet-contract",
+ "starknet-core",
+ "starknet-crypto 0.6.1 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=64ebc36)",
+ "starknet-ff 0.3.5 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=64ebc36)",
+ "starknet-providers",
+ "starknet-signers",
+ "thiserror",
+ "tokio",
+ "url",
 ]
 
 [[package]]

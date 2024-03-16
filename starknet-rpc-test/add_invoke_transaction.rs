@@ -8,10 +8,10 @@ use starknet_accounts::Account;
 use starknet_core::types::{BlockId, StarknetError};
 use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
-use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
-use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{build_single_owner_account, read_erc20_balance, AccountActions, U256};
-use starknet_rpc_test::{SendTransactionError, Transaction};
+use starknet_test_utils::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
+use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_test_utils::utils::{build_single_owner_account, read_erc20_balance, AccountActions, U256};
+use starknet_test_utils::{SendTransactionError, Transaction};
 
 #[rstest]
 #[tokio::test]

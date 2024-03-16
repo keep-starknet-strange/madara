@@ -67,7 +67,7 @@
     [
       "0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd",
       {
-        "path": "genesis-assets/Account0.json",
+        "path": "genesis-assets/AccountWithDeployContract.json",
         "version": 0
       }
     ],

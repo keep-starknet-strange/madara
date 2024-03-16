@@ -1,13 +1,11 @@
-extern crate starknet_rpc_test;
-
 use assert_matches::assert_matches;
 use rstest::rstest;
 use starknet_core::types::{BlockId, StarknetError};
 use starknet_ff::FieldElement;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
-use starknet_rpc_test::constants::{TEST_CONTRACT_ADDRESS, TEST_CONTRACT_CLASS_HASH};
-use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_test_utils::constants::{TEST_CONTRACT_ADDRESS, TEST_CONTRACT_CLASS_HASH};
+use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
 
 #[rstest]
 #[tokio::test]

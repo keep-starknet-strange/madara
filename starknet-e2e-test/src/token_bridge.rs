@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use async_trait::async_trait;
 use ethers::addressbook::Address;
 use ethers::prelude::U256;
 use ethers::types::Bytes;
@@ -16,23 +17,45 @@ use starknet_core_contract_client::interfaces::{
 };
 use starknet_core_contract_client::{LocalWalletSignerMiddleware, StarknetContractClient};
 use starknet_ff::FieldElement;
-use starknet_rpc_test::constants::{CAIRO_1_ACCOUNT_CONTRACT, SIGNER_PRIVATE};
-use starknet_rpc_test::fixtures::ThreadSafeMadaraClient;
-use starknet_rpc_test::utils::{build_single_owner_account, get_contract_address_from_deploy_tx, AccountActions};
-use starknet_rpc_test::Transaction;
+use starknet_test_utils::constants::{
+    CAIRO_1_ACCOUNT_CONTRACT, ERC20_CASM_PATH, ERC20_SIERRA_PATH, SIGNER_PRIVATE, TOKEN_BRIDGE_CASM_PATH,
+    TOKEN_BRIDGE_SIERRA_PATH,
+};
+use starknet_test_utils::fixtures::ThreadSafeMadaraClient;
+use starknet_test_utils::utils::{build_single_owner_account, get_contract_address_from_deploy_tx, AccountActions};
+use starknet_test_utils::Transaction;
 use zaun_sandbox::deploy::{
     deploy_dai_erc20_behind_unsafe_proxy, deploy_starkgate_manager_behind_unsafe_proxy,
     deploy_starkgate_registry_behind_unsafe_proxy, deploy_starknet_token_bridge_behind_unsafe_proxy,
 };
-use zaun_sandbox::EthereumSandbox;
 
-use crate::utils::madara_contract_call;
+use crate::utils::{invoke_contract, pad_bytes};
+use crate::BridgeDeployable;
 
 pub struct StarknetTokenBridge {
     manager: StarkgateManagerContractClient,
     registry: StarkgateRegistryContractClient,
     token_bridge: StarknetTokenBridgeContractClient,
     dai_erc20: DaiERC20ContractClient,
+}
+
+#[async_trait]
+impl BridgeDeployable for StarknetTokenBridge {
+    async fn deploy(client: Arc<LocalWalletSignerMiddleware>) -> Self {
+        let manager = deploy_starkgate_manager_behind_unsafe_proxy(client.clone())
+            .await
+            .expect("Failed to deploy starkgate manager contract");
+        let registry = deploy_starkgate_registry_behind_unsafe_proxy(client.clone())
+            .await
+            .expect("Failed to deploy starkgate registry");
+        let token_bridge = deploy_starknet_token_bridge_behind_unsafe_proxy(client.clone())
+            .await
+            .expect("Failed to deploy starknet contract");
+        let dai_erc20 =
+            deploy_dai_erc20_behind_unsafe_proxy(client.clone()).await.expect("Failed to deploy dai erc20 contract");
+
+        Self { manager, registry, token_bridge, dai_erc20 }
+    }
 }
 
 impl StarknetTokenBridge {
@@ -62,36 +85,14 @@ impl StarknetTokenBridge {
         self.dai_erc20.client()
     }
 
-    pub async fn deploy(client: Arc<LocalWalletSignerMiddleware>) -> Self {
-        let manager = deploy_starkgate_manager_behind_unsafe_proxy(client.clone())
-            .await
-            .expect("Failed to deploy starkgate manager contract");
-        let registry = deploy_starkgate_registry_behind_unsafe_proxy(client.clone())
-            .await
-            .expect("Failed to deploy starkgate registry");
-        let token_bridge = deploy_starknet_token_bridge_behind_unsafe_proxy(client.clone())
-            .await
-            .expect("Failed to deploy starknet contract");
-        let dai_erc20 =
-            deploy_dai_erc20_behind_unsafe_proxy(client.clone()).await.expect("Failed to deploy dai erc20 contract");
-
-        Self { manager, registry, token_bridge, dai_erc20 }
-    }
-
     pub async fn deploy_l2_contracts(madara: &ThreadSafeMadaraClient) -> FieldElement {
         let rpc = madara.get_starknet_client().await;
         let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, CAIRO_1_ACCOUNT_CONTRACT, false);
         let mut madara_write_lock = madara.write().await;
 
-        let (erc20_declare_tx, _, _) = account.declare_contract(
-            "../starknet-e2e-test/contracts/erc20.sierra.json",
-            "../starknet-e2e-test/contracts/erc20.casm.json",
-        );
+        let (erc20_declare_tx, _, _) = account.declare_contract(ERC20_SIERRA_PATH, ERC20_CASM_PATH);
 
-        let (bridge_declare_tx, _, _) = account.declare_contract(
-            "../starknet-e2e-test/contracts/token_bridge.sierra.json",
-            "../starknet-e2e-test/contracts/token_bridge.casm.json",
-        );
+        let (bridge_declare_tx, _, _) = account.declare_contract(TOKEN_BRIDGE_SIERRA_PATH, TOKEN_BRIDGE_CASM_PATH);
 
         let nonce = account.get_nonce().await.unwrap();
         madara_write_lock
@@ -124,9 +125,7 @@ impl StarknetTokenBridge {
         get_contract_address_from_deploy_tx(&rpc, deploy_tx_result).await.unwrap()
     }
 
-    /// Initialize Starknet core contract with the specified data.
-    ///
-    /// Also register Anvil default account as an operator.
+    /// Initialize Starknet Token Bridge.
     pub async fn initialize(&self, messaging_contract: Address) {
         let empty_bytes = [0u8; 32];
 
@@ -144,15 +143,15 @@ impl StarknetTokenBridge {
         bridge_calldata.extend(pad_bytes(self.manager_address()));
         bridge_calldata.extend(pad_bytes(messaging_contract));
 
-        self.manager.initialize(Bytes::from(manager_calldata)).await.expect("Failed to initialize Starkgate Manager");
+        self.manager.initialize(Bytes::from(manager_calldata)).await.expect("Failed to initialize starkgate manager");
         self.registry
             .initialize(Bytes::from(registry_calldata))
             .await
-            .expect("Failed to initialize Starkgate Registry");
+            .expect("Failed to initialize starkgate registry");
         self.token_bridge
             .initialize(Bytes::from(bridge_calldata))
             .await
-            .expect("Failed to initialize Starknet Token Bridge");
+            .expect("Failed to initialize starknet token bridge");
     }
 
     /// Sets up the Token bridge with the specified data
@@ -164,7 +163,7 @@ impl StarknetTokenBridge {
     }
 
     pub async fn setup_l2_bridge(&self, madara: &ThreadSafeMadaraClient, l2_bridge: FieldElement) {
-        madara_contract_call(
+        invoke_contract(
             madara,
             FieldElement::from_hex_be("0x5").unwrap(),
             "__execute__",
@@ -172,12 +171,12 @@ impl StarknetTokenBridge {
                 l2_bridge,                                                  // contract_address
                 get_selector_from_name("register_app_role_admin").unwrap(), // selector
                 FieldElement::ONE,                                          // calldata_len
-                FieldElement::from_hex_be("0x4").unwrap(),                  // calldata (upgrade_delay)
+                FieldElement::from_hex_be("0x4").unwrap(),                  // admin_address
             ],
         )
         .await;
 
-        madara_contract_call(
+        invoke_contract(
             madara,
             l2_bridge,
             "register_app_governor",
@@ -185,7 +184,7 @@ impl StarknetTokenBridge {
         )
         .await;
 
-        madara_contract_call(
+        invoke_contract(
             madara,
             l2_bridge,
             "set_l2_token_governance",
@@ -193,18 +192,18 @@ impl StarknetTokenBridge {
         )
         .await;
 
-        madara_contract_call(
+        invoke_contract(
             madara,
             l2_bridge,
             "set_erc20_class_hash",
             vec![
                 FieldElement::from_hex_be("0x008b150cfa4db35ed9d685d79f6daa590ff2bb10c295cd656fcbf176c4bd8365")
-                    .unwrap(),
+                    .unwrap(), // class hash
             ],
         )
         .await;
 
-        madara_contract_call(
+        invoke_contract(
             madara,
             l2_bridge,
             "set_l1_bridge",
@@ -217,54 +216,46 @@ impl StarknetTokenBridge {
         self.token_bridge
             .register_app_role_admin(address)
             .await
-            .expect("Failed to register app role admin in Starknet Token Bridge");
+            .expect("Failed to register app role admin in starknet token bridge");
     }
 
     pub async fn register_app_governor(&self, address: Address) {
         self.token_bridge
             .register_app_governor(address)
             .await
-            .expect("Failed to register app governor in Starknet Token Bridge");
+            .expect("Failed to register app governor in starknet token bridge");
     }
 
     pub async fn set_l2_token_bridge(&self, l2_bridge: U256) {
         self.token_bridge
             .set_l2_token_bridge(l2_bridge)
             .await
-            .expect("Failed to set l2 bridge in Starknet Token Bridge");
+            .expect("Failed to set l2 bridge in starknet token bridge");
     }
 
     pub async fn deposit(&self, token: Address, amount: U256, l2address: U256, fee: U256) {
-        self.token_bridge.deposit(token, amount, l2address, fee).await.expect("Failed to bridge funds from L1 to L2");
+        self.token_bridge.deposit(token, amount, l2address, fee).await.expect("Failed to bridge funds from l1 to l2");
     }
 
     pub async fn withdraw(&self, l1_token: Address, amount: U256, l1_recipient: Address) {
         self.token_bridge
             .withdraw(l1_token, amount, l1_recipient)
             .await
-            .expect("Failed to withdraw from Starknet Token Bridge");
+            .expect("Failed to withdraw from starknet token bridge");
     }
 
     pub async fn enroll_token_bridge(&self, address: Address, fee: U256) {
-        self.manager.enroll_token_bridge(address, fee).await.expect("Failed to enroll token in Starknet Token Bridge");
+        self.manager.enroll_token_bridge(address, fee).await.expect("Failed to enroll token in starknet token bridge");
     }
 
     pub async fn approve(&self, address: Address, amount: U256) {
         self.dai_erc20
             .approve(address, amount)
             .await
-            .expect("Failed to approve dai transfer for Starknet Token Bridge");
+            .expect("Failed to approve dai transfer for starknet token bridge");
     }
 
     pub async fn token_balance(&self, address: Address) -> U256 {
         self.dai_erc20.balance_of(address).await.unwrap()
     }
-}
-
-fn pad_bytes(address: Address) -> Vec<u8> {
-    let address_bytes = address.as_bytes();
-    let mut padded_address_bytes = Vec::with_capacity(32);
-    padded_address_bytes.extend(vec![0u8; 32 - address_bytes.len()]);
-    padded_address_bytes.extend_from_slice(&address_bytes);
-    padded_address_bytes
 }

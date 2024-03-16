@@ -1,5 +1,3 @@
-extern crate starknet_rpc_test;
-
 use assert_matches::assert_matches;
 use rstest::rstest;
 use starknet_accounts::{Call, ConnectedAccount};
@@ -10,9 +8,9 @@ use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
-use starknet_rpc_test::constants::{ACCOUNT_CONTRACT, ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE, TEST_CONTRACT_ADDRESS};
-use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{build_single_owner_account, AccountActions};
+use starknet_test_utils::constants::{ACCOUNT_CONTRACT, ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE, TEST_CONTRACT_ADDRESS};
+use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_test_utils::utils::{build_single_owner_account, AccountActions};
 
 #[rstest]
 #[tokio::test]

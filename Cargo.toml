@@ -32,6 +32,7 @@ members = [
   "da-test",
   "starknet-e2e-test",
   "madara-test-runner",
+  "starknet-test-utils",
 ]
 # All previous except for `starknet-rpc-test` and `starknet-e2e-test`
 # We don't want `cargo test` to trigger its tests
@@ -62,6 +63,7 @@ default-members = [
   "crates/client/commitment-state-diff",
   "crates/client/settlement",
   "crates/client/eth-client",
+  "starknet-test-utils",
 ]
 
 [profile.release]
@@ -239,6 +241,7 @@ mp-simulations = { path = "crates/primitives/simulations", default-features = fa
 mp-program-hash = { path = "crates/primitives/program-hash", default-features = false }
 mp-messages = { path = "crates/primitives/messages", default-features = false }
 starknet-rpc-test = { path = "starknet-rpc-test", default-features = false }
+starknet-test-utils = { path = "starknet-test-utils", default-features = false }
 
 # Madara client
 mc-genesis-data-provider = { path = "crates/client/genesis-data-provider" }

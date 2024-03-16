@@ -43,18 +43,15 @@ impl StarknetSovereign {
     /// and then deploy:
     ///     - Starknet core contract (sovereign mode)
     ///     - Unsafe delegate proxy (no access restrictions)
-    /// All the following interactions will be made thorugh the proxy
+    /// All the following interactions will be made through the proxy
     pub async fn deploy() -> Self {
         // Try to attach to an already running sandbox (GitHub CI case)
         // otherwise spawn new sandbox instance
-        // let sandbox = if let Ok(endpoint) = std::env::var("ANVIL_ENDPOINT") {
-        //     EthereumSandbox::attach(Some(endpoint)).expect("Failed to attach to sandbox")
-        // } else {
-        //     EthereumSandbox::spawn(None)
-        // };
-
-        let endpoint: String = String::from("http://localhost:8545");
-        let sandbox = EthereumSandbox::attach(Some(endpoint)).expect("Failed to attach to sandbox");
+        let sandbox = if let Ok(endpoint) = std::env::var("ANVIL_ENDPOINT") {
+            EthereumSandbox::attach(Some(endpoint)).expect("Failed to attach to sandbox")
+        } else {
+            EthereumSandbox::spawn(None)
+        };
 
         let client = deploy_starknet_sovereign_behind_unsafe_proxy(sandbox.client())
             .await

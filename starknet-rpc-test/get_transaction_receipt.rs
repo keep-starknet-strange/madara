@@ -1,5 +1,3 @@
-extern crate starknet_rpc_test;
-
 use std::vec;
 
 use assert_matches::assert_matches;
@@ -11,16 +9,16 @@ use starknet_core::types::{
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::Provider;
-use starknet_rpc_test::constants::{
+use starknet_test_utils::constants::{
     ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, FEE_TOKEN_ADDRESS, SEQUENCER_ADDRESS, SIGNER_PRIVATE,
     UDC_ADDRESS,
 };
-use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{
+use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_test_utils::utils::{
     assert_eq_msg_to_l1, build_deploy_account_tx, build_oz_account_factory, build_single_owner_account,
     get_contract_address_from_deploy_tx, get_transaction_receipt, AccountActions,
 };
-use starknet_rpc_test::{Transaction, TransactionResult};
+use starknet_test_utils::{Transaction, TransactionResult};
 
 #[rstest]
 #[tokio::test]

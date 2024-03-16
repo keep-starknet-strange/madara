@@ -1,7 +1,5 @@
 #![feature(assert_matches)]
 
-extern crate starknet_rpc_test;
-
 use std::assert_matches::assert_matches;
 
 use anyhow::anyhow;
@@ -14,14 +12,14 @@ use starknet_core::types::{
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
-use starknet_rpc_test::constants::{
+use starknet_test_utils::constants::{
     ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE, SIGNER_PRIVATE,
 };
-use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{
+use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_test_utils::utils::{
     build_deploy_account_tx, build_oz_account_factory, build_single_owner_account, AccountActions,
 };
-use starknet_rpc_test::Transaction;
+use starknet_test_utils::Transaction;
 
 #[rstest]
 #[tokio::test]
