@@ -1,15 +1,16 @@
 use std::vec;
 
-use assert_matches::assert_matches;
 use rstest::rstest;
 use starknet_accounts::Account;
-use starknet_core::types::{BlockId, StarknetError};
+use starknet_core::types::BlockId;
 use starknet_ff::FieldElement;
-use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
-use starknet_test_utils::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
-use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_test_utils::utils::{build_single_owner_account, read_erc20_balance, AccountActions, U256};
-use starknet_test_utils::{SendTransactionError, Transaction};
+use starknet_providers::Provider;
+use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, ETH_FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
+use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_rpc_test::utils::{
+    build_single_owner_account, is_good_error_code, read_erc20_balance, AccountActions, U256,
+};
+use starknet_rpc_test::{SendTransactionError, Transaction};
 
 #[rstest]
 #[tokio::test]
@@ -33,16 +34,14 @@ async fn fail_validation_step(madara: &ThreadSafeMadaraClient) -> Result<(), any
     assert_eq!(txs.len(), 1);
 
     let invoke_tx_result = txs[0].as_ref().unwrap_err();
-    assert_matches!(
-        invoke_tx_result,
-        SendTransactionError::AccountError(starknet_accounts::AccountError::Provider(ProviderError::StarknetError(
-            StarknetErrorWithMessage {
-                code: MaybeUnknownErrorCode::Known(StarknetError::ValidationFailure),
-                message: _
-            }
-        )))
-    );
-
+    match invoke_tx_result {
+        SendTransactionError::AccountError(starknet_accounts::AccountError::Provider(provider_error)) => {
+            assert!(is_good_error_code(provider_error, 55));
+        }
+        _ => {
+            panic!("wrong error type");
+        }
+    };
     Ok(())
 }
 
@@ -54,8 +53,8 @@ async fn works_with_storage_change(madara: &ThreadSafeMadaraClient) -> Result<()
     let funding_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let recipient_account = FieldElement::from_hex_be("0x123").unwrap();
 
-    let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
-    let (txs, initial_balance, final_balance, block_number) = {
+    let fee_token_address = FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap();
+    let (txs, recipient_initial_balance, recipient_final_balance, block_number) = {
         let mut madara_write_lock = madara.write().await;
         let initial_balance = read_erc20_balance(&rpc, fee_token_address, recipient_account).await;
 
@@ -75,8 +74,8 @@ async fn works_with_storage_change(madara: &ThreadSafeMadaraClient) -> Result<()
     assert_eq!(txs.len(), 1);
 
     assert!(txs[0].is_ok());
-    assert_eq!(final_balance[1], initial_balance[1]); // higher 128 bits are equal
-    assert_eq!(final_balance[0] - initial_balance[0], FieldElement::ONE); // lower 128 bits differ by one
+    assert_eq!(recipient_final_balance[1], recipient_initial_balance[1]); // higher 128 bits are equal
+    assert_eq!(recipient_final_balance[0] - recipient_initial_balance[0], FieldElement::ONE); // lower 128 bits differ by one
 
     // included in block
     let included_txs = rpc.get_block_transaction_count(BlockId::Number(block_number)).await?;
@@ -87,18 +86,18 @@ async fn works_with_storage_change(madara: &ThreadSafeMadaraClient) -> Result<()
 
 #[rstest]
 #[tokio::test]
-async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+async fn fail_execution_revert_with_no_transfer(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     // we will try to transfer all the funds of the funding account
     // so the transaction will fail in the execution step as we won't have
     // funds to pay the fees
 
     let rpc = madara.get_starknet_client().await;
 
-    let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
+    let fee_token_address = FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap();
 
     let funding_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
 
-    let (block_number, initial_balance, final_balance, txs) = {
+    let (block_number, recipient_initial_balance, recipient_final_balance, txs) = {
         let mut madara_write_lock = madara.write().await;
         let funding_account_balance = read_erc20_balance(&rpc, fee_token_address, funding_account.address()).await;
 
@@ -125,11 +124,11 @@ async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraCli
     let invoke_tx_result = txs[0].as_ref();
 
     assert!(invoke_tx_result.is_ok()); // the transaction was sent successfully
-    assert_eq!(final_balance, initial_balance);
+    assert_eq!(recipient_final_balance, recipient_initial_balance);
 
-    // doesn't get included in block
+    // get included in block
     let included_txs = rpc.get_block_transaction_count(BlockId::Number(block_number)).await?;
-    assert_eq!(included_txs, 0);
+    assert_eq!(included_txs, 1);
 
     Ok(())
 }

@@ -1,4 +1,7 @@
+use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::objects::TransactionExecutionInfo;
+use blockifier::transaction::transaction_execution::Transaction;
+use blockifier::transaction::transactions::L1HandlerTransaction;
 use log::error;
 pub use mc_rpc_core::utils::*;
 pub use mc_rpc_core::{
@@ -8,7 +11,6 @@ pub use mc_rpc_core::{
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_simulations::SimulationFlags;
-use mp_transactions::{HandleL1MessageTransaction, Transaction, UserTransaction};
 use pallet_starknet_runtime_api::{
     ConvertTransactionRuntimeApi, StarknetRuntimeApi, StarknetTransactionExecutionError,
 };
@@ -18,9 +20,8 @@ use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
 use sp_runtime::DispatchError;
-use starknet_api::api_core::{ContractAddress, EntryPointSelector};
+use starknet_api::core::{ContractAddress, EntryPointSelector};
 use starknet_api::transaction::{Calldata, Event, TransactionHash};
-use starknet_core::types::FieldElement;
 
 use crate::{Starknet, StarknetRpcApiError};
 
@@ -52,8 +53,8 @@ where
     pub fn do_estimate_message_fee(
         &self,
         block_hash: B::Hash,
-        message: HandleL1MessageTransaction,
-    ) -> RpcApiResult<(u128, u64, u64)> {
+        message: L1HandlerTransaction,
+    ) -> RpcApiResult<(u128, u128, u128)> {
         self.client
             .runtime_api()
             .estimate_message_fee(block_hash, message)
@@ -109,7 +110,7 @@ where
     pub fn convert_tx_to_extrinsic(
         &self,
         best_block_hash: <B as BlockT>::Hash,
-        transaction: UserTransaction,
+        transaction: AccountTransaction,
     ) -> RpcApiResult<B::Extrinsic> {
         self.client.runtime_api().convert_transaction(best_block_hash, transaction).map_err(|e| {
             error!("Failed to convert transaction: {:?}", e);
@@ -120,8 +121,8 @@ where
     pub fn estimate_fee(
         &self,
         block_hash: B::Hash,
-        transactions: Vec<UserTransaction>,
-    ) -> RpcApiResult<Vec<(u64, u64)>> {
+        transactions: Vec<AccountTransaction>,
+    ) -> RpcApiResult<Vec<(u128, u128)>> {
         self.client
             .runtime_api()
             .estimate_fee(block_hash, transactions)
@@ -134,6 +135,7 @@ where
                 StarknetRpcApiError::ContractError
             })
     }
+
     pub fn get_best_block_hash(&self) -> B::Hash {
         self.client.info().best_hash
     }
@@ -157,15 +159,12 @@ where
     pub fn get_tx_messages_to_l1(
         &self,
         substrate_block_hash: B::Hash,
-        transaction_hash: FieldElement,
+        transaction_hash: TransactionHash,
     ) -> RpcApiResult<Vec<starknet_api::transaction::MessageToL1>> {
-        self.client
-            .runtime_api()
-            .get_tx_messages_to_l1(substrate_block_hash, Felt252Wrapper(transaction_hash).into())
-            .map_err(|e| {
-                error!("'{e}'");
-                StarknetRpcApiError::InternalServerError
-            })
+        self.client.runtime_api().get_tx_messages_to_l1(substrate_block_hash, transaction_hash).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::InternalServerError
+        })
     }
 
     pub fn is_transaction_fee_disabled(&self, substrate_block_hash: B::Hash) -> RpcApiResult<bool> {
@@ -182,28 +181,17 @@ where
         skip_validate: bool,
         skip_fee_charge: bool,
     ) -> RpcApiResult<TransactionExecutionInfo> {
-        let simulations_flags = SimulationFlags { skip_validate, skip_fee_charge };
+        let simulations_flags = SimulationFlags { validate: !skip_validate, charge_fee: !skip_fee_charge };
         match tx {
-            Transaction::Declare(tx, contract_class) => {
-                let tx = UserTransaction::Declare(tx, contract_class);
-                self.simulate_user_tx(block_hash, tx, simulations_flags)
-            }
-            Transaction::DeployAccount(tx) => {
-                let tx = UserTransaction::DeployAccount(tx);
-                self.simulate_user_tx(block_hash, tx, simulations_flags)
-            }
-            Transaction::Invoke(tx) => {
-                let tx = UserTransaction::Invoke(tx);
-                self.simulate_user_tx(block_hash, tx, simulations_flags)
-            }
-            Transaction::L1Handler(tx) => self.simulate_l1_tx(block_hash, tx, simulations_flags),
+            Transaction::AccountTransaction(tx) => self.simulate_user_tx(block_hash, tx, simulations_flags),
+            Transaction::L1HandlerTransaction(tx) => self.simulate_l1_tx(block_hash, tx, simulations_flags),
         }
     }
 
     fn simulate_user_tx(
         &self,
         block_hash: B::Hash,
-        tx: UserTransaction,
+        tx: AccountTransaction,
         simulations_flags: SimulationFlags,
     ) -> RpcApiResult<TransactionExecutionInfo> {
         // Simulate a single User Transaction
@@ -230,7 +218,7 @@ where
     fn simulate_l1_tx(
         &self,
         block_hash: B::Hash,
-        tx: HandleL1MessageTransaction,
+        tx: L1HandlerTransaction,
         simulations_flags: SimulationFlags,
     ) -> RpcApiResult<TransactionExecutionInfo> {
         // Simulated a single HandleL1MessageTransaction

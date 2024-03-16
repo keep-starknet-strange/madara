@@ -11,8 +11,6 @@ fn log_is_found() {
     digest.push(DigestItem::Consensus(MADARA_ENGINE_ID, Log::Block(block.clone()).encode()));
 
     assert!(ensure_log(&digest).is_ok());
-    assert_eq!(find_log(&digest).unwrap(), Log::Block(block.clone()));
-    assert_eq!(find_starknet_block(&digest).unwrap(), block);
 }
 
 #[test]

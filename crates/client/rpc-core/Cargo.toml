@@ -19,7 +19,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 anyhow = { workspace = true }
 blockifier = { workspace = true, default-features = true }
 cairo-lang-casm = { workspace = true }
-cairo-lang-casm-contract-class = { workspace = true }
+cairo-lang-starknet-classes = { workspace = true }
 cairo-lang-starknet = { workspace = true }
 cairo-lang-utils = { workspace = true }
 cairo-vm = { workspace = true, default-features = true }

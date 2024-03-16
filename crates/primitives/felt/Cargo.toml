@@ -35,7 +35,6 @@ serde = ["dep:serde", "starknet-ff/serde", "dep:serde_with"]
 std = [
   "cairo-vm/std",
   "thiserror-no-std/std",
-  "starknet_api/std",
   "sp-core/std",
   "starknet-ff/std",
   "starknet-core/std",

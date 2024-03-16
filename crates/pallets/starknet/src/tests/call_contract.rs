@@ -1,9 +1,10 @@
+use std::sync::Arc;
+
 use frame_support::assert_ok;
 use mp_felt::Felt252Wrapper;
-use mp_transactions::InvokeTransactionV1;
-use starknet_api::api_core::{ContractAddress, EntryPointSelector, PatriciaKey};
+use starknet_api::core::{ContractAddress, EntryPointSelector, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
-use starknet_api::transaction::Calldata;
+use starknet_api::transaction::{Calldata, Fee, InvokeTransactionV1, TransactionSignature};
 
 use super::constants::TOKEN_CONTRACT_CLASS_HASH;
 use super::mock::default_mock::*;
@@ -20,28 +21,27 @@ fn given_call_contract_call_works() {
 
         // Deploy ERC20 Contract, as it is already declared in fixtures
         // Deploy ERC20 contract
-        let constructor_calldata: Vec<Felt252Wrapper> = vec![
-            sender_account.into(), // Simple contract address
-            Felt252Wrapper::from_hex_be("0x02730079d734ee55315f4f141eaed376bddd8c2133523d223a344c5604e0f7f8").unwrap(), // deploy_contract selector
-            Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000009").unwrap(), // Calldata len
-            Felt252Wrapper::from_hex_be(TOKEN_CONTRACT_CLASS_HASH).unwrap(), // Class hash
-            Felt252Wrapper::ONE,                                             // Contract address salt
-            Felt252Wrapper::from_hex_be("0x6").unwrap(),                     // Constructor_calldata_len
-            Felt252Wrapper::from_hex_be("0xA").unwrap(),                     // Name
-            Felt252Wrapper::from_hex_be("0x1").unwrap(),                     // Symbol
-            Felt252Wrapper::from_hex_be("0x2").unwrap(),                     // Decimals
-            Felt252Wrapper::from_hex_be("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF").unwrap(), // Initial supply low
-            Felt252Wrapper::from_hex_be("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF").unwrap(), // Initial supply high
-            sender_account.into(),                                           // recipient
-        ];
+        let constructor_calldata = Calldata(Arc::new(vec![
+            sender_account.0.0, // Simple contract address
+            StarkFelt::try_from("0x02730079d734ee55315f4f141eaed376bddd8c2133523d223a344c5604e0f7f8").unwrap(), // deploy_contract selector
+            StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000009").unwrap(), // Calldata len
+            StarkFelt::try_from(TOKEN_CONTRACT_CLASS_HASH).unwrap(), // Class hash
+            StarkFelt::ONE,                                             // Contract address salt
+            StarkFelt::try_from("0x6").unwrap(),                     // Constructor_calldata_len
+            StarkFelt::try_from("0xA").unwrap(),                     // Name
+            StarkFelt::try_from("0x1").unwrap(),                     // Symbol
+            StarkFelt::try_from("0x2").unwrap(),                     // Decimals
+            StarkFelt::try_from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF").unwrap(), // Initial supply low
+            StarkFelt::try_from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF").unwrap(), // Initial supply high
+            sender_account.0.0,                                           // recipient
+        ]));
 
         let deploy_transaction = InvokeTransactionV1 {
-            sender_address: sender_account.into(),
-            signature: vec![],
-            nonce: Felt252Wrapper::ZERO,
+            sender_address: sender_account,
+            signature: TransactionSignature(vec![]),
+            nonce: Nonce(StarkFelt::ZERO),
             calldata: constructor_calldata,
-            max_fee: u128::MAX,
-            offset_version: false,
+            max_fee: Fee(u128::MAX),
         };
 
         assert_ok!(Starknet::invoke(origin, deploy_transaction.into()));

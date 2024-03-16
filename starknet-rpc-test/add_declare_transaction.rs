@@ -1,3 +1,6 @@
+extern crate starknet_rpc_test;
+
+use core::panic;
 use std::vec;
 
 use assert_matches::assert_matches;
@@ -5,11 +8,15 @@ use rstest::rstest;
 use starknet_accounts::Account;
 use starknet_core::types::{BlockId, DeclareTransactionResult, StarknetError};
 use starknet_ff::FieldElement;
-use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
-use starknet_test_utils::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, OZ_CONTRACT_ADDRESS, SIGNER_PRIVATE};
-use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_test_utils::utils::{build_single_owner_account, read_erc20_balance, AccountActions, U256};
-use starknet_test_utils::{SendTransactionError, Transaction, TransactionResult};
+use starknet_providers::{Provider, ProviderError};
+use starknet_rpc_test::constants::{
+    ARGENT_CONTRACT_ADDRESS, ETH_FEE_TOKEN_ADDRESS, OZ_CONTRACT_ADDRESS, SIGNER_PRIVATE,
+};
+use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_rpc_test::utils::{
+    build_single_owner_account, is_good_error_code, read_erc20_balance, AccountActions, U256,
+};
+use starknet_rpc_test::{SendTransactionError, Transaction, TransactionResult};
 
 #[rstest]
 #[tokio::test]
@@ -22,6 +29,7 @@ async fn fail_validation_step(madara: &ThreadSafeMadaraClient) -> Result<(), any
         let (declare_tx, _, _) = account.declare_contract(
             "../starknet-rpc-test/contracts/counter0/counter0.contract_class.json",
             "../starknet-rpc-test/contracts/counter0/counter0.compiled_contract_class.json",
+            None,
         );
 
         let mut madara_write_lock = madara.write().await;
@@ -29,16 +37,16 @@ async fn fail_validation_step(madara: &ThreadSafeMadaraClient) -> Result<(), any
     };
     assert_eq!(txs.len(), 1);
 
-    let declare_tx_result = txs[0].as_ref().unwrap_err();
-    assert_matches!(
-        declare_tx_result,
-        SendTransactionError::AccountError(starknet_accounts::AccountError::Provider(ProviderError::StarknetError(
-            StarknetErrorWithMessage {
-                code: MaybeUnknownErrorCode::Known(StarknetError::ValidationFailure),
-                message: _
-            }
-        )))
-    );
+    let declare_tx_err = txs[0].as_ref().unwrap_err();
+    match declare_tx_err {
+        SendTransactionError::AccountError(starknet_accounts::AccountError::Provider(provider_error)) => {
+            assert!(is_good_error_code(provider_error, 55));
+        }
+
+        _ => {
+            panic!("wrong error type");
+        }
+    };
 
     Ok(())
 }
@@ -49,32 +57,43 @@ async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraCli
     let rpc = madara.get_starknet_client().await;
 
     let oz_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, OZ_CONTRACT_ADDRESS, true);
-    let (declare_tx, expected_class_hash, _) = oz_account.declare_contract(
-        "../starknet-rpc-test/contracts/counter1/counter1.contract_class.json",
-        "../starknet-rpc-test/contracts/counter1/counter1.compiled_contract_class.json",
-    );
 
-    let (block_number, txs) = {
+    let (block_number, expected_class_hash) = {
         let mut madara_write_lock = madara.write().await;
-        // draining oz_account so the txn fails during execution
-        let balance =
-            read_erc20_balance(&rpc, FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(), oz_account.address()).await;
-        madara_write_lock
-            .create_block_with_txs(vec![Transaction::Execution(oz_account.transfer_tokens_u256(
-                FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(),
-                // subtractin 150k to keep some fees for the transfer
-                U256 { low: balance[0] - FieldElement::from_dec_str("150000").unwrap(), high: balance[1] },
-                None,
-            ))])
+
+        let block_number = rpc.block_number().await?;
+        let current_nonce = rpc
+            .get_nonce(BlockId::Number(block_number), FieldElement::from_hex_be(OZ_CONTRACT_ADDRESS).unwrap())
             .await?;
 
-        // declaring contract
-        let txs = madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
-        let block_number = rpc.block_number().await?;
-        (block_number, txs)
+        let (declare_tx, expected_class_hash, _) = oz_account.declare_contract(
+            "../starknet-rpc-test/contracts/counter1/counter1.contract_class.json",
+            "../starknet-rpc-test/contracts/counter1/counter1.compiled_contract_class.json",
+            Some(current_nonce + FieldElement::ONE),
+        );
+        // draining oz_account so the txn fails during execution
+        let balance =
+            read_erc20_balance(&rpc, FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap(), oz_account.address())
+                .await;
+        println!("block number before fund drain: {block_number}");
+        let txs = madara_write_lock
+            .create_block_with_txs(vec![
+                Transaction::Execution(oz_account.transfer_tokens_u256(
+                    FieldElement::from_hex_be("0x123").unwrap(),
+                    // subtractin 150k to keep some fees for the transfer
+                    // but not enough for the declare
+                    U256 { low: balance[0] - FieldElement::from(150_000u128), high: balance[1] },
+                    None,
+                )),
+                Transaction::Declaration(declare_tx),
+            ])
+            .await?;
+        // Both tx made it into the mempool
+        assert!(txs[0].is_ok());
+        assert!(txs[1].is_ok());
+
+        (rpc.block_number().await?, expected_class_hash)
     };
-    assert_eq!(txs.len(), 1);
-    assert!(txs[0].is_ok());
 
     // transaction failed during execution, no change in storage
     println!(
@@ -86,7 +105,7 @@ async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraCli
 
     // doesn't get included in block
     let included_txs = rpc.get_block_transaction_count(BlockId::Number(block_number)).await?;
-    assert_eq!(included_txs, 0);
+    assert_eq!(included_txs, 1);
 
     Ok(())
 }
@@ -100,6 +119,7 @@ async fn works_with_storage_change(madara: &ThreadSafeMadaraClient) -> Result<()
     let (declare_tx, expected_class_hash, _) = account.declare_contract(
         "../starknet-rpc-test/contracts/counter2/counter2.contract_class.json",
         "../starknet-rpc-test/contracts/counter2/counter2.compiled_contract_class.json",
+        None,
     );
 
     let (mut txs, block_number) = {
@@ -137,6 +157,7 @@ async fn fails_already_declared(madara: &ThreadSafeMadaraClient) -> Result<(), a
     let (declare_tx, _, _) = account.declare_contract(
         "../starknet-rpc-test/contracts/counter3/counter3.contract_class.json",
         "../starknet-rpc-test/contracts/counter3/counter3.compiled_contract_class.json",
+        None,
     );
 
     let mut madara_write_lock = madara.write().await;
@@ -150,6 +171,7 @@ async fn fails_already_declared(madara: &ThreadSafeMadaraClient) -> Result<(), a
     let (declare_tx, _, _) = account.declare_contract(
         "../starknet-rpc-test/contracts/counter3/counter3.contract_class.json",
         "../starknet-rpc-test/contracts/counter3/counter3.compiled_contract_class.json",
+        None,
     );
 
     let mut txs = madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
@@ -159,10 +181,7 @@ async fn fails_already_declared(madara: &ThreadSafeMadaraClient) -> Result<(), a
     assert_matches!(
         declare_tx_result.err(),
         Some(SendTransactionError::AccountError(starknet_accounts::AccountError::Provider(
-            ProviderError::StarknetError(StarknetErrorWithMessage {
-                code: MaybeUnknownErrorCode::Known(StarknetError::ClassAlreadyDeclared),
-                message: _
-            })
+            ProviderError::StarknetError(StarknetError::ClassAlreadyDeclared)
         )))
     );
 

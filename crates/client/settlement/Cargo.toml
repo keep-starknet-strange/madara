@@ -42,6 +42,7 @@ mp-snos-output = { workspace = true, default-features = true }
 mp-transactions = { workspace = true, default-features = true }
 starknet-crypto = { workspace = true, default-features = true }
 starknet_api = { workspace = true, default-features = true }
+blockifier = { workspace = true, default-features = true }
 
 # Madara
 pallet-starknet-runtime-api = { workspace = true, default-features = true }

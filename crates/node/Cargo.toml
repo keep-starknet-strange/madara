@@ -94,10 +94,7 @@ mc-storage = { workspace = true }
 pallet-starknet = { workspace = true }
 pallet-starknet-runtime-api = { workspace = true }
 starknet-core = { workspace = true }
-starknet_api = { workspace = true, features = [
-  "scale-info",
-  "parity-scale-codec",
-] }
+starknet_api = { workspace = true }
 
 # Madara utils
 mc-genesis-data-provider = { workspace = true }

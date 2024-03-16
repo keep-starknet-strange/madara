@@ -18,7 +18,7 @@ pub async fn deploy_eth_token_on_l2(madara: &ThreadSafeMadaraClient, minter: Fie
     let rpc = madara.get_starknet_client().await;
     let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, CAIRO_1_ACCOUNT_CONTRACT, false);
 
-    let (declare_tx, class_hash, _) = account.declare_contract(ERC20_SIERRA_PATH, ERC20_CASM_PATH);
+    let (declare_tx, class_hash, _) = account.declare_contract(ERC20_SIERRA_PATH, ERC20_CASM_PATH, None);
 
     let mut madara_write_lock = madara.write().await;
 

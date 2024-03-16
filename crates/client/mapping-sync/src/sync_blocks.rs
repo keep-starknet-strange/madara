@@ -1,7 +1,7 @@
 use mc_rpc_core::utils::get_block_by_block_hash;
 use mp_digest_log::{find_starknet_block, FindLogError};
 use mp_hashers::HasherT;
-use mp_transactions::compute_hash::ComputeTransactionHash;
+use mp_transactions::get_transaction_hash;
 use num_traits::FromPrimitive;
 use pallet_starknet_runtime_api::StarknetRuntimeApi;
 use prometheus_endpoint::prometheus::core::Number;
@@ -45,8 +45,6 @@ where
                              db state ({storage_starknet_block_hash:?})"
                         ))
                     } else {
-                        let chain_id = client.runtime_api().chain_id(substrate_block_hash)?;
-
                         // Success, we write the Starknet to Substate hashes mapping to db
                         let mapping_commitment = mc_db::MappingCommitment {
                             block_hash: substrate_block_hash,
@@ -54,7 +52,8 @@ where
                             starknet_transaction_hashes: digest_starknet_block
                                 .transactions()
                                 .iter()
-                                .map(|tx| tx.compute_hash::<H>(chain_id, false).into())
+                                .map(get_transaction_hash)
+                                .cloned()
                                 .collect(),
                         };
 
@@ -70,13 +69,22 @@ where
                             block_metrics
                                 .event_count
                                 .inc_by(f64::from_u128(starknet_block.header().event_count).unwrap_or(f64::MIN));
-                            block_metrics.l1_gas_price_wei.set(
-                                f64::from_u128(starknet_block.header().l1_gas_price.price_in_wei).unwrap_or(f64::MIN),
+                            block_metrics.eth_l1_gas_price_wei.set(
+                                f64::from_u128(starknet_block.header().l1_gas_price.eth_l1_gas_price.into())
+                                    .unwrap_or(f64::MIN),
                             );
-
-                            block_metrics
-                                .l1_gas_price_strk
-                                .set(starknet_block.header().l1_gas_price.price_in_strk.unwrap_or(0).into_f64());
+                            block_metrics.strk_l1_gas_price_fri.set(
+                                f64::from_u128(starknet_block.header().l1_gas_price.strk_l1_gas_price.into())
+                                    .unwrap_or(f64::MIN),
+                            );
+                            block_metrics.eth_l1_gas_price_wei.set(
+                                f64::from_u128(starknet_block.header().l1_gas_price.eth_l1_data_gas_price.into())
+                                    .unwrap_or(f64::MIN),
+                            );
+                            block_metrics.strk_l1_data_gas_price_fri.set(
+                                f64::from_u128(starknet_block.header().l1_gas_price.strk_l1_data_gas_price.into())
+                                    .unwrap_or(f64::MIN),
+                            );
                         }
 
                         backend.mapping().write_hashes(mapping_commitment).map_err(|e| anyhow::anyhow!(e))

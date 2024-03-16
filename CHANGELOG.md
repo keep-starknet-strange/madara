@@ -2,6 +2,7 @@
 
 ## Next release
 
+- chore: rebase on latest blockifier
 - refactoring : Removed Redundant logs in madara
 - fix: transaction receipt fails for txs in the middle of a block
 - chore: add makefile for developer experience improvements and cleanup

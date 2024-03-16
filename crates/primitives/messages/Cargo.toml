@@ -26,7 +26,6 @@ serde_with = { workspace = true, optional = true }
 [features]
 default = ["std"]
 std = [
-  "starknet_api/std",
   "mp-transactions/std",
   "parity-scale-codec?/std",
   "scale-info?/std",
@@ -35,7 +34,6 @@ std = [
 ]
 parity-scale-codec = [
   "dep:parity-scale-codec",
-  "starknet_api/parity-scale-codec",
 ]
-scale-info = ["dep:scale-info", "starknet_api/scale-info"]
+scale-info = ["dep:scale-info"]
 serde = ["dep:serde", "dep:serde_with"]

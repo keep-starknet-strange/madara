@@ -1,5 +1,8 @@
 //! Transaction validation logic.
-use blockifier::transaction::errors::TransactionExecutionError;
+use blockifier::transaction::account_transaction::AccountTransaction;
+use blockifier::transaction::errors::{TransactionExecutionError, TransactionPreValidationError};
+use blockifier::transaction::transaction_execution::Transaction;
+use cairo_vm::vm::runners::cairo_runner::ExecutionResources;
 use frame_support::traits::EnsureOrigin;
 use mp_transactions::execution::Validate;
 
@@ -55,83 +58,73 @@ impl<OuterOrigin: Into<Result<RawOrigin, OuterOrigin>> + From<RawOrigin>> Ensure
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum TxPriorityInfo {
-    InvokeV0,
-    L1Handler { nonce: Felt252Wrapper },
-    RegularTxs { sender_address: Felt252Wrapper, transaction_nonce: Felt252Wrapper, sender_nonce: Felt252Wrapper },
-}
-
 impl<T: Config> Pallet<T> {
-    pub fn validate_unsigned_tx_nonce(
-        transaction: &UserOrL1HandlerTransaction,
-    ) -> Result<TxPriorityInfo, InvalidTransaction> {
+    pub fn pre_validate_unsigned_tx(transaction: &Transaction) -> Result<(), InvalidTransaction> {
         match transaction {
-            UserOrL1HandlerTransaction::User(tx) => {
-                let sender_address: ContractAddress = tx.sender_address().into();
-                let sender_nonce: Felt252Wrapper = Pallet::<T>::nonce(sender_address).into();
-                let transaction_nonce = match tx.nonce() {
-                    Some(n) => *n,
-                    None => return Ok(TxPriorityInfo::InvokeV0),
-                };
+            Transaction::AccountTransaction(transaction) => {
+                let mut state = BlockifierStateAdapter::<T>::default();
+                let block_context = Self::get_block_context();
+                let charge_fee = !<T as Config>::DisableTransactionFee::get();
+                let tx_context = Arc::new(block_context.to_tx_context(transaction));
+                let string_nonce_checking = false;
 
-                // Reject transaction with an already used Nonce
-                if sender_nonce > transaction_nonce {
-                    Err(InvalidTransaction::Stale)?;
+                match transaction {
+                    AccountTransaction::Declare(transaction) => {
+                        Validate::perform_pre_validation_stage(transaction, &mut state, tx_context, string_nonce_checking, charge_fee)
+                    }
+                    AccountTransaction::DeployAccount(transaction) => {
+                        Validate::perform_pre_validation_stage(transaction, &mut state, tx_context, string_nonce_checking, charge_fee)
+                    }
+                    AccountTransaction::Invoke(transaction) => {
+                        Validate::perform_pre_validation_stage(transaction, &mut state, tx_context, string_nonce_checking, charge_fee)
+                    }
                 }
-
-                // A transaction with a nonce higher than the expected nonce is placed in
-                // the future queue of the transaction pool.
-                if sender_nonce < transaction_nonce {
-                    log::debug!(
-                        "Nonce is too high. Expected: {:?}, got: {:?}. This transaction will be placed in the \
-                         transaction pool and executed in the future when the nonce is reached.",
-                        sender_nonce,
-                        transaction_nonce
-                    );
-                }
-
-                Ok(TxPriorityInfo::RegularTxs { sender_address: tx.sender_address(), transaction_nonce, sender_nonce })
+                // TODO: have more granular error mapping
+                .map_err(|_| InvalidTransaction::BadProof)
             }
-            UserOrL1HandlerTransaction::L1Handler(tx, _fee) => {
-                Self::ensure_l1_message_not_executed(&Nonce(StarkFelt::from(tx.nonce)))?;
-
-                Ok(TxPriorityInfo::L1Handler { nonce: tx.nonce.into() })
+            Transaction::L1HandlerTransaction(transaction) => {
+                Self::ensure_l1_message_not_executed(&transaction.tx.nonce)
             }
         }
     }
 
-    pub fn validate_unsigned_tx(transaction: &UserOrL1HandlerTransaction) -> Result<(), InvalidTransaction> {
-        let chain_id = Self::chain_id();
-        let block_context = Self::get_block_context();
-        let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();
-        let mut execution_resources = ExecutionResources::default();
-        let mut initial_gas = blockifier::abi::constants::INITIAL_GAS_COST;
+    pub fn validate_unsigned_tx(transaction: &Transaction) -> Result<(), InvalidTransaction> {
+        let _call_info = match transaction {
+            Transaction::AccountTransaction(transaction) => {
+                let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();
+                let block_context = Self::get_block_context();
+                let mut inital_gas = block_context.versioned_constants().tx_initial_gas();
+                let mut resources = ExecutionResources::default();
 
-        match transaction {
-            UserOrL1HandlerTransaction::User(transaction) => {
-                let validation_result =
-                    match transaction {
-                        // There is no way to validate it before the account is actuallly deployed
-                        UserTransaction::DeployAccount(_) => Ok(None),
-                        UserTransaction::Declare(tx, contract_class) => tx
-                            .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), false)
-                            .map_err(|_| InvalidTransaction::BadProof)?
-                            .validate_tx(&mut state, &block_context, &mut execution_resources, &mut initial_gas, false),
-                        UserTransaction::Invoke(tx) => tx
-                            .into_executable::<T::SystemHash>(chain_id, false)
-                            .validate_tx(&mut state, &block_context, &mut execution_resources, &mut initial_gas, false),
-                    };
+                let validation_result = match transaction {
+                    AccountTransaction::Declare(tx) => {
+                        println!("validating declare tx");
+                        let tx_context = Arc::new(block_context.to_tx_context(tx));
+                        tx.run_validate_entrypoint(&mut state, tx_context, &mut resources, &mut inital_gas, true)
+                    }
+                    AccountTransaction::DeployAccount(_) => return Ok(()),
+                    AccountTransaction::Invoke(tx) => {
+                        let tx_context = Arc::new(block_context.to_tx_context(tx));
+                        tx.run_validate_entrypoint(&mut state, tx_context, &mut resources, &mut inital_gas, true)
+                    }
+                };
+                println!("validation res: {:?}", validation_result);
 
-                if let Err(TransactionExecutionError::ValidateTransactionError(
-                    EntryPointExecutionError::PreExecutionError(PreExecutionError::UninitializedStorageAddress(
-                        contract_address,
-                    )),
+                // handle the case where we the user sent both its deploy and first tx at the same time
+                // we assume that the deploy tx is also in the pool and will therefore be executed before
+                // a bit hacky but it is needed in order to be compatible with wallets
+                if let Err(TransactionExecutionError::TransactionPreValidationError(
+                    TransactionPreValidationError::InvalidNonce { address, account_nonce, incoming_tx_nonce },
                 )) = validation_result
                 {
-                    let transaction_nonce = transaction.nonce();
-                    let sender_address = transaction.sender_address();
-                    if contract_address.0.0 == sender_address.into() && transaction_nonce == Some(&Felt252Wrapper::ONE)
+                    let sender_address = match transaction {
+                        AccountTransaction::Declare(tx) => tx.tx.sender_address(),
+                        AccountTransaction::DeployAccount(tx) => tx.contract_address,
+                        AccountTransaction::Invoke(tx) => tx.tx.sender_address(),
+                    };
+                    if address == sender_address
+                        && account_nonce == Nonce(StarkFelt::ZERO)
+                        && incoming_tx_nonce == Nonce(StarkFelt::ONE)
                     {
                         Ok(None)
                     } else {
@@ -141,16 +134,19 @@ impl<T: Config> Pallet<T> {
                     validation_result
                 }
             }
-            UserOrL1HandlerTransaction::L1Handler(_, fee) => {
+            Transaction::L1HandlerTransaction(tx) => {
                 // The tx will fail if no fee have been paid
-                if fee.0 == 0 {
+                if tx.paid_fee_on_l1 == Fee(0) {
                     return Err(InvalidTransaction::Payment);
                 }
 
                 Ok(None)
             }
         }
-        .map_err(|_| InvalidTransaction::BadProof)?;
+        .map_err(|e| {
+            println!("tx validation failed: {e:?}");
+            InvalidTransaction::BadProof
+        })?;
 
         Ok(())
     }

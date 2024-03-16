@@ -10,11 +10,13 @@ use starknet_contract::ContractFactory;
 use starknet_core::types::{BlockId, BlockTag, FunctionCall, StarknetError};
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
-use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
-use starknet_test_utils::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
-use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_test_utils::utils::{build_single_owner_account, get_contract_address_from_deploy_tx, AccountActions};
-use starknet_test_utils::Transaction;
+use starknet_providers::{Provider, ProviderError};
+use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, ETH_FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
+use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_rpc_test::utils::{
+    build_single_owner_account, get_contract_address_from_deploy_tx, is_good_error_code, AccountActions,
+};
+use starknet_rpc_test::Transaction;
 
 #[rstest]
 #[tokio::test]
@@ -24,7 +26,7 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
     assert_matches!(
         rpc.call(
             FunctionCall {
-                contract_address: FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(),
+                contract_address: FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap(),
                 entry_point_selector: get_selector_from_name("name").unwrap(),
                 calldata: vec![]
             },
@@ -32,10 +34,7 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
         )
         .await
         .err(),
-        Some(ProviderError::StarknetError(StarknetErrorWithMessage {
-            message: _,
-            code: MaybeUnknownErrorCode::Known(StarknetError::BlockNotFound)
-        }))
+        Some(ProviderError::StarknetError(StarknetError::BlockNotFound))
     );
 
     Ok(())
@@ -49,7 +48,7 @@ async fn fail_non_existing_entrypoint(madara: &ThreadSafeMadaraClient) -> Result
     assert_matches!(
         rpc.call(
             FunctionCall {
-                contract_address: FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(),
+                contract_address: FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap(),
                 entry_point_selector: FieldElement::from_hex_be("0x0").unwrap(),
                 calldata: vec![]
             },
@@ -57,10 +56,7 @@ async fn fail_non_existing_entrypoint(madara: &ThreadSafeMadaraClient) -> Result
         )
         .await
         .err(),
-        Some(ProviderError::StarknetError(StarknetErrorWithMessage {
-            message: _,
-            code: MaybeUnknownErrorCode::Known(StarknetError::ContractError)
-        }))
+        Some(provider_error) if is_good_error_code(&provider_error, 40)
     );
 
     Ok(())
@@ -74,7 +70,7 @@ async fn fail_incorrect_calldata(madara: &ThreadSafeMadaraClient) -> Result<(), 
     assert_matches!(
         rpc.call(
             FunctionCall {
-                contract_address: FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(),
+                contract_address: FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap(),
                 entry_point_selector: get_selector_from_name("name").unwrap(),
                 calldata: vec![FieldElement::ONE] // name function has no calldata
             },
@@ -82,10 +78,7 @@ async fn fail_incorrect_calldata(madara: &ThreadSafeMadaraClient) -> Result<(), 
         )
         .await
         .err(),
-        Some(ProviderError::StarknetError(StarknetErrorWithMessage {
-            message: _,
-            code: MaybeUnknownErrorCode::Known(StarknetError::ContractError)
-        }))
+        Some(provider_error) if is_good_error_code(&provider_error, 40)
     );
 
     Ok(())
@@ -99,7 +92,7 @@ async fn works_on_correct_call_no_calldata(madara: &ThreadSafeMadaraClient) -> R
     assert_eq!(
         rpc.call(
             FunctionCall {
-                contract_address: FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(),
+                contract_address: FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap(),
                 entry_point_selector: get_selector_from_name("name").unwrap(),
                 calldata: vec![] // name function has no calldata
             },
@@ -121,7 +114,7 @@ async fn works_on_correct_call_with_calldata(madara: &ThreadSafeMadaraClient) ->
     assert!(
         rpc.call(
             FunctionCall {
-                contract_address: FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(),
+                contract_address: FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap(),
                 entry_point_selector: get_selector_from_name("balanceOf").unwrap(),
                 calldata: vec![FieldElement::TWO]
             },
@@ -147,6 +140,7 @@ async fn works_on_mutable_call_without_modifying_storage(madara: &ThreadSafeMada
         let (declare_tx, class_hash, _) = account.declare_contract(
             "../starknet-rpc-test/contracts/counter4/counter4.contract_class.json",
             "../starknet-rpc-test/contracts/counter4/counter4.compiled_contract_class.json",
+            None,
         );
         let contract_factory = ContractFactory::new(class_hash, account.clone());
 

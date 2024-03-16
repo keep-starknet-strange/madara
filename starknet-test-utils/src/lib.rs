@@ -152,7 +152,7 @@ impl MadaraClient {
     }
 
     pub async fn create_block_with_pending_txs(&mut self) -> anyhow::Result<()> {
-        self.do_create_block(false, true).await
+        self.do_create_block(true, true).await
     }
 
     async fn do_create_block(&mut self, empty: bool, finalize: bool) -> anyhow::Result<()> {
@@ -176,7 +176,7 @@ impl MadaraClient {
             results.push(result);
         }
 
-        self.do_create_block(false, false).await?;
+        self.do_create_block(true, false).await?;
         Ok(results)
     }
 
