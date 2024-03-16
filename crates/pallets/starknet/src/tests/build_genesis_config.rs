@@ -66,7 +66,7 @@ fn check_genesis_storage() {
     let genesis_loader = GenesisLoader::new(project_root.clone(), genesis_data.clone());
     let genesis_loader_2 = GenesisLoader::new(project_root.clone(), genesis_data.clone());
 
-    assert_eq!(genesis_loader, genesis_loader_2);
+    assert_eq!(genesis_loader, genesis_loader_2, "Genesis Loader are not equal");
 
     // test
     let mut t: Storage = frame_system::GenesisConfig::<default_mock::MockRuntime>::default().build_storage().unwrap();
@@ -75,10 +75,12 @@ fn check_genesis_storage() {
     let genesis: GenesisConfig<default_mock::MockRuntime> = genesis_loader.into();
     let genesis_2: GenesisConfig<default_mock::MockRuntime> = genesis_loader_2.into();
 
+    assert_eq!(genesis, genesis_2, "Genesis Configs are not equal");
+
     genesis.assimilate_storage(&mut t).unwrap();
 
     genesis_2.assimilate_storage(&mut t_2).unwrap();
 
-    assert_eq!(t.top, t_2.top);
-    assert_eq!(t.children_default, t_2.children_default);
+    assert_eq!(t.top, t_2.top, "Storage top are not equal");
+    assert_eq!(t.children_default, t_2.children_default, "Storage children are not equal");
 }
