@@ -252,9 +252,13 @@ mc-eth-client = { path = "crates/client/eth-client" }
 madara-runtime = { path = "crates/runtime" }
 
 # Tendermint
-pallet-tendermint = { version = "0.1.0", default-features = false, git = "https://github.com/aerius-labs/substrate-tendermint", branch = "feat/madara", features = ["std"]}
-sp-finality-tendermint = { version = "0.1.0", default-features = false, git = "https://github.com/aerius-labs/substrate-tendermint", branch = "feat/madara", features = ["std"] }
-sc-finality-tendermint ={ version = "0.1.0", default-features = false, git = "https://github.com/aerius-labs/substrate-tendermint", branch = "feat/madara" }
+pallet-tendermint = { version = "0.1.0", default-features = false, git = "https://github.com/aerius-labs/substrate-tendermint", branch = "feat/madara", features = [
+  "std",
+] }
+sp-finality-tendermint = { version = "0.1.0", default-features = false, git = "https://github.com/aerius-labs/substrate-tendermint", branch = "feat/madara", features = [
+  "std",
+] }
+sc-finality-tendermint = { version = "0.1.0", default-features = false, git = "https://github.com/aerius-labs/substrate-tendermint", branch = "feat/madara" }
 
 # Madara test runner
 madara-test-runner = { path = "madara-test-runner" }
