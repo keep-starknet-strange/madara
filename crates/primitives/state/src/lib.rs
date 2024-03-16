@@ -4,16 +4,18 @@
 #[doc(hidden)]
 extern crate alloc;
 
+use std::collections::HashMap;
+
 use blockifier::execution::contract_class::ContractClass;
-use blockifier::state::cached_state::{ContractStorageKey, StateChangesCount};
+use blockifier::state::cached_state::StateChangesCount;
 use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{StateReader, StateResult};
-use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
+use starknet_api::core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
-use starknet_api::stdlib::collections::HashMap;
 
 type ContractClassMapping = HashMap<ClassHash, ContractClass>;
+type ContractStorageKey = (ContractAddress, StorageKey);
 
 /// This trait allows to get the state changes of a starknet tx and therefore enables computing the
 /// fees.
@@ -48,11 +50,11 @@ impl StateReader for DictStateReader {
         Ok(nonce)
     }
 
-    fn get_compiled_contract_class(&mut self, class_hash: &ClassHash) -> StateResult<ContractClass> {
-        let contract_class = self.class_hash_to_class.get(class_hash).cloned();
+    fn get_compiled_contract_class(&mut self, class_hash: ClassHash) -> StateResult<ContractClass> {
+        let contract_class = self.class_hash_to_class.get(&class_hash).cloned();
         match contract_class {
             Some(contract_class) => Ok(contract_class),
-            None => Err(StateError::UndeclaredClassHash(*class_hash)),
+            None => Err(StateError::UndeclaredClassHash(class_hash)),
         }
     }
 

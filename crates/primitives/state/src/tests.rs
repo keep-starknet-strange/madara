@@ -1,7 +1,7 @@
 use blockifier::execution::contract_class::{ContractClass, ContractClassV0};
 use blockifier::state::errors::StateError;
 use blockifier::state::state_api::StateReader;
-use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
+use starknet_api::core::{ClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 
@@ -44,7 +44,7 @@ fn test_get_contract_class() {
 
     state.class_hash_to_class.insert(class_hash, contract_class.clone());
 
-    let result = state.get_compiled_contract_class(&class_hash).unwrap();
+    let result = state.get_compiled_contract_class(class_hash).unwrap();
     assert_eq!(result, contract_class);
 }
 
@@ -67,7 +67,7 @@ fn test_get_contract_class_undeclared_class_hash() {
 
     let undeclared_class_hash = ClassHash::default();
 
-    let result = state.get_compiled_contract_class(&undeclared_class_hash);
+    let result = state.get_compiled_contract_class(undeclared_class_hash);
     assert!(result.is_err());
 
     if let Err(StateError::UndeclaredClassHash(hash)) = result {

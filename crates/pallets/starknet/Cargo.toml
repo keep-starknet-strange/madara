@@ -38,15 +38,10 @@ mp-transactions = { workspace = true, features = ["scale-info"] }
 
 blockifier = { workspace = true, features = [
   "testing",
-  "parity-scale-codec",
-  "scale-info",
 ] }
 starknet-core = { workspace = true }
 starknet-crypto = { workspace = true, features = ["alloc"] }
-starknet_api = { workspace = true, features = [
-  "scale-info",
-  "parity-scale-codec",
-] }
+starknet_api = { workspace = true }
 
 # Substrate frame
 frame-benchmarking = { workspace = true, optional = true }
@@ -65,9 +60,7 @@ sp-std = { workspace = true }
 # Frame pallets
 
 # Other third party dependencies
-cairo-lang-casm-contract-class = { workspace = true, optional = true, features = [
-  "std",
-] }
+cairo-lang-starknet-classes = { workspace = true, optional = true }
 derive_more = { workspace = true }
 hashbrown = { workspace = true }
 hex = { workspace = true }
@@ -108,12 +101,10 @@ std = [
   "sp-inherents/std",
   # Starknet
   "starknet-crypto/std",
-  "blockifier/std",
   "mp-felt/std",
   "mp-sequencer-address/std",
   # Other third party dependencies
   "dep:reqwest",
-  "dep:cairo-lang-casm-contract-class",
   "parity-scale-codec/std",
   "starknet-core/std",
   "mp-simulations/std",

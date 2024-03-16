@@ -3,7 +3,6 @@ use std::path::PathBuf;
 use std::string::String;
 use std::vec::Vec;
 
-use blockifier::execution::contract_class::ContractClass as StarknetContractClass;
 use derive_more::Constructor;
 use mp_felt::Felt252Wrapper;
 use serde::de::Error;
@@ -78,7 +77,6 @@ impl GenesisLoader {
 #[serde(untagged)]
 pub enum ContractClass {
     Path { path: String, version: u8 },
-    Class(StarknetContractClass),
 }
 
 /// A struct containing predeployed accounts info.

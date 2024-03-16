@@ -5,18 +5,15 @@ use alloc::vec::Vec;
 
 use blockifier::abi::abi_utils::selector_from_name;
 use blockifier::abi::constants::{INITIAL_GAS_COST, TRANSACTION_GAS_COST};
-use blockifier::block_context::BlockContext;
-use blockifier::execution::entry_point::{
-    CallEntryPoint, CallInfo, CallType, EntryPointExecutionContext, ExecutionResources,
-};
+use blockifier::context::BlockContext;
+use blockifier::execution::call_info::CallInfo;
+use blockifier::execution::entry_point::{CallEntryPoint, CallType, EntryPointExecutionContext};
 use blockifier::state::state_api::State;
 use blockifier::transaction::constants::{
     VALIDATE_DECLARE_ENTRY_POINT_NAME, VALIDATE_DEPLOY_ENTRY_POINT_NAME, VALIDATE_ENTRY_POINT_NAME,
 };
 use blockifier::transaction::errors::TransactionExecutionError;
-use blockifier::transaction::objects::{
-    AccountTransactionContext, ResourcesMapping, TransactionExecutionInfo, TransactionExecutionResult,
-};
+use blockifier::transaction::objects::{ResourcesMapping, TransactionExecutionInfo, TransactionExecutionResult};
 use blockifier::transaction::transaction_types::TransactionType;
 use blockifier::transaction::transaction_utils::{update_remaining_gas, verify_no_calls_to_other_contracts};
 use blockifier::transaction::transactions::{
@@ -132,6 +129,7 @@ impl GetAccountTransactionContext for InvokeTransaction {
         let mut version = match self.tx {
             starknet_api::transaction::InvokeTransaction::V0(_) => TransactionVersion(StarkFelt::from(0u8)),
             starknet_api::transaction::InvokeTransaction::V1(_) => TransactionVersion(StarkFelt::from(1u8)),
+            starknet_api::transaction::InvokeTransaction::V3(_) => TransactionVersion(StarkFelt::from(3u8)),
         };
         if offset_version {
             version = version.apply_simulate_tx_version_offset();
@@ -140,11 +138,13 @@ impl GetAccountTransactionContext for InvokeTransaction {
         let nonce = match &self.tx {
             starknet_api::transaction::InvokeTransaction::V0(_) => Nonce::default(),
             starknet_api::transaction::InvokeTransaction::V1(tx) => tx.nonce,
+            starknet_api::transaction::InvokeTransaction::V3(tx) => tx.nonce,
         };
 
         let sender_address = match &self.tx {
             starknet_api::transaction::InvokeTransaction::V0(tx) => tx.contract_address,
             starknet_api::transaction::InvokeTransaction::V1(tx) => tx.sender_address,
+            starknet_api::transaction::InvokeTransaction::V3(tx) => tx.sender_address,
         };
 
         AccountTransactionContext {
@@ -412,39 +412,6 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
 
         Ok(tx_execution_info)
     }
-
-    #[allow(clippy::too_many_arguments)]
-    fn handle_fee<S: State + StateChanges>(
-        &self,
-        state: &mut S,
-        execute_call_info: &Option<CallInfo>,
-        validate_call_info: &Option<CallInfo>,
-        execution_resources: &mut ExecutionResources,
-        block_context: &BlockContext,
-        account_tx_context: AccountTransactionContext,
-        execution_config: &ExecutionConfig,
-    ) -> TransactionExecutionResult<(Fee, Option<CallInfo>, ResourcesMapping)> {
-        let actual_resources = compute_transaction_resources(
-            state,
-            execute_call_info,
-            validate_call_info,
-            execution_resources,
-            Self::tx_type(),
-            None,
-        )?;
-
-        let (actual_fee, fee_transfer_call_info) = charge_fee(
-            state,
-            block_context,
-            account_tx_context,
-            &actual_resources,
-            execution_config.disable_transaction_fee,
-            execution_config.disable_fee_charge,
-            execution_config.is_query,
-        )?;
-
-        Ok((actual_fee, fee_transfer_call_info, actual_resources))
-    }
 }
 
 impl Validate for InvokeTransaction {
@@ -495,6 +462,17 @@ impl Execute for InvokeTransaction {
                     }
                 }
             }
+            starknet_api::transaction::InvokeTransaction::V3(_) => {
+                match self.run_execute(state, resources, &mut context, remaining_gas) {
+                    Ok(execute_call_info) => {
+                        ValidateExecuteCallInfo::new_accepted(validate_call_info, execute_call_info)
+                    }
+                    Err(e) => {
+                        log::debug!("Invoke transaction reverted with error: {:?}", e);
+                        ValidateExecuteCallInfo::new_reverted(validate_call_info, context.error_trace())
+                    }
+                }
+            }
         };
 
         Ok(validate_execute_call_info)
@@ -533,7 +511,8 @@ impl Execute for DeclareTransaction {
                 ValidateExecuteCallInfo::new_accepted(validate_call_info, execute_call_info)
             }
             starknet_api::transaction::DeclareTransaction::V1(_)
-            | starknet_api::transaction::DeclareTransaction::V2(_) => {
+            | starknet_api::transaction::DeclareTransaction::V2(_)
+            | starknet_api::transaction::DeclareTransaction::V3(_) => {
                 match self.run_execute(state, resources, &mut context, remaining_gas) {
                     Ok(execute_call_info) => {
                         ValidateExecuteCallInfo::new_accepted(validate_call_info, execute_call_info)
@@ -604,41 +583,6 @@ impl Execute for L1HandlerTransaction {
 
         Ok(ValidateExecuteCallInfo::new_accepted(None, execute_call_info))
     }
-
-    // No fee are charged for L1HandlerTransaction
-    fn handle_fee<S: State + StateChanges>(
-        &self,
-        state: &mut S,
-        execute_call_info: &Option<CallInfo>,
-        validate_call_info: &Option<CallInfo>,
-        execution_resources: &mut ExecutionResources,
-        block_context: &BlockContext,
-        _account_tx_context: AccountTransactionContext,
-        _execution_config: &ExecutionConfig,
-    ) -> TransactionExecutionResult<(Fee, Option<CallInfo>, ResourcesMapping)> {
-        // The calldata includes the "from" field, which is not a part of the payload.
-        let l1_handler_payload_size = self.calldata().0.len() - 1;
-
-        let actual_resources = compute_transaction_resources(
-            state,
-            execute_call_info,
-            validate_call_info,
-            execution_resources,
-            Self::tx_type(),
-            Some(l1_handler_payload_size),
-        )?;
-
-        let actual_fee = calculate_tx_fee(&actual_resources, block_context)?;
-
-        let paid_fee = self.paid_fee_on_l1;
-        // For now, assert only that any amount of fee was paid.
-        // The error message still indicates the required fee.
-        if paid_fee == Fee(0) {
-            return Err(TransactionExecutionError::InsufficientL1Fee { paid_fee, actual_fee });
-        }
-
-        Ok((Fee::default(), None, actual_resources))
-    }
 }
 
 #[cfg(test)]
@@ -682,6 +626,7 @@ mod simulate_tx_offset {
             tx: Default::default(),
             tx_hash: Default::default(),
             contract_address: Default::default(),
+            only_query: false,
         };
 
         let original_version = deploy_account_tx.tx.version;
@@ -723,6 +668,7 @@ mod simulate_tx_offset {
         let invoke_tx = InvokeTransaction {
             tx: starknet_api::transaction::InvokeTransaction::V0(Default::default()),
             tx_hash: Default::default(),
+            only_query: false,
         };
 
         // gen TxVersion from v0 manually

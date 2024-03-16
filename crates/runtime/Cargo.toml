@@ -102,8 +102,6 @@ std = [
   # 3rd party dependencies
   "parity-scale-codec/std",
   "scale-info/std",
-  "blockifier/std",
-  "starknet_api/std",
 ]
 try-runtime = [
   "pallet-timestamp/try-runtime",

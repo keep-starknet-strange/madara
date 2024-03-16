@@ -488,6 +488,7 @@ pub mod pallet {
             let sender_address = match &transaction.tx {
                 starknet_api::transaction::InvokeTransaction::V0(tx) => tx.contract_address,
                 starknet_api::transaction::InvokeTransaction::V1(tx) => tx.sender_address,
+                starknet_api::transaction::InvokeTransaction::V3(tx) => tx.sender_address,
             };
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(sender_address), Error::<T>::AccountNotDeployed);

@@ -3,7 +3,7 @@ use alloc::sync::Arc;
 use blockifier::execution::contract_class::ContractClass;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::pedersen::PedersenHasher;
-use starknet_api::api_core::{calculate_contract_address, ContractAddress, PatriciaKey};
+use starknet_api::core::{calculate_contract_address, ContractAddress, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::Calldata;
 use starknet_crypto::FieldElement;

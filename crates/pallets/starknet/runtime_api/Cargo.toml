@@ -22,16 +22,10 @@ mp-transactions = { workspace = true, features = [
 ] }
 
 # Starknet
-blockifier = { workspace = true, features = [
-  "parity-scale-codec",
-  "scale-info",
-] }
+blockifier = { workspace = true }
 hashbrown = { workspace = true }
 starknet-core = { workspace = true }
-starknet_api = { workspace = true, features = [
-  "scale-info",
-  "parity-scale-codec",
-] }
+starknet_api = { workspace = true }
 
 # Substrate
 parity-scale-codec = { workspace = true, features = ["derive"] }
@@ -46,8 +40,6 @@ default = ["std"]
 std = [
   "mp-felt/std",
   "mp-transactions/std",
-  "blockifier/std",
-  "starknet_api/std",
   "sp-api/std",
   "sp-runtime/std",
   "sp-arithmetic/std",

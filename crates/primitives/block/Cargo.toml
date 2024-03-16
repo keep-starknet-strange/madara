@@ -43,8 +43,6 @@ std = [
   "mp-fee/std",
   "mp-transactions/std",
   "mp-hashers/std",
-  "starknet_api/std",
-  "blockifier/std",
   "serde/std",
   # Optionals
   "parity-scale-codec?/std",
@@ -55,12 +53,8 @@ parity-scale-codec = [
   "mp-felt/parity-scale-codec",
   "mp-fee/parity-scale-codec",
   "mp-transactions/parity-scale-codec",
-  "starknet_api/parity-scale-codec",
-  "blockifier/parity-scale-codec",
 ]
 scale-info = [
   "dep:scale-info",
   "mp-felt/scale-info",
-  "starknet_api/scale-info",
-  "blockifier/scale-info",
 ]
