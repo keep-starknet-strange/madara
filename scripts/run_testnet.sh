@@ -14,34 +14,34 @@ trap cleanup EXIT
 # build release
 cargo build --release
 
-# copy configs from local
-./target/release/madara setup --from-local ./configs/ --chain=local --base-path /tmp/alice
+# copy configs from dev
+./target/release/madara setup --from-local ./configs/ --chain=dev --base-path /tmp/alice
 
-# copy configs over from local
-./target/release/madara setup --from-local ./configs/ --chain=local --base-path /tmp/node1
+# copy configs over from dev
+./target/release/madara setup --from-local ./configs/ --chain=dev --base-path /tmp/node1
 
 # purge validator chain
-./target/release/madara purge-chain --base-path /tmp/alice --chain local -y
+./target/release/madara purge-chain --base-path /tmp/alice --chain dev -y
 
 # purge node chain
-./target/release/madara purge-chain --base-path /tmp/node1 --chain local -y
+./target/release/madara purge-chain --base-path /tmp/node1 --chain dev -y
 
 # run validator in background instance
 ./target/release/madara \
---base-path /tmp/alice \
---chain local \
+--base-path=/tmp/alice \
+--chain=dev \
 --alice \
---node-key 0000000000000000000000000000000000000000000000000000000000000001 \
+--node-key=0000000000000000000000000000000000000000000000000000000000000001 \
 --validator  > validator_output.txt 2>&1 &
 validator_pid=$!
 
 
 # run node in another background instance
  ./target/release/madara \
---chain local \
---bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp \
---base-path /tmp/node1 \
---rpc-port 9946  > node_output.txt 2>&1 &
+--chain=dev \
+--bootnodes=/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp \
+--base-path=/tmp/node1 \
+--rpc-port=9946  > node_output.txt 2>&1 &
 node_pid=$!
 
 # Give some time for the services to start and produce output
