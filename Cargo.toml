@@ -315,7 +315,7 @@ flate2 = "1.0.28"
 parity-scale-codec = { version = "3.2.2", default-features = false, features = [
   "std",
 ] }
-scale-info = { version = "2.10.0", default-features = false, features = [
+scale-info = { version = "2.11.0", default-features = false, features = [
   "std",
 ] }
 lazy_static = { version = "1.4.0", default-features = false }
