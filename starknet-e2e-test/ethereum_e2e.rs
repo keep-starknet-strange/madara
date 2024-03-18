@@ -1,4 +1,3 @@
-extern crate core;
 extern crate starknet_e2e_test;
 use std::str::FromStr;
 use std::time::Duration;

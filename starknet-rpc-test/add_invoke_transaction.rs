@@ -1,5 +1,3 @@
-extern crate starknet_rpc_test;
-
 use std::vec;
 
 use assert_matches::assert_matches;

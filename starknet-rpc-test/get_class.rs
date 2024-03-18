@@ -1,5 +1,3 @@
-extern crate starknet_rpc_test;
-
 use std::io::Read;
 
 use assert_matches::assert_matches;
