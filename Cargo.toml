@@ -310,7 +310,7 @@ zaun-sandbox = { git = "https://github.com/keep-starknet-strange/zaun", package 
 starknet-core-contract-client = { git = "https://github.com/keep-starknet-strange/zaun" }
 
 # Other third party dependencies
-anyhow = "1.0.80"
+anyhow = "1.0.81"
 flate2 = "1.0.28"
 parity-scale-codec = { version = "3.2.2", default-features = false, features = [
   "std",

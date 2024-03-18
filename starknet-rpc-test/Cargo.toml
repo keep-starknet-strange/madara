@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 
-anyhow = "1.0.80"
+anyhow = "1.0.81"
 assert_matches = "1.5.0"
 async-lock = "3.1.0"
 async-trait = { workspace = true }
