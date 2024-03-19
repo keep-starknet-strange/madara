@@ -85,8 +85,8 @@ async fn returns_correct_state_diff_declare(madara: &ThreadSafeMadaraClient) -> 
 
     let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let (declare_tx, expected_class_hash, expected_compiled_class_hash) = account.declare_contract(
-        "./contracts/counter6/counter6.contract_class.json",
-        "./contracts/counter6/counter6.compiled_contract_class.json",
+        "../starknet-rpc-test/contracts/counter6/counter6.contract_class.json",
+        "../starknet-rpc-test/contracts/counter6/counter6.compiled_contract_class.json",
     );
 
     let (state_update, block_hash) = {

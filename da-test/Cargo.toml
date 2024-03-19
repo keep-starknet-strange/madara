@@ -18,7 +18,7 @@ serde = { workspace = true, default-features = true }
 serde_json = { workspace = true, default-features = true }
 starknet-ff = { workspace = true, default-features = true }
 starknet-providers = { workspace = true, default-features = true }
-starknet-rpc-test = { path = "../starknet-rpc-test" }
+starknet-test-utils = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["rt", "macros", "parking_lot"] }
 url = { workspace = true }

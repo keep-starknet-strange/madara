@@ -112,9 +112,9 @@ impl StarknetTokenBridge {
             vec![
                 FieldElement::from_hex_be("0x0469e62e2db14948db2579f7e0271759c9944937ac56b0a3698f386b22e49363")
                     .unwrap(), // class_hash
-                FieldElement::from_dec_str(&*random.to_string()).unwrap(), // contract_address_salt
-                FieldElement::ONE,                                         // constructor_calldata_len
-                FieldElement::ZERO,                                        // constructor_calldata (upgrade_delay)
+                FieldElement::from_dec_str(&random.to_string()).unwrap(), // contract_address_salt
+                FieldElement::ONE,                                        // constructor_calldata_len
+                FieldElement::ZERO,                                       // constructor_calldata (upgrade_delay)
             ],
             None,
         );

@@ -81,6 +81,6 @@ pub fn pad_bytes(address: Address) -> Vec<u8> {
     let address_bytes = address.as_bytes();
     let mut padded_address_bytes = Vec::with_capacity(32);
     padded_address_bytes.extend(vec![0u8; 32 - address_bytes.len()]);
-    padded_address_bytes.extend_from_slice(&address_bytes);
+    padded_address_bytes.extend_from_slice(address_bytes);
     padded_address_bytes
 }

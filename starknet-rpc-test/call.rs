@@ -145,8 +145,8 @@ async fn works_on_mutable_call_without_modifying_storage(madara: &ThreadSafeMada
         let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
 
         let (declare_tx, class_hash, _) = account.declare_contract(
-            "./contracts/counter4/counter4.contract_class.json",
-            "./contracts/counter4/counter4.compiled_contract_class.json",
+            "../starknet-rpc-test/contracts/counter4/counter4.contract_class.json",
+            "../starknet-rpc-test/contracts/counter4/counter4.compiled_contract_class.json",
         );
         let contract_factory = ContractFactory::new(class_hash, account.clone());
 

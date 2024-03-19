@@ -75,7 +75,7 @@ impl StarknetLegacyEthBridge {
 
         let mut padded_messaging_bytes = Vec::with_capacity(32);
         padded_messaging_bytes.extend(vec![0u8; 32 - messaging_bytes.len()]);
-        padded_messaging_bytes.extend_from_slice(&messaging_bytes);
+        padded_messaging_bytes.extend_from_slice(messaging_bytes);
 
         let mut calldata = Vec::new();
         calldata.extend(empty_bytes);
@@ -146,7 +146,6 @@ impl StarknetLegacyEthBridge {
     pub async fn eth_balance(&self, l1_recipient: Address) -> U256 {
         let provider = self.eth_bridge.client().provider().clone();
 
-        let balance = provider.get_balance(l1_recipient, None).await.unwrap();
-        balance
+        provider.get_balance(l1_recipient, None).await.unwrap()
     }
 }

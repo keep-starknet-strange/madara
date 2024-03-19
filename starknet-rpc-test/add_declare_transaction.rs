@@ -20,8 +20,8 @@ async fn fail_validation_step(madara: &ThreadSafeMadaraClient) -> Result<(), any
         // using incorrect private key to generate the wrong signature
         let account = build_single_owner_account(&rpc, "0x1234", ARGENT_CONTRACT_ADDRESS, true);
         let (declare_tx, _, _) = account.declare_contract(
-            "./contracts/counter0/counter0.contract_class.json",
-            "./contracts/counter0/counter0.compiled_contract_class.json",
+            "../starknet-rpc-test/contracts/counter0/counter0.contract_class.json",
+            "../starknet-rpc-test/contracts/counter0/counter0.compiled_contract_class.json",
         );
 
         let mut madara_write_lock = madara.write().await;
@@ -50,8 +50,8 @@ async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraCli
 
     let oz_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, OZ_CONTRACT_ADDRESS, true);
     let (declare_tx, expected_class_hash, _) = oz_account.declare_contract(
-        "./contracts/counter1/counter1.contract_class.json",
-        "./contracts/counter1/counter1.compiled_contract_class.json",
+        "../starknet-rpc-test/contracts/counter1/counter1.contract_class.json",
+        "../starknet-rpc-test/contracts/counter1/counter1.compiled_contract_class.json",
     );
 
     let (block_number, txs) = {
@@ -93,8 +93,8 @@ async fn works_with_storage_change(madara: &ThreadSafeMadaraClient) -> Result<()
 
     let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let (declare_tx, expected_class_hash, _) = account.declare_contract(
-        "./contracts/counter2/counter2.contract_class.json",
-        "./contracts/counter2/counter2.compiled_contract_class.json",
+        "../starknet-rpc-test/contracts/counter2/counter2.contract_class.json",
+        "../starknet-rpc-test/contracts/counter2/counter2.compiled_contract_class.json",
     );
 
     let (mut txs, block_number) = {
@@ -130,8 +130,8 @@ async fn fails_already_declared(madara: &ThreadSafeMadaraClient) -> Result<(), a
     // first declaration works
     let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let (declare_tx, _, _) = account.declare_contract(
-        "./contracts/counter3/counter3.contract_class.json",
-        "./contracts/counter3/counter3.compiled_contract_class.json",
+        "../starknet-rpc-test/contracts/counter3/counter3.contract_class.json",
+        "../starknet-rpc-test/contracts/counter3/counter3.compiled_contract_class.json",
     );
 
     let mut madara_write_lock = madara.write().await;
@@ -143,8 +143,8 @@ async fn fails_already_declared(madara: &ThreadSafeMadaraClient) -> Result<(), a
 
     // second declaration fails
     let (declare_tx, _, _) = account.declare_contract(
-        "./contracts/counter3/counter3.contract_class.json",
-        "./contracts/counter3/counter3.compiled_contract_class.json",
+        "../starknet-rpc-test/contracts/counter3/counter3.contract_class.json",
+        "../starknet-rpc-test/contracts/counter3/counter3.compiled_contract_class.json",
     );
 
     let mut txs = madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
