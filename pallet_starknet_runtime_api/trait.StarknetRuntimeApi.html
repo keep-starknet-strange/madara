@@ -17,7 +17,7 @@
         address: ContractAddress,
         function_selector: EntryPointSelector,
         calldata: Calldata
-    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;Felt252Wrapper&gt;, DispatchError&gt;, ApiError&gt; { ... }
+    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="struct" href="../mp_felt/struct.Felt252Wrapper.html" title="struct mp_felt::Felt252Wrapper">Felt252Wrapper</a>&gt;, DispatchError&gt;, ApiError&gt; { ... }
 <span class="item-spacer"></span>    fn <a href="#method.contract_class_hash_by_address" class="fn">contract_class_hash_by_address</a>(
         &amp;self,
         __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
@@ -31,11 +31,11 @@
 <span class="item-spacer"></span>    fn <a href="#method.chain_id" class="fn">chain_id</a>(
         &amp;self,
         __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash
-    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;Felt252Wrapper, ApiError&gt; { ... }
+    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="../mp_felt/struct.Felt252Wrapper.html" title="struct mp_felt::Felt252Wrapper">Felt252Wrapper</a>, ApiError&gt; { ... }
 <span class="item-spacer"></span>    fn <a href="#method.program_hash" class="fn">program_hash</a>(
         &amp;self,
         __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash
-    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;Felt252Wrapper, ApiError&gt; { ... }
+    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="../mp_felt/struct.Felt252Wrapper.html" title="struct mp_felt::Felt252Wrapper">Felt252Wrapper</a>, ApiError&gt; { ... }
 <span class="item-spacer"></span>    fn <a href="#method.config_hash" class="fn">config_hash</a>(
         &amp;self,
         __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash
@@ -58,14 +58,14 @@
         &amp;self,
         __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
         message: <a class="struct" href="../mp_transactions/struct.HandleL1MessageTransaction.html" title="struct mp_transactions::HandleL1MessageTransaction">HandleL1MessageTransaction</a>,
-        simulation_flags: SimulationFlags
-    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt;, ApiError&gt; { ... }
+        simulation_flags: <a class="struct" href="../mp_simulations/struct.SimulationFlags.html" title="struct mp_simulations::SimulationFlags">SimulationFlags</a>
+    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;TransactionExecutionInfo, <a class="struct" href="../mp_simulations/struct.PlaceHolderErrorTypeForFailedStarknetExecution.html" title="struct mp_simulations::PlaceHolderErrorTypeForFailedStarknetExecution">PlaceHolderErrorTypeForFailedStarknetExecution</a>&gt;, DispatchError&gt;, ApiError&gt; { ... }
 <span class="item-spacer"></span>    fn <a href="#method.simulate_transactions" class="fn">simulate_transactions</a>(
         &amp;self,
         __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
         transactions: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="enum" href="../mp_transactions/enum.UserTransaction.html" title="enum mp_transactions::UserTransaction">UserTransaction</a>&gt;,
-        simulation_flags: SimulationFlags
-    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt;, DispatchError&gt;, ApiError&gt; { ... }
+        simulation_flags: <a class="struct" href="../mp_simulations/struct.SimulationFlags.html" title="struct mp_simulations::SimulationFlags">SimulationFlags</a>
+    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;(CommitmentStateDiff, <a class="type" href="../mp_simulations/type.TransactionSimulationResult.html" title="type mp_simulations::TransactionSimulationResult">TransactionSimulationResult</a>)&gt;, DispatchError&gt;, ApiError&gt; { ... }
 <span class="item-spacer"></span>    fn <a href="#method.extrinsic_filter" class="fn">extrinsic_filter</a>(
         &amp;self,
         __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
@@ -75,13 +75,13 @@
         &amp;self,
         __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
         transactions: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="enum" href="../mp_transactions/enum.UserOrL1HandlerTransaction.html" title="enum mp_transactions::UserOrL1HandlerTransaction">UserOrL1HandlerTransaction</a>&gt;
-    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;(TransactionExecutionInfo, CommitmentStateDiff)&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt;, ApiError&gt; { ... }
+    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;(TransactionExecutionInfo, CommitmentStateDiff)&gt;, <a class="struct" href="../mp_simulations/struct.PlaceHolderErrorTypeForFailedStarknetExecution.html" title="struct mp_simulations::PlaceHolderErrorTypeForFailedStarknetExecution">PlaceHolderErrorTypeForFailedStarknetExecution</a>&gt;, DispatchError&gt;, ApiError&gt; { ... }
 <span class="item-spacer"></span>    fn <a href="#method.get_index_and_tx_for_tx_hash" class="fn">get_index_and_tx_for_tx_hash</a>(
         &amp;self,
         __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
         xts: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;&lt;Block as BlockT&gt;::Extrinsic&gt;,
-        chain_id: Felt252Wrapper,
-        tx_hash: Felt252Wrapper
+        chain_id: <a class="struct" href="../mp_felt/struct.Felt252Wrapper.html" title="struct mp_felt::Felt252Wrapper">Felt252Wrapper</a>,
+        tx_hash: <a class="struct" href="../mp_felt/struct.Felt252Wrapper.html" title="struct mp_felt::Felt252Wrapper">Felt252Wrapper</a>
     ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;(<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>, <a class="enum" href="../mp_transactions/enum.Transaction.html" title="enum mp_transactions::Transaction">Transaction</a>)&gt;, ApiError&gt; { ... }
 <span class="item-spacer"></span>    fn <a href="#method.get_events_for_tx_by_hash" class="fn">get_events_for_tx_by_hash</a>(
         &amp;self,
@@ -128,7 +128,7 @@
     address: ContractAddress,
     function_selector: EntryPointSelector,
     calldata: Calldata
-) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;Felt252Wrapper&gt;, DispatchError&gt;, ApiError&gt;</h4></section></summary><div class="docblock"><p>Returns a <code>Call</code> response.</p>
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="struct" href="../mp_felt/struct.Felt252Wrapper.html" title="struct mp_felt::Felt252Wrapper">Felt252Wrapper</a>&gt;, DispatchError&gt;, ApiError&gt;</h4></section></summary><div class="docblock"><p>Returns a <code>Call</code> response.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.contract_class_hash_by_address" class="method"><a class="src rightside" href="../src/pallet_starknet_runtime_api/lib.rs.html#37-102">source</a><h4 class="code-header">fn <a href="#method.contract_class_hash_by_address" class="fn">contract_class_hash_by_address</a>(
     &amp;self,
     __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
@@ -142,11 +142,11 @@
 </div></details><details class="toggle method-toggle" open><summary><section id="method.chain_id" class="method"><a class="src rightside" href="../src/pallet_starknet_runtime_api/lib.rs.html#37-102">source</a><h4 class="code-header">fn <a href="#method.chain_id" class="fn">chain_id</a>(
     &amp;self,
     __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash
-) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;Felt252Wrapper, ApiError&gt;</h4></section></summary><div class="docblock"><p>Returns the chain id.</p>
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="../mp_felt/struct.Felt252Wrapper.html" title="struct mp_felt::Felt252Wrapper">Felt252Wrapper</a>, ApiError&gt;</h4></section></summary><div class="docblock"><p>Returns the chain id.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.program_hash" class="method"><a class="src rightside" href="../src/pallet_starknet_runtime_api/lib.rs.html#37-102">source</a><h4 class="code-header">fn <a href="#method.program_hash" class="fn">program_hash</a>(
     &amp;self,
     __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash
-) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;Felt252Wrapper, ApiError&gt;</h4></section></summary><div class="docblock"><p>Returns the Starknet OS Cairo program hash.</p>
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="../mp_felt/struct.Felt252Wrapper.html" title="struct mp_felt::Felt252Wrapper">Felt252Wrapper</a>, ApiError&gt;</h4></section></summary><div class="docblock"><p>Returns the Starknet OS Cairo program hash.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.config_hash" class="method"><a class="src rightside" href="../src/pallet_starknet_runtime_api/lib.rs.html#37-102">source</a><h4 class="code-header">fn <a href="#method.config_hash" class="fn">config_hash</a>(
     &amp;self,
     __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash
@@ -169,14 +169,14 @@
     &amp;self,
     __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
     message: <a class="struct" href="../mp_transactions/struct.HandleL1MessageTransaction.html" title="struct mp_transactions::HandleL1MessageTransaction">HandleL1MessageTransaction</a>,
-    simulation_flags: SimulationFlags
-) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt;, ApiError&gt;</h4></section></summary><div class="docblock"><p>Simulates single L1 Message and returns its trace</p>
+    simulation_flags: <a class="struct" href="../mp_simulations/struct.SimulationFlags.html" title="struct mp_simulations::SimulationFlags">SimulationFlags</a>
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;TransactionExecutionInfo, <a class="struct" href="../mp_simulations/struct.PlaceHolderErrorTypeForFailedStarknetExecution.html" title="struct mp_simulations::PlaceHolderErrorTypeForFailedStarknetExecution">PlaceHolderErrorTypeForFailedStarknetExecution</a>&gt;, DispatchError&gt;, ApiError&gt;</h4></section></summary><div class="docblock"><p>Simulates single L1 Message and returns its trace</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.simulate_transactions" class="method"><a class="src rightside" href="../src/pallet_starknet_runtime_api/lib.rs.html#37-102">source</a><h4 class="code-header">fn <a href="#method.simulate_transactions" class="fn">simulate_transactions</a>(
     &amp;self,
     __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
     transactions: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="enum" href="../mp_transactions/enum.UserTransaction.html" title="enum mp_transactions::UserTransaction">UserTransaction</a>&gt;,
-    simulation_flags: SimulationFlags
-) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt;, DispatchError&gt;, ApiError&gt;</h4></section></summary><div class="docblock"><p>Simulates transactions and returns their trace</p>
+    simulation_flags: <a class="struct" href="../mp_simulations/struct.SimulationFlags.html" title="struct mp_simulations::SimulationFlags">SimulationFlags</a>
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;(CommitmentStateDiff, <a class="type" href="../mp_simulations/type.TransactionSimulationResult.html" title="type mp_simulations::TransactionSimulationResult">TransactionSimulationResult</a>)&gt;, DispatchError&gt;, ApiError&gt;</h4></section></summary><div class="docblock"><p>Simulates transactions and returns their trace</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.extrinsic_filter" class="method"><a class="src rightside" href="../src/pallet_starknet_runtime_api/lib.rs.html#37-102">source</a><h4 class="code-header">fn <a href="#method.extrinsic_filter" class="fn">extrinsic_filter</a>(
     &amp;self,
     __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
@@ -192,13 +192,13 @@ client to operate seamlessly while abstracting the extrinsic complexity.</p>
     &amp;self,
     __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
     transactions: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="enum" href="../mp_transactions/enum.UserOrL1HandlerTransaction.html" title="enum mp_transactions::UserOrL1HandlerTransaction">UserOrL1HandlerTransaction</a>&gt;
-) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;(TransactionExecutionInfo, CommitmentStateDiff)&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt;, ApiError&gt;</h4></section></summary><div class="docblock"><p>Re-execute a block and return the TransactionExecutionInfos of every transaction in it, in the same order</p>
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;(TransactionExecutionInfo, CommitmentStateDiff)&gt;, <a class="struct" href="../mp_simulations/struct.PlaceHolderErrorTypeForFailedStarknetExecution.html" title="struct mp_simulations::PlaceHolderErrorTypeForFailedStarknetExecution">PlaceHolderErrorTypeForFailedStarknetExecution</a>&gt;, DispatchError&gt;, ApiError&gt;</h4></section></summary><div class="docblock"><p>Re-execute a block and return the TransactionExecutionInfos of every transaction in it, in the same order</p>
 </div></details><section id="method.get_index_and_tx_for_tx_hash" class="method"><a class="src rightside" href="../src/pallet_starknet_runtime_api/lib.rs.html#37-102">source</a><h4 class="code-header">fn <a href="#method.get_index_and_tx_for_tx_hash" class="fn">get_index_and_tx_for_tx_hash</a>(
     &amp;self,
     __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
     xts: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;&lt;Block as BlockT&gt;::Extrinsic&gt;,
-    chain_id: Felt252Wrapper,
-    tx_hash: Felt252Wrapper
+    chain_id: <a class="struct" href="../mp_felt/struct.Felt252Wrapper.html" title="struct mp_felt::Felt252Wrapper">Felt252Wrapper</a>,
+    tx_hash: <a class="struct" href="../mp_felt/struct.Felt252Wrapper.html" title="struct mp_felt::Felt252Wrapper">Felt252Wrapper</a>
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;(<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>, <a class="enum" href="../mp_transactions/enum.Transaction.html" title="enum mp_transactions::Transaction">Transaction</a>)&gt;, ApiError&gt;</h4></section><section id="method.get_events_for_tx_by_hash" class="method"><a class="src rightside" href="../src/pallet_starknet_runtime_api/lib.rs.html#37-102">source</a><h4 class="code-header">fn <a href="#method.get_events_for_tx_by_hash" class="fn">get_events_for_tx_by_hash</a>(
     &amp;self,
     __runtime_api_at_param__: &lt;Block as BlockT&gt;::Hash,
