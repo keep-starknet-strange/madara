@@ -5,7 +5,7 @@ use std::io::Read;
 use assert_matches::assert_matches;
 use flate2::read::GzDecoder;
 use rstest::rstest;
-use starknet_core::types::contract::legacy::{LegacyContractClass, LegacyProgram};
+use starknet_core::types::contract::legacy::LegacyContractClass;
 use starknet_core::types::contract::SierraClass;
 use starknet_core::types::{BlockId, ContractClass, FlattenedSierraClass, StarknetError};
 use starknet_ff::FieldElement;
