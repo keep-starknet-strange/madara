@@ -525,3 +525,32 @@ fn test_verify_nonce_in_unsigned_tx() {
         );
     });
 }
+
+#[test]
+fn test_tx_fail_on_invalid_nonce_should_revert_storage() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let transaction = get_invoke_dummy(Felt252Wrapper::ZERO);
+
+        let tx_sender = transaction.sender_address.into();
+        let tx_source = TransactionSource::InBlock;
+        let call = Call::invoke { transaction: transaction.into() };
+
+        assert!(Starknet::validate_unsigned(tx_source, &call).is_ok());
+
+        set_nonce::<MockRuntime>(&tx_sender, &Nonce(StarkFelt::from(1u64)));
+
+        assert_eq!(
+            Starknet::validate_unsigned(tx_source, &call),
+            Err(TransactionValidityError::Invalid(InvalidTransaction::Stale))
+        );
+
+        let storage_key = (
+            tx_sender,
+            StorageKey(PatriciaKey(StarkFelt::from(0u128))),
+        );
+
+        assert_eq!(Starknet::storage(storage_key), StarkFelt::from(0u128));
+    });
+}
