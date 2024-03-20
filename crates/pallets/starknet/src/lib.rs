@@ -664,36 +664,41 @@ pub mod pallet {
             // Ensure that L1 Message has not been executed
             Self::ensure_l1_message_not_executed(&nonce).map_err(|_| Error::<T>::L1MessageAlreadyExecuted)?;
 
-            // Store information about message being processed
-            // The next instruction executes the message
-            // Either successfully  or not
-            L1Messages::<T>::mutate(|nonces| nonces.insert(nonce));
-
             // Execute
             let tx_execution_infos = transaction
                 .execute(
                     &mut BlockifierStateAdapter::<T>::default(),
                     &Self::get_block_context(),
                     &RuntimeExecutionConfigBuilder::new::<T>().build(),
-                )
-                .map_err(|e| {
+                );
+
+            match tx_execution_infos {
+                Ok(tx_exec_info) => {
+                    L1Messages::<T>::mutate(|nonces| nonces.insert(nonce));
+                    let tx_hash = transaction.tx_hash;
+                    Self::emit_and_store_tx_and_fees_events(
+                        tx_hash,
+                        &tx_exec_info.execute_call_info,
+                        &tx_exec_info.fee_transfer_call_info,
+                    );
+                    Self::store_transaction(
+                        tx_hash,
+                        Transaction::L1Handler(input_transaction),
+                        tx_exec_info.revert_error,
+                    );
+                    Ok(())
+                }
+                Err(e) => {
+                    // commit nonce even if txn fails to avoid replays
+                    storage::transactional::with_transaction(|| {
+                        storage::TransactionOutcome::Commit(Result::<_, DispatchError>::Ok(
+                            L1Messages::<T>::mutate(|nonces| nonces.insert(nonce))
+                        ))
+                    })?;
                     log::error!("Failed to consume l1 message: {}", e);
-                    Error::<T>::TransactionExecutionFailed
-                })?;
-
-            let tx_hash = transaction.tx_hash;
-            Self::emit_and_store_tx_and_fees_events(
-                tx_hash,
-                &tx_execution_infos.execute_call_info,
-                &tx_execution_infos.fee_transfer_call_info,
-            );
-            Self::store_transaction(
-                tx_hash,
-                Transaction::L1Handler(input_transaction),
-                tx_execution_infos.revert_error,
-            );
-
-            Ok(())
+                    Err(Error::<T>::TransactionExecutionFailed.into())
+                }
+            }
         }
     }
 
