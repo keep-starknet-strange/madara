@@ -26,6 +26,7 @@
 
 ## v0.7.0
 
+- fix: fixing build breakage for celestia/avail
 - chore: release v0.7.0
 - refacto: remove abusive `TryInto` impl
 - dev: optimize tx trace creation
