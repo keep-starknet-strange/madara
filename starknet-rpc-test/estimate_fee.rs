@@ -80,18 +80,20 @@ async fn fail_if_one_txn_cannot_be_executed(madara: &ThreadSafeMadaraClient) -> 
 #[tokio::test]
 async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
+    let sender_address = FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap();
+    let calldata = vec![
+        FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
+        get_selector_from_name("sqrt").unwrap(),
+        FieldElement::from_hex_be("1").unwrap(),
+        FieldElement::from(81u8),
+    ];
 
     let tx = BroadcastedInvokeTransaction {
         max_fee: FieldElement::ZERO,
         signature: vec![],
         nonce: FieldElement::ZERO,
-        sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap(),
-        calldata: vec![
-            FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
-            get_selector_from_name("sqrt").unwrap(),
-            FieldElement::from_hex_be("1").unwrap(),
-            FieldElement::from(81u8),
-        ],
+        sender_address,
+        calldata: calldata.clone(),
         is_query: true,
     };
 
@@ -103,13 +105,30 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
     let estimates =
         rpc.estimate_fee(&vec![invoke_transaction, invoke_transaction_2], BlockId::Tag(BlockTag::Latest)).await?;
 
-    // TODO: instead execute the tx and check that the actual fee are the same as the estimated ones
+    let tx = BroadcastedInvokeTransaction {
+        max_fee: FieldElement::from(210u16),
+        signature: vec![],
+        nonce: FieldElement::ZERO,
+        sender_address,
+        calldata,
+        is_query: false,
+    };
+
+    let invoke_transaction = BroadcastedTransaction::Invoke(tx.clone());
+
+    let invoke_transaction_2 =
+        BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction { nonce: FieldElement::ONE, ..tx });
+
+    let simulations = rpc
+        .simulate_transactions(BlockId::Tag(BlockTag::Latest), &[invoke_transaction, invoke_transaction_2], [])
+        .await?;
+    assert_eq!(simulations[0].fee_estimation.overall_fee, 210);
     assert_eq!(estimates.len(), 2);
-    assert_eq!(estimates[0].overall_fee, 210);
-    assert_eq!(estimates[1].overall_fee, 210);
+    assert_eq!(estimates[0].overall_fee, simulations[0].fee_estimation.overall_fee);
+    assert_eq!(estimates[1].overall_fee, simulations[1].fee_estimation.overall_fee);
     // https://starkscan.co/block/5
-    assert_eq!(estimates[0].gas_consumed, 0);
-    assert_eq!(estimates[1].gas_consumed, 0);
+    assert_eq!(estimates[0].gas_consumed, simulations[0].fee_estimation.gas_consumed);
+    assert_eq!(estimates[1].gas_consumed, simulations[1].fee_estimation.gas_consumed);
 
     Ok(())
 }
