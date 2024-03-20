@@ -990,8 +990,8 @@ dependencies = [
 
 [[package]]
 name = "blockifier"
-version = "0.5.0-rc.1"
-source = "git+https://github.com/bidzyyys/blockifier?branch=feature/scale-codec#947ad4505d39af8fe98b640538a1b9d93862d22d"
+version = "0.5.0-rc.3"
+source = "git+https://github.com/bidzyyys/blockifier?branch=feature/scale-codec#80796fd3876f1f79acce7e8331f3e2d4de7ed424"
 dependencies = [
  "anyhow",
  "ark-ec",
@@ -1012,6 +1012,7 @@ dependencies = [
  "log",
  "num-bigint",
  "num-integer",
+ "num-rational",
  "num-traits 0.2.17",
  "once_cell",
  "parity-scale-codec",
@@ -4646,7 +4647,7 @@ dependencies = [
  "httpdate",
  "itoa",
  "pin-project-lite 0.2.13",
- "socket2 0.5.5",
+ "socket2 0.4.10",
  "tokio",
  "tower-service",
  "tracing",
@@ -6798,7 +6799,6 @@ name = "mp-block"
 version = "0.7.0"
 dependencies = [
  "blockifier",
- "mp-fee",
  "mp-felt",
  "mp-hashers",
  "mp-transactions",
@@ -6833,18 +6833,8 @@ name = "mp-fee"
 version = "0.7.0"
 dependencies = [
  "blockifier",
- "cairo-vm",
- "hashbrown 0.14.3",
- "mp-felt",
- "mp-state",
- "parity-scale-codec",
- "phf",
- "scale-info",
- "serde",
- "serde_with",
- "sp-arithmetic 16.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "starknet-core",
- "starknet_api",
+ "frame-support",
+ "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
 ]
 
 [[package]]
@@ -6988,7 +6978,6 @@ dependencies = [
  "flate2",
  "indexmap 2.2.5",
  "log",
- "mp-fee",
  "mp-felt",
  "mp-hashers",
  "mp-state",
@@ -7402,6 +7391,7 @@ dependencies = [
  "num-bigint",
  "num-integer",
  "num-traits 0.2.17",
+ "serde",
 ]
 
 [[package]]
@@ -7693,11 +7683,11 @@ dependencies = [
  "assert_matches",
  "blockifier",
  "cairo-lang-starknet-classes",
+ "cairo-vm",
  "derive_more",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hashbrown 0.14.3",
  "hex",
  "hexlit",
  "indexmap 2.2.5",
@@ -13611,7 +13601,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.7",
- "rand 0.8.5",
+ "rand 0.7.3",
  "static_assertions",
 ]
 

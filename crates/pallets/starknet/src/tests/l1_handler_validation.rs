@@ -2,7 +2,7 @@ use assert_matches::assert_matches;
 use mp_felt::Felt252Wrapper;
 use mp_transactions::{HandleL1MessageTransaction, UserOrL1HandlerTransaction};
 use sp_runtime::transaction_validity::InvalidTransaction;
-use starknet_api::api_core::Nonce;
+use starknet_api::core::Nonce;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::Fee;
 

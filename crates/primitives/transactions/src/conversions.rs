@@ -13,7 +13,7 @@ use starknet_api::transaction::{Fee, TransactionVersion};
 use super::compute_hash::ComputeTransactionHash;
 use super::{
     DeclareTransaction, DeclareTransactionV0, DeclareTransactionV1, DeclareTransactionV2, DeployAccountTransaction,
-    HandleL1MessageTransaction, InvokeTransaction, InvokeTransactionV0, InvokeTransactionV1,
+    HandleL1MessageTransaction, InvokeTransaction, InvokeTransactionV1,
 };
 
 impl DeclareTransactionV0 {
@@ -113,28 +113,6 @@ impl DeclareTransaction {
     }
 }
 
-impl InvokeTransactionV0 {
-    pub fn into_executable<H: HasherT>(
-        &self,
-        chain_id: Felt252Wrapper,
-        offset_version: bool,
-    ) -> btx::InvokeTransaction {
-        let transaction_hash = self.compute_hash::<H>(chain_id, offset_version);
-
-        btx::InvokeTransaction {
-            tx: sttx::InvokeTransaction::V0(sttx::InvokeTransactionV0 {
-                max_fee: sttx::Fee(self.max_fee),
-                signature: vec_of_felt_to_signature(&self.signature),
-                contract_address: self.contract_address.into(),
-                entry_point_selector: self.entry_point_selector.into(),
-                calldata: vec_of_felt_to_calldata(&self.calldata),
-            }),
-            tx_hash: transaction_hash.into(),
-            only_query: offset_version,
-        }
-    }
-}
-
 impl InvokeTransactionV1 {
     pub fn into_executable<H: HasherT>(
         &self,
@@ -164,7 +142,6 @@ impl InvokeTransaction {
         offset_version: bool,
     ) -> btx::InvokeTransaction {
         match self {
-            InvokeTransaction::V0(tx) => tx.into_executable::<H>(chain_id, offset_version),
             InvokeTransaction::V1(tx) => tx.into_executable::<H>(chain_id, offset_version),
         }
     }

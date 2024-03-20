@@ -31,3 +31,5 @@ lazy_static! {
     pub static ref TEST_ACCOUNT_SALT: Felt252Wrapper =
         Felt252Wrapper::from_hex_be("0x0780f72e33c1508df24d8f00a96ecc6e08a850ecb09f7e6dff6a81624c0ef46a").unwrap();
 }
+
+pub const TRANSFER_SELECTOR_NAME: &str = "Transfer";

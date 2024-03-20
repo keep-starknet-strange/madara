@@ -7,7 +7,7 @@ use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{
     InvalidTransaction, TransactionSource, TransactionValidityError, ValidTransaction,
 };
-use starknet_api::api_core::{ClassHash, Nonce};
+use starknet_api::core::{ClassHash, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_crypto::FieldElement;
 

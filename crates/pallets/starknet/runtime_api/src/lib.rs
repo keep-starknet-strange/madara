@@ -5,8 +5,7 @@
 // Specifically, the macro generates a trait (`StarknetRuntimeApi`) with unused type parameters.
 #![allow(clippy::extra_unused_type_parameters)]
 
-use alloc::sync::Arc;
-
+use blockifier::context::{BlockContext, FeeTokenAddresses};
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::state::cached_state::CommitmentStateDiff;
 use blockifier::transaction::objects::TransactionExecutionInfo;
@@ -14,13 +13,11 @@ use mp_felt::Felt252Wrapper;
 use mp_transactions::{HandleL1MessageTransaction, Transaction, UserOrL1HandlerTransaction, UserTransaction};
 use sp_api::BlockT;
 pub extern crate alloc;
-use alloc::string::String;
 use alloc::vec::Vec;
 
 use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult};
 use sp_runtime::DispatchError;
-use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector, Nonce};
-use starknet_api::block::{BlockNumber, BlockTimestamp};
+use starknet_api::core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash};
@@ -53,11 +50,11 @@ sp_api::decl_runtime_apis! {
         /// Returns the Starknet config hash.
         fn config_hash() -> StarkHash;
         /// Returns the fee token address.
-        fn fee_token_address() -> ContractAddress;
+        fn fee_token_addresses() -> FeeTokenAddresses;
         /// Returns fee estimate
-        fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError>;
+        fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u128, u128)>, DispatchError>;
         /// Returns message fee estimate
-        fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), DispatchError>;
+        fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u128, u128), DispatchError>;
         /// Simulates single L1 Message and returns its trace
         fn simulate_message(message: HandleL1MessageTransaction, simulation_flags: SimulationFlags) -> Result<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError>;
         /// Simulates transactions and returns their trace
@@ -98,63 +95,5 @@ sp_api::decl_runtime_apis! {
 
         /// Converts the DispatchError to an understandable error for the client
         fn convert_error(error: DispatchError) -> StarknetTransactionExecutionError;
-    }
-}
-
-#[derive(Clone, Debug, parity_scale_codec::Encode, parity_scale_codec::Decode, scale_info::TypeInfo)]
-pub struct BlockContext {
-    pub chain_id: String,
-    pub block_number: u64,
-    pub block_timestamp: u64,
-
-    // Fee-related.
-    pub sequencer_address: ContractAddress,
-    pub fee_token_address: ContractAddress,
-    pub vm_resource_fee_cost: Vec<(String, sp_arithmetic::fixed_point::FixedU128)>,
-    pub gas_price: u128, // In wei.
-
-    // Limits.
-    pub invoke_tx_max_n_steps: u32,
-    pub validate_max_n_steps: u32,
-    pub max_recursion_depth: u32,
-}
-
-#[cfg(feature = "std")]
-use std::collections::HashMap;
-
-#[cfg(not(feature = "std"))]
-use hashbrown::HashMap;
-
-impl From<BlockContext> for blockifier::block_context::BlockContext {
-    fn from(value: BlockContext) -> Self {
-        Self {
-            chain_id: ChainId(value.chain_id),
-            block_number: BlockNumber(value.block_number),
-            block_timestamp: BlockTimestamp(value.block_timestamp),
-            sequencer_address: value.sequencer_address,
-            fee_token_address: value.fee_token_address,
-            vm_resource_fee_cost: Arc::new(HashMap::from_iter(value.vm_resource_fee_cost)),
-            gas_price: value.gas_price,
-            invoke_tx_max_n_steps: value.invoke_tx_max_n_steps,
-            validate_max_n_steps: value.validate_max_n_steps,
-            max_recursion_depth: value.max_recursion_depth,
-        }
-    }
-}
-
-impl From<blockifier::block_context::BlockContext> for BlockContext {
-    fn from(value: blockifier::block_context::BlockContext) -> Self {
-        Self {
-            chain_id: value.chain_id.0,
-            block_number: value.block_number.0,
-            block_timestamp: value.block_timestamp.0,
-            sequencer_address: value.sequencer_address,
-            fee_token_address: value.fee_token_address,
-            vm_resource_fee_cost: Vec::from_iter(value.vm_resource_fee_cost.iter().map(|(k, v)| (k.clone(), *v))),
-            gas_price: value.gas_price,
-            invoke_tx_max_n_steps: value.invoke_tx_max_n_steps,
-            validate_max_n_steps: value.validate_max_n_steps,
-            max_recursion_depth: value.max_recursion_depth,
-        }
     }
 }

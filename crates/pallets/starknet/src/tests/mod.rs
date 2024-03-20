@@ -1,9 +1,8 @@
-use blockifier::abi::abi_utils::get_erc20_balance_var_addresses;
 use blockifier::state::state_api::State;
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::{DeclareTransaction, DeclareTransactionV1, DeployAccountTransaction, InvokeTransactionV1};
-use starknet_api::api_core::{ContractAddress, Nonce};
+use starknet_api::core::{ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 
 use self::mock::default_mock::{MockRuntime, Starknet};
@@ -224,12 +223,16 @@ pub fn get_deploy_account_dummy(
 
 /// Sets the balance of the given address to infinite.
 pub fn set_infinite_tokens<T: Config>(contract_address: &ContractAddress) {
-    let fee_token_address = Starknet::fee_token_address();
+    let fee_token_addresses = Starknet::fee_token_addresses();
     let (low_key, high_key) = get_erc20_balance_var_addresses(contract_address).unwrap();
     let mut state_adapter = BlockifierStateAdapter::<T>::default();
 
-    state_adapter.set_storage_at(fee_token_address, low_key, StarkFelt::from(u64::MAX as u128));
-    state_adapter.set_storage_at(fee_token_address, high_key, StarkFelt::from(u64::MAX as u128));
+    state_adapter.set_storage_at(fee_token_addresses.eth_fee_token_address, low_key, StarkFelt::from(u64::MAX as u128));
+    state_adapter.set_storage_at(
+        fee_token_addresses.eth_fee_token_address,
+        high_key,
+        StarkFelt::from(u64::MAX as u128),
+    );
 }
 
 /// Sets nonce for the given address.

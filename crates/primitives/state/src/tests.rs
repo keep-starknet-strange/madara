@@ -63,7 +63,7 @@ fn test_get_class_hash_at() {
 
 #[test]
 fn test_get_contract_class_undeclared_class_hash() {
-    let mut state = DictStateReader::default();
+    let state = DictStateReader::default();
 
     let undeclared_class_hash = ClassHash::default();
 

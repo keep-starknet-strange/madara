@@ -42,7 +42,7 @@ pub enum BlockId {
 }
 
 /// Starknet block definition.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 pub struct Block {
     /// The block header.

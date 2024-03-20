@@ -11,8 +11,7 @@ use starknet_crypto::FieldElement;
 use crate::compute_hash::ComputeTransactionHash;
 use crate::{
     DeclareTransaction, DeclareTransactionV0, DeclareTransactionV1, DeclareTransactionV2, DeployAccountTransaction,
-    HandleL1MessageTransaction, InvokeTransaction, InvokeTransactionV0, InvokeTransactionV1, Transaction,
-    UserTransaction,
+    HandleL1MessageTransaction, InvokeTransaction, InvokeTransactionV1, Transaction, UserTransaction,
 };
 
 #[test]
@@ -173,39 +172,6 @@ fn test_declare_v2_tx_hash() {
     assert_eq!(tx_hash, expected_tx_hash);
 
     let user_transaction = UserTransaction::Declare(declare_v2_transaction, contract_class);
-    let tx_hash = user_transaction.compute_hash::<PedersenHasher>(chain_id, false);
-    assert_eq!(tx_hash, expected_tx_hash);
-}
-
-#[test]
-fn test_invoke_tx_v0_hash() {
-    // Computed with `calculate_transaction_hash_common` from the cairo lang package
-    let expected_tx_hash =
-        Felt252Wrapper::from_hex_be("0x0006a8aca140749156148fa84f432f7f7b7318c119d97dd1808848fc74d1a8a6").unwrap();
-
-    let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap());
-
-    let transaction = InvokeTransactionV0 {
-        max_fee: 1,
-        signature: vec![],
-        contract_address: Default::default(),
-        entry_point_selector: Default::default(),
-        calldata: vec![Felt252Wrapper::ONE, Felt252Wrapper::TWO, Felt252Wrapper::THREE],
-    };
-
-    let tx_hash = transaction.compute_hash::<PedersenHasher>(chain_id, false);
-
-    assert_eq!(tx_hash, expected_tx_hash);
-
-    let invoke_v0_transaction = InvokeTransaction::V0(transaction);
-    let tx_hash = invoke_v0_transaction.compute_hash::<PedersenHasher>(chain_id, false);
-    assert_eq!(tx_hash, expected_tx_hash);
-
-    let generic_transaction = Transaction::Invoke(invoke_v0_transaction.clone());
-    let tx_hash = generic_transaction.compute_hash::<PedersenHasher>(chain_id, false);
-    assert_eq!(tx_hash, expected_tx_hash);
-
-    let user_transaction = UserTransaction::Invoke(invoke_v0_transaction.clone());
     let tx_hash = user_transaction.compute_hash::<PedersenHasher>(chain_id, false);
     assert_eq!(tx_hash, expected_tx_hash);
 }

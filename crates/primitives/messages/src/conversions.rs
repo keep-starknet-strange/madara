@@ -1,5 +1,5 @@
 use mp_transactions::HandleL1MessageTransaction;
-use starknet_api::api_core::{ContractAddress, EthAddress, Nonce, PatriciaKey};
+use starknet_api::core::{ContractAddress, EthAddress, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::MessageToL1;
 

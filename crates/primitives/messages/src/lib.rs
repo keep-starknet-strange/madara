@@ -1,12 +1,8 @@
 //! L1-L2 messages types definition
-#![cfg_attr(not(feature = "std"), no_std)]
 
-#[doc(hidden)]
-pub extern crate alloc;
+use std::vec::Vec;
 
-use alloc::vec::Vec;
-
-use starknet_api::api_core::{ContractAddress, EthAddress, Nonce};
+use starknet_api::core::{ContractAddress, EthAddress, Nonce};
 use starknet_api::hash::{StarkFelt, StarkHash};
 
 pub mod conversions;

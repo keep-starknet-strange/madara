@@ -2,7 +2,7 @@ use frame_support::assert_ok;
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::{DeclareTransactionV1, DeployAccountTransaction, InvokeTransactionV1};
-use starknet_api::api_core::EthAddress;
+use starknet_api::core::EthAddress;
 use starknet_api::transaction::{L2ToL1Payload, MessageToL1, TransactionHash};
 
 use super::mock::default_mock::*;

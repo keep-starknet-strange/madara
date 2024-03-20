@@ -1,10 +1,11 @@
 use core::convert::TryFrom;
 
+use blockifier::context::FeeTokenAddresses;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::pedersen::PedersenHasher;
 use mp_hashers::HasherT;
-use starknet_api::api_core::{ChainId, ContractAddress, PatriciaKey};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
+use starknet_api::core::{ChainId, ContractAddress, PatriciaKey};
 use starknet_api::hash::{StarkFelt, StarkHash};
 
 use crate::Header;
@@ -82,14 +83,24 @@ fn test_to_block_context() {
     // Create a block header.
     let block_header = Header { block_number: 1, block_timestamp: 1, sequencer_address, ..Default::default() };
     // Create a fee token address.
-    let fee_token_address = ContractAddress(PatriciaKey(StarkFelt::try_from("AA").unwrap()));
+    let fee_token_addresses = FeeTokenAddresses {
+        eth_fee_token_address: ContractAddress(PatriciaKey(StarkFelt::try_from("AA").unwrap())),
+        strk_fee_token_address: ContractAddress(PatriciaKey(StarkFelt::try_from("BB").unwrap())),
+    };
     // Create a chain id.
     let chain_id = ChainId("0x1".to_string());
     // Try to serialize the block header.
-    let block_context = block_header.into_block_context(fee_token_address, chain_id);
+    let block_context = block_header.into_block_context(fee_token_addresses.clone(), chain_id);
     // Check that the block context was serialized correctly.
-    assert_eq!(block_context.block_number, BlockNumber(1));
-    assert_eq!(block_context.block_timestamp, BlockTimestamp(1));
-    assert_eq!(block_context.sequencer_address, sequencer_address);
-    assert_eq!(block_context.fee_token_address, fee_token_address);
+    assert_eq!(block_context.block_info().block_number, BlockNumber(1));
+    assert_eq!(block_context.block_info().block_timestamp, BlockTimestamp(1));
+    assert_eq!(block_context.block_info().sequencer_address, sequencer_address);
+    assert_eq!(
+        &block_context.chain_info().fee_token_addresses.eth_fee_token_address,
+        &fee_token_addresses.eth_fee_token_address
+    );
+    assert_eq!(
+        &block_context.chain_info().fee_token_addresses.strk_fee_token_address,
+        &fee_token_addresses.strk_fee_token_address
+    );
 }

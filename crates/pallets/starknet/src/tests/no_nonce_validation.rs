@@ -1,6 +1,6 @@
 use frame_support::assert_ok;
 use mp_felt::Felt252Wrapper;
-use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
+use starknet_api::core::{ClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 
 use super::mock::{new_test_ext, no_nonce_validation_mock};

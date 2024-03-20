@@ -12,11 +12,6 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 blockifier = { workspace = true }
-mp-fee = { workspace = true, features = [
-  "parity-scale-codec",
-  "serde",
-  "scale-info",
-] }
 mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
 mp-transactions = { workspace = true }
@@ -40,7 +35,6 @@ default = ["std"]
 std = [
   "sp-core/std",
   "mp-felt/std",
-  "mp-fee/std",
   "mp-transactions/std",
   "mp-hashers/std",
   "serde/std",
@@ -51,10 +45,8 @@ std = [
 parity-scale-codec = [
   "dep:parity-scale-codec",
   "mp-felt/parity-scale-codec",
-  "mp-fee/parity-scale-codec",
   "mp-transactions/parity-scale-codec",
 ]
 scale-info = [
   "dep:scale-info",
-  "mp-felt/scale-info",
 ]

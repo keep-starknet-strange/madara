@@ -1,11 +1,12 @@
 //! Starknet pallet custom types.
+use std::collections::HashMap;
+
 use blockifier::execution::contract_class::ContractClass;
 use mp_felt::Felt252Wrapper;
 use sp_core::ConstU32;
 use sp_std::vec::Vec;
-use starknet_api::api_core::{ClassHash, ContractAddress};
+use starknet_api::core::{ClassHash, ContractAddress};
 use starknet_api::state::StorageKey;
-use starknet_api::stdlib::collections::HashMap;
 use starknet_api::transaction::{Event, Fee, MessageToL1, TransactionHash};
 
 /// Contract Storage Key

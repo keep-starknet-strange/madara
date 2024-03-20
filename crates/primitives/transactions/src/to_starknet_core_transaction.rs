@@ -99,20 +99,6 @@ pub fn to_starknet_core_tx(
         }
         super::Transaction::Invoke(tx) => {
             let tx = match tx {
-                super::InvokeTransaction::V0(super::InvokeTransactionV0 {
-                    max_fee,
-                    signature,
-                    contract_address,
-                    entry_point_selector,
-                    calldata,
-                }) => starknet_core::types::InvokeTransaction::V0(starknet_core::types::InvokeTransactionV0 {
-                    transaction_hash,
-                    max_fee: max_fee.into(),
-                    signature: cast_vec_of_felt_252_wrappers(signature),
-                    contract_address: contract_address.into(),
-                    entry_point_selector: entry_point_selector.into(),
-                    calldata: cast_vec_of_felt_252_wrappers(calldata),
-                }),
                 super::InvokeTransaction::V1(super::InvokeTransactionV1 {
                     max_fee,
                     signature,

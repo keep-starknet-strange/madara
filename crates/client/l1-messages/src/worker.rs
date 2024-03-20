@@ -9,7 +9,7 @@ use sc_client_api::HeaderBackend;
 use sc_transaction_pool_api::{TransactionPool, TransactionSource};
 use sp_api::ProvideRuntimeApi;
 use sp_runtime::traits::Block as BlockT;
-use starknet_api::api_core::Nonce;
+use starknet_api::core::Nonce;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::Fee;
 use starknet_core_contract_client::interfaces::{LogMessageToL2Filter, StarknetMessagingEvents};

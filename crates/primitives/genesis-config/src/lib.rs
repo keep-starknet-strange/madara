@@ -55,7 +55,8 @@ pub struct GenesisData {
     pub contracts: Vec<(ContractAddress, ClassHash)>,
     pub predeployed_accounts: Vec<PredeployedAccount>,
     pub storage: Vec<(ContractStorageKey, StorageValue)>,
-    pub fee_token_address: ContractAddress,
+    pub strk_fee_token_address: ContractAddress,
+    pub eth_fee_token_address: ContractAddress,
 }
 
 #[derive(Constructor)]

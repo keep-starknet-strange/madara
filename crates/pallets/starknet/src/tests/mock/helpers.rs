@@ -3,7 +3,7 @@ use alloc::sync::Arc;
 use mp_felt::Felt252Wrapper;
 use mp_transactions::DeployAccountTransaction;
 use sp_core::H256;
-use starknet_api::api_core::{ClassHash, ContractAddress, PatriciaKey};
+use starknet_api::core::{ClassHash, ContractAddress, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::Calldata;

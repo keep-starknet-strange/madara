@@ -1,7 +1,7 @@
 use frame_support::assert_ok;
 use mp_felt::Felt252Wrapper;
 use mp_transactions::InvokeTransaction;
-use starknet_api::api_core::{ContractAddress, EntryPointSelector, PatriciaKey};
+use starknet_api::core::{ContractAddress, EntryPointSelector, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::Calldata;
 

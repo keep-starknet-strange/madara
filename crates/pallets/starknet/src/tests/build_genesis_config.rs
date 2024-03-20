@@ -1,5 +1,5 @@
 use sp_runtime::BuildStorage;
-use starknet_api::api_core::{ClassHash, ContractAddress};
+use starknet_api::core::{ClassHash, ContractAddress};
 
 use super::mock::default_mock;
 use super::utils::get_contract_class;

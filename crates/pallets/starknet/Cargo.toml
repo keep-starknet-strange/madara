@@ -57,12 +57,12 @@ sp-inherents = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
+cairo-vm = { workspace = true }
 # Frame pallets
 
 # Other third party dependencies
 cairo-lang-starknet-classes = { workspace = true, optional = true }
 derive_more = { workspace = true }
-hashbrown = { workspace = true }
 hex = { workspace = true }
 indexmap = { workspace = true }
 log = { workspace = true }
@@ -108,6 +108,7 @@ std = [
   "parity-scale-codec/std",
   "starknet-core/std",
   "mp-simulations/std",
+  "cairo-lang-starknet-classes"
 ]
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
 try-runtime = ["frame-support/try-runtime"]

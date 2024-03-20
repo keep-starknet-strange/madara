@@ -158,11 +158,13 @@ where
     /// Returns the substrate block hash corresponding to the given Starknet block id
     fn substrate_block_hash_from_starknet_block(&self, block_id: BlockId) -> Result<B::Hash, StarknetRpcApiError> {
         match block_id {
-            BlockId::Hash(h) => madara_backend_client::load_hash(self.client.as_ref(), &self.backend, h.into())
-                .map_err(|e| {
-                    error!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}");
-                    StarknetRpcApiError::BlockNotFound
-                })?,
+            BlockId::Hash(h) => {
+                madara_backend_client::load_hash(self.client.as_ref(), &self.backend, Felt252Wrapper(h).into())
+                    .map_err(|e| {
+                        error!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}");
+                        StarknetRpcApiError::BlockNotFound
+                    })?
+            }
             BlockId::Number(n) => self
                 .client
                 .hash(UniqueSaturatedInto::unique_saturated_into(n))
@@ -274,7 +276,7 @@ where
     fn predeployed_accounts(&self) -> RpcResult<Vec<PredeployedAccountWithBalance>> {
         let genesis_data = self.genesis_provider.load_genesis_data()?;
         let block_id = BlockId::Tag(BlockTag::Latest);
-        let fee_token_address: FieldElement = genesis_data.fee_token_address.0;
+        let fee_token_address: FieldElement = genesis_data.eth_fee_token_address.0;
 
         Ok(genesis_data
             .predeployed_accounts
@@ -894,13 +896,12 @@ where
 
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)?;
         let starknet_version = starknet_block.header().protocol_version;
-        let l1_gas_price = starknet_block.header().l1_gas_price;
         let block_hash = starknet_block.header().hash::<H>();
 
         let transaction_hashes = if let Some(tx_hashes) = self.get_cached_transaction_hashes(block_hash.into()) {
             let mut v = Vec::with_capacity(tx_hashes.len());
             for tx_hash in tx_hashes {
-                v.push(FieldElement::from(tx_hash));
+                v.push(Felt252Wrapper::from(tx_hash).into());
             }
             v
         } else {
@@ -930,7 +931,7 @@ where
             new_root: Felt252Wrapper::from(self.backend.temporary_global_state_root_getter()).into(),
             timestamp: starknet_block.header().block_timestamp,
             sequencer_address: Felt252Wrapper::from(starknet_block.header().sequencer_address).into(),
-            l1_gas_price: starknet_block.header().l1_gas_price.into(),
+            l1_gas_price: todo!(),
             starknet_version: starknet_version.to_string(),
         };
 
@@ -1027,7 +1028,7 @@ where
         let estimates = fee_estimates
             .into_iter()
 			// FIXME: https://github.com/keep-starknet-strange/madara/issues/329
-            .map(|x| FeeEstimate { gas_price: 10, gas_consumed: x.1, overall_fee: x.0 })
+            .map(|x| FeeEstimate { gas_price: 10, gas_consumed: x.1 as u64, overall_fee: x.0 as u64 })
             .collect();
 
         Ok(estimates)
@@ -1065,8 +1066,8 @@ where
 
         let estimate = FeeEstimate {
             gas_price: fee_estimate.0.try_into().map_err(|_| StarknetRpcApiError::InternalServerError)?,
-            gas_consumed: fee_estimate.2,
-            overall_fee: fee_estimate.1,
+            gas_consumed: fee_estimate.2 as u64,
+            overall_fee: fee_estimate.1 as u64,
         };
 
         Ok(estimate)
@@ -1109,7 +1110,7 @@ where
             self.get_cached_transaction_hashes(starknet_block.header().hash::<H>().into());
 
         let transaction_hash = if let Some(cached_tx_hashes) = opt_cached_transaction_hashes {
-            cached_tx_hashes.get(index as usize).map(|&fe| FieldElement::from(fe)).ok_or(CallError::Failed(
+            cached_tx_hashes.get(index as usize).map(|&fe| Felt252Wrapper::from(fe).into()).ok_or(CallError::Failed(
                 anyhow::anyhow!(
                     "Number of cached tx hashes does not match the number of transactions in block with id {:?}",
                     block_id
@@ -1164,7 +1165,7 @@ where
         let mut transactions = Vec::with_capacity(starknet_block.transactions().len());
         for (index, tx) in starknet_block.transactions().iter().enumerate() {
             let tx_hash = if let Some(cached_tx_hashes) = opt_cached_transaction_hashes.as_ref() {
-                cached_tx_hashes.get(index).map(|&h| FieldElement::from(h)).ok_or(CallError::Failed(
+                cached_tx_hashes.get(index).map(|&h| Felt252Wrapper::from(h).into()).ok_or(CallError::Failed(
                     anyhow::anyhow!(
                         "Number of cached tx hashes does not match the number of transactions in block with hash {:?}",
                         block_hash
@@ -1187,7 +1188,7 @@ where
             timestamp: starknet_block.header().block_timestamp,
             sequencer_address: Felt252Wrapper::from(starknet_block.header().sequencer_address).into(),
             transactions,
-            l1_gas_price: starknet_block.header().l1_gas_price.into(),
+            l1_gas_price: todo!(),
             starknet_version: starknet_version.to_string(),
         };
 
@@ -1225,7 +1226,7 @@ where
 
             let latest_block = self.get_best_block_hash();
             let latest_block = get_block_by_block_hash(self.client.as_ref(), latest_block).unwrap_or_default();
-            let old_root = self.backend.temporary_global_state_root_getter().into();
+            let old_root = Felt252Wrapper::from(self.backend.temporary_global_state_root_getter()).into();
             let pending_state_update = PendingStateUpdate { old_root, state_diff };
 
             return Ok(MaybePendingStateUpdate::PendingUpdate(pending_state_update));
@@ -1369,8 +1370,11 @@ where
     /// - `TOO_MANY_KEYS_IN_FILTER` if there are too many keys in the filter, which may exceed the
     ///   system's capacity.
     fn get_transaction_by_hash(&self, transaction_hash: FieldElement) -> RpcResult<Transaction> {
-        let substrate_block_hash_from_db =
-            self.backend.mapping().block_hash_from_transaction_hash(transaction_hash.into()).map_err(|e| {
+        let substrate_block_hash_from_db = self
+            .backend
+            .mapping()
+            .block_hash_from_transaction_hash(Felt252Wrapper::from(transaction_hash).into())
+            .map_err(|e| {
                 error!("Failed to get transaction's substrate block hash from mapping_db: {e}");
                 StarknetRpcApiError::TxnHashNotFound
             })?;
@@ -1428,21 +1432,25 @@ where
         &self,
         transaction_hash: FieldElement,
     ) -> RpcResult<MaybePendingTransactionReceipt> {
-        let chain_id = self.chain_id()?.0.into();
-        let receipt =
-            match self.backend.mapping().block_hash_from_transaction_hash(transaction_hash.into()).map_err(|e| {
+        let chain_id = Felt252Wrapper(self.chain_id()?.0);
+
+        let receipt = match self
+            .backend
+            .mapping()
+            .block_hash_from_transaction_hash(Felt252Wrapper::from(transaction_hash).into())
+            .map_err(|e| {
                 error!("Failed to interact with db backend error: {e}");
                 StarknetRpcApiError::InternalServerError
             })? {
-                Some(substrate_block_hash) => {
-                    self.prepare_tx_receipt(chain_id, transaction_hash, substrate_block_hash).await?
-                }
-                // Try to find pending Tx
-                None => self.get_pending_transaction_receipt(chain_id, transaction_hash).await.map_err(|e| {
-                    error!("Failed to find pending tx with hash: {transaction_hash}: {e}");
-                    StarknetRpcApiError::TxnHashNotFound
-                })?,
-            };
+            Some(substrate_block_hash) => {
+                self.prepare_tx_receipt(chain_id, transaction_hash, substrate_block_hash).await?
+            }
+            // Try to find pending Tx
+            None => self.get_pending_transaction_receipt(chain_id, transaction_hash).await.map_err(|e| {
+                error!("Failed to find pending tx with hash: {transaction_hash}: {e}");
+                StarknetRpcApiError::TxnHashNotFound
+            })?,
+        };
         Ok(receipt)
     }
 }
@@ -1475,7 +1483,7 @@ where
 
         let pending_block = PendingBlockWithTxHashes {
             transactions,
-            l1_gas_price: latest_block_header.l1_gas_price.into(),
+            l1_gas_price: todo!(),
             parent_hash: latest_block_header.hash::<H>().into(),
             sequencer_address: Felt252Wrapper::from(latest_block_header.sequencer_address).into(),
             starknet_version: latest_block_header.protocol_version.to_string(),
@@ -1500,7 +1508,7 @@ where
 
         let pending_block = PendingBlockWithTxs {
             transactions,
-            l1_gas_price: latest_block_header.l1_gas_price.into(),
+            l1_gas_price: todo!(),
             parent_hash: latest_block_header.hash::<H>().into(),
             sequencer_address: Felt252Wrapper::from(latest_block_header.sequencer_address).into(),
             starknet_version: latest_block_header.protocol_version.to_string(),
@@ -1602,7 +1610,9 @@ where
         let skip_validate = true;
         // let parent_block_hash = Felt252Wrapper::from().into();
         let parent_block_hash = self
-            .substrate_block_hash_from_starknet_block(BlockId::Hash(block_header.parent_block_hash.into()))
+            .substrate_block_hash_from_starknet_block(BlockId::Hash(
+                Felt252Wrapper::from(block_header.parent_block_hash).into(),
+            ))
             .map_err(|e| {
                 error!("Parent Block not found: {e}");
                 StarknetRpcApiError::BlockNotFound
@@ -1846,7 +1856,8 @@ fn revert_error_to_execution_result(revert_error: Option<String>) -> ExecutionRe
 }
 
 fn actual_resources_to_execution_resources(resources: ResourcesMapping) -> ExecutionResources {
-    let resources = resources.0.into_iter().map(|(k, v)| (k.to_lowercase(), v)).collect::<HashMap<String, u64>>();
+    let resources =
+        resources.0.into_iter().map(|(k, v)| (k.to_lowercase(), v as u64)).collect::<HashMap<String, u64>>();
     // Based on `VM_RESOURCE_FEE_COSTS`
     // in crates/primitives/fee/src/lib.rs
     ExecutionResources {

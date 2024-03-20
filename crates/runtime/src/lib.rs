@@ -17,6 +17,7 @@ mod pallets;
 mod runtime_tests;
 mod types;
 
+use blockifier::context::FeeTokenAddresses;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::state::cached_state::CommitmentStateDiff;
 use blockifier::transaction::objects::TransactionExecutionInfo;
@@ -51,7 +52,7 @@ use sp_runtime::{generic, ApplyExtrinsicResult, DispatchError};
 pub use sp_runtime::{Perbill, Permill};
 use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
-use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
+use starknet_api::core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash};
@@ -267,15 +268,15 @@ impl_runtime_apis! {
             Starknet::config_hash()
         }
 
-        fn fee_token_address() -> ContractAddress {
-            Starknet::fee_token_address()
+        fn fee_token_addresses() -> FeeTokenAddresses {
+            Starknet::fee_token_addresses()
         }
 
         fn is_transaction_fee_disabled() -> bool {
             Starknet::is_transaction_fee_disabled()
         }
 
-        fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
+        fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u128, u128)>, DispatchError> {
             Starknet::estimate_fee(transactions)
         }
 
@@ -283,7 +284,7 @@ impl_runtime_apis! {
             Starknet::re_execute_transactions(transactions)
         }
 
-        fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), DispatchError> {
+        fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u128, u128), DispatchError> {
             Starknet::estimate_message_fee(message)
         }
 
@@ -342,7 +343,7 @@ impl_runtime_apis! {
             Starknet::tx_revert_error(tx_hash).map(|s| s.into_bytes())
         }
 
-        fn get_block_context() -> pallet_starknet_runtime_api::BlockContext {
+        fn get_block_context() -> blockifier::context::BlockContext {
            Starknet::get_block_context().into()
         }
 

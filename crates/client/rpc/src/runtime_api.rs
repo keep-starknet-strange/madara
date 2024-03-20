@@ -18,7 +18,7 @@ use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
 use sp_runtime::DispatchError;
-use starknet_api::api_core::{ContractAddress, EntryPointSelector};
+use starknet_api::core::{ContractAddress, EntryPointSelector};
 use starknet_api::transaction::{Calldata, Event, TransactionHash};
 use starknet_core::types::FieldElement;
 
@@ -53,7 +53,7 @@ where
         &self,
         block_hash: B::Hash,
         message: HandleL1MessageTransaction,
-    ) -> RpcApiResult<(u128, u64, u64)> {
+    ) -> RpcApiResult<(u128, u128, u128)> {
         self.client
             .runtime_api()
             .estimate_message_fee(block_hash, message)
@@ -121,7 +121,7 @@ where
         &self,
         block_hash: B::Hash,
         transactions: Vec<UserTransaction>,
-    ) -> RpcApiResult<Vec<(u64, u64)>> {
+    ) -> RpcApiResult<Vec<(u128, u128)>> {
         self.client
             .runtime_api()
             .estimate_fee(block_hash, transactions)
@@ -134,6 +134,7 @@ where
                 StarknetRpcApiError::ContractError
             })
     }
+
     pub fn get_best_block_hash(&self) -> B::Hash {
         self.client.info().best_hash
     }
@@ -182,7 +183,7 @@ where
         skip_validate: bool,
         skip_fee_charge: bool,
     ) -> RpcApiResult<TransactionExecutionInfo> {
-        let simulations_flags = SimulationFlags { skip_validate, skip_fee_charge };
+        let simulations_flags = SimulationFlags { validate: !skip_validate, charge_fee: !skip_fee_charge };
         match tx {
             Transaction::Declare(tx, contract_class) => {
                 let tx = UserTransaction::Declare(tx, contract_class);

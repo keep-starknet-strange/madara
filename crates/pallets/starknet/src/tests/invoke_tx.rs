@@ -8,14 +8,16 @@ use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{
     InvalidTransaction, TransactionSource, TransactionValidityError, ValidTransaction,
 };
-use starknet_api::api_core::{ContractAddress, Nonce, PatriciaKey};
+use starknet_api::core::{ContractAddress, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Event as StarknetEvent, EventContent, EventData, EventKey, TransactionHash};
 use starknet_core::utils::get_selector_from_name;
 use starknet_crypto::FieldElement;
 
-use super::constants::{BLOCKIFIER_ACCOUNT_ADDRESS, MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS, TEST_CONTRACT_ADDRESS};
+use super::constants::{
+    BLOCKIFIER_ACCOUNT_ADDRESS, MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS, TEST_CONTRACT_ADDRESS, TRANSFER_SELECTOR_NAME,
+};
 use super::mock::default_mock::*;
 use super::mock::*;
 use super::utils::sign_message_hash;
@@ -73,10 +75,10 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
 
         assert!(events.into_iter().any(|e| e
             == StarknetEvent {
-                from_address: Starknet::fee_token_address(),
+                from_address: Starknet::fee_token_addresses().eth_fee_token_address,
                 content: EventContent {
                     keys: vec![EventKey(
-                        Felt252Wrapper::from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap()).into(),
+                        Felt252Wrapper::from(get_selector_from_name(TRANSFER_SELECTOR_NAME).unwrap()).into(),
                     )],
                     data: EventData(vec![
                         StarkFelt::try_from(BLOCKIFIER_ACCOUNT_ADDRESS).unwrap(),
@@ -118,10 +120,10 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
             },
         };
         let expected_fee_transfer_event = StarknetEvent {
-            from_address: Starknet::fee_token_address(),
+            from_address: Starknet::fee_token_addresses().eth_fee_token_address,
             content: EventContent {
                 keys: vec![EventKey(
-                    StarkFelt::try_from(Felt252Wrapper::from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap())).unwrap(),
+                    StarkFelt::try_from(Felt252Wrapper::from(get_selector_from_name(TRANSFER_SELECTOR_NAME).unwrap())).unwrap(),
                 )],
                 data: EventData(vec![
                     StarkFelt::try_from("0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0").unwrap(), // From
@@ -395,11 +397,11 @@ fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails
         transaction.signature = vec![Felt252Wrapper::ONE, Felt252Wrapper::ONE];
         transaction.sender_address = sender_address.into();
 
-        let storage_key = get_storage_var_address("destination", &[]).unwrap();
+        let storage_key = get_storage_var_address("destination", &[]);
         let destination = StarkFelt::try_from(TEST_CONTRACT_ADDRESS).unwrap();
         StorageView::<MockRuntime>::insert((sender_address, storage_key), destination);
 
-        let storage_key = get_storage_var_address("function_selector", &[]).unwrap();
+        let storage_key = get_storage_var_address("function_selector", &[]);
         let selector = get_selector_from_name("without_arg").unwrap();
         StorageView::<MockRuntime>::insert(
             (sender_address, storage_key),

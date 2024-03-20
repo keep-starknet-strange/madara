@@ -6,7 +6,7 @@ use mc_settlement::{SettlementProvider, StarknetSpec, StarknetState};
 use mp_messages::{MessageL1ToL2, MessageL2ToL1};
 use mp_snos_output::StarknetOsOutput;
 use rstest::rstest;
-use starknet_api::api_core::{ContractAddress, Nonce, PatriciaKey};
+use starknet_api::core::{ContractAddress, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_e2e_test::starknet_sovereign::StarknetSovereign;
 

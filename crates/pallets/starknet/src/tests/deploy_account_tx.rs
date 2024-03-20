@@ -4,7 +4,7 @@ use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::DeployAccountTransaction;
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidityError};
-use starknet_api::api_core::{ContractAddress, Nonce};
+use starknet_api::core::{ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Event as StarknetEvent, EventContent, EventData, EventKey, TransactionHash};
 use starknet_core::utils::get_selector_from_name;
@@ -13,7 +13,7 @@ use starknet_crypto::FieldElement;
 use super::mock::default_mock::*;
 use super::mock::*;
 use super::utils::{sign_message_hash, sign_message_hash_braavos};
-use crate::tests::constants::{ACCOUNT_PUBLIC_KEY, SALT};
+use crate::tests::constants::{ACCOUNT_PUBLIC_KEY, SALT, TRANSFER_SELECTOR_NAME};
 use crate::tests::{get_deploy_account_dummy, set_infinite_tokens, set_nonce};
 use crate::{Config, Error, StorageView};
 
@@ -50,7 +50,7 @@ fn given_contract_run_deploy_account_tx_works() {
         let expected_fee_transfer_event = StarknetEvent {
             content: EventContent {
                 keys: vec![EventKey(
-                    Felt252Wrapper::from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap()).into(),
+                    Felt252Wrapper::from(get_selector_from_name(TRANSFER_SELECTOR_NAME).unwrap()).into(),
                 )],
                 data: EventData(vec![
                     address.0.0,                            // From
@@ -59,7 +59,7 @@ fn given_contract_run_deploy_account_tx_works() {
                     StarkFelt::from(0u128),                 // Amount high
                 ]),
             },
-            from_address: Starknet::fee_token_address(),
+            from_address: Starknet::fee_token_addresses().eth_fee_token_address,
         };
 
         let events = Starknet::tx_events(TransactionHash::from(tx_hash));

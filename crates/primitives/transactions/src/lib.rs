@@ -1,12 +1,11 @@
 //! Starknet transaction related functionality.
-#![cfg_attr(not(feature = "std"), no_std)]
 
 #[doc(hidden)]
 pub extern crate alloc;
 
 pub mod compute_hash;
 pub mod conversions;
-pub mod execution;
+// pub mod execution;
 #[cfg(feature = "client")]
 pub mod from_broadcasted_transactions;
 pub mod getters;
@@ -117,19 +116,7 @@ pub enum UserOrL1HandlerTransaction {
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 pub enum InvokeTransaction {
-    V0(InvokeTransactionV0),
     V1(InvokeTransactionV1),
-}
-
-#[derive(Debug, Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
-#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
-pub struct InvokeTransactionV0 {
-    pub max_fee: u128,
-    pub signature: Vec<Felt252Wrapper>,
-    pub contract_address: Felt252Wrapper,
-    pub entry_point_selector: Felt252Wrapper,
-    pub calldata: Vec<Felt252Wrapper>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]

@@ -7,8 +7,8 @@ use starknet_crypto::FieldElement;
 
 use super::{
     DeclareTransaction, DeclareTransactionV0, DeclareTransactionV1, DeclareTransactionV2, DeployAccountTransaction,
-    HandleL1MessageTransaction, InvokeTransaction, InvokeTransactionV0, InvokeTransactionV1, Transaction,
-    UserTransaction, SIMULATE_TX_VERSION_OFFSET,
+    HandleL1MessageTransaction, InvokeTransaction, InvokeTransactionV1, Transaction, UserTransaction,
+    SIMULATE_TX_VERSION_OFFSET,
 };
 use crate::UserOrL1HandlerTransaction;
 
@@ -25,29 +25,6 @@ fn convert_calldata(data: &[Felt252Wrapper]) -> &[FieldElement] {
     // Non-copy but less dangerous than transmute
     // https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
     unsafe { core::slice::from_raw_parts(data.as_ptr() as *const FieldElement, data.len()) }
-}
-
-impl ComputeTransactionHash for InvokeTransactionV0 {
-    fn compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, offset_version: bool) -> Felt252Wrapper {
-        let prefix = FieldElement::from_byte_slice_be(INVOKE_PREFIX).unwrap();
-        let version = if offset_version { SIMULATE_TX_VERSION_OFFSET } else { FieldElement::ZERO };
-        let contract_address = self.contract_address.into();
-        let entrypoint_selector = self.entry_point_selector.into();
-        let calldata_hash = compute_hash_on_elements(convert_calldata(&self.calldata));
-        let max_fee = FieldElement::from(self.max_fee);
-        let chain_id = chain_id.into();
-
-        H::compute_hash_on_elements(&[
-            prefix,
-            version,
-            contract_address,
-            entrypoint_selector,
-            calldata_hash,
-            max_fee,
-            chain_id,
-        ])
-        .into()
-    }
 }
 
 impl ComputeTransactionHash for InvokeTransactionV1 {
@@ -78,7 +55,6 @@ impl ComputeTransactionHash for InvokeTransactionV1 {
 impl ComputeTransactionHash for InvokeTransaction {
     fn compute_hash<H: HasherT>(&self, chain_id: Felt252Wrapper, offset_version: bool) -> Felt252Wrapper {
         match self {
-            InvokeTransaction::V0(tx) => tx.compute_hash::<H>(chain_id, offset_version),
             InvokeTransaction::V1(tx) => tx.compute_hash::<H>(chain_id, offset_version),
         }
     }
