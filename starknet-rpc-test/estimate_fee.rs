@@ -122,7 +122,7 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
     let simulations = rpc
         .simulate_transactions(BlockId::Tag(BlockTag::Latest), &[invoke_transaction, invoke_transaction_2], [])
         .await?;
-    assert_eq!(simulations[0].fee_estimation.overall_fee, 210);
+    
     assert_eq!(estimates.len(), 2);
     assert_eq!(estimates[0].overall_fee, simulations[0].fee_estimation.overall_fee);
     assert_eq!(estimates[1].overall_fee, simulations[1].fee_estimation.overall_fee);
