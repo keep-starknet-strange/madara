@@ -16,6 +16,7 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
             .into_iter()
             .map(|(hash, class)| {
                 let hash = Felt252Wrapper(hash.0).into();
+                println!("loading: {:?}", class);
                 match class {
                     ContractClass::Path { path, version } => (
                         hash,
@@ -86,6 +87,7 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
 ///
 /// `ContractClassV1` needs to be read in Casm and then converted to Contract Class V1
 pub(crate) fn read_contract_class_from_json(json_str: &str, version: u8) -> StarknetContractClass {
+    // println!("json_str: {}", json_str);
     if version == 0 {
         return StarknetContractClass::V0(
             serde_json::from_str(json_str).expect("`json_str` should be deserializable into the correct ContracClass"),

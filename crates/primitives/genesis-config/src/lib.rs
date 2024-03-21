@@ -74,7 +74,7 @@ impl GenesisLoader {
     }
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(untagged)]
 pub enum ContractClass {
     Path { path: String, version: u8 },

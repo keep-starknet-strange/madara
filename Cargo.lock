@@ -991,7 +991,7 @@ dependencies = [
 [[package]]
 name = "blockifier"
 version = "0.5.0-rc.3"
-source = "git+https://github.com/bidzyyys/blockifier?branch=feature/scale-codec#80796fd3876f1f79acce7e8331f3e2d4de7ed424"
+source = "git+https://github.com/bidzyyys/blockifier?branch=feature/scale-codec#837ee8dcad47365d7ec89a018f9e1b18e1e36d6d"
 dependencies = [
  "anyhow",
  "ark-ec",
@@ -1197,7 +1197,7 @@ checksum = "ade8366b8bd5ba243f0a58f036cc0ca8a2f069cff1a2351ef1cac6b083e16fc0"
 [[package]]
 name = "cairo-felt"
 version = "0.9.1"
-source = "git+https://github.com/bidzyyys/cairo-vm?branch=feature/scale-codec#9f44e188a4890066af084d660142209485c5cbb9"
+source = "git+https://github.com/bidzyyys/cairo-vm?branch=feature/scale-codec#0641b5a018cd6fee7a01e627cab839f39bfaecb4"
 dependencies = [
  "lazy_static",
  "num-bigint",
@@ -1641,7 +1641,7 @@ dependencies = [
 [[package]]
 name = "cairo-vm"
 version = "0.9.1"
-source = "git+https://github.com/bidzyyys/cairo-vm?branch=feature/scale-codec#9f44e188a4890066af084d660142209485c5cbb9"
+source = "git+https://github.com/bidzyyys/cairo-vm?branch=feature/scale-codec#0641b5a018cd6fee7a01e627cab839f39bfaecb4"
 dependencies = [
  "anyhow",
  "ark-ff 0.4.2",
