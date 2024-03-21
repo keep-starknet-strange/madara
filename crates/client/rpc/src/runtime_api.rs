@@ -9,15 +9,12 @@ use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_simulations::SimulationFlags;
 use mp_transactions::{HandleL1MessageTransaction, Transaction, UserTransaction};
-use pallet_starknet_runtime_api::{
-    ConvertTransactionRuntimeApi, StarknetRuntimeApi, StarknetTransactionExecutionError,
-};
+use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::Backend;
 use sc_transaction_pool::ChainApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
-use sp_runtime::DispatchError;
 use starknet_api::api_core::{ContractAddress, EntryPointSelector};
 use starknet_api::transaction::{Calldata, Event, TransactionHash};
 use starknet_core::types::FieldElement;
@@ -42,7 +39,7 @@ where
         contract_address: ContractAddress,
         entry_point_selector: EntryPointSelector,
         calldata: Calldata,
-    ) -> RpcApiResult<Result<Vec<Felt252Wrapper>, sp_runtime::DispatchError>> {
+    ) -> RpcApiResult<Result<Vec<Felt252Wrapper>, mp_simulations::Error>> {
         self.client.runtime_api().call(best_block_hash, contract_address, entry_point_selector, calldata).map_err(|e| {
             error!("Request parameters error: {e}");
             StarknetRpcApiError::InternalServerError
@@ -91,17 +88,6 @@ where
                 "Failed to get events for transaction hash. Substrate block hash: {block_hash}, transaction hash: \
                  {tx_hash}, error: {e}"
             );
-            StarknetRpcApiError::InternalServerError
-        })
-    }
-
-    pub fn convert_dispatch_error(
-        &self,
-        best_block_hash: B::Hash,
-        error: DispatchError,
-    ) -> RpcApiResult<StarknetTransactionExecutionError> {
-        self.client.runtime_api().convert_error(best_block_hash, error).map_err(|e| {
-            error!("Failed to convert dispatch error: {:?}", e);
             StarknetRpcApiError::InternalServerError
         })
     }

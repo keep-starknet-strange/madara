@@ -6,6 +6,7 @@ pub extern crate alloc;
 use alloc::vec::Vec;
 
 use blockifier::transaction::objects::TransactionExecutionInfo;
+use starknet_api::api_core::ContractAddress;
 use starknet_core::types::SimulationFlag;
 
 // TODO: This is a placeholder
@@ -44,4 +45,14 @@ impl From<Vec<SimulationFlag>> for SimulationFlags {
 
         Self { skip_validate, skip_fee_charge }
     }
+}
+
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+pub enum Error {
+    ContractNotFound(ContractAddress),
+    TransactionExecutionFailed,
+    MissingL1GasUsage,
+    FailedToCreateATransactionalStorageExecution,
 }

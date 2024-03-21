@@ -45,7 +45,6 @@ use sp_blockchain::HeaderBackend;
 use sp_core::H256;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use sp_runtime::transaction_validity::InvalidTransaction;
-use sp_runtime::DispatchError;
 use starknet_api::block::BlockHash;
 use starknet_api::hash::StarkHash;
 use starknet_api::transaction::{Calldata, TransactionHash};
@@ -676,14 +675,14 @@ where
 
         let calldata = Calldata(Arc::new(request.calldata.iter().map(|x| Felt252Wrapper::from(*x).into()).collect()));
 
-        let result = self.do_call(
-            substrate_block_hash,
-            Felt252Wrapper(request.contract_address).into(),
-            Felt252Wrapper(request.entry_point_selector).into(),
-            calldata,
-        )?;
-
-        let result = self.convert_error(substrate_block_hash, result)?;
+        let result = self
+            .do_call(
+                substrate_block_hash,
+                Felt252Wrapper(request.contract_address).into(),
+                Felt252Wrapper(request.entry_point_selector).into(),
+                calldata,
+            )?
+            .map_err(StarknetRpcApiError::from)?;
 
         Ok(result.iter().map(|x| format!("{:#x}", x.0)).collect())
     }
@@ -1772,20 +1771,6 @@ where
         };
 
         Ok(MaybePendingTransactionReceipt::PendingReceipt(receipt))
-    }
-
-    fn convert_error<T>(
-        &self,
-        best_block_hash: <B as BlockT>::Hash,
-        call_result: Result<T, DispatchError>,
-    ) -> Result<T, StarknetRpcApiError> {
-        match call_result {
-            Ok(val) => Ok(val),
-            Err(e) => {
-                let starknet_error = self.convert_dispatch_error(best_block_hash, e)?;
-                Err(starknet_error.into())
-            }
-        }
     }
 }
 

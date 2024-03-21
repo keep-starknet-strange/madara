@@ -1,5 +1,4 @@
 use jsonrpsee::types::error::{CallError, ErrorObject};
-use pallet_starknet_runtime_api::StarknetTransactionExecutionError;
 
 // Comes from the RPC Spec:
 // https://github.com/starkware-libs/starknet-specs/blob/0e859ff905795f789f1dfd6f7340cdaf5015acc8/api/starknet_write_api.json#L227
@@ -45,14 +44,15 @@ pub enum StarknetRpcApiError {
     ProofLimitExceeded = 10000,
 }
 
-impl From<StarknetTransactionExecutionError> for StarknetRpcApiError {
-    fn from(err: StarknetTransactionExecutionError) -> Self {
-        match err {
-            StarknetTransactionExecutionError::ContractNotFound => StarknetRpcApiError::ContractNotFound,
-            StarknetTransactionExecutionError::ClassAlreadyDeclared => StarknetRpcApiError::ClassAlreadyDeclared,
-            StarknetTransactionExecutionError::ClassHashNotFound => StarknetRpcApiError::ClassHashNotFound,
-            StarknetTransactionExecutionError::InvalidContractClass => StarknetRpcApiError::InvalidContractClass,
-            StarknetTransactionExecutionError::ContractError => StarknetRpcApiError::ContractError,
+impl From<mp_simulations::Error> for StarknetRpcApiError {
+    fn from(value: mp_simulations::Error) -> Self {
+        match value {
+            mp_simulations::Error::ContractNotFound(_) => StarknetRpcApiError::ContractNotFound,
+            mp_simulations::Error::TransactionExecutionFailed => StarknetRpcApiError::ContractError,
+            mp_simulations::Error::MissingL1GasUsage => StarknetRpcApiError::InternalServerError,
+            mp_simulations::Error::FailedToCreateATransactionalStorageExecution => {
+                StarknetRpcApiError::InternalServerError
+            }
         }
     }
 }

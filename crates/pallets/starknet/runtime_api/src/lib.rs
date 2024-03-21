@@ -17,31 +17,23 @@ pub extern crate alloc;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult};
-use sp_runtime::DispatchError;
+use mp_simulations::{
+    Error, PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult,
+};
 use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash};
 
-#[derive(parity_scale_codec::Encode, parity_scale_codec::Decode, scale_info::TypeInfo)]
-pub enum StarknetTransactionExecutionError {
-    ContractNotFound,
-    ClassAlreadyDeclared,
-    ClassHashNotFound,
-    InvalidContractClass,
-    ContractError,
-}
-
 sp_api::decl_runtime_apis! {
     pub trait StarknetRuntimeApi {
         /// Returns the nonce associated with the given address in the given block
         fn nonce(contract_address: ContractAddress) -> Nonce;
         /// Returns a storage slot value
-        fn get_storage_at(address: ContractAddress, key: StorageKey) -> Result<StarkFelt, DispatchError>;
+        fn get_storage_at(address: ContractAddress, key: StorageKey) -> Result<StarkFelt, Error>;
         /// Returns a `Call` response.
-        fn call(address: ContractAddress, function_selector: EntryPointSelector, calldata: Calldata) -> Result<Vec<Felt252Wrapper>, DispatchError>;
+        fn call(address: ContractAddress, function_selector: EntryPointSelector, calldata: Calldata) -> Result<Vec<Felt252Wrapper>, Error>;
         /// Returns the contract class hash at the given address.
         fn contract_class_hash_by_address(address: ContractAddress) -> ClassHash;
         /// Returns the contract class for the given class hash.
@@ -55,13 +47,13 @@ sp_api::decl_runtime_apis! {
         /// Returns the fee token address.
         fn fee_token_address() -> ContractAddress;
         /// Returns fee estimate
-        fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError>;
+        fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, Error>;
         /// Returns message fee estimate
-        fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), DispatchError>;
+        fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), Error>;
         /// Simulates single L1 Message and returns its trace
-        fn simulate_message(message: HandleL1MessageTransaction, simulation_flags: SimulationFlags) -> Result<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError>;
+        fn simulate_message(message: HandleL1MessageTransaction, simulation_flags: SimulationFlags) -> Result<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, Error>;
         /// Simulates transactions and returns their trace
-        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, DispatchError>;
+        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, Error>;
         /// Filters extrinsic transactions to return only Starknet transactions
         ///
         /// To support runtime upgrades, the client must be unaware of the specific extrinsic
@@ -72,7 +64,7 @@ sp_api::decl_runtime_apis! {
         /// client to operate seamlessly while abstracting the extrinsic complexity.
         fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction>;
         /// Re-execute a block and return the TransactionExecutionInfos of every transaction in it, in the same order
-        fn re_execute_transactions(transactions: Vec<UserOrL1HandlerTransaction>) -> Result<Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError>;
+        fn re_execute_transactions(transactions: Vec<UserOrL1HandlerTransaction>) -> Result<Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, PlaceHolderErrorTypeForFailedStarknetExecution>, Error>;
 
         fn get_index_and_tx_for_tx_hash(xts: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper, tx_hash: Felt252Wrapper) -> Option<(u32, Transaction)>;
 
@@ -95,9 +87,6 @@ sp_api::decl_runtime_apis! {
 
         /// Converts the L1 Message transaction to an UncheckedExtrinsic for submission to the pool.
         fn convert_l1_transaction(transaction: HandleL1MessageTransaction, fee: Fee) -> <Block as BlockT>::Extrinsic;
-
-        /// Converts the DispatchError to an understandable error for the client
-        fn convert_error(error: DispatchError) -> StarknetTransactionExecutionError;
     }
 }
 

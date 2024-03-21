@@ -35,9 +35,7 @@ use mp_transactions::{HandleL1MessageTransaction, Transaction, UserOrL1HandlerTr
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the Starknet pallet.
 pub use pallet_starknet;
-use pallet_starknet::pallet::Error as PalletError;
 use pallet_starknet::Call::{consume_l1_message, declare, deploy_account, invoke};
-use pallet_starknet_runtime_api::StarknetTransactionExecutionError;
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -47,7 +45,7 @@ use sp_runtime::traits::{BlakeTwo256, Block as BlockT, NumberFor};
 use sp_runtime::transaction_validity::{TransactionSource, TransactionValidity};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-use sp_runtime::{generic, ApplyExtrinsicResult, DispatchError};
+use sp_runtime::{generic, ApplyExtrinsicResult};
 pub use sp_runtime::{Perbill, Permill};
 use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
@@ -235,11 +233,11 @@ impl_runtime_apis! {
 
     impl pallet_starknet_runtime_api::StarknetRuntimeApi<Block> for Runtime {
 
-        fn get_storage_at(address: ContractAddress, key: StorageKey) -> Result<StarkFelt, DispatchError> {
+        fn get_storage_at(address: ContractAddress, key: StorageKey) -> Result<StarkFelt, mp_simulations::Error> {
             Starknet::get_storage_at(address, key)
         }
 
-        fn call(address: ContractAddress, function_selector: EntryPointSelector, calldata: Calldata) -> Result<Vec<Felt252Wrapper>, DispatchError> {
+        fn call(address: ContractAddress, function_selector: EntryPointSelector, calldata: Calldata) -> Result<Vec<Felt252Wrapper>, mp_simulations::Error> {
             Starknet::call_contract(address, function_selector, calldata)
         }
 
@@ -275,23 +273,23 @@ impl_runtime_apis! {
             Starknet::is_transaction_fee_disabled()
         }
 
-        fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
+        fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, mp_simulations::Error> {
             Starknet::estimate_fee(transactions)
         }
 
-        fn re_execute_transactions(transactions: Vec<UserOrL1HandlerTransaction>) -> Result<Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError> {
+        fn re_execute_transactions(transactions: Vec<UserOrL1HandlerTransaction>) -> Result<Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, PlaceHolderErrorTypeForFailedStarknetExecution>, mp_simulations::Error> {
             Starknet::re_execute_transactions(transactions)
         }
 
-        fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), DispatchError> {
+        fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), mp_simulations::Error> {
             Starknet::estimate_message_fee(message)
         }
 
-        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, DispatchError> {
+        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, mp_simulations::Error> {
             Starknet::simulate_transactions(transactions, &simulation_flags)
         }
 
-        fn simulate_message(message: HandleL1MessageTransaction, simulation_flags: SimulationFlags) -> Result<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError> {
+        fn simulate_message(message: HandleL1MessageTransaction, simulation_flags: SimulationFlags) -> Result<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, mp_simulations::Error> {
             Starknet::simulate_message(message, &simulation_flags)
         }
 
@@ -372,23 +370,6 @@ impl_runtime_apis! {
             let call =  pallet_starknet::Call::<Runtime>::consume_l1_message { transaction, paid_fee_on_l1: fee };
 
             UncheckedExtrinsic::new_unsigned(call.into())
-        }
-
-        fn convert_error(error: DispatchError) -> StarknetTransactionExecutionError {
-            if error == PalletError::<Runtime>::ContractNotFound.into() {
-                return StarknetTransactionExecutionError::ContractNotFound;
-            }
-            if error == PalletError::<Runtime>::ClassHashAlreadyDeclared.into() {
-                return StarknetTransactionExecutionError::ClassAlreadyDeclared;
-            }
-            if error == PalletError::<Runtime>::ContractClassHashUnknown.into() {
-                return StarknetTransactionExecutionError::ClassHashNotFound;
-            }
-            if error == PalletError::<Runtime>::InvalidContractClass.into() {
-                return StarknetTransactionExecutionError::InvalidContractClass;
-            }
-
-            StarknetTransactionExecutionError::ContractError
         }
     }
 
