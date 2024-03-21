@@ -21,6 +21,7 @@ mod deploy_account_tx;
 mod erc20;
 mod events;
 mod fees_disabled;
+mod genesis_block;
 mod invoke_tx;
 mod l1_handler_validation;
 mod l1_message;
