@@ -2,13 +2,13 @@ use blockifier::abi::abi_utils::get_storage_var_address;
 use frame_support::{assert_err, assert_ok};
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
-use mp_transactions::{InvokeTransaction, InvokeTransactionV1};
+use mp_transactions::{DeclareTransactionV2, InvokeTransaction, InvokeTransactionV1};
 use pretty_assertions::assert_eq;
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{
     InvalidTransaction, TransactionSource, TransactionValidityError, ValidTransaction,
 };
-use starknet_api::api_core::{ContractAddress, Nonce, PatriciaKey};
+use starknet_api::api_core::{ContractAddress, Nonce, PatriciaKey, ClassHash};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Event as StarknetEvent, EventContent, EventData, EventKey, TransactionHash};
@@ -18,7 +18,7 @@ use starknet_crypto::FieldElement;
 use super::constants::{BLOCKIFIER_ACCOUNT_ADDRESS, MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS, TEST_CONTRACT_ADDRESS};
 use super::mock::default_mock::*;
 use super::mock::*;
-use super::utils::sign_message_hash;
+use super::utils::{get_contract_class, sign_message_hash};
 use crate::tests::{
     get_invoke_argent_dummy, get_invoke_braavos_dummy, get_invoke_dummy, get_invoke_emit_event_dummy,
     get_invoke_nonce_dummy, get_invoke_openzeppelin_dummy, get_storage_read_write_dummy, set_nonce,
@@ -546,11 +546,76 @@ fn test_tx_fail_on_invalid_nonce_should_revert_storage() {
             Err(TransactionValidityError::Invalid(InvalidTransaction::Stale))
         );
 
-        let storage_key = (
-            tx_sender,
-            StorageKey(PatriciaKey(StarkFelt::from(0u128))),
-        );
+        let storage_key = (tx_sender, StorageKey(PatriciaKey(StarkFelt::from(0u128))));
 
         assert_eq!(Starknet::storage(storage_key), StarkFelt::from(0u128));
     });
+}
+
+
+#[test]
+fn contract_function_call_should_fail() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let none_origin = RuntimeOrigin::none();
+
+        let account_addr = get_account_address(None, AccountType::V1(AccountTypeV1Inner::NoValidate));
+
+        let transaction_panic_class = get_contract_class("TransactionPanic.casm.json", 1);
+        let transaction_panic_class_hash =
+            Felt252Wrapper::from_hex_be("0x7d2bcb1df4970245665a19b23a4d3877eb86a661e8d98b89afc4531134b99f6").unwrap();
+        let transaction_panic_compiled_class_hash: Felt252Wrapper =
+            Felt252Wrapper::from_hex_be("0x1c02b663e928ed213d3a0fa206efb59182fa2ba41f5c204daa56c4a434b53e5").unwrap();
+
+        let mut transaction = DeclareTransactionV2 {
+            sender_address: account_addr.into(),
+            class_hash: transaction_panic_class_hash,
+            compiled_class_hash: transaction_panic_compiled_class_hash,
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: u128::MAX,
+            signature: vec![],
+            offset_version: false,
+        };
+
+        let chain_id = Starknet::chain_id();
+        let transaction_hash = transaction.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false);
+        transaction.signature = sign_message_hash(transaction_hash);
+
+        assert_ok!(Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::declare {
+                transaction: transaction.clone().into(),
+                contract_class: transaction_panic_class.clone()
+            },
+        ));
+
+        assert_ok!(Starknet::declare(none_origin, transaction.into(), transaction_panic_class.clone()));
+        assert_eq!(
+            Starknet::contract_class_by_class_hash(ClassHash::from(transaction_panic_class_hash)).unwrap(),
+            transaction_panic_class
+        );
+
+        // log account address
+        log::info!("Account address: {:?}", account_addr);
+
+        let deploy_transaction = InvokeTransactionV1{
+            sender_address: account_addr.into(),
+            signature: vec![],
+            nonce: Felt252Wrapper::ONE,
+            calldata: vec![
+                Felt252Wrapper::ONE,
+                Felt252Wrapper::from_hex_be("0x41a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf").unwrap(),
+                Felt252Wrapper::from_hex_be("0x1987cbd17808b9a23693d4de7e246a443cfe37e6e7fbaeabd7d7e6532b07c3d").unwrap(),
+                account_addr.into(),
+                transaction_panic_class_hash,
+                Felt252Wrapper::ONE,
+                Felt252Wrapper::ZERO
+            ],
+            max_fee: u128::MAX,
+            offset_version: false,
+        };
+
+        assert_ok!(Starknet::invoke(RuntimeOrigin::none(), deploy_transaction.into()));
+    })
 }
