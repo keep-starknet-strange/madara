@@ -1,6 +1,7 @@
 use std::vec::Vec;
 
 use blockifier::execution::contract_class::ContractClass as StarknetContractClass;
+use mp_chain_id::{MADARA_CHAIN_ID, SN_GOERLI_CHAIN_ID, SN_MAIN_CHAIN_ID};
 use mp_felt::Felt252Wrapper;
 use mp_genesis_config::ContractClass;
 pub use mp_genesis_config::{GenesisData, GenesisLoader, HexFelt, PredeployedAccount};
@@ -66,12 +67,20 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
             .collect::<Vec<_>>();
         let fee_token_address = Felt252Wrapper(loader.data().fee_token_address.0).into();
 
+        let chain_id = match loader.data().chain_id.as_ref() {
+            "MADARA" | "Madara" => MADARA_CHAIN_ID,
+            "GOERLI" | "Goerli" => SN_GOERLI_CHAIN_ID,
+            "STARKNET_MAINNET" | "Starkent Mainnet" | "Starkent_Mainnet" => SN_MAIN_CHAIN_ID,
+            _ => panic!("Inavalid chain id try `MADARA` or `GOERLI` or `STARKNET_MAINNET`"),
+        };
+
         GenesisConfig {
             contracts,
             contract_classes,
             sierra_to_casm_class_hash,
             storage,
             fee_token_address,
+            chain_id,
             ..Default::default()
         }
     }
@@ -137,13 +146,14 @@ mod tests {
             predeployed_accounts: Vec::new(),
             storage: vec![((contract_address, storage_key), storage_value)],
             fee_token_address,
+            chain_id: String::from("MADARA"),
         };
 
         // When
         let serialized_loader = serde_json::to_string(&genesis_loader).unwrap();
 
         // Then
-        let expected = r#"{"contract_classes":[["0x1",{"path":"cairo-contracts/ERC20.json","version":0}]],"sierra_class_hash_to_casm_class_hash":[["0x2a","0x1"]],"contracts":[["0x2","0x1"]],"predeployed_accounts":[],"storage":[[["0x2","0x3"],"0x4"]],"fee_token_address":"0x5"}"#;
+        let expected = r#"{"contract_classes":[["0x1",{"path":"cairo-contracts/ERC20.json","version":0}]],"sierra_class_hash_to_casm_class_hash":[["0x2a","0x1"]],"contracts":[["0x2","0x1"]],"predeployed_accounts":[],"storage":[[["0x2","0x3"],"0x4"]],"fee_token_address":"0x5","chain_id":"MADARA"}"#;
         assert_eq!(expected, serialized_loader);
     }
 }

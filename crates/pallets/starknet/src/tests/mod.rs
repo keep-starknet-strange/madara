@@ -6,7 +6,7 @@ use mp_transactions::{DeclareTransaction, DeclareTransactionV1, DeployAccountTra
 use starknet_api::api_core::{ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 
-use self::mock::default_mock::{MockRuntime, Starknet};
+pub use self::mock::default_mock::{MockRuntime, Starknet};
 use self::mock::{get_account_address, AccountType};
 use crate::blockifier_state_adapter::BlockifierStateAdapter;
 use crate::tests::mock::account_helper;
