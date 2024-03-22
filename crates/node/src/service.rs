@@ -409,6 +409,7 @@ pub fn new_full(
             madara_backend.clone(),
             3,
             0,
+            prometheus_registry.clone()
         )
         .for_each(|()| future::ready(())),
     );
