@@ -46,3 +46,6 @@ starknet_api = { workspace = true, features = [
 # Primitives
 mp-felt = { workspace = true }
 mp-transactions = { workspace = true, features = ["scale-info"] }
+
+[dev-dependencies]
+serde_json = { workspace = true }

@@ -7,7 +7,7 @@ use starknet_api::state::ContractClass;
 
 use crate::{DbError, DbHash};
 
-/// Allow interaction with the sierra classes db
+/// Allow interaction with the sierra classes db    
 pub struct SierraClassesDb {
     pub(crate) db: Arc<dyn Database<DbHash>>,
 }
