@@ -19,6 +19,7 @@ use mc_mapping_sync::MappingSyncWorker;
 use mc_settlement::errors::RetryOnRecoverableErrors;
 use mc_settlement::ethereum::StarknetContractClient;
 use mc_settlement::{SettlementLayer, SettlementProvider, SettlementWorker};
+use mc_starknet_block_import::StarknetBlockImport;
 use mc_storage::overrides_handle;
 use mp_sequencer_address::{
     InherentDataProvider as SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
@@ -43,7 +44,6 @@ use sp_offchain::STORAGE_PREFIX;
 use crate::genesis_block::MadaraGenesisBlockBuilder;
 use crate::rpc::StarknetDeps;
 use crate::starknet::{db_config_dir, MadaraBackend};
-use crate::starknet_block_import::StarknetBlockImport;
 // Our native executor instance.
 pub struct ExecutorDispatch;
 
@@ -107,7 +107,7 @@ where
         &Configuration,
         &TaskManager,
         Option<TelemetryHandle>,
-        StarknetBlockImport<GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>>,
+        StarknetBlockImport<GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>, FullClient>,
         Arc<MadaraBackend>,
     ) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>,
 {
@@ -203,7 +203,7 @@ pub fn build_aura_grandpa_import_queue(
     config: &Configuration,
     task_manager: &TaskManager,
     telemetry: Option<TelemetryHandle>,
-    block_import: StarknetBlockImport<GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>>,
+    block_import: StarknetBlockImport<GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>, FullClient>,
     _madara_backend: Arc<MadaraBackend>,
 ) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>
 where
@@ -244,7 +244,7 @@ pub fn build_manual_seal_import_queue(
     config: &Configuration,
     task_manager: &TaskManager,
     _telemetry: Option<TelemetryHandle>,
-    _block_import: StarknetBlockImport<GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>>,
+    _block_import: StarknetBlockImport<GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>, FullClient>,
     _madara_backend: Arc<MadaraBackend>,
 ) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>
 where
@@ -584,7 +584,7 @@ pub fn new_full(
         };
 
         // start the full GRANDPA voter
-        // NOTE: non-authorities could run the GRANDPA observer protocol, but atz
+        // NOTE: non-authorities could run the GRANDPA observer protocol, but at
         // this point the full voter should provide better guarantees of block
         // and vote data availability than the observer. The observer has not
         // been tested extensively yet and having most nodes in a network run it
