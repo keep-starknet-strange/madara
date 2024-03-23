@@ -109,7 +109,7 @@ pub fn convert_casm_entry_points(entry_points: Vec<EntryPointV1>) -> Vec<Compile
     entry_points
         .into_iter()
         .map(|entry_point| CompiledClassEntrypoint {
-            builtins: entry_point.builtins,
+            builtins: entry_point.builtins.into_iter().map(normalize_builtin_name).collect(),
             offset: entry_point.offset.0 as u64,
             selector: entry_point.selector.0.into(),
         })
@@ -118,7 +118,7 @@ pub fn convert_casm_entry_points(entry_points: Vec<EntryPointV1>) -> Vec<Compile
 
 pub(crate) fn cairo_vm_program_to_bytecode(program: &Program) -> Result<Vec<FieldElement>, CompilationError> {
     let mut bytecode = Vec::with_capacity(program.data_len());
-    for item in program.data().iter() {
+    for item in program.iter_data() {
         match item {
             MaybeRelocatable::Int(felt) => bytecode.push(Felt252Wrapper::from(felt.clone()).into()),
             MaybeRelocatable::RelocatableValue(_) => return Err(CompilationError::UnexpectedRelocatable),
@@ -133,4 +133,47 @@ pub fn stark_felt_to_biguint(felt: &StarkFelt) -> BigUint {
 
 pub fn stark_felt_to_biguint_as_hex(felt: &StarkFelt) -> BigUintAsHex {
     BigUintAsHex { value: stark_felt_to_biguint(felt) }
+}
+
+// CairoVM adds "_builtin" suffix to builtin names.
+// Need to remove it because it affects class hash.
+fn normalize_builtin_name(builtin: String) -> String {
+    builtin.strip_suffix("_builtin").map(Into::into).unwrap_or(builtin)
+}
+
+#[cfg(test)]
+mod test {
+    use blockifier::execution::contract_class::{ContractClass as BlockifierCasmClass, ContractClassV1};
+    use mc_rpc::flattened_sierra_to_sierra_contract_class;
+    use starknet_core::types::contract::SierraClass;
+    use starknet_core::types::FieldElement;
+
+    use super::{blockifier_casm_class_to_compiled_class_hash, blockifier_sierra_class_to_compiled_class_hash};
+
+    #[test]
+    fn test_blockifier_casm_class_to_compiled_class_hash() {
+        // starkli class-hash
+        // crates/client/starknet-block-import/tests/counter0/counter0.compiled_contract_class.json
+        let expected_class_hash =
+            FieldElement::from_hex_be("0x065f93ec23a940ec285a12359778a0865dd20deceec9be7c6e000257e7b0e009").unwrap();
+        let casm_class = BlockifierCasmClass::V1(
+            ContractClassV1::try_from_json_string(include_str!(
+                "../tests/counter0/counter0.compiled_contract_class.json"
+            ))
+            .unwrap(),
+        );
+        let casm_class_hash = blockifier_casm_class_to_compiled_class_hash(casm_class).unwrap();
+        assert_eq!(expected_class_hash, casm_class_hash);
+    }
+
+    #[test]
+    fn test_blockifier_sierra_class_to_compiled_class_hash() {
+        let expected_class_hash =
+            FieldElement::from_hex_be("0x065f93ec23a940ec285a12359778a0865dd20deceec9be7c6e000257e7b0e009").unwrap();
+        let sierra_class: SierraClass =
+            serde_json::from_str(include_str!("../tests/counter0/counter0.contract_class.json")).unwrap();
+        let blockifier_sierra_class = flattened_sierra_to_sierra_contract_class(sierra_class.flatten().unwrap().into());
+        let casm_class_hash = blockifier_sierra_class_to_compiled_class_hash(blockifier_sierra_class).unwrap();
+        assert_eq!(expected_class_hash, casm_class_hash);
+    }
 }
