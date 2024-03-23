@@ -6086,6 +6086,9 @@ version = "0.7.0"
 dependencies = [
  "async-trait",
  "blockifier",
+ "cairo-lang-starknet",
+ "cairo-lang-utils",
+ "cairo-vm",
  "clap 4.4.13",
  "ethers",
  "frame-benchmarking",
@@ -6111,6 +6114,7 @@ dependencies = [
  "mp-felt",
  "mp-sequencer-address",
  "mp-transactions",
+ "num-bigint",
  "pallet-starknet",
  "pallet-starknet-runtime-api",
  "parity-scale-codec",
@@ -6138,6 +6142,7 @@ dependencies = [
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
+ "sp-consensus",
  "sp-consensus-aura",
  "sp-consensus-grandpa",
  "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
@@ -6154,6 +6159,7 @@ dependencies = [
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
+ "thiserror",
  "try-runtime-cli",
  "url",
 ]
