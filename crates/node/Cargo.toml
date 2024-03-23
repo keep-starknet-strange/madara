@@ -29,6 +29,8 @@ futures = { workspace = true, features = ["thread-pool"] }
 log = { workspace = true }
 serde = { workspace = true }
 sha3 = { workspace = true }
+thiserror = { workspace = true }
+num-bigint = { workspace = true }
 
 frame-system = { workspace = true }
 sc-basic-authorship = { workspace = true }
@@ -66,6 +68,7 @@ jsonrpsee = { workspace = true, features = ["server"] }
 sp-api = { workspace = true }
 sp-block-builder = { workspace = true }
 sp-blockchain = { workspace = true }
+sp-consensus = { workspace = true }
 # Substrate client dependencies
 prometheus-endpoint = { workspace = true }
 sc-rpc-api = { workspace = true }
@@ -79,6 +82,9 @@ frame-benchmarking = { workspace = true }
 frame-benchmarking-cli = { workspace = true }
 
 # Starknet
+cairo-vm = { workspace = true }
+cairo-lang-starknet = { workspace = true }
+cairo-lang-utils = { workspace = true }
 blockifier = { workspace = true }
 hex = { workspace = true }
 madara-runtime = { workspace = true }

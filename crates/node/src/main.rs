@@ -13,6 +13,7 @@ mod constants;
 mod genesis_block;
 mod rpc;
 mod starknet;
+mod starknet_block_import;
 
 fn main() -> sc_cli::Result<()> {
     command::run()

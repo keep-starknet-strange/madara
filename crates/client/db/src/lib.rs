@@ -21,7 +21,7 @@ use starknet_api::hash::StarkHash;
 mod da_db;
 mod db_opening_utils;
 mod messaging_db;
-mod sierra_classes_db;
+pub mod sierra_classes_db;
 pub use messaging_db::LastSyncedEventBlock;
 mod l1_handler_tx_fee;
 mod meta_db;

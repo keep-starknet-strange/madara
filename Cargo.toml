@@ -125,9 +125,7 @@ sp-runtime = { git = "https://github.com/massalabs/polkadot-sdk", branch = "rele
 sp-consensus-aura = { git = "http://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
   "std",
 ] }
-sp-consensus = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
-  "std",
-] }
+sp-consensus = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false }
 sp-consensus-grandpa = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
   "std",
 ] }
