@@ -49,6 +49,13 @@ pallet-starknet-runtime-api = { workspace = true, default-features = true }
 # Ethereum
 ethers = { workspace = true }
 
+# Alloy
+alloy = { git = "https://github.com/alloy-rs/alloy", rev = "fd8f065", features = [
+    "providers",
+    "rpc-types-eth",
+    "signer-wallet",
+] }
+
 # Zaun
 starknet-core-contract-client = { workspace = true }
 

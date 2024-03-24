@@ -119,6 +119,7 @@ dependencies = [
  "alloy-network",
  "alloy-provider",
  "alloy-rpc-client",
+ "alloy-rpc-types",
  "alloy-signer",
  "alloy-signer-wallet",
  "alloy-transport",
@@ -6914,6 +6915,7 @@ dependencies = [
 name = "mc-settlement"
 version = "0.1.0"
 dependencies = [
+ "alloy",
  "async-trait",
  "clap 4.4.13",
  "ethers",
