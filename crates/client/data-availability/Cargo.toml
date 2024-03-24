@@ -50,6 +50,13 @@ starknet_api = { workspace = true, default-features = true }
 # Ethereum
 ethers = { workspace = true }
 
+# Alloy
+alloy = { git = "https://github.com/alloy-rs/alloy", rev = "fd8f065", features = [
+    "network",
+    "providers",
+    "transport-http",
+] }
+
 # Madara
 mp-digest-log = { workspace = true, default-features = true }
 mp-felt = { workspace = true, default-features = true }
