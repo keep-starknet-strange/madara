@@ -2,7 +2,7 @@
 pub enum Error {
     #[error("Failed to parse provider URL: {0}")]
     ProviderUrlParse(#[source] url::ParseError),
-    #[error("Failed to parse private key: {0}")]
+    #[error("Failed to parse private key")]
     PrivateKeyParse,
     #[error("could not deserialize private key from bytes")]
     DeserializePrivateKeyError,

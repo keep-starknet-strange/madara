@@ -15,7 +15,7 @@ use std::time::Duration;
 use url::Url;
 use alloy::{
     network::{Ethereum, EthereumSigner},
-    providers::{layers::{ManagedNonceLayer, ManagedNonceProvider, SignerLayer}, ProviderBuilder, Stack},
+    providers::{layers::SignerProvider, ProviderBuilder, RootProvider},
     rpc::client::RpcClient,
     signers::wallet::LocalWallet,
     transports::http::Http
@@ -25,14 +25,13 @@ use k256::SecretKey;
 use crate::config::{EthereumClientConfig, EthereumProviderConfig, EthereumWalletConfig};
 use crate::error::Error;
 
-impl TryFrom<EthereumProviderConfig> for ManagedNonceProvider<Ethereum, Http<reqwest::Client>, alloy::providers::RootProvider<Ethereum, Http<reqwest::Client>>>  {
+impl TryFrom<EthereumProviderConfig> for RootProvider<Ethereum, Http<reqwest::Client>>  {
     type Error = Error;
 
     fn try_from(config: EthereumProviderConfig) -> Result<Self, Self::Error> {
         match config {
             EthereumProviderConfig::Http(config) => {
                 let provider = ProviderBuilder::new()
-                    .layer(ManagedNonceLayer)
                     .on_client(RpcClient::new_http(Url::parse(&config.rpc_endpoint).map_err(Error::ProviderUrlParse)?));
 
                 // if let Some(poll_interval_ms) = config.tx_poll_interval_ms {
@@ -67,13 +66,21 @@ impl TryFrom<EthereumWalletConfig> for LocalWallet {
     }
 }
 
-impl TryFrom<EthereumClientConfig> for ProviderBuilder<Stack<SignerLayer<EthereumSigner>, ManagedNonceLayer>> {
+impl TryFrom<EthereumClientConfig> for SignerProvider<Ethereum, Http<reqwest::Client>, RootProvider<Ethereum, Http<reqwest::Client>>, EthereumSigner> {
     type Error = Error;
 
     fn try_from(config: EthereumClientConfig) -> Result<Self, Self::Error> {
-        let provider: ManagedNonceProvider<Ethereum, Http<reqwest::Client>, alloy::providers::RootProvider<Ethereum, Http<reqwest::Client>>> = 
-            config.provider.try_into()?;
         let wallet: LocalWallet = config.wallet.unwrap_or_default().try_into()?;
-        Ok(provider.signer(EthereumSigner::from(wallet)))
+        let provider_config = config.provider;
+        match provider_config {
+            EthereumProviderConfig::Http(provider_config) => {
+                let rpc_client = RpcClient::new_http(Url::parse(&provider_config.rpc_endpoint).map_err(Error::ProviderUrlParse)?);
+                let provider_with_signer = ProviderBuilder::<_, Ethereum>::new()
+                    .signer(EthereumSigner::from(wallet))
+                    .network::<Ethereum>()
+                    .provider(RootProvider::new(rpc_client));
+                Ok(provider_with_signer)
+            }
+        }
     }
 }
