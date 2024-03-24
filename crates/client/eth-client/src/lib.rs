@@ -12,24 +12,32 @@ pub mod error;
 
 use std::time::Duration;
 
-use ethers::middleware::SignerMiddleware;
-use ethers::providers::{Http, Provider};
-use ethers::signers::{LocalWallet, Signer};
+use url::Url;
+use alloy::{
+    network::{Ethereum, EthereumSigner},
+    providers::{layers::{ManagedNonceLayer, ManagedNonceProvider, SignerLayer}, ProviderBuilder, Stack},
+    rpc::client::RpcClient,
+    signers::wallet::LocalWallet,
+    transports::http::Http
+};
+use k256::SecretKey;
 
 use crate::config::{EthereumClientConfig, EthereumProviderConfig, EthereumWalletConfig};
 use crate::error::Error;
 
-impl TryFrom<EthereumProviderConfig> for Provider<Http> {
+impl TryFrom<EthereumProviderConfig> for ManagedNonceProvider<Ethereum, Http<reqwest::Client>, alloy::providers::RootProvider<Ethereum, Http<reqwest::Client>>>  {
     type Error = Error;
 
     fn try_from(config: EthereumProviderConfig) -> Result<Self, Self::Error> {
         match config {
             EthereumProviderConfig::Http(config) => {
-                let mut provider = Provider::<Http>::try_from(config.rpc_endpoint).map_err(Error::ProviderUrlParse)?;
+                let provider = ProviderBuilder::new()
+                    .layer(ManagedNonceLayer)
+                    .on_client(RpcClient::new_http(Url::parse(&config.rpc_endpoint).map_err(Error::ProviderUrlParse)?));
 
-                if let Some(poll_interval_ms) = config.tx_poll_interval_ms {
-                    provider = provider.interval(Duration::from_millis(poll_interval_ms));
-                }
+                // if let Some(poll_interval_ms) = config.tx_poll_interval_ms {
+                //     provider = provider.interval(Duration::from_millis(poll_interval_ms));
+                // }
 
                 Ok(provider)
             }
@@ -42,21 +50,30 @@ impl TryFrom<EthereumWalletConfig> for LocalWallet {
 
     fn try_from(config: EthereumWalletConfig) -> Result<Self, Self::Error> {
         match config {
-            EthereumWalletConfig::Local(config) => Ok(config
-                .private_key
-                .parse::<LocalWallet>()
-                .map_err(Error::PrivateKeyParse)?
-                .with_chain_id(config.chain_id)),
+            EthereumWalletConfig::Local(config) => {
+                let key_str =
+                    config.private_key.split("0x").last().ok_or(Error::PrivateKeyParse)?.trim();
+                let key_hex = alloy::primitives::hex::decode(key_str).map_err(Error::FromHexError)?;
+                let private_key = SecretKey::from_bytes((&key_hex[..]).into())
+                    .map_err(|_| Error::DeserializePrivateKeyError)?;
+
+                let wallet: LocalWallet = private_key
+                    .clone()
+                    .into();
+                // wallet.with_chain_id(Some(config.chain_id));
+                Ok(wallet)
+            }
         }
     }
 }
 
-impl TryFrom<EthereumClientConfig> for SignerMiddleware<Provider<Http>, LocalWallet> {
+impl TryFrom<EthereumClientConfig> for ProviderBuilder<Stack<SignerLayer<EthereumSigner>, ManagedNonceLayer>> {
     type Error = Error;
 
     fn try_from(config: EthereumClientConfig) -> Result<Self, Self::Error> {
-        let provider: Provider<Http> = config.provider.try_into()?;
+        let provider: ManagedNonceProvider<Ethereum, Http<reqwest::Client>, alloy::providers::RootProvider<Ethereum, Http<reqwest::Client>>> = 
+            config.provider.try_into()?;
         let wallet: LocalWallet = config.wallet.unwrap_or_default().try_into()?;
-        Ok(SignerMiddleware::new(provider, wallet))
+        Ok(provider.signer(EthereumSigner::from(wallet)))
     }
 }
