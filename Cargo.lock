@@ -6784,6 +6784,7 @@ dependencies = [
 name = "mc-l1-messages"
 version = "0.1.0"
 dependencies = [
+ "alloy",
  "ethers",
  "log",
  "mc-db",
@@ -6791,6 +6792,7 @@ dependencies = [
  "mp-felt",
  "mp-transactions",
  "pallet-starknet-runtime-api",
+ "reqwest",
  "rustc-hex",
  "sc-client-api",
  "sc-transaction-pool-api",
