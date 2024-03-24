@@ -20,7 +20,6 @@ use alloy::{
     signers::wallet::LocalWallet,
     transports::http::Http
 };
-use k256::SecretKey;
 
 use crate::config::{EthereumClientConfig, EthereumProviderConfig, EthereumWalletConfig};
 use crate::error::Error;
@@ -49,19 +48,12 @@ impl TryFrom<EthereumWalletConfig> for LocalWallet {
 
     fn try_from(config: EthereumWalletConfig) -> Result<Self, Self::Error> {
         match config {
-            EthereumWalletConfig::Local(config) => {
-                let key_str =
-                    config.private_key.split("0x").last().ok_or(Error::PrivateKeyParse)?.trim();
-                let key_hex = alloy::primitives::hex::decode(key_str).map_err(Error::FromHexError)?;
-                let private_key = SecretKey::from_bytes((&key_hex[..]).into())
-                    .map_err(|_| Error::DeserializePrivateKeyError)?;
-
-                let wallet: LocalWallet = private_key
-                    .clone()
-                    .into();
-                // wallet.with_chain_id(Some(config.chain_id));
-                Ok(wallet)
-            }
+            EthereumWalletConfig::Local(config) => Ok(config
+                .private_key
+                .parse::<LocalWallet>()
+                .map_err(Error::PrivateKeyParse)?
+                // .set_chain_id(Some(config.chain_id))
+            )
         }
     }
 }

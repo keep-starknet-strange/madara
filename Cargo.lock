@@ -363,8 +363,6 @@ dependencies = [
  "alloy-primitives",
  "alloy-signer",
  "async-trait",
- "coins-bip32",
- "coins-bip39",
  "k256",
  "rand 0.8.5",
  "thiserror",
@@ -6758,7 +6756,6 @@ version = "0.1.0"
 dependencies = [
  "alloy",
  "ethers",
- "k256",
  "reqwest",
  "rustc-hex",
  "serde",
