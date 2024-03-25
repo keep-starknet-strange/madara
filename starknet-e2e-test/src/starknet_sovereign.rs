@@ -160,7 +160,8 @@ impl StarknetSovereign {
     }
 
     pub async fn message_to_l1_exists(&self, message: &MessageL2ToL1) -> bool {
-        let mut payload: Vec<u8> = Vec::new();
+        let message_felt_size = message.size_in_felts();
+        let mut payload: Vec<u8> = Vec::with_capacity(32 * message_felt_size);
         message.clone().into_encoded_vec().into_iter().for_each(|felt| payload.append(&mut felt.bytes().to_vec()));
 
         let msg_hash = keccak256(payload);
