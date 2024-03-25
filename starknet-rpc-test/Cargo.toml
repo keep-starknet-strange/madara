@@ -11,7 +11,7 @@ assert_matches = "1.5.0"
 async-lock = "3.1.0"
 async-trait = { workspace = true }
 flate2 = { workspace = true }
-reqwest = "0.11.18"
+reqwest = "0.12.1"
 rstest = "0.18.1"
 serde = { version = "1.0.192", features = ["derive"] }
 serde_json = "1.0.108"
