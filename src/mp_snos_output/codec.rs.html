@@ -325,7 +325,7 @@
 
     <span class="kw">fn </span>decode(input: <span class="kw-2">&amp;mut </span>FeltReader) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, FeltReaderError&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>segment_reader = FeltReader::new(input.read_segment()<span class="question-mark">?</span>);
-        <span class="kw">let </span><span class="kw-2">mut </span>elements: Vec&lt;T&gt; = Vec::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>elements: Vec&lt;T&gt; = Vec::with_capacity(segment_reader.remaining_len());
         <span class="kw">while </span>segment_reader.remaining_len() &gt; <span class="number">0 </span>{
             elements.push(T::decode(<span class="kw-2">&amp;mut </span>segment_reader)<span class="question-mark">?</span>);
         }

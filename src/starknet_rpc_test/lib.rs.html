@@ -385,7 +385,7 @@
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         transactions: Vec&lt;Transaction&lt;<span class="lifetime">&#39;_</span>&gt;&gt;,
     ) -&gt; anyhow::Result&lt;Vec&lt;<span class="prelude-ty">Result</span>&lt;TransactionResult, SendTransactionError&gt;&gt;&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>results = Vec::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>results = Vec::with_capacity(transactions.len());
         <span class="kw">for </span>tx <span class="kw">in </span>transactions {
             <span class="kw">let </span>result = tx.send().<span class="kw">await</span>;
             results.push(result);
@@ -399,7 +399,7 @@
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         transactions: Vec&lt;Transaction&lt;<span class="lifetime">&#39;_</span>&gt;&gt;,
     ) -&gt; Vec&lt;<span class="prelude-ty">Result</span>&lt;TransactionResult, SendTransactionError&gt;&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>results = Vec::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>results = Vec::with_capacity(transactions.len());
         <span class="kw">for </span>tx <span class="kw">in </span>transactions {
             <span class="kw">let </span>result = tx.send().<span class="kw">await</span>;
             results.push(result);

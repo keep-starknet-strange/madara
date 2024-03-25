@@ -179,6 +179,7 @@
 <a href="#179" id="179">179</a>
 <a href="#180" id="180">180</a>
 <a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::fs::File;
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::sync::Arc;
@@ -341,7 +342,8 @@
     }
 
     <span class="kw">pub async fn </span>message_to_l1_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, message: <span class="kw-2">&amp;</span>MessageL2ToL1) -&gt; bool {
-        <span class="kw">let </span><span class="kw-2">mut </span>payload: Vec&lt;u8&gt; = Vec::new();
+        <span class="kw">let </span>message_felt_size = message.size_in_felts();
+        <span class="kw">let </span><span class="kw-2">mut </span>payload: Vec&lt;u8&gt; = Vec::with_capacity(<span class="number">32 </span>* message_felt_size);
         message.clone().into_encoded_vec().into_iter().for_each(|felt| payload.append(<span class="kw-2">&amp;mut </span>felt.bytes().to_vec()));
 
         <span class="kw">let </span>msg_hash = keccak256(payload);
