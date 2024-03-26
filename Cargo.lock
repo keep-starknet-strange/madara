@@ -991,7 +991,7 @@ dependencies = [
 [[package]]
 name = "blockifier"
 version = "0.5.0-rc.3"
-source = "git+https://github.com/bidzyyys/blockifier?branch=feature/scale-codec#837ee8dcad47365d7ec89a018f9e1b18e1e36d6d"
+source = "git+https://github.com/bidzyyys/blockifier?branch=feature/scale-codec#5cb2f10aab639a755509824181408447a8ac5424"
 dependencies = [
  "anyhow",
  "ark-ec",
@@ -6427,11 +6427,13 @@ dependencies = [
 name = "mc-l1-messages"
 version = "0.1.0"
 dependencies = [
+ "blockifier",
  "ethers",
  "log",
  "mc-db",
  "mc-eth-client",
  "mp-felt",
+ "mp-hashers",
  "mp-transactions",
  "pallet-starknet-runtime-api",
  "rustc-hex",
@@ -6453,6 +6455,7 @@ name = "mc-mapping-sync"
 version = "0.7.0"
 dependencies = [
  "anyhow",
+ "blockifier",
  "futures",
  "futures-timer",
  "log",
@@ -6560,6 +6563,7 @@ name = "mc-settlement"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "blockifier",
  "clap 4.4.13",
  "ethers",
  "futures",

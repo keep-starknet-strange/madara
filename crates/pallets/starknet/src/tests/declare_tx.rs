@@ -1,14 +1,16 @@
 use assert_matches::assert_matches;
+use blockifier::transaction::transactions::DeclareTransaction;
 use frame_support::{assert_err, assert_ok};
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
-use mp_transactions::{DeclareTransactionV1, DeclareTransactionV2};
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{
     InvalidTransaction, TransactionSource, TransactionValidityError, ValidTransaction,
 };
 use starknet_api::core::{ClassHash, Nonce};
 use starknet_api::hash::StarkFelt;
+use starknet_api::transaction::{DeclareTransaction as StarknetApiDeclareTransaction, DeclareTransactionV0V1};
+use blockifier::transaction::transactions::DeclareTransaction as BlockifierDeclareTransaction;
 use starknet_crypto::FieldElement;
 
 use super::mock::default_mock::*;
@@ -16,6 +18,8 @@ use super::mock::*;
 use super::utils::{get_contract_class, sign_message_hash};
 use crate::tests::{get_declare_dummy, set_nonce};
 use crate::{Config, Error};
+
+fn create_declare_tx(declare_transaction: DeclareTransaction) -> 
 
 #[test]
 fn given_contract_declare_tx_works_once_not_twice() {
@@ -28,6 +32,7 @@ fn given_contract_declare_tx_works_once_not_twice() {
         let erc20_class_hash =
             Felt252Wrapper::from_hex_be("0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
 
+        let transaction = DeclareTransaction::new(DeclareTransaction::V1(DeclareTransactionV0V1 { max_fee: todo!(), signature: todo!(), nonce: todo!(), class_hash: todo!(), sender_address: todo!() }), , );
         let transaction = DeclareTransactionV1 {
             sender_address: account_addr.into(),
             class_hash: erc20_class_hash,

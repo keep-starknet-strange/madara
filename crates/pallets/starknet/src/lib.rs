@@ -34,9 +34,6 @@
 
 use std::sync::Arc;
 
-use blockifier::execution::call_info::CallInfo;
-use blockifier::transaction::objects::{DeprecatedTransactionInfo, TransactionInfo};
-use blockifier::versioned_constants::VersionedConstants;
 /// Starknet pallet.
 /// Definition of the pallet's runtime storage items, events, errors, and dispatchable
 /// functions.
@@ -68,11 +65,18 @@ use alloc::vec::Vec;
 
 use blockifier::blockifier::block::{BlockInfo, GasPrices};
 use blockifier::context::{BlockContext, ChainInfo, FeeTokenAddresses, TransactionContext};
+use blockifier::execution::call_info::CallInfo;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::{CallEntryPoint, CallType, EntryPointExecutionContext};
 use blockifier::execution::errors::{EntryPointExecutionError, PreExecutionError};
 use blockifier::state::cached_state::{CachedState, GlobalContractCache};
-use blockifier::transaction::transactions::ExecutableTransaction;
+use blockifier::transaction::account_transaction::AccountTransaction;
+use blockifier::transaction::objects::{DeprecatedTransactionInfo, TransactionInfo};
+use blockifier::transaction::transaction_execution::Transaction;
+use blockifier::transaction::transactions::{
+    DeclareTransaction, DeployAccountTransaction, ExecutableTransaction, InvokeTransaction, L1HandlerTransaction,
+};
+use blockifier::versioned_constants::VersionedConstants;
 use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
 use frame_support::traits::Time;
@@ -83,10 +87,6 @@ use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
-use mp_transactions::{
-    DeclareTransaction, DeployAccountTransaction, HandleL1MessageTransaction, InvokeTransaction, Transaction,
-    UserOrL1HandlerTransaction, UserTransaction,
-};
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
 use starknet_api::block::{BlockNumber, BlockTimestamp};
@@ -120,6 +120,8 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
+    use blockifier::transaction::account_transaction::AccountTransaction;
+
     use super::*;
 
     #[pallet::pallet]
@@ -484,11 +486,6 @@ pub mod pallet {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
-            let input_transaction = transaction;
-
-            let chain_id = Self::chain_id();
-            let transaction = input_transaction.into_executable::<T::SystemHash>(chain_id, false);
-
             let sender_address = match &transaction.tx {
                 starknet_api::transaction::InvokeTransaction::V0(tx) => tx.contract_address,
                 starknet_api::transaction::InvokeTransaction::V1(tx) => tx.sender_address,
@@ -497,14 +494,12 @@ pub mod pallet {
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(sender_address), Error::<T>::AccountNotDeployed);
 
-            let tx_hash = transaction.tx_hash;
-
             // Init caches
             let mut cached_state = Self::init_cached_state();
 
             // Execute
             let tx_execution_infos = ExecutableTransaction::execute(
-                blockifier::transaction::account_transaction::AccountTransaction::Invoke(transaction),
+                blockifier::transaction::account_transaction::AccountTransaction::Invoke(transaction.clone()),
                 &mut cached_state,
                 &Self::get_block_context(),
                 true,
@@ -513,11 +508,15 @@ pub mod pallet {
             .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
             Self::emit_and_store_tx_and_fees_events(
-                tx_hash,
+                transaction.tx_hash,
                 &tx_execution_infos.execute_call_info,
                 &tx_execution_infos.fee_transfer_call_info,
             );
-            Self::store_transaction(tx_hash, Transaction::Invoke(input_transaction), tx_execution_infos.revert_error);
+            Self::store_transaction(
+                transaction.tx_hash,
+                Transaction::AccountTransaction(AccountTransaction::Invoke(transaction)),
+                tx_execution_infos.revert_error,
+            );
 
             Ok(())
         }
@@ -535,19 +534,9 @@ pub mod pallet {
         /// * `DispatchResult` - The result of the transaction.
         #[pallet::call_index(2)]
         #[pallet::weight({0})]
-        pub fn declare(
-            origin: OriginFor<T>,
-            transaction: DeclareTransaction,
-            contract_class: ContractClass,
-        ) -> DispatchResult {
+        pub fn declare(origin: OriginFor<T>, transaction: DeclareTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
-
-            let input_transaction = transaction;
-            let chain_id = Self::chain_id();
-            let transaction = input_transaction
-                .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), false)
-                .map_err(|_| Error::<T>::InvalidContractClassForThisDeclareVersion)?;
 
             // Check class hash is not already declared
             ensure!(
@@ -563,11 +552,9 @@ pub mod pallet {
             // Init caches
             let mut cached_state = Self::init_cached_state();
 
-            let tx_hash = transaction.tx_hash();
-
             // Execute
             let tx_execution_infos = ExecutableTransaction::execute(
-                blockifier::transaction::account_transaction::AccountTransaction::Declare(transaction),
+                blockifier::transaction::account_transaction::AccountTransaction::Declare(transaction.clone()),
                 &mut cached_state,
                 &Self::get_block_context(),
                 true,
@@ -576,13 +563,13 @@ pub mod pallet {
             .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
             Self::emit_and_store_tx_and_fees_events(
-                tx_hash,
+                transaction.tx_hash(),
                 &tx_execution_infos.execute_call_info,
                 &tx_execution_infos.fee_transfer_call_info,
             );
             Self::store_transaction(
-                tx_hash,
-                Transaction::Declare(input_transaction, contract_class),
+                transaction.tx_hash(),
+                Transaction::AccountTransaction(AccountTransaction::Declare(transaction)),
                 tx_execution_infos.revert_error,
             );
 
@@ -607,24 +594,18 @@ pub mod pallet {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
-            let input_transaction = transaction;
-            let chain_id = T::ChainId::get();
-            let transaction = input_transaction.into_executable::<T::SystemHash>(chain_id, false);
-
             // Check if contract is deployed
             ensure!(
                 !ContractClassHashes::<T>::contains_key(transaction.contract_address),
                 Error::<T>::AccountAlreadyDeployed
             );
 
-            let tx_hash = transaction.tx_hash;
-
             // Init caches
             let mut cached_state = Self::init_cached_state();
 
             // Execute
             let tx_execution_infos = ExecutableTransaction::execute(
-                blockifier::transaction::account_transaction::AccountTransaction::DeployAccount(transaction),
+                blockifier::transaction::account_transaction::AccountTransaction::DeployAccount(transaction.clone()),
                 &mut cached_state,
                 &Self::get_block_context(),
                 true,
@@ -633,13 +614,13 @@ pub mod pallet {
             .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
             Self::emit_and_store_tx_and_fees_events(
-                tx_hash,
+                transaction.tx_hash,
                 &tx_execution_infos.execute_call_info,
                 &tx_execution_infos.fee_transfer_call_info,
             );
             Self::store_transaction(
-                tx_hash,
-                Transaction::DeployAccount(input_transaction),
+                transaction.tx_hash,
+                Transaction::AccountTransaction(AccountTransaction::DeployAccount(transaction)),
                 tx_execution_infos.revert_error,
             );
 
@@ -661,19 +642,10 @@ pub mod pallet {
         /// * Compute weight
         #[pallet::call_index(4)]
         #[pallet::weight({0})]
-        pub fn consume_l1_message(
-            origin: OriginFor<T>,
-            transaction: HandleL1MessageTransaction,
-            paid_fee_on_l1: Fee,
-        ) -> DispatchResult {
+        pub fn consume_l1_message(origin: OriginFor<T>, transaction: L1HandlerTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
-            let input_transaction = transaction;
-            let chain_id = Self::chain_id();
-            let transaction = input_transaction.into_executable::<T::SystemHash>(chain_id, paid_fee_on_l1, false);
-
-            let tx_hash = transaction.tx_hash;
             let nonce = transaction.tx.nonce;
 
             // Ensure that L1 Message has not been executed
@@ -688,18 +660,23 @@ pub mod pallet {
             let mut cached_state = Self::init_cached_state();
 
             // Execute
-            let tx_execution_infos =
-                ExecutableTransaction::execute(transaction, &mut cached_state, &Self::get_block_context(), true, true)
-                    .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+            let tx_execution_infos = ExecutableTransaction::execute(
+                transaction.clone(),
+                &mut cached_state,
+                &Self::get_block_context(),
+                true,
+                true,
+            )
+            .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
             Self::emit_and_store_tx_and_fees_events(
-                tx_hash,
+                transaction.tx_hash,
                 &tx_execution_infos.execute_call_info,
                 &tx_execution_infos.fee_transfer_call_info,
             );
             Self::store_transaction(
-                tx_hash,
-                Transaction::L1Handler(input_transaction),
+                transaction.tx_hash,
+                Transaction::L1HandlerTransaction(transaction),
                 tx_execution_infos.revert_error,
             );
 
@@ -756,15 +733,19 @@ pub mod pallet {
                 // Make sure txs from same account are executed in correct order (nonce based ordering)
                 TxPriorityInfo::RegularTxs { sender_address, transaction_nonce, sender_nonce } => {
                     valid_transaction_builder =
-                        valid_transaction_builder.and_provides((sender_address, Felt252Wrapper(transaction_nonce.0)));
+                        valid_transaction_builder.and_provides((sender_address, transaction_nonce));
                     if transaction_nonce > sender_nonce {
-                        valid_transaction_builder = valid_transaction_builder
-                            .and_requires((sender_address, Felt252Wrapper(transaction_nonce.0 - FieldElement::ONE)));
+                        valid_transaction_builder = valid_transaction_builder.and_requires((
+                            sender_address,
+                            transaction_nonce
+                                .try_increment()
+                                .map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::BadProof))?,
+                        ));
                     }
                 }
                 TxPriorityInfo::L1Handler { nonce } => {
                     valid_transaction_builder =
-                        valid_transaction_builder.and_provides((Felt252Wrapper::ZERO, Felt252Wrapper(nonce.0)));
+                        valid_transaction_builder.and_provides((ContractAddress::default(), nonce));
                 }
                 _ => {}
             }
@@ -799,16 +780,18 @@ impl<T: Config> Pallet<T> {
     /// # Returns
     ///
     /// The transaction
-    fn get_call_transaction(call: Call<T>) -> Result<UserOrL1HandlerTransaction, ()> {
+    fn get_call_transaction(call: Call<T>) -> Result<Transaction, ()> {
         let tx = match call {
-            Call::<T>::invoke { transaction } => UserTransaction::Invoke(transaction).into(),
-            Call::<T>::declare { transaction, contract_class } => {
-                UserTransaction::Declare(transaction, contract_class).into()
+            Call::<T>::invoke { transaction } => {
+                Transaction::AccountTransaction(AccountTransaction::Invoke(transaction))
             }
-            Call::<T>::deploy_account { transaction } => UserTransaction::DeployAccount(transaction).into(),
-            Call::<T>::consume_l1_message { transaction, paid_fee_on_l1 } => {
-                UserOrL1HandlerTransaction::L1Handler(transaction, paid_fee_on_l1)
+            Call::<T>::declare { transaction } => {
+                Transaction::AccountTransaction(AccountTransaction::Declare(transaction))
             }
+            Call::<T>::deploy_account { transaction } => {
+                Transaction::AccountTransaction(AccountTransaction::DeployAccount(transaction))
+            }
+            Call::<T>::consume_l1_message { transaction } => Transaction::L1HandlerTransaction(transaction),
             _ => return Err(()),
         };
 

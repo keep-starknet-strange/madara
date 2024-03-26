@@ -3,14 +3,13 @@ use std::sync::Arc;
 use ethers::providers::{Http, Provider, StreamExt};
 use ethers::types::U256;
 pub use mc_eth_client::config::EthereumClientConfig;
-use mp_transactions::HandleL1MessageTransaction;
+use mp_hashers::HasherT;
+use mp_transactions::compute_hash::ComputeTransactionHash;
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::HeaderBackend;
 use sc_transaction_pool_api::{TransactionPool, TransactionSource};
 use sp_api::ProvideRuntimeApi;
 use sp_runtime::traits::Block as BlockT;
-use starknet_api::core::Nonce;
-use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::Fee;
 use starknet_core_contract_client::interfaces::{LogMessageToL2Filter, StarknetMessagingEvents};
 
@@ -27,7 +26,7 @@ fn create_event_listener(
     Ok(StarknetMessagingEvents::new(address, Arc::new(provider)))
 }
 
-pub async fn run_worker<C, P, B>(
+pub async fn run_worker<C, P, B, H>(
     config: EthereumClientConfig,
     client: Arc<C>,
     pool: Arc<P>,
@@ -37,6 +36,7 @@ pub async fn run_worker<C, P, B>(
     C: ProvideRuntimeApi<B> + HeaderBackend<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     P: TransactionPool<Block = B> + 'static,
+    H: HasherT + Send + Sync + 'static,
 {
     log::info!("⟠ Starting L1 Messages Worker with settings: {:?}", config);
 
@@ -74,7 +74,7 @@ pub async fn run_worker<C, P, B>(
                 meta.log_index
             );
 
-            match process_l1_message(
+            match process_l1_message::<_, _, _, _, H>(
                 event,
                 &client,
                 &pool,
@@ -110,7 +110,7 @@ pub async fn run_worker<C, P, B>(
     }
 }
 
-async fn process_l1_message<C, P, B, PE>(
+async fn process_l1_message<C, P, B, PE, H>(
     event: LogMessageToL2Filter,
     client: &Arc<C>,
     pool: &Arc<P>,
@@ -124,22 +124,23 @@ where
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     P: TransactionPool<Block = B, Error = PE> + 'static,
     PE: std::error::Error,
+    H: HasherT + Send + Sync + 'static,
 {
     // Check against panic
     // https://docs.rs/ethers/latest/ethers/types/struct.U256.html#method.as_u128
-    let fee: Fee = if event.fee > U256::from_big_endian(&(u128::MAX.to_be_bytes())) {
+    let paid_fee_on_l1: Fee = if event.fee > U256::from_big_endian(&(u128::MAX.to_be_bytes())) {
         return Err(L1MessagesWorkerError::ToFeeError);
     } else {
         Fee(event.fee.as_u128())
     };
-    let transaction: HandleL1MessageTransaction = parse_handle_l1_message_transaction(event)?;
+    let tx = parse_handle_l1_message_transaction(event)?;
 
     let best_block_hash = client.info().best_hash;
 
-    match client.runtime_api().l1_nonce_unused(best_block_hash, Nonce(StarkFelt::from(transaction.nonce))) {
+    match client.runtime_api().l1_nonce_unused(best_block_hash, tx.nonce) {
         Ok(true) => Ok(()),
         Ok(false) => {
-            log::debug!("⟠ Event already processed: {:?}", transaction);
+            log::debug!("⟠ Event already processed: {:?}", tx);
             return Ok(None);
         }
         Err(e) => {
@@ -148,7 +149,13 @@ where
         }
     }?;
 
-    let extrinsic = client.runtime_api().convert_l1_transaction(best_block_hash, transaction, fee).map_err(|e| {
+    let chain_id =
+        client.runtime_api().chain_id(best_block_hash).map_err(|e| L1MessagesWorkerError::RuntimeApiError(e.into()))?;
+    // TODO: Find a way not to hardcode that
+    let tx_hash = tx.compute_hash::<H>(chain_id, false);
+    let transaction = blockifier::transaction::transactions::L1HandlerTransaction { tx, tx_hash, paid_fee_on_l1 };
+
+    let extrinsic = client.runtime_api().convert_l1_transaction(best_block_hash, transaction).map_err(|e| {
         log::error!("⟠ Failed to convert L1 Transaction via Runtime Api: {:?}", e);
         L1MessagesWorkerError::ConvertTransactionRuntimeApiError(e)
     })?;

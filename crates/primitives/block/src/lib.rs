@@ -6,13 +6,10 @@ pub extern crate alloc;
 
 mod header;
 
-use alloc::vec::Vec;
-
-pub use header::*;
+use blockifier::transaction::transaction_execution::Transaction;
+pub use header::Header;
 use mp_felt::Felt252Wrapper;
-use mp_hashers::HasherT;
-use mp_transactions::compute_hash::ComputeTransactionHash;
-use mp_transactions::Transaction;
+use starknet_api::transaction::TransactionHash;
 
 /// Block Transactions
 pub type BlockTransactions = Vec<Transaction>;
@@ -75,11 +72,15 @@ impl Block {
     /// Returns an iterator that iterates over all transaction hashes.
     ///
     /// Those transactions are computed using the given `chain_id`.
-    pub fn transactions_hashes<H: HasherT>(
-        &self,
-        chain_id: Felt252Wrapper,
-    ) -> impl '_ + Iterator<Item = Felt252Wrapper> {
-        self.transactions.iter().map(move |tx| tx.compute_hash::<H>(chain_id, false))
+    pub fn transactions_hashes(&self) -> impl '_ + Iterator<Item = TransactionHash> {
+        self.transactions.iter().map(|tx| match tx {
+            Transaction::AccountTransaction(ac) => match ac {
+                blockifier::transaction::account_transaction::AccountTransaction::Declare(tx) => tx.tx_hash,
+                blockifier::transaction::account_transaction::AccountTransaction::DeployAccount(tx) => tx.tx_hash,
+                blockifier::transaction::account_transaction::AccountTransaction::Invoke(tx) => tx.tx_hash,
+            },
+            Transaction::L1HandlerTransaction(lhc) => lhc.tx_hash,
+        })
     }
 }
 

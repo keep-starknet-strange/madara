@@ -2,7 +2,7 @@
 
 use std::vec::Vec;
 
-use starknet_api::core::{ContractAddress, EthAddress, Nonce};
+use starknet_api::core::{ContractAddress, EntryPointSelector, EthAddress, Nonce};
 use starknet_api::hash::{StarkFelt, StarkHash};
 
 pub mod conversions;
@@ -35,7 +35,7 @@ pub struct MessageL1ToL2 {
     #[cfg_attr(feature = "serde", serde_as(as = "UfeHex"))]
     pub nonce: Nonce,
     #[cfg_attr(feature = "serde", serde_as(as = "UfeHex"))]
-    pub selector: StarkHash,
+    pub selector: EntryPointSelector,
     #[cfg_attr(feature = "serde", serde_as(as = "Vec<UfeHex>"))]
     pub payload: Vec<StarkFelt>,
 }

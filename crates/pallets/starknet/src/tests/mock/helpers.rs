@@ -1,12 +1,11 @@
 use alloc::sync::Arc;
 
 use mp_felt::Felt252Wrapper;
-use mp_transactions::DeployAccountTransaction;
 use sp_core::H256;
-use starknet_api::core::{ClassHash, ContractAddress, PatriciaKey};
+use starknet_api::core::{calculate_contract_address, ClassHash, ContractAddress, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
-use starknet_api::transaction::Calldata;
+use starknet_api::transaction::{Calldata, ContractAddressSalt};
 use starknet_core::utils::get_storage_var_address;
 use starknet_crypto::FieldElement;
 
@@ -93,16 +92,12 @@ pub fn get_account_calldata(account_type: AccountType) -> Vec<&'static str> {
 }
 
 /// Returns the account address for an account type
-pub fn get_account_address(salt: Option<Felt252Wrapper>, account_type: AccountType) -> ContractAddress {
-    let class_hash: Felt252Wrapper = get_account_class_hash(account_type).into();
-    let calldata: Vec<_> =
-        get_account_calldata(account_type).into_iter().map(|v| FieldElement::from_hex_be(v).unwrap()).collect();
+pub fn get_account_address(salt: Option<ContractAddressSalt>, account_type: AccountType) -> ContractAddress {
+    let class_hash = get_account_class_hash(account_type);
+    let calldata = Calldata(Arc::new(
+        get_account_calldata(account_type).into_iter().map(|v| StarkFelt::try_from(v).unwrap()).collect(),
+    ));
     let contract_address_salt = salt.unwrap_or(*TEST_ACCOUNT_SALT);
 
-    Felt252Wrapper(DeployAccountTransaction::calculate_contract_address(
-        contract_address_salt.0,
-        class_hash.0,
-        &calldata,
-    ))
-    .into()
+    calculate_contract_address(contract_address_salt, class_hash, &calldata, Default::default()).unwrap()
 }

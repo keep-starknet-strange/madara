@@ -1696,15 +1696,11 @@ where
     fn find_pending_tx(
         &self,
         chain_id: Felt252Wrapper,
-        tx_hash: FieldElement,
-    ) -> Result<Option<mp_transactions::Transaction>, StarknetRpcApiError> {
+        tx_hash: TransactionHash,
+    ) -> Result<Option<Transaction>, StarknetRpcApiError> {
         let latest_block = self.get_best_block_hash();
 
-        let pending_tx = self
-            .get_pending_txs(latest_block)?
-            .iter()
-            .find(|&tx| tx.compute_hash::<H>(chain_id.0.into(), false).0 == tx_hash)
-            .cloned();
+        let pending_tx = self.get_pending_txs(latest_block)?.iter().find(|&tx| tx.tx_hash == tx_hash).cloned();
 
         Ok(pending_tx)
     }

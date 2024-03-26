@@ -1,9 +1,15 @@
+use std::sync::Arc;
+
+use blockifier::execution::contract_class::ClassInfo;
 use frame_support::assert_ok;
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
-use mp_transactions::{DeclareTransactionV1, DeployAccountTransaction, InvokeTransactionV1};
-use starknet_api::core::EthAddress;
-use starknet_api::transaction::{L2ToL1Payload, MessageToL1, TransactionHash};
+use starknet_api::core::{calculate_contract_address, ClassHash, EthAddress, Nonce};
+use starknet_api::hash::StarkFelt;
+use starknet_api::transaction::{
+    Calldata, ContractAddressSalt, DeclareTransactionV0V1, Fee, InvokeTransactionV1, L2ToL1Payload, MessageToL1,
+    TransactionHash, TransactionSignature,
+};
 
 use super::mock::default_mock::*;
 use super::mock::*;
@@ -29,58 +35,62 @@ fn messages_to_l1_are_stored() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
-        let sender_address: Felt252Wrapper =
-            get_account_address(None, AccountType::V0(AccountTypeV0Inner::NoValidate)).into();
-        let contract_class = get_contract_class("send_message.json", 0);
-        let class_hash = Felt252Wrapper::from_hex_be(SEND_MESSAGE_CLASS_HASH).unwrap();
+        let chain_id = Starknet::chain_id();
+        let sender_address = get_account_address(None, AccountType::V0(AccountTypeV0Inner::NoValidate));
 
-        let declare_tx = DeclareTransactionV1 {
+        let contract_class = get_contract_class("send_message.json", 0);
+        let class_hash = ClassHash(StarkFelt::try_from(SEND_MESSAGE_CLASS_HASH).unwrap());
+
+        let declare_tx = starknet_api::transaction::DeclareTransaction::V1(DeclareTransactionV0V1 {
             sender_address,
             class_hash,
-            nonce: Felt252Wrapper::ZERO,
-            max_fee: u128::MAX,
-            signature: vec![],
-            offset_version: false,
+            nonce: Nonce(StarkFelt::ZERO),
+            max_fee: Fee(u128::MAX),
+            signature: TransactionSignature(vec![]),
+        });
+        let declare_tx = blockifier::transaction::transactions::DeclareTransaction {
+            tx: declare_tx,
+            tx_hash: declare_tx.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false),
+            only_query: false,
+            class_info: ClassInfo { contract_class, sierra_program_length: usize::MAX, abi_length: usize::MAX },
         };
 
-        assert_ok!(Starknet::declare(RuntimeOrigin::none(), declare_tx.into(), contract_class));
+        assert_ok!(Starknet::declare(RuntimeOrigin::none(), declare_tx.into()));
 
-        let salt = Felt252Wrapper::ZERO;
-        let contract_address: Felt252Wrapper =
-            DeployAccountTransaction::calculate_contract_address(salt.into(), class_hash.into(), &[]).into();
+        let salt = ContractAddressSalt(StarkFelt::ZERO);
+        let contract_address =
+            calculate_contract_address(salt, class_hash, &Calldata(Default::default()), Default::default()).unwrap();
 
         let deploy_tx = InvokeTransactionV1 {
             sender_address,
-            calldata: vec![
-                sender_address,
-                Felt252Wrapper::from_hex_be(DEPLOY_CONTRACT_SELECTOR).unwrap(),
-                Felt252Wrapper::from(3u128), // Calldata len
-                class_hash,
-                salt,
-                Felt252Wrapper::ZERO, // Constructor calldata len (no explicit constructor declared)
-            ],
-            nonce: Felt252Wrapper::ONE,
-            max_fee: u128::MAX,
-            signature: vec![],
-            offset_version: false,
+            calldata: Calldata(Arc::new(vec![
+                sender_address.0.0,
+                StarkFelt::try_from(DEPLOY_CONTRACT_SELECTOR).unwrap(),
+                StarkFelt::from(3u128), // Calldata len
+                class_hash.0,
+                salt.0,
+                StarkFelt::ZERO, // Constructor calldata len (no explicit constructor declared)
+            ])),
+            nonce: Nonce(StarkFelt::ONE),
+            max_fee: Fee(u128::MAX),
+            signature: TransactionSignature(vec![]),
         };
 
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), deploy_tx.into()));
 
         let invoke_tx = InvokeTransactionV1 {
             sender_address,
-            calldata: vec![
-                contract_address,
-                Felt252Wrapper::from_hex_be(SEND_MESSAGE_TO_L1_SELECTOR).unwrap(),
-                Felt252Wrapper::from(3u128), // Calldata len
-                Felt252Wrapper::ZERO,        // to_address
-                Felt252Wrapper::ONE,         // payload_len
-                Felt252Wrapper::TWO,         // payload
-            ],
-            nonce: Felt252Wrapper::TWO,
-            max_fee: u128::MAX,
-            signature: vec![],
-            offset_version: false,
+            calldata: Calldata(Arc::new(vec![
+                contract_address.0.0,
+                StarkFelt::try_from(SEND_MESSAGE_TO_L1_SELECTOR).unwrap(),
+                StarkFelt::from(3u128), // Calldata len
+                StarkFelt::ZERO,        // to_address
+                StarkFelt::ONE,         // payload_len
+                StarkFelt::TWO,         // payload
+            ])),
+            nonce: Nonce(StarkFelt::TWO),
+            max_fee: Fee(u128::MAX),
+            signature: TransactionSignature(vec![]),
         };
 
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), invoke_tx.clone().into()));

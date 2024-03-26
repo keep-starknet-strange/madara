@@ -7,10 +7,9 @@ use blockifier::execution::contract_class::ContractClass;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::pedersen::PedersenHasher;
 use mp_hashers::HasherT;
-use mp_transactions::{InvokeTransaction, InvokeTransactionV1};
 use starknet_api::core::EntryPointSelector;
 use starknet_api::hash::StarkFelt;
-use starknet_api::transaction::Calldata;
+use starknet_api::transaction::{Calldata, Fee, InvokeTransaction, InvokeTransactionV1, TransactionSignature};
 use starknet_crypto::{sign, FieldElement};
 
 use super::constants::{ACCOUNT_PRIVATE_KEY, K};
@@ -65,26 +64,21 @@ pub fn sign_message_hash(hash: Felt252Wrapper) -> Vec<Felt252Wrapper> {
 }
 
 pub fn build_transfer_invoke_transaction(request: BuildTransferInvokeTransaction) -> InvokeTransaction {
-    InvokeTransactionV1 {
-        max_fee: u128::MAX,
-        signature: vec![],
-        nonce: request.nonce,
-        sender_address: request.sender_address,
-        calldata: vec![
-            request.token_address, // Token address
-            Felt252Wrapper::from_hex_be(
-                "0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e",
-            )
-            .unwrap(), /* transfer
-                                    * selector */
-            Felt252Wrapper::THREE, // Calldata len
-            request.recipient,     // recipient
-            request.amount_low,    // initial supply low
-            request.amount_high,   // initial supply high
-        ],
-        offset_version: false,
-    }
-    .into()
+    InvokeTransaction::V1(InvokeTransactionV1 {
+        max_fee: Fee(u128::MAX),
+        signature: TransactionSignature(vec![]),
+        nonce: request.nonce.into(),
+        sender_address: request.sender_address.into(),
+        calldata: Calldata(Arc::new(vec![
+            request.token_address.into(), // Token address
+            StarkFelt::try_from("0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e").unwrap(), /* transfer
+                                                                                                                 * selector */
+            StarkFelt::THREE,           // Calldata len
+            request.recipient.into(),   // recipient
+            request.amount_low.into(),  // initial supply low
+            request.amount_high.into(), // initial supply high
+        ])),
+    })
 }
 
 pub fn build_get_balance_contract_call(account_address: StarkFelt) -> (EntryPointSelector, Calldata) {
