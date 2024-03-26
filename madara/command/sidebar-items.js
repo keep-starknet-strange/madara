@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["run"]};
+window.SIDEBAR_ITEMS = {"fn":["run","spit_spec_to_json"]};
