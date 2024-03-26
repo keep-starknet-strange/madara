@@ -19,6 +19,7 @@ use mc_mapping_sync::MappingSyncWorker;
 use mc_settlement::errors::RetryOnRecoverableErrors;
 use mc_settlement::ethereum::StarknetContractClient;
 use mc_settlement::{SettlementLayer, SettlementProvider, SettlementWorker};
+use mc_starknet_block_import::StarknetBlockImport;
 use mc_storage::overrides_handle;
 use mp_sequencer_address::{
     InherentDataProvider as SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
@@ -106,7 +107,7 @@ where
         &Configuration,
         &TaskManager,
         Option<TelemetryHandle>,
-        GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
+        StarknetBlockImport<GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>, FullClient>,
         Arc<MadaraBackend>,
     ) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>,
 {
@@ -173,12 +174,14 @@ where
 
     let madara_backend = Arc::new(MadaraBackend::open(&config.database, &db_config_dir(config), cache_more_things)?);
 
+    let starknet_block_import = StarknetBlockImport::new(grandpa_block_import, client.clone(), madara_backend.clone());
+
     let (import_queue, block_import) = build_import_queue(
         client.clone(),
         config,
         &task_manager,
         telemetry.as_ref().map(|x| x.handle()),
-        grandpa_block_import,
+        starknet_block_import,
         madara_backend.clone(),
     )?;
 
@@ -194,13 +197,13 @@ where
     })
 }
 
-/// Build the import queue for the template runtime (aura + grandpa).
+/// Build the import queue for the template runtime (aura + grandpa + starknet).
 pub fn build_aura_grandpa_import_queue(
     client: Arc<FullClient>,
     config: &Configuration,
     task_manager: &TaskManager,
     telemetry: Option<TelemetryHandle>,
-    grandpa_block_import: GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
+    block_import: StarknetBlockImport<GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>, FullClient>,
     _madara_backend: Arc<MadaraBackend>,
 ) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>
 where
@@ -220,8 +223,8 @@ where
 
     let import_queue =
         sc_consensus_aura::import_queue::<AuraPair, _, _, _, _, _>(sc_consensus_aura::ImportQueueParams {
-            block_import: grandpa_block_import.clone(),
-            justification_import: Some(Box::new(grandpa_block_import.clone())),
+            block_import: block_import.clone(),
+            justification_import: Some(Box::new(block_import.clone())),
             client,
             create_inherent_data_providers,
             spawner: &task_manager.spawn_essential_handle(),
@@ -232,7 +235,7 @@ where
         })
         .map_err::<ServiceError, _>(Into::into)?;
 
-    Ok((import_queue, Box::new(grandpa_block_import)))
+    Ok((import_queue, Box::new(block_import)))
 }
 
 /// Build the import queue for the template runtime (manual seal).
@@ -241,7 +244,7 @@ pub fn build_manual_seal_import_queue(
     config: &Configuration,
     task_manager: &TaskManager,
     _telemetry: Option<TelemetryHandle>,
-    _grandpa_block_import: GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
+    _block_import: StarknetBlockImport<GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>, FullClient>,
     _madara_backend: Arc<MadaraBackend>,
 ) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>
 where
@@ -283,6 +286,8 @@ pub fn new_full(
         transaction_pool,
         other: (block_import, grandpa_link, mut telemetry, madara_backend),
     } = new_partial(&config, build_import_queue, cache_more_things)?;
+    // NOTE: Starknet block import will be called for own blocks as well (probably we don't want that?).
+    // It's good for testing with a single node setup though.
 
     let mut net_config = sc_network::config::FullNetworkConfiguration::new(&config.network);
 

@@ -28,6 +28,7 @@ members = [
   "crates/client/commitment-state-diff",
   "crates/client/settlement",
   "crates/client/eth-client",
+  "crates/client/starknet-block-import",
   "starknet-rpc-test",
   "da-test",
   "starknet-e2e-test",
@@ -62,6 +63,7 @@ default-members = [
   "crates/client/commitment-state-diff",
   "crates/client/settlement",
   "crates/client/eth-client",
+  "crates/client/starknet-block-import",
 ]
 
 [profile.release]
@@ -125,9 +127,7 @@ sp-runtime = { git = "https://github.com/massalabs/polkadot-sdk", branch = "rele
 sp-consensus-aura = { git = "http://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
   "std",
 ] }
-sp-consensus = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
-  "std",
-] }
+sp-consensus = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false }
 sp-consensus-grandpa = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
   "std",
 ] }
@@ -251,6 +251,7 @@ mc-commitment-state-diff = { path = "crates/client/commitment-state-diff" }
 mc-l1-messages = { path = "crates/client/l1-messages" }
 mc-settlement = { path = "crates/client/settlement" }
 mc-eth-client = { path = "crates/client/eth-client" }
+mc-starknet-block-import = { path = "crates/client/starknet-block-import" }
 
 # Madara runtime
 madara-runtime = { path = "crates/runtime" }

@@ -335,7 +335,7 @@ where
         };
 
         let transaction: UserTransaction = declare_transaction.try_into().map_err(|e| {
-            error!("Failed to convert BroadcastedDeclareTransaction to UserTransaction, error: {e}");
+            error!("Failed to convert BroadcastedDeclareTransaction to UserTransaction, error: {e:#?}");
             StarknetRpcApiError::InternalServerError
         })?;
         let class_hash = match transaction {

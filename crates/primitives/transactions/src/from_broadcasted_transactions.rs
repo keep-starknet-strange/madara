@@ -44,8 +44,8 @@ pub enum BroadcastedTransactionConversionError {
     CasmContractClassConversionFailed,
     #[error("Compiled class hash does not match the class hash")]
     InvalidCompiledClassHash,
-    #[error("Failed to compile to Sierra")]
-    SierraCompilationFailed,
+    #[error("Failed to compile to Sierra: {0}")]
+    SierraCompilationFailed(#[source] StarknetSierraCompilationError),
     #[error("This transaction version is not supported")]
     UnsuportedTransactionVersion,
 }
@@ -159,7 +159,7 @@ impl TryFrom<BroadcastedDeclareTransaction> for UserTransaction {
                 });
 
                 let casm_contract_class = flattened_sierra_to_casm_contract_class(contract_class)
-                    .map_err(|_| BroadcastedTransactionConversionError::SierraCompilationFailed)?;
+                    .map_err(BroadcastedTransactionConversionError::SierraCompilationFailed)?;
 
                 // ensure that the user has sign the correct class hash
                 if get_casm_cotract_class_hash(&casm_contract_class) != compiled_class_hash {

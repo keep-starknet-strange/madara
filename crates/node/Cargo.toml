@@ -27,8 +27,10 @@ async-trait = "0.1"
 clap = { workspace = true, features = ["derive"] }
 futures = { workspace = true, features = ["thread-pool"] }
 log = { workspace = true }
+num-bigint = { workspace = true }
 serde = { workspace = true }
 sha3 = { workspace = true }
+thiserror = { workspace = true }
 
 frame-system = { workspace = true }
 sc-basic-authorship = { workspace = true }
@@ -90,6 +92,7 @@ mc-l1-messages = { workspace = true }
 mc-mapping-sync = { workspace = true }
 mc-rpc = { workspace = true }
 mc-settlement = { workspace = true, features = ["clap"] }
+mc-starknet-block-import = { workspace = true }
 mc-storage = { workspace = true }
 pallet-starknet = { workspace = true }
 pallet-starknet-runtime-api = { workspace = true }

@@ -6105,12 +6105,14 @@ dependencies = [
  "mc-mapping-sync",
  "mc-rpc",
  "mc-settlement",
+ "mc-starknet-block-import",
  "mc-storage",
  "mp-block",
  "mp-digest-log",
  "mp-felt",
  "mp-sequencer-address",
  "mp-transactions",
+ "num-bigint",
  "pallet-starknet",
  "pallet-starknet-runtime-api",
  "parity-scale-codec",
@@ -6154,6 +6156,7 @@ dependencies = [
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
+ "thiserror",
  "try-runtime-cli",
  "url",
 ]
@@ -6564,6 +6567,36 @@ dependencies = [
  "starknet_api",
  "thiserror",
  "url",
+]
+
+[[package]]
+name = "mc-starknet-block-import"
+version = "0.7.0"
+dependencies = [
+ "async-trait",
+ "blockifier",
+ "cairo-lang-starknet",
+ "cairo-lang-utils",
+ "cairo-vm",
+ "hex",
+ "log",
+ "madara-runtime",
+ "mc-db",
+ "mc-rpc",
+ "mp-felt",
+ "mp-transactions",
+ "num-bigint",
+ "pallet-starknet",
+ "pallet-starknet-runtime-api",
+ "sc-consensus",
+ "sc-rpc-api",
+ "serde_json",
+ "sp-api",
+ "sp-consensus",
+ "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
+ "starknet-core",
+ "starknet_api",
+ "thiserror",
 ]
 
 [[package]]

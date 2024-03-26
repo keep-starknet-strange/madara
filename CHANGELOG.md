@@ -25,6 +25,8 @@
 - refacto: reusable Eth client config for settlement/DA/other tasks
 - ci: add gomu gomu no gatling perfomrance test
 - feat(runtime): moved StarkEvents from Substrate events to runtime storage
+- feat(node): validate declare txs against local Sierra class in block import
+  queue
 
 ## v0.7.0
 
