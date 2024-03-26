@@ -2,6 +2,8 @@
 
 ## Next release
 
+- Fix(node): Fix creating a local testnet with multiple nodes fails using only
+  cli flags
 - dev: change `Vec::new` to `Vec::with_capacity` where possible.
 - chore(rpc): clean trace api
 - feat(rpc): added state diff real value in trace api
