@@ -15,7 +15,7 @@ use subxt::ext::sp_core::sr25519::Pair;
 use subxt::OnlineClient;
 
 use crate::utils::get_bytes_from_state_diff;
-use crate::{DaClient, DaError, DaLayer, DaMode};
+use crate::{DaClient, DaError, DaMode};
 
 type AvailPairSigner = subxt::tx::PairSigner<AvailConfig, Pair>;
 
@@ -44,7 +44,7 @@ impl SubxtClient {
     pub async fn restart(&mut self) -> Result<(), DaError> {
         self.client = match build_client(self.config.ws_provider.as_str(), self.config.validate_codegen).await {
             Ok(i) => i,
-            Err(e) => return DaError::FailedBuildingClient(e.into()),
+            Err(e) => return Err(DaError::FailedBuildingClient(e.into())),
         };
 
         Ok(())
@@ -65,7 +65,7 @@ impl TryFrom<config::AvailConfig> for SubxtClient {
 
 #[async_trait]
 impl DaClient for AvailClient {
-    async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<(), DaError> {
+    async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<(), anyhow::Error> {
         let bytes = get_bytes_from_state_diff(&state_diff);
         let bytes = BoundedVec(bytes);
         self.publish_data(&bytes).await?;
@@ -75,7 +75,7 @@ impl DaClient for AvailClient {
 
     // state diff can be published w/o verification of last state for the time being
     // may change in subsequent DaMode implementations
-    async fn last_published_state(&self) -> Result<I256> {
+    async fn last_published_state(&self) -> Result<I256, anyhow::Error> {
         Ok(I256::from(1))
     }
 
@@ -102,7 +102,7 @@ impl AvailClient {
                     let _ = ws_client.restart().await;
                 }
 
-                return DaError::FailedBuildingClient(e.into());
+                return Err(DaError::FailedBuildingClient(e.into()));
             }
         };
 

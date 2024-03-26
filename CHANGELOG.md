@@ -2,6 +2,7 @@
 
 ## Next release
 
+- dev: change `Vec::new` to `Vec::with_capacity` where possible.
 - chore(rpc): clean trace api
 - feat(rpc): added state diff real value in trace api
 - chore: update cairo-vm commit and update gas per op
@@ -25,6 +26,7 @@
 
 ## v0.7.0
 
+- fix: fixing build breakage for celestia/avail
 - chore: release v0.7.0
 - refacto: remove abusive `TryInto` impl
 - dev: optimize tx trace creation
