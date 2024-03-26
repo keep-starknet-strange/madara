@@ -20,9 +20,9 @@ use starknet_core_contract_client::interfaces::{
     CoreContractInitData, CoreContractState, OperatorTrait, ProxyInitializeData, ProxySupportTrait,
     StarknetMessagingTrait,
 };
-use starknet_core_contract_client::{LocalWalletSignerMiddleware, StarknetCoreContractClient};
+use starknet_core_contract_client::{LocalWalletSignerMiddleware, StarknetContractClient};
 use starknet_ff::FieldElement;
-use zaun_sandbox::unsafe_proxy::deploy_starknet_sovereign_behind_unsafe_proxy;
+use zaun_sandbox::deploy::deploy_starknet_sovereign_behind_unsafe_proxy;
 use zaun_sandbox::EthereumSandbox;
 
 pub struct StarknetSovereign {
@@ -43,7 +43,7 @@ impl StarknetSovereign {
     /// and then deploy:
     ///     - Starknet core contract (sovereign mode)
     ///     - Unsafe delegate proxy (no access restrictions)
-    /// All the following interactions will be made thorugh the proxy
+    /// All the following interactions will be made through the proxy
     pub async fn deploy() -> Self {
         // Try to attach to an already running sandbox (GitHub CI case)
         // otherwise spawn new sandbox instance

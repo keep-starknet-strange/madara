@@ -1,8 +1,6 @@
-extern crate starknet_rpc_test;
-
 use rstest::rstest;
 use starknet_providers::Provider;
-use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
 
 #[rstest]
 #[tokio::test]

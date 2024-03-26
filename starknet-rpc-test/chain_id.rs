@@ -1,9 +1,7 @@
-extern crate starknet_rpc_test;
-
 use rstest::rstest;
 use starknet_providers::Provider;
-use starknet_rpc_test::constants::SN_GOERLI_CHAIN_ID;
-use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_test_utils::constants::SN_GOERLI_CHAIN_ID;
+use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
 
 #[rstest]
 #[tokio::test]

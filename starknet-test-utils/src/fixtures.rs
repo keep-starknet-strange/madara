@@ -2,6 +2,7 @@ use async_lock::RwLock;
 use rstest::fixture;
 use starknet_providers::jsonrpc::HttpTransport;
 use starknet_providers::JsonRpcClient;
+use url::Url;
 
 use crate::MadaraClient;
 
@@ -11,6 +12,10 @@ pub struct ThreadSafeMadaraClient(RwLock<MadaraClient>);
 #[once]
 pub fn madara() -> ThreadSafeMadaraClient {
     ThreadSafeMadaraClient(RwLock::new(MadaraClient::default()))
+}
+
+pub fn madara_from(url: Url) -> ThreadSafeMadaraClient {
+    ThreadSafeMadaraClient(RwLock::new(MadaraClient::new(url)))
 }
 
 impl ThreadSafeMadaraClient {

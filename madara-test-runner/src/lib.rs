@@ -7,6 +7,7 @@ use std::path::PathBuf;
 use derive_more::Display;
 use lazy_static::lazy_static;
 use tokio::sync::Mutex;
+use url::Url;
 
 use crate::client::MadaraClient;
 use crate::node::MadaraNode;
@@ -61,6 +62,10 @@ impl MadaraRunner {
         }
 
         Self { _node: node, client }
+    }
+
+    pub fn url(&self) -> Url {
+        self._node.url()
     }
 }
 

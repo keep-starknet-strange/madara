@@ -10,6 +10,7 @@ async-trait = "0.1"
 ethers = { workspace = true }
 flate2 = { workspace = true }
 home = "0.5.5"
+rand = "0.8.5"
 reqwest = "0.11.18"
 rstest = "0.18.1"
 serde = { version = "1.0.179", features = ["derive"] }
@@ -27,6 +28,7 @@ starknet-crypto = { workspace = true }
 starknet-ff = { workspace = true }
 starknet-providers = { workspace = true }
 starknet-signers = { workspace = true }
+starknet-test-utils = { workspace = true }
 starknet_api = { workspace = true, default-features = true }
 
 # Madara

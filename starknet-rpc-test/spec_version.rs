@@ -1,5 +1,3 @@
-extern crate starknet_rpc_test;
-
 use rstest::rstest;
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 

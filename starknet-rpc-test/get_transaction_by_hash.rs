@@ -1,14 +1,12 @@
-extern crate starknet_rpc_test;
-
 use assert_matches::assert_matches;
 use rstest::rstest;
 use starknet_core::types::StarknetError;
 use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
-use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE};
-use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{assert_poll, build_single_owner_account, AccountActions};
-use starknet_rpc_test::{Transaction, TransactionResult};
+use starknet_test_utils::constants::{ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE};
+use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_test_utils::utils::{assert_poll, build_single_owner_account, AccountActions};
+use starknet_test_utils::{Transaction, TransactionResult};
 
 #[rstest]
 #[tokio::test]
