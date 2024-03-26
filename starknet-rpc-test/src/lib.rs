@@ -170,7 +170,7 @@ impl MadaraClient {
         &mut self,
         transactions: Vec<Transaction<'_>>,
     ) -> anyhow::Result<Vec<Result<TransactionResult, SendTransactionError>>> {
-        let mut results = Vec::new();
+        let mut results = Vec::with_capacity(transactions.len());
         for tx in transactions {
             let result = tx.send().await;
             results.push(result);
@@ -184,7 +184,7 @@ impl MadaraClient {
         &mut self,
         transactions: Vec<Transaction<'_>>,
     ) -> Vec<Result<TransactionResult, SendTransactionError>> {
-        let mut results = Vec::new();
+        let mut results = Vec::with_capacity(transactions.len());
         for tx in transactions {
             let result = tx.send().await;
             results.push(result);
