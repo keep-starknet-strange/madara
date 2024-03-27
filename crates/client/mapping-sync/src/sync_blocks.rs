@@ -1,3 +1,4 @@
+use blockifier::transaction_execution::Transaction;
 use mc_rpc_core::utils::get_block_by_block_hash;
 use mp_digest_log::{find_starknet_block, FindLogError};
 use mp_hashers::HasherT;
@@ -45,7 +46,10 @@ where
                             starknet_transaction_hashes: digest_starknet_block
                                 .transactions()
                                 .iter()
-                                .map(|tx| tx.compute_hash::<H>(chain_id, false).into())
+                                .map(|tx| match tx {
+                                    Transaction::AccountTransaction(tx) => tx.tx_hash(),
+                                    Transaction::L1HandlerTransacton(tx) => tx.tx_hash,
+                                })
                                 .collect(),
                         };
 

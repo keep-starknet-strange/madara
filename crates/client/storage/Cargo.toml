@@ -14,7 +14,7 @@ publish = false
 repository = "https://github.com/keep-starknet-strange/madara"
 
 [dependencies]
-blockifier = { workspace = true, features = ["std"] }
+blockifier = { workspace = true }
 frame-support = { workspace = true, features = ["std"] }
 frame-system = { workspace = true, features = ["std"] }
 madara-runtime = { workspace = true, features = ["std"] }
@@ -30,4 +30,4 @@ sp-io = { workspace = true, features = ["std"] }
 sp-runtime = { workspace = true, features = ["std"] }
 sp-storage = { workspace = true, features = ["std"] }
 starknet-core = { workspace = true, features = ["std"] }
-starknet_api = { workspace = true, features = ["std"] }
+starknet_api = { workspace = true }

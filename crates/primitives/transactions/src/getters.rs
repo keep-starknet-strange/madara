@@ -4,8 +4,8 @@ use mp_felt::Felt252Wrapper;
 
 use super::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction, UserTransaction};
 use crate::{
-    DeclareTransactionV0, DeclareTransactionV1, DeclareTransactionV2, HandleL1MessageTransaction, InvokeTransactionV0,
-    InvokeTransactionV1, UserOrL1HandlerTransaction,
+    DeclareTransactionV0, DeclareTransactionV1, DeclareTransactionV2, HandleL1MessageTransaction, InvokeTransactionV1,
+    UserOrL1HandlerTransaction,
 };
 
 impl Transaction {
@@ -52,10 +52,10 @@ impl UserTransaction {
         }
     }
 
-    pub fn nonce(&self) -> Option<&Felt252Wrapper> {
+    pub fn nonce(&self) -> &Felt252Wrapper {
         match self {
-            UserTransaction::Declare(tx, _) => Some(tx.nonce()),
-            UserTransaction::DeployAccount(tx) => Some(tx.nonce()),
+            UserTransaction::Declare(tx, _) => tx.nonce(),
+            UserTransaction::DeployAccount(tx) => tx.nonce(),
             UserTransaction::Invoke(tx) => tx.nonce(),
         }
     }
@@ -65,6 +65,14 @@ impl UserTransaction {
             UserTransaction::Declare(tx, _) => tx.offset_version(),
             UserTransaction::DeployAccount(tx) => tx.offset_version(),
             UserTransaction::Invoke(tx) => tx.offset_version(),
+        }
+    }
+
+    pub fn version(&self) -> u8 {
+        match self {
+            UserTransaction::Declare(tx, _) => tx.version(),
+            UserTransaction::DeployAccount(tx) => tx.version(),
+            UserTransaction::Invoke(tx) => tx.version(),
         }
     }
 }
@@ -161,43 +169,36 @@ impl DeployAccountTransaction {
 impl InvokeTransaction {
     pub fn sender_address(&self) -> &Felt252Wrapper {
         match self {
-            InvokeTransaction::V0(tx) => &tx.contract_address,
             InvokeTransaction::V1(tx) => &tx.sender_address,
         }
     }
 
     pub fn signature(&self) -> &Vec<Felt252Wrapper> {
         match self {
-            InvokeTransaction::V0(tx) => &tx.signature,
             InvokeTransaction::V1(tx) => &tx.signature,
         }
     }
 
     pub fn max_fee(&self) -> &u128 {
         match self {
-            InvokeTransaction::V0(tx) => &tx.max_fee,
             InvokeTransaction::V1(tx) => &tx.max_fee,
         }
     }
 
     pub fn calldata(&self) -> &Vec<Felt252Wrapper> {
         match self {
-            InvokeTransaction::V0(tx) => &tx.calldata,
             InvokeTransaction::V1(tx) => &tx.calldata,
         }
     }
 
-    pub fn nonce(&self) -> Option<&Felt252Wrapper> {
+    pub fn nonce(&self) -> &Felt252Wrapper {
         match self {
-            InvokeTransaction::V0(_) => None,
-            InvokeTransaction::V1(tx) => Some(&tx.nonce),
+            InvokeTransaction::V1(tx) => &tx.nonce,
         }
     }
 
     pub fn offset_version(&self) -> bool {
         match self {
-            // we don't accept V0 txs from the RPC
-            InvokeTransaction::V0(_) => false,
             InvokeTransaction::V1(tx) => tx.offset_version,
         }
     }
@@ -244,16 +245,8 @@ impl TransactionVersion for InvokeTransaction {
     #[inline(always)]
     fn version(&self) -> u8 {
         match self {
-            InvokeTransaction::V0(tx) => tx.version(),
             InvokeTransaction::V1(tx) => tx.version(),
         }
-    }
-}
-
-impl TransactionVersion for InvokeTransactionV0 {
-    #[inline(always)]
-    fn version(&self) -> u8 {
-        0
     }
 }
 

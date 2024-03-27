@@ -4,7 +4,7 @@ use lazy_static::lazy_static;
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::InvokeTransactionV1;
-use starknet_api::api_core::{ContractAddress, PatriciaKey};
+use starknet_api::core::{ContractAddress, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Event as StarknetEvent, EventContent, EventData, EventKey, TransactionHash};
@@ -12,7 +12,7 @@ use starknet_core::utils::get_selector_from_name;
 
 use super::mock::default_mock::*;
 use super::mock::*;
-use crate::tests::constants::TOKEN_CONTRACT_CLASS_HASH;
+use crate::tests::constants::{TOKEN_CONTRACT_CLASS_HASH, TRANSFER_SELECTOR_NAME};
 use crate::tests::utils::{build_transfer_invoke_transaction, get_contract_class};
 use crate::types::BuildTransferInvokeTransaction;
 use crate::Config;
@@ -105,7 +105,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         let expected_fee_transfer_event = StarknetEvent {
             content: EventContent {
                 keys: vec![EventKey(
-                    Felt252Wrapper::from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap()).into(),
+                    Felt252Wrapper::from(get_selector_from_name(TRANSFER_SELECTOR_NAME).unwrap()).into(),
                 )],
                 data: EventData(vec![
                     sender_account.0 .0, // From
@@ -114,7 +114,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     StarkFelt::from(0u128), // Amount high
                 ]),
             },
-            from_address: Starknet::fee_token_address(),
+            from_address: Starknet::fee_token_addresses().eth_fee_token_address,
         };
         // Check fee transfer event
         pretty_assertions::assert_eq!(
@@ -183,7 +183,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         let expected_event = StarknetEvent {
             content: EventContent {
                 keys: vec![EventKey(
-                    StarkFelt::try_from(Felt252Wrapper::from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap())).unwrap(),
+                    StarkFelt::try_from(Felt252Wrapper::from(get_selector_from_name(TRANSFER_SELECTOR_NAME).unwrap())).unwrap(),
                 )],
                 data: EventData(vec![
                     StarkFelt::try_from("0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0").unwrap(), // From
@@ -202,7 +202,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         let expected_fee_transfer_event = StarknetEvent {
             content: EventContent {
                 keys: vec![EventKey(
-                    StarkFelt::try_from(Felt252Wrapper::from(get_selector_from_name(mp_fee::TRANSFER_SELECTOR_NAME).unwrap())).unwrap(),
+                    StarkFelt::try_from(Felt252Wrapper::from(get_selector_from_name(TRANSFER_SELECTOR_NAME).unwrap())).unwrap(),
                 )],
                 data: EventData(vec![
                     sender_account.0 .0,                    // From
@@ -211,7 +211,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     StarkFelt::from(0u128),                 // Amount high
                 ]),
             },
-            from_address: Starknet::fee_token_address(),
+            from_address: Starknet::fee_token_addresses().eth_fee_token_address,
         };
         pretty_assertions::assert_eq!(
             expected_fee_transfer_event,

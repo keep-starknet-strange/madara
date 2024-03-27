@@ -86,7 +86,7 @@ where
                     data: event.content.data.0.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
                     block_hash: block_hash.0,
                     block_number,
-                    transaction_hash: tx_hash.into(),
+                    transaction_hash: Felt252Wrapper::from(tx_hash).0,
                 })
             }
         }

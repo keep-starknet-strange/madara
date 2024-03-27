@@ -1,6 +1,6 @@
 use ethers::types::U256;
 use mc_commitment_state_diff::BlockDAData;
-use starknet_api::api_core::{Nonce, PatriciaKey};
+use starknet_api::core::{Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use url::{ParseError, Url};
 

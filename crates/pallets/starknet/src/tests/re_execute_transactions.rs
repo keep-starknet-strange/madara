@@ -1,14 +1,12 @@
-use blockifier::state::state_api::State;
+use blockifier::transaction::account_transaction::AccountTransaction;
+use blockifier::transaction::transaction_execution::Transaction;
+use blockifier::transaction::transactions::ExecutableTransaction;
 use mp_felt::Felt252Wrapper;
-use mp_transactions::execution::Execute;
-use mp_transactions::{DeployAccountTransaction, HandleL1MessageTransaction, UserOrL1HandlerTransaction};
-use starknet_api::api_core::{ContractAddress, Nonce};
+use starknet_api::core::{ContractAddress, Nonce};
 use starknet_api::transaction::Fee;
 
 use super::mock::default_mock::*;
 use super::mock::*;
-use crate::blockifier_state_adapter::{BlockifierStateAdapter, CachedBlockifierStateAdapter};
-use crate::execution_config::RuntimeExecutionConfigBuilder;
 use crate::tests::utils::get_contract_class;
 use crate::tests::{constants, get_declare_dummy, get_invoke_dummy, set_infinite_tokens};
 use crate::types::CasmClassHash;
@@ -73,15 +71,11 @@ fn re_execute_tx_ok() {
         };
 
         let txs = vec![
-            UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::Invoke(
-                get_invoke_dummy(Felt252Wrapper::ZERO).into(),
-            )),
-            UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::Invoke(
-                get_invoke_dummy(Felt252Wrapper::ONE).into(),
-            )),
-            UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::Declare(declare_tx, erc20_class)),
-            UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::DeployAccount(deploy_tx)),
-            UserOrL1HandlerTransaction::L1Handler(handle_l1_tx, Fee(10)),
+            Transaction::AccountTransaction(AccountTransaction::Invoke(get_invoke_dummy(Felt252Wrapper::ZERO).into())),
+            Transaction::AccountTransaction(AccountTransaction::Invoke(get_invoke_dummy(Felt252Wrapper::ONE).into())),
+            Transaction::AccountTransaction(AccountTransaction::Declare(declare_tx, erc20_class)),
+            Transaction::AccountTransaction(AccountTransaction::DeployAccount(deploy_tx)),
+            Transaction::L1HandlerTransaction(handle_l1_tx, Fee(10)),
         ];
 
         // Call the function we want to test
@@ -95,80 +89,65 @@ fn re_execute_tx_ok() {
 
         // Now let's check the TransactionInfos returned
         let first_invoke_tx_info = match txs.get(0).unwrap() {
-            UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::Invoke(invoke_tx)) => {
-                let mut state = CachedBlockifierStateAdapter(BlockifierStateAdapter::<MockRuntime>::default());
-                let tx_info = invoke_tx
-                    .into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, false)
-                    .execute(
-                        &mut state,
-                        &Starknet::get_block_context(),
-                        &RuntimeExecutionConfigBuilder::new::<MockRuntime>().build(),
-                    )
-                    .unwrap();
+            Transaction::AccountTransaction(AccountTransaction::Invoke(invoke_tx)) => {
+                let mut state = Starknet::init_cached_state();
+                let tx_info = AccountTransaction::Invoke(
+                    invoke_tx.into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, false),
+                )
+                .execute(&mut state, &Starknet::get_block_context(), true, true)
+                .unwrap();
                 (tx_info, state.to_state_diff())
             }
             _ => unreachable!(),
         };
         assert_eq!(res[0], first_invoke_tx_info);
         let second_invoke_tx_info = match txs.get(1).unwrap() {
-            UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::Invoke(invoke_tx)) => {
-                let mut state = CachedBlockifierStateAdapter(BlockifierStateAdapter::<MockRuntime>::default());
-                let tx_info = invoke_tx
-                    .into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, false)
-                    .execute(
-                        &mut state,
-                        &Starknet::get_block_context(),
-                        &RuntimeExecutionConfigBuilder::new::<MockRuntime>().build(),
-                    )
-                    .unwrap();
+            Transaction::AccountTransaction(AccountTransaction::Invoke(invoke_tx)) => {
+                let mut state = Starknet::init_cached_state();
+                let tx_info = AccountTransaction::Invoke(
+                    invoke_tx.into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, false),
+                )
+                .execute(&mut state, &Starknet::get_block_context(), true, true)
+                .unwrap();
                 (tx_info, state.to_state_diff())
             }
             _ => unreachable!(),
         };
         assert_eq!(res[1], second_invoke_tx_info);
         let declare_tx_info = match txs.get(2).unwrap() {
-            UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::Declare(declare_tx, cc)) => {
-                let mut state = CachedBlockifierStateAdapter(BlockifierStateAdapter::<MockRuntime>::default());
-                let tx_info = declare_tx
-                    .try_into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, cc.clone(), false)
-                    .unwrap()
-                    .execute(
-                        &mut state,
-                        &Starknet::get_block_context(),
-                        &RuntimeExecutionConfigBuilder::new::<MockRuntime>().build(),
-                    )
-                    .unwrap();
+            Transaction::AccountTransaction(AccountTransaction::Declare(declare_tx, cc)) => {
+                let mut state = Starknet::init_cached_state();
+                let tx_info = AccountTransaction::Declare(
+                    declare_tx
+                        .try_into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, cc.clone(), false)
+                        .unwrap(),
+                )
+                .execute(&mut state, &Starknet::get_block_context(), true, true)
+                .unwrap();
                 (tx_info, state.to_state_diff())
             }
             _ => unreachable!(),
         };
         assert_eq!(res[2], declare_tx_info);
         let deploy_account_tx_info = match txs.get(3).unwrap() {
-            UserOrL1HandlerTransaction::User(mp_transactions::UserTransaction::DeployAccount(deploy_account_tx)) => {
-                let mut state = CachedBlockifierStateAdapter(BlockifierStateAdapter::<MockRuntime>::default());
-                let tx_info = deploy_account_tx
-                    .into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, false)
-                    .execute(
-                        &mut state,
-                        &Starknet::get_block_context(),
-                        &RuntimeExecutionConfigBuilder::new::<MockRuntime>().build(),
-                    )
-                    .unwrap();
+            Transaction::AccountTransaction(AccountTransaction::DeployAccount(deploy_account_tx)) => {
+                let mut state = Starknet::init_cached_state();
+                let tx_info = AccountTransaction::DeployAccount(
+                    deploy_account_tx.into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, false),
+                )
+                .execute(&mut state, &Starknet::get_block_context(), true, true)
+                .unwrap();
                 (tx_info, state.to_state_diff())
             }
             _ => unreachable!(),
         };
         assert_eq!(res[3], deploy_account_tx_info);
         let handle_l1_message_tx_info = match txs.get(4).unwrap() {
-            UserOrL1HandlerTransaction::L1Handler(l1_tx, fee) => {
-                let mut state = CachedBlockifierStateAdapter(BlockifierStateAdapter::<MockRuntime>::default());
+            Transaction::L1HandlerTransaction(l1_tx, fee) => {
+                let mut state = Starknet::init_cached_state();
                 let tx_info = l1_tx
                     .into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, *fee, false)
-                    .execute(
-                        &mut state,
-                        &Starknet::get_block_context(),
-                        &RuntimeExecutionConfigBuilder::new::<MockRuntime>().build(),
-                    )
+                    .execute(&mut state, &Starknet::get_block_context(), true, true)
                     .unwrap();
                 (tx_info, state.to_state_diff())
             }

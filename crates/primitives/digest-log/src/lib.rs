@@ -31,7 +31,7 @@ pub const MADARA_ENGINE_ID: ConsensusEngineId = [b'm', b'a', b'd', b'a'];
 ///
 /// Right now we only expect Madara to log the Starknet block,
 /// but other usecases may appears later on.
-#[derive(Debug, Clone, Encode, Decode, PartialEq, Eq)]
+#[derive(Debug, Clone, Encode, Decode)]
 pub enum Log {
     #[codec(index = 0)]
     Block(StarknetBlock),

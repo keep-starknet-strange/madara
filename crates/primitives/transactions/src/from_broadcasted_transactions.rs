@@ -1,18 +1,19 @@
 use alloc::sync::Arc;
-use std::collections::HashMap;
 
 use blockifier::execution::contract_class::{ContractClass, ContractClassV0, ContractClassV0Inner, ContractClassV1};
-use cairo_lang_casm_contract_class::{CasmContractClass, CasmContractEntryPoint, CasmContractEntryPoints};
-use cairo_lang_starknet::contract_class::{
+use cairo_lang_starknet_classes::casm_contract_class::{
+    CasmContractClass, CasmContractEntryPoint, CasmContractEntryPoints, StarknetSierraCompilationError,
+};
+use cairo_lang_starknet_classes::contract_class::{
     ContractClass as SierraContractClass, ContractEntryPoint, ContractEntryPoints,
 };
-use cairo_lang_starknet::contract_class_into_casm_contract_class::StarknetSierraCompilationError;
 use cairo_lang_utils::bigint::BigUintAsHex;
 use cairo_vm::types::program::Program;
 use flate2::read::GzDecoder;
+use indexmap::IndexMap;
 use mp_felt::Felt252Wrapper;
 use num_bigint::{BigInt, BigUint, Sign};
-use starknet_api::api_core::EntryPointSelector;
+use starknet_api::core::EntryPointSelector;
 use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType};
 use starknet_api::hash::StarkFelt;
 use starknet_core::types::contract::legacy::{
@@ -187,7 +188,7 @@ fn instantiate_blockifier_contract_class(
     let program: Program = Program::from_bytes(&program_decompressed_bytes, None)
         .map_err(|_| BroadcastedTransactionConversionError::ProgramDeserializationFailed)?;
 
-    let mut entry_points_by_type = <HashMap<EntryPointType, Vec<EntryPoint>>>::new();
+    let mut entry_points_by_type = <IndexMap<EntryPointType, Vec<EntryPoint>>>::new();
     entry_points_by_type.insert(
         EntryPointType::Constructor,
         contract_class
@@ -197,7 +198,7 @@ fn instantiate_blockifier_contract_class(
             .map(|entry_point| -> EntryPoint {
                 EntryPoint {
                     selector: EntryPointSelector(StarkFelt(entry_point.selector.to_bytes_be())),
-                    offset: EntryPointOffset(entry_point.offset as usize),
+                    offset: EntryPointOffset(entry_point.offset),
                 }
             })
             .collect::<Vec<EntryPoint>>(),
@@ -211,7 +212,7 @@ fn instantiate_blockifier_contract_class(
             .map(|entry_point| -> EntryPoint {
                 EntryPoint {
                     selector: EntryPointSelector(StarkFelt(entry_point.selector.to_bytes_be())),
-                    offset: EntryPointOffset(entry_point.offset as usize),
+                    offset: EntryPointOffset(entry_point.offset),
                 }
             })
             .collect::<Vec<EntryPoint>>(),
@@ -225,7 +226,7 @@ fn instantiate_blockifier_contract_class(
             .map(|entry_point| -> EntryPoint {
                 EntryPoint {
                     selector: EntryPointSelector(StarkFelt(entry_point.selector.to_bytes_be())),
-                    offset: EntryPointOffset(entry_point.offset as usize),
+                    offset: EntryPointOffset(entry_point.offset),
                 }
             })
             .collect::<Vec<EntryPoint>>(),
@@ -262,7 +263,8 @@ fn flattened_sierra_to_casm_contract_class(
         ),
         abi: None, // we can convert the ABI but for now, to convert to Casm, the ABI isn't needed
     };
-    let casm_contract_class = sierra_contract_class.into_casm_contract_class(false)?;
+    let casm_contract_class = CasmContractClass::from_contract_class(sierra_contract_class, false, usize::MAX)?;
+
     Ok(casm_contract_class)
 }
 

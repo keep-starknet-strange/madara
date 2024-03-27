@@ -1,16 +1,16 @@
-use alloc::sync::Arc;
+use core::num::NonZeroU128;
 
-use blockifier::block_context::BlockContext;
-use mp_fee::ResourcePrice;
+use blockifier::blockifier::block::{BlockInfo, GasPrices};
+use blockifier::context::{BlockContext, ChainInfo, FeeTokenAddresses};
+use blockifier::versioned_constants::VersionedConstants;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use sp_core::U256;
-use starknet_api::api_core::{ChainId, ContractAddress};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
+use starknet_api::core::{ChainId, ContractAddress};
 use starknet_api::hash::StarkHash;
-use starknet_api::stdlib::collections::HashMap;
 
-#[derive(Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 // #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
@@ -30,10 +30,36 @@ pub struct Header {
     pub event_count: u128,
     /// The version of the Starknet protocol used when creating this block
     pub protocol_version: u8,
-    /// l1 gas price for this block
-    pub l1_gas_price: ResourcePrice,
+    /// Gas prices for this block
+    pub l1_gas_price: GasPrices,
     /// Extraneous data that might be useful for running transactions
     pub extra_data: Option<U256>,
+}
+
+impl Default for Header {
+    fn default() -> Self {
+        Self {
+            // Those are fucked-up value
+            // Mainly usefull for tests or stuffs like this
+            // Should probably be removed
+            l1_gas_price: unsafe {
+                GasPrices {
+                    eth_l1_gas_price: NonZeroU128::new_unchecked(10),
+                    strk_l1_gas_price: NonZeroU128::new_unchecked(10),
+                    eth_l1_data_gas_price: NonZeroU128::new_unchecked(10),
+                    strk_l1_data_gas_price: NonZeroU128::new_unchecked(10),
+                }
+            },
+            parent_block_hash: Default::default(),
+            block_number: Default::default(),
+            sequencer_address: Default::default(),
+            block_timestamp: Default::default(),
+            transaction_count: Default::default(),
+            event_count: Default::default(),
+            protocol_version: Default::default(),
+            extra_data: Default::default(),
+        }
+    }
 }
 
 impl Header {
@@ -48,7 +74,7 @@ impl Header {
         transaction_count: u128,
         event_count: u128,
         protocol_version: u8,
-        l1_gas_price: ResourcePrice,
+        gas_prices: GasPrices,
         extra_data: Option<U256>,
     ) -> Self {
         Self {
@@ -59,26 +85,28 @@ impl Header {
             transaction_count,
             event_count,
             protocol_version,
-            l1_gas_price,
+            l1_gas_price: gas_prices,
             extra_data,
         }
     }
 
     /// Converts to a blockifier BlockContext
-    pub fn into_block_context(self, fee_token_address: ContractAddress, chain_id: ChainId) -> BlockContext {
-        BlockContext {
-            chain_id,
-            block_number: BlockNumber(self.block_number),
-            block_timestamp: BlockTimestamp(self.block_timestamp),
-            sequencer_address: self.sequencer_address,
-            vm_resource_fee_cost: Arc::new(HashMap::default()),
-            fee_token_address,
-            invoke_tx_max_n_steps: 1000000,
-            validate_max_n_steps: 1000000,
-            // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
-            gas_price: 10,
-            max_recursion_depth: 50,
-        }
+    pub fn into_block_context(self, fee_token_addresses: FeeTokenAddresses, chain_id: ChainId) -> BlockContext {
+        BlockContext::new_unchecked(
+            &BlockInfo {
+                block_number: BlockNumber(self.block_number),
+                block_timestamp: BlockTimestamp(self.block_timestamp),
+                sequencer_address: self.sequencer_address,
+                gas_prices: self.l1_gas_price,
+                // TODO
+                // I have no idea what this is, let's say we did not use any for now
+                use_kzg_da: false,
+            },
+            &ChainInfo { chain_id, fee_token_addresses },
+            // TODO
+            // I'm clueless on what those values should be
+            VersionedConstants::latest_constants(),
+        )
     }
 
     /// Compute the hash of the header.

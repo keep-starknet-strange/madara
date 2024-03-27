@@ -3,17 +3,18 @@ use core::marker::PhantomData;
 use std::collections::HashMap;
 
 use blockifier::execution::contract_class::ContractClass;
-use blockifier::state::cached_state::{CommitmentStateDiff, ContractStorageKey, StateChangesCount, StorageView};
+use blockifier::state::cached_state::StateChangesCount;
 use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{State, StateReader, StateResult};
 use indexmap::IndexMap;
 use mp_felt::Felt252Wrapper;
 use mp_state::StateChanges;
-use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
+use starknet_api::core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_crypto::FieldElement;
 
+use crate::types::ContractStorageKey;
 use crate::{Config, Pallet};
 
 /// Empty struct that implements the traits needed by the blockifier/starknet in rust.
@@ -58,35 +59,42 @@ impl<T: Config> Default for BlockifierStateAdapter<T> {
 }
 
 impl<T: Config> StateReader for BlockifierStateAdapter<T> {
-    fn get_storage_at(&mut self, contract_address: ContractAddress, key: StorageKey) -> StateResult<StarkFelt> {
+    fn get_storage_at(&self, contract_address: ContractAddress, key: StorageKey) -> StateResult<StarkFelt> {
         let contract_storage_key: ContractStorageKey = (contract_address, key);
         Ok(Pallet::<T>::storage(contract_storage_key))
     }
 
-    fn get_nonce_at(&mut self, contract_address: ContractAddress) -> StateResult<Nonce> {
+    fn get_nonce_at(&self, contract_address: ContractAddress) -> StateResult<Nonce> {
         Ok(Pallet::<T>::nonce(contract_address))
     }
 
-    fn get_class_hash_at(&mut self, contract_address: ContractAddress) -> StateResult<ClassHash> {
+    fn get_class_hash_at(&self, contract_address: ContractAddress) -> StateResult<ClassHash> {
         Ok(Pallet::<T>::contract_class_hash_by_address(contract_address))
     }
 
-    fn get_compiled_contract_class(&mut self, class_hash: &ClassHash) -> StateResult<ContractClass> {
-        Pallet::<T>::contract_class_by_class_hash(class_hash).ok_or(StateError::UndeclaredClassHash(*class_hash))
+    fn get_compiled_contract_class(&self, class_hash: ClassHash) -> StateResult<ContractClass> {
+        Pallet::<T>::contract_class_by_class_hash(class_hash).ok_or(StateError::UndeclaredClassHash(class_hash))
     }
 
-    fn get_compiled_class_hash(&mut self, class_hash: ClassHash) -> StateResult<CompiledClassHash> {
+    fn get_compiled_class_hash(&self, class_hash: ClassHash) -> StateResult<CompiledClassHash> {
         Pallet::<T>::compiled_class_hash_by_class_hash(class_hash).ok_or(StateError::UndeclaredClassHash(class_hash))
     }
 }
 
 impl<T: Config> State for BlockifierStateAdapter<T> {
-    fn set_storage_at(&mut self, contract_address: ContractAddress, key: StorageKey, value: StarkFelt) {
+    fn set_storage_at(
+        &mut self,
+        contract_address: ContractAddress,
+        key: StorageKey,
+        value: StarkFelt,
+    ) -> StateResult<()> {
         let contract_storage_key: ContractStorageKey = (contract_address, key);
 
         self.storage_update.insert(contract_storage_key, value);
 
         crate::StorageView::<T>::insert(contract_storage_key, value);
+
+        Ok(())
     }
 
     fn increment_nonce(&mut self, contract_address: ContractAddress) -> StateResult<()> {
@@ -107,7 +115,7 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
         Ok(())
     }
 
-    fn set_contract_class(&mut self, class_hash: &ClassHash, contract_class: ContractClass) -> StateResult<()> {
+    fn set_contract_class(&mut self, class_hash: ClassHash, contract_class: ContractClass) -> StateResult<()> {
         crate::ContractClasses::<T>::insert(class_hash, contract_class);
 
         Ok(())
@@ -124,16 +132,11 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
         Ok(())
     }
 
-    /// As the state is updated during the execution, return an empty [StateDiff]
-    ///
-    /// There is no reason to use it in the current implementation of the trait
-    fn to_state_diff(&self) -> CommitmentStateDiff {
-        CommitmentStateDiff {
-            address_to_class_hash: IndexMap::with_capacity_and_hasher(0, Default::default()),
-            address_to_nonce: IndexMap::with_capacity_and_hasher(0, Default::default()),
-            storage_updates: IndexMap::with_capacity_and_hasher(0, Default::default()),
-            class_hash_to_compiled_class_hash: IndexMap::with_capacity_and_hasher(0, Default::default()),
-        }
+    fn add_visited_pcs(&mut self, class_hash: ClassHash, pcs: &std::collections::HashSet<usize>) {
+        // TODO
+        // This should not be part of the trait.
+        // Hopefully it will be fixed upstream
+        unreachable!()
     }
 }
 
@@ -227,6 +230,12 @@ impl StateCache {
 
 pub struct CachedBlockifierStateAdapter<T: Config>(pub BlockifierStateAdapter<T>);
 
+impl<T: Config> Default for CachedBlockifierStateAdapter<T> {
+    fn default() -> Self {
+        Self(Default::default())
+    }
+}
+
 impl<T> StateChanges for CachedBlockifierStateAdapter<T>
 where
     T: Config,
@@ -240,9 +249,16 @@ impl<T> State for CachedBlockifierStateAdapter<T>
 where
     T: Config,
 {
-    fn set_storage_at(&mut self, contract_address: ContractAddress, key: StorageKey, value: StarkFelt) {
+    fn set_storage_at(
+        &mut self,
+        contract_address: ContractAddress,
+        key: StorageKey,
+        value: StarkFelt,
+    ) -> StateResult<()> {
         self.0.state_cache.set_storage_value(contract_address, key, value);
         self.0.set_storage_at(contract_address, key, value);
+
+        Ok(())
     }
 
     fn increment_nonce(&mut self, contract_address: ContractAddress) -> StateResult<()> {
@@ -258,7 +274,7 @@ where
         self.0.set_class_hash_at(contract_address, class_hash)
     }
 
-    fn set_contract_class(&mut self, class_hash: &ClassHash, contract_class: ContractClass) -> StateResult<()> {
+    fn set_contract_class(&mut self, class_hash: ClassHash, contract_class: ContractClass) -> StateResult<()> {
         self.0.set_contract_class(class_hash, contract_class)
     }
 
@@ -271,21 +287,11 @@ where
         self.0.set_compiled_class_hash(class_hash, compiled_class_hash)
     }
 
-    fn to_state_diff(&self) -> CommitmentStateDiff {
-        type StorageDiff = IndexMap<ContractAddress, IndexMap<StorageKey, StarkFelt>>;
-
-        let state_cache = &self.0.state_cache;
-        let class_hash_updates = state_cache.get_class_hash_updates();
-        let storage_diffs = state_cache.get_storage_updates();
-        let nonces = state_cache.get_nonce_updates();
-        let declared_classes = state_cache.get_compiled_class_hash_updates();
-
-        CommitmentStateDiff {
-            address_to_class_hash: class_hash_updates,
-            storage_updates: StorageDiff::from(StorageView(storage_diffs)),
-            class_hash_to_compiled_class_hash: declared_classes,
-            address_to_nonce: nonces,
-        }
+    fn add_visited_pcs(&mut self, class_hash: starknet_api::core::ClassHash, pcs: &std::collections::HashSet<usize>) {
+        // TODO
+        // This should not be part of the trait.
+        // Hopefully it will be fixed upstream
+        unreachable!()
     }
 }
 
@@ -293,40 +299,24 @@ impl<T> StateReader for CachedBlockifierStateAdapter<T>
 where
     T: Config,
 {
-    fn get_storage_at(&mut self, contract_address: ContractAddress, key: StorageKey) -> StateResult<StarkFelt> {
-        let storage_value = self.0.get_storage_at(contract_address, key)?;
-        if self.0.state_cache.get_storage_at(contract_address, key).is_none() {
-            self.0.state_cache.set_storage_initial_value(contract_address, key, storage_value);
-        }
-        Ok(storage_value)
+    fn get_storage_at(&self, contract_address: ContractAddress, key: StorageKey) -> StateResult<StarkFelt> {
+        self.0.get_storage_at(contract_address, key)
     }
 
-    fn get_nonce_at(&mut self, contract_address: ContractAddress) -> StateResult<Nonce> {
-        let nonce = self.0.get_nonce_at(contract_address)?;
-        if self.0.state_cache.get_nonce_at(contract_address).is_none() {
-            self.0.state_cache.set_nonce_initial_value(contract_address, nonce);
-        }
-        Ok(nonce)
+    fn get_nonce_at(&self, contract_address: ContractAddress) -> StateResult<Nonce> {
+        self.0.get_nonce_at(contract_address)
     }
 
-    fn get_class_hash_at(&mut self, contract_address: ContractAddress) -> StateResult<ClassHash> {
-        let class_hash = self.0.get_class_hash_at(contract_address)?;
-        if self.0.state_cache.get_class_hash_at(contract_address).is_none() {
-            self.0.state_cache.set_class_hash_initial_value(contract_address, class_hash);
-        }
-        Ok(class_hash)
+    fn get_class_hash_at(&self, contract_address: ContractAddress) -> StateResult<ClassHash> {
+        self.0.get_class_hash_at(contract_address)
     }
 
-    fn get_compiled_contract_class(&mut self, class_hash: &ClassHash) -> StateResult<ContractClass> {
+    fn get_compiled_contract_class(&self, class_hash: ClassHash) -> StateResult<ContractClass> {
         self.0.get_compiled_contract_class(class_hash)
     }
 
-    fn get_compiled_class_hash(&mut self, class_hash: ClassHash) -> StateResult<CompiledClassHash> {
-        let compiled_class_hash = self.0.get_compiled_class_hash(class_hash)?;
-        if self.0.state_cache.get_compiled_class_hash(class_hash).is_none() {
-            self.0.state_cache.set_compiled_class_hash_initial_value(class_hash, compiled_class_hash);
-        }
-        Ok(compiled_class_hash)
+    fn get_compiled_class_hash(&self, class_hash: ClassHash) -> StateResult<CompiledClassHash> {
+        self.0.get_compiled_class_hash(class_hash)
     }
 }
 

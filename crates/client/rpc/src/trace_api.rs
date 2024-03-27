@@ -1,5 +1,5 @@
+use blockifier::execution::call_info::CallInfo;
 use blockifier::execution::contract_class::{ContractClass, ContractClassV1};
-use blockifier::execution::entry_point::CallInfo;
 use blockifier::state::cached_state::CommitmentStateDiff;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
@@ -20,7 +20,7 @@ use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
-use starknet_api::api_core::ClassHash;
+use starknet_api::core::ClassHash;
 use starknet_core::types::{
     BlockId, BroadcastedTransaction, DeclareTransactionTrace, DeployAccountTransactionTrace, ExecuteInvocation,
     FeeEstimate, InvokeTransactionTrace, L1HandlerTransactionTrace, RevertedInvocation, SimulatedTransaction,
@@ -272,16 +272,16 @@ fn collect_call_info_ordered_messages(call_info: &CallInfo) -> Vec<starknet_core
         .iter()
         .map(|message| starknet_core::types::OrderedMessage {
             order: message.order as u64,
-            payload: message.message.payload.0.iter().map(|x| (*x).into()).collect(),
+            payload: message.message.payload.0.iter().map(|x| Felt252Wrapper::from(*x).into()).collect(),
             to_address: FieldElement::from_byte_slice_be(message.message.to_address.0.to_fixed_bytes().as_slice())
                 .unwrap(),
-            from_address: call_info.call.storage_address.0.0.into(),
+            from_address: Felt252Wrapper::from(call_info.call.storage_address).into(),
         })
         .collect()
 }
 
 fn blockifier_to_starknet_rs_ordered_events(
-    ordered_events: &[blockifier::execution::entry_point::OrderedEvent],
+    ordered_events: &[blockifier::execution::call_info::OrderedEvent],
 ) -> Vec<starknet_core::types::OrderedEvent> {
     ordered_events
         .iter()
@@ -316,8 +316,6 @@ fn try_get_function_invocation_from_call_info(
     let inner_calls =
         call_info.inner_calls.iter().map(try_get_function_invocation_from_call_info).collect::<Result<_, _>>()?;
 
-    call_info.get_sorted_l2_to_l1_payloads_length()?;
-
     let entry_point_type = match call_info.call.entry_point_type {
         starknet_api::deprecated_contract_class::EntryPointType::Constructor => {
             starknet_core::types::EntryPointType::Constructor
@@ -336,17 +334,20 @@ fn try_get_function_invocation_from_call_info(
     };
 
     // The class hash in the call_info is computed during execution and will be set here.
-    let class_hash = call_info.call.class_hash.expect("Class hash should be computed after execution").0.into();
+    let class_hash =
+        Felt252Wrapper::from(call_info.call.class_hash.expect("Class hash should be computed after execution"))
+            .0
+            .into();
 
     Ok(starknet_core::types::FunctionInvocation {
-        contract_address: call_info.call.storage_address.0.0.into(),
-        entry_point_selector: call_info.call.entry_point_selector.0.into(),
-        calldata: call_info.call.calldata.0.iter().map(|x| (*x).into()).collect(),
-        caller_address: call_info.call.caller_address.0.0.into(),
+        contract_address: Felt252Wrapper::from(call_info.call.storage_address).into(),
+        entry_point_selector: Felt252Wrapper::from(call_info.call.entry_point_selector).into(),
+        calldata: call_info.call.calldata.0.iter().map(|x| Felt252Wrapper::from(*x).into()).collect(),
+        caller_address: Felt252Wrapper::from(call_info.call.caller_address).into(),
         class_hash,
         entry_point_type,
         call_type,
-        result: call_info.execution.retdata.0.iter().map(|x| (*x).into()).collect(),
+        result: call_info.execution.retdata.0.iter().map(|x| Felt252Wrapper::from(*x).into()).collect(),
         calls: inner_calls,
         events,
         messages,

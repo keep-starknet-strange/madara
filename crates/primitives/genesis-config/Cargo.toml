@@ -12,8 +12,6 @@ mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
 
 blockifier = { workspace = true, features = [
   "testing",
-  "parity-scale-codec",
-  "scale-info",
 ] }
 #
 # third party

@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
+use blockifier::transaction::account_transaction::AccountTransaction;
+use blockifier::transaction::transaction_execution::Transaction;
 use futures::StreamExt;
 use futures_timer::Delay;
 use mp_block::Block as StarknetBlock;
 use mp_hashers::HasherT;
 use mp_messages::{MessageL1ToL2, MessageL2ToL1};
 use mp_snos_output::StarknetOsOutput;
-use mp_transactions::compute_hash::ComputeTransactionHash;
-use mp_transactions::Transaction;
 use pallet_starknet_runtime_api::StarknetRuntimeApi;
 use sc_client_api::BlockchainEvents;
 use sp_api::{HeaderT, ProvideRuntimeApi};
@@ -15,7 +15,6 @@ use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
 use starknet_api::hash::StarkHash;
-use starknet_api::transaction::TransactionHash;
 
 use crate::errors::Error;
 use crate::{Result, RetryStrategy, SettlementProvider, SettlementWorker, StarknetSpec, StarknetState};
@@ -251,13 +250,18 @@ where
         let mut messages_to_l1: Vec<MessageL2ToL1> = Vec::new();
         let mut messages_to_l2: Vec<MessageL1ToL2> = Vec::new();
 
-        let chain_id = substrate_client.runtime_api().chain_id(substrate_block_hash)?;
-
         for tx in next_block.transactions() {
-            if let Transaction::L1Handler(l1_handler) = tx {
-                messages_to_l2.push(l1_handler.clone().into());
+            if let Transaction::L1HandlerTransaction(l1_handler) = tx {
+                messages_to_l2.push(l1_handler.tx.clone().into());
             }
-            let tx_hash = TransactionHash(tx.compute_hash::<H>(chain_id, false).into());
+            let tx_hash = match tx {
+                Transaction::AccountTransaction(tx) => match tx {
+                    AccountTransaction::Declare(tx) => tx.tx_hash,
+                    AccountTransaction::DeployAccount(tx) => tx.tx_hash,
+                    AccountTransaction::Invoke(tx) => tx.tx_hash,
+                },
+                Transaction::L1HandlerTransaction(tx) => tx.tx_hash,
+            };
             substrate_client
                 .runtime_api()
                 .get_tx_messages_to_l1(substrate_block_hash, tx_hash)?

@@ -16,9 +16,10 @@ macro_rules! mock_runtime {
 			use frame_support::traits::Hooks;
 			use mp_sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
             use mp_felt::Felt252Wrapper;
-			use starknet_api::api_core::{PatriciaKey, ContractAddress};
+			use starknet_api::core::{PatriciaKey, ContractAddress};
 			use starknet_api::hash::StarkFelt;
-			use mp_fee::ResourcePrice;
+			use blockifier::blockifier::block::GasPrices;
+			use core::num::NonZeroU128;
 
 
 			type Block = frame_system::mocking::MockBlock<MockRuntime>;
@@ -75,7 +76,7 @@ macro_rules! mock_runtime {
                 pub const ChainId: Felt252Wrapper = mp_chain_id::SN_GOERLI_CHAIN_ID;
                 pub const MaxRecursionDepth: u32 = 50;
 				pub const ProgramHash: Felt252Wrapper = mp_program_hash::SN_OS_PROGRAM_HASH;
-				pub const L1GasPrice: ResourcePrice = ResourcePrice { price_in_strk: None, price_in_wei: 10 };
+				pub const L1GasPrices: GasPrices = GasPrices { eth_l1_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, strk_l1_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, eth_l1_data_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, strk_l1_data_gas_price: unsafe { NonZeroU128::new_unchecked(10) } };
             }
 
 			impl pallet_starknet::Config for MockRuntime {
@@ -91,7 +92,7 @@ macro_rules! mock_runtime {
                 type ChainId = ChainId;
                 type MaxRecursionDepth = MaxRecursionDepth;
 				type ProgramHash = ProgramHash;
-				type L1GasPrice = L1GasPrice;
+				type L1GasPrices = L1GasPrices;
 			}
 
 			/// Run to block n.

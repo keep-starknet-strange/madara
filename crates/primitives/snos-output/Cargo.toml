@@ -28,15 +28,12 @@ std = [
   "parity-scale-codec/std",
   "mp-transactions/std",
   "mp-messages/std",
-  "starknet_api/std",
 ]
 parity-scale-codec = [
   "dep:parity-scale-codec",
-  "starknet_api/parity-scale-codec",
   "mp-messages/parity-scale-codec",
 ]
 scale-info = [
   "dep:scale-info",
-  "starknet_api/scale-info",
   "mp-messages/scale-info",
 ]

@@ -3,7 +3,7 @@ use mp_felt::Felt252Wrapper;
 use mp_transactions::HandleL1MessageTransaction;
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError};
-use starknet_api::api_core::{ContractAddress, Nonce, PatriciaKey};
+use starknet_api::core::{ContractAddress, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::Fee;

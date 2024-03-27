@@ -25,8 +25,6 @@ serde_with = { workspace = true, optional = true }
 default = ["std"]
 std = [
   "mp-felt/std",
-  "starknet_api/std",
-  "blockifier/std",
   "serde?/std",
   "serde_with?/std",
   "parity-scale-codec?/std",
@@ -34,8 +32,7 @@ std = [
 ]
 parity-scale-codec = [
   "dep:parity-scale-codec",
-  "starknet_api/parity-scale-codec",
   "mp-felt/parity-scale-codec",
 ]
 serde = ["dep:serde", "dep:serde_with", "mp-felt/serde"]
-scale-info = ["dep:scale-info", "starknet_api/scale-info", "mp-felt/scale-info"]
+scale-info = ["dep:scale-info", "mp-felt/scale-info"]
