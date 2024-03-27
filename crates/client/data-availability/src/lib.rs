@@ -16,7 +16,7 @@ use std::time;
 
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use ethers::types::{I256, U256};
+use alloy::primitives::{I256, U256};
 use futures::channel::mpsc;
 use futures::StreamExt;
 use mc_commitment_state_diff::BlockDAData;

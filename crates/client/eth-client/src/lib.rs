@@ -12,24 +12,30 @@ pub mod error;
 
 use std::time::Duration;
 
-use ethers::middleware::SignerMiddleware;
-use ethers::providers::{Http, Provider};
-use ethers::signers::{LocalWallet, Signer};
+use url::Url;
+use alloy::{
+    network::{Ethereum, EthereumSigner},
+    providers::{layers::SignerProvider, ProviderBuilder, RootProvider},
+    rpc::client::RpcClient,
+    signers::wallet::LocalWallet,
+    transports::http::Http
+};
 
 use crate::config::{EthereumClientConfig, EthereumProviderConfig, EthereumWalletConfig};
 use crate::error::Error;
 
-impl TryFrom<EthereumProviderConfig> for Provider<Http> {
+impl TryFrom<EthereumProviderConfig> for RootProvider<Ethereum, Http<reqwest::Client>>  {
     type Error = Error;
 
     fn try_from(config: EthereumProviderConfig) -> Result<Self, Self::Error> {
         match config {
             EthereumProviderConfig::Http(config) => {
-                let mut provider = Provider::<Http>::try_from(config.rpc_endpoint).map_err(Error::ProviderUrlParse)?;
+                let provider = ProviderBuilder::new()
+                    .on_client(RpcClient::new_http(Url::parse(&config.rpc_endpoint).map_err(Error::ProviderUrlParse)?));
 
-                if let Some(poll_interval_ms) = config.tx_poll_interval_ms {
-                    provider = provider.interval(Duration::from_millis(poll_interval_ms));
-                }
+                // if let Some(poll_interval_ms) = config.tx_poll_interval_ms {
+                //     provider = provider.interval(Duration::from_millis(poll_interval_ms));
+                // }
 
                 Ok(provider)
             }
@@ -46,17 +52,27 @@ impl TryFrom<EthereumWalletConfig> for LocalWallet {
                 .private_key
                 .parse::<LocalWallet>()
                 .map_err(Error::PrivateKeyParse)?
-                .with_chain_id(config.chain_id)),
+                // .set_chain_id(Some(config.chain_id))
+            )
         }
     }
 }
 
-impl TryFrom<EthereumClientConfig> for SignerMiddleware<Provider<Http>, LocalWallet> {
+impl TryFrom<EthereumClientConfig> for SignerProvider<Ethereum, Http<reqwest::Client>, RootProvider<Ethereum, Http<reqwest::Client>>, EthereumSigner> {
     type Error = Error;
 
     fn try_from(config: EthereumClientConfig) -> Result<Self, Self::Error> {
-        let provider: Provider<Http> = config.provider.try_into()?;
         let wallet: LocalWallet = config.wallet.unwrap_or_default().try_into()?;
-        Ok(SignerMiddleware::new(provider, wallet))
+        let provider_config = config.provider;
+        match provider_config {
+            EthereumProviderConfig::Http(provider_config) => {
+                let rpc_client = RpcClient::new_http(Url::parse(&provider_config.rpc_endpoint).map_err(Error::ProviderUrlParse)?);
+                let provider_with_signer = ProviderBuilder::<_, Ethereum>::new()
+                    .signer(EthereumSigner::from(wallet))
+                    .network::<Ethereum>()
+                    .provider(RootProvider::new(rpc_client));
+                Ok(provider_with_signer)
+            }
+        }
     }
 }

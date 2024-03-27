@@ -15,7 +15,7 @@
 use std::fs::File;
 use std::path::PathBuf;
 
-use ethers::types::{Address, H160};
+use alloy::primitives::Address;
 use serde::{Deserialize, Serialize};
 
 use crate::error::Error;
@@ -112,7 +112,7 @@ impl Default for EthereumWalletConfig {
     }
 }
 
-fn parse_contract_address(string: &str) -> Result<H160, Error> {
+fn parse_contract_address(string: &str) -> Result<Address, Error> {
     string.parse().map_err(Error::ContractAddressParse)
 }
 

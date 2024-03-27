@@ -1,7 +1,10 @@
 use std::sync::Arc;
 
-use ethers::providers::{Http, Provider, StreamExt};
-use ethers::types::U256;
+use alloy::{
+    network::Ethereum,
+    providers::RootProvider,
+    transports::http::Http
+};
 pub use mc_eth_client::config::EthereumClientConfig;
 use mp_transactions::HandleL1MessageTransaction;
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
@@ -21,9 +24,9 @@ const TX_SOURCE: TransactionSource = TransactionSource::External;
 
 fn create_event_listener(
     config: EthereumClientConfig,
-) -> Result<StarknetMessagingEvents<Provider<Http>>, mc_eth_client::error::Error> {
+) -> Result<StarknetMessagingEvents<RootProvider<Ethereum, Http<reqwest::Client>>>, mc_eth_client::error::Error> {
     let address = config.contracts.core_contract()?;
-    let provider: Provider<Http> = config.provider.try_into()?;
+    let provider: RootProvider<Ethereum, Http<reqwest::Client>> = config.provider.try_into()?;
     Ok(StarknetMessagingEvents::new(address, Arc::new(provider)))
 }
 
@@ -127,8 +130,9 @@ where
 {
     // Check against panic
     // https://docs.rs/ethers/latest/ethers/types/struct.U256.html#method.as_u128
-    let fee: Fee = if event.fee > U256::from_big_endian(&(u128::MAX.to_be_bytes())) {
-        return Err(L1MessagesWorkerError::ToFeeError);
+    // let fee: Fee = if event.fee > U256::from_little_endian(value.as_le_slice(U256::from_be_bytes(&(u128::MAX.to_be_bytes())))) {
+    let fee: Fee = if event.fee > sp_core::U256::from_big_endian(&(u128::MAX.to_be_bytes())) {
+            return Err(L1MessagesWorkerError::ToFeeError);
     } else {
         Fee(event.fee.as_u128())
     };

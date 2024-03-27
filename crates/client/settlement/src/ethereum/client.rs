@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use ethers::types::{Address, TransactionReceipt, I256, U256};
+use alloy::{
+    primitives::{Address, I256, U256},
+    rpc::types::eth::TransactionReceipt
+};
 pub use mc_eth_client::config::EthereumClientConfig;
 use starknet_core_contract_client::interfaces::StarknetSovereignContract;
 use starknet_core_contract_client::LocalWalletSignerMiddleware;

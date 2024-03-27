@@ -8,7 +8,7 @@ pub enum Error {
     UrlParser(#[from] url::ParseError),
 
     #[error("Failed to initialize local wallet from private key: {0}")]
-    LocalWallet(#[from] ethers::signers::WalletError),
+    LocalWallet(#[from] alloy::signers::wallet::WalletError),
 
     #[error("Failed to parse contract address: {0}")]
     HexParser(#[from] rustc_hex::FromHexError),
@@ -16,8 +16,8 @@ pub enum Error {
     #[error("Error while interacting with contract: {0}")]
     Contract(#[from] ethers::contract::ContractError<LocalWalletSignerMiddleware>),
 
-    #[error("HTTP provider error: {0}")]
-    Provider(#[from] ethers::providers::ProviderError),
+    // #[error("HTTP provider error: {0}")]
+    // Provider(#[from] alloy::providers::Provider),
 
     #[error("Ethereum client error: {0}")]
     EthereumClient(#[from] mc_eth_client::error::Error),

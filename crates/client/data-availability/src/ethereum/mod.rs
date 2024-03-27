@@ -4,15 +4,19 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use ethers::providers::{Http, Provider};
-use ethers::types::{I256, U256};
+use alloy::{
+    primitives::{I256, U256},
+    network::Ethereum,
+    providers::RootProvider,
+    transports::http::Http
+};
 use starknet_core_contract_client::interfaces::StarknetSovereignContract;
 
 use crate::{DaClient, DaError, DaMode};
 
 #[derive(Clone, Debug)]
 pub struct EthereumDaClient {
-    core_contract: StarknetSovereignContract<Provider<Http>>,
+    core_contract: StarknetSovereignContract<RootProvider<Ethereum, Http<reqwest::Client>>>,
     mode: DaMode,
 }
 
@@ -55,7 +59,7 @@ impl TryFrom<config::EthereumDaConfig> for EthereumDaClient {
 
         let address = conf.contracts.core_contract().map_err(|e| DaError::FailedConversion(e.into()))?;
         let provider =
-            Provider::<Http>::try_from(conf.provider).map_err(|e| DaError::FailedBuildingClient(e.into()))?;
+            RootProvider::<Ethereum, Http<reqwest::Client>>::try_from(conf.provider).map_err(|e| DaError::FailedBuildingClient(e.into()))?;
         let core_contract = StarknetSovereignContract::new(address, Arc::new(provider));
 
         Ok(Self { mode: conf.mode, core_contract })

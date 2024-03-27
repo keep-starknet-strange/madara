@@ -3,7 +3,7 @@ pub mod errors;
 
 use async_trait::async_trait;
 pub use client::StarknetContractClient;
-use ethers::types::U256;
+use alloy::primitives::U256;
 use mp_snos_output::{SnosCodec, StarknetOsOutput};
 use sp_runtime::traits::Block;
 use starknet_api::hash::StarkFelt;
@@ -11,19 +11,18 @@ use starknet_api::hash::StarkFelt;
 use crate::{Result, SettlementProvider, StarknetSpec, StarknetState};
 
 pub fn convert_u256_to_felt<B: Block>(word: U256) -> Result<StarkFelt, B> {
-    let mut bytes = [0u8; 32];
-    word.to_big_endian(bytes.as_mut_slice());
+    let bytes = U256::to_be_bytes(&word);
     Ok(StarkFelt::new(bytes)?)
 }
 
 pub fn convert_felt_to_u256(felt: StarkFelt) -> U256 {
-    U256::from_big_endian(felt.bytes())
+    U256::try_from_be_slice(felt.bytes()).unwrap()
 }
 
 #[async_trait]
 impl<B: Block> SettlementProvider<B> for StarknetContractClient {
     async fn is_initialized(&self) -> Result<bool, B> {
-        Ok(U256::zero() != self.program_hash().await?)
+        Ok(U256::is_zero(&self.program_hash().await?))
     }
 
     async fn get_chain_spec(&self) -> Result<StarknetSpec, B> {

@@ -18,3 +18,13 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 url = { workspace = true }
+reqwest = { workspace = true }
+alloy = { git = "https://github.com/alloy-rs/alloy", rev = "fd8f065", features = [
+    "network",
+    "providers",
+    "rpc",
+    "rpc-client",
+    "signers",
+    "signer-wallet",
+    "transport-http",
+] }
