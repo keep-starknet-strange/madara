@@ -25,6 +25,7 @@
 - refacto: reusable Eth client config for settlement/DA/other tasks
 - ci: add gomu gomu no gatling perfomrance test
 - feat(runtime): moved StarkEvents from Substrate events to runtime storage
+- feat(rpc/trace_api): add `trace_transaction`
 
 ## v0.7.0
 

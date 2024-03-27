@@ -125,3 +125,7 @@ path = "get_state_update.rs"
 [[test]]
 name = "starknet_trace_block_transactions"
 path = "trace_block.rs"
+
+[[test]]
+name = "starknet_trace_transaction"
+path = "trace_transaction.rs"
