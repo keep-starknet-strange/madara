@@ -8,6 +8,7 @@
 //! # Usage
 //! The madara node should spawn a `MappingSyncWorker` among it's services.
 
+mod block_metrics;
 mod sync_blocks;
 
 use std::marker::PhantomData;
@@ -21,11 +22,14 @@ use futures_timer::Delay;
 use log::debug;
 use mp_hashers::HasherT;
 use pallet_starknet_runtime_api::StarknetRuntimeApi;
+use prometheus_endpoint::prometheus;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::client::ImportNotifications;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
+
+use crate::block_metrics::BlockMetrics;
 
 /// The worker in charge of syncing the Madara db when it receive a new Substrate block
 pub struct MappingSyncWorker<B: BlockT, C, BE, H> {
@@ -41,6 +45,8 @@ pub struct MappingSyncWorker<B: BlockT, C, BE, H> {
     have_next: bool,
     retry_times: usize,
     sync_from: <B::Header as HeaderT>::Number,
+
+    block_metrics: Option<BlockMetrics>,
 }
 
 impl<B: BlockT, C, BE, H> Unpin for MappingSyncWorker<B, C, BE, H> {}
@@ -55,7 +61,10 @@ impl<B: BlockT, C, BE, H> MappingSyncWorker<B, C, BE, H> {
         frontier_backend: Arc<mc_db::Backend<B>>,
         retry_times: usize,
         sync_from: <B::Header as HeaderT>::Number,
+        prometheus_registry: Option<prometheus::Registry>,
     ) -> Self {
+        let block_metrics =
+            prometheus_registry.and_then(|registry| block_metrics::BlockMetrics::register(&registry).ok());
         Self {
             import_notifications,
             timeout,
@@ -69,6 +78,7 @@ impl<B: BlockT, C, BE, H> MappingSyncWorker<B, C, BE, H> {
             have_next: true,
             retry_times,
             sync_from,
+            block_metrics,
         }
     }
 }
@@ -119,6 +129,7 @@ where
                 self.madara_backend.as_ref(),
                 self.retry_times,
                 self.sync_from,
+                self.block_metrics.as_ref(),
             ) {
                 Ok(have_next) => {
                     self.have_next = have_next;
