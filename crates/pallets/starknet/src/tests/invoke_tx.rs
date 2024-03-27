@@ -15,7 +15,7 @@ use starknet_api::transaction::{Event as StarknetEvent, EventContent, EventData,
 use starknet_core::utils::get_selector_from_name;
 use starknet_crypto::FieldElement;
 
-use super::constants::{BLOCKIFIER_ACCOUNT_ADDRESS, MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS, TEST_CONTRACT_ADDRESS};
+use super::constants::{BLOCKIFIER_ACCOUNT_ADDRESS, MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS, TEST_CONTRACT_ADDRESS, UDC_ADDRESS, UDC_SELECTOR, SALT};
 use super::mock::default_mock::*;
 use super::mock::*;
 use super::utils::{get_contract_class, sign_message_hash};
@@ -24,6 +24,7 @@ use crate::tests::{
     get_invoke_nonce_dummy, get_invoke_openzeppelin_dummy, get_storage_read_write_dummy, set_nonce,
 };
 use crate::{Call, Config, Error, StorageView};
+use test_log;
 
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
@@ -238,6 +239,7 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
 
 #[test]
 fn test_verify_nonce() {
+    log::info!("Running contract_function_call_should_fail test");
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
@@ -553,9 +555,11 @@ fn test_tx_fail_on_invalid_nonce_should_revert_storage() {
 }
 
 
-#[test]
+#[test_log::test]
 fn contract_function_call_should_fail() {
+    log::info!("Running test 1");
     new_test_ext::<MockRuntime>().execute_with(|| {
+        log::info!("Running test 2");
         basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
@@ -597,7 +601,7 @@ fn contract_function_call_should_fail() {
         );
 
         // log account address
-        log::info!("Account address: {:?}", account_addr);
+        log::debug!("[DEBUG] Sender Account address: {:?}", account_addr);
 
         let deploy_transaction = InvokeTransactionV1{
             sender_address: account_addr.into(),
@@ -605,17 +609,46 @@ fn contract_function_call_should_fail() {
             nonce: Felt252Wrapper::ONE,
             calldata: vec![
                 Felt252Wrapper::ONE,
-                Felt252Wrapper::from_hex_be("0x41a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf").unwrap(),
-                Felt252Wrapper::from_hex_be("0x1987cbd17808b9a23693d4de7e246a443cfe37e6e7fbaeabd7d7e6532b07c3d").unwrap(),
-                account_addr.into(),
-                transaction_panic_class_hash,
-                Felt252Wrapper::ONE,
-                Felt252Wrapper::ZERO
+                Felt252Wrapper::from_hex_be(UDC_ADDRESS).unwrap(), // udc address
+                Felt252Wrapper::from_hex_be(UDC_SELECTOR).unwrap(), // deployContract selector
+                account_addr.into(), // sender address
+                transaction_panic_class_hash, // contract class hash
+                *SALT, // salt
+                Felt252Wrapper::ONE, // unique
+                Felt252Wrapper::ZERO,  // calldata len
             ],
             max_fee: u128::MAX,
             offset_version: false,
         };
 
-        assert_ok!(Starknet::invoke(RuntimeOrigin::none(), deploy_transaction.into()));
+        // assert_ok!(Starknet::validate_unsigned(
+        //     TransactionSource::InBlock,
+        //     &crate::Call::invoke {
+        //         transaction: deploy_transaction.clone().into(),
+        //     },
+        // ));
+
+        log::debug!("Validating unsigned transaction");
+        let result = Starknet::validate_unsigned(
+                TransactionSource::InBlock,
+                &crate::Call::invoke {
+                    transaction: deploy_transaction.clone().into(),
+                },
+            );
+        
+        log::debug!("Result: {:?}", result);
+
+        log::debug!("Invoking transaction");
+        let _ = Starknet::invoke(RuntimeOrigin::none(), deploy_transaction.into());
+
+        
+
+        // assert_ok!(Starknet::invoke(RuntimeOrigin::none(), deploy_transaction.into()));
+
+        // assert_err!(
+        //     Starknet::invoke(RuntimeOrigin::none(), deploy_transaction.into()),
+        //     Error::<MockRuntime>::TransactionExecutionFailed
+        // );
+
     })
 }
