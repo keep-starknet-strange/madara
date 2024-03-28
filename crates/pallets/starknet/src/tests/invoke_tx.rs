@@ -8,23 +8,29 @@ use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{
     InvalidTransaction, TransactionSource, TransactionValidityError, ValidTransaction,
 };
-use starknet_api::api_core::{ContractAddress, Nonce, PatriciaKey, ClassHash};
+use starknet_api::api_core::{ClassHash, ContractAddress, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Event as StarknetEvent, EventContent, EventData, EventKey, TransactionHash};
-use starknet_core::utils::get_selector_from_name;
+use starknet_core::utils::{get_selector_from_name, UdcUniqueSettings, UdcUniqueness};
 use starknet_crypto::FieldElement;
+use test_log;
 
-use super::constants::{BLOCKIFIER_ACCOUNT_ADDRESS, MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS, TEST_CONTRACT_ADDRESS, UDC_ADDRESS, UDC_SELECTOR, SALT};
+use super::constants::{
+    BLOCKIFIER_ACCOUNT_ADDRESS, MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS, TEST_CONTRACT_ADDRESS, UDC_ADDRESS,
+    UDC_SELECTOR,
+};
 use super::mock::default_mock::*;
 use super::mock::*;
 use super::utils::{get_contract_class, sign_message_hash};
+use crate::tests::utils::get_udc_deployed_contract_address;
 use crate::tests::{
     get_invoke_argent_dummy, get_invoke_braavos_dummy, get_invoke_dummy, get_invoke_emit_event_dummy,
     get_invoke_nonce_dummy, get_invoke_openzeppelin_dummy, get_storage_read_write_dummy, set_nonce,
 };
 use crate::{Call, Config, Error, StorageView};
-use test_log;
+
+const INCREASE_BALANCE_FUNCTION_SELECTOR: &str = "0x362398bec32bc0ebb411203221a35a0301193a96f317ebe5e40be9f60d15320";
 
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
@@ -554,28 +560,25 @@ fn test_tx_fail_on_invalid_nonce_should_revert_storage() {
     });
 }
 
-
 #[test_log::test]
-fn contract_function_call_should_fail() {
-    log::info!("Running test 1");
+fn storage_changes_should_revert_on_transaction_revert() {
     new_test_ext::<MockRuntime>().execute_with(|| {
-        log::info!("Running test 2");
         basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
 
         let account_addr = get_account_address(None, AccountType::V1(AccountTypeV1Inner::NoValidate));
 
-        let transaction_panic_class = get_contract_class("TransactionPanic.casm.json", 1);
-        let transaction_panic_class_hash =
+        let transaction_revert_class = get_contract_class("TransactionRevert.casm.json", 1);
+        let transaction_revert_class_hash =
             Felt252Wrapper::from_hex_be("0x7d2bcb1df4970245665a19b23a4d3877eb86a661e8d98b89afc4531134b99f6").unwrap();
-        let transaction_panic_compiled_class_hash: Felt252Wrapper =
+        let transaction_revert_compiled_class_hash: Felt252Wrapper =
             Felt252Wrapper::from_hex_be("0x1c02b663e928ed213d3a0fa206efb59182fa2ba41f5c204daa56c4a434b53e5").unwrap();
 
         let mut transaction = DeclareTransactionV2 {
             sender_address: account_addr.into(),
-            class_hash: transaction_panic_class_hash,
-            compiled_class_hash: transaction_panic_compiled_class_hash,
+            class_hash: transaction_revert_class_hash,
+            compiled_class_hash: transaction_revert_compiled_class_hash,
             nonce: Felt252Wrapper::ZERO,
             max_fee: u128::MAX,
             signature: vec![],
@@ -586,24 +589,24 @@ fn contract_function_call_should_fail() {
         let transaction_hash = transaction.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false);
         transaction.signature = sign_message_hash(transaction_hash);
 
+        // validate declare transaction
         assert_ok!(Starknet::validate_unsigned(
             TransactionSource::InBlock,
             &crate::Call::declare {
                 transaction: transaction.clone().into(),
-                contract_class: transaction_panic_class.clone()
+                contract_class: transaction_revert_class.clone()
             },
         ));
 
-        assert_ok!(Starknet::declare(none_origin, transaction.into(), transaction_panic_class.clone()));
+        assert_ok!(Starknet::declare(none_origin, transaction.into(), transaction_revert_class.clone()));
         assert_eq!(
-            Starknet::contract_class_by_class_hash(ClassHash::from(transaction_panic_class_hash)).unwrap(),
-            transaction_panic_class
+            Starknet::contract_class_by_class_hash(ClassHash::from(transaction_revert_class_hash)).unwrap(),
+            transaction_revert_class
         );
 
-        // log account address
-        log::debug!("[DEBUG] Sender Account address: {:?}", account_addr);
+        let salt = Felt252Wrapper::ZERO;
 
-        let deploy_transaction = InvokeTransactionV1{
+        let deploy_transaction = InvokeTransactionV1 {
             sender_address: account_addr.into(),
             signature: vec![],
             nonce: Felt252Wrapper::ONE,
@@ -611,44 +614,63 @@ fn contract_function_call_should_fail() {
                 Felt252Wrapper::ONE,
                 Felt252Wrapper::from_hex_be(UDC_ADDRESS).unwrap(), // udc address
                 Felt252Wrapper::from_hex_be(UDC_SELECTOR).unwrap(), // deployContract selector
-                account_addr.into(), // sender address
-                transaction_panic_class_hash, // contract class hash
-                *SALT, // salt
-                Felt252Wrapper::ONE, // unique
-                Felt252Wrapper::ZERO,  // calldata len
+                Felt252Wrapper::from_hex_be("0x4").unwrap(),       // calldata len
+                transaction_revert_class_hash,                     // contract class hash
+                salt,                                              // salt
+                Felt252Wrapper::ONE,                               // unique
+                Felt252Wrapper::ZERO,                              // constructor calldata len
             ],
             max_fee: u128::MAX,
             offset_version: false,
         };
 
-        // assert_ok!(Starknet::validate_unsigned(
-        //     TransactionSource::InBlock,
-        //     &crate::Call::invoke {
-        //         transaction: deploy_transaction.clone().into(),
-        //     },
-        // ));
+        // validate invoke transaction
+        assert_ok!(Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::invoke { transaction: deploy_transaction.clone().into() },
+        ));
 
-        log::debug!("Validating unsigned transaction");
-        let result = Starknet::validate_unsigned(
-                TransactionSource::InBlock,
-                &crate::Call::invoke {
-                    transaction: deploy_transaction.clone().into(),
-                },
-            );
-        
-        log::debug!("Result: {:?}", result);
+        let contract_address: FieldElement = get_udc_deployed_contract_address(
+            salt.into(),
+            transaction_revert_class_hash.into(),
+            &UdcUniqueness::Unique(UdcUniqueSettings {
+                deployer_address: FieldElement::from_hex_be(
+                    "0x0642a8b9e2c6cc3a9ddb84575123f262a21415f78db453b0625d889e1e06ac32",
+                )
+                .unwrap(),
+                udc_contract_address: FieldElement::from_hex_be(UDC_ADDRESS).unwrap(),
+            }),
+            &[],
+        );
 
-        log::debug!("Invoking transaction");
-        let _ = Starknet::invoke(RuntimeOrigin::none(), deploy_transaction.into());
+        // deploy contract
+        assert_ok!(Starknet::invoke(RuntimeOrigin::none(), deploy_transaction.into()));
 
-        
+        // create increase balance transaction
+        let increase_balance_tx = InvokeTransactionV1 {
+            sender_address: account_addr.into(),
+            signature: vec![],
+            nonce: Felt252Wrapper::TWO,
+            max_fee: u128::MAX,
+            offset_version: false,
+            calldata: vec![
+                Felt252Wrapper::ONE,
+                contract_address.into(),
+                Felt252Wrapper::from_hex_be(INCREASE_BALANCE_FUNCTION_SELECTOR).unwrap(),
+                Felt252Wrapper::from_hex_be("0x1").unwrap(),
+                Felt252Wrapper::from_hex_be("0xa").unwrap(),
+            ],
+        };
 
-        // assert_ok!(Starknet::invoke(RuntimeOrigin::none(), deploy_transaction.into()));
+        // the transaction reverts and returns Ok
+        assert_ok!(Starknet::invoke(RuntimeOrigin::none(), increase_balance_tx.clone().into()));
 
-        // assert_err!(
-        //     Starknet::invoke(RuntimeOrigin::none(), deploy_transaction.into()),
-        //     Error::<MockRuntime>::TransactionExecutionFailed
-        // );
+        let storage_var_selector = StorageKey(PatriciaKey(
+            StarkFelt::try_from("0x0206f38f7e4f15e87567361213c28f235cccdaa1d7fd34c9db1dfe9489c6a091").unwrap(),
+        ));
 
+        // the storage value should be 0 after the transaction reverts
+        let contract_address = ContractAddress(PatriciaKey(StarkFelt::try_from(contract_address).unwrap()));
+        assert_eq!(Starknet::storage((contract_address, storage_var_selector)), StarkFelt::from(0_u128));
     })
 }
