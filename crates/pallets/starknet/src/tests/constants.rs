@@ -23,6 +23,8 @@ pub const UNAUTHORIZED_INNER_CALL_ACCOUNT_CLASS_HASH_CAIRO_0: &str =
     "0x071aaf68d30c3e52e1c4b7d1209b0e09525939c31bb0275919dffd4cd53f57c4";
 pub const MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS: &str =
     "0x051a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02cf";
+pub const UDC_ADDRESS: &str = "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf";
+pub const UDC_SELECTOR: &str = "0x1987cbd17808b9a23693d4de7e246a443cfe37e6e7fbaeabd7d7e6532b07c3d";
 
 // salts for address calculation
 lazy_static! {
