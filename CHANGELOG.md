@@ -2,6 +2,7 @@
 
 ## Next release
 
+- feat (pallet): add tests for storage reversal on transaction revert
 - Fix(node): Fix creating a local testnet with multiple nodes fails using only
   cli flags
 - dev: change `Vec::new` to `Vec::with_capacity` where possible.
