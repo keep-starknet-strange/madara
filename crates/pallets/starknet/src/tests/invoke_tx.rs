@@ -14,7 +14,6 @@ use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Event as StarknetEvent, EventContent, EventData, EventKey, TransactionHash};
 use starknet_core::utils::{get_selector_from_name, UdcUniqueSettings, UdcUniqueness};
 use starknet_crypto::FieldElement;
-use test_log;
 
 use super::constants::{
     BLOCKIFIER_ACCOUNT_ADDRESS, MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS, TEST_CONTRACT_ADDRESS, UDC_ADDRESS,
@@ -531,7 +530,7 @@ fn test_verify_nonce_in_unsigned_tx() {
     });
 }
 
-#[test_log::test]
+#[test]
 fn storage_changes_should_revert_on_transaction_revert() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
