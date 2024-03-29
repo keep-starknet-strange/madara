@@ -25,7 +25,7 @@
 - chore(db): changed the way hashes are encoded
 - refacto: reusable Eth client config for settlement/DA/other tasks
 - ci: add gomu gomu no gatling perfomrance test
-- feat(runtime): moved StarkEvents from Substrate events to runtime storage
+- feat(runtime): moved StarkEvents from Substrate
 
 ## v0.7.0
 
