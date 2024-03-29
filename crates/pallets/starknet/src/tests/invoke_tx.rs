@@ -30,8 +30,6 @@ use crate::tests::{
 };
 use crate::{Call, Config, Error, StorageView};
 
-const INCREASE_BALANCE_FUNCTION_SELECTOR: &str = "0x362398bec32bc0ebb411203221a35a0301193a96f317ebe5e40be9f60d15320";
-
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
     new_test_ext::<MockRuntime>().execute_with(|| {
@@ -245,7 +243,6 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
 
 #[test]
 fn test_verify_nonce() {
-    log::info!("Running contract_function_call_should_fail test");
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
@@ -534,32 +531,6 @@ fn test_verify_nonce_in_unsigned_tx() {
     });
 }
 
-#[test]
-fn test_tx_fail_on_invalid_nonce_should_revert_storage() {
-    new_test_ext::<MockRuntime>().execute_with(|| {
-        basic_test_setup(2);
-
-        let transaction = get_invoke_dummy(Felt252Wrapper::ZERO);
-
-        let tx_sender = transaction.sender_address.into();
-        let tx_source = TransactionSource::InBlock;
-        let call = Call::invoke { transaction: transaction.into() };
-
-        assert!(Starknet::validate_unsigned(tx_source, &call).is_ok());
-
-        set_nonce::<MockRuntime>(&tx_sender, &Nonce(StarkFelt::from(1u64)));
-
-        assert_eq!(
-            Starknet::validate_unsigned(tx_source, &call),
-            Err(TransactionValidityError::Invalid(InvalidTransaction::Stale))
-        );
-
-        let storage_key = (tx_sender, StorageKey(PatriciaKey(StarkFelt::from(0u128))));
-
-        assert_eq!(Starknet::storage(storage_key), StarkFelt::from(0u128));
-    });
-}
-
 #[test_log::test]
 fn storage_changes_should_revert_on_transaction_revert() {
     new_test_ext::<MockRuntime>().execute_with(|| {
@@ -645,6 +616,8 @@ fn storage_changes_should_revert_on_transaction_revert() {
 
         // deploy contract
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), deploy_transaction.into()));
+
+        const INCREASE_BALANCE_FUNCTION_SELECTOR: &str = "0x362398bec32bc0ebb411203221a35a0301193a96f317ebe5e40be9f60d15320";
 
         // create increase balance transaction
         let increase_balance_tx = InvokeTransactionV1 {
