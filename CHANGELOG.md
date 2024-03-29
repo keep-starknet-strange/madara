@@ -2,6 +2,7 @@
 
 ## Next release
 
+- Fix(node): fix genesis hash inconsistency
 - Fix(node): Fix creating a local testnet with multiple nodes fails using only
   cli flags
 - dev: change `Vec::new` to `Vec::with_capacity` where possible.

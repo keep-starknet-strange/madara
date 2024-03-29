@@ -55,8 +55,8 @@ frame-system = { workspace = true }
 # Substrate Client
 sc-cli = { workspace = true, optional = true }
 # substrate service
-sc-service = { workspace = true }
 sc-client-api = { workspace = true }
+sc-service = { workspace = true }
 # Substrate primitives
 sp-api = { workspace = true }
 sp-arithmetic = { workspace = true }
