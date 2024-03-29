@@ -60,6 +60,7 @@ sp-state-machine = { workspace = true }
 sp-statement-store = { workspace = true }
 sp-timestamp = { workspace = true }
 sp-trie = { workspace = true, features = ["default"] }
+sp-consensus = { workspace = true }
 
 # These dependencies are used for the node template's RPCs
 jsonrpsee = { workspace = true, features = ["server"] }

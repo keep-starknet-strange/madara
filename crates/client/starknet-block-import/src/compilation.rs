@@ -9,7 +9,7 @@ use cairo_vm::types::program::Program;
 use cairo_vm::types::relocatable::MaybeRelocatable;
 use mc_rpc::casm_contract_class_to_compiled_class;
 use mp_felt::Felt252Wrapper;
-use num_bigint::{BigInt, BigUint, Sign};
+use num_bigint::BigUint;
 use starknet_api::deprecated_contract_class::EntryPointType as DeprecatedEntryPointType;
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::{
@@ -128,7 +128,7 @@ pub(crate) fn cairo_vm_program_to_bytecode(program: &Program) -> Result<Vec<Fiel
 }
 
 pub fn stark_felt_to_biguint(felt: &StarkFelt) -> BigUint {
-    BigInt::from_bytes_be(Sign::Plus, felt.bytes()).to_biguint().unwrap()
+    BigUint::from_bytes_be(felt.bytes())
 }
 
 pub fn stark_felt_to_biguint_as_hex(felt: &StarkFelt) -> BigUintAsHex {

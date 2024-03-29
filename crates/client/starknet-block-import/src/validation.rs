@@ -38,12 +38,12 @@ pub fn validate_declare_v2_transaction(
     }
 
     // 3. Compile Sierra class to Casm class and check class hashes again
-    let compiled_sierra_class_hash =
+    let compiled_casm_class_hash_from_sierra_class =
         blockifier_sierra_class_to_compiled_class_hash(sierra_class).map_err(|e| ConsensusError::Other(Box::new(e)))?;
-    if compiled_sierra_class_hash != expected_casm_class_hash {
+    if compiled_casm_class_hash_from_sierra_class != expected_casm_class_hash {
         return Err(ConsensusError::ClientImport(format!(
             "Mismatched class hash (compiling sierra class from local db): expected (in tx) {0:x}, got {1:x}",
-            expected_casm_class_hash, compiled_sierra_class_hash
+            expected_casm_class_hash, compiled_casm_class_hash_from_sierra_class
         )));
     }
 

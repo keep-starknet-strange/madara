@@ -80,6 +80,8 @@ where
     async fn import_block(&mut self, block: BlockImportParams<Block>) -> Result<ImportResult, Self::Error> {
         log::info!("🐺 Starknet block import: verifying declared CASM classes against local Sierra classes");
         if let Some(extrinsics) = &block.body {
+            // Extrinsic filter does not access the block state so technically the block hash does not matter.
+            // But since we need to provide one anyways, parent hash is a convenient option.
             let prev_block_hash = *block.header.parent_hash();
             let transactions: Vec<Transaction> = self
                 .client
@@ -126,11 +128,15 @@ where
 
 impl<I, C> StarknetBlockImport<I, C>
 where
-    I: BlockImport<Block> + Send + Clone,
+    I: BlockImport<Block> + Send + Sync + Clone,
     C: ProvideRuntimeApi<Block> + Send,
 {
     pub fn new(inner: I, client: Arc<C>, madara_backend: Arc<MadaraBackend>) -> Self {
         Self { inner, client, madara_backend }
+    }
+
+    pub fn inner(&self) -> &I {
+        &self.inner
     }
 }
 
