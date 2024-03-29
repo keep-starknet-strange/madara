@@ -8,10 +8,10 @@ use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{
     InvalidTransaction, TransactionSource, TransactionValidityError, ValidTransaction,
 };
-use starknet_api::api_core::{ClassHash, ContractAddress, Nonce, PatriciaKey};
+use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
-use starknet_api::transaction::{Event as StarknetEvent, EventContent, EventData, EventKey, TransactionHash};
+use starknet_api::transaction::{Calldata, Event as StarknetEvent, EventContent, EventData, EventKey, TransactionHash};
 use starknet_core::utils::{get_selector_from_name, UdcUniqueSettings, UdcUniqueness};
 use starknet_crypto::FieldElement;
 
@@ -616,7 +616,7 @@ fn storage_changes_should_revert_on_transaction_revert() {
         // deploy contract
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), deploy_transaction.into()));
 
-        const INCREASE_BALANCE_FUNCTION_SELECTOR: &str = "0x362398bec32bc0ebb411203221a35a0301193a96f317ebe5e40be9f60d15320";
+        let increase_balance_function_selector: &str = "0x362398bec32bc0ebb411203221a35a0301193a96f317ebe5e40be9f60d15320";
 
         // create increase balance transaction
         let increase_balance_tx = InvokeTransactionV1 {
@@ -628,7 +628,7 @@ fn storage_changes_should_revert_on_transaction_revert() {
             calldata: vec![
                 Felt252Wrapper::ONE,
                 contract_address.into(),
-                Felt252Wrapper::from_hex_be(INCREASE_BALANCE_FUNCTION_SELECTOR).unwrap(),
+                Felt252Wrapper::from_hex_be(increase_balance_function_selector).unwrap(),
                 Felt252Wrapper::from_hex_be("0x1").unwrap(),
                 Felt252Wrapper::from_hex_be("0xa").unwrap(),
             ],
@@ -637,12 +637,16 @@ fn storage_changes_should_revert_on_transaction_revert() {
         // the transaction reverts and returns Ok
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), increase_balance_tx.clone().into()));
 
-        let storage_var_selector = StorageKey(PatriciaKey(
-            StarkFelt::try_from("0x0206f38f7e4f15e87567361213c28f235cccdaa1d7fd34c9db1dfe9489c6a091").unwrap(),
-        ));
-
         // the storage value should be 0 after the transaction reverts
         let contract_address = ContractAddress(PatriciaKey(StarkFelt::try_from(contract_address).unwrap()));
-        assert_eq!(Starknet::storage((contract_address, storage_var_selector)), StarkFelt::from(0_u128));
+
+        let get_balance_function_selector = EntryPointSelector(
+            StarkFelt::try_from("0x039e11d48192e4333233c7eb19d10ad67c362bb28580c604d67884c85da39695").unwrap(),
+        );
+
+        let default_calldata = Calldata(Default::default());
+        
+        let res = Starknet::call_contract(contract_address, get_balance_function_selector, default_calldata).unwrap();
+        assert_eq!(res, vec![Felt252Wrapper::from_hex_be("0x0").unwrap()])
     })
 }
