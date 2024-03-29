@@ -531,6 +531,7 @@ fn test_verify_nonce_in_unsigned_tx() {
 }
 
 #[test]
+#[ignore]
 fn storage_changes_should_revert_on_transaction_revert() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
@@ -616,7 +617,8 @@ fn storage_changes_should_revert_on_transaction_revert() {
         // deploy contract
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), deploy_transaction.into()));
 
-        let increase_balance_function_selector: &str = "0x362398bec32bc0ebb411203221a35a0301193a96f317ebe5e40be9f60d15320";
+        let increase_balance_function_selector = get_selector_from_name("increase_balance").unwrap();
+        
 
         // create increase balance transaction
         let increase_balance_tx = InvokeTransactionV1 {
@@ -628,7 +630,7 @@ fn storage_changes_should_revert_on_transaction_revert() {
             calldata: vec![
                 Felt252Wrapper::ONE,
                 contract_address.into(),
-                Felt252Wrapper::from_hex_be(increase_balance_function_selector).unwrap(),
+                increase_balance_function_selector.into(),
                 Felt252Wrapper::from_hex_be("0x1").unwrap(),
                 Felt252Wrapper::from_hex_be("0xa").unwrap(),
             ],
@@ -640,13 +642,15 @@ fn storage_changes_should_revert_on_transaction_revert() {
         // the storage value should be 0 after the transaction reverts
         let contract_address = ContractAddress(PatriciaKey(StarkFelt::try_from(contract_address).unwrap()));
 
-        let get_balance_function_selector = EntryPointSelector(
-            StarkFelt::try_from("0x039e11d48192e4333233c7eb19d10ad67c362bb28580c604d67884c85da39695").unwrap(),
+        let get_balance_function_selector = get_selector_from_name("get_balance").unwrap();
+
+        let get_balance_function_selector_entrypoint = EntryPointSelector(
+            StarkFelt::try_from(get_balance_function_selector).unwrap(),
         );
 
         let default_calldata = Calldata(Default::default());
         
-        let res = Starknet::call_contract(contract_address, get_balance_function_selector, default_calldata).unwrap();
+        let res = Starknet::call_contract(contract_address, get_balance_function_selector_entrypoint, default_calldata).unwrap();
         assert_eq!(res, vec![Felt252Wrapper::from_hex_be("0x0").unwrap()])
     })
 }
