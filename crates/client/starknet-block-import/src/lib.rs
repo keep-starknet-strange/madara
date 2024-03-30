@@ -78,7 +78,7 @@ where
     }
 
     async fn import_block(&mut self, block: BlockImportParams<Block>) -> Result<ImportResult, Self::Error> {
-        log::info!("🐺 Starknet block import: verifying declared CASM classes against local Sierra classes");
+        log::debug!("🐺 Starknet block import: verifying declared CASM classes against local Sierra classes");
         if let Some(extrinsics) = &block.body {
             // Extrinsic filter does not access the block state so technically the block hash does not matter.
             // But since we need to provide one anyways, parent hash is a convenient option.
@@ -91,6 +91,11 @@ where
 
             for tx in transactions {
                 if let Transaction::Declare(DeclareTransaction::V2(declare_v2), casm_class) = tx {
+                    log::trace!(
+                        "🐺 Starknet block import: checking declare v2 transaction\n\t{:?}\n\t{:?}",
+                        declare_v2,
+                        casm_class
+                    );
                     validate_declare_v2_transaction(
                         declare_v2,
                         casm_class,
@@ -135,8 +140,8 @@ where
         Self { inner, client, madara_backend }
     }
 
-    pub fn inner(&self) -> &I {
-        &self.inner
+    pub fn unwrap(self) -> I {
+        self.inner
     }
 }
 

@@ -7,14 +7,12 @@ dependencies compiled (see next section)
 
 1. Build Madara binary: `cargo build --profile release`
 2. Setup Madara instance (once):
-   `./target/release/madara --chain=dev --from-local=./configs`
-3. Run Madara node:
-   `./target/release/madara --chain=dev --sealing=manual --alice`
+   `./target/release/madara setup --dev --from-local=./configs`
+3. Run Madara node: `./target/release/madara --dev --sealing=manual`
 4. Run tests
    `cargo test --package starknet-rpc-test works_with_storage_change -- --nocapture`
 
-If you need to reset the state, run
-`./target/release/madara purge-chain --chain=dev`
+If you need to reset the state, run `./target/release/madara purge-chain --dev`
 
 ## Generate Cairo contract artifacts
 

@@ -42,8 +42,8 @@ use sp_offchain::STORAGE_PREFIX;
 
 use crate::genesis_block::MadaraGenesisBlockBuilder;
 use crate::import_queue::{
-    build_aura_import_queue, build_grandpa_pipeline, build_manual_seal_import_queue, build_manual_seal_pipeline,
-    BlockImportPipeline, GRANDPA_JUSTIFICATION_PERIOD,
+    build_aura_queue_grandpa_pipeline, build_manual_seal_queue_pipeline, BlockImportPipeline,
+    GRANDPA_JUSTIFICATION_PERIOD,
 };
 use crate::rpc::StarknetDeps;
 use crate::starknet::{db_config_dir, MadaraBackend};
@@ -140,6 +140,8 @@ where
         telemetry
     });
 
+    let select_chain = sc_consensus::LongestChain::new(backend.clone());
+
     let transaction_pool = sc_transaction_pool::BasicPool::new_full(
         config.transaction_pool.clone(),
         config.role.is_authority().into(),
@@ -148,25 +150,19 @@ where
         client.clone(),
     );
 
-    let select_chain = sc_consensus::LongestChain::new(backend.clone());
     let madara_backend = Arc::new(MadaraBackend::open(&config.database, &db_config_dir(config), cache_more_things)?);
 
     let (import_queue, import_pipeline) = if manual_sealing {
-        let pipeline = build_manual_seal_pipeline(client.clone(), madara_backend.clone());
-        let import_queue = build_manual_seal_import_queue(pipeline.external_block_import(), config, &task_manager)?;
-        (import_queue, pipeline)
+        build_manual_seal_queue_pipeline(client.clone(), config, &task_manager, madara_backend.clone())
     } else {
-        let pipeline =
-            build_grandpa_pipeline(client.clone(), select_chain.clone(), &telemetry, madara_backend.clone())?;
-        let import_queue = build_aura_import_queue(
+        build_aura_queue_grandpa_pipeline(
             client.clone(),
             config,
             &task_manager,
             &telemetry,
-            pipeline.external_block_import(),
-            pipeline.justification_import(),
-        )?;
-        (import_queue, pipeline)
+            select_chain.clone(),
+            madara_backend.clone(),
+        )?
     };
 
     Ok(sc_service::PartialComponents {
@@ -201,7 +197,7 @@ pub fn new_full(
         keystore_container,
         select_chain,
         transaction_pool,
-        other: (madara_backend, mut import_pipeline, mut telemetry),
+        other: (madara_backend, BlockImportPipeline { block_import, grandpa_link }, mut telemetry),
     } = new_partial(&config, cache_more_things, !sealing.is_default())?;
 
     let mut net_config = sc_network::config::FullNetworkConfiguration::new(&config.network);
@@ -211,12 +207,12 @@ pub fn new_full(
         &config.chain_spec,
     );
 
-    let warp_sync_params = if let Some(authority_set) = import_pipeline.grandpa_authority_set() {
+    let warp_sync_params = if let Some(link) = &grandpa_link {
         net_config
             .add_notification_protocol(sc_consensus_grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone()));
         let warp_sync = Arc::new(sc_consensus_grandpa::warp_proof::NetworkProvider::new(
             backend.clone(),
-            authority_set,
+            link.shared_authority_set().clone(),
             Vec::default(),
         ));
         Some(WarpSyncParams::WithProvider(warp_sync))
@@ -407,10 +403,10 @@ pub fn new_full(
 
             run_manual_seal_authorship(
                 sealing,
-                client.clone(),
+                client,
                 transaction_pool,
                 select_chain,
-                import_pipeline.authored_block_import(),
+                block_import,
                 &task_manager,
                 prometheus_registry.as_ref(),
                 commands_stream,
@@ -436,7 +432,7 @@ pub fn new_full(
             slot_duration,
             client: client.clone(),
             select_chain,
-            block_import: import_pipeline.authored_block_import(),
+            block_import,
             proposer_factory,
             create_inherent_data_providers: move |_, ()| {
                 let offchain_storage = backend.offchain_storage();
@@ -480,7 +476,7 @@ pub fn new_full(
         task_manager.spawn_essential_handle().spawn_blocking("aura", Some("block-authoring"), aura);
     }
 
-    if let Some(grandpa_link) = import_pipeline.remove_grandpa_link() {
+    if let Some(link) = grandpa_link {
         // if the node isn't actively participating in consensus then it doesn't
         // need a keystore, regardless of which protocol we use below.
         let keystore = if role.is_authority() { Some(keystore_container.keystore()) } else { None };
@@ -505,7 +501,7 @@ pub fn new_full(
         // could lead to finality stalls.
         let grandpa_config = sc_consensus_grandpa::GrandpaParams {
             config: grandpa_config,
-            link: grandpa_link,
+            link,
             network,
             sync: Arc::new(sync_service),
             voting_rule: sc_consensus_grandpa::VotingRulesBuilder::default().build(),
