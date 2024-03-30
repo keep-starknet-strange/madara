@@ -49,6 +49,7 @@ sc-service = { workspace = true }
 sc-telemetry = { workspace = true }
 sc-transaction-pool = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
+sp-consensus = { workspace = true }
 sp-consensus-aura = { workspace = true }
 sp-consensus-grandpa = { workspace = true }
 sp-core = { workspace = true }
@@ -60,7 +61,6 @@ sp-state-machine = { workspace = true }
 sp-statement-store = { workspace = true }
 sp-timestamp = { workspace = true }
 sp-trie = { workspace = true, features = ["default"] }
-sp-consensus = { workspace = true }
 
 # These dependencies are used for the node template's RPCs
 jsonrpsee = { workspace = true, features = ["server"] }
@@ -93,7 +93,7 @@ mc-l1-messages = { workspace = true }
 mc-mapping-sync = { workspace = true }
 mc-rpc = { workspace = true }
 mc-settlement = { workspace = true, features = ["clap"] }
-mc-starknet-block-import = { workspace = true }
+mc-starknet-block-import = { workspace = true, optional = true }
 mc-storage = { workspace = true }
 pallet-starknet = { workspace = true }
 pallet-starknet-runtime-api = { workspace = true }
@@ -142,3 +142,5 @@ disable-transaction-fee = ["madara-runtime/disable-transaction-fee"]
 sharingan = []
 avail = ["mc-data-availability/avail"]
 celestia = ["mc-data-availability/celestia"]
+sn-block-import = ["dep:mc-starknet-block-import"]
+sn-block-import-testing = ["sn-block-import"]

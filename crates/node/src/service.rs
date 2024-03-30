@@ -151,7 +151,7 @@ where
     let select_chain = sc_consensus::LongestChain::new(backend.clone());
     let madara_backend = Arc::new(MadaraBackend::open(&config.database, &db_config_dir(config), cache_more_things)?);
 
-    let (import_queue, pipeline) = if manual_sealing {
+    let (import_queue, import_pipeline) = if manual_sealing {
         let pipeline = build_manual_seal_pipeline(client.clone(), madara_backend.clone());
         let import_queue = build_manual_seal_import_queue(pipeline.external_block_import(), config, &task_manager)?;
         (import_queue, pipeline)
@@ -177,7 +177,7 @@ where
         keystore_container,
         select_chain,
         transaction_pool,
-        other: (madara_backend, pipeline, telemetry),
+        other: (madara_backend, import_pipeline, telemetry),
     })
 }
 
