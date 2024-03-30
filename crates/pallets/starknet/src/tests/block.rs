@@ -4,8 +4,6 @@ use frame_support::assert_ok;
 use mp_digest_log::{ensure_log, find_starknet_block};
 use mp_felt::Felt252Wrapper;
 use mp_sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
-use sp_runtime::codec::Decode;
-use sp_runtime::traits::Hash;
 use starknet_api::api_core::{ChainId, ContractAddress, PatriciaKey};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkFelt;

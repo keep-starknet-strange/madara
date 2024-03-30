@@ -1,5 +1,3 @@
-use std::fs;
-
 use sp_runtime::BuildStorage;
 
 use crate::genesis_loader::{GenesisData, GenesisLoader};
@@ -140,7 +138,7 @@ pub fn test_genesis_ext<T: Config>() -> sp_io::TestExternalities {
     let project_root = project_root::get_project_root().unwrap().join("configs/");
 
     let genesis_path = project_root.join("genesis-assets/").join("genesis.json");
-    let genesis_file_content = std::fs::read_to_string(&genesis_path).unwrap();
+    let genesis_file_content = std::fs::read_to_string(genesis_path).unwrap();
 
     let genesis_data: GenesisData = serde_json::from_str(&genesis_file_content).unwrap();
     let genesis_loader = GenesisLoader::new(project_root, genesis_data);

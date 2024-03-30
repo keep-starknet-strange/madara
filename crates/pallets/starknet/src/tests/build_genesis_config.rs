@@ -1,11 +1,10 @@
 use mp_genesis_config::{GenesisData, GenesisLoader};
-use sp_runtime::traits::{Block as BlockT, Hash as HashT, Header as HeaderT, Zero};
 use sp_runtime::{BuildStorage, Storage};
 use starknet_api::api_core::{ClassHash, ContractAddress};
 
 use super::mock::default_mock;
 use super::utils::get_contract_class;
-use crate::{Config, ContractClasses, GenesisConfig, Pallet};
+use crate::GenesisConfig;
 
 #[test]
 fn works_when_sierra_clash_hash_in_mapping_is_known() {
@@ -60,7 +59,7 @@ fn check_genesis_storage() {
     // setup
     let project_root = project_root::get_project_root().unwrap().join("configs/");
     let genesis_path = project_root.join("genesis-assets/").join("genesis.json");
-    let genesis_file_content = std::fs::read_to_string(&genesis_path).unwrap();
+    let genesis_file_content = std::fs::read_to_string(genesis_path).unwrap();
 
     let genesis_data: GenesisData = serde_json::from_str(&genesis_file_content).unwrap();
     let genesis_loader = GenesisLoader::new(project_root.clone(), genesis_data.clone());
