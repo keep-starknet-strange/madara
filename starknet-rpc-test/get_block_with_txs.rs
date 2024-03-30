@@ -315,8 +315,8 @@ async fn works_with_pending_declare_txn(madara: &ThreadSafeMadaraClient) -> Resu
         let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
         let nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account.address()).await?;
         let (declare_tx, class_hash, compiled_class_hash) = account.declare_contract(
-            "./contracts/counter8/counter8.contract_class.json",
-            "./contracts/counter8/counter8.compiled_contract_class.json",
+            "../starknet-rpc-test/contracts/counter8/counter8.contract_class.json",
+            "../starknet-rpc-test/contracts/counter8/counter8.compiled_contract_class.json",
         );
 
         madara_write_lock.submit_txs(vec![Transaction::Declaration(declare_tx)]).await;

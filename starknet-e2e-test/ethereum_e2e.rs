@@ -115,7 +115,7 @@ async fn deposit_and_withdraw_from_eth_bridge() -> Result<(), anyhow::Error> {
     // Wait for worker to catch L2 messages and send to L1 (state update post block finalization)
     let mut madara_write_lock = madara.write().await;
     madara_write_lock.create_n_blocks(2).await.expect("Unable to create empty blocks in madara");
-    sleep(Duration::from_millis(60000)).await;
+    sleep(Duration::from_millis(12000)).await;
 
     let l1_recipient: Address = Address::from_str(L1_RECIPIENT).unwrap();
     let balance_before = eth_bridge.eth_balance(l1_recipient).await;
@@ -164,6 +164,10 @@ async fn deposit_and_withdraw_from_erc20_bridge() -> Result<(), anyhow::Error> {
     catch_and_execute_l1_messages(&madara).await;
 
     let rpc = madara.get_starknet_client().await;
+
+    // Wait for l1_message execution to complete (nonce mismatch)
+    sleep(Duration::from_millis(12000)).await;
+
     let l2_token_address = rpc
         .call(
             FunctionCall {
@@ -175,10 +179,6 @@ async fn deposit_and_withdraw_from_erc20_bridge() -> Result<(), anyhow::Error> {
         )
         .await
         .unwrap()[0];
-
-    // Wait for l1_message execution to complete (nonce mismatch)
-    sleep(Duration::from_millis(60000)).await;
-
     token_bridge.approve(token_bridge.bridge_address(), 100000000.into()).await;
     catch_and_execute_l1_messages(&madara).await;
 
