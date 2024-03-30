@@ -42,7 +42,7 @@ jobs:
 
   basic_testnet:
     name: Run Basic Testnet
-    uses: ./.github/workflows/basic-tesnet.yml
+    uses: ./.github/workflows/basic-testnet.yml
     needs: madara_commands
 
   rpc-tests:
