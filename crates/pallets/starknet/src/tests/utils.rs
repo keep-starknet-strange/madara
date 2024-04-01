@@ -105,6 +105,5 @@ pub fn get_udc_deployed_contract_address(
     uniqueness: &UdcUniqueness,
     constructor_calldata: &[FieldElement],
 ) -> FieldElement {
-    let contract_address = get_udc_deployed_address(salt, class_hash, uniqueness, constructor_calldata);
-    return contract_address;
+    get_udc_deployed_address(salt, class_hash, uniqueness, constructor_calldata)
 }
