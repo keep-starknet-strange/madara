@@ -11,8 +11,8 @@ use mp_transactions::{InvokeTransaction, InvokeTransactionV1};
 use starknet_api::api_core::EntryPointSelector;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::Calldata;
-use starknet_crypto::{sign, FieldElement};
 use starknet_core::utils::{get_udc_deployed_address, UdcUniqueness};
+use starknet_crypto::{sign, FieldElement};
 
 use super::constants::{ACCOUNT_PRIVATE_KEY, K};
 use crate::genesis_loader::read_contract_class_from_json;
@@ -103,7 +103,7 @@ pub fn get_udc_deployed_contract_address(
     salt: FieldElement,
     class_hash: FieldElement,
     uniqueness: &UdcUniqueness,
-    constructor_calldata: &[FieldElement]
+    constructor_calldata: &[FieldElement],
 ) -> FieldElement {
     let contract_address = get_udc_deployed_address(salt, class_hash, uniqueness, constructor_calldata);
     return contract_address.into();

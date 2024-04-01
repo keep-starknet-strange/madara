@@ -618,7 +618,6 @@ fn storage_changes_should_revert_on_transaction_revert() {
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), deploy_transaction.into()));
 
         let increase_balance_function_selector = get_selector_from_name("increase_balance").unwrap();
-        
 
         // create increase balance transaction
         let increase_balance_tx = InvokeTransactionV1 {
@@ -644,13 +643,13 @@ fn storage_changes_should_revert_on_transaction_revert() {
 
         let get_balance_function_selector = get_selector_from_name("get_balance").unwrap();
 
-        let get_balance_function_selector_entrypoint = EntryPointSelector(
-            StarkFelt::try_from(get_balance_function_selector).unwrap(),
-        );
+        let get_balance_function_selector_entrypoint =
+            EntryPointSelector(StarkFelt::try_from(get_balance_function_selector).unwrap());
 
         let default_calldata = Calldata(Default::default());
-        
-        let res = Starknet::call_contract(contract_address, get_balance_function_selector_entrypoint, default_calldata).unwrap();
+
+        let res = Starknet::call_contract(contract_address, get_balance_function_selector_entrypoint, default_calldata)
+            .unwrap();
         assert_eq!(res, vec![Felt252Wrapper::from_hex_be("0x0").unwrap()])
     })
 }
