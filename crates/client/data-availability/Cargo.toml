@@ -59,12 +59,12 @@ mp-storage = { workspace = true, default-features = true }
 # Zaun
 ethereum-instance = { workspace = true }
 starkgate-manager-client = { workspace = true }
-starkgate-registry-client ={ workspace = true }
+starkgate-registry-client = { workspace = true }
 starknet-core-contract-client = { workspace = true }
 starknet-erc20-client = { workspace = true }
 starknet-eth-bridge-client = { workspace = true }
 starknet-proxy-client = { workspace = true }
-starknet-token-bridge-client ={ workspace = true }
+starknet-token-bridge-client = { workspace = true }
 zaun-utils = { workspace = true }
 
 # Prometheus
