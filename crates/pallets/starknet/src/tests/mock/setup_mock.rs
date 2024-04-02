@@ -16,7 +16,7 @@ macro_rules! mock_runtime {
 			use frame_support::traits::Hooks;
 			use mp_sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
             use mp_felt::Felt252Wrapper;
-			use starknet_api::api_core::{PatriciaKey, ContractAddress};
+			use starknet_api::api_core::{PatriciaKey, ContractAddress, ClassHash};
 			use starknet_api::hash::StarkFelt;
 			use mp_fee::ResourcePrice;
 
@@ -76,6 +76,7 @@ macro_rules! mock_runtime {
                 pub const MaxRecursionDepth: u32 = 50;
 				pub const ProgramHash: Felt252Wrapper = mp_program_hash::SN_OS_PROGRAM_HASH;
 				pub const L1GasPrice: ResourcePrice = ResourcePrice { price_in_strk: None, price_in_wei: 10 };
+				pub const WhitelistedClassHashes: Vec<ClassHash> = vec![];
             }
 
 			impl pallet_starknet::Config for MockRuntime {
@@ -92,6 +93,7 @@ macro_rules! mock_runtime {
                 type MaxRecursionDepth = MaxRecursionDepth;
 				type ProgramHash = ProgramHash;
 				type L1GasPrice = L1GasPrice;
+				type WhitelistedClassHashes = WhitelistedClassHashes;
 			}
 
 			/// Run to block n.

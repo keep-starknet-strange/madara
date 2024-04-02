@@ -49,6 +49,7 @@ impl pallet_starknet::Config for Runtime {
     type MaxRecursionDepth = MaxRecursionDepth;
     type ProgramHash = ProgramHash;
     type L1GasPrice = L1GasPrice;
+    type WhitelistedClassHashes = WhitelistedClassHashes;
 }
 
 /// --------------------------------------
@@ -164,6 +165,7 @@ parameter_types! {
     pub const MaxRecursionDepth: u32 = 50;
     pub const ProgramHash: Felt252Wrapper = SN_OS_PROGRAM_HASH;
     pub const L1GasPrice: ResourcePrice = ResourcePrice { price_in_strk: None, price_in_wei: 10 };
+    pub const WhitelistedClassHashes: Vec<ClassHash> = vec![];
 }
 
 /// Implement the OnTimestampSet trait to override the default Aura.

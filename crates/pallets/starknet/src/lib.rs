@@ -88,7 +88,7 @@ use mp_transactions::{
 };
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
-use starknet_api::api_core::{ChainId, CompiledClassHash, ContractAddress, EntryPointSelector, Nonce};
+use starknet_api::api_core::{ChainId, ClassHash, CompiledClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
@@ -167,6 +167,8 @@ pub mod pallet {
         type MaxRecursionDepth: Get<u32>;
         #[pallet::constant]
         type ProgramHash: Get<Felt252Wrapper>;
+        #[pallet::constant]
+        type WhitelistedClassHashes: Get<Vec<CasmClassHash>>;
     }
 
     /// The Starknet pallet hooks.
@@ -323,6 +325,14 @@ pub mod pallet {
     #[pallet::getter(fn l1_messages)]
     pub(super) type L1Messages<T: Config> = StorageValue<_, BTreeSet<Nonce>, ValueQuery>;
 
+    /// White list of class hashes that can be declared.
+    /// This is used to restrict the classes that can be declared.
+    /// When the whitelist is empty, all classes can be declared.
+    #[pallet::storage]
+    #[pallet::unbounded]
+    #[pallet::getter(fn whitelisted_class_hashes)]
+    pub(super) type WhitelistedClassHashes<T: Config> = StorageValue<_, Vec<CasmClassHash>, ValueQuery>;
+
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
@@ -430,6 +440,7 @@ pub mod pallet {
         FailedToCreateATransactionalStorageExecution,
         L1MessageAlreadyExecuted,
         MissingL1GasUsage,
+        ClassHashNotWhitelisted,
     }
 
     /// The Starknet pallet external functions.
@@ -541,6 +552,15 @@ pub mod pallet {
             let transaction = input_transaction
                 .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), false)
                 .map_err(|_| Error::<T>::InvalidContractClassForThisDeclareVersion)?;
+
+            // Check if class hash is whitelisted
+            let whitelisted_class_hashes = Self::whitelisted_class_hashes();
+            if !whitelisted_class_hashes.is_empty() {
+                ensure!(
+                    whitelisted_class_hashes.contains(&transaction.class_hash()),
+                    Error::<T>::ClassHashNotWhitelisted
+                );
+            }
 
             // Check class hash is not already declared
             ensure!(
@@ -693,6 +713,45 @@ pub mod pallet {
                 tx_execution_infos.revert_error,
             );
 
+            Ok(())
+        }
+
+        /// Whitelist a class hash.
+        ///
+        /// # Arguments
+        ///
+        /// * `origin` - The origin of the transaction.
+        /// * `class_hash` - The class hash to whitelist.
+        /// # Returns
+        ///
+        /// * `DispatchResult` - The result of the transaction.
+        #[pallet::call_index(5)]
+        #[pallet::weight({0})]
+        pub fn whitelist_class_hash(origin: OriginFor<T>, class_hash: ClassHash) -> DispatchResult {
+            ensure_root(origin)?;
+            let mut whitelisted_class_hashes = T::WhitelistedClassHashes::get();
+            whitelisted_class_hashes.push(class_hash);
+            WhitelistedClassHashes::<T>::put(whitelisted_class_hashes);
+            Ok(())
+        }
+
+        /// Blacklist a class hash.
+        ///
+        /// # Arguments
+        ///
+        /// * `origin` - The origin of the transaction.
+        /// * `class_hash` - The class hash to blacklist.
+        ///
+        /// # Returns
+        ///
+        /// * `DispatchResult` - The result of the transaction.
+        #[pallet::call_index(6)]
+        #[pallet::weight({0})]
+        pub fn blacklist_class_hash(origin: OriginFor<T>, class_hash: ClassHash) -> DispatchResult {
+            ensure_root(origin)?;
+            let mut whitelisted_class_hashes = T::WhitelistedClassHashes::get();
+            whitelisted_class_hashes.retain(|&hash| hash != class_hash);
+            WhitelistedClassHashes::<T>::put(whitelisted_class_hashes);
             Ok(())
         }
     }

@@ -16,6 +16,7 @@ use crate::{Config, Nonces};
 mod account_helper;
 mod build_genesis_config;
 mod call_contract;
+mod class_hash_whitelist;
 mod declare_tx;
 mod deploy_account_tx;
 mod erc20;
