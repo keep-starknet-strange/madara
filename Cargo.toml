@@ -310,8 +310,16 @@ ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "f0e5b194f09c533f
 ethers-solc = { git = "https://github.com/gakonst/ethers-rs", rev = "f0e5b194f09c533feb10d1a686ddb9e5946ec107" }
 
 # Zaun
-zaun-sandbox = { git = "https://github.com/karnotxyz/zaun", package = "sandbox", branch = "starkgate_testing" }
-starknet-core-contract-client = { git = "https://github.com/karnotxyz/zaun", branch = "starkgate_testing" }
+ethereum-instance = { git = "https://github.com/karnotxyz/zaun", package = "ethereum-instance", branch = "starkgate" }
+starkgate-manager-client = { git = "https://github.com/karnotxyz/zaun", package = "starkgate-manager-client", branch = "starkgate" }
+starkgate-registry-client = { git = "https://github.com/karnotxyz/zaun", package = "starkgate-registry-client", branch = "starkgate" }
+starknet-core-contract-client = { git = "https://github.com/karnotxyz/zaun", package = "starknet-core-contract-client", branch = "starkgate" }
+starknet-erc20-client = { git = "https://github.com/karnotxyz/zaun", package = "starknet-erc20-client", branch = "starkgate" }
+starknet-eth-bridge-client = { git = "https://github.com/karnotxyz/zaun", package = "starknet-eth-bridge-client", branch = "starkgate" }
+starknet-proxy-client = { git = "https://github.com/karnotxyz/zaun", package = "starknet-proxy-client", branch = "starkgate" }
+starknet-token-bridge-client = { git = "https://github.com/karnotxyz/zaun", package = "starknet-token-bridge-client", branch = "starkgate" }
+zaun-utils = { git = "https://github.com/karnotxyz/zaun", package = "utils", branch = "starkgate" }
+
 
 # Other third party dependencies
 anyhow = "1.0.80"

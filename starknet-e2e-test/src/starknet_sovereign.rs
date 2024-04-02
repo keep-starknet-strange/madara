@@ -16,17 +16,16 @@ use mp_snos_output::SnosCodec;
 use starknet_api::hash::StarkFelt;
 use starknet_api::serde_utils::hex_str_from_bytes;
 use starknet_core_contract_client::clients::StarknetSovereignContractClient;
-use starknet_core_contract_client::interfaces::{
-    CoreContractInitData, CoreContractState, OperatorTrait, ProxyInitializeData, ProxySupportTrait,
-    StarknetMessagingTrait,
-};
-use starknet_core_contract_client::{LocalWalletSignerMiddleware, StarknetContractClient};
+use starknet_proxy_client::proxy_support::{CoreContractInitData, CoreContractState, ProxyInitializeData, ProxySupportTrait};
+use zaun_utils::{LocalWalletSignerMiddleware, StarknetContractClient};
 use starknet_ff::FieldElement;
-use zaun_sandbox::deploy::deploy_starknet_sovereign_behind_unsafe_proxy;
-use zaun_sandbox::EthereumSandbox;
+use starknet_core_contract_client::deploy_starknet_sovereign_behind_unsafe_proxy;
+use ethereum_instance::EthereumClient;
+use starknet_core_contract_client::interfaces::OperatorTrait;
+use starknet_core_contract_client::interfaces::StarknetMessagingTrait;
 
 pub struct StarknetSovereign {
-    _sandbox: EthereumSandbox,
+    _sandbox: EthereumClient,
     client: StarknetSovereignContractClient,
 }
 
@@ -48,12 +47,12 @@ impl StarknetSovereign {
         // Try to attach to an already running sandbox (GitHub CI case)
         // otherwise spawn new sandbox instance
         let sandbox = if let Ok(endpoint) = std::env::var("ANVIL_ENDPOINT") {
-            EthereumSandbox::attach(Some(endpoint)).expect("Failed to attach to sandbox")
+            EthereumClient::attach(Some(endpoint)).expect("Failed to attach to sandbox")
         } else {
-            EthereumSandbox::spawn(None)
+            EthereumClient::spawn(None)
         };
 
-        let client = deploy_starknet_sovereign_behind_unsafe_proxy(sandbox.client())
+        let client = deploy_starknet_sovereign_behind_unsafe_proxy(sandbox.signer())
             .await
             .expect("Failed to deploy starknet contract");
 

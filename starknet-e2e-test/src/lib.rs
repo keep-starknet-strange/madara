@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use starknet_core_contract_client::LocalWalletSignerMiddleware;
+use zaun_utils::LocalWalletSignerMiddleware;
 
 pub mod eth_bridge;
 pub mod starknet_sovereign;

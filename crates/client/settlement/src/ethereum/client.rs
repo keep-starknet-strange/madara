@@ -3,7 +3,7 @@ use std::sync::Arc;
 use ethers::types::{Address, TransactionReceipt, I256, U256};
 pub use mc_eth_client::config::EthereumClientConfig;
 use starknet_core_contract_client::interfaces::StarknetSovereignContract;
-use starknet_core_contract_client::LocalWalletSignerMiddleware;
+use zaun_utils::LocalWalletSignerMiddleware;
 
 use crate::ethereum::errors::{Error, Result};
 
