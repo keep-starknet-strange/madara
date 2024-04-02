@@ -2,6 +2,7 @@
 
 ## Next release
 
+- feat(runtime): Add a new class hash whitelisting mechanism
 - Fix(node): Fix creating a local testnet with multiple nodes fails using only
   cli flags
 - dev: change `Vec::new` to `Vec::with_capacity` where possible.
