@@ -25,7 +25,6 @@ test:
 
 help:
 	@echo "Available targets:"
-	@echo "  all    - Run the default target (check)"
 	@echo "  check  - Run all checks (prt, fmt, clip, tap)"
 	@echo "  fix    - Fix code formatting and linting issues"
 	@echo "  prt    - Check code formatting with Prettier"
