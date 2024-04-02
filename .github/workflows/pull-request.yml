@@ -40,7 +40,6 @@ jobs:
     uses: ./.github/workflows/linters-cargo.yml
     needs: madara_commands
 
-
   coverage:
     name: Run code coverage
     uses: ./.github/workflows/coverage.yml
