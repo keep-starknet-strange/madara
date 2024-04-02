@@ -6,18 +6,18 @@ use ethers::prelude::U256;
 use ethers::types::Bytes;
 use mp_felt::Felt252Wrapper;
 use rand::Rng;
+use starkgate_manager_client::clients::starkgate_manager::StarkgateManagerContractClient;
+use starkgate_manager_client::deploy_starkgate_manager_behind_unsafe_proxy;
+use starkgate_manager_client::interfaces::manager::StarkgateManagerTrait;
+use starkgate_registry_client::clients::starkgate_registry::StarkgateRegistryContractClient;
+use starkgate_registry_client::deploy_starkgate_registry_behind_unsafe_proxy;
 use starknet_accounts::ConnectedAccount;
 use starknet_core::utils::get_selector_from_name;
 use starknet_erc20_client::clients::erc20::ERC20ContractClient;
-use starkgate_manager_client::clients::starkgate_manager::StarkgateManagerContractClient;
-use starkgate_registry_client::clients::starkgate_registry::StarkgateRegistryContractClient;
+use starknet_erc20_client::deploy_dai_erc20_behind_unsafe_proxy;
 use starknet_erc20_client::interfaces::erc20::ERC20TokenTrait;
-use starknet_token_bridge_client::clients::token_bridge::StarknetTokenBridgeContractClient;
-use starknet_proxy_client::proxy_support::ProxySupportTrait;
-use starknet_token_bridge_client::interfaces::token_bridge::StarknetTokenBridgeTrait;
-use starkgate_manager_client::interfaces::manager::StarkgateManagerTrait;
-use zaun_utils::{LocalWalletSignerMiddleware, StarknetContractClient};
 use starknet_ff::FieldElement;
+use starknet_proxy_client::proxy_support::ProxySupportTrait;
 use starknet_test_utils::constants::{
     CAIRO_1_ACCOUNT_CONTRACT, ERC20_CASM_PATH, ERC20_SIERRA_PATH, SIGNER_PRIVATE, TOKEN_BRIDGE_CASM_PATH,
     TOKEN_BRIDGE_SIERRA_PATH,
@@ -25,10 +25,11 @@ use starknet_test_utils::constants::{
 use starknet_test_utils::fixtures::ThreadSafeMadaraClient;
 use starknet_test_utils::utils::{build_single_owner_account, get_contract_address_from_deploy_tx, AccountActions};
 use starknet_test_utils::Transaction;
-use starknet_erc20_client::deploy_dai_erc20_behind_unsafe_proxy;
-use starkgate_manager_client::deploy_starkgate_manager_behind_unsafe_proxy;
-use starkgate_registry_client::deploy_starkgate_registry_behind_unsafe_proxy;
+use starknet_token_bridge_client::clients::token_bridge::StarknetTokenBridgeContractClient;
 use starknet_token_bridge_client::deploy_starknet_token_bridge_behind_unsafe_proxy;
+use starknet_token_bridge_client::interfaces::token_bridge::StarknetTokenBridgeTrait;
+use zaun_utils::{LocalWalletSignerMiddleware, StarknetContractClient};
+
 use crate::utils::{invoke_contract, pad_bytes};
 use crate::BridgeDeployable;
 

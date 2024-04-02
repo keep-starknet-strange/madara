@@ -7,16 +7,16 @@ use ethers::types::{Bytes, U256};
 use mp_felt::Felt252Wrapper;
 use starknet_accounts::Execution;
 use starknet_contract::ContractFactory;
+use starknet_eth_bridge_client::clients::eth_bridge::StarknetEthBridgeContractClient;
+// zaun imports
+use starknet_eth_bridge_client::deploy_starknet_eth_bridge_behind_unsafe_proxy;
+use starknet_eth_bridge_client::interfaces::eth_bridge::StarknetEthBridgeTrait;
 use starknet_ff::FieldElement;
+use starknet_proxy_client::proxy_support::ProxySupportTrait;
 use starknet_test_utils::constants::{CAIRO_1_ACCOUNT_CONTRACT, LEGACY_BRIDGE_PATH, SIGNER_PRIVATE};
 use starknet_test_utils::fixtures::ThreadSafeMadaraClient;
 use starknet_test_utils::utils::{build_single_owner_account, AccountActions};
 use starknet_test_utils::Transaction;
-// zaun imports
-use starknet_eth_bridge_client::deploy_starknet_eth_bridge_behind_unsafe_proxy;
-use starknet_eth_bridge_client::clients::eth_bridge::StarknetEthBridgeContractClient;
-use starknet_proxy_client::proxy_support::ProxySupportTrait;
-use starknet_eth_bridge_client::interfaces::eth_bridge::StarknetEthBridgeTrait;
 use zaun_utils::{LocalWalletSignerMiddleware, StarknetContractClient};
 
 use crate::utils::invoke_contract;

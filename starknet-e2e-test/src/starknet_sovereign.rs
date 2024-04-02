@@ -2,6 +2,7 @@ use std::fs::File;
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use ethereum_instance::EthereumClient;
 use ethers::providers::Middleware;
 use ethers::types::{Address, I256, U256};
 use ethers::utils::keccak256;
@@ -16,13 +17,13 @@ use mp_snos_output::SnosCodec;
 use starknet_api::hash::StarkFelt;
 use starknet_api::serde_utils::hex_str_from_bytes;
 use starknet_core_contract_client::clients::StarknetSovereignContractClient;
-use starknet_proxy_client::proxy_support::{CoreContractInitData, CoreContractState, ProxyInitializeData, ProxySupportTrait};
-use zaun_utils::{LocalWalletSignerMiddleware, StarknetContractClient};
-use starknet_ff::FieldElement;
 use starknet_core_contract_client::deploy_starknet_sovereign_behind_unsafe_proxy;
-use ethereum_instance::EthereumClient;
-use starknet_core_contract_client::interfaces::OperatorTrait;
-use starknet_core_contract_client::interfaces::StarknetMessagingTrait;
+use starknet_core_contract_client::interfaces::{OperatorTrait, StarknetMessagingTrait};
+use starknet_ff::FieldElement;
+use starknet_proxy_client::proxy_support::{
+    CoreContractInitData, CoreContractState, ProxyInitializeData, ProxySupportTrait,
+};
+use zaun_utils::{LocalWalletSignerMiddleware, StarknetContractClient};
 
 pub struct StarknetSovereign {
     _sandbox: EthereumClient,
