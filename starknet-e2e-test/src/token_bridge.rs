@@ -110,7 +110,7 @@ impl StarknetTokenBridge {
             FieldElement::from_hex_be("0x5").unwrap(),
             "deploy_contract",
             vec![
-                FieldElement::from_hex_be("0x0469e62e2db14948db2579f7e0271759c9944937ac56b0a3698f386b22e49363")
+                FieldElement::from_hex_be("0x0358663e6ed9d37efd33d4661e20b2bad143e0f92076b0c91fe65f31ccf55046")
                     .unwrap(), // class_hash
                 FieldElement::from_dec_str(&random.to_string()).unwrap(), // contract_address_salt
                 FieldElement::ONE,                                        // constructor_calldata_len

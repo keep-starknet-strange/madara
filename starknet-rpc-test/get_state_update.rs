@@ -53,10 +53,7 @@ async fn returns_correct_state_diff_transfer(madara: &ThreadSafeMadaraClient) ->
         let state_update = match rpc.get_state_update(BlockId::Tag(BlockTag::Latest)).await.unwrap() {
             MaybePendingStateUpdate::Update(update) => update,
             MaybePendingStateUpdate::PendingUpdate(_) => {
-                return Err(anyhow!(
-                    "Expected update, got pending
-update"
-                ));
+                return Err(anyhow!("Expected update, got pending update"));
             }
         };
         let block_hash_and_number = rpc.block_hash_and_number().await?;
