@@ -32,6 +32,7 @@ use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
 use mp_transactions::{TransactionStatus, UserTransaction};
+use pallet_starknet::simulations::{SimulationFailedTxHashes, FEE_ESTIMATION_FAILED, FEE_ESTIMATION_REVERTED};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::BlockBackend;
@@ -1022,13 +1023,36 @@ where
                 StarknetRpcApiError::InternalServerError
             })?;
 
-        let fee_estimates = self.estimate_fee(best_block_hash, transactions)?;
+        let fee_estimates = self.estimate_fee(best_block_hash, transactions.clone())?;
 
-        let estimates = fee_estimates
-            .into_iter()
-			// FIXME: https://github.com/keep-starknet-strange/madara/issues/329
-            .map(|x| FeeEstimate { gas_price: 10, gas_consumed: x.1, overall_fee: x.0 })
-            .collect();
+        let mut estimates = Vec::with_capacity(fee_estimates.len());
+        let mut failed_estimates = SimulationFailedTxHashes::default();
+        for (i, (overall_fee, gas_consumed)) in fee_estimates.iter().enumerate() {
+            match (*overall_fee, *gas_consumed) {
+                FEE_ESTIMATION_FAILED => {
+                    failed_estimates.push_rejected(transactions[i].compute_hash::<H>(chain_id, false))
+                }
+                FEE_ESTIMATION_REVERTED => {
+                    failed_estimates.push_reverted(transactions[i].compute_hash::<H>(chain_id, false))
+                }
+                // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
+                _ => estimates.push(FeeEstimate {
+                    gas_price: 10,
+                    gas_consumed: *gas_consumed,
+                    overall_fee: *overall_fee,
+                }),
+            }
+        }
+
+        if failed_estimates != SimulationFailedTxHashes::default() {
+            error!("Failed to estimate fee for transaction hases: {:?}", failed_estimates);
+
+            return Err(crate::errors::rpc_error_with_data(
+                StarknetRpcApiError::ContractError,
+                failed_estimates,
+                " with transaction hashes".to_string(),
+            ));
+        }
 
         Ok(estimates)
     }

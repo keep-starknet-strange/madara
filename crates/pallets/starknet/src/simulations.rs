@@ -6,10 +6,11 @@ use blockifier::state::state_api::State;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
 use frame_support::storage;
-use mp_felt::Felt252Wrapper;
+use mp_felt::{felt_to_hex, Felt252Wrapper};
 use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult};
 use mp_transactions::execution::{Execute, ExecutionConfig};
 use mp_transactions::{HandleL1MessageTransaction, UserOrL1HandlerTransaction, UserTransaction};
+use serde::Serialize;
 use sp_core::Get;
 use sp_runtime::DispatchError;
 use starknet_api::transaction::Fee;
@@ -17,6 +18,27 @@ use starknet_api::transaction::Fee;
 use crate::blockifier_state_adapter::{BlockifierStateAdapter, CachedBlockifierStateAdapter};
 use crate::execution_config::RuntimeExecutionConfigBuilder;
 use crate::{Config, Error, Pallet};
+
+pub const FEE_ESTIMATION_FAILED: (u64, u64) = (0, u64::MAX);
+pub const FEE_ESTIMATION_REVERTED: (u64, u64) = (0, u64::MAX - 1);
+
+#[derive(Debug, Default, Serialize, PartialEq)]
+pub struct SimulationFailedTxHashes {
+    #[serde(serialize_with = "felt_to_hex")]
+    rejected_tx_hashes: Vec<Felt252Wrapper>,
+    #[serde(serialize_with = "felt_to_hex")]
+    reverted_tx_hashes: Vec<Felt252Wrapper>,
+}
+
+impl SimulationFailedTxHashes {
+    pub fn push_rejected(&mut self, tx_hash: Felt252Wrapper) {
+        self.rejected_tx_hashes.push(tx_hash);
+    }
+
+    pub fn push_reverted(&mut self, tx_hash: Felt252Wrapper) {
+        self.reverted_tx_hashes.push(tx_hash);
+    }
+}
 
 impl<T: Config> Pallet<T> {
     pub fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
@@ -51,7 +73,7 @@ impl<T: Config> Pallet<T> {
                             // Safe due to the `match` branch order
                             execution_info.revert_error.unwrap()
                         );
-                        Err(Error::<T>::TransactionExecutionFailed)
+                        Err(Error::<T>::TransactionExecutionReverted)
                     }
                 }
             })
@@ -68,7 +90,12 @@ impl<T: Config> Pallet<T> {
 
         let mut fees = Vec::with_capacity(transactions_len);
         for fee_res in fee_res_iterator {
-            fees.push(fee_res??);
+            match fee_res {
+                Ok(fee) => fees.push(fee?),
+                Err(Error::<T>::TransactionExecutionFailed) => fees.push(FEE_ESTIMATION_FAILED),
+                Err(Error::<T>::TransactionExecutionReverted) => fees.push(FEE_ESTIMATION_REVERTED),
+                Err(e) => return Err(e.into()),
+            }
         }
 
         Ok(fees)
