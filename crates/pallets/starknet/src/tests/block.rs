@@ -5,10 +5,9 @@ use blockifier::blockifier::block::GasPrices;
 use blockifier::transaction::objects::FeeType;
 use frame_support::assert_ok;
 use mp_digest_log::{ensure_log, find_starknet_block};
-use mp_felt::Felt252Wrapper;
 use mp_sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
 use starknet_api::block::{BlockNumber, BlockTimestamp};
-use starknet_api::core::{ChainId, ContractAddress, PatriciaKey};
+use starknet_api::core::{ChainId, ContractAddress, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 
 use super::mock::default_mock::*;
@@ -58,12 +57,12 @@ fn store_block_with_pending_transactions_works() {
 
         // perform transactions
         // first invoke transaction
-        let transaction = get_invoke_dummy(Felt252Wrapper::ZERO);
+        let transaction = get_invoke_dummy(Nonce(StarkFelt::ZERO));
 
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), transaction.into()));
 
         // second invoke transaction
-        let transaction = get_invoke_dummy(Felt252Wrapper::ONE);
+        let transaction = get_invoke_dummy(Nonce(StarkFelt::ONE));
 
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), transaction.into()));
 

@@ -1,7 +1,6 @@
 use alloc::sync::Arc;
 
 use mp_felt::Felt252Wrapper;
-use mp_hashers::pedersen::PedersenHasher;
 use starknet_api::core::{ClassHash, CompiledClassHash, ContractAddress, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{
@@ -30,7 +29,7 @@ fn test_deploy_account_tx_hash() {
         class_hash: ClassHash(StarkFelt::THREE),
     };
 
-    let tx_hash = transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    let tx_hash = transaction.compute_hash(chain_id, false);
 
     assert_eq!(tx_hash, expected_tx_hash);
 }
@@ -52,7 +51,7 @@ fn test_declare_v0_tx_hash() {
         sender_address: ContractAddress(PatriciaKey(StarkFelt::from(19911991_u128))),
     });
 
-    let tx_hash = transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    let tx_hash = transaction.compute_hash(chain_id, false);
 
     assert_eq!(tx_hash, expected_tx_hash);
 }
@@ -74,7 +73,7 @@ fn test_declare_v1_tx_hash() {
         sender_address: ContractAddress(PatriciaKey(StarkFelt::from(19911991_u128))),
     });
 
-    let tx_hash = transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    let tx_hash = transaction.compute_hash(chain_id, false);
     assert_eq!(tx_hash, expected_tx_hash);
 }
 
@@ -96,12 +95,12 @@ fn test_declare_v2_tx_hash() {
         compiled_class_hash: CompiledClassHash(StarkFelt::THREE),
     };
 
-    let tx_hash = transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    let tx_hash = transaction.compute_hash(chain_id, false);
 
     assert_eq!(tx_hash, expected_tx_hash);
 
     let declare_v2_transaction = DeclareTransaction::V2(transaction);
-    let tx_hash = declare_v2_transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    let tx_hash = declare_v2_transaction.compute_hash(chain_id, false);
     assert_eq!(tx_hash, expected_tx_hash);
 }
 
@@ -122,7 +121,7 @@ fn test_invoke_tx_v1_hash() {
         calldata: Calldata(Arc::new(vec![StarkFelt::ONE, StarkFelt::TWO, StarkFelt::THREE])),
     };
 
-    let tx_hash = transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    let tx_hash = transaction.compute_hash(chain_id, false);
 
     assert_eq!(tx_hash, expected_tx_hash);
 }
@@ -144,7 +143,7 @@ fn test_handle_l1_message_tx_hash() {
         version: Default::default(),
     };
 
-    let tx_hash = transaction.compute_hash::<PedersenHasher>(chain_id, false);
+    let tx_hash = transaction.compute_hash(chain_id, false);
 
     assert_eq!(tx_hash, expected_tx_hash);
 }

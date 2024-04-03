@@ -90,7 +90,7 @@ use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
 use starknet_api::block::{BlockNumber, BlockTimestamp};
-use starknet_api::core::{ChainId, CompiledClassHash, ContractAddress, EntryPointSelector, Nonce};
+use starknet_api::core::{ChainId, ClassHash, CompiledClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::state::StorageKey;
@@ -121,6 +121,7 @@ macro_rules! log {
 #[frame_support::pallet]
 pub mod pallet {
     use blockifier::transaction::account_transaction::AccountTransaction;
+    use starknet_api::core::ClassHash;
 
     use super::*;
 
@@ -332,14 +333,14 @@ pub mod pallet {
         /// second element is the contract class hash.
         /// This can be used to start the chain with a set of pre-deployed contracts, for example in
         /// a test environment or in the case of a migration of an existing chain state.
-        pub contracts: Vec<(ContractAddress, SierraClassHash)>,
-        pub sierra_to_casm_class_hash: Vec<(SierraClassHash, CasmClassHash)>,
+        pub contracts: Vec<(ContractAddress, ClassHash)>,
+        pub sierra_to_casm_class_hash: Vec<(ClassHash, CompiledClassHash)>,
         /// The contract classes to be deployed at genesis.
         /// This is a vector of tuples, where the first element is the contract class hash and the
         /// second element is the contract class definition.
         /// Same as `contracts`, this can be used to start the chain with a set of pre-deployed
         /// contracts classes.
-        pub contract_classes: Vec<(SierraClassHash, ContractClass)>,
+        pub contract_classes: Vec<(ClassHash, ContractClass)>,
         pub storage: Vec<(ContractStorageKey, StarkFelt)>,
         /// The address of the fee token.
         /// Must be set to the address of the fee token ERC20 contract.
@@ -373,26 +374,26 @@ pub mod pallet {
             );
 
             for (class_hash, contract_class) in self.contract_classes.iter() {
-                ContractClasses::<T>::insert(class_hash, contract_class);
+                ContractClasses::<T>::insert(class_hash.0, contract_class);
             }
 
             for (sierra_class_hash, casm_class_hash) in self.sierra_to_casm_class_hash.iter() {
                 assert!(
-                    ContractClasses::<T>::contains_key(sierra_class_hash),
+                    ContractClasses::<T>::contains_key(sierra_class_hash.0),
                     "Sierra class hash {} does not exist in contract_classes",
                     sierra_class_hash,
                 );
-                CompiledClassHashes::<T>::insert(sierra_class_hash, CompiledClassHash(casm_class_hash.0));
+                CompiledClassHashes::<T>::insert(sierra_class_hash.0, casm_class_hash);
             }
 
             for (address, class_hash) in self.contracts.iter() {
                 assert!(
-                    ContractClasses::<T>::contains_key(class_hash),
+                    ContractClasses::<T>::contains_key(class_hash.0),
                     "Class hash {} does not exist in contract_classes",
                     class_hash,
                 );
 
-                ContractClassHashes::<T>::insert(address, class_hash);
+                ContractClassHashes::<T>::insert(address, class_hash.0);
             }
 
             for (key, value) in self.storage.iter() {
@@ -540,7 +541,7 @@ pub mod pallet {
 
             // Check class hash is not already declared
             ensure!(
-                !ContractClasses::<T>::contains_key(transaction.tx().class_hash()),
+                !ContractClasses::<T>::contains_key(transaction.tx().class_hash().0),
                 Error::<T>::ClassHashAlreadyDeclared
             );
             // Check if contract is deployed
@@ -883,7 +884,7 @@ impl<T: Config> Pallet<T> {
         let class_hash = ContractClassHashes::<T>::try_get(address).map_err(|_| Error::<T>::ContractNotFound)?;
 
         let entrypoint = CallEntryPoint {
-            class_hash: Some(class_hash),
+            class_hash: Some(ClassHash(class_hash)),
             code_address: None,
             entry_point_type: EntryPointType::External,
             entry_point_selector: function_selector,

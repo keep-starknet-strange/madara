@@ -1,7 +1,7 @@
+use blockifier::transaction::account_transaction::AccountTransaction;
 use frame_support::{assert_err, assert_ok};
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
-use mp_transactions::UserTransaction;
 
 use super::mock::default_mock::*;
 use super::mock::new_test_ext;
@@ -14,11 +14,11 @@ fn estimates_tx_fee_successfully_no_validate() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
-        let tx_1: mp_transactions::InvokeTransactionV1 = get_storage_read_write_dummy();
-        let tx_1 = UserTransaction::Invoke(tx_1.into());
+        let tx_1 = get_storage_read_write_dummy();
+        let tx_1 = AccountTransaction::Invoke(tx_1.into());
 
         let tx_2 = get_invoke_dummy(Felt252Wrapper::ONE);
-        let tx_2 = UserTransaction::Invoke(tx_2.into());
+        let tx_2 = AccountTransaction::Invoke(tx_2.into());
 
         let txs = vec![tx_1, tx_2];
 
@@ -41,7 +41,7 @@ fn estimates_tx_fee_with_query_version() {
 
         let tx = get_invoke_dummy(Felt252Wrapper::ZERO);
         let pre_storage = Starknet::pending().len();
-        let tx = UserTransaction::Invoke(tx.into());
+        let tx = AccountTransaction::Invoke(tx.into());
 
         let tx_vec = vec![tx];
 
@@ -61,7 +61,7 @@ fn executable_tx_should_not_be_estimable() {
         let tx_hash = tx.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false);
         tx.signature = sign_message_hash(tx_hash);
 
-        let tx_vec = vec![UserTransaction::Invoke(tx.clone().into())];
+        let tx_vec = vec![AccountTransaction::Invoke(tx.clone().into())];
 
         // it should be valid for estimate calls
         assert_ok!(Starknet::estimate_fee(tx_vec));
@@ -82,7 +82,7 @@ fn query_tx_should_not_be_executable() {
         let tx_hash = tx.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, true);
         tx.signature = sign_message_hash(tx_hash);
 
-        let tx_vec = vec![UserTransaction::Invoke(tx.clone().into())];
+        let tx_vec = vec![AccountTransaction::Invoke(tx.clone().into())];
 
         // it should be valid for estimate calls
         assert_ok!(Starknet::estimate_fee(tx_vec));

@@ -7,7 +7,7 @@ use rstest::rstest;
 use starknet_accounts::Account;
 use starknet_core::types::{BlockId, DeclareTransactionResult, StarknetError};
 use starknet_ff::FieldElement;
-use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
+use starknet_providers::{Provider, ProviderError};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, OZ_CONTRACT_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{build_single_owner_account, read_erc20_balance, AccountActions, U256};
@@ -35,10 +35,7 @@ async fn fail_validation_step(madara: &ThreadSafeMadaraClient) -> Result<(), any
     assert_matches!(
         declare_tx_result,
         SendTransactionError::AccountError(starknet_accounts::AccountError::Provider(ProviderError::StarknetError(
-            StarknetErrorWithMessage {
-                code: MaybeUnknownErrorCode::Known(StarknetError::ValidationFailure),
-                message: _
-            }
+            StarknetError::ValidationFailure(_)
         )))
     );
 

@@ -69,15 +69,15 @@ impl<T: Config> StateReader for BlockifierStateAdapter<T> {
     }
 
     fn get_class_hash_at(&self, contract_address: ContractAddress) -> StateResult<ClassHash> {
-        Ok(Pallet::<T>::contract_class_hash_by_address(contract_address))
+        Ok(ClassHash(Pallet::<T>::contract_class_hash_by_address(contract_address)))
     }
 
     fn get_compiled_contract_class(&self, class_hash: ClassHash) -> StateResult<ContractClass> {
-        Pallet::<T>::contract_class_by_class_hash(class_hash).ok_or(StateError::UndeclaredClassHash(class_hash))
+        Pallet::<T>::contract_class_by_class_hash(class_hash.0).ok_or(StateError::UndeclaredClassHash(class_hash))
     }
 
     fn get_compiled_class_hash(&self, class_hash: ClassHash) -> StateResult<CompiledClassHash> {
-        Pallet::<T>::compiled_class_hash_by_class_hash(class_hash).ok_or(StateError::UndeclaredClassHash(class_hash))
+        Pallet::<T>::compiled_class_hash_by_class_hash(class_hash.0).ok_or(StateError::UndeclaredClassHash(class_hash))
     }
 }
 
@@ -110,13 +110,13 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
     fn set_class_hash_at(&mut self, contract_address: ContractAddress, class_hash: ClassHash) -> StateResult<()> {
         self.class_hash_update += 1;
 
-        crate::ContractClassHashes::<T>::insert(contract_address, class_hash);
+        crate::ContractClassHashes::<T>::insert(contract_address, class_hash.0);
 
         Ok(())
     }
 
     fn set_contract_class(&mut self, class_hash: ClassHash, contract_class: ContractClass) -> StateResult<()> {
-        crate::ContractClasses::<T>::insert(class_hash, contract_class);
+        crate::ContractClasses::<T>::insert(class_hash.0, contract_class);
 
         Ok(())
     }
@@ -127,7 +127,7 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
         compiled_class_hash: CompiledClassHash,
     ) -> StateResult<()> {
         self.compiled_class_hash_update += 1;
-        crate::CompiledClassHashes::<T>::insert(class_hash, compiled_class_hash);
+        crate::CompiledClassHashes::<T>::insert(class_hash.0, compiled_class_hash);
 
         Ok(())
     }

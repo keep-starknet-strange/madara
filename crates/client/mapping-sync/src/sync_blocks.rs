@@ -1,8 +1,10 @@
-use blockifier::transaction_execution::Transaction;
+use blockifier::transaction::account_transaction::AccountTransaction;
+use blockifier::transaction::transaction_execution::Transaction;
 use mc_rpc_core::utils::get_block_by_block_hash;
 use mp_digest_log::{find_starknet_block, FindLogError};
 use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
+use mp_transactions::get_transaction_hash;
 use pallet_starknet_runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sp_api::ProvideRuntimeApi;
@@ -37,8 +39,6 @@ where
                              db state ({storage_starknet_block_hash:?})"
                         ))
                     } else {
-                        let chain_id = client.runtime_api().chain_id(substrate_block_hash)?;
-
                         // Success, we write the Starknet to Substate hashes mapping to db
                         let mapping_commitment = mc_db::MappingCommitment {
                             block_hash: substrate_block_hash,
@@ -46,10 +46,8 @@ where
                             starknet_transaction_hashes: digest_starknet_block
                                 .transactions()
                                 .iter()
-                                .map(|tx| match tx {
-                                    Transaction::AccountTransaction(tx) => tx.tx_hash(),
-                                    Transaction::L1HandlerTransacton(tx) => tx.tx_hash,
-                                })
+                                .map(get_transaction_hash)
+                                .cloned()
                                 .collect(),
                         };
 

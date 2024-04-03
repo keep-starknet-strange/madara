@@ -22,7 +22,6 @@ use sp_runtime::traits::Block as BlockT;
 use sp_runtime::DispatchError;
 use starknet_api::core::{ContractAddress, EntryPointSelector};
 use starknet_api::transaction::{Calldata, Event, TransactionHash};
-use starknet_core::types::FieldElement;
 
 use crate::{Starknet, StarknetRpcApiError};
 
@@ -160,15 +159,12 @@ where
     pub fn get_tx_messages_to_l1(
         &self,
         substrate_block_hash: B::Hash,
-        transaction_hash: FieldElement,
+        transaction_hash: TransactionHash,
     ) -> RpcApiResult<Vec<starknet_api::transaction::MessageToL1>> {
-        self.client
-            .runtime_api()
-            .get_tx_messages_to_l1(substrate_block_hash, Felt252Wrapper(transaction_hash).into())
-            .map_err(|e| {
-                error!("'{e}'");
-                StarknetRpcApiError::InternalServerError
-            })
+        self.client.runtime_api().get_tx_messages_to_l1(substrate_block_hash, transaction_hash).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::InternalServerError
+        })
     }
 
     pub fn is_transaction_fee_disabled(&self, substrate_block_hash: B::Hash) -> RpcApiResult<bool> {

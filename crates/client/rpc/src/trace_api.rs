@@ -1,5 +1,4 @@
 use blockifier::execution::call_info::CallInfo;
-use blockifier::execution::contract_class::{ContractClass, ContractClassV1};
 use blockifier::state::cached_state::CommitmentStateDiff;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
@@ -11,8 +10,11 @@ use mc_rpc_core::{StarknetReadRpcApiServer, StarknetTraceRpcApiServer};
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_simulations::{SimulationFlags, TransactionSimulationResult};
-use mp_transactions::compute_hash::ComputeTransactionHash;
-use mp_transactions::{DeclareTransaction, Transaction, TxType, UserOrL1HandlerTransaction, UserTransaction};
+use mp_transactions::from_broadcasted_transactions::{
+    try_account_tx_from_broadcasted_declare_tx, try_account_tx_from_broadcasted_deploy_tx,
+    try_account_tx_from_broadcasted_invoke_tx,
+};
+use mp_transactions::{get_transaction_hash, TxType};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::{Backend, BlockBackend, StorageProvider};
 use sc_transaction_pool::ChainApi;
@@ -20,11 +22,10 @@ use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
-use starknet_api::core::ClassHash;
 use starknet_core::types::{
     BlockId, BroadcastedTransaction, DeclareTransactionTrace, DeployAccountTransactionTrace, ExecuteInvocation,
-    FeeEstimate, InvokeTransactionTrace, L1HandlerTransactionTrace, RevertedInvocation, SimulatedTransaction,
-    SimulationFlag, StateDiff, TransactionTrace, TransactionTraceWithHash,
+    FeeEstimate, InvokeTransactionTrace, L1HandlerTransactionTrace, PriceUnit, RevertedInvocation,
+    SimulatedTransaction, SimulationFlag, StateDiff, TransactionTrace, TransactionTraceWithHash,
 };
 use starknet_ff::FieldElement;
 use thiserror::Error;
@@ -57,27 +58,36 @@ where
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
         let best_block_hash = self.get_best_block_hash();
 
+        let mut tx_types = Vec::with_capacity(transactions.len());
+        let mut account_transactions = Vec::with_capacity(transactions.len());
+
         let tx_type_and_tx_iterator = transactions.into_iter().map(|tx| match tx {
-            BroadcastedTransaction::Invoke(invoke_tx) => invoke_tx.try_into().map(|tx| (TxType::Invoke, tx)),
-            BroadcastedTransaction::Declare(declare_tx) => declare_tx.try_into().map(|tx| (TxType::Declare, tx)),
+            BroadcastedTransaction::Invoke(invoke_tx) => {
+                (TxType::Invoke, try_account_tx_from_broadcasted_invoke_tx(invoke_tx, chain_id))
+            }
+            BroadcastedTransaction::Declare(declare_tx) => {
+                (TxType::Declare, try_account_tx_from_broadcasted_declare_tx(declare_tx, chain_id))
+            }
             BroadcastedTransaction::DeployAccount(deploy_account_tx) => {
-                deploy_account_tx.try_into().map(|tx| (TxType::DeployAccount, tx))
+                (TxType::DeployAccount, try_account_tx_from_broadcasted_deploy_tx(deploy_account_tx, chain_id))
             }
         });
-        let (tx_types, user_transactions) =
-            itertools::process_results(tx_type_and_tx_iterator, |iter| iter.unzip::<_, _, Vec<_>, Vec<_>>()).map_err(
-                |e| {
-                    error!("Failed to convert BroadcastedTransaction to UserTransaction: {e}");
-                    StarknetRpcApiError::InternalServerError
-                },
-            )?;
+
+        for (tx_type, account_tx) in tx_type_and_tx_iterator {
+            let tx = account_tx.map_err(|e| {
+                error!("Failed to convert BroadcastedTransaction to AccountTransaction: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?;
+            account_transactions.push(tx);
+            tx_types.push(tx_type);
+        }
 
         let simulation_flags = SimulationFlags::from(simulation_flags);
 
         let res = self
             .client
             .runtime_api()
-            .simulate_transactions(substrate_block_hash, user_transactions, simulation_flags)
+            .simulate_transactions(substrate_block_hash, account_transactions, simulation_flags)
             .map_err(|e| {
                 error!("Request parameters error: {e}");
                 StarknetRpcApiError::InternalServerError
@@ -104,84 +114,7 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let block_transactions = starknet_block
-            .transactions()
-            .iter()
-            .map(|tx| match tx {
-                Transaction::Invoke(invoke_tx) => {
-                    RpcResult::Ok(UserOrL1HandlerTransaction::User(UserTransaction::Invoke(invoke_tx.clone())))
-                }
-                Transaction::DeployAccount(deploy_account_tx) => {
-                    Ok(UserOrL1HandlerTransaction::User(UserTransaction::DeployAccount(deploy_account_tx.clone())))
-                }
-                Transaction::Declare(declare_tx, _) => {
-                    let class_hash = ClassHash::from(*declare_tx.class_hash());
-
-                    match declare_tx {
-                        DeclareTransaction::V0(_) | DeclareTransaction::V1(_) => {
-                            let contract_class = self
-                                .overrides
-                                .for_block_hash(self.client.as_ref(), substrate_block_hash)
-                                .contract_class_by_class_hash(substrate_block_hash, class_hash)
-                                .ok_or_else(|| {
-                                    error!("Failed to retrieve contract class from hash '{class_hash}'");
-                                    StarknetRpcApiError::InternalServerError
-                                })?;
-
-                            Ok(UserOrL1HandlerTransaction::User(UserTransaction::Declare(
-                                declare_tx.clone(),
-                                contract_class,
-                            )))
-                        }
-                        DeclareTransaction::V2(tx) => {
-                            let contract_class = self
-                                .backend
-                                .sierra_classes()
-                                .get_sierra_class(class_hash)
-                                .map_err(|e| {
-                                    error!("Failed to fetch sierra class with hash {class_hash}: {e}");
-                                    StarknetRpcApiError::InternalServerError
-                                })?
-                                .ok_or_else(|| {
-                                    error!("The sierra class with hash {class_hash} is not present in db backend");
-                                    StarknetRpcApiError::InternalServerError
-                                })?;
-                            let contract_class = mp_transactions::utils::sierra_to_casm_contract_class(contract_class)
-                                .map_err(|e| {
-                                    error!("Failed to convert the SierraContractClass to CasmContractClass: {e}");
-                                    StarknetRpcApiError::InternalServerError
-                                })?;
-                            let contract_class =
-                                ContractClass::V1(ContractClassV1::try_from(contract_class).map_err(|e| {
-                                    error!(
-                                        "Failed to convert the compiler CasmContractClass to blockifier \
-                                         CasmContractClass: {e}"
-                                    );
-                                    StarknetRpcApiError::InternalServerError
-                                })?);
-
-                            Ok(UserOrL1HandlerTransaction::User(UserTransaction::Declare(
-                                declare_tx.clone(),
-                                contract_class,
-                            )))
-                        }
-                    }
-                }
-                Transaction::L1Handler(handle_l1_message_tx) => {
-                    let chain_id = self.chain_id()?.0.into();
-                    let tx_hash = handle_l1_message_tx.compute_hash::<H>(chain_id, false);
-                    let paid_fee =
-                        self.backend.l1_handler_paid_fee().get_fee_paid_for_l1_handler_tx(tx_hash.into()).map_err(
-                            |e| {
-                                error!("Failed to retrieve fee paid on l1 for tx with hash `{tx_hash:?}`: {e}");
-                                StarknetRpcApiError::InternalServerError
-                            },
-                        )?;
-
-                    Ok(UserOrL1HandlerTransaction::L1Handler(handle_l1_message_tx.clone(), paid_fee))
-                }
-            })
-            .collect::<Result<Vec<_>, _>>()?;
+        let block_transactions = starknet_block.transactions();
 
         let previous_block_substrate_hash = {
             let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).map_err(|e| {
@@ -232,7 +165,7 @@ where
                     Some(state_diff),
                 )
                 .map(|trace_root| TransactionTraceWithHash {
-                    transaction_hash: block_transactions[tx_idx].compute_hash::<H>(chain_id, false).into(),
+                    transaction_hash: Felt252Wrapper::from(*get_transaction_hash(&block_transactions[tx_idx])).into(),
                     trace_root,
                 })
             })
@@ -351,7 +284,49 @@ fn try_get_function_invocation_from_call_info(
         calls: inner_calls,
         events,
         messages,
+        execution_resources: vm_to_starknet_rs_exec_resources(&call_info.resources),
     })
+}
+
+fn vm_to_starknet_rs_exec_resources(
+    resources: &cairo_vm::vm::runners::cairo_runner::ExecutionResources,
+) -> starknet_core::types::ExecutionResources {
+    starknet_core::types::ExecutionResources {
+        steps: resources.n_steps.try_into().unwrap(),
+        memory_holes: Some(resources.n_memory_holes.try_into().unwrap()),
+        range_check_builtin_applications: resources
+            .builtin_instance_counter
+            .get("range_check_builtin")
+            .map(|&v| v.try_into().unwrap()),
+        pedersen_builtin_applications: resources
+            .builtin_instance_counter
+            .get("pedersen_builtin")
+            .map(|&v| v.try_into().unwrap()),
+        poseidon_builtin_applications: resources
+            .builtin_instance_counter
+            .get("poseidon_builtin")
+            .map(|&v| v.try_into().unwrap()),
+        ec_op_builtin_applications: resources
+            .builtin_instance_counter
+            .get("ec_op_builtin")
+            .map(|&v| v.try_into().unwrap()),
+        ecdsa_builtin_applications: resources
+            .builtin_instance_counter
+            .get("ecdsa_builtin")
+            .map(|&v| v.try_into().unwrap()),
+        bitwise_builtin_applications: resources
+            .builtin_instance_counter
+            .get("bitwise_builtin")
+            .map(|&v| v.try_into().unwrap()),
+        keccak_builtin_applications: resources
+            .builtin_instance_counter
+            .get("keccak_builtin")
+            .map(|&v| v.try_into().unwrap()),
+        segment_arena_builtin: resources
+            .builtin_instance_counter
+            .get("segment_arena_builtin")
+            .map(|&v| v.try_into().unwrap()),
+    }
 }
 
 fn tx_execution_infos_to_tx_trace(
@@ -430,7 +405,12 @@ fn tx_execution_infos_to_simulated_transactions(
 
                 results.push(SimulatedTransaction {
                     transaction_trace,
-                    fee_estimation: FeeEstimate { gas_consumed, gas_price, overall_fee },
+                    fee_estimation: FeeEstimate {
+                        gas_consumed: FieldElement::from(gas_consumed),
+                        gas_price: FieldElement::from(gas_price),
+                        overall_fee: FieldElement::from(overall_fee),
+                        unit: PriceUnit::Wei,
+                    },
                 });
             }
             Err(_) => {

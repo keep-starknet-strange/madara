@@ -1,20 +1,23 @@
+use std::sync::Arc;
+
 use blockifier::execution::contract_class::ContractClass;
 use frame_support::assert_ok;
 use lazy_static::lazy_static;
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
-use mp_transactions::InvokeTransactionV1;
-use starknet_api::core::{ContractAddress, PatriciaKey};
+use starknet_api::core::{ContractAddress, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
-use starknet_api::transaction::{Event as StarknetEvent, EventContent, EventData, EventKey, TransactionHash};
+use starknet_api::transaction::{
+    Calldata, Event as StarknetEvent, EventContent, EventData, EventKey, Fee, InvokeTransactionV1, TransactionHash,
+    TransactionSignature,
+};
 use starknet_core::utils::get_selector_from_name;
 
 use super::mock::default_mock::*;
 use super::mock::*;
 use crate::tests::constants::{TOKEN_CONTRACT_CLASS_HASH, TRANSFER_SELECTOR_NAME};
-use crate::tests::utils::{build_transfer_invoke_transaction, get_contract_class};
-use crate::types::BuildTransferInvokeTransaction;
+use crate::tests::utils::{build_transfer_invoke_transaction, get_contract_class, BuildTransferInvokeTransaction};
 use crate::Config;
 
 lazy_static! {
@@ -26,38 +29,36 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(1);
         let origin = RuntimeOrigin::none();
-        let sender_account = get_account_address(None, AccountType::V0(AccountTypeV0Inner::NoValidate));
-        let felt_252_sender_account = sender_account.into();
+        let sender_address = get_account_address(None, AccountType::V0(AccountTypeV0Inner::NoValidate));
         // ERC20 is already declared for the fees.
         // Deploy ERC20 contract
         let deploy_transaction = InvokeTransactionV1 {
-            max_fee: u128::MAX,
-            signature: vec![],
-            nonce: Felt252Wrapper::ZERO,
-            sender_address: felt_252_sender_account,
-            calldata: vec![
-                felt_252_sender_account, // Simple contract address
-                Felt252Wrapper::from_hex_be("0x02730079d734ee55315f4f141eaed376bddd8c2133523d223a344c5604e0f7f8")
+            max_fee: Fee(u128::MAX),
+            signature: TransactionSignature(vec![]),
+            nonce: Nonce(StarkFelt::ZERO),
+            sender_address,
+            calldata: Calldata(Arc::new(vec![
+                sender_address.0.0, // Simple contract address
+                StarkFelt::try_from("0x02730079d734ee55315f4f141eaed376bddd8c2133523d223a344c5604e0f7f8")
                     .unwrap(), // deploy_contract selector
-                Felt252Wrapper::from_hex_be("0x9").unwrap(), // Calldata len
-                Felt252Wrapper::from_hex_be(TOKEN_CONTRACT_CLASS_HASH).unwrap(), // Class hash
-                Felt252Wrapper::ONE,     // Contract address salt
-                Felt252Wrapper::from_hex_be("0x6").unwrap(), // Constructor_calldata_len
-                Felt252Wrapper::from_hex_be("0xA").unwrap(), // Name
-                Felt252Wrapper::from_hex_be("0x1").unwrap(), // Symbol
-                Felt252Wrapper::from_hex_be("0x2").unwrap(), // Decimals
-                Felt252Wrapper::from_hex_be("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF").unwrap(), // Initial supply low
-                Felt252Wrapper::from_hex_be("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF").unwrap(), // Initial supply high
-                felt_252_sender_account, // recipient
-            ],
-            offset_version: false,
+                StarkFelt::try_from("0x9").unwrap(), // Calldata len
+                StarkFelt::try_from(TOKEN_CONTRACT_CLASS_HASH).unwrap(), // Class hash
+                StarkFelt::ONE,     // Contract address salt
+                StarkFelt::try_from("0x6").unwrap(), // Constructor_calldata_len
+                StarkFelt::try_from("0xA").unwrap(), // Name
+                StarkFelt::try_from("0x1").unwrap(), // Symbol
+                StarkFelt::try_from("0x2").unwrap(), // Decimals
+                StarkFelt::try_from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF").unwrap(), // Initial supply low
+                StarkFelt::try_from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF").unwrap(), // Initial supply high
+                sender_address.0.0, // recipient
+            ])),
         };
 
         let expected_erc20_address =
             StarkFelt::try_from("0x00dc58c1280862c95964106ef9eba5d9ed8c0c16d05883093e4540f22b829dff").unwrap();
 
         let chain_id = Starknet::chain_id();
-        let tx_hash = deploy_transaction.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false);
+        let tx_hash = deploy_transaction.compute_hash(chain_id, false);
 
         assert_ok!(Starknet::invoke(origin.clone(), deploy_transaction.into()));
 
@@ -98,7 +99,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                             .unwrap(), // Salt
                     ]),
                 },
-                from_address: sender_account,
+                from_address: sender_address,
             },
             events[1],
         );
@@ -108,7 +109,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     Felt252Wrapper::from(get_selector_from_name(TRANSFER_SELECTOR_NAME).unwrap()).into(),
                 )],
                 data: EventData(vec![
-                    sender_account.0 .0, // From
+                    sender_address.0 .0, // From
                     StarkFelt::try_from("0x000000000000000000000000000000000000000000000000000000000000dead").unwrap(), // Sequencer address
                     StarkFelt::try_from("0x00000000000000000000000000000000000000000000000000000000000197a8").unwrap(), // Amount low
                     StarkFelt::from(0u128), // Amount high
@@ -124,16 +125,16 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         // TODO: use dynamic values to craft invoke transaction
         // Transfer some token
         let transfer_transaction = build_transfer_invoke_transaction(BuildTransferInvokeTransaction {
-            sender_address: felt_252_sender_account,
-            token_address: expected_erc20_address.into(),
-            recipient: Felt252Wrapper::from(16u128),
-            amount_low: Felt252Wrapper::from(15u128),
-            amount_high: Felt252Wrapper::ZERO,
-            nonce: Felt252Wrapper::ONE,
+            sender_address,
+            token_address: Felt252Wrapper::from(expected_erc20_address).into(),
+            recipient: Felt252Wrapper::from(16u128).into(),
+            amount_low: Felt252Wrapper::from(15u128).into(),
+            amount_high: Felt252Wrapper::ZERO.into(),
+            nonce: Felt252Wrapper::ONE.into(),
         });
 
         let chain_id = Starknet::chain_id();
-        let tx_hash = transfer_transaction.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false);
+        let tx_hash = transfer_transaction.compute_hash(chain_id, false);
 
         // Also asserts that the deployment has been saved.
         assert_ok!(Starknet::invoke(origin, transfer_transaction));
@@ -205,7 +206,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     StarkFelt::try_from(Felt252Wrapper::from(get_selector_from_name(TRANSFER_SELECTOR_NAME).unwrap())).unwrap(),
                 )],
                 data: EventData(vec![
-                    sender_account.0 .0,                    // From
+                    sender_address.0 .0,                    // From
                     StarkFelt::try_from("0xdead").unwrap(), // Sequencer address
                     StarkFelt::try_from("0xf014").unwrap(), // Amount low
                     StarkFelt::from(0u128),                 // Amount high

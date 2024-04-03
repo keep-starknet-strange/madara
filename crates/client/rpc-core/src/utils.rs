@@ -319,8 +319,10 @@ pub fn casm_contract_class_to_compiled_class(casm_contract_class: &CasmContractC
         compiler_version: casm_contract_class.compiler_version.clone(),
         bytecode: casm_contract_class.bytecode.iter().map(|x| biguint_to_field_element(&x.value)).collect(),
         entry_points_by_type: casm_entry_points_to_compiled_entry_points(&casm_contract_class.entry_points_by_type),
-        hints: vec![],        // not needed to get class hash so ignoring this
-        pythonic_hints: None, // not needed to get class hash so ignoring this
+        // TODO: fill those
+        hints: vec![],
+        pythonic_hints: None,
+        bytecode_segment_lengths: vec![],
     }
 }
 

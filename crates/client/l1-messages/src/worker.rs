@@ -3,7 +3,6 @@ use std::sync::Arc;
 use ethers::providers::{Http, Provider, StreamExt};
 use ethers::types::U256;
 pub use mc_eth_client::config::EthereumClientConfig;
-use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::HeaderBackend;
@@ -26,7 +25,7 @@ fn create_event_listener(
     Ok(StarknetMessagingEvents::new(address, Arc::new(provider)))
 }
 
-pub async fn run_worker<C, P, B, H>(
+pub async fn run_worker<C, P, B>(
     config: EthereumClientConfig,
     client: Arc<C>,
     pool: Arc<P>,
@@ -36,7 +35,6 @@ pub async fn run_worker<C, P, B, H>(
     C: ProvideRuntimeApi<B> + HeaderBackend<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     P: TransactionPool<Block = B> + 'static,
-    H: HasherT + Send + Sync + 'static,
 {
     log::info!("⟠ Starting L1 Messages Worker with settings: {:?}", config);
 
@@ -74,7 +72,7 @@ pub async fn run_worker<C, P, B, H>(
                 meta.log_index
             );
 
-            match process_l1_message::<_, _, _, _, H>(
+            match process_l1_message::<_, _, _, _>(
                 event,
                 &client,
                 &pool,
@@ -110,7 +108,7 @@ pub async fn run_worker<C, P, B, H>(
     }
 }
 
-async fn process_l1_message<C, P, B, PE, H>(
+async fn process_l1_message<C, P, B, PE>(
     event: LogMessageToL2Filter,
     client: &Arc<C>,
     pool: &Arc<P>,
@@ -124,7 +122,6 @@ where
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     P: TransactionPool<Block = B, Error = PE> + 'static,
     PE: std::error::Error,
-    H: HasherT + Send + Sync + 'static,
 {
     // Check against panic
     // https://docs.rs/ethers/latest/ethers/types/struct.U256.html#method.as_u128
@@ -152,7 +149,7 @@ where
     let chain_id =
         client.runtime_api().chain_id(best_block_hash).map_err(|e| L1MessagesWorkerError::RuntimeApiError(e.into()))?;
     // TODO: Find a way not to hardcode that
-    let tx_hash = tx.compute_hash::<H>(chain_id, false);
+    let tx_hash = tx.compute_hash(chain_id, false);
     let transaction = blockifier::transaction::transactions::L1HandlerTransaction { tx, tx_hash, paid_fee_on_l1 };
 
     let extrinsic = client.runtime_api().convert_l1_transaction(best_block_hash, transaction).map_err(|e| {

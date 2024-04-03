@@ -6,6 +6,7 @@ use mp_felt::Felt252Wrapper;
 use sp_core::ConstU32;
 use sp_std::vec::Vec;
 use starknet_api::core::{ClassHash, ContractAddress};
+use starknet_api::hash::StarkHash;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Event, Fee, MessageToL1, TransactionHash};
 
@@ -20,9 +21,9 @@ pub type ContractClassMapping = HashMap<ClassHash, ContractClass>;
 /// Type wrapper for a storage slot.
 pub type StorageSlot = (StorageKey, Felt252Wrapper);
 
-pub type CasmClassHash = ClassHash;
-pub type SierraClassHash = ClassHash;
-pub type SierraOrCasmClassHash = ClassHash;
+pub type CasmClassHash = StarkHash;
+pub type SierraClassHash = StarkHash;
+pub type SierraOrCasmClassHash = StarkHash;
 
 /// Declare Transaction Output
 #[derive(Clone, Debug, PartialEq, Eq, parity_scale_codec::Encode, parity_scale_codec::Decode, scale_info::TypeInfo)]
@@ -32,16 +33,6 @@ pub struct DeployAccountTransactionOutput {
     pub transaction_hash: Felt252Wrapper,
     /// Contract Address
     pub contract_address: ContractAddress,
-}
-
-/// Build invoke transaction for transfer utils
-pub struct BuildTransferInvokeTransaction {
-    pub sender_address: Felt252Wrapper,
-    pub token_address: Felt252Wrapper,
-    pub recipient: Felt252Wrapper,
-    pub amount_low: Felt252Wrapper,
-    pub amount_high: Felt252Wrapper,
-    pub nonce: Felt252Wrapper,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, parity_scale_codec::Encode, parity_scale_codec::Decode, scale_info::TypeInfo)]

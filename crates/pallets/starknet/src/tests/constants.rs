@@ -1,5 +1,4 @@
 use lazy_static::lazy_static;
-use mp_felt::Felt252Wrapper;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::ContractAddressSalt;
 
@@ -28,8 +27,9 @@ pub const MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS: &str =
 
 // salts for address calculation
 lazy_static! {
-    pub static ref SALT: Felt252Wrapper =
-        Felt252Wrapper::from_hex_be("0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463").unwrap();
+    pub static ref SALT: ContractAddressSalt = ContractAddressSalt(
+        StarkFelt::try_from("0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463").unwrap()
+    );
     pub static ref TEST_ACCOUNT_SALT: ContractAddressSalt = ContractAddressSalt(
         StarkFelt::try_from("0x0780f72e33c1508df24d8f00a96ecc6e08a850ecb09f7e6dff6a81624c0ef46a").unwrap()
     );

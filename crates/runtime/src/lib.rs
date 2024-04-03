@@ -250,11 +250,11 @@ impl_runtime_apis! {
         }
 
         fn contract_class_hash_by_address(address: ContractAddress) -> ClassHash {
-            Starknet::contract_class_hash_by_address(address)
+            ClassHash(Starknet::contract_class_hash_by_address(address))
         }
 
         fn contract_class_by_class_hash(class_hash: ClassHash) -> Option<ContractClass> {
-            Starknet::contract_class_by_class_hash(class_hash)
+            Starknet::contract_class_by_class_hash(class_hash.0)
         }
 
         fn chain_id() -> Felt252Wrapper {
@@ -307,7 +307,7 @@ impl_runtime_apis! {
             }).collect::<Vec<Transaction>>()
         }
 
-        fn get_index_and_tx_for_tx_hash(extrinsics: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper, tx_hash: TransactionHash) -> Option<(u32, Transaction)> {
+        fn get_index_and_tx_for_tx_hash(extrinsics: Vec<<Block as BlockT>::Extrinsic>, tx_hash: TransactionHash) -> Option<(u32, Transaction)> {
             // Find our tx and it's index
             let (tx_index, tx) =  extrinsics.into_iter().enumerate().find(|(_, xt)| {
                 let computed_tx_hash = match &xt.function {

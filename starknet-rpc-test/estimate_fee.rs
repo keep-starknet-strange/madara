@@ -30,8 +30,8 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
     });
 
     assert_matches!(
-        rpc.estimate_fee(&vec![ok_invoke_transaction], BlockId::Hash(FieldElement::ZERO)).await,
-        Err(StarknetProviderError(StarknetErrorWithMessage { code: MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::BlockNotFound
+        rpc.estimate_fee(&vec![ok_invoke_transaction], Default::default(), BlockId::Hash(FieldElement::ZERO)).await,
+        Err(StarknetProviderError(StarknetError::BlockNotFound))
     );
 
     Ok(())
