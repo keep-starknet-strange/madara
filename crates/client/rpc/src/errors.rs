@@ -70,7 +70,7 @@ pub fn rpc_error_with_data<T: sp_runtime::Serialize>(
 ) -> jsonrpsee::core::Error {
     jsonrpsee::core::Error::Call(CallError::Custom(ErrorObject::owned(
         err as i32,
-        format!("{}{msg}", err.to_string()),
+        format!("{err}{msg}"),
         serde_json::to_value(data).ok(),
     )))
 }
