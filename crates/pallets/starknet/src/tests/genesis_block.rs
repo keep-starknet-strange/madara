@@ -1,8 +1,9 @@
+/// These tests exist to ensure that the genesis block hash remains consistent
+/// due to some of the contract classes changing it and breaking the full node setup
 use sp_runtime::codec::Decode;
 
 use super::mock::default_mock::*;
 use super::mock::*;
-
 #[test]
 fn check_genesis_block_hash() {
     let t = test_genesis_ext::<MockRuntime>().execute_with(|| {
@@ -67,28 +68,6 @@ fn check_genesis_storage_root() {
 }
 
 #[test]
-fn check_genesis_child_root() {
-    let t = test_genesis_ext::<MockRuntime>().execute_with(|| {
-        System::finalize();
-
-        let state_version = frame_system::Pallet::<MockRuntime>::runtime_version().state_version();
-        let storage_root = &sp_io::storage::root(state_version)[..];
-        storage_root.to_vec()
-    });
-
-    let b = test_genesis_ext::<MockRuntime>().execute_with(|| {
-        System::finalize();
-
-        let state_version = frame_system::Pallet::<MockRuntime>::runtime_version().state_version();
-
-        let storage_root = &sp_io::storage::root(state_version)[..];
-        storage_root.to_vec()
-    });
-
-    assert_eq!(b, t)
-}
-
-#[test]
 fn check_decoder() {
     let t = test_genesis_ext::<MockRuntime>().execute_with(|| {
         System::finalize();
@@ -103,13 +82,4 @@ fn check_decoder() {
     });
 
     assert_eq!(b, t)
-}
-
-#[test]
-fn check_genesis_storage() {
-    let _t = test_genesis_ext::<MockRuntime>().execute_with(|| {
-        System::finalize();
-        let mut st: &[u8] = &[0u8; 32];
-        <MockRuntime as frame_system::Config>::Hash::decode(&mut st).unwrap()
-    });
 }

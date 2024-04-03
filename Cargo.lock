@@ -6337,6 +6337,7 @@ dependencies = [
  "mp-digest-log",
  "mp-hashers",
  "mp-transactions",
+ "num-traits 0.2.17",
  "pallet-starknet",
  "pallet-starknet-runtime-api",
  "sc-client-api",
@@ -6344,6 +6345,7 @@ dependencies = [
  "sp-blockchain",
  "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
+ "substrate-prometheus-endpoint",
 ]
 
 [[package]]
