@@ -12,7 +12,7 @@ use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, Non
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Calldata, Event as StarknetEvent, EventContent, EventData, EventKey, TransactionHash};
-use starknet_core::utils::{get_selector_from_name, UdcUniqueSettings, UdcUniqueness};
+use starknet_core::utils::{get_selector_from_name, get_udc_deployed_address, UdcUniqueSettings, UdcUniqueness};
 use starknet_crypto::FieldElement;
 
 use super::constants::{
@@ -22,7 +22,6 @@ use super::constants::{
 use super::mock::default_mock::*;
 use super::mock::*;
 use super::utils::{get_contract_class, sign_message_hash};
-use crate::tests::utils::get_udc_deployed_contract_address;
 use crate::tests::{
     get_invoke_argent_dummy, get_invoke_braavos_dummy, get_invoke_dummy, get_invoke_emit_event_dummy,
     get_invoke_nonce_dummy, get_invoke_openzeppelin_dummy, get_storage_read_write_dummy, set_nonce,
@@ -531,7 +530,6 @@ fn test_verify_nonce_in_unsigned_tx() {
 }
 
 #[test]
-#[ignore]
 fn storage_changes_should_revert_on_transaction_revert() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
@@ -601,7 +599,7 @@ fn storage_changes_should_revert_on_transaction_revert() {
             &crate::Call::invoke { transaction: deploy_transaction.clone().into() },
         ));
 
-        let contract_address: FieldElement = get_udc_deployed_contract_address(
+        let contract_address: FieldElement = get_udc_deployed_address(
             salt.into(),
             transaction_revert_class_hash.into(),
             &UdcUniqueness::Unique(UdcUniqueSettings {
@@ -648,8 +646,8 @@ fn storage_changes_should_revert_on_transaction_revert() {
 
         let default_calldata = Calldata(Default::default());
 
-        let res = Starknet::call_contract(contract_address, get_balance_function_selector_entrypoint, default_calldata)
+        let balance_value = Starknet::call_contract(contract_address, get_balance_function_selector_entrypoint, default_calldata)
             .unwrap();
-        assert_eq!(res, vec![Felt252Wrapper::from_hex_be("0x0").unwrap()])
+        assert_eq!(balance_value, vec![Felt252Wrapper::ZERO])
     })
 }
