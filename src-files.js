@@ -9,7 +9,7 @@ var srcIndex = JSON.parse('{\
 "mc_eth_client":["",[],["config.rs","error.rs","lib.rs"]],\
 "mc_genesis_data_provider":["",[],["constants.rs","lib.rs"]],\
 "mc_l1_messages":["",[],["contract.rs","error.rs","lib.rs","worker.rs"]],\
-"mc_mapping_sync":["",[],["lib.rs","sync_blocks.rs"]],\
+"mc_mapping_sync":["",[],["block_metrics.rs","lib.rs","sync_blocks.rs"]],\
 "mc_rpc":["",[["events",[],["mod.rs"]]],["constants.rs","errors.rs","lib.rs","madara_backend_client.rs","runtime_api.rs","starknetrpcwrapper.rs","trace_api.rs","types.rs"]],\
 "mc_rpc_core":["",[],["lib.rs","utils.rs"]],\
 "mc_settlement":["",[["ethereum",[],["client.rs","errors.rs","mod.rs"]]],["errors.rs","lib.rs","sync_state.rs"]],\

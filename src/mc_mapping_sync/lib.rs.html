@@ -135,6 +135,17 @@
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
 <a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A worker syncing the Madara db
 //!
 //! # Role
@@ -145,7 +156,8 @@
 //! # Usage
 //! The madara node should spawn a `MappingSyncWorker` among it&#39;s services.
 
-</span><span class="kw">mod </span>sync_blocks;
+</span><span class="kw">mod </span>block_metrics;
+<span class="kw">mod </span>sync_blocks;
 
 <span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::pin::Pin;
@@ -158,11 +170,14 @@
 <span class="kw">use </span>log::debug;
 <span class="kw">use </span>mp_hashers::HasherT;
 <span class="kw">use </span>pallet_starknet_runtime_api::StarknetRuntimeApi;
+<span class="kw">use </span>prometheus_endpoint::prometheus;
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>sc_client_api::client::ImportNotifications;
 <span class="kw">use </span>sp_api::ProvideRuntimeApi;
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
 <span class="kw">use </span>sp_runtime::traits::{Block <span class="kw">as </span>BlockT, Header <span class="kw">as </span>HeaderT};
+
+<span class="kw">use </span><span class="kw">crate</span>::block_metrics::BlockMetrics;
 
 <span class="doccomment">/// The worker in charge of syncing the Madara db when it receive a new Substrate block
 </span><span class="kw">pub struct </span>MappingSyncWorker&lt;B: BlockT, C, BE, H&gt; {
@@ -178,6 +193,8 @@
     have_next: bool,
     retry_times: usize,
     sync_from: &lt;B::Header <span class="kw">as </span>HeaderT&gt;::Number,
+
+    block_metrics: <span class="prelude-ty">Option</span>&lt;BlockMetrics&gt;,
 }
 
 <span class="kw">impl</span>&lt;B: BlockT, C, BE, H&gt; Unpin <span class="kw">for </span>MappingSyncWorker&lt;B, C, BE, H&gt; {}
@@ -192,7 +209,10 @@
         frontier_backend: Arc&lt;mc_db::Backend&lt;B&gt;&gt;,
         retry_times: usize,
         sync_from: &lt;B::Header <span class="kw">as </span>HeaderT&gt;::Number,
+        prometheus_registry: <span class="prelude-ty">Option</span>&lt;prometheus::Registry&gt;,
     ) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>block_metrics =
+            prometheus_registry.and_then(|registry| block_metrics::BlockMetrics::register(<span class="kw-2">&amp;</span>registry).ok());
         <span class="self">Self </span>{
             import_notifications,
             timeout,
@@ -206,6 +226,7 @@
             have_next: <span class="bool-val">true</span>,
             retry_times,
             sync_from,
+            block_metrics,
         }
     }
 }
@@ -256,6 +277,7 @@
                 <span class="self">self</span>.madara_backend.as_ref(),
                 <span class="self">self</span>.retry_times,
                 <span class="self">self</span>.sync_from,
+                <span class="self">self</span>.block_metrics.as_ref(),
             ) {
                 <span class="prelude-val">Ok</span>(have_next) =&gt; {
                     <span class="self">self</span>.have_next = have_next;
