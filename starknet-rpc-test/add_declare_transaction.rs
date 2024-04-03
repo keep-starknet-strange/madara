@@ -77,6 +77,11 @@ async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraCli
     assert!(txs[0].is_ok());
 
     // transaction failed during execution, no change in storage
+    println!(
+        "this is get class result - {}",
+        rpc.get_class(BlockId::Number(block_number), expected_class_hash).await.is_err()
+    );
+    println!("this is expected class hash - {}", expected_class_hash);
     assert!(rpc.get_class(BlockId::Number(block_number), expected_class_hash).await.is_err());
 
     // doesn't get included in block
