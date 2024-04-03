@@ -409,6 +409,7 @@ pub mod pallet {
     pub enum Error<T> {
         AccountNotDeployed,
         TransactionExecutionFailed,
+        TransactionExecutionReverted,
         ClassHashAlreadyDeclared,
         ContractClassHashUnknown,
         ContractClassAlreadyAssociated,
