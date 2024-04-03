@@ -62,3 +62,15 @@ impl From<StarknetRpcApiError> for jsonrpsee::core::Error {
         jsonrpsee::core::Error::Call(CallError::Custom(ErrorObject::owned(err as i32, err.to_string(), None::<()>)))
     }
 }
+
+pub fn rpc_error_with_data<T: sp_runtime::Serialize>(
+    err: StarknetRpcApiError,
+    data: T,
+    msg: String,
+) -> jsonrpsee::core::Error {
+    jsonrpsee::core::Error::Call(CallError::Custom(ErrorObject::owned(
+        err as i32,
+        format!("{}{msg}", err.to_string()),
+        serde_json::to_value(data).ok(),
+    )))
+}
