@@ -343,6 +343,8 @@ pub enum Felt252WrapperError {
 
 use alloc::borrow::Cow;
 
+use serde::ser::SerializeSeq;
+
 impl From<Felt252WrapperError> for Cow<'static, str> {
     fn from(err: Felt252WrapperError) -> Self {
         match err {
@@ -374,6 +376,18 @@ impl From<FromStrError> for Felt252WrapperError {
             FromStrError::OutOfRange => Self::OutOfRange,
         }
     }
+}
+
+pub fn felt_to_hex<S>(felt_list: &[Felt252Wrapper], serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    let mut seq = serializer.serialize_seq(Some(felt_list.len()))?;
+    for felt in felt_list {
+        let hex_string = format!("0x{:x}", felt.0);
+        seq.serialize_element(&hex_string)?;
+    }
+    seq.end()
 }
 
 #[cfg(test)]
