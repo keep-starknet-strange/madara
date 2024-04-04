@@ -85,92 +85,92 @@ version = "0.7.0"
 
 [workspace.dependencies]
 # Substrate frame dependencies
-frame-executive = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+frame-executive = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-frame-support = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+frame-support = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-frame-benchmarking = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+frame-benchmarking = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-frame-benchmarking-cli = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false }
-frame-system = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+frame-benchmarking-cli = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
+frame-system = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-frame-system-benchmarking = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+frame-system-benchmarking = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-frame-system-rpc-runtime-api = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+frame-system-rpc-runtime-api = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-frame-try-runtime = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+frame-try-runtime = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-substrate-frame-rpc-system = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false }
+substrate-frame-rpc-system = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
 
 # Substrate primitives dependencies
-sp-core = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+sp-core = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-sp-std = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+sp-std = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-sp-io = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+sp-io = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-sp-runtime = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+sp-runtime = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-sp-consensus-aura = { git = "http://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+sp-consensus-aura = { git = "http://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-sp-consensus = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+sp-consensus = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-sp-consensus-grandpa = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+sp-consensus-grandpa = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-sp-timestamp = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+sp-timestamp = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-sp-inherents = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+sp-inherents = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-sp-keyring = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false }
-sp-api = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+sp-keyring = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
+sp-api = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-sp-blockchain = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false }
-sp-block-builder = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+sp-blockchain = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
+sp-block-builder = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-sp-offchain = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+sp-offchain = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-sp-session = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+sp-session = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-sp-transaction-pool = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+sp-transaction-pool = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-sp-version = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+sp-version = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-sp-database = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false }
-sp-arithmetic = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+sp-database = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
+sp-arithmetic = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-sp-storage = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+sp-storage = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-sp-state-machine = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+sp-state-machine = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-sp-statement-store = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+sp-statement-store = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
-sp-trie = { version = "22.0.0", git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false, features = [
+sp-trie = { version = "22.0.0", git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std",  features = [
   "std",
 ] }
 sp-tracing = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
@@ -184,7 +184,7 @@ sc-network-common = { git = "https://github.com/massalabs/polkadot-sdk", branch 
 sc-network-sync = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
 sc-consensus = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
 # For integration tests in order to create blocks on demand
-sc-consensus-manual-seal = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std", default-features = false }
+sc-consensus-manual-seal = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
 sc-consensus-grandpa = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
 sc-rpc = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
 sc-rpc-api = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
@@ -211,33 +211,33 @@ substrate-wasm-builder = { git = "https://github.com/massalabs/polkadot-sdk", br
 prometheus-endpoint = { package = "substrate-prometheus-endpoint", version = "0.10.0-dev", git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
 
 # Substrate Frame pallet
-pallet-aura = { default-features = true, git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-pallet-grandpa = { default-features = true, git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-pallet-timestamp = { default-features = true, git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
+pallet-aura = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
+pallet-grandpa = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
+pallet-timestamp = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
 
 # Madara pallets
-pallet-starknet = { path = "crates/pallets/starknet", default-features = false, features = [
+pallet-starknet = { path = "crates/pallets/starknet", features = [
   "std",
 ] }
-pallet-starknet-runtime-api = { path = "crates/pallets/starknet/runtime_api", default-features = false, features = [
+pallet-starknet-runtime-api = { path = "crates/pallets/starknet/runtime_api", features = [
   "std",
 ] }
 # Madara primtitives
-mp-genesis-config = { path = "crates/primitives/genesis-config", default-features = false }
-mp-digest-log = { path = "crates/primitives/digest-log", default-features = false }
-mp-block = { path = "crates/primitives/block", default-features = false }
-mp-fee = { path = "crates/primitives/fee", default-features = false }
-mp-felt = { path = "crates/primitives/felt", default-features = false }
-mp-hashers = { path = "crates/primitives/hashers", default-features = false }
-mp-sequencer-address = { path = "crates/primitives/sequencer-address", default-features = false }
-mp-snos-output = { path = "crates/primitives/snos-output", default-features = false }
-mp-state = { path = "crates/primitives/state", default-features = false }
-mp-storage = { path = "crates/primitives/storage", default-features = false }
-mp-transactions = { path = "crates/primitives/transactions", default-features = false }
-mp-chain-id = { path = "crates/primitives/chain-id", default-features = false }
-mp-simulations = { path = "crates/primitives/simulations", default-features = false }
-mp-program-hash = { path = "crates/primitives/program-hash", default-features = false }
-mp-messages = { path = "crates/primitives/messages", default-features = false }
+mp-genesis-config = { path = "crates/primitives/genesis-config" }
+mp-digest-log = { path = "crates/primitives/digest-log" }
+mp-block = { path = "crates/primitives/block" }
+mp-fee = { path = "crates/primitives/fee" }
+mp-felt = { path = "crates/primitives/felt" }
+mp-hashers = { path = "crates/primitives/hashers" }
+mp-sequencer-address = { path = "crates/primitives/sequencer-address" }
+mp-snos-output = { path = "crates/primitives/snos-output" }
+mp-state = { path = "crates/primitives/state" }
+mp-storage = { path = "crates/primitives/storage" }
+mp-transactions = { path = "crates/primitives/transactions" }
+mp-chain-id = { path = "crates/primitives/chain-id" }
+mp-simulations = { path = "crates/primitives/simulations" }
+mp-program-hash = { path = "crates/primitives/program-hash" }
+mp-messages = { path = "crates/primitives/messages" }
 
 # Madara client
 mc-genesis-data-provider = { path = "crates/client/genesis-data-provider" }
@@ -260,24 +260,24 @@ madara-test-runner = { path = "madara-test-runner" }
 
 # Starknet dependencies
 # Cairo Virtual Machine
-cairo-vm = { git = "https://github.com/bidzyyys/cairo-vm", branch = "feature/scale-codec", default-features = false, features = [
+cairo-vm = { git = "https://github.com/bidzyyys/cairo-vm", branch = "feature/scale-codec", features = [
   "std",
   "cairo-1-hints",
   "parity-scale-codec",
 ] }
-starknet-crypto = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e", default-features = false, features = [
+starknet-crypto = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e",  features = [
   "std",
 ] }
-starknet-core = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e", default-features = false, features = [
+starknet-core = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e",  features = [
   "std",
 ] }
-starknet-providers = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e", default-features = false }
-starknet-ff = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e", default-features = false, features = [
+starknet-providers = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
+starknet-ff = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e",  features = [
   "std",
 ] }
-starknet-signers = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e", default-features = false }
-starknet-accounts = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e", default-features = false }
-starknet-contract = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e", default-features = false }
+starknet-signers = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
+starknet-accounts = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
+starknet-contract = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
 
 blockifier = { git = "https://github.com/bidzyyys/blockifier", branch = "feature/scale-codec"}
 starknet_api = { git = "https://github.com/bidzyyys/starknet-api", branch = "feature/scale-codec", features = [
@@ -302,34 +302,34 @@ starknet-core-contract-client = { git = "https://github.com/keep-starknet-strang
 # Other third party dependencies
 anyhow = "1.0.80"
 flate2 = "1.0.28"
-parity-scale-codec = { version = "3.2.2", default-features = false, features = [
+parity-scale-codec = { version = "3.2.2", features = [
   "std",
 ] }
-scale-info = { version = "2.10.0", default-features = false, features = [
+scale-info = { version = "2.10.0", features = [
   "std",
 ] }
-lazy_static = { version = "1.4.0", default-features = false }
-log = { version = "0.4.20", default-features = false, features = ["std"] }
-hex = { version = "0.4.3", default-features = false, features = ["std"] }
-safe-mix = { version = "1.0", default-features = false, features = ["std"] }
-jsonrpsee = { version = "0.16.3", default-features = false }
-clap = { version = "4.4.8", default-features = false, features = ["std"] }
-futures = { version = "0.3.29", default-features = false, features = ["std"] }
-futures-timer = { version = "3.0.3", default-features = false }
-sha3 = { version = "0.10.8", default-features = false, features = ["std"] }
-reqwest = { version = "0.11.22", default-features = false }
-serde = { version = "1.0.192", default-features = false, features = ["std"] }
-serde_json = { version = "1.0.108", default-features = false, features = [
+lazy_static = { version = "1.4.0" }
+log = { version = "0.4.20",  features = ["std"] }
+hex = { version = "0.4.3",  features = ["std"] }
+safe-mix = { version = "1.0",  features = ["std"] }
+jsonrpsee = { version = "0.16.3" }
+clap = { version = "4.4.8",  features = ["std"] }
+futures = { version = "0.3.29",  features = ["std"] }
+futures-timer = { version = "3.0.3" }
+sha3 = { version = "0.10.8",  features = ["std"] }
+reqwest = { version = "0.11.22" }
+serde = { version = "1.0.192", features = ["std"] }
+serde_json = { version = "1.0.108",  features = [
   "std",
 ] }
-serde_with = { version = "2.3.3", default-features = false }
-bitvec = { version = "1", default-features = false, features = ["std"] }
+serde_with = { version = "2.3.3" }
+bitvec = { version = "1",  features = ["std"] }
 thiserror = "1.0.50"
 thiserror-no-std = "2.0.2"
-derive_more = { version = "0.99.17", default-features = false }
+derive_more = { version = "0.99.17" }
 rstest = "0.18.1"
 pretty_assertions = "1.4.0"
-linked-hash-map = { version = "0.5.6", default-features = false, features = [
+linked-hash-map = { version = "0.5.6",  features = [
   "std",
 ] }
 parking_lot = "0.12.1"
@@ -337,7 +337,7 @@ async-trait = "0.1.74"
 indexmap = "2.2.5"
 num-traits = "0.2.17"
 num-bigint = "0.4.4"
-phf = { version = "0.11", default-features = false, features = ["std"] }
+phf = { version = "0.11",  features = ["std"] }
 url = "2.4.1"
 hashbrown = "0.14.2"
 tokio = "1.36.0"
