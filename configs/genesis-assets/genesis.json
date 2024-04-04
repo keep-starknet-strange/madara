@@ -43,13 +43,6 @@
       }
     ],
     [
-      "0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd",
-      {
-        "path": "genesis-assets/AccountWithDeployContract.json",
-        "version": 0
-      }
-    ],
-    [
       "0x04c5efa8dc6f0554da51f125d04e379ac41153a8b837391083a8dc3771a33388",
       {
         "path": "genesis-assets/test.json",
@@ -108,10 +101,6 @@
     [
       "0x4",
       "0x035ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276"
-    ],
-    [
-      "0x5",
-      "0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd"
     ],
     [
       "0x1111",

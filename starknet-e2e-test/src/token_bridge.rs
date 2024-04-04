@@ -108,7 +108,7 @@ impl StarknetTokenBridge {
         let random: u32 = rng.gen();
 
         let deploy_tx = account.invoke_contract(
-            FieldElement::from_hex_be("0x5").unwrap(),
+            FieldElement::from_hex_be("0x1").unwrap(),
             "deploy_contract",
             vec![
                 FieldElement::from_hex_be("0x0358663e6ed9d37efd33d4661e20b2bad143e0f92076b0c91fe65f31ccf55046")
@@ -166,7 +166,7 @@ impl StarknetTokenBridge {
     pub async fn setup_l2_bridge(&self, madara: &ThreadSafeMadaraClient, l2_bridge: FieldElement) {
         invoke_contract(
             madara,
-            FieldElement::from_hex_be("0x5").unwrap(),
+            FieldElement::from_hex_be("0x1").unwrap(),
             "__execute__",
             vec![
                 l2_bridge,                                                  // contract_address
