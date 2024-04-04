@@ -604,10 +604,7 @@ fn storage_changes_should_revert_on_transaction_revert() {
             salt.into(),
             transaction_revert_class_hash.into(),
             &UdcUniqueness::Unique(UdcUniqueSettings {
-                deployer_address: FieldElement::from_hex_be(
-                    "0x0642a8b9e2c6cc3a9ddb84575123f262a21415f78db453b0625d889e1e06ac32",
-                )
-                .unwrap(),
+                deployer_address: account_addr.0.0.into(),
                 udc_contract_address: FieldElement::from_hex_be(UDC_ADDRESS).unwrap(),
             }),
             &[],
