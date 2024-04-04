@@ -2,6 +2,7 @@
 
 ## Next release
 
+- fix(node): fix genesis hash inconsistency
 - feat (pallet): add tests for storage reversal on transaction revert
 - feat: add prometheus metrics for mapping worker
 - Fix(node): Fix creating a local testnet with multiple nodes fails using only
@@ -26,7 +27,7 @@
 - chore(db): changed the way hashes are encoded
 - refacto: reusable Eth client config for settlement/DA/other tasks
 - ci: add gomu gomu no gatling perfomrance test
-- feat(runtime): moved StarkEvents from Substrate events to runtime storage
+- feat(runtime): moved StarkEvents from Substrate
 
 ## v0.7.0
 
