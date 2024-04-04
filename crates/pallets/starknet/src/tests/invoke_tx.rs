@@ -644,8 +644,9 @@ fn storage_changes_should_revert_on_transaction_revert() {
 
         let default_calldata = Calldata(Default::default());
 
-        let balance_value = Starknet::call_contract(contract_address, get_balance_function_selector_entrypoint, default_calldata)
-            .unwrap();
+        let balance_value =
+            Starknet::call_contract(contract_address, get_balance_function_selector_entrypoint, default_calldata)
+                .unwrap();
         assert_eq!(balance_value, vec![Felt252Wrapper::ZERO])
     })
 }
