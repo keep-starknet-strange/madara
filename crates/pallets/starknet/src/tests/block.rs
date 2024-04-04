@@ -46,6 +46,7 @@ fn store_block_no_pending_transactions_works() {
 #[test]
 fn store_block_with_pending_transactions_works() {
     new_test_ext::<MockRuntime>().execute_with(|| {
+        let chain_id = Starknet::chain_id();
         // initialize first block
         let header = System::finalize();
         const BLOCK_NUMBER: u64 = 1;
@@ -57,12 +58,12 @@ fn store_block_with_pending_transactions_works() {
 
         // perform transactions
         // first invoke transaction
-        let transaction = get_invoke_dummy(Nonce(StarkFelt::ZERO));
+        let transaction = get_invoke_dummy(chain_id, Nonce(StarkFelt::ZERO));
 
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), transaction.into()));
 
         // second invoke transaction
-        let transaction = get_invoke_dummy(Nonce(StarkFelt::ONE));
+        let transaction = get_invoke_dummy(chain_id, Nonce(StarkFelt::ONE));
 
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), transaction.into()));
 

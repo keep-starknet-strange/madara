@@ -34,7 +34,7 @@ fn create_declare_erc20_v0_transaction(
     let erc20_class_hash =
         ClassHash(StarkFelt::try_from("0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap());
 
-    let tx = StarknetApiDeclareTransaction::V0(DeclareTransactionV0V1 {
+    let mut tx = StarknetApiDeclareTransaction::V0(DeclareTransactionV0V1 {
         max_fee: Fee(u128::MAX),
         signature: Default::default(),
         nonce: Nonce(StarkFelt::ZERO),
@@ -45,16 +45,11 @@ fn create_declare_erc20_v0_transaction(
     let tx_hash = tx.compute_hash(chain_id, false);
     // Force to do that because ComputeTransactionHash cannot be implemented on DeclareTransactionV0V1
     // directly...
-    if let StarknetApiDeclareTransaction::V0(tx) = tx {
+    if let StarknetApiDeclareTransaction::V0(tx) = &mut tx {
         tx.signature = signature.unwrap_or_else(|| sign_message_hash(tx_hash));
     }
 
-    BlockifierDeclareTransaction {
-        tx,
-        tx_hash,
-        only_query: false,
-        class_info: ClassInfo::new(&erc20_class, 0, 1).unwrap(),
-    }
+    BlockifierDeclareTransaction::new(tx, tx_hash, ClassInfo::new(&erc20_class, 0, 1).unwrap()).unwrap()
 }
 
 #[test]
@@ -102,22 +97,20 @@ fn given_contract_declare_tx_fails_sender_not_deployed() {
 fn given_contract_declare_on_all_account_types_then_it_works() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
-        let none_origin = RuntimeOrigin::none();
 
         for account_type in [AccountTypeV0Inner::Openzeppelin, AccountTypeV0Inner::Argent, AccountTypeV0Inner::Braavos]
         {
             let transaction =
                 create_declare_erc20_v0_transaction(Starknet::chain_id(), AccountType::V0(account_type), None, None);
+            let contract_class = transaction.class_info.contract_class();
+            let class_hash = transaction.tx.class_hash();
             assert_ok!(Starknet::validate_unsigned(
                 TransactionSource::InBlock,
                 &crate::Call::declare { transaction: transaction.clone() },
             ));
 
-            assert_ok!(Starknet::declare(none_origin, transaction));
-            assert_eq!(
-                Starknet::contract_class_by_class_hash(transaction.tx.class_hash().0).unwrap(),
-                transaction.class_info.contract_class()
-            );
+            assert_ok!(Starknet::declare(RuntimeOrigin::none(), transaction));
+            assert_eq!(Starknet::contract_class_by_class_hash(class_hash.0).unwrap(), contract_class);
         }
     });
 }
@@ -126,7 +119,6 @@ fn given_contract_declare_on_all_account_types_then_it_works() {
 fn given_contract_declare_on_all_account_types_with_incorrect_signature_then_it_fails() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
-        let none_origin = RuntimeOrigin::none();
 
         for account_type in [AccountTypeV0Inner::Openzeppelin, AccountTypeV0Inner::Argent, AccountTypeV0Inner::Braavos]
         {
@@ -146,7 +138,7 @@ fn given_contract_declare_on_all_account_types_with_incorrect_signature_then_it_
             );
 
             assert_err!(
-                Starknet::declare(none_origin, transaction.into()),
+                Starknet::declare(RuntimeOrigin::none(), transaction.into()),
                 Error::<MockRuntime>::TransactionExecutionFailed
             );
         }
@@ -180,12 +172,12 @@ fn given_contract_declare_on_cairo_1_no_validate_account_then_it_works() {
         let tx_hash = tx.compute_hash(Starknet::chain_id(), false);
         tx.signature = sign_message_hash(tx_hash);
 
-        let transaction = BlockifierDeclareTransaction {
-            tx: StarknetApiDeclareTransaction::V2(tx),
+        let transaction = BlockifierDeclareTransaction::new(
+            StarknetApiDeclareTransaction::V2(tx),
             tx_hash,
-            only_query: false,
-            class_info: ClassInfo::new(&hello_starknet_class, 1, 1).unwrap(),
-        };
+            ClassInfo::new(&hello_starknet_class, 1, 1).unwrap(),
+        )
+        .unwrap();
 
         assert_ok!(Starknet::validate_unsigned(
             TransactionSource::InBlock,

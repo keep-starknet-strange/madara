@@ -7,11 +7,10 @@ use blockifier::execution::contract_class::ContractClass;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::pedersen::PedersenHasher;
 use mp_hashers::HasherT;
+use mp_transactions::compute_hash::ComputeTransactionHash;
 use starknet_api::core::{ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::hash::{StarkFelt, StarkHash};
-use starknet_api::transaction::{
-    Calldata, Fee, InvokeTransaction, InvokeTransactionV1, TransactionHash, TransactionSignature,
-};
+use starknet_api::transaction::{Calldata, Fee, TransactionHash, TransactionSignature};
 use starknet_crypto::{sign, FieldElement};
 
 use super::constants::{ACCOUNT_PRIVATE_KEY, K};
@@ -68,8 +67,11 @@ pub fn sign_message_hash(hash: TransactionHash) -> TransactionSignature {
     TransactionSignature(vec![Felt252Wrapper(signature.r).into(), Felt252Wrapper(signature.s).into()])
 }
 
-pub fn build_transfer_invoke_transaction(request: BuildTransferInvokeTransaction) -> InvokeTransaction {
-    InvokeTransaction::V1(InvokeTransactionV1 {
+pub fn build_transfer_invoke_transaction(
+    chain_id: Felt252Wrapper,
+    request: BuildTransferInvokeTransaction,
+) -> blockifier::transaction::transactions::InvokeTransaction {
+    let tx = starknet_api::transaction::InvokeTransaction::V1(starknet_api::transaction::InvokeTransactionV1 {
         max_fee: Fee(u128::MAX),
         signature: TransactionSignature(vec![]),
         nonce: request.nonce,
@@ -83,7 +85,11 @@ pub fn build_transfer_invoke_transaction(request: BuildTransferInvokeTransaction
             request.amount_low,    // initial supply low
             request.amount_high,   // initial supply high
         ])),
-    })
+    });
+
+    let tx_hash = tx.compute_hash(chain_id, false);
+
+    blockifier::transaction::transactions::InvokeTransaction { tx, tx_hash, only_query: false }
 }
 
 /// Build invoke transaction for transfer utils

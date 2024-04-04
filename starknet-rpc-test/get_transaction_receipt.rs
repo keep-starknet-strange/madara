@@ -5,7 +5,7 @@ use std::vec;
 use assert_matches::assert_matches;
 use rstest::rstest;
 use starknet_core::types::{
-    Event, ExecutionResult, MaybePendingTransactionReceipt, MsgToL1, PendingTransactionReceipt,
+    Event, ExecutionResult, FeePayment, MaybePendingTransactionReceipt, MsgToL1, PendingTransactionReceipt, PriceUnit,
     TransactionFinalityStatus, TransactionReceipt,
 };
 use starknet_core::utils::get_selector_from_name;
@@ -50,7 +50,7 @@ async fn work_with_invoke_transaction(madara: &ThreadSafeMadaraClient) -> Result
 
     let invoke_tx_receipt = get_transaction_receipt(&rpc, rpc_response.transaction_hash).await;
     let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
-    let expected_fee = FieldElement::from_hex_be("0xf032").unwrap();
+    let expected_fee = FeePayment { amount: FieldElement::from_hex_be("0xf032").unwrap(), unit: PriceUnit::Wei };
 
     match invoke_tx_receipt {
         Ok(MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt))) => {
@@ -87,7 +87,7 @@ async fn work_with_invoke_transaction(madara: &ThreadSafeMadaraClient) -> Result
                         data: vec![
                             FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(), // from
                             FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(),       // to (sequencer address)
-                            expected_fee,                                                // value low
+                            expected_fee.amount,                                         // value low
                             FieldElement::ZERO,                                          // value high
                         ],
                     },
@@ -132,7 +132,7 @@ async fn work_with_pending_invoke_transaction(madara: &ThreadSafeMadaraClient) -
     match invoke_tx_pending_receipt {
         MaybePendingTransactionReceipt::PendingReceipt(PendingTransactionReceipt::Invoke(receipt)) => {
             assert_eq!(receipt.transaction_hash, rpc_response.transaction_hash);
-            assert!(receipt.actual_fee > FieldElement::ZERO);
+            assert!(receipt.actual_fee.amount > FieldElement::ZERO);
             assert_eq_msg_to_l1(receipt.messages_sent, vec![]);
             assert_eq!(receipt.events, vec![]);
             assert_matches!(receipt.execution_result, ExecutionResult::Succeeded);
@@ -165,15 +165,18 @@ async fn work_with_declare_transaction(madara: &ThreadSafeMadaraClient) -> Resul
     };
 
     let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
-    let expected_fee =
-        FieldElement::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000003066").unwrap();
+    let expected_fee = FeePayment {
+        amount: FieldElement::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000003066")
+            .unwrap(),
+        unit: PriceUnit::Wei,
+    };
     let expected_events = vec![Event {
         from_address: fee_token_address,
         keys: vec![get_selector_from_name("Transfer").unwrap()],
         data: vec![
             FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(), // from
             FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(),       // to (sequencer address)
-            expected_fee,                                                // value low
+            expected_fee.amount,                                         // value low
             FieldElement::ZERO,                                          // value high
         ],
     }];
@@ -221,7 +224,7 @@ async fn work_with_pending_declare_transaction(madara: &ThreadSafeMadaraClient) 
 
     match pending_receipt {
         MaybePendingTransactionReceipt::PendingReceipt(PendingTransactionReceipt::Declare(tx_receipt)) => {
-            assert!(tx_receipt.actual_fee > FieldElement::ZERO);
+            assert!(tx_receipt.actual_fee.amount > FieldElement::ZERO);
             assert_eq_msg_to_l1(tx_receipt.messages_sent, vec![]);
             assert_eq!(tx_receipt.events, vec![]);
             assert_matches!(tx_receipt.execution_result, ExecutionResult::Succeeded);
@@ -272,7 +275,7 @@ async fn work_with_deploy_account_transaction(madara: &ThreadSafeMadaraClient) -
 
     let account_deployment_tx_receipt = get_transaction_receipt(&rpc, rpc_response.transaction_hash).await;
     let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
-    let expected_fee = FieldElement::from_hex_be("0x7850").unwrap();
+    let expected_fee = FeePayment { amount: FieldElement::from_hex_be("0x7850").unwrap(), unit: PriceUnit::Wei };
 
     match account_deployment_tx_receipt {
         Ok(MaybePendingTransactionReceipt::Receipt(TransactionReceipt::DeployAccount(receipt))) => {
@@ -288,7 +291,7 @@ async fn work_with_deploy_account_transaction(madara: &ThreadSafeMadaraClient) -
                     data: vec![
                         account_address,
                         FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(), // to
-                        expected_fee,                                          // value low
+                        expected_fee.amount,                                   // value low
                         FieldElement::ZERO,                                    // value high
                     ],
                 }],
@@ -347,7 +350,7 @@ async fn work_with_pending_deploy_account_transaction(madara: &ThreadSafeMadaraC
     match account_deployment_tx_receipt {
         MaybePendingTransactionReceipt::PendingReceipt(PendingTransactionReceipt::DeployAccount(receipt)) => {
             assert_eq!(receipt.transaction_hash, rpc_response.transaction_hash);
-            assert!(receipt.actual_fee > FieldElement::ZERO);
+            assert!(receipt.actual_fee.amount > FieldElement::ZERO);
             assert_eq_msg_to_l1(receipt.messages_sent, vec![]);
             assert_eq!(receipt.events, vec![]);
             assert_matches!(receipt.execution_result, ExecutionResult::Succeeded);
@@ -382,7 +385,7 @@ async fn ensure_transfer_fee_event_not_messed_up_with_similar_transfer(
     };
     let tx_receipt = get_transaction_receipt(&rpc, rpc_response.transaction_hash).await;
     let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
-    let expected_fee = FieldElement::from_hex_be("0xf032").unwrap();
+    let expected_fee = FeePayment { amount: FieldElement::from_hex_be("0xf032").unwrap(), unit: PriceUnit::Wei };
 
     match tx_receipt {
         Ok(MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(mut receipt))) => {
@@ -410,7 +413,7 @@ async fn ensure_transfer_fee_event_not_messed_up_with_similar_transfer(
                         data: vec![
                             FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(), // from
                             FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(),       // to
-                            expected_fee,                                                // value low
+                            expected_fee.amount,                                         // value low
                             FieldElement::ZERO,                                          // value high
                         ],
                     },

@@ -153,10 +153,7 @@ async fn fails_already_declared(madara: &ThreadSafeMadaraClient) -> Result<(), a
     assert_matches!(
         declare_tx_result.err(),
         Some(SendTransactionError::AccountError(starknet_accounts::AccountError::Provider(
-            ProviderError::StarknetError(StarknetErrorWithMessage {
-                code: MaybeUnknownErrorCode::Known(StarknetError::ClassAlreadyDeclared),
-                message: _
-            })
+            ProviderError::StarknetError(StarknetError::ClassAlreadyDeclared)
         )))
     );
 

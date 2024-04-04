@@ -1,7 +1,5 @@
 use frame_support::assert_ok;
 use mp_felt::Felt252Wrapper;
-use mp_hashers::HasherT;
-use mp_transactions::compute_hash::ComputeTransactionHash;
 use starknet_api::core::{ContractAddress, EntryPointSelector, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::Calldata;
@@ -12,7 +10,6 @@ use super::utils::{
     build_get_balance_contract_call, build_transfer_invoke_transaction, BuildTransferInvokeTransaction,
 };
 use crate::tests::mock::setup_mock::default_mock::*;
-use crate::Config;
 
 #[test]
 fn given_default_runtime_with_fees_enabled_txn_deducts_fee_token() {
@@ -25,10 +22,7 @@ fn given_default_runtime_with_fees_enabled_txn_deducts_fee_token() {
         let (initial_balance_low, initial_balance_high) = get_balance_default_mock(address);
 
         // transfer to zero fee token so that the only change in balance can happen because of fees
-        assert_ok!(default_mock::Starknet::invoke(
-            origin,
-            build_invoke_transaction::<<MockRuntime as Config>::SystemHash>(chain_id, address)
-        ));
+        assert_ok!(default_mock::Starknet::invoke(origin, build_invoke_transaction(chain_id, address)));
         let (final_balance_low, final_balance_high) = get_balance_default_mock(address);
 
         // Check that the balance has changed because fees is reduced
@@ -48,10 +42,7 @@ fn given_default_runtime_with_fees_disabled_txn_does_not_deduct_fee_token() {
         let (initial_balance_low, initial_balance_high) = get_balance_fees_disabled_mock(address);
 
         // transfer to zero fee token so that the only change in balance can happen because of fees
-        assert_ok!(fees_disabled_mock::Starknet::invoke(
-            origin,
-            build_invoke_transaction::<<MockRuntime as Config>::SystemHash>(chain_id, address)
-        ));
+        assert_ok!(fees_disabled_mock::Starknet::invoke(origin, build_invoke_transaction(chain_id, address)));
         let (final_balance_low, final_balance_high) = get_balance_fees_disabled_mock(address);
 
         // Check that the balance hasn't changed
@@ -60,21 +51,21 @@ fn given_default_runtime_with_fees_disabled_txn_does_not_deduct_fee_token() {
     });
 }
 
-fn build_invoke_transaction<H: HasherT>(
+fn build_invoke_transaction(
     chain_id: Felt252Wrapper,
     address: ContractAddress,
 ) -> blockifier::transaction::transactions::InvokeTransaction {
-    let tx = build_transfer_invoke_transaction(BuildTransferInvokeTransaction {
-        sender_address: address,
-        token_address: ContractAddress(PatriciaKey(StarkFelt::try_from(FEE_TOKEN_ADDRESS).unwrap())),
-        recipient: address,
-        amount_low: StarkFelt::ZERO,
-        amount_high: StarkFelt::ZERO,
-        nonce: Nonce(StarkFelt::ZERO),
-    });
-    let tx_hash = tx.compute_hash::<H>(chain_id, false);
-
-    blockifier::transaction::transactions::InvokeTransaction { tx, tx_hash, only_query: false }
+    build_transfer_invoke_transaction(
+        chain_id,
+        BuildTransferInvokeTransaction {
+            sender_address: address,
+            token_address: ContractAddress(PatriciaKey(StarkFelt::try_from(FEE_TOKEN_ADDRESS).unwrap())),
+            recipient: address,
+            amount_low: StarkFelt::ZERO,
+            amount_high: StarkFelt::ZERO,
+            nonce: Nonce(StarkFelt::ZERO),
+        },
+    )
 }
 
 fn get_balance_default_mock(account_address: ContractAddress) -> (Felt252Wrapper, Felt252Wrapper) {

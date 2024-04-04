@@ -12,7 +12,7 @@ use starknet_contract::ContractFactory;
 use starknet_core::types::{BlockId, BlockTag, FunctionCall, StarknetError};
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
-use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
+use starknet_providers::{Provider, ProviderError};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{build_single_owner_account, get_contract_address_from_deploy_tx, AccountActions};
@@ -34,10 +34,7 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
         )
         .await
         .err(),
-        Some(ProviderError::StarknetError(StarknetErrorWithMessage {
-            message: _,
-            code: MaybeUnknownErrorCode::Known(StarknetError::BlockNotFound)
-        }))
+        Some(ProviderError::StarknetError(StarknetError::BlockNotFound))
     );
 
     Ok(())
@@ -59,10 +56,7 @@ async fn fail_non_existing_entrypoint(madara: &ThreadSafeMadaraClient) -> Result
         )
         .await
         .err(),
-        Some(ProviderError::StarknetError(StarknetErrorWithMessage {
-            message: _,
-            code: MaybeUnknownErrorCode::Known(StarknetError::ContractError)
-        }))
+        Some(ProviderError::StarknetError(StarknetError::ContractError(_)))
     );
 
     Ok(())
@@ -84,10 +78,7 @@ async fn fail_incorrect_calldata(madara: &ThreadSafeMadaraClient) -> Result<(), 
         )
         .await
         .err(),
-        Some(ProviderError::StarknetError(StarknetErrorWithMessage {
-            message: _,
-            code: MaybeUnknownErrorCode::Known(StarknetError::ContractError)
-        }))
+        Some(ProviderError::StarknetError(StarknetError::ContractError(_)))
     );
 
     Ok(())

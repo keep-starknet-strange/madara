@@ -8,7 +8,7 @@ use anyhow::anyhow;
 use rstest::rstest;
 use starknet_core::types::{BlockId, BlockTag, MaybePendingBlockWithTxHashes, StarknetError};
 use starknet_ff::FieldElement;
-use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
+use starknet_providers::{Provider, ProviderError};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{build_single_owner_account, AccountActions};
@@ -21,10 +21,7 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
 
     assert_matches!(
         rpc.get_block_with_tx_hashes(BlockId::Hash(FieldElement::ZERO)).await.err(),
-        Some(ProviderError::StarknetError(StarknetErrorWithMessage {
-            message: _,
-            code: MaybeUnknownErrorCode::Known(StarknetError::BlockNotFound)
-        }))
+        Some(ProviderError::StarknetError(StarknetError::BlockNotFound))
     );
 
     Ok(())

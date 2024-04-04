@@ -1,15 +1,31 @@
 use assert_matches::assert_matches;
+use blockifier::transaction::transaction_execution::Transaction;
+use blockifier::transaction::transactions::L1HandlerTransaction as BlockifierL1HandlerTransaction;
 use mp_felt::Felt252Wrapper;
-use mp_transactions::{HandleL1MessageTransaction, UserOrL1HandlerTransaction};
+use mp_transactions::compute_hash::ComputeTransactionHash;
 use sp_runtime::transaction_validity::InvalidTransaction;
-use starknet_api::core::Nonce;
+use starknet_api::core::{ContractAddress, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
-use starknet_api::transaction::Fee;
+use starknet_api::transaction::{Fee, L1HandlerTransaction as StarknetApiL1HandlerTransaction, TransactionVersion};
 
 use super::mock::default_mock::*;
 use super::mock::*;
 use crate::transaction_validation::TxPriorityInfo;
 use crate::L1Messages;
+
+fn create_l1_handler_transaction(chain_id: Felt252Wrapper, nonce: Nonce) -> Transaction {
+    let tx = StarknetApiL1HandlerTransaction {
+        nonce: Nonce(StarkFelt::ONE),
+        contract_address: ContractAddress(PatriciaKey(Default::default())),
+        entry_point_selector: Default::default(),
+        calldata: Default::default(),
+        version: TransactionVersion(StarkFelt::ZERO),
+    };
+
+    let tx_hash = tx.compute_hash(chain_id, false);
+
+    Transaction::L1HandlerTransaction(BlockifierL1HandlerTransaction { tx, tx_hash, paid_fee_on_l1: Fee(100) })
+}
 
 #[test]
 fn should_ensure_l1_message_not_executed_work_properly() {
@@ -31,20 +47,9 @@ fn should_accept_unused_nonce() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
-        let nonce: u64 = 1;
-        let transaction = HandleL1MessageTransaction {
-            nonce,
-            contract_address: Default::default(),
-            entry_point_selector: Default::default(),
-            calldata: Default::default(),
-        };
-
-        let tx = UserOrL1HandlerTransaction::L1Handler(transaction, Fee(100));
-
-        assert_eq!(
-            Starknet::validate_unsigned_tx_nonce(&tx),
-            Ok(TxPriorityInfo::L1Handler { nonce: Felt252Wrapper::ONE })
-        );
+        let nonce = Nonce(StarkFelt::ONE);
+        let tx = create_l1_handler_transaction(Starknet::chain_id(), nonce);
+        assert_eq!(Starknet::validate_unsigned_tx_nonce(&tx), Ok(TxPriorityInfo::L1Handler { nonce }));
     });
 }
 
@@ -53,37 +58,11 @@ fn should_reject_used_nonce() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
-        let nonce: u64 = 1;
-        let transaction = HandleL1MessageTransaction {
-            nonce,
-            contract_address: Default::default(),
-            entry_point_selector: Default::default(),
-            calldata: Default::default(),
-        };
+        let nonce = Nonce(StarkFelt::ONE);
+        let tx = create_l1_handler_transaction(Starknet::chain_id(), nonce);
 
-        let tx = UserOrL1HandlerTransaction::L1Handler(transaction, Fee(100));
-
-        L1Messages::<MockRuntime>::mutate(|nonces| nonces.insert(Nonce(nonce.into())));
+        L1Messages::<MockRuntime>::mutate(|nonces| nonces.insert(nonce.into()));
 
         assert_matches!(Starknet::validate_unsigned_tx_nonce(&tx), Err(InvalidTransaction::Stale));
-    });
-}
-
-#[test]
-fn should_accept_valid_unsigned_l1_message_tx() {
-    new_test_ext::<MockRuntime>().execute_with(|| {
-        basic_test_setup(2);
-
-        let nonce: u64 = 1;
-        let transaction = HandleL1MessageTransaction {
-            nonce,
-            contract_address: Default::default(),
-            entry_point_selector: Default::default(),
-            calldata: Default::default(),
-        };
-
-        let tx = UserOrL1HandlerTransaction::L1Handler(transaction, Fee(100));
-
-        assert!(Starknet::validate_unsigned_tx(&tx).is_ok());
     });
 }

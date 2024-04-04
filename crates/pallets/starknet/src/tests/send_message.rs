@@ -14,7 +14,6 @@ use starknet_api::transaction::{
 use super::mock::default_mock::*;
 use super::mock::*;
 use super::utils::get_contract_class;
-use crate::Config;
 
 // NoValidateAccount (Cairo 0)
 const DEPLOY_CONTRACT_SELECTOR: &str = "0x02730079d734ee55315f4f141eaed376bddd8c2133523d223a344c5604e0f7f8";
@@ -48,12 +47,13 @@ fn messages_to_l1_are_stored() {
             max_fee: Fee(u128::MAX),
             signature: TransactionSignature(vec![]),
         });
-        let declare_tx = blockifier::transaction::transactions::DeclareTransaction {
-            tx: declare_tx,
-            tx_hash: declare_tx.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false),
-            only_query: false,
-            class_info: ClassInfo { contract_class, sierra_program_length: usize::MAX, abi_length: usize::MAX },
-        };
+        let tx_hash = declare_tx.compute_hash(chain_id, false);
+        let declare_tx = blockifier::transaction::transactions::DeclareTransaction::new(
+            declare_tx,
+            tx_hash,
+            ClassInfo::new(&contract_class, usize::MAX, usize::MAX).unwrap(),
+        )
+        .unwrap();
 
         assert_ok!(Starknet::declare(RuntimeOrigin::none(), declare_tx.into()));
 
@@ -96,7 +96,7 @@ fn messages_to_l1_are_stored() {
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), invoke_tx.clone().into()));
 
         let chain_id = Starknet::chain_id();
-        let tx_hash = invoke_tx.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false);
+        let tx_hash = invoke_tx.compute_hash(chain_id, false);
         let messages = Starknet::tx_messages(TransactionHash::from(tx_hash));
 
         assert_eq!(1, messages.len());

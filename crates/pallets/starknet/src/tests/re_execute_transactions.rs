@@ -1,22 +1,17 @@
 use std::sync::Arc;
 
-use blockifier::execution::contract_class::ClassInfo;
 use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::transaction_execution::Transaction;
 use blockifier::transaction::transactions::ExecutableTransaction;
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
-use starknet_api::core::{
-    calculate_contract_address, CompiledClassHash, ContractAddress, EntryPointSelector, Nonce, PatriciaKey,
-};
+use starknet_api::core::{calculate_contract_address, ContractAddress, EntryPointSelector, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt, Fee, TransactionSignature, TransactionVersion};
 
 use super::mock::default_mock::*;
 use super::mock::*;
-use crate::tests::utils::get_contract_class;
 use crate::tests::{constants, get_declare_dummy, get_invoke_dummy, set_infinite_tokens};
-use crate::Config;
 
 #[test]
 fn re_execute_tx_ok() {
@@ -45,7 +40,7 @@ fn re_execute_tx_ok() {
                 class_hash: account_class_hash,
             };
 
-            let tx_hash = tx.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false);
+            let tx_hash = tx.compute_hash(chain_id, false);
             let contract_address = calculate_contract_address(
                 tx.contract_address_salt,
                 tx.class_hash,
@@ -63,26 +58,12 @@ fn re_execute_tx_ok() {
         set_infinite_tokens::<MockRuntime>(&deploy_tx.contract_address);
 
         // Declare
-        let erc20_class_hash = CompiledClassHash(
-            StarkFelt::try_from("0x372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4").unwrap(),
-        );
-        let erc20_class = get_contract_class("ERC20.json", 0);
-
         let contract_address = ContractAddress(PatriciaKey(
             StarkFelt::try_from("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(),
         ));
         let from_address = StarkFelt::try_from("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045").unwrap();
-        let declare_tx = {
-            let declare_tx =
-                get_declare_dummy(chain_id, Nonce(StarkFelt::ZERO), AccountType::V0(AccountTypeV0Inner::Openzeppelin));
-            let tx_hash = declare_tx.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false);
-            blockifier::transaction::transactions::DeclareTransaction::new(
-                declare_tx,
-                tx_hash,
-                ClassInfo { contract_class: erc20_class, sierra_program_length: usize::MAX, abi_length: usize::MAX },
-            )
-            .unwrap()
-        };
+        let declare_tx =
+            get_declare_dummy(chain_id, Nonce(StarkFelt::ZERO), AccountType::V0(AccountTypeV0Inner::Openzeppelin));
 
         // Handle l1 message
         let handle_l1_tx = {
@@ -99,16 +80,20 @@ fn re_execute_tx_ok() {
             ])),
             version: TransactionVersion(StarkFelt::ZERO),
         };
-            let tx_hash = tx.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false);
+            let tx_hash = tx.compute_hash(chain_id, false);
             blockifier::transaction::transactions::L1HandlerTransaction { tx, tx_hash, paid_fee_on_l1: Fee(10) }
         };
 
         let txs = vec![
-            Transaction::AccountTransaction(AccountTransaction::Invoke(
-                get_invoke_dummy(Nonce(StarkFelt::ZERO)).into(),
-            )),
-            Transaction::AccountTransaction(AccountTransaction::Invoke(get_invoke_dummy(Nonce(StarkFelt::ONE)).into())),
-            Transaction::AccountTransaction(AccountTransaction::Declare(declare_tx)),
+            Transaction::AccountTransaction(AccountTransaction::Invoke(get_invoke_dummy(
+                chain_id,
+                Nonce(StarkFelt::ZERO),
+            ))),
+            Transaction::AccountTransaction(AccountTransaction::Invoke(get_invoke_dummy(
+                chain_id,
+                Nonce(StarkFelt::ONE),
+            ))),
+            Transaction::AccountTransaction(AccountTransaction::Declare(declare_tx.clone())),
             Transaction::AccountTransaction(AccountTransaction::DeployAccount(deploy_tx)),
             Transaction::L1HandlerTransaction(handle_l1_tx),
         ];
@@ -118,7 +103,7 @@ fn re_execute_tx_ok() {
 
         // Storage changes have been reverted
         assert_eq!(Starknet::nonce(invoke_sender_address), Nonce(Felt252Wrapper::ZERO.into()));
-        assert_eq!(Starknet::contract_class_by_class_hash(erc20_class_hash.0), None);
+        assert_eq!(Starknet::contract_class_by_class_hash(declare_tx.tx.class_hash().0), None);
         // All txs are there
         assert_eq!(res.len(), 5);
 
@@ -126,7 +111,7 @@ fn re_execute_tx_ok() {
         let first_invoke_tx_info = match txs.get(0).unwrap() {
             Transaction::AccountTransaction(AccountTransaction::Invoke(invoke_tx)) => {
                 let mut state = Starknet::init_cached_state();
-                let tx_info = AccountTransaction::Invoke(*invoke_tx)
+                let tx_info = AccountTransaction::Invoke(invoke_tx.clone())
                     .execute(&mut state, &Starknet::get_block_context(), true, true)
                     .unwrap();
                 (tx_info, state.to_state_diff())
@@ -137,7 +122,7 @@ fn re_execute_tx_ok() {
         let second_invoke_tx_info = match txs.get(1).unwrap() {
             Transaction::AccountTransaction(AccountTransaction::Invoke(invoke_tx)) => {
                 let mut state = Starknet::init_cached_state();
-                let tx_info = AccountTransaction::Invoke(*invoke_tx)
+                let tx_info = AccountTransaction::Invoke(invoke_tx.clone())
                     .execute(&mut state, &Starknet::get_block_context(), true, true)
                     .unwrap();
                 (tx_info, state.to_state_diff())
@@ -148,7 +133,7 @@ fn re_execute_tx_ok() {
         let declare_tx_info = match txs.get(2).unwrap() {
             Transaction::AccountTransaction(AccountTransaction::Declare(declare_tx)) => {
                 let mut state = Starknet::init_cached_state();
-                let tx_info = AccountTransaction::Declare(*declare_tx)
+                let tx_info = AccountTransaction::Declare(declare_tx.clone())
                     .execute(&mut state, &Starknet::get_block_context(), true, true)
                     .unwrap();
                 (tx_info, state.to_state_diff())
@@ -159,7 +144,7 @@ fn re_execute_tx_ok() {
         let deploy_account_tx_info = match txs.get(3).unwrap() {
             Transaction::AccountTransaction(AccountTransaction::DeployAccount(deploy_account_tx)) => {
                 let mut state = Starknet::init_cached_state();
-                let tx_info = AccountTransaction::DeployAccount(*deploy_account_tx)
+                let tx_info = AccountTransaction::DeployAccount(deploy_account_tx.clone())
                     .execute(&mut state, &Starknet::get_block_context(), true, true)
                     .unwrap();
                 (tx_info, state.to_state_diff())
@@ -170,7 +155,7 @@ fn re_execute_tx_ok() {
         let handle_l1_message_tx_info = match txs.get(4).unwrap() {
             Transaction::L1HandlerTransaction(l1_tx) => {
                 let mut state = Starknet::init_cached_state();
-                let tx_info = l1_tx.execute(&mut state, &Starknet::get_block_context(), true, true).unwrap();
+                let tx_info = l1_tx.clone().execute(&mut state, &Starknet::get_block_context(), true, true).unwrap();
                 (tx_info, state.to_state_diff())
             }
             _ => unreachable!(),

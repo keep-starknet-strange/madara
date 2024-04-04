@@ -7,8 +7,8 @@ use starknet_core::types::{
     TransactionTrace, TransactionTraceWithHash,
 };
 use starknet_ff::FieldElement;
+use starknet_providers::Provider;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
-use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{
     ARGENT_ACCOUNT_CLASS_HASH_CAIRO_0, ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE,
 };
@@ -23,7 +23,7 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
 
     assert_matches!(
         rpc.trace_block_transactions(BlockId::Hash(FieldElement::ZERO)).await,
-        Err(StarknetProviderError(StarknetErrorWithMessage { code: MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::BlockNotFound
+        Err(StarknetProviderError(StarknetError::BlockNotFound))
     );
 
     Ok(())

@@ -5,8 +5,8 @@ use assert_matches::assert_matches;
 use rstest::rstest;
 use starknet_core::types::{BlockId, BlockTag, DeclaredClassItem, MaybePendingStateUpdate, NonceUpdate, StarknetError};
 use starknet_ff::FieldElement;
+use starknet_providers::Provider;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
-use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{build_single_owner_account, AccountActions};
@@ -18,12 +18,8 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
     let rpc = madara.get_starknet_client().await;
 
     assert_matches!(
-        rpc
-        .get_state_update(
-            BlockId::Hash(FieldElement::ZERO),
-        )
-        .await,
-        Err(StarknetProviderError(StarknetErrorWithMessage { code: MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::BlockNotFound
+        rpc.get_state_update(BlockId::Hash(FieldElement::ZERO)).await,
+        Err(StarknetProviderError(StarknetError::BlockNotFound)),
     );
 
     Ok(())
@@ -55,10 +51,7 @@ async fn returns_correct_state_diff_transfer(madara: &ThreadSafeMadaraClient) ->
         let state_update = match rpc.get_state_update(BlockId::Tag(BlockTag::Latest)).await.unwrap() {
             MaybePendingStateUpdate::Update(update) => update,
             MaybePendingStateUpdate::PendingUpdate(_) => {
-                return Err(anyhow!(
-                    "Expected update, got pending
-update"
-                ));
+                return Err(anyhow!("Expected update, got pending update"));
             }
         };
         let block_hash_and_number = rpc.block_hash_and_number().await?;

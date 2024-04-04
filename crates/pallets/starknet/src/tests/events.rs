@@ -1,13 +1,15 @@
+use std::sync::Arc;
+
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
-use mp_transactions::InvokeTransactionV1;
-use starknet_api::transaction::TransactionHash;
+use starknet_api::core::{ContractAddress, Nonce, PatriciaKey};
+use starknet_api::hash::StarkFelt;
+use starknet_api::transaction::{Calldata, Fee, InvokeTransactionV1, TransactionHash, TransactionSignature};
 use starknet_core::utils::get_selector_from_name;
 
 use super::constants::{FEE_TOKEN_ADDRESS, MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS};
 use super::mock::default_mock::*;
 use super::mock::*;
-use crate::Config;
 
 const INNER_EVENT_EMITTING_CONTRACT_ADDRESS: &str =
     "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02cf";
@@ -16,36 +18,37 @@ const INNER_EVENT_EMITTING_CONTRACT_ADDRESS: &str =
 fn internal_and_external_events_are_emitted_in_the_right_order() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
+        let chain_id = Starknet::chain_id();
 
-        let emit_contract_address = Felt252Wrapper::from_hex_be(MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS).unwrap();
-        let inner_contract_address = Felt252Wrapper::from_hex_be(INNER_EVENT_EMITTING_CONTRACT_ADDRESS).unwrap();
-        let fee_token_address = Felt252Wrapper::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
+        let emit_contract_address =
+            ContractAddress(PatriciaKey(StarkFelt::try_from(MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS).unwrap()));
+        let inner_contract_address =
+            ContractAddress(PatriciaKey(StarkFelt::try_from(INNER_EVENT_EMITTING_CONTRACT_ADDRESS).unwrap()));
+        let fee_token_address = ContractAddress(PatriciaKey(StarkFelt::try_from(FEE_TOKEN_ADDRESS).unwrap()));
 
         let sender_account = get_account_address(None, AccountType::V0(AccountTypeV0Inner::NoValidate));
-        let emit_selector = Felt252Wrapper::from(get_selector_from_name("emit_sandwich").unwrap());
+        let emit_selector: StarkFelt = Felt252Wrapper::from(get_selector_from_name("emit_sandwich").unwrap()).into();
 
         let emit_event_transaction = InvokeTransactionV1 {
-            sender_address: sender_account.into(),
-            calldata: vec![
-                emit_contract_address, // Token address
+            sender_address: sender_account,
+            calldata: Calldata(Arc::new(vec![
+                emit_contract_address.0.0, // Token address
                 emit_selector,
-                Felt252Wrapper::ZERO, // Calldata len
-            ],
-            nonce: Felt252Wrapper::ZERO,
-            max_fee: u128::MAX,
-            signature: vec![],
-            offset_version: false,
+                StarkFelt::ZERO, // Calldata len
+            ])),
+            nonce: Nonce(StarkFelt::ZERO),
+            max_fee: Fee(u128::MAX),
+            signature: TransactionSignature::default(),
         };
+        let tx_hash = emit_event_transaction.compute_hash(chain_id, false);
+
+        let events = Starknet::tx_events(TransactionHash::from(tx_hash));
 
         let none_origin = RuntimeOrigin::none();
         Starknet::invoke(none_origin, emit_event_transaction.clone().into())
             .expect("emit sandwich transaction should not fail");
 
-        let chain_id = Starknet::chain_id();
-        let tx_hash = emit_event_transaction.compute_hash::<<MockRuntime as Config>::SystemHash>(chain_id, false);
-        let events = Starknet::tx_events(TransactionHash::from(tx_hash));
-        let event_emitters: Vec<Felt252Wrapper> =
-            events.iter().map(|event| Felt252Wrapper::from(event.from_address)).collect();
+        let event_emitters: Vec<ContractAddress> = events.iter().map(|event| event.from_address).collect();
 
         pretty_assertions::assert_eq!(
             event_emitters,

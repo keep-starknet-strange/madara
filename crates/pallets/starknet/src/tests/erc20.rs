@@ -18,7 +18,6 @@ use super::mock::default_mock::*;
 use super::mock::*;
 use crate::tests::constants::{TOKEN_CONTRACT_CLASS_HASH, TRANSFER_SELECTOR_NAME};
 use crate::tests::utils::{build_transfer_invoke_transaction, get_contract_class, BuildTransferInvokeTransaction};
-use crate::Config;
 
 lazy_static! {
     static ref ERC20_CONTRACT_CLASS: ContractClass = get_contract_class("ERC20.json", 0);
@@ -122,9 +121,10 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             expected_fee_transfer_event,
             events.last().unwrap().clone()
         );
+        let chain_id = Starknet::chain_id();
         // TODO: use dynamic values to craft invoke transaction
         // Transfer some token
-        let transfer_transaction = build_transfer_invoke_transaction(BuildTransferInvokeTransaction {
+        let transfer_transaction = build_transfer_invoke_transaction(chain_id, BuildTransferInvokeTransaction {
             sender_address,
             token_address: Felt252Wrapper::from(expected_erc20_address).into(),
             recipient: Felt252Wrapper::from(16u128).into(),
@@ -132,9 +132,6 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             amount_high: Felt252Wrapper::ZERO.into(),
             nonce: Felt252Wrapper::ONE.into(),
         });
-
-        let chain_id = Starknet::chain_id();
-        let tx_hash = transfer_transaction.compute_hash(chain_id, false);
 
         // Also asserts that the deployment has been saved.
         assert_ok!(Starknet::invoke(origin, transfer_transaction));

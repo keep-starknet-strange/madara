@@ -4,7 +4,7 @@ use assert_matches::assert_matches;
 use rstest::rstest;
 use starknet_core::types::StarknetError;
 use starknet_ff::FieldElement;
-use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
+use starknet_providers::{Provider, ProviderError};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{assert_poll, build_single_owner_account, AccountActions};
@@ -49,10 +49,7 @@ async fn fail_invalid_transaction_hash(madara: &ThreadSafeMadaraClient) -> Resul
 
     assert_matches!(
         rpc.get_transaction_by_hash(FieldElement::from_hex_be("0x123").unwrap()).await,
-        Err(ProviderError::StarknetError(StarknetErrorWithMessage {
-            code: MaybeUnknownErrorCode::Known(StarknetError::TransactionHashNotFound),
-            message: _
-        }))
+        Err(ProviderError::StarknetError(StarknetError::TransactionHashNotFound))
     );
 
     Ok(())

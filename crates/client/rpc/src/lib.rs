@@ -833,10 +833,8 @@ where
     /// a pending block with transaction hashes, depending on the state of the requested block.
     /// In case the block is not found, returns a `StarknetRpcApiError` with `BlockNotFound`.
     fn get_block_with_tx_hashes(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxHashes> {
-        let chain_id = self.chain_id()?;
-
         if is_pending_block(block_id) {
-            let pending_block = self.prepare_pending_block_with_tx_hashes(Felt252Wrapper(chain_id.0))?;
+            let pending_block = self.prepare_pending_block_with_tx_hashes()?;
             return Ok(MaybePendingBlockWithTxHashes::PendingBlock(pending_block));
         }
 
@@ -1093,11 +1091,8 @@ where
     /// transactions. In case the specified block is not found, returns a `StarknetRpcApiError` with
     /// `BlockNotFound`.
     fn get_block_with_txs(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxs> {
-        let chain_id = self.chain_id()?;
-        let chain_id = Felt252Wrapper(chain_id.0);
-
         if is_pending_block(block_id) {
-            let pending_block = self.prepare_pending_block_with_txs(chain_id)?;
+            let pending_block = self.prepare_pending_block_with_txs()?;
             return Ok(MaybePendingBlockWithTxs::PendingBlock(pending_block));
         }
 
@@ -1389,10 +1384,7 @@ where
     G: GenesisProvider + Send + Sync + 'static,
     H: HasherT + Send + Sync + 'static,
 {
-    fn prepare_pending_block_with_tx_hashes(
-        &self,
-        chain_id: Felt252Wrapper,
-    ) -> Result<PendingBlockWithTxHashes, StarknetRpcApiError> {
+    fn prepare_pending_block_with_tx_hashes(&self) -> Result<PendingBlockWithTxHashes, StarknetRpcApiError> {
         let parent_hash = self.get_best_block_hash();
         let latest_block = get_block_by_block_hash(self.client.as_ref(), parent_hash).unwrap_or_default();
         let latest_block_header = latest_block.header();
@@ -1413,10 +1405,7 @@ where
         Ok(pending_block)
     }
 
-    fn prepare_pending_block_with_txs(
-        &self,
-        chain_id: Felt252Wrapper,
-    ) -> Result<PendingBlockWithTxs, StarknetRpcApiError> {
+    fn prepare_pending_block_with_txs(&self) -> Result<PendingBlockWithTxs, StarknetRpcApiError> {
         let parent_hash = self.get_best_block_hash();
         let latest_block = get_block_by_block_hash(self.client.as_ref(), parent_hash).unwrap_or_default();
         let latest_block_header = latest_block.header();

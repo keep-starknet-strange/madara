@@ -7,8 +7,8 @@ use starknet_core::types::{
     BlockId, BlockTag, InvokeTransaction, InvokeTransactionV1, MaybePendingBlockWithTxs, StarknetError, Transaction,
 };
 use starknet_ff::FieldElement;
+use starknet_providers::Provider;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
-use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, MINT_AMOUNT, SIGNER_PRIVATE, TEST_CONTRACT_CLASS_HASH};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{build_single_owner_account, AccountActions};
@@ -21,10 +21,7 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
 
     assert_matches!(
         rpc.get_transaction_by_block_id_and_index(BlockId::Hash(FieldElement::ZERO), 0).await,
-        Err(StarknetProviderError(StarknetErrorWithMessage {
-            code: MaybeUnknownErrorCode::Known(StarknetError::BlockNotFound),
-            ..
-        }))
+        Err(StarknetProviderError(StarknetError::BlockNotFound))
     );
 
     Ok(())
@@ -37,10 +34,7 @@ async fn fail_out_of_block_index(madara: &ThreadSafeMadaraClient) -> Result<(), 
 
     assert_matches!(
         rpc.get_transaction_by_block_id_and_index(BlockId::Tag(BlockTag::Latest), u64::MAX).await,
-        Err(StarknetProviderError(StarknetErrorWithMessage {
-            code: MaybeUnknownErrorCode::Known(StarknetError::InvalidTransactionIndex),
-            ..
-        }))
+        Err(StarknetProviderError(StarknetError::InvalidTransactionIndex))
     );
 
     Ok(())

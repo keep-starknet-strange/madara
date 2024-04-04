@@ -5,8 +5,8 @@ use rstest::rstest;
 use starknet_core::types::{BlockId, BlockTag, EthAddress, MsgFromL1, StarknetError};
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
+use starknet_providers::Provider;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
-use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
 use starknet_rpc_test::constants::{L1_CONTRACT_ADDRESS, TEST_CONTRACT_ADDRESS};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 
@@ -24,8 +24,8 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
 
     assert_matches!(
         rpc.estimate_message_fee(message, BlockId::Hash(FieldElement::ZERO)).await,
-        Err(StarknetProviderError(StarknetErrorWithMessage { code:
-MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::BlockNotFound     );
+        Err(StarknetProviderError(StarknetError::BlockNotFound))
+    );
 
     Ok(())
 }
@@ -44,8 +44,8 @@ async fn fail_if_message_fail(madara: &ThreadSafeMadaraClient) -> Result<(), any
 
     assert_matches!(
         rpc.estimate_message_fee(message, BlockId::Tag(BlockTag::Latest)).await,
-        Err(StarknetProviderError(StarknetErrorWithMessage { code:
-MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::ContractError     );
+        Err(StarknetProviderError(StarknetError::ContractError(_)))
+    );
 
     Ok(())
 }
@@ -67,9 +67,9 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
 
     let fee = rpc.estimate_message_fee(message, BlockId::Tag(BlockTag::Latest)).await?;
 
-    assert_eq!(fee.gas_consumed, 17091);
-    assert_eq!(fee.gas_price, 10);
-    assert_eq!(fee.overall_fee, 0);
+    assert_eq!(fee.gas_consumed, FieldElement::from(17091u128));
+    assert_eq!(fee.gas_price, FieldElement::from(10u128));
+    assert_eq!(fee.overall_fee, FieldElement::ZERO);
 
     Ok(())
 }

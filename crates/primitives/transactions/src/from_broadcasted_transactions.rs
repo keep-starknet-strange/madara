@@ -574,7 +574,6 @@ fn resource_bounds_mapping_conversion(
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
-    use mp_hashers::pedersen::PedersenHasher;
     use starknet_core::types::contract::SierraClass;
     use starknet_core::types::FlattenedSierraClass;
 
@@ -617,7 +616,7 @@ mod tests {
         };
 
         let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V1(txn);
-        assert!(try_account_tx_from_broadcasted_declare_tx::<PedersenHasher>(input, Default::default()).is_ok());
+        assert!(try_account_tx_from_broadcasted_declare_tx(input, Default::default()).is_ok());
     }
 
     #[test]
@@ -643,7 +642,7 @@ mod tests {
 
         let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V1(txn);
         assert_matches!(
-            try_account_tx_from_broadcasted_declare_tx::<PedersenHasher>(input, Default::default()),
+            try_account_tx_from_broadcasted_declare_tx(input, Default::default()),
             Err(BroadcastedTransactionConversionError::ProgramDecompressionFailed)
         );
     }
@@ -663,7 +662,7 @@ mod tests {
         };
 
         let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V2(txn);
-        assert!(try_account_tx_from_broadcasted_declare_tx::<PedersenHasher>(input, Default::default()).is_ok());
+        assert!(try_account_tx_from_broadcasted_declare_tx(input, Default::default()).is_ok());
     }
 
     #[test]
@@ -683,7 +682,7 @@ mod tests {
         let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V2(txn);
 
         assert_matches!(
-            try_account_tx_from_broadcasted_declare_tx::<PedersenHasher>(input, Default::default()),
+            try_account_tx_from_broadcasted_declare_tx(input, Default::default()),
             Err(BroadcastedTransactionConversionError::InvalidCompiledClassHash)
         );
     }

@@ -8,12 +8,12 @@ use anyhow::anyhow;
 use rstest::rstest;
 use starknet_accounts::Account;
 use starknet_core::types::{
-    BlockId, BlockStatus, BlockTag, DeclareTransaction, InvokeTransaction, MaybePendingBlockWithTxs, StarknetError,
-    Transaction as StarknetTransaction,
+    BlockId, BlockStatus, BlockTag, DeclareTransaction, DeployAccountTransaction, InvokeTransaction,
+    MaybePendingBlockWithTxs, StarknetError, Transaction as StarknetTransaction,
 };
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
-use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
+use starknet_providers::{Provider, ProviderError};
 use starknet_rpc_test::constants::{
     ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE, SIGNER_PRIVATE,
 };
@@ -30,10 +30,7 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
 
     assert_matches!(
         rpc.get_block_with_txs(BlockId::Hash(FieldElement::ZERO)).await.err(),
-        Some(ProviderError::StarknetError(StarknetErrorWithMessage {
-            message: _,
-            code: MaybeUnknownErrorCode::Known(StarknetError::BlockNotFound)
-        }))
+        Some(ProviderError::StarknetError(StarknetError::BlockNotFound))
     );
 
     Ok(())
@@ -183,7 +180,7 @@ async fn works_with_deploy_account_txn(madara: &ThreadSafeMadaraClient) -> Resul
 
     assert_eq!(block.transactions.len(), 1);
     let tx = match &block.transactions[0] {
-        StarknetTransaction::DeployAccount(tx) => tx,
+        StarknetTransaction::DeployAccount(DeployAccountTransaction::V1(tx)) => tx,
         _ => return Err(anyhow!("Expected an deploy transaction v1")),
     };
     assert_eq!(tx.nonce, 0u8.into());
@@ -241,16 +238,16 @@ async fn works_with_pending_deploy_account_txn(madara: &ThreadSafeMadaraClient) 
     };
 
     assert_eq!(pending_block.transactions.len(), 1);
-    let tx = match &pending_block.transactions[0] {
-        StarknetTransaction::DeployAccount(tx) => tx,
+    let transaction = match &pending_block.transactions[0] {
+        StarknetTransaction::DeployAccount(DeployAccountTransaction::V1(tx)) => tx,
         _ => return Err(anyhow!("Expected an deploy transaction v1")),
     };
-    assert_eq!(tx.nonce, 0u8.into());
-    assert_eq!(tx.max_fee, max_fee);
-    assert_eq!(tx.contract_address_salt, contract_address_salt);
-    assert_eq!(tx.class_hash, class_hash);
+    assert_eq!(transaction.nonce, 0u8.into());
+    assert_eq!(transaction.max_fee, max_fee);
+    assert_eq!(transaction.contract_address_salt, contract_address_salt);
+    assert_eq!(transaction.class_hash, class_hash);
     assert_eq!(
-        tx.constructor_calldata,
+        transaction.constructor_calldata,
         vec![FieldElement::from_hex_be("0x047de619de131463cbf799d321b50c617566dc897d4be614fb3927eacd55d7ad").unwrap()]
     );
 
