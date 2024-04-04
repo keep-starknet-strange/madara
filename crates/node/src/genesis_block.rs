@@ -58,7 +58,6 @@ fn construct_genesis_block<Block: BlockT>(state_root: Block::Hash, state_version
 
     let mut digest = vec![];
     let block = StarknetBlock::default();
-
     digest.push(DigestItem::Consensus(MADARA_ENGINE_ID, Log::Block(block).encode()));
 
     Block::new(
