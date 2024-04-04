@@ -115,13 +115,15 @@
 <a href="#115" id="115">115</a>
 <a href="#116" id="116">116</a>
 <a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::fmt;
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::string::String;
 <span class="kw">use </span>std::vec::Vec;
 
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass <span class="kw">as </span>StarknetContractClass;
-<span class="kw">use </span>derive_more::Constructor;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>serde::de::Error;
 <span class="kw">use </span>serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -131,7 +133,7 @@
 
 <span class="doccomment">/// A wrapper for FieldElement that implements serde&#39;s Serialize and Deserialize for hex strings.
 </span><span class="attr">#[serde_as]
-#[derive(Serialize, Deserialize, Copy, Clone)]
+#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>HexFelt(<span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>)] </span><span class="kw">pub </span>FieldElement);
 
 <span class="kw">impl </span>fmt::LowerHex <span class="kw">for </span>HexFelt {
@@ -166,7 +168,7 @@
 <span class="kw">pub type </span>ContractStorageKey = (ContractAddress, StorageKey);
 <span class="kw">pub type </span>StorageValue = HexFelt;
 
-<span class="attr">#[derive(Deserialize, Serialize)]
+<span class="attr">#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>GenesisData {
     <span class="kw">pub </span>contract_classes: Vec&lt;(ClassHash, ContractClass)&gt;,
     <span class="kw">pub </span>sierra_class_hash_to_casm_class_hash: Vec&lt;(ClassHash, ClassHash)&gt;,
@@ -176,13 +178,17 @@
     <span class="kw">pub </span>fee_token_address: ContractAddress,
 }
 
-<span class="attr">#[derive(Constructor)]
+<span class="attr">#[derive(Debug, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>GenesisLoader {
     base_path: PathBuf,
     data: GenesisData,
 }
 
 <span class="kw">impl </span>GenesisLoader {
+    <span class="kw">pub fn </span>new(base_path: PathBuf, data: GenesisData) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ base_path, data }
+    }
+
     <span class="kw">pub fn </span>data(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>GenesisData {
         <span class="kw-2">&amp;</span><span class="self">self</span>.data
     }
@@ -191,7 +197,7 @@
     }
 }
 
-<span class="attr">#[derive(Deserialize, Serialize, Clone)]
+<span class="attr">#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
 #[serde(untagged)]
 </span><span class="kw">pub enum </span>ContractClass {
     Path { path: String, version: u8 },
@@ -199,7 +205,7 @@
 }
 
 <span class="doccomment">/// A struct containing predeployed accounts info.
-</span><span class="attr">#[derive(Serialize, Deserialize)]
+</span><span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>PredeployedAccount {
     <span class="kw">pub </span>contract_address: ContractAddress,
     <span class="kw">pub </span>class_hash: ClassHash,

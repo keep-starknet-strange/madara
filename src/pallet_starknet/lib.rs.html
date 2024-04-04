@@ -1116,6 +1116,7 @@
 <a href="#1116" id="1116">1116</a>
 <a href="#1117" id="1117">1117</a>
 <a href="#1118" id="1118">1118</a>
+<a href="#1119" id="1119">1119</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1443,6 +1444,7 @@
 
     <span class="doccomment">/// Starknet genesis configuration.
     </span><span class="attr">#[pallet::genesis_config]
+    #[derive(Debug, PartialEq, Eq)]
     </span><span class="kw">pub struct </span>GenesisConfig&lt;T: Config&gt; {
         <span class="doccomment">/// The contracts to be deployed at genesis.
         /// This is a vector of tuples, where the first element is the contract address and the
@@ -1477,11 +1479,11 @@
             }
         }
     }
-
     <span class="attr">#[pallet::genesis_build]
     </span><span class="kw">impl</span>&lt;T: Config&gt; BuildGenesisConfig <span class="kw">for </span>GenesisConfig&lt;T&gt; {
         <span class="kw">fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) {
             &lt;Pallet&lt;T&gt;&gt;::store_block(<span class="number">0</span>);
+
             frame_support::storage::unhashed::put::&lt;StarknetStorageSchemaVersion&gt;(
                 PALLET_STARKNET_SCHEMA,
                 <span class="kw-2">&amp;</span>StarknetStorageSchemaVersion::V1,

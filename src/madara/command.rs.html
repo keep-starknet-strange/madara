@@ -183,39 +183,7 @@
 <a href="#183" id="183">183</a>
 <a href="#184" id="184">184</a>
 <a href="#185" id="185">185</a>
-<a href="#186" id="186">186</a>
-<a href="#187" id="187">187</a>
-<a href="#188" id="188">188</a>
-<a href="#189" id="189">189</a>
-<a href="#190" id="190">190</a>
-<a href="#191" id="191">191</a>
-<a href="#192" id="192">192</a>
-<a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
-<a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a>
-<a href="#206" id="206">206</a>
-<a href="#207" id="207">207</a>
-<a href="#208" id="208">208</a>
-<a href="#209" id="209">209</a>
-<a href="#210" id="210">210</a>
-<a href="#211" id="211">211</a>
-<a href="#212" id="212">212</a>
-<a href="#213" id="213">213</a>
-<a href="#214" id="214">214</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::env;
-<span class="kw">use </span>std::fs::{<span class="self">self</span>, File};
-<span class="kw">use </span>std::io::Write;
-<span class="kw">use </span>std::path::PathBuf;
 
 <span class="kw">use </span>frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 <span class="kw">use </span>madara_runtime::Block;
@@ -228,30 +196,6 @@
 <span class="attr">#[cfg(feature = <span class="string">&quot;sharingan&quot;</span>)]
 </span><span class="kw">use </span><span class="kw">crate</span>::constants::SHARINGAN_CHAIN_ID;
 <span class="kw">use crate</span>::{chain_spec, service};
-
-<span class="kw">fn </span>spit_spec_to_json(base_config: <span class="kw">impl </span>ChainSpec) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>ChainSpec&gt;, String&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>temp_dir = <span class="kw">match </span>env::var_os(<span class="string">&quot;HOME&quot;</span>) {
-        <span class="prelude-val">Some</span>(home_dir) =&gt; PathBuf::from(home_dir),
-        <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">&quot;Failed to get home directory&quot;</span>.to_string()),
-    };
-
-    temp_dir.push(<span class="string">&quot;.madara&quot;</span>);
-
-    fs::create_dir_all(<span class="kw-2">&amp;</span>temp_dir).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Failed to create directory: {}&quot;</span>, e))<span class="question-mark">?</span>;
-
-    <span class="kw">let </span>temp_file_name = <span class="macro">format!</span>(<span class="string">&quot;{:?}-spec.json&quot;</span>, base_config.chain_type());
-    <span class="kw">let </span>temp_file_path = temp_dir.join(temp_file_name);
-
-    <span class="kw">let </span>json_config = ChainSpec::as_json(<span class="kw-2">&amp;</span>base_config, <span class="bool-val">true</span>).expect(<span class="string">&quot;failed to create json dump of chainspec&quot;</span>);
-
-    <span class="kw">if </span>temp_file_path.exists() {
-        <span class="prelude-val">Ok</span>(Box::new(chain_spec::ChainSpec::from_json_file(temp_file_path.clone())<span class="question-mark">?</span>))
-    } <span class="kw">else </span>{
-        <span class="kw">let </span><span class="kw-2">mut </span>file = File::create(<span class="kw-2">&amp;</span>temp_file_path).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Failed to create temporary file: {}&quot;</span>, e))<span class="question-mark">?</span>;
-        file.write_all(json_config.as_bytes()).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Failed to write to temporary file: {}&quot;</span>, e))<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(Box::new(chain_spec::ChainSpec::from_json_file(temp_file_path)<span class="question-mark">?</span>))
-    }
-}
 
 <span class="kw">impl </span>SubstrateCli <span class="kw">for </span>Cli {
     <span class="kw">fn </span>impl_name() -&gt; String {
@@ -279,12 +223,11 @@
     </span>}
 
     <span class="kw">fn </span>load_spec(<span class="kw-2">&amp;</span><span class="self">self</span>, id: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>ChainSpec&gt;, String&gt; {
-        <span class="kw">match </span>id {
+        <span class="prelude-val">Ok</span>(<span class="kw">match </span>id {
             DEV_CHAIN_ID =&gt; {
                 <span class="kw">let </span>sealing = <span class="self">self</span>.run.sealing.map(Into::into).unwrap_or_default();
                 <span class="kw">let </span>base_path = <span class="self">self</span>.run.base_path().map_err(|e| e.to_string())<span class="question-mark">?</span>;
-                <span class="kw">let </span>base_config = chain_spec::development_config(sealing, base_path)<span class="question-mark">?</span>;
-                spit_spec_to_json(base_config)
+                Box::new(chain_spec::development_config(sealing, base_path)<span class="question-mark">?</span>)
             }
             <span class="attr">#[cfg(feature = <span class="string">&quot;sharingan&quot;</span>)]
             </span>SHARINGAN_CHAIN_ID =&gt; Box::new(chain_spec::ChainSpec::from_json_bytes(
@@ -292,11 +235,10 @@
             )<span class="question-mark">?</span>),
             <span class="string">&quot;&quot; </span>| <span class="string">&quot;local&quot; </span>| <span class="string">&quot;madara-local&quot; </span>=&gt; {
                 <span class="kw">let </span>base_path = <span class="self">self</span>.run.base_path().map_err(|e| e.to_string())<span class="question-mark">?</span>;
-                <span class="kw">let </span>base_config = chain_spec::local_testnet_config(base_path, id)<span class="question-mark">?</span>;
-                spit_spec_to_json(base_config)
+                Box::new(chain_spec::local_testnet_config(base_path, id)<span class="question-mark">?</span>)
             }
-            path_or_url =&gt; <span class="prelude-val">Ok</span>(Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path_or_url))<span class="question-mark">?</span>)),
-        }
+            path_or_url =&gt; Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path_or_url))<span class="question-mark">?</span>),
+        })
     }
 }
 
