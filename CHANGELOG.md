@@ -2,7 +2,8 @@
 
 ## Next release
 
-- Fix(node): fix genesis hash inconsistency
+- fix(node): fix genesis hash inconsistency
+- feat (pallet): add tests for storage reversal on transaction revert
 - feat: add prometheus metrics for mapping worker
 - Fix(node): Fix creating a local testnet with multiple nodes fails using only
   cli flags
