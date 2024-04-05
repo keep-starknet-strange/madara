@@ -40,6 +40,8 @@
 pub use pallet::*;
 /// An adapter for the blockifier state related traits
 pub mod blockifier_state_adapter;
+/// BlockifierError Wrappers
+pub mod errors;
 /// The implementation of the execution configuration.
 pub mod execution_config;
 #[cfg(feature = "std")]
@@ -98,6 +100,7 @@ use starknet_crypto::FieldElement;
 use transaction_validation::TxPriorityInfo;
 
 use crate::alloc::string::ToString;
+use crate::errors::BlockifierErrors;
 use crate::execution_config::RuntimeExecutionConfigBuilder;
 use crate::types::{CasmClassHash, SierraClassHash, SierraOrCasmClassHash, StorageSlot};
 
@@ -430,14 +433,6 @@ pub mod pallet {
         FailedToCreateATransactionalStorageExecution,
         L1MessageAlreadyExecuted,
         MissingL1GasUsage,
-    }
-
-    /// Wrapper Type For Blockifier Errors
-    #[derive(Debug, Clone, TypeInfo, Decode, Encode)]
-    pub enum BlockifierErrors {
-        EntryPointExecutionError(EntryPointExecutionError),
-        PreExecutionError(PreExecutionError),
-        TransactionExecutionError(TransactionExecutionError),
     }
 
     /// The Starknet pallet external functions.
