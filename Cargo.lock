@@ -6237,7 +6237,6 @@ dependencies = [
  "celestia-rpc",
  "celestia-types",
  "clap 4.4.10",
- "ethereum-instance",
  "ethers",
  "futures",
  "indexmap 2.0.0-pre",
@@ -6262,21 +6261,14 @@ dependencies = [
  "sp-io 23.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-keyring",
  "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "starkgate-manager-client",
- "starkgate-registry-client",
  "starknet-core",
  "starknet-core-contract-client",
- "starknet-erc20-client",
- "starknet-eth-bridge-client",
- "starknet-proxy-client",
- "starknet-token-bridge-client",
  "starknet_api",
  "substrate-prometheus-endpoint",
  "subxt",
  "thiserror",
  "tokio",
  "url",
- "utils",
  "uuid 1.8.0",
 ]
 
@@ -6328,7 +6320,6 @@ dependencies = [
 name = "mc-l1-messages"
 version = "0.1.0"
 dependencies = [
- "ethereum-instance",
  "ethers",
  "log",
  "mc-db",
@@ -6344,17 +6335,10 @@ dependencies = [
  "sp-api",
  "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "starkgate-manager-client",
- "starkgate-registry-client",
  "starknet-core-contract-client",
- "starknet-erc20-client",
- "starknet-eth-bridge-client",
- "starknet-proxy-client",
- "starknet-token-bridge-client",
  "starknet_api",
  "thiserror",
  "url",
- "utils",
 ]
 
 [[package]]
@@ -6472,7 +6456,6 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "clap 4.4.10",
- "ethereum-instance",
  "ethers",
  "futures",
  "futures-timer",
@@ -6497,14 +6480,8 @@ dependencies = [
  "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-io 23.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "starkgate-manager-client",
- "starkgate-registry-client",
  "starknet-core-contract-client",
  "starknet-crypto 0.6.1 (git+https://github.com/xJonathanLEI/starknet-rs.git?rev=64ebc36)",
- "starknet-erc20-client",
- "starknet-eth-bridge-client",
- "starknet-proxy-client",
- "starknet-token-bridge-client",
  "starknet_api",
  "thiserror",
  "url",
