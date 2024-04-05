@@ -9,6 +9,7 @@ use super::constants::TOKEN_CONTRACT_CLASS_HASH;
 use super::mock::default_mock::*;
 use super::mock::*;
 use crate::tests::utils::build_get_balance_contract_call;
+use crate::{Config, ContractClassHashes, Error};
 
 #[test]
 fn given_call_contract_call_works() {
@@ -81,5 +82,41 @@ fn given_call_contract_call_works() {
         );
         let res = Starknet::call_contract(expected_erc20_address, decimals_selector, default_calldata).unwrap();
         pretty_assertions::assert_eq!(res, vec![Felt252Wrapper::from_hex_be("0x02").unwrap()]);
+    });
+}
+
+/// Purpose of this test to check if the querying a random contract works
+/// Note: however some users expect the contract address of 0x1 to be empty to test calls
+/// using 0x1 reveals a contract that already exists there
+/// ```shell
+/// curl -X POST --location "http://localhost:9944" \
+/// -H "Content-Type: application/json" \
+/// -d '{
+/// "id": 1,
+/// "jsonrpc": "2.0",
+/// "method": "starknet_call",
+/// "params": [
+/// {
+/// "contract_address": "0x1",
+/// "entry_point_selector": "0x1",
+/// "calldata": [
+/// ]
+/// },
+/// "latest"
+/// ]
+/// }'
+/// ```
+#[test]
+#[should_panic(expected = "Contract Not Found")]
+fn fails_when_contract_does_not_exist() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(1);
+        let address = ContractAddress(PatriciaKey(
+            StarkFelt::try_from("00dc58c1280862c95964106ef9eba5d9ed8c0c16d05883093e4540f22b829dff").unwrap(),
+        ));
+
+        ContractClassHashes::<MockRuntime>::try_get(address)
+            .map_err(|_| Error::<MockRuntime>::ContractNotFound)
+            .unwrap();
     });
 }

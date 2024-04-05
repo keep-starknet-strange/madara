@@ -1,9 +1,11 @@
+use std::sync::Arc;
+
 use jsonrpsee::types::error::{CallError, ErrorObject};
 use pallet_starknet_runtime_api::StarknetTransactionExecutionError;
 
 // Comes from the RPC Spec:
 // https://github.com/starkware-libs/starknet-specs/blob/0e859ff905795f789f1dfd6f7340cdaf5015acc8/api/starknet_write_api.json#L227
-#[derive(thiserror::Error, Clone, Copy, Debug)]
+#[derive(thiserror::Error, Clone, Debug)]
 pub enum StarknetRpcApiError {
     #[error("Failed to write transaction")]
     FailedToReceiveTxn = 1,
@@ -59,6 +61,10 @@ impl From<StarknetTransactionExecutionError> for StarknetRpcApiError {
 
 impl From<StarknetRpcApiError> for jsonrpsee::core::Error {
     fn from(err: StarknetRpcApiError) -> Self {
-        jsonrpsee::core::Error::Call(CallError::Custom(ErrorObject::owned(err as i32, err.to_string(), None::<()>)))
+        jsonrpsee::core::Error::Call(CallError::Custom(ErrorObject::owned(
+            err.clone() as i32,
+            err.to_string(),
+            None::<()>,
+        )))
     }
 }

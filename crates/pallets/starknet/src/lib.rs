@@ -408,7 +408,7 @@ pub mod pallet {
     #[pallet::error]
     pub enum Error<T> {
         AccountNotDeployed,
-        TransactionExecutionFailed,
+        TransactionExecutionFailed(BlockifierErrors),
         ClassHashAlreadyDeclared,
         ContractClassHashUnknown,
         ContractClassAlreadyAssociated,
@@ -430,6 +430,14 @@ pub mod pallet {
         FailedToCreateATransactionalStorageExecution,
         L1MessageAlreadyExecuted,
         MissingL1GasUsage,
+    }
+
+    /// Wrapper Type For Blockifier Errors
+    #[derive(Debug, Clone, TypeInfo, Decode, Encode)]
+    pub enum BlockifierErrors {
+        EntryPointExecutionError(EntryPointExecutionError),
+        PreExecutionError(PreExecutionError),
+        TransactionExecutionError(TransactionExecutionError),
     }
 
     /// The Starknet pallet external functions.
@@ -915,7 +923,7 @@ impl<T: Config> Pallet<T> {
             }
             Err(e) => {
                 log!(error, "failed to call smart contract {:?}", e);
-                Err(Error::<T>::TransactionExecutionFailed.into())
+                Err(Error::<T>::TransactionExecutionFailed(BlockifierErrors::EntryPointExecutionError).into())
             }
         }
     }
