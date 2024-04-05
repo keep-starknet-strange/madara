@@ -8,10 +8,10 @@ edition = "2021"
 
 anyhow = { workspace = true }
 assert_matches = { workspace = true }
-async-lock ={ workspace = true }
+async-lock = { workspace = true }
 async-trait = { workspace = true }
 flate2 = { workspace = true }
-reqwest ={ workspace = true }
+reqwest = { workspace = true }
 rstest = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
