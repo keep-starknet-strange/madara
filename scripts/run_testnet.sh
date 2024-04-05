@@ -15,10 +15,10 @@ trap cleanup EXIT
 cargo build --release
 
 # copy configs from dev
-./target/release/madara setup --from-local ./configs/ --chain=dev --base-path /tmp/alice
+./target/release/madara setup --from-local ./configs/ --chain dev --base-path /tmp/alice
 
 # copy configs over from dev
-./target/release/madara setup --from-local ./configs/ --chain=dev --base-path /tmp/node1
+./target/release/madara setup --from-local ./configs/ --chain dev --base-path /tmp/node1
 
 # purge validator chain
 ./target/release/madara purge-chain --base-path /tmp/alice --chain dev -y
@@ -54,6 +54,7 @@ specific_message="1 peers"
 if ! grep -q "$specific_message" validator_output.txt; then
     echo "Node failed to connect to validator"
     cat validator_output.txt
+    echo "==============> Node output <=============="
     cat node_output.txt
     exit 1
 fi
