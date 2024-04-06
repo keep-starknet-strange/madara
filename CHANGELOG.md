@@ -2,6 +2,9 @@
 
 ## Next release
 
+- fix(node): fix genesis hash inconsistency
+- feat (pallet): add tests for storage reversal on transaction revert
+- feat: add prometheus metrics for mapping worker
 - Fix(node): Fix creating a local testnet with multiple nodes fails using only
   cli flags
 - dev: change `Vec::new` to `Vec::with_capacity` where possible.
@@ -27,6 +30,7 @@
 - feat(runtime): moved StarkEvents from Substrate events to runtime storage
 - feat(node): validate declare txs against local Sierra class in block import
   queue
+- feat(runtime): moved StarkEvents from Substrate
 
 ## v0.7.0
 

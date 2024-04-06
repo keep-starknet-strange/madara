@@ -4,7 +4,6 @@ use std::string::String;
 use std::vec::Vec;
 
 use blockifier::execution::contract_class::ContractClass as StarknetContractClass;
-use derive_more::Constructor;
 use mp_felt::Felt252Wrapper;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -14,7 +13,7 @@ use starknet_crypto::FieldElement;
 
 /// A wrapper for FieldElement that implements serde's Serialize and Deserialize for hex strings.
 #[serde_as]
-#[derive(Serialize, Deserialize, Copy, Clone)]
+#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq)]
 pub struct HexFelt(#[serde_as(as = "UfeHex")] pub FieldElement);
 
 impl fmt::LowerHex for HexFelt {
@@ -49,7 +48,7 @@ pub type StorageKey = HexFelt;
 pub type ContractStorageKey = (ContractAddress, StorageKey);
 pub type StorageValue = HexFelt;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
 pub struct GenesisData {
     pub contract_classes: Vec<(ClassHash, ContractClass)>,
     pub sierra_class_hash_to_casm_class_hash: Vec<(ClassHash, ClassHash)>,
@@ -59,13 +58,17 @@ pub struct GenesisData {
     pub fee_token_address: ContractAddress,
 }
 
-#[derive(Constructor)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct GenesisLoader {
     base_path: PathBuf,
     data: GenesisData,
 }
 
 impl GenesisLoader {
+    pub fn new(base_path: PathBuf, data: GenesisData) -> Self {
+        Self { base_path, data }
+    }
+
     pub fn data(&self) -> &GenesisData {
         &self.data
     }
@@ -74,7 +77,7 @@ impl GenesisLoader {
     }
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum ContractClass {
     Path { path: String, version: u8 },
@@ -82,7 +85,7 @@ pub enum ContractClass {
 }
 
 /// A struct containing predeployed accounts info.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct PredeployedAccount {
     pub contract_address: ContractAddress,
     pub class_hash: ClassHash,

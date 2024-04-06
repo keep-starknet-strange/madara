@@ -1,0 +1,76 @@
+name: Basic Testnet
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  rpc-tests:
+    runs-on: ubuntu-latest
+    env:
+      BINARY_PATH: ../target/production/madara
+    steps:
+      - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "cache"
+          save-if: false
+      - uses: actions/cache@v3
+        with:
+          path: |
+            target/production/madara
+          key:
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
+            github.run_id }}
+          fail-on-cache-miss: true
+      - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "2.3.1"
+      - name: Setup Validator
+        run: |
+          ./target/production/madara setup --from-local ./configs/ --chain dev --base-path /tmp/alice
+
+      - name: Setup Node1
+        run: |
+          ./target/production/madara setup --from-local ./configs/ --chain dev --base-path /tmp/node1
+
+      - name: Purge validator chain
+        run: |
+          ./target/production/madara purge-chain --base-path /tmp/alice --chain dev -y
+
+      - name: Purge node chain
+        run: |
+          ./target/production/madara purge-chain --base-path /tmp/node1 --chain dev -y
+
+      - name: Run validator
+        run: |
+          ./target/production/madara \
+            --base-path=/tmp/alice \
+            --chain=dev \
+            --alice \
+            --node-key=0000000000000000000000000000000000000000000000000000000000000001 \
+            --validator > validator_output.txt 2>&1 &
+          echo $! > validator_pid.txt
+
+      - name: Run node
+        run: |
+          ./target/production/madara \
+            --chain=dev \
+            --bootnodes=/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp \
+            --base-path=/tmp/node1 \
+            --rpc-port=9946 > node_output.txt 2>&1 &
+          echo $! > node_pid.txt
+
+      - name: Wait for services to start
+        run: sleep 20
+
+      - name: Check node connection
+        run: |
+          if ! grep -q "1 peers" validator_output.txt; then
+            echo "Node failed to connect to validator"
+            cat validator_output.txt
+            echo "==============> Node output <=============="
+            cat node_output.txt
+            exit 1
+          fi
+          echo "Validator successfully connected."
