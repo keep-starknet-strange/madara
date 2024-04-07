@@ -86,35 +86,6 @@ async fn fail_if_one_txn_cannot_be_executed(madara: &ThreadSafeMadaraClient) -> 
 #[tokio::test]
 async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
-    let sender_address = FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap();
-    let calldata = vec![
-        FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
-        get_selector_from_name("sqrt").unwrap(),
-        FieldElement::from_hex_be("1").unwrap(),
-        FieldElement::from(81u8),
-    ];
-
-    let tx = BroadcastedInvokeTransaction {
-        max_fee: FieldElement::ZERO,
-        signature: vec![],
-        nonce: FieldElement::ZERO,
-        sender_address,
-        calldata: calldata.clone(),
-        is_query: true,
-    };
-
-    let invoke_transaction = BroadcastedTransaction::Invoke(tx.clone());
-
-    let invoke_transaction_2 =
-        BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction { nonce: FieldElement::ONE, ..tx.clone() });
-
-    let estimates =
-        rpc.estimate_fee(&vec![invoke_transaction, invoke_transaction_2], BlockId::Tag(BlockTag::Latest)).await?;
-
-    assert_eq!(estimates.len(), 2);
-    assert_eq!(estimates[0].gas_consumed, 0);
-    assert_eq!(estimates[1].gas_consumed, 0);
-
     let funding_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let nonce = funding_account.get_nonce().await?;
     let max_fee = FieldElement::from(1000u16);
@@ -126,8 +97,13 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
 
     let tx = funding_account.prepare_invoke(calls, nonce, max_fee, false).await;
 
+    let invoke_transaction = BroadcastedTransaction::Invoke(tx.clone());
+
+    let estimates =
+        rpc.estimate_fee(&vec![invoke_transaction], BlockId::Tag(BlockTag::Latest)).await?;
+
     let invoke_transaction_result = rpc.add_invoke_transaction(tx.clone()).await?;
-    time::sleep(std::time::Duration::from_secs(200)).await;
+    time::sleep(std::time::Duration::from_secs(20)).await;
 
     let invoke_tx_receipt = rpc.get_transaction_receipt(invoke_transaction_result.transaction_hash).await?;
 
@@ -142,6 +118,9 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
 
         _ => panic!("expected invoke transaction receipt"),
     }
+
+    assert_eq!(estimates.len(), 1);
+    assert_eq!(estimates[0].gas_consumed, 0);
 
     Ok(())
 }
