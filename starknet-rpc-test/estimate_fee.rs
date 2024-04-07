@@ -128,7 +128,7 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
 
     let invoke_transaction_result = rpc.add_invoke_transaction(tx.clone()).await?;
 
-    time::sleep(std::time::Duration::from_secs(20)).await;
+    time::sleep(std::time::Duration::from_secs(200)).await;
 
     let invoke_tx_receipt = rpc.get_transaction_receipt(invoke_transaction_result.transaction_hash).await?;
 
