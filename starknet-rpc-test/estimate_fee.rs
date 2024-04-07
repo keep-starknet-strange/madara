@@ -99,8 +99,7 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
 
     let invoke_transaction = BroadcastedTransaction::Invoke(tx.clone());
 
-    let estimates =
-        rpc.estimate_fee(&vec![invoke_transaction], BlockId::Tag(BlockTag::Latest)).await?;
+    let estimates = rpc.estimate_fee(&vec![invoke_transaction], BlockId::Tag(BlockTag::Latest)).await?;
 
     let invoke_transaction_result = rpc.add_invoke_transaction(tx.clone()).await?;
     time::sleep(std::time::Duration::from_secs(20)).await;
