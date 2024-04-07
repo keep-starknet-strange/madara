@@ -32,18 +32,18 @@ use mp_felt::Felt252Wrapper;
 use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult};
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::{HandleL1MessageTransaction, Transaction, UserOrL1HandlerTransaction, UserTransaction};
-use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the Starknet pallet.
 pub use pallet_starknet;
 use pallet_starknet::pallet::Error as PalletError;
 use pallet_starknet::Call::{consume_l1_message, declare, deploy_account, invoke};
 use pallet_starknet_runtime_api::StarknetTransactionExecutionError;
+use pallet_tendermint::{fp_primitives, AuthorityList as TendermintAuthorityList};
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::crypto::KeyTypeId;
 use sp_core::OpaqueMetadata;
-use sp_runtime::traits::{BlakeTwo256, Block as BlockT, NumberFor};
+use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use sp_runtime::transaction_validity::{TransactionSource, TransactionValidity};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -64,7 +64,7 @@ construct_runtime!(
         System: frame_system,
         Timestamp: pallet_timestamp,
         Aura: pallet_aura,
-        Grandpa: pallet_grandpa,
+        Tendermint: pallet_tendermint,
         // Include Starknet pallet.
         Starknet: pallet_starknet,
     }
@@ -197,33 +197,13 @@ impl_runtime_apis! {
         }
     }
 
-    impl fg_primitives::GrandpaApi<Block> for Runtime {
-        fn grandpa_authorities() -> GrandpaAuthorityList {
-            Grandpa::grandpa_authorities()
+    impl fp_primitives::TendermintApi<Block> for Runtime {
+        fn tendermint_authorities() -> TendermintAuthorityList {
+            Tendermint::authorities()
         }
 
-        fn current_set_id() -> fg_primitives::SetId {
-            Grandpa::current_set_id()
-        }
-
-        fn submit_report_equivocation_unsigned_extrinsic(
-            _equivocation_proof: fg_primitives::EquivocationProof<
-                <Block as BlockT>::Hash,
-                NumberFor<Block>,
-            >,
-            _key_owner_proof: fg_primitives::OpaqueKeyOwnershipProof,
-        ) -> Option<()> {
-            None
-        }
-
-        fn generate_key_ownership_proof(
-            _set_id: fg_primitives::SetId,
-            _authority_id: GrandpaId,
-        ) -> Option<fg_primitives::OpaqueKeyOwnershipProof> {
-            // NOTE: this is the only implementation possible since we've
-            // defined our key owner proof type as a bottom type (i.e. a type
-            // with no values).
-            None
+        fn current_set_id() -> fp_primitives::SetId {
+            Tendermint::current_set_id()
         }
     }
 
