@@ -127,11 +127,11 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
     let tx = funding_account.prepare_invoke(calls, nonce, max_fee, false).await;
 
     let invoke_transaction_result = rpc.add_invoke_transaction(tx.clone()).await?;
-
-    time::sleep(std::time::Duration::from_secs(200)).await;
+    time::sleep(std::time::Duration::from_secs(20)).await;
 
     let invoke_tx_receipt = rpc.get_transaction_receipt(invoke_transaction_result.transaction_hash).await?;
-
+    time::sleep(std::time::Duration::from_secs(20)).await;
+    
     match invoke_tx_receipt {
         MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) => {
             assert_eq!(FieldElement::from(estimates[0].overall_fee), receipt.actual_fee);
