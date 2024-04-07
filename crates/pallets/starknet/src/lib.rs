@@ -325,6 +325,7 @@ pub mod pallet {
 
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct GenesisConfig<T: Config> {
         /// The contracts to be deployed at genesis.
         /// This is a vector of tuples, where the first element is the contract address and the
@@ -359,11 +360,11 @@ pub mod pallet {
             }
         }
     }
-
     #[pallet::genesis_build]
     impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
         fn build(&self) {
             <Pallet<T>>::store_block(0);
+
             frame_support::storage::unhashed::put::<StarknetStorageSchemaVersion>(
                 PALLET_STARKNET_SCHEMA,
                 &StarknetStorageSchemaVersion::V1,
