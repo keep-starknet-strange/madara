@@ -124,7 +124,7 @@ mod tests {
         let loader: GenesisData = serde_json::from_str(include_str!("./tests/mock/genesis.json")).unwrap();
 
         // Then
-        assert_eq!(13, loader.contract_classes.len());
+        assert_eq!(14, loader.contract_classes.len());
     }
 
     #[test]
