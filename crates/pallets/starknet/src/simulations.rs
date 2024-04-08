@@ -39,7 +39,7 @@ impl<T: Config> Pallet<T> {
             .map(|tx| {
                 execution_config.set_offset_version(tx.offset_version());
 
-                match Self::execute_user_transaction(tx, chain_id, &block_context, &execution_config) {
+                match Self::execute_transaction_with_state_diff(tx, chain_id, &block_context, &execution_config) {
                     (Ok(execution_info), _) if !execution_info.is_reverted() => Ok(execution_info),
                     (Err(e), _) => {
                         log::error!("Transaction execution failed during fee estimation: {e}");
@@ -216,12 +216,9 @@ impl<T: Config> Pallet<T> {
         let block_context = Self::get_block_context();
         let execution_config = RuntimeExecutionConfigBuilder::new::<T>().build();
 
-        let _transactions_before_exec_infos = Self::execute_user_or_l1_handler_transactions(
-            chain_id,
-            &block_context,
-            &execution_config,
-            transactions_before,
-        );
+        Self::execute_user_or_l1_handler_transactions(chain_id, &block_context, &execution_config, transactions_before)
+            .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?;
+
         let transactions_exec_infos = Self::execute_user_or_l1_handler_transactions(
             chain_id,
             &block_context,
@@ -230,30 +227,6 @@ impl<T: Config> Pallet<T> {
         );
 
         Ok(transactions_exec_infos)
-    }
-
-    fn execute_user_transaction(
-        transaction: UserTransaction,
-        chain_id: Felt252Wrapper,
-        block_context: &BlockContext,
-        execution_config: &ExecutionConfig,
-    ) -> (Result<TransactionExecutionInfo, TransactionExecutionError>, CommitmentStateDiff) {
-        let mut cached_state = CachedBlockifierStateAdapter(BlockifierStateAdapter::<T>::default());
-        let result = match transaction {
-            UserTransaction::Declare(tx, contract_class) => tx
-                .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), tx.offset_version())
-                .and_then(|exec| exec.execute(&mut cached_state, block_context, execution_config)),
-            UserTransaction::DeployAccount(tx) => {
-                let executable = tx.into_executable::<T::SystemHash>(chain_id, tx.offset_version());
-                executable.execute(&mut cached_state, block_context, execution_config)
-            }
-            UserTransaction::Invoke(tx) => {
-                let executable = tx.into_executable::<T::SystemHash>(chain_id, tx.offset_version());
-                executable.execute(&mut cached_state, block_context, execution_config)
-            }
-        };
-
-        (result, cached_state.to_state_diff())
     }
 
     fn execute_transaction_with_state_diff(
@@ -306,7 +279,7 @@ impl<T: Config> Pallet<T> {
             .iter()
             .map(|user_or_l1_tx| match user_or_l1_tx {
                 UserOrL1HandlerTransaction::User(tx) => {
-                    Self::execute_user_transaction(tx.clone(), chain_id, block_context, execution_config)
+                    Self::execute_transaction_with_state_diff(tx.clone(), chain_id, block_context, execution_config)
                 }
                 UserOrL1HandlerTransaction::L1Handler(tx, _fee) => {
                     Self::execute_message(tx.clone(), chain_id, block_context, execution_config)
