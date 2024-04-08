@@ -13,6 +13,7 @@ use starknet_crypto::FieldElement;
 use super::mock::default_mock::*;
 use super::mock::*;
 use super::utils::{sign_message_hash, sign_message_hash_braavos};
+use crate::errors::BlockifierErrors;
 use crate::tests::constants::{ACCOUNT_PUBLIC_KEY, SALT};
 use crate::tests::{get_deploy_account_dummy, set_infinite_tokens, set_nonce};
 use crate::{Config, Error, StorageView};
@@ -113,9 +114,11 @@ fn given_contract_run_deploy_account_tx_undeclared_then_it_fails() {
             offset_version: false,
         };
 
+        let message = "".to_string();
+
         assert_err!(
             Starknet::deploy_account(none_origin, transaction),
-            Error::<MockRuntime>::TransactionExecutionFailed
+            Error::<MockRuntime>::TransactionExecutionFailed(BlockifierErrors(message))
         );
     });
 }
@@ -130,9 +133,12 @@ fn given_contract_run_deploy_account_tx_fails_wrong_tx_version() {
         let transaction =
             get_deploy_account_dummy(Felt252Wrapper::ZERO, *SALT, AccountType::V0(AccountTypeV0Inner::Argent));
 
+        let message = "".to_string();
+
+        // it should not be executable
         assert_err!(
             Starknet::deploy_account(none_origin, transaction),
-            Error::<MockRuntime>::TransactionExecutionFailed
+            Error::<MockRuntime>::TransactionExecutionFailed(BlockifierErrors(message))
         );
     });
 }
@@ -191,7 +197,13 @@ fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_
         let address = deploy_tx.account_address().into();
         set_signer(address, AccountType::V0(AccountTypeV0Inner::Openzeppelin));
 
-        assert_err!(Starknet::deploy_account(none_origin, deploy_tx), Error::<MockRuntime>::TransactionExecutionFailed);
+        let message = "".to_string();
+
+        // it should not be executable
+        assert_err!(
+            Starknet::deploy_account(none_origin, deploy_tx),
+            Error::<MockRuntime>::TransactionExecutionFailed(BlockifierErrors(message))
+        );
     });
 }
 
@@ -250,7 +262,12 @@ fn given_contract_run_deploy_account_argent_with_incorrect_signature_then_it_fai
 
         set_signer(address, AccountType::V0(AccountTypeV0Inner::Argent));
 
-        assert_err!(Starknet::deploy_account(none_origin, deploy_tx), Error::<MockRuntime>::TransactionExecutionFailed);
+        let message = "".to_string();
+
+        assert_err!(
+            Starknet::deploy_account(none_origin, deploy_tx),
+            Error::<MockRuntime>::TransactionExecutionFailed(BlockifierErrors(message))
+        );
     });
 }
 
@@ -361,7 +378,12 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
         set_infinite_tokens::<MockRuntime>(&address);
         set_signer(address, AccountType::V0(AccountTypeV0Inner::Braavos));
 
-        assert_err!(Starknet::deploy_account(none_origin, deploy_tx), Error::<MockRuntime>::TransactionExecutionFailed);
+        let message = "".to_string();
+
+        assert_err!(
+            Starknet::deploy_account(none_origin, deploy_tx),
+            Error::<MockRuntime>::TransactionExecutionFailed(BlockifierErrors(message))
+        );
     });
 }
 

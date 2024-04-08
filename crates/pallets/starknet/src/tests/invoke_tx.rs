@@ -19,6 +19,7 @@ use super::constants::{BLOCKIFIER_ACCOUNT_ADDRESS, MULTIPLE_EVENT_EMITTING_CONTR
 use super::mock::default_mock::*;
 use super::mock::*;
 use super::utils::sign_message_hash;
+use crate::errors::BlockifierErrors;
 use crate::tests::{
     get_invoke_argent_dummy, get_invoke_braavos_dummy, get_invoke_dummy, get_invoke_emit_event_dummy,
     get_invoke_nonce_dummy, get_invoke_openzeppelin_dummy, get_storage_read_write_dummy, set_nonce,
@@ -249,9 +250,10 @@ fn test_verify_nonce() {
         // Test for an invalid nonce (actual: 0, expected: 1)
         let tx_2 = get_invoke_dummy(Felt252Wrapper::ZERO);
 
+        let message = "".to_string();
         assert_err!(
             Starknet::invoke(RuntimeOrigin::none(), tx_2.into()),
-            Error::<MockRuntime>::TransactionExecutionFailed
+            Error::<MockRuntime>::TransactionExecutionFailed(BlockifierErrors(message))
         );
     });
 }
@@ -291,9 +293,10 @@ fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_with_incorrect_si
         );
         assert!(matches!(validate_result.unwrap_err(), TransactionValidityError::Invalid(_)));
 
+        let message = "".to_string();
         assert_err!(
             Starknet::invoke(none_origin, transaction.into()),
-            Error::<MockRuntime>::TransactionExecutionFailed
+            Error::<MockRuntime>::TransactionExecutionFailed(BlockifierErrors(message))
         );
     });
 }
@@ -334,9 +337,10 @@ fn given_hardcoded_contract_run_invoke_on_argent_account_with_incorrect_signatur
         );
         assert!(matches!(validate_result.unwrap_err(), TransactionValidityError::Invalid(_)));
 
+        let message = "".to_string();
         assert_err!(
             Starknet::invoke(none_origin, transaction.into()),
-            Error::<MockRuntime>::TransactionExecutionFailed
+            Error::<MockRuntime>::TransactionExecutionFailed(BlockifierErrors(message))
         );
     });
 }
@@ -377,9 +381,10 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_with_incorrect_signatu
         );
         assert!(matches!(validate_result.unwrap_err(), TransactionValidityError::Invalid(_)));
 
+        let message = "".to_string();
         assert_err!(
             Starknet::invoke(none_origin, transaction.into()),
-            Error::<MockRuntime>::TransactionExecutionFailed
+            Error::<MockRuntime>::TransactionExecutionFailed(BlockifierErrors(message))
         );
     });
 }
@@ -406,9 +411,10 @@ fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails
             StarkFelt::from(Felt252Wrapper::from(selector)),
         );
 
+        let message = "".to_string();
         assert_err!(
             Starknet::invoke(none_origin, transaction.into()),
-            Error::<MockRuntime>::TransactionExecutionFailed
+            Error::<MockRuntime>::TransactionExecutionFailed(BlockifierErrors(message))
         );
     });
 }

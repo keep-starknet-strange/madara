@@ -15,6 +15,7 @@ use sp_runtime::DispatchError;
 use starknet_api::transaction::Fee;
 
 use crate::blockifier_state_adapter::{BlockifierStateAdapter, CachedBlockifierStateAdapter};
+use crate::errors::BlockifierErrors;
 use crate::execution_config::RuntimeExecutionConfigBuilder;
 use crate::{Config, Error, Pallet};
 
@@ -43,15 +44,16 @@ impl<T: Config> Pallet<T> {
                     Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
                     Err(e) => {
                         log::error!("Transaction execution failed during fee estimation: {e}");
-                        Err(Error::<T>::TransactionExecutionFailed)
+                        Err(Error::<T>::TransactionExecutionFailed(BlockifierErrors(e.to_string())).into())
                     }
                     Ok(execution_info) => {
-                        log::error!(
+                        // Safe due to the `match` branch order
+                        let message = format!(
                             "Transaction execution reverted during fee estimation: {}",
-                            // Safe due to the `match` branch order
                             execution_info.revert_error.unwrap()
                         );
-                        Err(Error::<T>::TransactionExecutionFailed)
+                        log::error!("{}", message);
+                        Err(Error::<T>::TransactionExecutionFailed(BlockifierErrors(message)))
                     }
                 }
             })
@@ -166,19 +168,22 @@ impl<T: Config> Pallet<T> {
             ) {
                 Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
                 Err(e) => {
-                    log::error!(
+                    let message = format!(
                         "Transaction execution failed during fee estimation: {e} {:?}",
                         std::error::Error::source(&e)
                     );
-                    Err(Error::<T>::TransactionExecutionFailed)
+                    log::error!("{}", message);
+                    Err(Error::<T>::TransactionExecutionFailed(BlockifierErrors(message)))
                 }
                 Ok(execution_info) => {
-                    log::error!(
+                    let message = format!(
                         "Transaction execution reverted during fee estimation: {}",
                         // Safe due to the `match` branch order
                         execution_info.revert_error.unwrap()
                     );
-                    Err(Error::<T>::TransactionExecutionFailed)
+
+                    log::error!("{}", message);
+                    Err(Error::<T>::TransactionExecutionFailed(BlockifierErrors(message)))
                 }
             }?;
 

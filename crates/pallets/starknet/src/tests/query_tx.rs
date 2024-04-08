@@ -5,6 +5,7 @@ use mp_transactions::UserTransaction;
 
 use super::mock::default_mock::*;
 use super::mock::new_test_ext;
+use crate::errors::BlockifierErrors;
 use crate::tests::utils::sign_message_hash;
 use crate::tests::{get_invoke_argent_dummy, get_invoke_dummy, get_storage_read_write_dummy};
 use crate::{Config, Error};
@@ -87,10 +88,12 @@ fn query_tx_should_not_be_executable() {
         // it should be valid for estimate calls
         assert_ok!(Starknet::estimate_fee(tx_vec));
 
+        let message = "".to_string();
+
         // it should not be executable
         assert_err!(
             Starknet::invoke(RuntimeOrigin::none(), tx.clone().into()),
-            Error::<MockRuntime>::TransactionExecutionFailed
+            Error::<MockRuntime>::TransactionExecutionFailed(BlockifierErrors(message))
         );
     });
 }

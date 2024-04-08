@@ -504,7 +504,7 @@ pub mod pallet {
                 )
                 .map_err(|e| {
                     log::error!("failed to execute invoke tx: {:?}", e);
-                    Error::<T>::TransactionExecutionFailed
+                    Error::<T>::TransactionExecutionFailed(BlockifierErrors(e.to_string()))
                 })?;
 
             let tx_hash = transaction.tx_hash;
@@ -563,7 +563,7 @@ pub mod pallet {
                     &Self::get_block_context(),
                     &RuntimeExecutionConfigBuilder::new::<T>().build(),
                 )
-                .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+                .map_err(|e| Error::<T>::TransactionExecutionFailed(BlockifierErrors(e.to_string())))?;
 
             let tx_hash = transaction.tx_hash();
             Self::emit_and_store_tx_and_fees_events(
@@ -617,7 +617,7 @@ pub mod pallet {
                 )
                 .map_err(|e| {
                     log::error!("failed to deploy account: {:?}", e);
-                    Error::<T>::TransactionExecutionFailed
+                    Error::<T>::TransactionExecutionFailed(BlockifierErrors(e.to_string()))
                 })?;
 
             let tx_hash = transaction.tx_hash;
@@ -681,7 +681,7 @@ pub mod pallet {
                 )
                 .map_err(|e| {
                     log::error!("Failed to consume l1 message: {}", e);
-                    Error::<T>::TransactionExecutionFailed
+                    Error::<T>::TransactionExecutionFailed(BlockifierErrors(e.to_string()))
                 })?;
 
             let tx_hash = transaction.tx_hash;
@@ -918,7 +918,7 @@ impl<T: Config> Pallet<T> {
             }
             Err(e) => {
                 log!(error, "failed to call smart contract {:?}", e);
-                Err(Error::<T>::TransactionExecutionFailed(BlockifierErrors::EntryPointExecutionError).into())
+                Err(Error::<T>::TransactionExecutionFailed(BlockifierErrors(e.to_string())).into())
             }
         }
     }
