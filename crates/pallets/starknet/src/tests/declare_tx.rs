@@ -22,7 +22,7 @@ use super::utils::{get_contract_class, sign_message_hash};
 use crate::tests::set_nonce;
 use crate::Error;
 
-fn create_declare_erc20_v0_transaction(
+fn create_declare_erc20_v1_transaction(
     chain_id: Felt252Wrapper,
     account_type: AccountType,
     sender_address: Option<ContractAddress>,
@@ -34,7 +34,7 @@ fn create_declare_erc20_v0_transaction(
     let erc20_class_hash =
         ClassHash(StarkFelt::try_from("0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap());
 
-    let mut tx = StarknetApiDeclareTransaction::V0(DeclareTransactionV0V1 {
+    let mut tx = StarknetApiDeclareTransaction::V1(DeclareTransactionV0V1 {
         max_fee: Fee(u128::MAX),
         signature: Default::default(),
         nonce: Nonce(StarkFelt::ZERO),
@@ -45,7 +45,7 @@ fn create_declare_erc20_v0_transaction(
     let tx_hash = tx.compute_hash(chain_id, false);
     // Force to do that because ComputeTransactionHash cannot be implemented on DeclareTransactionV0V1
     // directly...
-    if let StarknetApiDeclareTransaction::V0(tx) = &mut tx {
+    if let StarknetApiDeclareTransaction::V1(tx) = &mut tx {
         tx.signature = signature.unwrap_or_else(|| sign_message_hash(tx_hash));
     }
 
@@ -61,9 +61,14 @@ fn given_contract_declare_tx_works_once_not_twice() {
         let chain_id = Starknet::chain_id();
 
         let transaction =
-            create_declare_erc20_v0_transaction(chain_id, AccountType::V0(AccountTypeV0Inner::NoValidate), None, None);
+            create_declare_erc20_v1_transaction(chain_id, AccountType::V0(AccountTypeV0Inner::NoValidate), None, None);
+        let class_hash = transaction.class_hash();
+        let contract_class = transaction.contract_class();
+
+        println!("class_hash to be declared: {:?}", &class_hash);
 
         assert_ok!(Starknet::declare(none_origin.clone(), transaction.clone().into()));
+        assert_eq!(Starknet::contract_class_by_class_hash(class_hash.0).unwrap(), contract_class);
         // TODO: Uncomment once we have ABI support
         // assert_eq!(Starknet::contract_class_by_class_hash(erc20_class_hash), erc20_class);
         assert_err!(Starknet::declare(none_origin, transaction.into()), Error::<MockRuntime>::ClassHashAlreadyDeclared);
@@ -83,7 +88,7 @@ fn given_contract_declare_tx_fails_sender_not_deployed() {
             StarkFelt::try_from("0x03e437FB56Bb213f5708Fcd6966502070e276c093ec271aA33433b89E21fd31f").unwrap(),
         ));
 
-        let transaction = create_declare_erc20_v0_transaction(
+        let transaction = create_declare_erc20_v1_transaction(
             chain_id,
             AccountType::V0(AccountTypeV0Inner::NoValidate),
             Some(contract_address),
@@ -101,7 +106,7 @@ fn given_contract_declare_on_all_account_types_then_it_works() {
         for account_type in [AccountTypeV0Inner::Openzeppelin, AccountTypeV0Inner::Argent, AccountTypeV0Inner::Braavos]
         {
             let transaction =
-                create_declare_erc20_v0_transaction(Starknet::chain_id(), AccountType::V0(account_type), None, None);
+                create_declare_erc20_v1_transaction(Starknet::chain_id(), AccountType::V0(account_type), None, None);
             let contract_class = transaction.class_info.contract_class();
             let class_hash = transaction.tx.class_hash();
             assert_ok!(Starknet::validate_unsigned(
@@ -122,7 +127,7 @@ fn given_contract_declare_on_all_account_types_with_incorrect_signature_then_it_
 
         for account_type in [AccountTypeV0Inner::Openzeppelin, AccountTypeV0Inner::Argent, AccountTypeV0Inner::Braavos]
         {
-            let transaction = create_declare_erc20_v0_transaction(
+            let transaction = create_declare_erc20_v1_transaction(
                 Starknet::chain_id(),
                 AccountType::V0(account_type),
                 None,
@@ -193,7 +198,7 @@ fn given_contract_declare_on_cairo_1_no_validate_account_then_it_works() {
 fn test_verify_tx_longevity() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
-        let transaction = create_declare_erc20_v0_transaction(
+        let transaction = create_declare_erc20_v1_transaction(
             Starknet::chain_id(),
             AccountType::V0(AccountTypeV0Inner::NoValidate),
             None,
@@ -212,7 +217,7 @@ fn test_verify_require_tag() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
-        let transaction = create_declare_erc20_v0_transaction(
+        let transaction = create_declare_erc20_v1_transaction(
             Starknet::chain_id(),
             AccountType::V0(AccountTypeV0Inner::NoValidate),
             None,
@@ -248,7 +253,7 @@ fn test_verify_nonce_in_unsigned_tx() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
-        let transaction = create_declare_erc20_v0_transaction(
+        let transaction = create_declare_erc20_v1_transaction(
             Starknet::chain_id(),
             AccountType::V0(AccountTypeV0Inner::NoValidate),
             None,

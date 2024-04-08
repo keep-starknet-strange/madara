@@ -5,7 +5,6 @@ extern crate alloc;
 use std::collections::HashMap;
 
 use blockifier::execution::contract_class::ContractClass;
-use blockifier::state::cached_state::StateChangesCount;
 use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{StateReader, StateResult};
 use starknet_api::core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
@@ -15,13 +14,13 @@ use starknet_api::state::StorageKey;
 type ContractClassMapping = HashMap<ClassHash, ContractClass>;
 type ContractStorageKey = (ContractAddress, StorageKey);
 
-/// This trait allows to get the state changes of a starknet tx and therefore enables computing the
-/// fees.
-pub trait StateChanges {
-    /// This function counts the storage var updates implied by a transaction and the newly declared
-    /// class hashes.
-    fn count_state_changes(&self) -> StateChangesCount;
-}
+// /// This trait allows to get the state changes of a starknet tx and therefore enables computing
+// the /// fees.
+// pub trait StateChanges {
+//     /// This function counts the storage var updates implied by a transaction and the newly
+// declared     /// class hashes.
+//     fn count_state_changes(&self) -> StateChangesCount;
+// }
 
 /// A simple implementation of `StateReader` using `HashMap`s as storage.
 #[derive(Debug, Default)]

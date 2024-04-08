@@ -70,14 +70,15 @@ use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::{CallEntryPoint, CallType, EntryPointExecutionContext};
 use blockifier::execution::errors::{EntryPointExecutionError, PreExecutionError};
 use blockifier::state::cached_state::{CachedState, GlobalContractCache};
+use blockifier::state::state_api::{StateReader, StateResult};
 use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::objects::{DeprecatedTransactionInfo, TransactionInfo};
 use blockifier::transaction::transaction_execution::Transaction;
 use blockifier::transaction::transactions::{
-    DeclareTransaction, DeployAccountTransaction, ExecutableTransaction, InvokeTransaction, L1HandlerTransaction,
+    DeclareTransaction, DeployAccountTransaction, InvokeTransaction, L1HandlerTransaction,
 };
 use blockifier::versioned_constants::VersionedConstants;
-use blockifier_state_adapter::BlockifierStateAdapter;
+use blockifier_state_adapter::{BlockifierStateAdapter, CachedBlockifierStateAdapter};
 use frame_support::pallet_prelude::*;
 use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
@@ -87,6 +88,7 @@ use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
+use mp_transactions::execution::Execute;
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
 use starknet_api::block::{BlockNumber, BlockTimestamp};
@@ -496,17 +498,12 @@ pub mod pallet {
             ensure!(ContractClassHashes::<T>::contains_key(sender_address), Error::<T>::AccountNotDeployed);
 
             // Init caches
-            let mut cached_state = Self::init_cached_state();
+            let mut state = BlockifierStateAdapter::<T>::default();
 
             // Execute
-            let tx_execution_infos = ExecutableTransaction::execute(
-                blockifier::transaction::account_transaction::AccountTransaction::Invoke(transaction.clone()),
-                &mut cached_state,
-                &Self::get_block_context(),
-                true,
-                true,
-            )
-            .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+            let tx_execution_infos = transaction
+                .execute(&mut state, &Self::get_block_context(), true, true)
+                .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
             Self::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash,
@@ -550,18 +547,12 @@ pub mod pallet {
                 Error::<T>::AccountNotDeployed
             );
 
-            // Init caches
-            let mut cached_state = Self::init_cached_state();
+            let mut state = BlockifierStateAdapter::<T>::default();
 
             // Execute
-            let tx_execution_infos = ExecutableTransaction::execute(
-                blockifier::transaction::account_transaction::AccountTransaction::Declare(transaction.clone()),
-                &mut cached_state,
-                &Self::get_block_context(),
-                true,
-                true,
-            )
-            .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+            let tx_execution_infos = transaction
+                .execute(&mut state, &Self::get_block_context(), true, true)
+                .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
             Self::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash(),
@@ -570,10 +561,9 @@ pub mod pallet {
             );
             Self::store_transaction(
                 transaction.tx_hash(),
-                Transaction::AccountTransaction(AccountTransaction::Declare(transaction)),
+                Transaction::AccountTransaction(AccountTransaction::Declare(transaction.clone())),
                 tx_execution_infos.revert_error,
             );
-
             Ok(())
         }
 
@@ -601,18 +591,12 @@ pub mod pallet {
                 Error::<T>::AccountAlreadyDeployed
             );
 
-            // Init caches
-            let mut cached_state = Self::init_cached_state();
+            let mut state = BlockifierStateAdapter::<T>::default();
 
             // Execute
-            let tx_execution_infos = ExecutableTransaction::execute(
-                blockifier::transaction::account_transaction::AccountTransaction::DeployAccount(transaction.clone()),
-                &mut cached_state,
-                &Self::get_block_context(),
-                true,
-                true,
-            )
-            .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+            let tx_execution_infos = transaction
+                .execute(&mut state, &Self::get_block_context(), true, true)
+                .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
             Self::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash,
@@ -658,17 +642,12 @@ pub mod pallet {
             L1Messages::<T>::mutate(|nonces| nonces.insert(nonce));
 
             // Init caches
-            let mut cached_state = Self::init_cached_state();
+            let mut state = BlockifierStateAdapter::<T>::default();
 
             // Execute
-            let tx_execution_infos = ExecutableTransaction::execute(
-                transaction.clone(),
-                &mut cached_state,
-                &Self::get_block_context(),
-                true,
-                true,
-            )
-            .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+            let tx_execution_infos = transaction
+                .execute(&mut state, &Self::get_block_context(), true, true)
+                .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
             Self::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash,
