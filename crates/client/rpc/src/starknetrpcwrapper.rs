@@ -22,7 +22,7 @@ use starknet_core::types::{
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall,
     InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingStateUpdate,
     MaybePendingTransactionReceipt, MsgFromL1, SimulatedTransaction, SimulationFlag, SyncStatusType, Transaction,
-    TransactionTraceWithHash,
+    TransactionTrace, TransactionTraceWithHash,
 };
 
 use crate::Starknet;
@@ -622,7 +622,7 @@ where
     }
 
     /// Returns the executions traces of a specified transaction in the given block
-    async fn trace_transaction(&self, transaction_hash: FieldElement) -> RpcResult<TransactionTraceWithHash> {
+    async fn trace_transaction(&self, transaction_hash: FieldElement) -> RpcResult<TransactionTrace> {
         self.0.trace_transaction(transaction_hash).await
     }
 }

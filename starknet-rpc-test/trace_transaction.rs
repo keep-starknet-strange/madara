@@ -6,6 +6,7 @@ use starknet_core::types::{
     BlockId, CallType, EntryPointType, ExecuteInvocation, FunctionInvocation, InvokeTransactionTrace, StarknetError,
     TransactionTrace, TransactionTraceWithHash,
 };
+use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
@@ -66,18 +67,10 @@ async fn works_with_correct_transaction(madara: &ThreadSafeMadaraClient) -> Resu
     log::debug!("Transaction trace obtained: {:?}", trace);
 
     // starkli selector __execute__
-    let execute_selector = FieldElement::from_hex_be(
-        "
-0x15d40a3d6ca2ac30f4031e42be28da9b056fef9bb7357ac5e85627ee876e5ad",
-    )
-    .unwrap();
+    let execute_selector = get_selector_from_name("__execute__").unwrap();
 
     // starkli selector transfer
-    let transfer_selector = FieldElement::from_hex_be(
-        "
-0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e",
-    )
-    .unwrap();
+    let transfer_selector = get_selector_from_name("transfer").unwrap();
 
     // This is legacy starknet `__execute__` calls encoding
     let expected_calldata = vec![
