@@ -308,5 +308,5 @@
     ]
   ],
   "fee_token_address": "0x00000000000000000000000000000000000000000000000000000000000000AA",
-  "chain_id": "GOERLI"
+  "chain_id": "SN_GOERLI"
 }
