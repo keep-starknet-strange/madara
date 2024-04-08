@@ -34,6 +34,7 @@ MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::Transaction
 async fn works_with_correct_transaction(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
+    let _ = env_logger::builder().is_test(true).try_init();
     // Copy-pasted from add_invoke_transaction::work_with_storage_change and
     // ::work_for_one_invoke_tx
     let funding_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
@@ -58,7 +59,11 @@ async fn works_with_correct_transaction(madara: &ThreadSafeMadaraClient) -> Resu
     let included_tx = rpc.get_transaction_by_block_id_and_index(BlockId::Number(block_number), 0).await?;
     let included_tx_hash = included_tx.transaction_hash();
 
+    log::info!("About to trace transaction with hash: {:?}", included_tx_hash);
+
     let trace = rpc.trace_transaction(included_tx_hash).await?;
+
+    log::debug!("Transaction trace obtained: {:?}", trace);
 
     // starkli selector __execute__
     let execute_selector = FieldElement::from_hex_be(
@@ -75,7 +80,7 @@ async fn works_with_correct_transaction(madara: &ThreadSafeMadaraClient) -> Resu
     .unwrap();
 
     // This is legacy starknet `__execute__` calls encoding
-    let _expected_calldata = vec![
+    let expected_calldata = vec![
         FieldElement::ONE,                                     // number of calls
         FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(), // contract to call
         transfer_selector,                                     // selector
@@ -90,6 +95,8 @@ async fn works_with_correct_transaction(madara: &ThreadSafeMadaraClient) -> Resu
     let tx_hash = *included_tx.transaction_hash();
     let result = TransactionTraceWithHash { transaction_hash: tx_hash, trace_root: trace };
 
+    log::info!("Transaction trace result: {:?}", result);
+
     assert_matches!(
             &result,
             TransactionTraceWithHash {
@@ -102,9 +109,9 @@ async fn works_with_correct_transaction(madara: &ThreadSafeMadaraClient) -> Resu
             } if *contract_address == FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap()
                 && *class_hash == FieldElement::from_hex_be(ARGENT_ACCOUNT_CLASS_HASH_CAIRO_0).unwrap()
                 && *entry_point_type == EntryPointType::External
-                // && *call_type == CallType::Call
-                // && *entry_point_selector == execute_selector
-                // && *calldata == expected_calldata
+                && *call_type == CallType::Call
+                && *entry_point_selector == execute_selector
+                && *calldata == expected_calldata
         );
 
     Ok(())
