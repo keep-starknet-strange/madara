@@ -1,5 +1,7 @@
 extern crate starknet_rpc_test;
 
+use std::time::Duration;
+
 use assert_matches::assert_matches;
 use rstest::rstest;
 use starknet_accounts::{Call, ConnectedAccount};
@@ -102,20 +104,26 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
     let estimates = rpc.estimate_fee(&vec![invoke_transaction], BlockId::Tag(BlockTag::Latest)).await?;
 
     let invoke_transaction_result = rpc.add_invoke_transaction(tx.clone()).await?;
-    time::sleep(std::time::Duration::from_secs(20)).await;
 
-    let invoke_tx_receipt = rpc.get_transaction_receipt(invoke_transaction_result.transaction_hash).await?;
+    const SLEEP_DURATION: u64 = 20; // Sleep duration in seconds
 
-    match invoke_tx_receipt {
-        MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) => {
-            assert_eq!(FieldElement::from(estimates[0].overall_fee), receipt.actual_fee);
+    loop {
+        let invoke_tx_receipt = rpc.get_transaction_receipt(invoke_transaction_result.transaction_hash).await?;
+
+        match invoke_tx_receipt {
+            MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) => {
+                assert_eq!(FieldElement::from(estimates[0].overall_fee), receipt.actual_fee);
+                break; // Break the loop if receipt is received
+            }
+
+            MaybePendingTransactionReceipt::PendingReceipt(PendingTransactionReceipt::Invoke(_)) => {
+                time::sleep(Duration::from_secs(SLEEP_DURATION)).await;
+            }
+
+            _ => {
+                panic!("expected invoke transaction receipt");
+            }
         }
-
-        MaybePendingTransactionReceipt::PendingReceipt(PendingTransactionReceipt::Invoke(receipt)) => {
-            assert_eq!(FieldElement::from(estimates[0].overall_fee), receipt.actual_fee);
-        }
-
-        _ => panic!("expected invoke transaction receipt"),
     }
 
     assert_eq!(estimates.len(), 1);
