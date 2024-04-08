@@ -1,7 +1,6 @@
 use std::vec::Vec;
 
 use blockifier::execution::contract_class::ContractClass as StarknetContractClass;
-use mp_chain_id::{MADARA_CHAIN_ID, SN_GOERLI_CHAIN_ID, SN_MAIN_CHAIN_ID};
 use mp_felt::Felt252Wrapper;
 use mp_genesis_config::ContractClass;
 pub use mp_genesis_config::{GenesisData, GenesisLoader, HexFelt, PredeployedAccount};
@@ -67,12 +66,15 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
             .collect::<Vec<_>>();
         let fee_token_address = Felt252Wrapper(loader.data().fee_token_address.0).into();
 
-        let chain_id = match loader.data().chain_id.as_ref() {
-            "MADARA" | "Madara" => MADARA_CHAIN_ID,
-            "GOERLI" | "Goerli" => SN_GOERLI_CHAIN_ID,
-            "STARKNET_MAINNET" | "Starkent Mainnet" | "Starkent_Mainnet" => SN_MAIN_CHAIN_ID,
-            _ => panic!("Inavalid chain id try `MADARA` or `GOERLI` or `STARKNET_MAINNET`"),
-        };
+        let chain_id = loader
+            .data()
+            .chain_id
+            .clone()
+            .into_bytes()
+            .iter()
+            .as_ref()
+            .try_into()
+            .expect("Failed to convert chain id to felt");
 
         GenesisConfig {
             contracts,

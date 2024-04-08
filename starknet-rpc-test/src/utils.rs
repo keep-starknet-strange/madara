@@ -18,7 +18,7 @@ use starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
 use starknet_providers::{Provider, ProviderError};
 use starknet_signers::{LocalWallet, SigningKey};
 
-use crate::constants::{FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE};
+use crate::constants::{FEE_TOKEN_ADDRESS, MADARA_CHAIN_ID, MAX_FEE_OVERRIDE};
 use crate::{
     RpcAccount, RpcOzAccountFactory, SendTransactionError, TransactionAccountDeployment, TransactionDeclaration,
     TransactionExecution, TransactionLegacyDeclaration, TransactionResult,
@@ -42,7 +42,7 @@ pub fn build_single_owner_account<'a>(
     } else {
         starknet_accounts::ExecutionEncoding::New
     };
-    SingleOwnerAccount::new(rpc, signer, account_address, chain_id::TESTNET, execution_encoding)
+    SingleOwnerAccount::new(rpc, signer, account_address, MADARA_CHAIN_ID, execution_encoding)
 }
 
 pub async fn read_erc20_balance(
@@ -68,7 +68,7 @@ pub async fn build_oz_account_factory<'a>(
     class_hash: FieldElement,
 ) -> RpcOzAccountFactory<'a> {
     let signer = LocalWallet::from(SigningKey::from_secret_scalar(FieldElement::from_hex_be(private_key).unwrap()));
-    OpenZeppelinAccountFactory::new(class_hash, chain_id::TESTNET, signer, rpc).await.unwrap()
+    OpenZeppelinAccountFactory::new(class_hash, MADARA_CHAIN_ID, signer, rpc).await.unwrap()
 }
 
 pub fn build_deploy_account_tx<'a>(
