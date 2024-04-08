@@ -106,16 +106,13 @@ where
         })?;
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
-        let (block_transactions, empty_transactions) =
+        let (block_transactions, _) =
             map_transaction_to_user_transaction(self, starknet_block, substrate_block_hash, chain_id, None)?;
 
         let previous_block_substrate_hash = get_previous_block_substrate_hash(self, substrate_block_hash)?;
 
-        let execution_infos = self.re_execute_transactions(
-            previous_block_substrate_hash,
-            empty_transactions.clone(),
-            block_transactions.clone(),
-        )?;
+        let execution_infos =
+            self.re_execute_transactions(previous_block_substrate_hash, vec![], block_transactions.clone())?;
 
         let storage_override = self.overrides.for_block_hash(self.client.as_ref(), substrate_block_hash);
 
