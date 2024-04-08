@@ -60,11 +60,7 @@ async fn works_with_correct_transaction(madara: &ThreadSafeMadaraClient) -> Resu
     let included_tx = rpc.get_transaction_by_block_id_and_index(BlockId::Number(block_number), 0).await?;
     let included_tx_hash = included_tx.transaction_hash();
 
-    log::info!("About to trace transaction with hash: {:?}", included_tx_hash);
-
     let trace = rpc.trace_transaction(included_tx_hash).await?;
-
-    log::debug!("Transaction trace obtained: {:?}", trace);
 
     // starkli selector __execute__
     let execute_selector = get_selector_from_name("__execute__").unwrap();
@@ -87,8 +83,6 @@ async fn works_with_correct_transaction(madara: &ThreadSafeMadaraClient) -> Resu
 
     let tx_hash = *included_tx.transaction_hash();
     let result = TransactionTraceWithHash { transaction_hash: tx_hash, trace_root: trace };
-
-    log::info!("Transaction trace result: {:?}", result);
 
     assert_matches!(
             &result,
