@@ -2,6 +2,7 @@
 
 ## Next release
 
+- fix: fix cargo-lint issues
 - fix(node): fix genesis hash inconsistency
 - feat (pallet): add tests for storage reversal on transaction revert
 - feat: add prometheus metrics for mapping worker
