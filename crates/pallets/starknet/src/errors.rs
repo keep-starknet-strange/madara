@@ -7,6 +7,6 @@ use scale_info::TypeInfo;
 pub struct BlockifierErrors(pub String);
 
 impl PalletError for BlockifierErrors {
-    // max value allowed by MAX_MODULE_ERROR_ENCODED_SIZE
+    // max value allowed by MAX_MODULE_ERROR_ENCODED_SIZE is 4
     const MAX_ENCODED_SIZE: usize = 3;
 }

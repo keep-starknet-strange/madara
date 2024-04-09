@@ -1,7 +1,6 @@
-use std::sync::Arc;
-
+use blockifier::transaction::errors::TransactionExecutionError;
 use jsonrpsee::types::error::{CallError, ErrorObject};
-use pallet_starknet_runtime_api::StarknetTransactionExecutionError;
+use sp_runtime::DispatchError;
 
 // Comes from the RPC Spec:
 // https://github.com/starkware-libs/starknet-specs/blob/0e859ff905795f789f1dfd6f7340cdaf5015acc8/api/starknet_write_api.json#L227
@@ -30,7 +29,7 @@ pub enum StarknetRpcApiError {
     #[error("Failed to fetch pending transactions")]
     FailedToFetchPendingTransactions = 38,
     #[error("Contract error")]
-    ContractError = 40,
+    ContractError(DispatchError) = 40,
     #[error("Invalid contract class")]
     InvalidContractClass = 50,
     #[error("Class already declared")]
@@ -47,18 +46,6 @@ pub enum StarknetRpcApiError {
     ProofLimitExceeded = 10000,
 }
 
-impl From<StarknetTransactionExecutionError> for StarknetRpcApiError {
-    fn from(err: StarknetTransactionExecutionError) -> Self {
-        match err {
-            StarknetTransactionExecutionError::ContractNotFound => StarknetRpcApiError::ContractNotFound,
-            StarknetTransactionExecutionError::ClassAlreadyDeclared => StarknetRpcApiError::ClassAlreadyDeclared,
-            StarknetTransactionExecutionError::ClassHashNotFound => StarknetRpcApiError::ClassHashNotFound,
-            StarknetTransactionExecutionError::InvalidContractClass => StarknetRpcApiError::InvalidContractClass,
-            StarknetTransactionExecutionError::ContractError => StarknetRpcApiError::ContractError,
-        }
-    }
-}
-
 impl From<StarknetRpcApiError> for jsonrpsee::core::Error {
     fn from(err: StarknetRpcApiError) -> Self {
         jsonrpsee::core::Error::Call(CallError::Custom(ErrorObject::owned(
@@ -68,3 +55,10 @@ impl From<StarknetRpcApiError> for jsonrpsee::core::Error {
         )))
     }
 }
+
+impl From<TransactionExecutionError> for StarknetRpcApiError {
+    fn from(value: TransactionExecutionError) -> Self {
+        StarknetRpcApiError::ContractError(value)
+    }
+}
+

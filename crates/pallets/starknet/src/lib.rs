@@ -504,6 +504,7 @@ pub mod pallet {
                 )
                 .map_err(|e| {
                     log::error!("failed to execute invoke tx: {:?}", e);
+                    print!("check2: {:?}", e.to_string());
                     Error::<T>::TransactionExecutionFailed(BlockifierErrors(e.to_string()))
                 })?;
 

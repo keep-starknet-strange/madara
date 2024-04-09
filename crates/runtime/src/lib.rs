@@ -37,7 +37,6 @@ use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as G
 pub use pallet_starknet;
 use pallet_starknet::pallet::Error as PalletError;
 use pallet_starknet::Call::{consume_l1_message, declare, deploy_account, invoke};
-use pallet_starknet_runtime_api::StarknetTransactionExecutionError;
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -374,22 +373,6 @@ impl_runtime_apis! {
             UncheckedExtrinsic::new_unsigned(call.into())
         }
 
-        fn convert_error(error: DispatchError) -> StarknetTransactionExecutionError {
-            if error == PalletError::<Runtime>::ContractNotFound.into() {
-                return StarknetTransactionExecutionError::ContractNotFound;
-            }
-            if error == PalletError::<Runtime>::ClassHashAlreadyDeclared.into() {
-                return StarknetTransactionExecutionError::ClassAlreadyDeclared;
-            }
-            if error == PalletError::<Runtime>::ContractClassHashUnknown.into() {
-                return StarknetTransactionExecutionError::ClassHashNotFound;
-            }
-            if error == PalletError::<Runtime>::InvalidContractClass.into() {
-                return StarknetTransactionExecutionError::InvalidContractClass;
-            }
-
-            StarknetTransactionExecutionError::ContractError
-        }
     }
 
     #[cfg(feature = "runtime-benchmarks")]

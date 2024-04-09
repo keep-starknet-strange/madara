@@ -250,6 +250,8 @@ fn test_verify_nonce() {
         // Test for an invalid nonce (actual: 0, expected: 1)
         let tx_2 = get_invoke_dummy(Felt252Wrapper::ZERO);
 
+
+        print!("check: {:?}", Starknet::invoke(RuntimeOrigin::none(), tx_2.clone().into()));
         let message = "".to_string();
         assert_err!(
             Starknet::invoke(RuntimeOrigin::none(), tx_2.into()),

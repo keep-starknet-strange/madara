@@ -683,8 +683,6 @@ where
             calldata,
         )?;
 
-        let result = self.convert_error(substrate_block_hash, result)?;
-
         Ok(result.iter().map(|x| format!("{:#x}", x.0)).collect())
     }
 
@@ -1772,20 +1770,6 @@ where
         };
 
         Ok(MaybePendingTransactionReceipt::PendingReceipt(receipt))
-    }
-
-    fn convert_error<T>(
-        &self,
-        best_block_hash: <B as BlockT>::Hash,
-        call_result: Result<T, DispatchError>,
-    ) -> Result<T, StarknetRpcApiError> {
-        match call_result {
-            Ok(val) => Ok(val),
-            Err(e) => {
-                let starknet_error = self.convert_dispatch_error(best_block_hash, e)?;
-                Err(starknet_error.into())
-            }
-        }
     }
 }
 
