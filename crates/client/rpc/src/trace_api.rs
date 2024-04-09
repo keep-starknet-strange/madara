@@ -8,6 +8,7 @@ use log::error;
 use mc_genesis_data_provider::GenesisProvider;
 use mc_rpc_core::utils::{blockifier_to_rpc_state_diff_types, get_block_by_block_hash};
 use mc_rpc_core::{StarknetReadRpcApiServer, StarknetTraceRpcApiServer};
+use mp_block::Block;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_simulations::{SimulationFlags, TransactionSimulationResult};
@@ -55,7 +56,7 @@ where
         let substrate_block_hash =
             self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| StarknetRpcApiError::BlockNotFound)?;
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
-        let best_block_hash = self.get_best_block_hash();
+        let best_block_hash = self.client.info().best_hash;
 
         let tx_type_and_tx_iterator = transactions.into_iter().map(|tx| match tx {
             BroadcastedTransaction::Invoke(invoke_tx) => invoke_tx.try_into().map(|tx| (TxType::Invoke, tx)),
@@ -103,103 +104,94 @@ where
             error!("Failed to get block for block hash {substrate_block_hash}: '{e}'");
             StarknetRpcApiError::InternalServerError
         })?;
+        let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
-        let block_transactions = starknet_block
-            .transactions()
-            .iter()
-            .map(|tx| match tx {
-                Transaction::Invoke(invoke_tx) => {
-                    RpcResult::Ok(UserOrL1HandlerTransaction::User(UserTransaction::Invoke(invoke_tx.clone())))
-                }
-                Transaction::DeployAccount(deploy_account_tx) => {
-                    Ok(UserOrL1HandlerTransaction::User(UserTransaction::DeployAccount(deploy_account_tx.clone())))
-                }
-                Transaction::Declare(declare_tx, _) => {
-                    let class_hash = ClassHash::from(*declare_tx.class_hash());
+        let (block_transactions, _) =
+            map_transaction_to_user_transaction(self, starknet_block, substrate_block_hash, chain_id, None)?;
 
-                    match declare_tx {
-                        DeclareTransaction::V0(_) | DeclareTransaction::V1(_) => {
-                            let contract_class = self
-                                .overrides
-                                .for_block_hash(self.client.as_ref(), substrate_block_hash)
-                                .contract_class_by_class_hash(substrate_block_hash, class_hash)
-                                .ok_or_else(|| {
-                                    error!("Failed to retrieve contract class from hash '{class_hash}'");
-                                    StarknetRpcApiError::InternalServerError
-                                })?;
+        let previous_block_substrate_hash = get_previous_block_substrate_hash(self, substrate_block_hash)?;
 
-                            Ok(UserOrL1HandlerTransaction::User(UserTransaction::Declare(
-                                declare_tx.clone(),
-                                contract_class,
-                            )))
-                        }
-                        DeclareTransaction::V2(tx) => {
-                            let contract_class = self
-                                .backend
-                                .sierra_classes()
-                                .get_sierra_class(class_hash)
-                                .map_err(|e| {
-                                    error!("Failed to fetch sierra class with hash {class_hash}: {e}");
-                                    StarknetRpcApiError::InternalServerError
-                                })?
-                                .ok_or_else(|| {
-                                    error!("The sierra class with hash {class_hash} is not present in db backend");
-                                    StarknetRpcApiError::InternalServerError
-                                })?;
-                            let contract_class = mp_transactions::utils::sierra_to_casm_contract_class(contract_class)
-                                .map_err(|e| {
-                                    error!("Failed to convert the SierraContractClass to CasmContractClass: {e}");
-                                    StarknetRpcApiError::InternalServerError
-                                })?;
-                            let contract_class =
-                                ContractClass::V1(ContractClassV1::try_from(contract_class).map_err(|e| {
-                                    error!(
-                                        "Failed to convert the compiler CasmContractClass to blockifier \
-                                         CasmContractClass: {e}"
-                                    );
-                                    StarknetRpcApiError::InternalServerError
-                                })?);
+        let execution_infos =
+            self.re_execute_transactions(previous_block_substrate_hash, vec![], block_transactions.clone())?;
 
-                            Ok(UserOrL1HandlerTransaction::User(UserTransaction::Declare(
-                                declare_tx.clone(),
-                                contract_class,
-                            )))
-                        }
-                    }
-                }
-                Transaction::L1Handler(handle_l1_message_tx) => {
-                    let chain_id = self.chain_id()?.0.into();
-                    let tx_hash = handle_l1_message_tx.compute_hash::<H>(chain_id, false);
-                    let paid_fee =
-                        self.backend.l1_handler_paid_fee().get_fee_paid_for_l1_handler_tx(tx_hash.into()).map_err(
-                            |e| {
-                                error!("Failed to retrieve fee paid on l1 for tx with hash `{tx_hash:?}`: {e}");
-                                StarknetRpcApiError::InternalServerError
-                            },
-                        )?;
+        let storage_override = self.overrides.for_block_hash(self.client.as_ref(), substrate_block_hash);
 
-                    Ok(UserOrL1HandlerTransaction::L1Handler(handle_l1_message_tx.clone(), paid_fee))
-                }
-            })
-            .collect::<Result<Vec<_>, _>>()?;
+        let traces = Self::execution_info_to_transaction_trace(execution_infos, block_transactions, chain_id)?;
 
-        let previous_block_substrate_hash = {
-            let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).map_err(|e| {
-                error!("Failed to starknet block for substate block with hash {substrate_block_hash}: {e}");
-                StarknetRpcApiError::InternalServerError
-            })?;
-            let block_number = starknet_block.header().block_number;
-            let previous_block_number = block_number - 1;
-            self.substrate_block_hash_from_starknet_block(BlockId::Number(previous_block_number)).map_err(|e| {
-                error!("Failed to retrieve previous block substrate hash: {e}");
-                StarknetRpcApiError::InternalServerError
-            })
-        }?;
+        Ok(traces)
+    }
 
-        let execution_infos = self
+    async fn trace_transaction(&self, transaction_hash: FieldElement) -> RpcResult<TransactionTrace> {
+        let substrate_block_hash = self
+            .backend
+            .mapping()
+            .block_hash_from_transaction_hash(Felt252Wrapper(transaction_hash).into())
+            .map_err(|e| {
+                error!("Failed to get transaction's substrate block hash from mapping_db: {e}");
+                StarknetRpcApiError::TxnHashNotFound
+            })?
+            .ok_or(StarknetRpcApiError::TxnHashNotFound)?;
+
+        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)?;
+        let chain_id = Felt252Wrapper(self.chain_id()?.0);
+        let transaction_hash_to_trace: Felt252Wrapper = transaction_hash.into();
+
+        let (txs_to_execute_before, tx_to_trace) = map_transaction_to_user_transaction(
+            self,
+            starknet_block,
+            substrate_block_hash,
+            chain_id,
+            Some(transaction_hash_to_trace),
+        )?;
+
+        let previous_block_substrate_hash = get_previous_block_substrate_hash(self, substrate_block_hash)?;
+
+        let execution_infos = self.re_execute_transactions(
+            previous_block_substrate_hash,
+            txs_to_execute_before.clone(),
+            tx_to_trace.clone(),
+        )?;
+
+        let storage_override = self.overrides.for_block_hash(self.client.as_ref(), substrate_block_hash);
+        let chain_id = Felt252Wrapper(self.chain_id()?.0);
+
+        let traces = Self::execution_info_to_transaction_trace(execution_infos, tx_to_trace, chain_id)?;
+
+        let result: TransactionTraceWithHash = traces
+            .into_iter()
+            .find(|trace| trace.transaction_hash == transaction_hash)
+            .ok_or(StarknetRpcApiError::TxnHashNotFound)?;
+
+        Ok(result.trace_root)
+    }
+}
+
+impl<A, B, BE, G, C, P, H> Starknet<A, B, BE, G, C, P, H>
+where
+    A: ChainApi<Block = B> + 'static,
+    B: BlockT,
+    BE: Backend<B> + 'static,
+    G: GenesisProvider + Send + Sync + 'static,
+    C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
+    C: ProvideRuntimeApi<B>,
+    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
+    P: TransactionPool<Block = B> + 'static,
+    H: HasherT + Send + Sync + 'static,
+{
+    fn re_execute_transactions(
+        &self,
+        previous_block_substrate_hash: B::Hash,
+        transactions_before: Vec<UserOrL1HandlerTransaction>,
+        transactions_to_trace: Vec<UserOrL1HandlerTransaction>,
+    ) -> RpcResult<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>> {
+        Ok(self
             .client
             .runtime_api()
-            .re_execute_transactions(previous_block_substrate_hash, block_transactions.clone())
+            .re_execute_transactions(
+                previous_block_substrate_hash,
+                transactions_before.clone(),
+                transactions_to_trace.clone(),
+            )
             .map_err(|e| {
                 error!("Failed to execute runtime API call: {e}");
                 StarknetRpcApiError::InternalServerError
@@ -214,12 +206,15 @@ where
                      already been executed successfully in the past. There is a bug somewhere."
                 );
                 StarknetRpcApiError::InternalServerError
-            })?;
+            })?)
+    }
 
-        let storage_override = self.overrides.for_block_hash(self.client.as_ref(), substrate_block_hash);
-        let chain_id = Felt252Wrapper(self.chain_id()?.0);
-
-        let traces = execution_infos
+    fn execution_info_to_transaction_trace(
+        execution_infos: Vec<(TransactionExecutionInfo, CommitmentStateDiff)>,
+        block_transactions: Vec<UserOrL1HandlerTransaction>,
+        chain_id: Felt252Wrapper,
+    ) -> RpcResult<Vec<TransactionTraceWithHash>> {
+        Ok(execution_infos
             .into_iter()
             .enumerate()
             .map(|(tx_idx, (tx_exec_info, commitment_state_diff))| {
@@ -237,9 +232,7 @@ where
                 })
             })
             .collect::<Result<Vec<_>, _>>()
-            .map_err(StarknetRpcApiError::from)?;
-
-        Ok(traces)
+            .map_err(StarknetRpcApiError::from)?)
     }
 }
 
@@ -439,4 +432,141 @@ fn tx_execution_infos_to_simulated_transactions(
     }
 
     Ok(results)
+}
+
+fn map_transaction_to_user_transaction<A, B, BE, G, C, P, H>(
+    starknet: &Starknet<A, B, BE, G, C, P, H>,
+    starknet_block: Block,
+    substrate_block_hash: B::Hash,
+    chain_id: Felt252Wrapper,
+    target_transaction_hash: Option<Felt252Wrapper>,
+) -> Result<(Vec<UserOrL1HandlerTransaction>, Vec<UserOrL1HandlerTransaction>), StarknetRpcApiError>
+where
+    A: ChainApi<Block = B> + 'static,
+    B: BlockT,
+    C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
+    H: HasherT + Send + Sync + 'static,
+    BE: Backend<B> + 'static,
+{
+    let mut transactions = Vec::new();
+    let mut transaction_to_trace = Vec::new();
+
+    for tx in starknet_block.transactions() {
+        let current_tx_hash = tx.compute_hash::<H>(chain_id, false);
+
+        if Some(current_tx_hash) == target_transaction_hash {
+            let converted_tx = convert_transaction(tx, starknet, substrate_block_hash, chain_id)?;
+            transaction_to_trace.push(converted_tx);
+            break;
+        } else {
+            let converted_tx = convert_transaction(tx, starknet, substrate_block_hash, chain_id)?;
+            transactions.push(converted_tx);
+        }
+    }
+
+    Ok((transactions, transaction_to_trace))
+}
+
+fn convert_transaction<A, B, BE, G, C, P, H>(
+    tx: &Transaction,
+    starknet: &Starknet<A, B, BE, G, C, P, H>,
+    substrate_block_hash: B::Hash,
+    chain_id: Felt252Wrapper,
+) -> Result<UserOrL1HandlerTransaction, StarknetRpcApiError>
+where
+    A: ChainApi<Block = B> + 'static,
+    B: BlockT,
+    C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
+    H: HasherT + Send + Sync + 'static,
+    BE: Backend<B> + 'static,
+{
+    match tx {
+        Transaction::Invoke(invoke_tx) => {
+            Ok(UserOrL1HandlerTransaction::User(UserTransaction::Invoke(invoke_tx.clone())))
+        }
+        Transaction::DeployAccount(deploy_account_tx) => {
+            Ok(UserOrL1HandlerTransaction::User(UserTransaction::DeployAccount(deploy_account_tx.clone())))
+        }
+        Transaction::Declare(declare_tx, _) => {
+            let class_hash = ClassHash::from(*declare_tx.class_hash());
+
+            match declare_tx {
+                DeclareTransaction::V0(_) | DeclareTransaction::V1(_) => {
+                    let contract_class = starknet
+                        .overrides
+                        .for_block_hash(starknet.client.as_ref(), substrate_block_hash)
+                        .contract_class_by_class_hash(substrate_block_hash, class_hash)
+                        .ok_or_else(|| {
+                            error!("Failed to retrieve contract class from hash '{class_hash}'");
+                            StarknetRpcApiError::InternalServerError
+                        })?;
+
+                    Ok(UserOrL1HandlerTransaction::User(UserTransaction::Declare(declare_tx.clone(), contract_class)))
+                }
+                DeclareTransaction::V2(_tx) => {
+                    let contract_class = starknet
+                        .backend
+                        .sierra_classes()
+                        .get_sierra_class(class_hash)
+                        .map_err(|e| {
+                            error!("Failed to fetch sierra class with hash {class_hash}: {e}");
+                            StarknetRpcApiError::InternalServerError
+                        })?
+                        .ok_or_else(|| {
+                            error!("The sierra class with hash {class_hash} is not present in db backend");
+                            StarknetRpcApiError::InternalServerError
+                        })?;
+                    let contract_class = mp_transactions::utils::sierra_to_casm_contract_class(contract_class)
+                        .map_err(|e| {
+                            error!("Failed to convert the SierraContractClass to CasmContractClass: {e}");
+                            StarknetRpcApiError::InternalServerError
+                        })?;
+                    let contract_class = ContractClass::V1(ContractClassV1::try_from(contract_class).map_err(|e| {
+                        error!("Failed to convert the compiler CasmContractClass to blockifier CasmContractClass: {e}");
+                        StarknetRpcApiError::InternalServerError
+                    })?);
+
+                    Ok(UserOrL1HandlerTransaction::User(UserTransaction::Declare(declare_tx.clone(), contract_class)))
+                }
+            }
+        }
+        Transaction::L1Handler(handle_l1_message_tx) => {
+            let tx_hash = handle_l1_message_tx.compute_hash::<H>(chain_id, false);
+            let paid_fee =
+                starknet.backend.l1_handler_paid_fee().get_fee_paid_for_l1_handler_tx(tx_hash.into()).map_err(|e| {
+                    error!("Failed to retrieve fee paid on l1 for tx with hash `{tx_hash:?}`: {e}");
+                    StarknetRpcApiError::InternalServerError
+                })?;
+
+            Ok(UserOrL1HandlerTransaction::L1Handler(handle_l1_message_tx.clone(), paid_fee))
+        }
+    }
+}
+
+fn get_previous_block_substrate_hash<A, B, BE, G, C, P, H>(
+    starknet: &Starknet<A, B, BE, G, C, P, H>,
+    substrate_block_hash: B::Hash,
+) -> Result<B::Hash, StarknetRpcApiError>
+where
+    A: ChainApi<Block = B> + 'static,
+    B: BlockT,
+    C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
+    C: ProvideRuntimeApi<B>,
+    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
+    H: HasherT + Send + Sync + 'static,
+    BE: Backend<B> + 'static,
+{
+    let starknet_block = get_block_by_block_hash(starknet.client.as_ref(), substrate_block_hash).map_err(|e| {
+        error!("Failed to get block for block hash {substrate_block_hash}: '{e}'");
+        StarknetRpcApiError::InternalServerError
+    })?;
+    let block_number = starknet_block.header().block_number;
+    let previous_block_number = block_number - 1;
+    let substrate_block_hash =
+        starknet.substrate_block_hash_from_starknet_block(BlockId::Number(previous_block_number)).map_err(|e| {
+            error!("Failed to retrieve previous block substrate hash: {e}");
+            StarknetRpcApiError::InternalServerError
+        })?;
+
+    Ok(substrate_block_hash)
 }
