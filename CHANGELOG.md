@@ -2,6 +2,7 @@
 
 ## Next release
 
+- fix: fix cargo-lint issues
 - feat: added chain-id to the GenesisConfig in pallet-starknet
 - fix(node): fix genesis hash inconsistency
 - feat (pallet): add tests for storage reversal on transaction revert
