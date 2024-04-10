@@ -2,6 +2,8 @@
 
 ## Next release
 
+- fix: fix cargo-lint issues
+- feat: added chain-id to the GenesisConfig in pallet-starknet
 - fix(node): fix genesis hash inconsistency
 - feat (pallet): add tests for storage reversal on transaction revert
 - feat: add prometheus metrics for mapping worker
@@ -28,6 +30,7 @@
 - refacto: reusable Eth client config for settlement/DA/other tasks
 - ci: add gomu gomu no gatling perfomrance test
 - feat(runtime): moved StarkEvents from Substrate
+- feat(rpc/trace_api): add `trace_transaction`
 
 ## v0.7.0
 
