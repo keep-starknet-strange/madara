@@ -50,6 +50,11 @@ jobs:
     uses: ./.github/workflows/starknet-rpc-tests.yml
     needs: madara_commands
 
+  e2e-tests:
+    name: Run e2e tests
+    uses: ./.github/workflows/starknet-e2e-tests.yml
+    needs: madara_commands
+
   starknet-js-tests:
     name: Run starknet-js compatibility tests
     uses: ./.github/workflows/starknet-js-tests.yml
