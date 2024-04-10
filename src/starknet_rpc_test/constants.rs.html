@@ -38,7 +38,6 @@
 <a href="#38" id="38">38</a>
 <a href="#39" id="39">39</a>
 <a href="#40" id="40">40</a>
-<a href="#41" id="41">41</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>starknet_ff::FieldElement;
 
 <span class="kw">pub const </span>TEST_CONTRACT_ADDRESS: <span class="kw-2">&amp;</span>str = <span class="string">&quot;0x0000000000000000000000000000000000000000000000000000000000001111&quot;</span>;
@@ -75,9 +74,8 @@
 <span class="kw">pub const </span>MAX_FEE_OVERRIDE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;0x100000&quot;</span>;
 
 <span class="comment">// Need to use `from_mont` because this needs to be a constant function call
-</span><span class="doccomment">/// ChainId for Starknet Goerli testnet
-</span><span class="kw">pub const </span>SN_GOERLI_CHAIN_ID: FieldElement =
-    FieldElement::from_mont([<span class="number">3753493103916128178</span>, <span class="number">18446744073709548950</span>, <span class="number">18446744073709551615</span>, <span class="number">398700013197595345</span>]);
+</span><span class="kw">pub const </span>MADARA_CHAIN_ID: FieldElement =
+    FieldElement::from_mont([<span class="number">18444025906882525153</span>, <span class="number">18446744073709551615</span>, <span class="number">18446744073709551615</span>, <span class="number">530251916243973616</span>]);
 
 <span class="kw">pub const </span>SPEC_VERSION: <span class="kw-2">&amp;</span>str = <span class="string">&quot;0.4.0&quot;</span>;
 </code></pre></div></section></main></body></html>

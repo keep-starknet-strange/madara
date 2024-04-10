@@ -118,6 +118,7 @@
 <a href="#118" id="118">118</a>
 <a href="#119" id="119">119</a>
 <a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::fmt;
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::string::String;
@@ -176,6 +177,7 @@
     <span class="kw">pub </span>predeployed_accounts: Vec&lt;PredeployedAccount&gt;,
     <span class="kw">pub </span>storage: Vec&lt;(ContractStorageKey, StorageValue)&gt;,
     <span class="kw">pub </span>fee_token_address: ContractAddress,
+    <span class="kw">pub </span>chain_id: String,
 }
 
 <span class="attr">#[derive(Debug, PartialEq, Eq)]

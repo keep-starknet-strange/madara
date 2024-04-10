@@ -344,11 +344,11 @@
 
 <span class="kw">fn </span>load_genesis(data_path: PathBuf) -&gt; GenesisLoader {
     <span class="kw">let </span>genesis_path = data_path.join(GENESIS_ASSETS_DIR).join(GENESIS_ASSETS_FILE);
+
     <span class="macro">log::debug!</span>(<span class="string">&quot;🧪 Loading genesis data at : {}&quot;</span>, genesis_path.display());
     <span class="kw">let </span>genesis_file_content = std::fs::read_to_string(genesis_path)
         .expect(<span class="string">&quot;Failed to read genesis file. Please run `madara setup` before opening an issue.&quot;</span>);
     <span class="kw">let </span>genesis_data: GenesisData = serde_json::from_str(<span class="kw-2">&amp;</span>genesis_file_content).expect(<span class="string">&quot;Failed loading genesis&quot;</span>);
-
     GenesisLoader::new(data_path, genesis_data)
 }
 

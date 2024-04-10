@@ -259,7 +259,6 @@
 <a href="#259" id="259">259</a>
 <a href="#260" id="260">260</a>
 <a href="#261" id="261">261</a>
-<a href="#262" id="262">262</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::future::Future;
 <span class="kw">use </span>std::sync::Arc;
 
@@ -268,7 +267,6 @@
 <span class="kw">use </span>starknet_accounts::{
     Account, AccountFactory, Call, ConnectedAccount, Execution, OpenZeppelinAccountFactory, SingleOwnerAccount,
 };
-<span class="kw">use </span>starknet_core::chain_id;
 <span class="kw">use </span>starknet_core::types::contract::legacy::LegacyContractClass;
 <span class="kw">use </span>starknet_core::types::contract::{CompiledClass, SierraClass};
 <span class="kw">use </span>starknet_core::types::{
@@ -280,7 +278,7 @@
 <span class="kw">use </span>starknet_providers::{Provider, ProviderError};
 <span class="kw">use </span>starknet_signers::{LocalWallet, SigningKey};
 
-<span class="kw">use </span><span class="kw">crate</span>::constants::{FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE};
+<span class="kw">use </span><span class="kw">crate</span>::constants::{FEE_TOKEN_ADDRESS, MADARA_CHAIN_ID, MAX_FEE_OVERRIDE};
 <span class="kw">use crate</span>::{
     RpcAccount, RpcOzAccountFactory, SendTransactionError, TransactionAccountDeployment, TransactionDeclaration,
     TransactionExecution, TransactionLegacyDeclaration, TransactionResult,
@@ -304,7 +302,7 @@
     } <span class="kw">else </span>{
         starknet_accounts::ExecutionEncoding::New
     };
-    SingleOwnerAccount::new(rpc, signer, account_address, chain_id::TESTNET, execution_encoding)
+    SingleOwnerAccount::new(rpc, signer, account_address, MADARA_CHAIN_ID, execution_encoding)
 }
 
 <span class="kw">pub async fn </span>read_erc20_balance(
@@ -330,7 +328,7 @@
     class_hash: FieldElement,
 ) -&gt; RpcOzAccountFactory&lt;<span class="lifetime">&#39;a</span>&gt; {
     <span class="kw">let </span>signer = LocalWallet::from(SigningKey::from_secret_scalar(FieldElement::from_hex_be(private_key).unwrap()));
-    OpenZeppelinAccountFactory::new(class_hash, chain_id::TESTNET, signer, rpc).<span class="kw">await</span>.unwrap()
+    OpenZeppelinAccountFactory::new(class_hash, MADARA_CHAIN_ID, signer, rpc).<span class="kw">await</span>.unwrap()
 }
 
 <span class="kw">pub fn </span>build_deploy_account_tx&lt;<span class="lifetime">&#39;a</span>&gt;(

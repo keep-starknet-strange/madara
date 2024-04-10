@@ -158,6 +158,16 @@
 <a href="#158" id="158">158</a>
 <a href="#159" id="159">159</a>
 <a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Definition of the runtime API for the Starknet pallet.
 
 </span><span class="comment">// Adding allow unused type parameters to avoid clippy errors
@@ -231,8 +241,18 @@
         /// the runtime itself, accomplished through the extrinsic_filter method. This enables the
         /// client to operate seamlessly while abstracting the extrinsic complexity.
         </span><span class="kw">fn </span>extrinsic_filter(xts: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;) -&gt; Vec&lt;Transaction&gt;;
-        <span class="doccomment">/// Re-execute a block and return the TransactionExecutionInfos of every transaction in it, in the same order
-        </span><span class="kw">fn </span>re_execute_transactions(transactions: Vec&lt;UserOrL1HandlerTransaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;(TransactionExecutionInfo, CommitmentStateDiff)&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt;;
+        <span class="doccomment">/// Used to re-execute transactions from a past block and return their trace
+        ///
+        /// # Arguments
+        ///
+        /// * `transactions_before` - The first txs of the block. We don&#39;t want to trace those, but we need to execute them to rebuild the exact same state
+        /// * `transactions_to_trace` - The transactions we want to trace (can be a complete block of transactions or a subset of it)
+        ///
+        /// # Return
+        ///
+        /// Idealy, the execution traces of all of `transactions_to_trace`.
+        /// If any of the transactions (from both arguments) fails, an error is returned.
+        </span><span class="kw">fn </span>re_execute_transactions(transactions_before: Vec&lt;UserOrL1HandlerTransaction&gt;, transactions_to_trace: Vec&lt;UserOrL1HandlerTransaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;(TransactionExecutionInfo, CommitmentStateDiff)&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt;;
 
         <span class="kw">fn </span>get_index_and_tx_for_tx_hash(xts: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;, chain_id: Felt252Wrapper, tx_hash: Felt252Wrapper) -&gt; <span class="prelude-ty">Option</span>&lt;(u32, Transaction)&gt;;
 
