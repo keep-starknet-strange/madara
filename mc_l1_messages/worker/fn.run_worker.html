@@ -2,7 +2,7 @@
     config: <a class="struct" href="struct.EthereumClientConfig.html" title="struct mc_l1_messages::worker::EthereumClientConfig">EthereumClientConfig</a>,
     client: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc">Arc</a>&lt;C&gt;,
     pool: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc">Arc</a>&lt;P&gt;,
-    backend: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc">Arc</a>&lt;<a class="struct" href="../../mc_db/struct.Backend.html" title="struct mc_db::Backend">Backend</a>&lt;B&gt;&gt;
+    backend: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc">Arc</a>&lt;Backend&lt;B&gt;&gt;
 )<span class="where fmt-newline">where
     B: BlockT,
     C: ProvideRuntimeApi&lt;B&gt; + HeaderBackend&lt;B&gt;,
