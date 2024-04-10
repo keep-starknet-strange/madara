@@ -178,7 +178,7 @@ where
     P: TransactionPool<Block = B> + 'static,
     H: HasherT + Send + Sync + 'static,
 {
-    fn re_execute_transactions(
+    pub fn re_execute_transactions(
         &self,
         previous_block_substrate_hash: B::Hash,
         transactions_before: Vec<UserOrL1HandlerTransaction>,
@@ -434,7 +434,7 @@ fn tx_execution_infos_to_simulated_transactions(
     Ok(results)
 }
 
-fn map_transaction_to_user_transaction<A, B, BE, G, C, P, H>(
+pub fn map_transaction_to_user_transaction<A, B, BE, G, C, P, H>(
     starknet: &Starknet<A, B, BE, G, C, P, H>,
     starknet_block: Block,
     substrate_block_hash: B::Hash,
