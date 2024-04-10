@@ -48,7 +48,7 @@ impl StarknetSovereign {
         // Try to attach to an already running sandbox (GitHub CI case)
         // otherwise spawn new sandbox instance
         let sandbox = if let Ok(endpoint) = std::env::var("ANVIL_ENDPOINT") {
-            EthereumClient::attach(Some(endpoint)).expect("Failed to attach to sandbox")
+            EthereumClient::attach(Some(endpoint), Some(String::from(""))).expect("Failed to attach to sandbox")
         } else {
             EthereumClient::spawn(None)
         };

@@ -25,3 +25,4 @@ starknet-signers = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 url = { workspace = true }
+log = "0.4.20"

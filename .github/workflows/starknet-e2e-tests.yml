@@ -1,0 +1,36 @@
+---
+name: Task - E2e Tests
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  rpc-tests:
+    runs-on: ubuntu-latest
+    env:
+      BINARY_PATH: ../target/production/madara
+    steps:
+      - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "cache"
+          save-if: false
+      - uses: actions/cache@v3
+        with:
+          path: |
+            target/production/madara
+          key:
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
+            github.run_id }}
+          fail-on-cache-miss: true
+      - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "2.3.1"
+      - name: Setup build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
+      - name: Run rpc test without cache
+        run: |-
+          cd starknet-e2e-test && cargo test --package starknet-e2e-test -- --nocapture

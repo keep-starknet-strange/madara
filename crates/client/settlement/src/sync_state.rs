@@ -90,13 +90,13 @@ where
         }
 
         let starknet_spec = settlement_provider.get_chain_spec().await?;
-        log::debug!("[settlement] Starknet chain spec {:?}", starknet_spec);
+        log::info!("[settlement] Starknet chain spec {:?}", starknet_spec);
 
         // We need to make sure that we are on the same page with the settlement contract.
         Self::verify_starknet_spec(substrate_client, &starknet_spec)?;
 
         let mut last_settled_state = settlement_provider.get_state().await?;
-        log::debug!("[settlement] Last settled state {:?}", last_settled_state);
+        log::info!("[settlement] Last settled state {:?}", last_settled_state);
 
         // If we haven't reached the settled level yet (e.g. syncing from scratch) this check will pass.
         // But we need to run it again once we are up to speed.
@@ -140,7 +140,7 @@ where
                 )
                 .await?;
 
-                log::debug!("[settlement] State transitioned to {:?}", new_state);
+                log::info!("[settlement] State transitioned to {:?}", new_state);
                 last_settled_state = new_state;
                 sync_from += 1;
             }
@@ -275,7 +275,7 @@ where
             messages_to_l1,
             messages_to_l2,
         };
-        log::trace!("{:#?}", program_output);
+        log::info!("{:#?}", program_output);
 
         settlement_provider.update_state(program_output).await?;
 

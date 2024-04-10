@@ -17,6 +17,7 @@ use starknet_core::utils::get_selector_from_name;
 use starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
 use starknet_providers::{Provider, ProviderError};
 use starknet_signers::{LocalWallet, SigningKey};
+use log::log;
 
 use crate::constants::{FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE};
 use crate::{

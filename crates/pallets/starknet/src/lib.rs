@@ -121,6 +121,8 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
+    use blockifier::transaction::errors::TransactionExecutionError;
+
     use super::*;
 
     #[pallet::pallet]
@@ -670,6 +672,8 @@ pub mod pallet {
             // Either successfully  or not
             L1Messages::<T>::mutate(|nonces| nonces.insert(nonce));
 
+            log::info!(">>>> Transaction Info : {:?}", transaction);
+
             // Execute
             let tx_execution_infos = transaction
                 .execute(
@@ -679,6 +683,14 @@ pub mod pallet {
                 )
                 .map_err(|e| {
                     log::error!("Failed to consume l1 message: {}", e);
+                    match e {
+                        TransactionExecutionError::EntryPointExecutionError(inner_error) => log::info!("[EntryPointExecutionError] : error_details {:?}", inner_error),
+                        TransactionExecutionError::ExecutionError(inner_error) => log::info!("[ExecutionError] : error_details {:?}", inner_error),
+                        TransactionExecutionError::CairoResourcesNotContainedInFeeCosts => log::info!("[ExecutionError] : error_details : CairoResourcesNotContainedInFeeCosts"),
+                        TransactionExecutionError::ContractConstructorExecutionFailed(inner_error) => log::info!("[ContractConstructorExecutionFailed] : error_details {:?}", inner_error),
+                        TransactionExecutionError::FixedPointConversion => log::info!("[FixedPointConversion] : error_details"),
+                         _ => ()
+                    }
                     Error::<T>::TransactionExecutionFailed
                 })?;
 
