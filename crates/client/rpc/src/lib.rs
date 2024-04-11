@@ -1794,7 +1794,7 @@ where
             Some(transaction_hash.into()),
         )?;
 
-        if transaction_to_trace.len() == 0 {
+        if transaction_to_trace.is_empty() {
             return Err(StarknetRpcApiError::TxnHashNotFound);
         }
 
