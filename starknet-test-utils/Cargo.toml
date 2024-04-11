@@ -11,6 +11,7 @@ assert_matches = { workspace = true }
 async-lock = { workspace = true }
 async-trait = { workspace = true }
 flate2 = { workspace = true }
+log = "0.4.20"
 reqwest = { workspace = true }
 rstest = { workspace = true }
 serde = { workspace = true }
@@ -25,4 +26,3 @@ starknet-signers = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 url = { workspace = true }
-log = "0.4.20"
