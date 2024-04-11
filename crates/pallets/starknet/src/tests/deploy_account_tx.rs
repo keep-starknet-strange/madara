@@ -90,7 +90,7 @@ fn given_contract_run_deploy_account_tx_works() {
                 data: EventData(vec![
                     contract_address.0.0,                   // From
                     StarkFelt::try_from("0xdead").unwrap(), // To
-                    StarkFelt::try_from("0x18a6").unwrap(), // Amount low
+                    StarkFelt::try_from("0xb64e").unwrap(), // Amount low
                     StarkFelt::from(0u128),                 // Amount high
                 ]),
             },
@@ -272,6 +272,10 @@ fn given_contract_run_deploy_account_argent_tx_works() {
         set_infinite_tokens::<MockRuntime>(&contract_address);
         set_signer(deploy_tx.contract_address, AccountType::V0(AccountTypeV0Inner::Argent));
 
+        assert_ok!(Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::deploy_account { transaction: deploy_tx.clone() }
+        ));
         assert_ok!(Starknet::deploy_account(none_origin, deploy_tx));
         assert_eq!(Starknet::contract_class_hash_by_address(contract_address), account_class_hash.0);
     });

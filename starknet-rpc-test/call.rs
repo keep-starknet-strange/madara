@@ -13,7 +13,7 @@ use starknet_core::types::{BlockId, BlockTag, FunctionCall, StarknetError};
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::{Provider, ProviderError};
-use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
+use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, ETH_FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{build_single_owner_account, get_contract_address_from_deploy_tx, AccountActions};
 use starknet_rpc_test::Transaction;
@@ -26,7 +26,7 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
     assert_matches!(
         rpc.call(
             FunctionCall {
-                contract_address: FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(),
+                contract_address: FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap(),
                 entry_point_selector: get_selector_from_name("name").unwrap(),
                 calldata: vec![]
             },
@@ -48,7 +48,7 @@ async fn fail_non_existing_entrypoint(madara: &ThreadSafeMadaraClient) -> Result
     assert_matches!(
         rpc.call(
             FunctionCall {
-                contract_address: FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(),
+                contract_address: FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap(),
                 entry_point_selector: FieldElement::from_hex_be("0x0").unwrap(),
                 calldata: vec![]
             },
@@ -70,7 +70,7 @@ async fn fail_incorrect_calldata(madara: &ThreadSafeMadaraClient) -> Result<(), 
     assert_matches!(
         rpc.call(
             FunctionCall {
-                contract_address: FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(),
+                contract_address: FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap(),
                 entry_point_selector: get_selector_from_name("name").unwrap(),
                 calldata: vec![FieldElement::ONE] // name function has no calldata
             },
@@ -92,7 +92,7 @@ async fn works_on_correct_call_no_calldata(madara: &ThreadSafeMadaraClient) -> R
     assert_eq!(
         rpc.call(
             FunctionCall {
-                contract_address: FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(),
+                contract_address: FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap(),
                 entry_point_selector: get_selector_from_name("name").unwrap(),
                 calldata: vec![] // name function has no calldata
             },
@@ -114,7 +114,7 @@ async fn works_on_correct_call_with_calldata(madara: &ThreadSafeMadaraClient) ->
     assert!(
         rpc.call(
             FunctionCall {
-                contract_address: FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(),
+                contract_address: FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap(),
                 entry_point_selector: get_selector_from_name("balanceOf").unwrap(),
                 calldata: vec![FieldElement::TWO] // name function has no calldata
             },

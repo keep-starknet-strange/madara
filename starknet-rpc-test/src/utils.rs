@@ -18,7 +18,7 @@ use starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
 use starknet_providers::{Provider, ProviderError};
 use starknet_signers::{LocalWallet, SigningKey};
 
-use crate::constants::{FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE};
+use crate::constants::{ETH_FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE};
 use crate::{
     RpcAccount, RpcOzAccountFactory, SendTransactionError, TransactionAccountDeployment, TransactionDeclaration,
     TransactionExecution, TransactionLegacyDeclaration, TransactionResult,
@@ -133,7 +133,7 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
         transfer_amount: U256,
         nonce: Option<u64>,
     ) -> TransactionExecution {
-        let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
+        let fee_token_address = FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap();
         self.invoke_contract(
             fee_token_address,
             "transfer",

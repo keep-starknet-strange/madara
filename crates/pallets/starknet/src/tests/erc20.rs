@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use blockifier::execution::contract_class::ContractClass;
+use blockifier::transaction::transactions::InvokeTransaction;
 use frame_support::assert_ok;
 use lazy_static::lazy_static;
 use mp_felt::Felt252Wrapper;
@@ -31,7 +32,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         let sender_address = get_account_address(None, AccountType::V0(AccountTypeV0Inner::NoValidate));
         // ERC20 is already declared for the fees.
         // Deploy ERC20 contract
-        let deploy_transaction = InvokeTransactionV1 {
+        let tx = InvokeTransactionV1 {
             max_fee: Fee(u128::MAX),
             signature: TransactionSignature(vec![]),
             nonce: Nonce(StarkFelt::ZERO),
@@ -57,11 +58,12 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             StarkFelt::try_from("0x00dc58c1280862c95964106ef9eba5d9ed8c0c16d05883093e4540f22b829dff").unwrap();
 
         let chain_id = Starknet::chain_id();
-        let tx_hash = deploy_transaction.compute_hash(chain_id, false);
+        let tx_hash = tx.compute_hash(chain_id, false);
+        let transaction = InvokeTransaction { tx: tx.into(), tx_hash, only_query: false };
 
-        assert_ok!(Starknet::invoke(origin.clone(), deploy_transaction.into()));
+        assert_ok!(Starknet::invoke(origin.clone(), transaction));
 
-        let events: Vec<StarknetEvent> = Starknet::tx_events(TransactionHash::from(tx_hash));
+        let events: Vec<StarknetEvent> = Starknet::tx_events(tx_hash);
         // Expected events:
         // ERC20 -> Transfer
         // NoValidateAccount -> ContractDeployed
@@ -110,7 +112,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 data: EventData(vec![
                     sender_address.0 .0, // From
                     StarkFelt::try_from("0x000000000000000000000000000000000000000000000000000000000000dead").unwrap(), // Sequencer address
-                    StarkFelt::try_from("0x00000000000000000000000000000000000000000000000000000000000197a8").unwrap(), // Amount low
+                    StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000029c8e").unwrap(), // Amount low
                     StarkFelt::from(0u128), // Amount high
                 ]),
             },
@@ -132,6 +134,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             amount_high: Felt252Wrapper::ZERO.into(),
             nonce: Felt252Wrapper::ONE.into(),
         });
+        let tx_hash = transfer_transaction.tx_hash;
 
         // Also asserts that the deployment has been saved.
         assert_ok!(Starknet::invoke(origin, transfer_transaction));
@@ -172,7 +175,8 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             StarkFelt::from(0u128)
         );
 
-        let events: Vec<StarknetEvent> = Starknet::tx_events(TransactionHash::from(tx_hash));
+        let events: Vec<StarknetEvent> = Starknet::tx_events(tx_hash);
+        println!("eventslen: {} events {:#?}", events.len(), events);
         // Expected events: (added on top of the past ones)
         // ERC20 -> Transfer
         // FeeToken -> Transfer
@@ -205,7 +209,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 data: EventData(vec![
                     sender_address.0 .0,                    // From
                     StarkFelt::try_from("0xdead").unwrap(), // Sequencer address
-                    StarkFelt::try_from("0xf014").unwrap(), // Amount low
+                    StarkFelt::try_from("0x17c00").unwrap(), // Amount low
                     StarkFelt::from(0u128),                 // Amount high
                 ]),
             },

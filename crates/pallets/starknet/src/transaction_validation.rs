@@ -1,10 +1,12 @@
 //! Transaction validation logic.
 use blockifier::transaction::account_transaction::AccountTransaction;
-use blockifier::transaction::errors::TransactionExecutionError;
+use blockifier::transaction::errors::{TransactionExecutionError, TransactionPreValidationError};
 use blockifier::transaction::objects::TransactionInfoCreator;
 use blockifier::transaction::transaction_execution::Transaction;
 use blockifier::transaction::transactions::ValidatableTransaction;
+use cairo_vm::vm::runners::cairo_runner::ExecutionResources;
 use frame_support::traits::EnsureOrigin;
+use mp_transactions::execution::Validate;
 
 use super::*;
 
@@ -135,43 +137,42 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn validate_unsigned_tx(transaction: &Transaction) -> Result<(), InvalidTransaction> {
-        let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();
-        let mut execution_resources = cairo_vm::vm::runners::cairo_runner::ExecutionResources::default();
-        let mut initial_gas = VersionedConstants::latest_constants().tx_initial_gas();
-
         let _call_info = match transaction {
             Transaction::AccountTransaction(transaction) => {
-                let tx_context = Arc::new(TransactionContext {
-                    block_context: Self::get_block_context(),
-                    tx_info: transaction.create_tx_info(),
-                });
+                let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();
+                let block_context = Self::get_block_context();
+                let mut inital_gas = block_context.versioned_constants().tx_initial_gas();
+                let mut resources = ExecutionResources::default();
 
-                let validation_result =
-                    transaction.validate_tx(&mut state, &mut execution_resources, tx_context, &mut initial_gas, false);
+                let validation_result = match transaction {
+                    AccountTransaction::Declare(tx) => {
+                        println!("validating declare tx");
+                        let tx_context = Arc::new(block_context.to_tx_context(tx));
+                        tx.validate(&mut state, tx_context, &mut resources, &mut inital_gas, true, true, true)
+                    }
+                    AccountTransaction::DeployAccount(_) => return Ok(()),
+                    AccountTransaction::Invoke(tx) => {
+                        let tx_context = Arc::new(block_context.to_tx_context(tx));
+                        tx.validate(&mut state, tx_context, &mut resources, &mut inital_gas, true, true, true)
+                    }
+                };
 
                 // handle the case where we the user sent both its deploy and first tx at the same time
                 // we assume that the deploy tx is also in the pool and will therefore be executed before
                 // a bit hacky but it is needed in order to be compatible with wallets
-                if let Err(TransactionExecutionError::ValidateTransactionError {
-                    error:
-                        EntryPointExecutionError::PreExecutionError(PreExecutionError::UninitializedStorageAddress(
-                            contract_address,
-                        )),
-                    storage_address: _,
-                    selector: _,
-                }) = validation_result
+                if let Err(TransactionExecutionError::TransactionPreValidationError(
+                    TransactionPreValidationError::InvalidNonce { address, account_nonce, incoming_tx_nonce },
+                )) = validation_result
                 {
-                    let transaction_nonce = match transaction {
-                        AccountTransaction::Declare(tx) => tx.tx.nonce(),
-                        AccountTransaction::DeployAccount(tx) => tx.tx.nonce(),
-                        AccountTransaction::Invoke(tx) => tx.tx.nonce(),
-                    };
                     let sender_address = match transaction {
                         AccountTransaction::Declare(tx) => tx.tx.sender_address(),
                         AccountTransaction::DeployAccount(tx) => tx.contract_address,
                         AccountTransaction::Invoke(tx) => tx.tx.sender_address(),
                     };
-                    if contract_address == sender_address && transaction_nonce == Nonce(StarkFelt::ONE) {
+                    if address == sender_address
+                        && account_nonce == Nonce(StarkFelt::ZERO)
+                        && incoming_tx_nonce == Nonce(StarkFelt::ONE)
+                    {
                         Ok(None)
                     } else {
                         validation_result

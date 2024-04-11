@@ -6,7 +6,7 @@ use starknet_core::types::{BlockId, StarknetError};
 use starknet_ff::FieldElement;
 use starknet_providers::Provider;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
-use starknet_rpc_test::constants::{FEE_TOKEN_ADDRESS, MAX_U256};
+use starknet_rpc_test::constants::{ETH_FEE_TOKEN_ADDRESS, MAX_U256};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 
 #[rstest]
@@ -14,7 +14,7 @@ use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-    let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).expect("Invalid Contract Address");
+    let fee_token_address = FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).expect("Invalid Contract Address");
 
     assert_matches!(
         rpc.get_storage_at(
@@ -56,7 +56,7 @@ async fn fail_non_existing_contract(madara: &ThreadSafeMadaraClient) -> Result<(
 async fn work_ok_at_previous_contract(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-    let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).expect("Invalid Contract Address");
+    let fee_token_address = FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).expect("Invalid Contract Address");
 
     assert_eq!(
         rpc.get_storage_at(
@@ -76,7 +76,7 @@ async fn work_ok_at_previous_contract(madara: &ThreadSafeMadaraClient) -> Result
 async fn return_0_for_uninitialized_key(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-    let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).expect("Invalid Contract Address");
+    let fee_token_address = FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).expect("Invalid Contract Address");
 
     assert_eq!(
         rpc.get_storage_at(fee_token_address, FieldElement::from_hex_be("0x1").unwrap(), BlockId::Number(0),).await?,

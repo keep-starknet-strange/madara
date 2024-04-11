@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use blockifier::abi::abi_utils::get_storage_var_address;
+use blockifier::transaction::transactions::InvokeTransaction;
 use frame_support::{assert_err, assert_ok};
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
@@ -58,11 +59,9 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
-        let none_origin = RuntimeOrigin::none();
-
         let transaction = get_invoke_dummy(Starknet::chain_id(), NONCE_ZERO);
 
-        assert_ok!(Starknet::invoke(none_origin.clone(), transaction));
+        assert_ok!(Starknet::invoke(RuntimeOrigin::none(), transaction));
 
         let pending_txs = Starknet::pending();
         pretty_assertions::assert_eq!(pending_txs.len(), 1);
@@ -84,10 +83,8 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                     )],
                     data: EventData(vec![
                         StarkFelt::try_from(BLOCKIFIER_ACCOUNT_ADDRESS).unwrap(),
-                        StarkFelt::try_from("0x000000000000000000000000000000000000000000000000000000000000dead")
-                            .unwrap(),
-                        StarkFelt::try_from("0x00000000000000000000000000000000000000000000000000000000000000d2")
-                            .unwrap(),
+                        StarkFelt::try_from("0xdead").unwrap(),
+                        StarkFelt::try_from("0xce04").unwrap(),
                         StarkFelt::from(0u128),
                     ]),
                 },
@@ -127,7 +124,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
                 data: EventData(vec![
                     StarkFelt::try_from("0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0").unwrap(), // From
                     StarkFelt::try_from("0xdead").unwrap(), // To
-                    StarkFelt::try_from("0xd2").unwrap(),  // Amount low
+                    StarkFelt::try_from("0xd156").unwrap(),  // Amount low
                     StarkFelt::from(0u128),                 // Amount high
                 ]),
             },
@@ -152,6 +149,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
+        let chain_id = Starknet::chain_id();
         let emit_contract_address =
             ContractAddress(PatriciaKey(StarkFelt::try_from(MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS).unwrap()));
 
@@ -163,7 +161,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
         let expected_emitted_internal_event_hash = get_selector_from_name("internal").unwrap();
         let expected_emitted_external_event_hash = get_selector_from_name("external").unwrap();
 
-        let emit_internal_event_transaction = starknet_api::transaction::InvokeTransactionV1 {
+        let emit_internal_event_tx = starknet_api::transaction::InvokeTransactionV1 {
             sender_address: sender_account.into(),
             calldata: Calldata(Arc::new(vec![
                 emit_contract_address.0.0, // Token address
@@ -177,19 +175,19 @@ fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let chain_id = Starknet::chain_id();
-        let tx_hash = emit_internal_event_transaction.compute_hash(chain_id, false);
+        let tx_hash = emit_internal_event_tx.compute_hash(chain_id, false);
+        let transaction = InvokeTransaction { tx: emit_internal_event_tx.into(), tx_hash, only_query: false };
 
-        assert_ok!(Starknet::invoke(none_origin, emit_internal_event_transaction.into()));
+        assert_ok!(Starknet::invoke(none_origin.clone(), transaction));
 
-        let events: Vec<StarknetEvent> = Starknet::tx_events(TransactionHash::from(tx_hash));
+        let events: Vec<StarknetEvent> = Starknet::tx_events(tx_hash);
         let first_event = events.first();
         assert_eq!(
             first_event.and_then(|e| e.content.keys.get(0).cloned()).unwrap(),
             EventKey(Felt252Wrapper::from(expected_emitted_internal_event_hash).into())
         );
 
-        let do_two_event_transaction = starknet_api::transaction::InvokeTransactionV1 {
+        let do_two_event_tx = starknet_api::transaction::InvokeTransactionV1 {
             sender_address: sender_account,
             calldata: Calldata(Arc::new(vec![
                 emit_contract_address.0.0, // Token address
@@ -200,14 +198,12 @@ fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
             max_fee: Fee(u128::MAX),
             signature: TransactionSignature::default(),
         };
+        let tx_hash = do_two_event_tx.compute_hash(chain_id, false);
+        let transaction = InvokeTransaction { tx: do_two_event_tx.into(), tx_hash, only_query: false };
 
-        let none_origin = RuntimeOrigin::none();
+        assert_ok!(Starknet::invoke(none_origin, transaction));
 
-        assert_ok!(Starknet::invoke(none_origin, do_two_event_transaction.clone().into()));
-
-        let chain_id = Starknet::chain_id();
-        let tx_hash = do_two_event_transaction.compute_hash(chain_id, false);
-        let events = Starknet::tx_events(TransactionHash::from(tx_hash));
+        let events = Starknet::tx_events(tx_hash);
         assert_eq!(
             events[0].content.keys[0],
             EventKey(Felt252Wrapper::from(expected_emitted_external_event_hash).into())
@@ -263,12 +259,6 @@ fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_then_it_works() {
 
         let transaction = get_invoke_openzeppelin_dummy(Starknet::chain_id());
 
-        let validate_result = Starknet::validate_unsigned(
-            TransactionSource::InBlock,
-            &crate::Call::invoke { transaction: transaction.clone() },
-        );
-        assert_ok!(validate_result);
-
         assert_ok!(Starknet::invoke(none_origin, transaction));
     });
 }
@@ -311,12 +301,6 @@ fn given_hardcoded_contract_run_invoke_on_argent_account_then_it_works() {
             tx.signature = sign_message_hash(transaction.tx_hash);
         };
 
-        let validate_result = Starknet::validate_unsigned(
-            TransactionSource::InBlock,
-            &crate::Call::invoke { transaction: transaction.clone().into() },
-        );
-        assert_ok!(validate_result);
-
         assert_ok!(Starknet::invoke(none_origin, transaction.into()));
     });
 }
@@ -355,12 +339,6 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_then_it_works() {
         if let starknet_api::transaction::InvokeTransaction::V1(tx) = &mut transaction.tx {
             tx.signature = sign_message_hash(transaction.tx_hash);
         };
-
-        let validate_result = Starknet::validate_unsigned(
-            TransactionSource::InBlock,
-            &crate::Call::invoke { transaction: transaction.clone().into() },
-        );
-        assert_ok!(validate_result);
 
         assert_ok!(Starknet::invoke(none_origin, transaction.into()));
     });

@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 
 use blockifier::context::BlockContext;
-use blockifier::state::cached_state::CommitmentStateDiff;
+use blockifier::state::cached_state::{CachedState, CommitmentStateDiff};
 use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
@@ -12,6 +12,7 @@ use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationF
 use sp_core::Get;
 use sp_runtime::DispatchError;
 
+use crate::blockifier_state_adapter::BlockifierStateAdapter;
 use crate::{Config, Error, Pallet};
 
 impl<T: Config> Pallet<T> {
@@ -27,18 +28,24 @@ impl<T: Config> Pallet<T> {
     fn estimate_fee_inner(transactions: Vec<AccountTransaction>) -> Result<Vec<(u128, u128)>, DispatchError> {
         let transactions_len = transactions.len();
         let block_context = Self::get_block_context();
+        let mut cached_state = Self::init_cached_state();
 
         let fee_res_iterator = transactions
             .into_iter()
             .map(|tx| {
-                match Self::execute_account_transaction(tx, &block_context, &SimulationFlags::default()) {
+                match Self::execute_account_transaction(
+                    tx,
+                    &mut cached_state,
+                    &block_context,
+                    &SimulationFlags::default(),
+                ) {
                     Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
                     Err(e) => {
-                        log::error!("Transaction execution failed during fee estimation: {e}");
+                        println!("Transaction execution failed during fee estimation: {e}");
                         Err(Error::<T>::TransactionExecutionFailed)
                     }
                     Ok(execution_info) => {
-                        log::error!(
+                        println!(
                             "Transaction execution reverted during fee estimation: {}",
                             // Safe due to the `match` branch order
                             execution_info.revert_error.unwrap()
@@ -49,6 +56,7 @@ impl<T: Config> Pallet<T> {
             })
             .map(|exec_info_res| {
                 exec_info_res.map(|exec_info| {
+                    println!("exec info: {:#?}", exec_info);
                     exec_info
                         .actual_resources
                         .0
@@ -118,11 +126,13 @@ impl<T: Config> Pallet<T> {
         simulation_flags: &SimulationFlags,
     ) -> Result<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError> {
         let block_context = Self::get_block_context();
+        let mut cached_state = Self::init_cached_state();
 
-        let tx_execution_result = Self::execute_message(message, &block_context, simulation_flags).map_err(|e| {
-            log::error!("Transaction execution failed during simulation: {e}");
-            PlaceHolderErrorTypeForFailedStarknetExecution
-        });
+        let tx_execution_result = Self::execute_message(message, &mut cached_state, &block_context, simulation_flags)
+            .map_err(|e| {
+                log::error!("Transaction execution failed during simulation: {e}");
+                PlaceHolderErrorTypeForFailedStarknetExecution
+            });
 
         Ok(tx_execution_result)
     }
@@ -186,26 +196,28 @@ impl<T: Config> Pallet<T> {
         DispatchError,
     > {
         let block_context = Self::get_block_context();
+        let mut cached_state = Self::init_cached_state();
 
         let execution_infos = transactions
             .into_iter()
             .map(|user_or_l1_tx| {
-                let mut cached_state = Self::init_cached_state();
-
                 let res = match user_or_l1_tx {
-                    Transaction::AccountTransaction(tx) => {
-                        Self::execute_account_transaction(tx, &block_context, &SimulationFlags::default()).map_err(
-                            |e| {
+                    Transaction::AccountTransaction(tx) => Self::execute_account_transaction(
+                        tx,
+                        &mut cached_state,
+                        &block_context,
+                        &SimulationFlags::default(),
+                    )
+                    .map_err(|e| {
+                        log::error!("Failed to reexecute a tx: {}", e);
+                        PlaceHolderErrorTypeForFailedStarknetExecution
+                    }),
+                    Transaction::L1HandlerTransaction(tx) => {
+                        Self::execute_message(tx, &mut cached_state, &block_context, &SimulationFlags::default())
+                            .map_err(|e| {
                                 log::error!("Failed to reexecute a tx: {}", e);
                                 PlaceHolderErrorTypeForFailedStarknetExecution
-                            },
-                        )
-                    }
-                    Transaction::L1HandlerTransaction(tx) => {
-                        Self::execute_message(tx, &block_context, &SimulationFlags::default()).map_err(|e| {
-                            log::error!("Failed to reexecute a tx: {}", e);
-                            PlaceHolderErrorTypeForFailedStarknetExecution
-                        })
+                            })
                     }
                 };
 
@@ -218,12 +230,11 @@ impl<T: Config> Pallet<T> {
 
     fn execute_account_transaction(
         transaction: AccountTransaction,
+        state: &mut CachedState<BlockifierStateAdapter<T>>,
         block_context: &BlockContext,
         simulation_flags: &SimulationFlags,
     ) -> Result<TransactionExecutionInfo, TransactionExecutionError> {
-        let mut cached_state = Self::init_cached_state();
-
-        transaction.execute(&mut cached_state, block_context, simulation_flags.charge_fee, simulation_flags.validate)
+        transaction.execute(state, block_context, simulation_flags.charge_fee, simulation_flags.validate)
     }
 
     fn execute_transaction_with_state_diff(
@@ -245,11 +256,10 @@ impl<T: Config> Pallet<T> {
 
     fn execute_message(
         transaction: L1HandlerTransaction,
+        state: &mut CachedState<BlockifierStateAdapter<T>>,
         block_context: &BlockContext,
         simulation_flags: &SimulationFlags,
     ) -> Result<TransactionExecutionInfo, TransactionExecutionError> {
-        let mut cached_state = Self::init_cached_state();
-
-        transaction.execute(&mut cached_state, block_context, simulation_flags.charge_fee, simulation_flags.validate)
+        transaction.execute(state, block_context, simulation_flags.charge_fee, simulation_flags.validate)
     }
 }

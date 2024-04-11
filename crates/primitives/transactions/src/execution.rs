@@ -513,16 +513,6 @@ fn commit_transaction<S: State + SetArbitraryNonce>(
     Ok(())
 }
 
-pub trait Execute<S: State> {
-    fn execute(
-        &self,
-        state: &mut S,
-        block_context: &BlockContext,
-        validate: bool,
-        charge_fee: bool,
-    ) -> TransactionExecutionResult<TransactionExecutionInfo>;
-}
-
 pub trait SetArbitraryNonce: State {
     fn set_nonce_at(&self, contract_address: ContractAddress, nonce: Nonce) -> StateResult<()>;
 }
@@ -533,68 +523,161 @@ impl<'a, S: State + SetArbitraryNonce> SetArbitraryNonce for MutRefState<'a, S> 
     }
 }
 
-impl<S, T> Execute<S> for T
+pub fn run_non_revertible_transaction<T, S>(
+    transaction: &T,
+    state: &mut S,
+    block_context: &BlockContext,
+    validate: bool,
+    charge_fee: bool,
+) -> TransactionExecutionResult<TransactionExecutionInfo>
 where
-    for<'a> Self: Executable<CachedState<MutRefState<'a, S>>>
+    S: State,
+    T: GetTxType + Executable<S> + Validate + GetActualCostBuilder + TransactionInfoCreator,
+{
+    let mut resources = ExecutionResources::default();
+    let mut remaining_gas = block_context.versioned_constants().tx_initial_gas();
+    let tx_context = Arc::new(block_context.to_tx_context(transaction));
+
+    let validate_call_info: Option<CallInfo>;
+    let execute_call_info: Option<CallInfo>;
+    let strinct_nonce_checking = true;
+    if matches!(T::tx_type(), TransactionType::DeployAccount) {
+        // Handle `DeployAccount` transactions separately, due to different order of things.
+        // Also, the execution context required form the `DeployAccount` execute phase is
+        // validation context.
+        let mut execution_context = EntryPointExecutionContext::new_validate(tx_context.clone(), charge_fee)?;
+        execute_call_info =
+            transaction.run_execute(state, &mut resources, &mut execution_context, &mut remaining_gas)?;
+        validate_call_info = transaction.validate(
+            state,
+            tx_context.clone(),
+            &mut resources,
+            &mut remaining_gas,
+            validate,
+            charge_fee,
+            strinct_nonce_checking,
+        )?;
+    } else {
+        let mut execution_context = EntryPointExecutionContext::new_invoke(tx_context.clone(), charge_fee)?;
+        validate_call_info = transaction.validate(
+            state,
+            tx_context.clone(),
+            &mut resources,
+            &mut remaining_gas,
+            validate,
+            charge_fee,
+            strinct_nonce_checking,
+        )?;
+        execute_call_info =
+            transaction.run_execute(state, &mut resources, &mut execution_context, &mut remaining_gas)?;
+    }
+
+    let (actual_cost, bouncer_resources) = transaction
+        .get_actual_cost_builder(tx_context.clone())
+        .with_validate_call_info(&validate_call_info)
+        .with_execute_call_info(&execute_call_info)
+        .build(&resources)?;
+
+    let post_execution_report = PostExecutionReport::new(state, &tx_context, &actual_cost, charge_fee)?;
+    let validate_execute_call_info = match post_execution_report.error() {
+        Some(error) => Err(TransactionExecutionError::from(error)),
+        None => Ok(ValidateExecuteCallInfo::new_accepted(
+            validate_call_info,
+            execute_call_info,
+            actual_cost,
+            bouncer_resources,
+        )),
+    }?;
+
+    let fee_transfer_call_info = AccountTransaction::handle_fee(
+        state,
+        tx_context,
+        validate_execute_call_info.final_cost.actual_fee,
+        charge_fee,
+    )?;
+
+    let tx_execution_info = TransactionExecutionInfo {
+        validate_call_info: validate_execute_call_info.validate_call_info,
+        execute_call_info: validate_execute_call_info.execute_call_info,
+        fee_transfer_call_info,
+        actual_fee: validate_execute_call_info.final_cost.actual_fee,
+        da_gas: validate_execute_call_info.final_cost.da_gas,
+        actual_resources: validate_execute_call_info.final_cost.actual_resources,
+        revert_error: validate_execute_call_info.revert_error,
+        bouncer_resources: validate_execute_call_info.bouncer_resources,
+    };
+
+    Ok(tx_execution_info)
+}
+
+pub fn run_revertible_transaction<T, S>(
+    transaction: &T,
+    state: &mut S,
+    block_context: &BlockContext,
+    validate: bool,
+    charge_fee: bool,
+) -> TransactionExecutionResult<TransactionExecutionInfo>
+where
+    for<'a> T: Executable<CachedState<MutRefState<'a, S>>>
         + Validate
         + GetActualCostBuilder
-        + TransactionInfoCreator
         + GetTxType
-        + GetCalldataLen,
+        + GetCalldataLen
+        + TransactionInfoCreator,
     S: State + SetArbitraryNonce,
 {
-    fn execute(
-        &self,
-        state: &mut S,
-        block_context: &BlockContext,
-        validate: bool,
-        charge_fee: bool,
-    ) -> TransactionExecutionResult<TransactionExecutionInfo> {
-        let mut remaining_gas = block_context.versioned_constants().tx_initial_gas();
-        let tx_context = Arc::new(block_context.to_tx_context(self));
-        let mut resources = ExecutionResources::default();
+    let mut resources = ExecutionResources::default();
+    let mut remaining_gas = block_context.versioned_constants().tx_initial_gas();
+    let tx_context = Arc::new(block_context.to_tx_context(transaction));
 
-        let validate_call_info =
-            self.validate(state, tx_context.clone(), &mut resources, &mut remaining_gas, validate, charge_fee, true)?;
+    let validate_call_info = transaction.validate(
+        state,
+        tx_context.clone(),
+        &mut resources,
+        &mut remaining_gas,
+        validate,
+        charge_fee,
+        true,
+    )?;
 
-        let mut execution_context = EntryPointExecutionContext::new_invoke(tx_context.clone(), charge_fee)?;
+    let mut execution_context = EntryPointExecutionContext::new_invoke(tx_context.clone(), charge_fee)?;
 
-        let n_allotted_execution_steps = execution_context.subtract_validation_and_overhead_steps(
-            &validate_call_info,
-            &Self::tx_type(),
-            self.get_calldata_len(),
+    let n_allotted_execution_steps = execution_context.subtract_validation_and_overhead_steps(
+        &validate_call_info,
+        &T::tx_type(),
+        transaction.get_calldata_len(),
+    );
+
+    // Save the state changes resulting from running `validate_tx`, to be used later for
+    // resource and fee calculation.
+    let actual_cost_builder_with_validation_changes =
+        transaction.get_actual_cost_builder(tx_context.clone()).with_validate_call_info(&validate_call_info);
+
+    let validate_execute_call_info = {
+        // Create copies of state and resources for the execution.
+        // Both will be rolled back if the execution is reverted or committed upon success.
+        let mut execution_resources = resources.clone();
+        let mut transactional_state = CachedState::new(MutRefState::new(state), GlobalContractCache::new(10));
+
+        let execution_result = transaction.run_execute(
+            &mut transactional_state,
+            &mut execution_resources,
+            &mut execution_context,
+            &mut remaining_gas,
         );
 
-        // Save the state changes resulting from running `validate_tx`, to be used later for
-        // resource and fee calculation.
-        let actual_cost_builder_with_validation_changes =
-            self.get_actual_cost_builder(tx_context.clone()).with_validate_call_info(&validate_call_info);
+        // Pre-compute cost in case of revert.
+        let execution_steps_consumed = n_allotted_execution_steps - execution_context.n_remaining_steps();
+        let (revert_cost, bouncer_revert_resources) = actual_cost_builder_with_validation_changes
+            .clone()
+            .with_reverted_steps(execution_steps_consumed)
+            .build(&resources)?;
 
-        let validate_execute_call_info = {
-            // Create copies of state and resources for the execution.
-            // Both will be rolled back if the execution is reverted or committed upon success.
-            let mut execution_resources = resources.clone();
-            let mut transactional_state = CachedState::new(MutRefState::new(state), GlobalContractCache::new(10));
-
-            let execution_result = self.run_execute(
-                &mut transactional_state,
-                &mut execution_resources,
-                &mut execution_context,
-                &mut remaining_gas,
-            );
-
-            // Pre-compute cost in case of revert.
-            let execution_steps_consumed = n_allotted_execution_steps - execution_context.n_remaining_steps();
-            let (revert_cost, bouncer_revert_resources) = actual_cost_builder_with_validation_changes
-                .clone()
-                .with_reverted_steps(execution_steps_consumed)
-                .build(&resources)?;
-
-            match execution_result {
-                Ok(execute_call_info) => {
-                    // When execution succeeded, calculate the actual required fee before committing the
-                    // transactional state. If max_fee is insufficient, revert the `run_execute` part.
-                    let (actual_cost, bouncer_resources) = actual_cost_builder_with_validation_changes
+        match execution_result {
+            Ok(execute_call_info) => {
+                // When execution succeeded, calculate the actual required fee before committing the
+                // transactional state. If max_fee is insufficient, revert the `run_execute` part.
+                let (actual_cost, bouncer_resources) = actual_cost_builder_with_validation_changes
                     .with_execute_call_info(&execute_call_info)
                     // Fee is determined by the sum of `validate` and `execute` state changes.
                     // Since `execute_state_changes` are not yet committed, we merge them manually
@@ -602,110 +685,110 @@ where
                     .try_add_state_changes(&mut transactional_state)?
                     .build(&execution_resources)?;
 
-                    // Post-execution checks.
-                    let post_execution_report =
-                        PostExecutionReport::new(&transactional_state, &tx_context, &actual_cost, charge_fee)?;
-                    match post_execution_report.error() {
-                        Some(post_execution_error) => {
-                            // Post-execution check failed. Revert the execution, compute the final fee
-                            // to charge and recompute resources used (to be consistent with other
-                            // revert case, compute resources by adding consumed execution steps to
-                            // validation resources).
-                            abort_transaction(transactional_state);
-                            TransactionExecutionResult::Ok(ValidateExecuteCallInfo::new_reverted(
-                                validate_call_info,
-                                post_execution_error.to_string(),
-                                ActualCost { actual_fee: post_execution_report.recommended_fee(), ..revert_cost },
-                                bouncer_revert_resources,
-                            ))
-                        }
-                        None => {
-                            // Post-execution check passed, commit the execution.
-                            commit_transaction(transactional_state)?;
-                            Ok(ValidateExecuteCallInfo::new_accepted(
-                                validate_call_info,
-                                execute_call_info,
-                                actual_cost,
-                                bouncer_resources,
-                            ))
-                        }
+                // Post-execution checks.
+                let post_execution_report =
+                    PostExecutionReport::new(&transactional_state, &tx_context, &actual_cost, charge_fee)?;
+                match post_execution_report.error() {
+                    Some(post_execution_error) => {
+                        // Post-execution check failed. Revert the execution, compute the final fee
+                        // to charge and recompute resources used (to be consistent with other
+                        // revert case, compute resources by adding consumed execution steps to
+                        // validation resources).
+                        abort_transaction(transactional_state);
+                        TransactionExecutionResult::Ok(ValidateExecuteCallInfo::new_reverted(
+                            validate_call_info,
+                            post_execution_error.to_string(),
+                            ActualCost { actual_fee: post_execution_report.recommended_fee(), ..revert_cost },
+                            bouncer_revert_resources,
+                        ))
+                    }
+                    None => {
+                        // Post-execution check passed, commit the execution.
+                        commit_transaction(transactional_state)?;
+                        Ok(ValidateExecuteCallInfo::new_accepted(
+                            validate_call_info,
+                            execute_call_info,
+                            actual_cost,
+                            bouncer_resources,
+                        ))
                     }
                 }
-                Err(execution_error) => {
-                    // Error during execution. Revert, even if the error is sequencer-related.
-                    abort_transaction(transactional_state);
-                    let post_execution_report = PostExecutionReport::new(state, &tx_context, &revert_cost, charge_fee)?;
-                    TransactionExecutionResult::Ok(ValidateExecuteCallInfo::new_reverted(
-                        validate_call_info,
-                        execution_error.to_string(),
-                        ActualCost { actual_fee: post_execution_report.recommended_fee(), ..revert_cost },
-                        bouncer_revert_resources,
-                    ))
-                }
             }
-        }?;
-
-        let fee_transfer_call_info = AccountTransaction::handle_fee(
-            state,
-            tx_context,
-            validate_execute_call_info.final_cost.actual_fee,
-            charge_fee,
-        )?;
-
-        let tx_execution_info = TransactionExecutionInfo {
-            validate_call_info: validate_execute_call_info.validate_call_info,
-            execute_call_info: validate_execute_call_info.execute_call_info,
-            fee_transfer_call_info,
-            actual_fee: validate_execute_call_info.final_cost.actual_fee,
-            da_gas: validate_execute_call_info.final_cost.da_gas,
-            actual_resources: validate_execute_call_info.final_cost.actual_resources,
-            revert_error: validate_execute_call_info.revert_error,
-            bouncer_resources: validate_execute_call_info.bouncer_resources,
-        };
-        Ok(tx_execution_info)
-    }
-}
-
-impl<S: State> Execute<S> for L1HandlerTransaction {
-    fn execute(
-        &self,
-        state: &mut S,
-        block_context: &BlockContext,
-        _validate: bool,
-        _charge_fee: bool,
-    ) -> TransactionExecutionResult<TransactionExecutionInfo> {
-        let tx_context = Arc::new(block_context.to_tx_context(self));
-
-        let mut execution_resources = ExecutionResources::default();
-        let mut context = EntryPointExecutionContext::new_invoke(tx_context.clone(), true)?;
-        let mut remaining_gas = block_context.versioned_constants().tx_initial_gas();
-        let execute_call_info = self.run_execute(state, &mut execution_resources, &mut context, &mut remaining_gas)?;
-        let l1_handler_payload_size = self.payload_size();
-
-        let (ActualCost { actual_fee, da_gas, actual_resources }, _bouncer_resources) =
-            ActualCost::builder_for_l1_handler(tx_context, l1_handler_payload_size)
-                .with_execute_call_info(&execute_call_info)
-                .build(&execution_resources)?;
-
-        let paid_fee = self.paid_fee_on_l1;
-        // For now, assert only that any amount of fee was paid.
-        // The error message still indicates the required fee.
-        if paid_fee == Fee(0) {
-            return Err(TransactionFeeError::InsufficientL1Fee { paid_fee, actual_fee })?;
+            Err(execution_error) => {
+                println!("REVERTING: {:?}", execution_error);
+                // Error during execution. Revert, even if the error is sequencer-related.
+                abort_transaction(transactional_state);
+                let post_execution_report = PostExecutionReport::new(state, &tx_context, &revert_cost, charge_fee)?;
+                TransactionExecutionResult::Ok(ValidateExecuteCallInfo::new_reverted(
+                    validate_call_info,
+                    execution_error.to_string(),
+                    ActualCost { actual_fee: post_execution_report.recommended_fee(), ..revert_cost },
+                    bouncer_revert_resources,
+                ))
+            }
         }
+    }?;
 
-        Ok(TransactionExecutionInfo {
-            validate_call_info: None,
-            execute_call_info,
-            fee_transfer_call_info: None,
-            actual_fee: Fee::default(),
-            da_gas,
-            actual_resources: actual_resources.clone(),
-            revert_error: None,
-            bouncer_resources: actual_resources,
-        })
-    }
+    let fee_transfer_call_info = AccountTransaction::handle_fee(
+        state,
+        tx_context,
+        validate_execute_call_info.final_cost.actual_fee,
+        charge_fee,
+    )?;
+
+    let tx_execution_info = TransactionExecutionInfo {
+        validate_call_info: validate_execute_call_info.validate_call_info,
+        execute_call_info: validate_execute_call_info.execute_call_info,
+        fee_transfer_call_info,
+        actual_fee: validate_execute_call_info.final_cost.actual_fee,
+        da_gas: validate_execute_call_info.final_cost.da_gas,
+        actual_resources: validate_execute_call_info.final_cost.actual_resources,
+        revert_error: validate_execute_call_info.revert_error,
+        bouncer_resources: validate_execute_call_info.bouncer_resources,
+    };
+
+    Ok(tx_execution_info)
 }
+
+pub fn execute_l1_handler_transaction<S: State>(
+    transaction: &L1HandlerTransaction,
+    state: &mut S,
+    block_context: &BlockContext,
+) -> TransactionExecutionResult<TransactionExecutionInfo> {
+    let mut execution_resources = ExecutionResources::default();
+    let mut remaining_gas = block_context.versioned_constants().tx_initial_gas();
+    let tx_context = Arc::new(block_context.to_tx_context(transaction));
+
+    let mut context = EntryPointExecutionContext::new_invoke(tx_context.clone(), true)?;
+
+    let execute_call_info =
+        transaction.run_execute(state, &mut execution_resources, &mut context, &mut remaining_gas)?;
+    let l1_handler_payload_size = transaction.payload_size();
+
+    let (ActualCost { actual_fee, da_gas, actual_resources }, _bouncer_resources) =
+        ActualCost::builder_for_l1_handler(tx_context, l1_handler_payload_size)
+            .with_execute_call_info(&execute_call_info)
+            .build(&execution_resources)?;
+
+    let paid_fee = transaction.paid_fee_on_l1;
+    // For now, assert only that any amount of fee was paid.
+    // The error message still indicates the required fee.
+    if paid_fee == Fee(0) {
+        return Err(TransactionFeeError::InsufficientL1Fee { paid_fee, actual_fee })?;
+    }
+
+    Ok(TransactionExecutionInfo {
+        validate_call_info: None,
+        execute_call_info,
+        fee_transfer_call_info: None,
+        actual_fee: Fee::default(),
+        da_gas,
+        actual_resources: actual_resources.clone(),
+        revert_error: None,
+        bouncer_resources: actual_resources,
+    })
+}
+
 /// Wraps a mutable reference to a `State` object, exposing its API.
 /// Used to pass ownership to a `CachedState`.
 pub struct MutRefState<'a, S: State + ?Sized>(&'a mut S);

@@ -1,5 +1,6 @@
 use blockifier::transaction::account_transaction::AccountTransaction;
 use frame_support::{assert_err, assert_ok};
+use mp_transactions::compute_hash::ComputeTransactionHash;
 use starknet_api::core::Nonce;
 use starknet_api::hash::StarkFelt;
 
@@ -16,10 +17,10 @@ fn estimates_tx_fee_successfully_no_validate() {
 
         let chain_id = Starknet::chain_id();
         let tx_1 = get_storage_read_write_dummy(chain_id);
-        let tx_1 = AccountTransaction::Invoke(tx_1.into());
+        let tx_1 = AccountTransaction::Invoke(tx_1);
 
         let tx_2 = get_invoke_dummy(chain_id, Nonce(StarkFelt::ONE));
-        let tx_2 = AccountTransaction::Invoke(tx_2.into());
+        let tx_2 = AccountTransaction::Invoke(tx_2);
 
         let txs = vec![tx_1, tx_2];
 
@@ -27,11 +28,11 @@ fn estimates_tx_fee_successfully_no_validate() {
 
         let (actual, l1_gas_usage) = fees[0];
         assert!(actual > 0, "actual fee is missing");
-        assert!(l1_gas_usage > 0, "this should be charged l1_gas as it store a value to storage");
+        assert!(l1_gas_usage > 0, "l1 fee is missing");
 
         let (actual, l1_gas_usage) = fees[1];
         assert!(actual > 0, "actual fee is missing");
-        assert!(l1_gas_usage == 0, "this should not be charged any l1_gas as it does not store nor send messages");
+        assert!(l1_gas_usage > 0, "l1 fee is missing");
     });
 }
 
@@ -53,7 +54,7 @@ fn estimates_tx_fee_with_query_version() {
 }
 
 #[test]
-fn executable_tx_should_not_be_estimable() {
+fn executable_tx_should_be_estimable_and_executable() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
@@ -79,6 +80,7 @@ fn query_tx_should_not_be_executable() {
 
         let mut transaction = get_invoke_argent_dummy(Starknet::chain_id());
         transaction.only_query = true;
+        transaction.tx_hash = transaction.tx.compute_hash(Starknet::chain_id(), true);
         if let starknet_api::transaction::InvokeTransaction::V1(tx) = &mut transaction.tx {
             tx.signature = sign_message_hash(transaction.tx_hash);
         };
@@ -91,7 +93,7 @@ fn query_tx_should_not_be_executable() {
         // it should not be executable
         assert_err!(
             Starknet::invoke(RuntimeOrigin::none(), transaction.clone().into()),
-            Error::<MockRuntime>::TransactionExecutionFailed
+            Error::<MockRuntime>::QueryTransactionCannotBeExecuted
         );
     });
 }

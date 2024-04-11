@@ -88,7 +88,9 @@ use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
-use mp_transactions::execution::Execute;
+use mp_transactions::execution::{
+    execute_l1_handler_transaction, run_non_revertible_transaction, run_revertible_transaction,
+};
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
 use starknet_api::block::{BlockNumber, BlockTimestamp};
@@ -96,7 +98,9 @@ use starknet_api::core::{ChainId, ClassHash, CompiledClassHash, ContractAddress,
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::state::StorageKey;
-use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash};
+use starknet_api::transaction::{
+    Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash, TransactionVersion,
+};
 use starknet_crypto::FieldElement;
 use transaction_validation::TxPriorityInfo;
 
@@ -122,8 +126,6 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
-    use blockifier::transaction::account_transaction::AccountTransaction;
-    use starknet_api::core::ClassHash;
 
     use super::*;
 
@@ -394,6 +396,7 @@ pub mod pallet {
                     "Class hash {} does not exist in contract_classes",
                     class_hash,
                 );
+                println!("genesis deploying contract with class {class_hash:?} at address {address:?}");
 
                 ContractClassHashes::<T>::insert(address, class_hash.0);
             }
@@ -439,6 +442,7 @@ pub mod pallet {
         FailedToCreateATransactionalStorageExecution,
         L1MessageAlreadyExecuted,
         MissingL1GasUsage,
+        QueryTransactionCannotBeExecuted,
     }
 
     /// The Starknet pallet external functions.
@@ -486,6 +490,7 @@ pub mod pallet {
         #[pallet::call_index(1)]
         #[pallet::weight({0})]
         pub fn invoke(origin: OriginFor<T>, transaction: InvokeTransaction) -> DispatchResult {
+            ensure!(!transaction.only_query, Error::<T>::QueryTransactionCannotBeExecuted);
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
@@ -499,11 +504,20 @@ pub mod pallet {
 
             // Init caches
             let mut state = BlockifierStateAdapter::<T>::default();
+            let block_context = Self::get_block_context();
+            let charge_fee = !<T as Config>::DisableTransactionFee::get();
 
             // Execute
-            let tx_execution_infos = transaction
-                .execute(&mut state, &Self::get_block_context(), true, true)
-                .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+            let tx_execution_infos = match transaction.tx.version() {
+                TransactionVersion::ZERO => {
+                    run_non_revertible_transaction(&transaction, &mut state, &block_context, true, charge_fee)
+                }
+                _ => run_revertible_transaction(&transaction, &mut state, &block_context, true, charge_fee),
+            }
+            .map_err(|e| {
+                println!("invoke execution failed: {e:?}");
+                Error::<T>::TransactionExecutionFailed
+            })?;
 
             Self::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash,
@@ -533,6 +547,7 @@ pub mod pallet {
         #[pallet::call_index(2)]
         #[pallet::weight({0})]
         pub fn declare(origin: OriginFor<T>, transaction: DeclareTransaction) -> DispatchResult {
+            ensure!(!transaction.only_query(), Error::<T>::QueryTransactionCannotBeExecuted);
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
@@ -548,11 +563,15 @@ pub mod pallet {
             );
 
             let mut state = BlockifierStateAdapter::<T>::default();
+            let charge_fee = !<T as Config>::DisableTransactionFee::get();
 
             // Execute
-            let tx_execution_infos = transaction
-                .execute(&mut state, &Self::get_block_context(), true, true)
-                .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+            let tx_execution_infos =
+                run_non_revertible_transaction(&transaction, &mut state, &Self::get_block_context(), true, charge_fee)
+                    .map_err(|e| {
+                        println!("declare failed: {e:?}");
+                        Error::<T>::TransactionExecutionFailed
+                    })?;
 
             Self::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash(),
@@ -564,6 +583,7 @@ pub mod pallet {
                 Transaction::AccountTransaction(AccountTransaction::Declare(transaction.clone())),
                 tx_execution_infos.revert_error,
             );
+
             Ok(())
         }
 
@@ -582,6 +602,7 @@ pub mod pallet {
         #[pallet::call_index(3)]
         #[pallet::weight({0})]
         pub fn deploy_account(origin: OriginFor<T>, transaction: DeployAccountTransaction) -> DispatchResult {
+            ensure!(!transaction.only_query, Error::<T>::QueryTransactionCannotBeExecuted);
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
@@ -592,11 +613,12 @@ pub mod pallet {
             );
 
             let mut state = BlockifierStateAdapter::<T>::default();
+            let charge_fee = !<T as Config>::DisableTransactionFee::get();
 
             // Execute
-            let tx_execution_infos = transaction
-                .execute(&mut state, &Self::get_block_context(), true, true)
-                .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+            let tx_execution_infos =
+                run_non_revertible_transaction(&transaction, &mut state, &Self::get_block_context(), true, charge_fee)
+                    .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
             Self::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash,
@@ -645,9 +667,9 @@ pub mod pallet {
             let mut state = BlockifierStateAdapter::<T>::default();
 
             // Execute
-            let tx_execution_infos = transaction
-                .execute(&mut state, &Self::get_block_context(), true, true)
-                .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+            let tx_execution_infos =
+                execute_l1_handler_transaction(&transaction, &mut state, &Self::get_block_context())
+                    .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
             Self::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash,
@@ -700,9 +722,12 @@ pub mod pallet {
 
             let transaction = Self::get_call_transaction(call.clone()).map_err(|_| InvalidTransaction::Call)?;
 
+            println!("before validate unsigned tx nonce");
             let tx_priority_info = Self::validate_unsigned_tx_nonce(&transaction)?;
 
+            println!("before validate unsigned tx");
             Self::validate_unsigned_tx(&transaction)?;
+            println!("after validate unsigned tx");
 
             let mut valid_transaction_builder = ValidTransaction::with_tag_prefix("starknet")
                 .priority(u64::MAX)
@@ -714,12 +739,15 @@ pub mod pallet {
                 TxPriorityInfo::RegularTxs { sender_address, transaction_nonce, sender_nonce } => {
                     valid_transaction_builder =
                         valid_transaction_builder.and_provides((sender_address, transaction_nonce));
+                    println!("tx nonce: {:?}, sender_nonce: {:?}", transaction_nonce, sender_nonce);
+
+                    // Future nonces requires the previous one to be execute before
                     if transaction_nonce > sender_nonce {
                         valid_transaction_builder = valid_transaction_builder.and_requires((
                             sender_address,
-                            transaction_nonce
-                                .try_increment()
-                                .map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::BadProof))?,
+                            Nonce::from(Felt252Wrapper::from(
+                                Felt252Wrapper::from(transaction_nonce).0 - FieldElement::ONE,
+                            )),
                         ));
                     }
                 }

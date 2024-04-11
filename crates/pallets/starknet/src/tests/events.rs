@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use blockifier::transaction::transactions::InvokeTransaction;
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use starknet_api::core::{ContractAddress, Nonce, PatriciaKey};
@@ -29,7 +30,7 @@ fn internal_and_external_events_are_emitted_in_the_right_order() {
         let sender_account = get_account_address(None, AccountType::V0(AccountTypeV0Inner::NoValidate));
         let emit_selector: StarkFelt = Felt252Wrapper::from(get_selector_from_name("emit_sandwich").unwrap()).into();
 
-        let emit_event_transaction = InvokeTransactionV1 {
+        let tx = InvokeTransactionV1 {
             sender_address: sender_account,
             calldata: Calldata(Arc::new(vec![
                 emit_contract_address.0.0, // Token address
@@ -40,14 +41,13 @@ fn internal_and_external_events_are_emitted_in_the_right_order() {
             max_fee: Fee(u128::MAX),
             signature: TransactionSignature::default(),
         };
-        let tx_hash = emit_event_transaction.compute_hash(chain_id, false);
+        let tx_hash = tx.compute_hash(chain_id, false);
+        let transaction = InvokeTransaction { tx: tx.into(), tx_hash, only_query: false };
 
-        let events = Starknet::tx_events(TransactionHash::from(tx_hash));
-
-        let none_origin = RuntimeOrigin::none();
-        Starknet::invoke(none_origin, emit_event_transaction.clone().into())
+        Starknet::invoke(RuntimeOrigin::none(), transaction.clone())
             .expect("emit sandwich transaction should not fail");
 
+        let events = Starknet::tx_events(tx_hash);
         let event_emitters: Vec<ContractAddress> = events.iter().map(|event| event.from_address).collect();
 
         pretty_assertions::assert_eq!(

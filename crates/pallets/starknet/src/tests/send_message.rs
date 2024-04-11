@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use blockifier::execution::contract_class::ClassInfo;
+use blockifier::transaction::transactions::InvokeTransaction;
 use frame_support::assert_ok;
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
@@ -51,7 +52,7 @@ fn messages_to_l1_are_stored() {
         let declare_tx = blockifier::transaction::transactions::DeclareTransaction::new(
             declare_tx,
             tx_hash,
-            ClassInfo::new(&contract_class, usize::MAX, usize::MAX).unwrap(),
+            ClassInfo::new(&contract_class, 0, 100).unwrap(),
         )
         .unwrap();
 
@@ -78,7 +79,7 @@ fn messages_to_l1_are_stored() {
 
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), deploy_tx.into()));
 
-        let invoke_tx = InvokeTransactionV1 {
+        let tx = InvokeTransactionV1 {
             sender_address,
             calldata: Calldata(Arc::new(vec![
                 contract_address.0.0,
@@ -93,11 +94,13 @@ fn messages_to_l1_are_stored() {
             signature: TransactionSignature(vec![]),
         };
 
-        assert_ok!(Starknet::invoke(RuntimeOrigin::none(), invoke_tx.clone().into()));
-
         let chain_id = Starknet::chain_id();
-        let tx_hash = invoke_tx.compute_hash(chain_id, false);
-        let messages = Starknet::tx_messages(TransactionHash::from(tx_hash));
+        let tx_hash = tx.compute_hash(chain_id, false);
+
+        let transaction = InvokeTransaction { tx: tx.into(), tx_hash, only_query: false };
+        assert_ok!(Starknet::invoke(RuntimeOrigin::none(), transaction));
+
+        let messages = Starknet::tx_messages(tx_hash);
 
         assert_eq!(1, messages.len());
         pretty_assertions::assert_eq!(

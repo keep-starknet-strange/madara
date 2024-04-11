@@ -108,9 +108,9 @@ fn re_execute_tx_ok() {
         assert_eq!(res.len(), 5);
 
         // Now let's check the TransactionInfos returned
+        let mut state = Starknet::init_cached_state();
         let first_invoke_tx_info = match txs.get(0).unwrap() {
             Transaction::AccountTransaction(AccountTransaction::Invoke(invoke_tx)) => {
-                let mut state = Starknet::init_cached_state();
                 let tx_info = AccountTransaction::Invoke(invoke_tx.clone())
                     .execute(&mut state, &Starknet::get_block_context(), true, true)
                     .unwrap();
@@ -121,7 +121,6 @@ fn re_execute_tx_ok() {
         assert_eq!(res[0], first_invoke_tx_info);
         let second_invoke_tx_info = match txs.get(1).unwrap() {
             Transaction::AccountTransaction(AccountTransaction::Invoke(invoke_tx)) => {
-                let mut state = Starknet::init_cached_state();
                 let tx_info = AccountTransaction::Invoke(invoke_tx.clone())
                     .execute(&mut state, &Starknet::get_block_context(), true, true)
                     .unwrap();
@@ -132,7 +131,6 @@ fn re_execute_tx_ok() {
         assert_eq!(res[1], second_invoke_tx_info);
         let declare_tx_info = match txs.get(2).unwrap() {
             Transaction::AccountTransaction(AccountTransaction::Declare(declare_tx)) => {
-                let mut state = Starknet::init_cached_state();
                 let tx_info = AccountTransaction::Declare(declare_tx.clone())
                     .execute(&mut state, &Starknet::get_block_context(), true, true)
                     .unwrap();
@@ -143,7 +141,6 @@ fn re_execute_tx_ok() {
         assert_eq!(res[2], declare_tx_info);
         let deploy_account_tx_info = match txs.get(3).unwrap() {
             Transaction::AccountTransaction(AccountTransaction::DeployAccount(deploy_account_tx)) => {
-                let mut state = Starknet::init_cached_state();
                 let tx_info = AccountTransaction::DeployAccount(deploy_account_tx.clone())
                     .execute(&mut state, &Starknet::get_block_context(), true, true)
                     .unwrap();
@@ -154,7 +151,6 @@ fn re_execute_tx_ok() {
         assert_eq!(res[3], deploy_account_tx_info);
         let handle_l1_message_tx_info = match txs.get(4).unwrap() {
             Transaction::L1HandlerTransaction(l1_tx) => {
-                let mut state = Starknet::init_cached_state();
                 let tx_info = l1_tx.clone().execute(&mut state, &Starknet::get_block_context(), true, true).unwrap();
                 (tx_info, state.to_state_diff())
             }

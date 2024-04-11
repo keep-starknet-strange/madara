@@ -8,7 +8,9 @@ use starknet_accounts::Account;
 use starknet_core::types::{BlockId, DeclareTransactionResult, StarknetError};
 use starknet_ff::FieldElement;
 use starknet_providers::{Provider, ProviderError};
-use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, OZ_CONTRACT_ADDRESS, SIGNER_PRIVATE};
+use starknet_rpc_test::constants::{
+    ARGENT_CONTRACT_ADDRESS, ETH_FEE_TOKEN_ADDRESS, OZ_CONTRACT_ADDRESS, SIGNER_PRIVATE,
+};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{build_single_owner_account, read_erc20_balance, AccountActions, U256};
 use starknet_rpc_test::{SendTransactionError, Transaction, TransactionResult};
@@ -57,18 +59,28 @@ async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraCli
         let mut madara_write_lock = madara.write().await;
         // draining oz_account so the txn fails during execution
         let balance =
-            read_erc20_balance(&rpc, FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(), oz_account.address()).await;
+            read_erc20_balance(&rpc, FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap(), oz_account.address())
+                .await;
+        println!("{:?}", balance);
         madara_write_lock
             .create_block_with_txs(vec![Transaction::Execution(oz_account.transfer_tokens_u256(
                 FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(),
                 // subtractin 150k to keep some fees for the transfer
-                U256 { low: balance[0] - FieldElement::from_dec_str("150000").unwrap(), high: balance[1] },
+                U256 { low: balance[0] - FieldElement::from(1_000_000u128), high: balance[1] },
                 None,
             ))])
             .await?;
 
+        let balance =
+            read_erc20_balance(&rpc, FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap(), oz_account.address())
+                .await;
+        println!("{:?}", balance);
         // declaring contract
         let txs = madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
+        let balance =
+            read_erc20_balance(&rpc, FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap(), oz_account.address())
+                .await;
+        println!("{:?}", balance);
         let block_number = rpc.block_number().await?;
         (block_number, txs)
     };

@@ -15,7 +15,8 @@ use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::{Provider, ProviderError};
 use starknet_rpc_test::constants::{
-    ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE, SIGNER_PRIVATE,
+    ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, ETH_FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE,
+    SIGNER_PRIVATE,
 };
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{
@@ -75,7 +76,7 @@ async fn works_with_invoke_txn(madara: &ThreadSafeMadaraClient) -> Result<(), an
         tx.calldata,
         vec![
             FieldElement::ONE,
-            FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(),
+            FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap(),
             get_selector_from_name("transfer").unwrap(),
             FieldElement::ZERO,
             FieldElement::THREE,
@@ -129,7 +130,7 @@ async fn works_with_pending_invoke_txn(madara: &ThreadSafeMadaraClient) -> Resul
         tx.calldata,
         vec![
             FieldElement::ONE,
-            FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(),
+            FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap(),
             get_selector_from_name("transfer").unwrap(),
             FieldElement::ZERO,
             FieldElement::THREE,

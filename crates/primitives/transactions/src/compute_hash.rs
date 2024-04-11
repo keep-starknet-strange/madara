@@ -1,6 +1,5 @@
 use alloc::vec::Vec;
 
-use blockifier::transaction::account_transaction::AccountTransaction;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::pedersen::PedersenHasher;
 use mp_hashers::poseidon::PoseidonHasher;

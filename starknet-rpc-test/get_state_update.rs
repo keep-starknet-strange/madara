@@ -19,7 +19,7 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
 
     assert_matches!(
         rpc.get_state_update(BlockId::Hash(FieldElement::ZERO)).await,
-        Err(StarknetProviderError(StarknetError::BlockNotFound)),
+        Err(StarknetProviderError(StarknetError::BlockNotFound))
     );
 
     Ok(())

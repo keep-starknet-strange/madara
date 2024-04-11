@@ -12,8 +12,8 @@ use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::Provider;
 use starknet_rpc_test::constants::{
-    ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, FEE_TOKEN_ADDRESS, SEQUENCER_ADDRESS, SIGNER_PRIVATE,
-    UDC_ADDRESS,
+    ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, ETH_FEE_TOKEN_ADDRESS, SEQUENCER_ADDRESS,
+    SIGNER_PRIVATE, UDC_ADDRESS,
 };
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{
@@ -49,7 +49,7 @@ async fn work_with_invoke_transaction(madara: &ThreadSafeMadaraClient) -> Result
     };
 
     let invoke_tx_receipt = get_transaction_receipt(&rpc, rpc_response.transaction_hash).await;
-    let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
+    let fee_token_address = FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap();
     let expected_fee = FeePayment { amount: FieldElement::from_hex_be("0xf032").unwrap(), unit: PriceUnit::Wei };
 
     match invoke_tx_receipt {
@@ -164,7 +164,7 @@ async fn work_with_declare_transaction(madara: &ThreadSafeMadaraClient) -> Resul
         _ => panic!("expected execution result"),
     };
 
-    let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
+    let fee_token_address = FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap();
     let expected_fee = FeePayment {
         amount: FieldElement::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000003066")
             .unwrap(),
@@ -274,7 +274,7 @@ async fn work_with_deploy_account_transaction(madara: &ThreadSafeMadaraClient) -
     };
 
     let account_deployment_tx_receipt = get_transaction_receipt(&rpc, rpc_response.transaction_hash).await;
-    let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
+    let fee_token_address = FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap();
     let expected_fee = FeePayment { amount: FieldElement::from_hex_be("0x7850").unwrap(), unit: PriceUnit::Wei };
 
     match account_deployment_tx_receipt {
@@ -384,7 +384,7 @@ async fn ensure_transfer_fee_event_not_messed_up_with_similar_transfer(
         _ => panic!("expected execution result"),
     };
     let tx_receipt = get_transaction_receipt(&rpc, rpc_response.transaction_hash).await;
-    let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
+    let fee_token_address = FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap();
     let expected_fee = FeePayment { amount: FieldElement::from_hex_be("0xf032").unwrap(), unit: PriceUnit::Wei };
 
     match tx_receipt {

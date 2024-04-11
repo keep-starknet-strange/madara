@@ -34,7 +34,7 @@ pub enum AccountType {
     V1(AccountTypeV1Inner),
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum AccountTypeV0Inner {
     Argent,
     Openzeppelin,
