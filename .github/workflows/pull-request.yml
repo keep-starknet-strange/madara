@@ -40,6 +40,11 @@ jobs:
     uses: ./.github/workflows/linters-cargo.yml
     needs: madara_commands
 
+  coverage:
+    name: Run code coverage
+    uses: ./.github/workflows/coverage.yml
+    needs: madara_commands
+
   basic_testnet:
     name: Run Basic Testnet
     uses: ./.github/workflows/basic-testnet.yml
