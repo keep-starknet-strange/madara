@@ -27,7 +27,7 @@ pub use mc_rpc_core::{
     StarknetWriteRpcApiServer,
 };
 use mc_storage::OverrideHandle;
-use mp_block::Block;
+use mp_block::{Block, BlockTransactions};
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
@@ -1601,8 +1601,18 @@ where
 
         // TODO
         // Is any better way to get execution resources of processed tx?
-        let execution_info =
-            self.get_transaction_execution_info(starknet_block, substrate_block_hash, chain_id, transaction_hash)?;
+        let parent_substrate_block_hash = self
+            .substrate_block_hash_from_starknet_block(BlockId::Hash(starknet_block.header().parent_block_hash.into()))
+            .map_err(|e| {
+                error!("Parent Block not found: {e}");
+                StarknetRpcApiError::BlockNotFound
+            })?;
+        let execution_info = self.get_transaction_execution_info(
+            parent_substrate_block_hash,
+            starknet_block.transactions(),
+            chain_id,
+            transaction_hash,
+        )?;
 
         let execution_resources = actual_resources_to_execution_resources(execution_info.actual_resources.clone());
 
@@ -1683,14 +1693,12 @@ where
         &self,
         chain_id: Felt252Wrapper,
         tx_hash: FieldElement,
+        pending_txs: &Vec<mp_transactions::Transaction>,
     ) -> Result<Option<mp_transactions::Transaction>, StarknetRpcApiError> {
         let latest_block = self.get_best_block_hash();
 
-        let pending_tx = self
-            .get_pending_txs(latest_block)?
-            .iter()
-            .find(|&tx| tx.compute_hash::<H>(chain_id.0.into(), false).0 == tx_hash)
-            .cloned();
+        let pending_tx =
+            pending_txs.iter().find(|&tx| tx.compute_hash::<H>(chain_id.0.into(), false).0 == tx_hash).cloned();
 
         Ok(pending_tx)
     }
@@ -1700,22 +1708,22 @@ where
         chain_id: Felt252Wrapper,
         transaction_hash: FieldElement,
     ) -> Result<MaybePendingTransactionReceipt, StarknetRpcApiError> {
-        let pending_tx =
-            self.find_pending_tx(chain_id, transaction_hash)?.ok_or(StarknetRpcApiError::TxnHashNotFound)?;
+        let parent_substrate_block_hash = self.get_best_block_hash();
+        let pending_txs = self.get_pending_txs(parent_substrate_block_hash)?;
+        let pending_tx = self
+            .find_pending_tx(chain_id, transaction_hash, &pending_txs)?
+            .ok_or(StarknetRpcApiError::TxnHashNotFound)?;
 
         // TODO -- no way of getting messages sent to L1 for the tx
         let messages_sent = Vec::new();
         // TODO -- no  way of getting events for the tx
         let events = Vec::new();
 
-        // TODO -- should Tx be simulated with `skip_validate`?
-        let skip_validate = true;
-        let skip_fee_charge = self.is_transaction_fee_disabled(self.get_best_block_hash())?;
-        let simulation =
-            self.simulate_tx(self.get_best_block_hash(), pending_tx.clone(), skip_validate, skip_fee_charge)?;
-        let actual_fee = simulation.actual_fee.0.into();
-        let execution_result = revert_error_to_execution_result(simulation.revert_error);
-        let execution_resources = actual_resources_to_execution_resources(simulation.actual_resources);
+        let execution_info =
+            self.get_transaction_execution_info(parent_substrate_block_hash, &pending_txs, chain_id, transaction_hash)?;
+        let actual_fee = execution_info.actual_fee.0.into();
+        let execution_result = revert_error_to_execution_result(execution_info.revert_error);
+        let execution_resources = actual_resources_to_execution_resources(execution_info.actual_resources);
 
         let receipt = match pending_tx {
             mp_transactions::Transaction::Declare(_tx, _contract_class) => {
@@ -1772,27 +1780,16 @@ where
 
     fn get_transaction_execution_info(
         &self,
-        starknet_block: Block,
-        substrate_block_hash: B::Hash,
+        parent_substrate_block_hash: B::Hash,
+        previous_transactions: &BlockTransactions,
         chain_id: Felt252Wrapper,
         transaction_hash: FieldElement,
     ) -> Result<TransactionExecutionInfo, StarknetRpcApiError>
     where
         B: BlockT,
     {
-        let parent_substrate_block_hash = self
-            .substrate_block_hash_from_starknet_block(BlockId::Hash(starknet_block.header().parent_block_hash.into()))
-            .map_err(|e| {
-                error!("Parent Block not found: {e}");
-                StarknetRpcApiError::BlockNotFound
-            })?;
-        let (transactions_before, transaction_to_trace) = map_transaction_to_user_transaction(
-            self,
-            starknet_block,
-            substrate_block_hash,
-            chain_id,
-            Some(transaction_hash.into()),
-        )?;
+        let (transactions_before, transaction_to_trace) =
+            map_transaction_to_user_transaction(self, previous_transactions, chain_id, Some(transaction_hash.into()))?;
 
         if transaction_to_trace.is_empty() {
             return Err(StarknetRpcApiError::TxnHashNotFound);

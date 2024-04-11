@@ -8,7 +8,7 @@ use log::error;
 use mc_genesis_data_provider::GenesisProvider;
 use mc_rpc_core::utils::{blockifier_to_rpc_state_diff_types, get_block_by_block_hash};
 use mc_rpc_core::{StarknetReadRpcApiServer, StarknetTraceRpcApiServer};
-use mp_block::Block;
+use mp_block::{Block, BlockTransactions};
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_simulations::{SimulationFlags, TransactionSimulationResult};
@@ -107,7 +107,7 @@ where
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
         let (block_transactions, _) =
-            map_transaction_to_user_transaction(self, starknet_block, substrate_block_hash, chain_id, None)?;
+            map_transaction_to_user_transaction(self, starknet_block.transactions(), chain_id, None)?;
 
         let previous_block_substrate_hash = get_previous_block_substrate_hash(self, substrate_block_hash)?;
 
@@ -138,8 +138,7 @@ where
 
         let (txs_to_execute_before, tx_to_trace) = map_transaction_to_user_transaction(
             self,
-            starknet_block,
-            substrate_block_hash,
+            starknet_block.transactions(),
             chain_id,
             Some(transaction_hash_to_trace),
         )?;
@@ -436,8 +435,7 @@ fn tx_execution_infos_to_simulated_transactions(
 
 pub fn map_transaction_to_user_transaction<A, B, BE, G, C, P, H>(
     starknet: &Starknet<A, B, BE, G, C, P, H>,
-    starknet_block: Block,
-    substrate_block_hash: B::Hash,
+    transactions: &BlockTransactions,
     chain_id: Felt252Wrapper,
     target_transaction_hash: Option<Felt252Wrapper>,
 ) -> Result<(Vec<UserOrL1HandlerTransaction>, Vec<UserOrL1HandlerTransaction>), StarknetRpcApiError>
@@ -448,29 +446,28 @@ where
     H: HasherT + Send + Sync + 'static,
     BE: Backend<B> + 'static,
 {
-    let mut transactions = Vec::new();
+    let mut user_transactions = Vec::new();
     let mut transaction_to_trace = Vec::new();
 
-    for tx in starknet_block.transactions() {
+    for tx in transactions {
         let current_tx_hash = tx.compute_hash::<H>(chain_id, false);
 
         if Some(current_tx_hash) == target_transaction_hash {
-            let converted_tx = convert_transaction(tx, starknet, substrate_block_hash, chain_id)?;
+            let converted_tx = convert_transaction(tx, starknet, chain_id)?;
             transaction_to_trace.push(converted_tx);
             break;
         } else {
-            let converted_tx = convert_transaction(tx, starknet, substrate_block_hash, chain_id)?;
-            transactions.push(converted_tx);
+            let converted_tx = convert_transaction(tx, starknet, chain_id)?;
+            user_transactions.push(converted_tx);
         }
     }
 
-    Ok((transactions, transaction_to_trace))
+    Ok((user_transactions, transaction_to_trace))
 }
 
 fn convert_transaction<A, B, BE, G, C, P, H>(
     tx: &Transaction,
     starknet: &Starknet<A, B, BE, G, C, P, H>,
-    substrate_block_hash: B::Hash,
     chain_id: Felt252Wrapper,
 ) -> Result<UserOrL1HandlerTransaction, StarknetRpcApiError>
 where
@@ -487,22 +484,12 @@ where
         Transaction::DeployAccount(deploy_account_tx) => {
             Ok(UserOrL1HandlerTransaction::User(UserTransaction::DeployAccount(deploy_account_tx.clone())))
         }
-        Transaction::Declare(declare_tx, _) => {
+        Transaction::Declare(declare_tx, contract_class) => {
             let class_hash = ClassHash::from(*declare_tx.class_hash());
-
             match declare_tx {
-                DeclareTransaction::V0(_) | DeclareTransaction::V1(_) => {
-                    let contract_class = starknet
-                        .overrides
-                        .for_block_hash(starknet.client.as_ref(), substrate_block_hash)
-                        .contract_class_by_class_hash(substrate_block_hash, class_hash)
-                        .ok_or_else(|| {
-                            error!("Failed to retrieve contract class from hash '{class_hash}'");
-                            StarknetRpcApiError::InternalServerError
-                        })?;
-
-                    Ok(UserOrL1HandlerTransaction::User(UserTransaction::Declare(declare_tx.clone(), contract_class)))
-                }
+                DeclareTransaction::V0(_) | DeclareTransaction::V1(_) => Ok(UserOrL1HandlerTransaction::User(
+                    UserTransaction::Declare(declare_tx.clone(), contract_class.clone()),
+                )),
                 DeclareTransaction::V2(_tx) => {
                     let contract_class = starknet
                         .backend
