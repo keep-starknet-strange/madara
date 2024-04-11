@@ -37,5 +37,5 @@ jobs:
           target/production/madara key inspect --scheme Ed25519 "${{ steps.key-gen.outputs.SEED_PHRASE }}"
       - name: Add keys to the node keystore
         run: |
-          target/production/madara key insert --scheme Sr25519 --suri "${{ steps.key-gen.outputs.SEED_PHRASE }}" --key-type aura
-          target/production/madara key insert --scheme Ed25519 --suri "${{ steps.key-gen.outputs.SEED_PHRASE }}" --key-type gran
+          target/production/madara key insert --chain=chain-raw.json --scheme Sr25519 --suri "${{ steps.key-gen.outputs.SEED_PHRASE }}" --key-type aura
+          target/production/madara key insert --chain=chain-raw.json --scheme Ed25519 --suri "${{ steps.key-gen.outputs.SEED_PHRASE }}" --key-type gran
