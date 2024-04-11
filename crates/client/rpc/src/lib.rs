@@ -1712,9 +1712,12 @@ where
             .find_pending_tx(chain_id, transaction_hash, &pending_txs)?
             .ok_or(StarknetRpcApiError::TxnHashNotFound)?;
 
-        // TODO -- no way of getting messages sent to L1 for the tx
+        // TODO: Massa labs is working on pending blocks within Substrate. That will allow fetching
+        // events and messages directly from the runtime the same way we do for finalized blocks.
+        // So for now we return empty events and messages. Another option is to expose the event and message
+        // ordering functions from the runtime, order events inside execution info and use it. But the effort
+        // will not be worth it after pending blocks, so we've skipped implementing this for now.
         let messages_sent = Vec::new();
-        // TODO -- no  way of getting events for the tx
         let events = Vec::new();
 
         let execution_info =
