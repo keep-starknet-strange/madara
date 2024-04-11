@@ -16,8 +16,8 @@
 //!
 //! 4. Genesis Configuration: The GenesisConfig struct is defined, which is used to set up the
 //! initial state of the pallet during genesis. The struct includes fields for contracts,
-//! contract_classes, storage, fee_token_address, and _phantom. A GenesisBuild implementation is
-//! provided to build the initial state during genesis.
+//! contract_classes, storage, fee_token_address, chain_id and _phantom. A GenesisBuild
+//! implementation is provided to build the initial state during genesis.
 //!
 //! 5. Events: A set of events are defined in the Event enum, including KeepStarknetStrange,
 //! StarknetEvent, and FeeTokenAddressChanged. These events are emitted during the execution of
@@ -121,6 +121,9 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
+
+    use mp_chain_id::MADARA_CHAIN_ID;
+
     use super::*;
 
     #[pallet::pallet]
@@ -161,8 +164,6 @@ pub mod pallet {
         type ValidateMaxNSteps: Get<u32>;
         #[pallet::constant]
         type ProtocolVersion: Get<u8>;
-        #[pallet::constant]
-        type ChainId: Get<Felt252Wrapper>;
         #[pallet::constant]
         type MaxRecursionDepth: Get<u32>;
         #[pallet::constant]
@@ -323,8 +324,22 @@ pub mod pallet {
     #[pallet::getter(fn l1_messages)]
     pub(super) type L1Messages<T: Config> = StorageValue<_, BTreeSet<Nonce>, ValueQuery>;
 
+    /// ChainID for the palle'a, 'a, t startknet
+    #[pallet::storage]
+    #[pallet::getter(fn chain_id)]
+    pub type ChainIdStorage<T> = StorageValue<_, Felt252Wrapper, ValueQuery, DefaultChainId>;
+
+    /// Default ChainId MADARA
+    pub struct DefaultChainId {}
+
+    impl Get<Felt252Wrapper> for DefaultChainId {
+        fn get() -> Felt252Wrapper {
+            MADARA_CHAIN_ID
+        }
+    }
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct GenesisConfig<T: Config> {
         /// The contracts to be deployed at genesis.
         /// This is a vector of tuples, where the first element is the contract address and the
@@ -343,6 +358,9 @@ pub mod pallet {
         /// The address of the fee token.
         /// Must be set to the address of the fee token ERC20 contract.
         pub fee_token_address: ContractAddress,
+        /// Chain Id, this must be set in the genesis file
+        /// The default value will be MADARA custom chain id
+        pub chain_id: Felt252Wrapper,
         pub _phantom: PhantomData<T>,
     }
 
@@ -355,15 +373,16 @@ pub mod pallet {
                 contract_classes: vec![],
                 storage: vec![],
                 fee_token_address: ContractAddress::default(),
+                chain_id: DefaultChainId::get(),
                 _phantom: PhantomData,
             }
         }
     }
-
     #[pallet::genesis_build]
     impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
         fn build(&self) {
             <Pallet<T>>::store_block(0);
+
             frame_support::storage::unhashed::put::<StarknetStorageSchemaVersion>(
                 PALLET_STARKNET_SCHEMA,
                 &StarknetStorageSchemaVersion::V1,
@@ -400,6 +419,8 @@ pub mod pallet {
             // Set the fee token address from the genesis config.
             FeeTokenAddress::<T>::set(self.fee_token_address);
             SeqAddrUpdate::<T>::put(true);
+
+            ChainIdStorage::<T>::put(self.chain_id)
         }
     }
 
@@ -596,7 +617,7 @@ pub mod pallet {
             ensure_none(origin)?;
 
             let input_transaction = transaction;
-            let chain_id = T::ChainId::get();
+            let chain_id = Self::chain_id();
             let transaction = input_transaction.into_executable::<T::SystemHash>(chain_id, false);
 
             // Check if contract is deployed
@@ -835,7 +856,7 @@ impl<T: Config> Pallet<T> {
     /// convert chain_id
     #[inline(always)]
     pub fn chain_id_str() -> String {
-        unsafe { from_utf8_unchecked(&T::ChainId::get().0.to_bytes_be()).to_string() }
+        unsafe { from_utf8_unchecked(&Self::chain_id().0.to_bytes_be()).to_string() }
     }
 
     /// Get the block hash of the previous block.
@@ -1095,10 +1116,6 @@ impl<T: Config> Pallet<T> {
         TxRevertError::<T>::set(tx_hash, revert_reason);
     }
 
-    pub fn chain_id() -> Felt252Wrapper {
-        T::ChainId::get()
-    }
-
     pub fn program_hash() -> Felt252Wrapper {
         T::ProgramHash::get()
     }
@@ -1106,7 +1123,7 @@ impl<T: Config> Pallet<T> {
     pub fn config_hash() -> StarkHash {
         T::SystemHash::compute_hash_on_elements(&[
             FieldElement::from_byte_slice_be(SN_OS_CONFIG_HASH_VERSION.as_bytes()).unwrap(),
-            T::ChainId::get().into(),
+            Self::chain_id().into(),
             Self::fee_token_address().0.0.into(),
         ])
         .into()

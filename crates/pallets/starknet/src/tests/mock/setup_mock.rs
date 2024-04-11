@@ -72,7 +72,6 @@ macro_rules! mock_runtime {
 				pub const DisableTransactionFee: bool = $disable_transaction_fee;
                 pub const DisableNonceValidation: bool = $disable_nonce_validation;
 				pub const ProtocolVersion: u8 = 0;
-                pub const ChainId: Felt252Wrapper = mp_chain_id::SN_GOERLI_CHAIN_ID;
                 pub const MaxRecursionDepth: u32 = 50;
 				pub const ProgramHash: Felt252Wrapper = mp_program_hash::SN_OS_PROGRAM_HASH;
 				pub const L1GasPrice: ResourcePrice = ResourcePrice { price_in_strk: None, price_in_wei: 10 };
@@ -88,7 +87,6 @@ macro_rules! mock_runtime {
 				type DisableTransactionFee = DisableTransactionFee;
                 type DisableNonceValidation = DisableNonceValidation;
 				type ProtocolVersion = ProtocolVersion;
-                type ChainId = ChainId;
                 type MaxRecursionDepth = MaxRecursionDepth;
 				type ProgramHash = ProgramHash;
 				type L1GasPrice = L1GasPrice;
@@ -125,6 +123,23 @@ pub fn new_test_ext<T: Config>() -> sp_io::TestExternalities {
 
     let genesis_data: GenesisData = serde_json::from_str(std::include_str!("./genesis.json")).unwrap();
     let genesis_loader = GenesisLoader::new(project_root::get_project_root().unwrap(), genesis_data);
+    let genesis: GenesisConfig<T> = genesis_loader.into();
+
+    genesis.assimilate_storage(&mut t).unwrap();
+
+    t.into()
+}
+
+// Build genesis storage according to the actual runtime.
+pub fn test_genesis_ext<T: Config>() -> sp_io::TestExternalities {
+    let mut t = frame_system::GenesisConfig::<T>::default().build_storage().unwrap();
+    let project_root = project_root::get_project_root().unwrap().join("configs/");
+
+    let genesis_path = project_root.join("genesis-assets/").join("genesis.json");
+    let genesis_file_content = std::fs::read_to_string(genesis_path).unwrap();
+
+    let genesis_data: GenesisData = serde_json::from_str(&genesis_file_content).unwrap();
+    let genesis_loader = GenesisLoader::new(project_root, genesis_data);
     let genesis: GenesisConfig<T> = genesis_loader.into();
 
     genesis.assimilate_storage(&mut t).unwrap();
