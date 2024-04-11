@@ -27,7 +27,7 @@ pub use mc_rpc_core::{
     StarknetWriteRpcApiServer,
 };
 use mc_storage::OverrideHandle;
-use mp_block::{Block, BlockTransactions};
+use mp_block::BlockTransactions;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
@@ -1695,8 +1695,6 @@ where
         tx_hash: FieldElement,
         pending_txs: &Vec<mp_transactions::Transaction>,
     ) -> Result<Option<mp_transactions::Transaction>, StarknetRpcApiError> {
-        let latest_block = self.get_best_block_hash();
-
         let pending_tx =
             pending_txs.iter().find(|&tx| tx.compute_hash::<H>(chain_id.0.into(), false).0 == tx_hash).cloned();
 

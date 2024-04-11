@@ -8,7 +8,7 @@ use log::error;
 use mc_genesis_data_provider::GenesisProvider;
 use mc_rpc_core::utils::{blockifier_to_rpc_state_diff_types, get_block_by_block_hash};
 use mc_rpc_core::{StarknetReadRpcApiServer, StarknetTraceRpcApiServer};
-use mp_block::{Block, BlockTransactions};
+use mp_block::BlockTransactions;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_simulations::{SimulationFlags, TransactionSimulationResult};
