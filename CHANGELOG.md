@@ -3,6 +3,8 @@
 ## Next release
 
 - fix: transaction receipt fails for txs in the middle of a block
+- fix: fix cargo-lint issues
+- feat: added chain-id to the GenesisConfig in pallet-starknet
 - fix(node): fix genesis hash inconsistency
 - feat (pallet): add tests for storage reversal on transaction revert
 - feat: add prometheus metrics for mapping worker
