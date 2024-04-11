@@ -1,5 +1,5 @@
 ---
-name: Task - Integration Tests
+name: Task - Test Coverage
 
 on:
   workflow_dispatch:
