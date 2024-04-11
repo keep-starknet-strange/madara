@@ -3,6 +3,8 @@
 ## Next release
 
 - dev: better estimate fee test
+- fix: fix cargo-lint issues
+- feat: added chain-id to the GenesisConfig in pallet-starknet
 - fix(node): fix genesis hash inconsistency
 - feat (pallet): add tests for storage reversal on transaction revert
 - feat: add prometheus metrics for mapping worker
