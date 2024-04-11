@@ -23,7 +23,7 @@ pub struct CelestiaClient {
 
 #[async_trait]
 impl DaClient for CelestiaClient {
-    async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<(), DaError> {
+    async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<(), anyhow::Error> {
         let blob = self.get_blob_from_state_diff(state_diff).map_err(|e| DaError::FailedDataFetching(e.into()))?;
 
         let submitted_height = self.publish_data(&blob).await.map_err(|e| DaError::FailedDataSubmission(e.into()))?;
@@ -39,7 +39,7 @@ impl DaClient for CelestiaClient {
         Ok(())
     }
 
-    async fn last_published_state(&self) -> Result<I256> {
+    async fn last_published_state(&self) -> Result<I256, anyhow::Error> {
         Ok(I256::from(1))
     }
 
@@ -93,7 +93,10 @@ impl TryFrom<config::CelestiaConfig> for CelestiaClient {
         // we only need to initiate the http provider and not the ws provider, we don't need async
         let mut headers = HeaderMap::new();
         if let Some(auth_token) = conf.auth_token {
-            let val = HeaderValue::from_str(&format!("Bearer {}", auth_token))?;
+            let val = match HeaderValue::from_str(&format!("Bearer {}", auth_token)) {
+                Ok(value) => value,
+                Err(e) => return Err(DaError::FailedConversion(e.into())),
+            };
             headers.insert(header::AUTHORIZATION, val);
         }
 

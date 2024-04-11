@@ -117,7 +117,7 @@ impl<T: SnosCodec> SnosCodec for Vec<T> {
 
     fn decode(input: &mut FeltReader) -> Result<Self, FeltReaderError> {
         let mut segment_reader = FeltReader::new(input.read_segment()?);
-        let mut elements: Vec<T> = Vec::new();
+        let mut elements: Vec<T> = Vec::with_capacity(segment_reader.remaining_len());
         while segment_reader.remaining_len() > 0 {
             elements.push(T::decode(&mut segment_reader)?);
         }

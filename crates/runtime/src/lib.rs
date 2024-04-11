@@ -18,6 +18,7 @@ mod runtime_tests;
 mod types;
 
 use blockifier::execution::contract_class::ContractClass;
+use blockifier::state::cached_state::CommitmentStateDiff;
 use blockifier::transaction::objects::TransactionExecutionInfo;
 pub use config::*;
 pub use frame_support::traits::{ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness, StorageInfo};
@@ -28,7 +29,7 @@ pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
 use mp_felt::Felt252Wrapper;
-use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags};
+use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult};
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::{HandleL1MessageTransaction, Transaction, UserOrL1HandlerTransaction, UserTransaction};
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
@@ -36,6 +37,7 @@ use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as G
 pub use pallet_starknet;
 use pallet_starknet::pallet::Error as PalletError;
 use pallet_starknet::Call::{consume_l1_message, declare, deploy_account, invoke};
+pub use pallet_starknet::DefaultChainId;
 use pallet_starknet_runtime_api::StarknetTransactionExecutionError;
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_api::impl_runtime_apis;
@@ -278,15 +280,15 @@ impl_runtime_apis! {
             Starknet::estimate_fee(transactions)
         }
 
-        fn re_execute_transactions(transactions: Vec<UserOrL1HandlerTransaction>) -> Result<Result<Vec<TransactionExecutionInfo>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError> {
-            Starknet::re_execute_transactions(transactions)
+        fn re_execute_transactions(transactions_before: Vec<UserOrL1HandlerTransaction>, transactions_to_trace: Vec<UserOrL1HandlerTransaction>) -> Result<Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError> {
+            Starknet::re_execute_transactions(transactions_before, transactions_to_trace)
         }
 
         fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), DispatchError> {
             Starknet::estimate_message_fee(message)
         }
 
-        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>>, DispatchError> {
+        fn simulate_transactions(transactions: Vec<UserTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, DispatchError> {
             Starknet::simulate_transactions(transactions, &simulation_flags)
         }
 

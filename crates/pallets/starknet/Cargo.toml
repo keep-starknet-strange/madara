@@ -43,6 +43,7 @@ blockifier = { workspace = true, features = [
 ] }
 starknet-core = { workspace = true }
 starknet-crypto = { workspace = true, features = ["alloc"] }
+starknet-ff = { workspace = true }
 starknet_api = { workspace = true, features = [
   "scale-info",
   "parity-scale-codec",
@@ -54,6 +55,9 @@ frame-support = { workspace = true }
 frame-system = { workspace = true }
 # Substrate Client
 sc-cli = { workspace = true, optional = true }
+# substrate service
+sc-client-api = { workspace = true }
+sc-service = { workspace = true }
 # Substrate primitives
 sp-api = { workspace = true }
 sp-arithmetic = { workspace = true }
