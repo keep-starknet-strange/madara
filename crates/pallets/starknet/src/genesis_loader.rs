@@ -66,12 +66,23 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
             .collect::<Vec<_>>();
         let fee_token_address = Felt252Wrapper(loader.data().fee_token_address.0).into();
 
+        let chain_id = loader
+            .data()
+            .chain_id
+            .clone()
+            .into_bytes()
+            .iter()
+            .as_ref()
+            .try_into()
+            .expect("Failed to convert chain id to felt");
+
         GenesisConfig {
             contracts,
             contract_classes,
             sierra_to_casm_class_hash,
             storage,
             fee_token_address,
+            chain_id,
             ..Default::default()
         }
     }
@@ -137,13 +148,14 @@ mod tests {
             predeployed_accounts: Vec::new(),
             storage: vec![((contract_address, storage_key), storage_value)],
             fee_token_address,
+            chain_id: String::from("MADARA"),
         };
 
         // When
         let serialized_loader = serde_json::to_string(&genesis_loader).unwrap();
 
         // Then
-        let expected = r#"{"contract_classes":[["0x1",{"path":"cairo-contracts/ERC20.json","version":0}]],"sierra_class_hash_to_casm_class_hash":[["0x2a","0x1"]],"contracts":[["0x2","0x1"]],"predeployed_accounts":[],"storage":[[["0x2","0x3"],"0x4"]],"fee_token_address":"0x5"}"#;
+        let expected = r#"{"contract_classes":[["0x1",{"path":"cairo-contracts/ERC20.json","version":0}]],"sierra_class_hash_to_casm_class_hash":[["0x2a","0x1"]],"contracts":[["0x2","0x1"]],"predeployed_accounts":[],"storage":[[["0x2","0x3"],"0x4"]],"fee_token_address":"0x5","chain_id":"MADARA"}"#;
         assert_eq!(expected, serialized_loader);
     }
 }
