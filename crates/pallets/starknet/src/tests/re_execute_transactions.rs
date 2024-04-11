@@ -160,21 +160,21 @@ fn execute_transasction(
                     PlaceHolderErrorTypeForFailedStarknetExecution
                 })
                 .and_then(|executable| {
-                    executable.execute(&mut cached_state, &block_context, &execution_config).map_err(|e| {
+                    executable.execute(&mut cached_state, &block_context, execution_config).map_err(|e| {
                         log::error!("Failed to reexecute a tx: {}", e);
                         PlaceHolderErrorTypeForFailedStarknetExecution
                     })
                 }),
             UserTransaction::DeployAccount(tx) => tx
                 .into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, false)
-                .execute(&mut cached_state, &block_context, &execution_config)
+                .execute(&mut cached_state, &block_context, execution_config)
                 .map_err(|e| {
                     log::error!("Failed to reexecute a tx: {}", e);
                     PlaceHolderErrorTypeForFailedStarknetExecution
                 }),
             UserTransaction::Invoke(tx) => tx
                 .into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, false)
-                .execute(&mut cached_state, &block_context, &execution_config)
+                .execute(&mut cached_state, &block_context, execution_config)
                 .map_err(|e| {
                     log::error!("Failed to reexecute a tx: {}", e);
                     PlaceHolderErrorTypeForFailedStarknetExecution
@@ -182,7 +182,7 @@ fn execute_transasction(
         },
         UserOrL1HandlerTransaction::L1Handler(tx, fee) => tx
             .into_executable::<<MockRuntime as Config>::SystemHash>(chain_id, fee, false)
-            .execute(&mut cached_state, &block_context, &execution_config)
+            .execute(&mut cached_state, &block_context, execution_config)
             .map_err(|e| {
                 log::error!("Failed to reexecute a tx: {}", e);
                 PlaceHolderErrorTypeForFailedStarknetExecution
