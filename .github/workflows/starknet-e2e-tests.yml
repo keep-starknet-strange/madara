@@ -31,11 +31,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
       - name: Run e2e tests
         run: |-
-          ls /home/runner
-          curl -L https://foundry.paradigm.xyz | bash
-          source /home/runner/.bashrc
-          ls /home/runner/.foundry/bin
-          /home/runner/.foundry/bin/foundryup
+          forge
+          export ANVIL_ENDPOINT="http://127.0.0.1:8545"
+          anvil& ANVIL_RUN_PID=$!
+          while ! echo exit | nc localhost 8545; do sleep 1; done
           cd starknet-e2e-test && cargo test --package starknet-e2e-test -- --nocapture
+          kill $ANVIL_RUN_PID
