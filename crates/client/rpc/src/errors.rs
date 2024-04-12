@@ -7,52 +7,73 @@ use sp_runtime::DispatchError;
 
 // Comes from the RPC Spec:
 // https://github.com/starkware-libs/starknet-specs/blob/0e859ff905795f789f1dfd6f7340cdaf5015acc8/api/starknet_write_api.json#L227
-#[repr(i32)]
 #[derive(thiserror::Error, Debug)]
 pub enum StarknetRpcApiError {
     #[error("Failed to write transaction")]
-    FailedToReceiveTxn = 1,
+    FailedToReceiveTxn,
     #[error("Contract not found")]
-    ContractNotFound = 20,
+    ContractNotFound,
     #[error("Block not found")]
-    BlockNotFound = 24,
+    BlockNotFound,
     #[error("Invalid transaction index in a block")]
-    InvalidTxnIndex = 27,
+    InvalidTxnIndex,
     #[error("Class hash not found")]
-    ClassHashNotFound = 28,
+    ClassHashNotFound,
     #[error("Transaction hash not found")]
-    TxnHashNotFound = 29,
+    TxnHashNotFound,
     #[error("Requested page size is too big")]
-    PageSizeTooBig = 31,
+    PageSizeTooBig,
     #[error("There are no blocks")]
-    NoBlocks = 32,
+    NoBlocks,
     #[error("The supplied continuation token is invalid or unknown")]
-    InvalidContinuationToken = 33,
+    InvalidContinuationToken,
     #[error("Too many keys provided in a filter")]
-    TooManyKeysInFilter = 34,
+    TooManyKeysInFilter,
     #[error("Failed to fetch pending transactions")]
-    FailedToFetchPendingTransactions = 38,
+    FailedToFetchPendingTransactions,
     #[error("Contract error: {0}")]
-    ContractError(ContractErrorWrapper) = 40,
+    ContractError(ContractErrorWrapper),
     #[error("Invalid contract class")]
-    InvalidContractClass = 50,
+    InvalidContractClass,
     #[error("Class already declared")]
-    ClassAlreadyDeclared = 51,
+    ClassAlreadyDeclared,
     #[error("Account validation failed")]
-    ValidationFailure = 55,
+    ValidationFailure,
     #[error("The transaction version is not supported")]
-    UnsupportedTxVersion = 61,
+    UnsupportedTxVersion,
     #[error("Internal server error")]
-    InternalServerError = 500,
+    InternalServerError,
     #[error("Unimplemented method")]
-    UnimplementedMethod = 501,
+    UnimplementedMethod,
     #[error("Too many storage keys requested")]
-    ProofLimitExceeded = 10000,
+    ProofLimitExceeded,
 }
 
 impl From<StarknetRpcApiError> for jsonrpsee::core::Error {
     fn from(err: StarknetRpcApiError) -> Self {
-        jsonrpsee::core::Error::Call(CallError::Custom(ErrorObject::owned(40, err.to_string(), None::<()>)))
+        let code = match err {
+            StarknetRpcApiError::FailedToReceiveTxn => 1,
+            StarknetRpcApiError::ContractNotFound => 20,
+            StarknetRpcApiError::BlockNotFound => 24,
+            StarknetRpcApiError::InvalidTxnIndex => 27,
+            StarknetRpcApiError::ClassHashNotFound => 28,
+            StarknetRpcApiError::TxnHashNotFound => 29,
+            StarknetRpcApiError::PageSizeTooBig => 31,
+            StarknetRpcApiError::NoBlocks => 32,
+            StarknetRpcApiError::InvalidContinuationToken => 33,
+            StarknetRpcApiError::TooManyKeysInFilter => 34,
+            StarknetRpcApiError::FailedToFetchPendingTransactions => 38,
+            StarknetRpcApiError::ContractError(_) => 40,
+            StarknetRpcApiError::InvalidContractClass => 50,
+            StarknetRpcApiError::ClassAlreadyDeclared => 51,
+            StarknetRpcApiError::ValidationFailure => 55,
+            StarknetRpcApiError::UnsupportedTxVersion => 61,
+            StarknetRpcApiError::InternalServerError => 500,
+            StarknetRpcApiError::UnimplementedMethod => 501,
+            StarknetRpcApiError::ProofLimitExceeded => 10000,
+        };
+
+        jsonrpsee::core::Error::Call(CallError::Custom(ErrorObject::owned(code, err.to_string(), None::<()>)))
     }
 }
 
@@ -78,9 +99,9 @@ pub enum ContractErrorWrapper {
 impl Display for ContractErrorWrapper {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ContractErrorWrapper::DispatchError(e) => write!(f, "{:?}", e),
-            ContractErrorWrapper::TransactionExecutionError(e) => write!(f, "{:?}", e),
-            ContractErrorWrapper::PlaceHolderErrorTypeForFailedStarknetExecution(e) => write!(f, "{:?}", e),
+            ContractErrorWrapper::DispatchError(e) => write!(f, "Dispatch{:?}", e),
+            ContractErrorWrapper::TransactionExecutionError(e) => write!(f, "transaction{:?}", e),
+            ContractErrorWrapper::PlaceHolderErrorTypeForFailedStarknetExecution(e) => write!(f, "place{:?}", e),
         }
     }
 }
