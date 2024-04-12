@@ -19,6 +19,7 @@ use starknet_api::api_core::{ContractAddress, EntryPointSelector};
 use starknet_api::transaction::{Calldata, Event, TransactionHash};
 use starknet_core::types::FieldElement;
 
+use crate::errors::ContractErrorWrapper;
 use crate::{Starknet, StarknetRpcApiError};
 
 type RpcApiResult<T> = Result<T, crate::errors::StarknetRpcApiError>;
@@ -50,7 +51,7 @@ where
             .map_err(|e| {
                 // TODO: replace this
                 error!("do call contract error: {:?}", e);
-                StarknetRpcApiError::ContractError
+                StarknetRpcApiError::ContractError(ContractErrorWrapper::DispatchError(e))
             })
     }
 
@@ -68,7 +69,7 @@ where
             })?
             .map_err(|e| {
                 error!("Function execution failed: {:#?}", e);
-                StarknetRpcApiError::ContractError
+                StarknetRpcApiError::ContractError(ContractErrorWrapper::DispatchError(e))
             })
     }
 
@@ -125,7 +126,7 @@ where
             })?
             .map_err(|e| {
                 error!("Failed to call function: {:#?}", e);
-                StarknetRpcApiError::ContractError
+                StarknetRpcApiError::ContractError(ContractErrorWrapper::DispatchError(e))
             })
     }
     pub fn get_best_block_hash(&self) -> B::Hash {
@@ -211,7 +212,7 @@ where
             })?
             .map_err(|e| {
                 error!("Failed to call function: {:#?}", e);
-                StarknetRpcApiError::ContractError
+                StarknetRpcApiError::ContractError(ContractErrorWrapper::DispatchError(e))
             })?
             .swap_remove(0)
             .1
@@ -237,7 +238,7 @@ where
             })?
             .map_err(|e| {
                 error!("Failed to call function: {:#?}", e);
-                StarknetRpcApiError::ContractError
+                StarknetRpcApiError::ContractError(ContractErrorWrapper::DispatchError(e))
             })?
             .map_err(|e| {
                 error!("Failed to simulate L1 Message: {:?}", e);

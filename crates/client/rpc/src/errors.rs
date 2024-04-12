@@ -1,10 +1,14 @@
+use std::fmt::Display;
+
 use blockifier::transaction::errors::TransactionExecutionError;
 use jsonrpsee::types::error::{CallError, ErrorObject};
+use mp_simulations::PlaceHolderErrorTypeForFailedStarknetExecution;
 use sp_runtime::DispatchError;
 
 // Comes from the RPC Spec:
 // https://github.com/starkware-libs/starknet-specs/blob/0e859ff905795f789f1dfd6f7340cdaf5015acc8/api/starknet_write_api.json#L227
-#[derive(thiserror::Error, Clone, Debug)]
+#[repr(i32)]
+#[derive(thiserror::Error, Debug)]
 pub enum StarknetRpcApiError {
     #[error("Failed to write transaction")]
     FailedToReceiveTxn = 1,
@@ -28,8 +32,8 @@ pub enum StarknetRpcApiError {
     TooManyKeysInFilter = 34,
     #[error("Failed to fetch pending transactions")]
     FailedToFetchPendingTransactions = 38,
-    #[error("Contract error")]
-    ContractError(DispatchError) = 40,
+    #[error("Contract error: {0}")]
+    ContractError(ContractErrorWrapper) = 40,
     #[error("Invalid contract class")]
     InvalidContractClass = 50,
     #[error("Class already declared")]
@@ -48,17 +52,35 @@ pub enum StarknetRpcApiError {
 
 impl From<StarknetRpcApiError> for jsonrpsee::core::Error {
     fn from(err: StarknetRpcApiError) -> Self {
-        jsonrpsee::core::Error::Call(CallError::Custom(ErrorObject::owned(
-            err.clone() as i32,
-            err.to_string(),
-            None::<()>,
-        )))
+        jsonrpsee::core::Error::Call(CallError::Custom(ErrorObject::owned(40, err.to_string(), None::<()>)))
     }
 }
 
 impl From<TransactionExecutionError> for StarknetRpcApiError {
     fn from(value: TransactionExecutionError) -> Self {
-        StarknetRpcApiError::ContractError(value)
+        StarknetRpcApiError::ContractError(ContractErrorWrapper::TransactionExecutionError(value))
     }
 }
 
+impl From<DispatchError> for StarknetRpcApiError {
+    fn from(value: DispatchError) -> Self {
+        StarknetRpcApiError::ContractError(ContractErrorWrapper::DispatchError(value))
+    }
+}
+
+#[derive(Debug)]
+pub enum ContractErrorWrapper {
+    DispatchError(DispatchError),
+    TransactionExecutionError(TransactionExecutionError),
+    PlaceHolderErrorTypeForFailedStarknetExecution(PlaceHolderErrorTypeForFailedStarknetExecution),
+}
+
+impl Display for ContractErrorWrapper {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ContractErrorWrapper::DispatchError(e) => write!(f, "{:?}", e),
+            ContractErrorWrapper::TransactionExecutionError(e) => write!(f, "{:?}", e),
+            ContractErrorWrapper::PlaceHolderErrorTypeForFailedStarknetExecution(e) => write!(f, "{:?}", e),
+        }
+    }
+}

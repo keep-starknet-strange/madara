@@ -29,7 +29,7 @@ use starknet_core::types::{
 use starknet_ff::FieldElement;
 use thiserror::Error;
 
-use crate::errors::StarknetRpcApiError;
+use crate::errors::{ContractErrorWrapper, StarknetRpcApiError};
 use crate::Starknet;
 
 #[async_trait]
@@ -84,7 +84,7 @@ where
             })?
             .map_err(|e| {
                 error!("Failed to call function: {:#?}", e);
-                StarknetRpcApiError::ContractError
+                StarknetRpcApiError::ContractError(ContractErrorWrapper::DispatchError(e))
             })?;
 
         let mut simulated_transactions = vec![];
@@ -107,8 +107,11 @@ where
                         fee_estimation: FeeEstimate { gas_consumed, gas_price, overall_fee },
                     });
                 }
-                Err(_) => {
-                    return Err(StarknetRpcApiError::ContractError.into());
+                Err(e) => {
+                    return Err(StarknetRpcApiError::ContractError(
+                        ContractErrorWrapper::PlaceHolderErrorTypeForFailedStarknetExecution(e),
+                    )
+                    .into());
                 }
             }
         }
