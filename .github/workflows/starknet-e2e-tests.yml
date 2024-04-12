@@ -6,7 +6,7 @@ on:
   workflow_call:
 
 jobs:
-  rpc-tests:
+  e2e-bridge-tests:
     runs-on: ubuntu-latest
     env:
       BINARY_PATH: ../target/production/madara
@@ -31,9 +31,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
-      - name: Run rpc test without cache
+      - name: Run e2e tests
         run: |-
           curl -L https://foundry.paradigm.xyz | bash
-          source ~/.bashrc
+          source /home/runner/.bashrc
           foundryup
           cd starknet-e2e-test && cargo test --package starknet-e2e-test -- --nocapture
