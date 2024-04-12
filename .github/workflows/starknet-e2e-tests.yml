@@ -31,8 +31,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
       - name: Run e2e tests
         run: |-
+          ls /home/runner
+          curl -L https://foundry.paradigm.xyz | bash
+          source /home/runner/.bashrc
+          ls /home/runner/.foundry/bin
+          /home/runner/.foundry/bin/foundryup
           cd starknet-e2e-test && cargo test --package starknet-e2e-test -- --nocapture
