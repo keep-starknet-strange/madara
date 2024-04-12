@@ -32,6 +32,7 @@
 - ci: add gomu gomu no gatling perfomrance test
 - feat(runtime): moved StarkEvents from Substrate
 - feat(rpc/trace_api): add `trace_transaction`
+- fix(docker): fix dockerfile for `madara-node`
 
 ## v0.7.0
 
