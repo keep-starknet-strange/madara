@@ -57,8 +57,8 @@ pub async fn read_erc20_balance(
         },
         BlockId::Tag(BlockTag::Latest),
     )
-        .await
-        .unwrap()
+    .await
+    .unwrap()
 }
 
 pub async fn build_oz_account_factory<'a>(
@@ -117,8 +117,8 @@ pub trait AccountActions {
         max_fee: FieldElement,
         query_only: bool,
     ) -> BroadcastedInvokeTransaction
-        where
-            Self: Account + ConnectedAccount,
+    where
+        Self: Account + ConnectedAccount,
     {
         let prepared_execution = Execution::new(calls, self).nonce(nonce).max_fee(max_fee).prepared().unwrap();
         prepared_execution.get_invoke_request(query_only).await.unwrap()
@@ -175,11 +175,11 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
         let sierra: SierraClass = serde_json::from_reader(
             std::fs::File::open(env!("CARGO_MANIFEST_DIR").to_owned() + "/" + path_to_sierra).unwrap(),
         )
-            .unwrap();
+        .unwrap();
         let casm: CompiledClass = serde_json::from_reader(
             std::fs::File::open(env!("CARGO_MANIFEST_DIR").to_owned() + "/" + path_to_casm).unwrap(),
         )
-            .unwrap();
+        .unwrap();
         let compiled_class_hash = casm.class_hash().unwrap();
         (
             self.declare(sierra.clone().flatten().unwrap().into(), compiled_class_hash)
@@ -194,7 +194,7 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
         let contract_artifact: LegacyContractClass = serde_json::from_reader(
             std::fs::File::open(env!("CARGO_MANIFEST_DIR").to_owned() + "/" + path_to_compiled_contract).unwrap(),
         )
-            .unwrap();
+        .unwrap();
         (
             self.declare_legacy(Arc::new(contract_artifact.clone()))
                 // starknet-rs calls estimateFee with incorrect version which throws an error
@@ -214,9 +214,9 @@ pub fn assert_eq_msg_to_l1(l1: Vec<MsgToL1>, l2: Vec<MsgToL1>) {
 }
 
 pub async fn assert_poll<F, Fut>(f: F, polling_time_ms: u64, max_poll_count: u32)
-    where
-        F: Fn() -> Fut,
-        Fut: Future<Output = bool>,
+where
+    F: Fn() -> Fut,
+    Fut: Future<Output = bool>,
 {
     for _poll_count in 0..max_poll_count {
         if f().await {
