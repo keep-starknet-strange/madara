@@ -5,8 +5,8 @@ use std::vec;
 use assert_matches::assert_matches;
 use rstest::rstest;
 use starknet_core::types::{
-    Event, ExecutionResult, InvokeTransactionResult, MaybePendingTransactionReceipt, MsgToL1,
-    PendingTransactionReceipt, TransactionFinalityStatus, TransactionReceipt,
+    Event, ExecutionResult, MaybePendingTransactionReceipt, MsgToL1, PendingTransactionReceipt,
+    TransactionFinalityStatus, TransactionReceipt,
 };
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
@@ -144,8 +144,10 @@ async fn work_with_pending_invoke_transaction(madara: &ThreadSafeMadaraClient) -
                     MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(final_receipt)) => {
                         assert_eq!(receipt.transaction_hash, final_receipt.transaction_hash);
                         assert_eq!(receipt.actual_fee, final_receipt.actual_fee);
-                        assert_eq_msg_to_l1(receipt.messages_sent, final_receipt.messages_sent);
-                        assert_eq!(receipt.events, final_receipt.events);
+                        // TODO: it's possible to add events and messages in the receipt right now but it makes more
+                        // sense to have it once we've pending blocks in Substrate (which Massa labs is working on)
+                        // assert_eq_msg_to_l1(receipt.messages_sent, final_receipt.messages_sent);
+                        // assert_eq!(receipt.events, final_receipt.events);
                         assert_matches!(receipt.execution_result, ExecutionResult::Succeeded);
                         assert_eq!(receipt.execution_resources, final_receipt.execution_resources);
                     }

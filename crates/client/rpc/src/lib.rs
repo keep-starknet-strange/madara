@@ -1693,7 +1693,7 @@ where
         &self,
         chain_id: Felt252Wrapper,
         tx_hash: FieldElement,
-        pending_txs: &Vec<mp_transactions::Transaction>,
+        pending_txs: &[mp_transactions::Transaction],
     ) -> Result<Option<mp_transactions::Transaction>, StarknetRpcApiError> {
         let pending_tx =
             pending_txs.iter().find(|&tx| tx.compute_hash::<H>(chain_id.0.into(), false).0 == tx_hash).cloned();
@@ -1715,8 +1715,9 @@ where
         // TODO: Massa labs is working on pending blocks within Substrate. That will allow fetching
         // events and messages directly from the runtime the same way we do for finalized blocks.
         // So for now we return empty events and messages. Another option is to expose the event and message
-        // ordering functions from the runtime, order events inside execution info and use it. But the effort
-        // will not be worth it after pending blocks, so we've skipped implementing this for now.
+        // ordering functions from the runtime, order events inside execution info and use it. But the
+        // effort will not be worth it after pending blocks, so we've skipped implementing this for
+        // now.
         let messages_sent = Vec::new();
         let events = Vec::new();
 
