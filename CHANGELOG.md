@@ -35,6 +35,7 @@
   queue
 - feat(runtime): moved StarkEvents from Substrate
 - feat(rpc/trace_api): add `trace_transaction`
+- fix(docker): fix dockerfile for `madara-node`
 
 ## v0.7.0
 
@@ -318,3 +319,4 @@
 - fix: l1-l2 messaging
 - dev : clean contracts and compiled files
 - fix: add from_address in calldata of l1 message
+- test: add starkgate related testcase

@@ -2,8 +2,6 @@
 
 mod get_block_hash_and_number;
 
-extern crate starknet_rpc_test;
-
 use std::assert_matches::assert_matches;
 
 use rstest::rstest;
@@ -13,10 +11,10 @@ use starknet_core::types::{BlockId, BlockTag, FunctionCall, StarknetError};
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
-use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
-use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{build_single_owner_account, get_contract_address_from_deploy_tx, AccountActions};
-use starknet_rpc_test::Transaction;
+use starknet_test_utils::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
+use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_test_utils::utils::{build_single_owner_account, get_contract_address_from_deploy_tx, AccountActions};
+use starknet_test_utils::Transaction;
 
 #[rstest]
 #[tokio::test]
@@ -125,7 +123,7 @@ async fn works_on_correct_call_with_calldata(madara: &ThreadSafeMadaraClient) ->
             FunctionCall {
                 contract_address: FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(),
                 entry_point_selector: get_selector_from_name("balanceOf").unwrap(),
-                calldata: vec![FieldElement::TWO] // name function has no calldata
+                calldata: vec![FieldElement::TWO]
             },
             BlockId::Tag(BlockTag::Latest)
         )
@@ -147,8 +145,8 @@ async fn works_on_mutable_call_without_modifying_storage(madara: &ThreadSafeMada
         let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
 
         let (declare_tx, class_hash, _) = account.declare_contract(
-            "./contracts/counter4/counter4.contract_class.json",
-            "./contracts/counter4/counter4.compiled_contract_class.json",
+            "../starknet-rpc-test/contracts/counter4/counter4.contract_class.json",
+            "../starknet-rpc-test/contracts/counter4/counter4.compiled_contract_class.json",
         );
         let contract_factory = ContractFactory::new(class_hash, account.clone());
 
