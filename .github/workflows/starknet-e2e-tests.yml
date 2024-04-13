@@ -39,7 +39,5 @@ jobs:
           anvil& ANVIL_RUN_PID=$!
           while ! echo exit | nc localhost 8545; do sleep 1; done
           cd starknet-e2e-test
-          cargo test -- deposit_and_withdraw_from_erc20_bridge --exact
-          cargo test -- deposit_and_withdraw_from_eth_bridge --exact
-          cargo test -- madara_advances_ethereum_settlement_contract_state_in_sovereign_mode --exact
+          cargo test -- --test-threads=1
           kill $ANVIL_RUN_PID
