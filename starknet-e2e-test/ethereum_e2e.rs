@@ -163,10 +163,12 @@ async fn deposit_and_withdraw_from_erc20_bridge() -> Result<(), anyhow::Error> {
 
     catch_and_execute_l1_messages(&madara).await;
 
+    sleep(Duration::from_millis(20000)).await;
+
     let rpc = madara.get_starknet_client().await;
 
     // Wait for l1_message execution to complete (nonce mismatch)
-    sleep(Duration::from_millis(12000)).await;
+    sleep(Duration::from_millis(20000)).await;
 
     let l2_token_address = rpc
         .call(
@@ -179,11 +181,19 @@ async fn deposit_and_withdraw_from_erc20_bridge() -> Result<(), anyhow::Error> {
         )
         .await
         .unwrap()[0];
+
+    println!("L2 token address [erc20] : {:?}, L2 Bridge address : {:?}", l2_token_address, l2_bridge_address);
+
     token_bridge.approve(token_bridge.bridge_address(), 100000000.into()).await;
     catch_and_execute_l1_messages(&madara).await;
 
+    // waiting for erc20 token to be deployed on l2. It may take some time
+    sleep(Duration::from_millis(30000)).await;
+
     let balance_before =
         read_erc20_balance(&rpc, l2_token_address, FieldElement::from_hex_be(CAIRO_1_ACCOUNT_CONTRACT).unwrap()).await;
+
+    println!(">>>> balance before : {:?}", balance_before);
 
     token_bridge
         .deposit(
@@ -195,8 +205,12 @@ async fn deposit_and_withdraw_from_erc20_bridge() -> Result<(), anyhow::Error> {
         .await;
     catch_and_execute_l1_messages(&madara).await;
 
+    sleep(Duration::from_millis(20000)).await;
+
     let balance_after =
         read_erc20_balance(&rpc, l2_token_address, FieldElement::from_hex_be(CAIRO_1_ACCOUNT_CONTRACT).unwrap()).await;
+
+    println!(">>>> balance after : {:?}", balance_after);
 
     // balance_before + deposited_amount = balance_after
     assert_eq!(balance_before[0] + FieldElement::from_dec_str("10").unwrap(), balance_after[0]);

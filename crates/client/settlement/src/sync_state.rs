@@ -110,17 +110,17 @@ where
             let sync_to = block.header().block_number;
 
             if sync_from > sync_to {
-                log::info!("[settlement] Skipping block {} (already settled)", sync_to);
+                log::debug!("[settlement] Skipping block {} (already settled)", sync_to);
                 continue;
             }
 
             if sync_from == sync_to {
-                log::info!("[settlement] Verifying state root for block {}", sync_to);
+                log::debug!("[settlement] Verifying state root for block {}", sync_to);
                 Self::verify_starknet_state(substrate_client, &last_settled_state, madara_backend)?;
                 continue;
             }
 
-            log::info!("[settlement] Syncing state for blocks {} -> {}", sync_from, sync_to);
+            log::debug!("[settlement] Syncing state for blocks {} -> {}", sync_from, sync_to);
             while sync_from < sync_to {
                 let (next_block, substrate_block_hash) = if sync_from + 1 == sync_to {
                     // This is a typical scenario when we are up to speed with the chain
@@ -140,7 +140,7 @@ where
                 )
                 .await?;
 
-                log::info!("[settlement] State transitioned to {:?}", new_state);
+                log::debug!("[settlement] State transitioned to {:?}", new_state);
                 last_settled_state = new_state;
                 sync_from += 1;
             }

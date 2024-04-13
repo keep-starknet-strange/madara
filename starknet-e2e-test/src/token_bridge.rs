@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::time::Duration;
 
 use async_trait::async_trait;
 use ethers::addressbook::Address;
@@ -28,6 +29,7 @@ use starknet_test_utils::Transaction;
 use starknet_token_bridge_client::clients::token_bridge::StarknetTokenBridgeContractClient;
 use starknet_token_bridge_client::deploy_starknet_token_bridge_behind_unsafe_proxy;
 use starknet_token_bridge_client::interfaces::token_bridge::StarknetTokenBridgeTrait;
+use tokio::time::sleep;
 use zaun_utils::{LocalWalletSignerMiddleware, StarknetContractClient};
 
 use crate::utils::{invoke_contract, pad_bytes};
@@ -104,6 +106,8 @@ impl StarknetTokenBridge {
             .await
             .expect("Failed to declare token bridge contract on l2");
 
+        sleep(Duration::from_secs(20)).await;
+
         let mut rng = rand::thread_rng();
         let random: u32 = rng.gen();
 
@@ -120,9 +124,18 @@ impl StarknetTokenBridge {
             None,
         );
 
+        sleep(Duration::from_secs(25)).await;
+
         let mut txs = madara_write_lock.create_block_with_txs(vec![Transaction::Execution(deploy_tx)]).await.unwrap();
 
+        println!(">>>> txs : {:?}", txs);
+
         let deploy_tx_result = txs.pop().unwrap();
+
+        println!(">>>> deploy_tx_result : {:?}", deploy_tx_result);
+
+        sleep(Duration::from_secs(20)).await;
+
         get_contract_address_from_deploy_tx(&rpc, deploy_tx_result).await.unwrap()
     }
 

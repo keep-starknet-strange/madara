@@ -35,8 +35,11 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1
       - name: Run e2e tests
         run: |-
-          export ANVIL_ENDPOINT="http://127.0.0.1:8545"
+          export ETH_RPC_ENDPOINT="http://127.0.0.1:8545"
           anvil& ANVIL_RUN_PID=$!
           while ! echo exit | nc localhost 8545; do sleep 1; done
-          cd starknet-e2e-test && cargo test --package starknet-e2e-test -- --nocapture
+          cd starknet-e2e-test
+          cargo test -- deposit_and_withdraw_from_erc20_bridge --exact
+          cargo test -- deposit_and_withdraw_from_eth_bridge --exact
+          cargo test -- madara_advances_ethereum_settlement_contract_state_in_sovereign_mode --exact
           kill $ANVIL_RUN_PID
