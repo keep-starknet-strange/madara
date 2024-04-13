@@ -2,6 +2,7 @@
 
 ## Next release
 
+- fix: e2e workflow run all tests
 - chore: add makefile for developer experience improvements and cleanup
 - fix: fix cargo-lint issues
 - feat: added chain-id to the GenesisConfig in pallet-starknet
