@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 use blockifier::transaction::errors::TransactionExecutionError;
 use jsonrpsee::types::error::{CallError, ErrorObject};
+use log::error;
 use mp_simulations::PlaceHolderErrorTypeForFailedStarknetExecution;
 use sp_runtime::DispatchError;
 
@@ -83,11 +84,18 @@ impl From<TransactionExecutionError> for StarknetRpcApiError {
     }
 }
 
-impl From<DispatchError> for StarknetRpcApiError {
+impl From<DispatchError> for ContractErrorWrapper {
     fn from(value: DispatchError) -> Self {
-        StarknetRpcApiError::ContractError(ContractErrorWrapper::DispatchError(value))
+        ContractErrorWrapper::DispatchError(value)
     }
 }
+
+impl From<PlaceHolderErrorTypeForFailedStarknetExecution> for ContractErrorWrapper {
+    fn from(value: PlaceHolderErrorTypeForFailedStarknetExecution) -> Self {
+        ContractErrorWrapper::PlaceHolderErrorTypeForFailedStarknetExecution(value)
+    }
+}
+
 
 #[derive(Debug)]
 pub enum ContractErrorWrapper {
@@ -99,9 +107,9 @@ pub enum ContractErrorWrapper {
 impl Display for ContractErrorWrapper {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ContractErrorWrapper::DispatchError(e) => write!(f, "Dispatch{:?}", e),
-            ContractErrorWrapper::TransactionExecutionError(e) => write!(f, "transaction{:?}", e),
-            ContractErrorWrapper::PlaceHolderErrorTypeForFailedStarknetExecution(e) => write!(f, "place{:?}", e),
+            ContractErrorWrapper::DispatchError(e) => write!(f, "{:?}", e),
+            ContractErrorWrapper::TransactionExecutionError(e) => write!(f, "{}", e),
+            ContractErrorWrapper::PlaceHolderErrorTypeForFailedStarknetExecution(e) => write!(f, "{:?}", e),
         }
     }
 }
