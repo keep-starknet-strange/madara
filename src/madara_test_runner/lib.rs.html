@@ -77,6 +77,11 @@
 <a href="#77" id="77">77</a>
 <a href="#78" id="78">78</a>
 <a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
 </pre></div><pre class="rust"><code><span class="kw">pub mod </span>client;
 <span class="kw">pub mod </span>node;
 
@@ -86,6 +91,7 @@
 <span class="kw">use </span>derive_more::Display;
 <span class="kw">use </span>lazy_static::lazy_static;
 <span class="kw">use </span>tokio::sync::Mutex;
+<span class="kw">use </span>url::Url;
 
 <span class="kw">use </span><span class="kw">crate</span>::client::MadaraClient;
 <span class="kw">use </span><span class="kw">crate</span>::node::MadaraNode;
@@ -140,6 +146,10 @@
         }
 
         <span class="self">Self </span>{ _node: node, client }
+    }
+
+    <span class="kw">pub fn </span>url(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Url {
+        <span class="self">self</span>._node.url()
     }
 }
 

@@ -444,7 +444,7 @@
         <span class="kw">let </span>compiled_class_hash = casm.class_hash().unwrap();
         (
             <span class="self">self</span>.declare(sierra.clone().flatten().unwrap().into(), compiled_class_hash)
-				<span class="comment">// starknet-rs calls estimateFee with incorrect version which throws an error
+                <span class="comment">// starknet-rs calls estimateFee with incorrect version which throws an error
                 </span>.max_fee(FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap()),
             sierra.class_hash().unwrap(),
             compiled_class_hash,
@@ -458,8 +458,8 @@
         .unwrap();
         (
             <span class="self">self</span>.declare_legacy(Arc::new(contract_artifact.clone()))
-			 <span class="comment">// starknet-rs calls estimateFee with incorrect version which throws an error
-			 </span>.max_fee(FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap()),
+                <span class="comment">// starknet-rs calls estimateFee with incorrect version which throws an error
+                </span>.max_fee(FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap()),
             contract_artifact.class_hash().unwrap(),
         )
     }

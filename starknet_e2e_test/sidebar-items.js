@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["starknet_sovereign"]};
+window.SIDEBAR_ITEMS = {"mod":["eth_bridge","starknet_sovereign","token_bridge","utils"],"trait":["BridgeDeployable"]};

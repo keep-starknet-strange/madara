@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["catch_and_execute_l1_messages","deploy_eth_token_on_l2","invoke_contract","pad_bytes"]};

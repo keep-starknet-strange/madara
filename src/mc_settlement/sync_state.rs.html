@@ -374,13 +374,13 @@
         }
 
         <span class="kw">let </span>starknet_spec = settlement_provider.get_chain_spec().<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="macro">log::debug!</span>(<span class="string">&quot;[settlement] Starknet chain spec {:?}&quot;</span>, starknet_spec);
+        <span class="macro">log::info!</span>(<span class="string">&quot;[settlement] Starknet chain spec {:?}&quot;</span>, starknet_spec);
 
         <span class="comment">// We need to make sure that we are on the same page with the settlement contract.
         </span><span class="self">Self</span>::verify_starknet_spec(substrate_client, <span class="kw-2">&amp;</span>starknet_spec)<span class="question-mark">?</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>last_settled_state = settlement_provider.get_state().<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="macro">log::debug!</span>(<span class="string">&quot;[settlement] Last settled state {:?}&quot;</span>, last_settled_state);
+        <span class="macro">log::info!</span>(<span class="string">&quot;[settlement] Last settled state {:?}&quot;</span>, last_settled_state);
 
         <span class="comment">// If we haven&#39;t reached the settled level yet (e.g. syncing from scratch) this check will pass.
         // But we need to run it again once we are up to speed.
@@ -394,17 +394,17 @@
             <span class="kw">let </span>sync_to = block.header().block_number;
 
             <span class="kw">if </span>sync_from &gt; sync_to {
-                <span class="macro">log::info!</span>(<span class="string">&quot;[settlement] Skipping block {} (already settled)&quot;</span>, sync_to);
+                <span class="macro">log::debug!</span>(<span class="string">&quot;[settlement] Skipping block {} (already settled)&quot;</span>, sync_to);
                 <span class="kw">continue</span>;
             }
 
             <span class="kw">if </span>sync_from == sync_to {
-                <span class="macro">log::info!</span>(<span class="string">&quot;[settlement] Verifying state root for block {}&quot;</span>, sync_to);
+                <span class="macro">log::debug!</span>(<span class="string">&quot;[settlement] Verifying state root for block {}&quot;</span>, sync_to);
                 <span class="self">Self</span>::verify_starknet_state(substrate_client, <span class="kw-2">&amp;</span>last_settled_state, madara_backend)<span class="question-mark">?</span>;
                 <span class="kw">continue</span>;
             }
 
-            <span class="macro">log::info!</span>(<span class="string">&quot;[settlement] Syncing state for blocks {} -&gt; {}&quot;</span>, sync_from, sync_to);
+            <span class="macro">log::debug!</span>(<span class="string">&quot;[settlement] Syncing state for blocks {} -&gt; {}&quot;</span>, sync_from, sync_to);
             <span class="kw">while </span>sync_from &lt; sync_to {
                 <span class="kw">let </span>(next_block, substrate_block_hash) = <span class="kw">if </span>sync_from + <span class="number">1 </span>== sync_to {
                     <span class="comment">// This is a typical scenario when we are up to speed with the chain
@@ -559,7 +559,7 @@
             messages_to_l1,
             messages_to_l2,
         };
-        <span class="macro">log::trace!</span>(<span class="string">&quot;{:#?}&quot;</span>, program_output);
+        <span class="macro">log::info!</span>(<span class="string">&quot;{:#?}&quot;</span>, program_output);
 
         settlement_provider.update_state(program_output).<span class="kw">await</span><span class="question-mark">?</span>;
 
