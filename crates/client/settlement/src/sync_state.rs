@@ -90,13 +90,13 @@ where
         }
 
         let starknet_spec = settlement_provider.get_chain_spec().await?;
-        log::debug!("[settlement] Starknet chain spec {:?}", starknet_spec);
+        log::info!("[settlement] Starknet chain spec {:?}", starknet_spec);
 
         // We need to make sure that we are on the same page with the settlement contract.
         Self::verify_starknet_spec(substrate_client, &starknet_spec)?;
 
         let mut last_settled_state = settlement_provider.get_state().await?;
-        log::debug!("[settlement] Last settled state {:?}", last_settled_state);
+        log::info!("[settlement] Last settled state {:?}", last_settled_state);
 
         // If we haven't reached the settled level yet (e.g. syncing from scratch) this check will pass.
         // But we need to run it again once we are up to speed.
@@ -110,17 +110,17 @@ where
             let sync_to = block.header().block_number;
 
             if sync_from > sync_to {
-                log::info!("[settlement] Skipping block {} (already settled)", sync_to);
+                log::debug!("[settlement] Skipping block {} (already settled)", sync_to);
                 continue;
             }
 
             if sync_from == sync_to {
-                log::info!("[settlement] Verifying state root for block {}", sync_to);
+                log::debug!("[settlement] Verifying state root for block {}", sync_to);
                 Self::verify_starknet_state(substrate_client, &last_settled_state, madara_backend)?;
                 continue;
             }
 
-            log::info!("[settlement] Syncing state for blocks {} -> {}", sync_from, sync_to);
+            log::debug!("[settlement] Syncing state for blocks {} -> {}", sync_from, sync_to);
             while sync_from < sync_to {
                 let (next_block, substrate_block_hash) = if sync_from + 1 == sync_to {
                     // This is a typical scenario when we are up to speed with the chain
@@ -275,7 +275,7 @@ where
             messages_to_l1,
             messages_to_l2,
         };
-        log::trace!("{:#?}", program_output);
+        log::info!("{:#?}", program_output);
 
         settlement_provider.update_state(program_output).await?;
 

@@ -1,5 +1,3 @@
-extern crate starknet_rpc_test;
-
 use std::vec;
 
 use assert_matches::assert_matches;
@@ -11,16 +9,16 @@ use starknet_core::types::{
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::Provider;
-use starknet_rpc_test::constants::{
+use starknet_test_utils::constants::{
     ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, FEE_TOKEN_ADDRESS, SEQUENCER_ADDRESS, SIGNER_PRIVATE,
     UDC_ADDRESS,
 };
-use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{
+use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_test_utils::utils::{
     assert_eq_msg_to_l1, build_deploy_account_tx, build_oz_account_factory, build_single_owner_account,
     get_contract_address_from_deploy_tx, get_transaction_receipt, AccountActions,
 };
-use starknet_rpc_test::{Transaction, TransactionResult};
+use starknet_test_utils::{Transaction, TransactionResult};
 
 #[rstest]
 #[tokio::test]
@@ -152,8 +150,8 @@ async fn work_with_declare_transaction(madara: &ThreadSafeMadaraClient) -> Resul
         let mut madara_write_lock = madara.write().await;
         let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
         let (declare_tx, _, _) = account.declare_contract(
-            "./contracts/counter7/counter7.contract_class.json",
-            "./contracts/counter7/counter7.compiled_contract_class.json",
+            "../starknet-rpc-test/contracts/counter7/counter7.contract_class.json",
+            "../starknet-rpc-test/contracts/counter7/counter7.compiled_contract_class.json",
         );
 
         madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?
@@ -201,8 +199,8 @@ async fn work_with_pending_declare_transaction(madara: &ThreadSafeMadaraClient) 
         let mut madara_write_lock = madara.write().await;
         let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
         let (declare_tx, _, _) = account.declare_contract(
-            "./contracts/counter9/counter9.contract_class.json",
-            "./contracts/counter9/counter9.compiled_contract_class.json",
+            "../starknet-rpc-test/contracts/counter9/counter9.contract_class.json",
+            "../starknet-rpc-test/contracts/counter9/counter9.compiled_contract_class.json",
         );
 
         let mut txs = madara_write_lock.submit_txs(vec![Transaction::Declaration(declare_tx)]).await;

@@ -1,0 +1,45 @@
+---
+name: Task - E2e Tests
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  e2e-bridge-tests:
+    runs-on: ubuntu-latest
+    env:
+      BINARY_PATH: ../target/production/madara
+    steps:
+      - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "cache"
+          save-if: false
+      - uses: actions/cache@v3
+        with:
+          path: |
+            target/production/madara
+          key:
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{
+            github.run_id }}
+          fail-on-cache-miss: true
+      - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "2.3.1"
+      - name: Setup build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+      - name: Run e2e tests
+        run: |-
+          export ETH_RPC_ENDPOINT="http://127.0.0.1:8545"
+          anvil& ANVIL_RUN_PID=$!
+          while ! echo exit | nc localhost 8545; do sleep 1; done
+          cd starknet-e2e-test
+          cargo test -- deposit_and_withdraw_from_erc20_bridge --exact
+          cargo test -- deposit_and_withdraw_from_eth_bridge --exact
+          cargo test -- madara_advances_ethereum_settlement_contract_state_in_sovereign_mode --exact
+          kill $ANVIL_RUN_PID

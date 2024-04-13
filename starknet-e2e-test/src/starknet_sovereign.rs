@@ -2,6 +2,7 @@ use std::fs::File;
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use ethereum_instance::EthereumClient;
 use ethers::providers::Middleware;
 use ethers::types::{Address, I256, U256};
 use ethers::utils::keccak256;
@@ -16,17 +17,16 @@ use mp_snos_output::SnosCodec;
 use starknet_api::hash::StarkFelt;
 use starknet_api::serde_utils::hex_str_from_bytes;
 use starknet_core_contract_client::clients::StarknetSovereignContractClient;
-use starknet_core_contract_client::interfaces::{
-    CoreContractInitData, CoreContractState, OperatorTrait, ProxyInitializeData, ProxySupportTrait,
-    StarknetMessagingTrait,
-};
-use starknet_core_contract_client::{LocalWalletSignerMiddleware, StarknetCoreContractClient};
+use starknet_core_contract_client::deploy_starknet_sovereign_behind_unsafe_proxy;
+use starknet_core_contract_client::interfaces::{OperatorTrait, StarknetMessagingTrait};
 use starknet_ff::FieldElement;
-use zaun_sandbox::unsafe_proxy::deploy_starknet_sovereign_behind_unsafe_proxy;
-use zaun_sandbox::EthereumSandbox;
+use starknet_proxy_client::proxy_support::{
+    CoreContractInitData, CoreContractState, ProxyInitializeData, ProxySupportTrait,
+};
+use zaun_utils::{LocalWalletSignerMiddleware, StarknetContractClient};
 
 pub struct StarknetSovereign {
-    _sandbox: EthereumSandbox,
+    _sandbox: EthereumClient,
     client: StarknetSovereignContractClient,
 }
 
@@ -43,17 +43,21 @@ impl StarknetSovereign {
     /// and then deploy:
     ///     - Starknet core contract (sovereign mode)
     ///     - Unsafe delegate proxy (no access restrictions)
-    /// All the following interactions will be made thorugh the proxy
+    /// All the following interactions will be made through the proxy
     pub async fn deploy() -> Self {
         // Try to attach to an already running sandbox (GitHub CI case)
         // otherwise spawn new sandbox instance
-        let sandbox = if let Ok(endpoint) = std::env::var("ANVIL_ENDPOINT") {
-            EthereumSandbox::attach(Some(endpoint)).expect("Failed to attach to sandbox")
+        let sandbox = if let Ok(endpoint) = std::env::var("ETH_RPC_ENDPOINT") {
+            EthereumClient::attach(
+                Some(endpoint),
+                Some(String::from("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")),
+            )
+            .expect("Failed to attach to sandbox")
         } else {
-            EthereumSandbox::spawn(None)
+            EthereumClient::spawn(None)
         };
 
-        let client = deploy_starknet_sovereign_behind_unsafe_proxy(sandbox.client())
+        let client = deploy_starknet_sovereign_behind_unsafe_proxy(sandbox.signer())
             .await
             .expect("Failed to deploy starknet contract");
 
@@ -126,11 +130,11 @@ impl StarknetSovereign {
         ));
 
         // Hash version:        SN_OS_CONFIG_HASH_VERSION (settlement)
-        // Chain ID:            SN_GOERLI_CHAIN_ID (pallet config)
+        // Chain ID:            MADARA (pallet config)
         // Fee token address:   0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 (genesis
         // config)
         let config_hash = StarkFelt::from(Felt252Wrapper::from(
-            FieldElement::from_hex_be("0x036f5e4ea4dd042801c8841e3db8e654124305da0f11824fc1db60c405dbb39f").unwrap(),
+            FieldElement::from_hex_be("0x05ac6b99d1ab6d37202e29e2c887ace63cc594b40f900cf2c47398272bef412c").unwrap(),
         ));
 
         let init_data = CoreContractInitData {
