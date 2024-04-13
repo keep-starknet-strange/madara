@@ -4,6 +4,7 @@ use std::vec;
 
 use assert_matches::assert_matches;
 use rstest::rstest;
+use starknet_accounts::ConnectedAccount;
 use starknet_core::types::{
     Event, ExecutionResult, MaybePendingTransactionReceipt, MsgToL1, PendingTransactionReceipt,
     TransactionFinalityStatus, TransactionReceipt,
@@ -111,10 +112,11 @@ async fn work_with_pending_invoke_transaction(madara: &ThreadSafeMadaraClient) -
 
     let mut madara_write_lock = madara.write().await;
     let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    let nonce = account.get_nonce().await?.try_into()?;
     let mut txs = madara_write_lock
         .submit_txs(vec![
-            Transaction::Execution(account.transfer_tokens(recipient, transfer_amount, Some(0))),
-            Transaction::Execution(account.transfer_tokens(recipient, transfer_amount, Some(1))),
+            Transaction::Execution(account.transfer_tokens(recipient, transfer_amount, Some(nonce))),
+            Transaction::Execution(account.transfer_tokens(recipient, transfer_amount, Some(nonce + 1))),
         ])
         .await;
 
