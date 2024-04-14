@@ -32,6 +32,7 @@ members = [
   "da-test",
   "starknet-e2e-test",
   "madara-test-runner",
+  "starknet-test-utils",
 ]
 # All previous except for `starknet-rpc-test` and `starknet-e2e-test`
 # We don't want `cargo test` to trigger its tests
@@ -62,6 +63,7 @@ default-members = [
   "crates/client/commitment-state-diff",
   "crates/client/settlement",
   "crates/client/eth-client",
+  "starknet-test-utils",
 ]
 
 [profile.release]
@@ -237,6 +239,8 @@ mp-chain-id = { path = "crates/primitives/chain-id", default-features = false }
 mp-simulations = { path = "crates/primitives/simulations", default-features = false }
 mp-program-hash = { path = "crates/primitives/program-hash", default-features = false }
 mp-messages = { path = "crates/primitives/messages", default-features = false }
+starknet-rpc-test = { path = "starknet-rpc-test", default-features = false }
+starknet-test-utils = { path = "starknet-test-utils", default-features = false }
 
 # Madara client
 mc-genesis-data-provider = { path = "crates/client/genesis-data-provider" }
@@ -305,8 +309,16 @@ ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "f0e5b194f09c533f
 ethers-solc = { git = "https://github.com/gakonst/ethers-rs", rev = "f0e5b194f09c533feb10d1a686ddb9e5946ec107" }
 
 # Zaun
-zaun-sandbox = { git = "https://github.com/keep-starknet-strange/zaun", package = "sandbox" }
-starknet-core-contract-client = { git = "https://github.com/keep-starknet-strange/zaun" }
+ethereum-instance = { git = "https://github.com/keep-starknet-strange/zaun", package = "ethereum-instance", branch = "main" }
+starkgate-manager-client = { git = "https://github.com/keep-starknet-strange/zaun", package = "starkgate-manager-client", branch = "main" }
+starkgate-registry-client = { git = "https://github.com/keep-starknet-strange/zaun", package = "starkgate-registry-client", branch = "main" }
+starknet-core-contract-client = { git = "https://github.com/keep-starknet-strange/zaun", package = "starknet-core-contract-client", branch = "main" }
+starknet-erc20-client = { git = "https://github.com/keep-starknet-strange/zaun", package = "starknet-erc20-client", branch = "main" }
+starknet-eth-bridge-client = { git = "https://github.com/keep-starknet-strange/zaun", package = "starknet-eth-bridge-client", branch = "main" }
+starknet-proxy-client = { git = "https://github.com/keep-starknet-strange/zaun", package = "starknet-proxy-client", branch = "main" }
+starknet-token-bridge-client = { git = "https://github.com/keep-starknet-strange/zaun", package = "starknet-token-bridge-client", branch = "main" }
+zaun-utils = { git = "https://github.com/keep-starknet-strange/zaun", package = "utils", branch = "main" }
+
 
 # Other third party dependencies
 anyhow = "1.0.80"

@@ -183,7 +183,7 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
         let compiled_class_hash = casm.class_hash().unwrap();
         (
             self.declare(sierra.clone().flatten().unwrap().into(), compiled_class_hash)
-                // starknet-rs calls estimateFee with incorrect version which throws an error
+				// starknet-rs calls estimateFee with incorrect version which throws an error
                 .max_fee(FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap()),
             sierra.class_hash().unwrap(),
             compiled_class_hash,
@@ -197,8 +197,8 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
         .unwrap();
         (
             self.declare_legacy(Arc::new(contract_artifact.clone()))
-                // starknet-rs calls estimateFee with incorrect version which throws an error
-                .max_fee(FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap()),
+			 // starknet-rs calls estimateFee with incorrect version which throws an error
+			 .max_fee(FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap()),
             contract_artifact.class_hash().unwrap(),
         )
     }
@@ -251,11 +251,15 @@ pub async fn get_contract_address_from_deploy_tx(
         Ok(TransactionResult::Execution(rpc_response)) => rpc_response.transaction_hash
     );
 
+    println!(">>>> deploy_tx_hash : {:?}", deploy_tx_hash);
+
     let deploy_tx_receipt = get_transaction_receipt(rpc, deploy_tx_hash).await?;
+
+    println!(">>>> deploy_tx_receipt : {:?}", deploy_tx_receipt);
 
     let contract_address = assert_matches!(
         deploy_tx_receipt,
-        MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) => receipt.events[0].data[0]
+        MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) => receipt.events.iter().find(|e| e.keys[0] == get_selector_from_name("ContractDeployed").unwrap()).unwrap().data[0]
     );
     Ok(contract_address)
 }

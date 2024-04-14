@@ -10,6 +10,7 @@ async-trait = "0.1"
 ethers = { workspace = true }
 flate2 = { workspace = true }
 home = "0.5.5"
+rand = "0.8.5"
 reqwest = "0.11.18"
 rstest = "0.18.1"
 serde = { version = "1.0.179", features = ["derive"] }
@@ -27,6 +28,7 @@ starknet-crypto = { workspace = true }
 starknet-ff = { workspace = true }
 starknet-providers = { workspace = true }
 starknet-signers = { workspace = true }
+starknet-test-utils = { workspace = true }
 starknet_api = { workspace = true, default-features = true }
 
 # Madara
@@ -39,8 +41,15 @@ mp-messages = { workspace = true }
 mp-snos-output = { workspace = true }
 
 # Zaun
+ethereum-instance = { workspace = true }
+starkgate-manager-client = { workspace = true }
+starkgate-registry-client = { workspace = true }
 starknet-core-contract-client = { workspace = true }
-zaun-sandbox = { workspace = true }
+starknet-erc20-client = { workspace = true }
+starknet-eth-bridge-client = { workspace = true }
+starknet-proxy-client = { workspace = true }
+starknet-token-bridge-client = { workspace = true }
+zaun-utils = { workspace = true }
 
 [[test]]
 name = "ethereum_core_contract"

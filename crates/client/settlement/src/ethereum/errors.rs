@@ -1,4 +1,4 @@
-use starknet_core_contract_client::LocalWalletSignerMiddleware;
+use zaun_utils::LocalWalletSignerMiddleware;
 
 /// Ethereum client error type.
 #[derive(thiserror::Error, Debug)]

@@ -24,7 +24,6 @@ pub mod constants;
 pub mod utils;
 
 pub mod fixtures;
-// mod utils;
 
 const NODE_RPC_URL: &str = "http://localhost:9944";
 

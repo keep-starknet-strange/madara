@@ -1,5 +1,3 @@
-extern crate starknet_rpc_test;
-
 use anyhow::anyhow;
 use assert_matches::assert_matches;
 use rstest::rstest;
@@ -7,10 +5,10 @@ use starknet_core::types::{BlockId, BlockTag, DeclaredClassItem, MaybePendingSta
 use starknet_ff::FieldElement;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
-use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE};
-use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{build_single_owner_account, AccountActions};
-use starknet_rpc_test::Transaction;
+use starknet_test_utils::constants::{ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE};
+use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_test_utils::utils::{build_single_owner_account, AccountActions};
+use starknet_test_utils::Transaction;
 
 #[rstest]
 #[tokio::test]
@@ -55,10 +53,7 @@ async fn returns_correct_state_diff_transfer(madara: &ThreadSafeMadaraClient) ->
         let state_update = match rpc.get_state_update(BlockId::Tag(BlockTag::Latest)).await.unwrap() {
             MaybePendingStateUpdate::Update(update) => update,
             MaybePendingStateUpdate::PendingUpdate(_) => {
-                return Err(anyhow!(
-                    "Expected update, got pending
-update"
-                ));
+                return Err(anyhow!("Expected update, got pending update"));
             }
         };
         let block_hash_and_number = rpc.block_hash_and_number().await?;
@@ -87,8 +82,8 @@ async fn returns_correct_state_diff_declare(madara: &ThreadSafeMadaraClient) -> 
 
     let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let (declare_tx, expected_class_hash, expected_compiled_class_hash) = account.declare_contract(
-        "./contracts/counter6/counter6.contract_class.json",
-        "./contracts/counter6/counter6.compiled_contract_class.json",
+        "../starknet-rpc-test/contracts/counter6/counter6.contract_class.json",
+        "../starknet-rpc-test/contracts/counter6/counter6.compiled_contract_class.json",
     );
 
     let (state_update, block_hash) = {
