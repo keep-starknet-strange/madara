@@ -1861,6 +1861,49 @@
 <a href="#1861" id="1861">1861</a>
 <a href="#1862" id="1862">1862</a>
 <a href="#1863" id="1863">1863</a>
+<a href="#1864" id="1864">1864</a>
+<a href="#1865" id="1865">1865</a>
+<a href="#1866" id="1866">1866</a>
+<a href="#1867" id="1867">1867</a>
+<a href="#1868" id="1868">1868</a>
+<a href="#1869" id="1869">1869</a>
+<a href="#1870" id="1870">1870</a>
+<a href="#1871" id="1871">1871</a>
+<a href="#1872" id="1872">1872</a>
+<a href="#1873" id="1873">1873</a>
+<a href="#1874" id="1874">1874</a>
+<a href="#1875" id="1875">1875</a>
+<a href="#1876" id="1876">1876</a>
+<a href="#1877" id="1877">1877</a>
+<a href="#1878" id="1878">1878</a>
+<a href="#1879" id="1879">1879</a>
+<a href="#1880" id="1880">1880</a>
+<a href="#1881" id="1881">1881</a>
+<a href="#1882" id="1882">1882</a>
+<a href="#1883" id="1883">1883</a>
+<a href="#1884" id="1884">1884</a>
+<a href="#1885" id="1885">1885</a>
+<a href="#1886" id="1886">1886</a>
+<a href="#1887" id="1887">1887</a>
+<a href="#1888" id="1888">1888</a>
+<a href="#1889" id="1889">1889</a>
+<a href="#1890" id="1890">1890</a>
+<a href="#1891" id="1891">1891</a>
+<a href="#1892" id="1892">1892</a>
+<a href="#1893" id="1893">1893</a>
+<a href="#1894" id="1894">1894</a>
+<a href="#1895" id="1895">1895</a>
+<a href="#1896" id="1896">1896</a>
+<a href="#1897" id="1897">1897</a>
+<a href="#1898" id="1898">1898</a>
+<a href="#1899" id="1899">1899</a>
+<a href="#1900" id="1900">1900</a>
+<a href="#1901" id="1901">1901</a>
+<a href="#1902" id="1902">1902</a>
+<a href="#1903" id="1903">1903</a>
+<a href="#1904" id="1904">1904</a>
+<a href="#1905" id="1905">1905</a>
+<a href="#1906" id="1906">1906</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1878,7 +1921,7 @@
 <span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>blockifier::transaction::objects::ResourcesMapping;
+<span class="kw">use </span>blockifier::transaction::objects::{ResourcesMapping, TransactionExecutionInfo};
 <span class="kw">use </span>errors::StarknetRpcApiError;
 <span class="kw">use </span>jsonrpsee::core::{async_trait, RpcResult};
 <span class="kw">use </span>jsonrpsee::types::error::CallError;
@@ -1890,6 +1933,7 @@
     StarknetWriteRpcApiServer,
 };
 <span class="kw">use </span>mc_storage::OverrideHandle;
+<span class="kw">use </span>mp_block::BlockTransactions;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_hashers::HasherT;
 <span class="kw">use </span>mp_transactions::compute_hash::ComputeTransactionHash;
@@ -1927,6 +1971,7 @@
 <span class="kw">use </span>starknet_core::utils::get_selector_from_name;
 
 <span class="kw">use </span><span class="kw">crate</span>::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
+<span class="kw">use </span><span class="kw">crate</span>::trace_api::map_transaction_to_user_transaction;
 <span class="kw">use </span><span class="kw">crate</span>::types::RpcEventFilter;
 
 <span class="doccomment">/// A Starknet RPC server for Madara
@@ -3462,16 +3507,20 @@
 
         <span class="comment">// TODO
         // Is any better way to get execution resources of processed tx?
-        </span><span class="kw">let </span>skip_validate = <span class="bool-val">true</span>;
-        <span class="comment">// let parent_block_hash = Felt252Wrapper::from().into();
-        </span><span class="kw">let </span>parent_block_hash = <span class="self">self
+        </span><span class="kw">let </span>parent_substrate_block_hash = <span class="self">self
             </span>.substrate_block_hash_from_starknet_block(BlockId::Hash(block_header.parent_block_hash.into()))
             .map_err(|e| {
                 <span class="macro">error!</span>(<span class="string">&quot;Parent Block not found: {e}&quot;</span>);
                 StarknetRpcApiError::BlockNotFound
             })<span class="question-mark">?</span>;
-        <span class="kw">let </span>simulation = <span class="self">self</span>.simulate_tx(parent_block_hash, transaction.clone(), skip_validate, fee_disabled)<span class="question-mark">?</span>;
-        <span class="kw">let </span>execution_resources = actual_resources_to_execution_resources(simulation.actual_resources);
+        <span class="kw">let </span>execution_info = <span class="self">self</span>.get_transaction_execution_info(
+            parent_substrate_block_hash,
+            starknet_block.transactions(),
+            chain_id,
+            transaction_hash,
+        )<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>execution_resources = actual_resources_to_execution_resources(execution_info.actual_resources);
 
         <span class="kw">let </span>receipt = <span class="kw">match </span>transaction {
             mp_transactions::Transaction::Declare(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; TransactionReceipt::Declare(DeclareTransactionReceipt {
@@ -3550,14 +3599,10 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         chain_id: Felt252Wrapper,
         tx_hash: FieldElement,
+        pending_txs: <span class="kw-2">&amp;</span>[mp_transactions::Transaction],
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;mp_transactions::Transaction&gt;, StarknetRpcApiError&gt; {
-        <span class="kw">let </span>latest_block = <span class="self">self</span>.get_best_block_hash();
-
-        <span class="kw">let </span>pending_tx = <span class="self">self
-            </span>.get_pending_txs(latest_block)<span class="question-mark">?
-            </span>.iter()
-            .find(|<span class="kw-2">&amp;</span>tx| tx.compute_hash::&lt;H&gt;(chain_id.<span class="number">0</span>.into(), <span class="bool-val">false</span>).<span class="number">0 </span>== tx_hash)
-            .cloned();
+        <span class="kw">let </span>pending_tx =
+            pending_txs.iter().find(|<span class="kw-2">&amp;</span>tx| tx.compute_hash::&lt;H&gt;(chain_id.<span class="number">0</span>.into(), <span class="bool-val">false</span>).<span class="number">0 </span>== tx_hash).cloned();
 
         <span class="prelude-val">Ok</span>(pending_tx)
     }
@@ -3567,22 +3612,26 @@
         chain_id: Felt252Wrapper,
         transaction_hash: FieldElement,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;MaybePendingTransactionReceipt, StarknetRpcApiError&gt; {
-        <span class="kw">let </span>pending_tx =
-            <span class="self">self</span>.find_pending_tx(chain_id, transaction_hash)<span class="question-mark">?</span>.ok_or(StarknetRpcApiError::TxnHashNotFound)<span class="question-mark">?</span>;
+        <span class="kw">let </span>parent_substrate_block_hash = <span class="self">self</span>.get_best_block_hash();
+        <span class="kw">let </span>pending_txs = <span class="self">self</span>.get_pending_txs(parent_substrate_block_hash)<span class="question-mark">?</span>;
+        <span class="kw">let </span>pending_tx = <span class="self">self
+            </span>.find_pending_tx(chain_id, transaction_hash, <span class="kw-2">&amp;</span>pending_txs)<span class="question-mark">?
+            </span>.ok_or(StarknetRpcApiError::TxnHashNotFound)<span class="question-mark">?</span>;
 
-        <span class="comment">// TODO -- no way of getting messages sent to L1 for the tx
+        <span class="comment">// TODO: Massa labs is working on pending blocks within Substrate. That will allow fetching
+        // events and messages directly from the runtime the same way we do for finalized blocks.
+        // So for now we return empty events and messages. Another option is to expose the event and message
+        // ordering functions from the runtime, order events inside execution info and use it. But the
+        // effort will not be worth it after pending blocks, so we&#39;ve skipped implementing this for
+        // now.
         </span><span class="kw">let </span>messages_sent = Vec::new();
-        <span class="comment">// TODO -- no  way of getting events for the tx
-        </span><span class="kw">let </span>events = Vec::new();
+        <span class="kw">let </span>events = Vec::new();
 
-        <span class="comment">// TODO -- should Tx be simulated with `skip_validate`?
-        </span><span class="kw">let </span>skip_validate = <span class="bool-val">true</span>;
-        <span class="kw">let </span>skip_fee_charge = <span class="self">self</span>.is_transaction_fee_disabled(<span class="self">self</span>.get_best_block_hash())<span class="question-mark">?</span>;
-        <span class="kw">let </span>simulation =
-            <span class="self">self</span>.simulate_tx(<span class="self">self</span>.get_best_block_hash(), pending_tx.clone(), skip_validate, skip_fee_charge)<span class="question-mark">?</span>;
-        <span class="kw">let </span>actual_fee = simulation.actual_fee.<span class="number">0</span>.into();
-        <span class="kw">let </span>execution_result = revert_error_to_execution_result(simulation.revert_error);
-        <span class="kw">let </span>execution_resources = actual_resources_to_execution_resources(simulation.actual_resources);
+        <span class="kw">let </span>execution_info =
+            <span class="self">self</span>.get_transaction_execution_info(parent_substrate_block_hash, <span class="kw-2">&amp;</span>pending_txs, chain_id, transaction_hash)<span class="question-mark">?</span>;
+        <span class="kw">let </span>actual_fee = execution_info.actual_fee.<span class="number">0</span>.into();
+        <span class="kw">let </span>execution_result = revert_error_to_execution_result(execution_info.revert_error);
+        <span class="kw">let </span>execution_resources = actual_resources_to_execution_resources(execution_info.actual_resources);
 
         <span class="kw">let </span>receipt = <span class="kw">match </span>pending_tx {
             mp_transactions::Transaction::Declare(_tx, _contract_class) =&gt; {
@@ -3635,6 +3684,43 @@
         };
 
         <span class="prelude-val">Ok</span>(MaybePendingTransactionReceipt::PendingReceipt(receipt))
+    }
+
+    <span class="kw">fn </span>get_transaction_execution_info(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        parent_substrate_block_hash: B::Hash,
+        previous_transactions: <span class="kw-2">&amp;</span>BlockTransactions,
+        chain_id: Felt252Wrapper,
+        transaction_hash: FieldElement,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, StarknetRpcApiError&gt;
+    <span class="kw">where
+        </span>B: BlockT,
+    {
+        <span class="kw">let </span>(transactions_before, transaction_to_trace) =
+            map_transaction_to_user_transaction(<span class="self">self</span>, previous_transactions, chain_id, <span class="prelude-val">Some</span>(transaction_hash.into()))<span class="question-mark">?</span>;
+
+        <span class="kw">if </span>transaction_to_trace.is_empty() {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(StarknetRpcApiError::TxnHashNotFound);
+        }
+
+        <span class="kw">if </span>transaction_to_trace.len() &gt; <span class="number">1 </span>{
+            <span class="macro">log::error!</span>(<span class="string">&quot;More than one transaction with the same transaction hash {:#?}&quot;</span>, transaction_to_trace);
+            <span class="kw">return </span><span class="prelude-val">Err</span>(StarknetRpcApiError::InternalServerError);
+        }
+
+        <span class="kw">let </span>trace = <span class="self">self
+            </span>.re_execute_transactions(parent_substrate_block_hash, transactions_before, transaction_to_trace)
+            .map_err(|e| {
+                <span class="macro">log::error!</span>(<span class="string">&quot;Failed to re-execute transactions: {e}&quot;</span>);
+                StarknetRpcApiError::InternalServerError
+            })<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>execution_info = trace.get(<span class="number">0</span>).ok_or_else(|| {
+            <span class="macro">log::error!</span>(<span class="string">&quot;Failed to get execution info&quot;</span>);
+            StarknetRpcApiError::InternalServerError
+        })<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(execution_info.<span class="number">0</span>.clone())
     }
 
     <span class="kw">fn </span>convert_error&lt;T&gt;(

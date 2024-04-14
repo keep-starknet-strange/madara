@@ -557,19 +557,6 @@
 <a href="#557" id="557">557</a>
 <a href="#558" id="558">558</a>
 <a href="#559" id="559">559</a>
-<a href="#560" id="560">560</a>
-<a href="#561" id="561">561</a>
-<a href="#562" id="562">562</a>
-<a href="#563" id="563">563</a>
-<a href="#564" id="564">564</a>
-<a href="#565" id="565">565</a>
-<a href="#566" id="566">566</a>
-<a href="#567" id="567">567</a>
-<a href="#568" id="568">568</a>
-<a href="#569" id="569">569</a>
-<a href="#570" id="570">570</a>
-<a href="#571" id="571">571</a>
-<a href="#572" id="572">572</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>blockifier::execution::contract_class::{ContractClass, ContractClassV1};
 <span class="kw">use </span>blockifier::execution::entry_point::CallInfo;
 <span class="kw">use </span>blockifier::state::cached_state::CommitmentStateDiff;
@@ -580,7 +567,7 @@
 <span class="kw">use </span>mc_genesis_data_provider::GenesisProvider;
 <span class="kw">use </span>mc_rpc_core::utils::{blockifier_to_rpc_state_diff_types, get_block_by_block_hash};
 <span class="kw">use </span>mc_rpc_core::{StarknetReadRpcApiServer, StarknetTraceRpcApiServer};
-<span class="kw">use </span>mp_block::Block;
+<span class="kw">use </span>mp_block::BlockTransactions;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_hashers::HasherT;
 <span class="kw">use </span>mp_simulations::{SimulationFlags, TransactionSimulationResult};
@@ -679,7 +666,7 @@
         <span class="kw">let </span>chain_id = Felt252Wrapper(<span class="self">self</span>.chain_id()<span class="question-mark">?</span>.<span class="number">0</span>);
 
         <span class="kw">let </span>(block_transactions, <span class="kw">_</span>) =
-            map_transaction_to_user_transaction(<span class="self">self</span>, starknet_block, substrate_block_hash, chain_id, <span class="prelude-val">None</span>)<span class="question-mark">?</span>;
+            map_transaction_to_user_transaction(<span class="self">self</span>, starknet_block.transactions(), chain_id, <span class="prelude-val">None</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>previous_block_substrate_hash = get_previous_block_substrate_hash(<span class="self">self</span>, substrate_block_hash)<span class="question-mark">?</span>;
 
@@ -710,8 +697,7 @@
 
         <span class="kw">let </span>(txs_to_execute_before, tx_to_trace) = map_transaction_to_user_transaction(
             <span class="self">self</span>,
-            starknet_block,
-            substrate_block_hash,
+            starknet_block.transactions(),
             chain_id,
             <span class="prelude-val">Some</span>(transaction_hash_to_trace),
         )<span class="question-mark">?</span>;
@@ -750,7 +736,7 @@
     P: TransactionPool&lt;Block = B&gt; + <span class="lifetime">&#39;static</span>,
     H: HasherT + Send + Sync + <span class="lifetime">&#39;static</span>,
 {
-    <span class="kw">fn </span>re_execute_transactions(
+    <span class="kw">pub fn </span>re_execute_transactions(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         previous_block_substrate_hash: B::Hash,
         transactions_before: Vec&lt;UserOrL1HandlerTransaction&gt;,
@@ -1006,10 +992,9 @@
     <span class="prelude-val">Ok</span>(results)
 }
 
-<span class="kw">fn </span>map_transaction_to_user_transaction&lt;A, B, BE, G, C, P, H&gt;(
+<span class="kw">pub fn </span>map_transaction_to_user_transaction&lt;A, B, BE, G, C, P, H&gt;(
     starknet: <span class="kw-2">&amp;</span>Starknet&lt;A, B, BE, G, C, P, H&gt;,
-    starknet_block: Block,
-    substrate_block_hash: B::Hash,
+    transactions: <span class="kw-2">&amp;</span>BlockTransactions,
     chain_id: Felt252Wrapper,
     target_transaction_hash: <span class="prelude-ty">Option</span>&lt;Felt252Wrapper&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(Vec&lt;UserOrL1HandlerTransaction&gt;, Vec&lt;UserOrL1HandlerTransaction&gt;), StarknetRpcApiError&gt;
@@ -1020,29 +1005,28 @@
     H: HasherT + Send + Sync + <span class="lifetime">&#39;static</span>,
     BE: Backend&lt;B&gt; + <span class="lifetime">&#39;static</span>,
 {
-    <span class="kw">let </span><span class="kw-2">mut </span>transactions = Vec::new();
+    <span class="kw">let </span><span class="kw-2">mut </span>user_transactions = Vec::new();
     <span class="kw">let </span><span class="kw-2">mut </span>transaction_to_trace = Vec::new();
 
-    <span class="kw">for </span>tx <span class="kw">in </span>starknet_block.transactions() {
+    <span class="kw">for </span>tx <span class="kw">in </span>transactions {
         <span class="kw">let </span>current_tx_hash = tx.compute_hash::&lt;H&gt;(chain_id, <span class="bool-val">false</span>);
 
         <span class="kw">if </span><span class="prelude-val">Some</span>(current_tx_hash) == target_transaction_hash {
-            <span class="kw">let </span>converted_tx = convert_transaction(tx, starknet, substrate_block_hash, chain_id)<span class="question-mark">?</span>;
+            <span class="kw">let </span>converted_tx = convert_transaction(tx, starknet, chain_id)<span class="question-mark">?</span>;
             transaction_to_trace.push(converted_tx);
             <span class="kw">break</span>;
         } <span class="kw">else </span>{
-            <span class="kw">let </span>converted_tx = convert_transaction(tx, starknet, substrate_block_hash, chain_id)<span class="question-mark">?</span>;
-            transactions.push(converted_tx);
+            <span class="kw">let </span>converted_tx = convert_transaction(tx, starknet, chain_id)<span class="question-mark">?</span>;
+            user_transactions.push(converted_tx);
         }
     }
 
-    <span class="prelude-val">Ok</span>((transactions, transaction_to_trace))
+    <span class="prelude-val">Ok</span>((user_transactions, transaction_to_trace))
 }
 
 <span class="kw">fn </span>convert_transaction&lt;A, B, BE, G, C, P, H&gt;(
     tx: <span class="kw-2">&amp;</span>Transaction,
     starknet: <span class="kw-2">&amp;</span>Starknet&lt;A, B, BE, G, C, P, H&gt;,
-    substrate_block_hash: B::Hash,
     chain_id: Felt252Wrapper,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;UserOrL1HandlerTransaction, StarknetRpcApiError&gt;
 <span class="kw">where
@@ -1059,22 +1043,12 @@
         Transaction::DeployAccount(deploy_account_tx) =&gt; {
             <span class="prelude-val">Ok</span>(UserOrL1HandlerTransaction::User(UserTransaction::DeployAccount(deploy_account_tx.clone())))
         }
-        Transaction::Declare(declare_tx, <span class="kw">_</span>) =&gt; {
+        Transaction::Declare(declare_tx, contract_class) =&gt; {
             <span class="kw">let </span>class_hash = ClassHash::from(<span class="kw-2">*</span>declare_tx.class_hash());
-
             <span class="kw">match </span>declare_tx {
-                DeclareTransaction::V0(<span class="kw">_</span>) | DeclareTransaction::V1(<span class="kw">_</span>) =&gt; {
-                    <span class="kw">let </span>contract_class = starknet
-                        .overrides
-                        .for_block_hash(starknet.client.as_ref(), substrate_block_hash)
-                        .contract_class_by_class_hash(substrate_block_hash, class_hash)
-                        .ok_or_else(|| {
-                            <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve contract class from hash &#39;{class_hash}&#39;&quot;</span>);
-                            StarknetRpcApiError::InternalServerError
-                        })<span class="question-mark">?</span>;
-
-                    <span class="prelude-val">Ok</span>(UserOrL1HandlerTransaction::User(UserTransaction::Declare(declare_tx.clone(), contract_class)))
-                }
+                DeclareTransaction::V0(<span class="kw">_</span>) | DeclareTransaction::V1(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(UserOrL1HandlerTransaction::User(
+                    UserTransaction::Declare(declare_tx.clone(), contract_class.clone()),
+                )),
                 DeclareTransaction::V2(_tx) =&gt; {
                     <span class="kw">let </span>contract_class = starknet
                         .backend
