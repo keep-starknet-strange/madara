@@ -1602,7 +1602,7 @@ where
         // TODO
         // Is any better way to get execution resources of processed tx?
         let parent_substrate_block_hash = self
-            .substrate_block_hash_from_starknet_block(BlockId::Hash(starknet_block.header().parent_block_hash.into()))
+            .substrate_block_hash_from_starknet_block(BlockId::Hash(block_header.parent_block_hash.into()))
             .map_err(|e| {
                 error!("Parent Block not found: {e}");
                 StarknetRpcApiError::BlockNotFound
@@ -1614,7 +1614,7 @@ where
             transaction_hash,
         )?;
 
-        let execution_resources = actual_resources_to_execution_resources(execution_info.actual_resources.clone());
+        let execution_resources = actual_resources_to_execution_resources(execution_info.actual_resources);
 
         let receipt = match transaction {
             mp_transactions::Transaction::Declare(_, _) => TransactionReceipt::Declare(DeclareTransactionReceipt {
