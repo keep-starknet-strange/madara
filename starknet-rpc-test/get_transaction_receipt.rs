@@ -2,6 +2,7 @@ use std::vec;
 
 use assert_matches::assert_matches;
 use rstest::rstest;
+use starknet_accounts::ConnectedAccount;
 use starknet_core::types::{
     Event, ExecutionResult, MaybePendingTransactionReceipt, MsgToL1, PendingTransactionReceipt,
     TransactionFinalityStatus, TransactionReceipt,
@@ -107,36 +108,57 @@ async fn work_with_pending_invoke_transaction(madara: &ThreadSafeMadaraClient) -
     let recipient = FieldElement::from_hex_be("0x12345").unwrap();
     let transfer_amount = FieldElement::ONE;
 
-    let (rpc_response, invoke_tx_pending_receipt) = {
-        let mut madara_write_lock = madara.write().await;
-        let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
-        let mut txs = madara_write_lock
-            .submit_txs(vec![Transaction::Execution(account.transfer_tokens(recipient, transfer_amount, None))])
-            .await;
+    let mut madara_write_lock = madara.write().await;
+    let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
+    let nonce = account.get_nonce().await?.try_into()?;
+    let mut txs = madara_write_lock
+        .submit_txs(vec![
+            Transaction::Execution(account.transfer_tokens(recipient, transfer_amount, Some(nonce))),
+            Transaction::Execution(account.transfer_tokens(recipient, transfer_amount, Some(nonce + 1))),
+        ])
+        .await;
 
-        assert_eq!(txs.len(), 1);
-        let rpc_response = match txs.remove(0).unwrap() {
-            TransactionResult::Execution(rpc_response) => rpc_response,
-            _ => panic!("expected execution result"),
-        };
-        let pending_receipt = get_transaction_receipt(&rpc, rpc_response.transaction_hash).await?;
-
-        // Create block with pending txs to clear state
-        madara_write_lock.create_block_with_pending_txs().await?;
-
-        (rpc_response, pending_receipt)
+    assert_eq!(txs.len(), 2);
+    let rpc_response_one = match txs.remove(0).unwrap() {
+        TransactionResult::Execution(rpc_response) => rpc_response,
+        _ => panic!("expected execution result"),
     };
+    let rpc_response_two = match txs.remove(0).unwrap() {
+        TransactionResult::Execution(rpc_response) => rpc_response,
+        _ => panic!("expected execution result"),
+    };
+    let pending_receipt_one = get_transaction_receipt(&rpc, rpc_response_one.transaction_hash).await?;
+    let pending_receipt_two = get_transaction_receipt(&rpc, rpc_response_two.transaction_hash).await?;
 
-    match invoke_tx_pending_receipt {
-        MaybePendingTransactionReceipt::PendingReceipt(PendingTransactionReceipt::Invoke(receipt)) => {
-            assert_eq!(receipt.transaction_hash, rpc_response.transaction_hash);
-            assert!(receipt.actual_fee > FieldElement::ZERO);
-            assert_eq_msg_to_l1(receipt.messages_sent, vec![]);
-            assert_eq!(receipt.events, vec![]);
-            assert_matches!(receipt.execution_result, ExecutionResult::Succeeded);
+    // Create block with pending txs to clear state
+    madara_write_lock.create_block_with_pending_txs().await?;
+
+    let final_receipt_one = get_transaction_receipt(&rpc, rpc_response_one.transaction_hash).await?;
+    let final_receipt_two = get_transaction_receipt(&rpc, rpc_response_two.transaction_hash).await?;
+
+    let assert_receipt_match = |pending_receipt: MaybePendingTransactionReceipt,
+                                final_receipt: MaybePendingTransactionReceipt| {
+        match pending_receipt {
+            MaybePendingTransactionReceipt::PendingReceipt(PendingTransactionReceipt::Invoke(receipt)) => {
+                match final_receipt {
+                    MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(final_receipt)) => {
+                        assert_eq!(receipt.transaction_hash, final_receipt.transaction_hash);
+                        assert_eq!(receipt.actual_fee, final_receipt.actual_fee);
+                        // TODO: it's possible to add events and messages in the receipt right now but it makes more
+                        // sense to have it once we've pending blocks in Substrate (which Massa labs is working on)
+                        // assert_eq_msg_to_l1(receipt.messages_sent, final_receipt.messages_sent);
+                        // assert_eq!(receipt.events, final_receipt.events);
+                        assert_matches!(receipt.execution_result, ExecutionResult::Succeeded);
+                        assert_eq!(receipt.execution_resources, final_receipt.execution_resources);
+                    }
+                    _ => panic!("expected final invoke transaction receipt"),
+                }
+            }
+            _ => panic!("expected pending invoke transaction receipt"),
         }
-        _ => panic!("expected invoke transaction receipt"),
     };
+    assert_receipt_match(pending_receipt_one, final_receipt_one);
+    assert_receipt_match(pending_receipt_two, final_receipt_two);
 
     Ok(())
 }
