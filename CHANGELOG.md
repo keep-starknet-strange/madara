@@ -34,6 +34,7 @@
 - feat(runtime): moved StarkEvents from Substrate
 - feat(rpc/trace_api): add `trace_transaction`
 - fix(docker): fix dockerfile for `madara-node`
+- refactoring : Removed Redundant logs in madara
 
 ## v0.7.0
 
