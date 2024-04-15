@@ -2,6 +2,7 @@
 
 ## Next release
 
+- refactoring : Removed Redundant logs in madara
 - fix: transaction receipt fails for txs in the middle of a block
 - chore: add makefile for developer experience improvements and cleanup
 - fix: fix cargo-lint issues
@@ -34,7 +35,6 @@
 - feat(runtime): moved StarkEvents from Substrate
 - feat(rpc/trace_api): add `trace_transaction`
 - fix(docker): fix dockerfile for `madara-node`
-- refactoring : Removed Redundant logs in madara
 
 ## v0.7.0
 
