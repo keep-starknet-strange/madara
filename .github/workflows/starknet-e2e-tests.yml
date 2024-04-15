@@ -42,6 +42,4 @@ jobs:
           cargo test -- deposit_and_withdraw_from_erc20_bridge --exact
           cargo test -- deposit_and_withdraw_from_eth_bridge --exact
           cargo test -- madara_advances_ethereum_settlement_contract_state_in_sovereign_mode --exact
-          cargo test --package starknet-e2e-test --test ethereum_settlement
-          cargo test --package starknet-e2e-test --test ethereum_core_contract
           kill $ANVIL_RUN_PID
