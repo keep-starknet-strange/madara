@@ -5,23 +5,16 @@ edition = "2021"
 
 
 [dependencies]
-anyhow = { workspace = true  }
-assert_matches = { workspace = true  }
-async-lock = { workspace = true  }
+anyhow = { workspace = true }
 clap = { workspace = true, features = ["std", "derive"] }
-ethers = { workspace = true  }
-flate2 = { workspace = true  }
-lazy_static = { workspace = true  }
-reqwest = { workspace = true  }
-rstest = { workspace = true  }
-serde = { workspace = true  }
-serde_json = { workspace = true  }
-starknet-ff = { workspace = true  }
-starknet-providers = { workspace = true  }
+ethers = { workspace = true }
+rstest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+starknet-ff = { workspace = true }
+starknet-providers = { workspace = true }
 starknet-test-utils = { workspace = true }
-thiserror = { workspace = true }
 tokio = { workspace = true, features = ["rt", "macros", "parking_lot"] }
-url = { workspace = true }
 
 # madara
 mc-data-availability = { workspace = true, features = ["clap"] }

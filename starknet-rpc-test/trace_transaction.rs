@@ -21,8 +21,7 @@ use starknet_test_utils::utils::trace_transaction;
 async fn fail_non_existing_transaction(madara: &ThreadSafeMadaraClient) {
     let rpc = madara.get_starknet_client().await;
 
-    let trace_transaction_error =
-        trace_transaction(&rpc, FieldElement::from_hex_be("0x123").unwrap()).await.unwrap_err();
+    let trace_transaction_error = rpc.trace_transaction(FieldElement::from_hex_be("0x123").unwrap()).await.unwrap_err();
     assert_matches!(trace_transaction_error, ProviderError::StarknetError(StarknetError::TransactionHashNotFound));
 }
 

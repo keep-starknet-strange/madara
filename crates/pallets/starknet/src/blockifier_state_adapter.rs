@@ -1,6 +1,5 @@
-use alloc::collections::BTreeMap;
 use core::marker::PhantomData;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::state::cached_state::{CachedState, GlobalContractCache};

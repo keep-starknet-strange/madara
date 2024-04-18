@@ -13,7 +13,6 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 log = { workspace = true }
-rustc-hex = "2.1.0"
 url = "2.5.0"
 
 # Madara RuntimeApi
@@ -30,7 +29,6 @@ mc-eth-client = { workspace = true }
 # Madara Primitives
 mp-felt = { workspace = true }
 mp-transactions = { workspace = true }
-mp-hashers = { workspace = true }
 
 # Substrate Primitives
 sp-api = { workspace = true }
@@ -46,6 +44,4 @@ starknet-core-contract-client = { workspace = true }
 
 # Other third party dependencies
 ethers = { workspace = true }
-serde = { workspace = true }
-serde_json = { workspace = true }
 thiserror = { workspace = true }

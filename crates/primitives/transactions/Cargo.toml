@@ -12,11 +12,8 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 blockifier = { workspace = true }
-derive_more = { workspace = true, features = ["from"] }
-log = { workspace = true }
 mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
-mp-state = { workspace = true }
 starknet-core = { workspace = true }
 starknet-crypto = { workspace = true, features = ["alloc"] }
 starknet-ff = { workspace = true, features = ["alloc"] }
@@ -28,7 +25,6 @@ cairo-vm = { workspace = true }
 
 # Optional (client)
 cairo-lang-starknet-classes = { workspace = true, optional = true }
-cairo-lang-starknet = { workspace = true, optional = true }
 cairo-lang-utils = { workspace = true, optional = true }
 flate2 = { workspace = true, optional = true }
 num-bigint = { workspace = true, optional = true }
@@ -46,24 +42,8 @@ serde = { workspace = true, features = ["derive"], optional = true }
 assert_matches = "1.5.0"
 
 [features]
-default = ["std"]
-std = [
-  "starknet-ff/std",
-  "starknet-core/std",
-  "mp-state/std",
-  "mp-hashers/std",
-  "mp-felt/std",
-  "cairo-vm/std",
-  # Optional
-  "parity-scale-codec?/std",
-  "scale-info?/std",
-  "serde?/std",
-  "serde_json?/std",
-]
 client = [
-  "std",
   "dep:flate2",
-  "dep:cairo-lang-starknet",
   "dep:cairo-lang-utils",
   "dep:num-bigint",
   "dep:serde_json",

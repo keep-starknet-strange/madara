@@ -1,4 +1,4 @@
-use alloc::sync::Arc;
+use std::sync::Arc;
 
 use mp_felt::Felt252Wrapper;
 use starknet_api::core::{ClassHash, CompiledClassHash, ContractAddress, Nonce, PatriciaKey};

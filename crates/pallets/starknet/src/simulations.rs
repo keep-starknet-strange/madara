@@ -1,5 +1,3 @@
-use alloc::vec::Vec;
-
 use blockifier::context::BlockContext;
 use blockifier::state::cached_state::{CachedState, CommitmentStateDiff, GlobalContractCache};
 use blockifier::state::state_api::State;

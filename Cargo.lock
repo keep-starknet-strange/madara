@@ -2495,23 +2495,16 @@ name = "da-test"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "assert_matches",
- "async-lock 3.2.0",
  "clap 4.4.10",
  "ethers",
- "flate2",
- "lazy_static",
  "mc-data-availability",
- "reqwest",
  "rstest 0.18.2",
  "serde",
  "serde_json",
  "starknet-ff 0.3.7",
  "starknet-providers",
  "starknet-test-utils",
- "thiserror",
  "tokio",
- "url",
 ]
 
 [[package]]
@@ -4912,15 +4905,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itertools"
-version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
-dependencies = [
- "either",
-]
-
-[[package]]
 name = "itoa"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6043,14 +6027,11 @@ name = "madara"
 version = "0.7.0"
 dependencies = [
  "async-trait",
- "blockifier",
  "clap 4.4.10",
- "ethers",
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "frame-system",
  "futures",
- "hex",
  "jsonrpsee 0.16.3",
  "log",
  "madara-runtime",
@@ -6068,10 +6049,8 @@ dependencies = [
  "mp-digest-log",
  "mp-felt",
  "mp-sequencer-address",
- "mp-transactions",
  "pallet-starknet",
  "pallet-starknet-runtime-api",
- "parity-scale-codec",
  "reqwest",
  "sc-basic-authorship",
  "sc-cli",
@@ -6081,7 +6060,6 @@ dependencies = [
  "sc-consensus-grandpa",
  "sc-consensus-manual-seal",
  "sc-executor",
- "sc-keystore",
  "sc-network",
  "sc-network-sync",
  "sc-offchain",
@@ -6106,9 +6084,6 @@ dependencies = [
  "sp-state-machine 0.28.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-statement-store",
  "sp-timestamp",
- "sp-trie 22.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "starknet-core",
- "starknet_api",
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
@@ -6128,14 +6103,11 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "mp-block",
  "mp-chain-id",
- "mp-fee",
  "mp-felt",
  "mp-hashers",
  "mp-program-hash",
  "mp-simulations",
- "mp-transactions",
  "pallet-aura",
  "pallet-grandpa",
  "pallet-starknet",
@@ -6155,8 +6127,6 @@ dependencies = [
  "sp-std 8.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-transaction-pool",
  "sp-version",
- "starknet-core",
- "starknet-ff 0.3.7",
  "starknet_api",
 ]
 
@@ -6164,29 +6134,10 @@ dependencies = [
 name = "madara-test-runner"
 version = "0.1.0"
 dependencies = [
- "anyhow",
- "assert_matches",
- "async-lock 3.2.0",
- "async-trait",
  "derive_more",
- "flate2",
  "lazy_static",
- "reqwest",
- "rstest 0.18.2",
- "serde",
- "serde_json",
- "starknet-accounts",
- "starknet-contract",
- "starknet-core",
- "starknet-crypto 0.6.2",
- "starknet-ff 0.3.7",
- "starknet-providers",
- "starknet-rpc-test",
- "starknet-signers",
  "starknet-test-utils",
- "starknet_api",
  "tempfile",
- "thiserror",
  "tokio",
  "url",
 ]
@@ -6247,7 +6198,6 @@ checksum = "60302e4db3a61da70c0cb7991976248362f30319e88850c487b9b95bbf059e00"
 name = "mc-commitment-state-diff"
 version = "0.7.0"
 dependencies = [
- "blockifier",
  "futures",
  "indexmap 2.2.5",
  "log",
@@ -6255,7 +6205,6 @@ dependencies = [
  "mp-digest-log",
  "mp-hashers",
  "mp-storage",
- "pallet-starknet",
  "pallet-starknet-runtime-api",
  "sc-client-api",
  "sp-api",
@@ -6272,35 +6221,23 @@ dependencies = [
  "anyhow",
  "async-trait",
  "avail-subxt",
- "blockifier",
  "celestia-rpc",
  "celestia-types",
  "clap 4.4.10",
  "ethers",
  "futures",
- "indexmap 2.2.5",
  "jsonrpsee 0.20.3",
  "log",
  "mc-commitment-state-diff",
  "mc-db",
  "mc-eth-client",
- "mp-digest-log",
- "mp-felt",
  "mp-hashers",
- "mp-storage",
- "pallet-starknet-runtime-api",
  "reqwest",
  "rstest 0.18.2",
- "sc-client-api",
  "serde",
  "serde_json",
- "sp-api",
- "sp-blockchain",
  "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "sp-io 23.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "sp-keyring",
  "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "starknet-core",
  "starknet-core-contract-client",
  "starknet_api",
  "substrate-prometheus-endpoint",
@@ -6315,13 +6252,11 @@ dependencies = [
 name = "mc-db"
 version = "0.7.0"
 dependencies = [
- "ethers",
  "kvdb-rocksdb",
  "log",
  "parity-db",
  "parity-scale-codec",
  "sc-client-db",
- "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-database",
  "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "starknet_api",
@@ -6349,8 +6284,6 @@ dependencies = [
  "jsonrpsee 0.16.3",
  "log",
  "mp-genesis-config",
- "pallet-starknet",
- "serde",
  "serde_json",
  "thiserror",
 ]
@@ -6365,14 +6298,10 @@ dependencies = [
  "mc-db",
  "mc-eth-client",
  "mp-felt",
- "mp-hashers",
  "mp-transactions",
  "pallet-starknet-runtime-api",
- "rustc-hex",
  "sc-client-api",
  "sc-transaction-pool-api",
- "serde",
- "serde_json",
  "sp-api",
  "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
@@ -6387,23 +6316,19 @@ name = "mc-mapping-sync"
 version = "0.7.0"
 dependencies = [
  "anyhow",
- "blockifier",
  "futures",
  "futures-timer",
  "log",
  "mc-db",
  "mc-rpc-core",
- "mc-storage",
  "mp-digest-log",
  "mp-hashers",
  "mp-transactions",
  "num-traits 0.2.17",
- "pallet-starknet",
  "pallet-starknet-runtime-api",
  "sc-client-api",
  "sp-api",
  "sp-blockchain",
- "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "substrate-prometheus-endpoint",
 ]
@@ -6412,28 +6337,19 @@ dependencies = [
 name = "mc-rpc"
 version = "0.7.0"
 dependencies = [
- "anyhow",
  "blockifier",
  "cairo-vm",
- "frame-support",
- "frame-system",
- "hex",
- "indexmap 2.2.5",
- "itertools 0.12.1",
  "jsonrpsee 0.16.3",
  "log",
- "mc-data-availability",
  "mc-db",
  "mc-genesis-data-provider",
  "mc-rpc-core",
  "mc-storage",
  "mp-block",
- "mp-fee",
  "mp-felt",
  "mp-hashers",
  "mp-simulations",
  "mp-transactions",
- "pallet-starknet",
  "pallet-starknet-runtime-api",
  "pretty_assertions",
  "rstest 0.18.2",
@@ -6441,7 +6357,6 @@ dependencies = [
  "sc-network-sync",
  "sc-transaction-pool",
  "sc-transaction-pool-api",
- "serde_json",
  "sp-api",
  "sp-arithmetic 16.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-blockchain",
@@ -6452,7 +6367,6 @@ dependencies = [
  "starknet-ff 0.3.7",
  "starknet_api",
  "thiserror",
- "tokio",
 ]
 
 [[package]]
@@ -6462,21 +6376,14 @@ dependencies = [
  "anyhow",
  "assert_matches",
  "blockifier",
- "cairo-lang-casm",
- "cairo-lang-starknet",
  "cairo-lang-starknet-classes",
  "cairo-lang-utils",
- "cairo-vm",
  "flate2",
- "frame-support",
- "hex",
  "indexmap 2.2.5",
  "jsonrpsee 0.16.3",
  "mp-block",
  "mp-digest-log",
  "mp-felt",
- "mp-genesis-config",
- "mp-simulations",
  "mp-transactions",
  "num-bigint",
  "pallet-starknet",
@@ -6485,12 +6392,8 @@ dependencies = [
  "serde_with",
  "sp-api",
  "sp-blockchain",
- "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "starknet-core",
- "starknet-providers",
  "starknet_api",
- "thiserror",
 ]
 
 [[package]]
@@ -6508,24 +6411,18 @@ dependencies = [
  "mc-eth-client",
  "mp-block",
  "mp-digest-log",
- "mp-felt",
  "mp-hashers",
  "mp-messages",
  "mp-snos-output",
- "mp-transactions",
  "pallet-starknet-runtime-api",
  "rustc-hex",
  "sc-client-api",
  "serde",
- "serde_json",
  "sp-api",
  "sp-arithmetic 16.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-blockchain",
- "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "sp-io 23.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "starknet-core-contract-client",
- "starknet-crypto 0.6.2",
  "starknet_api",
  "thiserror",
  "url",
@@ -6538,20 +6435,15 @@ version = "0.7.0"
 dependencies = [
  "blockifier",
  "frame-support",
- "frame-system",
- "madara-runtime",
  "mp-storage",
- "pallet-starknet",
  "pallet-starknet-runtime-api",
  "parity-scale-codec",
  "sc-client-api",
  "sp-api",
  "sp-blockchain",
- "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-io 23.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-storage 13.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "starknet-core",
  "starknet_api",
 ]
 
@@ -6750,11 +6642,9 @@ dependencies = [
  "blockifier",
  "mp-felt",
  "mp-hashers",
- "mp-transactions",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "serde_json",
  "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "starknet_api",
 ]
@@ -6778,15 +6668,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mp-fee"
-version = "0.7.0"
-dependencies = [
- "blockifier",
- "frame-support",
- "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
-]
-
-[[package]]
 name = "mp-felt"
 version = "0.7.0"
 dependencies = [
@@ -6800,19 +6681,16 @@ dependencies = [
  "starknet-core",
  "starknet-ff 0.3.7",
  "starknet_api",
- "thiserror-no-std",
+ "thiserror",
 ]
 
 [[package]]
 name = "mp-genesis-config"
 version = "0.7.0"
 dependencies = [
- "blockifier",
- "derive_more",
  "hex",
  "mp-felt",
  "serde",
- "serde_json",
  "serde_with",
  "starknet-core",
  "starknet-crypto 0.6.2",
@@ -6834,12 +6712,10 @@ dependencies = [
 name = "mp-messages"
 version = "0.7.0"
 dependencies = [
- "mp-transactions",
  "parity-scale-codec",
  "scale-info",
  "serde",
  "serde_with",
- "starknet-core",
  "starknet_api",
 ]
 
@@ -6859,7 +6735,7 @@ dependencies = [
  "parity-scale-codec",
  "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-inherents",
- "thiserror-no-std",
+ "thiserror",
 ]
 
 [[package]]
@@ -6867,9 +6743,6 @@ name = "mp-simulations"
 version = "0.7.0"
 dependencies = [
  "blockifier",
- "derive_more",
- "mp-felt",
- "mp-transactions",
  "parity-scale-codec",
  "scale-info",
  "starknet-core",
@@ -6882,11 +6755,9 @@ dependencies = [
  "assert_matches",
  "hex",
  "mp-messages",
- "mp-transactions",
  "parity-scale-codec",
  "pretty_assertions",
  "scale-info",
- "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "starknet_api",
 ]
 
@@ -6895,11 +6766,6 @@ name = "mp-state"
 version = "0.7.0"
 dependencies = [
  "blockifier",
- "mp-felt",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "serde_with",
  "starknet_api",
 ]
 
@@ -6919,17 +6785,13 @@ version = "0.7.0"
 dependencies = [
  "assert_matches",
  "blockifier",
- "cairo-lang-starknet",
  "cairo-lang-starknet-classes",
  "cairo-lang-utils",
  "cairo-vm",
- "derive_more",
  "flate2",
  "indexmap 2.2.5",
- "log",
  "mp-felt",
  "mp-hashers",
- "mp-state",
  "num-bigint",
  "parity-scale-codec",
  "scale-info",
@@ -7635,11 +7497,8 @@ dependencies = [
  "blockifier",
  "cairo-lang-starknet-classes",
  "cairo-vm",
- "derive_more",
- "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex",
  "hexlit",
  "indexmap 2.2.5",
  "lazy_static",
@@ -7647,33 +7506,22 @@ dependencies = [
  "mp-block",
  "mp-chain-id",
  "mp-digest-log",
- "mp-fee",
  "mp-felt",
  "mp-genesis-config",
  "mp-hashers",
  "mp-program-hash",
  "mp-sequencer-address",
  "mp-simulations",
- "mp-snos-output",
- "mp-state",
  "mp-storage",
  "mp-transactions",
  "pallet-timestamp",
  "parity-scale-codec",
  "pretty_assertions",
  "project-root",
- "reqwest",
- "sc-cli",
- "sc-client-api",
- "sc-service",
  "scale-info",
  "serde",
  "serde_json",
- "serde_with",
- "sp-api",
- "sp-arithmetic 16.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "sp-inherents",
  "sp-io 23.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-std 8.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
@@ -7689,17 +7537,12 @@ name = "pallet-starknet-runtime-api"
 version = "0.1.0"
 dependencies = [
  "blockifier",
- "hashbrown 0.14.3",
  "mp-felt",
  "mp-simulations",
- "mp-snos-output",
- "mp-transactions",
  "parity-scale-codec",
  "scale-info",
  "sp-api",
- "sp-arithmetic 16.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "starknet-core",
  "starknet_api",
 ]
 
@@ -12248,8 +12091,6 @@ dependencies = [
  "async-trait",
  "ethereum-instance",
  "ethers",
- "flate2",
- "home",
  "madara-runtime",
  "madara-test-runner",
  "mc-eth-client",
@@ -12260,7 +12101,6 @@ dependencies = [
  "rand 0.8.5",
  "reqwest",
  "rstest 0.18.2",
- "serde",
  "serde_json",
  "starkgate-manager-client",
  "starkgate-registry-client",
@@ -12268,20 +12108,16 @@ dependencies = [
  "starknet-contract",
  "starknet-core",
  "starknet-core-contract-client",
- "starknet-crypto 0.6.2",
  "starknet-erc20-client",
  "starknet-eth-bridge-client",
  "starknet-ff 0.3.7",
  "starknet-providers",
  "starknet-proxy-client",
- "starknet-signers",
  "starknet-test-utils",
  "starknet-token-bridge-client",
  "starknet_api",
  "test-context",
- "thiserror",
  "tokio",
- "url",
  "utils",
 ]
 
@@ -12383,15 +12219,12 @@ dependencies = [
  "async-trait",
  "env_logger 0.9.3",
  "flate2",
- "log",
  "reqwest",
  "rstest 0.18.2",
- "serde",
  "serde_json",
  "starknet-accounts",
  "starknet-contract",
  "starknet-core",
- "starknet-crypto 0.6.2",
  "starknet-ff 0.3.7",
  "starknet-providers",
  "starknet-signers",
@@ -12424,16 +12257,11 @@ dependencies = [
  "assert_matches",
  "async-lock 3.2.0",
  "async-trait",
- "flate2",
- "log",
  "reqwest",
  "rstest 0.18.2",
- "serde",
  "serde_json",
  "starknet-accounts",
- "starknet-contract",
  "starknet-core",
- "starknet-crypto 0.6.2",
  "starknet-ff 0.3.7",
  "starknet-providers",
  "starknet-signers",
@@ -13234,10 +13062,8 @@ checksum = "212d5dcb2a1ce06d81107c3d0ffa3121fe974b73f068c8282cb1c32328113b6c"
 dependencies = [
  "futures-util",
  "log",
- "native-tls",
  "rustls 0.21.9",
  "tokio",
- "tokio-native-tls",
  "tokio-rustls",
  "tungstenite",
  "webpki-roots 0.25.3",
@@ -13585,7 +13411,6 @@ dependencies = [
  "http",
  "httparse",
  "log",
- "native-tls",
  "rand 0.8.5",
  "rustls 0.21.9",
  "sha1",

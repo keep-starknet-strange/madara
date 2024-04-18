@@ -1,7 +1,5 @@
-use alloc::sync::Arc;
-use alloc::vec;
-use alloc::vec::Vec;
 use std::collections::HashSet;
+use std::sync::Arc;
 
 use blockifier::abi::abi_utils::selector_from_name;
 use blockifier::context::{BlockContext, TransactionContext};

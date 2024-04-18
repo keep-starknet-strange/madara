@@ -42,7 +42,7 @@ use std::sync::Arc;
 pub use pallet::*;
 /// An adapter for the blockifier state related traits
 pub mod blockifier_state_adapter;
-#[cfg(feature = "std")]
+#[cfg(feature = "genesis-loader")]
 pub mod genesis_loader;
 /// Simulation, estimations and execution trace logic.
 pub mod simulations;
@@ -54,14 +54,8 @@ pub mod types;
 #[cfg(test)]
 mod tests;
 
-#[macro_use]
-pub extern crate alloc;
-
-use alloc::collections::BTreeSet;
-use alloc::str::from_utf8_unchecked;
-use alloc::string::String;
-use alloc::vec;
-use alloc::vec::Vec;
+use std::collections::BTreeSet;
+use std::str::from_utf8_unchecked;
 
 use blockifier::blockifier::block::{BlockInfo, GasPrices};
 use blockifier::context::{BlockContext, ChainInfo, FeeTokenAddresses, TransactionContext};
@@ -103,7 +97,6 @@ use starknet_api::transaction::{
 };
 use starknet_crypto::FieldElement;
 
-use crate::alloc::string::ToString;
 use crate::types::{CasmClassHash, ContractStorageKey, SierraClassHash, SierraOrCasmClassHash, StorageSlot};
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 

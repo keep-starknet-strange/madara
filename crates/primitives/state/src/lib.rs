@@ -1,7 +1,4 @@
 //! Starknet state primitives.
-#[doc(hidden)]
-extern crate alloc;
-
 use std::collections::HashMap;
 
 use blockifier::execution::contract_class::ContractClass;

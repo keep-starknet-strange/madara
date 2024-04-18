@@ -1,5 +1,3 @@
-use alloc::vec::Vec;
-
 use mp_felt::Felt252Wrapper;
 use mp_hashers::pedersen::PedersenHasher;
 use mp_hashers::poseidon::PoseidonHasher;

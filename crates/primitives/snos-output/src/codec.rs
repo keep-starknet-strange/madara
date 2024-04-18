@@ -1,5 +1,3 @@
-use alloc::vec::Vec;
-
 use mp_messages::conversions::eth_address_to_felt;
 use mp_messages::{MessageL1ToL2, MessageL2ToL1};
 use starknet_api::core::{ContractAddress, EntryPointSelector, EthAddress, Nonce, PatriciaKey};

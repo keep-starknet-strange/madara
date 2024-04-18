@@ -1,4 +1,4 @@
-use alloc::sync::Arc;
+use std::sync::Arc;
 
 use mp_felt::Felt252Wrapper;
 use sp_core::H256;

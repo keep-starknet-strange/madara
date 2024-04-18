@@ -1,8 +1,6 @@
 //! Starknet transaction related functionality.
 
 #![feature(trait_upcasting)]
-#[doc(hidden)]
-pub extern crate alloc;
 
 pub mod compute_hash;
 pub mod execution;

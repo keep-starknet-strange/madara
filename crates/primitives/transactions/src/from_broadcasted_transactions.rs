@@ -1,4 +1,4 @@
-use alloc::sync::Arc;
+use std::sync::Arc;
 
 use blockifier::execution::contract_class::{
     ClassInfo, ContractClass, ContractClassV0, ContractClassV0Inner, ContractClassV1,
