@@ -36,9 +36,7 @@ mp-state = { workspace = true }
 mp-storage = { workspace = true, features = ["parity-scale-codec"] }
 mp-transactions = { workspace = true, features = ["scale-info"] }
 
-blockifier = { workspace = true, features = [
-  "testing",
-] }
+blockifier = { workspace = true, features = ["testing"] }
 starknet-core = { workspace = true }
 starknet-crypto = { workspace = true, features = ["alloc"] }
 starknet_api = { workspace = true }
@@ -111,7 +109,7 @@ std = [
   "parity-scale-codec/std",
   "starknet-core/std",
   "mp-simulations/std",
-  "cairo-lang-starknet-classes"
+  "cairo-lang-starknet-classes",
 ]
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
 try-runtime = ["frame-support/try-runtime"]

@@ -79,6 +79,6 @@ scale-info = [
   "dep:scale-info",
   "mp-felt/scale-info",
   "starknet_api/scale-info",
-  "blockifier/scale-info"
+  "blockifier/scale-info",
 ]
 serde = ["dep:serde", "mp-felt/serde"]

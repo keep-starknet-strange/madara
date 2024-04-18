@@ -24,16 +24,9 @@ hex = "*"
 
 [features]
 default = ["std"]
-std = [
-  "parity-scale-codec/std",
-  "mp-transactions/std",
-  "mp-messages/std",
-]
+std = ["parity-scale-codec/std", "mp-transactions/std", "mp-messages/std"]
 parity-scale-codec = [
   "dep:parity-scale-codec",
   "mp-messages/parity-scale-codec",
 ]
-scale-info = [
-  "dep:scale-info",
-  "mp-messages/scale-info",
-]
+scale-info = ["dep:scale-info", "mp-messages/scale-info"]

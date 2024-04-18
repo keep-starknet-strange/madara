@@ -47,6 +47,4 @@ parity-scale-codec = [
   "mp-felt/parity-scale-codec",
   "mp-transactions/parity-scale-codec",
 ]
-scale-info = [
-  "dep:scale-info",
-]
+scale-info = ["dep:scale-info"]

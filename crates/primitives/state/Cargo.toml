@@ -30,9 +30,6 @@ std = [
   "parity-scale-codec?/std",
   "scale-info?/std",
 ]
-parity-scale-codec = [
-  "dep:parity-scale-codec",
-  "mp-felt/parity-scale-codec",
-]
+parity-scale-codec = ["dep:parity-scale-codec", "mp-felt/parity-scale-codec"]
 serde = ["dep:serde", "dep:serde_with", "mp-felt/serde"]
 scale-info = ["dep:scale-info", "mp-felt/scale-info"]

@@ -32,8 +32,6 @@ std = [
   "serde_with?/std",
   "serde?/std",
 ]
-parity-scale-codec = [
-  "dep:parity-scale-codec",
-]
+parity-scale-codec = ["dep:parity-scale-codec"]
 scale-info = ["dep:scale-info"]
 serde = ["dep:serde", "dep:serde_with"]

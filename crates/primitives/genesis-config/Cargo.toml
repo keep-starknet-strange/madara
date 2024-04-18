@@ -10,9 +10,7 @@ version.workspace = true
 [dependencies]
 mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
 
-blockifier = { workspace = true, features = [
-  "testing",
-] }
+blockifier = { workspace = true, features = ["testing"] }
 #
 # third party
 derive_more = { workspace = true, features = ["constructor"] }
