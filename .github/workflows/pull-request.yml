@@ -40,6 +40,11 @@ jobs:
     uses: ./.github/workflows/linters-cargo.yml
     needs: madara_commands
 
+  coverage:
+    name: Run code coverage
+    uses: ./.github/workflows/coverage.yml
+    needs: madara_commands
+
   basic_testnet:
     name: Run Basic Testnet
     uses: ./.github/workflows/basic-testnet.yml
@@ -48,6 +53,11 @@ jobs:
   rpc-tests:
     name: Run rpc tests
     uses: ./.github/workflows/starknet-rpc-tests.yml
+    needs: madara_commands
+
+  e2e-tests:
+    name: Run e2e tests
+    uses: ./.github/workflows/starknet-e2e-tests.yml
     needs: madara_commands
 
   starknet-js-tests:

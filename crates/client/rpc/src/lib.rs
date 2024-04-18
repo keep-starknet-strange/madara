@@ -15,7 +15,7 @@ use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-use blockifier::transaction::objects::ResourcesMapping;
+use blockifier::transaction::objects::{ResourcesMapping, TransactionExecutionInfo};
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use jsonrpsee::types::error::CallError;
@@ -27,6 +27,7 @@ pub use mc_rpc_core::{
     StarknetWriteRpcApiServer,
 };
 use mc_storage::OverrideHandle;
+use mp_block::BlockTransactions;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_transactions::compute_hash::ComputeTransactionHash;
@@ -64,6 +65,7 @@ use starknet_core::types::{
 use starknet_core::utils::get_selector_from_name;
 
 use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
+use crate::trace_api::map_transaction_to_user_transaction;
 use crate::types::RpcEventFilter;
 
 /// A Starknet RPC server for Madara
@@ -1599,16 +1601,20 @@ where
 
         // TODO
         // Is any better way to get execution resources of processed tx?
-        let skip_validate = true;
-        // let parent_block_hash = Felt252Wrapper::from().into();
-        let parent_block_hash = self
+        let parent_substrate_block_hash = self
             .substrate_block_hash_from_starknet_block(BlockId::Hash(block_header.parent_block_hash.into()))
             .map_err(|e| {
                 error!("Parent Block not found: {e}");
                 StarknetRpcApiError::BlockNotFound
             })?;
-        let simulation = self.simulate_tx(parent_block_hash, transaction.clone(), skip_validate, fee_disabled)?;
-        let execution_resources = actual_resources_to_execution_resources(simulation.actual_resources);
+        let execution_info = self.get_transaction_execution_info(
+            parent_substrate_block_hash,
+            starknet_block.transactions(),
+            chain_id,
+            transaction_hash,
+        )?;
+
+        let execution_resources = actual_resources_to_execution_resources(execution_info.actual_resources);
 
         let receipt = match transaction {
             mp_transactions::Transaction::Declare(_, _) => TransactionReceipt::Declare(DeclareTransactionReceipt {
@@ -1687,14 +1693,10 @@ where
         &self,
         chain_id: Felt252Wrapper,
         tx_hash: FieldElement,
+        pending_txs: &[mp_transactions::Transaction],
     ) -> Result<Option<mp_transactions::Transaction>, StarknetRpcApiError> {
-        let latest_block = self.get_best_block_hash();
-
-        let pending_tx = self
-            .get_pending_txs(latest_block)?
-            .iter()
-            .find(|&tx| tx.compute_hash::<H>(chain_id.0.into(), false).0 == tx_hash)
-            .cloned();
+        let pending_tx =
+            pending_txs.iter().find(|&tx| tx.compute_hash::<H>(chain_id.0.into(), false).0 == tx_hash).cloned();
 
         Ok(pending_tx)
     }
@@ -1704,22 +1706,26 @@ where
         chain_id: Felt252Wrapper,
         transaction_hash: FieldElement,
     ) -> Result<MaybePendingTransactionReceipt, StarknetRpcApiError> {
-        let pending_tx =
-            self.find_pending_tx(chain_id, transaction_hash)?.ok_or(StarknetRpcApiError::TxnHashNotFound)?;
+        let parent_substrate_block_hash = self.get_best_block_hash();
+        let pending_txs = self.get_pending_txs(parent_substrate_block_hash)?;
+        let pending_tx = self
+            .find_pending_tx(chain_id, transaction_hash, &pending_txs)?
+            .ok_or(StarknetRpcApiError::TxnHashNotFound)?;
 
-        // TODO -- no way of getting messages sent to L1 for the tx
+        // TODO: Massa labs is working on pending blocks within Substrate. That will allow fetching
+        // events and messages directly from the runtime the same way we do for finalized blocks.
+        // So for now we return empty events and messages. Another option is to expose the event and message
+        // ordering functions from the runtime, order events inside execution info and use it. But the
+        // effort will not be worth it after pending blocks, so we've skipped implementing this for
+        // now.
         let messages_sent = Vec::new();
-        // TODO -- no  way of getting events for the tx
         let events = Vec::new();
 
-        // TODO -- should Tx be simulated with `skip_validate`?
-        let skip_validate = true;
-        let skip_fee_charge = self.is_transaction_fee_disabled(self.get_best_block_hash())?;
-        let simulation =
-            self.simulate_tx(self.get_best_block_hash(), pending_tx.clone(), skip_validate, skip_fee_charge)?;
-        let actual_fee = simulation.actual_fee.0.into();
-        let execution_result = revert_error_to_execution_result(simulation.revert_error);
-        let execution_resources = actual_resources_to_execution_resources(simulation.actual_resources);
+        let execution_info =
+            self.get_transaction_execution_info(parent_substrate_block_hash, &pending_txs, chain_id, transaction_hash)?;
+        let actual_fee = execution_info.actual_fee.0.into();
+        let execution_result = revert_error_to_execution_result(execution_info.revert_error);
+        let execution_resources = actual_resources_to_execution_resources(execution_info.actual_resources);
 
         let receipt = match pending_tx {
             mp_transactions::Transaction::Declare(_tx, _contract_class) => {
@@ -1772,6 +1778,43 @@ where
         };
 
         Ok(MaybePendingTransactionReceipt::PendingReceipt(receipt))
+    }
+
+    fn get_transaction_execution_info(
+        &self,
+        parent_substrate_block_hash: B::Hash,
+        previous_transactions: &BlockTransactions,
+        chain_id: Felt252Wrapper,
+        transaction_hash: FieldElement,
+    ) -> Result<TransactionExecutionInfo, StarknetRpcApiError>
+    where
+        B: BlockT,
+    {
+        let (transactions_before, transaction_to_trace) =
+            map_transaction_to_user_transaction(self, previous_transactions, chain_id, Some(transaction_hash.into()))?;
+
+        if transaction_to_trace.is_empty() {
+            return Err(StarknetRpcApiError::TxnHashNotFound);
+        }
+
+        if transaction_to_trace.len() > 1 {
+            log::error!("More than one transaction with the same transaction hash {:#?}", transaction_to_trace);
+            return Err(StarknetRpcApiError::InternalServerError);
+        }
+
+        let trace = self
+            .re_execute_transactions(parent_substrate_block_hash, transactions_before, transaction_to_trace)
+            .map_err(|e| {
+                log::error!("Failed to re-execute transactions: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?;
+
+        let execution_info = trace.get(0).ok_or_else(|| {
+            log::error!("Failed to get execution info");
+            StarknetRpcApiError::InternalServerError
+        })?;
+
+        Ok(execution_info.0.clone())
     }
 
     fn convert_error<T>(

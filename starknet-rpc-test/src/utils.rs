@@ -183,7 +183,7 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
         let compiled_class_hash = casm.class_hash().unwrap();
         (
             self.declare(sierra.clone().flatten().unwrap().into(), compiled_class_hash)
-				// starknet-rs calls estimateFee with incorrect version which throws an error
+                // starknet-rs calls estimateFee with incorrect version which throws an error
                 .max_fee(FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap()),
             sierra.class_hash().unwrap(),
             compiled_class_hash,
@@ -197,8 +197,8 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
         .unwrap();
         (
             self.declare_legacy(Arc::new(contract_artifact.clone()))
-			 // starknet-rs calls estimateFee with incorrect version which throws an error
-			 .max_fee(FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap()),
+                // starknet-rs calls estimateFee with incorrect version which throws an error
+                .max_fee(FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap()),
             contract_artifact.class_hash().unwrap(),
         )
     }

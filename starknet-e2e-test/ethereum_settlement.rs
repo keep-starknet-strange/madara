@@ -82,6 +82,8 @@ async fn catches_up_with_the_state_in_the_future(ctx: &mut Context) -> Result<()
     let mut madara = ctx.launch_madara().await;
 
     // Unless state root calculation is enabled (not by default), we should be fine
+    // Give time for anvil block to finalize
+    sleep(Duration::from_millis(200)).await;
     madara.create_n_blocks(2).await?;
     // Give the client thread some time to handle the finalized block
     sleep(Duration::from_millis(200)).await;

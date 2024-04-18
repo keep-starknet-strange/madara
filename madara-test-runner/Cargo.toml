@@ -22,6 +22,7 @@ starknet-crypto = { workspace = true }
 starknet-ff = { workspace = true }
 starknet-providers = { workspace = true }
 starknet-signers = { workspace = true }
+starknet-test-utils = { workspace = true }
 starknet_api = { workspace = true, default-features = true }
 tempfile = { workspace = true }
 thiserror = { workspace = true }
