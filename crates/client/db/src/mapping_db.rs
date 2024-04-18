@@ -6,7 +6,6 @@ use parity_scale_codec::{Decode, Encode};
 use sp_database::Database;
 use sp_runtime::traits::Block as BlockT;
 use starknet_api::block::BlockHash;
-use starknet_api::hash::StarkHash;
 use starknet_api::transaction::TransactionHash;
 
 use crate::{DbError, DbHash};
@@ -23,15 +22,13 @@ pub struct MappingCommitment<B: BlockT> {
 pub struct MappingDb<B: BlockT> {
     db: Arc<dyn Database<DbHash>>,
     write_lock: Arc<Mutex<()>>,
-    /// Whether more information should be cached in the database.
-    cache_more_things: bool,
     _marker: PhantomData<B>,
 }
 
 impl<B: BlockT> MappingDb<B> {
     /// Creates a new instance of the mapping database.
-    pub fn new(db: Arc<dyn Database<DbHash>>, cache_more_things: bool) -> Self {
-        Self { db, write_lock: Arc::new(Mutex::new(())), cache_more_things, _marker: PhantomData }
+    pub fn new(db: Arc<dyn Database<DbHash>>) -> Self {
+        Self { db, write_lock: Arc::new(Mutex::new(())), _marker: PhantomData }
     }
 
     /// Check if the given block hash has already been processed
@@ -102,14 +99,6 @@ impl<B: BlockT> MappingDb<B> {
             );
         }
 
-        if self.cache_more_things {
-            transaction.set(
-                crate::columns::STARKNET_TRANSACTION_HASHES_CACHE,
-                &commitment.starknet_block_hash.encode(),
-                &commitment.starknet_transaction_hashes.encode(),
-            );
-        }
-
         self.db.commit(transaction)?;
 
         Ok(())
@@ -129,35 +118,6 @@ impl<B: BlockT> MappingDb<B> {
     ) -> Result<Option<B::Hash>, DbError> {
         match self.db.get(crate::columns::TRANSACTION_MAPPING, &transaction_hash.encode()) {
             Some(raw) => Ok(Some(<B::Hash>::decode(&mut &raw[..])?)),
-            None => Ok(None),
-        }
-    }
-
-    /// Returns the list of transaction hashes for the given block hash.
-    ///
-    /// # Arguments
-    ///
-    /// * `starknet_hash` - the hash of the starknet block to search for.
-    ///
-    /// # Returns
-    ///
-    /// The list of transaction hashes.
-    ///
-    /// This function may return `None` for two separate reasons:
-    ///
-    /// - The cache is disabled.
-    /// - The provided `starknet_hash` is not present in the cache.
-    pub fn cached_transaction_hashes_from_block_hash(
-        &self,
-        starknet_block_hash: BlockHash,
-    ) -> Result<Option<Vec<StarkHash>>, DbError> {
-        if !self.cache_more_things {
-            // The cache is not enabled, no need to even touch the database.
-            return Ok(None);
-        }
-
-        match self.db.get(crate::columns::STARKNET_TRANSACTION_HASHES_CACHE, &starknet_block_hash.encode()) {
-            Some(raw) => Ok(Some(Vec::<StarkHash>::decode(&mut &raw[..])?)),
             None => Ok(None),
         }
     }

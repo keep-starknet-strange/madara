@@ -15,8 +15,6 @@ use starknet_core_contract_client::interfaces::{LogMessageToL2Filter, StarknetMe
 use crate::contract::parse_handle_l1_message_transaction;
 use crate::error::L1MessagesWorkerError;
 
-const TX_SOURCE: TransactionSource = TransactionSource::External;
-
 fn create_event_listener(
     config: EthereumClientConfig,
 ) -> Result<StarknetMessagingEvents<Provider<Http>>, mc_eth_client::error::Error> {
@@ -72,7 +70,7 @@ pub async fn run_worker<C, P, B>(
                 meta.log_index
             );
 
-            match process_l1_message::<_, _, _, _>(
+            match process_l1_message(
                 event,
                 &client,
                 &pool,
@@ -147,7 +145,6 @@ where
     }?;
 
     let chain_id = client.runtime_api().chain_id(best_block_hash).map_err(L1MessagesWorkerError::RuntimeApiError)?;
-    // TODO: Find a way not to hardcode that
     let tx_hash = tx.compute_hash(chain_id, false);
     let transaction = blockifier::transaction::transactions::L1HandlerTransaction { tx, tx_hash, paid_fee_on_l1 };
 
@@ -156,7 +153,7 @@ where
         L1MessagesWorkerError::ConvertTransactionRuntimeApiError(e)
     })?;
 
-    let tx_hash = pool.submit_one(best_block_hash, TX_SOURCE, extrinsic).await.map_err(|e| {
+    let tx_hash = pool.submit_one(best_block_hash, TransactionSource::External, extrinsic).await.map_err(|e| {
         log::error!("⟠ Failed to submit transaction with L1 Message: {:?}", e);
         L1MessagesWorkerError::SubmitTxError(e)
     })?;
