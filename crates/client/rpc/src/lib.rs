@@ -1451,27 +1451,16 @@ where
         let block_hash = block_header.hash::<H>().into();
         let block_number = block_header.block_number;
 
-        let block_extrinsics = self
-            .client
-            .block_body(substrate_block_hash)
-            .map_err(|e| {
-                error!("Failed to get block body. Substrate block hash: {substrate_block_hash}, error: {e}");
-                StarknetRpcApiError::InternalServerError
-            })?
-            .ok_or(StarknetRpcApiError::BlockNotFound)?;
-
-        let fee_disabled = self.is_transaction_fee_disabled(substrate_block_hash)?;
-
-        let transactions = self.filter_extrinsics(substrate_block_hash, block_extrinsics)?;
-        let transaction = transactions.iter().find(|tx| get_transaction_hash(tx) == &transaction_hash);
-        if transaction.is_none() {
-            error!(
-                "Failed to find transaction hash in block. Substrate block hash: {substrate_block_hash}, transaction \
-                 hash: {transaction_hash}"
-            );
-            return Err(StarknetRpcApiError::InternalServerError);
-        }
-        let transaction = transaction.unwrap();
+        let transaction =
+            starknet_block.transactions().iter().find(|tx| get_transaction_hash(tx) == &transaction_hash).ok_or_else(
+                || {
+                    error!(
+                        "Failed to find transaction hash in block. Substrate block hash: {substrate_block_hash}, \
+                         transaction hash: {transaction_hash}"
+                    );
+                    StarknetRpcApiError::InternalServerError
+                },
+            )?;
 
         let events = self.get_events_for_tx_by_hash(substrate_block_hash, transaction_hash)?;
 
@@ -1487,6 +1476,7 @@ where
         let events_converted: Vec<starknet_core::types::Event> =
             events.clone().into_iter().map(starknet_api_to_starknet_core_event).collect();
 
+        let fee_disabled = self.is_transaction_fee_disabled(substrate_block_hash)?;
         let actual_fee = FeePayment {
             amount: if fee_disabled {
                 FieldElement::ZERO
@@ -1510,10 +1500,9 @@ where
 
         let messages_sent = messages.into_iter().map(starknet_api_to_starknet_core_message_to_l1).collect();
 
-        // TODO
-        // Is any better way to get execution resources of processed tx?
+        // TODO: use re_execute_transaction in order to rebuild the correct state and not have to skip the
+        // validation phase. It will return more accurate fees
         let skip_validate = true;
-        // let parent_block_hash = Felt252Wrapper::from().into();
         let parent_block_hash = self
             .substrate_block_hash_from_starknet_block(BlockId::Hash(
                 Felt252Wrapper::from(block_header.parent_block_hash).into(),
