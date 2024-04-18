@@ -2,7 +2,6 @@
 
 ## Next release
 
-
 - dev: better estimate fee test
 - refactoring : Removed Redundant logs in madara
 - fix: transaction receipt fails for txs in the middle of a block
