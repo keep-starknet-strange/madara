@@ -17,35 +17,35 @@ rustc-hex = "2.1.0"
 url = "2.5.0"
 
 # Madara RuntimeApi
-pallet-starknet-runtime-api = { workspace = true, default-features = true }
+pallet-starknet-runtime-api = { workspace = true }
 
 # Starknet dependencies
-starknet_api = { workspace = true, default-features = true }
-blockifier = { workspace = true, default-features = true }
+starknet_api = { workspace = true }
+blockifier = { workspace = true }
 
 # Starknet
-mc-db = { workspace = true, default-features = true }
+mc-db = { workspace = true }
 mc-eth-client = { workspace = true }
 
 # Madara Primitives
-mp-felt = { workspace = true, default-features = true }
-mp-transactions = { workspace = true, default-features = true }
-mp-hashers = { workspace = true, default-features = true }
+mp-felt = { workspace = true }
+mp-transactions = { workspace = true }
+mp-hashers = { workspace = true }
 
 # Substrate Primitives
-sp-api = { workspace = true, default-features = true }
-sp-core = { workspace = true, default-features = true }
-sp-runtime = { workspace = true, default-features = true }
+sp-api = { workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
 
 # Substrate client dependencies
-sc-client-api = { workspace = true, default-features = true }
-sc-transaction-pool-api = { workspace = true, default-features = true }
+sc-client-api = { workspace = true }
+sc-transaction-pool-api = { workspace = true }
 
 # Zaun
 starknet-core-contract-client = { workspace = true }
 
 # Other third party dependencies
 ethers = { workspace = true }
-serde = { workspace = true, default-features = true }
-serde_json = { workspace = true, default-features = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 thiserror = { workspace = true }

@@ -7,10 +7,10 @@ version.workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-jsonrpsee = { workspace = true, default-features = true }
-log = { workspace = true, default-features = true }
+jsonrpsee = { workspace = true }
+log = { workspace = true }
 mp-genesis-config = { workspace = true }
-pallet-starknet = { workspace = true, default-features = true }
-serde = { workspace = true, default-features = true }
-serde_json = { workspace = true, default-features = true }
+pallet-starknet = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 thiserror = { workspace = true }

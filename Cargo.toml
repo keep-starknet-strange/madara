@@ -217,10 +217,8 @@ pallet-grandpa = { git = "https://github.com/massalabs/polkadot-sdk", branch = "
 pallet-timestamp = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
 
 # Madara pallets
-pallet-starknet = { path = "crates/pallets/starknet", features = ["std"] }
-pallet-starknet-runtime-api = { path = "crates/pallets/starknet/runtime_api", features = [
-  "std",
-] }
+pallet-starknet = { path = "crates/pallets/starknet" }
+pallet-starknet-runtime-api = { path = "crates/pallets/starknet/runtime_api" }
 # Madara primtitives
 mp-genesis-config = { path = "crates/primitives/genesis-config" }
 mp-digest-log = { path = "crates/primitives/digest-log" }
@@ -263,20 +261,13 @@ madara-test-runner = { path = "madara-test-runner" }
 # Starknet dependencies
 # Cairo Virtual Machine
 cairo-vm = { git = "https://github.com/bidzyyys/cairo-vm", branch = "feature/scale-codec", features = [
-  "std",
   "cairo-1-hints",
   "parity-scale-codec",
 ] }
-starknet-crypto = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e", features = [
-  "std",
-] }
-starknet-core = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e", features = [
-  "std",
-] }
+starknet-crypto = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
+starknet-core = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
 starknet-providers = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
-starknet-ff = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e", features = [
-  "std",
-] }
+starknet-ff = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
 starknet-signers = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
 starknet-accounts = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
 starknet-contract = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
@@ -312,34 +303,34 @@ zaun-utils = { git = "https://github.com/keep-starknet-strange/zaun", package = 
 # Other third party dependencies
 anyhow = "1.0.80"
 flate2 = "1.0.28"
-parity-scale-codec = { version = "3.2.2", features = ["std"] }
-scale-info = { version = "2.10.0", features = ["std"] }
+parity-scale-codec = { version = "3.2.2" }
+scale-info = { version = "2.10.0" }
 lazy_static = { version = "1.4.0" }
-log = { version = "0.4.20", features = ["std"] }
-hex = { version = "0.4.3", features = ["std"] }
-safe-mix = { version = "1.0", features = ["std"] }
+log = { version = "0.4.20" }
+hex = { version = "0.4.3" }
+safe-mix = { version = "1.0" }
 jsonrpsee = { version = "0.16.3" }
-clap = { version = "4.4.8", features = ["std"] }
-futures = { version = "0.3.29", features = ["std"] }
+clap = { version = "4.4.8" }
+futures = { version = "0.3.29" }
 futures-timer = { version = "3.0.3" }
-sha3 = { version = "0.10.8", features = ["std"] }
+sha3 = { version = "0.10.8" }
 reqwest = { version = "0.11.22" }
-serde = { version = "1.0.192", features = ["std"] }
-serde_json = { version = "1.0.108", features = ["std"] }
+serde = { version = "1.0.192" }
+serde_json = { version = "1.0.108" }
 serde_with = { version = "2.3.3" }
-bitvec = { version = "1", features = ["std"] }
+bitvec = { version = "1" }
 thiserror = "1.0.50"
 thiserror-no-std = "2.0.2"
 derive_more = { version = "0.99.17" }
 rstest = "0.18.1"
 pretty_assertions = "1.4.0"
-linked-hash-map = { version = "0.5.6", features = ["std"] }
+linked-hash-map = { version = "0.5.6" }
 parking_lot = "0.12.1"
 async-trait = "0.1.74"
 indexmap = "2.2.5"
 num-traits = "0.2.17"
 num-bigint = "0.4.4"
-phf = { version = "0.11", features = ["std"] }
+phf = { version = "0.11" }
 url = "2.4.1"
 hashbrown = "0.14.2"
 tokio = "1.36.0"

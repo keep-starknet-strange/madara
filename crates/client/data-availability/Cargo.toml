@@ -23,8 +23,8 @@ jsonrpsee = { version = "0.20.0", features = [
 ] }
 log = { workspace = true }
 reqwest = { version = "0.11.18", features = ["blocking", "json"] }
-serde = { workspace = true, default-features = true }
-serde_json = { workspace = true, default-features = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 thiserror.workspace = true
 tokio = { version = "1", features = ["full"] }
 url = { workspace = true }
@@ -39,22 +39,22 @@ sp-io = { workspace = true, features = ["std"] }
 sp-runtime = { workspace = true, features = ["std"] }
 
 # Starknet
-blockifier = { workspace = true, default-features = true }
-mc-commitment-state-diff = { workspace = true, default-features = true }
-mc-db = { workspace = true, default-features = true }
+blockifier = { workspace = true }
+mc-commitment-state-diff = { workspace = true }
+mc-db = { workspace = true }
 mc-eth-client = { workspace = true }
 pallet-starknet-runtime-api = { workspace = true, features = ["std"] }
 starknet-core = { workspace = true, features = ["std"] }
-starknet_api = { workspace = true, default-features = true }
+starknet_api = { workspace = true }
 
 # Ethereum
 ethers = { workspace = true }
 
 # Madara
-mp-digest-log = { workspace = true, default-features = true }
-mp-felt = { workspace = true, default-features = true }
-mp-hashers = { workspace = true, default-features = true }
-mp-storage = { workspace = true, default-features = true }
+mp-digest-log = { workspace = true }
+mp-felt = { workspace = true }
+mp-hashers = { workspace = true }
+mp-storage = { workspace = true }
 
 # Zaun
 starknet-core-contract-client = { workspace = true }

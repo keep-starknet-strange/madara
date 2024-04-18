@@ -19,8 +19,8 @@ targets = ["x86_64-unknown-linux-gnu"]
 # Madara utils
 mc-genesis-data-provider = { workspace = true }
 # Madara runtime
-pallet-starknet = { workspace = true, default-features = true }
-pallet-starknet-runtime-api = { workspace = true, default-features = true }
+pallet-starknet = { workspace = true }
+pallet-starknet-runtime-api = { workspace = true }
 # Madara client
 mc-data-availability = { workspace = true }
 mc-db = { workspace = true }
@@ -31,41 +31,41 @@ frame-support = { workspace = true }
 frame-system = { workspace = true }
 sc-transaction-pool = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
-sp-api = { workspace = true, default-features = true }
-sp-arithmetic = { workspace = true, default-features = true }
-sp-blockchain = { workspace = true, default-features = true }
-sp-core = { workspace = true, default-features = true }
-sp-runtime = { workspace = true, default-features = true }
-sp-timestamp = { workspace = true, default-features = true }
+sp-api = { workspace = true }
+sp-arithmetic = { workspace = true }
+sp-blockchain = { workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+sp-timestamp = { workspace = true }
 
 # Substrate client
-sc-client-api = { workspace = true, default-features = true }
+sc-client-api = { workspace = true }
 sc-network-sync = { workspace = true }
 # Starknet
-blockifier = { workspace = true, default-features = true }
+blockifier = { workspace = true }
 starknet-core = { workspace = true }
 starknet-ff = { workspace = true }
-starknet_api = { workspace = true, default-features = true }
+starknet_api = { workspace = true }
 # Others
 anyhow = { workspace = true }
-hex = { workspace = true, default-features = true }
-indexmap = { workspace = true, default-features = true }
+hex = { workspace = true }
+indexmap = { workspace = true }
 itertools = { workspace = true }
-jsonrpsee = { workspace = true, default-features = true, features = [
+jsonrpsee = { workspace = true , features = [
   "server",
   "macros",
 ] }
-log = { workspace = true, default-features = true }
-mp-block = { workspace = true, default-features = true }
-mp-fee = { workspace = true, default-features = true }
-mp-felt = { workspace = true, default-features = true }
-mp-hashers = { workspace = true, default-features = true }
+log = { workspace = true }
+mp-block = { workspace = true }
+mp-fee = { workspace = true }
+mp-felt = { workspace = true }
+mp-hashers = { workspace = true }
 mp-simulations = { workspace = true }
 mp-transactions = { workspace = true, features = ["client"] }
-serde_json = { workspace = true, default-features = true }
+serde_json = { workspace = true }
 thiserror = { workspace = true }
-tokio = { workspace = true, default-features = true, features = ["time"] }
-cairo-vm = { workspace = true, default-features = true }
+tokio = { workspace = true , features = ["time"] }
+cairo-vm = { workspace = true }
 
 [dev-dependencies]
 rstest = { workspace = true }

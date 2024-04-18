@@ -23,7 +23,7 @@ starknet-ff = { workspace = true }
 starknet-providers = { workspace = true }
 starknet-signers = { workspace = true }
 starknet-test-utils = { workspace = true }
-starknet_api = { workspace = true, default-features = true }
+starknet_api = { workspace = true }
 tempfile = { workspace = true }
 thiserror = { workspace = true }
 tokio = { version = "1.36.0", features = ["rt", "macros", "parking_lot"] }

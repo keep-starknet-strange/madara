@@ -13,10 +13,10 @@ publish = false
 repository = "https://github.com/keep-starknet-strange/madara"
 
 [dependencies]
-anyhow = { workspace = true, default-features = true }
-futures = { workspace = true, default-features = true }
+anyhow = { workspace = true }
+futures = { workspace = true }
 futures-timer = "3.0.3"
-log = { workspace = true, default-features = true }
+log = { workspace = true }
 mc-db = { workspace = true }
 mc-rpc-core = { workspace = true }
 mc-storage = { workspace = true }

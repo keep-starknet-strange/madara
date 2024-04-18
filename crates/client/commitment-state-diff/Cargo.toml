@@ -8,24 +8,24 @@ version.workspace = true
 [dependencies]
 # Substrate
 sc-client-api = { workspace = true }
-sp-api = { workspace = true, default-features = true }
+sp-api = { workspace = true }
 sp-blockchain = { workspace = true }
-sp-runtime = { workspace = true, default-features = true }
+sp-runtime = { workspace = true }
 
 # Madara
-mc-db = { workspace = true, default-features = true }
-mp-digest-log = { workspace = true, default-features = true }
-mp-hashers = { workspace = true, default-features = true }
-mp-storage = { workspace = true, default-features = true }
-pallet-starknet = { workspace = true, default-features = true }
-pallet-starknet-runtime-api = { workspace = true, default-features = true }
+mc-db = { workspace = true }
+mp-digest-log = { workspace = true }
+mp-hashers = { workspace = true }
+mp-storage = { workspace = true }
+pallet-starknet = { workspace = true }
+pallet-starknet-runtime-api = { workspace = true }
 
 # Starknet
-blockifier = { workspace = true, default-features = true }
-starknet_api = { workspace = true, default-features = true }
+blockifier = { workspace = true }
+starknet_api = { workspace = true }
 
 # Async
-futures = { workspace = true, default-features = true }
+futures = { workspace = true }
 
 # Others
 indexmap = { workspace = true }

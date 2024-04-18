@@ -5,19 +5,19 @@ edition = "2021"
 
 
 [dependencies]
-anyhow = { workspace = true, default-features = true }
-assert_matches = { workspace = true, default-features = true }
-async-lock = { workspace = true, default-features = true }
+anyhow = { workspace = true  }
+assert_matches = { workspace = true  }
+async-lock = { workspace = true  }
 clap = { workspace = true, features = ["std", "derive"] }
-ethers = { workspace = true, default-features = true }
-flate2 = { workspace = true, default-features = true }
-lazy_static = { workspace = true, default-features = true }
-reqwest = { workspace = true, default-features = true }
-rstest = { workspace = true, default-features = true }
-serde = { workspace = true, default-features = true }
-serde_json = { workspace = true, default-features = true }
-starknet-ff = { workspace = true, default-features = true }
-starknet-providers = { workspace = true, default-features = true }
+ethers = { workspace = true  }
+flate2 = { workspace = true  }
+lazy_static = { workspace = true  }
+reqwest = { workspace = true  }
+rstest = { workspace = true  }
+serde = { workspace = true  }
+serde_json = { workspace = true  }
+starknet-ff = { workspace = true  }
+starknet-providers = { workspace = true  }
 starknet-test-utils = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["rt", "macros", "parking_lot"] }

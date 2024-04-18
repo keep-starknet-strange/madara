@@ -29,7 +29,7 @@ starknet-ff = { workspace = true }
 starknet-providers = { workspace = true }
 starknet-signers = { workspace = true }
 starknet-test-utils = { workspace = true }
-starknet_api = { workspace = true, default-features = true }
+starknet_api = { workspace = true }
 
 # Madara
 madara-runtime = { workspace = true }
