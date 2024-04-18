@@ -407,32 +407,11 @@ impl<
         // Check if nonce has a correct value
         Self::handle_nonce(state, &tx_context.tx_info, strict_nonce_checking)?;
 
-        // todel
-        let tx_info = &tx_context.tx_info;
-        let committed_fee = match tx_info {
-            TransactionInfo::Current(context) => {
-                let l1_bounds = context.l1_resource_bounds()?;
-                let max_amount: u128 = l1_bounds.max_amount.into();
-                // Sender will not be charged by `max_price_per_unit`, but this check should not depend
-                // on the current gas price.
-                Fee(max_amount * l1_bounds.max_price_per_unit)
-            }
-            TransactionInfo::Deprecated(context) => context.max_fee,
-        };
-        let (balance_low, balance_high, can_pay) =
-            blockifier::fee::fee_utils::get_balance_and_if_covers_fee(state, &tx_context, committed_fee)?;
-        //
-        println!("committed_fee: {committed_fee:?}");
-        println!("balance: low: {}, hight {}", balance_low, balance_high);
-        println!("can pay: {}", can_pay);
-
-        println!("enforcefee: {:?}", tx_context.tx_info.enforce_fee());
         // Check if user has funds to pay the worst case scenario fees
         if charge_fee && tx_context.tx_info.enforce_fee()? {
             self.check_fee_bounds(&tx_context)?;
 
             blockifier::fee::fee_utils::verify_can_pay_committed_bounds(state, &tx_context)?;
-            println!("can cover fees");
         }
 
         Ok(())
@@ -731,7 +710,6 @@ where
                     PostExecutionReport::new(&transactional_state, &tx_context, &actual_cost, charge_fee)?;
                 match post_execution_report.error() {
                     Some(post_execution_error) => {
-                        println!("REVERTING: {:?}", post_execution_error);
                         // Post-execution check failed. Revert the execution, compute the final fee
                         // to charge and recompute resources used (to be consistent with other
                         // revert case, compute resources by adding consumed execution steps to
@@ -757,7 +735,6 @@ where
                 }
             }
             Err(execution_error) => {
-                println!("REVERTING: {:?}", execution_error);
                 // Error during execution. Revert, even if the error is sequencer-related.
                 abort_transactional_state(transactional_state);
                 let post_execution_report = PostExecutionReport::new(state, &tx_context, &revert_cost, charge_fee)?;
@@ -777,8 +754,6 @@ where
         validate_execute_call_info.final_cost.actual_fee,
         charge_fee,
     )?;
-
-    println!("final fee: {:?}", validate_execute_call_info.final_cost.actual_fee);
 
     let tx_execution_info = TransactionExecutionInfo {
         validate_call_info: validate_execute_call_info.validate_call_info,

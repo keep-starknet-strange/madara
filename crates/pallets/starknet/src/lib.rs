@@ -500,7 +500,6 @@ pub mod pallet {
         #[pallet::call_index(1)]
         #[pallet::weight({0})]
         pub fn invoke(origin: OriginFor<T>, transaction: InvokeTransaction) -> DispatchResult {
-            println!("into invoke");
             ensure!(!transaction.only_query, Error::<T>::QueryTransactionCannotBeExecuted);
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
@@ -517,7 +516,6 @@ pub mod pallet {
             let mut state = BlockifierStateAdapter::<T>::default();
             let block_context = Self::get_block_context();
             let charge_fee = !<T as Config>::DisableTransactionFee::get();
-            println!("charge fee: {charge_fee}");
 
             // Execute
             let tx_execution_infos = match transaction.tx.version() {
@@ -526,10 +524,7 @@ pub mod pallet {
                 }
                 _ => run_revertible_transaction(&transaction, &mut state, &block_context, true, charge_fee),
             }
-            .map_err(|e| {
-                println!("invoke execution failed: {e:?}");
-                Error::<T>::TransactionExecutionFailed
-            })?;
+            .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
             Self::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash,
@@ -559,7 +554,6 @@ pub mod pallet {
         #[pallet::call_index(2)]
         #[pallet::weight({0})]
         pub fn declare(origin: OriginFor<T>, transaction: DeclareTransaction) -> DispatchResult {
-            println!("into declare");
             ensure!(!transaction.only_query(), Error::<T>::QueryTransactionCannotBeExecuted);
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
@@ -581,11 +575,7 @@ pub mod pallet {
             // Execute
             let tx_execution_infos =
                 run_non_revertible_transaction(&transaction, &mut state, &Self::get_block_context(), true, charge_fee)
-                    .map_err(|e| {
-                        println!("declare failed: {e:?}");
-                        Error::<T>::TransactionExecutionFailed
-                    })?;
-            println!("declare rx went through");
+                    .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
             Self::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash(),
@@ -741,11 +731,8 @@ pub mod pallet {
             let sender_address = get_transaction_sender_address(&transaction);
             let sender_nonce = Self::nonce(sender_address);
 
-            println!("before validate unsigned tx nonce");
-
             Self::pre_validate_unsigned_tx(&transaction)?;
 
-            println!("before validate unsigned tx");
             let mut valid_transaction_builder = ValidTransaction::with_tag_prefix("starknet")
                 .priority(u64::MAX)
                 .longevity(T::TransactionLongevity::get())
@@ -756,7 +743,6 @@ pub mod pallet {
                     valid_transaction_builder =
                         valid_transaction_builder.and_provides((sender_address, transaction_nonce));
 
-                    println!("tx nonce {:?}, sender nonce {:?}", transaction_nonce, sender_nonce);
                     match (transaction_nonce, sender_nonce) {
                         // Special case where the wallet send both deploy_account and first tx at the same time
                         // The first tx validation would fail because the contract is not deployed yet,

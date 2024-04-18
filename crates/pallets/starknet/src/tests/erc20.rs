@@ -175,7 +175,6 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         );
 
         let events: Vec<StarknetEvent> = Starknet::tx_events(tx_hash);
-        println!("eventslen: {} events {:#?}", events.len(), events);
         // Expected events: (added on top of the past ones)
         // ERC20 -> Transfer
         // FeeToken -> Transfer

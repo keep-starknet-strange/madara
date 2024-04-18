@@ -98,7 +98,6 @@ impl<T: Config> Pallet<T> {
 
                 let validation_result = match transaction {
                     AccountTransaction::Declare(tx) => {
-                        println!("validating declare tx");
                         let tx_context = Arc::new(block_context.to_tx_context(tx));
                         tx.run_validate_entrypoint(&mut state, tx_context, &mut resources, &mut inital_gas, true)
                     }
@@ -108,7 +107,6 @@ impl<T: Config> Pallet<T> {
                         tx.run_validate_entrypoint(&mut state, tx_context, &mut resources, &mut inital_gas, true)
                     }
                 };
-                println!("validation res: {:?}", validation_result);
 
                 // handle the case where we the user sent both its deploy and first tx at the same time
                 // we assume that the deploy tx is also in the pool and will therefore be executed before
@@ -143,10 +141,7 @@ impl<T: Config> Pallet<T> {
                 Ok(None)
             }
         }
-        .map_err(|e| {
-            println!("tx validation failed: {e:?}");
-            InvalidTransaction::BadProof
-        })?;
+        .map_err(|_| InvalidTransaction::BadProof)?;
 
         Ok(())
     }

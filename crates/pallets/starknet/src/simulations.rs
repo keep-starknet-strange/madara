@@ -39,22 +39,11 @@ impl<T: Config> Pallet<T> {
             .map(|tx| {
                 match Self::execute_account_transaction(&tx, &mut state, &block_context, &SimulationFlags::default()) {
                     Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
-                    Err(e) => {
-                        println!("Transaction execution failed during fee estimation: {e}");
-                        Err(Error::<T>::TransactionExecutionFailed)
-                    }
-                    Ok(execution_info) => {
-                        println!(
-                            "Transaction execution reverted during fee estimation: {}",
-                            execution_info.revert_error.unwrap()
-                        );
-                        Err(Error::<T>::TransactionExecutionFailed)
-                    }
+                    Err(_) | Ok(_) => Err(Error::<T>::TransactionExecutionFailed),
                 }
             })
             .map(|exec_info_res| {
                 exec_info_res.map(|exec_info| {
-                    println!("exec info: {:#?}", exec_info);
                     exec_info
                         .actual_resources
                         .0
@@ -305,7 +294,6 @@ impl<T: Config> Pallet<T> {
         (Result<TransactionExecutionInfo, TransactionExecutionError>, CommitmentStateDiff),
         PlaceHolderErrorTypeForFailedStarknetExecution,
     > {
-        println!("simulation flags: {:?}", simulation_flags);
         // In order to produce a state diff for this specific tx we execute on a transactional state
         let mut transactional_state = CachedState::new(MutRefState::new(state), GlobalContractCache::new(10));
 

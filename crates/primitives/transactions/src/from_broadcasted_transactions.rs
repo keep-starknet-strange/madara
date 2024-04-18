@@ -383,6 +383,10 @@ pub fn casm_contract_class_to_compiled_class(casm_contract_class: &CasmContractC
         bytecode: casm_contract_class.bytecode.iter().map(|x| biguint_to_field_element(&x.value)).collect(),
         entry_points_by_type: casm_entry_points_to_compiled_entry_points(&casm_contract_class.entry_points_by_type),
         // TODO: convert those too
+        // Actually, maybe those are not needed for us and we can leave them as it is.
+        // I don't know
+        // Maybe it's not needed for execution, but should be stored somewhere in order for the RPC to be able to return
+        // those
         hints: vec![],
         pythonic_hints: None,
         bytecode_segment_lengths: vec![],

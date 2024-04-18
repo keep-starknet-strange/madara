@@ -71,8 +71,6 @@ fn given_contract_declare_tx_works_once_not_twice() {
         let class_hash = transaction.class_hash();
         let contract_class = transaction.contract_class();
 
-        println!("class_hash to be declared: {:?}", &class_hash);
-
         assert_ok!(Starknet::declare(none_origin.clone(), transaction.clone()));
         assert_eq!(Starknet::contract_class_by_class_hash(class_hash.0).unwrap(), contract_class);
         // TODO: Uncomment once we have ABI support

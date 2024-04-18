@@ -1020,7 +1020,7 @@ where
             };
             let tx_hash = tx.compute_hash(chain_id, true);
 
-            // Hardcoded fee fee value as it is not relevant here
+            // Hardcoded `paid_fee_on_l1` value as it is not relevant here
             L1HandlerTransaction { tx, tx_hash, paid_fee_on_l1: Fee(10) }
         };
 
@@ -1353,7 +1353,6 @@ where
         transaction_hash: FieldElement,
     ) -> RpcResult<MaybePendingTransactionReceipt> {
         let transaction_hash = Felt252Wrapper::from(transaction_hash).into();
-        println!("into get tx receipt: {:?}", transaction_hash);
 
         let receipt = match self.backend.mapping().block_hash_from_transaction_hash(transaction_hash).map_err(|e| {
             error!("Failed to interact with db backend error: {e}");
@@ -1446,7 +1445,6 @@ where
         transaction_hash: TransactionHash,
         substrate_block_hash: B::Hash,
     ) -> Result<MaybePendingTransactionReceipt, StarknetRpcApiError> {
-        println!("PREPARE TX RECEIPT");
         let starknet_block: mp_block::Block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)
             .map_err(|_e| StarknetRpcApiError::BlockNotFound)?;
         let block_header = starknet_block.header();
@@ -1477,11 +1475,8 @@ where
 
         let events = self.get_events_for_tx_by_hash(substrate_block_hash, transaction_hash)?;
 
-        println!("1");
-
         let execution_result = {
             let revert_error = self.get_tx_execution_outcome(substrate_block_hash, transaction_hash)?;
-            println!("2");
 
             // This is safe because the message is a Vec<u8> build from a String
             revert_error_to_execution_result(
@@ -1489,7 +1484,6 @@ where
             )
         };
 
-        println!("4");
         let events_converted: Vec<starknet_core::types::Event> =
             events.clone().into_iter().map(starknet_api_to_starknet_core_event).collect();
 
@@ -1528,10 +1522,7 @@ where
                 error!("Parent Block not found: {e}");
                 StarknetRpcApiError::BlockNotFound
             })?;
-        println!("--5");
-        println!("tx to simulate: {:x?}", transaction);
         let simulation = self.simulate_tx(parent_block_hash, transaction.clone(), skip_validate, fee_disabled)?;
-        println!("--6");
         let execution_resources = actual_resources_to_execution_resources(simulation.actual_resources);
         let transaction_hash = Felt252Wrapper::from(transaction_hash).into();
 
@@ -1633,7 +1624,6 @@ where
         &self,
         transaction_hash: TransactionHash,
     ) -> Result<MaybePendingTransactionReceipt, StarknetRpcApiError> {
-        println!("GET PENDING TX RECEIPT");
         let pending_tx = self.find_pending_tx(transaction_hash)?.ok_or(StarknetRpcApiError::TxnHashNotFound)?;
 
         // TODO: Massa labs is working on pending blocks within Substrate. That will allow fetching

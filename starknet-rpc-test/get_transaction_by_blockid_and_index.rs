@@ -11,9 +11,9 @@ use starknet_core::types::{
 use starknet_ff::FieldElement;
 use starknet_providers::Provider;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
-use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, ETH_FEE_TOKEN_ADDRESS, MIN_AMOUNT, SIGNER_PRIVATE};
+use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, MIN_AMOUNT, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{build_single_owner_account, read_erc20_balance, AccountActions};
+use starknet_rpc_test::utils::{build_single_owner_account, AccountActions};
 use starknet_rpc_test::Transaction as TransactionEnum;
 
 #[rstest]
@@ -53,17 +53,6 @@ async fn work_ok_by_compare_with_get_block_with_tx(madara: &ThreadSafeMadaraClie
         let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
         let argent_account_address = account.address();
         let nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account.address()).await.unwrap();
-        println!("address: {:?}", argent_account_address);
-        println!("nonce: {:?}", nonce);
-
-        let balance =
-            read_erc20_balance(&rpc, FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap(), argent_account_address)
-                .await;
-        println!("balance: {balance:?}");
-        let balance =
-            read_erc20_balance(&rpc, FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap(), argent_account_address)
-                .await;
-        println!("balance: {balance:?}");
 
         let execution_1 = account.transfer_tokens(
             FieldElement::from_hex_be("0x123").unwrap(),

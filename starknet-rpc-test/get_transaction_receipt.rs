@@ -2,7 +2,7 @@ use std::vec;
 
 use assert_matches::assert_matches;
 use rstest::rstest;
-use starknet_accounts::{Account, ConnectedAccount};
+use starknet_accounts::ConnectedAccount;
 use starknet_core::types::{
     Event, ExecutionResult, FeePayment, MaybePendingTransactionReceipt, MsgToL1, PendingTransactionReceipt, PriceUnit,
     TransactionFinalityStatus, TransactionReceipt,
@@ -14,7 +14,6 @@ use starknet_rpc_test::constants::{
     ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, ETH_FEE_TOKEN_ADDRESS, SEQUENCER_ADDRESS,
     SIGNER_PRIVATE, UDC_ADDRESS,
 };
-use starknet_rpc_test::utils::read_erc20_balance;
 use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_test_utils::utils::{
     assert_eq_msg_to_l1, build_deploy_account_tx, build_oz_account_factory, build_single_owner_account,
@@ -36,12 +35,6 @@ async fn work_with_invoke_transaction(madara: &ThreadSafeMadaraClient) -> Result
         madara_write_lock.create_empty_block().await.unwrap();
 
         let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
-        println!("sender address: {:?}", account.address());
-        let sender_balance = read_erc20_balance(&rpc, fee_token_address, account.address()).await;
-        let recipient_balance = read_erc20_balance(&rpc, fee_token_address, recipient).await;
-
-        println!("sender balance: {:?}", sender_balance);
-        println!("recipient balance: {:?}", recipient_balance);
 
         madara_write_lock
             .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(
@@ -57,7 +50,6 @@ async fn work_with_invoke_transaction(madara: &ThreadSafeMadaraClient) -> Result
         TransactionResult::Execution(rpc_response) => rpc_response,
         _ => panic!("expected execution result"),
     };
-    println!("tx result: {:?}", rpc_response);
 
     let invoke_tx_receipt = get_transaction_receipt(&rpc, rpc_response.transaction_hash).await;
     let expected_fee = FeePayment { amount: FieldElement::from_hex_be("0x15572").unwrap(), unit: PriceUnit::Wei };

@@ -75,7 +75,6 @@ async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraCli
         let balance =
             read_erc20_balance(&rpc, FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap(), oz_account.address())
                 .await;
-        println!("block number before fund drain: {block_number}");
         let txs = madara_write_lock
             .create_block_with_txs(vec![
                 Transaction::Execution(oz_account.transfer_tokens_u256(
@@ -96,11 +95,6 @@ async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraCli
     };
 
     // transaction failed during execution, no change in storage
-    println!(
-        "this is get class result - {:?}",
-        rpc.get_class(BlockId::Number(block_number), expected_class_hash).await
-    );
-    println!("this is expected class hash - {}", expected_class_hash);
     assert!(rpc.get_class(BlockId::Number(block_number), expected_class_hash).await.is_err());
 
     // doesn't get included in block

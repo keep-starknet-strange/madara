@@ -99,7 +99,6 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
     }
 
     fn set_contract_class(&mut self, class_hash: ClassHash, contract_class: ContractClass) -> StateResult<()> {
-        println!("SET CONTRACT CLASS: {:?}", class_hash);
         crate::ContractClasses::<T>::insert(class_hash.0, contract_class);
 
         Ok(())
