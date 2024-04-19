@@ -15,21 +15,23 @@ use sp_runtime::DispatchError;
 use starknet_api::transaction::Fee;
 
 use crate::blockifier_state_adapter::{BlockifierStateAdapter, CachedBlockifierStateAdapter};
-use crate::errors::BlockifierErrors;
 use crate::execution_config::RuntimeExecutionConfigBuilder;
-use crate::{Config, Error, Pallet};
+use crate::{Config, Pallet};
 
 impl<T: Config> Pallet<T> {
-    pub fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
+    pub fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, mp_simulations::Error> {
+        let mut res = None;
+
         storage::transactional::with_transaction(|| {
-            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::estimate_fee_inner(
-                transactions,
-            )))
+            res = Some(Self::estimate_fee_inner(transactions));
+            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(()))
         })
-        .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?
+        .map_err(|_| mp_simulations::Error::FailedToCreateATransactionalStorageExecution)?;
+
+        res.expect("`res` should have been set to `Some` at this point")
     }
 
-    fn estimate_fee_inner(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
+    fn estimate_fee_inner(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, mp_simulations::Error> {
         let transactions_len = transactions.len();
         let chain_id = Self::chain_id();
         let block_context = Self::get_block_context();
@@ -44,16 +46,15 @@ impl<T: Config> Pallet<T> {
                     Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
                     Err(e) => {
                         log::error!("Transaction execution failed during fee estimation: {e}");
-                        Err(Error::<T>::TransactionExecutionFailed(BlockifierErrors(e.to_string())).into())
+                        Err(mp_simulations::Error::TransactionExecutionFailed)
                     }
                     Ok(execution_info) => {
-                        // Safe due to the `match` branch order
-                        let message = format!(
+                        log::error!(
                             "Transaction execution reverted during fee estimation: {}",
+                            // Safe due to the `match` branch order
                             execution_info.revert_error.unwrap()
                         );
-                        log::error!("{}", message);
-                        Err(Error::<T>::TransactionExecutionFailed(BlockifierErrors(message)))
+                        Err(mp_simulations::Error::TransactionExecutionFailed)
                     }
                 }
             })
@@ -63,7 +64,7 @@ impl<T: Config> Pallet<T> {
                         .actual_resources
                         .0
                         .get("l1_gas_usage")
-                        .ok_or_else(|| DispatchError::from(Error::<T>::MissingL1GasUsage))
+                        .ok_or(mp_simulations::Error::MissingL1GasUsage)
                         .map(|l1_gas_usage| (exec_info.actual_fee.0 as u64, *l1_gas_usage))
                 })
             });
@@ -78,20 +79,22 @@ impl<T: Config> Pallet<T> {
     pub fn simulate_transactions(
         transactions: Vec<UserTransaction>,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, DispatchError> {
+    ) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, mp_simulations::Error> {
+        let mut res = None;
+
         storage::transactional::with_transaction(|| {
-            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::simulate_transactions_inner(
-                transactions,
-                simulation_flags,
-            )))
+            res = Some(Self::simulate_transactions_inner(transactions, simulation_flags));
+            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(()))
         })
-        .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?
+        .map_err(|_| mp_simulations::Error::FailedToCreateATransactionalStorageExecution)?;
+
+        Ok(res.expect("`res` should have been set to `Some` at this point"))
     }
 
     fn simulate_transactions_inner(
         transactions: Vec<UserTransaction>,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, DispatchError> {
+    ) -> Vec<(CommitmentStateDiff, TransactionSimulationResult)> {
         let chain_id = Self::chain_id();
         let block_context = Self::get_block_context();
         let mut execution_config =
@@ -111,26 +114,29 @@ impl<T: Config> Pallet<T> {
             })
             .collect();
 
-        Ok(tx_execution_results)
+        tx_execution_results
     }
 
     pub fn simulate_message(
         message: HandleL1MessageTransaction,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError> {
+    ) -> Result<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, mp_simulations::Error>
+    {
+        let mut res = None;
+
         storage::transactional::with_transaction(|| {
-            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::simulate_message_inner(
-                message,
-                simulation_flags,
-            )))
+            res = Some(Self::simulate_message_inner(message, simulation_flags));
+            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(()))
         })
-        .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?
+        .map_err(|_| mp_simulations::Error::FailedToCreateATransactionalStorageExecution)?;
+
+        Ok(res.expect("`res` should have been set to `Some` at this point"))
     }
 
     fn simulate_message_inner(
         message: HandleL1MessageTransaction,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError> {
+    ) -> Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution> {
         let chain_id = Self::chain_id();
         let block_context = Self::get_block_context();
         let mut execution_config =
@@ -138,25 +144,30 @@ impl<T: Config> Pallet<T> {
 
         // Follow `offset` from Pallet Starknet where it is set to false
         execution_config.set_offset_version(false);
-        let tx_execution_result =
-            Self::execute_message(message, chain_id, &block_context, &execution_config).map_err(|e| {
-                log::error!("Transaction execution failed during simulation: {e}");
-                PlaceHolderErrorTypeForFailedStarknetExecution
-            });
 
-        Ok(tx_execution_result)
-    }
-
-    pub fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), DispatchError> {
-        storage::transactional::with_transaction(|| {
-            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::estimate_message_fee_inner(
-                message,
-            )))
+        Self::execute_message(message, chain_id, &block_context, &execution_config).map_err(|e| {
+            log::error!("Transaction execution failed during simulation: {e}");
+            PlaceHolderErrorTypeForFailedStarknetExecution
         })
-        .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?
     }
 
-    fn estimate_message_fee_inner(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), DispatchError> {
+    pub fn estimate_message_fee(
+        message: HandleL1MessageTransaction,
+    ) -> Result<(u128, u64, u64), mp_simulations::Error> {
+        let mut res = None;
+
+        storage::transactional::with_transaction(|| {
+            res = Some(Self::estimate_message_fee_inner(message));
+            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(()))
+        })
+        .map_err(|_| mp_simulations::Error::FailedToCreateATransactionalStorageExecution)?;
+
+        res.expect("`res` should have been set to `Some` at this point")
+    }
+
+    fn estimate_message_fee_inner(
+        message: HandleL1MessageTransaction,
+    ) -> Result<(u128, u64, u64), mp_simulations::Error> {
         let chain_id = Self::chain_id();
 
         // Follow `offset` from Pallet Starknet where it is set to false
@@ -168,29 +179,26 @@ impl<T: Config> Pallet<T> {
             ) {
                 Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
                 Err(e) => {
-                    let message = format!(
+                    log::error!(
                         "Transaction execution failed during fee estimation: {e} {:?}",
                         std::error::Error::source(&e)
                     );
-                    log::error!("{}", message);
-                    Err(Error::<T>::TransactionExecutionFailed(BlockifierErrors(message)))
+                    Err(mp_simulations::Error::TransactionExecutionFailed)
                 }
                 Ok(execution_info) => {
-                    let message = format!(
+                    log::error!(
                         "Transaction execution reverted during fee estimation: {}",
                         // Safe due to the `match` branch order
                         execution_info.revert_error.unwrap()
                     );
-
-                    log::error!("{}", message);
-                    Err(Error::<T>::TransactionExecutionFailed(BlockifierErrors(message)))
+                    Err(mp_simulations::Error::TransactionExecutionFailed)
                 }
             }?;
 
         if let Some(l1_gas_usage) = tx_execution_infos.actual_resources.0.get("l1_gas_usage") {
             Ok((T::L1GasPrice::get().price_in_wei, tx_execution_infos.actual_fee.0 as u64, *l1_gas_usage))
         } else {
-            Err(Error::<T>::MissingL1GasUsage.into())
+            Err(mp_simulations::Error::MissingL1GasUsage)
         }
     }
 
@@ -198,21 +206,24 @@ impl<T: Config> Pallet<T> {
         transactions: Vec<UserOrL1HandlerTransaction>,
     ) -> Result<
         Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, PlaceHolderErrorTypeForFailedStarknetExecution>,
-        DispatchError,
+        mp_simulations::Error,
     > {
+        let mut res = None;
+
         storage::transactional::with_transaction(|| {
-            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::re_execute_transactions_inner(
-                transactions,
-            )))
+            res = Some(Self::re_execute_transactions_inner(transactions));
+            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(()))
         })
-        .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?
+        .map_err(|_| mp_simulations::Error::FailedToCreateATransactionalStorageExecution)?;
+
+        res.expect("`res` should have been set to `Some` at this point")
     }
 
     fn re_execute_transactions_inner(
         transactions: Vec<UserOrL1HandlerTransaction>,
     ) -> Result<
         Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, PlaceHolderErrorTypeForFailedStarknetExecution>,
-        DispatchError,
+        mp_simulations::Error,
     > {
         let chain_id = Self::chain_id();
         let block_context = Self::get_block_context();

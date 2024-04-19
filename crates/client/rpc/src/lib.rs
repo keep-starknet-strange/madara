@@ -3,7 +3,7 @@
 //! It uses the madara client and backend in order to answer queries.
 
 mod constants;
-mod errors;
+pub mod errors;
 mod events;
 mod madara_backend_client;
 mod runtime_api;
@@ -675,7 +675,6 @@ where
         })?;
 
         let calldata = Calldata(Arc::new(request.calldata.iter().map(|x| Felt252Wrapper::from(*x).into()).collect()));
-
         let result = self.do_call(
             substrate_block_hash,
             Felt252Wrapper(request.contract_address).into(),

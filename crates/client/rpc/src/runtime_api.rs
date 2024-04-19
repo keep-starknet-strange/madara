@@ -49,7 +49,7 @@ where
             })?
             .map_err(|e| {
                 // TODO: replace this
-                StarknetRpcApiError::ContractError(e.into())
+                StarknetRpcApiError::ContractError
             })
     }
 
@@ -67,7 +67,7 @@ where
             })?
             .map_err(|e| {
                 error!("Function execution failed: {:#?}", e);
-                StarknetRpcApiError::ContractError(e.into())
+                StarknetRpcApiError::ContractError
             })
     }
 
@@ -124,7 +124,7 @@ where
             })?
             .map_err(|e| {
                 error!("Failed to call function: {:#?}", e);
-                StarknetRpcApiError::ContractError(e.into())
+                StarknetRpcApiError::ContractError
             })
     }
     pub fn get_best_block_hash(&self) -> B::Hash {
@@ -210,7 +210,7 @@ where
             })?
             .map_err(|e| {
                 error!("Failed to call function: {:#?}", e);
-                StarknetRpcApiError::ContractError(e.into())
+                StarknetRpcApiError::ContractError
             })?
             .swap_remove(0)
             .1
@@ -236,7 +236,7 @@ where
             })?
             .map_err(|e| {
                 error!("Failed to call function: {:#?}", e);
-                StarknetRpcApiError::ContractError(e.into())
+                StarknetRpcApiError::ContractError
             })?
             .map_err(|e| {
                 error!("Failed to simulate L1 Message: {:?}", e);

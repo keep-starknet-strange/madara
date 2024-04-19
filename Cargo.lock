@@ -6910,6 +6910,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "starknet-core",
+ "starknet_api",
 ]
 
 [[package]]

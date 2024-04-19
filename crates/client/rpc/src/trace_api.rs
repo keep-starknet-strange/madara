@@ -1,7 +1,5 @@
 use blockifier::execution::contract_class::{ContractClass, ContractClassV1};
 use blockifier::execution::entry_point::CallInfo;
-use blockifier::state::cached_state::CommitmentStateDiff;
-use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
@@ -29,7 +27,7 @@ use starknet_core::types::{
 use starknet_ff::FieldElement;
 use thiserror::Error;
 
-use crate::errors::{ContractErrorWrapper, StarknetRpcApiError};
+use crate::errors::StarknetRpcApiError;
 use crate::Starknet;
 
 #[async_trait]
@@ -84,7 +82,7 @@ where
             })?
             .map_err(|e| {
                 error!("Failed to call function: {:#?}", e);
-                StarknetRpcApiError::ContractError(ContractErrorWrapper::DispatchError(e))
+                StarknetRpcApiError::ContractError
             })?;
 
         let mut simulated_transactions = vec![];
@@ -108,10 +106,7 @@ where
                     });
                 }
                 Err(e) => {
-                    return Err(StarknetRpcApiError::ContractError(
-                        ContractErrorWrapper::PlaceHolderErrorTypeForFailedStarknetExecution(e),
-                    )
-                    .into());
+                    return Err(StarknetRpcApiError::ContractError.into());
                 }
             }
         }
@@ -268,10 +263,6 @@ where
         Ok(traces)
     }
 }
-
-// transactionfailed => contractError
-// getFunctionInvocation => InternalServerError
-// convertstatedifffailed => Internal serverError
 
 fn try_get_function_invocation_from_call_info(
     call_info: &CallInfo,
