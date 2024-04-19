@@ -122,10 +122,11 @@ where
         &self,
         block_hash: B::Hash,
         transactions: Vec<AccountTransaction>,
+        simulation_flags: SimulationFlags,
     ) -> RpcApiResult<Vec<(u128, u128)>> {
         self.client
             .runtime_api()
-            .estimate_fee(block_hash, transactions)
+            .estimate_fee(block_hash, transactions, simulation_flags)
             .map_err(|e| {
                 error!("Request parameters error: {e}");
                 StarknetRpcApiError::InternalServerError

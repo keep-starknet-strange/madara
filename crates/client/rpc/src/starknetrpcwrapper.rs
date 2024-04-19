@@ -54,7 +54,6 @@ where
 }
 
 #[async_trait]
-#[allow(unused_variables)]
 impl<A, B, BE, G, C, P, H> StarknetReadRpcApiServer for StarknetRpcWrapper<A, B, BE, G, C, P, H>
 where
     A: ChainApi<Block = B> + 'static,

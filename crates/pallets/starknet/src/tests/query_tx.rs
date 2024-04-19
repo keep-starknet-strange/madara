@@ -24,7 +24,7 @@ fn estimates_tx_fee_successfully_no_validate() {
 
         let txs = vec![tx_1, tx_2];
 
-        let fees = Starknet::estimate_fee(txs).expect("estimate should not fail");
+        let fees = Starknet::estimate_fee(txs, &Default::default()).expect("estimate should not fail");
 
         let (actual, l1_gas_usage) = fees[0];
         assert!(actual > 0, "actual fee is missing");
@@ -47,7 +47,7 @@ fn estimates_tx_fee_with_query_version() {
 
         let tx_vec = vec![tx];
 
-        assert_ok!(Starknet::estimate_fee(tx_vec));
+        assert_ok!(Starknet::estimate_fee(tx_vec, &Default::default()));
 
         assert!(pre_storage == Starknet::pending().len(), "estimate should not add a tx to pending");
     });
@@ -66,7 +66,7 @@ fn executable_tx_should_be_estimable_and_executable() {
         let tx_vec = vec![AccountTransaction::Invoke(transaction.clone())];
 
         // it should be valid for estimate calls
-        assert_ok!(Starknet::estimate_fee(tx_vec));
+        assert_ok!(Starknet::estimate_fee(tx_vec, &Default::default()));
 
         // it should be executable
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), transaction.clone()));
@@ -88,7 +88,7 @@ fn query_tx_should_not_be_executable() {
         let tx_vec = vec![AccountTransaction::Invoke(transaction.clone())];
 
         // it should be valid for estimate calls
-        assert_ok!(Starknet::estimate_fee(tx_vec));
+        assert_ok!(Starknet::estimate_fee(tx_vec, &Default::default()));
 
         // it should not be executable
         assert_err!(

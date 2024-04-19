@@ -12,7 +12,6 @@
 //! of reader functions to operate properly.
 
 #![allow(clippy::large_enum_variant)]
-#![deny(unused_crate_dependencies)]
 
 mod error;
 #[cfg(test)]

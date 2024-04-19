@@ -20,27 +20,32 @@ use crate::blockifier_state_adapter::BlockifierStateAdapter;
 use crate::{Config, Error, Pallet};
 
 impl<T: Config> Pallet<T> {
-    pub fn estimate_fee(transactions: Vec<AccountTransaction>) -> Result<Vec<(u128, u128)>, DispatchError> {
+    pub fn estimate_fee(
+        transactions: Vec<AccountTransaction>,
+        simulation_flags: &SimulationFlags,
+    ) -> Result<Vec<(u128, u128)>, DispatchError> {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::estimate_fee_inner(
                 transactions,
+                simulation_flags,
             )))
         })
         .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?
     }
 
-    fn estimate_fee_inner(transactions: Vec<AccountTransaction>) -> Result<Vec<(u128, u128)>, DispatchError> {
+    fn estimate_fee_inner(
+        transactions: Vec<AccountTransaction>,
+        simulation_flags: &SimulationFlags,
+    ) -> Result<Vec<(u128, u128)>, DispatchError> {
         let transactions_len = transactions.len();
         let block_context = Self::get_block_context();
         let mut state = BlockifierStateAdapter::<T>::default();
 
         let fee_res_iterator = transactions
             .into_iter()
-            .map(|tx| {
-                match Self::execute_account_transaction(&tx, &mut state, &block_context, &SimulationFlags::default()) {
-                    Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
-                    Err(_) | Ok(_) => Err(Error::<T>::TransactionExecutionFailed),
-                }
+            .map(|tx| match Self::execute_account_transaction(&tx, &mut state, &block_context, simulation_flags) {
+                Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
+                Err(_) | Ok(_) => Err(Error::<T>::TransactionExecutionFailed),
             })
             .map(|exec_info_res| {
                 exec_info_res.map(|exec_info| {

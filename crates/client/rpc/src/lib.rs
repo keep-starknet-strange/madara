@@ -30,13 +30,14 @@ pub use mc_rpc_core::{
 use mc_storage::OverrideHandle;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
+use mp_simulations::SimulationFlags;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::from_broadcasted_transactions::{
-    try_account_tx_from_broadcasted_declare_tx, try_account_tx_from_broadcasted_deploy_tx,
-    try_account_tx_from_broadcasted_invoke_tx, try_account_tx_from_broadcasted_tx,
+    try_account_tx_from_broadcasted_tx, try_declare_tx_from_broadcasted_declare_tx,
+    try_deploy_tx_from_broadcasted_deploy_tx, try_invoke_tx_from_broadcasted_invoke_tx,
 };
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
-use mp_transactions::{compute_message_hash, get_account_transaction_hash, get_transaction_hash, TransactionStatus};
+use mp_transactions::{compute_message_hash, get_transaction_hash, TransactionStatus};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::BlockBackend;
@@ -303,15 +304,11 @@ where
 
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
-        let transaction: AccountTransaction = try_account_tx_from_broadcasted_declare_tx(declare_transaction, chain_id)
-            .map_err(|e| {
-                error!("Failed to convert BroadcastedDeclareTransaction to AccountTransaction, error: {e}");
-                StarknetRpcApiError::InternalServerError
-            })?;
-        let (class_hash, tx_hash) = match &transaction {
-            AccountTransaction::Declare(tx) => (tx.class_hash(), tx.tx_hash()),
-            _ => Err(StarknetRpcApiError::InternalServerError)?,
-        };
+        let transaction = try_declare_tx_from_broadcasted_declare_tx(declare_transaction, chain_id).map_err(|e| {
+            error!("Failed to convert BroadcastedDeclareTransaction to DeclareTransaction, error: {e}");
+            StarknetRpcApiError::InternalServerError
+        })?;
+        let (class_hash, tx_hash) = (transaction.class_hash(), transaction.tx_hash());
 
         let current_block_hash = self.get_best_block_hash();
         let contract_class = self
@@ -324,7 +321,7 @@ where
             return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
         }
 
-        let extrinsic = self.convert_tx_to_extrinsic(best_block_hash, transaction.clone())?;
+        let extrinsic = self.convert_tx_to_extrinsic(best_block_hash, AccountTransaction::Declare(transaction))?;
 
         submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
 
@@ -356,14 +353,13 @@ where
         let best_block_hash = self.get_best_block_hash();
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
-        let transaction: AccountTransaction = try_account_tx_from_broadcasted_invoke_tx(invoke_transaction, chain_id)
-            .map_err(|e| {
-            error!("Failed to convert BroadcastedInvokeTransaction to AccountTransaction: {e}");
+        let transaction = try_invoke_tx_from_broadcasted_invoke_tx(invoke_transaction, chain_id).map_err(|e| {
+            error!("Failed to convert BroadcastedInvokeTransaction to InvokeTransaction: {e}");
             StarknetRpcApiError::InternalServerError
         })?;
-        let tx_hash = get_account_transaction_hash(&transaction);
+        let tx_hash = transaction.tx_hash;
 
-        let extrinsic = self.convert_tx_to_extrinsic(best_block_hash, transaction.clone())?;
+        let extrinsic = self.convert_tx_to_extrinsic(best_block_hash, AccountTransaction::Invoke(transaction))?;
 
         submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
 
@@ -387,20 +383,18 @@ where
         let best_block_hash = self.get_best_block_hash();
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
-        let transaction: AccountTransaction =
-            try_account_tx_from_broadcasted_deploy_tx(deploy_account_transaction, chain_id).map_err(|e| {
-                error!("Failed to convert BroadcastedDeployAccountTransaction to AccountTransaction, error: {e}",);
+        let transaction =
+            try_deploy_tx_from_broadcasted_deploy_tx(deploy_account_transaction, chain_id).map_err(|e| {
+                error!("Failed to convert BroadcastedDeployAccountTransaction to DeployAccountTransaction, error: {e}",);
                 StarknetRpcApiError::InternalServerError
             })?;
 
-        let extrinsic = self.convert_tx_to_extrinsic(best_block_hash, transaction.clone())?;
+        let (contract_address, tx_hash) = (transaction.contract_address, transaction.tx_hash);
+
+        let extrinsic =
+            self.convert_tx_to_extrinsic(best_block_hash, AccountTransaction::DeployAccount(transaction))?;
 
         submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
-
-        let (contract_address, tx_hash) = match &transaction {
-            AccountTransaction::DeployAccount(tx) => (tx.contract_address, tx.tx_hash),
-            _ => Err(StarknetRpcApiError::InternalServerError)?,
-        };
 
         Ok(DeployAccountTransactionResult {
             transaction_hash: Felt252Wrapper::from(tx_hash).into(),
@@ -410,7 +404,6 @@ where
 }
 
 #[async_trait]
-#[allow(unused_variables)]
 impl<A, B, BE, G, C, P, H> StarknetReadRpcApiServer for Starknet<A, B, BE, G, C, P, H>
 where
     A: ChainApi<Block = B> + 'static,
@@ -532,8 +525,6 @@ where
                 StarknetRpcApiError::TxnHashNotFound
             })?
             .ok_or(StarknetRpcApiError::TxnHashNotFound)?;
-
-        let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)?;
 
         let execution_status = {
             let revert_error = self.get_tx_execution_outcome(substrate_block_hash, transaction_hash)?;
@@ -956,7 +947,6 @@ where
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
         })?;
-        let best_block_hash = self.get_best_block_hash();
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
         let transactions = request
@@ -968,7 +958,8 @@ where
                 StarknetRpcApiError::InternalServerError
             })?;
 
-        let fee_estimates = self.estimate_fee(best_block_hash, transactions)?;
+        let fee_estimates =
+            self.estimate_fee(substrate_block_hash, transactions, SimulationFlags::from(simulation_flags))?;
 
         let estimates = fee_estimates
             .into_iter()
@@ -1067,7 +1058,6 @@ where
 
         let transaction =
             starknet_block.transactions().get(index as usize).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
-        let chain_id = self.chain_id()?;
 
         Ok(to_starknet_core_tx(transaction.clone()))
     }
@@ -1154,8 +1144,6 @@ where
                 nonces: Vec::new(),
             };
 
-            let latest_block = self.get_best_block_hash();
-            let latest_block = get_block_by_block_hash(self.client.as_ref(), latest_block).unwrap_or_default();
             let old_root = Felt252Wrapper::from(self.backend.temporary_global_state_root_getter()).into();
             let pending_state_update = PendingStateUpdate { old_root, state_diff };
 
@@ -1170,15 +1158,6 @@ where
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)?;
 
         let old_root = if starknet_block.header().block_number > 0 {
-            let parent_block_hash = Felt252Wrapper::from(starknet_block.header().parent_block_hash).into();
-            let substrate_parent_block_hash =
-                self.substrate_block_hash_from_starknet_block(BlockId::Hash(parent_block_hash)).map_err(|e| {
-                    error!("'{e}'");
-                    StarknetRpcApiError::BlockNotFound
-                })?;
-
-            let parent_block = get_block_by_block_hash(self.client.as_ref(), substrate_parent_block_hash)?;
-
             Felt252Wrapper::from(self.backend.temporary_global_state_root_getter()).into()
         } else {
             FieldElement::default()

@@ -1,5 +1,5 @@
 use blockifier::transaction::objects::TransactionExecutionInfo;
-use starknet_core::types::SimulationFlag;
+use starknet_core::types::{SimulationFlag, SimulationFlagForEstimateFee};
 
 // TODO: This is a placeholder
 // https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json#L3919
@@ -30,6 +30,23 @@ impl From<Vec<SimulationFlag>> for SimulationFlags {
                 SimulationFlag::SkipFeeCharge => flags_out.charge_fee = false,
             }
             if !flags_out.validate && !flags_out.charge_fee {
+                break;
+            }
+        }
+
+        flags_out
+    }
+}
+
+impl From<Vec<SimulationFlagForEstimateFee>> for SimulationFlags {
+    fn from(flags: Vec<SimulationFlagForEstimateFee>) -> Self {
+        let mut flags_out = Self::default();
+
+        for flag in flags {
+            match flag {
+                SimulationFlagForEstimateFee::SkipValidate => flags_out.validate = false,
+            }
+            if !flags_out.validate {
                 break;
             }
         }

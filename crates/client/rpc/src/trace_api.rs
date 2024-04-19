@@ -1,5 +1,6 @@
 use blockifier::execution::call_info::CallInfo;
 use blockifier::state::cached_state::CommitmentStateDiff;
+use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
 use blockifier::transaction::transaction_execution::Transaction;
@@ -12,8 +13,8 @@ use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_simulations::{SimulationFlags, TransactionSimulationResult};
 use mp_transactions::from_broadcasted_transactions::{
-    try_account_tx_from_broadcasted_declare_tx, try_account_tx_from_broadcasted_deploy_tx,
-    try_account_tx_from_broadcasted_invoke_tx,
+    try_declare_tx_from_broadcasted_declare_tx, try_deploy_tx_from_broadcasted_deploy_tx,
+    try_invoke_tx_from_broadcasted_invoke_tx,
 };
 use mp_transactions::{get_transaction_hash, TxType};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
@@ -36,7 +37,6 @@ use crate::errors::StarknetRpcApiError;
 use crate::Starknet;
 
 #[async_trait]
-#[allow(unused_variables)]
 impl<A, B, BE, G, C, P, H> StarknetTraceRpcApiServer for Starknet<A, B, BE, G, C, P, H>
 where
     A: ChainApi<Block = B> + 'static,
@@ -56,23 +56,26 @@ where
         simulation_flags: Vec<SimulationFlag>,
     ) -> RpcResult<Vec<SimulatedTransaction>> {
         let substrate_block_hash =
-            self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| StarknetRpcApiError::BlockNotFound)?;
+            self.substrate_block_hash_from_starknet_block(block_id).map_err(|_| StarknetRpcApiError::BlockNotFound)?;
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
-        let best_block_hash = self.client.info().best_hash;
 
         let mut tx_types = Vec::with_capacity(transactions.len());
         let mut account_transactions = Vec::with_capacity(transactions.len());
 
         let tx_type_and_tx_iterator = transactions.into_iter().map(|tx| match tx {
-            BroadcastedTransaction::Invoke(invoke_tx) => {
-                (TxType::Invoke, try_account_tx_from_broadcasted_invoke_tx(invoke_tx, chain_id))
-            }
-            BroadcastedTransaction::Declare(declare_tx) => {
-                (TxType::Declare, try_account_tx_from_broadcasted_declare_tx(declare_tx, chain_id))
-            }
-            BroadcastedTransaction::DeployAccount(deploy_account_tx) => {
-                (TxType::DeployAccount, try_account_tx_from_broadcasted_deploy_tx(deploy_account_tx, chain_id))
-            }
+            BroadcastedTransaction::Invoke(invoke_tx) => (
+                TxType::Invoke,
+                try_invoke_tx_from_broadcasted_invoke_tx(invoke_tx, chain_id).map(AccountTransaction::Invoke),
+            ),
+            BroadcastedTransaction::Declare(declare_tx) => (
+                TxType::Declare,
+                try_declare_tx_from_broadcasted_declare_tx(declare_tx, chain_id).map(AccountTransaction::Declare),
+            ),
+            BroadcastedTransaction::DeployAccount(deploy_account_tx) => (
+                TxType::DeployAccount,
+                try_deploy_tx_from_broadcasted_deploy_tx(deploy_account_tx, chain_id)
+                    .map(AccountTransaction::DeployAccount),
+            ),
         });
 
         for (tx_type, account_tx) in tx_type_and_tx_iterator {
@@ -115,7 +118,6 @@ where
             error!("Failed to get block for block hash {substrate_block_hash}: '{e}'");
             StarknetRpcApiError::InternalServerError
         })?;
-        let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
         let block_transactions = starknet_block.transactions();
 
@@ -123,8 +125,6 @@ where
 
         let execution_infos =
             self.re_execute_transactions(previous_block_substrate_hash, vec![], block_transactions.clone())?;
-
-        let storage_override = self.overrides.for_block_hash(self.client.as_ref(), substrate_block_hash);
 
         let traces = Self::execution_info_to_transaction_trace(execution_infos, block_transactions)?;
 
@@ -145,7 +145,6 @@ where
             .ok_or(StarknetRpcApiError::TxnHashNotFound)?;
 
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)?;
-        let chain_id = self.get_chain_id(substrate_block_hash)?;
 
         let (txs_before, tx_to_trace) = super::split_block_tx_for_reexecution(&starknet_block, transaction_hash)?;
         let tx_type = TxType::from(&tx_to_trace[0]);

@@ -73,16 +73,22 @@ pub fn try_account_tx_from_broadcasted_tx(
     chain_id: Felt252Wrapper,
 ) -> Result<AccountTransaction, BroadcastedTransactionConversionError> {
     match tx {
-        BroadcastedTransaction::Invoke(tx) => try_account_tx_from_broadcasted_invoke_tx(tx, chain_id),
-        BroadcastedTransaction::Declare(tx) => try_account_tx_from_broadcasted_declare_tx(tx, chain_id),
-        BroadcastedTransaction::DeployAccount(tx) => try_account_tx_from_broadcasted_deploy_tx(tx, chain_id),
+        BroadcastedTransaction::Invoke(tx) => {
+            try_invoke_tx_from_broadcasted_invoke_tx(tx, chain_id).map(AccountTransaction::Invoke)
+        }
+        BroadcastedTransaction::Declare(tx) => {
+            try_declare_tx_from_broadcasted_declare_tx(tx, chain_id).map(AccountTransaction::Declare)
+        }
+        BroadcastedTransaction::DeployAccount(tx) => {
+            try_deploy_tx_from_broadcasted_deploy_tx(tx, chain_id).map(AccountTransaction::DeployAccount)
+        }
     }
 }
 
-pub fn try_account_tx_from_broadcasted_declare_tx(
+pub fn try_declare_tx_from_broadcasted_declare_tx(
     value: BroadcastedDeclareTransaction,
     chain_id: Felt252Wrapper,
-) -> Result<AccountTransaction, BroadcastedTransactionConversionError> {
+) -> Result<DeclareTransaction, BroadcastedTransactionConversionError> {
     let user_tx = match value {
         BroadcastedDeclareTransaction::V1(BroadcastedDeclareTransactionV1 {
             max_fee,
@@ -134,7 +140,7 @@ pub fn try_account_tx_from_broadcasted_declare_tx(
             let contract_class = instantiate_blockifier_contract_class(compresed_contract_class, decompressed_bytes)?;
             let tx_hash = tx.compute_hash(chain_id, is_query);
 
-            AccountTransaction::Declare({
+            {
                 let class_info = ClassInfo::new(&contract_class, 0, abi_length)?;
                 if is_query {
                     DeclareTransaction::new_for_query(tx, tx_hash, class_info)
@@ -142,7 +148,7 @@ pub fn try_account_tx_from_broadcasted_declare_tx(
                     DeclareTransaction::new(tx, tx_hash, class_info)
                 }
                 .map_err(|_| BroadcastedTransactionConversionError::InvalidTransactionVersion)?
-            })
+            }
         }
         BroadcastedDeclareTransaction::V2(BroadcastedDeclareTransactionV2 {
             max_fee,
@@ -183,7 +189,7 @@ pub fn try_account_tx_from_broadcasted_declare_tx(
                     .map_err(|_| BroadcastedTransactionConversionError::CasmContractClassConversionFailed)?,
             );
 
-            AccountTransaction::Declare({
+            {
                 let class_info = ClassInfo::new(&contract_class, sierra_program_length, abi_length)?;
                 if is_query {
                     DeclareTransaction::new_for_query(tx, tx_hash, class_info)
@@ -191,7 +197,7 @@ pub fn try_account_tx_from_broadcasted_declare_tx(
                     DeclareTransaction::new(tx, tx_hash, class_info)
                 }
                 .map_err(|_| BroadcastedTransactionConversionError::InvalidTransactionVersion)?
-            })
+            }
         }
         BroadcastedDeclareTransaction::V3(BroadcastedDeclareTransactionV3 {
             sender_address,
@@ -241,7 +247,7 @@ pub fn try_account_tx_from_broadcasted_declare_tx(
                     .map_err(|_| BroadcastedTransactionConversionError::CasmContractClassConversionFailed)?,
             );
 
-            AccountTransaction::Declare({
+            {
                 let class_info = ClassInfo::new(&contract_class, sierra_program_length, abi_length)?;
                 if is_query {
                     DeclareTransaction::new_for_query(tx, tx_hash, class_info)
@@ -249,7 +255,7 @@ pub fn try_account_tx_from_broadcasted_declare_tx(
                     DeclareTransaction::new(tx, tx_hash, class_info)
                 }
                 .map_err(|_| BroadcastedTransactionConversionError::InvalidTransactionVersion)?
-            })
+            }
         }
     };
 
@@ -417,10 +423,10 @@ fn casm_entry_point_to_compiled_entry_point(value: &CasmContractEntryPoint) -> C
     }
 }
 
-pub fn try_account_tx_from_broadcasted_invoke_tx(
+pub fn try_invoke_tx_from_broadcasted_invoke_tx(
     broadcasted_tx: BroadcastedInvokeTransaction,
     chain_id: Felt252Wrapper,
-) -> Result<AccountTransaction, BroadcastedTransactionConversionError> {
+) -> Result<InvokeTransaction, BroadcastedTransactionConversionError> {
     Ok(match broadcasted_tx {
         BroadcastedInvokeTransaction::V1(bc_tx) => {
             let tx = starknet_api::transaction::InvokeTransaction::V1(starknet_api::transaction::InvokeTransactionV1 {
@@ -439,7 +445,7 @@ pub fn try_account_tx_from_broadcasted_invoke_tx(
             });
             let tx_hash = tx.compute_hash(chain_id, bc_tx.is_query);
 
-            AccountTransaction::Invoke(InvokeTransaction { tx, tx_hash, only_query: bc_tx.is_query })
+            InvokeTransaction { tx, tx_hash, only_query: bc_tx.is_query }
         }
         BroadcastedInvokeTransaction::V3(bc_tx) => {
             let tx = starknet_api::transaction::InvokeTransaction::V3(starknet_api::transaction::InvokeTransactionV3 {
@@ -464,15 +470,15 @@ pub fn try_account_tx_from_broadcasted_invoke_tx(
             });
             let tx_hash = tx.compute_hash(chain_id, bc_tx.is_query);
 
-            AccountTransaction::Invoke(InvokeTransaction { tx, tx_hash, only_query: bc_tx.is_query })
+            InvokeTransaction { tx, tx_hash, only_query: bc_tx.is_query }
         }
     })
 }
 
-pub fn try_account_tx_from_broadcasted_deploy_tx(
+pub fn try_deploy_tx_from_broadcasted_deploy_tx(
     broadcasted_tx: BroadcastedDeployAccountTransaction,
     chain_id: Felt252Wrapper,
-) -> Result<AccountTransaction, BroadcastedTransactionConversionError> {
+) -> Result<DeployAccountTransaction, BroadcastedTransactionConversionError> {
     Ok(match broadcasted_tx {
         BroadcastedDeployAccountTransaction::V1(bc_tx) => {
             let tx = starknet_api::transaction::DeployAccountTransaction::V1(
@@ -499,12 +505,7 @@ pub fn try_account_tx_from_broadcasted_deploy_tx(
                 &tx.constructor_calldata(),
                 Default::default(),
             )?;
-            AccountTransaction::DeployAccount(DeployAccountTransaction {
-                tx,
-                tx_hash,
-                contract_address,
-                only_query: bc_tx.is_query,
-            })
+            DeployAccountTransaction { tx, tx_hash, contract_address, only_query: bc_tx.is_query }
         }
         BroadcastedDeployAccountTransaction::V3(bc_tx) => {
             let tx = starknet_api::transaction::DeployAccountTransaction::V3(
@@ -534,12 +535,7 @@ pub fn try_account_tx_from_broadcasted_deploy_tx(
                 &tx.constructor_calldata(),
                 Default::default(),
             )?;
-            AccountTransaction::DeployAccount(DeployAccountTransaction {
-                tx,
-                tx_hash,
-                contract_address,
-                only_query: bc_tx.is_query,
-            })
+            DeployAccountTransaction { tx, tx_hash, contract_address, only_query: bc_tx.is_query }
         }
     })
 }
@@ -620,7 +616,7 @@ mod tests {
         };
 
         let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V1(txn);
-        assert!(try_account_tx_from_broadcasted_declare_tx(input, Default::default()).is_ok());
+        assert!(try_declare_tx_from_broadcasted_declare_tx(input, Default::default()).is_ok());
     }
 
     #[test]
@@ -646,7 +642,7 @@ mod tests {
 
         let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V1(txn);
         assert_matches!(
-            try_account_tx_from_broadcasted_declare_tx(input, Default::default()),
+            try_declare_tx_from_broadcasted_declare_tx(input, Default::default()),
             Err(BroadcastedTransactionConversionError::ProgramDecompressionFailed)
         );
     }
@@ -666,7 +662,7 @@ mod tests {
         };
 
         let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V2(txn);
-        assert!(try_account_tx_from_broadcasted_declare_tx(input, Default::default()).is_ok());
+        assert!(try_declare_tx_from_broadcasted_declare_tx(input, Default::default()).is_ok());
     }
 
     #[test]
@@ -686,7 +682,7 @@ mod tests {
         let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V2(txn);
 
         assert_matches!(
-            try_account_tx_from_broadcasted_declare_tx(input, Default::default()),
+            try_declare_tx_from_broadcasted_declare_tx(input, Default::default()),
             Err(BroadcastedTransactionConversionError::InvalidCompiledClassHash)
         );
     }
