@@ -37,7 +37,6 @@ use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as G
 pub use pallet_starknet;
 use pallet_starknet::Call::{consume_l1_message, declare, deploy_account, invoke};
 pub use pallet_starknet::DefaultChainId;
-use pallet_starknet_runtime_api::StarknetTransactionExecutionError;
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -126,14 +125,6 @@ impl_runtime_apis! {
         }
     }
 
-
-    impl pallet_starknet_runtime_api::DecodeError<Block> for Runtime {
-         fn decode_error(dispatch_error: sp_runtime::DispatchError) -> String {
-              RuntimeError::from_dispatch_error(dispatch_error.clone())
-                .map(|e| alloc::format!("{e:?}"))
-                .unwrap_or_else(|| alloc::format!("{dispatch_error:?}"))
-         }
-    }
 
     impl sp_api::Metadata<Block> for Runtime {
         fn metadata() -> OpaqueMetadata {

@@ -1812,6 +1812,7 @@ where
 
         Ok(execution_info.0.clone())
     }
+}
 
 async fn submit_extrinsic<P, B>(
     pool: Arc<P>,

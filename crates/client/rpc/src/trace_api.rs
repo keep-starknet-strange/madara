@@ -1,5 +1,6 @@
 use blockifier::execution::contract_class::{ContractClass, ContractClassV1};
 use blockifier::execution::entry_point::CallInfo;
+use blockifier::state::cached_state::CommitmentStateDiff;
 use blockifier::transaction::objects::TransactionExecutionInfo;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
@@ -9,7 +10,7 @@ use mc_rpc_core::{StarknetReadRpcApiServer, StarknetTraceRpcApiServer};
 use mp_block::BlockTransactions;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
-use mp_simulations::{SimulationFlags, TransactionSimulationResult};
+use mp_simulations::SimulationFlags;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use mp_transactions::{DeclareTransaction, Transaction, TxType, UserOrL1HandlerTransaction, UserTransaction};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
@@ -26,7 +27,6 @@ use starknet_core::types::{
     SimulationFlag, StateDiff, TransactionTrace, TransactionTraceWithHash,
 };
 use starknet_ff::FieldElement;
-use thiserror::Error;
 
 use crate::errors::StarknetRpcApiError;
 use crate::Starknet;
@@ -383,38 +383,6 @@ fn tx_execution_infos_to_tx_trace(
     };
 
     Ok(tx_trace)
-}
-
-fn tx_execution_infos_to_simulated_transactions(
-    tx_types: Vec<TxType>,
-    transaction_execution_results: Vec<(CommitmentStateDiff, TransactionSimulationResult)>,
-) -> Result<Vec<SimulatedTransaction>, ConvertCallInfoToExecuteInvocationError> {
-    let mut results = vec![];
-    for (tx_type, (state_diff, res)) in tx_types.into_iter().zip(transaction_execution_results.into_iter()) {
-        match res {
-            Ok(tx_exec_info) => {
-                let state_diff = blockifier_to_rpc_state_diff_types(state_diff)
-                    .map_err(|_| ConvertCallInfoToExecuteInvocationError::ConvertStateDiffFailed)?;
-
-                let transaction_trace = tx_execution_infos_to_tx_trace(tx_type, &tx_exec_info, Some(state_diff))?;
-                let gas_consumed =
-                    tx_exec_info.execute_call_info.as_ref().map(|x| x.execution.gas_consumed).unwrap_or_default();
-                let overall_fee = tx_exec_info.actual_fee.0 as u64;
-                // TODO: Shouldn't the gas price be taken from the block header instead?
-                let gas_price = if gas_consumed > 0 { overall_fee / gas_consumed } else { 0 };
-
-                results.push(SimulatedTransaction {
-                    transaction_trace,
-                    fee_estimation: FeeEstimate { gas_consumed, gas_price, overall_fee },
-                });
-            }
-            Err(_) => {
-                return Err(ConvertCallInfoToExecuteInvocationError::TransactionExecutionFailed);
-            }
-        }
-    }
-
-    Ok(results)
 }
 
 pub fn map_transaction_to_user_transaction<A, B, BE, G, C, P, H>(

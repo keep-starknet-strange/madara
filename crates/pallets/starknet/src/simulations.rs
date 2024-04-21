@@ -51,7 +51,6 @@ impl<T: Config> Pallet<T> {
                     (Ok(execution_info), _) => {
                         log::error!(
                             "Transaction execution reverted during fee estimation: {}",
-                            // Safe due to the `match` branch order
                             &execution_info.revert_error.clone().unwrap()
                         );
                         Err(Error::TransactionExecutionFailed(execution_info.revert_error.unwrap().to_string()))
@@ -122,21 +121,19 @@ impl<T: Config> Pallet<T> {
         message: HandleL1MessageTransaction,
         simulation_flags: &SimulationFlags,
     ) -> Result<Result<TransactionExecutionInfo, Error>, Error> {
-        let mut res = None;
-
         storage::transactional::with_transaction(|| {
-            res = Some(Self::simulate_message_inner(message, simulation_flags));
-            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(()))
+            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::simulate_message_inner(
+                message,
+                simulation_flags,
+            )))
         })
-        .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?;
-
-        Ok(res.expect("`res` should have been set to `Some` at this point"))
+        .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?
     }
 
     fn simulate_message_inner(
         message: HandleL1MessageTransaction,
         simulation_flags: &SimulationFlags,
-    ) -> Result<TransactionExecutionInfo, Error> {
+    ) -> Result<Result<TransactionExecutionInfo, Error>, Error> {
         let chain_id = Self::chain_id();
         let block_context = Self::get_block_context();
         let mut execution_config =
@@ -152,10 +149,7 @@ impl<T: Config> Pallet<T> {
             Error::from(e)
         });
 
-        Self::execute_message(message, chain_id, &block_context, &execution_config).map_err(|e| {
-            log::error!("Transaction execution failed during simulation: {e}");
-            Error::from(e)
-        })
+        Ok(tx_execution_result)
     }
 
     pub fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), Error> {
@@ -209,34 +203,27 @@ impl<T: Config> Pallet<T> {
     pub fn re_execute_transactions(
         transactions_before: Vec<UserOrL1HandlerTransaction>,
         transactions_to_trace: Vec<UserOrL1HandlerTransaction>,
-    ) -> Result<
-        Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, Error>,
-        Error,
-    > {
+    ) -> Result<Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, Error>, Error> {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::re_execute_transactions_inner(
                 transactions_before,
                 transactions_to_trace,
             )))
         })
-        .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?;
-
-        res.expect("`res` should have been set to `Some` at this point")
+        .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?
     }
 
     fn re_execute_transactions_inner(
         transactions_before: Vec<UserOrL1HandlerTransaction>,
         transactions_to_trace: Vec<UserOrL1HandlerTransaction>,
-    ) -> Result<
-        Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, Error>,
-        Error,
-    > {
+    ) -> Result<Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, Error>, Error> {
         let chain_id = Self::chain_id();
         let block_context = Self::get_block_context();
         let execution_config = RuntimeExecutionConfigBuilder::new::<T>().build();
 
         Self::execute_user_or_l1_handler_transactions(chain_id, &block_context, &execution_config, transactions_before)
-            .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?;
+            .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?;
+
         let transactions_exec_infos = Self::execute_user_or_l1_handler_transactions(
             chain_id,
             &block_context,
@@ -291,8 +278,7 @@ impl<T: Config> Pallet<T> {
         block_context: &BlockContext,
         execution_config: &ExecutionConfig,
         transactions: Vec<UserOrL1HandlerTransaction>,
-    ) -> Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, PlaceHolderErrorTypeForFailedStarknetExecution>
-    {
+    ) -> Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, Error> {
         let exec_transactions: Vec<_> = transactions
             .iter()
             .map(|user_or_l1_tx| match user_or_l1_tx {
@@ -311,7 +297,7 @@ impl<T: Config> Pallet<T> {
                 Ok(info) => execution_infos.push((info, state_diff)),
                 Err(err) => {
                     log::error!("Transaction execution failed: {err}");
-                    return Err(PlaceHolderErrorTypeForFailedStarknetExecution);
+                    return Err(Error::from(err));
                 }
             }
         }

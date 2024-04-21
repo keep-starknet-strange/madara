@@ -9,7 +9,6 @@ use super::constants::TOKEN_CONTRACT_CLASS_HASH;
 use super::mock::default_mock::*;
 use super::mock::*;
 use crate::tests::utils::build_get_balance_contract_call;
-use crate::{Config, ContractClassHashes, Error};
 
 #[test]
 fn given_call_contract_call_works() {

@@ -18,7 +18,6 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 use mp_simulations::{Error, SimulationFlags, TransactionSimulationResult};
-use sp_runtime::DispatchError;
 use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::{StarkFelt, StarkHash};
@@ -73,7 +72,7 @@ sp_api::decl_runtime_apis! {
         ///
         /// Idealy, the execution traces of all of `transactions_to_trace`.
         /// If any of the transactions (from both arguments) fails, an error is returned.
-        fn re_execute_transactions(transactions: Vec<UserOrL1HandlerTransaction>) -> Result<Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, Error>, Error>;
+        fn re_execute_transactions(transactions_before: Vec<UserOrL1HandlerTransaction>, transactions_to_trace: Vec<UserOrL1HandlerTransaction>) -> Result<Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, Error>, Error>;
 
         fn get_index_and_tx_for_tx_hash(xts: Vec<<Block as BlockT>::Extrinsic>, chain_id: Felt252Wrapper, tx_hash: Felt252Wrapper) -> Option<(u32, Transaction)>;
 
@@ -98,10 +97,6 @@ sp_api::decl_runtime_apis! {
         fn convert_l1_transaction(transaction: HandleL1MessageTransaction, fee: Fee) -> <Block as BlockT>::Extrinsic;
     }
 
-   pub trait DecodeError {
-       ///Decodes `DispatchErrors` into String errors for release into the RPC
-        fn decode_error(dispatch_error: DispatchError) -> String;
-    }
 }
 
 #[derive(Clone, Debug, parity_scale_codec::Encode, parity_scale_codec::Decode, scale_info::TypeInfo)]
