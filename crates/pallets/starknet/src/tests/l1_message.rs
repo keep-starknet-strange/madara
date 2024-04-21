@@ -10,7 +10,6 @@ use starknet_api::transaction::Fee;
 
 use super::mock::default_mock::*;
 use super::mock::*;
-use crate::errors::BlockifierErrors;
 use crate::{Call, Error, InvalidTransaction, L1Messages};
 
 #[test]
@@ -148,10 +147,9 @@ fn fail_if_no_fee() {
             ],
         };
 
-        let message = "".to_string();
         assert_err!(
             Starknet::consume_l1_message(RuntimeOrigin::none(), transaction, Fee(0)),
-            Error::<MockRuntime>::TransactionExecutionFailed(BlockifierErrors(message))
+            Error::<MockRuntime>::TransactionExecutionFailed
         );
 
         let storage_key = (

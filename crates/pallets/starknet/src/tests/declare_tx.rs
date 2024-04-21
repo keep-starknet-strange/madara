@@ -14,7 +14,6 @@ use starknet_crypto::FieldElement;
 use super::mock::default_mock::*;
 use super::mock::*;
 use super::utils::{get_contract_class, sign_message_hash};
-use crate::errors::BlockifierErrors;
 use crate::tests::{get_declare_dummy, set_nonce};
 use crate::{Config, Error};
 
@@ -130,11 +129,9 @@ fn given_contract_declare_on_openzeppelin_account_with_incorrect_signature_then_
             Err(TransactionValidityError::Invalid(_))
         );
 
-        let message = "".to_string();
-
         assert_err!(
             Starknet::declare(none_origin, transaction.into(), erc20_class),
-            Error::<MockRuntime>::TransactionExecutionFailed(BlockifierErrors(message))
+            Error::<MockRuntime>::TransactionExecutionFailed
         );
     });
 }
@@ -191,11 +188,9 @@ fn given_contract_declare_on_braavos_account_with_incorrect_signature_then_it_fa
             Err(TransactionValidityError::Invalid(_))
         );
 
-        let message = "".to_string();
-
         assert_err!(
             Starknet::declare(none_origin, transaction.into(), erc20_class),
-            Error::<MockRuntime>::TransactionExecutionFailed(BlockifierErrors(message))
+            Error::<MockRuntime>::TransactionExecutionFailed
         );
     });
 }
@@ -252,11 +247,9 @@ fn given_contract_declare_on_argent_account_with_incorrect_signature_then_it_fai
             Err(TransactionValidityError::Invalid(_))
         );
 
-        let message = "".to_string();
-
         assert_err!(
             Starknet::declare(none_origin, transaction.into(), erc20_class),
-            Error::<MockRuntime>::TransactionExecutionFailed(BlockifierErrors(message))
+            Error::<MockRuntime>::TransactionExecutionFailed
         );
     });
 }

@@ -55,6 +55,8 @@ use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash};
 /// Import the types.
 pub use types::*;
+// For `format!`
+extern crate alloc;
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -120,6 +122,15 @@ impl_runtime_apis! {
         fn initialize_block(header: &<Block as BlockT>::Header) {
             Executive::initialize_block(header)
         }
+    }
+
+
+    impl pallet_starknet_runtime_api::DecodeError<Block> for Runtime {
+         fn decode_error(dispatch_error: sp_runtime::DispatchError) -> String {
+              RuntimeError::from_dispatch_error(dispatch_error.clone())
+                .map(|e| alloc::format!("{e:?}"))
+                .unwrap_or_else(|| alloc::format!("{dispatch_error:?}"))
+         }
     }
 
     impl sp_api::Metadata<Block> for Runtime {

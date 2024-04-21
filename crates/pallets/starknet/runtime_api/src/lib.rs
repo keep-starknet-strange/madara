@@ -20,6 +20,7 @@ use alloc::vec::Vec;
 use mp_simulations::{
     Error, PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult,
 };
+use sp_runtime::DispatchError;
 use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::{StarkFelt, StarkHash};
@@ -87,6 +88,11 @@ sp_api::decl_runtime_apis! {
 
         /// Converts the L1 Message transaction to an UncheckedExtrinsic for submission to the pool.
         fn convert_l1_transaction(transaction: HandleL1MessageTransaction, fee: Fee) -> <Block as BlockT>::Extrinsic;
+    }
+
+   pub trait DecodeError {
+       ///Decodes `DispatchErrors` into String errors for release into the RPC
+        fn decode_error(dispatch_error: DispatchError) -> String;
     }
 }
 

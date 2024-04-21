@@ -40,8 +40,6 @@
 pub use pallet::*;
 /// An adapter for the blockifier state related traits
 pub mod blockifier_state_adapter;
-/// BlockifierError Wrappers
-pub mod errors;
 /// The implementation of the execution configuration.
 pub mod execution_config;
 #[cfg(feature = "std")]
@@ -100,7 +98,6 @@ use starknet_crypto::FieldElement;
 use transaction_validation::TxPriorityInfo;
 
 use crate::alloc::string::ToString;
-use crate::errors::BlockifierErrors;
 use crate::execution_config::RuntimeExecutionConfigBuilder;
 use crate::types::{CasmClassHash, SierraClassHash, SierraOrCasmClassHash, StorageSlot};
 
@@ -411,7 +408,7 @@ pub mod pallet {
     #[pallet::error]
     pub enum Error<T> {
         AccountNotDeployed,
-        TransactionExecutionFailed(BlockifierErrors),
+        TransactionExecutionFailed,
         ClassHashAlreadyDeclared,
         ContractClassHashUnknown,
         ContractClassAlreadyAssociated,
@@ -504,8 +501,7 @@ pub mod pallet {
                 )
                 .map_err(|e| {
                     log::error!("failed to execute invoke tx: {:?}", e);
-                    print!("check2: {:?}", e.to_string());
-                    Error::<T>::TransactionExecutionFailed(BlockifierErrors(e.to_string()))
+                    Error::<T>::TransactionExecutionFailed
                 })?;
 
             let tx_hash = transaction.tx_hash;
@@ -564,7 +560,7 @@ pub mod pallet {
                     &Self::get_block_context(),
                     &RuntimeExecutionConfigBuilder::new::<T>().build(),
                 )
-                .map_err(|e| Error::<T>::TransactionExecutionFailed(BlockifierErrors(e.to_string())))?;
+                .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
             let tx_hash = transaction.tx_hash();
             Self::emit_and_store_tx_and_fees_events(
@@ -618,7 +614,7 @@ pub mod pallet {
                 )
                 .map_err(|e| {
                     log::error!("failed to deploy account: {:?}", e);
-                    Error::<T>::TransactionExecutionFailed(BlockifierErrors(e.to_string()))
+                    Error::<T>::TransactionExecutionFailed
                 })?;
 
             let tx_hash = transaction.tx_hash;
@@ -682,7 +678,7 @@ pub mod pallet {
                 )
                 .map_err(|e| {
                     log::error!("Failed to consume l1 message: {}", e);
-                    Error::<T>::TransactionExecutionFailed(BlockifierErrors(e.to_string()))
+                    Error::<T>::TransactionExecutionFailed
                 })?;
 
             let tx_hash = transaction.tx_hash;

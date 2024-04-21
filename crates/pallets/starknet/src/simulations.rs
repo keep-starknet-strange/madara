@@ -49,10 +49,10 @@ impl<T: Config> Pallet<T> {
                         Err(mp_simulations::Error::TransactionExecutionFailed(e.to_string()))
                     }
                     Ok(execution_info) => {
-                        //log::error!(
-                            //"Transaction execution reverted during fee estimation: {}",
-                            //// Safe due to the `match` branch order
-                            //execution_info.revert_error.unwrap()
+                        // log::error!(
+                        //"Transaction execution reverted during fee estimation: {}",
+                        //// Safe due to the `match` branch order
+                        // execution_info.revert_error.unwrap()
                         //);
                         Err(mp_simulations::Error::TransactionExecutionFailed(
                             execution_info.revert_error.unwrap().to_string(),
@@ -190,10 +190,10 @@ impl<T: Config> Pallet<T> {
                 Err(mp_simulations::Error::TransactionExecutionFailed(e.to_string()))
             }
             Ok(execution_info) => {
-                //log::error!(
-                    //"Transaction execution reverted during fee estimation: {}",
-                    //// Safe due to the `match` branch order
-                    //execution_info.revert_error.unwrap()
+                // log::error!(
+                //"Transaction execution reverted during fee estimation: {}",
+                //// Safe due to the `match` branch order
+                // execution_info.revert_error.unwrap()
                 //);
                 Err(mp_simulations::Error::TransactionExecutionFailed(execution_info.revert_error.unwrap().to_string()))
             }
