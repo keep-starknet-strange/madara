@@ -84,4 +84,3 @@ fn given_call_contract_call_works() {
         pretty_assertions::assert_eq!(res, vec![Felt252Wrapper::from_hex_be("0x02").unwrap()]);
     });
 }
-

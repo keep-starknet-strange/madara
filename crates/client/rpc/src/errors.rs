@@ -32,8 +32,8 @@ pub enum StarknetRpcApiError {
     TooManyKeysInFilter,
     #[error("Failed to fetch pending transactions")]
     FailedToFetchPendingTransactions,
-    #[error("Contract Error: {0}")]
-    ContractError(String),
+    #[error(transparent)]
+    ContractError(#[from] ContractError),
     #[error("Invalid contract class")]
     InvalidContractClass,
     #[error("Class already declared")]
@@ -48,6 +48,12 @@ pub enum StarknetRpcApiError {
     UnimplementedMethod,
     #[error("Too many storage keys requested")]
     ProofLimitExceeded,
+}
+
+#[derive(Debug, Error)]
+#[error("Contract Error")]
+pub struct ContractError {
+    revert_error: String,
 }
 
 #[derive(Debug)]
@@ -91,20 +97,45 @@ impl From<StarknetRpcApiError> for jsonrpsee::core::Error {
             StarknetRpcApiError::ProofLimitExceeded => 10000,
         };
 
-        jsonrpsee::core::Error::Call(CallError::Custom(ErrorObject::owned(code, err.to_string(), None::<()>)))
+        let data = match &err {
+            StarknetRpcApiError::ContractError(ref error) => Some(serde_json::json!({
+                "revert_error": error.revert_error
+            })),
+            _ => None,
+        };
+
+        jsonrpsee::core::Error::Call(CallError::Custom(ErrorObject::owned(code, err.to_string(), data)))
+    }
+}
+
+impl From<String> for ContractError {
+    fn from(value: String) -> Self {
+        ContractError { revert_error: value }
+    }
+}
+
+impl From<TransactionExecutionError> for ContractError {
+    fn from(e: TransactionExecutionError) -> Self {
+        ContractError { revert_error: e.to_string() }
+    }
+}
+
+impl From<PlaceHolderErrorTypeForFailedStarknetExecution> for ContractError {
+    fn from(e: PlaceHolderErrorTypeForFailedStarknetExecution) -> Self {
+        let format = format!("{:?}", e);
+        ContractError { revert_error: format }
     }
 }
 
 impl From<TransactionExecutionError> for StarknetRpcApiError {
     fn from(e: TransactionExecutionError) -> Self {
-        StarknetRpcApiError::ContractError(e.to_string())
+        StarknetRpcApiError::ContractError(e.into())
     }
 }
 
 impl From<PlaceHolderErrorTypeForFailedStarknetExecution> for StarknetRpcApiError {
     fn from(e: PlaceHolderErrorTypeForFailedStarknetExecution) -> Self {
-        let format = format!("{:?}", e);
-        StarknetRpcApiError::ContractError(format)
+        StarknetRpcApiError::ContractError(e.into())
     }
 }
 
@@ -112,7 +143,7 @@ impl From<mp_simulations::Error> for StarknetRpcApiError {
     fn from(value: mp_simulations::Error) -> Self {
         match value {
             mp_simulations::Error::ContractNotFound(address) => StarknetRpcApiError::ContractNotFound(address.into()),
-            mp_simulations::Error::TransactionExecutionFailed(e) => StarknetRpcApiError::ContractError(e),
+            mp_simulations::Error::TransactionExecutionFailed(e) => StarknetRpcApiError::ContractError(e.into()),
             mp_simulations::Error::MissingL1GasUsage => StarknetRpcApiError::InternalServerError,
             mp_simulations::Error::FailedToCreateATransactionalStorageExecution => {
                 StarknetRpcApiError::InternalServerError

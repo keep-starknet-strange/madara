@@ -5,7 +5,8 @@ pub extern crate alloc;
 
 use alloc::vec::Vec;
 
-use blockifier::{transaction::objects::TransactionExecutionInfo, execution::entry_point::EntryPointExecutionResult};
+use blockifier::execution::entry_point::EntryPointExecutionResult;
+use blockifier::transaction::objects::TransactionExecutionInfo;
 use starknet_api::api_core::ContractAddress;
 use starknet_core::types::SimulationFlag;
 
