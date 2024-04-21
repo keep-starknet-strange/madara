@@ -40,17 +40,13 @@ where
         entry_point_selector: EntryPointSelector,
         calldata: Calldata,
     ) -> RpcApiResult<Vec<Felt252Wrapper>> {
-        self.client
-            .runtime_api()
-            .call(best_block_hash, contract_address, entry_point_selector, calldata)
-            .map_err(|e| {
+        // simulation error
+        Ok(self.client.runtime_api().call(best_block_hash, contract_address, entry_point_selector, calldata).map_err(
+            |e| {
                 error!("Request parameters error: {e}");
                 StarknetRpcApiError::InternalServerError
-            })?
-            .map_err(|e| {
-                // TODO: replace this
-                StarknetRpcApiError::ContractError
-            })
+            },
+        )??)
     }
 
     pub fn do_estimate_message_fee(
@@ -58,17 +54,10 @@ where
         block_hash: B::Hash,
         message: HandleL1MessageTransaction,
     ) -> RpcApiResult<(u128, u64, u64)> {
-        self.client
-            .runtime_api()
-            .estimate_message_fee(block_hash, message)
-            .map_err(|e| {
-                error!("Runtime Api error: {e}");
-                StarknetRpcApiError::InternalServerError
-            })?
-            .map_err(|e| {
-                error!("Function execution failed: {:#?}", e);
-                StarknetRpcApiError::ContractError
-            })
+        Ok(self.client.runtime_api().estimate_message_fee(block_hash, message).map_err(|e| {
+            error!("Runtime Api error: {e}");
+            StarknetRpcApiError::InternalServerError
+        })??)
     }
 
     pub fn do_get_tx_execution_outcome(
@@ -115,17 +104,10 @@ where
         block_hash: B::Hash,
         transactions: Vec<UserTransaction>,
     ) -> RpcApiResult<Vec<(u64, u64)>> {
-        self.client
-            .runtime_api()
-            .estimate_fee(block_hash, transactions)
-            .map_err(|e| {
-                error!("Request parameters error: {e}");
-                StarknetRpcApiError::InternalServerError
-            })?
-            .map_err(|e| {
-                error!("Failed to call function: {:#?}", e);
-                StarknetRpcApiError::ContractError
-            })
+        Ok(self.client.runtime_api().estimate_fee(block_hash, transactions).map_err(|e| {
+            error!("Request parameters error: {e}");
+            StarknetRpcApiError::InternalServerError
+        })??)
     }
     pub fn get_best_block_hash(&self) -> B::Hash {
         self.client.info().best_hash
@@ -210,7 +192,7 @@ where
             })?
             .map_err(|e| {
                 error!("Failed to call function: {:#?}", e);
-                StarknetRpcApiError::ContractError
+                StarknetRpcApiError::from(e)
             })?
             .swap_remove(0)
             .1
@@ -236,7 +218,7 @@ where
             })?
             .map_err(|e| {
                 error!("Failed to call function: {:#?}", e);
-                StarknetRpcApiError::ContractError
+                StarknetRpcApiError::from(e)
             })?
             .map_err(|e| {
                 error!("Failed to simulate L1 Message: {:?}", e);

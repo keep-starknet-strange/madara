@@ -920,7 +920,7 @@ impl<T: Config> Pallet<T> {
             }
             Err(e) => {
                 log!(error, "failed to call smart contract {:?}", e);
-                Err(mp_simulations::Error::TransactionExecutionFailed)
+                Err(mp_simulations::Error::TransactionExecutionFailed(e.to_string()))
             }
         }
     }

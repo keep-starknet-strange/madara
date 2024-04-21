@@ -82,7 +82,7 @@ where
             })?
             .map_err(|e| {
                 error!("Failed to call function: {:#?}", e);
-                StarknetRpcApiError::ContractError
+                StarknetRpcApiError::from(e)
             })?;
 
         let mut simulated_transactions = vec![];
@@ -106,7 +106,7 @@ where
                     });
                 }
                 Err(e) => {
-                    return Err(StarknetRpcApiError::ContractError.into());
+                    return Err(StarknetRpcApiError::from(e).into());
                 }
             }
         }

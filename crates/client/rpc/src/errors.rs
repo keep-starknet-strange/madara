@@ -1,5 +1,9 @@
+use core::fmt;
+
 use blockifier::transaction::errors::TransactionExecutionError;
 use jsonrpsee::types::error::{CallError, ErrorObject};
+use mp_simulations::PlaceHolderErrorTypeForFailedStarknetExecution;
+use starknet_api::api_core::ContractAddress;
 use thiserror::Error;
 
 // Comes from the RPC Spec:
@@ -8,8 +12,8 @@ use thiserror::Error;
 pub enum StarknetRpcApiError {
     #[error("Failed to write transaction")]
     FailedToReceiveTxn,
-    #[error("Contract not found")]
-    ContractNotFound,
+    #[error("Contract not found: {0}")]
+    ContractNotFound(DisplayableContractAddress),
     #[error("Block not found")]
     BlockNotFound,
     #[error("Invalid transaction index in a block")]
@@ -28,8 +32,8 @@ pub enum StarknetRpcApiError {
     TooManyKeysInFilter,
     #[error("Failed to fetch pending transactions")]
     FailedToFetchPendingTransactions,
-    #[error("Contract Error")]
-    ContractError,
+    #[error("Contract Error: {0}")]
+    ContractError(String),
     #[error("Invalid contract class")]
     InvalidContractClass,
     #[error("Class already declared")]
@@ -46,11 +50,28 @@ pub enum StarknetRpcApiError {
     ProofLimitExceeded,
 }
 
+#[derive(Debug)]
+pub struct DisplayableContractAddress(pub ContractAddress);
+
+impl fmt::Display for DisplayableContractAddress {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // unwrapping all the layers of different types to get display from starkhash
+        let address = &self.0.0.0;
+        write!(f, "{}", address)
+    }
+}
+
+impl From<ContractAddress> for DisplayableContractAddress {
+    fn from(value: ContractAddress) -> Self {
+        DisplayableContractAddress(value)
+    }
+}
+
 impl From<StarknetRpcApiError> for jsonrpsee::core::Error {
     fn from(err: StarknetRpcApiError) -> Self {
         let code = match err {
             StarknetRpcApiError::FailedToReceiveTxn => 1,
-            StarknetRpcApiError::ContractNotFound => 20,
+            StarknetRpcApiError::ContractNotFound(_) => 20,
             StarknetRpcApiError::BlockNotFound => 24,
             StarknetRpcApiError::InvalidTxnIndex => 27,
             StarknetRpcApiError::ClassHashNotFound => 28,
@@ -60,7 +81,7 @@ impl From<StarknetRpcApiError> for jsonrpsee::core::Error {
             StarknetRpcApiError::InvalidContinuationToken => 33,
             StarknetRpcApiError::TooManyKeysInFilter => 34,
             StarknetRpcApiError::FailedToFetchPendingTransactions => 38,
-            StarknetRpcApiError::ContractError => 40,
+            StarknetRpcApiError::ContractError(_) => 40,
             StarknetRpcApiError::InvalidContractClass => 50,
             StarknetRpcApiError::ClassAlreadyDeclared => 51,
             StarknetRpcApiError::ValidationFailure => 55,
@@ -75,16 +96,23 @@ impl From<StarknetRpcApiError> for jsonrpsee::core::Error {
 }
 
 impl From<TransactionExecutionError> for StarknetRpcApiError {
-    fn from(value: TransactionExecutionError) -> Self {
-        StarknetRpcApiError::ContractError
+    fn from(e: TransactionExecutionError) -> Self {
+        StarknetRpcApiError::ContractError(e.to_string())
+    }
+}
+
+impl From<PlaceHolderErrorTypeForFailedStarknetExecution> for StarknetRpcApiError {
+    fn from(e: PlaceHolderErrorTypeForFailedStarknetExecution) -> Self {
+        let format = format!("{:?}", e);
+        StarknetRpcApiError::ContractError(format)
     }
 }
 
 impl From<mp_simulations::Error> for StarknetRpcApiError {
     fn from(value: mp_simulations::Error) -> Self {
         match value {
-            mp_simulations::Error::ContractNotFound(_) => StarknetRpcApiError::ContractNotFound,
-            mp_simulations::Error::TransactionExecutionFailed => StarknetRpcApiError::ContractError,
+            mp_simulations::Error::ContractNotFound(address) => StarknetRpcApiError::ContractNotFound(address.into()),
+            mp_simulations::Error::TransactionExecutionFailed(e) => StarknetRpcApiError::ContractError(e),
             mp_simulations::Error::MissingL1GasUsage => StarknetRpcApiError::InternalServerError,
             mp_simulations::Error::FailedToCreateATransactionalStorageExecution => {
                 StarknetRpcApiError::InternalServerError

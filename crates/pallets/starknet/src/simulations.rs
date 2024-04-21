@@ -46,15 +46,17 @@ impl<T: Config> Pallet<T> {
                     Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
                     Err(e) => {
                         log::error!("Transaction execution failed during fee estimation: {e}");
-                        Err(mp_simulations::Error::TransactionExecutionFailed)
+                        Err(mp_simulations::Error::TransactionExecutionFailed(e.to_string()))
                     }
                     Ok(execution_info) => {
-                        log::error!(
-                            "Transaction execution reverted during fee estimation: {}",
-                            // Safe due to the `match` branch order
-                            execution_info.revert_error.unwrap()
-                        );
-                        Err(mp_simulations::Error::TransactionExecutionFailed)
+                        //log::error!(
+                            //"Transaction execution reverted during fee estimation: {}",
+                            //// Safe due to the `match` branch order
+                            //execution_info.revert_error.unwrap()
+                        //);
+                        Err(mp_simulations::Error::TransactionExecutionFailed(
+                            execution_info.revert_error.unwrap().to_string(),
+                        ))
                     }
                 }
             })
@@ -71,7 +73,8 @@ impl<T: Config> Pallet<T> {
 
         let mut fees = Vec::with_capacity(transactions_len);
         for fee_res in fee_res_iterator {
-            fees.push(fee_res??);
+            let res = fee_res??;
+            fees.push(res);
         }
 
         Ok(fees)
@@ -171,29 +174,30 @@ impl<T: Config> Pallet<T> {
         let chain_id = Self::chain_id();
 
         // Follow `offset` from Pallet Starknet where it is set to false
-        let tx_execution_infos =
-            match message.into_executable::<T::SystemHash>(chain_id, Fee(u128::MAX), false).execute(
+        let tx_execution_infos = match message
+            .into_executable::<T::SystemHash>(chain_id, Fee(u128::MAX), false)
+            .execute(
                 &mut BlockifierStateAdapter::<T>::default(),
                 &Self::get_block_context(),
                 &RuntimeExecutionConfigBuilder::new::<T>().with_query_mode().with_disable_nonce_validation().build(),
             ) {
-                Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
-                Err(e) => {
-                    log::error!(
-                        "Transaction execution failed during fee estimation: {e} {:?}",
-                        std::error::Error::source(&e)
-                    );
-                    Err(mp_simulations::Error::TransactionExecutionFailed)
-                }
-                Ok(execution_info) => {
-                    log::error!(
-                        "Transaction execution reverted during fee estimation: {}",
-                        // Safe due to the `match` branch order
-                        execution_info.revert_error.unwrap()
-                    );
-                    Err(mp_simulations::Error::TransactionExecutionFailed)
-                }
-            }?;
+            Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
+            Err(e) => {
+                log::error!(
+                    "Transaction execution failed during fee estimation: {e} {:?}",
+                    std::error::Error::source(&e)
+                );
+                Err(mp_simulations::Error::TransactionExecutionFailed(e.to_string()))
+            }
+            Ok(execution_info) => {
+                //log::error!(
+                    //"Transaction execution reverted during fee estimation: {}",
+                    //// Safe due to the `match` branch order
+                    //execution_info.revert_error.unwrap()
+                //);
+                Err(mp_simulations::Error::TransactionExecutionFailed(execution_info.revert_error.unwrap().to_string()))
+            }
+        }?;
 
         if let Some(l1_gas_usage) = tx_execution_infos.actual_resources.0.get("l1_gas_usage") {
             Ok((T::L1GasPrice::get().price_in_wei, tx_execution_infos.actual_fee.0 as u64, *l1_gas_usage))

@@ -45,7 +45,6 @@ use sp_blockchain::HeaderBackend;
 use sp_core::H256;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use sp_runtime::transaction_validity::InvalidTransaction;
-use sp_runtime::DispatchError;
 use starknet_api::block::BlockHash;
 use starknet_api::hash::StarkHash;
 use starknet_api::transaction::{Calldata, TransactionHash};
@@ -641,7 +640,7 @@ where
             .get_storage_by_storage_key(substrate_block_hash, contract_address, key)
             .ok_or_else(|| {
                 error!("Failed to retrieve storage at '{contract_address:?}' and '{key:?}'");
-                StarknetRpcApiError::ContractNotFound
+                StarknetRpcApiError::ContractNotFound(contract_address.into())
             })?;
 
         Ok(Felt(Felt252Wrapper::from(value).into()))
@@ -717,7 +716,7 @@ where
             .contract_class_by_address(substrate_block_hash, contract_address_wrapped)
             .ok_or_else(|| {
                 error!("Failed to retrieve contract class at '{contract_address}'");
-                StarknetRpcApiError::ContractNotFound
+                StarknetRpcApiError::ContractNotFound(contract_address_wrapped.into())
             })?;
 
         Ok(blockifier_to_rpc_contract_class_types(contract_class).map_err(|e| {
@@ -751,7 +750,7 @@ where
             .contract_class_hash_by_address(substrate_block_hash, contract_address)
             .ok_or_else(|| {
                 error!("Failed to retrieve contract class hash at '{contract_address:?}'");
-                StarknetRpcApiError::ContractNotFound
+                StarknetRpcApiError::ContractNotFound(contract_address.into())
             })?;
 
         Ok(Felt(Felt252Wrapper::from(class_hash).into()))
@@ -964,7 +963,7 @@ where
             .nonce(substrate_block_hash, contract_address)
             .ok_or_else(|| {
                 error!("Failed to get nonce at '{contract_address:?}'");
-                StarknetRpcApiError::ContractNotFound
+                StarknetRpcApiError::ContractNotFound(contract_address.into())
             })?;
 
         Ok(Felt(Felt252Wrapper::from(nonce).into()))
