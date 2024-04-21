@@ -3,7 +3,7 @@
 //! It uses the madara client and backend in order to answer queries.
 
 mod constants;
-pub mod errors;
+mod errors;
 mod events;
 mod madara_backend_client;
 mod runtime_api;

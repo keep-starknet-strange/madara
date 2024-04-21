@@ -2,7 +2,6 @@ use core::fmt;
 
 use blockifier::transaction::errors::TransactionExecutionError;
 use jsonrpsee::types::error::{CallError, ErrorObject};
-use mp_simulations::PlaceHolderErrorTypeForFailedStarknetExecution;
 use starknet_api::api_core::ContractAddress;
 use thiserror::Error;
 
@@ -120,21 +119,8 @@ impl From<TransactionExecutionError> for ContractError {
     }
 }
 
-impl From<PlaceHolderErrorTypeForFailedStarknetExecution> for ContractError {
-    fn from(e: PlaceHolderErrorTypeForFailedStarknetExecution) -> Self {
-        let format = format!("{:?}", e);
-        ContractError { revert_error: format }
-    }
-}
-
 impl From<TransactionExecutionError> for StarknetRpcApiError {
     fn from(e: TransactionExecutionError) -> Self {
-        StarknetRpcApiError::ContractError(e.into())
-    }
-}
-
-impl From<PlaceHolderErrorTypeForFailedStarknetExecution> for StarknetRpcApiError {
-    fn from(e: PlaceHolderErrorTypeForFailedStarknetExecution) -> Self {
         StarknetRpcApiError::ContractError(e.into())
     }
 }

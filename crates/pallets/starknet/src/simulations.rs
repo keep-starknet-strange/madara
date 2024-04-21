@@ -7,7 +7,7 @@ use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
 use frame_support::storage;
 use mp_felt::Felt252Wrapper;
-use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult};
+use mp_simulations::{Error, SimulationFlags, TransactionSimulationResult};
 use mp_transactions::execution::{Execute, ExecutionConfig};
 use mp_transactions::{HandleL1MessageTransaction, UserOrL1HandlerTransaction, UserTransaction};
 use sp_core::Get;
@@ -19,19 +19,19 @@ use crate::execution_config::RuntimeExecutionConfigBuilder;
 use crate::{Config, Pallet};
 
 impl<T: Config> Pallet<T> {
-    pub fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, mp_simulations::Error> {
+    pub fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, Error> {
         let mut res = None;
 
         storage::transactional::with_transaction(|| {
             res = Some(Self::estimate_fee_inner(transactions));
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(()))
         })
-        .map_err(|_| mp_simulations::Error::FailedToCreateATransactionalStorageExecution)?;
+        .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?;
 
         res.expect("`res` should have been set to `Some` at this point")
     }
 
-    fn estimate_fee_inner(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, mp_simulations::Error> {
+    fn estimate_fee_inner(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, Error> {
         let transactions_len = transactions.len();
         let chain_id = Self::chain_id();
         let block_context = Self::get_block_context();
@@ -46,17 +46,15 @@ impl<T: Config> Pallet<T> {
                     Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
                     Err(e) => {
                         log::error!("Transaction execution failed during fee estimation: {e}");
-                        Err(mp_simulations::Error::TransactionExecutionFailed(e.to_string()))
+                        Err(Error::from(e))
                     }
                     Ok(execution_info) => {
-                        // log::error!(
-                        //"Transaction execution reverted during fee estimation: {}",
-                        //// Safe due to the `match` branch order
-                        // execution_info.revert_error.unwrap()
-                        //);
-                        Err(mp_simulations::Error::TransactionExecutionFailed(
-                            execution_info.revert_error.unwrap().to_string(),
-                        ))
+                        log::error!(
+                            "Transaction execution reverted during fee estimation: {}",
+                            // Safe due to the `match` branch order
+                            &execution_info.revert_error.clone().unwrap()
+                        );
+                        Err(Error::TransactionExecutionFailed(execution_info.revert_error.unwrap().to_string()))
                     }
                 }
             })
@@ -66,7 +64,7 @@ impl<T: Config> Pallet<T> {
                         .actual_resources
                         .0
                         .get("l1_gas_usage")
-                        .ok_or(mp_simulations::Error::MissingL1GasUsage)
+                        .ok_or(Error::MissingL1GasUsage)
                         .map(|l1_gas_usage| (exec_info.actual_fee.0 as u64, *l1_gas_usage))
                 })
             });
@@ -82,14 +80,14 @@ impl<T: Config> Pallet<T> {
     pub fn simulate_transactions(
         transactions: Vec<UserTransaction>,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, mp_simulations::Error> {
+    ) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, Error> {
         let mut res = None;
 
         storage::transactional::with_transaction(|| {
             res = Some(Self::simulate_transactions_inner(transactions, simulation_flags));
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(()))
         })
-        .map_err(|_| mp_simulations::Error::FailedToCreateATransactionalStorageExecution)?;
+        .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?;
 
         Ok(res.expect("`res` should have been set to `Some` at this point"))
     }
@@ -111,7 +109,7 @@ impl<T: Config> Pallet<T> {
                 let res = Self::execute_transaction_with_state_diff(tx, chain_id, &block_context, &execution_config);
                 let result = res.0.map_err(|e| {
                     log::error!("Transaction execution failed during simulation: {e}");
-                    PlaceHolderErrorTypeForFailedStarknetExecution
+                    Error::from(e)
                 });
                 (res.1, result)
             })
@@ -123,15 +121,14 @@ impl<T: Config> Pallet<T> {
     pub fn simulate_message(
         message: HandleL1MessageTransaction,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, mp_simulations::Error>
-    {
+    ) -> Result<Result<TransactionExecutionInfo, Error>, Error> {
         let mut res = None;
 
         storage::transactional::with_transaction(|| {
             res = Some(Self::simulate_message_inner(message, simulation_flags));
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(()))
         })
-        .map_err(|_| mp_simulations::Error::FailedToCreateATransactionalStorageExecution)?;
+        .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?;
 
         Ok(res.expect("`res` should have been set to `Some` at this point"))
     }
@@ -139,7 +136,7 @@ impl<T: Config> Pallet<T> {
     fn simulate_message_inner(
         message: HandleL1MessageTransaction,
         simulation_flags: &SimulationFlags,
-    ) -> Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution> {
+    ) -> Result<TransactionExecutionInfo, Error> {
         let chain_id = Self::chain_id();
         let block_context = Self::get_block_context();
         let mut execution_config =
@@ -150,85 +147,75 @@ impl<T: Config> Pallet<T> {
 
         Self::execute_message(message, chain_id, &block_context, &execution_config).map_err(|e| {
             log::error!("Transaction execution failed during simulation: {e}");
-            PlaceHolderErrorTypeForFailedStarknetExecution
+            Error::from(e)
         })
     }
 
-    pub fn estimate_message_fee(
-        message: HandleL1MessageTransaction,
-    ) -> Result<(u128, u64, u64), mp_simulations::Error> {
+    pub fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), Error> {
         let mut res = None;
 
         storage::transactional::with_transaction(|| {
             res = Some(Self::estimate_message_fee_inner(message));
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(()))
         })
-        .map_err(|_| mp_simulations::Error::FailedToCreateATransactionalStorageExecution)?;
+        .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?;
 
         res.expect("`res` should have been set to `Some` at this point")
     }
 
-    fn estimate_message_fee_inner(
-        message: HandleL1MessageTransaction,
-    ) -> Result<(u128, u64, u64), mp_simulations::Error> {
+    fn estimate_message_fee_inner(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), Error> {
         let chain_id = Self::chain_id();
 
         // Follow `offset` from Pallet Starknet where it is set to false
-        let tx_execution_infos = match message
-            .into_executable::<T::SystemHash>(chain_id, Fee(u128::MAX), false)
-            .execute(
+        let tx_execution_infos =
+            match message.into_executable::<T::SystemHash>(chain_id, Fee(u128::MAX), false).execute(
                 &mut BlockifierStateAdapter::<T>::default(),
                 &Self::get_block_context(),
                 &RuntimeExecutionConfigBuilder::new::<T>().with_query_mode().with_disable_nonce_validation().build(),
             ) {
-            Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
-            Err(e) => {
-                log::error!(
-                    "Transaction execution failed during fee estimation: {e} {:?}",
-                    std::error::Error::source(&e)
-                );
-                Err(mp_simulations::Error::TransactionExecutionFailed(e.to_string()))
-            }
-            Ok(execution_info) => {
-                // log::error!(
-                //"Transaction execution reverted during fee estimation: {}",
-                //// Safe due to the `match` branch order
-                // execution_info.revert_error.unwrap()
-                //);
-                Err(mp_simulations::Error::TransactionExecutionFailed(execution_info.revert_error.unwrap().to_string()))
-            }
-        }?;
+                Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
+                Err(e) => {
+                    log::error!(
+                        "Transaction execution failed during fee estimation: {e} {:?}",
+                        std::error::Error::source(&e)
+                    );
+                    Err(Error::from(e))
+                }
+                Ok(execution_info) => {
+                    let revert_error = execution_info.revert_error;
+                    log::error!(
+                        "Transaction execution reverted during fee estimation: {}",
+                        // Safe due to the `match` branch order
+                        &revert_error.clone().unwrap()
+                    );
+                    Err(Error::TransactionExecutionFailed(revert_error.unwrap().to_string()))
+                }
+            }?;
 
         if let Some(l1_gas_usage) = tx_execution_infos.actual_resources.0.get("l1_gas_usage") {
             Ok((T::L1GasPrice::get().price_in_wei, tx_execution_infos.actual_fee.0 as u64, *l1_gas_usage))
         } else {
-            Err(mp_simulations::Error::MissingL1GasUsage)
+            Err(Error::MissingL1GasUsage)
         }
     }
 
     pub fn re_execute_transactions(
         transactions: Vec<UserOrL1HandlerTransaction>,
-    ) -> Result<
-        Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, PlaceHolderErrorTypeForFailedStarknetExecution>,
-        mp_simulations::Error,
-    > {
+    ) -> Result<Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, Error>, Error> {
         let mut res = None;
 
         storage::transactional::with_transaction(|| {
             res = Some(Self::re_execute_transactions_inner(transactions));
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(()))
         })
-        .map_err(|_| mp_simulations::Error::FailedToCreateATransactionalStorageExecution)?;
+        .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?;
 
         res.expect("`res` should have been set to `Some` at this point")
     }
 
     fn re_execute_transactions_inner(
         transactions: Vec<UserOrL1HandlerTransaction>,
-    ) -> Result<
-        Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, PlaceHolderErrorTypeForFailedStarknetExecution>,
-        mp_simulations::Error,
-    > {
+    ) -> Result<Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, Error>, Error> {
         let chain_id = Self::chain_id();
         let block_context = Self::get_block_context();
         let execution_config = RuntimeExecutionConfigBuilder::new::<T>().build();
@@ -243,12 +230,12 @@ impl<T: Config> Pallet<T> {
                             .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), false)
                             .map_err(|e| {
                                 log::error!("Failed to reexecute a tx: {}", e);
-                                PlaceHolderErrorTypeForFailedStarknetExecution
+                                Error::from(e)
                             })
                             .and_then(|executable| {
                                 executable.execute(&mut cached_state, &block_context, &execution_config).map_err(|e| {
                                     log::error!("Failed to reexecute a tx: {}", e);
-                                    PlaceHolderErrorTypeForFailedStarknetExecution
+                                    Error::from(e)
                                 })
                             }),
                         UserTransaction::DeployAccount(tx) => tx
@@ -256,14 +243,14 @@ impl<T: Config> Pallet<T> {
                             .execute(&mut cached_state, &block_context, &execution_config)
                             .map_err(|e| {
                                 log::error!("Failed to reexecute a tx: {}", e);
-                                PlaceHolderErrorTypeForFailedStarknetExecution
+                                Error::from(e)
                             }),
                         UserTransaction::Invoke(tx) => tx
                             .into_executable::<T::SystemHash>(chain_id, false)
                             .execute(&mut cached_state, &block_context, &execution_config)
                             .map_err(|e| {
                                 log::error!("Failed to reexecute a tx: {}", e);
-                                PlaceHolderErrorTypeForFailedStarknetExecution
+                                Error::from(e)
                             }),
                     },
                     UserOrL1HandlerTransaction::L1Handler(tx, fee) => tx
@@ -271,7 +258,7 @@ impl<T: Config> Pallet<T> {
                         .execute(&mut cached_state, &block_context, &execution_config)
                         .map_err(|e| {
                             log::error!("Failed to reexecute a tx: {}", e);
-                            PlaceHolderErrorTypeForFailedStarknetExecution
+                            Error::from(e)
                         }),
                 };
                 res.map(|r| (r, cached_state.to_state_diff()))
