@@ -96,6 +96,13 @@
         "path": "./cairo-contracts/build/emit_multiple_events_across_contracts.json",
         "version": 0
       }
+    ],
+    [
+      "0x07b3e05f48f0c69e4a65ce5e076a66271a527aff2c34ce1083ec6e1526997a69",
+      {
+        "path": "./cairo-contracts/build/UniversalDeployer.json",
+        "version": 0
+      }
     ]
   ],
   "contracts": [
@@ -150,6 +157,10 @@
     [
       "0x051a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02cf",
       "0x92000"
+    ],
+    [
+      "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf",
+      "0x07b3e05f48f0c69e4a65ce5e076a66271a527aff2c34ce1083ec6e1526997a69"
     ]
   ],
   "predeployed_accounts": [
@@ -296,5 +307,6 @@
       "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02cf"
     ]
   ],
-  "fee_token_address": "0x00000000000000000000000000000000000000000000000000000000000000AA"
+  "fee_token_address": "0x00000000000000000000000000000000000000000000000000000000000000AA",
+  "chain_id": "SN_GOERLI"
 }

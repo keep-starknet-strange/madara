@@ -34,8 +34,7 @@ pub const MAX_U256: &str = "0xffffffffffffffffffffffffffffffff";
 pub const MAX_FEE_OVERRIDE: &str = "0x100000";
 
 // Need to use `from_mont` because this needs to be a constant function call
-/// ChainId for Starknet Goerli testnet
-pub const SN_GOERLI_CHAIN_ID: FieldElement =
-    FieldElement::from_mont([3753493103916128178, 18446744073709548950, 18446744073709551615, 398700013197595345]);
+pub const MADARA_CHAIN_ID: FieldElement =
+    FieldElement::from_mont([18444025906882525153, 18446744073709551615, 18446744073709551615, 530251916243973616]);
 
 pub const SPEC_VERSION: &str = "0.4.0";

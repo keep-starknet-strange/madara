@@ -29,28 +29,6 @@
       }
     ],
     [
-      "0x2c2b8f559e1221468140ad7b2352b1a5be32660d0bf1a3ae3a054a4ec5254e4",
-      { "path": "genesis-assets/BraavosAccount.json", "version": 0 }
-    ],
-    [
-      "0x5aa23d5bb71ddaa783da7ea79d405315bafa7cf0387a74f4593578c3e9e6570",
-      {
-        "path": "genesis-assets/BraavosAccountBaseImpl.json",
-        "version": 0
-      }
-    ],
-    [
-      "0x07db5c2c2676c2a5bfc892ee4f596b49514e3056a0eee8ad125870b4fb1dd909",
-      {
-        "path": "genesis-assets/BraavosCallAggregator.json",
-        "version": 0
-      }
-    ],
-    [
-      "0x3131fa018d520a037686ce3efddeab8f28895662f019ca3ca18a626650f7d1e",
-      { "path": "genesis-assets/BraavosProxy.json", "version": 0 }
-    ],
-    [
       "0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd",
       {
         "path": "genesis-assets/OpenzeppelinAccount.json",
@@ -227,6 +205,13 @@
     [
       [
         "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+        "0x40795dc9acd6d37d07ba939bbafe8ff2d0a9b78de88db2c74b4eb57d757c0eb"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
         "0x45abe05a3e7fb0c2ae1fa912be22a7dbc4832915e00562e2783dee710b9e4bd"
       ],
       "0xffffffffffffffffffffffffffffffff"
@@ -295,5 +280,6 @@
       "0x1"
     ]
   ],
-  "fee_token_address": "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"
+  "fee_token_address": "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+  "chain_id": "MADARA"
 }

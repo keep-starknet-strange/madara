@@ -36,6 +36,8 @@ use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as G
 /// Import the Starknet pallet.
 pub use pallet_starknet;
 use pallet_starknet::Call::{consume_l1_message, declare, deploy_account, invoke};
+pub use pallet_starknet::DefaultChainId;
+use pallet_starknet_runtime_api::StarknetTransactionExecutionError;
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -288,8 +290,8 @@ impl_runtime_apis! {
             Starknet::estimate_fee(transactions)
         }
 
-        fn re_execute_transactions(transactions: Vec<UserOrL1HandlerTransaction>) -> Result<Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, Error>, Error> {
-            Starknet::re_execute_transactions(transactions)
+        fn re_execute_transactions(transactions_before: Vec<UserOrL1HandlerTransaction>, transactions_to_trace: Vec<UserOrL1HandlerTransaction>) -> Result<Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, Error>, Error> {
+            Starknet::re_execute_transactions(transactions_before, transactions_to_trace)
         }
 
         fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), Error> {

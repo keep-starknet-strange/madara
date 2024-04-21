@@ -1,7 +1,5 @@
 #![feature(assert_matches)]
 
-extern crate starknet_rpc_test;
-
 use std::assert_matches::assert_matches;
 
 use anyhow::anyhow;
@@ -14,14 +12,14 @@ use starknet_core::types::{
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
-use starknet_rpc_test::constants::{
+use starknet_test_utils::constants::{
     ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE, SIGNER_PRIVATE,
 };
-use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{
+use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_test_utils::utils::{
     build_deploy_account_tx, build_oz_account_factory, build_single_owner_account, AccountActions,
 };
-use starknet_rpc_test::Transaction;
+use starknet_test_utils::Transaction;
 
 #[rstest]
 #[tokio::test]
@@ -272,8 +270,8 @@ async fn works_with_declare_txn(madara: &ThreadSafeMadaraClient) -> Result<(), a
         let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
         let nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account.address()).await?;
         let (declare_tx, class_hash, compiled_class_hash) = account.declare_contract(
-            "./contracts/counter5/counter5.contract_class.json",
-            "./contracts/counter5/counter5.compiled_contract_class.json",
+            "../starknet-rpc-test/contracts/counter5/counter5.contract_class.json",
+            "../starknet-rpc-test/contracts/counter5/counter5.compiled_contract_class.json",
         );
 
         madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
@@ -317,8 +315,8 @@ async fn works_with_pending_declare_txn(madara: &ThreadSafeMadaraClient) -> Resu
         let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
         let nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), account.address()).await?;
         let (declare_tx, class_hash, compiled_class_hash) = account.declare_contract(
-            "./contracts/counter8/counter8.contract_class.json",
-            "./contracts/counter8/counter8.compiled_contract_class.json",
+            "../starknet-rpc-test/contracts/counter8/counter8.contract_class.json",
+            "../starknet-rpc-test/contracts/counter8/counter8.compiled_contract_class.json",
         );
 
         madara_write_lock.submit_txs(vec![Transaction::Declaration(declare_tx)]).await;

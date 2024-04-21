@@ -1,2 +1,1 @@
-// TODO: refactor starknet-rpc-test
-pub use starknet_rpc_test::MadaraClient;
+pub use starknet_test_utils::MadaraClient;
