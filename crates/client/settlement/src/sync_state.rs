@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::transaction_execution::Transaction;
 use futures::StreamExt;
 use futures_timer::Delay;
@@ -8,6 +7,7 @@ use mp_block::Block as StarknetBlock;
 use mp_hashers::HasherT;
 use mp_messages::{MessageL1ToL2, MessageL2ToL1};
 use mp_snos_output::StarknetOsOutput;
+use mp_transactions::get_transaction_hash;
 use pallet_starknet_runtime_api::StarknetRuntimeApi;
 use sc_client_api::BlockchainEvents;
 use sp_api::{HeaderT, ProvideRuntimeApi};
@@ -254,17 +254,10 @@ where
             if let Transaction::L1HandlerTransaction(l1_handler) = tx {
                 messages_to_l2.push(l1_handler.tx.clone().into());
             }
-            let tx_hash = match tx {
-                Transaction::AccountTransaction(tx) => match tx {
-                    AccountTransaction::Declare(tx) => tx.tx_hash,
-                    AccountTransaction::DeployAccount(tx) => tx.tx_hash,
-                    AccountTransaction::Invoke(tx) => tx.tx_hash,
-                },
-                Transaction::L1HandlerTransaction(tx) => tx.tx_hash,
-            };
+            let tx_hash = get_transaction_hash(tx);
             substrate_client
                 .runtime_api()
-                .get_tx_messages_to_l1(substrate_block_hash, tx_hash)?
+                .get_tx_messages_to_l1(substrate_block_hash, *tx_hash)?
                 .into_iter()
                 .for_each(|msg| messages_to_l1.push(msg.into()));
         }

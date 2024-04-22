@@ -90,7 +90,7 @@ fn given_contract_run_deploy_account_tx_works() {
                 data: EventData(vec![
                     contract_address.0.0,                   // From
                     StarkFelt::try_from("0xdead").unwrap(), // To
-                    StarkFelt::try_from("0xb64e").unwrap(), // Amount low
+                    StarkFelt::try_from("0xa17c").unwrap(), // Amount low
                     StarkFelt::from(0u128),                 // Amount high
                 ]),
             },

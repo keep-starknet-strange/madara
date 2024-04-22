@@ -154,13 +154,7 @@ pub mod pallet {
         /// A bool to disable Nonce validation
         type DisableNonceValidation: Get<bool>;
         #[pallet::constant]
-        type InvokeTxMaxNSteps: Get<u32>;
-        #[pallet::constant]
-        type ValidateMaxNSteps: Get<u32>;
-        #[pallet::constant]
         type ProtocolVersion: Get<u8>;
-        #[pallet::constant]
-        type MaxRecursionDepth: Get<u32>;
         #[pallet::constant]
         type ProgramHash: Get<Felt252Wrapper>;
     }
@@ -748,6 +742,7 @@ pub mod pallet {
                         // The first tx validation would fail because the contract is not deployed yet,
                         // so we skip the entrypoint execution for now
                         (Nonce(StarkFelt::ONE), Nonce(StarkFelt::ZERO)) => {
+                            // Self::validate_unsigned_tx(&transaction)?;
                             valid_transaction_builder =
                                 valid_transaction_builder.and_requires((sender_address, Nonce(StarkFelt::ZERO)));
                         }
@@ -851,13 +846,9 @@ impl<T: Config> Pallet<T> {
                 block_timestamp: BlockTimestamp(block_timestamp),
                 sequencer_address,
                 gas_prices,
-                // TODO
-                // I have no idea what this is, let's say we did not use any for now
-                use_kzg_da: false,
+                use_kzg_da: true,
             },
             &ChainInfo { chain_id, fee_token_addresses },
-            // TODO
-            // I'm clueless on what those values should be
             VersionedConstants::latest_constants(),
         )
     }

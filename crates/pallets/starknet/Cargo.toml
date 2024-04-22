@@ -41,7 +41,6 @@ sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 cairo-vm = { workspace = true }
-# Frame pallets
 
 # Other third party dependencies
 indexmap = { workspace = true }

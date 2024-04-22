@@ -68,12 +68,9 @@ macro_rules! mock_runtime {
 			parameter_types! {
 				pub const UnsignedPriority: u64 = 1 << 20;
 				pub const TransactionLongevity: u64 = u64::MAX;
-				pub const InvokeTxMaxNSteps: u32 = 1_000_000;
-				pub const ValidateMaxNSteps: u32 = 1_000_000;
 				pub const DisableTransactionFee: bool = $disable_transaction_fee;
                 pub const DisableNonceValidation: bool = $disable_nonce_validation;
 				pub const ProtocolVersion: u8 = 0;
-                pub const MaxRecursionDepth: u32 = 50;
 				pub const ProgramHash: Felt252Wrapper = mp_program_hash::SN_OS_PROGRAM_HASH;
 				pub const L1GasPrices: GasPrices = GasPrices { eth_l1_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, strk_l1_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, eth_l1_data_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, strk_l1_data_gas_price: unsafe { NonZeroU128::new_unchecked(10) } };
             }
@@ -83,12 +80,9 @@ macro_rules! mock_runtime {
 				type TimestampProvider = Timestamp;
 				type UnsignedPriority = UnsignedPriority;
 				type TransactionLongevity = TransactionLongevity;
-				type InvokeTxMaxNSteps = InvokeTxMaxNSteps;
-				type ValidateMaxNSteps = ValidateMaxNSteps;
 				type DisableTransactionFee = DisableTransactionFee;
                 type DisableNonceValidation = DisableNonceValidation;
 				type ProtocolVersion = ProtocolVersion;
-                type MaxRecursionDepth = MaxRecursionDepth;
 				type ProgramHash = ProgramHash;
 				type L1GasPrices = L1GasPrices;
 			}

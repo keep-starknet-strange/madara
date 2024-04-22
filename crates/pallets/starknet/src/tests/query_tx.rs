@@ -28,11 +28,11 @@ fn estimates_tx_fee_successfully_no_validate() {
 
         let (actual, l1_gas_usage) = fees[0];
         assert!(actual > 0, "actual fee is missing");
-        assert!(l1_gas_usage > 0, "l1 fee is missing");
+        assert!(l1_gas_usage == 0, "using blobstream we shouldn't pay l1 fee");
 
         let (actual, l1_gas_usage) = fees[1];
         assert!(actual > 0, "actual fee is missing");
-        assert!(l1_gas_usage > 0, "l1 fee is missing");
+        assert!(l1_gas_usage == 0, "using blobstream we shouldn't pay l1 fee");
     });
 }
 

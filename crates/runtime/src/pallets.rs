@@ -44,10 +44,7 @@ impl pallet_starknet::Config for Runtime {
     #[cfg(feature = "disable-transaction-fee")]
     type DisableTransactionFee = ConstBool<true>;
     type DisableNonceValidation = ConstBool<false>;
-    type InvokeTxMaxNSteps = InvokeTxMaxNSteps;
-    type ValidateMaxNSteps = ValidateMaxNSteps;
     type ProtocolVersion = ProtocolVersion;
-    type MaxRecursionDepth = MaxRecursionDepth;
     type ProgramHash = ProgramHash;
     type L1GasPrices = L1GasPrices;
 }
@@ -158,10 +155,7 @@ impl pallet_timestamp::Config for Runtime {
 parameter_types! {
     pub const UnsignedPriority: u64 = 1 << 20;
     pub const TransactionLongevity: u64 = u64::MAX;
-    pub const InvokeTxMaxNSteps: u32 = 1_000_000;
-    pub const ValidateMaxNSteps: u32 = 1_000_000;
     pub const ProtocolVersion: u8 = 0;
-    pub const MaxRecursionDepth: u32 = 50;
     pub const ProgramHash: Felt252Wrapper = SN_OS_PROGRAM_HASH;
     pub const L1GasPrices: GasPrices = GasPrices { eth_l1_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, strk_l1_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, eth_l1_data_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, strk_l1_data_gas_price: unsafe { NonZeroU128::new_unchecked(10) } };
 }

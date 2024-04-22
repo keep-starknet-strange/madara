@@ -6414,6 +6414,7 @@ dependencies = [
  "mp-hashers",
  "mp-messages",
  "mp-snos-output",
+ "mp-transactions",
  "pallet-starknet-runtime-api",
  "rustc-hex",
  "sc-client-api",

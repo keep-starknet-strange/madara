@@ -16,7 +16,6 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
             .into_iter()
             .map(|(hash, class)| {
                 let hash = Felt252Wrapper(hash.0).into();
-                log::debug!("loading: {:?}", class);
                 match class {
                     ContractClass::Path { path, version } => (
                         hash,

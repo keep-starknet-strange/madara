@@ -1365,14 +1365,14 @@ where
         let parent_hash = self.get_best_block_hash();
         let latest_block = get_block_by_block_hash(self.client.as_ref(), parent_hash).unwrap_or_default();
         let latest_block_header = latest_block.header();
-        let transactions = self
+        let transaction_hashes = self
             .get_pending_txs(parent_hash)?
             .iter()
             .map(|tx| Felt252Wrapper::from(*get_transaction_hash(tx)).into())
             .collect::<Vec<_>>();
 
         let pending_block = PendingBlockWithTxHashes {
-            transactions,
+            transactions: transaction_hashes,
             // TODO: fill real prices
             l1_gas_price: ResourcePrice { price_in_fri: Default::default(), price_in_wei: Default::default() },
             parent_hash: latest_block_header.hash::<H>().into(),
