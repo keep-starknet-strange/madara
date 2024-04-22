@@ -97,7 +97,7 @@ sp_api::decl_runtime_apis! {
 
     pub trait ConvertTransactionRuntimeApi {
         /// Converts the transaction to an UncheckedExtrinsic for submission to the pool.
-        fn convert_transaction(transaction: AccountTransaction) -> <Block as BlockT>::Extrinsic;
+        fn convert_account_transaction(transaction: AccountTransaction) -> <Block as BlockT>::Extrinsic;
 
         /// Converts the L1 Message transaction to an UncheckedExtrinsic for submission to the pool.
         fn convert_l1_transaction(transaction: L1HandlerTransaction) -> <Block as BlockT>::Extrinsic;

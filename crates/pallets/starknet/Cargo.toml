@@ -43,7 +43,6 @@ sp-std = { workspace = true }
 cairo-vm = { workspace = true }
 
 # Other third party dependencies
-indexmap = { workspace = true }
 log = { workspace = true }
 parity-scale-codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive"] }

@@ -1,11 +1,10 @@
 use core::marker::PhantomData;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::state::cached_state::{CachedState, GlobalContractCache};
 use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{State, StateReader, StateResult};
-use indexmap::IndexMap;
 use mp_felt::Felt252Wrapper;
 use mp_transactions::execution::SetArbitraryNonce;
 use starknet_api::core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
@@ -22,22 +21,13 @@ use crate::{Config, Pallet};
 /// and not an extra layer that would add overhead.
 /// We don't implement those traits directly on the pallet to avoid compilation problems.
 pub struct BlockifierStateAdapter<T: Config> {
-    storage_update: BTreeMap<ContractStorageKey, StarkFelt>,
-    class_hash_update: usize,
-    compiled_class_hash_update: usize,
     visited_pcs: HashMap<ClassHash, HashSet<usize>>,
     _phantom: PhantomData<T>,
 }
 
 impl<T: Config> Default for BlockifierStateAdapter<T> {
     fn default() -> Self {
-        Self {
-            storage_update: BTreeMap::default(),
-            class_hash_update: usize::default(),
-            compiled_class_hash_update: usize::default(),
-            visited_pcs: Default::default(),
-            _phantom: PhantomData,
-        }
+        Self { visited_pcs: Default::default(), _phantom: PhantomData }
     }
 }
 
@@ -73,8 +63,6 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
     ) -> StateResult<()> {
         let contract_storage_key: ContractStorageKey = (contract_address, key);
 
-        self.storage_update.insert(contract_storage_key, value);
-
         crate::StorageView::<T>::insert(contract_storage_key, value);
 
         Ok(())
@@ -91,8 +79,6 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
     }
 
     fn set_class_hash_at(&mut self, contract_address: ContractAddress, class_hash: ClassHash) -> StateResult<()> {
-        self.class_hash_update += 1;
-
         crate::ContractClassHashes::<T>::insert(contract_address, class_hash.0);
 
         Ok(())
@@ -109,7 +95,6 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
         class_hash: ClassHash,
         compiled_class_hash: CompiledClassHash,
     ) -> StateResult<()> {
-        self.compiled_class_hash_update += 1;
         crate::CompiledClassHashes::<T>::insert(class_hash.0, compiled_class_hash);
 
         Ok(())
@@ -143,10 +128,6 @@ where
 
     fn increment_nonce(&mut self, contract_address: ContractAddress) -> StateResult<()> {
         self.0.increment_nonce(contract_address)
-        // let current_nonce = Pallet::<T>::nonce(contract_address);
-        // let current_nonce: FieldElement = Felt252Wrapper::from(current_nonce.0).into();
-        // let new_nonce: Nonce = Felt252Wrapper(current_nonce + FieldElement::ONE).into();
-        // self.0.state_cache.set_nonce_value(contract_address, new_nonce);
     }
 
     fn set_class_hash_at(&mut self, contract_address: ContractAddress, class_hash: ClassHash) -> StateResult<()> {
@@ -193,17 +174,6 @@ where
     fn get_compiled_class_hash(&self, class_hash: ClassHash) -> StateResult<CompiledClassHash> {
         self.0.get_compiled_class_hash(class_hash)
     }
-}
-
-/// Returns a `IndexMap` containing key-value pairs from `a` that are not included in `b` (if
-/// a key appears in `b` with a different value, it will be part of the output).
-/// Usage: Get updated items from a mapping.
-pub fn subtract_mappings<K, V>(lhs: &IndexMap<K, V>, rhs: &IndexMap<K, V>) -> IndexMap<K, V>
-where
-    K: Clone + Eq + core::hash::Hash,
-    V: Clone + PartialEq,
-{
-    lhs.iter().filter(|(k, v)| rhs.get(*k) != Some(v)).map(|(k, v)| (k.clone(), v.clone())).collect()
 }
 
 impl<T: Config> SetArbitraryNonce for BlockifierStateAdapter<T> {

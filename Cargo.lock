@@ -7501,7 +7501,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hexlit",
- "indexmap 2.2.5",
  "lazy_static",
  "log",
  "mp-block",

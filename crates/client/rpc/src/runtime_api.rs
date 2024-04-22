@@ -112,7 +112,7 @@ where
         best_block_hash: <B as BlockT>::Hash,
         transaction: AccountTransaction,
     ) -> RpcApiResult<B::Extrinsic> {
-        self.client.runtime_api().convert_transaction(best_block_hash, transaction).map_err(|e| {
+        self.client.runtime_api().convert_account_transaction(best_block_hash, transaction).map_err(|e| {
             error!("Failed to convert transaction: {:?}", e);
             StarknetRpcApiError::InternalServerError
         })

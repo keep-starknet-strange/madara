@@ -355,7 +355,7 @@ impl_runtime_apis! {
     }
 
     impl pallet_starknet_runtime_api::ConvertTransactionRuntimeApi<Block> for Runtime {
-        fn convert_transaction(transaction: AccountTransaction) -> UncheckedExtrinsic {
+        fn convert_account_transaction(transaction: AccountTransaction) -> UncheckedExtrinsic {
             let call = match transaction {
                 AccountTransaction::Declare(tx) => {
                     pallet_starknet::Call::declare { transaction: tx }
