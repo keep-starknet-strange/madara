@@ -1,5 +1,3 @@
-use core::num::NonZeroU128;
-
 use blockifier::blockifier::block::{BlockInfo, GasPrices};
 use blockifier::context::{BlockContext, ChainInfo, FeeTokenAddresses};
 use blockifier::versioned_constants::VersionedConstants;
@@ -34,32 +32,6 @@ pub struct Header {
     pub l1_gas_price: GasPrices,
     /// Extraneous data that might be useful for running transactions
     pub extra_data: Option<U256>,
-}
-
-impl Default for Header {
-    fn default() -> Self {
-        Self {
-            // Those are fucked-up value
-            // Mainly usefull for tests or stuffs like this
-            // Should probably be removed
-            l1_gas_price: unsafe {
-                GasPrices {
-                    eth_l1_gas_price: NonZeroU128::new_unchecked(10),
-                    strk_l1_gas_price: NonZeroU128::new_unchecked(10),
-                    eth_l1_data_gas_price: NonZeroU128::new_unchecked(10),
-                    strk_l1_data_gas_price: NonZeroU128::new_unchecked(10),
-                }
-            },
-            parent_block_hash: Default::default(),
-            block_number: Default::default(),
-            sequencer_address: Default::default(),
-            block_timestamp: Default::default(),
-            transaction_count: Default::default(),
-            event_count: Default::default(),
-            protocol_version: Default::default(),
-            extra_data: Default::default(),
-        }
-    }
 }
 
 impl Header {

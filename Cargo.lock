@@ -6027,6 +6027,7 @@ name = "madara"
 version = "0.7.0"
 dependencies = [
  "async-trait",
+ "blockifier",
  "clap 4.4.10",
  "frame-benchmarking",
  "frame-benchmarking-cli",
@@ -6648,6 +6649,7 @@ dependencies = [
  "serde",
  "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
  "starknet_api",
+ "thiserror",
 ]
 
 [[package]]
@@ -6663,6 +6665,7 @@ name = "mp-digest-log"
 version = "0.7.0"
 dependencies = [
  "assert_matches",
+ "blockifier",
  "mp-block",
  "parity-scale-codec",
  "sp-runtime 24.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",

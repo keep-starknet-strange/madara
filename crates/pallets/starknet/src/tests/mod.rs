@@ -35,8 +35,6 @@ mod genesis_block;
 mod invoke_tx;
 mod l1_handler_validation;
 mod l1_message;
-// Disabled because the basic blockifer options don't allow for it
-// mod no_nonce_validation;
 mod query_tx;
 mod re_execute_transactions;
 mod send_message;

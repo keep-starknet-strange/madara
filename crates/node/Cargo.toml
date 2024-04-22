@@ -95,6 +95,9 @@ mp-digest-log = { workspace = true }
 mp-felt = { workspace = true }
 mp-sequencer-address = { workspace = true, features = ["client"] }
 
+# Starknet
+blockifier = { workspace = true }
+
 
 # CLI-specific dependencies
 try-runtime-cli = { optional = true, git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }

@@ -66,7 +66,7 @@ where
 
     match substrate_block_hash {
         Ok(Some(block_hash)) => {
-            let block = get_block_by_block_hash(client, block_hash).unwrap_or_default();
+            let block = get_block_by_block_hash(client, block_hash).map_err(|_| StarknetRpcApiError::BlockNotFound)?;
 
             Ok(block)
         }

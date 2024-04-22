@@ -1,5 +1,7 @@
 use core::convert::TryFrom;
+use std::num::NonZeroU128;
 
+use blockifier::blockifier::block::GasPrices;
 use blockifier::context::FeeTokenAddresses;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::pedersen::PedersenHasher;
@@ -81,7 +83,24 @@ fn test_real_header_hash() {
 fn test_to_block_context() {
     let sequencer_address = ContractAddress(PatriciaKey(StarkFelt::try_from("0xFF").unwrap()));
     // Create a block header.
-    let block_header = Header { block_number: 1, block_timestamp: 1, sequencer_address, ..Default::default() };
+    let block_header = Header {
+        block_number: 1,
+        block_timestamp: 1,
+        sequencer_address,
+        parent_block_hash: Default::default(),
+        transaction_count: Default::default(),
+        event_count: Default::default(),
+        protocol_version: Default::default(),
+        l1_gas_price: unsafe {
+            GasPrices {
+                eth_l1_gas_price: NonZeroU128::new_unchecked(10),
+                strk_l1_gas_price: NonZeroU128::new_unchecked(10),
+                eth_l1_data_gas_price: NonZeroU128::new_unchecked(10),
+                strk_l1_data_gas_price: NonZeroU128::new_unchecked(10),
+            }
+        },
+        extra_data: Default::default(),
+    };
     // Create a fee token address.
     let fee_token_addresses = FeeTokenAddresses {
         eth_fee_token_address: ContractAddress(PatriciaKey(StarkFelt::try_from("AA").unwrap())),

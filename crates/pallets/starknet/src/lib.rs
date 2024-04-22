@@ -980,7 +980,7 @@ impl<T: Config> Pallet<T> {
 
         let l1_gas_price = T::L1GasPrices::get();
 
-        let block = StarknetBlock::new(
+        let block = StarknetBlock::try_new(
             StarknetHeader::new(
                 parent_block_hash.into(),
                 block_number,
@@ -993,7 +993,9 @@ impl<T: Config> Pallet<T> {
                 extra_data,
             ),
             transactions,
-        );
+        )
+        // Safe because it could only failed if `transaction_count` does not match `transactions.len()`
+        .unwrap();
         // Save the block number <> hash mapping.
         let blockhash = block.header().hash::<T::SystemHash>();
         BlockHash::<T>::insert(block_number, blockhash);

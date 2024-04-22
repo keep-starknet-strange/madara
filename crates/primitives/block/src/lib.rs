@@ -15,6 +15,7 @@ pub type BlockTransactions = Vec<Transaction>;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 pub enum BlockTag {
     #[cfg_attr(feature = "serde", serde(rename = "latest"))]
     Latest,
@@ -33,8 +34,14 @@ pub enum BlockId {
     Tag(BlockTag),
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum NewBlockError {
+    #[error("header's field `transaction_count` does not matched the len of the `transactions` field")]
+    InvalidTxCount,
+}
+
 /// Starknet block definition.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 pub struct Block {
     /// The block header.
@@ -50,8 +57,12 @@ impl Block {
     ///
     /// * `header` - The block header.
     /// * `transactions` - The block transactions.
-    pub fn new(header: Header, transactions: BlockTransactions) -> Self {
-        Self { header, transactions }
+    pub fn try_new(header: Header, transactions: BlockTransactions) -> Result<Self, NewBlockError> {
+        if header.transaction_count as usize != transactions.len() {
+            Err(NewBlockError::InvalidTxCount)
+        } else {
+            Ok(Self { header, transactions })
+        }
     }
 
     /// Return a reference to the block header

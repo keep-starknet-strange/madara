@@ -1363,7 +1363,8 @@ where
 {
     fn prepare_pending_block_with_tx_hashes(&self) -> Result<PendingBlockWithTxHashes, StarknetRpcApiError> {
         let parent_hash = self.get_best_block_hash();
-        let latest_block = get_block_by_block_hash(self.client.as_ref(), parent_hash).unwrap_or_default();
+        let latest_block = get_block_by_block_hash(self.client.as_ref(), parent_hash)
+            .map_err(|_| StarknetRpcApiError::BlockNotFound)?;
         let latest_block_header = latest_block.header();
         let transaction_hashes = self
             .get_pending_txs(parent_hash)?
@@ -1385,7 +1386,8 @@ where
 
     fn prepare_pending_block_with_txs(&self) -> Result<PendingBlockWithTxs, StarknetRpcApiError> {
         let parent_hash = self.get_best_block_hash();
-        let latest_block = get_block_by_block_hash(self.client.as_ref(), parent_hash).unwrap_or_default();
+        let latest_block = get_block_by_block_hash(self.client.as_ref(), parent_hash)
+            .map_err(|_| StarknetRpcApiError::BlockNotFound)?;
         let latest_block_header = latest_block.header();
 
         let transactions =
