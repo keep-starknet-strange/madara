@@ -20,11 +20,11 @@ starknet_api = { workspace = true }
 thiserror = { workspace = true }
 
 # Optionals
-serde = { workspace = true, features = ["derive"], optional = true }
 parity-scale-codec = { workspace = true, features = [
   "derive",
 ], optional = true }
 scale-info = { workspace = true, features = ["derive"], optional = true }
+serde = { workspace = true, features = ["derive"], optional = true }
 
 [features]
 parity-scale-codec = ["dep:parity-scale-codec", "mp-felt/parity-scale-codec"]

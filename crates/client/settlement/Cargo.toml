@@ -28,8 +28,8 @@ sp-blockchain = { workspace = true }
 sp-runtime = { workspace = true }
 
 # Starknet
-starknet_api = { workspace = true }
 blockifier = { workspace = true }
+starknet_api = { workspace = true }
 
 # Madara
 mc-db = { workspace = true }

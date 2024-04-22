@@ -17,11 +17,11 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # Madara utils
-mc-genesis-data-provider = { workspace = true }
-pallet-starknet-runtime-api = { workspace = true }
 mc-db = { workspace = true }
+mc-genesis-data-provider = { workspace = true }
 mc-rpc-core = { workspace = true }
 mc-storage = { workspace = true }
+pallet-starknet-runtime-api = { workspace = true }
 sc-transaction-pool = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
 sp-api = { workspace = true }
@@ -36,9 +36,7 @@ sc-client-api = { workspace = true }
 sc-network-sync = { workspace = true }
 # Starknet
 blockifier = { workspace = true }
-starknet-core = { workspace = true }
-starknet-ff = { workspace = true }
-starknet_api = { workspace = true }
+cairo-vm = { workspace = true }
 jsonrpsee = { workspace = true, features = ["server", "macros"] }
 log = { workspace = true }
 mp-block = { workspace = true }
@@ -46,8 +44,10 @@ mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
 mp-simulations = { workspace = true }
 mp-transactions = { workspace = true, features = ["client"] }
+starknet-core = { workspace = true }
+starknet-ff = { workspace = true }
+starknet_api = { workspace = true }
 thiserror = { workspace = true }
-cairo-vm = { workspace = true }
 
 [dev-dependencies]
 rstest = { workspace = true }

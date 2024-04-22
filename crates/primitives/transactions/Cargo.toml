@@ -12,16 +12,16 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 blockifier = { workspace = true }
+cairo-vm = { workspace = true }
+indexmap = { workspace = true }
 mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
+sha3 = { workspace = true }
+sp-core = { workspace = true }
 starknet-core = { workspace = true }
 starknet-crypto = { workspace = true, features = ["alloc"] }
 starknet-ff = { workspace = true, features = ["alloc"] }
 starknet_api = { workspace = true }
-indexmap = { workspace = true }
-sha3 = { workspace = true }
-sp-core = { workspace = true }
-cairo-vm = { workspace = true }
 
 # Optional (client)
 cairo-lang-starknet-classes = { workspace = true, optional = true }

@@ -19,8 +19,8 @@ url = "2.5.0"
 pallet-starknet-runtime-api = { workspace = true }
 
 # Starknet dependencies
-starknet_api = { workspace = true }
 blockifier = { workspace = true }
+starknet_api = { workspace = true }
 
 # Starknet
 mc-db = { workspace = true }
