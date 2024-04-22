@@ -9,7 +9,7 @@ use starknet_core::types::{BlockId, ContractClass, FlattenedSierraClass, Starkne
 use starknet_ff::FieldElement;
 use starknet_providers::Provider;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
-use starknet_rpc_test::constants::{CAIRO_1_ACCOUNT_CONTRACT, TEST_CONTRACT_ADDRESS};
+use starknet_rpc_test::constants::{CAIRO_1_ACCOUNT_CONTRACT_ADDRESS, TEST_CONTRACT_ADDRESS};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 
 #[rstest]
@@ -81,7 +81,8 @@ async fn work_ok_retrieving_class_for_contract_version_0(madara: &ThreadSafeMada
 async fn work_ok_retrieving_class_for_contract_version_1(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-    let test_contract_address = FieldElement::from_hex_be(CAIRO_1_ACCOUNT_CONTRACT).expect("Invalid Contract Address");
+    let test_contract_address =
+        FieldElement::from_hex_be(CAIRO_1_ACCOUNT_CONTRACT_ADDRESS).expect("Invalid Contract Address");
 
     let test_contract_class_bytes = include_bytes!("../cairo-contracts/build/cairo_1/NoValidateAccount.sierra.json");
     let test_contract_class: SierraClass = serde_json::from_slice(test_contract_class_bytes).unwrap();

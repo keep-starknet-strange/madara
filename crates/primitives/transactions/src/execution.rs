@@ -677,7 +677,7 @@ where
         // Create copies of state and resources for the execution.
         // Both will be rolled back if the execution is reverted or committed upon success.
         let mut execution_resources = resources.clone();
-        let mut transactional_state = CachedState::new(MutRefState::new(state), GlobalContractCache::new(10));
+        let mut transactional_state = CachedState::new(MutRefState::new(state), GlobalContractCache::new(1));
 
         let execution_result = transaction.run_execute(
             &mut transactional_state,

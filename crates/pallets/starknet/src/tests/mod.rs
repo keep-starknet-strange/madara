@@ -63,8 +63,8 @@ pub fn get_invoke_dummy(
     let calldata = Calldata(Arc::new(vec![
         StarkFelt::try_from("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(), /* contract_address */
         StarkFelt::try_from("0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc").unwrap(), /* selector for the `with_arg` external */
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), /* calldata_len */
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), /* calldata[0] */
+        StarkFelt::try_from("0x1").unwrap(),  // calldata_len
+        StarkFelt::try_from("0x19").unwrap(), // calldata[0]
     ]));
 
     let tx = starknet_api::transaction::InvokeTransaction::V1(starknet_api::transaction::InvokeTransactionV1 {
@@ -88,13 +88,13 @@ fn get_invoke_argent_dummy(chain_id: Felt252Wrapper) -> blockifier::transaction:
     let nonce = Nonce(StarkFelt::ZERO);
     let signature = TransactionSignature::default();
     let calldata = Calldata(Arc::new(vec![
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), /* call_array_len */
+        StarkFelt::try_from("0x1").unwrap(), // call_array_len
         StarkFelt::try_from("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(), // to
-        StarkFelt::try_from("0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc").unwrap(), /* selector */
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(), /* data_offset */
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), /* data_len */
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), /* calldata_len */
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), /* calldata[0] */
+        StarkFelt::try_from("0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc").unwrap(), // selector
+        StarkFelt::try_from("0x0").unwrap(), // data_offset
+        StarkFelt::try_from("0x1").unwrap(), // data_len
+        StarkFelt::try_from("0x1").unwrap(), // calldata_len
+        StarkFelt::try_from("0x19").unwrap(), // calldata[0]
     ]));
 
     let tx = starknet_api::transaction::InvokeTransaction::V1(starknet_api::transaction::InvokeTransactionV1 {
@@ -121,13 +121,13 @@ fn get_invoke_braavos_dummy(chain_id: Felt252Wrapper) -> blockifier::transaction
     ));
     let nonce = Nonce(StarkFelt::ZERO);
     let calldata = Calldata(Arc::new(vec![
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), /* call_array_len */
+        StarkFelt::try_from("0x1").unwrap(), // call_array_len
         StarkFelt::try_from("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(), // to
-        StarkFelt::try_from("0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc").unwrap(), /* selector */
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(), /* data_offset */
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), /* data_len */
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), /* calldata_len */
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), /* calldata[0] */
+        StarkFelt::try_from("0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc").unwrap(), // selector
+        StarkFelt::try_from("0x0").unwrap(), // data_offset
+        StarkFelt::try_from("0x1").unwrap(), // data_len
+        StarkFelt::try_from("0x1").unwrap(), // calldata_len
+        StarkFelt::try_from("0x19").unwrap(), // calldata[0]
     ]));
 
     let tx = starknet_api::transaction::InvokeTransaction::V1(starknet_api::transaction::InvokeTransactionV1 {
@@ -156,7 +156,7 @@ fn get_invoke_emit_event_dummy(chain_id: Felt252Wrapper) -> blockifier::transact
     let calldata = Calldata(Arc::new(vec![
         StarkFelt::try_from("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(), // to
         StarkFelt::try_from("0x00966af5d72d3975f70858b044c77785d3710638bbcebbd33cc7001a91025588").unwrap(), /* selector */
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(), /* amount */
+        StarkFelt::try_from("0x0").unwrap(),                                                                /* amount */
     ]));
 
     let tx = starknet_api::transaction::InvokeTransaction::V1(starknet_api::transaction::InvokeTransactionV1 {
@@ -184,8 +184,8 @@ fn get_invoke_nonce_dummy(chain_id: Felt252Wrapper) -> blockifier::transaction::
     let calldata = Calldata(Arc::new(vec![
         StarkFelt::try_from("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(), /* contract_address */
         StarkFelt::try_from("0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc").unwrap(), /* selector */
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), /* calldata_len */
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), /* calldata[0] */
+        StarkFelt::try_from("0x1").unwrap(),  // calldata_len
+        StarkFelt::try_from("0x19").unwrap(), // calldata[0]
     ]));
 
     let tx = starknet_api::transaction::InvokeTransaction::V1(starknet_api::transaction::InvokeTransactionV1 {
@@ -210,9 +210,9 @@ fn get_storage_read_write_dummy(chain_id: Felt252Wrapper) -> blockifier::transac
     let calldata = Calldata(Arc::new(vec![
         StarkFelt::try_from("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(), /* contract_address */
         StarkFelt::try_from("0x03b097c62d3e4b85742aadd0dfb823f96134b886ec13bda57b68faf86f294d97").unwrap(), /* selector */
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(), /* calldata_len */
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), /* calldata[0] */
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), /* calldata[1] */
+        StarkFelt::try_from("0x2").unwrap(),  // calldata_len
+        StarkFelt::try_from("0x19").unwrap(), // calldata[0]
+        StarkFelt::try_from("0x1").unwrap(),  // calldata[1]
     ]));
 
     let tx = starknet_api::transaction::InvokeTransaction::V1(starknet_api::transaction::InvokeTransactionV1 {
@@ -239,13 +239,13 @@ fn get_invoke_openzeppelin_dummy(chain_id: Felt252Wrapper) -> blockifier::transa
     ));
     let nonce = Nonce(StarkFelt::ZERO);
     let calldata = Calldata(Arc::new(vec![
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), /* call_array_len */
+        StarkFelt::try_from("0x1").unwrap(), // call_array_len
         StarkFelt::try_from("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(), // to
-        StarkFelt::try_from("0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc").unwrap(), /* selector */
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(), /* data offset */
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), /* data length */
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), /* calldata_len */
-        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), /* calldata[0] */
+        StarkFelt::try_from("0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc").unwrap(), // selector
+        StarkFelt::try_from("0x0").unwrap(), // data offset
+        StarkFelt::try_from("0x1").unwrap(), // data length
+        StarkFelt::try_from("0x1").unwrap(), // calldata_len
+        StarkFelt::try_from("0x19").unwrap(), // calldata[0]
     ]));
 
     let tx = starknet_api::transaction::InvokeTransaction::V1(starknet_api::transaction::InvokeTransactionV1 {

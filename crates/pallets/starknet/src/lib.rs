@@ -718,7 +718,8 @@ pub mod pallet {
             // otherwise we have a nonce error and everything fails.
             // Once we have a real fee market this is where we'll chose the most profitable transaction.
 
-            let transaction = Self::get_call_transaction(call.clone()).map_err(|_| InvalidTransaction::Call)?;
+            let transaction = Self::convert_runtime_calls_to_starknet_transaction(call.clone())
+                .map_err(|_| InvalidTransaction::Call)?;
             // Important to store the nonce before the call to prevalidate, because the `handle_nonce`
             // function will increment it
             let transaction_nonce = get_transaction_nonce(&transaction);
@@ -809,7 +810,7 @@ impl<T: Config> Pallet<T> {
     /// # Returns
     ///
     /// The transaction
-    fn get_call_transaction(call: Call<T>) -> Result<Transaction, ()> {
+    fn convert_runtime_calls_to_starknet_transaction(call: Call<T>) -> Result<Transaction, ()> {
         let tx = match call {
             Call::<T>::invoke { transaction } => {
                 Transaction::AccountTransaction(AccountTransaction::Invoke(transaction))
@@ -1139,6 +1140,7 @@ impl<T: Config> Pallet<T> {
     }
 
     fn init_cached_state() -> CachedState<BlockifierStateAdapter<T>> {
-        CachedState::new(BlockifierStateAdapter::<T>::default(), GlobalContractCache::new(10))
+        // Let's keep the GlobalContractCache small, we won't need it anyway
+        CachedState::new(BlockifierStateAdapter::<T>::default(), GlobalContractCache::new(1))
     }
 }

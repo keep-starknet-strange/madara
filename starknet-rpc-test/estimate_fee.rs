@@ -8,7 +8,7 @@ use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::Provider;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
-use starknet_rpc_test::constants::{ACCOUNT_CONTRACT, TEST_CONTRACT_ADDRESS};
+use starknet_rpc_test::constants::{ACCOUNT_CONTRACT_ADDRESS, TEST_CONTRACT_ADDRESS};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::is_good_error_code;
 
@@ -22,7 +22,7 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
             max_fee: FieldElement::ZERO,
             signature: vec![],
             nonce: FieldElement::ZERO,
-            sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap(),
+            sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT_ADDRESS).unwrap(),
             calldata: vec![
                 FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
                 get_selector_from_name("sqrt").unwrap(),
@@ -60,7 +60,7 @@ async fn fail_if_one_txn_cannot_be_executed(madara: &ThreadSafeMadaraClient) -> 
             max_fee: FieldElement::ZERO,
             signature: vec![],
             nonce: FieldElement::ZERO,
-            sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap(),
+            sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT_ADDRESS).unwrap(),
             calldata: vec![
                 FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
                 get_selector_from_name("sqrt").unwrap(),
@@ -88,7 +88,7 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
         max_fee: FieldElement::ZERO,
         signature: vec![],
         nonce: FieldElement::ZERO,
-        sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap(),
+        sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT_ADDRESS).unwrap(),
         calldata: vec![
             FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
             get_selector_from_name("sqrt").unwrap(),

@@ -8,7 +8,9 @@ use starknet_core::types::{
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::{Provider, ProviderError};
-use starknet_rpc_test::constants::{ACCOUNT_CONTRACT, ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE, TEST_CONTRACT_ADDRESS};
+use starknet_rpc_test::constants::{
+    ACCOUNT_CONTRACT_ADDRESS, ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE, TEST_CONTRACT_ADDRESS,
+};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{build_single_owner_account, is_good_error_code, AccountActions};
 
@@ -22,7 +24,7 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
             max_fee: FieldElement::ZERO,
             signature: vec![],
             nonce: FieldElement::ZERO,
-            sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap(),
+            sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT_ADDRESS).unwrap(),
             calldata: vec![
                 FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
                 get_selector_from_name("sqrt").unwrap(),
@@ -49,7 +51,7 @@ async fn fail_max_fee_too_big(madara: &ThreadSafeMadaraClient) -> Result<(), any
             max_fee: FieldElement::from_hex_be("0x100000000000000000000000000000000").unwrap(), // u128::MAX + 1
             signature: vec![],
             nonce: FieldElement::ZERO,
-            sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap(),
+            sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT_ADDRESS).unwrap(),
             calldata: vec![
                 FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
                 get_selector_from_name("sqrt").unwrap(),
@@ -86,7 +88,7 @@ async fn fail_if_one_txn_cannot_be_executed(madara: &ThreadSafeMadaraClient) -> 
             max_fee: FieldElement::ZERO,
             signature: vec![],
             nonce: FieldElement::ZERO,
-            sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap(),
+            sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT_ADDRESS).unwrap(),
             calldata: vec![
                 FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
                 get_selector_from_name("sqrt").unwrap(),
@@ -110,7 +112,7 @@ async fn fail_if_one_txn_cannot_be_executed(madara: &ThreadSafeMadaraClient) -> 
 async fn works_ok_on_no_validate(madara: &ThreadSafeMadaraClient) {
     let rpc = madara.get_starknet_client().await;
 
-    let sender_address = FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap();
+    let sender_address = FieldElement::from_hex_be(ACCOUNT_CONTRACT_ADDRESS).unwrap();
 
     let mut madara_write_lock = madara.write().await;
     let _ = madara_write_lock.create_empty_block().await;
@@ -214,7 +216,7 @@ async fn works_ok_on_validate_without_signature_with_skip_validate(
 async fn works_ok_without_max_fee_with_skip_fee_charge(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-    let sender_address = FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap();
+    let sender_address = FieldElement::from_hex_be(ACCOUNT_CONTRACT_ADDRESS).unwrap();
 
     let tx = BroadcastedInvokeTransactionV1 {
         max_fee: FieldElement::from(0u8),

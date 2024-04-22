@@ -6,7 +6,9 @@ use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::jsonrpc::HttpTransport;
 use starknet_providers::{JsonRpcClient, Provider, ProviderError};
-use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, ETH_FEE_TOKEN_ADDRESS, SEQUENCER_ADDRESS, SIGNER_PRIVATE};
+use starknet_rpc_test::constants::{
+    ARGENT_CONTRACT_ADDRESS, ETH_FEE_TOKEN_ADDRESS, SEQUENCER_CONTRACT_ADDRESS, SIGNER_PRIVATE,
+};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{build_single_owner_account, AccountActions};
 use starknet_rpc_test::{MadaraClient, Transaction, TransactionResult};
@@ -155,10 +157,10 @@ async fn work_one_block_no_filter(madara: &ThreadSafeMadaraClient) -> Result<(),
                 from_address: fee_token_address,
                 keys: vec![get_selector_from_name("Transfer").unwrap()],
                 data: vec![
-                    account_address,                                       // from
-                    FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(), // to (sequencer address)
-                    expected_fee,                                          // value low
-                    FieldElement::ZERO,                                    // value high
+                    account_address,                                                // from
+                    FieldElement::from_hex_be(SEQUENCER_CONTRACT_ADDRESS).unwrap(), // to (sequencer address)
+                    expected_fee,                                                   // value low
+                    FieldElement::ZERO,                                             // value high
                 ],
                 block_hash: Some(block_hash),
                 block_number: Some(block_number),
@@ -224,10 +226,10 @@ async fn work_one_block_with_chunk_filter_and_continuation_token(
                 from_address: fee_token_address,
                 keys: vec![get_selector_from_name("Transfer").unwrap()],
                 data: vec![
-                    account_address,                                       // from
-                    FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(), // to (sequencer address)
-                    expected_fee,                                          // value low
-                    FieldElement::ZERO,                                    // value high
+                    account_address,                                                // from
+                    FieldElement::from_hex_be(SEQUENCER_CONTRACT_ADDRESS).unwrap(), // to (sequencer address)
+                    expected_fee,                                                   // value low
+                    FieldElement::ZERO,                                             // value high
                 ],
                 block_hash: Some(block_hash),
                 block_number: Some(block_number),

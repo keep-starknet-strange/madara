@@ -109,7 +109,7 @@ pub struct CachedBlockifierStateAdapter<T: Config>(pub CachedState<BlockifierSta
 
 impl<T: Config> Default for CachedBlockifierStateAdapter<T> {
     fn default() -> Self {
-        Self(CachedState::new(BlockifierStateAdapter::default(), GlobalContractCache::new(10)))
+        Self(CachedState::new(BlockifierStateAdapter::default(), GlobalContractCache::new(1)))
     }
 }
 

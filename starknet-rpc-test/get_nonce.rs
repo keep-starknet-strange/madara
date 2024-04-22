@@ -8,7 +8,7 @@ use starknet_core::types::{BlockId, BlockTag, StarknetError};
 use starknet_ff::FieldElement;
 use starknet_providers::{Provider, ProviderError};
 use starknet_rpc_test::constants::{
-    ARGENT_CONTRACT_ADDRESS, CONTRACT_ADDRESS, MIN_AMOUNT, SIGNER_PRIVATE, TEST_CONTRACT_ADDRESS,
+    ACCOUNT_CONTRACT_ADDRESS, ARGENT_CONTRACT_ADDRESS, MIN_AMOUNT, SIGNER_PRIVATE, TEST_CONTRACT_ADDRESS,
 };
 use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_test_utils::utils::{build_single_owner_account, AccountActions};
@@ -22,7 +22,7 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
     assert_matches!(
         rpc.get_nonce(
             BlockId::Hash(FieldElement::ZERO),
-            FieldElement::from_hex_be(CONTRACT_ADDRESS).expect("Invalid Contract Address"),
+            FieldElement::from_hex_be(ACCOUNT_CONTRACT_ADDRESS).expect("Invalid Contract Address"),
         )
         .await,
         Err(ProviderError::StarknetError(StarknetError::BlockNotFound))

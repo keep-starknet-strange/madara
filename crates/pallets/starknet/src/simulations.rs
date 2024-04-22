@@ -210,7 +210,7 @@ impl<T: Config> Pallet<T> {
             .iter()
             .map(|tx| {
                 let mut transactional_state =
-                    CachedState::new(MutRefState::new(&mut state), GlobalContractCache::new(10));
+                    CachedState::new(MutRefState::new(&mut state), GlobalContractCache::new(1));
                 let res = Self::execute_transaction(
                     tx,
                     &mut transactional_state,
@@ -300,7 +300,7 @@ impl<T: Config> Pallet<T> {
         PlaceHolderErrorTypeForFailedStarknetExecution,
     > {
         // In order to produce a state diff for this specific tx we execute on a transactional state
-        let mut transactional_state = CachedState::new(MutRefState::new(state), GlobalContractCache::new(10));
+        let mut transactional_state = CachedState::new(MutRefState::new(state), GlobalContractCache::new(1));
 
         let result =
             Self::execute_account_transaction(transaction, &mut transactional_state, block_context, simulation_flags);

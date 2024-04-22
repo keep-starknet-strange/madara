@@ -11,8 +11,8 @@ use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::Provider;
 use starknet_rpc_test::constants::{
-    ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, ETH_FEE_TOKEN_ADDRESS, SEQUENCER_ADDRESS,
-    SIGNER_PRIVATE, UDC_ADDRESS,
+    ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, ETH_FEE_TOKEN_ADDRESS, SEQUENCER_CONTRACT_ADDRESS,
+    SIGNER_PRIVATE, UDC_CONTRACT_ADDRESS,
 };
 use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_test_utils::utils::{
@@ -88,7 +88,7 @@ async fn work_with_invoke_transaction(madara: &ThreadSafeMadaraClient) -> Result
                         keys: vec![get_selector_from_name("Transfer").unwrap()],
                         data: vec![
                             FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(), // from
-                            FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(),       // to (sequencer address)
+                            FieldElement::from_hex_be(SEQUENCER_CONTRACT_ADDRESS).unwrap(), // to (sequencer address)
                             expected_fee.amount,                                         // value low
                             FieldElement::ZERO,                                          // value high
                         ],
@@ -198,7 +198,7 @@ async fn work_with_declare_transaction(madara: &ThreadSafeMadaraClient) -> Resul
         keys: vec![get_selector_from_name("Transfer").unwrap()],
         data: vec![
             FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(), // from
-            FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(),       // to (sequencer address)
+            FieldElement::from_hex_be(SEQUENCER_CONTRACT_ADDRESS).unwrap(), // to (sequencer address)
             expected_fee.amount,                                         // value low
             FieldElement::ZERO,                                          // value high
         ],
@@ -314,9 +314,9 @@ async fn work_with_deploy_account_transaction(madara: &ThreadSafeMadaraClient) -
                     keys: vec![get_selector_from_name("Transfer").unwrap()],
                     data: vec![
                         account_address,
-                        FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(), // to
-                        expected_fee.amount,                                   // value low
-                        FieldElement::ZERO,                                    // value high
+                        FieldElement::from_hex_be(SEQUENCER_CONTRACT_ADDRESS).unwrap(), // to
+                        expected_fee.amount,                                            // value low
+                        FieldElement::ZERO,                                             // value high
                     ],
                 }],
             );
@@ -398,7 +398,7 @@ async fn ensure_transfer_fee_event_not_messed_up_with_similar_transfer(
     let funding_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let mut tx = madara_write_lock
         .create_block_with_txs(vec![Transaction::Execution(funding_account.transfer_tokens(
-            FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(),
+            FieldElement::from_hex_be(SEQUENCER_CONTRACT_ADDRESS).unwrap(),
             transfer_amount,
             None,
         ))])
@@ -426,7 +426,7 @@ async fn ensure_transfer_fee_event_not_messed_up_with_similar_transfer(
                         keys: vec![get_selector_from_name("Transfer").unwrap()],
                         data: vec![
                             FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(), // from
-                            FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(),       // to
+                            FieldElement::from_hex_be(SEQUENCER_CONTRACT_ADDRESS).unwrap(), // to
                             transfer_amount,                                             // value low
                             FieldElement::ZERO,                                          // value high
                         ],
@@ -436,7 +436,7 @@ async fn ensure_transfer_fee_event_not_messed_up_with_similar_transfer(
                         keys: vec![get_selector_from_name("Transfer").unwrap()],
                         data: vec![
                             FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).unwrap(), // from
-                            FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(),       // to
+                            FieldElement::from_hex_be(SEQUENCER_CONTRACT_ADDRESS).unwrap(), // to
                             expected_fee.amount,                                         // value low
                             FieldElement::ZERO,                                          // value high
                         ],
@@ -486,7 +486,7 @@ async fn work_with_messages_to_l1(madara: &ThreadSafeMadaraClient) -> Result<(),
     // 3. Next, deploying an instance of this class using universal deployer
 
     let deploy_tx = account.invoke_contract(
-        FieldElement::from_hex_be(UDC_ADDRESS).unwrap(),
+        FieldElement::from_hex_be(UDC_CONTRACT_ADDRESS).unwrap(),
         "deployContract",
         vec![
             class_hash,

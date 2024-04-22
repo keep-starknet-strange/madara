@@ -81,21 +81,21 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                         StarkFelt::from(0u128), /* Deployer (always 0 with this
                                                  * account contract) */
                         StarkFelt::try_from(TOKEN_CONTRACT_CLASS_HASH).unwrap(), // Class hash
-                        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000006")
+                        StarkFelt::try_from("0x6")
                             .unwrap(), // Constructor calldata len
-                        StarkFelt::try_from("0x000000000000000000000000000000000000000000000000000000000000000a")
+                        StarkFelt::try_from("0xa")
                             .unwrap(), // Name
-                        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000001")
+                        StarkFelt::try_from("0x1")
                             .unwrap(), // Symbol
-                        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000002")
+                        StarkFelt::try_from("0x2")
                             .unwrap(), // Decimals
-                        StarkFelt::try_from("0x000000000000000000000000000000000fffffffffffffffffffffffffffffff")
+                        StarkFelt::try_from("0xfffffffffffffffffffffffffffffff")
                             .unwrap(), // Initial supply low
-                        StarkFelt::try_from("0x000000000000000000000000000000000fffffffffffffffffffffffffffffff")
+                        StarkFelt::try_from("0xfffffffffffffffffffffffffffffff")
                             .unwrap(), // Initial supply high
                         StarkFelt::try_from("0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0")
                             .unwrap(), // Recipient
-                        StarkFelt::try_from("0x0000000000000000000000000000000000000000000000000000000000000001")
+                        StarkFelt::try_from("0x1")
                             .unwrap(), // Salt
                     ]),
                 },
