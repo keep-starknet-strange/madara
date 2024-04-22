@@ -2,6 +2,8 @@
 
 ## Next release
 
+- refactoring : Removed Redundant logs in madara
+- fix: transaction receipt fails for txs in the middle of a block
 - chore: add makefile for developer experience improvements and cleanup
 - fix: fix cargo-lint issues
 - feat: added chain-id to the GenesisConfig in pallet-starknet

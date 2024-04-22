@@ -275,7 +275,6 @@ where
             messages_to_l1,
             messages_to_l2,
         };
-        log::info!("{:#?}", program_output);
 
         settlement_provider.update_state(program_output).await?;
 

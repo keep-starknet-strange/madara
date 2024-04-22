@@ -291,7 +291,10 @@ impl<T: Config> Pallet<T> {
         for (exec_result, state_diff) in exec_transactions {
             match exec_result {
                 Ok(info) => execution_infos.push((info, state_diff)),
-                Err(_err) => return Err(PlaceHolderErrorTypeForFailedStarknetExecution),
+                Err(err) => {
+                    log::error!("Transaction execution failed: {err}");
+                    return Err(PlaceHolderErrorTypeForFailedStarknetExecution);
+                }
             }
         }
 

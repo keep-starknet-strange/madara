@@ -376,16 +376,10 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
         let mut execution_resources = ExecutionResources::default();
         let mut remaining_gas = TX_INITIAL_AVAILABLE_GAS;
 
-        log::info!(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-
         let account_tx_context = self.get_account_transaction_context(execution_config.offset_version);
-
-        log::info!("account txn context : {:?}", account_tx_context);
 
         // Nonce and fee check should be done before running user code.
         Self::handle_nonce_and_check_fee_balance(state, block_context, &account_tx_context, execution_config)?;
-
-        log::info!(">>>> nonce and check fee balance done ✅");
 
         // execute
         let ValidateExecuteCallInfo { validate_call_info, execute_call_info, revert_error } = self.execute_inner(
@@ -397,8 +391,6 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
             execution_config.disable_validation,
         )?;
 
-        log::info!(">>>> execution call info validated ✅");
-
         let (actual_fee, fee_transfer_call_info, actual_resources) = self.handle_fee(
             state,
             &execute_call_info,
@@ -409,8 +401,6 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
             execution_config,
         )?;
 
-        log::info!(">>>> fee handling done ✅");
-
         let tx_execution_info = TransactionExecutionInfo {
             validate_call_info,
             execute_call_info,
@@ -419,8 +409,6 @@ pub trait Execute: Sized + GetAccountTransactionContext + GetTransactionCalldata
             actual_resources,
             revert_error,
         };
-
-        log::info!(">>>> txn execution info : {:?}", tx_execution_info);
 
         Ok(tx_execution_info)
     }
