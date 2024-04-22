@@ -837,7 +837,7 @@ where
         let block_hash = starknet_block.header().hash::<H>();
 
         let transaction_hashes =
-            starknet_block.transactions_hashes().map(|txh| Felt252Wrapper::from(txh).into()).collect();
+            starknet_block.transactions_hashes().map(|txh| Felt252Wrapper::from(*txh).into()).collect();
         let block_status = match self.backend.messaging().last_synced_l1_block_with_event() {
             Ok(l1_block) => {
                 if l1_block.block_number >= starknet_block.header().block_number {

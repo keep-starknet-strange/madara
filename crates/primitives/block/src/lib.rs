@@ -4,6 +4,7 @@ mod header;
 use blockifier::transaction::transaction_execution::Transaction;
 pub use header::Header;
 use mp_felt::Felt252Wrapper;
+use mp_transactions::get_transaction_hash;
 use starknet_api::transaction::TransactionHash;
 
 /// Block Transactions
@@ -78,15 +79,8 @@ impl Block {
     /// Returns an iterator that iterates over all transaction hashes.
     ///
     /// Those transactions are computed using the given `chain_id`.
-    pub fn transactions_hashes(&self) -> impl '_ + Iterator<Item = TransactionHash> {
-        self.transactions.iter().map(|tx| match tx {
-            Transaction::AccountTransaction(ac) => match ac {
-                blockifier::transaction::account_transaction::AccountTransaction::Declare(tx) => tx.tx_hash,
-                blockifier::transaction::account_transaction::AccountTransaction::DeployAccount(tx) => tx.tx_hash,
-                blockifier::transaction::account_transaction::AccountTransaction::Invoke(tx) => tx.tx_hash,
-            },
-            Transaction::L1HandlerTransaction(lhc) => lhc.tx_hash,
-        })
+    pub fn transactions_hashes(&self) -> impl '_ + Iterator<Item = &TransactionHash> {
+        self.transactions.iter().map(get_transaction_hash)
     }
 }
 

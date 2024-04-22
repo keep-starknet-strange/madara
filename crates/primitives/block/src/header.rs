@@ -70,13 +70,9 @@ impl Header {
                 block_timestamp: BlockTimestamp(self.block_timestamp),
                 sequencer_address: self.sequencer_address,
                 gas_prices: self.l1_gas_price,
-                // TODO
-                // I have no idea what this is, let's say we did not use any for now
-                use_kzg_da: false,
+                use_kzg_da: true,
             },
             &ChainInfo { chain_id, fee_token_addresses },
-            // TODO
-            // I'm clueless on what those values should be
             VersionedConstants::latest_constants(),
         )
     }

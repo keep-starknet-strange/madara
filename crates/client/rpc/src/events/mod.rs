@@ -61,7 +61,7 @@ where
 
         let mut emitted_events: Vec<EmittedEvent> = vec![];
         for tx_hash in starknet_block.transactions_hashes() {
-            let raw_events = runtime_api.get_events_for_tx_by_hash(substrate_block_hash, tx_hash).map_err(|e| {
+            let raw_events = runtime_api.get_events_for_tx_by_hash(substrate_block_hash, *tx_hash).map_err(|e| {
                 error!("Failed to retrieve starknet events for transaction: error: {e}");
                 StarknetRpcApiError::InternalServerError
             })?;
@@ -72,7 +72,7 @@ where
                     data: event.content.data.0.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
                     block_hash: Some(block_hash.into()),
                     block_number: Some(block_number),
-                    transaction_hash: Felt252Wrapper::from(tx_hash).0,
+                    transaction_hash: Felt252Wrapper::from(*tx_hash).0,
                 })
             }
         }

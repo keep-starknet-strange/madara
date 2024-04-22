@@ -6644,6 +6644,7 @@ dependencies = [
  "blockifier",
  "mp-felt",
  "mp-hashers",
+ "mp-transactions",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -6762,14 +6763,6 @@ dependencies = [
  "parity-scale-codec",
  "pretty_assertions",
  "scale-info",
- "starknet_api",
-]
-
-[[package]]
-name = "mp-state"
-version = "0.7.0"
-dependencies = [
- "blockifier",
  "starknet_api",
 ]
 
