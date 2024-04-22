@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = { workspace = true }
-clap = { workspace = true, features = ["std", "derive"] }
+clap = { workspace = true, features = ["derive"] }
 ethers = { workspace = true }
 rstest = { workspace = true }
 serde = { workspace = true }
