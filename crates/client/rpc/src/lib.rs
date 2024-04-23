@@ -1004,6 +1004,8 @@ where
                 .collect();
             let tx = starknet_api::transaction::L1HandlerTransaction {
                 version: TransactionVersion::ZERO,
+                // Nonce is not used during the message fee estimation.
+                // Just put whatever.
                 nonce: Nonce(StarkFelt::ZERO),
                 contract_address: Felt252Wrapper::from(message.to_address).into(),
                 entry_point_selector: Felt252Wrapper::from(message.entry_point_selector).into(),
@@ -1012,7 +1014,7 @@ where
             let tx_hash = tx.compute_hash(chain_id, true);
 
             // Hardcoded `paid_fee_on_l1` value as it is not relevant here
-            L1HandlerTransaction { tx, tx_hash, paid_fee_on_l1: Fee(10) }
+            L1HandlerTransaction { tx, tx_hash, paid_fee_on_l1: Fee(1) }
         };
 
         let fee_estimate = self.do_estimate_message_fee(substrate_block_hash, transaction)?;

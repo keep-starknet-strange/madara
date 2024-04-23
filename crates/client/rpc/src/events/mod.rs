@@ -67,12 +67,12 @@ where
             })?;
             for event in raw_events {
                 emitted_events.push(EmittedEvent {
-                    from_address: Felt252Wrapper::from(event.from_address).0,
-                    keys: event.content.keys.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
-                    data: event.content.data.0.into_iter().map(|felt| Felt252Wrapper::from(felt).0).collect(),
+                    from_address: Felt252Wrapper::from(event.from_address).into(),
+                    keys: event.content.keys.into_iter().map(|felt| Felt252Wrapper::from(felt).into()).collect(),
+                    data: event.content.data.0.into_iter().map(|felt| Felt252Wrapper::from(felt).into()).collect(),
                     block_hash: Some(block_hash.into()),
                     block_number: Some(block_number),
-                    transaction_hash: Felt252Wrapper::from(*tx_hash).0,
+                    transaction_hash: Felt252Wrapper::from(*tx_hash).into(),
                 })
             }
         }

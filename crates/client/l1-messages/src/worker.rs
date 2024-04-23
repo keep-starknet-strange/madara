@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use blockifier::transaction::transactions::L1HandlerTransaction;
 use ethers::providers::{Http, Provider, StreamExt};
 use ethers::types::U256;
 pub use mc_eth_client::config::EthereumClientConfig;
@@ -146,7 +147,7 @@ where
 
     let chain_id = client.runtime_api().chain_id(best_block_hash).map_err(L1MessagesWorkerError::RuntimeApiError)?;
     let tx_hash = tx.compute_hash(chain_id, false);
-    let transaction = blockifier::transaction::transactions::L1HandlerTransaction { tx, tx_hash, paid_fee_on_l1 };
+    let transaction = L1HandlerTransaction { tx, tx_hash, paid_fee_on_l1 };
 
     let extrinsic = client.runtime_api().convert_l1_transaction(best_block_hash, transaction).map_err(|e| {
         log::error!("⟠ Failed to convert L1 Transaction via Runtime Api: {:?}", e);

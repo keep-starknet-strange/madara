@@ -1,11 +1,8 @@
-use blockifier::blockifier::block::{BlockInfo, GasPrices};
-use blockifier::context::{BlockContext, ChainInfo, FeeTokenAddresses};
-use blockifier::versioned_constants::VersionedConstants;
+use blockifier::blockifier::block::GasPrices;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use sp_core::U256;
-use starknet_api::block::{BlockNumber, BlockTimestamp};
-use starknet_api::core::{ChainId, ContractAddress};
+use starknet_api::core::ContractAddress;
 use starknet_api::hash::StarkHash;
 
 #[derive(Clone, Debug)]
@@ -60,21 +57,6 @@ impl Header {
             l1_gas_price: gas_prices,
             extra_data,
         }
-    }
-
-    /// Converts to a blockifier BlockContext
-    pub fn into_block_context(self, fee_token_addresses: FeeTokenAddresses, chain_id: ChainId) -> BlockContext {
-        BlockContext::new_unchecked(
-            &BlockInfo {
-                block_number: BlockNumber(self.block_number),
-                block_timestamp: BlockTimestamp(self.block_timestamp),
-                sequencer_address: self.sequencer_address,
-                gas_prices: self.l1_gas_price,
-                use_kzg_da: true,
-            },
-            &ChainInfo { chain_id, fee_token_addresses },
-            VersionedConstants::latest_constants(),
-        )
     }
 
     /// Compute the hash of the header.
