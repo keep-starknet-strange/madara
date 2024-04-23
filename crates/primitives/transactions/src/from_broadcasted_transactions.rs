@@ -24,7 +24,7 @@ use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, Entr
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{
     AccountDeploymentData, Calldata, Fee, PaymasterData, Resource, ResourceBounds, ResourceBoundsMapping, Tip,
-    TransactionSignature,
+    TransactionHash, TransactionSignature,
 };
 use starknet_api::StarknetApiError;
 use starknet_core::types::contract::legacy::{
@@ -89,6 +89,20 @@ pub fn try_declare_tx_from_broadcasted_declare_tx(
     value: BroadcastedDeclareTransaction,
     chain_id: Felt252Wrapper,
 ) -> Result<DeclareTransaction, BroadcastedTransactionConversionError> {
+    fn try_new_declare_transaction(
+        tx: starknet_api::transaction::DeclareTransaction,
+        tx_hash: TransactionHash,
+        class_info: ClassInfo,
+        is_query: bool,
+    ) -> Result<DeclareTransaction, BroadcastedTransactionConversionError> {
+        if is_query {
+            DeclareTransaction::new_for_query(tx, tx_hash, class_info)
+        } else {
+            DeclareTransaction::new(tx, tx_hash, class_info)
+        }
+        .map_err(|_| BroadcastedTransactionConversionError::InvalidTransactionVersion)
+    }
+
     let user_tx = match value {
         BroadcastedDeclareTransaction::V1(BroadcastedDeclareTransactionV1 {
             max_fee,
@@ -140,15 +154,7 @@ pub fn try_declare_tx_from_broadcasted_declare_tx(
             let contract_class = instantiate_blockifier_contract_class(compresed_contract_class, decompressed_bytes)?;
             let tx_hash = tx.compute_hash(chain_id, is_query);
 
-            {
-                let class_info = ClassInfo::new(&contract_class, 0, abi_length)?;
-                if is_query {
-                    DeclareTransaction::new_for_query(tx, tx_hash, class_info)
-                } else {
-                    DeclareTransaction::new(tx, tx_hash, class_info)
-                }
-                .map_err(|_| BroadcastedTransactionConversionError::InvalidTransactionVersion)?
-            }
+            try_new_declare_transaction(tx, tx_hash, ClassInfo::new(&contract_class, 0, abi_length)?, is_query)?
         }
         BroadcastedDeclareTransaction::V2(BroadcastedDeclareTransactionV2 {
             max_fee,
@@ -189,15 +195,12 @@ pub fn try_declare_tx_from_broadcasted_declare_tx(
                     .map_err(|_| BroadcastedTransactionConversionError::CasmContractClassConversionFailed)?,
             );
 
-            {
-                let class_info = ClassInfo::new(&contract_class, sierra_program_length, abi_length)?;
-                if is_query {
-                    DeclareTransaction::new_for_query(tx, tx_hash, class_info)
-                } else {
-                    DeclareTransaction::new(tx, tx_hash, class_info)
-                }
-                .map_err(|_| BroadcastedTransactionConversionError::InvalidTransactionVersion)?
-            }
+            try_new_declare_transaction(
+                tx,
+                tx_hash,
+                ClassInfo::new(&contract_class, sierra_program_length, abi_length)?,
+                is_query,
+            )?
         }
         BroadcastedDeclareTransaction::V3(BroadcastedDeclareTransactionV3 {
             sender_address,
@@ -247,15 +250,12 @@ pub fn try_declare_tx_from_broadcasted_declare_tx(
                     .map_err(|_| BroadcastedTransactionConversionError::CasmContractClassConversionFailed)?,
             );
 
-            {
-                let class_info = ClassInfo::new(&contract_class, sierra_program_length, abi_length)?;
-                if is_query {
-                    DeclareTransaction::new_for_query(tx, tx_hash, class_info)
-                } else {
-                    DeclareTransaction::new(tx, tx_hash, class_info)
-                }
-                .map_err(|_| BroadcastedTransactionConversionError::InvalidTransactionVersion)?
-            }
+            try_new_declare_transaction(
+                tx,
+                tx_hash,
+                ClassInfo::new(&contract_class, sierra_program_length, abi_length)?,
+                is_query,
+            )?
         }
     };
 

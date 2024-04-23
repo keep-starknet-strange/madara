@@ -310,22 +310,23 @@ fn entry_points_by_type_to_contract_entry_points(value: EntryPointsByType) -> Co
 
 // Utils to convert Casm contract class to Compiled class
 pub fn get_casm_cotract_class_hash(casm_contract_class: &CasmContractClass) -> FieldElement {
-    let compiled_class = casm_contract_class_to_compiled_class(casm_contract_class);
-    compiled_class.class_hash().unwrap()
-}
-
-/// Converts a [CasmContractClass] to a [CompiledClass]
-pub fn casm_contract_class_to_compiled_class(casm_contract_class: &CasmContractClass) -> CompiledClass {
-    CompiledClass {
-        prime: casm_contract_class.prime.to_string(),
-        compiler_version: casm_contract_class.compiler_version.clone(),
-        bytecode: casm_contract_class.bytecode.iter().map(|x| biguint_to_field_element(&x.value)).collect(),
-        entry_points_by_type: casm_entry_points_to_compiled_entry_points(&casm_contract_class.entry_points_by_type),
-        // TODO: fill those
-        hints: vec![],
-        pythonic_hints: None,
-        bytecode_segment_lengths: vec![],
+    // Let's not expose it as it don't produce a full fleshed CompiledClass
+    // and is therefore only usefull in the context of computing the ClassHash
+    fn casm_contract_class_to_partial_compiled_class(casm_contract_class: &CasmContractClass) -> CompiledClass {
+        CompiledClass {
+            prime: casm_contract_class.prime.to_string(),
+            compiler_version: casm_contract_class.compiler_version.clone(),
+            bytecode: casm_contract_class.bytecode.iter().map(|x| biguint_to_field_element(&x.value)).collect(),
+            entry_points_by_type: casm_entry_points_to_compiled_entry_points(&casm_contract_class.entry_points_by_type),
+            // The following fields are not usefull to compute the class hash, so no need to fill those
+            hints: vec![],
+            pythonic_hints: None,
+            bytecode_segment_lengths: vec![],
+        }
     }
+
+    let compiled_class = casm_contract_class_to_partial_compiled_class(casm_contract_class);
+    compiled_class.class_hash().unwrap()
 }
 
 /// Converts a [CasmContractEntryPoints] to a [CompiledClassEntrypointList]
