@@ -46,7 +46,7 @@ jobs:
       - name: Run gomu gomu test
         run: |-
           set -v -x +e
-          ./target/production/madara --dev --cache > madara.log 2>&1 &
+          ./target/production/madara --dev > madara.log 2>&1 &
           MADARA_RUN_PID=$!
           while ! echo exit | nc localhost 9944; do sleep 1; done
           cd ../gomu-gomu-no-gatling
