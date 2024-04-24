@@ -11,12 +11,13 @@ use starknet_core::types::{BlockId, BlockTag, FunctionCall, StarknetError};
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::{Provider, ProviderError};
-use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, ETH_FEE_TOKEN_ADDRESS, SIGNER_PRIVATE};
+use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{
     build_single_owner_account, get_contract_address_from_deploy_tx, is_good_error_code, AccountActions,
 };
 use starknet_rpc_test::Transaction;
+use starknet_test_utils::constants::{ETH_FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE};
 
 #[rstest]
 #[tokio::test]
@@ -146,7 +147,7 @@ async fn works_on_mutable_call_without_modifying_storage(madara: &ThreadSafeMada
 
         // manually setting fee else estimate_fee will be called and it will fail
         // as contract is not declared yet (declared in the same block as deployment)
-        let max_fee = FieldElement::from_hex_be("0x1000000000").unwrap();
+        let max_fee = FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap();
 
         // manually incrementing nonce else as both declare and deploy are in the same block
         // so automatic nonce calculation will fail

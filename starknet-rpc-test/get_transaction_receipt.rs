@@ -11,9 +11,10 @@ use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::Provider;
 use starknet_rpc_test::constants::{
-    ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, ETH_FEE_TOKEN_ADDRESS, SEQUENCER_CONTRACT_ADDRESS,
-    SIGNER_PRIVATE, UDC_CONTRACT_ADDRESS,
+    ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, SEQUENCER_CONTRACT_ADDRESS, SIGNER_PRIVATE,
+    UDC_CONTRACT_ADDRESS,
 };
+use starknet_test_utils::constants::{ETH_FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE};
 use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_test_utils::utils::{
     assert_eq_msg_to_l1, build_deploy_account_tx, build_oz_account_factory, build_single_owner_account,
@@ -280,7 +281,7 @@ async fn work_with_deploy_account_transaction(madara: &ThreadSafeMadaraClient) -
         madara_write_lock
             .create_block_with_txs(vec![Transaction::Execution(funding_account.transfer_tokens(
                 account_address,
-                FieldElement::from_hex_be("0x100000").unwrap(),
+                FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap(),
                 None,
             ))])
             .await?;
@@ -350,7 +351,7 @@ async fn work_with_pending_deploy_account_transaction(madara: &ThreadSafeMadaraC
         madara_write_lock
             .create_block_with_txs(vec![Transaction::Execution(funding_account.transfer_tokens(
                 account_address,
-                FieldElement::from_hex_be("0x100000").unwrap(),
+                FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap(),
                 None,
             ))])
             .await?;
@@ -394,7 +395,7 @@ async fn ensure_transfer_fee_event_not_messed_up_with_similar_transfer(
     let rpc = madara.get_starknet_client().await;
 
     let mut madara_write_lock = madara.write().await;
-    let transfer_amount = FieldElement::from_hex_be("0x100000").unwrap();
+    let transfer_amount = FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap();
     let funding_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let mut tx = madara_write_lock
         .create_block_with_txs(vec![Transaction::Execution(funding_account.transfer_tokens(

@@ -8,7 +8,6 @@ pub const SALT: &str = "0x1111";
 pub const MIN_AMOUNT: &str = "0x1";
 pub const DEPLOY_ACCOUNT_COST: &str = "0xffffffff";
 pub const MAX_U256: &str = "0xffffffffffffffffffffffffffffffff";
-pub const MAX_FEE_OVERRIDE: &str = "0x100000";
 
 // Usefull class hashes
 pub const TEST_CONTRACT_CLASS_HASH: &str = "0x04c5efa8dc6f0554da51f125d04e379ac41153a8b837391083a8dc3771a33388";
@@ -28,7 +27,6 @@ pub const OZ_CONTRACT_ADDRESS: &str = "0x3";
 pub const CAIRO_1_ACCOUNT_CONTRACT_ADDRESS: &str = "0x4";
 pub const TEST_CONTRACT_ADDRESS: &str = "0x1111";
 pub const L1_CONTRACT_ADDRESS: &str = "0xae0ee0a63a2ce6baeeffe56e7714fb4efe48d419";
-pub const ETH_FEE_TOKEN_ADDRESS: &str = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 pub const UDC_CONTRACT_ADDRESS: &str = "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf";
 
 // Need to use `from_mont` because this needs to be a constant function call

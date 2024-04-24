@@ -23,7 +23,7 @@ pub const TEST_CONTRACT_CLASS_HASH: &str = "0x04c5efa8dc6f0554da51f125d04e379ac4
 pub const MINT_AMOUNT: &str = "0x1";
 pub const DEPLOY_ACCOUNT_COST: &str = "0xffffffff";
 pub const CONTRACT_ADDRESS: &str = "0x1";
-pub const FEE_TOKEN_ADDRESS: &str = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
+pub const ETH_FEE_TOKEN_ADDRESS: &str = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 pub const TOKEN_CLASS_HASH: &str = "0x10000";
 pub const ARGENT_CONTRACT_ADDRESS: &str = "0x2";
 pub const OZ_CONTRACT_ADDRESS: &str = "0x3";
@@ -31,7 +31,7 @@ pub const OZ_CONTRACT_ADDRESS: &str = "0x3";
 pub const L1_CONTRACT_ADDRESS: &str = "0xae0ee0a63a2ce6baeeffe56e7714fb4efe48d419";
 
 pub const MAX_U256: &str = "0xffffffffffffffffffffffffffffffff";
-pub const MAX_FEE_OVERRIDE: &str = "0x100000";
+pub const MAX_FEE_OVERRIDE: &str = "0x1000000";
 
 // Need to use `from_mont` because this needs to be a constant function call
 pub const MADARA_CHAIN_ID: FieldElement =

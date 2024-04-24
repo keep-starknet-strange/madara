@@ -7,9 +7,8 @@ use starknet_core::types::{
 use starknet_ff::FieldElement;
 use starknet_providers::Provider;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
-use starknet_rpc_test::constants::{
-    ARGENT_ACCOUNT_CLASS_HASH_CAIRO_0, ARGENT_CONTRACT_ADDRESS, ETH_FEE_TOKEN_ADDRESS, SIGNER_PRIVATE,
-};
+use starknet_rpc_test::constants::{ARGENT_ACCOUNT_CLASS_HASH_CAIRO_0, ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE};
+use starknet_test_utils::constants::ETH_FEE_TOKEN_ADDRESS;
 use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_test_utils::utils::{build_single_owner_account, AccountActions};
 use starknet_test_utils::Transaction;

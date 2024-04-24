@@ -12,10 +12,8 @@ use starknet_core::types::{
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::{Provider, ProviderError};
-use starknet_rpc_test::constants::{
-    ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, ETH_FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE,
-    SIGNER_PRIVATE,
-};
+use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, SIGNER_PRIVATE};
+use starknet_test_utils::constants::{ETH_FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE};
 use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_test_utils::utils::{
     build_deploy_account_tx, build_oz_account_factory, build_single_owner_account, AccountActions,

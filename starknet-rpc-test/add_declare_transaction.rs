@@ -9,14 +9,13 @@ use starknet_accounts::Account;
 use starknet_core::types::{BlockId, DeclareTransactionResult, StarknetError};
 use starknet_ff::FieldElement;
 use starknet_providers::{Provider, ProviderError};
-use starknet_rpc_test::constants::{
-    ARGENT_CONTRACT_ADDRESS, ETH_FEE_TOKEN_ADDRESS, OZ_CONTRACT_ADDRESS, SIGNER_PRIVATE,
-};
+use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, OZ_CONTRACT_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{
     build_single_owner_account, is_good_error_code, read_erc20_balance, AccountActions, U256,
 };
 use starknet_rpc_test::{SendTransactionError, Transaction, TransactionResult};
+use starknet_test_utils::constants::ETH_FEE_TOKEN_ADDRESS;
 
 #[rstest]
 #[tokio::test]

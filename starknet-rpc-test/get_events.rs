@@ -6,12 +6,11 @@ use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::jsonrpc::HttpTransport;
 use starknet_providers::{JsonRpcClient, Provider, ProviderError};
-use starknet_rpc_test::constants::{
-    ARGENT_CONTRACT_ADDRESS, ETH_FEE_TOKEN_ADDRESS, SEQUENCER_CONTRACT_ADDRESS, SIGNER_PRIVATE,
-};
+use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, SEQUENCER_CONTRACT_ADDRESS, SIGNER_PRIVATE};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{build_single_owner_account, AccountActions};
 use starknet_rpc_test::{MadaraClient, Transaction, TransactionResult};
+use starknet_test_utils::constants::ETH_FEE_TOKEN_ADDRESS;
 
 async fn transfer_tokens(
     rpc: &JsonRpcClient<HttpTransport>,

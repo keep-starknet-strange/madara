@@ -13,7 +13,7 @@ use starknet_rpc_test::constants::{ARGENT_ACCOUNT_CLASS_HASH_CAIRO_0, ARGENT_CON
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{build_single_owner_account, AccountActions};
 use starknet_rpc_test::Transaction;
-use starknet_test_utils::constants::FEE_TOKEN_ADDRESS;
+use starknet_test_utils::constants::ETH_FEE_TOKEN_ADDRESS;
 use starknet_test_utils::utils::trace_transaction;
 
 #[rstest]
@@ -66,15 +66,15 @@ async fn works_with_correct_transaction(madara: &ThreadSafeMadaraClient) {
 
     // This is legacy starknet `__execute__` calls encoding
     let expected_calldata = vec![
-        FieldElement::ONE,                                     // number of calls
-        FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(), // contract to call
-        transfer_selector,                                     // selector
-        FieldElement::ZERO,                                    // data offset
-        FieldElement::from(3u8),                               // data len
-        FieldElement::from(3u8),                               // Calldata len
-        recipient_account,                                     // Recipient address
-        FieldElement::ONE,                                     // Amount low
-        FieldElement::ZERO,                                    // Amount high
+        FieldElement::ONE,                                         // number of calls
+        FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap(), // contract to call
+        transfer_selector,                                         // selector
+        FieldElement::ZERO,                                        // data offset
+        FieldElement::from(3u8),                                   // data len
+        FieldElement::from(3u8),                                   // Calldata len
+        recipient_account,                                         // Recipient address
+        FieldElement::ONE,                                         // Amount low
+        FieldElement::ZERO,                                        // Amount high
     ];
 
     let tx_hash = *included_tx.transaction_hash();

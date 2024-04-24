@@ -4,8 +4,9 @@ use starknet_core::types::{BlockId, StarknetError};
 use starknet_ff::FieldElement;
 use starknet_providers::Provider;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
-use starknet_rpc_test::constants::{ETH_FEE_TOKEN_ADDRESS, MAX_U256};
+use starknet_rpc_test::constants::MAX_U256;
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_test_utils::constants::ETH_FEE_TOKEN_ADDRESS;
 
 #[rstest]
 #[tokio::test]
