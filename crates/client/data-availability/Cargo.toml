@@ -15,46 +15,29 @@ targets = ["x86_64-unknown-linux-gnu"]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 futures = "0.3.21"
-indexmap = { workspace = true }
 jsonrpsee = { version = "0.20.0", features = [
   "http-client",
   "ws-client",
   "macros",
 ] }
 log = { workspace = true }
+mc-commitment-state-diff = { workspace = true }
+mc-db = { workspace = true }
+mc-eth-client = { workspace = true }
 reqwest = { version = "0.11.18", features = ["blocking", "json"] }
-serde = { workspace = true, default-features = true }
-serde_json = { workspace = true, default-features = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sp-core = { workspace = true, features = ["std"] }
+sp-runtime = { workspace = true, features = ["std"] }
+starknet_api = { workspace = true }
 thiserror.workspace = true
 tokio = { version = "1", features = ["full"] }
 url = { workspace = true }
 uuid = { version = "1.4.0", features = ["v4", "serde"] }
 
-# Substrate
-sc-client-api = { workspace = true }
-sp-api = { workspace = true, features = ["std"] }
-sp-blockchain = { workspace = true }
-sp-core = { workspace = true, features = ["std"] }
-sp-io = { workspace = true, features = ["std"] }
-sp-runtime = { workspace = true, features = ["std"] }
-
-# Starknet
-blockifier = { workspace = true, default-features = true }
-mc-commitment-state-diff = { workspace = true, default-features = true }
-mc-db = { workspace = true, default-features = true }
-mc-eth-client = { workspace = true }
-pallet-starknet-runtime-api = { workspace = true, features = ["std"] }
-starknet-core = { workspace = true, features = ["std"] }
-starknet_api = { workspace = true, default-features = true }
-
 # Ethereum
 ethers = { workspace = true }
-
-# Madara
-mp-digest-log = { workspace = true, default-features = true }
-mp-felt = { workspace = true, default-features = true }
-mp-hashers = { workspace = true, default-features = true }
-mp-storage = { workspace = true, default-features = true }
+mp-hashers = { workspace = true }
 
 # Zaun
 starknet-core-contract-client = { workspace = true }
@@ -67,14 +50,12 @@ avail-subxt = { git = "https://github.com/availproject/avail", version = "0.4.0"
 celestia-rpc = { git = "https://github.com/eigerco/lumina", rev = "ccc5b9bfeac632cccd32d35ecb7b7d51d71fbb87", optional = true }
 celestia-types = { git = "https://github.com/eigerco/lumina", rev = "ccc5b9bfeac632cccd32d35ecb7b7d51d71fbb87", optional = true }
 clap = { workspace = true, features = ["derive"], optional = true }
-sp-keyring = { workspace = true, optional = true }
 subxt = { workspace = true, optional = true }
 
 [dev-dependencies]
 rstest = { workspace = true }
 
 [features]
-default = []
 clap = ["dep:clap"]
-avail = ["dep:avail-subxt", "dep:sp-keyring", "dep:subxt"]
+avail = ["dep:avail-subxt", "dep:subxt"]
 celestia = ["dep:celestia-rpc", "dep:celestia-types"]

@@ -14,7 +14,4 @@ sp-runtime = { workspace = true }
 
 [dev-dependencies]
 assert_matches = "1.5.0"
-
-[features]
-default = ["std"]
-std = ["parity-scale-codec/std", "sp-runtime/std", "mp-block/std"]
+blockifier = { workspace = true }

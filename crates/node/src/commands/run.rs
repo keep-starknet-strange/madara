@@ -73,14 +73,6 @@ pub struct ExtendedRunCmd {
     /// returned.
     #[clap(long, value_hint = FilePath, requires = "settlement")]
     pub settlement_conf: Option<PathBuf>,
-
-    /// When enabled, more information about the blocks and their transaction is cached and stored
-    /// in the database.
-    ///
-    /// This may improve response times for RPCs that require that information, but it also
-    /// increases the memory footprint of the node.
-    #[clap(long)]
-    pub cache: bool,
 }
 
 impl ExtendedRunCmd {
@@ -202,8 +194,7 @@ pub fn run_node(mut cli: Cli) -> Result<()> {
 
     runner.run_node_until_exit(|config| async move {
         let sealing = cli.run.sealing.map(Into::into).unwrap_or_default();
-        let cache = cli.run.cache;
-        service::new_full(config, sealing, da_client, cache, settlement_config).map_err(sc_cli::Error::Service)
+        service::new_full(config, sealing, da_client, settlement_config).map_err(sc_cli::Error::Service)
     })
 }
 

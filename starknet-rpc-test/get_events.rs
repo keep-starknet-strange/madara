@@ -5,11 +5,12 @@ use starknet_core::types::{BlockId, EmittedEvent, EventFilter, StarknetError};
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::jsonrpc::HttpTransport;
-use starknet_providers::{JsonRpcClient, MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
-use starknet_test_utils::constants::{ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SEQUENCER_ADDRESS, SIGNER_PRIVATE};
-use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_test_utils::utils::{build_single_owner_account, AccountActions};
-use starknet_test_utils::{MadaraClient, Transaction, TransactionResult};
+use starknet_providers::{JsonRpcClient, Provider, ProviderError};
+use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, SEQUENCER_CONTRACT_ADDRESS, SIGNER_PRIVATE};
+use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_rpc_test::utils::{build_single_owner_account, AccountActions};
+use starknet_rpc_test::{MadaraClient, Transaction, TransactionResult};
+use starknet_test_utils::constants::ETH_FEE_TOKEN_ADDRESS;
 
 async fn transfer_tokens(
     rpc: &JsonRpcClient<HttpTransport>,
@@ -48,13 +49,7 @@ async fn fail_invalid_continuation_token(madara: &ThreadSafeMadaraClient) -> Res
         )
         .await;
 
-    assert_matches!(
-        events_result,
-        Err(ProviderError::StarknetError(StarknetErrorWithMessage {
-            message: _,
-            code: MaybeUnknownErrorCode::Known(StarknetError::InvalidContinuationToken)
-        }))
-    );
+    assert_matches!(events_result, Err(ProviderError::StarknetError(StarknetError::InvalidContinuationToken)));
 
     Ok(())
 }
@@ -77,13 +72,7 @@ async fn fail_chunk_size_too_big(madara: &ThreadSafeMadaraClient) -> Result<(), 
         )
         .await;
 
-    assert_matches!(
-        events_result,
-        Err(ProviderError::StarknetError(StarknetErrorWithMessage {
-            message: _,
-            code: MaybeUnknownErrorCode::Known(StarknetError::PageSizeTooBig)
-        }))
-    );
+    assert_matches!(events_result, Err(ProviderError::StarknetError(StarknetError::PageSizeTooBig)));
 
     Ok(())
 }
@@ -106,13 +95,7 @@ async fn fail_keys_too_big(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow
         )
         .await;
 
-    assert_matches!(
-        events_result,
-        Err(ProviderError::StarknetError(StarknetErrorWithMessage {
-            message: _,
-            code: MaybeUnknownErrorCode::Known(StarknetError::TooManyKeysInFilter)
-        }))
-    );
+    assert_matches!(events_result, Err(ProviderError::StarknetError(StarknetError::TooManyKeysInFilter)));
 
     Ok(())
 }
@@ -135,7 +118,7 @@ async fn work_one_block_no_filter(madara: &ThreadSafeMadaraClient) -> Result<(),
         .await
         .unwrap();
 
-    let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
+    let fee_token_address = FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap();
     let block_hash =
         FieldElement::from_hex_be("0x0742520489186d3d79b09e1d14ec7e69d515a3c915e6cfd8fd4ca65299372a45").unwrap();
     let expected_fee = FieldElement::from_hex_be("0x1d010").unwrap();
@@ -152,8 +135,8 @@ async fn work_one_block_no_filter(madara: &ThreadSafeMadaraClient) -> Result<(),
                     transfer_amount,    // value low
                     FieldElement::ZERO, // value high
                 ],
-                block_hash,
-                block_number,
+                block_hash: Some(block_hash),
+                block_number: Some(block_number),
                 transaction_hash,
             },
             EmittedEvent {
@@ -165,21 +148,21 @@ async fn work_one_block_no_filter(madara: &ThreadSafeMadaraClient) -> Result<(),
                     FieldElement::ONE,
                     FieldElement::ONE,
                 ],
-                block_hash,
-                block_number,
+                block_hash: Some(block_hash),
+                block_number: Some(block_number),
                 transaction_hash,
             },
             EmittedEvent {
                 from_address: fee_token_address,
                 keys: vec![get_selector_from_name("Transfer").unwrap()],
                 data: vec![
-                    account_address,                                       // from
-                    FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(), // to (sequencer address)
-                    expected_fee,                                          // value low
-                    FieldElement::ZERO,                                    // value high
+                    account_address,                                                // from
+                    FieldElement::from_hex_be(SEQUENCER_CONTRACT_ADDRESS).unwrap(), // to (sequencer address)
+                    expected_fee,                                                   // value low
+                    FieldElement::ZERO,                                             // value high
                 ],
-                block_hash,
-                block_number,
+                block_hash: Some(block_hash),
+                block_number: Some(block_number),
                 transaction_hash,
             },
         ]
@@ -207,7 +190,7 @@ async fn work_one_block_with_chunk_filter_and_continuation_token(
         .await
         .unwrap();
 
-    let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
+    let fee_token_address = FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap();
     let block_hash =
         FieldElement::from_hex_be("0x0742520489186d3d79b09e1d14ec7e69d515a3c915e6cfd8fd4ca65299372a45").unwrap();
 
@@ -234,21 +217,21 @@ async fn work_one_block_with_chunk_filter_and_continuation_token(
                     FieldElement::ONE,
                     FieldElement::ONE,
                 ],
-                block_hash,
-                block_number,
+                block_hash: Some(block_hash),
+                block_number: Some(block_number),
                 transaction_hash,
             },
             EmittedEvent {
                 from_address: fee_token_address,
                 keys: vec![get_selector_from_name("Transfer").unwrap()],
                 data: vec![
-                    account_address,                                       // from
-                    FieldElement::from_hex_be(SEQUENCER_ADDRESS).unwrap(), // to (sequencer address)
-                    expected_fee,                                          // value low
-                    FieldElement::ZERO,                                    // value high
+                    account_address,                                                // from
+                    FieldElement::from_hex_be(SEQUENCER_CONTRACT_ADDRESS).unwrap(), // to (sequencer address)
+                    expected_fee,                                                   // value low
+                    FieldElement::ZERO,                                             // value high
                 ],
-                block_hash,
-                block_number,
+                block_hash: Some(block_hash),
+                block_number: Some(block_number),
                 transaction_hash,
             },
         ]
@@ -291,7 +274,7 @@ async fn work_two_blocks_with_block_filter_and_continuation_token(
         .await
         .unwrap();
 
-    let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
+    let fee_token_address = FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap();
 
     assert_eq!(
         events_result.events,
@@ -304,8 +287,8 @@ async fn work_two_blocks_with_block_filter_and_continuation_token(
                 transfer_amount,    // value low
                 FieldElement::ZERO, // value high
             ],
-            block_hash: first_block_number_and_hash.block_hash,
-            block_number: first_block_number_and_hash.block_number,
+            block_hash: Some(first_block_number_and_hash.block_hash),
+            block_number: Some(first_block_number_and_hash.block_number),
             transaction_hash: transaction_hash_1,
         }],
     );
@@ -337,8 +320,8 @@ async fn work_two_blocks_with_block_filter_and_continuation_token(
                 transfer_amount,    // value low
                 FieldElement::ZERO, // value high
             ],
-            block_hash: second_block_number_and_hash.block_hash,
-            block_number: second_block_number_and_hash.block_number,
+            block_hash: Some(second_block_number_and_hash.block_hash),
+            block_number: Some(second_block_number_and_hash.block_number),
             transaction_hash: transaction_hash_2,
         }],
     );
@@ -382,8 +365,8 @@ async fn work_one_block_address_filter(madara: &ThreadSafeMadaraClient) -> Resul
                 FieldElement::ONE,
                 FieldElement::ONE,
             ],
-            block_hash,
-            block_number,
+            block_hash: Some(block_hash),
+            block_number: Some(block_number),
             transaction_hash,
         }
     });
@@ -428,8 +411,8 @@ async fn work_one_block_key_filter(madara: &ThreadSafeMadaraClient) -> Result<()
                 FieldElement::ONE,
                 FieldElement::ONE,
             ],
-            block_hash,
-            block_number,
+            block_hash: Some(block_hash),
+            block_number: Some(block_number),
             transaction_hash,
         }
     });

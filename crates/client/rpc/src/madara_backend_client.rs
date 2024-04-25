@@ -5,14 +5,14 @@ use sc_client_api::backend::{Backend, StorageProvider};
 use sp_api::BlockId;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
-use starknet_api::hash::StarkHash;
+use starknet_api::block::BlockHash;
 
 use crate::errors::StarknetRpcApiError;
 
 pub fn load_hash<B: BlockT, C>(
     client: &C,
     backend: &mc_db::Backend<B>,
-    hash: StarkHash,
+    hash: BlockHash,
 ) -> Result<Option<B::Hash>, DbError>
 where
     B: BlockT,
@@ -66,7 +66,7 @@ where
 
     match substrate_block_hash {
         Ok(Some(block_hash)) => {
-            let block = get_block_by_block_hash(client, block_hash).unwrap_or_default();
+            let block = get_block_by_block_hash(client, block_hash).map_err(|_| StarknetRpcApiError::BlockNotFound)?;
 
             Ok(block)
         }

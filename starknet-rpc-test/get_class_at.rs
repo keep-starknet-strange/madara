@@ -7,10 +7,10 @@ use starknet_core::types::contract::legacy::{LegacyContractClass, LegacyProgram}
 use starknet_core::types::contract::SierraClass;
 use starknet_core::types::{BlockId, ContractClass, FlattenedSierraClass, StarknetError};
 use starknet_ff::FieldElement;
+use starknet_providers::Provider;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
-use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
-use starknet_test_utils::constants::{CAIRO_1_ACCOUNT_CONTRACT, TEST_CONTRACT_ADDRESS};
-use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_rpc_test::constants::{CAIRO_1_ACCOUNT_CONTRACT_ADDRESS, TEST_CONTRACT_ADDRESS};
+use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 
 #[rstest]
 #[tokio::test]
@@ -20,13 +20,8 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
     let test_contract_address = FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).expect("Invalid Contract Address");
 
     assert_matches!(
-        rpc
-        .get_class_at(
-            BlockId::Number(100),
-            test_contract_address,
-        )
-        .await,
-        Err(StarknetProviderError(StarknetErrorWithMessage { code: MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::BlockNotFound
+        rpc.get_class_at(BlockId::Number(100), test_contract_address,).await,
+        Err(StarknetProviderError(StarknetError::BlockNotFound))
     );
 
     Ok(())
@@ -40,13 +35,8 @@ async fn fail_non_existing_contract(madara: &ThreadSafeMadaraClient) -> Result<(
     let unknown_contract_address = FieldElement::from_hex_be("0x4269DEADBEEF").expect("Invalid Contract Address");
 
     assert_matches!(
-        rpc
-        .get_class_at(
-            BlockId::Number(0),
-            unknown_contract_address,
-        )
-        .await,
-        Err(StarknetProviderError(StarknetErrorWithMessage { code: MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::ContractNotFound
+        rpc.get_class_at(BlockId::Number(0), unknown_contract_address,).await,
+        Err(StarknetProviderError(StarknetError::ContractNotFound))
     );
 
     Ok(())
@@ -91,7 +81,8 @@ async fn work_ok_retrieving_class_for_contract_version_0(madara: &ThreadSafeMada
 async fn work_ok_retrieving_class_for_contract_version_1(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-    let test_contract_address = FieldElement::from_hex_be(CAIRO_1_ACCOUNT_CONTRACT).expect("Invalid Contract Address");
+    let test_contract_address =
+        FieldElement::from_hex_be(CAIRO_1_ACCOUNT_CONTRACT_ADDRESS).expect("Invalid Contract Address");
 
     let test_contract_class_bytes = include_bytes!("../cairo-contracts/build/cairo_1/NoValidateAccount.sierra.json");
     let test_contract_class: SierraClass = serde_json::from_slice(test_contract_class_bytes).unwrap();

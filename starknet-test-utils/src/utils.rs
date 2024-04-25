@@ -10,14 +10,14 @@ use starknet_core::types::contract::legacy::LegacyContractClass;
 use starknet_core::types::contract::{CompiledClass, SierraClass};
 use starknet_core::types::{
     BlockId, BlockTag, BroadcastedInvokeTransaction, FieldElement, FunctionCall, MaybePendingTransactionReceipt,
-    MsgToL1, TransactionReceipt,
+    MsgToL1, TransactionReceipt, TransactionTrace,
 };
 use starknet_core::utils::get_selector_from_name;
 use starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
 use starknet_providers::{Provider, ProviderError};
 use starknet_signers::{LocalWallet, SigningKey};
 
-use crate::constants::{FEE_TOKEN_ADDRESS, MADARA_CHAIN_ID, MAX_FEE_OVERRIDE};
+use crate::constants::{ETH_FEE_TOKEN_ADDRESS, MADARA_CHAIN_ID, MAX_FEE_OVERRIDE};
 use crate::{
     RpcAccount, RpcOzAccountFactory, SendTransactionError, TransactionAccountDeployment, TransactionDeclaration,
     TransactionExecution, TransactionLegacyDeclaration, TransactionResult,
@@ -106,6 +106,7 @@ pub trait AccountActions {
         &self,
         path_to_sierra: &str,
         path_to_casm: &str,
+        nonce: Option<u64>,
     ) -> (TransactionDeclaration, FieldElement, FieldElement);
 
     fn declare_legacy_contract(&self, path_to_compiled_contract: &str) -> (TransactionLegacyDeclaration, FieldElement);
@@ -132,7 +133,7 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
         transfer_amount: U256,
         nonce: Option<u64>,
     ) -> TransactionExecution {
-        let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
+        let fee_token_address = FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap();
         self.invoke_contract(
             fee_token_address,
             "transfer",
@@ -171,6 +172,7 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
         &self,
         path_to_sierra: &str,
         path_to_casm: &str,
+        nonce: Option<u64>,
     ) -> (TransactionDeclaration, FieldElement, FieldElement) {
         let sierra: SierraClass = serde_json::from_reader(
             std::fs::File::open(env!("CARGO_MANIFEST_DIR").to_owned() + "/" + path_to_sierra).unwrap(),
@@ -181,13 +183,17 @@ impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalW
         )
         .unwrap();
         let compiled_class_hash = casm.class_hash().unwrap();
-        (
-            self.declare(sierra.clone().flatten().unwrap().into(), compiled_class_hash)
-				// starknet-rs calls estimateFee with incorrect version which throws an error
-                .max_fee(FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap()),
-            sierra.class_hash().unwrap(),
-            compiled_class_hash,
-        )
+        let max_fee = FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap();
+
+        let tx = match nonce {
+            Some(nonce) => self
+                .declare(sierra.clone().flatten().unwrap().into(), compiled_class_hash)
+                .max_fee(max_fee)
+                .nonce(nonce.into()),
+            None => self.declare(sierra.clone().flatten().unwrap().into(), compiled_class_hash).max_fee(max_fee),
+        };
+
+        (tx, sierra.class_hash().unwrap(), compiled_class_hash)
     }
 
     fn declare_legacy_contract(&self, path_to_compiled_contract: &str) -> (TransactionLegacyDeclaration, FieldElement) {
@@ -240,6 +246,17 @@ pub async fn get_transaction_receipt(
     assert_poll(|| async { rpc.get_transaction_receipt(transaction_hash).await.is_ok() }, 100, 20).await;
 
     rpc.get_transaction_receipt(transaction_hash).await
+}
+
+pub async fn trace_transaction(
+    rpc: &JsonRpcClient<HttpTransport>,
+    transaction_hash: FieldElement,
+) -> Result<TransactionTrace, ProviderError> {
+    // there is a delay between the transaction being available at the client
+    // and the sealing of the block, hence sleeping for 100ms
+    assert_poll(|| async { rpc.get_transaction_receipt(transaction_hash).await.is_ok() }, 100, 20).await;
+
+    rpc.trace_transaction(transaction_hash).await
 }
 
 pub async fn get_contract_address_from_deploy_tx(

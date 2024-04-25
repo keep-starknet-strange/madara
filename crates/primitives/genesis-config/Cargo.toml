@@ -8,19 +8,9 @@ version.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
-
-blockifier = { workspace = true, features = [
-  "testing",
-  "parity-scale-codec",
-  "scale-info",
-] }
-#
-# third party
-derive_more = { workspace = true, features = ["constructor"] }
 hex = { workspace = true }
+mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
 serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
 serde_with = { workspace = true }
 starknet-core = { workspace = true }
 starknet-crypto = { workspace = true, features = ["alloc"] }

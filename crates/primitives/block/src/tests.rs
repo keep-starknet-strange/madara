@@ -3,11 +3,8 @@ use core::convert::TryFrom;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::pedersen::PedersenHasher;
 use mp_hashers::HasherT;
-use starknet_api::api_core::{ChainId, ContractAddress, PatriciaKey};
-use starknet_api::block::{BlockNumber, BlockTimestamp};
+use starknet_api::core::{ContractAddress, PatriciaKey};
 use starknet_api::hash::{StarkFelt, StarkHash};
-
-use crate::Header;
 
 fn generate_dummy_header() -> Vec<Felt252Wrapper> {
     vec![
@@ -74,22 +71,4 @@ fn test_real_header_hash() {
     let hash = <PedersenHasher as HasherT>::compute_hash_on_wrappers(header);
 
     assert_eq!(hash, expected_hash);
-}
-
-#[test]
-fn test_to_block_context() {
-    let sequencer_address = ContractAddress(PatriciaKey(StarkFelt::try_from("0xFF").unwrap()));
-    // Create a block header.
-    let block_header = Header { block_number: 1, block_timestamp: 1, sequencer_address, ..Default::default() };
-    // Create a fee token address.
-    let fee_token_address = ContractAddress(PatriciaKey(StarkFelt::try_from("AA").unwrap()));
-    // Create a chain id.
-    let chain_id = ChainId("0x1".to_string());
-    // Try to serialize the block header.
-    let block_context = block_header.into_block_context(fee_token_address, chain_id);
-    // Check that the block context was serialized correctly.
-    assert_eq!(block_context.block_number, BlockNumber(1));
-    assert_eq!(block_context.block_timestamp, BlockTimestamp(1));
-    assert_eq!(block_context.sequencer_address, sequencer_address);
-    assert_eq!(block_context.fee_token_address, fee_token_address);
 }
