@@ -341,7 +341,7 @@
         <span class="self">self</span>.client
             .send_message_to_l2(
                 convert_felt_to_u256(message.to_address.<span class="number">0.0</span>),
-                convert_felt_to_u256(message.selector),
+                convert_felt_to_u256(message.selector.<span class="number">0</span>),
                 message.payload.clone().into_iter().map(convert_felt_to_u256).collect(),
                 <span class="number">1</span>.into(),
             )

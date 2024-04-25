@@ -649,8 +649,8 @@
     BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall,
     InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingStateUpdate,
-    MaybePendingTransactionReceipt, MsgFromL1, SimulatedTransaction, SimulationFlag, SyncStatusType, Transaction,
-    TransactionTrace, TransactionTraceWithHash,
+    MaybePendingTransactionReceipt, MsgFromL1, SimulatedTransaction, SimulationFlag, SimulationFlagForEstimateFee,
+    SyncStatusType, Transaction, TransactionTrace, TransactionTraceWithHash,
 };
 
 <span class="kw">use </span><span class="kw">crate</span>::Starknet;
@@ -682,7 +682,6 @@
 }
 
 <span class="attr">#[async_trait]
-#[allow(unused_variables)]
 </span><span class="kw">impl</span>&lt;A, B, BE, G, C, P, H&gt; StarknetReadRpcApiServer <span class="kw">for </span>StarknetRpcWrapper&lt;A, B, BE, G, C, P, H&gt;
 <span class="kw">where
     </span>A: ChainApi&lt;Block = B&gt; + <span class="lifetime">&#39;static</span>,
@@ -979,9 +978,10 @@
     </span><span class="kw">async fn </span>estimate_fee(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         request: Vec&lt;BroadcastedTransaction&gt;,
+        simulation_flags: Vec&lt;SimulationFlagForEstimateFee&gt;,
         block_id: BlockId,
     ) -&gt; RpcResult&lt;Vec&lt;FeeEstimate&gt;&gt; {
-        StarknetReadRpcApiServer::estimate_fee(<span class="kw-2">&amp;*</span><span class="self">self</span>.<span class="number">0</span>, request, block_id).<span class="kw">await
+        StarknetReadRpcApiServer::estimate_fee(<span class="kw-2">&amp;*</span><span class="self">self</span>.<span class="number">0</span>, request, simulation_flags, block_id).<span class="kw">await
     </span>}
 
     <span class="doccomment">/// Estimate the L2 fee of a message sent on L1

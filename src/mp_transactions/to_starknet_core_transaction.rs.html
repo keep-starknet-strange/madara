@@ -146,152 +146,284 @@
 <a href="#146" id="146">146</a>
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::vec::Vec;
-
-<span class="kw">use </span>mp_felt::Felt252Wrapper;
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>starknet_crypto::FieldElement;
 
-<span class="kw">fn </span>cast_vec_of_felt_252_wrappers(data: Vec&lt;Felt252Wrapper&gt;) -&gt; Vec&lt;FieldElement&gt; {
-    <span class="comment">// Non-copy but less dangerous than transmute
-    // https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
-
-    // Unsafe code but all invariants are checked:
-
-    // 1. ptr must have been allocated using the global allocator -&gt; data is allocated with the Global
-    //    allocator.
-    // 2. T needs to have the same alignment as what ptr was allocated with -&gt; Felt252Wrapper uses
-    //    transparent representation of the inner type.
-    // 3. The allocated size in bytes needs to be the same as the pointer -&gt; As FieldElement and
-    //    Felt252Wrapper have the same size, and capacity is taken directly from the data Vector, we
-    //    will have the same allocated byte size.
-    // 4. Length needs to be less than or equal to capacity -&gt; data.len() is always less than or equal
-    //    to data.capacity()
-    // 5. The first length values must be properly initialized values of type T -&gt; ok since we use data
-    //    which was correctly allocated
-    // 6. capacity needs to be the capacity that the pointer was allocated with -&gt; data.as_mut_ptr()
-    //    returns a pointer to memory having at least capacity initialized memory
-    // 7. The allocated size in bytes must be no larger than isize::MAX -&gt; data.capacity() will never be
-    //    bigger than isize::MAX (https://doc.rust-lang.org/std/vec/struct.Vec.html#panics-7)
-    </span><span class="kw">let </span><span class="kw-2">mut </span>data = core::mem::ManuallyDrop::new(data);
-    <span class="kw">unsafe </span>{ alloc::vec::Vec::from_raw_parts(data.as_mut_ptr() <span class="kw">as </span><span class="kw-2">*mut </span>FieldElement, data.len(), data.capacity()) }
-}
-
 <span class="kw">pub fn </span>to_starknet_core_tx(
-    tx: <span class="kw">super</span>::Transaction,
-    transaction_hash: FieldElement,
+    tx: blockifier::transaction::transaction_execution::Transaction,
 ) -&gt; starknet_core::types::Transaction {
     <span class="kw">match </span>tx {
-        <span class="kw">super</span>::Transaction::Declare(tx, _contract_class) =&gt; {
-            <span class="kw">let </span>tx = <span class="kw">match </span>tx {
-                <span class="kw">super</span>::DeclareTransaction::V0(<span class="kw">super</span>::DeclareTransactionV0 {
-                    max_fee,
-                    signature,
-                    nonce: <span class="kw">_</span>,
-                    class_hash,
-                    sender_address,
-                }) =&gt; starknet_core::types::DeclareTransaction::V0(starknet_core::types::DeclareTransactionV0 {
-                    transaction_hash,
-                    max_fee: max_fee.into(),
-                    signature: cast_vec_of_felt_252_wrappers(signature),
-                    class_hash: class_hash.into(),
-                    sender_address: sender_address.into(),
-                }),
-                <span class="kw">super</span>::DeclareTransaction::V1(<span class="kw">super</span>::DeclareTransactionV1 {
-                    max_fee,
-                    signature,
-                    nonce,
-                    class_hash,
-                    sender_address,
-                    ..
-                }) =&gt; starknet_core::types::DeclareTransaction::V1(starknet_core::types::DeclareTransactionV1 {
-                    transaction_hash,
-                    max_fee: max_fee.into(),
-                    signature: cast_vec_of_felt_252_wrappers(signature),
-                    nonce: nonce.into(),
-                    class_hash: class_hash.into(),
-                    sender_address: sender_address.into(),
-                }),
-                <span class="kw">super</span>::DeclareTransaction::V2(<span class="kw">super</span>::DeclareTransactionV2 {
-                    max_fee,
-                    signature,
-                    nonce,
-                    class_hash,
-                    sender_address,
-                    compiled_class_hash,
-                    ..
-                }) =&gt; starknet_core::types::DeclareTransaction::V2(starknet_core::types::DeclareTransactionV2 {
-                    transaction_hash,
-                    max_fee: max_fee.into(),
-                    signature: cast_vec_of_felt_252_wrappers(signature),
-                    nonce: nonce.into(),
-                    class_hash: class_hash.into(),
-                    sender_address: sender_address.into(),
-                    compiled_class_hash: compiled_class_hash.into(),
-                }),
-            };
-
-            starknet_core::types::Transaction::Declare(tx)
+        blockifier::transaction::transaction_execution::Transaction::AccountTransaction(acc_tx) =&gt; <span class="kw">match </span>acc_tx {
+            blockifier::transaction::account_transaction::AccountTransaction::Declare(dec_tx) =&gt; <span class="kw">match </span>dec_tx.tx {
+                starknet_api::transaction::DeclareTransaction::V0(tx) =&gt; starknet_core::types::Transaction::Declare(
+                    starknet_core::types::DeclareTransaction::V0(starknet_core::types::DeclareTransactionV0 {
+                        transaction_hash: Felt252Wrapper::from(dec_tx.tx_hash).into(),
+                        sender_address: Felt252Wrapper::from(tx.sender_address).into(),
+                        max_fee: FieldElement::from(tx.max_fee.<span class="number">0</span>),
+                        signature: tx.signature.<span class="number">0</span>.into_iter().map(|v| Felt252Wrapper::from(v).into()).collect(),
+                        class_hash: Felt252Wrapper::from(tx.class_hash).into(),
+                    }),
+                ),
+                starknet_api::transaction::DeclareTransaction::V1(tx) =&gt; starknet_core::types::Transaction::Declare(
+                    starknet_core::types::DeclareTransaction::V1(starknet_core::types::DeclareTransactionV1 {
+                        transaction_hash: Felt252Wrapper::from(dec_tx.tx_hash).into(),
+                        sender_address: Felt252Wrapper::from(tx.sender_address).into(),
+                        max_fee: FieldElement::from(tx.max_fee.<span class="number">0</span>),
+                        signature: tx.signature.<span class="number">0</span>.into_iter().map(|v| Felt252Wrapper::from(v).into()).collect(),
+                        nonce: Felt252Wrapper::from(tx.nonce).into(),
+                        class_hash: Felt252Wrapper::from(tx.class_hash).into(),
+                    }),
+                ),
+                starknet_api::transaction::DeclareTransaction::V2(tx) =&gt; starknet_core::types::Transaction::Declare(
+                    starknet_core::types::DeclareTransaction::V2(starknet_core::types::DeclareTransactionV2 {
+                        transaction_hash: Felt252Wrapper::from(dec_tx.tx_hash).into(),
+                        sender_address: Felt252Wrapper::from(tx.sender_address).into(),
+                        compiled_class_hash: Felt252Wrapper::from(tx.compiled_class_hash).into(),
+                        max_fee: FieldElement::from(tx.max_fee.<span class="number">0</span>),
+                        signature: tx.signature.<span class="number">0</span>.into_iter().map(|v| Felt252Wrapper::from(v).into()).collect(),
+                        nonce: Felt252Wrapper::from(tx.nonce).into(),
+                        class_hash: Felt252Wrapper::from(tx.class_hash).into(),
+                    }),
+                ),
+                starknet_api::transaction::DeclareTransaction::V3(tx) =&gt; starknet_core::types::Transaction::Declare(
+                    starknet_core::types::DeclareTransaction::V3(starknet_core::types::DeclareTransactionV3 {
+                        transaction_hash: Felt252Wrapper::from(dec_tx.tx_hash).into(),
+                        sender_address: Felt252Wrapper::from(tx.sender_address).into(),
+                        compiled_class_hash: Felt252Wrapper::from(tx.compiled_class_hash).into(),
+                        signature: tx.signature.<span class="number">0</span>.into_iter().map(|v| Felt252Wrapper::from(v).into()).collect(),
+                        nonce: Felt252Wrapper::from(tx.nonce).into(),
+                        class_hash: Felt252Wrapper::from(tx.class_hash).into(),
+                        resource_bounds: resource_bounds_mapping_conversion(tx.resource_bounds),
+                        tip: tx.tip.<span class="number">0</span>,
+                        paymaster_data: tx
+                            .paymaster_data
+                            .<span class="number">0
+                            </span>.into_iter()
+                            .map(|v| Felt252Wrapper::from(v).into())
+                            .collect(),
+                        account_deployment_data: tx
+                            .account_deployment_data
+                            .<span class="number">0
+                            </span>.into_iter()
+                            .map(|v| Felt252Wrapper::from(v).into())
+                            .collect(),
+                        nonce_data_availability_mode: data_availability_mode_conversion(
+                            tx.nonce_data_availability_mode,
+                        ),
+                        fee_data_availability_mode: data_availability_mode_conversion(tx.fee_data_availability_mode),
+                    }),
+                ),
+            },
+            blockifier::transaction::account_transaction::AccountTransaction::DeployAccount(da_tx) =&gt; <span class="kw">match </span>da_tx.tx {
+                starknet_api::transaction::DeployAccountTransaction::V1(tx) =&gt; {
+                    starknet_core::types::Transaction::DeployAccount(
+                        starknet_core::types::DeployAccountTransaction::V1(
+                            starknet_core::types::DeployAccountTransactionV1 {
+                                transaction_hash: Felt252Wrapper::from(da_tx.tx_hash).into(),
+                                max_fee: FieldElement::from(tx.max_fee.<span class="number">0</span>),
+                                signature: tx.signature.<span class="number">0</span>.into_iter().map(|v| Felt252Wrapper::from(v).into()).collect(),
+                                nonce: Felt252Wrapper::from(tx.nonce).into(),
+                                contract_address_salt: Felt252Wrapper::from(tx.contract_address_salt).into(),
+                                constructor_calldata: tx
+                                    .constructor_calldata
+                                    .<span class="number">0
+                                    </span>.iter()
+                                    .map(|<span class="kw-2">&amp;</span>v| Felt252Wrapper::from(v).into())
+                                    .collect(),
+                                class_hash: Felt252Wrapper::from(tx.class_hash).into(),
+                            },
+                        ),
+                    )
+                }
+                starknet_api::transaction::DeployAccountTransaction::V3(tx) =&gt; {
+                    starknet_core::types::Transaction::DeployAccount(
+                        starknet_core::types::DeployAccountTransaction::V3(
+                            starknet_core::types::DeployAccountTransactionV3 {
+                                transaction_hash: Felt252Wrapper::from(da_tx.tx_hash).into(),
+                                signature: tx.signature.<span class="number">0</span>.into_iter().map(|v| Felt252Wrapper::from(v).into()).collect(),
+                                nonce: Felt252Wrapper::from(tx.nonce).into(),
+                                contract_address_salt: Felt252Wrapper::from(tx.contract_address_salt).into(),
+                                constructor_calldata: tx
+                                    .constructor_calldata
+                                    .<span class="number">0
+                                    </span>.iter()
+                                    .map(|<span class="kw-2">&amp;</span>v| Felt252Wrapper::from(v).into())
+                                    .collect(),
+                                class_hash: Felt252Wrapper::from(tx.class_hash).into(),
+                                resource_bounds: resource_bounds_mapping_conversion(tx.resource_bounds),
+                                tip: tx.tip.<span class="number">0</span>,
+                                paymaster_data: tx
+                                    .paymaster_data
+                                    .<span class="number">0
+                                    </span>.into_iter()
+                                    .map(|v| Felt252Wrapper::from(v).into())
+                                    .collect(),
+                                nonce_data_availability_mode: data_availability_mode_conversion(
+                                    tx.nonce_data_availability_mode,
+                                ),
+                                fee_data_availability_mode: data_availability_mode_conversion(
+                                    tx.fee_data_availability_mode,
+                                ),
+                            },
+                        ),
+                    )
+                }
+            },
+            blockifier::transaction::account_transaction::AccountTransaction::Invoke(inv_tx) =&gt; <span class="kw">match </span>inv_tx.tx {
+                starknet_api::transaction::InvokeTransaction::V0(tx) =&gt; starknet_core::types::Transaction::Invoke(
+                    starknet_core::types::InvokeTransaction::V0(starknet_core::types::InvokeTransactionV0 {
+                        transaction_hash: Felt252Wrapper::from(inv_tx.tx_hash).into(),
+                        max_fee: FieldElement::from(tx.max_fee.<span class="number">0</span>),
+                        signature: tx.signature.<span class="number">0</span>.into_iter().map(|v| Felt252Wrapper::from(v).into()).collect(),
+                        contract_address: Felt252Wrapper::from(tx.contract_address).into(),
+                        entry_point_selector: Felt252Wrapper::from(tx.entry_point_selector).into(),
+                        calldata: tx.calldata.<span class="number">0</span>.iter().map(|<span class="kw-2">&amp;</span>v| Felt252Wrapper::from(v).into()).collect(),
+                    }),
+                ),
+                starknet_api::transaction::InvokeTransaction::V1(tx) =&gt; starknet_core::types::Transaction::Invoke(
+                    starknet_core::types::InvokeTransaction::V1(starknet_core::types::InvokeTransactionV1 {
+                        transaction_hash: Felt252Wrapper::from(inv_tx.tx_hash).into(),
+                        sender_address: Felt252Wrapper::from(tx.sender_address).into(),
+                        calldata: tx.calldata.<span class="number">0</span>.iter().map(|<span class="kw-2">&amp;</span>v| Felt252Wrapper::from(v).into()).collect(),
+                        max_fee: FieldElement::from(tx.max_fee.<span class="number">0</span>),
+                        signature: tx.signature.<span class="number">0</span>.into_iter().map(|v| Felt252Wrapper::from(v).into()).collect(),
+                        nonce: Felt252Wrapper::from(tx.nonce).into(),
+                    }),
+                ),
+                starknet_api::transaction::InvokeTransaction::V3(tx) =&gt; starknet_core::types::Transaction::Invoke(
+                    starknet_core::types::InvokeTransaction::V3(starknet_core::types::InvokeTransactionV3 {
+                        transaction_hash: Felt252Wrapper::from(inv_tx.tx_hash).into(),
+                        sender_address: Felt252Wrapper::from(tx.sender_address).into(),
+                        calldata: tx.calldata.<span class="number">0</span>.iter().map(|<span class="kw-2">&amp;</span>v| Felt252Wrapper::from(v).into()).collect(),
+                        signature: tx.signature.<span class="number">0</span>.into_iter().map(|v| Felt252Wrapper::from(v).into()).collect(),
+                        nonce: Felt252Wrapper::from(tx.nonce).into(),
+                        resource_bounds: resource_bounds_mapping_conversion(tx.resource_bounds),
+                        tip: tx.tip.<span class="number">0</span>,
+                        paymaster_data: tx
+                            .paymaster_data
+                            .<span class="number">0
+                            </span>.into_iter()
+                            .map(|v| Felt252Wrapper::from(v).into())
+                            .collect(),
+                        account_deployment_data: tx
+                            .account_deployment_data
+                            .<span class="number">0
+                            </span>.into_iter()
+                            .map(|v| Felt252Wrapper::from(v).into())
+                            .collect(),
+                        nonce_data_availability_mode: data_availability_mode_conversion(
+                            tx.nonce_data_availability_mode,
+                        ),
+                        fee_data_availability_mode: data_availability_mode_conversion(tx.fee_data_availability_mode),
+                    }),
+                ),
+            },
+        },
+        blockifier::transaction::transaction_execution::Transaction::L1HandlerTransaction(l1h_tx) =&gt; {
+            starknet_core::types::Transaction::L1Handler(starknet_core::types::L1HandlerTransaction {
+                transaction_hash: Felt252Wrapper::from(l1h_tx.tx_hash).into(),
+                version: FieldElement::ZERO,
+                <span class="comment">// Safe to unwrap as long as there is less than u64::MAX messages sent from l1 to l1.
+                // We have some margin here.
+                </span>nonce: u64::try_from(Felt252Wrapper::from(l1h_tx.tx.nonce)).unwrap(),
+                contract_address: Felt252Wrapper::from(l1h_tx.tx.contract_address).into(),
+                entry_point_selector: Felt252Wrapper::from(l1h_tx.tx.entry_point_selector).into(),
+                calldata: l1h_tx.tx.calldata.<span class="number">0</span>.iter().map(|<span class="kw-2">&amp;</span>v| Felt252Wrapper::from(v).into()).collect(),
+            })
         }
-        <span class="kw">super</span>::Transaction::DeployAccount(tx) =&gt; {
-            <span class="kw">let </span>tx = starknet_core::types::DeployAccountTransaction {
-                transaction_hash,
-                max_fee: tx.max_fee.into(),
-                signature: cast_vec_of_felt_252_wrappers(tx.signature),
-                nonce: tx.nonce.into(),
-                contract_address_salt: tx.contract_address_salt.into(),
-                constructor_calldata: cast_vec_of_felt_252_wrappers(tx.constructor_calldata),
-                class_hash: tx.class_hash.into(),
-            };
+    }
+}
 
-            starknet_core::types::Transaction::DeployAccount(tx)
-        }
-        <span class="kw">super</span>::Transaction::Invoke(tx) =&gt; {
-            <span class="kw">let </span>tx = <span class="kw">match </span>tx {
-                <span class="kw">super</span>::InvokeTransaction::V0(<span class="kw">super</span>::InvokeTransactionV0 {
-                    max_fee,
-                    signature,
-                    contract_address,
-                    entry_point_selector,
-                    calldata,
-                }) =&gt; starknet_core::types::InvokeTransaction::V0(starknet_core::types::InvokeTransactionV0 {
-                    transaction_hash,
-                    max_fee: max_fee.into(),
-                    signature: cast_vec_of_felt_252_wrappers(signature),
-                    contract_address: contract_address.into(),
-                    entry_point_selector: entry_point_selector.into(),
-                    calldata: cast_vec_of_felt_252_wrappers(calldata),
-                }),
-                <span class="kw">super</span>::InvokeTransaction::V1(<span class="kw">super</span>::InvokeTransactionV1 {
-                    max_fee,
-                    signature,
-                    nonce,
-                    sender_address,
-                    calldata,
-                    ..
-                }) =&gt; starknet_core::types::InvokeTransaction::V1(starknet_core::types::InvokeTransactionV1 {
-                    transaction_hash,
-                    max_fee: max_fee.into(),
-                    signature: cast_vec_of_felt_252_wrappers(signature),
-                    nonce: nonce.into(),
-                    sender_address: sender_address.into(),
-                    calldata: cast_vec_of_felt_252_wrappers(calldata),
-                }),
-            };
+<span class="kw">fn </span>data_availability_mode_conversion(
+    da_mode: starknet_api::data_availability::DataAvailabilityMode,
+) -&gt; starknet_core::types::DataAvailabilityMode {
+    <span class="kw">match </span>da_mode {
+        starknet_api::data_availability::DataAvailabilityMode::L1 =&gt; starknet_core::types::DataAvailabilityMode::L1,
+        starknet_api::data_availability::DataAvailabilityMode::L2 =&gt; starknet_core::types::DataAvailabilityMode::L2,
+    }
+}
 
-            starknet_core::types::Transaction::Invoke(tx)
-        }
-        <span class="kw">super</span>::Transaction::L1Handler(tx) =&gt; {
-            <span class="kw">let </span>tx = starknet_core::types::L1HandlerTransaction {
-                transaction_hash,
-                version: <span class="number">0</span>,
-                nonce: tx.nonce,
-                contract_address: tx.contract_address.into(),
-                entry_point_selector: tx.entry_point_selector.into(),
-                calldata: cast_vec_of_felt_252_wrappers(tx.calldata),
-            };
+<span class="kw">fn </span>resource_bounds_mapping_conversion(
+    resource_bounds: starknet_api::transaction::ResourceBoundsMapping,
+) -&gt; starknet_core::types::ResourceBoundsMapping {
+    <span class="kw">let </span>l1_gas = resource_bounds.<span class="number">0</span>.get(<span class="kw-2">&amp;</span>starknet_api::transaction::Resource::L1Gas);
+    <span class="kw">let </span>l2_gas = resource_bounds.<span class="number">0</span>.get(<span class="kw-2">&amp;</span>starknet_api::transaction::Resource::L2Gas);
 
-            starknet_core::types::Transaction::L1Handler(tx)
-        }
+    starknet_core::types::ResourceBoundsMapping {
+        l1_gas: starknet_core::types::ResourceBounds {
+            max_amount: l1_gas.map(|v| v.max_amount).unwrap_or_default(),
+            max_price_per_unit: l1_gas.map(|v| v.max_price_per_unit).unwrap_or_default(),
+        },
+        l2_gas: starknet_core::types::ResourceBounds {
+            max_amount: l2_gas.map(|v| v.max_amount).unwrap_or_default(),
+            max_price_per_unit: l2_gas.map(|v| v.max_price_per_unit).unwrap_or_default(),
+        },
     }
 }
 </code></pre></div></section></main></body></html>

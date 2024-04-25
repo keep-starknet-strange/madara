@@ -104,7 +104,7 @@
     <span class="kw">let </span>rpc = madara.get_starknet_client().<span class="kw">await</span>;
     <span class="kw">let </span>account = build_single_owner_account(<span class="kw-2">&amp;</span>rpc, SIGNER_PRIVATE, CAIRO_1_ACCOUNT_CONTRACT, <span class="bool-val">false</span>);
 
-    <span class="kw">let </span>(declare_tx, class_hash, <span class="kw">_</span>) = account.declare_contract(ERC20_SIERRA_PATH, ERC20_CASM_PATH);
+    <span class="kw">let </span>(declare_tx, class_hash, <span class="kw">_</span>) = account.declare_contract(ERC20_SIERRA_PATH, ERC20_CASM_PATH, <span class="prelude-val">None</span>);
 
     <span class="kw">let </span><span class="kw-2">mut </span>madara_write_lock = madara.write().<span class="kw">await</span>;
 

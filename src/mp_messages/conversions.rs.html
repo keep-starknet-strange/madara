@@ -31,11 +31,9 @@
 <a href="#31" id="31">31</a>
 <a href="#32" id="32">32</a>
 <a href="#33" id="33">33</a>
-<a href="#34" id="34">34</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>mp_transactions::HandleL1MessageTransaction;
-<span class="kw">use </span>starknet_api::api_core::{ContractAddress, EthAddress, Nonce, PatriciaKey};
+</pre></div><pre class="rust"><code><span class="kw">use </span>starknet_api::core::{ContractAddress, EthAddress, PatriciaKey};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
-<span class="kw">use </span>starknet_api::transaction::MessageToL1;
+<span class="kw">use </span>starknet_api::transaction::{L1HandlerTransaction, MessageToL1};
 
 <span class="kw">use crate</span>::{MessageL1ToL2, MessageL2ToL1};
 
@@ -52,17 +50,17 @@
     }
 }
 
-<span class="kw">impl </span>From&lt;HandleL1MessageTransaction&gt; <span class="kw">for </span>MessageL1ToL2 {
-    <span class="kw">fn </span>from(tx: HandleL1MessageTransaction) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span><span class="kw-2">mut </span>calldata = tx.calldata;
+<span class="kw">impl </span>From&lt;L1HandlerTransaction&gt; <span class="kw">for </span>MessageL1ToL2 {
+    <span class="kw">fn </span>from(tx: L1HandlerTransaction) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>calldata = (<span class="kw-2">*</span>tx.calldata.<span class="number">0</span>).clone();
         <span class="comment">// Source Eth address is always passed as the first calldata arg
-        </span><span class="kw">let </span>from_address = ContractAddress(PatriciaKey(StarkFelt::from(calldata.remove(<span class="number">0</span>))));
+        </span><span class="kw">let </span>from_address = ContractAddress(PatriciaKey(calldata.remove(<span class="number">0</span>)));
         <span class="self">Self </span>{
             from_address,
-            to_address: tx.contract_address.into(),
-            nonce: Nonce(tx.nonce.into()),
-            selector: tx.entry_point_selector.into(),
-            payload: calldata.into_iter().map(|felt| felt.into()).collect(),
+            to_address: tx.contract_address,
+            nonce: tx.nonce,
+            selector: tx.entry_point_selector,
+            payload: calldata,
         }
     }
 }

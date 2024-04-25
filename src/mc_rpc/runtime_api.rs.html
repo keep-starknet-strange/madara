@@ -240,18 +240,10 @@
 <a href="#240" id="240">240</a>
 <a href="#241" id="241">241</a>
 <a href="#242" id="242">242</a>
-<a href="#243" id="243">243</a>
-<a href="#244" id="244">244</a>
-<a href="#245" id="245">245</a>
-<a href="#246" id="246">246</a>
-<a href="#247" id="247">247</a>
-<a href="#248" id="248">248</a>
-<a href="#249" id="249">249</a>
-<a href="#250" id="250">250</a>
-<a href="#251" id="251">251</a>
-<a href="#252" id="252">252</a>
-<a href="#253" id="253">253</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>blockifier::transaction::objects::TransactionExecutionInfo;
+</pre></div><pre class="rust"><code><span class="kw">use </span>blockifier::transaction::account_transaction::AccountTransaction;
+<span class="kw">use </span>blockifier::transaction::objects::TransactionExecutionInfo;
+<span class="kw">use </span>blockifier::transaction::transaction_execution::Transaction;
+<span class="kw">use </span>blockifier::transaction::transactions::L1HandlerTransaction;
 <span class="kw">use </span>log::error;
 <span class="kw">pub use </span>mc_rpc_core::utils::<span class="kw-2">*</span>;
 <span class="kw">pub use </span>mc_rpc_core::{
@@ -261,7 +253,6 @@
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_hashers::HasherT;
 <span class="kw">use </span>mp_simulations::SimulationFlags;
-<span class="kw">use </span>mp_transactions::{HandleL1MessageTransaction, Transaction, UserTransaction};
 <span class="kw">use </span>pallet_starknet_runtime_api::{
     ConvertTransactionRuntimeApi, StarknetRuntimeApi, StarknetTransactionExecutionError,
 };
@@ -271,9 +262,8 @@
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
 <span class="kw">use </span>sp_runtime::traits::Block <span class="kw">as </span>BlockT;
 <span class="kw">use </span>sp_runtime::DispatchError;
-<span class="kw">use </span>starknet_api::api_core::{ContractAddress, EntryPointSelector};
+<span class="kw">use </span>starknet_api::core::{ContractAddress, EntryPointSelector};
 <span class="kw">use </span>starknet_api::transaction::{Calldata, Event, TransactionHash};
-<span class="kw">use </span>starknet_core::types::FieldElement;
 
 <span class="kw">use crate</span>::{Starknet, StarknetRpcApiError};
 
@@ -305,8 +295,8 @@
     <span class="kw">pub fn </span>do_estimate_message_fee(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         block_hash: B::Hash,
-        message: HandleL1MessageTransaction,
-    ) -&gt; RpcApiResult&lt;(u128, u64, u64)&gt; {
+        message: L1HandlerTransaction,
+    ) -&gt; RpcApiResult&lt;(u128, u128, u128)&gt; {
         <span class="self">self</span>.client
             .runtime_api()
             .estimate_message_fee(block_hash, message)
@@ -362,9 +352,9 @@
     <span class="kw">pub fn </span>convert_tx_to_extrinsic(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         best_block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash,
-        transaction: UserTransaction,
+        transaction: AccountTransaction,
     ) -&gt; RpcApiResult&lt;B::Extrinsic&gt; {
-        <span class="self">self</span>.client.runtime_api().convert_transaction(best_block_hash, transaction).map_err(|e| {
+        <span class="self">self</span>.client.runtime_api().convert_account_transaction(best_block_hash, transaction).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;Failed to convert transaction: {:?}&quot;</span>, e);
             StarknetRpcApiError::InternalServerError
         })
@@ -373,11 +363,12 @@
     <span class="kw">pub fn </span>estimate_fee(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         block_hash: B::Hash,
-        transactions: Vec&lt;UserTransaction&gt;,
-    ) -&gt; RpcApiResult&lt;Vec&lt;(u64, u64)&gt;&gt; {
+        transactions: Vec&lt;AccountTransaction&gt;,
+        simulation_flags: SimulationFlags,
+    ) -&gt; RpcApiResult&lt;Vec&lt;(u128, u128)&gt;&gt; {
         <span class="self">self</span>.client
             .runtime_api()
-            .estimate_fee(block_hash, transactions)
+            .estimate_fee(block_hash, transactions, simulation_flags)
             .map_err(|e| {
                 <span class="macro">error!</span>(<span class="string">&quot;Request parameters error: {e}&quot;</span>);
                 StarknetRpcApiError::InternalServerError
@@ -387,6 +378,7 @@
                 StarknetRpcApiError::ContractError
             })
     }
+
     <span class="kw">pub fn </span>get_best_block_hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; B::Hash {
         <span class="self">self</span>.client.info().best_hash
     }
@@ -410,15 +402,12 @@
     <span class="kw">pub fn </span>get_tx_messages_to_l1(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         substrate_block_hash: B::Hash,
-        transaction_hash: FieldElement,
+        transaction_hash: TransactionHash,
     ) -&gt; RpcApiResult&lt;Vec&lt;starknet_api::transaction::MessageToL1&gt;&gt; {
-        <span class="self">self</span>.client
-            .runtime_api()
-            .get_tx_messages_to_l1(substrate_block_hash, Felt252Wrapper(transaction_hash).into())
-            .map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
-                StarknetRpcApiError::InternalServerError
-            })
+        <span class="self">self</span>.client.runtime_api().get_tx_messages_to_l1(substrate_block_hash, transaction_hash).map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
+            StarknetRpcApiError::InternalServerError
+        })
     }
 
     <span class="kw">pub fn </span>is_transaction_fee_disabled(<span class="kw-2">&amp;</span><span class="self">self</span>, substrate_block_hash: B::Hash) -&gt; RpcApiResult&lt;bool&gt; {
@@ -435,28 +424,17 @@
         skip_validate: bool,
         skip_fee_charge: bool,
     ) -&gt; RpcApiResult&lt;TransactionExecutionInfo&gt; {
-        <span class="kw">let </span>simulations_flags = SimulationFlags { skip_validate, skip_fee_charge };
+        <span class="kw">let </span>simulations_flags = SimulationFlags { validate: !skip_validate, charge_fee: !skip_fee_charge };
         <span class="kw">match </span>tx {
-            Transaction::Declare(tx, contract_class) =&gt; {
-                <span class="kw">let </span>tx = UserTransaction::Declare(tx, contract_class);
-                <span class="self">self</span>.simulate_user_tx(block_hash, tx, simulations_flags)
-            }
-            Transaction::DeployAccount(tx) =&gt; {
-                <span class="kw">let </span>tx = UserTransaction::DeployAccount(tx);
-                <span class="self">self</span>.simulate_user_tx(block_hash, tx, simulations_flags)
-            }
-            Transaction::Invoke(tx) =&gt; {
-                <span class="kw">let </span>tx = UserTransaction::Invoke(tx);
-                <span class="self">self</span>.simulate_user_tx(block_hash, tx, simulations_flags)
-            }
-            Transaction::L1Handler(tx) =&gt; <span class="self">self</span>.simulate_l1_tx(block_hash, tx, simulations_flags),
+            Transaction::AccountTransaction(tx) =&gt; <span class="self">self</span>.simulate_user_tx(block_hash, tx, simulations_flags),
+            Transaction::L1HandlerTransaction(tx) =&gt; <span class="self">self</span>.simulate_l1_tx(block_hash, tx, simulations_flags),
         }
     }
 
     <span class="kw">fn </span>simulate_user_tx(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         block_hash: B::Hash,
-        tx: UserTransaction,
+        tx: AccountTransaction,
         simulations_flags: SimulationFlags,
     ) -&gt; RpcApiResult&lt;TransactionExecutionInfo&gt; {
         <span class="comment">// Simulate a single User Transaction
@@ -483,7 +461,7 @@
     <span class="kw">fn </span>simulate_l1_tx(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         block_hash: B::Hash,
-        tx: HandleL1MessageTransaction,
+        tx: L1HandlerTransaction,
         simulations_flags: SimulationFlags,
     ) -&gt; RpcApiResult&lt;TransactionExecutionInfo&gt; {
         <span class="comment">// Simulated a single HandleL1MessageTransaction

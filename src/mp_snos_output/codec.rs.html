@@ -206,11 +206,21 @@
 <a href="#206" id="206">206</a>
 <a href="#207" id="207">207</a>
 <a href="#208" id="208">208</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>alloc::vec::Vec;
-
-<span class="kw">use </span>mp_messages::conversions::eth_address_to_felt;
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>mp_messages::conversions::eth_address_to_felt;
 <span class="kw">use </span>mp_messages::{MessageL1ToL2, MessageL2ToL1};
-<span class="kw">use </span>starknet_api::api_core::{ContractAddress, EthAddress, Nonce, PatriciaKey};
+<span class="kw">use </span>starknet_api::core::{ContractAddress, EntryPointSelector, EthAddress, Nonce, PatriciaKey};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
 
 <span class="kw">use </span><span class="kw">crate</span>::felt_reader::{FeltReader, FeltReaderError};
@@ -300,6 +310,20 @@
     }
 }
 
+<span class="kw">impl </span>SnosCodec <span class="kw">for </span>EntryPointSelector {
+    <span class="kw">fn </span>size_in_felts(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="number">1
+    </span>}
+
+    <span class="kw">fn </span>encode_to(<span class="self">self</span>, output: <span class="kw-2">&amp;mut </span>Vec&lt;StarkFelt&gt;) {
+        output.push(<span class="self">self</span>.<span class="number">0</span>);
+    }
+
+    <span class="kw">fn </span>decode(input: <span class="kw-2">&amp;mut </span>FeltReader) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, FeltReaderError&gt; {
+        <span class="prelude-val">Ok</span>(EntryPointSelector(StarkFelt::decode(input)<span class="question-mark">?</span>))
+    }
+}
+
 <span class="kw">impl</span>&lt;T: SnosCodec&gt; SnosCodec <span class="kw">for </span>Vec&lt;T&gt; {
     <span class="kw">fn </span>size_in_felts(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="comment">// Works well for Vec&lt;StarkFelt&gt;
@@ -375,7 +399,7 @@
             from_address: ContractAddress::decode(input)<span class="question-mark">?</span>,
             to_address: ContractAddress::decode(input)<span class="question-mark">?</span>,
             nonce: Nonce::decode(input)<span class="question-mark">?</span>,
-            selector: StarkFelt::decode(input)<span class="question-mark">?</span>,
+            selector: EntryPointSelector::decode(input)<span class="question-mark">?</span>,
             payload: Vec::&lt;StarkFelt&gt;::decode(input)<span class="question-mark">?</span>,
         })
     }

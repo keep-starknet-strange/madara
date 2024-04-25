@@ -150,17 +150,11 @@
 <a href="#150" id="150">150</a>
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
-<a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
-<a href="#155" id="155">155</a>
-<a href="#156" id="156">156</a>
-<a href="#157" id="157">157</a>
-<a href="#158" id="158">158</a>
-<a href="#159" id="159">159</a>
-<a href="#160" id="160">160</a>
-<a href="#161" id="161">161</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Transaction validation logic.
-</span><span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
+</span><span class="kw">use </span>blockifier::transaction::account_transaction::AccountTransaction;
+<span class="kw">use </span>blockifier::transaction::errors::{TransactionExecutionError, TransactionPreValidationError};
+<span class="kw">use </span>blockifier::transaction::transaction_execution::Transaction;
+<span class="kw">use </span>cairo_vm::vm::runners::cairo_runner::ExecutionResources;
 <span class="kw">use </span>frame_support::traits::EnsureOrigin;
 <span class="kw">use </span>mp_transactions::execution::Validate;
 
@@ -216,83 +210,71 @@
     }
 }
 
-<span class="attr">#[derive(Debug, PartialEq, Eq)]
-</span><span class="kw">pub enum </span>TxPriorityInfo {
-    InvokeV0,
-    L1Handler { nonce: Felt252Wrapper },
-    RegularTxs { sender_address: Felt252Wrapper, transaction_nonce: Felt252Wrapper, sender_nonce: Felt252Wrapper },
-}
-
 <span class="kw">impl</span>&lt;T: Config&gt; Pallet&lt;T&gt; {
-    <span class="kw">pub fn </span>validate_unsigned_tx_nonce(
-        transaction: <span class="kw-2">&amp;</span>UserOrL1HandlerTransaction,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;TxPriorityInfo, InvalidTransaction&gt; {
+    <span class="kw">pub fn </span>pre_validate_unsigned_tx(transaction: <span class="kw-2">&amp;</span>Transaction) -&gt; <span class="prelude-ty">Result</span>&lt;(), InvalidTransaction&gt; {
         <span class="kw">match </span>transaction {
-            UserOrL1HandlerTransaction::User(tx) =&gt; {
-                <span class="kw">let </span>sender_address: ContractAddress = tx.sender_address().into();
-                <span class="kw">let </span>sender_nonce: Felt252Wrapper = Pallet::&lt;T&gt;::nonce(sender_address).into();
-                <span class="kw">let </span>transaction_nonce = <span class="kw">match </span>tx.nonce() {
-                    <span class="prelude-val">Some</span>(n) =&gt; <span class="kw-2">*</span>n,
-                    <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(TxPriorityInfo::InvokeV0),
-                };
+            Transaction::AccountTransaction(transaction) =&gt; {
+                <span class="kw">let </span><span class="kw-2">mut </span>state = BlockifierStateAdapter::&lt;T&gt;::default();
+                <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
+                <span class="kw">let </span>charge_fee = !&lt;T <span class="kw">as </span>Config&gt;::DisableTransactionFee::get();
+                <span class="kw">let </span>tx_context = Arc::new(block_context.to_tx_context(transaction));
+                <span class="kw">let </span>string_nonce_checking = <span class="bool-val">false</span>;
 
-                <span class="comment">// Reject transaction with an already used Nonce
-                </span><span class="kw">if </span>sender_nonce &gt; transaction_nonce {
-                    <span class="prelude-val">Err</span>(InvalidTransaction::Stale)<span class="question-mark">?</span>;
+                <span class="kw">match </span>transaction {
+                    AccountTransaction::Declare(transaction) =&gt; {
+                        Validate::perform_pre_validation_stage(transaction, <span class="kw-2">&amp;mut </span>state, tx_context, string_nonce_checking, charge_fee)
+                    }
+                    AccountTransaction::DeployAccount(transaction) =&gt; {
+                        Validate::perform_pre_validation_stage(transaction, <span class="kw-2">&amp;mut </span>state, tx_context, string_nonce_checking, charge_fee)
+                    }
+                    AccountTransaction::Invoke(transaction) =&gt; {
+                        Validate::perform_pre_validation_stage(transaction, <span class="kw-2">&amp;mut </span>state, tx_context, string_nonce_checking, charge_fee)
+                    }
                 }
-
-                <span class="comment">// A transaction with a nonce higher than the expected nonce is placed in
-                // the future queue of the transaction pool.
-                </span><span class="kw">if </span>sender_nonce &lt; transaction_nonce {
-                    <span class="macro">log::debug!</span>(
-                        <span class="string">&quot;Nonce is too high. Expected: {:?}, got: {:?}. This transaction will be placed in the \
-                         transaction pool and executed in the future when the nonce is reached.&quot;</span>,
-                        sender_nonce,
-                        transaction_nonce
-                    );
-                }
-
-                <span class="prelude-val">Ok</span>(TxPriorityInfo::RegularTxs { sender_address: tx.sender_address(), transaction_nonce, sender_nonce })
+                <span class="comment">// TODO: have more granular error mapping
+                </span>.map_err(|<span class="kw">_</span>| InvalidTransaction::BadProof)
             }
-            UserOrL1HandlerTransaction::L1Handler(tx, _fee) =&gt; {
-                <span class="self">Self</span>::ensure_l1_message_not_executed(<span class="kw-2">&amp;</span>Nonce(StarkFelt::from(tx.nonce)))<span class="question-mark">?</span>;
-
-                <span class="prelude-val">Ok</span>(TxPriorityInfo::L1Handler { nonce: tx.nonce.into() })
+            Transaction::L1HandlerTransaction(transaction) =&gt; {
+                <span class="self">Self</span>::ensure_l1_message_not_executed(<span class="kw-2">&amp;</span>transaction.tx.nonce)
             }
         }
     }
 
-    <span class="kw">pub fn </span>validate_unsigned_tx(transaction: <span class="kw-2">&amp;</span>UserOrL1HandlerTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(), InvalidTransaction&gt; {
-        <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
-        <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
-        <span class="kw">let </span><span class="kw-2">mut </span>state: BlockifierStateAdapter&lt;T&gt; = BlockifierStateAdapter::&lt;T&gt;::default();
-        <span class="kw">let </span><span class="kw-2">mut </span>execution_resources = ExecutionResources::default();
-        <span class="kw">let </span><span class="kw-2">mut </span>initial_gas = blockifier::abi::constants::INITIAL_GAS_COST;
+    <span class="kw">pub fn </span>validate_unsigned_tx(transaction: <span class="kw-2">&amp;</span>Transaction) -&gt; <span class="prelude-ty">Result</span>&lt;(), InvalidTransaction&gt; {
+        <span class="kw">let </span>_call_info = <span class="kw">match </span>transaction {
+            Transaction::AccountTransaction(transaction) =&gt; {
+                <span class="kw">let </span><span class="kw-2">mut </span>state: BlockifierStateAdapter&lt;T&gt; = BlockifierStateAdapter::&lt;T&gt;::default();
+                <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
+                <span class="kw">let </span><span class="kw-2">mut </span>inital_gas = block_context.versioned_constants().tx_initial_gas();
+                <span class="kw">let </span><span class="kw-2">mut </span>resources = ExecutionResources::default();
 
-        <span class="kw">match </span>transaction {
-            UserOrL1HandlerTransaction::User(transaction) =&gt; {
-                <span class="kw">let </span>validation_result =
-                    <span class="kw">match </span>transaction {
-                        <span class="comment">// There is no way to validate it before the account is actuallly deployed
-                        </span>UserTransaction::DeployAccount(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-                        UserTransaction::Declare(tx, contract_class) =&gt; tx
-                            .try_into_executable::&lt;T::SystemHash&gt;(chain_id, contract_class.clone(), <span class="bool-val">false</span>)
-                            .map_err(|<span class="kw">_</span>| InvalidTransaction::BadProof)<span class="question-mark">?
-                            </span>.validate_tx(<span class="kw-2">&amp;mut </span>state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;mut </span>execution_resources, <span class="kw-2">&amp;mut </span>initial_gas, <span class="bool-val">false</span>),
-                        UserTransaction::Invoke(tx) =&gt; tx
-                            .into_executable::&lt;T::SystemHash&gt;(chain_id, <span class="bool-val">false</span>)
-                            .validate_tx(<span class="kw-2">&amp;mut </span>state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;mut </span>execution_resources, <span class="kw-2">&amp;mut </span>initial_gas, <span class="bool-val">false</span>),
-                    };
+                <span class="kw">let </span>validation_result = <span class="kw">match </span>transaction {
+                    AccountTransaction::Declare(tx) =&gt; {
+                        <span class="kw">let </span>tx_context = Arc::new(block_context.to_tx_context(tx));
+                        tx.run_validate_entrypoint(<span class="kw-2">&amp;mut </span>state, tx_context, <span class="kw-2">&amp;mut </span>resources, <span class="kw-2">&amp;mut </span>inital_gas, <span class="bool-val">true</span>)
+                    }
+                    AccountTransaction::DeployAccount(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(()),
+                    AccountTransaction::Invoke(tx) =&gt; {
+                        <span class="kw">let </span>tx_context = Arc::new(block_context.to_tx_context(tx));
+                        tx.run_validate_entrypoint(<span class="kw-2">&amp;mut </span>state, tx_context, <span class="kw-2">&amp;mut </span>resources, <span class="kw-2">&amp;mut </span>inital_gas, <span class="bool-val">true</span>)
+                    }
+                };
 
-                <span class="kw">if let </span><span class="prelude-val">Err</span>(TransactionExecutionError::ValidateTransactionError(
-                    EntryPointExecutionError::PreExecutionError(PreExecutionError::UninitializedStorageAddress(
-                        contract_address,
-                    )),
+                <span class="comment">// handle the case where we the user sent both its deploy and first tx at the same time
+                // we assume that the deploy tx is also in the pool and will therefore be executed before
+                // a bit hacky but it is needed in order to be compatible with wallets
+                </span><span class="kw">if let </span><span class="prelude-val">Err</span>(TransactionExecutionError::TransactionPreValidationError(
+                    TransactionPreValidationError::InvalidNonce { address, account_nonce, incoming_tx_nonce },
                 )) = validation_result
                 {
-                    <span class="kw">let </span>transaction_nonce = transaction.nonce();
-                    <span class="kw">let </span>sender_address = transaction.sender_address();
-                    <span class="kw">if </span>contract_address.<span class="number">0.0 </span>== sender_address.into() &amp;&amp; transaction_nonce == <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>Felt252Wrapper::ONE)
+                    <span class="kw">let </span>sender_address = <span class="kw">match </span>transaction {
+                        AccountTransaction::Declare(tx) =&gt; tx.tx.sender_address(),
+                        AccountTransaction::DeployAccount(tx) =&gt; tx.contract_address,
+                        AccountTransaction::Invoke(tx) =&gt; tx.tx.sender_address(),
+                    };
+                    <span class="kw">if </span>address == sender_address
+                        &amp;&amp; account_nonce == Nonce(StarkFelt::ZERO)
+                        &amp;&amp; incoming_tx_nonce == Nonce(StarkFelt::ONE)
                     {
                         <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
                     } <span class="kw">else </span>{
@@ -302,9 +284,9 @@
                     validation_result
                 }
             }
-            UserOrL1HandlerTransaction::L1Handler(<span class="kw">_</span>, fee) =&gt; {
+            Transaction::L1HandlerTransaction(tx) =&gt; {
                 <span class="comment">// The tx will fail if no fee have been paid
-                </span><span class="kw">if </span>fee.<span class="number">0 </span>== <span class="number">0 </span>{
+                </span><span class="kw">if </span>tx.paid_fee_on_l1 == Fee(<span class="number">0</span>) {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(InvalidTransaction::Payment);
                 }
 

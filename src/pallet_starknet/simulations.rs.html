@@ -301,61 +301,77 @@
 <a href="#301" id="301">301</a>
 <a href="#302" id="302">302</a>
 <a href="#303" id="303">303</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>alloc::vec::Vec;
-
-<span class="kw">use </span>blockifier::block_context::BlockContext;
-<span class="kw">use </span>blockifier::state::cached_state::CommitmentStateDiff;
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>blockifier::context::BlockContext;
+<span class="kw">use </span>blockifier::state::cached_state::{CachedState, CommitmentStateDiff, GlobalContractCache};
 <span class="kw">use </span>blockifier::state::state_api::State;
+<span class="kw">use </span>blockifier::transaction::account_transaction::AccountTransaction;
 <span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>blockifier::transaction::objects::TransactionExecutionInfo;
+<span class="kw">use </span>blockifier::transaction::transaction_execution::Transaction;
+<span class="kw">use </span>blockifier::transaction::transactions::{ExecutableTransaction, L1HandlerTransaction};
 <span class="kw">use </span>frame_support::storage;
-<span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult};
-<span class="kw">use </span>mp_transactions::execution::{Execute, ExecutionConfig};
-<span class="kw">use </span>mp_transactions::{HandleL1MessageTransaction, UserOrL1HandlerTransaction, UserTransaction};
+<span class="kw">use </span>mp_transactions::execution::{
+    commit_transactional_state, execute_l1_handler_transaction, run_non_revertible_transaction,
+    run_revertible_transaction, MutRefState, SetArbitraryNonce,
+};
 <span class="kw">use </span>sp_core::Get;
 <span class="kw">use </span>sp_runtime::DispatchError;
-<span class="kw">use </span>starknet_api::transaction::Fee;
+<span class="kw">use </span>starknet_api::transaction::TransactionVersion;
 
-<span class="kw">use </span><span class="kw">crate</span>::blockifier_state_adapter::{BlockifierStateAdapter, CachedBlockifierStateAdapter};
-<span class="kw">use </span><span class="kw">crate</span>::execution_config::RuntimeExecutionConfigBuilder;
+<span class="kw">use </span><span class="kw">crate</span>::blockifier_state_adapter::BlockifierStateAdapter;
 <span class="kw">use crate</span>::{Config, Error, Pallet};
 
 <span class="kw">impl</span>&lt;T: Config&gt; Pallet&lt;T&gt; {
-    <span class="kw">pub fn </span>estimate_fee(transactions: Vec&lt;UserTransaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(u64, u64)&gt;, DispatchError&gt; {
+    <span class="kw">pub fn </span>estimate_fee(
+        transactions: Vec&lt;AccountTransaction&gt;,
+        simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(u128, u128)&gt;, DispatchError&gt; {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(<span class="prelude-ty">Result</span>::&lt;<span class="kw">_</span>, DispatchError&gt;::Ok(<span class="self">Self</span>::estimate_fee_inner(
                 transactions,
+                simulation_flags,
             )))
         })
         .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::FailedToCreateATransactionalStorageExecution)<span class="question-mark">?
     </span>}
 
-    <span class="kw">fn </span>estimate_fee_inner(transactions: Vec&lt;UserTransaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(u64, u64)&gt;, DispatchError&gt; {
+    <span class="kw">fn </span>estimate_fee_inner(
+        transactions: Vec&lt;AccountTransaction&gt;,
+        simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(u128, u128)&gt;, DispatchError&gt; {
         <span class="kw">let </span>transactions_len = transactions.len();
-        <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
         <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
-        <span class="kw">let </span><span class="kw-2">mut </span>execution_config = RuntimeExecutionConfigBuilder::new::&lt;T&gt;().with_query_mode().build();
+        <span class="kw">let </span><span class="kw-2">mut </span>state = BlockifierStateAdapter::&lt;T&gt;::default();
 
         <span class="kw">let </span>fee_res_iterator = transactions
             .into_iter()
-            .map(|tx| {
-                execution_config.set_offset_version(tx.offset_version());
-
-                <span class="kw">match </span><span class="self">Self</span>::execute_transaction_with_state_diff(tx, chain_id, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>execution_config) {
-                    (<span class="prelude-val">Ok</span>(execution_info), <span class="kw">_</span>) <span class="kw">if </span>!execution_info.is_reverted() =&gt; <span class="prelude-val">Ok</span>(execution_info),
-                    (<span class="prelude-val">Err</span>(e), <span class="kw">_</span>) =&gt; {
-                        <span class="macro">log::error!</span>(<span class="string">&quot;Transaction execution failed during fee estimation: {e}&quot;</span>);
-                        <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed)
-                    }
-                    (<span class="prelude-val">Ok</span>(execution_info), <span class="kw">_</span>) =&gt; {
-                        <span class="macro">log::error!</span>(
-                            <span class="string">&quot;Transaction execution reverted during fee estimation: {}&quot;</span>,
-                            execution_info.revert_error.unwrap()
-                        );
-                        <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed)
-                    }
-                }
+            .map(|tx| <span class="kw">match </span><span class="self">Self</span>::execute_account_transaction(<span class="kw-2">&amp;</span>tx, <span class="kw-2">&amp;mut </span>state, <span class="kw-2">&amp;</span>block_context, simulation_flags) {
+                <span class="prelude-val">Ok</span>(execution_info) <span class="kw">if </span>!execution_info.is_reverted() =&gt; <span class="prelude-val">Ok</span>(execution_info),
+                <span class="prelude-val">Err</span>(<span class="kw">_</span>) | <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed),
             })
             .map(|exec_info_res| {
                 exec_info_res.map(|exec_info| {
@@ -364,7 +380,7 @@
                         .<span class="number">0
                         </span>.get(<span class="string">&quot;l1_gas_usage&quot;</span>)
                         .ok_or_else(|| DispatchError::from(Error::&lt;T&gt;::MissingL1GasUsage))
-                        .map(|l1_gas_usage| (exec_info.actual_fee.<span class="number">0 </span><span class="kw">as </span>u64, <span class="kw-2">*</span>l1_gas_usage))
+                        .map(|l1_gas_usage| (exec_info.actual_fee.<span class="number">0</span>, <span class="kw-2">*</span>l1_gas_usage))
                 })
             });
 
@@ -375,8 +391,9 @@
 
         <span class="prelude-val">Ok</span>(fees)
     }
+
     <span class="kw">pub fn </span>simulate_transactions(
-        transactions: Vec&lt;UserTransaction&gt;,
+        transactions: Vec&lt;AccountTransaction&gt;,
         simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt;, DispatchError&gt; {
         storage::transactional::with_transaction(|| {
@@ -389,33 +406,37 @@
     </span>}
 
     <span class="kw">fn </span>simulate_transactions_inner(
-        transactions: Vec&lt;UserTransaction&gt;,
+        transactions: Vec&lt;AccountTransaction&gt;,
         simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt;, DispatchError&gt; {
-        <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
         <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
-        <span class="kw">let </span><span class="kw-2">mut </span>execution_config =
-            RuntimeExecutionConfigBuilder::new::&lt;T&gt;().with_simulation_mode(simulation_flags).build();
+        <span class="kw">let </span><span class="kw-2">mut </span>state = BlockifierStateAdapter::&lt;T&gt;::default();
 
         <span class="kw">let </span>tx_execution_results: Vec&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt; = transactions
             .into_iter()
             .map(|tx| {
-                execution_config.set_offset_version(tx.offset_version());
+                <span class="kw">let </span>res = <span class="self">Self</span>::execute_account_transaction_with_state_diff(
+                    <span class="kw-2">&amp;</span>tx,
+                    <span class="kw-2">&amp;mut </span>state,
+                    <span class="kw-2">&amp;</span>block_context,
+                    simulation_flags,
+                )<span class="question-mark">?</span>;
 
-                <span class="kw">let </span>res = <span class="self">Self</span>::execute_transaction_with_state_diff(tx, chain_id, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>execution_config);
                 <span class="kw">let </span>result = res.<span class="number">0</span>.map_err(|e| {
                     <span class="macro">log::error!</span>(<span class="string">&quot;Transaction execution failed during simulation: {e}&quot;</span>);
                     PlaceHolderErrorTypeForFailedStarknetExecution
                 });
-                (res.<span class="number">1</span>, result)
+
+                <span class="prelude-val">Ok</span>((res.<span class="number">1</span>, result))
             })
-            .collect();
+            .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;&gt;()
+            .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TransactionExecutionFailed)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(tx_execution_results)
     }
 
     <span class="kw">pub fn </span>simulate_message(
-        message: HandleL1MessageTransaction,
+        message: L1HandlerTransaction,
         simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt; {
         storage::transactional::with_transaction(|| {
@@ -428,20 +449,13 @@
     </span>}
 
     <span class="kw">fn </span>simulate_message_inner(
-        message: HandleL1MessageTransaction,
-        simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
+        message: L1HandlerTransaction,
+        _simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt; {
-        <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
         <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
-        <span class="kw">let </span><span class="kw-2">mut </span>execution_config =
-            RuntimeExecutionConfigBuilder::new::&lt;T&gt;().with_simulation_mode(simulation_flags).build();
+        <span class="kw">let </span><span class="kw-2">mut </span>state = BlockifierStateAdapter::&lt;T&gt;::default();
 
-        <span class="comment">// Follow `offset` from Pallet Starknet where it is set to false
-        </span>execution_config.set_offset_version(<span class="bool-val">false</span>);
-        <span class="kw">let </span>(tx_execution_result, _state_diff) =
-            <span class="self">Self</span>::execute_message(message, chain_id, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>execution_config);
-
-        <span class="kw">let </span>tx_execution_result = tx_execution_result.map_err(|e| {
+        <span class="kw">let </span>tx_execution_result = <span class="self">Self</span>::execute_message(<span class="kw-2">&amp;</span>message, <span class="kw-2">&amp;mut </span>state, <span class="kw-2">&amp;</span>block_context).map_err(|e| {
             <span class="macro">log::error!</span>(<span class="string">&quot;Transaction execution failed during simulation: {e}&quot;</span>);
             PlaceHolderErrorTypeForFailedStarknetExecution
         });
@@ -449,7 +463,7 @@
         <span class="prelude-val">Ok</span>(tx_execution_result)
     }
 
-    <span class="kw">pub fn </span>estimate_message_fee(message: HandleL1MessageTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u128, u64, u64), DispatchError&gt; {
+    <span class="kw">pub fn </span>estimate_message_fee(message: L1HandlerTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u128, u128, u128), DispatchError&gt; {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(<span class="prelude-ty">Result</span>::&lt;<span class="kw">_</span>, DispatchError&gt;::Ok(<span class="self">Self</span>::estimate_message_fee_inner(
                 message,
@@ -458,150 +472,182 @@
         .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::FailedToCreateATransactionalStorageExecution)<span class="question-mark">?
     </span>}
 
-    <span class="kw">fn </span>estimate_message_fee_inner(message: HandleL1MessageTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u128, u64, u64), DispatchError&gt; {
-        <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
+    <span class="kw">fn </span>estimate_message_fee_inner(message: L1HandlerTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u128, u128, u128), DispatchError&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>cached_state = <span class="self">Self</span>::init_cached_state();
 
-        <span class="comment">// Follow `offset` from Pallet Starknet where it is set to false
-        </span><span class="kw">let </span>tx_execution_infos =
-            <span class="kw">match </span>message.into_executable::&lt;T::SystemHash&gt;(chain_id, Fee(u128::MAX), <span class="bool-val">false</span>).execute(
-                <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
-                <span class="kw-2">&amp;</span><span class="self">Self</span>::get_block_context(),
-                <span class="kw-2">&amp;</span>RuntimeExecutionConfigBuilder::new::&lt;T&gt;().with_query_mode().with_disable_nonce_validation().build(),
-            ) {
-                <span class="prelude-val">Ok</span>(execution_info) <span class="kw">if </span>!execution_info.is_reverted() =&gt; <span class="prelude-val">Ok</span>(execution_info),
-                <span class="prelude-val">Err</span>(e) =&gt; {
-                    <span class="macro">log::error!</span>(
-                        <span class="string">&quot;Transaction execution failed during fee estimation: {e} {:?}&quot;</span>,
-                        std::error::Error::source(<span class="kw-2">&amp;</span>e)
-                    );
-                    <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed)
-                }
-                <span class="prelude-val">Ok</span>(execution_info) =&gt; {
-                    <span class="macro">log::error!</span>(
-                        <span class="string">&quot;Transaction execution reverted during fee estimation: {}&quot;</span>,
-                        execution_info.revert_error.unwrap()
-                    );
-                    <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed)
-                }
-            }<span class="question-mark">?</span>;
+        <span class="kw">let </span>tx_execution_infos = <span class="kw">match </span>message.execute(<span class="kw-2">&amp;mut </span>cached_state, <span class="kw-2">&amp;</span><span class="self">Self</span>::get_block_context(), <span class="bool-val">true</span>, <span class="bool-val">true</span>) {
+            <span class="prelude-val">Ok</span>(execution_info) <span class="kw">if </span>!execution_info.is_reverted() =&gt; <span class="prelude-val">Ok</span>(execution_info),
+            <span class="prelude-val">Err</span>(e) =&gt; {
+                <span class="macro">log::error!</span>(
+                    <span class="string">&quot;Transaction execution failed during fee estimation: {e} {:?}&quot;</span>,
+                    std::error::Error::source(<span class="kw-2">&amp;</span>e)
+                );
+                <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed)
+            }
+            <span class="prelude-val">Ok</span>(execution_info) =&gt; {
+                <span class="macro">log::error!</span>(
+                    <span class="string">&quot;Transaction execution reverted during fee estimation: {}&quot;</span>,
+                    <span class="comment">// Safe due to the `match` branch order
+                    </span>execution_info.revert_error.unwrap()
+                );
+                <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed)
+            }
+        }<span class="question-mark">?</span>;
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(l1_gas_usage) = tx_execution_infos.actual_resources.<span class="number">0</span>.get(<span class="string">&quot;l1_gas_usage&quot;</span>) {
-            <span class="prelude-val">Ok</span>((T::L1GasPrice::get().price_in_wei, tx_execution_infos.actual_fee.<span class="number">0 </span><span class="kw">as </span>u64, <span class="kw-2">*</span>l1_gas_usage))
+            <span class="prelude-val">Ok</span>((T::L1GasPrices::get().eth_l1_gas_price.into(), tx_execution_infos.actual_fee.<span class="number">0 </span><span class="kw">as </span>u128, <span class="kw-2">*</span>l1_gas_usage))
         } <span class="kw">else </span>{
             <span class="prelude-val">Err</span>(Error::&lt;T&gt;::MissingL1GasUsage.into())
         }
     }
 
     <span class="kw">pub fn </span>re_execute_transactions(
-        transactions_before: Vec&lt;UserOrL1HandlerTransaction&gt;,
-        transactions_to_trace: Vec&lt;UserOrL1HandlerTransaction&gt;,
+        transactions_before: Vec&lt;Transaction&gt;,
+        transactions_to_trace: Vec&lt;Transaction&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;
         <span class="prelude-ty">Result</span>&lt;Vec&lt;(TransactionExecutionInfo, CommitmentStateDiff)&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;,
         DispatchError,
     &gt; {
         storage::transactional::with_transaction(|| {
-            storage::TransactionOutcome::Rollback(<span class="prelude-ty">Result</span>::&lt;<span class="kw">_</span>, DispatchError&gt;::Ok(<span class="self">Self</span>::re_execute_transactions_inner(
-                transactions_before,
-                transactions_to_trace,
-            )))
+            <span class="kw">let </span>res = <span class="self">Self</span>::re_execute_transactions_inner(transactions_before, transactions_to_trace);
+            storage::TransactionOutcome::Rollback(<span class="prelude-ty">Result</span>::&lt;<span class="kw">_</span>, DispatchError&gt;::Ok(<span class="prelude-val">Ok</span>(res)))
         })
         .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::FailedToCreateATransactionalStorageExecution)<span class="question-mark">?
     </span>}
 
     <span class="kw">fn </span>re_execute_transactions_inner(
-        transactions_before: Vec&lt;UserOrL1HandlerTransaction&gt;,
-        transactions_to_trace: Vec&lt;UserOrL1HandlerTransaction&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;
-        <span class="prelude-ty">Result</span>&lt;Vec&lt;(TransactionExecutionInfo, CommitmentStateDiff)&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;,
-        DispatchError,
-    &gt; {
-        <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
-        <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
-        <span class="kw">let </span>execution_config = RuntimeExecutionConfigBuilder::new::&lt;T&gt;().build();
-
-        <span class="self">Self</span>::execute_user_or_l1_handler_transactions(chain_id, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>execution_config, transactions_before)
-            .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::FailedToCreateATransactionalStorageExecution)<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>transactions_exec_infos = <span class="self">Self</span>::execute_user_or_l1_handler_transactions(
-            chain_id,
-            <span class="kw-2">&amp;</span>block_context,
-            <span class="kw-2">&amp;</span>execution_config,
-            transactions_to_trace,
-        );
-
-        <span class="prelude-val">Ok</span>(transactions_exec_infos)
-    }
-
-    <span class="kw">fn </span>execute_transaction_with_state_diff(
-        transaction: UserTransaction,
-        chain_id: Felt252Wrapper,
-        block_context: <span class="kw-2">&amp;</span>BlockContext,
-        execution_config: <span class="kw-2">&amp;</span>ExecutionConfig,
-    ) -&gt; (<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, TransactionExecutionError&gt;, CommitmentStateDiff) {
-        <span class="kw">let </span><span class="kw-2">mut </span>cached_state = CachedBlockifierStateAdapter(BlockifierStateAdapter::&lt;T&gt;::default());
-        <span class="kw">let </span>result = <span class="kw">match </span>transaction {
-            UserTransaction::Declare(tx, contract_class) =&gt; tx
-                .try_into_executable::&lt;T::SystemHash&gt;(chain_id, contract_class.clone(), tx.offset_version())
-                .and_then(|exec| exec.execute(<span class="kw-2">&amp;mut </span>cached_state, block_context, execution_config)),
-            UserTransaction::DeployAccount(tx) =&gt; {
-                <span class="kw">let </span>executable = tx.into_executable::&lt;T::SystemHash&gt;(chain_id, tx.offset_version());
-                executable.execute(<span class="kw-2">&amp;mut </span>cached_state, block_context, execution_config)
-            }
-            UserTransaction::Invoke(tx) =&gt; {
-                <span class="kw">let </span>executable = tx.into_executable::&lt;T::SystemHash&gt;(chain_id, tx.offset_version());
-                executable.execute(<span class="kw-2">&amp;mut </span>cached_state, block_context, execution_config)
-            }
-        };
-
-        (result, cached_state.to_state_diff())
-    }
-
-    <span class="kw">fn </span>execute_message(
-        message: HandleL1MessageTransaction,
-        chain_id: Felt252Wrapper,
-        block_context: <span class="kw-2">&amp;</span>BlockContext,
-        execution_config: <span class="kw-2">&amp;</span>ExecutionConfig,
-    ) -&gt; (<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, TransactionExecutionError&gt;, CommitmentStateDiff) {
-        <span class="comment">// Follow `offset` from Pallet Starknet where it is set to false
-        </span><span class="kw">let </span><span class="kw-2">mut </span>cached_state = CachedBlockifierStateAdapter(BlockifierStateAdapter::&lt;T&gt;::default());
-        <span class="kw">let </span>fee = Fee(u128::MAX);
-        <span class="kw">let </span>executable = message.into_executable::&lt;T::SystemHash&gt;(chain_id, fee, <span class="bool-val">false</span>);
-        <span class="kw">let </span>result = executable.execute(<span class="kw-2">&amp;mut </span>cached_state, block_context, execution_config);
-
-        (result, cached_state.to_state_diff())
-    }
-
-    <span class="kw">fn </span>execute_user_or_l1_handler_transactions(
-        chain_id: Felt252Wrapper,
-        block_context: <span class="kw-2">&amp;</span>BlockContext,
-        execution_config: <span class="kw-2">&amp;</span>ExecutionConfig,
-        transactions: Vec&lt;UserOrL1HandlerTransaction&gt;,
+        transactions_before: Vec&lt;Transaction&gt;,
+        transactions_to_trace: Vec&lt;Transaction&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(TransactionExecutionInfo, CommitmentStateDiff)&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;
     {
-        <span class="kw">let </span>exec_transactions: Vec&lt;<span class="kw">_</span>&gt; = transactions
-            .iter()
-            .map(|user_or_l1_tx| <span class="kw">match </span>user_or_l1_tx {
-                UserOrL1HandlerTransaction::User(tx) =&gt; {
-                    <span class="self">Self</span>::execute_transaction_with_state_diff(tx.clone(), chain_id, block_context, execution_config)
-                }
-                UserOrL1HandlerTransaction::L1Handler(tx, _fee) =&gt; {
-                    <span class="self">Self</span>::execute_message(tx.clone(), chain_id, block_context, execution_config)
-                }
-            })
-            .collect();
+        <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
+        <span class="kw">let </span><span class="kw-2">mut </span>state = BlockifierStateAdapter::&lt;T&gt;::default();
 
-        <span class="kw">let </span><span class="kw-2">mut </span>execution_infos = Vec::with_capacity(exec_transactions.len());
-        <span class="kw">for </span>(exec_result, state_diff) <span class="kw">in </span>exec_transactions {
-            <span class="kw">match </span>exec_result {
-                <span class="prelude-val">Ok</span>(info) =&gt; execution_infos.push((info, state_diff)),
-                <span class="prelude-val">Err</span>(err) =&gt; {
-                    <span class="macro">log::error!</span>(<span class="string">&quot;Transaction execution failed: {err}&quot;</span>);
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(PlaceHolderErrorTypeForFailedStarknetExecution);
-                }
-            }
-        }
+        transactions_before.iter().try_for_each(|tx| {
+            <span class="self">Self</span>::execute_transaction(tx, <span class="kw-2">&amp;mut </span>state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>SimulationFlags::default()).map_err(|e| {
+                <span class="macro">log::error!</span>(<span class="string">&quot;Failed to reexecute a tx: {}&quot;</span>, e);
+                PlaceHolderErrorTypeForFailedStarknetExecution
+            })<span class="question-mark">?</span>;
+
+            <span class="prelude-val">Ok</span>(())
+        })<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>execution_infos = transactions_to_trace
+            .iter()
+            .map(|tx| {
+                <span class="kw">let </span><span class="kw-2">mut </span>transactional_state =
+                    CachedState::new(MutRefState::new(<span class="kw-2">&amp;mut </span>state), GlobalContractCache::new(<span class="number">1</span>));
+                <span class="kw">let </span>res = <span class="self">Self</span>::execute_transaction(
+                    tx,
+                    <span class="kw-2">&amp;mut </span>transactional_state,
+                    <span class="kw-2">&amp;</span>block_context,
+                    <span class="kw-2">&amp;</span>SimulationFlags::default(),
+                )
+                .map_err(|e| {
+                    <span class="macro">log::error!</span>(<span class="string">&quot;Failed to reexecute a tx: {}&quot;</span>, e);
+                    PlaceHolderErrorTypeForFailedStarknetExecution
+                });
+
+                <span class="kw">let </span>res = res.map(|r| (r, transactional_state.to_state_diff()));
+                commit_transactional_state(transactional_state).map_err(|e| {
+                    <span class="macro">log::error!</span>(<span class="string">&quot;Failed to commit state changes: {:?}&quot;</span>, e);
+                    PlaceHolderErrorTypeForFailedStarknetExecution
+                })<span class="question-mark">?</span>;
+
+                res
+            })
+            .collect::&lt;<span class="prelude-ty">Result</span>&lt;<span class="kw">_</span>, PlaceHolderErrorTypeForFailedStarknetExecution&gt;&gt;()<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(execution_infos)
+    }
+
+    <span class="kw">fn </span>execute_transaction&lt;S: State + SetArbitraryNonce&gt;(
+        transaction: <span class="kw-2">&amp;</span>Transaction,
+        state: <span class="kw-2">&amp;mut </span>S,
+        block_context: <span class="kw-2">&amp;</span>BlockContext,
+        simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, TransactionExecutionError&gt; {
+        <span class="kw">match </span>transaction {
+            Transaction::AccountTransaction(tx) =&gt; {
+                <span class="self">Self</span>::execute_account_transaction(tx, state, block_context, simulation_flags)
+            }
+
+            Transaction::L1HandlerTransaction(tx) =&gt; <span class="self">Self</span>::execute_message(tx, state, block_context),
+        }
+    }
+
+    <span class="kw">fn </span>execute_account_transaction&lt;S: State + SetArbitraryNonce&gt;(
+        transaction: <span class="kw-2">&amp;</span>AccountTransaction,
+        state: <span class="kw-2">&amp;mut </span>S,
+        block_context: <span class="kw-2">&amp;</span>BlockContext,
+        simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, TransactionExecutionError&gt; {
+        <span class="kw">match </span>transaction {
+            AccountTransaction::Declare(tx) =&gt; run_non_revertible_transaction(
+                tx,
+                state,
+                block_context,
+                simulation_flags.validate,
+                simulation_flags.charge_fee,
+            ),
+            AccountTransaction::DeployAccount(tx) =&gt; run_non_revertible_transaction(
+                tx,
+                state,
+                block_context,
+                simulation_flags.validate,
+                simulation_flags.charge_fee,
+            ),
+            AccountTransaction::Invoke(tx) <span class="kw">if </span>tx.tx.version() == TransactionVersion::ZERO =&gt; {
+                run_non_revertible_transaction(
+                    tx,
+                    state,
+                    block_context,
+                    simulation_flags.validate,
+                    simulation_flags.charge_fee,
+                )
+            }
+            AccountTransaction::Invoke(tx) =&gt; run_revertible_transaction(
+                tx,
+                state,
+                block_context,
+                simulation_flags.validate,
+                simulation_flags.charge_fee,
+            ),
+        }
+    }
+
+    <span class="kw">fn </span>execute_account_transaction_with_state_diff&lt;S: State + SetArbitraryNonce&gt;(
+        transaction: <span class="kw-2">&amp;</span>AccountTransaction,
+        state: <span class="kw-2">&amp;mut </span>S,
+        block_context: <span class="kw-2">&amp;</span>BlockContext,
+        simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;
+        (<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, TransactionExecutionError&gt;, CommitmentStateDiff),
+        PlaceHolderErrorTypeForFailedStarknetExecution,
+    &gt; {
+        <span class="comment">// In order to produce a state diff for this specific tx we execute on a transactional state
+        </span><span class="kw">let </span><span class="kw-2">mut </span>transactional_state = CachedState::new(MutRefState::new(state), GlobalContractCache::new(<span class="number">1</span>));
+
+        <span class="kw">let </span>result =
+            <span class="self">Self</span>::execute_account_transaction(transaction, <span class="kw-2">&amp;mut </span>transactional_state, block_context, simulation_flags);
+
+        <span class="kw">let </span>state_diff = transactional_state.to_state_diff();
+        <span class="comment">// Once the state diff of this tx is generated, we apply those changes on the original state
+        // so that next txs being simulated are ontop of this one (avoid nonce error)
+        </span>commit_transactional_state(transactional_state).map_err(|e| {
+            <span class="macro">log::error!</span>(<span class="string">&quot;Failed to commit state changes: {:?}&quot;</span>, e);
+            PlaceHolderErrorTypeForFailedStarknetExecution
+        })<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>((result, state_diff))
+    }
+
+    <span class="kw">fn </span>execute_message&lt;S: State&gt;(
+        transaction: <span class="kw-2">&amp;</span>L1HandlerTransaction,
+        state: <span class="kw-2">&amp;mut </span>S,
+        block_context: <span class="kw-2">&amp;</span>BlockContext,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, TransactionExecutionError&gt; {
+        execute_l1_handler_transaction(transaction, state, block_context)
     }
 }
 </code></pre></div></section></main></body></html>

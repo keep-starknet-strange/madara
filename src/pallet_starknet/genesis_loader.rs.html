@@ -188,7 +188,6 @@
                             version,
                         ),
                     ),
-                    ContractClass::Class(class) =&gt; (hash, class),
                 }
             })
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
@@ -225,7 +224,6 @@
                 (key, value)
             })
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-        <span class="kw">let </span>fee_token_address = Felt252Wrapper(loader.data().fee_token_address.<span class="number">0</span>).into();
 
         <span class="kw">let </span>chain_id = loader
             .data()
@@ -242,7 +240,8 @@
             contract_classes,
             sierra_to_casm_class_hash,
             storage,
-            fee_token_address,
+            strk_fee_token_address: Felt252Wrapper(loader.data().strk_fee_token_address.<span class="number">0</span>).into(),
+            eth_fee_token_address: Felt252Wrapper(loader.data().eth_fee_token_address.<span class="number">0</span>).into(),
             chain_id,
             ..Default::default()
         }
@@ -264,7 +263,7 @@
             serde_json::from_str(json_str).expect(<span class="string">&quot;`json_str` should be deserializable into the correct ContracClass&quot;</span>),
         );
     } <span class="kw">else if </span>version == <span class="number">1 </span>{
-        <span class="kw">let </span>casm_contract_class: cairo_lang_casm_contract_class::CasmContractClass =
+        <span class="kw">let </span>casm_contract_class: cairo_lang_starknet_classes::casm_contract_class::CasmContractClass =
             serde_json::from_str(json_str).expect(<span class="string">&quot;`json_str` should be deserializable into the CasmContracClass&quot;</span>);
         <span class="kw">return </span>StarknetContractClass::V1(
             casm_contract_class.try_into().expect(<span class="string">&quot;the CasmContractClass should produce a valid ContractClassV1&quot;</span>),
@@ -297,7 +296,7 @@
         <span class="kw">let </span>contract_address = FieldElement::from(<span class="number">2u8</span>).into();
         <span class="kw">let </span>storage_key = FieldElement::from(<span class="number">3u8</span>).into();
         <span class="kw">let </span>storage_value = FieldElement::from(<span class="number">4u8</span>).into();
-        <span class="kw">let </span>fee_token_address = FieldElement::from(<span class="number">5u8</span>).into();
+        <span class="kw">let </span>fee_token_address: HexFelt = FieldElement::from(<span class="number">5u8</span>).into();
 
         <span class="kw">let </span>genesis_loader = GenesisData {
             contract_classes: <span class="macro">vec!</span>[(class_hash, class)],
@@ -308,7 +307,8 @@
             contracts: <span class="macro">vec!</span>[(contract_address, class_hash)],
             predeployed_accounts: Vec::new(),
             storage: <span class="macro">vec!</span>[((contract_address, storage_key), storage_value)],
-            fee_token_address,
+            strk_fee_token_address: fee_token_address,
+            eth_fee_token_address: fee_token_address,
             chain_id: String::from(<span class="string">&quot;MADARA&quot;</span>),
         };
 
@@ -316,7 +316,7 @@
         </span><span class="kw">let </span>serialized_loader = serde_json::to_string(<span class="kw-2">&amp;</span>genesis_loader).unwrap();
 
         <span class="comment">// Then
-        </span><span class="kw">let </span>expected = <span class="string">r#&quot;{&quot;contract_classes&quot;:[[&quot;0x1&quot;,{&quot;path&quot;:&quot;cairo-contracts/ERC20.json&quot;,&quot;version&quot;:0}]],&quot;sierra_class_hash_to_casm_class_hash&quot;:[[&quot;0x2a&quot;,&quot;0x1&quot;]],&quot;contracts&quot;:[[&quot;0x2&quot;,&quot;0x1&quot;]],&quot;predeployed_accounts&quot;:[],&quot;storage&quot;:[[[&quot;0x2&quot;,&quot;0x3&quot;],&quot;0x4&quot;]],&quot;fee_token_address&quot;:&quot;0x5&quot;,&quot;chain_id&quot;:&quot;MADARA&quot;}&quot;#</span>;
+        </span><span class="kw">let </span>expected = <span class="string">r#&quot;{&quot;contract_classes&quot;:[[&quot;0x1&quot;,{&quot;path&quot;:&quot;cairo-contracts/ERC20.json&quot;,&quot;version&quot;:0}]],&quot;sierra_class_hash_to_casm_class_hash&quot;:[[&quot;0x2a&quot;,&quot;0x1&quot;]],&quot;contracts&quot;:[[&quot;0x2&quot;,&quot;0x1&quot;]],&quot;predeployed_accounts&quot;:[],&quot;storage&quot;:[[[&quot;0x2&quot;,&quot;0x3&quot;],&quot;0x4&quot;]],&quot;chain_id&quot;:&quot;MADARA&quot;,&quot;strk_fee_token_address&quot;:&quot;0x5&quot;,&quot;eth_fee_token_address&quot;:&quot;0x5&quot;}&quot;#</span>;
         <span class="macro">assert_eq!</span>(expected, serialized_loader);
     }
 }

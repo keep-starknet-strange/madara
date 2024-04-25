@@ -263,6 +263,23 @@
 <a href="#263" id="263">263</a>
 <a href="#264" id="264">264</a>
 <a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::future::Future;
 <span class="kw">use </span>std::sync::Arc;
 
@@ -275,14 +292,14 @@
 <span class="kw">use </span>starknet_core::types::contract::{CompiledClass, SierraClass};
 <span class="kw">use </span>starknet_core::types::{
     BlockId, BlockTag, BroadcastedInvokeTransaction, FieldElement, FunctionCall, MaybePendingTransactionReceipt,
-    MsgToL1, TransactionReceipt,
+    MsgToL1, TransactionReceipt, TransactionTrace,
 };
 <span class="kw">use </span>starknet_core::utils::get_selector_from_name;
 <span class="kw">use </span>starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
 <span class="kw">use </span>starknet_providers::{Provider, ProviderError};
 <span class="kw">use </span>starknet_signers::{LocalWallet, SigningKey};
 
-<span class="kw">use </span><span class="kw">crate</span>::constants::{FEE_TOKEN_ADDRESS, MADARA_CHAIN_ID, MAX_FEE_OVERRIDE};
+<span class="kw">use </span><span class="kw">crate</span>::constants::{ETH_FEE_TOKEN_ADDRESS, MADARA_CHAIN_ID, MAX_FEE_OVERRIDE};
 <span class="kw">use crate</span>::{
     RpcAccount, RpcOzAccountFactory, SendTransactionError, TransactionAccountDeployment, TransactionDeclaration,
     TransactionExecution, TransactionLegacyDeclaration, TransactionResult,
@@ -371,6 +388,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         path_to_sierra: <span class="kw-2">&amp;</span>str,
         path_to_casm: <span class="kw-2">&amp;</span>str,
+        nonce: <span class="prelude-ty">Option</span>&lt;u64&gt;,
     ) -&gt; (TransactionDeclaration, FieldElement, FieldElement);
 
     <span class="kw">fn </span>declare_legacy_contract(<span class="kw-2">&amp;</span><span class="self">self</span>, path_to_compiled_contract: <span class="kw-2">&amp;</span>str) -&gt; (TransactionLegacyDeclaration, FieldElement);
@@ -397,7 +415,7 @@
         transfer_amount: U256,
         nonce: <span class="prelude-ty">Option</span>&lt;u64&gt;,
     ) -&gt; TransactionExecution {
-        <span class="kw">let </span>fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
+        <span class="kw">let </span>fee_token_address = FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap();
         <span class="self">self</span>.invoke_contract(
             fee_token_address,
             <span class="string">&quot;transfer&quot;</span>,
@@ -436,6 +454,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         path_to_sierra: <span class="kw-2">&amp;</span>str,
         path_to_casm: <span class="kw-2">&amp;</span>str,
+        nonce: <span class="prelude-ty">Option</span>&lt;u64&gt;,
     ) -&gt; (TransactionDeclaration, FieldElement, FieldElement) {
         <span class="kw">let </span>sierra: SierraClass = serde_json::from_reader(
             std::fs::File::open(<span class="macro">env!</span>(<span class="string">&quot;CARGO_MANIFEST_DIR&quot;</span>).to_owned() + <span class="string">&quot;/&quot; </span>+ path_to_sierra).unwrap(),
@@ -446,13 +465,17 @@
         )
         .unwrap();
         <span class="kw">let </span>compiled_class_hash = casm.class_hash().unwrap();
-        (
-            <span class="self">self</span>.declare(sierra.clone().flatten().unwrap().into(), compiled_class_hash)
-				<span class="comment">// starknet-rs calls estimateFee with incorrect version which throws an error
-                </span>.max_fee(FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap()),
-            sierra.class_hash().unwrap(),
-            compiled_class_hash,
-        )
+        <span class="kw">let </span>max_fee = FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap();
+
+        <span class="kw">let </span>tx = <span class="kw">match </span>nonce {
+            <span class="prelude-val">Some</span>(nonce) =&gt; <span class="self">self
+                </span>.declare(sierra.clone().flatten().unwrap().into(), compiled_class_hash)
+                .max_fee(max_fee)
+                .nonce(nonce.into()),
+            <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.declare(sierra.clone().flatten().unwrap().into(), compiled_class_hash).max_fee(max_fee),
+        };
+
+        (tx, sierra.class_hash().unwrap(), compiled_class_hash)
     }
 
     <span class="kw">fn </span>declare_legacy_contract(<span class="kw-2">&amp;</span><span class="self">self</span>, path_to_compiled_contract: <span class="kw-2">&amp;</span>str) -&gt; (TransactionLegacyDeclaration, FieldElement) {
@@ -505,6 +528,17 @@
     </span>assert_poll(|| <span class="kw">async </span>{ rpc.get_transaction_receipt(transaction_hash).<span class="kw">await</span>.is_ok() }, <span class="number">100</span>, <span class="number">20</span>).<span class="kw">await</span>;
 
     rpc.get_transaction_receipt(transaction_hash).<span class="kw">await
+</span>}
+
+<span class="kw">pub async fn </span>trace_transaction(
+    rpc: <span class="kw-2">&amp;</span>JsonRpcClient&lt;HttpTransport&gt;,
+    transaction_hash: FieldElement,
+) -&gt; <span class="prelude-ty">Result</span>&lt;TransactionTrace, ProviderError&gt; {
+    <span class="comment">// there is a delay between the transaction being available at the client
+    // and the sealing of the block, hence sleeping for 100ms
+    </span>assert_poll(|| <span class="kw">async </span>{ rpc.get_transaction_receipt(transaction_hash).<span class="kw">await</span>.is_ok() }, <span class="number">100</span>, <span class="number">20</span>).<span class="kw">await</span>;
+
+    rpc.trace_transaction(transaction_hash).<span class="kw">await
 </span>}
 
 <span class="kw">pub async fn </span>get_contract_address_from_deploy_tx(

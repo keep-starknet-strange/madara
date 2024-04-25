@@ -455,6 +455,8 @@
 <a href="#455" id="455">455</a>
 <a href="#456" id="456">456</a>
 <a href="#457" id="457">457</a>
+<a href="#458" id="458">458</a>
+<a href="#459" id="459">459</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don&#39;t support yet validity proofs and state updates to
@@ -474,9 +476,13 @@
 <span class="kw">mod </span>runtime_tests;
 <span class="kw">mod </span>types;
 
+<span class="kw">use </span>blockifier::context::FeeTokenAddresses;
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>blockifier::state::cached_state::CommitmentStateDiff;
+<span class="kw">use </span>blockifier::transaction::account_transaction::AccountTransaction;
 <span class="kw">use </span>blockifier::transaction::objects::TransactionExecutionInfo;
+<span class="kw">use </span>blockifier::transaction::transaction_execution::Transaction;
+<span class="kw">use </span>blockifier::transaction::transactions::L1HandlerTransaction;
 <span class="kw">pub use </span>config::<span class="kw-2">*</span>;
 <span class="kw">pub use </span>frame_support::traits::{ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness, StorageInfo};
 <span class="kw">pub use </span>frame_support::weights::constants::{
@@ -487,8 +493,6 @@
 <span class="kw">pub use </span>frame_system::Call <span class="kw">as </span>SystemCall;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult};
-<span class="kw">use </span>mp_transactions::compute_hash::ComputeTransactionHash;
-<span class="kw">use </span>mp_transactions::{HandleL1MessageTransaction, Transaction, UserOrL1HandlerTransaction, UserTransaction};
 <span class="kw">use </span>pallet_grandpa::{fg_primitives, AuthorityId <span class="kw">as </span>GrandpaId, AuthorityList <span class="kw">as </span>GrandpaAuthorityList};
 <span class="doccomment">/// Import the Starknet pallet.
 </span><span class="kw">pub use </span>pallet_starknet;
@@ -509,10 +513,10 @@
 <span class="kw">pub use </span>sp_runtime::{Perbill, Permill};
 <span class="kw">use </span>sp_std::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>sp_version::RuntimeVersion;
-<span class="kw">use </span>starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
+<span class="kw">use </span>starknet_api::core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
 <span class="kw">use </span>starknet_api::hash::{StarkFelt, StarkHash};
 <span class="kw">use </span>starknet_api::state::StorageKey;
-<span class="kw">use </span>starknet_api::transaction::{Calldata, Event <span class="kw">as </span>StarknetEvent, Fee, MessageToL1, TransactionHash};
+<span class="kw">use </span>starknet_api::transaction::{Calldata, Event <span class="kw">as </span>StarknetEvent, MessageToL1, TransactionHash};
 <span class="doccomment">/// Import the types.
 </span><span class="kw">pub use </span>types::<span class="kw-2">*</span>;
 
@@ -706,11 +710,11 @@
         }
 
         <span class="kw">fn </span>contract_class_hash_by_address(address: ContractAddress) -&gt; ClassHash {
-            Starknet::contract_class_hash_by_address(address)
+            ClassHash(Starknet::contract_class_hash_by_address(address))
         }
 
         <span class="kw">fn </span>contract_class_by_class_hash(class_hash: ClassHash) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClass&gt; {
-            Starknet::contract_class_by_class_hash(class_hash)
+            Starknet::contract_class_by_class_hash(class_hash.<span class="number">0</span>)
         }
 
         <span class="kw">fn </span>chain_id() -&gt; Felt252Wrapper {
@@ -725,62 +729,62 @@
             Starknet::config_hash()
         }
 
-        <span class="kw">fn </span>fee_token_address() -&gt; ContractAddress {
-            Starknet::fee_token_address()
+        <span class="kw">fn </span>fee_token_addresses() -&gt; FeeTokenAddresses {
+            Starknet::fee_token_addresses()
         }
 
         <span class="kw">fn </span>is_transaction_fee_disabled() -&gt; bool {
             Starknet::is_transaction_fee_disabled()
         }
 
-        <span class="kw">fn </span>estimate_fee(transactions: Vec&lt;UserTransaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(u64, u64)&gt;, DispatchError&gt; {
-            Starknet::estimate_fee(transactions)
+        <span class="kw">fn </span>estimate_fee(transactions: Vec&lt;AccountTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(u128, u128)&gt;, DispatchError&gt; {
+            Starknet::estimate_fee(transactions, <span class="kw-2">&amp;</span>simulation_flags)
         }
 
-        <span class="kw">fn </span>re_execute_transactions(transactions_before: Vec&lt;UserOrL1HandlerTransaction&gt;, transactions_to_trace: Vec&lt;UserOrL1HandlerTransaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;(TransactionExecutionInfo, CommitmentStateDiff)&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt; {
+        <span class="kw">fn </span>re_execute_transactions(transactions_before: Vec&lt;Transaction&gt;, transactions_to_trace: Vec&lt;Transaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;(TransactionExecutionInfo, CommitmentStateDiff)&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt; {
             Starknet::re_execute_transactions(transactions_before, transactions_to_trace)
         }
 
-        <span class="kw">fn </span>estimate_message_fee(message: HandleL1MessageTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u128, u64, u64), DispatchError&gt; {
+        <span class="kw">fn </span>estimate_message_fee(message: L1HandlerTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u128, u128, u128), DispatchError&gt; {
             Starknet::estimate_message_fee(message)
         }
 
-        <span class="kw">fn </span>simulate_transactions(transactions: Vec&lt;UserTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt;, DispatchError&gt; {
+        <span class="kw">fn </span>simulate_transactions(transactions: Vec&lt;AccountTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt;, DispatchError&gt; {
             Starknet::simulate_transactions(transactions, <span class="kw-2">&amp;</span>simulation_flags)
         }
 
-        <span class="kw">fn </span>simulate_message(message: HandleL1MessageTransaction, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt; {
+        <span class="kw">fn </span>simulate_message(message: L1HandlerTransaction, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt; {
             Starknet::simulate_message(message, <span class="kw-2">&amp;</span>simulation_flags)
         }
 
         <span class="kw">fn </span>extrinsic_filter(xts: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;) -&gt; Vec&lt;Transaction&gt; {
             xts.into_iter().filter_map(|xt| <span class="kw">match </span>xt.function {
-                RuntimeCall::Starknet( invoke { transaction }) =&gt; <span class="prelude-val">Some</span>(Transaction::Invoke(transaction)),
-                RuntimeCall::Starknet( declare { transaction, contract_class }) =&gt; <span class="prelude-val">Some</span>(Transaction::Declare(transaction, contract_class)),
-                RuntimeCall::Starknet( deploy_account { transaction }) =&gt; <span class="prelude-val">Some</span>(Transaction::DeployAccount(transaction)),
-                RuntimeCall::Starknet( consume_l1_message { transaction, .. }) =&gt; <span class="prelude-val">Some</span>(Transaction::L1Handler(transaction)),
-                <span class="kw">_ </span>=&gt; <span class="prelude-val">None
-            </span>}).collect::&lt;Vec&lt;Transaction&gt;&gt;()
+                RuntimeCall::Starknet( invoke { transaction }) =&gt; <span class="prelude-val">Some</span>(Transaction::AccountTransaction(AccountTransaction::Invoke(transaction))),
+                RuntimeCall::Starknet( declare { transaction }) =&gt; <span class="prelude-val">Some</span>(Transaction::AccountTransaction(AccountTransaction::Declare(transaction))),
+                RuntimeCall::Starknet( deploy_account { transaction }) =&gt; <span class="prelude-val">Some</span>(Transaction::AccountTransaction(AccountTransaction::DeployAccount(transaction))),
+                RuntimeCall::Starknet( consume_l1_message { transaction }) =&gt; <span class="prelude-val">Some</span>(Transaction::L1HandlerTransaction(transaction)),
+                <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+            }).collect::&lt;Vec&lt;Transaction&gt;&gt;()
         }
 
-        <span class="kw">fn </span>get_index_and_tx_for_tx_hash(extrinsics: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;, chain_id: Felt252Wrapper, tx_hash: Felt252Wrapper) -&gt; <span class="prelude-ty">Option</span>&lt;(u32, Transaction)&gt; {
+        <span class="kw">fn </span>get_index_and_tx_for_tx_hash(extrinsics: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;, tx_hash: TransactionHash) -&gt; <span class="prelude-ty">Option</span>&lt;(u32, Transaction)&gt; {
             <span class="comment">// Find our tx and it&#39;s index
             </span><span class="kw">let </span>(tx_index, tx) =  extrinsics.into_iter().enumerate().find(|(<span class="kw">_</span>, xt)| {
                 <span class="kw">let </span>computed_tx_hash = <span class="kw">match </span><span class="kw-2">&amp;</span>xt.function {
-                    RuntimeCall::Starknet( invoke { transaction }) =&gt; transaction.compute_hash::&lt;&lt;Runtime <span class="kw">as </span><span class="kw">crate</span>::pallet_starknet::Config&gt;::SystemHash&gt;(chain_id, <span class="bool-val">false</span>),
-                    RuntimeCall::Starknet( declare { transaction, .. }) =&gt; transaction.compute_hash::&lt;&lt;Runtime <span class="kw">as </span><span class="kw">crate</span>::pallet_starknet::Config&gt;::SystemHash&gt;(chain_id, <span class="bool-val">false</span>),
-                    RuntimeCall::Starknet( deploy_account { transaction }) =&gt; transaction.compute_hash::&lt;&lt;Runtime <span class="kw">as </span><span class="kw">crate</span>::pallet_starknet::Config&gt;::SystemHash&gt;(chain_id, <span class="bool-val">false</span>),
-                    RuntimeCall::Starknet( consume_l1_message { transaction, .. }) =&gt; transaction.compute_hash::&lt;&lt;Runtime <span class="kw">as </span><span class="kw">crate</span>::pallet_starknet::Config&gt;::SystemHash&gt;(chain_id, <span class="bool-val">false</span>),
+                    RuntimeCall::Starknet( invoke { transaction }) =&gt; transaction.tx_hash,
+                    RuntimeCall::Starknet( declare { transaction, .. }) =&gt; transaction.tx_hash,
+                    RuntimeCall::Starknet( deploy_account { transaction }) =&gt; transaction.tx_hash,
+                    RuntimeCall::Starknet( consume_l1_message { transaction, .. }) =&gt; transaction.tx_hash,
                     <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="bool-val">false
                 </span>};
 
                 computed_tx_hash == tx_hash
             })<span class="question-mark">?</span>;
             <span class="kw">let </span>transaction = <span class="kw">match </span>tx.function {
-                RuntimeCall::Starknet( invoke { transaction }) =&gt; Transaction::Invoke(transaction),
-                RuntimeCall::Starknet( declare { transaction, contract_class }) =&gt; Transaction::Declare(transaction, contract_class),
-                RuntimeCall::Starknet( deploy_account { transaction }) =&gt; Transaction::DeployAccount(transaction),
-                RuntimeCall::Starknet( consume_l1_message { transaction, .. }) =&gt; Transaction::L1Handler(transaction),
+                RuntimeCall::Starknet( invoke { transaction }) =&gt; Transaction::AccountTransaction(AccountTransaction::Invoke(transaction)),
+                RuntimeCall::Starknet( declare { transaction }) =&gt; Transaction::AccountTransaction(AccountTransaction::Declare(transaction)),
+                RuntimeCall::Starknet( deploy_account { transaction }) =&gt; Transaction::AccountTransaction(AccountTransaction::DeployAccount(transaction)),
+                RuntimeCall::Starknet( consume_l1_message { transaction }) =&gt; Transaction::L1HandlerTransaction(transaction),
                 <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;The previous match made sure that at this point tx is one of those starknet calls&quot;</span>),
             };
 
@@ -800,8 +804,8 @@
             Starknet::tx_revert_error(tx_hash).map(|s| s.into_bytes())
         }
 
-        <span class="kw">fn </span>get_block_context() -&gt; pallet_starknet_runtime_api::BlockContext {
-           Starknet::get_block_context().into()
+        <span class="kw">fn </span>get_block_context() -&gt; blockifier::context::BlockContext {
+           Starknet::get_block_context()
         }
 
         <span class="kw">fn </span>l1_nonce_unused(nonce: Nonce) -&gt; bool {
@@ -810,15 +814,15 @@
     }
 
     <span class="kw">impl </span>pallet_starknet_runtime_api::ConvertTransactionRuntimeApi&lt;Block&gt; <span class="kw">for </span>Runtime {
-        <span class="kw">fn </span>convert_transaction(transaction: UserTransaction) -&gt; UncheckedExtrinsic {
+        <span class="kw">fn </span>convert_account_transaction(transaction: AccountTransaction) -&gt; UncheckedExtrinsic {
             <span class="kw">let </span>call = <span class="kw">match </span>transaction {
-                UserTransaction::Declare(tx, contract_class) =&gt; {
-                    pallet_starknet::Call::declare { transaction: tx, contract_class  }
+                AccountTransaction::Declare(tx) =&gt; {
+                    pallet_starknet::Call::declare { transaction: tx }
                 }
-                UserTransaction::DeployAccount(tx) =&gt; {
+                AccountTransaction::DeployAccount(tx) =&gt; {
                     pallet_starknet::Call::deploy_account { transaction: tx  }
                 }
-                UserTransaction::Invoke(tx) =&gt; {
+                AccountTransaction::Invoke(tx) =&gt; {
                     pallet_starknet::Call::invoke { transaction: tx  }
                 }
             };
@@ -826,8 +830,8 @@
             UncheckedExtrinsic::new_unsigned(call.into())
         }
 
-        <span class="kw">fn </span>convert_l1_transaction(transaction: HandleL1MessageTransaction, fee: Fee) -&gt; UncheckedExtrinsic {
-            <span class="kw">let </span>call =  pallet_starknet::Call::&lt;Runtime&gt;::consume_l1_message { transaction, paid_fee_on_l1: fee };
+        <span class="kw">fn </span>convert_l1_transaction(transaction: L1HandlerTransaction) -&gt; UncheckedExtrinsic {
+            <span class="kw">let </span>call =  pallet_starknet::Call::&lt;Runtime&gt;::consume_l1_message { transaction };
 
             UncheckedExtrinsic::new_unsigned(call.into())
         }

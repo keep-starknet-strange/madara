@@ -278,19 +278,16 @@
 <a href="#278" id="278">278</a>
 <a href="#279" id="279">279</a>
 <a href="#280" id="280">280</a>
-<a href="#281" id="281">281</a>
-<a href="#282" id="282">282</a>
-<a href="#283" id="283">283</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
+<span class="kw">use </span>blockifier::transaction::transaction_execution::Transaction;
 <span class="kw">use </span>futures::StreamExt;
 <span class="kw">use </span>futures_timer::Delay;
 <span class="kw">use </span>mp_block::Block <span class="kw">as </span>StarknetBlock;
 <span class="kw">use </span>mp_hashers::HasherT;
 <span class="kw">use </span>mp_messages::{MessageL1ToL2, MessageL2ToL1};
 <span class="kw">use </span>mp_snos_output::StarknetOsOutput;
-<span class="kw">use </span>mp_transactions::compute_hash::ComputeTransactionHash;
-<span class="kw">use </span>mp_transactions::Transaction;
+<span class="kw">use </span>mp_transactions::get_transaction_hash;
 <span class="kw">use </span>pallet_starknet_runtime_api::StarknetRuntimeApi;
 <span class="kw">use </span>sc_client_api::BlockchainEvents;
 <span class="kw">use </span>sp_api::{HeaderT, ProvideRuntimeApi};
@@ -298,7 +295,6 @@
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
 <span class="kw">use </span>sp_runtime::traits::Block <span class="kw">as </span>BlockT;
 <span class="kw">use </span>starknet_api::hash::StarkHash;
-<span class="kw">use </span>starknet_api::transaction::TransactionHash;
 
 <span class="kw">use </span><span class="kw">crate</span>::errors::Error;
 <span class="kw">use crate</span>::{<span class="prelude-ty">Result</span>, RetryStrategy, SettlementProvider, SettlementWorker, StarknetSpec, StarknetState};
@@ -534,16 +530,14 @@
         <span class="kw">let </span><span class="kw-2">mut </span>messages_to_l1: Vec&lt;MessageL2ToL1&gt; = Vec::new();
         <span class="kw">let </span><span class="kw-2">mut </span>messages_to_l2: Vec&lt;MessageL1ToL2&gt; = Vec::new();
 
-        <span class="kw">let </span>chain_id = substrate_client.runtime_api().chain_id(substrate_block_hash)<span class="question-mark">?</span>;
-
         <span class="kw">for </span>tx <span class="kw">in </span>next_block.transactions() {
-            <span class="kw">if let </span>Transaction::L1Handler(l1_handler) = tx {
-                messages_to_l2.push(l1_handler.clone().into());
+            <span class="kw">if let </span>Transaction::L1HandlerTransaction(l1_handler) = tx {
+                messages_to_l2.push(l1_handler.tx.clone().into());
             }
-            <span class="kw">let </span>tx_hash = TransactionHash(tx.compute_hash::&lt;H&gt;(chain_id, <span class="bool-val">false</span>).into());
+            <span class="kw">let </span>tx_hash = get_transaction_hash(tx);
             substrate_client
                 .runtime_api()
-                .get_tx_messages_to_l1(substrate_block_hash, tx_hash)<span class="question-mark">?
+                .get_tx_messages_to_l1(substrate_block_hash, <span class="kw-2">*</span>tx_hash)<span class="question-mark">?
                 </span>.into_iter()
                 .for_each(|msg| messages_to_l1.push(msg.into()));
         }

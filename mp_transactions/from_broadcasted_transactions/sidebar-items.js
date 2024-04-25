@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["BroadcastedTransactionConversionError"],"fn":["casm_contract_class_to_compiled_class","get_casm_cotract_class_hash"]};
+window.SIDEBAR_ITEMS = {"enum":["BroadcastedTransactionConversionError"],"fn":["casm_contract_class_to_compiled_class","get_casm_contract_class_hash","try_account_tx_from_broadcasted_tx","try_declare_tx_from_broadcasted_declare_tx","try_deploy_tx_from_broadcasted_deploy_tx","try_invoke_tx_from_broadcasted_invoke_tx"]};

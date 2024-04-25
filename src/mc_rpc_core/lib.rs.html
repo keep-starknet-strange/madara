@@ -188,6 +188,7 @@
 <a href="#188" id="188">188</a>
 <a href="#189" id="189">189</a>
 <a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC API trait and types
 //!
 //! Starkware maintains [a description of the Starknet API](https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json)
@@ -212,8 +213,8 @@
     BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall,
     InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingStateUpdate,
-    MaybePendingTransactionReceipt, MsgFromL1, SimulatedTransaction, SimulationFlag, SyncStatusType, Transaction,
-    TransactionTrace, TransactionTraceWithHash,
+    MaybePendingTransactionReceipt, MsgFromL1, SimulatedTransaction, SimulationFlag, SimulationFlagForEstimateFee,
+    SyncStatusType, Transaction, TransactionTrace, TransactionTraceWithHash,
 };
 
 <span class="attr">#[serde_as]
@@ -327,6 +328,7 @@
     </span><span class="kw">async fn </span>estimate_fee(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         request: Vec&lt;BroadcastedTransaction&gt;,
+        simulation_flags: Vec&lt;SimulationFlagForEstimateFee&gt;,
         block_id: BlockId,
     ) -&gt; RpcResult&lt;Vec&lt;FeeEstimate&gt;&gt;;
 

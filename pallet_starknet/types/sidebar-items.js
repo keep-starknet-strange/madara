@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["BuildTransferInvokeTransaction","DeployAccountTransactionOutput","TransactionOutput"],"type":["CasmClassHash","ContractClassMapping","ContractStorageKey","MaxTransactionsPendingBlock","SierraClassHash","SierraOrCasmClassHash","StorageSlot"]};
+window.SIDEBAR_ITEMS = {"struct":["DeployAccountTransactionOutput","TransactionOutput"],"type":["CasmClassHash","ContractClassMapping","ContractStorageKey","MaxTransactionsPendingBlock","SierraClassHash","SierraOrCasmClassHash","StorageSlot"]};

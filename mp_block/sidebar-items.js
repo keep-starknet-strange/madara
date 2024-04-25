@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["BlockId","BlockTag"],"struct":["Block","Header"],"type":["BlockTransactions"]};
+window.SIDEBAR_ITEMS = {"enum":["BlockId","BlockTag","NewBlockError"],"struct":["Block","Header"],"type":["BlockTransactions"]};

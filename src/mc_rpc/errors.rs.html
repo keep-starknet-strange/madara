@@ -62,6 +62,9 @@
 <a href="#62" id="62">62</a>
 <a href="#63" id="63">63</a>
 <a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>jsonrpsee::types::error::{CallError, ErrorObject};
 <span class="kw">use </span>pallet_starknet_runtime_api::StarknetTransactionExecutionError;
 
@@ -123,7 +126,10 @@
 
 <span class="kw">impl </span>From&lt;StarknetRpcApiError&gt; <span class="kw">for </span>jsonrpsee::core::Error {
     <span class="kw">fn </span>from(err: StarknetRpcApiError) -&gt; <span class="self">Self </span>{
-        jsonrpsee::core::Error::Call(CallError::Custom(ErrorObject::owned(err <span class="kw">as </span>i32, err.to_string(), <span class="prelude-val">None</span>::&lt;()&gt;)))
+        <span class="comment">// TODO:
+        // when able to ge rich errors out of runtime,
+        // match and populate the `data` field
+        </span>jsonrpsee::core::Error::Call(CallError::Custom(ErrorObject::owned(err <span class="kw">as </span>i32, err.to_string(), <span class="prelude-val">None</span>::&lt;()&gt;)))
     }
 }
 </code></pre></div></section></main></body></html>

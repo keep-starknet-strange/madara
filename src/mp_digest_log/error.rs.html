@@ -20,7 +20,6 @@
 <a href="#20" id="20">20</a>
 <a href="#21" id="21">21</a>
 <a href="#22" id="22">22</a>
-<a href="#23" id="23">23</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/// Error that may occur while searching a Madara \[Log\] in the \[Digest\]
 ///
 /// As for now only one single Madara \[Log\] is expected per \[Digest\].
@@ -33,8 +32,7 @@
     </span>MultipleLogs,
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>FindLogError {}
+<span class="kw">impl </span>std::error::Error <span class="kw">for </span>FindLogError {}
 
 <span class="kw">impl </span>core::fmt::Display <span class="kw">for </span>FindLogError {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; core::fmt::Result {

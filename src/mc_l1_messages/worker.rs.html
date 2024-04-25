@@ -171,26 +171,24 @@
 <a href="#171" id="171">171</a>
 <a href="#172" id="172">172</a>
 <a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
+<span class="kw">use </span>blockifier::transaction::transactions::L1HandlerTransaction;
 <span class="kw">use </span>ethers::providers::{Http, Provider, StreamExt};
 <span class="kw">use </span>ethers::types::U256;
 <span class="kw">pub use </span>mc_eth_client::config::EthereumClientConfig;
-<span class="kw">use </span>mp_transactions::HandleL1MessageTransaction;
+<span class="kw">use </span>mp_transactions::compute_hash::ComputeTransactionHash;
 <span class="kw">use </span>pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 <span class="kw">use </span>sc_client_api::HeaderBackend;
 <span class="kw">use </span>sc_transaction_pool_api::{TransactionPool, TransactionSource};
 <span class="kw">use </span>sp_api::ProvideRuntimeApi;
 <span class="kw">use </span>sp_runtime::traits::Block <span class="kw">as </span>BlockT;
-<span class="kw">use </span>starknet_api::api_core::Nonce;
-<span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_api::transaction::Fee;
 <span class="kw">use </span>starknet_core_contract_client::interfaces::{LogMessageToL2Filter, StarknetMessagingEvents};
 
 <span class="kw">use </span><span class="kw">crate</span>::contract::parse_handle_l1_message_transaction;
 <span class="kw">use </span><span class="kw">crate</span>::error::L1MessagesWorkerError;
-
-<span class="kw">const </span>TX_SOURCE: TransactionSource = TransactionSource::External;
 
 <span class="kw">fn </span>create_event_listener(
     config: EthereumClientConfig,
@@ -300,19 +298,19 @@
 {
     <span class="comment">// Check against panic
     // https://docs.rs/ethers/latest/ethers/types/struct.U256.html#method.as_u128
-    </span><span class="kw">let </span>fee: Fee = <span class="kw">if </span>event.fee &gt; U256::from_big_endian(<span class="kw-2">&amp;</span>(u128::MAX.to_be_bytes())) {
+    </span><span class="kw">let </span>paid_fee_on_l1: Fee = <span class="kw">if </span>event.fee &gt; U256::from_big_endian(<span class="kw-2">&amp;</span>(u128::MAX.to_be_bytes())) {
         <span class="kw">return </span><span class="prelude-val">Err</span>(L1MessagesWorkerError::ToFeeError);
     } <span class="kw">else </span>{
         Fee(event.fee.as_u128())
     };
-    <span class="kw">let </span>transaction: HandleL1MessageTransaction = parse_handle_l1_message_transaction(event)<span class="question-mark">?</span>;
+    <span class="kw">let </span>tx = parse_handle_l1_message_transaction(event)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>best_block_hash = client.info().best_hash;
 
-    <span class="kw">match </span>client.runtime_api().l1_nonce_unused(best_block_hash, Nonce(StarkFelt::from(transaction.nonce))) {
+    <span class="kw">match </span>client.runtime_api().l1_nonce_unused(best_block_hash, tx.nonce) {
         <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>) =&gt; <span class="prelude-val">Ok</span>(()),
         <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>) =&gt; {
-            <span class="macro">log::debug!</span>(<span class="string">&quot;⟠ Event already processed: {:?}&quot;</span>, transaction);
+            <span class="macro">log::debug!</span>(<span class="string">&quot;⟠ Event already processed: {:?}&quot;</span>, tx);
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
         }
         <span class="prelude-val">Err</span>(e) =&gt; {
@@ -321,12 +319,16 @@
         }
     }<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>extrinsic = client.runtime_api().convert_l1_transaction(best_block_hash, transaction, fee).map_err(|e| {
+    <span class="kw">let </span>chain_id = client.runtime_api().chain_id(best_block_hash).map_err(L1MessagesWorkerError::RuntimeApiError)<span class="question-mark">?</span>;
+    <span class="kw">let </span>tx_hash = tx.compute_hash(chain_id, <span class="bool-val">false</span>);
+    <span class="kw">let </span>transaction = L1HandlerTransaction { tx, tx_hash, paid_fee_on_l1 };
+
+    <span class="kw">let </span>extrinsic = client.runtime_api().convert_l1_transaction(best_block_hash, transaction).map_err(|e| {
         <span class="macro">log::error!</span>(<span class="string">&quot;⟠ Failed to convert L1 Transaction via Runtime Api: {:?}&quot;</span>, e);
         L1MessagesWorkerError::ConvertTransactionRuntimeApiError(e)
     })<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>tx_hash = pool.submit_one(best_block_hash, TX_SOURCE, extrinsic).<span class="kw">await</span>.map_err(|e| {
+    <span class="kw">let </span>tx_hash = pool.submit_one(best_block_hash, TransactionSource::External, extrinsic).<span class="kw">await</span>.map_err(|e| {
         <span class="macro">log::error!</span>(<span class="string">&quot;⟠ Failed to submit transaction with L1 Message: {:?}&quot;</span>, e);
         L1MessagesWorkerError::SubmitTxError(e)
     })<span class="question-mark">?</span>;

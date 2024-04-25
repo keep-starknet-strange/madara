@@ -80,14 +80,14 @@
 <span class="kw">use </span>sp_api::BlockId;
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
 <span class="kw">use </span>sp_runtime::traits::{Block <span class="kw">as </span>BlockT, Header <span class="kw">as </span>HeaderT};
-<span class="kw">use </span>starknet_api::hash::StarkHash;
+<span class="kw">use </span>starknet_api::block::BlockHash;
 
 <span class="kw">use </span><span class="kw">crate</span>::errors::StarknetRpcApiError;
 
 <span class="kw">pub fn </span>load_hash&lt;B: BlockT, C&gt;(
     client: <span class="kw-2">&amp;</span>C,
     backend: <span class="kw-2">&amp;</span>mc_db::Backend&lt;B&gt;,
-    hash: StarkHash,
+    hash: BlockHash,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;B::Hash&gt;, DbError&gt;
 <span class="kw">where
     </span>B: BlockT,
@@ -141,7 +141,7 @@
 
     <span class="kw">match </span>substrate_block_hash {
         <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(block_hash)) =&gt; {
-            <span class="kw">let </span>block = get_block_by_block_hash(client, block_hash).unwrap_or_default();
+            <span class="kw">let </span>block = get_block_by_block_hash(client, block_hash).map_err(|<span class="kw">_</span>| StarknetRpcApiError::BlockNotFound)<span class="question-mark">?</span>;
 
             <span class="prelude-val">Ok</span>(block)
         }

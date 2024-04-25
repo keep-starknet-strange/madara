@@ -507,72 +507,25 @@
 <a href="#507" id="507">507</a>
 <a href="#508" id="508">508</a>
 <a href="#509" id="509">509</a>
-<a href="#510" id="510">510</a>
-<a href="#511" id="511">511</a>
-<a href="#512" id="512">512</a>
-<a href="#513" id="513">513</a>
-<a href="#514" id="514">514</a>
-<a href="#515" id="515">515</a>
-<a href="#516" id="516">516</a>
-<a href="#517" id="517">517</a>
-<a href="#518" id="518">518</a>
-<a href="#519" id="519">519</a>
-<a href="#520" id="520">520</a>
-<a href="#521" id="521">521</a>
-<a href="#522" id="522">522</a>
-<a href="#523" id="523">523</a>
-<a href="#524" id="524">524</a>
-<a href="#525" id="525">525</a>
-<a href="#526" id="526">526</a>
-<a href="#527" id="527">527</a>
-<a href="#528" id="528">528</a>
-<a href="#529" id="529">529</a>
-<a href="#530" id="530">530</a>
-<a href="#531" id="531">531</a>
-<a href="#532" id="532">532</a>
-<a href="#533" id="533">533</a>
-<a href="#534" id="534">534</a>
-<a href="#535" id="535">535</a>
-<a href="#536" id="536">536</a>
-<a href="#537" id="537">537</a>
-<a href="#538" id="538">538</a>
-<a href="#539" id="539">539</a>
-<a href="#540" id="540">540</a>
-<a href="#541" id="541">541</a>
-<a href="#542" id="542">542</a>
-<a href="#543" id="543">543</a>
-<a href="#544" id="544">544</a>
-<a href="#545" id="545">545</a>
-<a href="#546" id="546">546</a>
-<a href="#547" id="547">547</a>
-<a href="#548" id="548">548</a>
-<a href="#549" id="549">549</a>
-<a href="#550" id="550">550</a>
-<a href="#551" id="551">551</a>
-<a href="#552" id="552">552</a>
-<a href="#553" id="553">553</a>
-<a href="#554" id="554">554</a>
-<a href="#555" id="555">555</a>
-<a href="#556" id="556">556</a>
-<a href="#557" id="557">557</a>
-<a href="#558" id="558">558</a>
-<a href="#559" id="559">559</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>blockifier::execution::contract_class::{ContractClass, ContractClassV1};
-<span class="kw">use </span>blockifier::execution::entry_point::CallInfo;
+</pre></div><pre class="rust"><code><span class="kw">use </span>blockifier::execution::call_info::CallInfo;
 <span class="kw">use </span>blockifier::state::cached_state::CommitmentStateDiff;
+<span class="kw">use </span>blockifier::transaction::account_transaction::AccountTransaction;
 <span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>blockifier::transaction::objects::TransactionExecutionInfo;
+<span class="kw">use </span>blockifier::transaction::transaction_execution::Transaction;
 <span class="kw">use </span>jsonrpsee::core::{async_trait, RpcResult};
 <span class="kw">use </span>log::error;
 <span class="kw">use </span>mc_genesis_data_provider::GenesisProvider;
 <span class="kw">use </span>mc_rpc_core::utils::{blockifier_to_rpc_state_diff_types, get_block_by_block_hash};
 <span class="kw">use </span>mc_rpc_core::{StarknetReadRpcApiServer, StarknetTraceRpcApiServer};
-<span class="kw">use </span>mp_block::BlockTransactions;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_hashers::HasherT;
 <span class="kw">use </span>mp_simulations::{SimulationFlags, TransactionSimulationResult};
-<span class="kw">use </span>mp_transactions::compute_hash::ComputeTransactionHash;
-<span class="kw">use </span>mp_transactions::{DeclareTransaction, Transaction, TxType, UserOrL1HandlerTransaction, UserTransaction};
+<span class="kw">use </span>mp_transactions::from_broadcasted_transactions::{
+    try_declare_tx_from_broadcasted_declare_tx, try_deploy_tx_from_broadcasted_deploy_tx,
+    try_invoke_tx_from_broadcasted_invoke_tx,
+};
+<span class="kw">use </span>mp_transactions::{get_transaction_hash, TxType};
 <span class="kw">use </span>pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 <span class="kw">use </span>sc_client_api::{Backend, BlockBackend, StorageProvider};
 <span class="kw">use </span>sc_transaction_pool::ChainApi;
@@ -580,11 +533,11 @@
 <span class="kw">use </span>sp_api::ProvideRuntimeApi;
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
 <span class="kw">use </span>sp_runtime::traits::Block <span class="kw">as </span>BlockT;
-<span class="kw">use </span>starknet_api::api_core::ClassHash;
+<span class="kw">use </span>starknet_api::transaction::TransactionHash;
 <span class="kw">use </span>starknet_core::types::{
     BlockId, BroadcastedTransaction, DeclareTransactionTrace, DeployAccountTransactionTrace, ExecuteInvocation,
-    FeeEstimate, InvokeTransactionTrace, L1HandlerTransactionTrace, RevertedInvocation, SimulatedTransaction,
-    SimulationFlag, StateDiff, TransactionTrace, TransactionTraceWithHash,
+    FeeEstimate, InvokeTransactionTrace, L1HandlerTransactionTrace, PriceUnit, RevertedInvocation,
+    SimulatedTransaction, SimulationFlag, StateDiff, TransactionTrace, TransactionTraceWithHash,
 };
 <span class="kw">use </span>starknet_ff::FieldElement;
 <span class="kw">use </span>thiserror::Error;
@@ -593,7 +546,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::Starknet;
 
 <span class="attr">#[async_trait]
-#[allow(unused_variables)]
 </span><span class="kw">impl</span>&lt;A, B, BE, G, C, P, H&gt; StarknetTraceRpcApiServer <span class="kw">for </span>Starknet&lt;A, B, BE, G, C, P, H&gt;
 <span class="kw">where
     </span>A: ChainApi&lt;Block = B&gt; + <span class="lifetime">&#39;static</span>,
@@ -613,31 +565,43 @@
         simulation_flags: Vec&lt;SimulationFlag&gt;,
     ) -&gt; RpcResult&lt;Vec&lt;SimulatedTransaction&gt;&gt; {
         <span class="kw">let </span>substrate_block_hash =
-            <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| StarknetRpcApiError::BlockNotFound)<span class="question-mark">?</span>;
+            <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|<span class="kw">_</span>| StarknetRpcApiError::BlockNotFound)<span class="question-mark">?</span>;
         <span class="kw">let </span>chain_id = Felt252Wrapper(<span class="self">self</span>.chain_id()<span class="question-mark">?</span>.<span class="number">0</span>);
-        <span class="kw">let </span>best_block_hash = <span class="self">self</span>.client.info().best_hash;
+
+        <span class="kw">let </span><span class="kw-2">mut </span>tx_types = Vec::with_capacity(transactions.len());
+        <span class="kw">let </span><span class="kw-2">mut </span>account_transactions = Vec::with_capacity(transactions.len());
 
         <span class="kw">let </span>tx_type_and_tx_iterator = transactions.into_iter().map(|tx| <span class="kw">match </span>tx {
-            BroadcastedTransaction::Invoke(invoke_tx) =&gt; invoke_tx.try_into().map(|tx| (TxType::Invoke, tx)),
-            BroadcastedTransaction::Declare(declare_tx) =&gt; declare_tx.try_into().map(|tx| (TxType::Declare, tx)),
-            BroadcastedTransaction::DeployAccount(deploy_account_tx) =&gt; {
-                deploy_account_tx.try_into().map(|tx| (TxType::DeployAccount, tx))
-            }
+            BroadcastedTransaction::Invoke(invoke_tx) =&gt; (
+                TxType::Invoke,
+                try_invoke_tx_from_broadcasted_invoke_tx(invoke_tx, chain_id).map(AccountTransaction::Invoke),
+            ),
+            BroadcastedTransaction::Declare(declare_tx) =&gt; (
+                TxType::Declare,
+                try_declare_tx_from_broadcasted_declare_tx(declare_tx, chain_id).map(AccountTransaction::Declare),
+            ),
+            BroadcastedTransaction::DeployAccount(deploy_account_tx) =&gt; (
+                TxType::DeployAccount,
+                try_deploy_tx_from_broadcasted_deploy_tx(deploy_account_tx, chain_id)
+                    .map(AccountTransaction::DeployAccount),
+            ),
         });
-        <span class="kw">let </span>(tx_types, user_transactions) =
-            itertools::process_results(tx_type_and_tx_iterator, |iter| iter.unzip::&lt;<span class="kw">_</span>, <span class="kw">_</span>, Vec&lt;<span class="kw">_</span>&gt;, Vec&lt;<span class="kw">_</span>&gt;&gt;()).map_err(
-                |e| {
-                    <span class="macro">error!</span>(<span class="string">&quot;Failed to convert BroadcastedTransaction to UserTransaction: {e}&quot;</span>);
-                    StarknetRpcApiError::InternalServerError
-                },
-            )<span class="question-mark">?</span>;
+
+        <span class="kw">for </span>(tx_type, account_tx) <span class="kw">in </span>tx_type_and_tx_iterator {
+            <span class="kw">let </span>tx = account_tx.map_err(|e| {
+                <span class="macro">error!</span>(<span class="string">&quot;Failed to convert BroadcastedTransaction to AccountTransaction: {e}&quot;</span>);
+                StarknetRpcApiError::InternalServerError
+            })<span class="question-mark">?</span>;
+            account_transactions.push(tx);
+            tx_types.push(tx_type);
+        }
 
         <span class="kw">let </span>simulation_flags = SimulationFlags::from(simulation_flags);
 
         <span class="kw">let </span>res = <span class="self">self
             </span>.client
             .runtime_api()
-            .simulate_transactions(substrate_block_hash, user_transactions, simulation_flags)
+            .simulate_transactions(substrate_block_hash, account_transactions, simulation_flags)
             .map_err(|e| {
                 <span class="macro">error!</span>(<span class="string">&quot;Request parameters error: {e}&quot;</span>);
                 StarknetRpcApiError::InternalServerError
@@ -663,28 +627,26 @@
             <span class="macro">error!</span>(<span class="string">&quot;Failed to get block for block hash {substrate_block_hash}: &#39;{e}&#39;&quot;</span>);
             StarknetRpcApiError::InternalServerError
         })<span class="question-mark">?</span>;
-        <span class="kw">let </span>chain_id = Felt252Wrapper(<span class="self">self</span>.chain_id()<span class="question-mark">?</span>.<span class="number">0</span>);
 
-        <span class="kw">let </span>(block_transactions, <span class="kw">_</span>) =
-            map_transaction_to_user_transaction(<span class="self">self</span>, starknet_block.transactions(), chain_id, <span class="prelude-val">None</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>block_transactions = starknet_block.transactions();
 
         <span class="kw">let </span>previous_block_substrate_hash = get_previous_block_substrate_hash(<span class="self">self</span>, substrate_block_hash)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>execution_infos =
             <span class="self">self</span>.re_execute_transactions(previous_block_substrate_hash, <span class="macro">vec!</span>[], block_transactions.clone())<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>storage_override = <span class="self">self</span>.overrides.for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash);
-
-        <span class="kw">let </span>traces = <span class="self">Self</span>::execution_info_to_transaction_trace(execution_infos, block_transactions, chain_id)<span class="question-mark">?</span>;
+        <span class="kw">let </span>traces = <span class="self">Self</span>::execution_info_to_transaction_trace(execution_infos, block_transactions)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(traces)
     }
 
     <span class="kw">async fn </span>trace_transaction(<span class="kw-2">&amp;</span><span class="self">self</span>, transaction_hash: FieldElement) -&gt; RpcResult&lt;TransactionTrace&gt; {
+        <span class="kw">let </span>transaction_hash: TransactionHash = Felt252Wrapper::from(transaction_hash).into();
+
         <span class="kw">let </span>substrate_block_hash = <span class="self">self
             </span>.backend
             .mapping()
-            .block_hash_from_transaction_hash(Felt252Wrapper(transaction_hash).into())
+            .block_hash_from_transaction_hash(transaction_hash)
             .map_err(|e| {
                 <span class="macro">error!</span>(<span class="string">&quot;Failed to get transaction&#39;s substrate block hash from mapping_db: {e}&quot;</span>);
                 StarknetRpcApiError::TxnHashNotFound
@@ -692,35 +654,25 @@
             </span>.ok_or(StarknetRpcApiError::TxnHashNotFound)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>starknet_block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)<span class="question-mark">?</span>;
-        <span class="kw">let </span>chain_id = Felt252Wrapper(<span class="self">self</span>.chain_id()<span class="question-mark">?</span>.<span class="number">0</span>);
-        <span class="kw">let </span>transaction_hash_to_trace: Felt252Wrapper = transaction_hash.into();
 
-        <span class="kw">let </span>(txs_to_execute_before, tx_to_trace) = map_transaction_to_user_transaction(
-            <span class="self">self</span>,
-            starknet_block.transactions(),
-            chain_id,
-            <span class="prelude-val">Some</span>(transaction_hash_to_trace),
-        )<span class="question-mark">?</span>;
+        <span class="kw">let </span>(txs_before, tx_to_trace) = <span class="kw">super</span>::split_block_tx_for_reexecution(<span class="kw-2">&amp;</span>starknet_block, transaction_hash)<span class="question-mark">?</span>;
+        <span class="kw">let </span>tx_type = TxType::from(<span class="kw-2">&amp;</span>tx_to_trace[<span class="number">0</span>]);
 
         <span class="kw">let </span>previous_block_substrate_hash = get_previous_block_substrate_hash(<span class="self">self</span>, substrate_block_hash)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>execution_infos = <span class="self">self</span>.re_execute_transactions(
-            previous_block_substrate_hash,
-            txs_to_execute_before.clone(),
-            tx_to_trace.clone(),
-        )<span class="question-mark">?</span>;
+        <span class="kw">let </span>(execution_infos, commitment_state_diff) = <span class="self">self
+            </span>.re_execute_transactions(previous_block_substrate_hash, txs_before, tx_to_trace)<span class="question-mark">?
+            </span>.into_iter()
+            .next()
+            .unwrap();
 
-        <span class="kw">let </span>storage_override = <span class="self">self</span>.overrides.for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash);
-        <span class="kw">let </span>chain_id = Felt252Wrapper(<span class="self">self</span>.chain_id()<span class="question-mark">?</span>.<span class="number">0</span>);
+        <span class="kw">let </span>state_diff = blockifier_to_rpc_state_diff_types(commitment_state_diff.clone())
+            .map_err(|<span class="kw">_</span>| StarknetRpcApiError::from(ConvertCallInfoToExecuteInvocationError::ConvertStateDiffFailed))<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>traces = <span class="self">Self</span>::execution_info_to_transaction_trace(execution_infos, tx_to_trace, chain_id)<span class="question-mark">?</span>;
+        <span class="kw">let </span>trace = tx_execution_infos_to_tx_trace(tx_type, <span class="kw-2">&amp;</span>execution_infos, <span class="prelude-val">Some</span>(state_diff))
+            .map_err(StarknetRpcApiError::from)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>result: TransactionTraceWithHash = traces
-            .into_iter()
-            .find(|trace| trace.transaction_hash == transaction_hash)
-            .ok_or(StarknetRpcApiError::TxnHashNotFound)<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(result.trace_root)
+        <span class="prelude-val">Ok</span>(trace)
     }
 }
 
@@ -739,8 +691,8 @@
     <span class="kw">pub fn </span>re_execute_transactions(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         previous_block_substrate_hash: B::Hash,
-        transactions_before: Vec&lt;UserOrL1HandlerTransaction&gt;,
-        transactions_to_trace: Vec&lt;UserOrL1HandlerTransaction&gt;,
+        transactions_before: Vec&lt;Transaction&gt;,
+        transactions_to_trace: Vec&lt;Transaction&gt;,
     ) -&gt; RpcResult&lt;Vec&lt;(TransactionExecutionInfo, CommitmentStateDiff)&gt;&gt; {
         <span class="prelude-val">Ok</span>(<span class="self">self
             </span>.client
@@ -769,8 +721,7 @@
 
     <span class="kw">fn </span>execution_info_to_transaction_trace(
         execution_infos: Vec&lt;(TransactionExecutionInfo, CommitmentStateDiff)&gt;,
-        block_transactions: Vec&lt;UserOrL1HandlerTransaction&gt;,
-        chain_id: Felt252Wrapper,
+        block_transactions: <span class="kw-2">&amp;</span>[Transaction],
     ) -&gt; RpcResult&lt;Vec&lt;TransactionTraceWithHash&gt;&gt; {
         <span class="prelude-val">Ok</span>(execution_infos
             .into_iter()
@@ -785,7 +736,7 @@
                     <span class="prelude-val">Some</span>(state_diff),
                 )
                 .map(|trace_root| TransactionTraceWithHash {
-                    transaction_hash: block_transactions[tx_idx].compute_hash::&lt;H&gt;(chain_id, <span class="bool-val">false</span>).into(),
+                    transaction_hash: Felt252Wrapper::from(<span class="kw-2">*</span>get_transaction_hash(<span class="kw-2">&amp;</span>block_transactions[tx_idx])).into(),
                     trace_root,
                 })
             })
@@ -823,16 +774,16 @@
         .iter()
         .map(|message| starknet_core::types::OrderedMessage {
             order: message.order <span class="kw">as </span>u64,
-            payload: message.message.payload.<span class="number">0</span>.iter().map(|x| (<span class="kw-2">*</span>x).into()).collect(),
+            payload: message.message.payload.<span class="number">0</span>.iter().map(|x| Felt252Wrapper::from(<span class="kw-2">*</span>x).into()).collect(),
             to_address: FieldElement::from_byte_slice_be(message.message.to_address.<span class="number">0</span>.to_fixed_bytes().as_slice())
                 .unwrap(),
-            from_address: call_info.call.storage_address.<span class="number">0.0</span>.into(),
+            from_address: Felt252Wrapper::from(call_info.call.storage_address).into(),
         })
         .collect()
 }
 
 <span class="kw">fn </span>blockifier_to_starknet_rs_ordered_events(
-    ordered_events: <span class="kw-2">&amp;</span>[blockifier::execution::entry_point::OrderedEvent],
+    ordered_events: <span class="kw-2">&amp;</span>[blockifier::execution::call_info::OrderedEvent],
 ) -&gt; Vec&lt;starknet_core::types::OrderedEvent&gt; {
     ordered_events
         .iter()
@@ -867,8 +818,6 @@
     <span class="kw">let </span>inner_calls =
         call_info.inner_calls.iter().map(try_get_function_invocation_from_call_info).collect::&lt;<span class="prelude-ty">Result</span>&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>;
 
-    call_info.get_sorted_l2_to_l1_payloads_length()<span class="question-mark">?</span>;
-
     <span class="kw">let </span>entry_point_type = <span class="kw">match </span>call_info.call.entry_point_type {
         starknet_api::deprecated_contract_class::EntryPointType::Constructor =&gt; {
             starknet_core::types::EntryPointType::Constructor
@@ -887,21 +836,64 @@
     };
 
     <span class="comment">// The class hash in the call_info is computed during execution and will be set here.
-    </span><span class="kw">let </span>class_hash = call_info.call.class_hash.expect(<span class="string">&quot;Class hash should be computed after execution&quot;</span>).<span class="number">0</span>.into();
+    </span><span class="kw">let </span>class_hash =
+        Felt252Wrapper::from(call_info.call.class_hash.expect(<span class="string">&quot;Class hash should be computed after execution&quot;</span>)).<span class="number">0</span>;
 
     <span class="prelude-val">Ok</span>(starknet_core::types::FunctionInvocation {
-        contract_address: call_info.call.storage_address.<span class="number">0.0</span>.into(),
-        entry_point_selector: call_info.call.entry_point_selector.<span class="number">0</span>.into(),
-        calldata: call_info.call.calldata.<span class="number">0</span>.iter().map(|x| (<span class="kw-2">*</span>x).into()).collect(),
-        caller_address: call_info.call.caller_address.<span class="number">0.0</span>.into(),
+        contract_address: Felt252Wrapper::from(call_info.call.storage_address).into(),
+        entry_point_selector: Felt252Wrapper::from(call_info.call.entry_point_selector).into(),
+        calldata: call_info.call.calldata.<span class="number">0</span>.iter().map(|x| Felt252Wrapper::from(<span class="kw-2">*</span>x).into()).collect(),
+        caller_address: Felt252Wrapper::from(call_info.call.caller_address).into(),
         class_hash,
         entry_point_type,
         call_type,
-        result: call_info.execution.retdata.<span class="number">0</span>.iter().map(|x| (<span class="kw-2">*</span>x).into()).collect(),
+        result: call_info.execution.retdata.<span class="number">0</span>.iter().map(|x| Felt252Wrapper::from(<span class="kw-2">*</span>x).into()).collect(),
         calls: inner_calls,
         events,
         messages,
+        execution_resources: vm_to_starknet_rs_exec_resources(<span class="kw-2">&amp;</span>call_info.resources),
     })
+}
+
+<span class="kw">fn </span>vm_to_starknet_rs_exec_resources(
+    resources: <span class="kw-2">&amp;</span>cairo_vm::vm::runners::cairo_runner::ExecutionResources,
+) -&gt; starknet_core::types::ExecutionResources {
+    starknet_core::types::ExecutionResources {
+        steps: resources.n_steps.try_into().unwrap(),
+        memory_holes: <span class="prelude-val">Some</span>(resources.n_memory_holes.try_into().unwrap()),
+        range_check_builtin_applications: resources
+            .builtin_instance_counter
+            .get(<span class="string">&quot;range_check_builtin&quot;</span>)
+            .map(|<span class="kw-2">&amp;</span>v| v.try_into().unwrap()),
+        pedersen_builtin_applications: resources
+            .builtin_instance_counter
+            .get(<span class="string">&quot;pedersen_builtin&quot;</span>)
+            .map(|<span class="kw-2">&amp;</span>v| v.try_into().unwrap()),
+        poseidon_builtin_applications: resources
+            .builtin_instance_counter
+            .get(<span class="string">&quot;poseidon_builtin&quot;</span>)
+            .map(|<span class="kw-2">&amp;</span>v| v.try_into().unwrap()),
+        ec_op_builtin_applications: resources
+            .builtin_instance_counter
+            .get(<span class="string">&quot;ec_op_builtin&quot;</span>)
+            .map(|<span class="kw-2">&amp;</span>v| v.try_into().unwrap()),
+        ecdsa_builtin_applications: resources
+            .builtin_instance_counter
+            .get(<span class="string">&quot;ecdsa_builtin&quot;</span>)
+            .map(|<span class="kw-2">&amp;</span>v| v.try_into().unwrap()),
+        bitwise_builtin_applications: resources
+            .builtin_instance_counter
+            .get(<span class="string">&quot;bitwise_builtin&quot;</span>)
+            .map(|<span class="kw-2">&amp;</span>v| v.try_into().unwrap()),
+        keccak_builtin_applications: resources
+            .builtin_instance_counter
+            .get(<span class="string">&quot;keccak_builtin&quot;</span>)
+            .map(|<span class="kw-2">&amp;</span>v| v.try_into().unwrap()),
+        segment_arena_builtin: resources
+            .builtin_instance_counter
+            .get(<span class="string">&quot;segment_arena_builtin&quot;</span>)
+            .map(|<span class="kw-2">&amp;</span>v| v.try_into().unwrap()),
+    }
 }
 
 <span class="kw">fn </span>tx_execution_infos_to_tx_trace(
@@ -980,7 +972,12 @@
 
                 results.push(SimulatedTransaction {
                     transaction_trace,
-                    fee_estimation: FeeEstimate { gas_consumed, gas_price, overall_fee },
+                    fee_estimation: FeeEstimate {
+                        gas_consumed: FieldElement::from(gas_consumed),
+                        gas_price: FieldElement::from(gas_price),
+                        overall_fee: FieldElement::from(overall_fee),
+                        unit: PriceUnit::Wei,
+                    },
                 });
             }
             <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
@@ -990,103 +987,6 @@
     }
 
     <span class="prelude-val">Ok</span>(results)
-}
-
-<span class="kw">pub fn </span>map_transaction_to_user_transaction&lt;A, B, BE, G, C, P, H&gt;(
-    starknet: <span class="kw-2">&amp;</span>Starknet&lt;A, B, BE, G, C, P, H&gt;,
-    transactions: <span class="kw-2">&amp;</span>BlockTransactions,
-    chain_id: Felt252Wrapper,
-    target_transaction_hash: <span class="prelude-ty">Option</span>&lt;Felt252Wrapper&gt;,
-) -&gt; <span class="prelude-ty">Result</span>&lt;(Vec&lt;UserOrL1HandlerTransaction&gt;, Vec&lt;UserOrL1HandlerTransaction&gt;), StarknetRpcApiError&gt;
-<span class="kw">where
-    </span>A: ChainApi&lt;Block = B&gt; + <span class="lifetime">&#39;static</span>,
-    B: BlockT,
-    C: HeaderBackend&lt;B&gt; + BlockBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt; + <span class="lifetime">&#39;static</span>,
-    H: HasherT + Send + Sync + <span class="lifetime">&#39;static</span>,
-    BE: Backend&lt;B&gt; + <span class="lifetime">&#39;static</span>,
-{
-    <span class="kw">let </span><span class="kw-2">mut </span>user_transactions = Vec::new();
-    <span class="kw">let </span><span class="kw-2">mut </span>transaction_to_trace = Vec::new();
-
-    <span class="kw">for </span>tx <span class="kw">in </span>transactions {
-        <span class="kw">let </span>current_tx_hash = tx.compute_hash::&lt;H&gt;(chain_id, <span class="bool-val">false</span>);
-
-        <span class="kw">if </span><span class="prelude-val">Some</span>(current_tx_hash) == target_transaction_hash {
-            <span class="kw">let </span>converted_tx = convert_transaction(tx, starknet, chain_id)<span class="question-mark">?</span>;
-            transaction_to_trace.push(converted_tx);
-            <span class="kw">break</span>;
-        } <span class="kw">else </span>{
-            <span class="kw">let </span>converted_tx = convert_transaction(tx, starknet, chain_id)<span class="question-mark">?</span>;
-            user_transactions.push(converted_tx);
-        }
-    }
-
-    <span class="prelude-val">Ok</span>((user_transactions, transaction_to_trace))
-}
-
-<span class="kw">fn </span>convert_transaction&lt;A, B, BE, G, C, P, H&gt;(
-    tx: <span class="kw-2">&amp;</span>Transaction,
-    starknet: <span class="kw-2">&amp;</span>Starknet&lt;A, B, BE, G, C, P, H&gt;,
-    chain_id: Felt252Wrapper,
-) -&gt; <span class="prelude-ty">Result</span>&lt;UserOrL1HandlerTransaction, StarknetRpcApiError&gt;
-<span class="kw">where
-    </span>A: ChainApi&lt;Block = B&gt; + <span class="lifetime">&#39;static</span>,
-    B: BlockT,
-    C: HeaderBackend&lt;B&gt; + BlockBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt; + <span class="lifetime">&#39;static</span>,
-    H: HasherT + Send + Sync + <span class="lifetime">&#39;static</span>,
-    BE: Backend&lt;B&gt; + <span class="lifetime">&#39;static</span>,
-{
-    <span class="kw">match </span>tx {
-        Transaction::Invoke(invoke_tx) =&gt; {
-            <span class="prelude-val">Ok</span>(UserOrL1HandlerTransaction::User(UserTransaction::Invoke(invoke_tx.clone())))
-        }
-        Transaction::DeployAccount(deploy_account_tx) =&gt; {
-            <span class="prelude-val">Ok</span>(UserOrL1HandlerTransaction::User(UserTransaction::DeployAccount(deploy_account_tx.clone())))
-        }
-        Transaction::Declare(declare_tx, contract_class) =&gt; {
-            <span class="kw">let </span>class_hash = ClassHash::from(<span class="kw-2">*</span>declare_tx.class_hash());
-            <span class="kw">match </span>declare_tx {
-                DeclareTransaction::V0(<span class="kw">_</span>) | DeclareTransaction::V1(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(UserOrL1HandlerTransaction::User(
-                    UserTransaction::Declare(declare_tx.clone(), contract_class.clone()),
-                )),
-                DeclareTransaction::V2(_tx) =&gt; {
-                    <span class="kw">let </span>contract_class = starknet
-                        .backend
-                        .sierra_classes()
-                        .get_sierra_class(class_hash)
-                        .map_err(|e| {
-                            <span class="macro">error!</span>(<span class="string">&quot;Failed to fetch sierra class with hash {class_hash}: {e}&quot;</span>);
-                            StarknetRpcApiError::InternalServerError
-                        })<span class="question-mark">?
-                        </span>.ok_or_else(|| {
-                            <span class="macro">error!</span>(<span class="string">&quot;The sierra class with hash {class_hash} is not present in db backend&quot;</span>);
-                            StarknetRpcApiError::InternalServerError
-                        })<span class="question-mark">?</span>;
-                    <span class="kw">let </span>contract_class = mp_transactions::utils::sierra_to_casm_contract_class(contract_class)
-                        .map_err(|e| {
-                            <span class="macro">error!</span>(<span class="string">&quot;Failed to convert the SierraContractClass to CasmContractClass: {e}&quot;</span>);
-                            StarknetRpcApiError::InternalServerError
-                        })<span class="question-mark">?</span>;
-                    <span class="kw">let </span>contract_class = ContractClass::V1(ContractClassV1::try_from(contract_class).map_err(|e| {
-                        <span class="macro">error!</span>(<span class="string">&quot;Failed to convert the compiler CasmContractClass to blockifier CasmContractClass: {e}&quot;</span>);
-                        StarknetRpcApiError::InternalServerError
-                    })<span class="question-mark">?</span>);
-
-                    <span class="prelude-val">Ok</span>(UserOrL1HandlerTransaction::User(UserTransaction::Declare(declare_tx.clone(), contract_class)))
-                }
-            }
-        }
-        Transaction::L1Handler(handle_l1_message_tx) =&gt; {
-            <span class="kw">let </span>tx_hash = handle_l1_message_tx.compute_hash::&lt;H&gt;(chain_id, <span class="bool-val">false</span>);
-            <span class="kw">let </span>paid_fee =
-                starknet.backend.l1_handler_paid_fee().get_fee_paid_for_l1_handler_tx(tx_hash.into()).map_err(|e| {
-                    <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve fee paid on l1 for tx with hash `{tx_hash:?}`: {e}&quot;</span>);
-                    StarknetRpcApiError::InternalServerError
-                })<span class="question-mark">?</span>;
-
-            <span class="prelude-val">Ok</span>(UserOrL1HandlerTransaction::L1Handler(handle_l1_message_tx.clone(), paid_fee))
-        }
-    }
 }
 
 <span class="kw">fn </span>get_previous_block_substrate_hash&lt;A, B, BE, G, C, P, H&gt;(

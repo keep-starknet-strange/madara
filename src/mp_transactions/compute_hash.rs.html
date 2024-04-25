@@ -293,295 +293,477 @@
 <a href="#293" id="293">293</a>
 <a href="#294" id="294">294</a>
 <a href="#295" id="295">295</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>alloc::vec::Vec;
-
-<span class="kw">use </span>mp_felt::Felt252Wrapper;
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>mp_felt::Felt252Wrapper;
+<span class="kw">use </span>mp_hashers::pedersen::PedersenHasher;
+<span class="kw">use </span>mp_hashers::poseidon::PoseidonHasher;
 <span class="kw">use </span>mp_hashers::HasherT;
+<span class="kw">use </span>starknet_api::core::calculate_contract_address;
+<span class="kw">use </span>starknet_api::data_availability::DataAvailabilityMode;
+<span class="kw">use </span>starknet_api::transaction::{
+    Calldata, DeclareTransaction, DeclareTransactionV0V1, DeclareTransactionV2, DeclareTransactionV3,
+    DeployAccountTransaction, DeployAccountTransactionV1, DeployAccountTransactionV3, InvokeTransaction,
+    InvokeTransactionV0, InvokeTransactionV1, InvokeTransactionV3, L1HandlerTransaction, Resource,
+    ResourceBoundsMapping, TransactionHash,
+};
 <span class="kw">use </span>starknet_core::crypto::compute_hash_on_elements;
 <span class="kw">use </span>starknet_crypto::FieldElement;
 
-<span class="kw">use super</span>::{
-    DeclareTransaction, DeclareTransactionV0, DeclareTransactionV1, DeclareTransactionV2, DeployAccountTransaction,
-    HandleL1MessageTransaction, InvokeTransaction, InvokeTransactionV0, InvokeTransactionV1, Transaction,
-    UserTransaction, SIMULATE_TX_VERSION_OFFSET,
-};
-<span class="kw">use </span><span class="kw">crate</span>::UserOrL1HandlerTransaction;
+<span class="kw">use </span><span class="kw">super</span>::SIMULATE_TX_VERSION_OFFSET;
 
 <span class="kw">const </span>DECLARE_PREFIX: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;declare&quot;</span>;
 <span class="kw">const </span>DEPLOY_ACCOUNT_PREFIX: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;deploy_account&quot;</span>;
 <span class="kw">const </span>INVOKE_PREFIX: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;invoke&quot;</span>;
 <span class="kw">const </span>L1_HANDLER_PREFIX: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;l1_handler&quot;</span>;
+<span class="kw">const </span>L1_GAS: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;L1_GAS&quot;</span>;
+<span class="kw">const </span>L2_GAS: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;L2_GAS&quot;</span>;
 
 <span class="kw">pub trait </span>ComputeTransactionHash {
-    <span class="kw">fn </span>compute_hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; Felt252Wrapper;
+    <span class="kw">fn </span>compute_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; TransactionHash;
 }
 
-<span class="kw">fn </span>convert_calldata(data: <span class="kw-2">&amp;</span>[Felt252Wrapper]) -&gt; <span class="kw-2">&amp;</span>[FieldElement] {
-    <span class="comment">// Non-copy but less dangerous than transmute
-    // https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
-    </span><span class="kw">unsafe </span>{ core::slice::from_raw_parts(data.as_ptr() <span class="kw">as </span><span class="kw-2">*const </span>FieldElement, data.len()) }
+<span class="kw">fn </span>convert_calldata(calldata: Calldata) -&gt; Vec&lt;FieldElement&gt; {
+    calldata.<span class="number">0</span>.iter().map(|f| Felt252Wrapper::from(<span class="kw-2">*</span>f).into()).collect()
+}
+
+<span class="kw">fn </span>prepare_resource_bound_value(resource_bounds_mapping: <span class="kw-2">&amp;</span>ResourceBoundsMapping, resource: Resource) -&gt; FieldElement {
+    <span class="kw">let </span><span class="kw-2">mut </span>buffer = [<span class="number">0u8</span>; <span class="number">32</span>];
+    buffer[<span class="number">2</span>..<span class="number">8</span>].copy_from_slice(<span class="kw">match </span>resource {
+        Resource::L1Gas =&gt; L1_GAS,
+        Resource::L2Gas =&gt; L2_GAS,
+    });
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(resource_bounds) = resource_bounds_mapping.<span class="number">0</span>.get(<span class="kw-2">&amp;</span>resource) {
+        buffer[<span class="number">8</span>..<span class="number">16</span>].copy_from_slice(<span class="kw-2">&amp;</span>resource_bounds.max_amount.to_be_bytes());
+        buffer[<span class="number">16</span>..].copy_from_slice(<span class="kw-2">&amp;</span>resource_bounds.max_price_per_unit.to_be_bytes());
+    };
+
+    <span class="comment">// Safe to unwrap because we left most significant bit of the buffer empty
+    </span>FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>buffer).unwrap()
+}
+
+<span class="kw">fn </span>prepare_data_availability_modes(
+    nonce_data_availability_mode: DataAvailabilityMode,
+    fee_data_availability_mode: DataAvailabilityMode,
+) -&gt; FieldElement {
+    <span class="kw">let </span><span class="kw-2">mut </span>buffer = [<span class="number">0u8</span>; <span class="number">32</span>];
+    buffer[<span class="number">8</span>..<span class="number">12</span>].copy_from_slice(<span class="kw-2">&amp;</span>(nonce_data_availability_mode <span class="kw">as </span>u32).to_be_bytes());
+    buffer[<span class="number">12</span>..].copy_from_slice(<span class="kw-2">&amp;</span>(fee_data_availability_mode <span class="kw">as </span>u32).to_be_bytes());
+
+    <span class="comment">// Safe to unwrap because we left most significant bit of the buffer empty
+    </span>FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>buffer).unwrap()
 }
 
 <span class="kw">impl </span>ComputeTransactionHash <span class="kw">for </span>InvokeTransactionV0 {
-    <span class="kw">fn </span>compute_hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; Felt252Wrapper {
+    <span class="kw">fn </span>compute_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; TransactionHash {
         <span class="kw">let </span>prefix = FieldElement::from_byte_slice_be(INVOKE_PREFIX).unwrap();
         <span class="kw">let </span>version = <span class="kw">if </span>offset_version { SIMULATE_TX_VERSION_OFFSET } <span class="kw">else </span>{ FieldElement::ZERO };
-        <span class="kw">let </span>contract_address = <span class="self">self</span>.contract_address.into();
-        <span class="kw">let </span>entrypoint_selector = <span class="self">self</span>.entry_point_selector.into();
-        <span class="kw">let </span>calldata_hash = compute_hash_on_elements(convert_calldata(<span class="kw-2">&amp;</span><span class="self">self</span>.calldata));
-        <span class="kw">let </span>max_fee = FieldElement::from(<span class="self">self</span>.max_fee);
-        <span class="kw">let </span>chain_id = chain_id.into();
+        <span class="kw">let </span>contract_address = Felt252Wrapper::from(<span class="self">self</span>.contract_address).into();
+        <span class="kw">let </span>entrypoint_selector = Felt252Wrapper::from(<span class="self">self</span>.entry_point_selector).into();
+        <span class="kw">let </span>calldata_hash = compute_hash_on_elements(<span class="kw-2">&amp;</span>convert_calldata(<span class="self">self</span>.calldata.clone()));
+        <span class="kw">let </span>max_fee = FieldElement::from(<span class="self">self</span>.max_fee.<span class="number">0</span>);
 
-        H::compute_hash_on_elements(<span class="kw-2">&amp;</span>[
+        Felt252Wrapper(PedersenHasher::compute_hash_on_elements(<span class="kw-2">&amp;</span>[
             prefix,
             version,
             contract_address,
             entrypoint_selector,
             calldata_hash,
             max_fee,
-            chain_id,
-        ])
+            chain_id.into(),
+        ]))
         .into()
     }
 }
 
 <span class="kw">impl </span>ComputeTransactionHash <span class="kw">for </span>InvokeTransactionV1 {
-    <span class="kw">fn </span>compute_hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; Felt252Wrapper {
+    <span class="kw">fn </span>compute_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; TransactionHash {
         <span class="kw">let </span>prefix = FieldElement::from_byte_slice_be(INVOKE_PREFIX).unwrap();
         <span class="kw">let </span>version = <span class="kw">if </span>offset_version { SIMULATE_TX_VERSION_OFFSET + FieldElement::ONE } <span class="kw">else </span>{ FieldElement::ONE };
-        <span class="kw">let </span>sender_address = <span class="self">self</span>.sender_address.into();
+        <span class="kw">let </span>sender_address = Felt252Wrapper::from(<span class="self">self</span>.sender_address).into();
         <span class="kw">let </span>entrypoint_selector = FieldElement::ZERO;
-        <span class="kw">let </span>calldata_hash = compute_hash_on_elements(convert_calldata(<span class="kw-2">&amp;</span><span class="self">self</span>.calldata));
-        <span class="kw">let </span>max_fee = FieldElement::from(<span class="self">self</span>.max_fee);
-        <span class="kw">let </span>chain_id = chain_id.into();
-        <span class="kw">let </span>nonce = FieldElement::from(<span class="self">self</span>.nonce);
+        <span class="kw">let </span>calldata_hash = compute_hash_on_elements(<span class="kw-2">&amp;</span>convert_calldata(<span class="self">self</span>.calldata.clone()));
+        <span class="kw">let </span>max_fee = FieldElement::from(<span class="self">self</span>.max_fee.<span class="number">0</span>);
+        <span class="kw">let </span>nonce = Felt252Wrapper::from(<span class="self">self</span>.nonce.<span class="number">0</span>).into();
 
-        H::compute_hash_on_elements(<span class="kw-2">&amp;</span>[
+        Felt252Wrapper(PedersenHasher::compute_hash_on_elements(<span class="kw-2">&amp;</span>[
             prefix,
             version,
             sender_address,
             entrypoint_selector,
             calldata_hash,
             max_fee,
-            chain_id,
+            chain_id.into(),
             nonce,
-        ])
+        ]))
+        .into()
+    }
+}
+
+<span class="kw">impl </span>ComputeTransactionHash <span class="kw">for </span>InvokeTransactionV3 {
+    <span class="kw">fn </span>compute_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; TransactionHash {
+        <span class="kw">let </span>prefix = FieldElement::from_byte_slice_be(INVOKE_PREFIX).unwrap();
+        <span class="kw">let </span>version =
+            <span class="kw">if </span>offset_version { SIMULATE_TX_VERSION_OFFSET + FieldElement::THREE } <span class="kw">else </span>{ FieldElement::THREE };
+        <span class="kw">let </span>sender_address = Felt252Wrapper::from(<span class="self">self</span>.sender_address).into();
+        <span class="kw">let </span>gas_hash = compute_hash_on_elements(<span class="kw-2">&amp;</span>[
+            FieldElement::from(<span class="self">self</span>.tip.<span class="number">0</span>),
+            prepare_resource_bound_value(<span class="kw-2">&amp;</span><span class="self">self</span>.resource_bounds, Resource::L1Gas),
+            prepare_resource_bound_value(<span class="kw-2">&amp;</span><span class="self">self</span>.resource_bounds, Resource::L2Gas),
+        ]);
+        <span class="kw">let </span>paymaster_hash = compute_hash_on_elements(
+            <span class="kw-2">&amp;</span><span class="self">self</span>.paymaster_data.<span class="number">0</span>.iter().map(|f| Felt252Wrapper::from(<span class="kw-2">*</span>f).into()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
+        );
+        <span class="kw">let </span>nonce = Felt252Wrapper::from(<span class="self">self</span>.nonce.<span class="number">0</span>).into();
+        <span class="kw">let </span>data_availability_modes =
+            prepare_data_availability_modes(<span class="self">self</span>.nonce_data_availability_mode, <span class="self">self</span>.fee_data_availability_mode);
+        <span class="kw">let </span>data_hash = {
+            <span class="kw">let </span>account_deployment_data_hash = compute_hash_on_elements(
+                <span class="kw-2">&amp;</span><span class="self">self</span>.account_deployment_data.<span class="number">0</span>.iter().map(|f| Felt252Wrapper::from(<span class="kw-2">*</span>f).into()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
+            );
+            <span class="kw">let </span>calldata_hash = compute_hash_on_elements(
+                <span class="kw-2">&amp;</span><span class="self">self</span>.calldata.<span class="number">0</span>.iter().map(|f| Felt252Wrapper::from(<span class="kw-2">*</span>f).into()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
+            );
+            compute_hash_on_elements(<span class="kw-2">&amp;</span>[account_deployment_data_hash, calldata_hash])
+        };
+
+        Felt252Wrapper(PoseidonHasher::compute_hash_on_elements(<span class="kw-2">&amp;</span>[
+            prefix,
+            version,
+            sender_address,
+            gas_hash,
+            paymaster_hash,
+            chain_id.into(),
+            nonce,
+            data_availability_modes,
+            data_hash,
+        ]))
         .into()
     }
 }
 
 <span class="kw">impl </span>ComputeTransactionHash <span class="kw">for </span>InvokeTransaction {
-    <span class="kw">fn </span>compute_hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; Felt252Wrapper {
+    <span class="kw">fn </span>compute_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; TransactionHash {
         <span class="kw">match </span><span class="self">self </span>{
-            InvokeTransaction::V0(tx) =&gt; tx.compute_hash::&lt;H&gt;(chain_id, offset_version),
-            InvokeTransaction::V1(tx) =&gt; tx.compute_hash::&lt;H&gt;(chain_id, offset_version),
+            InvokeTransaction::V0(tx) =&gt; tx.compute_hash(chain_id, offset_version),
+            InvokeTransaction::V1(tx) =&gt; tx.compute_hash(chain_id, offset_version),
+            InvokeTransaction::V3(tx) =&gt; tx.compute_hash(chain_id, offset_version),
         }
     }
 }
 
-<span class="kw">impl </span>ComputeTransactionHash <span class="kw">for </span>DeclareTransactionV0 {
-    <span class="kw">fn </span>compute_hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; Felt252Wrapper {
-        <span class="kw">let </span>prefix = FieldElement::from_byte_slice_be(DECLARE_PREFIX).unwrap();
-        <span class="kw">let </span>version = <span class="kw">if </span>offset_version { SIMULATE_TX_VERSION_OFFSET } <span class="kw">else </span>{ FieldElement::ZERO };
-        <span class="kw">let </span>sender_address = <span class="self">self</span>.sender_address.into();
-        <span class="kw">let </span>entrypoint_selector = FieldElement::ZERO;
-        <span class="kw">let </span>alignment_placeholder = compute_hash_on_elements(<span class="kw-2">&amp;</span>[]);
-        <span class="kw">let </span>max_fee = FieldElement::from(<span class="self">self</span>.max_fee);
-        <span class="kw">let </span>chain_id = chain_id.into();
-        <span class="kw">let </span>class_hash = <span class="self">self</span>.class_hash.into();
+<span class="kw">fn </span>compute_hash_declare_v0_or_v1(
+    chain_id: Felt252Wrapper,
+    offset_version: bool,
+    tx: <span class="kw-2">&amp;</span>DeclareTransactionV0V1,
+    version: u8,
+) -&gt; TransactionHash {
+    <span class="kw">let </span>prefix = FieldElement::from_byte_slice_be(DECLARE_PREFIX).unwrap();
+    <span class="kw">let </span>sender_address = Felt252Wrapper::from(tx.sender_address).into();
+    <span class="kw">let </span>zero = FieldElement::ZERO;
+    <span class="kw">let </span>class_or_nothing_hash = <span class="kw">if </span>version == <span class="number">0 </span>{
+        compute_hash_on_elements(<span class="kw-2">&amp;</span>[])
+    } <span class="kw">else </span>{
+        compute_hash_on_elements(<span class="kw-2">&amp;</span>[Felt252Wrapper::from(tx.class_hash).into()])
+    };
+    <span class="kw">let </span>max_fee = FieldElement::from(tx.max_fee.<span class="number">0</span>);
+    <span class="kw">let </span>nonce_or_class_hash =
+        <span class="kw">if </span>version == <span class="number">0 </span>{ Felt252Wrapper::from(tx.class_hash).into() } <span class="kw">else </span>{ Felt252Wrapper::from(tx.nonce).into() };
+    <span class="kw">let </span>version = <span class="kw">if </span>offset_version {
+        SIMULATE_TX_VERSION_OFFSET + FieldElement::from(version)
+    } <span class="kw">else </span>{
+        FieldElement::from(version)
+    };
 
-        H::compute_hash_on_elements(<span class="kw-2">&amp;</span>[
-            prefix,
-            version,
-            sender_address,
-            entrypoint_selector,
-            alignment_placeholder,
-            max_fee,
-            chain_id,
-            class_hash,
-        ])
-        .into()
-    }
-}
-
-<span class="kw">impl </span>ComputeTransactionHash <span class="kw">for </span>DeclareTransactionV1 {
-    <span class="kw">fn </span>compute_hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; Felt252Wrapper {
-        <span class="kw">let </span>prefix = FieldElement::from_byte_slice_be(DECLARE_PREFIX).unwrap();
-        <span class="kw">let </span>version = <span class="kw">if </span>offset_version { SIMULATE_TX_VERSION_OFFSET + FieldElement::ONE } <span class="kw">else </span>{ FieldElement::ONE };
-        <span class="kw">let </span>sender_address = <span class="self">self</span>.sender_address.into();
-        <span class="kw">let </span>entrypoint_selector = FieldElement::ZERO;
-        <span class="kw">let </span>calldata = compute_hash_on_elements(<span class="kw-2">&amp;</span>[<span class="self">self</span>.class_hash.into()]);
-        <span class="kw">let </span>max_fee = FieldElement::from(<span class="self">self</span>.max_fee);
-        <span class="kw">let </span>chain_id = chain_id.into();
-        <span class="kw">let </span>nonce = FieldElement::from(<span class="self">self</span>.nonce);
-
-        H::compute_hash_on_elements(<span class="kw-2">&amp;</span>[
-            prefix,
-            version,
-            sender_address,
-            entrypoint_selector,
-            calldata,
-            max_fee,
-            chain_id,
-            nonce,
-        ])
-        .into()
-    }
+    Felt252Wrapper(PedersenHasher::compute_hash_on_elements(<span class="kw-2">&amp;</span>[
+        prefix,
+        version,
+        sender_address,
+        zero,
+        class_or_nothing_hash,
+        max_fee,
+        chain_id.into(),
+        nonce_or_class_hash,
+    ]))
+    .into()
 }
 
 <span class="kw">impl </span>ComputeTransactionHash <span class="kw">for </span>DeclareTransactionV2 {
-    <span class="kw">fn </span>compute_hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; Felt252Wrapper {
+    <span class="kw">fn </span>compute_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; TransactionHash {
         <span class="kw">let </span>prefix = FieldElement::from_byte_slice_be(DECLARE_PREFIX).unwrap();
         <span class="kw">let </span>version = <span class="kw">if </span>offset_version { SIMULATE_TX_VERSION_OFFSET + FieldElement::TWO } <span class="kw">else </span>{ FieldElement::TWO };
-        <span class="kw">let </span>sender_address = <span class="self">self</span>.sender_address.into();
+        <span class="kw">let </span>sender_address = Felt252Wrapper::from(<span class="self">self</span>.sender_address).into();
         <span class="kw">let </span>entrypoint_selector = FieldElement::ZERO;
-        <span class="kw">let </span>calldata = compute_hash_on_elements(<span class="kw-2">&amp;</span>[<span class="self">self</span>.class_hash.into()]);
-        <span class="kw">let </span>max_fee = FieldElement::from(<span class="self">self</span>.max_fee);
-        <span class="kw">let </span>chain_id = chain_id.into();
-        <span class="kw">let </span>nonce = FieldElement::from(<span class="self">self</span>.nonce);
-        <span class="kw">let </span>compiled_class_hash = <span class="self">self</span>.compiled_class_hash.into();
+        <span class="kw">let </span>calldata = compute_hash_on_elements(<span class="kw-2">&amp;</span>[Felt252Wrapper::from(<span class="self">self</span>.class_hash).into()]);
+        <span class="kw">let </span>max_fee = FieldElement::from(<span class="self">self</span>.max_fee.<span class="number">0</span>);
+        <span class="kw">let </span>nonce = Felt252Wrapper::from(<span class="self">self</span>.nonce).into();
+        <span class="kw">let </span>compiled_class_hash = Felt252Wrapper::from(<span class="self">self</span>.compiled_class_hash).into();
 
-        H::compute_hash_on_elements(<span class="kw-2">&amp;</span>[
+        Felt252Wrapper(PedersenHasher::compute_hash_on_elements(<span class="kw-2">&amp;</span>[
             prefix,
             version,
             sender_address,
             entrypoint_selector,
             calldata,
             max_fee,
-            chain_id,
+            chain_id.into(),
             nonce,
             compiled_class_hash,
-        ])
+        ]))
         .into()
     }
 }
 
+<span class="kw">impl </span>ComputeTransactionHash <span class="kw">for </span>DeclareTransactionV3 {
+    <span class="kw">fn </span>compute_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; TransactionHash {
+        <span class="kw">let </span>prefix = FieldElement::from_byte_slice_be(DECLARE_PREFIX).unwrap();
+        <span class="kw">let </span>version =
+            <span class="kw">if </span>offset_version { SIMULATE_TX_VERSION_OFFSET + FieldElement::THREE } <span class="kw">else </span>{ FieldElement::THREE };
+        <span class="kw">let </span>sender_address = Felt252Wrapper::from(<span class="self">self</span>.sender_address).into();
+        <span class="kw">let </span>gas_hash = compute_hash_on_elements(<span class="kw-2">&amp;</span>[
+            FieldElement::from(<span class="self">self</span>.tip.<span class="number">0</span>),
+            prepare_resource_bound_value(<span class="kw-2">&amp;</span><span class="self">self</span>.resource_bounds, Resource::L1Gas),
+            prepare_resource_bound_value(<span class="kw-2">&amp;</span><span class="self">self</span>.resource_bounds, Resource::L2Gas),
+        ]);
+        <span class="kw">let </span>paymaster_hash = compute_hash_on_elements(
+            <span class="kw-2">&amp;</span><span class="self">self</span>.paymaster_data.<span class="number">0</span>.iter().map(|f| Felt252Wrapper::from(<span class="kw-2">*</span>f).into()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
+        );
+        <span class="kw">let </span>nonce = Felt252Wrapper::from(<span class="self">self</span>.nonce.<span class="number">0</span>).into();
+        <span class="kw">let </span>data_availability_modes =
+            prepare_data_availability_modes(<span class="self">self</span>.nonce_data_availability_mode, <span class="self">self</span>.fee_data_availability_mode);
+        <span class="kw">let </span>account_deployment_data_hash = compute_hash_on_elements(
+            <span class="kw-2">&amp;</span><span class="self">self</span>.account_deployment_data.<span class="number">0</span>.iter().map(|f| Felt252Wrapper::from(<span class="kw-2">*</span>f).into()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
+        );
+
+        Felt252Wrapper(PoseidonHasher::compute_hash_on_elements(<span class="kw-2">&amp;</span>[
+            prefix,
+            version,
+            sender_address,
+            gas_hash,
+            paymaster_hash,
+            chain_id.into(),
+            nonce,
+            data_availability_modes,
+            account_deployment_data_hash,
+            Felt252Wrapper::from(<span class="self">self</span>.class_hash).into(),
+            Felt252Wrapper::from(<span class="self">self</span>.compiled_class_hash).into(),
+        ]))
+        .into()
+    }
+}
 <span class="kw">impl </span>ComputeTransactionHash <span class="kw">for </span>DeclareTransaction {
-    <span class="kw">fn </span>compute_hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; Felt252Wrapper {
+    <span class="kw">fn </span>compute_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; TransactionHash {
         <span class="kw">match </span><span class="self">self </span>{
-            DeclareTransaction::V0(tx) =&gt; tx.compute_hash::&lt;H&gt;(chain_id, offset_version),
-            DeclareTransaction::V1(tx) =&gt; tx.compute_hash::&lt;H&gt;(chain_id, offset_version),
-            DeclareTransaction::V2(tx) =&gt; tx.compute_hash::&lt;H&gt;(chain_id, offset_version),
+            DeclareTransaction::V0(tx) =&gt; compute_hash_declare_v0_or_v1(chain_id, offset_version, tx, <span class="number">0</span>),
+            DeclareTransaction::V1(tx) =&gt; compute_hash_declare_v0_or_v1(chain_id, offset_version, tx, <span class="number">1</span>),
+            DeclareTransaction::V2(tx) =&gt; tx.compute_hash(chain_id, offset_version),
+            DeclareTransaction::V3(tx) =&gt; tx.compute_hash(chain_id, offset_version),
         }
     }
 }
 
 <span class="kw">impl </span>ComputeTransactionHash <span class="kw">for </span>DeployAccountTransaction {
-    <span class="kw">fn </span>compute_hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; Felt252Wrapper {
-        <span class="kw">let </span>chain_id = chain_id.into();
-        <span class="kw">let </span>contract_address = <span class="self">self</span>.get_account_address();
-
-        <span class="self">self</span>.compute_hash_given_contract_address::&lt;H&gt;(chain_id, contract_address, offset_version).into()
+    <span class="kw">fn </span>compute_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; TransactionHash {
+        <span class="kw">match </span><span class="self">self </span>{
+            DeployAccountTransaction::V1(tx) =&gt; tx.compute_hash(chain_id, offset_version),
+            DeployAccountTransaction::V3(tx) =&gt; tx.compute_hash(chain_id, offset_version),
+        }
     }
 }
 
-<span class="kw">impl </span>DeployAccountTransaction {
-    <span class="kw">pub fn </span>get_account_address(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FieldElement {
-        <span class="self">Self</span>::calculate_contract_address(
-            <span class="self">self</span>.contract_address_salt.into(),
-            <span class="self">self</span>.class_hash.into(),
-            convert_calldata(<span class="kw-2">&amp;</span><span class="self">self</span>.constructor_calldata),
+<span class="kw">impl </span>ComputeTransactionHash <span class="kw">for </span>DeployAccountTransactionV1 {
+    <span class="kw">fn </span>compute_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; TransactionHash {
+        <span class="kw">let </span>constructor_calldata = convert_calldata(<span class="self">self</span>.constructor_calldata.clone());
+
+        <span class="kw">let </span>contract_address = Felt252Wrapper::from(
+            calculate_contract_address(
+                <span class="self">self</span>.contract_address_salt,
+                <span class="self">self</span>.class_hash,
+                <span class="kw-2">&amp;</span><span class="self">self</span>.constructor_calldata,
+                Default::default(),
+            )
+            .unwrap(),
         )
-    }
-
-    <span class="kw">pub fn </span>calculate_contract_address(
-        contract_address_salt: FieldElement,
-        class_hash: FieldElement,
-        constructor_calldata: <span class="kw-2">&amp;</span>[FieldElement],
-    ) -&gt; FieldElement {
-        <span class="doccomment">/// Cairo string for &quot;STARKNET_CONTRACT_ADDRESS&quot;
-        </span><span class="kw">const </span>PREFIX_CONTRACT_ADDRESS: FieldElement = FieldElement::from_mont([
-            <span class="number">3829237882463328880</span>,
-            <span class="number">17289941567720117366</span>,
-            <span class="number">8635008616843941496</span>,
-            <span class="number">533439743893157637</span>,
-        ]);
-        <span class="comment">// 2 ** 251 - 256
-        </span><span class="kw">const </span>ADDR_BOUND: FieldElement =
-            FieldElement::from_mont([<span class="number">18446743986131443745</span>, <span class="number">160989183</span>, <span class="number">18446744073709255680</span>, <span class="number">576459263475590224</span>]);
-
-        starknet_core::crypto::compute_hash_on_elements(<span class="kw-2">&amp;</span>[
-            PREFIX_CONTRACT_ADDRESS,
-            FieldElement::ZERO,
-            contract_address_salt,
-            class_hash,
-            starknet_core::crypto::compute_hash_on_elements(constructor_calldata),
-        ]) % ADDR_BOUND
-    }
-
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>compute_hash_given_contract_address&lt;H: HasherT&gt;(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        chain_id: FieldElement,
-        contract_address: FieldElement,
-        offset_version: bool,
-    ) -&gt; FieldElement {
+        .into();
         <span class="kw">let </span>prefix = FieldElement::from_byte_slice_be(DEPLOY_ACCOUNT_PREFIX).unwrap();
         <span class="kw">let </span>version = <span class="kw">if </span>offset_version { SIMULATE_TX_VERSION_OFFSET + FieldElement::ONE } <span class="kw">else </span>{ FieldElement::ONE };
         <span class="kw">let </span>entrypoint_selector = FieldElement::ZERO;
-        <span class="kw">let </span><span class="kw-2">mut </span>calldata: Vec&lt;FieldElement&gt; = Vec::with_capacity(<span class="self">self</span>.constructor_calldata.len() + <span class="number">2</span>);
-        calldata.push(<span class="self">self</span>.class_hash.into());
-        calldata.push(<span class="self">self</span>.contract_address_salt.into());
-        calldata.extend_from_slice(convert_calldata(<span class="kw-2">&amp;</span><span class="self">self</span>.constructor_calldata));
+        <span class="kw">let </span><span class="kw-2">mut </span>calldata: Vec&lt;FieldElement&gt; = Vec::with_capacity(constructor_calldata.len() + <span class="number">2</span>);
+        calldata.push(Felt252Wrapper::from(<span class="self">self</span>.class_hash).into());
+        calldata.push(Felt252Wrapper::from(<span class="self">self</span>.contract_address_salt).into());
+        calldata.extend_from_slice(<span class="kw-2">&amp;</span>constructor_calldata);
         <span class="kw">let </span>calldata_hash = compute_hash_on_elements(<span class="kw-2">&amp;</span>calldata);
-        <span class="kw">let </span>max_fee = FieldElement::from(<span class="self">self</span>.max_fee);
-        <span class="kw">let </span>nonce = FieldElement::from(<span class="self">self</span>.nonce);
-        <span class="kw">let </span>elements =
-            <span class="kw-2">&amp;</span>[prefix, version, contract_address, entrypoint_selector, calldata_hash, max_fee, chain_id, nonce];
+        <span class="kw">let </span>max_fee = FieldElement::from(<span class="self">self</span>.max_fee.<span class="number">0</span>);
+        <span class="kw">let </span>nonce = Felt252Wrapper::from(<span class="self">self</span>.nonce).into();
 
-        H::compute_hash_on_elements(elements)
-    }
-}
-
-<span class="kw">impl </span>ComputeTransactionHash <span class="kw">for </span>HandleL1MessageTransaction {
-    <span class="kw">fn </span>compute_hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; Felt252Wrapper {
-        <span class="kw">let </span>prefix = FieldElement::from_byte_slice_be(L1_HANDLER_PREFIX).unwrap();
-        <span class="kw">let </span>version = <span class="kw">if </span>offset_version { SIMULATE_TX_VERSION_OFFSET } <span class="kw">else </span>{ FieldElement::ZERO };
-        <span class="kw">let </span>contract_address = <span class="self">self</span>.contract_address.into();
-        <span class="kw">let </span>entrypoint_selector = <span class="self">self</span>.entry_point_selector.into();
-        <span class="kw">let </span>calldata_hash = compute_hash_on_elements(convert_calldata(<span class="kw-2">&amp;</span><span class="self">self</span>.calldata));
-        <span class="kw">let </span>chain_id = chain_id.into();
-        <span class="kw">let </span>nonce = <span class="self">self</span>.nonce.into();
-
-        H::compute_hash_on_elements(<span class="kw-2">&amp;</span>[
+        Felt252Wrapper(PedersenHasher::compute_hash_on_elements(<span class="kw-2">&amp;</span>[
             prefix,
             version,
             contract_address,
             entrypoint_selector,
             calldata_hash,
-            chain_id,
+            max_fee,
+            chain_id.into(),
             nonce,
-        ])
+        ]))
         .into()
     }
 }
 
-<span class="kw">impl </span>ComputeTransactionHash <span class="kw">for </span>Transaction {
-    <span class="kw">fn </span>compute_hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; Felt252Wrapper {
-        <span class="kw">match </span><span class="self">self </span>{
-            Transaction::Declare(tx, _contract_class) =&gt; tx.compute_hash::&lt;H&gt;(chain_id, offset_version),
-            Transaction::DeployAccount(tx) =&gt; tx.compute_hash::&lt;H&gt;(chain_id, offset_version),
-            Transaction::Invoke(tx) =&gt; tx.compute_hash::&lt;H&gt;(chain_id, offset_version),
-            Transaction::L1Handler(tx) =&gt; tx.compute_hash::&lt;H&gt;(chain_id, offset_version),
-        }
+<span class="kw">impl </span>ComputeTransactionHash <span class="kw">for </span>DeployAccountTransactionV3 {
+    <span class="kw">fn </span>compute_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; TransactionHash {
+        <span class="kw">let </span>prefix = FieldElement::from_byte_slice_be(DEPLOY_ACCOUNT_PREFIX).unwrap();
+        <span class="kw">let </span>version =
+            <span class="kw">if </span>offset_version { SIMULATE_TX_VERSION_OFFSET + FieldElement::THREE } <span class="kw">else </span>{ FieldElement::THREE };
+        <span class="kw">let </span>constructor_calldata = convert_calldata(<span class="self">self</span>.constructor_calldata.clone());
+        <span class="kw">let </span>contract_address = Felt252Wrapper::from(
+            calculate_contract_address(
+                <span class="self">self</span>.contract_address_salt,
+                <span class="self">self</span>.class_hash,
+                <span class="kw-2">&amp;</span><span class="self">self</span>.constructor_calldata,
+                Default::default(),
+            )
+            .unwrap(),
+        )
+        .into();
+        <span class="kw">let </span>gas_hash = compute_hash_on_elements(<span class="kw-2">&amp;</span>[
+            FieldElement::from(<span class="self">self</span>.tip.<span class="number">0</span>),
+            prepare_resource_bound_value(<span class="kw-2">&amp;</span><span class="self">self</span>.resource_bounds, Resource::L1Gas),
+            prepare_resource_bound_value(<span class="kw-2">&amp;</span><span class="self">self</span>.resource_bounds, Resource::L2Gas),
+        ]);
+        <span class="kw">let </span>paymaster_hash = compute_hash_on_elements(
+            <span class="kw-2">&amp;</span><span class="self">self</span>.paymaster_data.<span class="number">0</span>.iter().map(|f| Felt252Wrapper::from(<span class="kw-2">*</span>f).into()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
+        );
+        <span class="kw">let </span>nonce = Felt252Wrapper::from(<span class="self">self</span>.nonce.<span class="number">0</span>).into();
+        <span class="kw">let </span>data_availability_modes =
+            prepare_data_availability_modes(<span class="self">self</span>.nonce_data_availability_mode, <span class="self">self</span>.fee_data_availability_mode);
+        <span class="kw">let </span>constructor_calldata_hash = compute_hash_on_elements(<span class="kw-2">&amp;</span>constructor_calldata);
+
+        Felt252Wrapper(PoseidonHasher::compute_hash_on_elements(<span class="kw-2">&amp;</span>[
+            prefix,
+            version,
+            contract_address,
+            gas_hash,
+            paymaster_hash,
+            chain_id.into(),
+            nonce,
+            data_availability_modes,
+            constructor_calldata_hash,
+            Felt252Wrapper::from(<span class="self">self</span>.class_hash).into(),
+            Felt252Wrapper::from(<span class="self">self</span>.contract_address_salt).into(),
+        ]))
+        .into()
     }
 }
 
-<span class="kw">impl </span>ComputeTransactionHash <span class="kw">for </span>UserTransaction {
-    <span class="kw">fn </span>compute_hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; Felt252Wrapper {
-        <span class="kw">match </span><span class="self">self </span>{
-            UserTransaction::Declare(tx, <span class="kw">_</span>) =&gt; tx.compute_hash::&lt;H&gt;(chain_id, offset_version),
-            UserTransaction::DeployAccount(tx) =&gt; tx.compute_hash::&lt;H&gt;(chain_id, offset_version),
-            UserTransaction::Invoke(tx) =&gt; tx.compute_hash::&lt;H&gt;(chain_id, offset_version),
-        }
-    }
-}
+<span class="kw">impl </span>ComputeTransactionHash <span class="kw">for </span>L1HandlerTransaction {
+    <span class="kw">fn </span>compute_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; TransactionHash {
+        <span class="kw">let </span>prefix = FieldElement::from_byte_slice_be(L1_HANDLER_PREFIX).unwrap();
+        <span class="kw">let </span>version = <span class="kw">if </span>offset_version { SIMULATE_TX_VERSION_OFFSET } <span class="kw">else </span>{ FieldElement::ZERO };
+        <span class="kw">let </span>contract_address = Felt252Wrapper::from(<span class="self">self</span>.contract_address).into();
+        <span class="kw">let </span>entrypoint_selector = Felt252Wrapper::from(<span class="self">self</span>.entry_point_selector).into();
+        <span class="kw">let </span>calldata_hash = compute_hash_on_elements(<span class="kw-2">&amp;</span>convert_calldata(<span class="self">self</span>.calldata.clone()));
+        <span class="kw">let </span>nonce = Felt252Wrapper::from(<span class="self">self</span>.nonce).into();
 
-<span class="kw">impl </span>ComputeTransactionHash <span class="kw">for </span>UserOrL1HandlerTransaction {
-    <span class="kw">fn </span>compute_hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: Felt252Wrapper, offset_version: bool) -&gt; Felt252Wrapper {
-        <span class="kw">match </span><span class="self">self </span>{
-            UserOrL1HandlerTransaction::User(tx) =&gt; tx.compute_hash::&lt;H&gt;(chain_id, offset_version),
-            UserOrL1HandlerTransaction::L1Handler(tx, <span class="kw">_</span>) =&gt; tx.compute_hash::&lt;H&gt;(chain_id, offset_version),
-        }
+        Felt252Wrapper(PedersenHasher::compute_hash_on_elements(<span class="kw-2">&amp;</span>[
+            prefix,
+            version,
+            contract_address,
+            entrypoint_selector,
+            calldata_hash,
+            chain_id.into(),
+            nonce,
+        ]))
+        .into()
     }
 }
 

@@ -273,6 +273,7 @@
 <a href="#273" id="273">273</a>
 <a href="#274" id="274">274</a>
 <a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::time::Duration;
 
@@ -368,9 +369,10 @@
         <span class="kw">let </span>account = build_single_owner_account(<span class="kw-2">&amp;</span>rpc, SIGNER_PRIVATE, CAIRO_1_ACCOUNT_CONTRACT, <span class="bool-val">false</span>);
         <span class="kw">let </span><span class="kw-2">mut </span>madara_write_lock = madara.write().<span class="kw">await</span>;
 
-        <span class="kw">let </span>(erc20_declare_tx, <span class="kw">_</span>, <span class="kw">_</span>) = account.declare_contract(ERC20_SIERRA_PATH, ERC20_CASM_PATH);
+        <span class="kw">let </span>(erc20_declare_tx, <span class="kw">_</span>, <span class="kw">_</span>) = account.declare_contract(ERC20_SIERRA_PATH, ERC20_CASM_PATH, <span class="prelude-val">None</span>);
 
-        <span class="kw">let </span>(bridge_declare_tx, <span class="kw">_</span>, <span class="kw">_</span>) = account.declare_contract(TOKEN_BRIDGE_SIERRA_PATH, TOKEN_BRIDGE_CASM_PATH);
+        <span class="kw">let </span>(bridge_declare_tx, <span class="kw">_</span>, <span class="kw">_</span>) =
+            account.declare_contract(TOKEN_BRIDGE_SIERRA_PATH, TOKEN_BRIDGE_CASM_PATH, <span class="prelude-val">None</span>);
 
         <span class="kw">let </span>nonce = account.get_nonce().<span class="kw">await</span>.unwrap();
         madara_write_lock

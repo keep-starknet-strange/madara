@@ -106,68 +106,6 @@
 <a href="#106" id="106">106</a>
 <a href="#107" id="107">107</a>
 <a href="#108" id="108">108</a>
-<a href="#109" id="109">109</a>
-<a href="#110" id="110">110</a>
-<a href="#111" id="111">111</a>
-<a href="#112" id="112">112</a>
-<a href="#113" id="113">113</a>
-<a href="#114" id="114">114</a>
-<a href="#115" id="115">115</a>
-<a href="#116" id="116">116</a>
-<a href="#117" id="117">117</a>
-<a href="#118" id="118">118</a>
-<a href="#119" id="119">119</a>
-<a href="#120" id="120">120</a>
-<a href="#121" id="121">121</a>
-<a href="#122" id="122">122</a>
-<a href="#123" id="123">123</a>
-<a href="#124" id="124">124</a>
-<a href="#125" id="125">125</a>
-<a href="#126" id="126">126</a>
-<a href="#127" id="127">127</a>
-<a href="#128" id="128">128</a>
-<a href="#129" id="129">129</a>
-<a href="#130" id="130">130</a>
-<a href="#131" id="131">131</a>
-<a href="#132" id="132">132</a>
-<a href="#133" id="133">133</a>
-<a href="#134" id="134">134</a>
-<a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
-<a href="#140" id="140">140</a>
-<a href="#141" id="141">141</a>
-<a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
-<a href="#151" id="151">151</a>
-<a href="#152" id="152">152</a>
-<a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
-<a href="#155" id="155">155</a>
-<a href="#156" id="156">156</a>
-<a href="#157" id="157">157</a>
-<a href="#158" id="158">158</a>
-<a href="#159" id="159">159</a>
-<a href="#160" id="160">160</a>
-<a href="#161" id="161">161</a>
-<a href="#162" id="162">162</a>
-<a href="#163" id="163">163</a>
-<a href="#164" id="164">164</a>
-<a href="#165" id="165">165</a>
-<a href="#166" id="166">166</a>
-<a href="#167" id="167">167</a>
-<a href="#168" id="168">168</a>
-<a href="#169" id="169">169</a>
-<a href="#170" id="170">170</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Definition of the runtime API for the Starknet pallet.
 
 </span><span class="comment">// Adding allow unused type parameters to avoid clippy errors
@@ -175,25 +113,21 @@
 // Specifically, the macro generates a trait (`StarknetRuntimeApi`) with unused type parameters.
 </span><span class="attr">#![allow(clippy::extra_unused_type_parameters)]
 
-</span><span class="kw">use </span>alloc::sync::Arc;
-
+</span><span class="kw">use </span>blockifier::context::{BlockContext, FeeTokenAddresses};
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>blockifier::state::cached_state::CommitmentStateDiff;
+<span class="kw">use </span>blockifier::transaction::account_transaction::AccountTransaction;
 <span class="kw">use </span>blockifier::transaction::objects::TransactionExecutionInfo;
+<span class="kw">use </span>blockifier::transaction::transaction_execution::Transaction;
+<span class="kw">use </span>blockifier::transaction::transactions::L1HandlerTransaction;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
-<span class="kw">use </span>mp_transactions::{HandleL1MessageTransaction, Transaction, UserOrL1HandlerTransaction, UserTransaction};
-<span class="kw">use </span>sp_api::BlockT;
-<span class="kw">pub extern crate </span>alloc;
-<span class="kw">use </span>alloc::string::String;
-<span class="kw">use </span>alloc::vec::Vec;
-
 <span class="kw">use </span>mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult};
+<span class="kw">use </span>sp_api::BlockT;
 <span class="kw">use </span>sp_runtime::DispatchError;
-<span class="kw">use </span>starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector, Nonce};
-<span class="kw">use </span>starknet_api::block::{BlockNumber, BlockTimestamp};
+<span class="kw">use </span>starknet_api::core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
 <span class="kw">use </span>starknet_api::hash::{StarkFelt, StarkHash};
 <span class="kw">use </span>starknet_api::state::StorageKey;
-<span class="kw">use </span>starknet_api::transaction::{Calldata, Event <span class="kw">as </span>StarknetEvent, Fee, MessageToL1, TransactionHash};
+<span class="kw">use </span>starknet_api::transaction::{Calldata, Event <span class="kw">as </span>StarknetEvent, MessageToL1, TransactionHash};
 
 <span class="attr">#[derive(parity_scale_codec::Encode, parity_scale_codec::Decode, scale_info::TypeInfo)]
 </span><span class="kw">pub enum </span>StarknetTransactionExecutionError {
@@ -223,15 +157,15 @@
         <span class="doccomment">/// Returns the Starknet config hash.
         </span><span class="kw">fn </span>config_hash() -&gt; StarkHash;
         <span class="doccomment">/// Returns the fee token address.
-        </span><span class="kw">fn </span>fee_token_address() -&gt; ContractAddress;
+        </span><span class="kw">fn </span>fee_token_addresses() -&gt; FeeTokenAddresses;
         <span class="doccomment">/// Returns fee estimate
-        </span><span class="kw">fn </span>estimate_fee(transactions: Vec&lt;UserTransaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(u64, u64)&gt;, DispatchError&gt;;
+        </span><span class="kw">fn </span>estimate_fee(transactions: Vec&lt;AccountTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(u128, u128)&gt;, DispatchError&gt;;
         <span class="doccomment">/// Returns message fee estimate
-        </span><span class="kw">fn </span>estimate_message_fee(message: HandleL1MessageTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u128, u64, u64), DispatchError&gt;;
+        </span><span class="kw">fn </span>estimate_message_fee(message: L1HandlerTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u128, u128, u128), DispatchError&gt;;
         <span class="doccomment">/// Simulates single L1 Message and returns its trace
-        </span><span class="kw">fn </span>simulate_message(message: HandleL1MessageTransaction, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt;;
+        </span><span class="kw">fn </span>simulate_message(message: L1HandlerTransaction, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt;;
         <span class="doccomment">/// Simulates transactions and returns their trace
-        </span><span class="kw">fn </span>simulate_transactions(transactions: Vec&lt;UserTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt;, DispatchError&gt;;
+        </span><span class="kw">fn </span>simulate_transactions(transactions: Vec&lt;AccountTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt;, DispatchError&gt;;
         <span class="doccomment">/// Filters extrinsic transactions to return only Starknet transactions
         ///
         /// To support runtime upgrades, the client must be unaware of the specific extrinsic
@@ -252,9 +186,9 @@
         ///
         /// Idealy, the execution traces of all of `transactions_to_trace`.
         /// If any of the transactions (from both arguments) fails, an error is returned.
-        </span><span class="kw">fn </span>re_execute_transactions(transactions_before: Vec&lt;UserOrL1HandlerTransaction&gt;, transactions_to_trace: Vec&lt;UserOrL1HandlerTransaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;(TransactionExecutionInfo, CommitmentStateDiff)&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt;;
+        </span><span class="kw">fn </span>re_execute_transactions(transactions_before: Vec&lt;Transaction&gt;, transactions_to_trace: Vec&lt;Transaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;(TransactionExecutionInfo, CommitmentStateDiff)&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt;;
 
-        <span class="kw">fn </span>get_index_and_tx_for_tx_hash(xts: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;, chain_id: Felt252Wrapper, tx_hash: Felt252Wrapper) -&gt; <span class="prelude-ty">Option</span>&lt;(u32, Transaction)&gt;;
+        <span class="kw">fn </span>get_index_and_tx_for_tx_hash(xts: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;, tx_hash: TransactionHash) -&gt; <span class="prelude-ty">Option</span>&lt;(u32, Transaction)&gt;;
 
         <span class="kw">fn </span>get_events_for_tx_by_hash(tx_hash: TransactionHash) -&gt; Vec&lt;StarknetEvent&gt;;
         <span class="doccomment">/// Return the outcome of the tx execution
@@ -271,71 +205,13 @@
 
     <span class="kw">pub trait </span>ConvertTransactionRuntimeApi {
         <span class="doccomment">/// Converts the transaction to an UncheckedExtrinsic for submission to the pool.
-        </span><span class="kw">fn </span>convert_transaction(transaction: UserTransaction) -&gt; &lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic;
+        </span><span class="kw">fn </span>convert_account_transaction(transaction: AccountTransaction) -&gt; &lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic;
 
         <span class="doccomment">/// Converts the L1 Message transaction to an UncheckedExtrinsic for submission to the pool.
-        </span><span class="kw">fn </span>convert_l1_transaction(transaction: HandleL1MessageTransaction, fee: Fee) -&gt; &lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic;
+        </span><span class="kw">fn </span>convert_l1_transaction(transaction: L1HandlerTransaction) -&gt; &lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic;
 
         <span class="doccomment">/// Converts the DispatchError to an understandable error for the client
         </span><span class="kw">fn </span>convert_error(error: DispatchError) -&gt; StarknetTransactionExecutionError;
-    }
-}
-
-<span class="attr">#[derive(Clone, Debug, parity_scale_codec::Encode, parity_scale_codec::Decode, scale_info::TypeInfo)]
-</span><span class="kw">pub struct </span>BlockContext {
-    <span class="kw">pub </span>chain_id: String,
-    <span class="kw">pub </span>block_number: u64,
-    <span class="kw">pub </span>block_timestamp: u64,
-
-    <span class="comment">// Fee-related.
-    </span><span class="kw">pub </span>sequencer_address: ContractAddress,
-    <span class="kw">pub </span>fee_token_address: ContractAddress,
-    <span class="kw">pub </span>vm_resource_fee_cost: Vec&lt;(String, sp_arithmetic::fixed_point::FixedU128)&gt;,
-    <span class="kw">pub </span>gas_price: u128, <span class="comment">// In wei.
-
-    // Limits.
-    </span><span class="kw">pub </span>invoke_tx_max_n_steps: u32,
-    <span class="kw">pub </span>validate_max_n_steps: u32,
-    <span class="kw">pub </span>max_recursion_depth: u32,
-}
-
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">use </span>std::collections::HashMap;
-
-<span class="attr">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
-</span><span class="kw">use </span>hashbrown::HashMap;
-
-<span class="kw">impl </span>From&lt;BlockContext&gt; <span class="kw">for </span>blockifier::block_context::BlockContext {
-    <span class="kw">fn </span>from(value: BlockContext) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            chain_id: ChainId(value.chain_id),
-            block_number: BlockNumber(value.block_number),
-            block_timestamp: BlockTimestamp(value.block_timestamp),
-            sequencer_address: value.sequencer_address,
-            fee_token_address: value.fee_token_address,
-            vm_resource_fee_cost: Arc::new(HashMap::from_iter(value.vm_resource_fee_cost)),
-            gas_price: value.gas_price,
-            invoke_tx_max_n_steps: value.invoke_tx_max_n_steps,
-            validate_max_n_steps: value.validate_max_n_steps,
-            max_recursion_depth: value.max_recursion_depth,
-        }
-    }
-}
-
-<span class="kw">impl </span>From&lt;blockifier::block_context::BlockContext&gt; <span class="kw">for </span>BlockContext {
-    <span class="kw">fn </span>from(value: blockifier::block_context::BlockContext) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            chain_id: value.chain_id.<span class="number">0</span>,
-            block_number: value.block_number.<span class="number">0</span>,
-            block_timestamp: value.block_timestamp.<span class="number">0</span>,
-            sequencer_address: value.sequencer_address,
-            fee_token_address: value.fee_token_address,
-            vm_resource_fee_cost: Vec::from_iter(value.vm_resource_fee_cost.iter().map(|(k, v)| (k.clone(), <span class="kw-2">*</span>v))),
-            gas_price: value.gas_price,
-            invoke_tx_max_n_steps: value.invoke_tx_max_n_steps,
-            validate_max_n_steps: value.validate_max_n_steps,
-            max_recursion_depth: value.max_recursion_depth,
-        }
     }
 }
 </code></pre></div></section></main></body></html>

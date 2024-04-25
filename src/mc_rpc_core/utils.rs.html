@@ -321,18 +321,49 @@
 <a href="#321" id="321">321</a>
 <a href="#322" id="322">322</a>
 <a href="#323" id="323">323</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
-<span class="kw">use </span>std::io::Write;
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::io::Write;
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>anyhow::{anyhow, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass <span class="kw">as </span>BlockifierContractClass;
 <span class="kw">use </span>blockifier::state::cached_state::CommitmentStateDiff;
-<span class="kw">use </span>cairo_lang_casm_contract_class::{CasmContractClass, CasmContractEntryPoint, CasmContractEntryPoints};
-<span class="kw">use </span>cairo_lang_starknet::contract_class::{
+<span class="kw">use </span>cairo_lang_starknet_classes::casm_contract_class::{
+    CasmContractClass, CasmContractEntryPoint, CasmContractEntryPoints, StarknetSierraCompilationError,
+};
+<span class="kw">use </span>cairo_lang_starknet_classes::contract_class::{
     ContractClass <span class="kw">as </span>SierraContractClass, ContractEntryPoint, ContractEntryPoints,
 };
-<span class="kw">use </span>cairo_lang_starknet::contract_class_into_casm_contract_class::StarknetSierraCompilationError;
 <span class="kw">use </span>cairo_lang_utils::bigint::BigUintAsHex;
 <span class="kw">use </span>indexmap::IndexMap;
 <span class="kw">use </span>mp_block::Block <span class="kw">as </span>StarknetBlock;
@@ -355,7 +386,7 @@
     <span class="kw">match </span>contract_class {
         BlockifierContractClass::V0(contract_class) =&gt; {
             <span class="kw">let </span>entry_points_by_type = to_legacy_entry_points_by_type(<span class="kw-2">&amp;</span>contract_class.entry_points_by_type)<span class="question-mark">?</span>;
-            <span class="kw">let </span>compressed_program = compress(<span class="kw-2">&amp;</span>contract_class.program.to_bytes())<span class="question-mark">?</span>;
+            <span class="kw">let </span>compressed_program = compress(<span class="kw-2">&amp;</span>contract_class.program.serialize()<span class="question-mark">?</span>)<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(ContractClass::Legacy(CompressedLegacyContractClass {
                 program: compressed_program,
                 entry_points_by_type,
@@ -380,9 +411,12 @@
         .map(|(address, storage_map)| {
             <span class="kw">let </span>storage_entries = storage_map
                 .into_iter()
-                .map(|(key, value)| StorageEntry { key: key.<span class="number">0.0</span>.into(), value: value.into() })
+                .map(|(key, value)| StorageEntry {
+                    key: Felt252Wrapper::from(key).into(),
+                    value: Felt252Wrapper::from(value).into(),
+                })
                 .collect();
-            ContractStorageDiffItem { address: address.<span class="number">0.0</span>.into(), storage_entries }
+            ContractStorageDiffItem { address: Felt252Wrapper::from(address).into(), storage_entries }
         })
         .collect();
 
@@ -390,8 +424,8 @@
         .class_hash_to_compiled_class_hash
         .into_iter()
         .map(|(class_hash, compiled_class_hash)| DeclaredClassItem {
-            class_hash: class_hash.<span class="number">0</span>.into(),
-            compiled_class_hash: compiled_class_hash.<span class="number">0</span>.into(),
+            class_hash: Felt252Wrapper::from(class_hash).into(),
+            compiled_class_hash: Felt252Wrapper::from(compiled_class_hash).into(),
         })
         .collect();
 
@@ -399,15 +433,18 @@
         .address_to_class_hash
         .into_iter()
         .map(|(address, class_hash)| DeployedContractItem {
-            address: address.<span class="number">0.0</span>.into(),
-            class_hash: class_hash.<span class="number">0</span>.into(),
+            address: Felt252Wrapper::from(address).into(),
+            class_hash: Felt252Wrapper::from(class_hash).into(),
         })
         .collect();
 
     <span class="kw">let </span>nonces = commitment_state_diff
         .address_to_nonce
         .into_iter()
-        .map(|(address, nonce)| NonceUpdate { contract_address: address.<span class="number">0.0</span>.into(), nonce: nonce.<span class="number">0</span>.into() })
+        .map(|(address, nonce)| NonceUpdate {
+            contract_address: Felt252Wrapper::from(address).into(),
+            nonce: Felt252Wrapper::from(nonce).into(),
+        })
         .collect();
 
     <span class="prelude-val">Ok</span>(StateDiff {
@@ -424,37 +461,59 @@
 </span><span class="kw">pub fn </span>to_rpc_state_diff(thin_state_diff: ThinStateDiff) -&gt; StateDiff {
     <span class="kw">let </span>nonces = thin_state_diff
         .nonces
-        .iter()
-        .map(|x| NonceUpdate { contract_address: x.<span class="number">0.0</span>.<span class="number">0</span>.into(), nonce: x.<span class="number">1.0</span>.into() })
+        .into_iter()
+        .map(|(contract_address, nonce)| NonceUpdate {
+            contract_address: Felt252Wrapper::from(contract_address).into(),
+            nonce: Felt252Wrapper::from(nonce).into(),
+        })
         .collect();
 
     <span class="kw">let </span>storage_diffs = thin_state_diff
         .storage_diffs
-        .iter()
-        .map(|x| ContractStorageDiffItem {
-            address: x.<span class="number">0.0</span>.<span class="number">0</span>.into(),
-            storage_entries: x.<span class="number">1</span>.iter().map(|y| StorageEntry { key: y.<span class="number">0.0</span>.<span class="number">0</span>.into(), value: (<span class="kw-2">*</span>y.<span class="number">1</span>).into() }).collect(),
+        .into_iter()
+        .map(|(contract_address, storage_changes)| ContractStorageDiffItem {
+            address: Felt252Wrapper::from(contract_address).into(),
+            storage_entries: storage_changes
+                .into_iter()
+                .map(|(storage_key, value)| StorageEntry {
+                    key: Felt252Wrapper::from(storage_key).into(),
+                    value: Felt252Wrapper::from(value).into(),
+                })
+                .collect(),
         })
         .collect();
 
-    <span class="kw">let </span>deprecated_declared_classes = thin_state_diff.deprecated_declared_classes.iter().map(|x| x.<span class="number">0</span>.into()).collect();
+    <span class="kw">let </span>deprecated_declared_classes = thin_state_diff
+        .deprecated_declared_classes
+        .into_iter()
+        .map(|class_hash| Felt252Wrapper::from(class_hash).into())
+        .collect();
 
     <span class="kw">let </span>declared_classes = thin_state_diff
         .declared_classes
-        .iter()
-        .map(|x| DeclaredClassItem { class_hash: x.<span class="number">0.0</span>.into(), compiled_class_hash: x.<span class="number">1.0</span>.into() })
+        .into_iter()
+        .map(|(class_hash, compiled_class_hash)| DeclaredClassItem {
+            class_hash: Felt252Wrapper::from(class_hash).into(),
+            compiled_class_hash: Felt252Wrapper::from(compiled_class_hash).into(),
+        })
         .collect();
 
     <span class="kw">let </span>deployed_contracts = thin_state_diff
         .deployed_contracts
-        .iter()
-        .map(|x| DeployedContractItem { address: x.<span class="number">0.0</span>.<span class="number">0</span>.into(), class_hash: x.<span class="number">1.0</span>.into() })
+        .into_iter()
+        .map(|(contract_address, class_hash)| DeployedContractItem {
+            address: Felt252Wrapper::from(contract_address).into(),
+            class_hash: Felt252Wrapper::from(class_hash).into(),
+        })
         .collect();
 
     <span class="kw">let </span>replaced_classes = thin_state_diff
         .replaced_classes
-        .iter()
-        .map(|x| ReplacedClassItem { contract_address: x.<span class="number">0.0</span>.<span class="number">0</span>.into(), class_hash: x.<span class="number">1.0</span>.into() })
+        .into_iter()
+        .map(|(contract_address, class_hash)| ReplacedClassItem {
+            contract_address: Felt252Wrapper::from(contract_address).into(),
+            class_hash: Felt252Wrapper::from(class_hash).into(),
+        })
         .collect();
 
     StateDiff {
@@ -481,10 +540,10 @@
 <span class="doccomment">/// Returns a [Result&lt;LegacyEntryPointsByType&gt;] (starknet-rs type) from a [HashMap&lt;EntryPointType,
 /// Vec&lt;EntryPoint&gt;&gt;]
 </span><span class="kw">fn </span>to_legacy_entry_points_by_type(
-    entries: <span class="kw-2">&amp;</span>HashMap&lt;EntryPointType, Vec&lt;EntryPoint&gt;&gt;,
+    entries: <span class="kw-2">&amp;</span>IndexMap&lt;EntryPointType, Vec&lt;EntryPoint&gt;&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;LegacyEntryPointsByType&gt; {
     <span class="kw">fn </span>collect_entry_points(
-        entries: <span class="kw-2">&amp;</span>HashMap&lt;EntryPointType, Vec&lt;EntryPoint&gt;&gt;,
+        entries: <span class="kw-2">&amp;</span>IndexMap&lt;EntryPointType, Vec&lt;EntryPoint&gt;&gt;,
         entry_point_type: EntryPointType,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;LegacyContractEntryPoint&gt;&gt; {
         <span class="prelude-val">Ok</span>(entries
@@ -505,7 +564,7 @@
 <span class="doccomment">/// Returns a [LegacyContractEntryPoint] (starknet-rs) from a [EntryPoint] (starknet-api)
 </span><span class="kw">fn </span>to_legacy_entry_point(entry_point: EntryPoint) -&gt; <span class="prelude-ty">Result</span>&lt;LegacyContractEntryPoint, FromByteArrayError&gt; {
     <span class="kw">let </span>selector = FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>entry_point.selector.<span class="number">0.0</span>)<span class="question-mark">?</span>;
-    <span class="kw">let </span>offset = entry_point.offset.<span class="number">0 </span><span class="kw">as </span>u64;
+    <span class="kw">let </span>offset = entry_point.offset.<span class="number">0</span>;
     <span class="prelude-val">Ok</span>(LegacyContractEntryPoint { selector, offset })
 }
 
@@ -537,36 +596,36 @@
         ),
         abi: <span class="prelude-val">None</span>, <span class="comment">// we can convert the ABI but for now, to convert to Casm, the ABI isn&#39;t needed
     </span>};
-    <span class="kw">let </span>casm_contract_class = sierra_contract_class.into_casm_contract_class(<span class="bool-val">false</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span>casm_contract_class = CasmContractClass::from_contract_class(sierra_contract_class, <span class="bool-val">false</span>, usize::MAX)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(casm_contract_class)
 }
 
 <span class="kw">pub fn </span>flattened_sierra_to_sierra_contract_class(
     flattened_sierra: Arc&lt;FlattenedSierraClass&gt;,
 ) -&gt; starknet_api::state::ContractClass {
-    <span class="kw">let </span><span class="kw-2">mut </span>entry_point_by_type =
+    <span class="kw">let </span><span class="kw-2">mut </span>entry_points_by_type =
         IndexMap::&lt;starknet_api::state::EntryPointType, Vec&lt;starknet_api::state::EntryPoint&gt;&gt;::with_capacity(<span class="number">3</span>);
     <span class="kw">for </span>sierra_entrypoint <span class="kw">in </span>flattened_sierra.entry_points_by_type.constructor.iter() {
-        entry_point_by_type
+        entry_points_by_type
             .entry(starknet_api::state::EntryPointType::Constructor)
             .or_default()
             .push(rpc_entry_point_to_starknet_api_entry_point(sierra_entrypoint));
     }
     <span class="kw">for </span>sierra_entrypoint <span class="kw">in </span>flattened_sierra.entry_points_by_type.external.iter() {
-        entry_point_by_type
+        entry_points_by_type
             .entry(starknet_api::state::EntryPointType::External)
             .or_default()
             .push(rpc_entry_point_to_starknet_api_entry_point(sierra_entrypoint));
     }
     <span class="kw">for </span>sierra_entrypoint <span class="kw">in </span>flattened_sierra.entry_points_by_type.l1_handler.iter() {
-        entry_point_by_type
+        entry_points_by_type
             .entry(starknet_api::state::EntryPointType::L1Handler)
             .or_default()
             .push(rpc_entry_point_to_starknet_api_entry_point(sierra_entrypoint));
     }
     starknet_api::state::ContractClass {
         sierra_program: flattened_sierra.sierra_program.iter().map(|f| Felt252Wrapper(<span class="kw-2">*</span>f).into()).collect(),
-        entry_point_by_type,
+        entry_points_by_type,
         abi: flattened_sierra.abi.clone(),
     }
 }
@@ -605,20 +664,23 @@
 
 <span class="comment">// Utils to convert Casm contract class to Compiled class
 </span><span class="kw">pub fn </span>get_casm_cotract_class_hash(casm_contract_class: <span class="kw-2">&amp;</span>CasmContractClass) -&gt; FieldElement {
-    <span class="kw">let </span>compiled_class = casm_contract_class_to_compiled_class(casm_contract_class);
-    compiled_class.class_hash().unwrap()
-}
+    <span class="comment">// Let&#39;s not expose it as it don&#39;t produce a full fleshed CompiledClass
+    // and is therefore only usefull in the context of computing the ClassHash
+    </span><span class="kw">fn </span>casm_contract_class_to_partial_compiled_class(casm_contract_class: <span class="kw-2">&amp;</span>CasmContractClass) -&gt; CompiledClass {
+        CompiledClass {
+            prime: casm_contract_class.prime.to_string(),
+            compiler_version: casm_contract_class.compiler_version.clone(),
+            bytecode: casm_contract_class.bytecode.iter().map(|x| biguint_to_field_element(<span class="kw-2">&amp;</span>x.value)).collect(),
+            entry_points_by_type: casm_entry_points_to_compiled_entry_points(<span class="kw-2">&amp;</span>casm_contract_class.entry_points_by_type),
+            <span class="comment">// The following fields are not usefull to compute the class hash, so no need to fill those
+            </span>hints: <span class="macro">vec!</span>[],
+            pythonic_hints: <span class="prelude-val">None</span>,
+            bytecode_segment_lengths: <span class="macro">vec!</span>[],
+        }
+    }
 
-<span class="doccomment">/// Converts a [CasmContractClass] to a [CompiledClass]
-</span><span class="kw">pub fn </span>casm_contract_class_to_compiled_class(casm_contract_class: <span class="kw-2">&amp;</span>CasmContractClass) -&gt; CompiledClass {
-    CompiledClass {
-        prime: casm_contract_class.prime.to_string(),
-        compiler_version: casm_contract_class.compiler_version.clone(),
-        bytecode: casm_contract_class.bytecode.iter().map(|x| biguint_to_field_element(<span class="kw-2">&amp;</span>x.value)).collect(),
-        entry_points_by_type: casm_entry_points_to_compiled_entry_points(<span class="kw-2">&amp;</span>casm_contract_class.entry_points_by_type),
-        hints: <span class="macro">vec!</span>[],        <span class="comment">// not needed to get class hash so ignoring this
-        </span>pythonic_hints: <span class="prelude-val">None</span>, <span class="comment">// not needed to get class hash so ignoring this
-    </span>}
+    <span class="kw">let </span>compiled_class = casm_contract_class_to_partial_compiled_class(casm_contract_class);
+    compiled_class.class_hash().unwrap()
 }
 
 <span class="doccomment">/// Converts a [CasmContractEntryPoints] to a [CompiledClassEntrypointList]

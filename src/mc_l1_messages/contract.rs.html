@@ -51,8 +51,25 @@
 <a href="#51" id="51">51</a>
 <a href="#52" id="52">52</a>
 <a href="#53" id="53">53</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>mp_felt::{Felt252Wrapper, Felt252WrapperError};
-<span class="kw">use </span>mp_transactions::HandleL1MessageTransaction;
+<a href="#54" id="54">54</a>
+<a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
+
+<span class="kw">use </span>mp_felt::{Felt252Wrapper, Felt252WrapperError};
+<span class="kw">use </span>starknet_api::hash::StarkFelt;
+<span class="kw">use </span>starknet_api::transaction::{Calldata, L1HandlerTransaction, TransactionVersion};
 <span class="kw">use </span>starknet_core_contract_client::interfaces::LogMessageToL2Filter;
 
 <span class="attr">#[derive(thiserror::Error, Debug, PartialEq)]
@@ -72,36 +89,47 @@
 
 <span class="kw">pub fn </span>parse_handle_l1_message_transaction(
     event: LogMessageToL2Filter,
-) -&gt; <span class="prelude-ty">Result</span>&lt;HandleL1MessageTransaction, L1EventToTransactionError&gt; {
+) -&gt; <span class="prelude-ty">Result</span>&lt;L1HandlerTransaction, L1EventToTransactionError&gt; {
     <span class="comment">// L1 from address.
     </span><span class="kw">let </span>from_address = Felt252Wrapper::try_from(sp_core::U256::from_big_endian(event.from_address.as_bytes()))
-        .map_err(L1EventToTransactionError::InvalidFromAddress)<span class="question-mark">?</span>;
+        .map_err(L1EventToTransactionError::InvalidFromAddress)<span class="question-mark">?
+        </span>.into();
 
     <span class="comment">// L2 contract to call.
     </span><span class="kw">let </span>contract_address = Felt252Wrapper::try_from(sp_core::U256(event.to_address.<span class="number">0</span>))
-        .map_err(L1EventToTransactionError::InvalidContractAddress)<span class="question-mark">?</span>;
+        .map_err(L1EventToTransactionError::InvalidContractAddress)<span class="question-mark">?
+        </span>.into();
 
     <span class="comment">// Function of the contract to call.
     </span><span class="kw">let </span>entry_point_selector = Felt252Wrapper::try_from(sp_core::U256(event.selector.<span class="number">0</span>))
-        .map_err(L1EventToTransactionError::InvalidEntryPointSelector)<span class="question-mark">?</span>;
+        .map_err(L1EventToTransactionError::InvalidEntryPointSelector)<span class="question-mark">?
+        </span>.into();
 
     <span class="comment">// L1 message nonce.
-    </span><span class="kw">let </span>nonce: u64 = Felt252Wrapper::try_from(sp_core::U256(event.nonce.<span class="number">0</span>))
-        .map_err(L1EventToTransactionError::InvalidNonce)<span class="question-mark">?
-        </span>.try_into()
-        .map_err(L1EventToTransactionError::InvalidNonce)<span class="question-mark">?</span>;
+    </span><span class="kw">let </span>nonce =
+        Felt252Wrapper::try_from(sp_core::U256(event.nonce.<span class="number">0</span>)).map_err(L1EventToTransactionError::InvalidNonce)<span class="question-mark">?</span>.into();
 
-    <span class="kw">let </span>event_payload: Vec&lt;Felt252Wrapper&gt; = event
+    <span class="kw">let </span>event_payload: Vec&lt;<span class="kw">_</span>&gt; = event
         .payload
         .iter()
-        .map(|param| Felt252Wrapper::try_from(sp_core::U256(param.<span class="number">0</span>)))
-        .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;Felt252Wrapper&gt;, Felt252WrapperError&gt;&gt;()
+        .map(|param| Felt252Wrapper::try_from(sp_core::U256(param.<span class="number">0</span>)).map(StarkFelt::from))
+        .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, Felt252WrapperError&gt;&gt;()
         .map_err(L1EventToTransactionError::InvalidCalldata)<span class="question-mark">?</span>;
 
-    <span class="kw">let </span><span class="kw-2">mut </span>calldata: Vec&lt;Felt252Wrapper&gt; = Vec::with_capacity(event.payload.len() + <span class="number">1</span>);
-    calldata.push(from_address);
-    event_payload.iter().collect_into(<span class="kw-2">&amp;mut </span>calldata);
+    <span class="kw">let </span>calldata = {
+        <span class="kw">let </span><span class="kw-2">mut </span>calldata: Vec&lt;<span class="kw">_</span>&gt; = Vec::with_capacity(event.payload.len() + <span class="number">1</span>);
+        calldata.push(from_address);
+        event_payload.iter().collect_into(<span class="kw-2">&amp;mut </span>calldata);
 
-    <span class="prelude-val">Ok</span>(HandleL1MessageTransaction { nonce, contract_address, entry_point_selector, calldata })
+        Calldata(Arc::new(calldata))
+    };
+
+    <span class="prelude-val">Ok</span>(L1HandlerTransaction {
+        nonce,
+        contract_address,
+        entry_point_selector,
+        calldata,
+        version: TransactionVersion(StarkFelt::ZERO),
+    })
 }
 </code></pre></div></section></main></body></html>

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["StarknetTransactionExecutionError"],"externcrate":["alloc"],"struct":["BlockContext"],"trait":["ConvertTransactionRuntimeApi","StarknetRuntimeApi"]};
+window.SIDEBAR_ITEMS = {"enum":["StarknetTransactionExecutionError"],"trait":["ConvertTransactionRuntimeApi","StarknetRuntimeApi"]};

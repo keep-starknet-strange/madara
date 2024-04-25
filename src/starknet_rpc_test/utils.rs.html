@@ -259,6 +259,23 @@
 <a href="#259" id="259">259</a>
 <a href="#260" id="260">260</a>
 <a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::future::Future;
 <span class="kw">use </span>std::sync::Arc;
 
@@ -274,11 +291,12 @@
     MsgToL1, TransactionReceipt,
 };
 <span class="kw">use </span>starknet_core::utils::get_selector_from_name;
-<span class="kw">use </span>starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
+<span class="kw">use </span>starknet_providers::jsonrpc::{HttpTransport, HttpTransportError, JsonRpcClient, JsonRpcClientError};
 <span class="kw">use </span>starknet_providers::{Provider, ProviderError};
 <span class="kw">use </span>starknet_signers::{LocalWallet, SigningKey};
+<span class="kw">use </span>starknet_test_utils::constants::{ETH_FEE_TOKEN_ADDRESS, MAX_FEE_OVERRIDE};
 
-<span class="kw">use </span><span class="kw">crate</span>::constants::{FEE_TOKEN_ADDRESS, MADARA_CHAIN_ID, MAX_FEE_OVERRIDE};
+<span class="kw">use </span><span class="kw">crate</span>::constants::MADARA_CHAIN_ID;
 <span class="kw">use crate</span>::{
     RpcAccount, RpcOzAccountFactory, SendTransactionError, TransactionAccountDeployment, TransactionDeclaration,
     TransactionExecution, TransactionLegacyDeclaration, TransactionResult,
@@ -367,6 +385,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         path_to_sierra: <span class="kw-2">&amp;</span>str,
         path_to_casm: <span class="kw-2">&amp;</span>str,
+        nonce: <span class="prelude-ty">Option</span>&lt;FieldElement&gt;,
     ) -&gt; (TransactionDeclaration, FieldElement, FieldElement);
 
     <span class="kw">fn </span>declare_legacy_contract(<span class="kw-2">&amp;</span><span class="self">self</span>, path_to_compiled_contract: <span class="kw-2">&amp;</span>str) -&gt; (TransactionLegacyDeclaration, FieldElement);
@@ -393,7 +412,7 @@
         transfer_amount: U256,
         nonce: <span class="prelude-ty">Option</span>&lt;u64&gt;,
     ) -&gt; TransactionExecution {
-        <span class="kw">let </span>fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
+        <span class="kw">let </span>fee_token_address = FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap();
         <span class="self">self</span>.invoke_contract(
             fee_token_address,
             <span class="string">&quot;transfer&quot;</span>,
@@ -432,6 +451,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         path_to_sierra: <span class="kw-2">&amp;</span>str,
         path_to_casm: <span class="kw-2">&amp;</span>str,
+        nonce: <span class="prelude-ty">Option</span>&lt;FieldElement&gt;,
     ) -&gt; (TransactionDeclaration, FieldElement, FieldElement) {
         <span class="kw">let </span>sierra: SierraClass = serde_json::from_reader(
             std::fs::File::open(<span class="macro">env!</span>(<span class="string">&quot;CARGO_MANIFEST_DIR&quot;</span>).to_owned() + <span class="string">&quot;/&quot; </span>+ path_to_sierra).unwrap(),
@@ -442,13 +462,14 @@
         )
         .unwrap();
         <span class="kw">let </span>compiled_class_hash = casm.class_hash().unwrap();
-        (
-            <span class="self">self</span>.declare(sierra.clone().flatten().unwrap().into(), compiled_class_hash)
-                <span class="comment">// starknet-rs calls estimateFee with incorrect version which throws an error
-                </span>.max_fee(FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap()),
-            sierra.class_hash().unwrap(),
-            compiled_class_hash,
-        )
+        <span class="comment">// starknet-rs calls estimateFee with incorrect version which throws an error
+        </span><span class="kw">let </span>tx = <span class="kw">match </span>nonce {
+            <span class="prelude-val">Some</span>(nonce) =&gt; <span class="self">self</span>.declare(sierra.clone().flatten().unwrap().into(), compiled_class_hash).nonce(nonce),
+            <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.declare(sierra.clone().flatten().unwrap().into(), compiled_class_hash),
+        }
+        .max_fee(FieldElement::from_hex_be(MAX_FEE_OVERRIDE).unwrap());
+
+        (tx, sierra.class_hash().unwrap(), compiled_class_hash)
     }
 
     <span class="kw">fn </span>declare_legacy_contract(<span class="kw-2">&amp;</span><span class="self">self</span>, path_to_compiled_contract: <span class="kw-2">&amp;</span>str) -&gt; (TransactionLegacyDeclaration, FieldElement) {
@@ -519,5 +540,18 @@
         MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt)) =&gt; receipt.events[<span class="number">0</span>].data[<span class="number">0</span>]
     );
     <span class="prelude-val">Ok</span>(contract_address)
+}
+
+<span class="kw">pub fn </span>is_good_error_code(error: <span class="kw-2">&amp;</span>ProviderError, code: i64) -&gt; bool {
+    <span class="kw">match </span>error {
+        ProviderError::Other(e) =&gt; {
+            <span class="kw">let </span>json_rpc_err = e.as_any().downcast_ref::&lt;JsonRpcClientError&lt;HttpTransportError&gt;&gt;().unwrap();
+            <span class="kw">match </span>json_rpc_err {
+                JsonRpcClientError::JsonRpcError(e) =&gt; e.code == code,
+                <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;wrong error type&quot;</span>),
+            }
+        }
+        e =&gt; <span class="macro">panic!</span>(<span class="string">&quot;wrong error type: {e:?}&quot;</span>),
+    }
 }
 </code></pre></div></section></main></body></html>

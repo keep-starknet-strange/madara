@@ -17,7 +17,6 @@ var srcIndex = JSON.parse('{\
 "mp_block":["",[],["header.rs","lib.rs"]],\
 "mp_chain_id":["",[],["lib.rs"]],\
 "mp_digest_log":["",[],["error.rs","lib.rs"]],\
-"mp_fee":["",[],["lib.rs"]],\
 "mp_felt":["",[],["lib.rs","starkware_types_conversions.rs","with_serde.rs"]],\
 "mp_genesis_config":["",[],["lib.rs"]],\
 "mp_hashers":["",[],["lib.rs","pedersen.rs","poseidon.rs"]],\
@@ -26,10 +25,9 @@ var srcIndex = JSON.parse('{\
 "mp_sequencer_address":["",[],["lib.rs"]],\
 "mp_simulations":["",[],["lib.rs"]],\
 "mp_snos_output":["",[],["codec.rs","felt_reader.rs","lib.rs"]],\
-"mp_state":["",[],["lib.rs"]],\
 "mp_storage":["",[],["lib.rs"]],\
-"mp_transactions":["",[],["compute_hash.rs","conversions.rs","execution.rs","from_broadcasted_transactions.rs","getters.rs","lib.rs","to_starknet_core_transaction.rs","utils.rs"]],\
-"pallet_starknet":["",[],["blockifier_state_adapter.rs","execution_config.rs","genesis_loader.rs","lib.rs","simulations.rs","transaction_validation.rs","types.rs"]],\
+"mp_transactions":["",[],["compute_hash.rs","execution.rs","from_broadcasted_transactions.rs","lib.rs","to_starknet_core_transaction.rs"]],\
+"pallet_starknet":["",[],["blockifier_state_adapter.rs","genesis_loader.rs","lib.rs","simulations.rs","transaction_validation.rs","types.rs"]],\
 "pallet_starknet_runtime_api":["",[],["lib.rs"]],\
 "starknet_e2e_test":["",[],["eth_bridge.rs","lib.rs","starknet_sovereign.rs","token_bridge.rs","utils.rs"]],\
 "starknet_rpc_test":["",[],["constants.rs","fixtures.rs","lib.rs","utils.rs"]],\

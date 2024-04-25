@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["subtract_mappings"],"struct":["BlockifierStateAdapter","CachedBlockifierStateAdapter"]};
+window.SIDEBAR_ITEMS = {"struct":["BlockifierStateAdapter","CachedBlockifierStateAdapter"]};

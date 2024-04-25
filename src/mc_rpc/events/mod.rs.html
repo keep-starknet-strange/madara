@@ -191,20 +191,6 @@
 <a href="#191" id="191">191</a>
 <a href="#192" id="192">192</a>
 <a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
-<a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a>
-<a href="#206" id="206">206</a>
-<a href="#207" id="207">207</a>
 </pre></div><pre class="rust"><code><span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests;
 
@@ -216,7 +202,6 @@
 <span class="kw">use </span>mc_rpc_core::utils::get_block_by_block_hash;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_hashers::HasherT;
-<span class="kw">use </span>mp_transactions::compute_hash::ComputeTransactionHash;
 <span class="kw">use </span>pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>sc_client_api::BlockBackend;
@@ -224,7 +209,6 @@
 <span class="kw">use </span>sp_api::ProvideRuntimeApi;
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
 <span class="kw">use </span>sp_runtime::traits::Block <span class="kw">as </span>BlockT;
-<span class="kw">use </span>starknet_api::transaction::TransactionHash;
 <span class="kw">use </span>starknet_core::types::{BlockId, EmittedEvent, EventsPage};
 <span class="kw">use </span>starknet_ff::FieldElement;
 
@@ -261,39 +245,27 @@
 
         <span class="kw">let </span>runtime_api = <span class="self">self</span>.client.runtime_api();
 
-        <span class="kw">let </span>chain_id = <span class="self">self</span>.get_chain_id(substrate_block_hash).map_err(|<span class="kw">_</span>| {
-            <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve chain id&quot;</span>);
-            StarknetRpcApiError::InternalServerError
-        })<span class="question-mark">?</span>;
-
         <span class="kw">let </span>starknet_block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve starknet block from substrate block hash: error: {e}&quot;</span>);
             StarknetRpcApiError::InternalServerError
         })<span class="question-mark">?</span>;
-        <span class="kw">let </span>txn_hashes =
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(tx_hashes) = <span class="self">self</span>.get_cached_transaction_hashes(starknet_block.header().hash::&lt;H&gt;().into()) {
-                tx_hashes
-            } <span class="kw">else </span>{
-                starknet_block.transactions().iter().map(|tx| tx.compute_hash::&lt;H&gt;(chain_id, <span class="bool-val">false</span>).into()).collect()
-            };
 
         <span class="kw">let </span>block_hash = starknet_block.header().hash::&lt;H&gt;();
 
         <span class="kw">let </span><span class="kw-2">mut </span>emitted_events: Vec&lt;EmittedEvent&gt; = <span class="macro">vec!</span>[];
-        <span class="kw">for </span>tx_hash <span class="kw">in </span>txn_hashes {
-            <span class="kw">let </span>raw_events =
-                runtime_api.get_events_for_tx_by_hash(substrate_block_hash, TransactionHash(tx_hash)).map_err(|e| {
-                    <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve starknet events for transaction: error: {e}&quot;</span>);
-                    StarknetRpcApiError::InternalServerError
-                })<span class="question-mark">?</span>;
+        <span class="kw">for </span>tx_hash <span class="kw">in </span>starknet_block.transactions_hashes() {
+            <span class="kw">let </span>raw_events = runtime_api.get_events_for_tx_by_hash(substrate_block_hash, <span class="kw-2">*</span>tx_hash).map_err(|e| {
+                <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve starknet events for transaction: error: {e}&quot;</span>);
+                StarknetRpcApiError::InternalServerError
+            })<span class="question-mark">?</span>;
             <span class="kw">for </span>event <span class="kw">in </span>raw_events {
                 emitted_events.push(EmittedEvent {
-                    from_address: Felt252Wrapper::from(event.from_address).<span class="number">0</span>,
-                    keys: event.content.keys.into_iter().map(|felt| Felt252Wrapper::from(felt).<span class="number">0</span>).collect(),
-                    data: event.content.data.<span class="number">0</span>.into_iter().map(|felt| Felt252Wrapper::from(felt).<span class="number">0</span>).collect(),
-                    block_hash: block_hash.<span class="number">0</span>,
-                    block_number,
-                    transaction_hash: tx_hash.into(),
+                    from_address: Felt252Wrapper::from(event.from_address).into(),
+                    keys: event.content.keys.into_iter().map(|felt| Felt252Wrapper::from(felt).into()).collect(),
+                    data: event.content.data.<span class="number">0</span>.into_iter().map(|felt| Felt252Wrapper::from(felt).into()).collect(),
+                    block_hash: <span class="prelude-val">Some</span>(block_hash.into()),
+                    block_number: <span class="prelude-val">Some</span>(block_number),
+                    transaction_hash: Felt252Wrapper::from(<span class="kw-2">*</span>tx_hash).into(),
                 })
             }
         }

@@ -367,7 +367,7 @@
     </span>}
 
     <span class="kw">pub async fn </span>create_block_with_pending_txs(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; anyhow::Result&lt;()&gt; {
-        <span class="self">self</span>.do_create_block(<span class="bool-val">false</span>, <span class="bool-val">true</span>).<span class="kw">await
+        <span class="self">self</span>.do_create_block(<span class="bool-val">true</span>, <span class="bool-val">true</span>).<span class="kw">await
     </span>}
 
     <span class="kw">async fn </span>do_create_block(<span class="kw-2">&amp;mut </span><span class="self">self</span>, empty: bool, finalize: bool) -&gt; anyhow::Result&lt;()&gt; {
@@ -391,7 +391,7 @@
             results.push(result);
         }
 
-        <span class="self">self</span>.do_create_block(<span class="bool-val">false</span>, <span class="bool-val">false</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="self">self</span>.do_create_block(<span class="bool-val">true</span>, <span class="bool-val">false</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(results)
     }
 

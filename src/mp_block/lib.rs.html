@@ -85,21 +85,15 @@
 <a href="#85" id="85">85</a>
 <a href="#86" id="86">86</a>
 <a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet block primitives.
-</span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
+</span><span class="kw">mod </span>header;
 
-#[doc(hidden)]
-</span><span class="kw">pub extern crate </span>alloc;
-
-<span class="kw">mod </span>header;
-
-<span class="kw">use </span>alloc::vec::Vec;
-
-<span class="kw">pub use </span>header::<span class="kw-2">*</span>;
+<span class="kw">use </span>blockifier::transaction::transaction_execution::Transaction;
+<span class="kw">pub use </span>header::Header;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
-<span class="kw">use </span>mp_hashers::HasherT;
-<span class="kw">use </span>mp_transactions::compute_hash::ComputeTransactionHash;
-<span class="kw">use </span>mp_transactions::Transaction;
+<span class="kw">use </span>mp_transactions::get_transaction_hash;
+<span class="kw">use </span>starknet_api::transaction::TransactionHash;
 
 <span class="doccomment">/// Block Transactions
 </span><span class="kw">pub type </span>BlockTransactions = Vec&lt;Transaction&gt;;
@@ -110,6 +104,7 @@
 </span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(feature = <span class="string">&quot;scale-info&quot;</span>, derive(scale_info::TypeInfo))]
 </span><span class="kw">pub enum </span>BlockTag {
     <span class="attr">#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, serde(rename = <span class="string">&quot;latest&quot;</span>))]
     </span>Latest,
@@ -128,8 +123,14 @@
     Tag(BlockTag),
 }
 
+<span class="attr">#[derive(Debug, thiserror::Error)]
+</span><span class="kw">pub enum </span>NewBlockError {
+    <span class="attr">#[error(<span class="string">&quot;header&#39;s field `transaction_count` does not matched the len of the `transactions` field&quot;</span>)]
+    </span>InvalidTxCount,
+}
+
 <span class="doccomment">/// Starknet block definition.
-</span><span class="attr">#[derive(Clone, Debug, Default, PartialEq, Eq)]
+</span><span class="attr">#[derive(Clone, Debug)]
 #[cfg_attr(feature = <span class="string">&quot;parity-scale-codec&quot;</span>, derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 </span><span class="kw">pub struct </span>Block {
     <span class="doccomment">/// The block header.
@@ -145,8 +146,12 @@
     ///
     /// * `header` - The block header.
     /// * `transactions` - The block transactions.
-    </span><span class="kw">pub fn </span>new(header: Header, transactions: BlockTransactions) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ header, transactions }
+    </span><span class="kw">pub fn </span>try_new(header: Header, transactions: BlockTransactions) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, NewBlockError&gt; {
+        <span class="kw">if </span>header.transaction_count <span class="kw">as </span>usize != transactions.len() {
+            <span class="prelude-val">Err</span>(NewBlockError::InvalidTxCount)
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ header, transactions })
+        }
     }
 
     <span class="doccomment">/// Return a reference to the block header
@@ -162,11 +167,8 @@
     <span class="doccomment">/// Returns an iterator that iterates over all transaction hashes.
     ///
     /// Those transactions are computed using the given `chain_id`.
-    </span><span class="kw">pub fn </span>transactions_hashes&lt;H: HasherT&gt;(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        chain_id: Felt252Wrapper,
-    ) -&gt; <span class="kw">impl </span><span class="lifetime">&#39;_ </span>+ Iterator&lt;Item = Felt252Wrapper&gt; {
-        <span class="self">self</span>.transactions.iter().map(<span class="kw">move </span>|tx| tx.compute_hash::&lt;H&gt;(chain_id, <span class="bool-val">false</span>))
+    </span><span class="kw">pub fn </span>transactions_hashes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span><span class="lifetime">&#39;_ </span>+ Iterator&lt;Item = <span class="kw-2">&amp;</span>TransactionHash&gt; {
+        <span class="self">self</span>.transactions.iter().map(get_transaction_hash)
     }
 }
 

@@ -171,14 +171,13 @@
 <a href="#171" id="171">171</a>
 <a href="#172" id="172">172</a>
 <a href="#173" id="173">173</a>
-<a href="#174" id="174">174</a>
-<a href="#175" id="175">175</a>
-<a href="#176" id="176">176</a>
-<a href="#177" id="177">177</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Configuration of the pallets used in the runtime.
 //! The pallets used in the runtime are configured here.
 //! This file is used to generate the `construct_runtime!` macro.
-</span><span class="kw">pub use </span>frame_support::traits::{
+</span><span class="kw">use </span>std::num::NonZeroU128;
+
+<span class="kw">use </span>blockifier::blockifier::block::GasPrices;
+<span class="kw">pub use </span>frame_support::traits::{
     ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, OnTimestampSet, Randomness, StorageInfo,
 };
 <span class="kw">pub use </span>frame_support::weights::constants::{
@@ -188,7 +187,6 @@
 <span class="kw">pub use </span>frame_support::{construct_runtime, parameter_types, StorageValue};
 <span class="kw">pub use </span>frame_system::Call <span class="kw">as </span>SystemCall;
 <span class="kw">pub use </span>mp_chain_id::SN_GOERLI_CHAIN_ID;
-<span class="kw">use </span>mp_fee::ResourcePrice;
 <span class="kw">pub use </span>mp_program_hash::SN_OS_PROGRAM_HASH;
 <span class="doccomment">/// Import the StarkNet pallet.
 </span><span class="kw">pub use </span>pallet_starknet;
@@ -219,12 +217,9 @@
     <span class="attr">#[cfg(feature = <span class="string">&quot;disable-transaction-fee&quot;</span>)]
     </span><span class="kw">type </span>DisableTransactionFee = ConstBool&lt;<span class="bool-val">true</span>&gt;;
     <span class="kw">type </span>DisableNonceValidation = ConstBool&lt;<span class="bool-val">false</span>&gt;;
-    <span class="kw">type </span>InvokeTxMaxNSteps = InvokeTxMaxNSteps;
-    <span class="kw">type </span>ValidateMaxNSteps = ValidateMaxNSteps;
     <span class="kw">type </span>ProtocolVersion = ProtocolVersion;
-    <span class="kw">type </span>MaxRecursionDepth = MaxRecursionDepth;
     <span class="kw">type </span>ProgramHash = ProgramHash;
-    <span class="kw">type </span>L1GasPrice = L1GasPrice;
+    <span class="kw">type </span>L1GasPrices = L1GasPrices;
 }
 
 <span class="doccomment">/// --------------------------------------
@@ -333,12 +328,9 @@
 <span class="macro">parameter_types! </span>{
     <span class="kw">pub const </span>UnsignedPriority: u64 = <span class="number">1 </span>&lt;&lt; <span class="number">20</span>;
     <span class="kw">pub const </span>TransactionLongevity: u64 = u64::MAX;
-    <span class="kw">pub const </span>InvokeTxMaxNSteps: u32 = <span class="number">1_000_000</span>;
-    <span class="kw">pub const </span>ValidateMaxNSteps: u32 = <span class="number">1_000_000</span>;
     <span class="kw">pub const </span>ProtocolVersion: u8 = <span class="number">0</span>;
-    <span class="kw">pub const </span>MaxRecursionDepth: u32 = <span class="number">50</span>;
     <span class="kw">pub const </span>ProgramHash: Felt252Wrapper = SN_OS_PROGRAM_HASH;
-    <span class="kw">pub const </span>L1GasPrice: ResourcePrice = ResourcePrice { price_in_strk: <span class="prelude-val">None</span>, price_in_wei: <span class="number">10 </span>};
+    <span class="kw">pub const </span>L1GasPrices: GasPrices = GasPrices { eth_l1_gas_price: <span class="kw">unsafe </span>{ NonZeroU128::new_unchecked(<span class="number">10</span>) }, strk_l1_gas_price: <span class="kw">unsafe </span>{ NonZeroU128::new_unchecked(<span class="number">10</span>) }, eth_l1_data_gas_price: <span class="kw">unsafe </span>{ NonZeroU128::new_unchecked(<span class="number">10</span>) }, strk_l1_data_gas_price: <span class="kw">unsafe </span>{ NonZeroU128::new_unchecked(<span class="number">10</span>) } };
 }
 
 <span class="doccomment">/// Implement the OnTimestampSet trait to override the default Aura.

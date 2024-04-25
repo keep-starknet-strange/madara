@@ -118,13 +118,11 @@
 <a href="#118" id="118">118</a>
 <a href="#119" id="119">119</a>
 <a href="#120" id="120">120</a>
-<a href="#121" id="121">121</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::fmt;
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::string::String;
 <span class="kw">use </span>std::vec::Vec;
 
-<span class="kw">use </span>blockifier::execution::contract_class::ContractClass <span class="kw">as </span>StarknetContractClass;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>serde::de::Error;
 <span class="kw">use </span>serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -176,8 +174,9 @@
     <span class="kw">pub </span>contracts: Vec&lt;(ContractAddress, ClassHash)&gt;,
     <span class="kw">pub </span>predeployed_accounts: Vec&lt;PredeployedAccount&gt;,
     <span class="kw">pub </span>storage: Vec&lt;(ContractStorageKey, StorageValue)&gt;,
-    <span class="kw">pub </span>fee_token_address: ContractAddress,
     <span class="kw">pub </span>chain_id: String,
+    <span class="kw">pub </span>strk_fee_token_address: ContractAddress,
+    <span class="kw">pub </span>eth_fee_token_address: ContractAddress,
 }
 
 <span class="attr">#[derive(Debug, PartialEq, Eq)]
@@ -199,11 +198,10 @@
     }
 }
 
-<span class="attr">#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
+<span class="attr">#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 #[serde(untagged)]
 </span><span class="kw">pub enum </span>ContractClass {
     Path { path: String, version: u8 },
-    Class(StarknetContractClass),
 }
 
 <span class="doccomment">/// A struct containing predeployed accounts info.
