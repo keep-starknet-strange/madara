@@ -146,7 +146,8 @@ where
 
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)?;
 
-        let (txs_before, tx_to_trace) = super::split_block_tx_for_reexecution(&starknet_block, transaction_hash)?;
+        let (txs_before, tx_to_trace) =
+            super::split_block_tx_for_reexecution(starknet_block.transactions(), transaction_hash)?;
         let tx_type = TxType::from(&tx_to_trace[0]);
 
         let previous_block_substrate_hash = get_previous_block_substrate_hash(self, substrate_block_hash)?;

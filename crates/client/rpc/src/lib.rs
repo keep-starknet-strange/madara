@@ -16,7 +16,7 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 use blockifier::transaction::account_transaction::AccountTransaction;
-use blockifier::transaction::objects::ResourcesMapping;
+use blockifier::transaction::objects::{ResourcesMapping, TransactionExecutionInfo};
 use blockifier::transaction::transactions::L1HandlerTransaction;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
@@ -28,6 +28,7 @@ pub use mc_rpc_core::{
     StarknetWriteRpcApiServer,
 };
 use mc_storage::OverrideHandle;
+use mp_block::BlockTransactions;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_simulations::SimulationFlags;
@@ -1483,9 +1484,6 @@ where
 
         let messages_sent = messages.into_iter().map(starknet_api_to_starknet_core_message_to_l1).collect();
 
-        // TODO: use re_execute_transaction in order to rebuild the correct state and not have to skip the
-        // validation phase. It will return more accurate fees
-        let skip_validate = true;
         let parent_block_hash = self
             .substrate_block_hash_from_starknet_block(BlockId::Hash(
                 Felt252Wrapper::from(block_header.parent_block_hash).into(),
@@ -1494,8 +1492,9 @@ where
                 error!("Parent Block not found: {e}");
                 StarknetRpcApiError::BlockNotFound
             })?;
-        let simulation = self.simulate_tx(parent_block_hash, transaction.clone(), skip_validate, fee_disabled)?;
-        let execution_resources = actual_resources_to_execution_resources(simulation.actual_resources);
+        let execution_info =
+            self.get_transaction_execution_info(parent_block_hash, starknet_block.transactions(), transaction_hash)?;
+        let execution_resources = actual_resources_to_execution_resources(execution_info.actual_resources);
         let transaction_hash = Felt252Wrapper::from(transaction_hash).into();
 
         let receipt = match transaction {
@@ -1563,6 +1562,42 @@ where
         Ok(MaybePendingTransactionReceipt::Receipt(receipt))
     }
 
+    fn get_transaction_execution_info(
+        &self,
+        parent_substrate_block_hash: B::Hash,
+        block_transactions: &BlockTransactions,
+        transaction_hash: TransactionHash,
+    ) -> Result<TransactionExecutionInfo, StarknetRpcApiError>
+    where
+        B: BlockT,
+    {
+        let (transactions_before, transaction_to_trace) =
+            split_block_tx_for_reexecution(block_transactions, transaction_hash).map_err(|e| {
+                log::error!("Failed to split block transactions for re-execution: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?;
+
+        if transaction_to_trace.is_empty() {
+            return Err(StarknetRpcApiError::TxnHashNotFound);
+        }
+
+        if transaction_to_trace.len() > 1 {
+            log::error!("More than one transaction with the same transaction hash {:#?}", transaction_to_trace);
+            return Err(StarknetRpcApiError::InternalServerError);
+        }
+
+        let mut trace = self
+            .re_execute_transactions(parent_substrate_block_hash, transactions_before, transaction_to_trace)
+            .map_err(|e| {
+                log::error!("Failed to re-execute transactions: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?;
+
+        let execution_info = trace.remove(0);
+
+        Ok(execution_info.0)
+    }
+
     fn get_events_for_tx_by_hash(
         &self,
         substrate_block_hash: B::Hash,
@@ -1607,11 +1642,10 @@ where
         let messages_sent = Vec::new();
         let events = Vec::new();
 
-        // TODO -- should Tx be simulated with `skip_validate`?
-        let skip_validate = true;
-        let skip_fee_charge = self.is_transaction_fee_disabled(self.get_best_block_hash())?;
+        let parent_substrate_block_hash = self.get_best_block_hash();
+        let pending_txs = self.get_pending_txs(parent_substrate_block_hash)?;
         let simulation =
-            self.simulate_tx(self.get_best_block_hash(), pending_tx.clone(), skip_validate, skip_fee_charge)?;
+            self.get_transaction_execution_info(parent_substrate_block_hash, &pending_txs, transaction_hash)?;
         let actual_fee =
             FeePayment { amount: Felt252Wrapper::from(simulation.actual_fee.0).into(), unit: PriceUnit::Wei };
         let execution_result = revert_error_to_execution_result(simulation.revert_error);
@@ -1767,13 +1801,12 @@ fn actual_resources_to_execution_resources(resources: ResourcesMapping) -> Execu
 }
 
 fn split_block_tx_for_reexecution(
-    block: &mp_block::Block,
+    block_transactions: &BlockTransactions,
     transaction_hash: TransactionHash,
 ) -> RpcResult<(
     Vec<blockifier::transaction::transaction_execution::Transaction>,
     Vec<blockifier::transaction::transaction_execution::Transaction>,
 )> {
-    let block_transactions = block.transactions();
     let tx_to_trace_idx = block_transactions
         .iter()
         .rposition(|tx| get_transaction_hash(tx) == &transaction_hash)
