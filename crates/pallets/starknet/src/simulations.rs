@@ -17,7 +17,7 @@ use sp_runtime::DispatchError;
 use starknet_api::transaction::TransactionVersion;
 
 use crate::blockifier_state_adapter::BlockifierStateAdapter;
-use crate::{Config, Error, Pallet};
+use crate::{Config, Error as ConfigError, Pallet};
 
 impl<T: Config> Pallet<T> {
     pub fn estimate_fee(
@@ -30,7 +30,7 @@ impl<T: Config> Pallet<T> {
                 simulation_flags,
             )))
         })
-        .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?;
+        .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?
     }
 
     fn estimate_fee_inner(
@@ -45,9 +45,10 @@ impl<T: Config> Pallet<T> {
             .into_iter()
             .map(|tx| match Self::execute_account_transaction(&tx, &mut state, &block_context, simulation_flags) {
                 Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
-                Err(_) | Ok(_) => {
+                Ok(execution_info) => {
                     Err(Error::TransactionExecutionFailed(execution_info.revert_error.unwrap().to_string()))
                 }
+                Err(e) => Err(Error::from(e)),
             })
             .map(|exec_info_res| {
                 exec_info_res.map(|exec_info| {
@@ -55,14 +56,14 @@ impl<T: Config> Pallet<T> {
                         .actual_resources
                         .0
                         .get("l1_gas_usage")
-                        .ok_or_else(|| DispatchError::from(Error::<T>::MissingL1GasUsage))
+                        .ok_or_else(|| DispatchError::from(ConfigError::<T>::MissingL1GasUsage))
                         .map(|l1_gas_usage| (exec_info.actual_fee.0, *l1_gas_usage))
                 })
             });
 
         let mut fees = Vec::with_capacity(transactions_len);
         for fee_res in fee_res_iterator {
-            let res = fee_res??;
+            let res = fee_res?.map_err(|_| Error::StateDiff)?;
             fees.push(res);
         }
 
@@ -73,15 +74,13 @@ impl<T: Config> Pallet<T> {
         transactions: Vec<AccountTransaction>,
         simulation_flags: &SimulationFlags,
     ) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, Error> {
-        let mut res = None;
-
         storage::transactional::with_transaction(|| {
-            res = Some(Self::simulate_transactions_inner(transactions, simulation_flags));
-            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(()))
+            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::simulate_transactions_inner(
+                transactions,
+                simulation_flags,
+            )))
         })
-        .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?;
-
-        Ok(res.expect("`res` should have been set to `Some` at this point"))
+        .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?
     }
 
     fn simulate_transactions_inner(
@@ -108,10 +107,10 @@ impl<T: Config> Pallet<T> {
 
                 Ok((res.1, result))
             })
-            .collect::<Result<Vec<_>, PlaceHolderErrorTypeForFailedStarknetExecution>>()
-            .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+            .collect::<Result<Vec<_>, Error>>()
+            .map_err(|e| Error::from(e))?;
 
-        tx_execution_results
+        Ok(tx_execution_results)
     }
 
     pub fn simulate_message(
@@ -143,14 +142,18 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn estimate_message_fee(message: L1HandlerTransaction) -> Result<(u128, u128, u128), Error> {
+        let mut res = None;
+
         storage::transactional::with_transaction(|| {
             res = Some(Self::estimate_message_fee_inner(message));
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(()))
         })
         .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?;
+
+        res.expect("`res` should have been set to `Some` at this point")
     }
 
-    fn estimate_message_fee_inner(message: L1HandlerTransaction) -> Result<(u128, u128, u128), DispatchError> {
+    fn estimate_message_fee_inner(message: L1HandlerTransaction) -> Result<(u128, u128, u128), Error> {
         let mut cached_state = Self::init_cached_state();
 
         let tx_execution_infos = match message.execute(&mut cached_state, &Self::get_block_context(), true, true) {
@@ -168,7 +171,7 @@ impl<T: Config> Pallet<T> {
                     // Safe due to the `match` branch order
                     &execution_info.revert_error.clone().unwrap()
                 );
-                Err(Error::TransactionExecutionFailed(revert_error.unwrap().to_string()))
+                Err(Error::TransactionExecutionFailed(execution_info.revert_error.unwrap().to_string()))
             }
         }?;
 
@@ -183,8 +186,8 @@ impl<T: Config> Pallet<T> {
         transactions_before: Vec<Transaction>,
         transactions_to_trace: Vec<Transaction>,
     ) -> Result<Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, Error>, Error> {
+        let res = Self::re_execute_transactions_inner(transactions_before, transactions_to_trace);
         storage::transactional::with_transaction(|| {
-            let res = Self::re_execute_transactions_inner(transactions_before, transactions_to_trace);
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Ok(res)))
         })
         .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?
@@ -203,7 +206,7 @@ impl<T: Config> Pallet<T> {
                 Error::from(e)
             })?;
 
-            Ok(())
+            Ok::<(), Error>(())
         })?;
 
         let execution_infos = transactions_to_trace

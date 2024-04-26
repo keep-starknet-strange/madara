@@ -16,7 +16,7 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 use blockifier::transaction::account_transaction::AccountTransaction;
-use blockifier::transaction::objects::ResourcesMapping;
+use blockifier::transaction::objects::{ResourcesMapping, TransactionExecutionInfo};
 use blockifier::transaction::transactions::L1HandlerTransaction;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
@@ -28,6 +28,7 @@ pub use mc_rpc_core::{
     StarknetWriteRpcApiServer,
 };
 use mc_storage::OverrideHandle;
+use mp_block::BlockTransactions;
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_simulations::SimulationFlags;
@@ -1670,43 +1671,6 @@ where
         };
 
         Ok(MaybePendingTransactionReceipt::PendingReceipt(receipt))
-    }
-
-    fn get_transaction_execution_info(
-        &self,
-        parent_substrate_block_hash: B::Hash,
-        previous_transactions: &BlockTransactions,
-        chain_id: Felt252Wrapper,
-        transaction_hash: FieldElement,
-    ) -> Result<TransactionExecutionInfo, StarknetRpcApiError>
-    where
-        B: BlockT,
-    {
-        let (transactions_before, transaction_to_trace) =
-            map_transaction_to_user_transaction(self, previous_transactions, chain_id, Some(transaction_hash.into()))?;
-
-        if transaction_to_trace.is_empty() {
-            return Err(StarknetRpcApiError::TxnHashNotFound);
-        }
-
-        if transaction_to_trace.len() > 1 {
-            log::error!("More than one transaction with the same transaction hash {:#?}", transaction_to_trace);
-            return Err(StarknetRpcApiError::InternalServerError);
-        }
-
-        let trace = self
-            .re_execute_transactions(parent_substrate_block_hash, transactions_before, transaction_to_trace)
-            .map_err(|e| {
-                log::error!("Failed to re-execute transactions: {e}");
-                StarknetRpcApiError::InternalServerError
-            })?;
-
-        let execution_info = trace.get(0).ok_or_else(|| {
-            log::error!("Failed to get execution info");
-            StarknetRpcApiError::InternalServerError
-        })?;
-
-        Ok(execution_info.0.clone())
     }
 }
 

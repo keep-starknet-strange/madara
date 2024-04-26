@@ -118,7 +118,12 @@ where
 
                     simulated_transactions.push(SimulatedTransaction {
                         transaction_trace,
-                        fee_estimation: FeeEstimate { gas_consumed, gas_price, overall_fee },
+                        fee_estimation: FeeEstimate {
+                            gas_consumed: FieldElement::from(gas_consumed),
+                            gas_price: FieldElement::from(gas_price),
+                            overall_fee: FieldElement::from(overall_fee),
+                            unit: PriceUnit::Wei,
+                        },
                     });
                 }
                 Err(e) => {
@@ -180,7 +185,7 @@ where
             .unwrap();
 
         let state_diff = blockifier_to_rpc_state_diff_types(commitment_state_diff.clone())
-            .map_err(|_| StarknetRpcApiError::from(ConvertCallInfoToExecuteInvocationError::ConvertStateDiffFailed))?;
+            .map_err(|_| StarknetRpcApiError::InternalServerError)?;
 
         let trace = tx_execution_infos_to_tx_trace(tx_type, &execution_infos, Some(state_diff))
             .map_err(StarknetRpcApiError::from)?;

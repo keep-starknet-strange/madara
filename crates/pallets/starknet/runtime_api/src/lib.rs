@@ -13,15 +13,11 @@ use blockifier::transaction::objects::TransactionExecutionInfo;
 use blockifier::transaction::transaction_execution::Transaction;
 use blockifier::transaction::transactions::L1HandlerTransaction;
 use mp_felt::Felt252Wrapper;
-use mp_transactions::{HandleL1MessageTransaction, Transaction, UserOrL1HandlerTransaction, UserTransaction};
-use sp_api::BlockT;
 pub extern crate alloc;
-use alloc::string::String;
 use alloc::vec::Vec;
 
 use mp_simulations::{Error, SimulationFlags, TransactionSimulationResult};
 use sp_api::BlockT;
-use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::state::StorageKey;

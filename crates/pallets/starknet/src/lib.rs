@@ -928,7 +928,7 @@ impl<T: Config> Pallet<T> {
             }),
             false,
         )
-        .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+        .map_err(|e| mp_simulations::Error::from(e))?;
 
         match entrypoint.execute(
             &mut BlockifierStateAdapter::<T>::default(),

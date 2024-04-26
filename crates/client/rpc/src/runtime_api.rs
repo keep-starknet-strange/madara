@@ -11,7 +11,6 @@ pub use mc_rpc_core::{
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_simulations::SimulationFlags;
-use mp_transactions::{HandleL1MessageTransaction, Transaction, UserTransaction};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::Backend;
 use sc_transaction_pool::ChainApi;
@@ -54,7 +53,7 @@ where
     pub fn do_estimate_message_fee(
         &self,
         block_hash: B::Hash,
-        message: HandleL1MessageTransaction,
+        message: L1HandlerTransaction,
     ) -> RpcApiResult<(u128, u128, u128)> {
         Ok(self.client.runtime_api().estimate_message_fee(block_hash, message).map_err(|e| {
             error!("Runtime Api error: {e}");

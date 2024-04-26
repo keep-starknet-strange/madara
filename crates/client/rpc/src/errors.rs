@@ -1,8 +1,9 @@
 use core::fmt;
 
 use blockifier::transaction::errors::TransactionExecutionError;
+use blockifier::transaction::objects::TransactionExecutionInfo;
 use jsonrpsee::types::error::{CallError, ErrorObject};
-use starknet_api::api_core::ContractAddress;
+use starknet_api::core::ContractAddress;
 use thiserror::Error;
 
 // Comes from the RPC Spec:
@@ -130,10 +131,9 @@ impl From<mp_simulations::Error> for StarknetRpcApiError {
         match value {
             mp_simulations::Error::ContractNotFound(address) => StarknetRpcApiError::ContractNotFound(address.into()),
             mp_simulations::Error::TransactionExecutionFailed(e) => StarknetRpcApiError::ContractError(e.into()),
-            mp_simulations::Error::MissingL1GasUsage => StarknetRpcApiError::InternalServerError,
-            mp_simulations::Error::FailedToCreateATransactionalStorageExecution => {
-                StarknetRpcApiError::InternalServerError
-            }
+            mp_simulations::Error::MissingL1GasUsage
+            | mp_simulations::Error::FailedToCreateATransactionalStorageExecution
+            | mp_simulations::Error::StateDiff => StarknetRpcApiError::InternalServerError,
         }
     }
 }
