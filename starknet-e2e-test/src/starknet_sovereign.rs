@@ -155,7 +155,7 @@ impl StarknetSovereign {
         self.client
             .send_message_to_l2(
                 convert_felt_to_u256(message.to_address.0.0),
-                convert_felt_to_u256(message.selector),
+                convert_felt_to_u256(message.selector.0),
                 message.payload.clone().into_iter().map(convert_felt_to_u256).collect(),
                 1.into(),
             )

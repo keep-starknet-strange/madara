@@ -93,9 +93,10 @@ impl StarknetTokenBridge {
         let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, CAIRO_1_ACCOUNT_CONTRACT, false);
         let mut madara_write_lock = madara.write().await;
 
-        let (erc20_declare_tx, _, _) = account.declare_contract(ERC20_SIERRA_PATH, ERC20_CASM_PATH);
+        let (erc20_declare_tx, _, _) = account.declare_contract(ERC20_SIERRA_PATH, ERC20_CASM_PATH, None);
 
-        let (bridge_declare_tx, _, _) = account.declare_contract(TOKEN_BRIDGE_SIERRA_PATH, TOKEN_BRIDGE_CASM_PATH);
+        let (bridge_declare_tx, _, _) =
+            account.declare_contract(TOKEN_BRIDGE_SIERRA_PATH, TOKEN_BRIDGE_CASM_PATH, None);
 
         let nonce = account.get_nonce().await.unwrap();
         madara_write_lock

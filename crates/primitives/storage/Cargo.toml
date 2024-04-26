@@ -20,7 +20,5 @@ serde = { workspace = true, optional = true, features = ["derive"] }
 sp-io = { workspace = true }
 
 [features]
-default = ["std"]
-std = ["serde?/std", "parity-scale-codec?/std", "sp-io/std"]
 serde = ["dep:serde"]
 parity-scale-codec = ["dep:parity-scale-codec"]

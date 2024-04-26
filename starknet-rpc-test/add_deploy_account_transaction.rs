@@ -16,7 +16,7 @@ use starknet_test_utils::{Transaction, TransactionResult};
 
 #[rstest]
 #[tokio::test]
-async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+async fn address_without_funds_cannot_deploy(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
     // deploy account
@@ -34,7 +34,7 @@ async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraCli
     let txs = madara_write_lock.create_block_with_txs(vec![Transaction::AccountDeployment(account_deploy_txn)]).await?;
 
     assert_eq!(txs.len(), 1);
-    assert!(txs[0].as_ref().is_ok());
+    assert!(txs[0].as_ref().is_err());
 
     // transaction fails, nothing at class hash
     assert!(rpc.get_class_hash_at(BlockId::Tag(BlockTag::Latest), account_address).await.is_err());

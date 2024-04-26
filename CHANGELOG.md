@@ -3,7 +3,8 @@
 ## Next release
 
 - fix: starknet_call errs if contract nonexistent
-- refactoring: Removed Redundant logs in madara
+- chore: rebase on latest blockifier
+- refactoring : Removed Redundant logs in madara
 - fix: transaction receipt fails for txs in the middle of a block
 - chore: add makefile for developer experience improvements and cleanup
 - fix: fix cargo-lint issues

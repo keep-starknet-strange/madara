@@ -1,8 +1,6 @@
 //! The address of the account receiving the network fee
-#![cfg_attr(not(feature = "std"), no_std)]
-
 use sp_inherents::{InherentData, InherentIdentifier, IsFatalError};
-use thiserror_no_std::Error;
+use thiserror::Error;
 
 /// The identifier for the `sequencer_address` inherent.
 pub const INHERENT_IDENTIFIER: InherentIdentifier = *b"seqaddr0";

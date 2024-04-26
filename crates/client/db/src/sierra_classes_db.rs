@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use parity_scale_codec::{Decode, Encode};
 use sp_database::Database;
-use starknet_api::api_core::ClassHash;
+use starknet_api::core::ClassHash;
 use starknet_api::state::ContractClass;
 
 use crate::{DbError, DbHash};

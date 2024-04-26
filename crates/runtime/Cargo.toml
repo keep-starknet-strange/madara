@@ -15,9 +15,12 @@ repository = "https://github.com/keep-starknet-strange/madara"
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
+[package.metadata.cargo-machete]
+ignored = ["scale-info"] # Used in the macros
+
 [dependencies]
-parity-scale-codec = { workspace = true, features = [] }
-scale-info = { workspace = true, features = [] }
+parity-scale-codec = { workspace = true }
+scale-info = { workspace = true }
 serde = { workspace = true }
 
 sp-api = { workspace = true }
@@ -49,59 +52,20 @@ frame-system-benchmarking = { workspace = true, optional = true }
 
 # Madara Local Dependencies
 # Madara Pallets
-pallet-starknet = { workspace = true }
-pallet-starknet-runtime-api = { workspace = true }
-
-# Madara Primitives
-mp-block = { workspace = true }
 mp-chain-id = { workspace = true }
-mp-fee = { workspace = true }
 mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
 mp-program-hash = { workspace = true }
 mp-simulations = { workspace = true }
-mp-transactions = { workspace = true }
+pallet-starknet = { workspace = true }
+pallet-starknet-runtime-api = { workspace = true }
 # Starknet dependencies
 blockifier = { workspace = true }
-starknet-core = { workspace = true }
-starknet-ff = { workspace = true }
 starknet_api = { workspace = true }
 
 [features]
-std = [
-  # Madara pallets
-  "pallet-starknet/std",
-  # Frame dependencies
-  "frame-try-runtime?/std",
-  "frame-system-benchmarking?/std",
-  "frame-benchmarking?/std",
-  "frame-executive/std",
-  "frame-support/std",
-  "frame-system-rpc-runtime-api/std",
-  "frame-system/std",
-  "frame-try-runtime/std",
-  # Frame pallets dependencies
-  "pallet-aura/std",
-  "pallet-grandpa/std",
-  "pallet-timestamp/std",
-  # Substrate primitives dependencies
-  "sp-api/std",
-  "sp-block-builder/std",
-  "sp-consensus-aura/std",
-  "sp-core/std",
-  "sp-inherents/std",
-  "sp-offchain/std",
-  "sp-runtime/std",
-  "sp-session/std",
-  "sp-std/std",
-  "sp-transaction-pool/std",
-  "sp-version/std",
-  # 3rd party dependencies
-  "parity-scale-codec/std",
-  "scale-info/std",
-  "blockifier/std",
-  "starknet_api/std",
-]
+default = ["std"]
+std = []
 try-runtime = [
   "pallet-timestamp/try-runtime",
   "frame-try-runtime/try-runtime",
@@ -113,7 +77,6 @@ try-runtime = [
   # Madara pallets
   "pallet-starknet/try-runtime",
 ]
-default = ["std"]
 madara-state-root = []
 disable-transaction-fee = []
 runtime-benchmarks = [

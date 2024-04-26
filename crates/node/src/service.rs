@@ -81,7 +81,6 @@ const GRANDPA_JUSTIFICATION_PERIOD: u32 = 512;
 pub fn new_partial<BIQ>(
     config: &Configuration,
     build_import_queue: BIQ,
-    cache_more_things: bool,
 ) -> Result<
     sc_service::PartialComponents<
         FullClient,
@@ -171,7 +170,7 @@ where
         telemetry.as_ref().map(|x| x.handle()),
     )?;
 
-    let madara_backend = Arc::new(MadaraBackend::open(&config.database, &db_config_dir(config), cache_more_things)?);
+    let madara_backend = Arc::new(MadaraBackend::open(&config.database, &db_config_dir(config))?);
 
     let (import_queue, block_import) = build_import_queue(
         client.clone(),
@@ -267,7 +266,6 @@ pub fn new_full(
     config: Configuration,
     sealing: SealingMode,
     da_client: Option<Box<dyn DaClient + Send + Sync>>,
-    cache_more_things: bool,
     settlement_config: Option<(SettlementLayer, PathBuf)>,
 ) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
@@ -282,7 +280,7 @@ pub fn new_full(
         select_chain,
         transaction_pool,
         other: (block_import, grandpa_link, mut telemetry, madara_backend),
-    } = new_partial(&config, build_import_queue, cache_more_things)?;
+    } = new_partial(&config, build_import_queue)?;
 
     let mut net_config = sc_network::config::FullNetworkConfiguration::new(&config.network);
 
@@ -707,9 +705,9 @@ where
 type ChainOpsResult =
     Result<(Arc<FullClient>, Arc<FullBackend>, BasicQueue<Block>, TaskManager, Arc<MadaraBackend>), ServiceError>;
 
-pub fn new_chain_ops(config: &mut Configuration, cache_more_things: bool) -> ChainOpsResult {
+pub fn new_chain_ops(config: &mut Configuration) -> ChainOpsResult {
     config.keystore = sc_service::config::KeystoreConfig::InMemory;
     let sc_service::PartialComponents { client, backend, import_queue, task_manager, other, .. } =
-        new_partial::<_>(config, build_aura_grandpa_import_queue, cache_more_things)?;
+        new_partial::<_>(config, build_aura_grandpa_import_queue)?;
     Ok((client, backend, import_queue, task_manager, other.3))
 }

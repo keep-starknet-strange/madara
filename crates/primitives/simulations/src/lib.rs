@@ -1,14 +1,5 @@
-#![cfg_attr(not(feature = "std"), no_std)]
-
-#[doc(hidden)]
-pub extern crate alloc;
-
-use alloc::vec::Vec;
-
-use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
-use starknet_api::api_core::ContractAddress;
-use starknet_core::types::SimulationFlag;
+use starknet_core::types::{SimulationFlag, SimulationFlagForEstimateFee};
 
 // TODO: This is a placeholder
 // https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json#L3919
@@ -37,25 +28,47 @@ pub type TransactionSimulationResult = Result<TransactionExecutionInfo, Error>;
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 pub struct SimulationFlags {
-    pub skip_validate: bool,
-    pub skip_fee_charge: bool,
+    pub validate: bool,
+    pub charge_fee: bool,
 }
 
 impl From<Vec<SimulationFlag>> for SimulationFlags {
     fn from(flags: Vec<SimulationFlag>) -> Self {
-        let mut skip_validate = false;
-        let mut skip_fee_charge = false;
+        let mut flags_out = Self::default();
 
         for flag in flags {
             match flag {
-                SimulationFlag::SkipValidate => skip_validate = true,
-                SimulationFlag::SkipFeeCharge => skip_fee_charge = true,
+                SimulationFlag::SkipValidate => flags_out.validate = false,
+                SimulationFlag::SkipFeeCharge => flags_out.charge_fee = false,
             }
-            if skip_validate && skip_fee_charge {
+            if !flags_out.validate && !flags_out.charge_fee {
                 break;
             }
         }
 
-        Self { skip_validate, skip_fee_charge }
+        flags_out
+    }
+}
+
+impl From<Vec<SimulationFlagForEstimateFee>> for SimulationFlags {
+    fn from(flags: Vec<SimulationFlagForEstimateFee>) -> Self {
+        let mut flags_out = Self::default();
+
+        for flag in flags {
+            match flag {
+                SimulationFlagForEstimateFee::SkipValidate => flags_out.validate = false,
+            }
+            if !flags_out.validate {
+                break;
+            }
+        }
+
+        flags_out
+    }
+}
+
+impl core::default::Default for SimulationFlags {
+    fn default() -> Self {
+        Self { validate: true, charge_fee: true }
     }
 }

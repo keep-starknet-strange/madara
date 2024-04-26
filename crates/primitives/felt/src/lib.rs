@@ -6,18 +6,12 @@
 //!
 //! The [`Felt252Wrapper`] implements the traits for SCALE encoding, and wrap
 //! the [`FieldElement`] type from starknet-ff.
-
-#![cfg_attr(not(feature = "std"), no_std)]
-
-#[doc(hidden)]
-pub extern crate alloc;
-
 mod starkware_types_conversions;
 
 #[cfg(feature = "serde")]
 pub mod with_serde;
 
-use alloc::string::{String, ToString};
+use std::borrow::Cow;
 
 use cairo_vm::felt::Felt252;
 #[cfg(feature = "parity-scale-codec")]
@@ -27,7 +21,7 @@ use scale_info::{build::Fields, Path, Type, TypeInfo};
 use sp_core::{H256, U256};
 use starknet_api::hash::StarkFelt;
 use starknet_ff::{FieldElement, FromByteSliceError, FromStrError};
-use thiserror_no_std::Error;
+use thiserror::Error;
 
 #[cfg(feature = "serde")]
 pub use crate::with_serde::*;
@@ -87,9 +81,8 @@ impl Felt252Wrapper {
     ///
     /// If the bytes are not valid utf-8, returns [`Felt252WrapperError`].
     pub fn from_utf8(&self) -> Result<String, Felt252WrapperError> {
-        let s = alloc::str::from_utf8(&self.0.to_bytes_be())
-            .map_err(|_| Felt252WrapperError::InvalidCharacter)?
-            .to_string();
+        let s =
+            std::str::from_utf8(&self.0.to_bytes_be()).map_err(|_| Felt252WrapperError::InvalidCharacter)?.to_string();
         Ok(s.trim_start_matches('\0').to_string())
     }
 }
@@ -340,8 +333,6 @@ pub enum Felt252WrapperError {
     #[error("felt252 value too large")]
     ValueTooLarge,
 }
-
-use alloc::borrow::Cow;
 
 impl From<Felt252WrapperError> for Cow<'static, str> {
     fn from(err: Felt252WrapperError) -> Self {

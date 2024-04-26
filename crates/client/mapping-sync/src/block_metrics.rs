@@ -6,8 +6,10 @@ pub struct BlockMetrics {
     pub block_height: Gauge,
     pub transaction_count: Counter,
     pub event_count: Counter,
-    pub l1_gas_price_wei: Gauge,
-    pub l1_gas_price_strk: Gauge,
+    pub eth_l1_gas_price_wei: Gauge,
+    pub strk_l1_gas_price_fri: Gauge,
+    pub eth_l1_data_gas_price_wei: Gauge,
+    pub strk_l1_data_gas_price_fri: Gauge,
 }
 
 impl BlockMetrics {
@@ -19,9 +21,20 @@ impl BlockMetrics {
                 registry,
             )?,
             event_count: register(Counter::new("madara_event_count", "Counter for madara event count")?, registry)?,
-            l1_gas_price_wei: register(Gauge::new("madara_l1_gas_price", "Gauge for madara l1 gas price")?, registry)?,
-            l1_gas_price_strk: register(
-                Gauge::new("madara_l1_gas_price_strk", "Gauge for madara l1 gas price in strk")?,
+            eth_l1_gas_price_wei: register(
+                Gauge::new("madara_l1_gas_price_eth", "Gauge for madara l1 gas price in eth wei")?,
+                registry,
+            )?,
+            strk_l1_gas_price_fri: register(
+                Gauge::new("madara_l1_gas_price_strk", "Gauge for madara l1 gas price in strk fri")?,
+                registry,
+            )?,
+            eth_l1_data_gas_price_wei: register(
+                Gauge::new("madara_l1_data_gas_price_eth", "Gauge for madara l1 data gas price in eth wei")?,
+                registry,
+            )?,
+            strk_l1_data_gas_price_fri: register(
+                Gauge::new("madara_l1_data_gas_price_strk", "Gauge for madara l1 data gas price in strk fri")?,
                 registry,
             )?,
         })
