@@ -1,5 +1,5 @@
 use starknet_api::state::StorageKey;
-use starknet_api::{api_core as stcore, block as stb, transaction as sttx};
+use starknet_api::{block as stb, core as stcore, transaction as sttx};
 
 use super::Felt252Wrapper;
 

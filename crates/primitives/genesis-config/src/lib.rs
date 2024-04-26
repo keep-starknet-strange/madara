@@ -3,7 +3,6 @@ use std::path::PathBuf;
 use std::string::String;
 use std::vec::Vec;
 
-use blockifier::execution::contract_class::ContractClass as StarknetContractClass;
 use mp_felt::Felt252Wrapper;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -55,8 +54,9 @@ pub struct GenesisData {
     pub contracts: Vec<(ContractAddress, ClassHash)>,
     pub predeployed_accounts: Vec<PredeployedAccount>,
     pub storage: Vec<(ContractStorageKey, StorageValue)>,
-    pub fee_token_address: ContractAddress,
     pub chain_id: String,
+    pub strk_fee_token_address: ContractAddress,
+    pub eth_fee_token_address: ContractAddress,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -78,11 +78,10 @@ impl GenesisLoader {
     }
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum ContractClass {
     Path { path: String, version: u8 },
-    Class(StarknetContractClass),
 }
 
 /// A struct containing predeployed accounts info.

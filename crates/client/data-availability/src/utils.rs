@@ -1,6 +1,6 @@
 use ethers::types::U256;
 use mc_commitment_state_diff::BlockDAData;
-use starknet_api::api_core::{Nonce, PatriciaKey};
+use starknet_api::core::{Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use url::{ParseError, Url};
 
@@ -30,7 +30,7 @@ pub fn block_data_to_calldata(mut block_da_data: BlockDAData) -> Vec<U256> {
             .get(&addr)
             .or_else(|| block_da_data.state_diff.replaced_classes.get(&addr));
 
-        let nonce = block_da_data.state_diff.nonces.remove(&addr);
+        let nonce = block_da_data.state_diff.nonces.swap_remove(&addr);
         calldata.push(da_word(class_flag.is_some(), nonce, writes.len() as u64));
 
         if let Some(class_hash) = class_flag {

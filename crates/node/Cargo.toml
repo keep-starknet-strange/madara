@@ -20,8 +20,6 @@ targets = ["x86_64-unknown-linux-gnu"]
 name = "madara"
 
 [dependencies]
-# Ethereum
-ethers = { workspace = true, features = ["openssl"] }
 
 async-trait = "0.1"
 clap = { workspace = true, features = ["derive"] }
@@ -41,7 +39,6 @@ sc-consensus-aura = { workspace = true }
 sc-consensus-grandpa = { workspace = true }
 sc-consensus-manual-seal = { workspace = true }
 sc-executor = { workspace = true }
-sc-keystore = { workspace = true }
 sc-network = { workspace = true }
 sc-network-sync = { workspace = true }
 sc-offchain = { workspace = true }
@@ -60,7 +57,6 @@ sp-runtime = { workspace = true }
 sp-state-machine = { workspace = true }
 sp-statement-store = { workspace = true }
 sp-timestamp = { workspace = true }
-sp-trie = { workspace = true, features = ["default"] }
 
 # These dependencies are used for the node template's RPCs
 jsonrpsee = { workspace = true, features = ["server"] }
@@ -80,11 +76,7 @@ substrate-frame-rpc-system = { workspace = true }
 # These dependencies are used for runtime benchmarking
 frame-benchmarking = { workspace = true }
 frame-benchmarking-cli = { workspace = true }
-
-# Starknet
-blockifier = { workspace = true }
-hex = { workspace = true }
-madara-runtime = { workspace = true }
+madara-runtime = { workspace = true, features = ["std"] }
 mc-commitment-state-diff = { workspace = true }
 mc-data-availability = { workspace = true, features = ["clap"] }
 mc-db = { workspace = true }
@@ -95,13 +87,8 @@ mc-rpc = { workspace = true }
 mc-settlement = { workspace = true, features = ["clap"] }
 mc-starknet-block-import = { workspace = true, optional = true }
 mc-storage = { workspace = true }
-pallet-starknet = { workspace = true }
+pallet-starknet = { workspace = true, features = ["genesis-loader"] }
 pallet-starknet-runtime-api = { workspace = true }
-starknet-core = { workspace = true }
-starknet_api = { workspace = true, features = [
-  "scale-info",
-  "parity-scale-codec",
-] }
 
 # Madara utils
 mc-genesis-data-provider = { workspace = true }
@@ -111,22 +98,21 @@ mp-block = { workspace = true }
 mp-digest-log = { workspace = true }
 mp-felt = { workspace = true }
 mp-sequencer-address = { workspace = true, features = ["client"] }
-mp-transactions = { workspace = true, features = ["scale-info"] }
+
+# Starknet
+blockifier = { workspace = true }
 
 
 # CLI-specific dependencies
-try-runtime-cli = { optional = true, git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-
-parity-scale-codec = { workspace = true, features = ["derive"] }
 reqwest = { workspace = true }
 serde_json = { workspace = true }
+try-runtime-cli = { optional = true, git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
 url = { workspace = true }
 
 [build-dependencies]
 substrate-build-script-utils = { workspace = true }
 
 [features]
-default = []
 # Dependencies that are only required if runtime benchmarking should be build.
 runtime-benchmarks = [
   "madara-runtime/runtime-benchmarks",

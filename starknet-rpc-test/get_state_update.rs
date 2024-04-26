@@ -3,12 +3,16 @@ use assert_matches::assert_matches;
 use rstest::rstest;
 use starknet_core::types::{BlockId, BlockTag, DeclaredClassItem, MaybePendingStateUpdate, NonceUpdate, StarknetError};
 use starknet_ff::FieldElement;
+use starknet_providers::Provider;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
-use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
-use starknet_test_utils::constants::{ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE};
-use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_test_utils::utils::{build_single_owner_account, AccountActions};
-use starknet_test_utils::Transaction;
+use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE};
+use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_rpc_test::utils::{build_single_owner_account, AccountActions};
+use starknet_rpc_test::Transaction;
+
+// Those test should be run on a node using the
+// --da-layer=ethereum --da-conf=examples/da-confs/ethereum.json
+// arguments
 
 #[rstest]
 #[tokio::test]
@@ -16,12 +20,8 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
     let rpc = madara.get_starknet_client().await;
 
     assert_matches!(
-        rpc
-        .get_state_update(
-            BlockId::Hash(FieldElement::ZERO),
-        )
-        .await,
-        Err(StarknetProviderError(StarknetErrorWithMessage { code: MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::BlockNotFound
+        rpc.get_state_update(BlockId::Hash(FieldElement::ZERO)).await,
+        Err(StarknetProviderError(StarknetError::BlockNotFound))
     );
 
     Ok(())
@@ -84,15 +84,17 @@ async fn returns_correct_state_diff_declare(madara: &ThreadSafeMadaraClient) -> 
     let (declare_tx, expected_class_hash, expected_compiled_class_hash) = account.declare_contract(
         "../starknet-rpc-test/contracts/counter6/counter6.contract_class.json",
         "../starknet-rpc-test/contracts/counter6/counter6.compiled_contract_class.json",
+        None,
     );
 
     let (state_update, block_hash) = {
         let mut madara_write_lock = madara.write().await;
 
-        madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
+        let txs = madara_write_lock.create_block_with_txs(vec![Transaction::Declaration(declare_tx)]).await?;
+        assert!(txs[0].is_ok());
 
         // sleep for a bit to make sure state diff is published
-        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
         let state_update = match rpc.get_state_update(BlockId::Tag(BlockTag::Latest)).await.unwrap() {
             MaybePendingStateUpdate::Update(update) => update,

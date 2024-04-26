@@ -6,7 +6,7 @@ use mc_settlement::{SettlementProvider, StarknetSpec, StarknetState};
 use mp_messages::{MessageL1ToL2, MessageL2ToL1};
 use mp_snos_output::StarknetOsOutput;
 use rstest::rstest;
-use starknet_api::api_core::{ContractAddress, Nonce, PatriciaKey};
+use starknet_api::core::{ContractAddress, EntryPointSelector, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_e2e_test::starknet_sovereign::StarknetSovereign;
 
@@ -68,7 +68,7 @@ async fn starknet_core_contract_sends_messages_to_l2() -> anyhow::Result<()> {
         from_address: ContractAddress(PatriciaKey(StarkFelt::new(from_address).unwrap())),
         to_address: 3u64.into(),
         nonce: Nonce(0u64.into()), // Starknet contract maintains global nonce counter
-        selector: 2u64.into(),
+        selector: EntryPointSelector(StarkFelt::from(2u64)),
         payload: vec![1u64.into()],
     };
 

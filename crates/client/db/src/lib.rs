@@ -53,7 +53,7 @@ pub(crate) mod columns {
     // ===== /!\ ===================================================================================
     // MUST BE INCREMENTED WHEN A NEW COLUMN IN ADDED
     // ===== /!\ ===================================================================================
-    pub const NUM_COLUMNS: u32 = 9;
+    pub const NUM_COLUMNS: u32 = 8;
 
     pub const META: u32 = 0;
     pub const BLOCK_MAPPING: u32 = 1;
@@ -61,20 +61,14 @@ pub(crate) mod columns {
     pub const SYNCED_MAPPING: u32 = 3;
     pub const DA: u32 = 4;
 
-    /// This column is used to map starknet block hashes to a list of transaction hashes that are
-    /// contained in the block.
-    ///
-    /// This column should only be accessed if the `--cache` flag is enabled.
-    pub const STARKNET_TRANSACTION_HASHES_CACHE: u32 = 5;
-
     /// This column contains last synchronized L1 block.
-    pub const MESSAGING: u32 = 6;
+    pub const MESSAGING: u32 = 5;
 
     /// This column contains the Sierra contract classes
-    pub const SIERRA_CONTRACT_CLASSES: u32 = 7;
+    pub const SIERRA_CONTRACT_CLASSES: u32 = 6;
 
     /// This column stores the fee paid on l1 for L1Handler transactions
-    pub const L1_HANDLER_PAID_FEE: u32 = 8;
+    pub const L1_HANDLER_PAID_FEE: u32 = 7;
 }
 
 pub mod static_keys {
@@ -106,33 +100,30 @@ impl<B: BlockT> Backend<B> {
     /// Open the database
     ///
     /// The database will be created at db_config_dir.join(<db_type_name>)
-    pub fn open(database: &DatabaseSource, db_config_dir: &Path, cache_more_things: bool) -> Result<Self, String> {
-        Self::new(
-            &DatabaseSettings {
-                source: match database {
-                    DatabaseSource::RocksDb { .. } => {
-                        DatabaseSource::RocksDb { path: starknet_database_dir(db_config_dir, "rockdb"), cache_size: 0 }
-                    }
-                    DatabaseSource::ParityDb { .. } => {
-                        DatabaseSource::ParityDb { path: starknet_database_dir(db_config_dir, "paritydb") }
-                    }
-                    DatabaseSource::Auto { .. } => DatabaseSource::Auto {
-                        rocksdb_path: starknet_database_dir(db_config_dir, "rockdb"),
-                        paritydb_path: starknet_database_dir(db_config_dir, "paritydb"),
-                        cache_size: 0,
-                    },
-                    _ => return Err("Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string()),
+    pub fn open(database: &DatabaseSource, db_config_dir: &Path) -> Result<Self, String> {
+        Self::new(&DatabaseSettings {
+            source: match database {
+                DatabaseSource::RocksDb { .. } => {
+                    DatabaseSource::RocksDb { path: starknet_database_dir(db_config_dir, "rockdb"), cache_size: 0 }
+                }
+                DatabaseSource::ParityDb { .. } => {
+                    DatabaseSource::ParityDb { path: starknet_database_dir(db_config_dir, "paritydb") }
+                }
+                DatabaseSource::Auto { .. } => DatabaseSource::Auto {
+                    rocksdb_path: starknet_database_dir(db_config_dir, "rockdb"),
+                    paritydb_path: starknet_database_dir(db_config_dir, "paritydb"),
+                    cache_size: 0,
                 },
+                _ => return Err("Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string()),
             },
-            cache_more_things,
-        )
+        })
     }
 
-    fn new(config: &DatabaseSettings, cache_more_things: bool) -> Result<Self, String> {
+    fn new(config: &DatabaseSettings) -> Result<Self, String> {
         let db = db_opening_utils::open_database(config)?;
 
         Ok(Self {
-            mapping: Arc::new(MappingDb::new(db.clone(), cache_more_things)),
+            mapping: Arc::new(MappingDb::new(db.clone())),
             meta: Arc::new(MetaDb { db: db.clone(), _marker: PhantomData }),
             da: Arc::new(DaDb { db: db.clone() }),
             messaging: Arc::new(MessagingDb { db: db.clone() }),

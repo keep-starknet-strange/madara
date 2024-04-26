@@ -5,11 +5,10 @@ use starknet_core::types::{
     TransactionTrace, TransactionTraceWithHash,
 };
 use starknet_ff::FieldElement;
+use starknet_providers::Provider;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
-use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
-use starknet_test_utils::constants::{
-    ARGENT_ACCOUNT_CLASS_HASH_CAIRO_0, ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, SIGNER_PRIVATE,
-};
+use starknet_rpc_test::constants::{ARGENT_ACCOUNT_CLASS_HASH_CAIRO_0, ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE};
+use starknet_test_utils::constants::ETH_FEE_TOKEN_ADDRESS;
 use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_test_utils::utils::{build_single_owner_account, AccountActions};
 use starknet_test_utils::Transaction;
@@ -21,7 +20,7 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
 
     assert_matches!(
         rpc.trace_block_transactions(BlockId::Hash(FieldElement::ZERO)).await,
-        Err(StarknetProviderError(StarknetErrorWithMessage { code: MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::BlockNotFound
+        Err(StarknetProviderError(StarknetError::BlockNotFound))
     );
 
     Ok(())
@@ -70,15 +69,15 @@ async fn work_for_one_invoke_tx(madara: &ThreadSafeMadaraClient) -> Result<(), a
         FieldElement::from_hex_be("0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e").unwrap();
     // This is legacy starknet `__execute__` calls encoding
     let expected_calldata = vec![
-        FieldElement::ONE,                                     // number of calls
-        FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(), // contract to call
-        transfer_selector,                                     // selector
-        FieldElement::ZERO,                                    // data offset
-        FieldElement::from(3u8),                               // data len
-        FieldElement::from(3u8),                               // Calldata len
-        recipient_account,                                     // Recipient address
-        FieldElement::ONE,                                     // Amount low
-        FieldElement::ZERO,                                    // Amount high
+        FieldElement::ONE,                                         // number of calls
+        FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap(), // contract to call
+        transfer_selector,                                         // selector
+        FieldElement::ZERO,                                        // data offset
+        FieldElement::from(3u8),                                   // data len
+        FieldElement::from(3u8),                                   // Calldata len
+        recipient_account,                                         // Recipient address
+        FieldElement::ONE,                                         // Amount low
+        FieldElement::ZERO,                                        // Amount high
     ];
 
     assert_eq!(traces.len(), 1);

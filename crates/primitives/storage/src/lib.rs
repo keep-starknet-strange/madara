@@ -1,8 +1,4 @@
 //! Starknet storage primitives.
-#![cfg_attr(not(feature = "std"), no_std)]
-
-extern crate alloc;
-use alloc::vec::Vec;
 
 use lazy_static::lazy_static;
 use sp_io::hashing::twox_128;

@@ -1,16 +1,10 @@
 //! StarkNet OS program output primitives.
-#![cfg_attr(not(feature = "std"), no_std)]
-
-#[doc(hidden)]
-pub extern crate alloc;
 
 mod codec;
 mod felt_reader;
 
 #[cfg(test)]
 mod tests;
-
-use alloc::vec::Vec;
 
 use mp_messages::{MessageL1ToL2, MessageL2ToL1};
 use starknet_api::hash::StarkFelt;

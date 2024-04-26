@@ -12,55 +12,21 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 blockifier = { workspace = true }
-mp-fee = { workspace = true, features = [
-  "parity-scale-codec",
-  "serde",
-  "scale-info",
-] }
 mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
 mp-transactions = { workspace = true }
-serde = { workspace = true, features = ["derive"], optional = true }
-serde_json = { workspace = true }
 sp-core = { workspace = true }
 starknet_api = { workspace = true }
+thiserror = { workspace = true }
 
 # Optionals
 parity-scale-codec = { workspace = true, features = [
   "derive",
 ], optional = true }
 scale-info = { workspace = true, features = ["derive"], optional = true }
-
-[dev-dependencies]
-mp-hashers = { workspace = true }
-mp-felt = { workspace = true }
+serde = { workspace = true, features = ["derive"], optional = true }
 
 [features]
-default = ["std"]
-std = [
-  "sp-core/std",
-  "mp-felt/std",
-  "mp-fee/std",
-  "mp-transactions/std",
-  "mp-hashers/std",
-  "starknet_api/std",
-  "blockifier/std",
-  "serde/std",
-  # Optionals
-  "parity-scale-codec?/std",
-  "scale-info?/std",
-]
-parity-scale-codec = [
-  "dep:parity-scale-codec",
-  "mp-felt/parity-scale-codec",
-  "mp-fee/parity-scale-codec",
-  "mp-transactions/parity-scale-codec",
-  "starknet_api/parity-scale-codec",
-  "blockifier/parity-scale-codec",
-]
-scale-info = [
-  "dep:scale-info",
-  "mp-felt/scale-info",
-  "starknet_api/scale-info",
-  "blockifier/scale-info",
-]
+parity-scale-codec = ["dep:parity-scale-codec", "mp-felt/parity-scale-codec"]
+serde = ["dep:serde"]
+scale-info = ["dep:scale-info", "mp-felt/scale-info"]
