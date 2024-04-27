@@ -928,7 +928,7 @@ impl<T: Config> Pallet<T> {
             }),
             false,
         )
-        .map_err(|e| mp_simulations::Error::from(e))?;
+        .map_err(mp_simulations::Error::from)?;
 
         match entrypoint.execute(
             &mut BlockifierStateAdapter::<T>::default(),

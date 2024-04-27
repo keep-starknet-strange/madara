@@ -16,7 +16,7 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 use blockifier::transaction::account_transaction::AccountTransaction;
-use blockifier::transaction::objects::{ResourcesMapping, TransactionExecutionInfo};
+use blockifier::transaction::objects::{ResourcesMapping};
 use blockifier::transaction::transactions::L1HandlerTransaction;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
@@ -28,7 +28,7 @@ pub use mc_rpc_core::{
     StarknetWriteRpcApiServer,
 };
 use mc_storage::OverrideHandle;
-use mp_block::BlockTransactions;
+
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_simulations::SimulationFlags;

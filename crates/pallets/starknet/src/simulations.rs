@@ -107,8 +107,7 @@ impl<T: Config> Pallet<T> {
 
                 Ok((res.1, result))
             })
-            .collect::<Result<Vec<_>, Error>>()
-            .map_err(|e| Error::from(e))?;
+            .collect::<Result<Vec<_>, Error>>()?;
 
         Ok(tx_execution_results)
     }

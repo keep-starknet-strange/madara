@@ -1,7 +1,7 @@
 use blockifier::execution::call_info::CallInfo;
 use blockifier::state::cached_state::CommitmentStateDiff;
 use blockifier::transaction::account_transaction::AccountTransaction;
-use blockifier::transaction::errors::TransactionExecutionError;
+
 use blockifier::transaction::objects::TransactionExecutionInfo;
 use blockifier::transaction::transaction_execution::Transaction;
 use jsonrpsee::core::{async_trait, RpcResult};
@@ -11,7 +11,7 @@ use mc_rpc_core::utils::{blockifier_to_rpc_state_diff_types, get_block_by_block_
 use mc_rpc_core::{StarknetReadRpcApiServer, StarknetTraceRpcApiServer};
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
-use mp_simulations::{SimulationFlags, TransactionSimulationResult};
+use mp_simulations::{SimulationFlags};
 use mp_transactions::from_broadcasted_transactions::{
     try_declare_tx_from_broadcasted_declare_tx, try_deploy_tx_from_broadcasted_deploy_tx,
     try_invoke_tx_from_broadcasted_invoke_tx,

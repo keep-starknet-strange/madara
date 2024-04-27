@@ -1,7 +1,7 @@
 use core::fmt;
 
 use blockifier::transaction::errors::TransactionExecutionError;
-use blockifier::transaction::objects::TransactionExecutionInfo;
+
 use jsonrpsee::types::error::{CallError, ErrorObject};
 use starknet_api::core::ContractAddress;
 use thiserror::Error;
