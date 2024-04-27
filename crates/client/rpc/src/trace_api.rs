@@ -123,8 +123,14 @@ where
 
         let previous_block_substrate_hash = get_previous_block_substrate_hash(self, substrate_block_hash)?;
 
-        let execution_infos =
-            self.re_execute_transactions(previous_block_substrate_hash, vec![], block_transactions.clone())?;
+        let execution_infos = self
+            .re_execute_transactions(previous_block_substrate_hash, vec![], block_transactions.clone(), true)?
+            .into_iter()
+            .map(|(e, c)| match c {
+                Some(c) => Ok((e, c)),
+                None => Err(StarknetRpcApiError::InternalServerError),
+            })
+            .collect::<Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, StarknetRpcApiError>>()?;
 
         let traces = Self::execution_info_to_transaction_trace(execution_infos, block_transactions)?;
 
@@ -153,10 +159,15 @@ where
         let previous_block_substrate_hash = get_previous_block_substrate_hash(self, substrate_block_hash)?;
 
         let (execution_infos, commitment_state_diff) = self
-            .re_execute_transactions(previous_block_substrate_hash, txs_before, tx_to_trace)?
+            .re_execute_transactions(previous_block_substrate_hash, txs_before, tx_to_trace, true)?
             .into_iter()
             .next()
             .unwrap();
+
+        let commitment_state_diff = commitment_state_diff.ok_or_else(|| {
+            error!("Failed to get CommitmentStateDiff for transaction {transaction_hash}");
+            StarknetRpcApiError::InternalServerError
+        })?;
 
         let state_diff = blockifier_to_rpc_state_diff_types(commitment_state_diff.clone())
             .map_err(|_| StarknetRpcApiError::from(ConvertCallInfoToExecuteInvocationError::ConvertStateDiffFailed))?;
@@ -185,7 +196,8 @@ where
         previous_block_substrate_hash: B::Hash,
         transactions_before: Vec<Transaction>,
         transactions_to_trace: Vec<Transaction>,
-    ) -> RpcResult<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>> {
+        with_state_diff: bool,
+    ) -> RpcResult<Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>> {
         Ok(self
             .client
             .runtime_api()
@@ -193,6 +205,7 @@ where
                 previous_block_substrate_hash,
                 transactions_before.clone(),
                 transactions_to_trace.clone(),
+                with_state_diff,
             )
             .map_err(|e| {
                 error!("Failed to execute runtime API call: {e}");

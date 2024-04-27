@@ -282,8 +282,8 @@ impl_runtime_apis! {
             Starknet::estimate_fee(transactions, &simulation_flags)
         }
 
-        fn re_execute_transactions(transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>) -> Result<Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError> {
-            Starknet::re_execute_transactions(transactions_before, transactions_to_trace)
+        fn re_execute_transactions(transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>, with_state_diff: bool) -> Result<Result<Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError> {
+            Starknet::re_execute_transactions(transactions_before, transactions_to_trace, with_state_diff)
         }
 
         fn estimate_message_fee(message: L1HandlerTransaction) -> Result<(u128, u128, u128), DispatchError> {

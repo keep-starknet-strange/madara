@@ -1587,7 +1587,7 @@ where
         }
 
         let mut trace = self
-            .re_execute_transactions(parent_substrate_block_hash, transactions_before, transaction_to_trace)
+            .re_execute_transactions(parent_substrate_block_hash, transactions_before, transaction_to_trace, false)
             .map_err(|e| {
                 log::error!("Failed to re-execute transactions: {e}");
                 StarknetRpcApiError::InternalServerError
