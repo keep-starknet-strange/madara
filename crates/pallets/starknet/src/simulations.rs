@@ -44,8 +44,21 @@ impl<T: Config> Pallet<T> {
         let fee_res_iterator = transactions
             .into_iter()
             .map(|tx| match Self::execute_account_transaction(&tx, &mut state, &block_context, simulation_flags) {
-                Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
-                Err(_) | Ok(_) => Err(Error::<T>::TransactionExecutionFailed),
+                Ok(execution_info) => {
+                    if !execution_info.is_reverted() {
+                        Ok(execution_info)
+                    } else {
+                        log::error!(
+                            "Transaction execution reverted during fee estimation: {:?}",
+                            execution_info.revert_error
+                        );
+                        Err(Error::<T>::TransactionExecutionFailed)
+                    }
+                }
+                Err(e) => {
+                    log::error!("Transaction execution failed during fee estimation: {e}");
+                    Err(Error::<T>::TransactionExecutionFailed)
+                }
             })
             .map(|exec_info_res| {
                 exec_info_res.map(|exec_info| {
