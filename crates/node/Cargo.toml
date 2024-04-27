@@ -128,5 +128,7 @@ disable-transaction-fee = ["madara-runtime/disable-transaction-fee"]
 sharingan = []
 avail = ["mc-data-availability/avail"]
 celestia = ["mc-data-availability/celestia"]
+# Enables Sierra class verification for foreign blocks only + disabled in manual sealing mode
 sn-block-import = ["dep:mc-starknet-block-import"]
+# Enables Sierra class verification for both own and foreign blocks only + enabled for manual sealing mode
 sn-block-import-testing = ["sn-block-import"]

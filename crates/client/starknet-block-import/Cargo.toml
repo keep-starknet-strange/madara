@@ -29,6 +29,7 @@ sc-rpc-api = { workspace = true }
 # Starknet
 blockifier = { workspace = true }
 cairo-lang-starknet = { workspace = true }
+cairo-lang-starknet-classes = { workspace = true }
 cairo-lang-utils = { workspace = true }
 cairo-vm = { workspace = true }
 hex = { workspace = true }

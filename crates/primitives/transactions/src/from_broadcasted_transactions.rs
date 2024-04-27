@@ -170,7 +170,7 @@ pub fn try_declare_tx_from_broadcasted_declare_tx(
             let abi_length = flattened_contract_class.abi.len();
 
             let casm_contract_class = flattened_sierra_to_casm_contract_class(flattened_contract_class)
-                .map_err(|_| BroadcastedTransactionConversionError::SierraCompilationFailed)?;
+                .map_err(BroadcastedTransactionConversionError::SierraCompilationFailed)?;
             // ensure that the user has sign the correct class hash
             if get_casm_contract_class_hash(&casm_contract_class) != compiled_class_hash {
                 return Err(BroadcastedTransactionConversionError::InvalidCompiledClassHash);
@@ -221,7 +221,7 @@ pub fn try_declare_tx_from_broadcasted_declare_tx(
             let abi_length = flattened_contract_class.abi.len();
 
             let casm_contract_class = flattened_sierra_to_casm_contract_class(flattened_contract_class)
-                .map_err(|_| BroadcastedTransactionConversionError::SierraCompilationFailed)?;
+                .map_err(BroadcastedTransactionConversionError::SierraCompilationFailed)?;
 
             let tx =
                 starknet_api::transaction::DeclareTransaction::V3(starknet_api::transaction::DeclareTransactionV3 {

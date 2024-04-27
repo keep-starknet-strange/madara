@@ -1,14 +1,14 @@
 use blockifier::execution::contract_class::{ContractClass as BlockifierCasmClass, EntryPointV1};
-use cairo_lang_starknet::contract_class::{
+use cairo_lang_starknet_classes::casm_contract_class::{CasmContractClass, StarknetSierraCompilationError};
+use cairo_lang_starknet_classes::contract_class::{
     ContractClass as SierraContractClass, ContractEntryPoint as SierraEntryPoint,
     ContractEntryPoints as SierraEntryPoints,
 };
-use cairo_lang_starknet::contract_class_into_casm_contract_class::StarknetSierraCompilationError;
 use cairo_lang_utils::bigint::BigUintAsHex;
 use cairo_vm::types::program::Program;
 use cairo_vm::types::relocatable::MaybeRelocatable;
-use mc_rpc::casm_contract_class_to_compiled_class;
 use mp_felt::Felt252Wrapper;
+use mp_transactions::from_broadcasted_transactions::casm_contract_class_to_compiled_class;
 use num_bigint::BigUint;
 use starknet_api::deprecated_contract_class::{EntryPoint as EntryPointV0, EntryPointType as DeprecatedEntryPointType};
 use starknet_api::hash::StarkFelt;
@@ -41,13 +41,13 @@ pub(crate) fn blockifier_casm_class_to_compiled_class_hash(
             let mut entry_points_by_type = class.entry_points_by_type.clone();
             let entrypoints = CompiledClassEntrypointList {
                 external: entry_points_by_type
-                    .remove(&DeprecatedEntryPointType::External)
+                    .shift_remove(&DeprecatedEntryPointType::External)
                     .map_or(vec![], convert_casm_entry_points_v0),
                 l1_handler: entry_points_by_type
-                    .remove(&DeprecatedEntryPointType::L1Handler)
+                    .shift_remove(&DeprecatedEntryPointType::L1Handler)
                     .map_or(vec![], convert_casm_entry_points_v0),
                 constructor: entry_points_by_type
-                    .remove(&DeprecatedEntryPointType::Constructor)
+                    .shift_remove(&DeprecatedEntryPointType::Constructor)
                     .map_or(vec![], convert_casm_entry_points_v0),
             };
             let bytecode = cairo_vm_program_to_bytecode(&class.program)?;
@@ -57,13 +57,13 @@ pub(crate) fn blockifier_casm_class_to_compiled_class_hash(
             let mut entry_points_by_type = class.entry_points_by_type.clone();
             let entrypoints = CompiledClassEntrypointList {
                 external: entry_points_by_type
-                    .remove(&DeprecatedEntryPointType::External)
+                    .shift_remove(&DeprecatedEntryPointType::External)
                     .map_or(vec![], convert_casm_entry_points_v1),
                 l1_handler: entry_points_by_type
-                    .remove(&DeprecatedEntryPointType::L1Handler)
+                    .shift_remove(&DeprecatedEntryPointType::L1Handler)
                     .map_or(vec![], convert_casm_entry_points_v1),
                 constructor: entry_points_by_type
-                    .remove(&DeprecatedEntryPointType::Constructor)
+                    .shift_remove(&DeprecatedEntryPointType::Constructor)
                     .map_or(vec![], convert_casm_entry_points_v1),
             };
             let bytecode = cairo_vm_program_to_bytecode(&class.program)?;
@@ -74,6 +74,7 @@ pub(crate) fn blockifier_casm_class_to_compiled_class_hash(
         bytecode,
         entry_points_by_type,
         // The rest of the fields do not contribute to the class hash
+        bytecode_segment_lengths: Default::default(),
         prime: Default::default(),
         compiler_version: Default::default(),
         hints: Default::default(),
@@ -85,19 +86,19 @@ pub(crate) fn blockifier_casm_class_to_compiled_class_hash(
 pub(crate) fn blockifier_sierra_class_to_compiled_class_hash(
     sierra_class: BlockifierSierraClass,
 ) -> Result<FieldElement, CompilationError> {
-    let BlockifierSierraClass { sierra_program, mut entry_point_by_type, .. } = sierra_class;
+    let BlockifierSierraClass { sierra_program, mut entry_points_by_type, .. } = sierra_class;
 
     let sierra_contract_class = SierraContractClass {
         sierra_program: sierra_program.iter().map(stark_felt_to_biguint_as_hex).collect(),
         entry_points_by_type: SierraEntryPoints {
-            external: entry_point_by_type
-                .remove(&BlockifierEntryPointType::External)
+            external: entry_points_by_type
+                .shift_remove(&BlockifierEntryPointType::External)
                 .map_or(vec![], convert_sierra_entry_points),
-            l1_handler: entry_point_by_type
-                .remove(&BlockifierEntryPointType::L1Handler)
+            l1_handler: entry_points_by_type
+                .shift_remove(&BlockifierEntryPointType::L1Handler)
                 .map_or(vec![], convert_sierra_entry_points),
-            constructor: entry_point_by_type
-                .remove(&BlockifierEntryPointType::Constructor)
+            constructor: entry_points_by_type
+                .shift_remove(&BlockifierEntryPointType::Constructor)
                 .map_or(vec![], convert_sierra_entry_points),
         },
         // The rest of the fields are not used for compilation
@@ -106,7 +107,9 @@ pub(crate) fn blockifier_sierra_class_to_compiled_class_hash(
         abi: None,
     };
 
-    let casm_contract_class = sierra_contract_class.into_casm_contract_class(false)?;
+    // Pythonic hints do not affect the class hash calculation
+    // FIXME: more restrictive max bytecode size?
+    let casm_contract_class = CasmContractClass::from_contract_class(sierra_contract_class, false, usize::MAX)?;
     let compiled_class = casm_contract_class_to_compiled_class(&casm_contract_class);
     compiled_class.class_hash().map_err(Into::into)
 }
@@ -126,8 +129,8 @@ pub fn convert_casm_entry_points_v1(entry_points: Vec<EntryPointV1>) -> Vec<Comp
         .into_iter()
         .map(|entry_point| CompiledClassEntrypoint {
             builtins: entry_point.builtins.into_iter().map(normalize_builtin_name).collect(),
-            offset: entry_point.offset.0 as u64,
-            selector: entry_point.selector.0.into(),
+            offset: entry_point.offset.0,
+            selector: stark_felt_to_field_element(&entry_point.selector.0),
         })
         .collect()
 }
@@ -137,8 +140,8 @@ pub fn convert_casm_entry_points_v0(entry_points: Vec<EntryPointV0>) -> Vec<Comp
         .into_iter()
         .map(|entry_point| CompiledClassEntrypoint {
             builtins: vec![],
-            offset: entry_point.offset.0 as u64,
-            selector: entry_point.selector.0.into(),
+            offset: entry_point.offset.0,
+            selector: stark_felt_to_field_element(&entry_point.selector.0),
         })
         .collect()
 }
@@ -160,6 +163,12 @@ pub fn stark_felt_to_biguint(felt: &StarkFelt) -> BigUint {
 
 pub fn stark_felt_to_biguint_as_hex(felt: &StarkFelt) -> BigUintAsHex {
     BigUintAsHex { value: stark_felt_to_biguint(felt) }
+}
+
+pub fn stark_felt_to_field_element(felt: &StarkFelt) -> FieldElement {
+    // Can only fail if the 32 byte number is not smaller than the field's modulus,
+    // but StarkFelt already enforces that
+    FieldElement::from_bytes_be(&felt.0).unwrap()
 }
 
 // CairoVM adds "_builtin" suffix to builtin names.
