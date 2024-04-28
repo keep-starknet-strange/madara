@@ -355,6 +355,7 @@ impl ComputeTransactionHash for L1HandlerTransaction {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn compute_transaction_hash_common_v3(
     tx_hash_prefix: FieldElement,
     version: FieldElement,
