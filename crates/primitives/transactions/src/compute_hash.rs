@@ -370,8 +370,8 @@ fn compute_transaction_hash_common_v3(
 ) -> TransactionHash {
     let gas_hash = PoseidonHasher::compute_hash_on_elements(&[
         FieldElement::from(tip.0),
-        prepare_resource_bound_value(&resource_bounds, Resource::L1Gas),
-        prepare_resource_bound_value(&resource_bounds, Resource::L2Gas),
+        prepare_resource_bound_value(resource_bounds, Resource::L1Gas),
+        prepare_resource_bound_value(resource_bounds, Resource::L2Gas),
     ]);
     let paymaster_hash = PoseidonHasher::compute_hash_on_elements(
         &paymaster_data.0.iter().map(|f| Felt252Wrapper::from(*f).into()).collect::<Vec<_>>(),
@@ -384,7 +384,7 @@ fn compute_transaction_hash_common_v3(
         sender_address,
         gas_hash,
         paymaster_hash,
-        chain_id.into(),
+        chain_id,
         nonce,
         data_availability_modes,
     ];

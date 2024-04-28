@@ -80,7 +80,7 @@ impl<T: Config> Pallet<T> {
                     }
                 }
                 // TODO: have more granular error mapping
-                .map_err(|e| { 
+                .map_err(|e| {
                     log::error!("Error in pre_validate_unsigned_tx: {:?}", e);
                     InvalidTransaction::BadProof
                 })
@@ -144,7 +144,7 @@ impl<T: Config> Pallet<T> {
                 Ok(None)
             }
         }
-        .map_err(|e| { 
+        .map_err(|e| {
             log::error!("Error in validate_unsigned_tx: {:?}", e);
             InvalidTransaction::BadProof
         })?;
