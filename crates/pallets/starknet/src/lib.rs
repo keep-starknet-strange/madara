@@ -512,11 +512,12 @@ pub mod pallet {
             let charge_fee = !<T as Config>::DisableTransactionFee::get();
 
             // Execute
+            let charge_fee = !T::DisableTransactionFee::get();
             let tx_execution_infos = match transaction.tx.version() {
                 TransactionVersion::ZERO => {
-                    run_non_revertible_transaction(&transaction, &mut state, &block_context, true, charge_fee)
+                    run_non_revertible_transaction(&transaction, &mut state, &block_context, charge_fee, charge_fee)
                 }
-                _ => run_revertible_transaction(&transaction, &mut state, &block_context, true, charge_fee),
+                _ => run_revertible_transaction(&transaction, &mut state, &block_context, charge_fee, charge_fee),
             }
             .map_err(|e| {
                 log!(error, "Invoke transaction execution failed: {:?}", e);
@@ -570,12 +571,17 @@ pub mod pallet {
             let charge_fee = !<T as Config>::DisableTransactionFee::get();
 
             // Execute
-            let tx_execution_infos =
-                run_non_revertible_transaction(&transaction, &mut state, &Self::get_block_context(), true, charge_fee)
-                    .map_err(|e| {
-                        log!(error, "Declare transaction execution failed: {:?}", e);
-                        Error::<T>::TransactionExecutionFailed
-                    })?;
+            let tx_execution_infos = run_non_revertible_transaction(
+                &transaction,
+                &mut state,
+                &Self::get_block_context(),
+                !T::DisableTransactionFee::get(),
+                charge_fee,
+            )
+            .map_err(|e| {
+                log!(error, "Declare transaction execution failed: {:?}", e);
+                Error::<T>::TransactionExecutionFailed
+            })?;
 
             Self::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash(),
@@ -620,12 +626,17 @@ pub mod pallet {
             let charge_fee = !<T as Config>::DisableTransactionFee::get();
 
             // Execute
-            let tx_execution_infos =
-                run_non_revertible_transaction(&transaction, &mut state, &Self::get_block_context(), true, charge_fee)
-                    .map_err(|e| {
-                        log!(error, "Deploy account transaction execution failed: {:?}", e);
-                        Error::<T>::TransactionExecutionFailed
-                    })?;
+            let tx_execution_infos = run_non_revertible_transaction(
+                &transaction,
+                &mut state,
+                &Self::get_block_context(),
+                !T::DisableTransactionFee::get(),
+                charge_fee,
+            )
+            .map_err(|e| {
+                log!(error, "Deploy account transaction execution failed: {:?}", e);
+                Error::<T>::TransactionExecutionFailed
+            })?;
 
             Self::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash,
