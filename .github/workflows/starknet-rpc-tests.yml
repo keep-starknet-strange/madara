@@ -39,7 +39,7 @@ jobs:
           cd starknet-rpc-test/contracts && ./generate_declare_contracts.sh 10
       - name: Run rpc test without cache
         run: |-
-          ./target/production/madara --dev --sealing=manual --da-layer=ethereum --da-conf=examples/da-confs/ethereum.json &
+          ./target/production/madara --dev --sealing=manual
           MADARA_RUN_PID=$!
           while ! echo exit | nc localhost 9944; do sleep 1; done
           cd starknet-rpc-test
@@ -47,7 +47,7 @@ jobs:
           kill $MADARA_RUN_PID
       - name: Run rpc test with cache
         run: |-
-          ./target/production/madara --dev --sealing=manual --da-layer=ethereum --da-conf=examples/da-confs/ethereum.json &
+          ./target/production/madara --dev --sealing=manual
           MADARA_RUN_PID=$!
           while ! echo exit | nc localhost 9944; do sleep 1; done
           cd starknet-rpc-test
