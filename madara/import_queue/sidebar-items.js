@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["GRANDPA_JUSTIFICATION_PERIOD"],"fn":["build_aura_import_queue","build_aura_queue_grandpa_pipeline","build_manual_seal_queue_pipeline"],"struct":["BlockImportPipeline"],"type":["GrandpaLinkT"]};

@@ -1,6 +1,6 @@
 var srcIndex = JSON.parse('{\
 "da_test":["",[],["constants.rs","fixtures.rs","lib.rs","utils.rs"]],\
-"madara":["",[["commands",[],["mod.rs","run.rs","setup.rs"]],["rpc",[],["mod.rs","starknet.rs"]]],["benchmarking.rs","chain_spec.rs","cli.rs","command.rs","configs.rs","constants.rs","genesis_block.rs","main.rs","service.rs","starknet.rs"]],\
+"madara":["",[["commands",[],["mod.rs","run.rs","setup.rs"]],["rpc",[],["mod.rs","starknet.rs"]]],["benchmarking.rs","chain_spec.rs","cli.rs","command.rs","configs.rs","constants.rs","genesis_block.rs","import_queue.rs","main.rs","service.rs","starknet.rs"]],\
 "madara_runtime":["",[],["config.rs","lib.rs","opaque.rs","pallets.rs","runtime_tests.rs","types.rs"]],\
 "madara_test_runner":["",[],["client.rs","lib.rs","node.rs"]],\
 "mc_commitment_state_diff":["",[],["lib.rs"]],\
@@ -13,6 +13,7 @@ var srcIndex = JSON.parse('{\
 "mc_rpc":["",[["events",[],["mod.rs"]]],["constants.rs","errors.rs","lib.rs","madara_backend_client.rs","runtime_api.rs","starknetrpcwrapper.rs","trace_api.rs","types.rs"]],\
 "mc_rpc_core":["",[],["lib.rs","utils.rs"]],\
 "mc_settlement":["",[["ethereum",[],["client.rs","errors.rs","mod.rs"]]],["errors.rs","lib.rs","sync_state.rs"]],\
+"mc_starknet_block_import":["",[],["compilation.rs","lib.rs","validation.rs"]],\
 "mc_storage":["",[["overrides",[],["mod.rs","schema_v1_override.rs"]]],["lib.rs"]],\
 "mp_block":["",[],["header.rs","lib.rs"]],\
 "mp_chain_id":["",[],["lib.rs"]],\

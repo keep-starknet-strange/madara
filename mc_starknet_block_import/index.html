@@ -1,0 +1,47 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Starknet block import"><title>mc_starknet_block_import - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-47e7ab555ef2818a.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="mc_starknet_block_import" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (249595b75 2023-08-23)" data-channel="nightly" data-search-js="search-6dfdfced5eff6596.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-b2d31d2efc7e9b67.css" data-theme-dark-css="dark-3388a2fb2ef8066b.css" data-theme-ayu-css="ayu-8c3c66a6cf12cb2f.css" ><script src="../static.files/storage-db41da1a38ea3cb8.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../static.files/light-b2d31d2efc7e9b67.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../static.files/dark-3388a2fb2ef8066b.css"><link rel="stylesheet" href="../static.files/noscript-cffde32267a19fd6.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="logo-container" href="../mc_starknet_block_import/index.html"><img class="rust-logo" src="../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><h2></h2></nav><nav class="sidebar"><a class="logo-container" href="../mc_starknet_block_import/index.html"><img class="rust-logo" src="../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><h2 class="location"><a href="#">Crate mc_starknet_block_import</a></h2><div class="sidebar-elems"><ul class="block"><li class="version">Version 0.7.0</li><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#structs">Structs</a></li></ul></section></div></nav><main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">mc_starknet_block_import</a><button id="copy-path" title="Copy item path to clipboard"><img src="../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="src" href="../src/mc_starknet_block_import/lib.rs.html#1-112">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="starknet-block-import"><a href="#starknet-block-import">Starknet block import</a></h2>
+<p>This crate introduces a Starknet specific handler that can be added to the block
+import pipeline. More specifically, it “wraps” the underlying block import logic
+i.e. executes first in the queue.</p>
+<p>Read more about block import pipeline:</p>
+<ul>
+<li><a href="https://docs.substrate.io/learn/transaction-lifecycle/#block-authoring-and-block-imports">https://docs.substrate.io/learn/transaction-lifecycle/#block-authoring-and-block-imports</a></li>
+<li><a href="https://doc.deepernetwork.org/v3/advanced/block-import/">https://doc.deepernetwork.org/v3/advanced/block-import/</a></li>
+</ul>
+<p>The purpose of this custom block import logic is to do additional checks for
+declare transactions. Despite the introduction of the safe intermediate
+representation (Sierra) for Cairo, there’s still a possibility of the following
+attack:</p>
+<ul>
+<li>User crafts a malicious Cairo contract the execution of which cannot be proven</li>
+<li>User submits that transaction via a patched node that does not verify Sierra
+classes</li>
+<li>The runtime does not have Sierra classes and therefore cannot check the
+validiy either</li>
+<li>Sequencer fails to prove the execution and also cannot charge for the work
+done =&gt; DoS attack vector</li>
+</ul>
+<p>Read more about Sierra and the problem it addresses:</p>
+<ul>
+<li><a href="https://docs.starknet.io/documentation/architecture_and_concepts/Smart_Contracts/cairo-and-sierra/">https://docs.starknet.io/documentation/architecture_and_concepts/Smart_Contracts/cairo-and-sierra/</a></li>
+</ul>
+<p>Starknet block import solves the issue above as follows:</p>
+<ul>
+<li>Upon receiving a new block it searches for declare transactions</li>
+<li>For every declare transaction found, it tries to find according Sierra classes
+in the local DB</li>
+<li>It tries to compile the class to check if they match the contract class from
+the transaction</li>
+<li>The block import fails if there is at least one transaction with mismatching
+class hashes</li>
+</ul>
+<h3 id="notes"><a href="#notes">Notes</a></h3>
+<p>Currently Sierra classes DB is populated when user submits RPC requests and
+therefore the approch works for single node setup only. In order to make it work
+in the multi-node setting, one needs to query missing Sierra classes from other
+nodes via P2P (see
+<a href="https://github.com/starknet-io/starknet-p2p-specs/blob/main/p2p/proto/class.proto">https://github.com/starknet-io/starknet-p2p-specs/blob/main/p2p/proto/class.proto</a>)</p>
+<p>Cairo compiler version mismatch can be a problem, e.g. if the version used by
+Madara is lagging behind significantly it can fail to compile Sierra classes
+obtained from the recent compilers. Similarly, old Sierra classes might not
+compile because of the broken backward compatibility.</p>
+</div></details><h2 id="structs" class="small-section-header"><a href="#structs">Structs</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.StarknetBlockImport.html" title="struct mc_starknet_block_import::StarknetBlockImport">StarknetBlockImport</a></div></li></ul></section></div></main></body></html>

@@ -745,8 +745,8 @@
     </span>CasmContractClassConversionFailed,
     <span class="attr">#[error(<span class="string">&quot;Compiled class hash does not match the class hash&quot;</span>)]
     </span>InvalidCompiledClassHash,
-    <span class="attr">#[error(<span class="string">&quot;Failed to compile to Sierra&quot;</span>)]
-    </span>SierraCompilationFailed,
+    <span class="attr">#[error(<span class="string">&quot;Failed to compile to Sierra: {0}&quot;</span>)]
+    </span>SierraCompilationFailed(<span class="attr">#[source] </span>StarknetSierraCompilationError),
     <span class="attr">#[error(<span class="string">&quot;This transaction version is not supported&quot;</span>)]
     </span>UnsuportedTransactionVersion,
     <span class="attr">#[error(<span class="string">&quot;This transaction version is invalid for this tx&quot;</span>)]
@@ -859,7 +859,7 @@
             <span class="kw">let </span>abi_length = flattened_contract_class.abi.len();
 
             <span class="kw">let </span>casm_contract_class = flattened_sierra_to_casm_contract_class(flattened_contract_class)
-                .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionError::SierraCompilationFailed)<span class="question-mark">?</span>;
+                .map_err(BroadcastedTransactionConversionError::SierraCompilationFailed)<span class="question-mark">?</span>;
             <span class="comment">// ensure that the user has sign the correct class hash
             </span><span class="kw">if </span>get_casm_contract_class_hash(<span class="kw-2">&amp;</span>casm_contract_class) != compiled_class_hash {
                 <span class="kw">return </span><span class="prelude-val">Err</span>(BroadcastedTransactionConversionError::InvalidCompiledClassHash);
@@ -910,7 +910,7 @@
             <span class="kw">let </span>abi_length = flattened_contract_class.abi.len();
 
             <span class="kw">let </span>casm_contract_class = flattened_sierra_to_casm_contract_class(flattened_contract_class)
-                .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionError::SierraCompilationFailed)<span class="question-mark">?</span>;
+                .map_err(BroadcastedTransactionConversionError::SierraCompilationFailed)<span class="question-mark">?</span>;
 
             <span class="kw">let </span>tx =
                 starknet_api::transaction::DeclareTransaction::V3(starknet_api::transaction::DeclareTransactionV3 {
