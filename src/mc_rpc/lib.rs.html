@@ -1781,6 +1781,39 @@
 <a href="#1781" id="1781">1781</a>
 <a href="#1782" id="1782">1782</a>
 <a href="#1783" id="1783">1783</a>
+<a href="#1784" id="1784">1784</a>
+<a href="#1785" id="1785">1785</a>
+<a href="#1786" id="1786">1786</a>
+<a href="#1787" id="1787">1787</a>
+<a href="#1788" id="1788">1788</a>
+<a href="#1789" id="1789">1789</a>
+<a href="#1790" id="1790">1790</a>
+<a href="#1791" id="1791">1791</a>
+<a href="#1792" id="1792">1792</a>
+<a href="#1793" id="1793">1793</a>
+<a href="#1794" id="1794">1794</a>
+<a href="#1795" id="1795">1795</a>
+<a href="#1796" id="1796">1796</a>
+<a href="#1797" id="1797">1797</a>
+<a href="#1798" id="1798">1798</a>
+<a href="#1799" id="1799">1799</a>
+<a href="#1800" id="1800">1800</a>
+<a href="#1801" id="1801">1801</a>
+<a href="#1802" id="1802">1802</a>
+<a href="#1803" id="1803">1803</a>
+<a href="#1804" id="1804">1804</a>
+<a href="#1805" id="1805">1805</a>
+<a href="#1806" id="1806">1806</a>
+<a href="#1807" id="1807">1807</a>
+<a href="#1808" id="1808">1808</a>
+<a href="#1809" id="1809">1809</a>
+<a href="#1810" id="1810">1810</a>
+<a href="#1811" id="1811">1811</a>
+<a href="#1812" id="1812">1812</a>
+<a href="#1813" id="1813">1813</a>
+<a href="#1814" id="1814">1814</a>
+<a href="#1815" id="1815">1815</a>
+<a href="#1816" id="1816">1816</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1799,7 +1832,7 @@
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>blockifier::transaction::account_transaction::AccountTransaction;
-<span class="kw">use </span>blockifier::transaction::objects::ResourcesMapping;
+<span class="kw">use </span>blockifier::transaction::objects::{ResourcesMapping, TransactionExecutionInfo};
 <span class="kw">use </span>blockifier::transaction::transactions::L1HandlerTransaction;
 <span class="kw">use </span>errors::StarknetRpcApiError;
 <span class="kw">use </span>jsonrpsee::core::{async_trait, RpcResult};
@@ -1811,6 +1844,7 @@
     StarknetWriteRpcApiServer,
 };
 <span class="kw">use </span>mc_storage::OverrideHandle;
+<span class="kw">use </span>mp_block::BlockTransactions;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_hashers::HasherT;
 <span class="kw">use </span>mp_simulations::SimulationFlags;
@@ -3266,9 +3300,6 @@
 
         <span class="kw">let </span>messages_sent = messages.into_iter().map(starknet_api_to_starknet_core_message_to_l1).collect();
 
-        <span class="comment">// TODO: use re_execute_transaction in order to rebuild the correct state and not have to skip the
-        // validation phase. It will return more accurate fees
-        </span><span class="kw">let </span>skip_validate = <span class="bool-val">true</span>;
         <span class="kw">let </span>parent_block_hash = <span class="self">self
             </span>.substrate_block_hash_from_starknet_block(BlockId::Hash(
                 Felt252Wrapper::from(block_header.parent_block_hash).into(),
@@ -3277,8 +3308,9 @@
                 <span class="macro">error!</span>(<span class="string">&quot;Parent Block not found: {e}&quot;</span>);
                 StarknetRpcApiError::BlockNotFound
             })<span class="question-mark">?</span>;
-        <span class="kw">let </span>simulation = <span class="self">self</span>.simulate_tx(parent_block_hash, transaction.clone(), skip_validate, fee_disabled)<span class="question-mark">?</span>;
-        <span class="kw">let </span>execution_resources = actual_resources_to_execution_resources(simulation.actual_resources);
+        <span class="kw">let </span>execution_info =
+            <span class="self">self</span>.get_transaction_execution_info(parent_block_hash, starknet_block.transactions(), transaction_hash)<span class="question-mark">?</span>;
+        <span class="kw">let </span>execution_resources = actual_resources_to_execution_resources(execution_info.actual_resources);
         <span class="kw">let </span>transaction_hash = Felt252Wrapper::from(transaction_hash).into();
 
         <span class="kw">let </span>receipt = <span class="kw">match </span>transaction {
@@ -3346,6 +3378,42 @@
         <span class="prelude-val">Ok</span>(MaybePendingTransactionReceipt::Receipt(receipt))
     }
 
+    <span class="kw">fn </span>get_transaction_execution_info(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        parent_substrate_block_hash: B::Hash,
+        block_transactions: <span class="kw-2">&amp;</span>BlockTransactions,
+        transaction_hash: TransactionHash,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, StarknetRpcApiError&gt;
+    <span class="kw">where
+        </span>B: BlockT,
+    {
+        <span class="kw">let </span>(transactions_before, transaction_to_trace) =
+            split_block_tx_for_reexecution(block_transactions, transaction_hash).map_err(|e| {
+                <span class="macro">log::error!</span>(<span class="string">&quot;Failed to split block transactions for re-execution: {e}&quot;</span>);
+                StarknetRpcApiError::InternalServerError
+            })<span class="question-mark">?</span>;
+
+        <span class="kw">if </span>transaction_to_trace.is_empty() {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(StarknetRpcApiError::TxnHashNotFound);
+        }
+
+        <span class="kw">if </span>transaction_to_trace.len() &gt; <span class="number">1 </span>{
+            <span class="macro">log::error!</span>(<span class="string">&quot;More than one transaction with the same transaction hash {:#?}&quot;</span>, transaction_to_trace);
+            <span class="kw">return </span><span class="prelude-val">Err</span>(StarknetRpcApiError::InternalServerError);
+        }
+
+        <span class="kw">let </span><span class="kw-2">mut </span>trace = <span class="self">self
+            </span>.re_execute_transactions(parent_substrate_block_hash, transactions_before, transaction_to_trace, <span class="bool-val">false</span>)
+            .map_err(|e| {
+                <span class="macro">log::error!</span>(<span class="string">&quot;Failed to re-execute transactions: {e}&quot;</span>);
+                StarknetRpcApiError::InternalServerError
+            })<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>execution_info = trace.remove(<span class="number">0</span>);
+
+        <span class="prelude-val">Ok</span>(execution_info.<span class="number">0</span>)
+    }
+
     <span class="kw">fn </span>get_events_for_tx_by_hash(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         substrate_block_hash: B::Hash,
@@ -3390,11 +3458,10 @@
         </span><span class="kw">let </span>messages_sent = Vec::new();
         <span class="kw">let </span>events = Vec::new();
 
-        <span class="comment">// TODO -- should Tx be simulated with `skip_validate`?
-        </span><span class="kw">let </span>skip_validate = <span class="bool-val">true</span>;
-        <span class="kw">let </span>skip_fee_charge = <span class="self">self</span>.is_transaction_fee_disabled(<span class="self">self</span>.get_best_block_hash())<span class="question-mark">?</span>;
+        <span class="kw">let </span>parent_substrate_block_hash = <span class="self">self</span>.get_best_block_hash();
+        <span class="kw">let </span>pending_txs = <span class="self">self</span>.get_pending_txs(parent_substrate_block_hash)<span class="question-mark">?</span>;
         <span class="kw">let </span>simulation =
-            <span class="self">self</span>.simulate_tx(<span class="self">self</span>.get_best_block_hash(), pending_tx.clone(), skip_validate, skip_fee_charge)<span class="question-mark">?</span>;
+            <span class="self">self</span>.get_transaction_execution_info(parent_substrate_block_hash, <span class="kw-2">&amp;</span>pending_txs, transaction_hash)<span class="question-mark">?</span>;
         <span class="kw">let </span>actual_fee =
             FeePayment { amount: Felt252Wrapper::from(simulation.actual_fee.<span class="number">0</span>).into(), unit: PriceUnit::Wei };
         <span class="kw">let </span>execution_result = revert_error_to_execution_result(simulation.revert_error);
@@ -3550,13 +3617,12 @@
 }
 
 <span class="kw">fn </span>split_block_tx_for_reexecution(
-    block: <span class="kw-2">&amp;</span>mp_block::Block,
+    block_transactions: <span class="kw-2">&amp;</span>BlockTransactions,
     transaction_hash: TransactionHash,
 ) -&gt; RpcResult&lt;(
     Vec&lt;blockifier::transaction::transaction_execution::Transaction&gt;,
     Vec&lt;blockifier::transaction::transaction_execution::Transaction&gt;,
 )&gt; {
-    <span class="kw">let </span>block_transactions = block.transactions();
     <span class="kw">let </span>tx_to_trace_idx = block_transactions
         .iter()
         .rposition(|tx| get_transaction_hash(tx) == <span class="kw-2">&amp;</span>transaction_hash)

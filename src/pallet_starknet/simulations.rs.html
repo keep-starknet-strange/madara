@@ -324,6 +324,13 @@
 <a href="#324" id="324">324</a>
 <a href="#325" id="325">325</a>
 <a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>blockifier::context::BlockContext;
 <span class="kw">use </span>blockifier::state::cached_state::{CachedState, CommitmentStateDiff, GlobalContractCache};
 <span class="kw">use </span>blockifier::state::state_api::State;
@@ -344,6 +351,11 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::blockifier_state_adapter::BlockifierStateAdapter;
 <span class="kw">use crate</span>::{Config, Error, Pallet};
+
+<span class="kw">type </span>ReExecutionResult = <span class="prelude-ty">Result</span>&lt;
+    Vec&lt;(TransactionExecutionInfo, <span class="prelude-ty">Option</span>&lt;CommitmentStateDiff&gt;)&gt;,
+    PlaceHolderErrorTypeForFailedStarknetExecution,
+&gt;;
 
 <span class="kw">impl</span>&lt;T: Config&gt; Pallet&lt;T&gt; {
     <span class="kw">pub fn </span>estimate_fee(
@@ -504,12 +516,10 @@
     <span class="kw">pub fn </span>re_execute_transactions(
         transactions_before: Vec&lt;Transaction&gt;,
         transactions_to_trace: Vec&lt;Transaction&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;
-        <span class="prelude-ty">Result</span>&lt;Vec&lt;(TransactionExecutionInfo, CommitmentStateDiff)&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;,
-        DispatchError,
-    &gt; {
+        with_state_diff: bool,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;ReExecutionResult, DispatchError&gt; {
         storage::transactional::with_transaction(|| {
-            <span class="kw">let </span>res = <span class="self">Self</span>::re_execute_transactions_inner(transactions_before, transactions_to_trace);
+            <span class="kw">let </span>res = <span class="self">Self</span>::re_execute_transactions_inner(transactions_before, transactions_to_trace, with_state_diff);
             storage::TransactionOutcome::Rollback(<span class="prelude-ty">Result</span>::&lt;<span class="kw">_</span>, DispatchError&gt;::Ok(<span class="prelude-val">Ok</span>(res)))
         })
         .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::FailedToCreateATransactionalStorageExecution)<span class="question-mark">?
@@ -518,8 +528,11 @@
     <span class="kw">fn </span>re_execute_transactions_inner(
         transactions_before: Vec&lt;Transaction&gt;,
         transactions_to_trace: Vec&lt;Transaction&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(TransactionExecutionInfo, CommitmentStateDiff)&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;
-    {
+        with_state_diff: bool,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;
+        Vec&lt;(TransactionExecutionInfo, <span class="prelude-ty">Option</span>&lt;CommitmentStateDiff&gt;)&gt;,
+        PlaceHolderErrorTypeForFailedStarknetExecution,
+    &gt; {
         <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
         <span class="kw">let </span><span class="kw-2">mut </span>state = BlockifierStateAdapter::&lt;T&gt;::default();
 
@@ -548,7 +561,8 @@
                     PlaceHolderErrorTypeForFailedStarknetExecution
                 });
 
-                <span class="kw">let </span>res = res.map(|r| (r, transactional_state.to_state_diff()));
+                <span class="kw">let </span>res = res
+                    .map(|r| <span class="kw">if </span>with_state_diff { (r, <span class="prelude-val">Some</span>(transactional_state.to_state_diff())) } <span class="kw">else </span>{ (r, <span class="prelude-val">None</span>) });
                 commit_transactional_state(transactional_state).map_err(|e| {
                     <span class="macro">log::error!</span>(<span class="string">&quot;Failed to commit state changes: {:?}&quot;</span>, e);
                     PlaceHolderErrorTypeForFailedStarknetExecution

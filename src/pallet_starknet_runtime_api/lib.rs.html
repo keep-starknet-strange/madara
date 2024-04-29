@@ -106,6 +106,11 @@
 <a href="#106" id="106">106</a>
 <a href="#107" id="107">107</a>
 <a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Definition of the runtime API for the Starknet pallet.
 
 </span><span class="comment">// Adding allow unused type parameters to avoid clippy errors
@@ -137,6 +142,11 @@
     InvalidContractClass,
     ContractError,
 }
+
+<span class="kw">type </span>ReExecutionResult = <span class="prelude-ty">Result</span>&lt;
+    Vec&lt;(TransactionExecutionInfo, <span class="prelude-ty">Option</span>&lt;CommitmentStateDiff&gt;)&gt;,
+    PlaceHolderErrorTypeForFailedStarknetExecution,
+&gt;;
 
 <span class="macro">sp_api::decl_runtime_apis! </span>{
     <span class="kw">pub trait </span>StarknetRuntimeApi {
@@ -186,7 +196,7 @@
         ///
         /// Idealy, the execution traces of all of `transactions_to_trace`.
         /// If any of the transactions (from both arguments) fails, an error is returned.
-        </span><span class="kw">fn </span>re_execute_transactions(transactions_before: Vec&lt;Transaction&gt;, transactions_to_trace: Vec&lt;Transaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;(TransactionExecutionInfo, CommitmentStateDiff)&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt;;
+        </span><span class="kw">fn </span>re_execute_transactions(transactions_before: Vec&lt;Transaction&gt;, transactions_to_trace: Vec&lt;Transaction&gt;, with_state_diff: bool) -&gt; <span class="prelude-ty">Result</span>&lt;ReExecutionResult, DispatchError&gt;;
 
         <span class="kw">fn </span>get_index_and_tx_for_tx_hash(xts: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;, tx_hash: TransactionHash) -&gt; <span class="prelude-ty">Option</span>&lt;(u32, Transaction)&gt;;
 
