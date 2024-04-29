@@ -34,6 +34,9 @@
 - chore(db): changed the way hashes are encoded
 - refacto: reusable Eth client config for settlement/DA/other tasks
 - ci: add gomu gomu no gatling perfomrance test
+- feat(runtime): moved StarkEvents from Substrate events to runtime storage
+- feat(node): validate declare txs against local Sierra class in block import
+  queue
 - feat(runtime): moved StarkEvents from Substrate
 - feat(rpc/trace_api): add `trace_transaction`
 - fix(docker): fix dockerfile for `madara-node`
