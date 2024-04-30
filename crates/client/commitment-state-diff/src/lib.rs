@@ -235,7 +235,7 @@ where
     let config_hash = client.runtime_api().config_hash(storage_notification.block)?;
 
     Ok(BlockDAData {
-        block_hash: current_block.header().hash::<H>().into(),
+        block_hash: current_block.header().hash().into(),
         state_diff: commitment_state_diff,
         num_addr_accessed: accessed_addrs.len(),
         block_number: current_block.header().block_number,

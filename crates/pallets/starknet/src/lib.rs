@@ -1007,7 +1007,7 @@ impl<T: Config> Pallet<T> {
         // Safe because it could only failed if `transaction_count` does not match `transactions.len()`
         .unwrap();
         // Save the block number <> hash mapping.
-        let blockhash = block.header().hash::<T::SystemHash>();
+        let blockhash = block.header().hash();
         BlockHash::<T>::insert(block_number, blockhash);
 
         // Kill pending storage.

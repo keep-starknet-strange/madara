@@ -4,6 +4,7 @@ use mp_hashers::HasherT;
 use sp_core::U256;
 use starknet_api::core::ContractAddress;
 use starknet_api::hash::StarkHash;
+use mp_hashers::pedersen::PedersenHasher;
 
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -60,7 +61,23 @@ impl Header {
     }
 
     /// Compute the hash of the header.
-    pub fn hash<H: HasherT>(&self) -> Felt252Wrapper {
+    // pub fn hash<H: HasherT>(&self) -> Felt252Wrapper {
+    //     let data: &[Felt252Wrapper] = &[
+    //         self.block_number.into(),
+    //         self.sequencer_address.0.0.into(),
+    //         self.block_timestamp.into(),
+    //         self.transaction_count.into(),
+    //         self.event_count.into(),
+    //         self.protocol_version.into(),
+    //         Felt252Wrapper::ZERO,
+    //         self.parent_block_hash.into(),
+    //     ];
+
+    //     H::compute_hash_on_wrappers(data)
+    // }
+
+    // Computing the hash using the Pedersen hasher.
+    pub fn hash(&self) -> Felt252Wrapper {
         let data: &[Felt252Wrapper] = &[
             self.block_number.into(),
             self.sequencer_address.0.0.into(),
@@ -72,6 +89,6 @@ impl Header {
             self.parent_block_hash.into(),
         ];
 
-        H::compute_hash_on_wrappers(data)
+        PedersenHasher::compute_hash_on_wrappers(data)
     }
 }

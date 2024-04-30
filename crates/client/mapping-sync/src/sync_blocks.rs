@@ -36,8 +36,8 @@ where
             let opt_storage_starknet_block = get_block_by_block_hash(client, substrate_block_hash);
             match opt_storage_starknet_block {
                 Ok(storage_starknet_block) => {
-                    let digest_starknet_block_hash = digest_starknet_block.header().hash::<H>();
-                    let storage_starknet_block_hash = storage_starknet_block.header().hash::<H>();
+                    let digest_starknet_block_hash = digest_starknet_block.header().hash();
+                    let storage_starknet_block_hash = storage_starknet_block.header().hash();
                     // Ensure the two blocks sources (chain storage and block digest) agree on the block content
                     if digest_starknet_block_hash != storage_starknet_block_hash {
                         Err(anyhow::anyhow!(
@@ -119,7 +119,7 @@ where
         }
         Err(FindLogError::MultipleLogs) => return Err(anyhow::anyhow!("Multiple logs found")),
     };
-    let block_hash = block.header().hash::<H>();
+    let block_hash = block.header().hash();
     let mapping_commitment = mc_db::MappingCommitment::<B> {
         block_hash: substrate_block_hash,
         starknet_block_hash: block_hash.into(),
