@@ -1,10 +1,10 @@
 use blockifier::blockifier::block::GasPrices;
 use mp_felt::Felt252Wrapper;
+use mp_hashers::pedersen::PedersenHasher;
 use mp_hashers::HasherT;
 use sp_core::U256;
 use starknet_api::core::ContractAddress;
 use starknet_api::hash::StarkHash;
-use mp_hashers::pedersen::PedersenHasher;
 
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
