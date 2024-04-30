@@ -16,9 +16,10 @@ macro_rules! mock_runtime {
 			use frame_support::traits::Hooks;
 			use mp_sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
             use mp_felt::Felt252Wrapper;
-			use starknet_api::api_core::{PatriciaKey, ContractAddress};
+			use starknet_api::core::{PatriciaKey, ContractAddress};
 			use starknet_api::hash::StarkFelt;
-			use mp_fee::ResourcePrice;
+			use blockifier::blockifier::block::GasPrices;
+			use core::num::NonZeroU128;
 
 
 			type Block = frame_system::mocking::MockBlock<MockRuntime>;
@@ -67,15 +68,11 @@ macro_rules! mock_runtime {
 			parameter_types! {
 				pub const UnsignedPriority: u64 = 1 << 20;
 				pub const TransactionLongevity: u64 = u64::MAX;
-				pub const InvokeTxMaxNSteps: u32 = 1_000_000;
-				pub const ValidateMaxNSteps: u32 = 1_000_000;
 				pub const DisableTransactionFee: bool = $disable_transaction_fee;
                 pub const DisableNonceValidation: bool = $disable_nonce_validation;
 				pub const ProtocolVersion: u8 = 0;
-                pub const ChainId: Felt252Wrapper = mp_chain_id::SN_GOERLI_CHAIN_ID;
-                pub const MaxRecursionDepth: u32 = 50;
 				pub const ProgramHash: Felt252Wrapper = mp_program_hash::SN_OS_PROGRAM_HASH;
-				pub const L1GasPrice: ResourcePrice = ResourcePrice { price_in_strk: None, price_in_wei: 10 };
+				pub const L1GasPrices: GasPrices = GasPrices { eth_l1_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, strk_l1_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, eth_l1_data_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, strk_l1_data_gas_price: unsafe { NonZeroU128::new_unchecked(10) } };
             }
 
 			impl pallet_starknet::Config for MockRuntime {
@@ -83,21 +80,18 @@ macro_rules! mock_runtime {
 				type TimestampProvider = Timestamp;
 				type UnsignedPriority = UnsignedPriority;
 				type TransactionLongevity = TransactionLongevity;
-				type InvokeTxMaxNSteps = InvokeTxMaxNSteps;
-				type ValidateMaxNSteps = ValidateMaxNSteps;
 				type DisableTransactionFee = DisableTransactionFee;
                 type DisableNonceValidation = DisableNonceValidation;
 				type ProtocolVersion = ProtocolVersion;
-                type ChainId = ChainId;
-                type MaxRecursionDepth = MaxRecursionDepth;
 				type ProgramHash = ProgramHash;
-				type L1GasPrice = L1GasPrice;
+				type L1GasPrices = L1GasPrices;
 			}
 
 			/// Run to block n.
 			/// The function will repeatedly create and run blocks until the block number is equal to `n`.
 			/// # Arguments
 			/// * `n` - The block number to run to.
+			#[allow(unused)]
 			pub(crate) fn run_to_block(n: u64) {
 				for b in System::block_number()..=n {
 					SeqAddrUpdate::<MockRuntime>::put(true);
@@ -108,6 +102,7 @@ macro_rules! mock_runtime {
 			}
 
 			/// Setup initial block and sequencer address for unit tests.
+			#[allow(unused)]
 			pub(crate) fn basic_test_setup(n: u64) {
 				SeqAddrUpdate::<MockRuntime>::put(true);
 				let default_addr = ContractAddress(PatriciaKey(StarkFelt::new(DEFAULT_SEQUENCER_ADDRESS).unwrap()));
@@ -125,6 +120,23 @@ pub fn new_test_ext<T: Config>() -> sp_io::TestExternalities {
 
     let genesis_data: GenesisData = serde_json::from_str(std::include_str!("./genesis.json")).unwrap();
     let genesis_loader = GenesisLoader::new(project_root::get_project_root().unwrap(), genesis_data);
+    let genesis: GenesisConfig<T> = genesis_loader.into();
+
+    genesis.assimilate_storage(&mut t).unwrap();
+
+    t.into()
+}
+
+// Build genesis storage according to the actual runtime.
+pub fn test_genesis_ext<T: Config>() -> sp_io::TestExternalities {
+    let mut t = frame_system::GenesisConfig::<T>::default().build_storage().unwrap();
+    let project_root = project_root::get_project_root().unwrap().join("configs/");
+
+    let genesis_path = project_root.join("genesis-assets/").join("genesis.json");
+    let genesis_file_content = std::fs::read_to_string(genesis_path).unwrap();
+
+    let genesis_data: GenesisData = serde_json::from_str(&genesis_file_content).unwrap();
+    let genesis_loader = GenesisLoader::new(project_root, genesis_data);
     let genesis: GenesisConfig<T> = genesis_loader.into();
 
     genesis.assimilate_storage(&mut t).unwrap();

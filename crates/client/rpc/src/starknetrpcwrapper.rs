@@ -21,8 +21,8 @@ use starknet_core::types::{
     BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
     DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall,
     InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingStateUpdate,
-    MaybePendingTransactionReceipt, MsgFromL1, SimulatedTransaction, SimulationFlag, SyncStatusType, Transaction,
-    TransactionTraceWithHash,
+    MaybePendingTransactionReceipt, MsgFromL1, SimulatedTransaction, SimulationFlag, SimulationFlagForEstimateFee,
+    SyncStatusType, Transaction, TransactionTrace, TransactionTraceWithHash,
 };
 
 use crate::Starknet;
@@ -54,7 +54,6 @@ where
 }
 
 #[async_trait]
-#[allow(unused_variables)]
 impl<A, B, BE, G, C, P, H> StarknetReadRpcApiServer for StarknetRpcWrapper<A, B, BE, G, C, P, H>
 where
     A: ChainApi<Block = B> + 'static,
@@ -351,9 +350,10 @@ where
     async fn estimate_fee(
         &self,
         request: Vec<BroadcastedTransaction>,
+        simulation_flags: Vec<SimulationFlagForEstimateFee>,
         block_id: BlockId,
     ) -> RpcResult<Vec<FeeEstimate>> {
-        StarknetReadRpcApiServer::estimate_fee(&*self.0, request, block_id).await
+        StarknetReadRpcApiServer::estimate_fee(&*self.0, request, simulation_flags, block_id).await
     }
 
     /// Estimate the L2 fee of a message sent on L1
@@ -619,5 +619,10 @@ where
     /// Returns the execution traces of all transactions included in the given block
     async fn trace_block_transactions(&self, block_id: BlockId) -> RpcResult<Vec<TransactionTraceWithHash>> {
         self.0.trace_block_transactions(block_id).await
+    }
+
+    /// Returns the executions traces of a specified transaction in the given block
+    async fn trace_transaction(&self, transaction_hash: FieldElement) -> RpcResult<TransactionTrace> {
+        self.0.trace_transaction(transaction_hash).await
     }
 }

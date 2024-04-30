@@ -17,39 +17,25 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 anyhow = { workspace = true }
-blockifier = { workspace = true, default-features = true }
-cairo-lang-casm = { workspace = true }
-cairo-lang-casm-contract-class = { workspace = true }
-cairo-lang-starknet = { workspace = true }
+blockifier = { workspace = true }
+cairo-lang-starknet-classes = { workspace = true }
 cairo-lang-utils = { workspace = true }
-cairo-vm = { workspace = true, default-features = true }
 flate2 = { workspace = true }
-frame-support = { workspace = true }
-hex = { workspace = true, default-features = true }
-indexmap = { workspace = true, default-features = true }
-jsonrpsee = { workspace = true, features = [
-  "server",
-  "macros",
-], default-features = true }
+indexmap = { workspace = true }
+jsonrpsee = { workspace = true, features = ["server", "macros"] }
 mp-block = { workspace = true }
 mp-digest-log = { workspace = true }
 mp-felt = { workspace = true }
-mp-genesis-config = { workspace = true }
-mp-simulations = { workspace = true }
 mp-transactions = { workspace = true, features = ["serde"] }
 num-bigint = { workspace = true }
-pallet-starknet = { workspace = true }
-serde = { workspace = true, default-features = true }
+pallet-starknet = { workspace = true, features = ["genesis-loader"] }
+serde = { workspace = true }
 serde_json = { workspace = true }
 serde_with = { workspace = true }
-sp-api = { workspace = true, default-features = true }
-sp-blockchain = { workspace = true, default-features = true }
-sp-core = { workspace = true }
-sp-runtime = { workspace = true, default-features = true }
+sp-api = { workspace = true }
+sp-blockchain = { workspace = true }
 starknet-core = { workspace = true }
-starknet-providers = { workspace = true }
-starknet_api = { workspace = true, default-features = true }
-thiserror = { workspace = true }
+starknet_api = { workspace = true }
 
 [dev-dependencies]
 assert_matches = "1.5.0"

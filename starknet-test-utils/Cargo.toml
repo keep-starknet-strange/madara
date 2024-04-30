@@ -1,0 +1,23 @@
+[package]
+name = "starknet-test-utils"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+
+anyhow = { workspace = true }
+assert_matches = { workspace = true }
+async-lock = { workspace = true }
+async-trait = { workspace = true }
+reqwest = { workspace = true }
+rstest = { workspace = true }
+serde_json = { workspace = true }
+starknet-accounts = { workspace = true }
+starknet-core = { workspace = true }
+starknet-ff = { workspace = true }
+starknet-providers = { workspace = true }
+starknet-signers = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+url = { workspace = true }

@@ -1,15 +1,15 @@
-use std::collections::HashMap;
 use std::io::Write;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
 use blockifier::execution::contract_class::ContractClass as BlockifierContractClass;
 use blockifier::state::cached_state::CommitmentStateDiff;
-use cairo_lang_casm_contract_class::{CasmContractClass, CasmContractEntryPoint, CasmContractEntryPoints};
-use cairo_lang_starknet::contract_class::{
+use cairo_lang_starknet_classes::casm_contract_class::{
+    CasmContractClass, CasmContractEntryPoint, CasmContractEntryPoints, StarknetSierraCompilationError,
+};
+use cairo_lang_starknet_classes::contract_class::{
     ContractClass as SierraContractClass, ContractEntryPoint, ContractEntryPoints,
 };
-use cairo_lang_starknet::contract_class_into_casm_contract_class::StarknetSierraCompilationError;
 use cairo_lang_utils::bigint::BigUintAsHex;
 use indexmap::IndexMap;
 use mp_block::Block as StarknetBlock;
@@ -32,7 +32,7 @@ pub fn blockifier_to_rpc_contract_class_types(contract_class: BlockifierContract
     match contract_class {
         BlockifierContractClass::V0(contract_class) => {
             let entry_points_by_type = to_legacy_entry_points_by_type(&contract_class.entry_points_by_type)?;
-            let compressed_program = compress(&contract_class.program.to_bytes())?;
+            let compressed_program = compress(&contract_class.program.serialize()?)?;
             Ok(ContractClass::Legacy(CompressedLegacyContractClass {
                 program: compressed_program,
                 entry_points_by_type,
@@ -57,9 +57,12 @@ pub fn blockifier_to_rpc_state_diff_types(commitment_state_diff: CommitmentState
         .map(|(address, storage_map)| {
             let storage_entries = storage_map
                 .into_iter()
-                .map(|(key, value)| StorageEntry { key: key.0.0.into(), value: value.into() })
+                .map(|(key, value)| StorageEntry {
+                    key: Felt252Wrapper::from(key).into(),
+                    value: Felt252Wrapper::from(value).into(),
+                })
                 .collect();
-            ContractStorageDiffItem { address: address.0.0.into(), storage_entries }
+            ContractStorageDiffItem { address: Felt252Wrapper::from(address).into(), storage_entries }
         })
         .collect();
 
@@ -67,8 +70,8 @@ pub fn blockifier_to_rpc_state_diff_types(commitment_state_diff: CommitmentState
         .class_hash_to_compiled_class_hash
         .into_iter()
         .map(|(class_hash, compiled_class_hash)| DeclaredClassItem {
-            class_hash: class_hash.0.into(),
-            compiled_class_hash: compiled_class_hash.0.into(),
+            class_hash: Felt252Wrapper::from(class_hash).into(),
+            compiled_class_hash: Felt252Wrapper::from(compiled_class_hash).into(),
         })
         .collect();
 
@@ -76,15 +79,18 @@ pub fn blockifier_to_rpc_state_diff_types(commitment_state_diff: CommitmentState
         .address_to_class_hash
         .into_iter()
         .map(|(address, class_hash)| DeployedContractItem {
-            address: address.0.0.into(),
-            class_hash: class_hash.0.into(),
+            address: Felt252Wrapper::from(address).into(),
+            class_hash: Felt252Wrapper::from(class_hash).into(),
         })
         .collect();
 
     let nonces = commitment_state_diff
         .address_to_nonce
         .into_iter()
-        .map(|(address, nonce)| NonceUpdate { contract_address: address.0.0.into(), nonce: nonce.0.into() })
+        .map(|(address, nonce)| NonceUpdate {
+            contract_address: Felt252Wrapper::from(address).into(),
+            nonce: Felt252Wrapper::from(nonce).into(),
+        })
         .collect();
 
     Ok(StateDiff {
@@ -101,37 +107,59 @@ pub fn blockifier_to_rpc_state_diff_types(commitment_state_diff: CommitmentState
 pub fn to_rpc_state_diff(thin_state_diff: ThinStateDiff) -> StateDiff {
     let nonces = thin_state_diff
         .nonces
-        .iter()
-        .map(|x| NonceUpdate { contract_address: x.0.0.0.into(), nonce: x.1.0.into() })
+        .into_iter()
+        .map(|(contract_address, nonce)| NonceUpdate {
+            contract_address: Felt252Wrapper::from(contract_address).into(),
+            nonce: Felt252Wrapper::from(nonce).into(),
+        })
         .collect();
 
     let storage_diffs = thin_state_diff
         .storage_diffs
-        .iter()
-        .map(|x| ContractStorageDiffItem {
-            address: x.0.0.0.into(),
-            storage_entries: x.1.iter().map(|y| StorageEntry { key: y.0.0.0.into(), value: (*y.1).into() }).collect(),
+        .into_iter()
+        .map(|(contract_address, storage_changes)| ContractStorageDiffItem {
+            address: Felt252Wrapper::from(contract_address).into(),
+            storage_entries: storage_changes
+                .into_iter()
+                .map(|(storage_key, value)| StorageEntry {
+                    key: Felt252Wrapper::from(storage_key).into(),
+                    value: Felt252Wrapper::from(value).into(),
+                })
+                .collect(),
         })
         .collect();
 
-    let deprecated_declared_classes = thin_state_diff.deprecated_declared_classes.iter().map(|x| x.0.into()).collect();
+    let deprecated_declared_classes = thin_state_diff
+        .deprecated_declared_classes
+        .into_iter()
+        .map(|class_hash| Felt252Wrapper::from(class_hash).into())
+        .collect();
 
     let declared_classes = thin_state_diff
         .declared_classes
-        .iter()
-        .map(|x| DeclaredClassItem { class_hash: x.0.0.into(), compiled_class_hash: x.1.0.into() })
+        .into_iter()
+        .map(|(class_hash, compiled_class_hash)| DeclaredClassItem {
+            class_hash: Felt252Wrapper::from(class_hash).into(),
+            compiled_class_hash: Felt252Wrapper::from(compiled_class_hash).into(),
+        })
         .collect();
 
     let deployed_contracts = thin_state_diff
         .deployed_contracts
-        .iter()
-        .map(|x| DeployedContractItem { address: x.0.0.0.into(), class_hash: x.1.0.into() })
+        .into_iter()
+        .map(|(contract_address, class_hash)| DeployedContractItem {
+            address: Felt252Wrapper::from(contract_address).into(),
+            class_hash: Felt252Wrapper::from(class_hash).into(),
+        })
         .collect();
 
     let replaced_classes = thin_state_diff
         .replaced_classes
-        .iter()
-        .map(|x| ReplacedClassItem { contract_address: x.0.0.0.into(), class_hash: x.1.0.into() })
+        .into_iter()
+        .map(|(contract_address, class_hash)| ReplacedClassItem {
+            contract_address: Felt252Wrapper::from(contract_address).into(),
+            class_hash: Felt252Wrapper::from(class_hash).into(),
+        })
         .collect();
 
     StateDiff {
@@ -158,10 +186,10 @@ pub(crate) fn compress(data: &[u8]) -> Result<Vec<u8>> {
 /// Returns a [Result<LegacyEntryPointsByType>] (starknet-rs type) from a [HashMap<EntryPointType,
 /// Vec<EntryPoint>>]
 fn to_legacy_entry_points_by_type(
-    entries: &HashMap<EntryPointType, Vec<EntryPoint>>,
+    entries: &IndexMap<EntryPointType, Vec<EntryPoint>>,
 ) -> Result<LegacyEntryPointsByType> {
     fn collect_entry_points(
-        entries: &HashMap<EntryPointType, Vec<EntryPoint>>,
+        entries: &IndexMap<EntryPointType, Vec<EntryPoint>>,
         entry_point_type: EntryPointType,
     ) -> Result<Vec<LegacyContractEntryPoint>> {
         Ok(entries
@@ -182,7 +210,7 @@ fn to_legacy_entry_points_by_type(
 /// Returns a [LegacyContractEntryPoint] (starknet-rs) from a [EntryPoint] (starknet-api)
 fn to_legacy_entry_point(entry_point: EntryPoint) -> Result<LegacyContractEntryPoint, FromByteArrayError> {
     let selector = FieldElement::from_bytes_be(&entry_point.selector.0.0)?;
-    let offset = entry_point.offset.0 as u64;
+    let offset = entry_point.offset.0;
     Ok(LegacyContractEntryPoint { selector, offset })
 }
 
@@ -214,36 +242,36 @@ pub fn flattened_sierra_to_casm_contract_class(
         ),
         abi: None, // we can convert the ABI but for now, to convert to Casm, the ABI isn't needed
     };
-    let casm_contract_class = sierra_contract_class.into_casm_contract_class(false)?;
+    let casm_contract_class = CasmContractClass::from_contract_class(sierra_contract_class, false, usize::MAX)?;
     Ok(casm_contract_class)
 }
 
 pub fn flattened_sierra_to_sierra_contract_class(
     flattened_sierra: Arc<FlattenedSierraClass>,
 ) -> starknet_api::state::ContractClass {
-    let mut entry_point_by_type =
+    let mut entry_points_by_type =
         IndexMap::<starknet_api::state::EntryPointType, Vec<starknet_api::state::EntryPoint>>::with_capacity(3);
     for sierra_entrypoint in flattened_sierra.entry_points_by_type.constructor.iter() {
-        entry_point_by_type
+        entry_points_by_type
             .entry(starknet_api::state::EntryPointType::Constructor)
             .or_default()
             .push(rpc_entry_point_to_starknet_api_entry_point(sierra_entrypoint));
     }
     for sierra_entrypoint in flattened_sierra.entry_points_by_type.external.iter() {
-        entry_point_by_type
+        entry_points_by_type
             .entry(starknet_api::state::EntryPointType::External)
             .or_default()
             .push(rpc_entry_point_to_starknet_api_entry_point(sierra_entrypoint));
     }
     for sierra_entrypoint in flattened_sierra.entry_points_by_type.l1_handler.iter() {
-        entry_point_by_type
+        entry_points_by_type
             .entry(starknet_api::state::EntryPointType::L1Handler)
             .or_default()
             .push(rpc_entry_point_to_starknet_api_entry_point(sierra_entrypoint));
     }
     starknet_api::state::ContractClass {
         sierra_program: flattened_sierra.sierra_program.iter().map(|f| Felt252Wrapper(*f).into()).collect(),
-        entry_point_by_type,
+        entry_points_by_type,
         abi: flattened_sierra.abi.clone(),
     }
 }
@@ -282,20 +310,23 @@ fn entry_points_by_type_to_contract_entry_points(value: EntryPointsByType) -> Co
 
 // Utils to convert Casm contract class to Compiled class
 pub fn get_casm_cotract_class_hash(casm_contract_class: &CasmContractClass) -> FieldElement {
-    let compiled_class = casm_contract_class_to_compiled_class(casm_contract_class);
-    compiled_class.class_hash().unwrap()
-}
-
-/// Converts a [CasmContractClass] to a [CompiledClass]
-pub fn casm_contract_class_to_compiled_class(casm_contract_class: &CasmContractClass) -> CompiledClass {
-    CompiledClass {
-        prime: casm_contract_class.prime.to_string(),
-        compiler_version: casm_contract_class.compiler_version.clone(),
-        bytecode: casm_contract_class.bytecode.iter().map(|x| biguint_to_field_element(&x.value)).collect(),
-        entry_points_by_type: casm_entry_points_to_compiled_entry_points(&casm_contract_class.entry_points_by_type),
-        hints: vec![],        // not needed to get class hash so ignoring this
-        pythonic_hints: None, // not needed to get class hash so ignoring this
+    // Let's not expose it as it don't produce a full fleshed CompiledClass
+    // and is therefore only usefull in the context of computing the ClassHash
+    fn casm_contract_class_to_partial_compiled_class(casm_contract_class: &CasmContractClass) -> CompiledClass {
+        CompiledClass {
+            prime: casm_contract_class.prime.to_string(),
+            compiler_version: casm_contract_class.compiler_version.clone(),
+            bytecode: casm_contract_class.bytecode.iter().map(|x| biguint_to_field_element(&x.value)).collect(),
+            entry_points_by_type: casm_entry_points_to_compiled_entry_points(&casm_contract_class.entry_points_by_type),
+            // The following fields are not usefull to compute the class hash, so no need to fill those
+            hints: vec![],
+            pythonic_hints: None,
+            bytecode_segment_lengths: vec![],
+        }
     }
+
+    let compiled_class = casm_contract_class_to_partial_compiled_class(casm_contract_class);
+    compiled_class.class_hash().unwrap()
 }
 
 /// Converts a [CasmContractEntryPoints] to a [CompiledClassEntrypointList]

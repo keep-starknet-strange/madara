@@ -10,7 +10,7 @@ use sc_client_api::{Backend, HeaderBackend, StorageProvider};
 use sp_api::ProvideRuntimeApi;
 use sp_io::hashing::twox_128;
 use sp_runtime::traits::Block as BlockT;
-use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
+use starknet_api::core::{ClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Event as StarknetEvent, TransactionHash};

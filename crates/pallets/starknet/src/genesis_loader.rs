@@ -27,7 +27,6 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
                             version,
                         ),
                     ),
-                    ContractClass::Class(class) => (hash, class),
                 }
             })
             .collect::<Vec<_>>();
@@ -64,14 +63,25 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
                 (key, value)
             })
             .collect::<Vec<_>>();
-        let fee_token_address = Felt252Wrapper(loader.data().fee_token_address.0).into();
+
+        let chain_id = loader
+            .data()
+            .chain_id
+            .clone()
+            .into_bytes()
+            .iter()
+            .as_ref()
+            .try_into()
+            .expect("Failed to convert chain id to felt");
 
         GenesisConfig {
             contracts,
             contract_classes,
             sierra_to_casm_class_hash,
             storage,
-            fee_token_address,
+            strk_fee_token_address: Felt252Wrapper(loader.data().strk_fee_token_address.0).into(),
+            eth_fee_token_address: Felt252Wrapper(loader.data().eth_fee_token_address.0).into(),
+            chain_id,
             ..Default::default()
         }
     }
@@ -92,7 +102,7 @@ pub(crate) fn read_contract_class_from_json(json_str: &str, version: u8) -> Star
             serde_json::from_str(json_str).expect("`json_str` should be deserializable into the correct ContracClass"),
         );
     } else if version == 1 {
-        let casm_contract_class: cairo_lang_casm_contract_class::CasmContractClass =
+        let casm_contract_class: cairo_lang_starknet_classes::casm_contract_class::CasmContractClass =
             serde_json::from_str(json_str).expect("`json_str` should be deserializable into the CasmContracClass");
         return StarknetContractClass::V1(
             casm_contract_class.try_into().expect("the CasmContractClass should produce a valid ContractClassV1"),
@@ -113,7 +123,7 @@ mod tests {
         let loader: GenesisData = serde_json::from_str(include_str!("./tests/mock/genesis.json")).unwrap();
 
         // Then
-        assert_eq!(13, loader.contract_classes.len());
+        assert_eq!(14, loader.contract_classes.len());
     }
 
     #[test]
@@ -125,7 +135,7 @@ mod tests {
         let contract_address = FieldElement::from(2u8).into();
         let storage_key = FieldElement::from(3u8).into();
         let storage_value = FieldElement::from(4u8).into();
-        let fee_token_address = FieldElement::from(5u8).into();
+        let fee_token_address: HexFelt = FieldElement::from(5u8).into();
 
         let genesis_loader = GenesisData {
             contract_classes: vec![(class_hash, class)],
@@ -136,14 +146,16 @@ mod tests {
             contracts: vec![(contract_address, class_hash)],
             predeployed_accounts: Vec::new(),
             storage: vec![((contract_address, storage_key), storage_value)],
-            fee_token_address,
+            strk_fee_token_address: fee_token_address,
+            eth_fee_token_address: fee_token_address,
+            chain_id: String::from("MADARA"),
         };
 
         // When
         let serialized_loader = serde_json::to_string(&genesis_loader).unwrap();
 
         // Then
-        let expected = r#"{"contract_classes":[["0x1",{"path":"cairo-contracts/ERC20.json","version":0}]],"sierra_class_hash_to_casm_class_hash":[["0x2a","0x1"]],"contracts":[["0x2","0x1"]],"predeployed_accounts":[],"storage":[[["0x2","0x3"],"0x4"]],"fee_token_address":"0x5"}"#;
+        let expected = r#"{"contract_classes":[["0x1",{"path":"cairo-contracts/ERC20.json","version":0}]],"sierra_class_hash_to_casm_class_hash":[["0x2a","0x1"]],"contracts":[["0x2","0x1"]],"predeployed_accounts":[],"storage":[[["0x2","0x3"],"0x4"]],"chain_id":"MADARA","strk_fee_token_address":"0x5","eth_fee_token_address":"0x5"}"#;
         assert_eq!(expected, serialized_loader);
     }
 }

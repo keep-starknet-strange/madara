@@ -1,59 +1,56 @@
-use alloc::vec::Vec;
-
-use blockifier::block_context::BlockContext;
-use blockifier::state::cached_state::CommitmentStateDiff;
+use blockifier::context::BlockContext;
+use blockifier::state::cached_state::{CachedState, CommitmentStateDiff, GlobalContractCache};
 use blockifier::state::state_api::State;
+use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
+use blockifier::transaction::transaction_execution::Transaction;
+use blockifier::transaction::transactions::{ExecutableTransaction, L1HandlerTransaction};
 use frame_support::storage;
-use mp_felt::Felt252Wrapper;
 use mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult};
-use mp_transactions::execution::{Execute, ExecutionConfig};
-use mp_transactions::{HandleL1MessageTransaction, UserOrL1HandlerTransaction, UserTransaction};
+use mp_transactions::execution::{
+    commit_transactional_state, execute_l1_handler_transaction, run_non_revertible_transaction,
+    run_revertible_transaction, MutRefState, SetArbitraryNonce,
+};
 use sp_core::Get;
 use sp_runtime::DispatchError;
-use starknet_api::transaction::Fee;
+use starknet_api::transaction::TransactionVersion;
 
-use crate::blockifier_state_adapter::{BlockifierStateAdapter, CachedBlockifierStateAdapter};
-use crate::execution_config::RuntimeExecutionConfigBuilder;
+use crate::blockifier_state_adapter::BlockifierStateAdapter;
 use crate::{Config, Error, Pallet};
 
+type ReExecutionResult = Result<
+    Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>,
+    PlaceHolderErrorTypeForFailedStarknetExecution,
+>;
+
 impl<T: Config> Pallet<T> {
-    pub fn estimate_fee(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
+    pub fn estimate_fee(
+        transactions: Vec<AccountTransaction>,
+        simulation_flags: &SimulationFlags,
+    ) -> Result<Vec<(u128, u128)>, DispatchError> {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::estimate_fee_inner(
                 transactions,
+                simulation_flags,
             )))
         })
         .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?
     }
 
-    fn estimate_fee_inner(transactions: Vec<UserTransaction>) -> Result<Vec<(u64, u64)>, DispatchError> {
+    fn estimate_fee_inner(
+        transactions: Vec<AccountTransaction>,
+        simulation_flags: &SimulationFlags,
+    ) -> Result<Vec<(u128, u128)>, DispatchError> {
         let transactions_len = transactions.len();
-        let chain_id = Self::chain_id();
         let block_context = Self::get_block_context();
-        let mut execution_config = RuntimeExecutionConfigBuilder::new::<T>().with_query_mode().build();
+        let mut state = BlockifierStateAdapter::<T>::default();
 
         let fee_res_iterator = transactions
             .into_iter()
-            .map(|tx| {
-                execution_config.set_offset_version(tx.offset_version());
-
-                match Self::execute_user_transaction(tx, chain_id, &block_context, &execution_config) {
-                    Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
-                    Err(e) => {
-                        log::error!("Transaction execution failed during fee estimation: {e}");
-                        Err(Error::<T>::TransactionExecutionFailed)
-                    }
-                    Ok(execution_info) => {
-                        log::error!(
-                            "Transaction execution reverted during fee estimation: {}",
-                            // Safe due to the `match` branch order
-                            execution_info.revert_error.unwrap()
-                        );
-                        Err(Error::<T>::TransactionExecutionFailed)
-                    }
-                }
+            .map(|tx| match Self::execute_account_transaction(&tx, &mut state, &block_context, simulation_flags) {
+                Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
+                Err(_) | Ok(_) => Err(Error::<T>::TransactionExecutionFailed),
             })
             .map(|exec_info_res| {
                 exec_info_res.map(|exec_info| {
@@ -62,7 +59,7 @@ impl<T: Config> Pallet<T> {
                         .0
                         .get("l1_gas_usage")
                         .ok_or_else(|| DispatchError::from(Error::<T>::MissingL1GasUsage))
-                        .map(|l1_gas_usage| (exec_info.actual_fee.0 as u64, *l1_gas_usage))
+                        .map(|l1_gas_usage| (exec_info.actual_fee.0, *l1_gas_usage))
                 })
             });
 
@@ -73,8 +70,9 @@ impl<T: Config> Pallet<T> {
 
         Ok(fees)
     }
+
     pub fn simulate_transactions(
-        transactions: Vec<UserTransaction>,
+        transactions: Vec<AccountTransaction>,
         simulation_flags: &SimulationFlags,
     ) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, DispatchError> {
         storage::transactional::with_transaction(|| {
@@ -87,33 +85,37 @@ impl<T: Config> Pallet<T> {
     }
 
     fn simulate_transactions_inner(
-        transactions: Vec<UserTransaction>,
+        transactions: Vec<AccountTransaction>,
         simulation_flags: &SimulationFlags,
     ) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, DispatchError> {
-        let chain_id = Self::chain_id();
         let block_context = Self::get_block_context();
-        let mut execution_config =
-            RuntimeExecutionConfigBuilder::new::<T>().with_simulation_mode(simulation_flags).build();
+        let mut state = BlockifierStateAdapter::<T>::default();
 
         let tx_execution_results: Vec<(CommitmentStateDiff, TransactionSimulationResult)> = transactions
             .into_iter()
             .map(|tx| {
-                execution_config.set_offset_version(tx.offset_version());
+                let res = Self::execute_account_transaction_with_state_diff(
+                    &tx,
+                    &mut state,
+                    &block_context,
+                    simulation_flags,
+                )?;
 
-                let res = Self::execute_transaction_with_state_diff(tx, chain_id, &block_context, &execution_config);
                 let result = res.0.map_err(|e| {
                     log::error!("Transaction execution failed during simulation: {e}");
                     PlaceHolderErrorTypeForFailedStarknetExecution
                 });
-                (res.1, result)
+
+                Ok((res.1, result))
             })
-            .collect();
+            .collect::<Result<Vec<_>, PlaceHolderErrorTypeForFailedStarknetExecution>>()
+            .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
         Ok(tx_execution_results)
     }
 
     pub fn simulate_message(
-        message: HandleL1MessageTransaction,
+        message: L1HandlerTransaction,
         simulation_flags: &SimulationFlags,
     ) -> Result<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError> {
         storage::transactional::with_transaction(|| {
@@ -126,26 +128,21 @@ impl<T: Config> Pallet<T> {
     }
 
     fn simulate_message_inner(
-        message: HandleL1MessageTransaction,
-        simulation_flags: &SimulationFlags,
+        message: L1HandlerTransaction,
+        _simulation_flags: &SimulationFlags,
     ) -> Result<Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>, DispatchError> {
-        let chain_id = Self::chain_id();
         let block_context = Self::get_block_context();
-        let mut execution_config =
-            RuntimeExecutionConfigBuilder::new::<T>().with_simulation_mode(simulation_flags).build();
+        let mut state = BlockifierStateAdapter::<T>::default();
 
-        // Follow `offset` from Pallet Starknet where it is set to false
-        execution_config.set_offset_version(false);
-        let tx_execution_result =
-            Self::execute_message(message, chain_id, &block_context, &execution_config).map_err(|e| {
-                log::error!("Transaction execution failed during simulation: {e}");
-                PlaceHolderErrorTypeForFailedStarknetExecution
-            });
+        let tx_execution_result = Self::execute_message(&message, &mut state, &block_context).map_err(|e| {
+            log::error!("Transaction execution failed during simulation: {e}");
+            PlaceHolderErrorTypeForFailedStarknetExecution
+        });
 
         Ok(tx_execution_result)
     }
 
-    pub fn estimate_message_fee(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), DispatchError> {
+    pub fn estimate_message_fee(message: L1HandlerTransaction) -> Result<(u128, u128, u128), DispatchError> {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::estimate_message_fee_inner(
                 message,
@@ -154,168 +151,183 @@ impl<T: Config> Pallet<T> {
         .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?
     }
 
-    fn estimate_message_fee_inner(message: HandleL1MessageTransaction) -> Result<(u128, u64, u64), DispatchError> {
-        let chain_id = Self::chain_id();
+    fn estimate_message_fee_inner(message: L1HandlerTransaction) -> Result<(u128, u128, u128), DispatchError> {
+        let mut cached_state = Self::init_cached_state();
 
-        // Follow `offset` from Pallet Starknet where it is set to false
-        let tx_execution_infos =
-            match message.into_executable::<T::SystemHash>(chain_id, Fee(u128::MAX), false).execute(
-                &mut BlockifierStateAdapter::<T>::default(),
-                &Self::get_block_context(),
-                &RuntimeExecutionConfigBuilder::new::<T>().with_query_mode().with_disable_nonce_validation().build(),
-            ) {
-                Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
-                Err(e) => {
-                    log::error!(
-                        "Transaction execution failed during fee estimation: {e} {:?}",
-                        std::error::Error::source(&e)
-                    );
-                    Err(Error::<T>::TransactionExecutionFailed)
-                }
-                Ok(execution_info) => {
-                    log::error!(
-                        "Transaction execution reverted during fee estimation: {}",
-                        // Safe due to the `match` branch order
-                        execution_info.revert_error.unwrap()
-                    );
-                    Err(Error::<T>::TransactionExecutionFailed)
-                }
-            }?;
+        let tx_execution_infos = match message.execute(&mut cached_state, &Self::get_block_context(), true, true) {
+            Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
+            Err(e) => {
+                log::error!(
+                    "Transaction execution failed during fee estimation: {e} {:?}",
+                    std::error::Error::source(&e)
+                );
+                Err(Error::<T>::TransactionExecutionFailed)
+            }
+            Ok(execution_info) => {
+                log::error!(
+                    "Transaction execution reverted during fee estimation: {}",
+                    // Safe due to the `match` branch order
+                    execution_info.revert_error.unwrap()
+                );
+                Err(Error::<T>::TransactionExecutionFailed)
+            }
+        }?;
 
         if let Some(l1_gas_usage) = tx_execution_infos.actual_resources.0.get("l1_gas_usage") {
-            Ok((T::L1GasPrice::get().price_in_wei, tx_execution_infos.actual_fee.0 as u64, *l1_gas_usage))
+            Ok((T::L1GasPrices::get().eth_l1_gas_price.into(), tx_execution_infos.actual_fee.0 as u128, *l1_gas_usage))
         } else {
             Err(Error::<T>::MissingL1GasUsage.into())
         }
     }
 
     pub fn re_execute_transactions(
-        transactions: Vec<UserOrL1HandlerTransaction>,
-    ) -> Result<
-        Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, PlaceHolderErrorTypeForFailedStarknetExecution>,
-        DispatchError,
-    > {
+        transactions_before: Vec<Transaction>,
+        transactions_to_trace: Vec<Transaction>,
+        with_state_diff: bool,
+    ) -> Result<ReExecutionResult, DispatchError> {
         storage::transactional::with_transaction(|| {
-            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::re_execute_transactions_inner(
-                transactions,
-            )))
+            let res = Self::re_execute_transactions_inner(transactions_before, transactions_to_trace, with_state_diff);
+            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Ok(res)))
         })
         .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?
     }
 
     fn re_execute_transactions_inner(
-        transactions: Vec<UserOrL1HandlerTransaction>,
+        transactions_before: Vec<Transaction>,
+        transactions_to_trace: Vec<Transaction>,
+        with_state_diff: bool,
     ) -> Result<
-        Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, PlaceHolderErrorTypeForFailedStarknetExecution>,
-        DispatchError,
+        Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>,
+        PlaceHolderErrorTypeForFailedStarknetExecution,
     > {
-        let chain_id = Self::chain_id();
         let block_context = Self::get_block_context();
-        let execution_config = RuntimeExecutionConfigBuilder::new::<T>().build();
+        let mut state = BlockifierStateAdapter::<T>::default();
 
-        let execution_infos = transactions
+        transactions_before.iter().try_for_each(|tx| {
+            Self::execute_transaction(tx, &mut state, &block_context, &SimulationFlags::default()).map_err(|e| {
+                log::error!("Failed to reexecute a tx: {}", e);
+                PlaceHolderErrorTypeForFailedStarknetExecution
+            })?;
+
+            Ok(())
+        })?;
+
+        let execution_infos = transactions_to_trace
             .iter()
-            .map(|user_or_l1_tx| {
-                let mut cached_state = CachedBlockifierStateAdapter(BlockifierStateAdapter::<T>::default());
-                let res = match user_or_l1_tx {
-                    UserOrL1HandlerTransaction::User(tx) => match tx {
-                        UserTransaction::Declare(tx, contract_class) => tx
-                            .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), false)
-                            .map_err(|e| {
-                                log::error!("Failed to reexecute a tx: {}", e);
-                                PlaceHolderErrorTypeForFailedStarknetExecution
-                            })
-                            .and_then(|executable| {
-                                executable.execute(&mut cached_state, &block_context, &execution_config).map_err(|e| {
-                                    log::error!("Failed to reexecute a tx: {}", e);
-                                    PlaceHolderErrorTypeForFailedStarknetExecution
-                                })
-                            }),
-                        UserTransaction::DeployAccount(tx) => tx
-                            .into_executable::<T::SystemHash>(chain_id, false)
-                            .execute(&mut cached_state, &block_context, &execution_config)
-                            .map_err(|e| {
-                                log::error!("Failed to reexecute a tx: {}", e);
-                                PlaceHolderErrorTypeForFailedStarknetExecution
-                            }),
-                        UserTransaction::Invoke(tx) => tx
-                            .into_executable::<T::SystemHash>(chain_id, false)
-                            .execute(&mut cached_state, &block_context, &execution_config)
-                            .map_err(|e| {
-                                log::error!("Failed to reexecute a tx: {}", e);
-                                PlaceHolderErrorTypeForFailedStarknetExecution
-                            }),
-                    },
-                    UserOrL1HandlerTransaction::L1Handler(tx, fee) => tx
-                        .into_executable::<T::SystemHash>(chain_id, *fee, false)
-                        .execute(&mut cached_state, &block_context, &execution_config)
-                        .map_err(|e| {
-                            log::error!("Failed to reexecute a tx: {}", e);
-                            PlaceHolderErrorTypeForFailedStarknetExecution
-                        }),
-                };
-                res.map(|r| (r, cached_state.to_state_diff()))
+            .map(|tx| {
+                let mut transactional_state =
+                    CachedState::new(MutRefState::new(&mut state), GlobalContractCache::new(1));
+                let res = Self::execute_transaction(
+                    tx,
+                    &mut transactional_state,
+                    &block_context,
+                    &SimulationFlags::default(),
+                )
+                .map_err(|e| {
+                    log::error!("Failed to reexecute a tx: {}", e);
+                    PlaceHolderErrorTypeForFailedStarknetExecution
+                });
+
+                let res = res
+                    .map(|r| if with_state_diff { (r, Some(transactional_state.to_state_diff())) } else { (r, None) });
+                commit_transactional_state(transactional_state).map_err(|e| {
+                    log::error!("Failed to commit state changes: {:?}", e);
+                    PlaceHolderErrorTypeForFailedStarknetExecution
+                })?;
+
+                res
             })
-            .collect();
+            .collect::<Result<_, PlaceHolderErrorTypeForFailedStarknetExecution>>()?;
 
         Ok(execution_infos)
     }
 
-    fn execute_user_transaction(
-        transaction: UserTransaction,
-        chain_id: Felt252Wrapper,
+    fn execute_transaction<S: State + SetArbitraryNonce>(
+        transaction: &Transaction,
+        state: &mut S,
         block_context: &BlockContext,
-        execution_config: &ExecutionConfig,
+        simulation_flags: &SimulationFlags,
     ) -> Result<TransactionExecutionInfo, TransactionExecutionError> {
         match transaction {
-            UserTransaction::Declare(tx, contract_class) => {
-                tx.try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), tx.offset_version()).and_then(
-                    |exec| exec.execute(&mut BlockifierStateAdapter::<T>::default(), block_context, execution_config),
-                )
+            Transaction::AccountTransaction(tx) => {
+                Self::execute_account_transaction(tx, state, block_context, simulation_flags)
             }
-            UserTransaction::DeployAccount(tx) => {
-                let executable = tx.into_executable::<T::SystemHash>(chain_id, tx.offset_version());
-                executable.execute(&mut BlockifierStateAdapter::<T>::default(), block_context, execution_config)
-            }
-            UserTransaction::Invoke(tx) => {
-                let executable = tx.into_executable::<T::SystemHash>(chain_id, tx.offset_version());
-                executable.execute(&mut BlockifierStateAdapter::<T>::default(), block_context, execution_config)
-            }
+
+            Transaction::L1HandlerTransaction(tx) => Self::execute_message(tx, state, block_context),
         }
     }
 
-    fn execute_transaction_with_state_diff(
-        transaction: UserTransaction,
-        chain_id: Felt252Wrapper,
+    fn execute_account_transaction<S: State + SetArbitraryNonce>(
+        transaction: &AccountTransaction,
+        state: &mut S,
         block_context: &BlockContext,
-        execution_config: &ExecutionConfig,
-    ) -> (Result<TransactionExecutionInfo, TransactionExecutionError>, CommitmentStateDiff) {
-        let mut cached_state = CachedBlockifierStateAdapter(BlockifierStateAdapter::<T>::default());
-        let result = match transaction {
-            UserTransaction::Declare(tx, contract_class) => tx
-                .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), tx.offset_version())
-                .and_then(|exec| exec.execute(&mut cached_state, block_context, execution_config)),
-            UserTransaction::DeployAccount(tx) => {
-                let executable = tx.into_executable::<T::SystemHash>(chain_id, tx.offset_version());
-                executable.execute(&mut cached_state, block_context, execution_config)
+        simulation_flags: &SimulationFlags,
+    ) -> Result<TransactionExecutionInfo, TransactionExecutionError> {
+        match transaction {
+            AccountTransaction::Declare(tx) => run_non_revertible_transaction(
+                tx,
+                state,
+                block_context,
+                simulation_flags.validate,
+                simulation_flags.charge_fee,
+            ),
+            AccountTransaction::DeployAccount(tx) => run_non_revertible_transaction(
+                tx,
+                state,
+                block_context,
+                simulation_flags.validate,
+                simulation_flags.charge_fee,
+            ),
+            AccountTransaction::Invoke(tx) if tx.tx.version() == TransactionVersion::ZERO => {
+                run_non_revertible_transaction(
+                    tx,
+                    state,
+                    block_context,
+                    simulation_flags.validate,
+                    simulation_flags.charge_fee,
+                )
             }
-            UserTransaction::Invoke(tx) => {
-                let executable = tx.into_executable::<T::SystemHash>(chain_id, tx.offset_version());
-                executable.execute(&mut cached_state, block_context, execution_config)
-            }
-        };
-
-        (result, cached_state.to_state_diff())
+            AccountTransaction::Invoke(tx) => run_revertible_transaction(
+                tx,
+                state,
+                block_context,
+                simulation_flags.validate,
+                simulation_flags.charge_fee,
+            ),
+        }
     }
 
-    fn execute_message(
-        message: HandleL1MessageTransaction,
-        chain_id: Felt252Wrapper,
+    fn execute_account_transaction_with_state_diff<S: State + SetArbitraryNonce>(
+        transaction: &AccountTransaction,
+        state: &mut S,
         block_context: &BlockContext,
-        execution_config: &ExecutionConfig,
+        simulation_flags: &SimulationFlags,
+    ) -> Result<
+        (Result<TransactionExecutionInfo, TransactionExecutionError>, CommitmentStateDiff),
+        PlaceHolderErrorTypeForFailedStarknetExecution,
+    > {
+        // In order to produce a state diff for this specific tx we execute on a transactional state
+        let mut transactional_state = CachedState::new(MutRefState::new(state), GlobalContractCache::new(1));
+
+        let result =
+            Self::execute_account_transaction(transaction, &mut transactional_state, block_context, simulation_flags);
+
+        let state_diff = transactional_state.to_state_diff();
+        // Once the state diff of this tx is generated, we apply those changes on the original state
+        // so that next txs being simulated are ontop of this one (avoid nonce error)
+        commit_transactional_state(transactional_state).map_err(|e| {
+            log::error!("Failed to commit state changes: {:?}", e);
+            PlaceHolderErrorTypeForFailedStarknetExecution
+        })?;
+
+        Ok((result, state_diff))
+    }
+
+    fn execute_message<S: State>(
+        transaction: &L1HandlerTransaction,
+        state: &mut S,
+        block_context: &BlockContext,
     ) -> Result<TransactionExecutionInfo, TransactionExecutionError> {
-        // Follow `offset` from Pallet Starknet where it is set to false
-        let executable = message.into_executable::<T::SystemHash>(chain_id, Fee::default(), false);
-        executable.execute(&mut BlockifierStateAdapter::<T>::default(), block_context, execution_config)
+        execute_l1_handler_transaction(transaction, state, block_context)
     }
 }

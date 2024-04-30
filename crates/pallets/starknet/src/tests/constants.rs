@@ -1,5 +1,6 @@
 use lazy_static::lazy_static;
-use mp_felt::Felt252Wrapper;
+use starknet_api::hash::StarkFelt;
+use starknet_api::transaction::ContractAddressSalt;
 
 pub const ACCOUNT_PRIVATE_KEY: &str = "0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d";
 pub const ACCOUNT_PUBLIC_KEY: &str = "0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2";
@@ -23,11 +24,17 @@ pub const UNAUTHORIZED_INNER_CALL_ACCOUNT_CLASS_HASH_CAIRO_0: &str =
     "0x071aaf68d30c3e52e1c4b7d1209b0e09525939c31bb0275919dffd4cd53f57c4";
 pub const MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS: &str =
     "0x051a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02cf";
+pub const UDC_ADDRESS: &str = "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf";
+pub const UDC_SELECTOR: &str = "0x1987cbd17808b9a23693d4de7e246a443cfe37e6e7fbaeabd7d7e6532b07c3d";
 
 // salts for address calculation
 lazy_static! {
-    pub static ref SALT: Felt252Wrapper =
-        Felt252Wrapper::from_hex_be("0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463").unwrap();
-    pub static ref TEST_ACCOUNT_SALT: Felt252Wrapper =
-        Felt252Wrapper::from_hex_be("0x0780f72e33c1508df24d8f00a96ecc6e08a850ecb09f7e6dff6a81624c0ef46a").unwrap();
+    pub static ref SALT: ContractAddressSalt = ContractAddressSalt(
+        StarkFelt::try_from("0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463").unwrap()
+    );
+    pub static ref TEST_ACCOUNT_SALT: ContractAddressSalt = ContractAddressSalt(
+        StarkFelt::try_from("0x0780f72e33c1508df24d8f00a96ecc6e08a850ecb09f7e6dff6a81624c0ef46a").unwrap()
+    );
 }
+
+pub const TRANSFER_SELECTOR_NAME: &str = "Transfer";

@@ -26,6 +26,7 @@ pub mod constants;
 pub mod utils;
 
 pub mod fixtures;
+// mod utils;
 
 const NODE_RPC_URL: &str = "http://localhost:9944";
 
@@ -154,7 +155,7 @@ impl MadaraClient {
     }
 
     pub async fn create_block_with_pending_txs(&mut self) -> anyhow::Result<()> {
-        self.do_create_block(false, true).await
+        self.do_create_block(true, true).await
     }
 
     async fn do_create_block(&mut self, empty: bool, finalize: bool) -> anyhow::Result<()> {
@@ -172,13 +173,13 @@ impl MadaraClient {
         &mut self,
         transactions: Vec<Transaction<'_>>,
     ) -> anyhow::Result<Vec<Result<TransactionResult, SendTransactionError>>> {
-        let mut results = Vec::new();
+        let mut results = Vec::with_capacity(transactions.len());
         for tx in transactions {
             let result = tx.send().await;
             results.push(result);
         }
 
-        self.do_create_block(false, false).await?;
+        self.do_create_block(true, false).await?;
         Ok(results)
     }
 
@@ -186,7 +187,7 @@ impl MadaraClient {
         &mut self,
         transactions: Vec<Transaction<'_>>,
     ) -> Vec<Result<TransactionResult, SendTransactionError>> {
-        let mut results = Vec::new();
+        let mut results = Vec::with_capacity(transactions.len());
         for tx in transactions {
             let result = tx.send().await;
             results.push(result);

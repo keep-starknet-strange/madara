@@ -1,18 +1,11 @@
 //! Starknet block primitives.
-#![cfg_attr(not(feature = "std"), no_std)]
-
-#[doc(hidden)]
-pub extern crate alloc;
-
 mod header;
 
-use alloc::vec::Vec;
-
-pub use header::*;
+use blockifier::transaction::transaction_execution::Transaction;
+pub use header::Header;
 use mp_felt::Felt252Wrapper;
-use mp_hashers::HasherT;
-use mp_transactions::compute_hash::ComputeTransactionHash;
-use mp_transactions::Transaction;
+use mp_transactions::get_transaction_hash;
+use starknet_api::transaction::TransactionHash;
 
 /// Block Transactions
 pub type BlockTransactions = Vec<Transaction>;
@@ -23,6 +16,7 @@ pub type BlockTransactions = Vec<Transaction>;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 pub enum BlockTag {
     #[cfg_attr(feature = "serde", serde(rename = "latest"))]
     Latest,
@@ -41,8 +35,14 @@ pub enum BlockId {
     Tag(BlockTag),
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum NewBlockError {
+    #[error("header's field `transaction_count` does not matched the len of the `transactions` field")]
+    InvalidTxCount,
+}
+
 /// Starknet block definition.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 pub struct Block {
     /// The block header.
@@ -58,8 +58,12 @@ impl Block {
     ///
     /// * `header` - The block header.
     /// * `transactions` - The block transactions.
-    pub fn new(header: Header, transactions: BlockTransactions) -> Self {
-        Self { header, transactions }
+    pub fn try_new(header: Header, transactions: BlockTransactions) -> Result<Self, NewBlockError> {
+        if header.transaction_count as usize != transactions.len() {
+            Err(NewBlockError::InvalidTxCount)
+        } else {
+            Ok(Self { header, transactions })
+        }
     }
 
     /// Return a reference to the block header
@@ -75,11 +79,8 @@ impl Block {
     /// Returns an iterator that iterates over all transaction hashes.
     ///
     /// Those transactions are computed using the given `chain_id`.
-    pub fn transactions_hashes<H: HasherT>(
-        &self,
-        chain_id: Felt252Wrapper,
-    ) -> impl '_ + Iterator<Item = Felt252Wrapper> {
-        self.transactions.iter().map(move |tx| tx.compute_hash::<H>(chain_id, false))
+    pub fn transactions_hashes(&self) -> impl '_ + Iterator<Item = &TransactionHash> {
+        self.transactions.iter().map(get_transaction_hash)
     }
 }
 

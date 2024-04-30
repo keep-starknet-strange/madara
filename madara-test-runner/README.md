@@ -41,7 +41,7 @@ start). In order to troubleshoot such issues you can enable Madara logs. Simply
 run tests with `MADARA_LOG` environment variable set:
 
 ```shell
-MADARA_LOG=1 cargo test --package starknet-e2e-test <your-test-case-name> -- --nocapture
+MADARA_LOG=1 cargo test --package starknet-rpc-test <your-test-case-name> -- --nocapture
 ```
 
 The logs will be available at:

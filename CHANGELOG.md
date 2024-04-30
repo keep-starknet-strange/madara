@@ -3,6 +3,20 @@
 ## Next release
 
 - bug: fix contract serialisation
+- chore: remove all da/settlement related code
+- fix: re-execute txs instead of simulating for txn receipts
+- chore: rebase on latest blockifier
+- refactoring : Removed Redundant logs in madara
+- fix: transaction receipt fails for txs in the middle of a block
+- chore: add makefile for developer experience improvements and cleanup
+- fix: fix cargo-lint issues
+- feat: added chain-id to the GenesisConfig in pallet-starknet
+- fix(node): fix genesis hash inconsistency
+- feat (pallet): add tests for storage reversal on transaction revert
+- feat: add prometheus metrics for mapping worker
+- Fix(node): Fix creating a local testnet with multiple nodes fails using only
+  cli flags
+- dev: change `Vec::new` to `Vec::with_capacity` where possible.
 - chore(rpc): clean trace api
 - feat(rpc): added state diff real value in trace api
 - chore: update cairo-vm commit and update gas per op
@@ -23,6 +37,11 @@
 - refacto: reusable Eth client config for settlement/DA/other tasks
 - ci: add gomu gomu no gatling perfomrance test
 - feat(runtime): moved StarkEvents from Substrate events to runtime storage
+- feat(node): validate declare txs against local Sierra class in block import
+  queue
+- feat(runtime): moved StarkEvents from Substrate
+- feat(rpc/trace_api): add `trace_transaction`
+- fix(docker): fix dockerfile for `madara-node`
 
 ## v0.7.0
 
@@ -306,3 +325,4 @@
 - fix: l1-l2 messaging
 - dev : clean contracts and compiled files
 - fix: add from_address in calldata of l1 message
+- test: add starkgate related testcase

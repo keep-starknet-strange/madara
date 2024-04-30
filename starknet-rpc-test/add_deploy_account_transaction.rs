@@ -1,5 +1,3 @@
-extern crate starknet_rpc_test;
-
 use std::vec;
 
 use rstest::rstest;
@@ -7,18 +5,18 @@ use starknet_accounts::AccountFactory;
 use starknet_core::types::{BlockId, BlockTag, DeployAccountTransactionResult};
 use starknet_ff::FieldElement;
 use starknet_providers::Provider;
-use starknet_rpc_test::constants::{
+use starknet_test_utils::constants::{
     ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, MAX_FEE_OVERRIDE, SIGNER_PRIVATE,
 };
-use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{
+use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_test_utils::utils::{
     build_deploy_account_tx, build_oz_account_factory, build_single_owner_account, AccountActions,
 };
-use starknet_rpc_test::{Transaction, TransactionResult};
+use starknet_test_utils::{Transaction, TransactionResult};
 
 #[rstest]
 #[tokio::test]
-async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+async fn address_without_funds_cannot_deploy(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
     // deploy account
@@ -36,7 +34,7 @@ async fn fail_execution_step_with_no_storage_change(madara: &ThreadSafeMadaraCli
     let txs = madara_write_lock.create_block_with_txs(vec![Transaction::AccountDeployment(account_deploy_txn)]).await?;
 
     assert_eq!(txs.len(), 1);
-    assert!(txs[0].as_ref().is_ok());
+    assert!(txs[0].as_ref().is_err());
 
     // transaction fails, nothing at class hash
     assert!(rpc.get_class_hash_at(BlockId::Tag(BlockTag::Latest), account_address).await.is_err());
