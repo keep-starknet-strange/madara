@@ -1,10 +1,8 @@
 var srcIndex = JSON.parse('{\
-"da_test":["",[],["constants.rs","fixtures.rs","lib.rs","utils.rs"]],\
 "madara":["",[["commands",[],["mod.rs","run.rs","setup.rs"]],["rpc",[],["mod.rs","starknet.rs"]]],["benchmarking.rs","chain_spec.rs","cli.rs","command.rs","configs.rs","constants.rs","genesis_block.rs","import_queue.rs","main.rs","service.rs","starknet.rs"]],\
 "madara_runtime":["",[],["config.rs","lib.rs","opaque.rs","pallets.rs","runtime_tests.rs","types.rs"]],\
 "madara_test_runner":["",[],["client.rs","lib.rs","node.rs"]],\
 "mc_commitment_state_diff":["",[],["lib.rs"]],\
-"mc_data_availability":["",[["ethereum",[],["config.rs","mod.rs"]],["sharp",[],["mod.rs"]]],["da_metrics.rs","lib.rs","utils.rs"]],\
 "mc_db":["",[["db_opening_utils",[],["mod.rs","parity_db_adapter.rs"]]],["da_db.rs","error.rs","l1_handler_tx_fee.rs","lib.rs","mapping_db.rs","messaging_db.rs","meta_db.rs","sierra_classes_db.rs"]],\
 "mc_eth_client":["",[],["config.rs","error.rs","lib.rs"]],\
 "mc_genesis_data_provider":["",[],["constants.rs","lib.rs"]],\
@@ -12,7 +10,6 @@ var srcIndex = JSON.parse('{\
 "mc_mapping_sync":["",[],["block_metrics.rs","lib.rs","sync_blocks.rs"]],\
 "mc_rpc":["",[["events",[],["mod.rs"]]],["constants.rs","errors.rs","lib.rs","madara_backend_client.rs","runtime_api.rs","starknetrpcwrapper.rs","trace_api.rs","types.rs"]],\
 "mc_rpc_core":["",[],["lib.rs","utils.rs"]],\
-"mc_settlement":["",[["ethereum",[],["client.rs","errors.rs","mod.rs"]]],["errors.rs","lib.rs","sync_state.rs"]],\
 "mc_starknet_block_import":["",[],["compilation.rs","lib.rs","validation.rs"]],\
 "mc_storage":["",[["overrides",[],["mod.rs","schema_v1_override.rs"]]],["lib.rs"]],\
 "mp_block":["",[],["header.rs","lib.rs"]],\
@@ -30,7 +27,6 @@ var srcIndex = JSON.parse('{\
 "mp_transactions":["",[],["compute_hash.rs","execution.rs","from_broadcasted_transactions.rs","lib.rs","to_starknet_core_transaction.rs"]],\
 "pallet_starknet":["",[],["blockifier_state_adapter.rs","genesis_loader.rs","lib.rs","simulations.rs","transaction_validation.rs","types.rs"]],\
 "pallet_starknet_runtime_api":["",[],["lib.rs"]],\
-"starknet_e2e_test":["",[],["eth_bridge.rs","lib.rs","starknet_sovereign.rs","token_bridge.rs","utils.rs"]],\
 "starknet_rpc_test":["",[],["constants.rs","fixtures.rs","lib.rs","utils.rs"]],\
 "starknet_test_utils":["",[],["constants.rs","fixtures.rs","lib.rs","utils.rs"]]\
 }');
