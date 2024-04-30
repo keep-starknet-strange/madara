@@ -12,9 +12,6 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 blockifier = { workspace = true }
-derive_more = { workspace = true, features = ["constructor"] }
-mp-felt = { workspace = true }
-mp-transactions = { workspace = true }
 starknet-core = { workspace = true }
 
 # Optional dependencies
@@ -22,12 +19,5 @@ parity-scale-codec = { workspace = true, optional = true }
 scale-info = { workspace = true, optional = true }
 
 [features]
-default = ["std"]
 parity-scale-codec = ["dep:parity-scale-codec"]
 scale-info = ["dep:scale-info"]
-std = [
-  "starknet-core/std",
-  # Optional
-  "parity-scale-codec?/std",
-  "scale-info?/std",
-]

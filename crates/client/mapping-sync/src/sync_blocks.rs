@@ -1,14 +1,23 @@
 use mc_rpc_core::utils::get_block_by_block_hash;
 use mp_digest_log::{find_starknet_block, FindLogError};
 use mp_hashers::HasherT;
-use mp_transactions::compute_hash::ComputeTransactionHash;
+use mp_transactions::get_transaction_hash;
+use num_traits::FromPrimitive;
 use pallet_starknet_runtime_api::StarknetRuntimeApi;
+use prometheus_endpoint::prometheus::core::Number;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Backend as _, HeaderBackend};
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT, Zero};
 
-fn sync_block<B: BlockT, C, BE, H>(client: &C, backend: &mc_db::Backend<B>, header: &B::Header) -> anyhow::Result<()>
+use crate::block_metrics::BlockMetrics;
+
+fn sync_block<B: BlockT, C, BE, H>(
+    client: &C,
+    backend: &mc_db::Backend<B>,
+    header: &B::Header,
+    block_metrics: Option<&BlockMetrics>,
+) -> anyhow::Result<()>
 where
     C: HeaderBackend<B> + StorageProvider<B, BE>,
     C: ProvideRuntimeApi<B>,
@@ -36,8 +45,6 @@ where
                              db state ({storage_starknet_block_hash:?})"
                         ))
                     } else {
-                        let chain_id = client.runtime_api().chain_id(substrate_block_hash)?;
-
                         // Success, we write the Starknet to Substate hashes mapping to db
                         let mapping_commitment = mc_db::MappingCommitment {
                             block_hash: substrate_block_hash,
@@ -45,9 +52,40 @@ where
                             starknet_transaction_hashes: digest_starknet_block
                                 .transactions()
                                 .iter()
-                                .map(|tx| tx.compute_hash::<H>(chain_id, false).into())
+                                .map(get_transaction_hash)
+                                .cloned()
                                 .collect(),
                         };
+
+                        if let Some(block_metrics) = block_metrics {
+                            let starknet_block = &digest_starknet_block.clone();
+                            block_metrics.block_height.set(starknet_block.header().block_number.into_f64());
+
+                            // sending f64::MIN in case we exceed f64 (highly unlikely). The min numbers will
+                            // allow dashboards to catch anomalies so that it can be investigated.
+                            block_metrics
+                                .transaction_count
+                                .inc_by(f64::from_u128(starknet_block.header().transaction_count).unwrap_or(f64::MIN));
+                            block_metrics
+                                .event_count
+                                .inc_by(f64::from_u128(starknet_block.header().event_count).unwrap_or(f64::MIN));
+                            block_metrics.eth_l1_gas_price_wei.set(
+                                f64::from_u128(starknet_block.header().l1_gas_price.eth_l1_gas_price.into())
+                                    .unwrap_or(f64::MIN),
+                            );
+                            block_metrics.strk_l1_gas_price_fri.set(
+                                f64::from_u128(starknet_block.header().l1_gas_price.strk_l1_gas_price.into())
+                                    .unwrap_or(f64::MIN),
+                            );
+                            block_metrics.eth_l1_gas_price_wei.set(
+                                f64::from_u128(starknet_block.header().l1_gas_price.eth_l1_data_gas_price.into())
+                                    .unwrap_or(f64::MIN),
+                            );
+                            block_metrics.strk_l1_data_gas_price_fri.set(
+                                f64::from_u128(starknet_block.header().l1_gas_price.strk_l1_data_gas_price.into())
+                                    .unwrap_or(f64::MIN),
+                            );
+                        }
 
                         backend.mapping().write_hashes(mapping_commitment).map_err(|e| anyhow::anyhow!(e))
                     }
@@ -98,6 +136,7 @@ fn sync_one_block<B: BlockT, C, BE, H>(
     substrate_backend: &BE,
     madara_backend: &mc_db::Backend<B>,
     sync_from: <B::Header as HeaderT>::Number,
+    block_metrics: Option<&BlockMetrics>,
 ) -> anyhow::Result<bool>
 where
     C: ProvideRuntimeApi<B>,
@@ -139,7 +178,7 @@ where
         madara_backend.meta().write_current_syncing_tips(current_syncing_tips)?;
         Ok(true)
     } else {
-        sync_block::<_, _, _, H>(client, madara_backend, &operating_header)?;
+        sync_block::<_, _, _, H>(client, madara_backend, &operating_header, block_metrics)?;
 
         current_syncing_tips.push(*operating_header.parent_hash());
         madara_backend.meta().write_current_syncing_tips(current_syncing_tips)?;
@@ -153,6 +192,7 @@ pub fn sync_blocks<B: BlockT, C, BE, H>(
     madara_backend: &mc_db::Backend<B>,
     limit: usize,
     sync_from: <B::Header as HeaderT>::Number,
+    block_metrics: Option<&BlockMetrics>,
 ) -> anyhow::Result<bool>
 where
     C: ProvideRuntimeApi<B>,
@@ -164,7 +204,8 @@ where
     let mut synced_any = false;
 
     for _ in 0..limit {
-        synced_any = synced_any || sync_one_block::<_, _, _, H>(client, substrate_backend, madara_backend, sync_from)?;
+        synced_any = synced_any
+            || sync_one_block::<_, _, _, H>(client, substrate_backend, madara_backend, sync_from, block_metrics)?;
     }
 
     Ok(synced_any)

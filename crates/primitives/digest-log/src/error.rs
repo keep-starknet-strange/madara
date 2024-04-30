@@ -10,7 +10,6 @@ pub enum FindLogError {
     MultipleLogs,
 }
 
-#[cfg(feature = "std")]
 impl std::error::Error for FindLogError {}
 
 impl core::fmt::Display for FindLogError {

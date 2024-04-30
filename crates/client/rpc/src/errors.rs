@@ -59,6 +59,9 @@ impl From<StarknetTransactionExecutionError> for StarknetRpcApiError {
 
 impl From<StarknetRpcApiError> for jsonrpsee::core::Error {
     fn from(err: StarknetRpcApiError) -> Self {
+        // TODO:
+        // when able to ge rich errors out of runtime,
+        // match and populate the `data` field
         jsonrpsee::core::Error::Call(CallError::Custom(ErrorObject::owned(err as i32, err.to_string(), None::<()>)))
     }
 }

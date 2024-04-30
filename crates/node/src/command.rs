@@ -1,7 +1,4 @@
 use std::env;
-use std::fs::{self, File};
-use std::io::Write;
-use std::path::PathBuf;
 
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use madara_runtime::Block;
@@ -14,30 +11,6 @@ use crate::constants::DEV_CHAIN_ID;
 #[cfg(feature = "sharingan")]
 use crate::constants::SHARINGAN_CHAIN_ID;
 use crate::{chain_spec, service};
-
-fn spit_spec_to_json(base_config: impl ChainSpec) -> Result<Box<dyn ChainSpec>, String> {
-    let mut temp_dir = match env::var_os("HOME") {
-        Some(home_dir) => PathBuf::from(home_dir),
-        None => return Err("Failed to get home directory".to_string()),
-    };
-
-    temp_dir.push(".madara");
-
-    fs::create_dir_all(&temp_dir).map_err(|e| format!("Failed to create directory: {}", e))?;
-
-    let temp_file_name = format!("{:?}-spec.json", base_config.chain_type());
-    let temp_file_path = temp_dir.join(temp_file_name);
-
-    let json_config = ChainSpec::as_json(&base_config, true).expect("failed to create json dump of chainspec");
-
-    if temp_file_path.exists() {
-        Ok(Box::new(chain_spec::ChainSpec::from_json_file(temp_file_path.clone())?))
-    } else {
-        let mut file = File::create(&temp_file_path).map_err(|e| format!("Failed to create temporary file: {}", e))?;
-        file.write_all(json_config.as_bytes()).map_err(|e| format!("Failed to write to temporary file: {}", e))?;
-        Ok(Box::new(chain_spec::ChainSpec::from_json_file(temp_file_path)?))
-    }
-}
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
@@ -65,12 +38,11 @@ impl SubstrateCli for Cli {
     }
 
     fn load_spec(&self, id: &str) -> Result<Box<dyn ChainSpec>, String> {
-        match id {
+        Ok(match id {
             DEV_CHAIN_ID => {
                 let sealing = self.run.sealing.map(Into::into).unwrap_or_default();
                 let base_path = self.run.base_path().map_err(|e| e.to_string())?;
-                let base_config = chain_spec::development_config(sealing, base_path)?;
-                spit_spec_to_json(base_config)
+                Box::new(chain_spec::development_config(sealing, base_path)?)
             }
             #[cfg(feature = "sharingan")]
             SHARINGAN_CHAIN_ID => Box::new(chain_spec::ChainSpec::from_json_bytes(
@@ -78,11 +50,10 @@ impl SubstrateCli for Cli {
             )?),
             "" | "local" | "madara-local" => {
                 let base_path = self.run.base_path().map_err(|e| e.to_string())?;
-                let base_config = chain_spec::local_testnet_config(base_path, id)?;
-                spit_spec_to_json(base_config)
+                Box::new(chain_spec::local_testnet_config(base_path, id)?)
             }
-            path_or_url => Ok(Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path_or_url))?)),
-        }
+            path_or_url => Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path_or_url))?),
+        })
     }
 }
 
@@ -99,28 +70,28 @@ pub fn run() -> sc_cli::Result<()> {
         Some(Subcommand::CheckBlock(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.async_run(|mut config| {
-                let (client, _, import_queue, task_manager, _) = service::new_chain_ops(&mut config, cli.run.cache)?;
+                let (client, _, import_queue, task_manager, _) = service::new_chain_ops(&mut config)?;
                 Ok((cmd.run(client, import_queue), task_manager))
             })
         }
         Some(Subcommand::ExportBlocks(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.async_run(|mut config| {
-                let (client, _, _, task_manager, _) = service::new_chain_ops(&mut config, cli.run.cache)?;
+                let (client, _, _, task_manager, _) = service::new_chain_ops(&mut config)?;
                 Ok((cmd.run(client, config.database), task_manager))
             })
         }
         Some(Subcommand::ExportState(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.async_run(|mut config| {
-                let (client, _, _, task_manager, _) = service::new_chain_ops(&mut config, cli.run.cache)?;
+                let (client, _, _, task_manager, _) = service::new_chain_ops(&mut config)?;
                 Ok((cmd.run(client, config.chain_spec), task_manager))
             })
         }
         Some(Subcommand::ImportBlocks(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.async_run(|mut config| {
-                let (client, _, import_queue, task_manager, _) = service::new_chain_ops(&mut config, cli.run.cache)?;
+                let (client, _, import_queue, task_manager, _) = service::new_chain_ops(&mut config)?;
                 Ok((cmd.run(client, import_queue), task_manager))
             })
         }
@@ -131,7 +102,7 @@ pub fn run() -> sc_cli::Result<()> {
         Some(Subcommand::Revert(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.async_run(|mut config| {
-                let (client, backend, _, task_manager, _) = service::new_chain_ops(&mut config, cli.run.cache)?;
+                let (client, backend, _, task_manager, _) = service::new_chain_ops(&mut config)?;
                 let aux_revert = Box::new(|client, _, blocks| {
                     sc_consensus_grandpa::revert(client, blocks)?;
                     Ok(())
@@ -156,7 +127,7 @@ pub fn run() -> sc_cli::Result<()> {
                         cmd.run::<Block, sp_statement_store::runtime_api::HostFunctions>(config)
                     }
                     BenchmarkCmd::Block(cmd) => {
-                        let (client, _, _, _, _) = service::new_chain_ops(&mut config, cli.run.cache)?;
+                        let (client, _, _, _, _) = service::new_chain_ops(&mut config)?;
                         cmd.run(client)
                     }
                     #[cfg(not(feature = "runtime-benchmarks"))]
@@ -165,20 +136,20 @@ pub fn run() -> sc_cli::Result<()> {
                     }
                     #[cfg(feature = "runtime-benchmarks")]
                     BenchmarkCmd::Storage(cmd) => {
-                        let (client, backend, _, _, _) = service::new_chain_ops(&mut config, cli.run.cache)?;
+                        let (client, backend, _, _, _) = service::new_chain_ops(&mut config)?;
                         let db = backend.expose_db();
                         let storage = backend.expose_storage();
 
                         cmd.run(config, client, db, storage)
                     }
                     BenchmarkCmd::Overhead(cmd) => {
-                        let (client, _, _, _, _) = service::new_chain_ops(&mut config, cli.run.cache)?;
+                        let (client, _, _, _, _) = service::new_chain_ops(&mut config)?;
                         let ext_builder = RemarkBuilder::new(client.clone());
 
                         cmd.run(config, client, inherent_benchmark_data()?, Vec::new(), &ext_builder)
                     }
                     BenchmarkCmd::Extrinsic(cmd) => {
-                        let (client, _, _, _, _) = service::new_chain_ops(&mut config, cli.run.cache)?;
+                        let (client, _, _, _, _) = service::new_chain_ops(&mut config)?;
                         // Register the *Remark* builder.
                         let ext_factory = ExtrinsicFactory(vec![Box::new(RemarkBuilder::new(client.clone()))]);
 

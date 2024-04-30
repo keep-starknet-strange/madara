@@ -10,18 +10,18 @@ anyhow = "1.0.80"
 assert_matches = "1.5.0"
 async-lock = "3.1.0"
 async-trait = { workspace = true }
+env_logger = "0.9"
 flate2 = { workspace = true }
 reqwest = "0.11.18"
 rstest = "0.18.1"
-serde = { version = "1.0.192", features = ["derive"] }
 serde_json = "1.0.108"
 starknet-accounts = { workspace = true }
 starknet-contract = { workspace = true }
 starknet-core = { workspace = true }
-starknet-crypto = { workspace = true }
 starknet-ff = { workspace = true }
 starknet-providers = { workspace = true }
 starknet-signers = { workspace = true }
+starknet-test-utils = { workspace = true }
 thiserror = { workspace = true }
 tokio = { version = "1.36.0", features = ["rt", "macros", "parking_lot"] }
 url = "2.4.1"
@@ -119,9 +119,9 @@ name = "starknet_simulate_transaction"
 path = "simulate_transaction.rs"
 
 [[test]]
-name = "starknet_get_state_update"
-path = "get_state_update.rs"
-
-[[test]]
 name = "starknet_trace_block_transactions"
 path = "trace_block.rs"
+
+[[test]]
+name = "starknet_trace_transaction"
+path = "trace_transaction.rs"

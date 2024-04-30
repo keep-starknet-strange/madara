@@ -16,8 +16,8 @@
 //!
 //! 4. Genesis Configuration: The GenesisConfig struct is defined, which is used to set up the
 //! initial state of the pallet during genesis. The struct includes fields for contracts,
-//! contract_classes, storage, fee_token_address, and _phantom. A GenesisBuild implementation is
-//! provided to build the initial state during genesis.
+//! contract_classes, storage, fee_token_address, chain_id and _phantom. A GenesisBuild
+//! implementation is provided to build the initial state during genesis.
 //!
 //! 5. Events: A set of events are defined in the Event enum, including KeepStarknetStrange,
 //! StarknetEvent, and FeeTokenAddressChanged. These events are emitted during the execution of
@@ -32,6 +32,8 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![allow(clippy::large_enum_variant)]
 
+use std::sync::Arc;
+
 /// Starknet pallet.
 /// Definition of the pallet's runtime storage items, events, errors, and dispatchable
 /// functions.
@@ -40,9 +42,7 @@
 pub use pallet::*;
 /// An adapter for the blockifier state related traits
 pub mod blockifier_state_adapter;
-/// The implementation of the execution configuration.
-pub mod execution_config;
-#[cfg(feature = "std")]
+#[cfg(feature = "genesis-loader")]
 pub mod genesis_loader;
 /// Simulation, estimations and execution trace logic.
 pub mod simulations;
@@ -54,53 +54,50 @@ pub mod types;
 #[cfg(test)]
 mod tests;
 
-#[macro_use]
-pub extern crate alloc;
+use std::collections::BTreeSet;
+use std::str::from_utf8_unchecked;
 
-use alloc::collections::BTreeSet;
-use alloc::str::from_utf8_unchecked;
-use alloc::string::String;
-use alloc::vec;
-use alloc::vec::Vec;
-
-use blockifier::block_context::BlockContext;
+use blockifier::blockifier::block::{BlockInfo, GasPrices};
+use blockifier::context::{BlockContext, ChainInfo, FeeTokenAddresses, TransactionContext};
+use blockifier::execution::call_info::CallInfo;
 use blockifier::execution::contract_class::ContractClass;
-use blockifier::execution::entry_point::{
-    CallEntryPoint, CallInfo, CallType, EntryPointExecutionContext, ExecutionResources,
+use blockifier::execution::entry_point::{CallEntryPoint, CallType, EntryPointExecutionContext};
+use blockifier::state::cached_state::{CachedState, GlobalContractCache};
+use blockifier::transaction::account_transaction::AccountTransaction;
+use blockifier::transaction::objects::{DeprecatedTransactionInfo, TransactionInfo};
+use blockifier::transaction::transaction_execution::Transaction;
+use blockifier::transaction::transactions::{
+    DeclareTransaction, DeployAccountTransaction, InvokeTransaction, L1HandlerTransaction,
 };
-use blockifier::execution::errors::{EntryPointExecutionError, PreExecutionError};
-use blockifier::state::cached_state::ContractStorageKey;
+use blockifier::versioned_constants::VersionedConstants;
 use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
 use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
 use mp_block::{Block as StarknetBlock, Header as StarknetHeader};
+use mp_chain_id::MADARA_CHAIN_ID;
 use mp_digest_log::MADARA_ENGINE_ID;
-use mp_fee::{ResourcePrice, INITIAL_GAS};
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
-use mp_transactions::execution::Execute;
-use mp_transactions::{
-    DeclareTransaction, DeployAccountTransaction, HandleL1MessageTransaction, InvokeTransaction, Transaction,
-    UserOrL1HandlerTransaction, UserTransaction,
+use mp_transactions::execution::{
+    execute_l1_handler_transaction, run_non_revertible_transaction, run_revertible_transaction,
 };
+use mp_transactions::{get_transaction_nonce, get_transaction_sender_address};
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
-use starknet_api::api_core::{ChainId, ClassHash, CompiledClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
+use starknet_api::core::{ChainId, ClassHash, CompiledClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::state::StorageKey;
-use starknet_api::transaction::{Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash};
+use starknet_api::transaction::{
+    Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash, TransactionVersion,
+};
 use starknet_crypto::FieldElement;
-use transaction_validation::TxPriorityInfo;
 
-use crate::alloc::string::ToString;
-use crate::execution_config::RuntimeExecutionConfigBuilder;
-use crate::types::{CasmClassHash, SierraClassHash, SierraOrCasmClassHash, StorageSlot};
-
+use crate::types::{CasmClassHash, ContractStorageKey, SierraClassHash, SierraOrCasmClassHash, StorageSlot};
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
 pub const ETHEREUM_EXECUTION_RPC: &[u8] = b"starknet::ETHEREUM_EXECUTION_RPC";
@@ -121,6 +118,7 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
+
     use super::*;
 
     #[pallet::pallet]
@@ -137,7 +135,7 @@ pub mod pallet {
         type TimestampProvider: Time;
         /// The gas price
         #[pallet::constant]
-        type L1GasPrice: Get<ResourcePrice>;
+        type L1GasPrices: Get<GasPrices>;
         /// A configuration for base priority of unsigned transactions.
         ///
         /// This is exposed so that it can be tuned for particular runtime, when
@@ -156,15 +154,7 @@ pub mod pallet {
         /// A bool to disable Nonce validation
         type DisableNonceValidation: Get<bool>;
         #[pallet::constant]
-        type InvokeTxMaxNSteps: Get<u32>;
-        #[pallet::constant]
-        type ValidateMaxNSteps: Get<u32>;
-        #[pallet::constant]
         type ProtocolVersion: Get<u8>;
-        #[pallet::constant]
-        type ChainId: Get<Felt252Wrapper>;
-        #[pallet::constant]
-        type MaxRecursionDepth: Get<u32>;
         #[pallet::constant]
         type ProgramHash: Get<Felt252Wrapper>;
         #[pallet::constant]
@@ -303,8 +293,8 @@ pub mod pallet {
     /// The address of the fee token ERC20 contract.
     #[pallet::storage]
     #[pallet::unbounded]
-    #[pallet::getter(fn fee_token_address)]
-    pub(super) type FeeTokenAddress<T: Config> = StorageValue<_, ContractAddress, ValueQuery>;
+    #[pallet::getter(fn fee_token_addresses)]
+    pub(super) type FeeTokens<T: Config> = StorageValue<_, FeeTokenAddresses, ValueQuery>;
 
     /// Current sequencer address.
     #[pallet::storage]
@@ -333,26 +323,45 @@ pub mod pallet {
     #[pallet::getter(fn whitelisted_class_hashes)]
     pub(super) type WhitelistedClassHashes<T: Config> = StorageValue<_, Vec<CasmClassHash>, ValueQuery>;
 
+    /// ChainID for the pallet starknet
+    #[pallet::storage]
+    #[pallet::getter(fn chain_id)]
+    pub type ChainIdStorage<T> = StorageValue<_, Felt252Wrapper, ValueQuery, DefaultChainId>;
+
+    /// Default ChainId MADARA
+    pub struct DefaultChainId {}
+
+    impl Get<Felt252Wrapper> for DefaultChainId {
+        fn get() -> Felt252Wrapper {
+            MADARA_CHAIN_ID
+        }
+    }
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct GenesisConfig<T: Config> {
         /// The contracts to be deployed at genesis.
         /// This is a vector of tuples, where the first element is the contract address and the
         /// second element is the contract class hash.
         /// This can be used to start the chain with a set of pre-deployed contracts, for example in
         /// a test environment or in the case of a migration of an existing chain state.
-        pub contracts: Vec<(ContractAddress, SierraClassHash)>,
-        pub sierra_to_casm_class_hash: Vec<(SierraClassHash, CasmClassHash)>,
+        pub contracts: Vec<(ContractAddress, ClassHash)>,
+        pub sierra_to_casm_class_hash: Vec<(ClassHash, CompiledClassHash)>,
         /// The contract classes to be deployed at genesis.
         /// This is a vector of tuples, where the first element is the contract class hash and the
         /// second element is the contract class definition.
         /// Same as `contracts`, this can be used to start the chain with a set of pre-deployed
         /// contracts classes.
-        pub contract_classes: Vec<(SierraClassHash, ContractClass)>,
+        pub contract_classes: Vec<(ClassHash, ContractClass)>,
         pub storage: Vec<(ContractStorageKey, StarkFelt)>,
         /// The address of the fee token.
-        /// Must be set to the address of the fee token ERC20 contract.
-        pub fee_token_address: ContractAddress,
+        /// Chain Id, this must be set in the genesis file
+        /// The default value will be MADARA custom chain id
+        pub chain_id: Felt252Wrapper,
+        /// Must be set to the address of a fee token ERC20 contract.
+        pub strk_fee_token_address: ContractAddress,
+        /// Must be set to the address of a fee token ERC20 contract.
+        pub eth_fee_token_address: ContractAddress,
         pub _phantom: PhantomData<T>,
     }
 
@@ -364,42 +373,44 @@ pub mod pallet {
                 sierra_to_casm_class_hash: vec![],
                 contract_classes: vec![],
                 storage: vec![],
-                fee_token_address: ContractAddress::default(),
+                chain_id: DefaultChainId::get(),
+                strk_fee_token_address: Default::default(),
+                eth_fee_token_address: Default::default(),
                 _phantom: PhantomData,
             }
         }
     }
-
     #[pallet::genesis_build]
     impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
         fn build(&self) {
             <Pallet<T>>::store_block(0);
+
             frame_support::storage::unhashed::put::<StarknetStorageSchemaVersion>(
                 PALLET_STARKNET_SCHEMA,
                 &StarknetStorageSchemaVersion::V1,
             );
 
             for (class_hash, contract_class) in self.contract_classes.iter() {
-                ContractClasses::<T>::insert(class_hash, contract_class);
+                ContractClasses::<T>::insert(class_hash.0, contract_class);
             }
 
             for (sierra_class_hash, casm_class_hash) in self.sierra_to_casm_class_hash.iter() {
                 assert!(
-                    ContractClasses::<T>::contains_key(sierra_class_hash),
+                    ContractClasses::<T>::contains_key(sierra_class_hash.0),
                     "Sierra class hash {} does not exist in contract_classes",
                     sierra_class_hash,
                 );
-                CompiledClassHashes::<T>::insert(sierra_class_hash, CompiledClassHash(casm_class_hash.0));
+                CompiledClassHashes::<T>::insert(sierra_class_hash.0, casm_class_hash);
             }
 
             for (address, class_hash) in self.contracts.iter() {
                 assert!(
-                    ContractClasses::<T>::contains_key(class_hash),
+                    ContractClasses::<T>::contains_key(class_hash.0),
                     "Class hash {} does not exist in contract_classes",
                     class_hash,
                 );
 
-                ContractClassHashes::<T>::insert(address, class_hash);
+                ContractClassHashes::<T>::insert(address, class_hash.0);
             }
 
             for (key, value) in self.storage.iter() {
@@ -408,8 +419,13 @@ pub mod pallet {
 
             LastKnownEthBlock::<T>::set(None);
             // Set the fee token address from the genesis config.
-            FeeTokenAddress::<T>::set(self.fee_token_address);
+            FeeTokens::<T>::set(FeeTokenAddresses {
+                strk_fee_token_address: self.strk_fee_token_address,
+                eth_fee_token_address: self.eth_fee_token_address,
+            });
             SeqAddrUpdate::<T>::put(true);
+
+            ChainIdStorage::<T>::put(self.chain_id)
         }
     }
 
@@ -441,6 +457,7 @@ pub mod pallet {
         L1MessageAlreadyExecuted,
         MissingL1GasUsage,
         ClassHashNotWhitelisted,
+        QueryTransactionCannotBeExecuted,
     }
 
     /// The Starknet pallet external functions.
@@ -488,40 +505,42 @@ pub mod pallet {
         #[pallet::call_index(1)]
         #[pallet::weight({0})]
         pub fn invoke(origin: OriginFor<T>, transaction: InvokeTransaction) -> DispatchResult {
+            ensure!(!transaction.only_query, Error::<T>::QueryTransactionCannotBeExecuted);
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
-
-            let input_transaction = transaction;
-
-            let chain_id = Self::chain_id();
-            let transaction = input_transaction.into_executable::<T::SystemHash>(chain_id, false);
 
             let sender_address = match &transaction.tx {
                 starknet_api::transaction::InvokeTransaction::V0(tx) => tx.contract_address,
                 starknet_api::transaction::InvokeTransaction::V1(tx) => tx.sender_address,
+                starknet_api::transaction::InvokeTransaction::V3(tx) => tx.sender_address,
             };
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(sender_address), Error::<T>::AccountNotDeployed);
 
-            // Execute
-            let tx_execution_infos = transaction
-                .execute(
-                    &mut BlockifierStateAdapter::<T>::default(),
-                    &Self::get_block_context(),
-                    &RuntimeExecutionConfigBuilder::new::<T>().build(),
-                )
-                .map_err(|e| {
-                    log::error!("failed to execute invoke tx: {:?}", e);
-                    Error::<T>::TransactionExecutionFailed
-                })?;
+            // Init caches
+            let mut state = BlockifierStateAdapter::<T>::default();
+            let block_context = Self::get_block_context();
+            let charge_fee = !<T as Config>::DisableTransactionFee::get();
 
-            let tx_hash = transaction.tx_hash;
+            // Execute
+            let tx_execution_infos = match transaction.tx.version() {
+                TransactionVersion::ZERO => {
+                    run_non_revertible_transaction(&transaction, &mut state, &block_context, true, charge_fee)
+                }
+                _ => run_revertible_transaction(&transaction, &mut state, &block_context, true, charge_fee),
+            }
+            .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+
             Self::emit_and_store_tx_and_fees_events(
-                tx_hash,
+                transaction.tx_hash,
                 &tx_execution_infos.execute_call_info,
                 &tx_execution_infos.fee_transfer_call_info,
             );
-            Self::store_transaction(tx_hash, Transaction::Invoke(input_transaction), tx_execution_infos.revert_error);
+            Self::store_transaction(
+                transaction.tx_hash,
+                Transaction::AccountTransaction(AccountTransaction::Invoke(transaction)),
+                tx_execution_infos.revert_error,
+            );
 
             Ok(())
         }
@@ -539,11 +558,8 @@ pub mod pallet {
         /// * `DispatchResult` - The result of the transaction.
         #[pallet::call_index(2)]
         #[pallet::weight({0})]
-        pub fn declare(
-            origin: OriginFor<T>,
-            transaction: DeclareTransaction,
-            contract_class: ContractClass,
-        ) -> DispatchResult {
+        pub fn declare(origin: OriginFor<T>, transaction: DeclareTransaction) -> DispatchResult {
+            ensure!(!transaction.only_query(), Error::<T>::QueryTransactionCannotBeExecuted);
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
@@ -564,7 +580,7 @@ pub mod pallet {
 
             // Check class hash is not already declared
             ensure!(
-                !ContractClasses::<T>::contains_key(transaction.tx().class_hash()),
+                !ContractClasses::<T>::contains_key(transaction.tx().class_hash().0),
                 Error::<T>::ClassHashAlreadyDeclared
             );
             // Check if contract is deployed
@@ -573,24 +589,22 @@ pub mod pallet {
                 Error::<T>::AccountNotDeployed
             );
 
-            // Execute
-            let tx_execution_infos = transaction
-                .execute(
-                    &mut BlockifierStateAdapter::<T>::default(),
-                    &Self::get_block_context(),
-                    &RuntimeExecutionConfigBuilder::new::<T>().build(),
-                )
-                .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+            let mut state = BlockifierStateAdapter::<T>::default();
+            let charge_fee = !<T as Config>::DisableTransactionFee::get();
 
-            let tx_hash = transaction.tx_hash();
+            // Execute
+            let tx_execution_infos =
+                run_non_revertible_transaction(&transaction, &mut state, &Self::get_block_context(), true, charge_fee)
+                    .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+
             Self::emit_and_store_tx_and_fees_events(
-                tx_hash,
+                transaction.tx_hash(),
                 &tx_execution_infos.execute_call_info,
                 &tx_execution_infos.fee_transfer_call_info,
             );
             Self::store_transaction(
-                tx_hash,
-                Transaction::Declare(input_transaction, contract_class),
+                transaction.tx_hash(),
+                Transaction::AccountTransaction(AccountTransaction::Declare(transaction.clone())),
                 tx_execution_infos.revert_error,
             );
 
@@ -612,12 +626,9 @@ pub mod pallet {
         #[pallet::call_index(3)]
         #[pallet::weight({0})]
         pub fn deploy_account(origin: OriginFor<T>, transaction: DeployAccountTransaction) -> DispatchResult {
+            ensure!(!transaction.only_query, Error::<T>::QueryTransactionCannotBeExecuted);
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
-
-            let input_transaction = transaction;
-            let chain_id = T::ChainId::get();
-            let transaction = input_transaction.into_executable::<T::SystemHash>(chain_id, false);
 
             // Check if contract is deployed
             ensure!(
@@ -625,27 +636,22 @@ pub mod pallet {
                 Error::<T>::AccountAlreadyDeployed
             );
 
-            // Execute
-            let tx_execution_infos = transaction
-                .execute(
-                    &mut BlockifierStateAdapter::<T>::default(),
-                    &Self::get_block_context(),
-                    &RuntimeExecutionConfigBuilder::new::<T>().build(),
-                )
-                .map_err(|e| {
-                    log::error!("failed to deploy account: {:?}", e);
-                    Error::<T>::TransactionExecutionFailed
-                })?;
+            let mut state = BlockifierStateAdapter::<T>::default();
+            let charge_fee = !<T as Config>::DisableTransactionFee::get();
 
-            let tx_hash = transaction.tx_hash;
+            // Execute
+            let tx_execution_infos =
+                run_non_revertible_transaction(&transaction, &mut state, &Self::get_block_context(), true, charge_fee)
+                    .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+
             Self::emit_and_store_tx_and_fees_events(
-                tx_hash,
+                transaction.tx_hash,
                 &tx_execution_infos.execute_call_info,
                 &tx_execution_infos.fee_transfer_call_info,
             );
             Self::store_transaction(
-                tx_hash,
-                Transaction::DeployAccount(input_transaction),
+                transaction.tx_hash,
+                Transaction::AccountTransaction(AccountTransaction::DeployAccount(transaction)),
                 tx_execution_infos.revert_error,
             );
 
@@ -667,19 +673,11 @@ pub mod pallet {
         /// * Compute weight
         #[pallet::call_index(4)]
         #[pallet::weight({0})]
-        pub fn consume_l1_message(
-            origin: OriginFor<T>,
-            transaction: HandleL1MessageTransaction,
-            paid_fee_on_l1: Fee,
-        ) -> DispatchResult {
+        pub fn consume_l1_message(origin: OriginFor<T>, transaction: L1HandlerTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
-            let input_transaction = transaction;
-            let chain_id = Self::chain_id();
-            let transaction = input_transaction.into_executable::<T::SystemHash>(chain_id, paid_fee_on_l1, false);
-
-            let nonce: Nonce = transaction.tx.nonce;
+            let nonce = transaction.tx.nonce;
 
             // Ensure that L1 Message has not been executed
             Self::ensure_l1_message_not_executed(&nonce).map_err(|_| Error::<T>::L1MessageAlreadyExecuted)?;
@@ -689,27 +687,22 @@ pub mod pallet {
             // Either successfully  or not
             L1Messages::<T>::mutate(|nonces| nonces.insert(nonce));
 
-            // Execute
-            let tx_execution_infos = transaction
-                .execute(
-                    &mut BlockifierStateAdapter::<T>::default(),
-                    &Self::get_block_context(),
-                    &RuntimeExecutionConfigBuilder::new::<T>().build(),
-                )
-                .map_err(|e| {
-                    log::error!("Failed to consume l1 message: {}", e);
-                    Error::<T>::TransactionExecutionFailed
-                })?;
+            // Init caches
+            let mut state = BlockifierStateAdapter::<T>::default();
 
-            let tx_hash = transaction.tx_hash;
+            // Execute
+            let tx_execution_infos =
+                execute_l1_handler_transaction(&transaction, &mut state, &Self::get_block_context())
+                    .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+
             Self::emit_and_store_tx_and_fees_events(
-                tx_hash,
+                transaction.tx_hash,
                 &tx_execution_infos.execute_call_info,
                 &tx_execution_infos.fee_transfer_call_info,
             );
             Self::store_transaction(
-                tx_hash,
-                Transaction::L1Handler(input_transaction),
+                transaction.tx_hash,
+                Transaction::L1HandlerTransaction(transaction),
                 tx_execution_infos.revert_error,
             );
 
@@ -790,33 +783,64 @@ pub mod pallet {
             // otherwise we have a nonce error and everything fails.
             // Once we have a real fee market this is where we'll chose the most profitable transaction.
 
-            let transaction = Self::get_call_transaction(call.clone()).map_err(|_| InvalidTransaction::Call)?;
+            let transaction = Self::convert_runtime_calls_to_starknet_transaction(call.clone())
+                .map_err(|_| InvalidTransaction::Call)?;
+            // Important to store the nonce before the call to prevalidate, because the `handle_nonce`
+            // function will increment it
+            let transaction_nonce = get_transaction_nonce(&transaction);
+            let sender_address = get_transaction_sender_address(&transaction);
+            let sender_nonce = Self::nonce(sender_address);
 
-            let tx_priority_info = Self::validate_unsigned_tx_nonce(&transaction)?;
-
-            Self::validate_unsigned_tx(&transaction)?;
+            Self::pre_validate_unsigned_tx(&transaction)?;
 
             let mut valid_transaction_builder = ValidTransaction::with_tag_prefix("starknet")
                 .priority(u64::MAX)
                 .longevity(T::TransactionLongevity::get())
                 .propagate(true);
 
-            match tx_priority_info {
-                // Make sure txs from same account are executed in correct order (nonce based ordering)
-                TxPriorityInfo::RegularTxs { sender_address, transaction_nonce, sender_nonce } => {
+            match &transaction {
+                Transaction::AccountTransaction(_) => {
                     valid_transaction_builder =
-                        valid_transaction_builder.and_provides((sender_address, Felt252Wrapper(transaction_nonce.0)));
-                    if transaction_nonce > sender_nonce {
-                        valid_transaction_builder = valid_transaction_builder
-                            .and_requires((sender_address, Felt252Wrapper(transaction_nonce.0 - FieldElement::ONE)));
+                        valid_transaction_builder.and_provides((sender_address, transaction_nonce));
+
+                    match (transaction_nonce, sender_nonce) {
+                        // Special case where the wallet send both deploy_account and first tx at the same time
+                        // The first tx validation would fail because the contract is not deployed yet,
+                        // so we skip the entrypoint execution for now
+                        (Nonce(StarkFelt::ONE), Nonce(StarkFelt::ZERO)) => {
+                            valid_transaction_builder =
+                                valid_transaction_builder.and_requires((sender_address, Nonce(StarkFelt::ZERO)));
+                        }
+                        // Future transaction, we validate the entrypoint in order to avoid having the mempool flooded
+                        // There is a possiblility of false negative, where a previous tx execution you make the future
+                        // one possible, atm we are ok with this, the user will just wait for the
+                        // first one to be executed and then send the next one
+                        // May be removed in the future tho
+                        (transaction_nonce, sender_nonce) if transaction_nonce > sender_nonce => {
+                            Self::validate_unsigned_tx(&transaction)?;
+                            valid_transaction_builder = valid_transaction_builder.and_requires((
+                                sender_address,
+                                Nonce::from(Felt252Wrapper::from(
+                                    Felt252Wrapper::from(transaction_nonce).0 - FieldElement::ONE,
+                                )),
+                            ));
+                        }
+                        // Happy path, were the the nonce is the current one,
+                        // we validate the tx
+                        _ => {
+                            Self::validate_unsigned_tx(&transaction)?;
+                        }
+                    };
+                }
+                Transaction::L1HandlerTransaction(l1_tx) => {
+                    // TODO: double check in blockifier code there is no other checks done
+                    if l1_tx.paid_fee_on_l1.0 == 0 {
+                        return Err(InvalidTransaction::Payment.into());
                     }
-                }
-                TxPriorityInfo::L1Handler { nonce } => {
                     valid_transaction_builder =
-                        valid_transaction_builder.and_provides((Felt252Wrapper::ZERO, Felt252Wrapper(nonce.0)));
+                        valid_transaction_builder.and_provides((ContractAddress::default(), l1_tx.tx.nonce));
                 }
-                _ => {}
-            }
+            };
 
             valid_transaction_builder.build()
         }
@@ -832,6 +856,8 @@ pub mod pallet {
         /// before dispatch. In our case, since transaction was already validated in
         /// `validate_unsigned` we can just return Ok.
         fn pre_dispatch(_call: &Self::Call) -> Result<(), TransactionValidityError> {
+            // TODO: run the full validation: pre_validation and validation, to avoid including failing tx in
+            // the runtime
             Ok(())
         }
     }
@@ -848,16 +874,18 @@ impl<T: Config> Pallet<T> {
     /// # Returns
     ///
     /// The transaction
-    fn get_call_transaction(call: Call<T>) -> Result<UserOrL1HandlerTransaction, ()> {
+    fn convert_runtime_calls_to_starknet_transaction(call: Call<T>) -> Result<Transaction, ()> {
         let tx = match call {
-            Call::<T>::invoke { transaction } => UserTransaction::Invoke(transaction).into(),
-            Call::<T>::declare { transaction, contract_class } => {
-                UserTransaction::Declare(transaction, contract_class).into()
+            Call::<T>::invoke { transaction } => {
+                Transaction::AccountTransaction(AccountTransaction::Invoke(transaction))
             }
-            Call::<T>::deploy_account { transaction } => UserTransaction::DeployAccount(transaction).into(),
-            Call::<T>::consume_l1_message { transaction, paid_fee_on_l1 } => {
-                UserOrL1HandlerTransaction::L1Handler(transaction, paid_fee_on_l1)
+            Call::<T>::declare { transaction } => {
+                Transaction::AccountTransaction(AccountTransaction::Declare(transaction))
             }
+            Call::<T>::deploy_account { transaction } => {
+                Transaction::AccountTransaction(AccountTransaction::DeployAccount(transaction))
+            }
+            Call::<T>::consume_l1_message { transaction } => Transaction::L1HandlerTransaction(transaction),
             _ => return Err(()),
         };
 
@@ -871,30 +899,29 @@ impl<T: Config> Pallet<T> {
         let block_number = UniqueSaturatedInto::<u64>::unique_saturated_into(frame_system::Pallet::<T>::block_number());
         let block_timestamp = Self::block_timestamp();
 
-        let fee_token_address = Self::fee_token_address();
+        let fee_token_addresses = Self::fee_token_addresses();
         let sequencer_address = Self::sequencer_address();
 
-        let chain_id = Self::chain_id_str();
+        let chain_id = ChainId(Self::chain_id_str());
+        let gas_prices = T::L1GasPrices::get();
 
-        let vm_resource_fee_cost = Default::default();
-        BlockContext {
-            block_number: BlockNumber(block_number),
-            block_timestamp: BlockTimestamp(block_timestamp),
-            chain_id: ChainId(chain_id),
-            sequencer_address,
-            fee_token_address,
-            vm_resource_fee_cost,
-            invoke_tx_max_n_steps: T::InvokeTxMaxNSteps::get(),
-            validate_max_n_steps: T::ValidateMaxNSteps::get(),
-            gas_price: T::L1GasPrice::get().price_in_wei,
-            max_recursion_depth: T::MaxRecursionDepth::get(),
-        }
+        BlockContext::new_unchecked(
+            &BlockInfo {
+                block_number: BlockNumber(block_number),
+                block_timestamp: BlockTimestamp(block_timestamp),
+                sequencer_address,
+                gas_prices,
+                use_kzg_da: true,
+            },
+            &ChainInfo { chain_id, fee_token_addresses },
+            VersionedConstants::latest_constants(),
+        )
     }
 
     /// convert chain_id
     #[inline(always)]
     pub fn chain_id_str() -> String {
-        unsafe { from_utf8_unchecked(&T::ChainId::get().0.to_bytes_be()).to_string() }
+        unsafe { from_utf8_unchecked(&Self::chain_id().0.to_bytes_be()).to_string() }
     }
 
     /// Get the block hash of the previous block.
@@ -946,21 +973,26 @@ impl<T: Config> Pallet<T> {
         let class_hash = ContractClassHashes::<T>::try_get(address).map_err(|_| Error::<T>::ContractNotFound)?;
 
         let entrypoint = CallEntryPoint {
-            class_hash: Some(class_hash),
+            class_hash: Some(ClassHash(class_hash)),
             code_address: None,
             entry_point_type: EntryPointType::External,
             entry_point_selector: function_selector,
-            calldata,
+            calldata: calldata.clone(),
             storage_address: address,
             caller_address: ContractAddress::default(),
             call_type: CallType::Call,
-            initial_gas: INITIAL_GAS,
+            initial_gas: VersionedConstants::latest_constants().tx_initial_gas(),
         };
 
-        let max_n_steps = block_context.invoke_tx_max_n_steps;
-        let mut resources = ExecutionResources::default();
-        let mut entry_point_execution_context =
-            EntryPointExecutionContext::new(block_context, Default::default(), max_n_steps);
+        let mut resources = cairo_vm::vm::runners::cairo_runner::ExecutionResources::default();
+        let mut entry_point_execution_context = EntryPointExecutionContext::new_invoke(
+            Arc::new(TransactionContext {
+                block_context,
+                tx_info: TransactionInfo::Deprecated(DeprecatedTransactionInfo::default()),
+            }),
+            false,
+        )
+        .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
         match entrypoint.execute(
             &mut BlockifierStateAdapter::<T>::default(),
@@ -1010,9 +1042,9 @@ impl<T: Config> Pallet<T> {
         let protocol_version = T::ProtocolVersion::get();
         let extra_data = None;
 
-        let l1_gas_price = T::L1GasPrice::get();
+        let l1_gas_price = T::L1GasPrices::get();
 
-        let block = StarknetBlock::new(
+        let block = StarknetBlock::try_new(
             StarknetHeader::new(
                 parent_block_hash.into(),
                 block_number,
@@ -1025,7 +1057,9 @@ impl<T: Config> Pallet<T> {
                 extra_data,
             ),
             transactions,
-        );
+        )
+        // Safe because it could only failed if `transaction_count` does not match `transactions.len()`
+        .unwrap();
         // Save the block number <> hash mapping.
         let blockhash = block.header().hash::<T::SystemHash>();
         BlockHash::<T>::insert(block_number, blockhash);
@@ -1154,24 +1188,25 @@ impl<T: Config> Pallet<T> {
         TxRevertError::<T>::set(tx_hash, revert_reason);
     }
 
-    pub fn chain_id() -> Felt252Wrapper {
-        T::ChainId::get()
-    }
-
     pub fn program_hash() -> Felt252Wrapper {
         T::ProgramHash::get()
     }
 
     pub fn config_hash() -> StarkHash {
-        T::SystemHash::compute_hash_on_elements(&[
+        Felt252Wrapper(T::SystemHash::compute_hash_on_elements(&[
             FieldElement::from_byte_slice_be(SN_OS_CONFIG_HASH_VERSION.as_bytes()).unwrap(),
-            T::ChainId::get().into(),
-            Self::fee_token_address().0.0.into(),
-        ])
+            Self::chain_id().into(),
+            Felt252Wrapper::from(Self::fee_token_addresses().eth_fee_token_address.0.0).0,
+        ]))
         .into()
     }
 
     pub fn is_transaction_fee_disabled() -> bool {
         T::DisableTransactionFee::get()
+    }
+
+    fn init_cached_state() -> CachedState<BlockifierStateAdapter<T>> {
+        // Let's keep the GlobalContractCache small, we won't need it anyway
+        CachedState::new(BlockifierStateAdapter::<T>::default(), GlobalContractCache::new(1))
     }
 }

@@ -1,5 +1,4 @@
 //! Pedersen hash module.
-use alloc::vec::Vec;
 
 use mp_felt::Felt252Wrapper;
 use starknet_core::crypto::compute_hash_on_elements;
