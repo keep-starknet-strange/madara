@@ -118,6 +118,7 @@
 - refactor: use Zaun crate for Starknet core contract bindings
 - refactor: use Anvil sandbox from Zaun crate
 - feat(rpc) : estimateMessageFee RPC call implementation
+- feat: Remove generic hasher from block hash computation
 
 ## v0.6.0
 
