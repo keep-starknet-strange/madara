@@ -148,9 +148,7 @@ async fn work_with_pending_invoke_transaction(madara: &ThreadSafeMadaraClient) -
                 match final_receipt {
                     MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(final_receipt)) => {
                         assert_eq!(receipt.transaction_hash, final_receipt.transaction_hash);
-                        // For pending receipt we are skiping the validation step, otherwise the simulation of tx may
-                        // fail, meaning the cost will always be lower than the actual ones
-                        assert!(receipt.actual_fee.amount < final_receipt.actual_fee.amount);
+                        assert_eq!(receipt.actual_fee.amount, final_receipt.actual_fee.amount);
                         // TODO: it's possible to add events and messages in the receipt right now but it makes more
                         // sense to have it once we've pending blocks in Substrate (which Massa labs is working on)
                         // assert_eq_msg_to_l1(receipt.messages_sent, final_receipt.messages_sent);

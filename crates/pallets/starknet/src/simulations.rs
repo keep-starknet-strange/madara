@@ -19,6 +19,11 @@ use starknet_api::transaction::TransactionVersion;
 use crate::blockifier_state_adapter::BlockifierStateAdapter;
 use crate::{Config, Error, Pallet};
 
+type ReExecutionResult = Result<
+    Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>,
+    PlaceHolderErrorTypeForFailedStarknetExecution,
+>;
+
 impl<T: Config> Pallet<T> {
     pub fn estimate_fee(
         transactions: Vec<AccountTransaction>,
@@ -191,12 +196,10 @@ impl<T: Config> Pallet<T> {
     pub fn re_execute_transactions(
         transactions_before: Vec<Transaction>,
         transactions_to_trace: Vec<Transaction>,
-    ) -> Result<
-        Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, PlaceHolderErrorTypeForFailedStarknetExecution>,
-        DispatchError,
-    > {
+        with_state_diff: bool,
+    ) -> Result<ReExecutionResult, DispatchError> {
         storage::transactional::with_transaction(|| {
-            let res = Self::re_execute_transactions_inner(transactions_before, transactions_to_trace);
+            let res = Self::re_execute_transactions_inner(transactions_before, transactions_to_trace, with_state_diff);
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Ok(res)))
         })
         .map_err(|_| Error::<T>::FailedToCreateATransactionalStorageExecution)?
@@ -205,8 +208,11 @@ impl<T: Config> Pallet<T> {
     fn re_execute_transactions_inner(
         transactions_before: Vec<Transaction>,
         transactions_to_trace: Vec<Transaction>,
-    ) -> Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, PlaceHolderErrorTypeForFailedStarknetExecution>
-    {
+        with_state_diff: bool,
+    ) -> Result<
+        Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>,
+        PlaceHolderErrorTypeForFailedStarknetExecution,
+    > {
         let block_context = Self::get_block_context();
         let mut state = BlockifierStateAdapter::<T>::default();
 
@@ -235,7 +241,8 @@ impl<T: Config> Pallet<T> {
                     PlaceHolderErrorTypeForFailedStarknetExecution
                 });
 
-                let res = res.map(|r| (r, transactional_state.to_state_diff()));
+                let res = res
+                    .map(|r| if with_state_diff { (r, Some(transactional_state.to_state_diff())) } else { (r, None) });
                 commit_transactional_state(transactional_state).map_err(|e| {
                     log::error!("Failed to commit state changes: {:?}", e);
                     PlaceHolderErrorTypeForFailedStarknetExecution
