@@ -11,47 +11,15 @@ use sp_runtime::transaction_validity::{
 use starknet_api::core::{ClassHash, CompiledClassHash, ContractAddress, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{
-    DeclareTransaction as StarknetApiDeclareTransaction, DeclareTransactionV0V1, DeclareTransactionV2, Fee,
-    TransactionSignature,
+    DeclareTransaction as StarknetApiDeclareTransaction, DeclareTransactionV2, Fee, TransactionSignature,
 };
 use starknet_crypto::FieldElement;
 
 use super::mock::default_mock::*;
 use super::mock::*;
-use super::utils::{get_contract_class, sign_message_hash};
+use super::utils::{create_declare_erc20_v1_transaction, get_contract_class, sign_message_hash};
 use crate::tests::{set_infinite_tokens, set_nonce};
 use crate::Error;
-
-fn create_declare_erc20_v1_transaction(
-    chain_id: Felt252Wrapper,
-    account_type: AccountType,
-    sender_address: Option<ContractAddress>,
-    signature: Option<TransactionSignature>,
-    nonce: Option<Nonce>,
-) -> BlockifierDeclareTransaction {
-    let sender_address = sender_address.unwrap_or_else(|| get_account_address(None, account_type));
-
-    let erc20_class = get_contract_class("ERC20.json", 0);
-    let erc20_class_hash =
-        ClassHash(StarkFelt::try_from("0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap());
-
-    let mut tx = StarknetApiDeclareTransaction::V1(DeclareTransactionV0V1 {
-        max_fee: Fee(u128::MAX),
-        signature: Default::default(),
-        nonce: nonce.unwrap_or_default(),
-        class_hash: erc20_class_hash,
-        sender_address,
-    });
-
-    let tx_hash = tx.compute_hash(chain_id, false);
-    // Force to do that because ComputeTransactionHash cannot be implemented on DeclareTransactionV0V1
-    // directly...
-    if let StarknetApiDeclareTransaction::V1(tx) = &mut tx {
-        tx.signature = signature.unwrap_or_else(|| sign_message_hash(tx_hash));
-    }
-
-    BlockifierDeclareTransaction::new(tx, tx_hash, ClassInfo::new(&erc20_class, 0, 1).unwrap()).unwrap()
-}
 
 #[test]
 fn given_contract_declare_tx_works_once_not_twice() {

@@ -563,12 +563,6 @@ pub mod pallet {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
-            let input_transaction = transaction;
-            let chain_id = Self::chain_id();
-            let transaction = input_transaction
-                .try_into_executable::<T::SystemHash>(chain_id, contract_class.clone(), false)
-                .map_err(|_| Error::<T>::InvalidContractClassForThisDeclareVersion)?;
-
             // Check if class hash is whitelisted
             let whitelisted_class_hashes = Self::whitelisted_class_hashes();
             if !whitelisted_class_hashes.is_empty() {
@@ -720,7 +714,7 @@ pub mod pallet {
         /// * `DispatchResult` - The result of the transaction.
         #[pallet::call_index(5)]
         #[pallet::weight({0})]
-        pub fn whitelist_class_hash(origin: OriginFor<T>, class_hash: ClassHash) -> DispatchResult {
+        pub fn whitelist_class_hash(origin: OriginFor<T>, class_hash: CasmClassHash) -> DispatchResult {
             ensure_root(origin)?;
             let mut whitelisted_class_hashes = T::WhitelistedClassHashes::get();
             whitelisted_class_hashes.push(class_hash);
@@ -740,7 +734,7 @@ pub mod pallet {
         /// * `DispatchResult` - The result of the transaction.
         #[pallet::call_index(6)]
         #[pallet::weight({0})]
-        pub fn blacklist_class_hash(origin: OriginFor<T>, class_hash: ClassHash) -> DispatchResult {
+        pub fn blacklist_class_hash(origin: OriginFor<T>, class_hash: CasmClassHash) -> DispatchResult {
             ensure_root(origin)?;
             let mut whitelisted_class_hashes = T::WhitelistedClassHashes::get();
             whitelisted_class_hashes.retain(|&hash| hash != class_hash);
