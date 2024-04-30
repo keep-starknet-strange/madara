@@ -76,7 +76,7 @@ where
                 Poll::Ready(Some(storage_notification)) => {
                     let block_hash = storage_notification.block;
 
-                    match build_commitment_state_diff::<B, C, H>(
+                    match build_commitment_state_diff::<B, C>(
                         self_as_mut.client.clone(),
                         self_as_mut.backend.clone(),
                         storage_notification,
@@ -137,7 +137,7 @@ enum BuildCommitmentStateDiffError {
     FailedToGetConfigHash(#[from] sp_api::ApiError),
 }
 
-fn build_commitment_state_diff<B: BlockT, C, H>(
+fn build_commitment_state_diff<B: BlockT, C>(
     client: Arc<C>,
     backend: Arc<mc_db::Backend<B>>,
     storage_notification: StorageNotification<B::Hash>,
@@ -145,8 +145,7 @@ fn build_commitment_state_diff<B: BlockT, C, H>(
 where
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
-    C: HeaderBackend<B>,
-    H: HasherT,
+    C: HeaderBackend<B>
 {
     let mut accessed_addrs: IndexSet<ContractAddress> = IndexSet::new();
     let mut commitment_state_diff = ThinStateDiff {

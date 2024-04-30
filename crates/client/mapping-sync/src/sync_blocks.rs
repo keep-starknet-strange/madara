@@ -1,6 +1,5 @@
 use mc_rpc_core::utils::get_block_by_block_hash;
 use mp_digest_log::{find_starknet_block, FindLogError};
-use mp_hashers::HasherT;
 use mp_transactions::get_transaction_hash;
 use num_traits::FromPrimitive;
 use pallet_starknet_runtime_api::StarknetRuntimeApi;
@@ -12,7 +11,7 @@ use sp_runtime::traits::{Block as BlockT, Header as HeaderT, Zero};
 
 use crate::block_metrics::BlockMetrics;
 
-fn sync_block<B: BlockT, C, BE, H>(
+fn sync_block<B: BlockT, C, BE>(
     client: &C,
     backend: &mc_db::Backend<B>,
     header: &B::Header,
@@ -23,7 +22,6 @@ where
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
     BE: Backend<B>,
-    H: HasherT,
 {
     // Before storing the new block in the Madara backend database, we want to make sure that the
     // wrapped Starknet block it contains is the same that we can find in the storage at this height.
@@ -100,15 +98,14 @@ where
     }
 }
 
-fn sync_genesis_block<B: BlockT, C, H>(
+fn sync_genesis_block<B: BlockT, C>(
     _client: &C,
     backend: &mc_db::Backend<B>,
     header: &B::Header,
 ) -> anyhow::Result<()>
 where
     C: HeaderBackend<B>,
-    B: BlockT,
-    H: HasherT,
+    B: BlockT
 {
     let substrate_block_hash = header.hash();
 
@@ -131,7 +128,7 @@ where
     Ok(())
 }
 
-fn sync_one_block<B: BlockT, C, BE, H>(
+fn sync_one_block<B: BlockT, C, BE>(
     client: &C,
     substrate_backend: &BE,
     madara_backend: &mc_db::Backend<B>,
@@ -143,7 +140,6 @@ where
     C::Api: StarknetRuntimeApi<B>,
     C: HeaderBackend<B> + StorageProvider<B, BE>,
     BE: Backend<B>,
-    H: HasherT,
 {
     let mut current_syncing_tips = madara_backend.meta().current_syncing_tips()?;
 
@@ -173,12 +169,12 @@ where
     };
 
     if operating_header.number() == &Zero::zero() {
-        sync_genesis_block::<_, _, H>(client, madara_backend, &operating_header)?;
+        sync_genesis_block::<_, _>(client, madara_backend, &operating_header)?;
 
         madara_backend.meta().write_current_syncing_tips(current_syncing_tips)?;
         Ok(true)
     } else {
-        sync_block::<_, _, _, H>(client, madara_backend, &operating_header, block_metrics)?;
+        sync_block::<_, _, _>(client, madara_backend, &operating_header, block_metrics)?;
 
         current_syncing_tips.push(*operating_header.parent_hash());
         madara_backend.meta().write_current_syncing_tips(current_syncing_tips)?;
@@ -186,7 +182,7 @@ where
     }
 }
 
-pub fn sync_blocks<B: BlockT, C, BE, H>(
+pub fn sync_blocks<B: BlockT, C, BE>(
     client: &C,
     substrate_backend: &BE,
     madara_backend: &mc_db::Backend<B>,
@@ -199,13 +195,12 @@ where
     C::Api: StarknetRuntimeApi<B>,
     C: HeaderBackend<B> + StorageProvider<B, BE>,
     BE: Backend<B>,
-    H: HasherT,
 {
     let mut synced_any = false;
 
     for _ in 0..limit {
         synced_any = synced_any
-            || sync_one_block::<_, _, _, H>(client, substrate_backend, madara_backend, sync_from, block_metrics)?;
+            || sync_one_block::<_, _, _>(client, substrate_backend, madara_backend, sync_from, block_metrics)?;
     }
 
     Ok(synced_any)
