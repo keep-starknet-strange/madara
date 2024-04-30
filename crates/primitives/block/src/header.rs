@@ -60,22 +60,6 @@ impl Header {
         }
     }
 
-    /// Compute the hash of the header.
-    // pub fn hash<H: HasherT>(&self) -> Felt252Wrapper {
-    //     let data: &[Felt252Wrapper] = &[
-    //         self.block_number.into(),
-    //         self.sequencer_address.0.0.into(),
-    //         self.block_timestamp.into(),
-    //         self.transaction_count.into(),
-    //         self.event_count.into(),
-    //         self.protocol_version.into(),
-    //         Felt252Wrapper::ZERO,
-    //         self.parent_block_hash.into(),
-    //     ];
-
-    //     H::compute_hash_on_wrappers(data)
-    // }
-
     // Computing the hash using the Pedersen hasher.
     pub fn hash(&self) -> Felt252Wrapper {
         let data: &[Felt252Wrapper] = &[
