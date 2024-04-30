@@ -24,16 +24,13 @@ members = [
   "crates/client/mapping-sync",
   "crates/client/storage",
   "crates/client/commitment-state-diff",
-  "crates/client/settlement",
   "crates/client/eth-client",
   "crates/client/starknet-block-import",
   "starknet-rpc-test",
-  "da-test",
-  "starknet-e2e-test",
   "madara-test-runner",
   "starknet-test-utils",
 ]
-# All previous except for `starknet-rpc-test` and `starknet-e2e-test`
+# All previous except for `starknet-rpc-test`
 # We don't want `cargo test` to trigger its tests
 default-members = [
   "crates/node",
@@ -58,7 +55,6 @@ default-members = [
   "crates/client/mapping-sync",
   "crates/client/storage",
   "crates/client/commitment-state-diff",
-  "crates/client/settlement",
   "crates/client/eth-client",
   "crates/client/starknet-block-import",
   "starknet-test-utils",
@@ -187,10 +183,8 @@ mc-db = { path = "crates/client/db" }
 mc-storage = { path = "crates/client/storage" }
 mc-rpc = { path = "crates/client/rpc" }
 mc-rpc-core = { path = "crates/client/rpc-core" }
-mc-data-availability = { path = "crates/client/data-availability" }
 mc-commitment-state-diff = { path = "crates/client/commitment-state-diff" }
 mc-l1-messages = { path = "crates/client/l1-messages" }
-mc-settlement = { path = "crates/client/settlement" }
 mc-eth-client = { path = "crates/client/eth-client" }
 mc-starknet-block-import = { path = "crates/client/starknet-block-import" }
 

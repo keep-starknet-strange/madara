@@ -2,6 +2,7 @@
 
 ## Next release
 
+- chore: remove all da/settlement related code
 - fix: re-execute txs instead of simulating for txn receipts
 - chore: rebase on latest blockifier
 - refactoring : Removed Redundant logs in madara
