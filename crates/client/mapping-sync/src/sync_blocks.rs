@@ -98,14 +98,10 @@ where
     }
 }
 
-fn sync_genesis_block<B: BlockT, C>(
-    _client: &C,
-    backend: &mc_db::Backend<B>,
-    header: &B::Header,
-) -> anyhow::Result<()>
+fn sync_genesis_block<B: BlockT, C>(_client: &C, backend: &mc_db::Backend<B>, header: &B::Header) -> anyhow::Result<()>
 where
     C: HeaderBackend<B>,
-    B: BlockT
+    B: BlockT,
 {
     let substrate_block_hash = header.hash();
 

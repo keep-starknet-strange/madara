@@ -145,7 +145,7 @@ fn build_commitment_state_diff<B: BlockT, C>(
 where
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
-    C: HeaderBackend<B>
+    C: HeaderBackend<B>,
 {
     let mut accessed_addrs: IndexSet<ContractAddress> = IndexSet::new();
     let mut commitment_state_diff = ThinStateDiff {
