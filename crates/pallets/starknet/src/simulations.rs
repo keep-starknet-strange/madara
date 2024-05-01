@@ -141,15 +141,12 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn estimate_message_fee(message: L1HandlerTransaction) -> Result<(u128, u128, u128), SimulationError> {
-        let mut res = None;
-
         storage::transactional::with_transaction(|| {
-            res = Some(Self::estimate_message_fee_inner(message));
-            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(()))
+            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::estimate_message_fee_inner(
+                message,
+            )))
         })
-        .map_err(|_| SimulationError::FailedToCreateATransactionalStorageExecution)?;
-
-        res.expect("`res` should have been set to `Some` at this point")
+        .map_err(|_| SimulationError::FailedToCreateATransactionalStorageExecution)?
     }
 
     fn estimate_message_fee_inner(message: L1HandlerTransaction) -> Result<(u128, u128, u128), SimulationError> {
