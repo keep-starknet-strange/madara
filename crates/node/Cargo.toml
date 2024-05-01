@@ -25,8 +25,10 @@ async-trait = "0.1"
 clap = { workspace = true, features = ["derive"] }
 futures = { workspace = true, features = ["thread-pool"] }
 log = { workspace = true }
+num-bigint = { workspace = true }
 serde = { workspace = true }
 sha3 = { workspace = true }
+thiserror = { workspace = true }
 
 frame-system = { workspace = true }
 sc-basic-authorship = { workspace = true }
@@ -44,6 +46,7 @@ sc-service = { workspace = true }
 sc-telemetry = { workspace = true }
 sc-transaction-pool = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
+sp-consensus = { workspace = true }
 sp-consensus-aura = { workspace = true }
 sp-consensus-grandpa = { workspace = true }
 sp-core = { workspace = true }
@@ -75,13 +78,12 @@ frame-benchmarking = { workspace = true }
 frame-benchmarking-cli = { workspace = true }
 madara-runtime = { workspace = true, features = ["std"] }
 mc-commitment-state-diff = { workspace = true }
-mc-data-availability = { workspace = true, features = ["clap"] }
 mc-db = { workspace = true }
 mc-eth-client = { workspace = true }
 mc-l1-messages = { workspace = true }
 mc-mapping-sync = { workspace = true }
 mc-rpc = { workspace = true }
-mc-settlement = { workspace = true, features = ["clap"] }
+mc-starknet-block-import = { workspace = true, optional = true }
 mc-storage = { workspace = true }
 pallet-starknet = { workspace = true, features = ["genesis-loader"] }
 pallet-starknet-runtime-api = { workspace = true }
@@ -100,7 +102,7 @@ blockifier = { workspace = true }
 
 
 # CLI-specific dependencies
-reqwest = { workspace = true }
+reqwest = { workspace = true, features = ["blocking"] }
 serde_json = { workspace = true }
 try-runtime-cli = { optional = true, git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
 url = { workspace = true }
@@ -122,5 +124,7 @@ disable-transaction-fee = ["madara-runtime/disable-transaction-fee"]
 # Load sharingan chain-specs during the compilation
 # This is the way to run a sharingan chain
 sharingan = []
-avail = ["mc-data-availability/avail"]
-celestia = ["mc-data-availability/celestia"]
+# Enables Sierra class verification for foreign blocks only + disabled in manual sealing mode
+sn-block-import = ["dep:mc-starknet-block-import"]
+# Enables Sierra class verification for both own and foreign blocks only + enabled for manual sealing mode
+sn-block-import-testing = ["sn-block-import"]

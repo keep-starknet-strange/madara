@@ -11,14 +11,8 @@ use futures::future::BoxFuture;
 use futures::prelude::*;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi, SealingMode, StarknetHasher};
-use mc_commitment_state_diff::CommitmentStateDiffWorker;
-use mc_data_availability::{DaClient, DataAvailabilityWorker};
-use mc_eth_client::config::EthereumClientConfig;
 use mc_genesis_data_provider::OnDiskGenesisConfig;
 use mc_mapping_sync::MappingSyncWorker;
-use mc_settlement::errors::RetryOnRecoverableErrors;
-use mc_settlement::ethereum::StarknetContractClient;
-use mc_settlement::{SettlementLayer, SettlementProvider, SettlementWorker};
 use mc_storage::overrides_handle;
 use mp_sequencer_address::{
     InherentDataProvider as SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
@@ -28,11 +22,11 @@ use sc_basic_authorship::ProposerFactory;
 use sc_client_api::{Backend, BlockBackend, BlockchainEvents, HeaderBackend};
 use sc_consensus::BasicQueue;
 use sc_consensus_aura::{SlotProportion, StartAuraParams};
-use sc_consensus_grandpa::{GrandpaBlockImport, SharedVoterState};
+use sc_consensus_grandpa::SharedVoterState;
 pub use sc_executor::NativeElseWasmExecutor;
 use sc_service::error::Error as ServiceError;
 use sc_service::{new_db_backend, Configuration, TaskManager, WarpSyncParams};
-use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
+use sc_telemetry::{Telemetry, TelemetryWorker};
 use sc_transaction_pool::FullPool;
 use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 use sp_api::offchain::OffchainStorage;
@@ -41,13 +35,16 @@ use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_offchain::STORAGE_PREFIX;
 
 use crate::genesis_block::MadaraGenesisBlockBuilder;
+use crate::import_queue::{
+    build_aura_queue_grandpa_pipeline, build_manual_seal_queue_pipeline, BlockImportPipeline,
+    GRANDPA_JUSTIFICATION_PERIOD,
+};
 use crate::rpc::StarknetDeps;
 use crate::starknet::{db_config_dir, MadaraBackend};
 // Our native executor instance.
 pub struct ExecutorDispatch;
 
 const MADARA_TASK_GROUP: &str = "madara";
-const DEFAULT_SETTLEMENT_RETRY_INTERVAL: Duration = Duration::from_millis(100);
 
 impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
     /// Only enable the benchmarking host functions when we actually want to benchmark.
@@ -67,47 +64,30 @@ impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
 }
 
 pub(crate) type FullClient = sc_service::TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<ExecutorDispatch>>;
-type FullBackend = sc_service::TFullBackend<Block>;
-type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
+pub(crate) type FullBackend = sc_service::TFullBackend<Block>;
+pub(crate) type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 
-type BasicImportQueue = sc_consensus::DefaultImportQueue<Block>;
+pub(crate) type BasicImportQueue = sc_consensus::DefaultImportQueue<Block>;
 type BoxBlockImport = sc_consensus::BoxBlockImport<Block>;
 
-/// The minimum period of blocks on which justifications will be
-/// imported and generated.
-const GRANDPA_JUSTIFICATION_PERIOD: u32 = 512;
-
 #[allow(clippy::type_complexity)]
-pub fn new_partial<BIQ>(
+pub fn new_partial(
     config: &Configuration,
-    build_import_queue: BIQ,
+    manual_sealing: bool,
 ) -> Result<
     sc_service::PartialComponents<
         FullClient,
         FullBackend,
         FullSelectChain,
-        sc_consensus::DefaultImportQueue<Block>,
+        BasicImportQueue,
         sc_transaction_pool::FullPool<Block, FullClient>,
-        (
-            BoxBlockImport,
-            sc_consensus_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
-            Option<Telemetry>,
-            Arc<MadaraBackend>,
-        ),
+        (Arc<MadaraBackend>, BlockImportPipeline, Option<Telemetry>),
     >,
     ServiceError,
 >
 where
     RuntimeApi: ConstructRuntimeApi<Block, FullClient>,
     RuntimeApi: Send + Sync + 'static,
-    BIQ: FnOnce(
-        Arc<FullClient>,
-        &Configuration,
-        &TaskManager,
-        Option<TelemetryHandle>,
-        GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
-        Arc<MadaraBackend>,
-    ) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>,
 {
     let telemetry = config
         .telemetry_endpoints
@@ -162,24 +142,20 @@ where
         client.clone(),
     );
 
-    let (grandpa_block_import, grandpa_link) = sc_consensus_grandpa::block_import(
-        client.clone(),
-        GRANDPA_JUSTIFICATION_PERIOD,
-        &client as &Arc<_>,
-        select_chain.clone(),
-        telemetry.as_ref().map(|x| x.handle()),
-    )?;
-
     let madara_backend = Arc::new(MadaraBackend::open(&config.database, &db_config_dir(config))?);
 
-    let (import_queue, block_import) = build_import_queue(
-        client.clone(),
-        config,
-        &task_manager,
-        telemetry.as_ref().map(|x| x.handle()),
-        grandpa_block_import,
-        madara_backend.clone(),
-    )?;
+    let (import_queue, import_pipeline) = if manual_sealing {
+        build_manual_seal_queue_pipeline(client.clone(), config, &task_manager, madara_backend.clone())
+    } else {
+        build_aura_queue_grandpa_pipeline(
+            client.clone(),
+            config,
+            &task_manager,
+            &telemetry,
+            select_chain.clone(),
+            madara_backend.clone(),
+        )?
+    };
 
     Ok(sc_service::PartialComponents {
         client,
@@ -189,72 +165,8 @@ where
         keystore_container,
         select_chain,
         transaction_pool,
-        other: (block_import, grandpa_link, telemetry, madara_backend),
+        other: (madara_backend, import_pipeline, telemetry),
     })
-}
-
-/// Build the import queue for the template runtime (aura + grandpa).
-pub fn build_aura_grandpa_import_queue(
-    client: Arc<FullClient>,
-    config: &Configuration,
-    task_manager: &TaskManager,
-    telemetry: Option<TelemetryHandle>,
-    grandpa_block_import: GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
-    _madara_backend: Arc<MadaraBackend>,
-) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>
-where
-    RuntimeApi: ConstructRuntimeApi<Block, FullClient>,
-    RuntimeApi: Send + Sync + 'static,
-{
-    let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
-
-    let create_inherent_data_providers = move |_, ()| async move {
-        let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
-        let slot = sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-            *timestamp,
-            slot_duration,
-        );
-        Ok((slot, timestamp))
-    };
-
-    let import_queue =
-        sc_consensus_aura::import_queue::<AuraPair, _, _, _, _, _>(sc_consensus_aura::ImportQueueParams {
-            block_import: grandpa_block_import.clone(),
-            justification_import: Some(Box::new(grandpa_block_import.clone())),
-            client,
-            create_inherent_data_providers,
-            spawner: &task_manager.spawn_essential_handle(),
-            registry: config.prometheus_registry(),
-            check_for_equivocation: Default::default(),
-            telemetry,
-            compatibility_mode: sc_consensus_aura::CompatibilityMode::None,
-        })
-        .map_err::<ServiceError, _>(Into::into)?;
-
-    Ok((import_queue, Box::new(grandpa_block_import)))
-}
-
-/// Build the import queue for the template runtime (manual seal).
-pub fn build_manual_seal_import_queue(
-    client: Arc<FullClient>,
-    config: &Configuration,
-    task_manager: &TaskManager,
-    _telemetry: Option<TelemetryHandle>,
-    _grandpa_block_import: GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
-    _madara_backend: Arc<MadaraBackend>,
-) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>
-where
-    RuntimeApi: ConstructRuntimeApi<Block, FullClient>,
-    RuntimeApi: Send + Sync + 'static,
-{
-    Ok((
-        sc_consensus_manual_seal::import_queue(
-            Box::new(client.clone()),
-            &task_manager.spawn_essential_handle(),
-            config.prometheus_registry(),
-        ),
-        Box::new(client),
-    ))
 }
 
 /// Builds a new service for a full client.
@@ -262,15 +174,7 @@ where
 /// # Arguments
 ///
 /// - `cache`: whether more information should be cached when storing the block in the database.
-pub fn new_full(
-    config: Configuration,
-    sealing: SealingMode,
-    da_client: Option<Box<dyn DaClient + Send + Sync>>,
-    settlement_config: Option<(SettlementLayer, PathBuf)>,
-) -> Result<TaskManager, ServiceError> {
-    let build_import_queue =
-        if sealing.is_default() { build_aura_grandpa_import_queue } else { build_manual_seal_import_queue };
-
+pub fn new_full(config: Configuration, sealing: SealingMode) -> Result<TaskManager, ServiceError> {
     let sc_service::PartialComponents {
         client,
         backend,
@@ -279,8 +183,8 @@ pub fn new_full(
         keystore_container,
         select_chain,
         transaction_pool,
-        other: (block_import, grandpa_link, mut telemetry, madara_backend),
-    } = new_partial(&config, build_import_queue)?;
+        other: (madara_backend, BlockImportPipeline { block_import, grandpa_link }, mut telemetry),
+    } = new_partial(&config, !sealing.is_default())?;
 
     let mut net_config = sc_network::config::FullNetworkConfiguration::new(&config.network);
 
@@ -289,12 +193,12 @@ pub fn new_full(
         &config.chain_spec,
     );
 
-    let warp_sync_params = if sealing.is_default() {
+    let warp_sync_params = if let Some(link) = &grandpa_link {
         net_config
             .add_notification_protocol(sc_consensus_grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone()));
         let warp_sync = Arc::new(sc_consensus_grandpa::warp_proof::NetworkProvider::new(
             backend.clone(),
-            grandpa_link.shared_authority_set().clone(),
+            link.shared_authority_set().clone(),
             Vec::default(),
         ));
         Some(WarpSyncParams::WithProvider(warp_sync))
@@ -338,7 +242,6 @@ pub fn new_full(
     let force_authoring = config.force_authoring;
     let backoff_authoring_blocks: Option<()> = None;
     let name = config.network.node_name.clone();
-    let enable_grandpa = !config.disable_grandpa && sealing.is_default();
     let prometheus_registry = config.prometheus_registry().cloned();
     let starting_block = client.info().best_number;
 
@@ -411,74 +314,6 @@ pub fn new_full(
         )
         .for_each(|()| future::ready(())),
     );
-
-    let (commitment_state_diff_tx, commitment_state_diff_rx) = mpsc::channel(5);
-
-    // initialize data availability worker
-    if let Some(da_client) = da_client {
-        task_manager.spawn_essential_handle().spawn(
-            "commitment-state-diff",
-            Some("madara"),
-            CommitmentStateDiffWorker::<_, _, StarknetHasher>::new(
-                client.clone(),
-                madara_backend.clone(),
-                commitment_state_diff_tx,
-            )
-            .for_each(|()| future::ready(())),
-        );
-        task_manager.spawn_essential_handle().spawn(
-            "da-worker",
-            Some(MADARA_TASK_GROUP),
-            DataAvailabilityWorker::<_, StarknetHasher>::prove_current_block(
-                da_client.into(),
-                prometheus_registry.clone(),
-                commitment_state_diff_rx,
-                madara_backend.clone(),
-            ),
-        );
-    }
-
-    // initialize settlement workers
-    if let Some((layer_kind, config_path)) = settlement_config {
-        let settlement_provider: Box<dyn SettlementProvider<_>> = match layer_kind {
-            SettlementLayer::Ethereum => {
-                let ethereum_conf = EthereumClientConfig::from_json_file(&config_path)
-                    .map_err(|e| ServiceError::Other(e.to_string()))?;
-                Box::new(
-                    StarknetContractClient::try_from(ethereum_conf).map_err(|e| ServiceError::Other(e.to_string()))?,
-                )
-            }
-        };
-        let retry_strategy = Box::new(RetryOnRecoverableErrors { delay: DEFAULT_SETTLEMENT_RETRY_INTERVAL });
-
-        task_manager.spawn_essential_handle().spawn(
-            "settlement-worker-sync-state",
-            Some(MADARA_TASK_GROUP),
-            SettlementWorker::<_, StarknetHasher, _>::sync_state(
-                client.clone(),
-                settlement_provider,
-                madara_backend.clone(),
-                retry_strategy,
-            ),
-        );
-
-        // TODO: make L1 message handling part of the SettlementProvider, support multiple layer options
-        if layer_kind == SettlementLayer::Ethereum {
-            let ethereum_conf =
-                EthereumClientConfig::from_json_file(&config_path).map_err(|e| ServiceError::Other(e.to_string()))?;
-
-            task_manager.spawn_handle().spawn(
-                "settlement-worker-sync-l1-messages",
-                Some(MADARA_TASK_GROUP),
-                mc_l1_messages::worker::run_worker(
-                    ethereum_conf,
-                    client.clone(),
-                    transaction_pool.clone(),
-                    madara_backend.clone(),
-                ),
-            );
-        }
-    }
 
     if role.is_authority() {
         // manual-seal authorship
@@ -560,7 +395,7 @@ pub fn new_full(
         task_manager.spawn_essential_handle().spawn_blocking("aura", Some("block-authoring"), aura);
     }
 
-    if enable_grandpa {
+    if let Some(link) = grandpa_link {
         // if the node isn't actively participating in consensus then it doesn't
         // need a keystore, regardless of which protocol we use below.
         let keystore = if role.is_authority() { Some(keystore_container.keystore()) } else { None };
@@ -585,7 +420,7 @@ pub fn new_full(
         // could lead to finality stalls.
         let grandpa_config = sc_consensus_grandpa::GrandpaParams {
             config: grandpa_config,
-            link: grandpa_link,
+            link,
             network,
             sync: Arc::new(sync_service),
             voting_rule: sc_consensus_grandpa::VotingRulesBuilder::default().build(),
@@ -708,6 +543,6 @@ type ChainOpsResult =
 pub fn new_chain_ops(config: &mut Configuration) -> ChainOpsResult {
     config.keystore = sc_service::config::KeystoreConfig::InMemory;
     let sc_service::PartialComponents { client, backend, import_queue, task_manager, other, .. } =
-        new_partial::<_>(config, build_aura_grandpa_import_queue)?;
-    Ok((client, backend, import_queue, task_manager, other.3))
+        new_partial(config, false)?;
+    Ok((client, backend, import_queue, task_manager, other.0))
 }
