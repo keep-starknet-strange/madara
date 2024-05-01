@@ -47,7 +47,7 @@ pub enum StarknetRpcApiError {
 }
 
 #[derive(Debug, Error)]
-#[error("Contract Error")]
+#[error("Contract SimulationError")]
 pub struct ContractError {
     revert_error: String,
 }
@@ -106,14 +106,14 @@ impl From<TransactionExecutionError> for StarknetRpcApiError {
     }
 }
 
-impl From<mp_simulations::Error> for StarknetRpcApiError {
-    fn from(value: mp_simulations::Error) -> Self {
+impl From<mp_simulations::SimulationError> for StarknetRpcApiError {
+    fn from(value: mp_simulations::SimulationError) -> Self {
         match value {
-            mp_simulations::Error::ContractNotFound => StarknetRpcApiError::ContractNotFound,
-            mp_simulations::Error::TransactionExecutionFailed(e) => StarknetRpcApiError::ContractError(e.into()),
-            mp_simulations::Error::MissingL1GasUsage
-            | mp_simulations::Error::FailedToCreateATransactionalStorageExecution
-            | mp_simulations::Error::StateDiff => StarknetRpcApiError::InternalServerError,
+            mp_simulations::SimulationError::ContractNotFound => StarknetRpcApiError::ContractNotFound,
+            mp_simulations::SimulationError::TransactionExecutionFailed(e) => StarknetRpcApiError::ContractError(e.into()),
+            mp_simulations::SimulationError::MissingL1GasUsage
+            | mp_simulations::SimulationError::FailedToCreateATransactionalStorageExecution
+            | mp_simulations::SimulationError::StateDiff => StarknetRpcApiError::InternalServerError,
         }
     }
 }

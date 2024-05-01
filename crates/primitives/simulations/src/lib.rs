@@ -10,7 +10,7 @@ use starknet_core::types::{SimulationFlag, SimulationFlagForEstimateFee};
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
-pub enum Error {
+pub enum SimulationError {
     ContractNotFound,
     TransactionExecutionFailed(String),
     MissingL1GasUsage,
@@ -18,19 +18,19 @@ pub enum Error {
     StateDiff,
 }
 
-impl From<TransactionExecutionError> for Error {
-    fn from(e: TransactionExecutionError) -> Error {
-        Error::TransactionExecutionFailed(e.to_string())
+impl From<TransactionExecutionError> for SimulationError {
+    fn from(e: TransactionExecutionError) -> SimulationError {
+        SimulationError::TransactionExecutionFailed(e.to_string())
     }
 }
 
-impl From<StateError> for Error {
-    fn from(_e: StateError) -> Error {
-        Error::StateDiff
+impl From<StateError> for SimulationError {
+    fn from(_e: StateError) -> SimulationError {
+        SimulationError::StateDiff
     }
 }
 
-pub type TransactionSimulationResult = Result<TransactionExecutionInfo, Error>;
+pub type TransactionSimulationResult = Result<TransactionExecutionInfo, SimulationError>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]

@@ -7,7 +7,7 @@ use blockifier::transaction::objects::TransactionExecutionInfo;
 use blockifier::transaction::transaction_execution::Transaction;
 use blockifier::transaction::transactions::{ExecutableTransaction, L1HandlerTransaction};
 use frame_support::storage;
-use mp_simulations::{Error, SimulationFlags, TransactionSimulationResult};
+use mp_simulations::{SimulationError, SimulationFlags, TransactionSimulationResult};
 use mp_transactions::execution::{
     commit_transactional_state, execute_l1_handler_transaction, run_non_revertible_transaction,
     run_revertible_transaction, MutRefState, SetArbitraryNonce,
@@ -23,20 +23,20 @@ impl<T: Config> Pallet<T> {
     pub fn estimate_fee(
         transactions: Vec<AccountTransaction>,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Vec<(u128, u128)>, Error> {
+    ) -> Result<Vec<(u128, u128)>, SimulationError> {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::estimate_fee_inner(
                 transactions,
                 simulation_flags,
             )))
         })
-        .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?
+        .map_err(|_| SimulationError::FailedToCreateATransactionalStorageExecution)?
     }
 
     fn estimate_fee_inner(
         transactions: Vec<AccountTransaction>,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Vec<(u128, u128)>, Error> {
+    ) -> Result<Vec<(u128, u128)>, SimulationError> {
         let transactions_len = transactions.len();
         let block_context = Self::get_block_context();
         let mut state = BlockifierStateAdapter::<T>::default();
@@ -46,9 +46,9 @@ impl<T: Config> Pallet<T> {
             .map(|tx| match Self::execute_account_transaction(&tx, &mut state, &block_context, simulation_flags) {
                 Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
                 Ok(execution_info) => {
-                    Err(Error::TransactionExecutionFailed(execution_info.revert_error.unwrap().to_string()))
+                    Err(SimulationError::TransactionExecutionFailed(execution_info.revert_error.unwrap().to_string()))
                 }
-                Err(e) => Err(Error::from(e)),
+                Err(e) => Err(SimulationError::from(e)),
             })
             .map(|exec_info_res| {
                 exec_info_res.map(|exec_info| {
@@ -63,7 +63,7 @@ impl<T: Config> Pallet<T> {
 
         let mut fees = Vec::with_capacity(transactions_len);
         for fee_res in fee_res_iterator {
-            let res = fee_res?.map_err(|_| Error::StateDiff)?;
+            let res = fee_res?.map_err(|_| SimulationError::StateDiff)?;
             fees.push(res);
         }
 
@@ -73,20 +73,20 @@ impl<T: Config> Pallet<T> {
     pub fn simulate_transactions(
         transactions: Vec<AccountTransaction>,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, Error> {
+    ) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, SimulationError> {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::simulate_transactions_inner(
                 transactions,
                 simulation_flags,
             )))
         })
-        .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?
+        .map_err(|_| SimulationError::FailedToCreateATransactionalStorageExecution)?
     }
 
     fn simulate_transactions_inner(
         transactions: Vec<AccountTransaction>,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, Error> {
+    ) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, SimulationError> {
         let block_context = Self::get_block_context();
         let mut state = BlockifierStateAdapter::<T>::default();
 
@@ -102,12 +102,12 @@ impl<T: Config> Pallet<T> {
 
                 let result = res.0.map_err(|e| {
                     log::error!("Transaction execution failed during simulation: {e}");
-                    Error::from(e)
+                    SimulationError::from(e)
                 });
 
                 Ok((res.1, result))
             })
-            .collect::<Result<Vec<_>, Error>>()?;
+            .collect::<Result<Vec<_>, SimulationError>>()?;
 
         Ok(tx_execution_results)
     }
@@ -115,44 +115,44 @@ impl<T: Config> Pallet<T> {
     pub fn simulate_message(
         message: L1HandlerTransaction,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Result<TransactionExecutionInfo, Error>, Error> {
+    ) -> Result<Result<TransactionExecutionInfo, SimulationError>, SimulationError> {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::simulate_message_inner(
                 message,
                 simulation_flags,
             )))
         })
-        .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?
+        .map_err(|_| SimulationError::FailedToCreateATransactionalStorageExecution)?
     }
 
     fn simulate_message_inner(
         message: L1HandlerTransaction,
         _simulation_flags: &SimulationFlags,
-    ) -> Result<Result<TransactionExecutionInfo, Error>, Error> {
+    ) -> Result<Result<TransactionExecutionInfo, SimulationError>, SimulationError> {
         let block_context = Self::get_block_context();
         let mut state = BlockifierStateAdapter::<T>::default();
 
         let tx_execution_result = Self::execute_message(&message, &mut state, &block_context).map_err(|e| {
             log::error!("Transaction execution failed during simulation: {e}");
-            Error::from(e)
+            SimulationError::from(e)
         });
 
         Ok(tx_execution_result)
     }
 
-    pub fn estimate_message_fee(message: L1HandlerTransaction) -> Result<(u128, u128, u128), Error> {
+    pub fn estimate_message_fee(message: L1HandlerTransaction) -> Result<(u128, u128, u128), SimulationError> {
         let mut res = None;
 
         storage::transactional::with_transaction(|| {
             res = Some(Self::estimate_message_fee_inner(message));
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(()))
         })
-        .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?;
+        .map_err(|_| SimulationError::FailedToCreateATransactionalStorageExecution)?;
 
         res.expect("`res` should have been set to `Some` at this point")
     }
 
-    fn estimate_message_fee_inner(message: L1HandlerTransaction) -> Result<(u128, u128, u128), Error> {
+    fn estimate_message_fee_inner(message: L1HandlerTransaction) -> Result<(u128, u128, u128), SimulationError> {
         let mut cached_state = Self::init_cached_state();
 
         let tx_execution_infos = match message.execute(&mut cached_state, &Self::get_block_context(), true, true) {
@@ -162,7 +162,7 @@ impl<T: Config> Pallet<T> {
                     "Transaction execution failed during fee estimation: {e} {:?}",
                     std::error::Error::source(&e)
                 );
-                Err(Error::from(e))
+                Err(SimulationError::from(e))
             }
             Ok(execution_info) => {
                 log::error!(
@@ -170,33 +170,33 @@ impl<T: Config> Pallet<T> {
                     // Safe due to the `match` branch order
                     &execution_info.revert_error.clone().unwrap()
                 );
-                Err(Error::TransactionExecutionFailed(execution_info.revert_error.unwrap().to_string()))
+                Err(SimulationError::TransactionExecutionFailed(execution_info.revert_error.unwrap().to_string()))
             }
         }?;
 
         if let Some(l1_gas_usage) = tx_execution_infos.actual_resources.0.get("l1_gas_usage") {
             Ok((T::L1GasPrices::get().eth_l1_gas_price.into(), tx_execution_infos.actual_fee.0 as u128, *l1_gas_usage))
         } else {
-            Err(Error::MissingL1GasUsage)
+            Err(SimulationError::MissingL1GasUsage)
         }
     }
 
     pub fn re_execute_transactions(
         transactions_before: Vec<Transaction>,
         transactions_to_trace: Vec<Transaction>,
-    ) -> Result<Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, Error>, Error> {
+    ) -> Result<Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, SimulationError>, SimulationError> {
         let res = Self::re_execute_transactions_inner(transactions_before, transactions_to_trace);
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Ok(res)))
         })
-        .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?
+        .map_err(|_| SimulationError::FailedToCreateATransactionalStorageExecution)?
     }
 
 
 fn re_execute_transactions_inner(
         transactions_before: Vec<Transaction>,
         transactions_to_trace: Vec<Transaction>,
-    ) -> Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, Error>
+    ) -> Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, SimulationError>
     {
         let block_context = Self::get_block_context();
         let mut state = BlockifierStateAdapter::<T>::default();
@@ -204,9 +204,9 @@ fn re_execute_transactions_inner(
         transactions_before.iter().try_for_each(|tx| {
             Self::execute_transaction(tx, &mut state, &block_context, &SimulationFlags::default()).map_err(|e| {
                 log::error!("Failed to reexecute a tx: {}", e);
-                Error::from(e)
+                SimulationError::from(e)
             })?;
-            Ok::<(), Error>(())
+            Ok::<(), SimulationError>(())
         })?;
 
         let execution_infos = transactions_to_trace
@@ -222,18 +222,18 @@ fn re_execute_transactions_inner(
                 )
                 .map_err(|e| {
                     log::error!("Failed to reexecute a tx: {}", e);
-                    Error::from(e)
+                    SimulationError::from(e)
                 });
 
                 let res = res.map(|r| (r, transactional_state.to_state_diff()));
                 commit_transactional_state(transactional_state).map_err(|e| {
                     log::error!("Failed to commit state changes: {:?}", e);
-                    Error::from(e)
+                    SimulationError::from(e)
                 })?;
 
                 res
             })
-            .collect::<Result<_, Error>>()?;
+            .collect::<Result<_, SimulationError>>()?;
 
         Ok(execution_infos)
     }
@@ -299,7 +299,7 @@ fn re_execute_transactions_inner(
         state: &mut S,
         block_context: &BlockContext,
         simulation_flags: &SimulationFlags,
-    ) -> Result<(Result<TransactionExecutionInfo, TransactionExecutionError>, CommitmentStateDiff), Error> {
+    ) -> Result<(Result<TransactionExecutionInfo, TransactionExecutionError>, CommitmentStateDiff), SimulationError> {
         // In order to produce a state diff for this specific tx we execute on a transactional state
         let mut transactional_state = CachedState::new(MutRefState::new(state), GlobalContractCache::new(1));
 
@@ -311,7 +311,7 @@ fn re_execute_transactions_inner(
         // so that next txs being simulated are ontop of this one (avoid nonce error)
         commit_transactional_state(transactional_state).map_err(|e| {
             log::error!("Failed to commit state changes: {:?}", e);
-            Error::from(e)
+            SimulationError::from(e)
         })?;
 
         Ok((result, state_diff))

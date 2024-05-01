@@ -901,12 +901,12 @@ impl<T: Config> Pallet<T> {
         address: ContractAddress,
         function_selector: EntryPointSelector,
         calldata: Calldata,
-    ) -> Result<Vec<Felt252Wrapper>, mp_simulations::Error> {
+    ) -> Result<Vec<Felt252Wrapper>, mp_simulations::SimulationError> {
         // Get current block context
         let block_context = Self::get_block_context();
         // Get class hash
         let class_hash =
-            ContractClassHashes::<T>::try_get(address).map_err(|_| mp_simulations::Error::ContractNotFound)?;
+            ContractClassHashes::<T>::try_get(address).map_err(|_| mp_simulations::SimulationError::ContractNotFound)?;
 
         let entrypoint = CallEntryPoint {
             class_hash: Some(ClassHash(class_hash)),
@@ -928,7 +928,7 @@ impl<T: Config> Pallet<T> {
             }),
             false,
         )
-        .map_err(mp_simulations::Error::from)?;
+        .map_err(mp_simulations::SimulationError::from)?;
 
         match entrypoint.execute(
             &mut BlockifierStateAdapter::<T>::default(),
@@ -942,7 +942,7 @@ impl<T: Config> Pallet<T> {
             }
             Err(e) => {
                 log!(error, "failed to call smart contract {:?}", e);
-                Err(mp_simulations::Error::TransactionExecutionFailed(e.to_string()))
+                Err(mp_simulations::SimulationError::TransactionExecutionFailed(e.to_string()))
             }
         }
     }
@@ -951,11 +951,11 @@ impl<T: Config> Pallet<T> {
     pub fn get_storage_at(
         contract_address: ContractAddress,
         key: StorageKey,
-    ) -> Result<StarkFelt, mp_simulations::Error> {
+    ) -> Result<StarkFelt, mp_simulations::SimulationError> {
         // Get state
         ensure!(
             ContractClassHashes::<T>::contains_key(contract_address),
-            mp_simulations::Error::ContractNotFound
+            mp_simulations::SimulationError::ContractNotFound
         );
         Ok(Self::storage((contract_address, key)))
     }
