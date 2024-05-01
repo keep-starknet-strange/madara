@@ -905,8 +905,8 @@ impl<T: Config> Pallet<T> {
         // Get current block context
         let block_context = Self::get_block_context();
         // Get class hash
-        let class_hash =
-            ContractClassHashes::<T>::try_get(address).map_err(|_| mp_simulations::SimulationError::ContractNotFound)?;
+        let class_hash = ContractClassHashes::<T>::try_get(address)
+            .map_err(|_| mp_simulations::SimulationError::ContractNotFound)?;
 
         let entrypoint = CallEntryPoint {
             class_hash: Some(ClassHash(class_hash)),

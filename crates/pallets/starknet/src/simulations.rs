@@ -189,15 +189,16 @@ impl<T: Config> Pallet<T> {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Ok(res)))
         })
-        .map_err(|_| SimulationError::FailedToCreateATransactionalStorageExecution)?
+        .map_err(|e| {
+            log::error!("Failed to reexecute a tx: {:?}", e);
+            SimulationError::FailedToCreateATransactionalStorageExecution
+        })?
     }
 
-
-fn re_execute_transactions_inner(
+    fn re_execute_transactions_inner(
         transactions_before: Vec<Transaction>,
         transactions_to_trace: Vec<Transaction>,
-    ) -> Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, SimulationError>
-    {
+    ) -> Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, SimulationError> {
         let block_context = Self::get_block_context();
         let mut state = BlockifierStateAdapter::<T>::default();
 
@@ -237,7 +238,6 @@ fn re_execute_transactions_inner(
 
         Ok(execution_infos)
     }
-
 
     fn execute_transaction<S: State + SetArbitraryNonce>(
         transaction: &Transaction,
@@ -299,7 +299,8 @@ fn re_execute_transactions_inner(
         state: &mut S,
         block_context: &BlockContext,
         simulation_flags: &SimulationFlags,
-    ) -> Result<(Result<TransactionExecutionInfo, TransactionExecutionError>, CommitmentStateDiff), SimulationError> {
+    ) -> Result<(Result<TransactionExecutionInfo, TransactionExecutionError>, CommitmentStateDiff), SimulationError>
+    {
         // In order to produce a state diff for this specific tx we execute on a transactional state
         let mut transactional_state = CachedState::new(MutRefState::new(state), GlobalContractCache::new(1));
 
