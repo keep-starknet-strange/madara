@@ -1,9 +1,5 @@
-use core::fmt;
-
 use blockifier::transaction::errors::TransactionExecutionError;
-
 use jsonrpsee::types::error::{CallError, ErrorObject};
-use starknet_api::core::ContractAddress;
 use thiserror::Error;
 
 // Comes from the RPC Spec:
@@ -12,8 +8,8 @@ use thiserror::Error;
 pub enum StarknetRpcApiError {
     #[error("Failed to write transaction")]
     FailedToReceiveTxn,
-    #[error("Contract not found: {0}")]
-    ContractNotFound(DisplayableContractAddress),
+    #[error("Contract not found")]
+    ContractNotFound,
     #[error("Block not found")]
     BlockNotFound,
     #[error("Invalid transaction index in a block")]
@@ -56,28 +52,12 @@ pub struct ContractError {
     revert_error: String,
 }
 
-#[derive(Debug)]
-pub struct DisplayableContractAddress(pub ContractAddress);
-
-impl fmt::Display for DisplayableContractAddress {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // unwrapping all the layers of different types to get display from starkhash
-        let address = &self.0.0.0;
-        write!(f, "{}", address)
-    }
-}
-
-impl From<ContractAddress> for DisplayableContractAddress {
-    fn from(value: ContractAddress) -> Self {
-        DisplayableContractAddress(value)
-    }
-}
 
 impl From<StarknetRpcApiError> for jsonrpsee::core::Error {
     fn from(err: StarknetRpcApiError) -> Self {
         let code = match err {
             StarknetRpcApiError::FailedToReceiveTxn => 1,
-            StarknetRpcApiError::ContractNotFound(_) => 20,
+            StarknetRpcApiError::ContractNotFound => 20,
             StarknetRpcApiError::BlockNotFound => 24,
             StarknetRpcApiError::InvalidTxnIndex => 27,
             StarknetRpcApiError::ClassHashNotFound => 28,
@@ -129,7 +109,7 @@ impl From<TransactionExecutionError> for StarknetRpcApiError {
 impl From<mp_simulations::Error> for StarknetRpcApiError {
     fn from(value: mp_simulations::Error) -> Self {
         match value {
-            mp_simulations::Error::ContractNotFound(address) => StarknetRpcApiError::ContractNotFound(address.into()),
+            mp_simulations::Error::ContractNotFound => StarknetRpcApiError::ContractNotFound,
             mp_simulations::Error::TransactionExecutionFailed(e) => StarknetRpcApiError::ContractError(e.into()),
             mp_simulations::Error::MissingL1GasUsage
             | mp_simulations::Error::FailedToCreateATransactionalStorageExecution

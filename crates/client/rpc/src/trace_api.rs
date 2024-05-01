@@ -217,8 +217,8 @@ where
             .runtime_api()
             .re_execute_transactions(
                 previous_block_substrate_hash,
-                transactions_before.clone(),
-                transactions_to_trace.clone(),
+                transactions_before,
+                transactions_to_trace,
             )
             .map_err(|e| {
                 error!("Failed to execute runtime API call: {e}");

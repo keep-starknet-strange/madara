@@ -192,10 +192,12 @@ impl<T: Config> Pallet<T> {
         .map_err(|_| Error::FailedToCreateATransactionalStorageExecution)?
     }
 
-    fn re_execute_transactions_inner(
+
+fn re_execute_transactions_inner(
         transactions_before: Vec<Transaction>,
         transactions_to_trace: Vec<Transaction>,
-    ) -> Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, Error> {
+    ) -> Result<Vec<(TransactionExecutionInfo, CommitmentStateDiff)>, Error>
+    {
         let block_context = Self::get_block_context();
         let mut state = BlockifierStateAdapter::<T>::default();
 
@@ -204,7 +206,6 @@ impl<T: Config> Pallet<T> {
                 log::error!("Failed to reexecute a tx: {}", e);
                 Error::from(e)
             })?;
-
             Ok::<(), Error>(())
         })?;
 
@@ -236,6 +237,7 @@ impl<T: Config> Pallet<T> {
 
         Ok(execution_infos)
     }
+
 
     fn execute_transaction<S: State + SetArbitraryNonce>(
         transaction: &Transaction,

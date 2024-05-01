@@ -1,7 +1,6 @@
 use blockifier::state::errors::StateError;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
-use starknet_api::core::ContractAddress;
 use starknet_core::types::{SimulationFlag, SimulationFlagForEstimateFee};
 
 // TODO: This is a placeholder
@@ -12,7 +11,7 @@ use starknet_core::types::{SimulationFlag, SimulationFlagForEstimateFee};
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 pub enum Error {
-    ContractNotFound(ContractAddress),
+    ContractNotFound,
     TransactionExecutionFailed(String),
     MissingL1GasUsage,
     FailedToCreateATransactionalStorageExecution,

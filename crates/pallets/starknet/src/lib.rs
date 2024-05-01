@@ -906,7 +906,7 @@ impl<T: Config> Pallet<T> {
         let block_context = Self::get_block_context();
         // Get class hash
         let class_hash =
-            ContractClassHashes::<T>::try_get(address).map_err(|_| mp_simulations::Error::ContractNotFound(address))?;
+            ContractClassHashes::<T>::try_get(address).map_err(|_| mp_simulations::Error::ContractNotFound)?;
 
         let entrypoint = CallEntryPoint {
             class_hash: Some(ClassHash(class_hash)),
@@ -955,7 +955,7 @@ impl<T: Config> Pallet<T> {
         // Get state
         ensure!(
             ContractClassHashes::<T>::contains_key(contract_address),
-            mp_simulations::Error::ContractNotFound(contract_address)
+            mp_simulations::Error::ContractNotFound
         );
         Ok(Self::storage((contract_address, key)))
     }
