@@ -17,7 +17,7 @@ use sp_runtime::DispatchError;
 use starknet_api::transaction::TransactionVersion;
 
 use crate::blockifier_state_adapter::BlockifierStateAdapter;
-use crate::{Config, Error, Pallet};
+use crate::{log, Config, Error, Pallet};
 
 type ReExecutionResult = Result<
     Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>,
@@ -53,7 +53,8 @@ impl<T: Config> Pallet<T> {
                     if !execution_info.is_reverted() {
                         Ok(execution_info)
                     } else {
-                        log::error!(
+                        log!(
+                            debug,
                             "Transaction execution reverted during fee estimation: {:?}",
                             execution_info.revert_error
                         );
@@ -61,7 +62,7 @@ impl<T: Config> Pallet<T> {
                     }
                 }
                 Err(e) => {
-                    log::error!("Transaction execution failed during fee estimation: {e}");
+                    log!(debug, "Transaction execution failed during fee estimation: {:?}", e);
                     Err(Error::<T>::TransactionExecutionFailed)
                 }
             })
@@ -115,7 +116,7 @@ impl<T: Config> Pallet<T> {
                 )?;
 
                 let result = res.0.map_err(|e| {
-                    log::error!("Transaction execution failed during simulation: {e}");
+                    log!(debug, "Transaction execution failed during simulation: {:?}", e);
                     PlaceHolderErrorTypeForFailedStarknetExecution
                 });
 
@@ -148,7 +149,7 @@ impl<T: Config> Pallet<T> {
         let mut state = BlockifierStateAdapter::<T>::default();
 
         let tx_execution_result = Self::execute_message(&message, &mut state, &block_context).map_err(|e| {
-            log::error!("Transaction execution failed during simulation: {e}");
+            log!(debug, "Transaction execution failed during simulation: {:?}", e);
             PlaceHolderErrorTypeForFailedStarknetExecution
         });
 
@@ -170,14 +171,17 @@ impl<T: Config> Pallet<T> {
         let tx_execution_infos = match message.execute(&mut cached_state, &Self::get_block_context(), true, true) {
             Ok(execution_info) if !execution_info.is_reverted() => Ok(execution_info),
             Err(e) => {
-                log::error!(
-                    "Transaction execution failed during fee estimation: {e} {:?}",
+                log!(
+                    debug,
+                    "Transaction execution failed during fee estimation: {:?} {:?}",
+                    e,
                     std::error::Error::source(&e)
                 );
                 Err(Error::<T>::TransactionExecutionFailed)
             }
             Ok(execution_info) => {
-                log::error!(
+                log!(
+                    debug,
                     "Transaction execution reverted during fee estimation: {}",
                     // Safe due to the `match` branch order
                     execution_info.revert_error.unwrap()
@@ -218,7 +222,7 @@ impl<T: Config> Pallet<T> {
 
         transactions_before.iter().try_for_each(|tx| {
             Self::execute_transaction(tx, &mut state, &block_context, &SimulationFlags::default()).map_err(|e| {
-                log::error!("Failed to reexecute a tx: {}", e);
+                log!(debug, "Failed to reexecute a tx: {}", e);
                 PlaceHolderErrorTypeForFailedStarknetExecution
             })?;
 
@@ -237,14 +241,14 @@ impl<T: Config> Pallet<T> {
                     &SimulationFlags::default(),
                 )
                 .map_err(|e| {
-                    log::error!("Failed to reexecute a tx: {}", e);
+                    log!(debug, "Failed to reexecute a tx: {}", e);
                     PlaceHolderErrorTypeForFailedStarknetExecution
                 });
 
                 let res = res
                     .map(|r| if with_state_diff { (r, Some(transactional_state.to_state_diff())) } else { (r, None) });
                 commit_transactional_state(transactional_state).map_err(|e| {
-                    log::error!("Failed to commit state changes: {:?}", e);
+                    log!(debug, "Failed to commit state changes: {:?}", e);
                     PlaceHolderErrorTypeForFailedStarknetExecution
                 })?;
 
@@ -329,7 +333,7 @@ impl<T: Config> Pallet<T> {
         // Once the state diff of this tx is generated, we apply those changes on the original state
         // so that next txs being simulated are ontop of this one (avoid nonce error)
         commit_transactional_state(transactional_state).map_err(|e| {
-            log::error!("Failed to commit state changes: {:?}", e);
+            log!(error, "Failed to commit state changes: {:?}", e);
             PlaceHolderErrorTypeForFailedStarknetExecution
         })?;
 
