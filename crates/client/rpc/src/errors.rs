@@ -52,7 +52,6 @@ pub struct ContractError {
     revert_error: String,
 }
 
-
 impl From<StarknetRpcApiError> for jsonrpsee::core::Error {
     fn from(err: StarknetRpcApiError) -> Self {
         let code = match err {
@@ -110,7 +109,9 @@ impl From<mp_simulations::SimulationError> for StarknetRpcApiError {
     fn from(value: mp_simulations::SimulationError) -> Self {
         match value {
             mp_simulations::SimulationError::ContractNotFound => StarknetRpcApiError::ContractNotFound,
-            mp_simulations::SimulationError::TransactionExecutionFailed(e) => StarknetRpcApiError::ContractError(e.into()),
+            mp_simulations::SimulationError::TransactionExecutionFailed(e) => {
+                StarknetRpcApiError::ContractError(e.into())
+            }
             mp_simulations::SimulationError::MissingL1GasUsage
             | mp_simulations::SimulationError::FailedToCreateATransactionalStorageExecution
             | mp_simulations::SimulationError::StateDiff => StarknetRpcApiError::InternalServerError,
