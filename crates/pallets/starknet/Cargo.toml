@@ -22,10 +22,10 @@ mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
 mp-genesis-config = { workspace = true }
 mp-hashers = { workspace = true }
 mp-program-hash = { workspace = true }
-mp-sequencer-address = { workspace = true, features = ["parity-scale-codec"] }
+mp-starknet-inherent = { workspace = true, features = ["parity-scale-codec", "scale-info"] }
 mp-simulations = { workspace = true, features = [
-  "parity-scale-codec",
-  "scale-info",
+    "parity-scale-codec",
+    "scale-info",
 ] }
 mp-storage = { workspace = true, features = ["parity-scale-codec"] }
 mp-transactions = { workspace = true, features = ["scale-info"] }

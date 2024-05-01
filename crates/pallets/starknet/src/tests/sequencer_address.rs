@@ -1,6 +1,6 @@
 use frame_support::assert_ok;
 use frame_support::traits::Hooks;
-use mp_sequencer_address::{DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY};
+use mp_starknet_inherent::{DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY};
 use starknet_api::core::{ContractAddress, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 
@@ -114,7 +114,7 @@ fn inherent_updates_storage() {
         assert!(!Starknet::seq_addr_update());
 
         System::set_block_number(1);
-        assert_ok!(Starknet::set_sequencer_address(none_origin, DEFAULT_SEQUENCER_ADDRESS));
+        assert_ok!(Starknet::set_starknet_inherent_data(none_origin, DEFAULT_SEQUENCER_ADDRESS));
         assert!(Starknet::seq_addr_update());
     });
 }

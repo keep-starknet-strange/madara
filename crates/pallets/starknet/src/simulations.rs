@@ -182,7 +182,11 @@ impl<T: Config> Pallet<T> {
         }?;
 
         if let Some(l1_gas_usage) = tx_execution_infos.actual_resources.0.get("l1_gas_usage") {
-            Ok((T::L1GasPrices::get().eth_l1_gas_price.into(), tx_execution_infos.actual_fee.0 as u128, *l1_gas_usage))
+            Ok((
+                Self::current_l1_gas_prices().eth_l1_gas_price.into(),
+                tx_execution_infos.actual_fee.0 as u128,
+                *l1_gas_usage,
+            ))
         } else {
             Err(Error::<T>::MissingL1GasUsage.into())
         }

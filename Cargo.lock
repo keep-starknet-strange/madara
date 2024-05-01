@@ -6041,6 +6041,7 @@ dependencies = [
  "mc-db",
  "mc-eth-client",
  "mc-genesis-data-provider",
+ "mc-l1-gas-price",
  "mc-l1-messages",
  "mc-mapping-sync",
  "mc-rpc",
@@ -6049,7 +6050,7 @@ dependencies = [
  "mp-block",
  "mp-digest-log",
  "mp-felt",
- "mp-sequencer-address",
+ "mp-starknet-inherent",
  "pallet-starknet",
  "pallet-starknet-runtime-api",
  "reqwest",
@@ -6287,6 +6288,14 @@ dependencies = [
  "mp-genesis-config",
  "serde_json",
  "thiserror",
+]
+
+[[package]]
+name = "mc-l1-gas-price"
+version = "0.1.0"
+dependencies = [
+ "ethers",
+ "mc-eth-client",
 ]
 
 [[package]]
@@ -6733,17 +6742,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mp-sequencer-address"
-version = "0.7.0"
-dependencies = [
- "async-trait",
- "parity-scale-codec",
- "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
- "sp-inherents",
- "thiserror",
-]
-
-[[package]]
 name = "mp-simulations"
 version = "0.7.0"
 dependencies = [
@@ -6764,6 +6762,19 @@ dependencies = [
  "pretty_assertions",
  "scale-info",
  "starknet_api",
+]
+
+[[package]]
+name = "mp-starknet-inherent"
+version = "0.7.0"
+dependencies = [
+ "async-trait",
+ "blockifier",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
+ "sp-inherents",
+ "thiserror",
 ]
 
 [[package]]
@@ -7507,8 +7518,8 @@ dependencies = [
  "mp-genesis-config",
  "mp-hashers",
  "mp-program-hash",
- "mp-sequencer-address",
  "mp-simulations",
+ "mp-starknet-inherent",
  "mp-storage",
  "mp-transactions",
  "pallet-timestamp",

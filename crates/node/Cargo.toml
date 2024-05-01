@@ -4,8 +4,8 @@ version.workspace = true
 edition.workspace = true
 description = "Madara node."
 authors = [
-  "Abdelhamid Bakhta <@keep-starknet-strange>",
-  "Substrate DevHub <https://github.com/substrate-developer-hub>",
+    "Abdelhamid Bakhta <@keep-starknet-strange>",
+    "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
 license = "MIT"
@@ -79,6 +79,7 @@ mc-data-availability = { workspace = true, features = ["clap"] }
 mc-db = { workspace = true }
 mc-eth-client = { workspace = true }
 mc-l1-messages = { workspace = true }
+mc-l1-gas-price = { workspace = true }
 mc-mapping-sync = { workspace = true }
 mc-rpc = { workspace = true }
 mc-settlement = { workspace = true, features = ["clap"] }
@@ -93,7 +94,7 @@ mc-genesis-data-provider = { workspace = true }
 mp-block = { workspace = true }
 mp-digest-log = { workspace = true }
 mp-felt = { workspace = true }
-mp-sequencer-address = { workspace = true, features = ["client"] }
+mp-starknet-inherent = { workspace = true, features = ["client"] }
 
 # Starknet
 blockifier = { workspace = true }
@@ -111,9 +112,9 @@ substrate-build-script-utils = { workspace = true }
 [features]
 # Dependencies that are only required if runtime benchmarking should be build.
 runtime-benchmarks = [
-  "madara-runtime/runtime-benchmarks",
-  "frame-benchmarking/runtime-benchmarks",
-  "frame-benchmarking-cli/runtime-benchmarks",
+    "madara-runtime/runtime-benchmarks",
+    "frame-benchmarking/runtime-benchmarks",
+    "frame-benchmarking-cli/runtime-benchmarks",
 ]
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
 # in the near future.

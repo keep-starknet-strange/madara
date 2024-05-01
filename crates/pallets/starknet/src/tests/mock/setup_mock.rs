@@ -12,9 +12,9 @@ macro_rules! mock_runtime {
 			use sp_core::H256;
 			use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
 			use {crate as pallet_starknet, frame_system as system};
-			use crate::{ SeqAddrUpdate, SequencerAddress};
+			use crate::{ InherentUpdate, SequencerAddress};
 			use frame_support::traits::Hooks;
-			use mp_sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
+			use mp_starknet_inherent::DEFAULT_SEQUENCER_ADDRESS;
             use mp_felt::Felt252Wrapper;
 			use starknet_api::core::{PatriciaKey, ContractAddress};
 			use starknet_api::hash::StarkFelt;
@@ -72,7 +72,6 @@ macro_rules! mock_runtime {
                 pub const DisableNonceValidation: bool = $disable_nonce_validation;
 				pub const ProtocolVersion: u8 = 0;
 				pub const ProgramHash: Felt252Wrapper = mp_program_hash::SN_OS_PROGRAM_HASH;
-				pub const L1GasPrices: GasPrices = GasPrices { eth_l1_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, strk_l1_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, eth_l1_data_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, strk_l1_data_gas_price: unsafe { NonZeroU128::new_unchecked(10) } };
             }
 
 			impl pallet_starknet::Config for MockRuntime {
@@ -84,17 +83,16 @@ macro_rules! mock_runtime {
                 type DisableNonceValidation = DisableNonceValidation;
 				type ProtocolVersion = ProtocolVersion;
 				type ProgramHash = ProgramHash;
-				type L1GasPrices = L1GasPrices;
 			}
 
 			/// Run to block n.
-			/// The function will repeatedly create and run blocks until the block number is equal to `n`.
-			/// # Arguments
-			/// * `n` - The block number to run to.
+            /// The function will repeatedly create and run blocks until the block number is equal to `n`.
+            /// # Arguments
+            /// * `n` - The block number to run to.
 			#[allow(unused)]
 			pub(crate) fn run_to_block(n: u64) {
 				for b in System::block_number()..=n {
-					SeqAddrUpdate::<MockRuntime>::put(true);
+					InherentUpdate::<MockRuntime>::put(true);
 					System::set_block_number(b);
 					Timestamp::set_timestamp(System::block_number() * 6_000);
 					Starknet::on_finalize(b);
@@ -104,7 +102,7 @@ macro_rules! mock_runtime {
 			/// Setup initial block and sequencer address for unit tests.
 			#[allow(unused)]
 			pub(crate) fn basic_test_setup(n: u64) {
-				SeqAddrUpdate::<MockRuntime>::put(true);
+				InherentUpdate::<MockRuntime>::put(true);
 				let default_addr = ContractAddress(PatriciaKey(StarkFelt::new(DEFAULT_SEQUENCER_ADDRESS).unwrap()));
 				SequencerAddress::<MockRuntime>::put(default_addr);
 				System::set_block_number(0);

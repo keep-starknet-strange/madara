@@ -1,10 +1,12 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 use std::cell::RefCell;
+use std::num::NonZeroU128;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
+use blockifier::blockifier::block::GasPrices;
 use futures::channel::mpsc;
 use futures::future;
 use futures::future::BoxFuture;
@@ -14,14 +16,15 @@ use madara_runtime::{self, Hash, RuntimeApi, SealingMode, StarknetHasher};
 use mc_commitment_state_diff::CommitmentStateDiffWorker;
 use mc_data_availability::{DaClient, DataAvailabilityWorker};
 use mc_eth_client::config::EthereumClientConfig;
-use mc_genesis_data_provider::OnDiskGenesisConfig;
+use mc_genesis_data_provider::{GenesisProvider, OnDiskGenesisConfig};
 use mc_mapping_sync::MappingSyncWorker;
 use mc_settlement::errors::RetryOnRecoverableErrors;
 use mc_settlement::ethereum::StarknetContractClient;
 use mc_settlement::{SettlementLayer, SettlementProvider, SettlementWorker};
 use mc_storage::overrides_handle;
-use mp_sequencer_address::{
-    InherentDataProvider as SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
+use mp_starknet_inherent::{
+    InherentDataProvider as StarknetInherentDataProvider, InherentError as StarknetInherentError, L1GasPrices,
+    StarknetInherentData, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
 };
 use prometheus_endpoint::Registry;
 use sc_basic_authorship::ProposerFactory;
@@ -345,7 +348,7 @@ pub fn new_full(
     // Channel for the rpc handler to communicate with the authorship task.
     let (command_sink, commands_stream) = match sealing {
         SealingMode::Manual => {
-            let (sender, receiver) = mpsc::channel(1000);
+            let (sender, receiver) = mpsc::chnnel(1000);
             (Some(sender), Some(receiver))
         }
         _ => (None, None),
@@ -532,16 +535,22 @@ pub fn new_full(
                     let prefix = &STORAGE_PREFIX;
                     let key = SEQ_ADDR_STORAGE_KEY;
 
-                    let sequencer_address = if let Some(storage) = ocw_storage {
-                        SeqAddrInherentDataProvider::try_from(
-                            storage.get(prefix, key).unwrap_or(DEFAULT_SEQUENCER_ADDRESS.to_vec()),
-                        )
-                        .unwrap_or_default()
+                    let sequencer_address: [u8; 32] = if let Some(storage) = ocw_storage {
+                        storage
+                            .get(prefix, key)
+                            .unwrap_or(DEFAULT_SEQUENCER_ADDRESS.to_vec())
+                            .try_into()
+                            .map_err(|_| StarknetInherentError::WrongAddressFormat)?
                     } else {
-                        SeqAddrInherentDataProvider::default()
+                        DEFAULT_SEQUENCER_ADDRESS
                     };
 
-                    Ok((slot, timestamp, sequencer_address))
+                    let starknet_inherent = StarknetInherentDataProvider::new(StarknetInherentData {
+                        sequencer_address,
+                        l1_gas_price: L1GasPrices::default(),
+                    });
+
+                    Ok((slot, timestamp, starknet_inherent))
                 }
             },
             force_authoring,

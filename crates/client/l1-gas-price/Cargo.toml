@@ -1,0 +1,15 @@
+[package]
+name = "mc-l1-gas-price"
+version = "0.1.0"
+description = "L1 gas price fetching library."
+homepage = "https://github.com/keep-starknet-strange/madara"
+edition = "2021"
+license = "MIT"
+publish = false
+repository = "https://github.com/keep-starknet-strange/madara"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mc-eth-client = { workspace = true }
+ethers = { workspace = true }
