@@ -105,6 +105,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "alephBFT"
+version = "0.7.0"
+
+[[package]]
 name = "allocator-api2"
 version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
