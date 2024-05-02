@@ -11,14 +11,8 @@ use futures::future::BoxFuture;
 use futures::prelude::*;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi, SealingMode, StarknetHasher};
-use mc_commitment_state_diff::CommitmentStateDiffWorker;
-use mc_data_availability::{DaClient, DataAvailabilityWorker};
-use mc_eth_client::config::EthereumClientConfig;
 use mc_genesis_data_provider::OnDiskGenesisConfig;
 use mc_mapping_sync::MappingSyncWorker;
-use mc_settlement::errors::RetryOnRecoverableErrors;
-use mc_settlement::ethereum::StarknetContractClient;
-use mc_settlement::{SettlementLayer, SettlementProvider, SettlementWorker};
 use mc_storage::overrides_handle;
 use mp_sequencer_address::{
     InherentDataProvider as SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
@@ -51,7 +45,6 @@ use crate::starknet::{db_config_dir, MadaraBackend};
 pub struct ExecutorDispatch;
 
 const MADARA_TASK_GROUP: &str = "madara";
-const DEFAULT_SETTLEMENT_RETRY_INTERVAL: Duration = Duration::from_millis(100);
 
 impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
     /// Only enable the benchmarking host functions when we actually want to benchmark.
@@ -181,12 +174,7 @@ where
 /// # Arguments
 ///
 /// - `cache`: whether more information should be cached when storing the block in the database.
-pub fn new_full(
-    config: Configuration,
-    sealing: SealingMode,
-    da_client: Option<Box<dyn DaClient + Send + Sync>>,
-    settlement_config: Option<(SettlementLayer, PathBuf)>,
-) -> Result<TaskManager, ServiceError> {
+pub fn new_full(config: Configuration, sealing: SealingMode) -> Result<TaskManager, ServiceError> {
     let sc_service::PartialComponents {
         client,
         backend,
@@ -326,74 +314,6 @@ pub fn new_full(
         )
         .for_each(|()| future::ready(())),
     );
-
-    let (commitment_state_diff_tx, commitment_state_diff_rx) = mpsc::channel(5);
-
-    // initialize data availability worker
-    if let Some(da_client) = da_client {
-        task_manager.spawn_essential_handle().spawn(
-            "commitment-state-diff",
-            Some("madara"),
-            CommitmentStateDiffWorker::<_, _, StarknetHasher>::new(
-                client.clone(),
-                madara_backend.clone(),
-                commitment_state_diff_tx,
-            )
-            .for_each(|()| future::ready(())),
-        );
-        task_manager.spawn_essential_handle().spawn(
-            "da-worker",
-            Some(MADARA_TASK_GROUP),
-            DataAvailabilityWorker::<_, StarknetHasher>::prove_current_block(
-                da_client.into(),
-                prometheus_registry.clone(),
-                commitment_state_diff_rx,
-                madara_backend.clone(),
-            ),
-        );
-    }
-
-    // initialize settlement workers
-    if let Some((layer_kind, config_path)) = settlement_config {
-        let settlement_provider: Box<dyn SettlementProvider<_>> = match layer_kind {
-            SettlementLayer::Ethereum => {
-                let ethereum_conf = EthereumClientConfig::from_json_file(&config_path)
-                    .map_err(|e| ServiceError::Other(e.to_string()))?;
-                Box::new(
-                    StarknetContractClient::try_from(ethereum_conf).map_err(|e| ServiceError::Other(e.to_string()))?,
-                )
-            }
-        };
-        let retry_strategy = Box::new(RetryOnRecoverableErrors { delay: DEFAULT_SETTLEMENT_RETRY_INTERVAL });
-
-        task_manager.spawn_essential_handle().spawn(
-            "settlement-worker-sync-state",
-            Some(MADARA_TASK_GROUP),
-            SettlementWorker::<_, StarknetHasher, _>::sync_state(
-                client.clone(),
-                settlement_provider,
-                madara_backend.clone(),
-                retry_strategy,
-            ),
-        );
-
-        // TODO: make L1 message handling part of the SettlementProvider, support multiple layer options
-        if layer_kind == SettlementLayer::Ethereum {
-            let ethereum_conf =
-                EthereumClientConfig::from_json_file(&config_path).map_err(|e| ServiceError::Other(e.to_string()))?;
-
-            task_manager.spawn_handle().spawn(
-                "settlement-worker-sync-l1-messages",
-                Some(MADARA_TASK_GROUP),
-                mc_l1_messages::worker::run_worker(
-                    ethereum_conf,
-                    client.clone(),
-                    transaction_pool.clone(),
-                    madara_backend.clone(),
-                ),
-            );
-        }
-    }
 
     if role.is_authority() {
         // manual-seal authorship
