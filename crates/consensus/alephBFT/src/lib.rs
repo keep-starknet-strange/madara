@@ -1,14 +1,33 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
+#![feature(async_fn_in_trait)]
+use aleph_bft::{Data, Hasher, Index, NetworkData, NodeIndex, PartialMultisignature, Signature};
+use parity_scale_codec::{Decode, Encode};
+
+pub trait DataProvider<Data> {
+    async fn get_data(&mut self) -> Option<Data>;
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub trait FinalizationHandler<Data> {
+    fn data_finalized(&mut self, data: Data, creator: NodeIndex);
+}
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+pub trait Network<H, D, S, MS>: Send
+where
+    H: Hasher,
+    D: Data,
+    S: Encode + Decode,
+    MS: PartialMultisignature,
+{
+    fn send(&self, data: NetworkData<H, D, S, MS>, recipient: Recipient);
+    async fn next_event(&mut self) -> Option<NetworkData<H, D, S, MS>>;
+}
+
+pub enum Recipient {
+    Everyone,
+    Node(NodeIndex),
+}
+
+pub trait Keychain: Index + Clone + Send + Sync + 'static {
+    type Signature: Signature;
+    fn sign(&self, msg: &[u8]) -> Self::Signature;
+    fn verify(&self, msg: &[u8], sgn: &Self::Signature, index: NodeIndex) -> bool;
 }

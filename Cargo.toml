@@ -59,6 +59,7 @@ default-members = [
   "crates/client/eth-client",
   "crates/client/starknet-block-import",
   "starknet-test-utils",
+  "crates/consensus/alephBFT"
 ]
 
 [profile.release]

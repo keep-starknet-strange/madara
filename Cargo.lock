@@ -105,8 +105,74 @@ dependencies = [
 ]
 
 [[package]]
+name = "aleph-bft"
+version = "0.36.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f930b4c0d4a6b66533422e7ee62f5bab08949ada6d275298de909e95bc75b4ce"
+dependencies = [
+ "aleph-bft-rmc",
+ "aleph-bft-types",
+ "anyhow",
+ "async-trait",
+ "derivative",
+ "futures",
+ "futures-timer",
+ "itertools 0.12.1",
+ "log",
+ "parity-scale-codec",
+ "parking_lot 0.12.1",
+ "rand 0.8.5",
+ "thiserror",
+]
+
+[[package]]
+name = "aleph-bft-crypto"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7fdf0c124883ef234a6262e43b9ed1d214e9f9c8744a88f1f2451c2b6efe4290"
+dependencies = [
+ "async-trait",
+ "bit-vec",
+ "derive_more",
+ "log",
+ "parity-scale-codec",
+]
+
+[[package]]
+name = "aleph-bft-rmc"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "878948f17ae09afc0b62162a22325b8828fa1f46c90109bde7261224e2e09e34"
+dependencies = [
+ "aleph-bft-crypto",
+ "aleph-bft-types",
+ "async-trait",
+ "futures",
+ "futures-timer",
+ "log",
+ "parity-scale-codec",
+]
+
+[[package]]
+name = "aleph-bft-types"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2bca9d19f587215da2b6c50b5e71f9addbf2305153f850dad3f9496ed67e28bb"
+dependencies = [
+ "aleph-bft-crypto",
+ "async-trait",
+ "futures",
+ "parity-scale-codec",
+]
+
+[[package]]
 name = "alephBFT"
 version = "0.7.0"
+dependencies = [
+ "aleph-bft",
+ "parity-scale-codec",
+ "scale-info",
+]
 
 [[package]]
 name = "allocator-api2"
@@ -4548,6 +4614,15 @@ name = "itertools"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
 dependencies = [
  "either",
 ]
@@ -11907,7 +11982,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.7",
- "rand 0.7.3",
+ "rand 0.8.5",
  "static_assertions",
 ]
 
