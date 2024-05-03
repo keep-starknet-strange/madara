@@ -1,5 +1,6 @@
 use blockifier::transaction::errors::TransactionExecutionError;
 use jsonrpsee::types::error::{CallError, ErrorObject};
+use serde::Serialize;
 use thiserror::Error;
 
 // Comes from the RPC Spec:
@@ -28,7 +29,7 @@ pub enum StarknetRpcApiError {
     TooManyKeysInFilter,
     #[error("Failed to fetch pending transactions")]
     FailedToFetchPendingTransactions,
-    #[error(transparent)]
+    #[error("Contract Error")]
     ContractError(#[from] ContractError),
     #[error("Invalid contract class")]
     InvalidContractClass,
@@ -46,8 +47,8 @@ pub enum StarknetRpcApiError {
     ProofLimitExceeded,
 }
 
-#[derive(Debug, Error)]
-#[error("Contract SimulationError")]
+#[derive(Debug, Error, Serialize)]
+#[error("revert error: {revert_error}")]
 pub struct ContractError {
     revert_error: String,
 }
@@ -77,9 +78,7 @@ impl From<StarknetRpcApiError> for jsonrpsee::core::Error {
         };
 
         let data = match &err {
-            StarknetRpcApiError::ContractError(ref error) => Some(serde_json::json!({
-                "revert_error": error.revert_error
-            })),
+            StarknetRpcApiError::ContractError(ref error) => Some(error),
             _ => None,
         };
 
