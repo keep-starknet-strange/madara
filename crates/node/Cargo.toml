@@ -4,8 +4,8 @@ version.workspace = true
 edition.workspace = true
 description = "Madara node."
 authors = [
-  "Abdelhamid Bakhta <@keep-starknet-strange>",
-  "Substrate DevHub <https://github.com/substrate-developer-hub>",
+    "Abdelhamid Bakhta <@keep-starknet-strange>",
+    "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
 license = "MIT"
@@ -113,9 +113,9 @@ substrate-build-script-utils = { workspace = true }
 [features]
 # Dependencies that are only required if runtime benchmarking should be build.
 runtime-benchmarks = [
-  "madara-runtime/runtime-benchmarks",
-  "frame-benchmarking/runtime-benchmarks",
-  "frame-benchmarking-cli/runtime-benchmarks",
+    "madara-runtime/runtime-benchmarks",
+    "frame-benchmarking/runtime-benchmarks",
+    "frame-benchmarking-cli/runtime-benchmarks",
 ]
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
 # in the near future.
@@ -128,3 +128,5 @@ sharingan = []
 sn-block-import = ["dep:mc-starknet-block-import"]
 # Enables Sierra class verification for both own and foreign blocks only + enabled for manual sealing mode
 sn-block-import-testing = ["sn-block-import"]
+# Enables dev features to improve DevX
+dev = []
