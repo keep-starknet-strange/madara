@@ -7,7 +7,7 @@ use blockifier::transaction::objects::TransactionExecutionInfo;
 use blockifier::transaction::transaction_execution::Transaction;
 use blockifier::transaction::transactions::{ExecutableTransaction, L1HandlerTransaction};
 use frame_support::storage;
-use mp_simulations::{SimulationError, SimulationFlags, TransactionSimulationResult};
+use mp_simulations::{InternalSubstrateError, SimulationError, SimulationFlags, TransactionSimulationResult};
 use mp_transactions::execution::{
     commit_transactional_state, execute_l1_handler_transaction, run_non_revertible_transaction,
     run_revertible_transaction, MutRefState, SetArbitraryNonce,
@@ -25,14 +25,14 @@ impl<T: Config> Pallet<T> {
     pub fn estimate_fee(
         transactions: Vec<AccountTransaction>,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Vec<(u128, u128)>, SimulationError> {
+    ) -> Result<Vec<(u128, u128)>, InternalSubstrateError> {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::estimate_fee_inner(
                 transactions,
                 simulation_flags,
             )))
         })
-        .map_err(|_| SimulationError::FailedToCreateATransactionalStorageExecution)?
+        .map_err(|_| InternalSubstrateError::FailedToCreateATransactionalStorageExecution)?
     }
 
     fn estimate_fee_inner(
@@ -75,16 +75,16 @@ impl<T: Config> Pallet<T> {
     pub fn simulate_transactions(
         transactions: Vec<AccountTransaction>,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, SimulationError> {
+    ) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, InternalSubstrateError> {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::simulate_transactions_inner(
                 transactions,
                 simulation_flags,
             )))
         })
-        .map_err(|_| SimulationError::FailedToCreateATransactionalStorageExecution)?
+        .map_err(|_| InternalSubstrateError::FailedToCreateATransactionalStorageExecution)?
     }
-
+nter
     fn simulate_transactions_inner(
         transactions: Vec<AccountTransaction>,
         simulation_flags: &SimulationFlags,
@@ -124,7 +124,7 @@ impl<T: Config> Pallet<T> {
                 simulation_flags,
             )))
         })
-        .map_err(|_| SimulationError::FailedToCreateATransactionalStorageExecution)?
+        .map_err(|_| InternalSubstrateError::FailedToCreateATransactionalStorageExecution)?
     }
 
     fn simulate_message_inner(
@@ -142,13 +142,13 @@ impl<T: Config> Pallet<T> {
         Ok(tx_execution_result)
     }
 
-    pub fn estimate_message_fee(message: L1HandlerTransaction) -> Result<(u128, u128, u128), SimulationError> {
+    pub fn estimate_message_fee(message: L1HandlerTransaction) -> Result<(u128, u128, u128), InternalSubstrateError> {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::estimate_message_fee_inner(
                 message,
             )))
         })
-        .map_err(|_| SimulationError::FailedToCreateATransactionalStorageExecution)?
+        .map_err(|_| InternalSubstrateError::FailedToCreateATransactionalStorageExecution)?
     }
 
     fn estimate_message_fee_inner(message: L1HandlerTransaction) -> Result<(u128, u128, u128), SimulationError> {
@@ -184,14 +184,14 @@ impl<T: Config> Pallet<T> {
         transactions_before: Vec<Transaction>,
         transactions_to_trace: Vec<Transaction>,
         with_state_diff: bool,
-    ) -> Result<ReExecutionResult, SimulationError> {
+    ) -> Result<ReExecutionResult, InternalSubstrateError> {
         storage::transactional::with_transaction(|| {
             let res = Self::re_execute_transactions_inner(transactions_before, transactions_to_trace, with_state_diff);
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Ok(res)))
         })
         .map_err(|e| {
             log::error!("Failed to reexecute a tx: {:?}", e);
-            SimulationError::FailedToCreateATransactionalStorageExecution
+            InternalSubstrateError::FailedToCreateATransactionalStorageExecution
         })?
     }
 

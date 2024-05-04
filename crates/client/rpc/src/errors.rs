@@ -111,9 +111,19 @@ impl From<mp_simulations::SimulationError> for StarknetRpcApiError {
             mp_simulations::SimulationError::TransactionExecutionFailed(e) => {
                 StarknetRpcApiError::ContractError(e.into())
             }
-            mp_simulations::SimulationError::MissingL1GasUsage
-            | mp_simulations::SimulationError::FailedToCreateATransactionalStorageExecution
-            | mp_simulations::SimulationError::StateDiff => StarknetRpcApiError::InternalServerError,
+            mp_simulations::SimulationError::MissingL1GasUsage | mp_simulations::SimulationError::StateDiff => {
+                StarknetRpcApiError::InternalServerError
+            }
+        }
+    }
+}
+
+impl From<InternalSubtrateError> for StarknetRpcApiError {
+    fn from(value: InternalSubtrateError) -> Self {
+        match value {
+            InternalSubtrateError::FailedToCreateATransactionalStorageExecution => {
+                StarknetRpcApiError::InternalServerError
+            }
         }
     }
 }
