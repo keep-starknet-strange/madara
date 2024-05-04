@@ -143,12 +143,10 @@ impl<T: Config> Pallet<T> {
         let block_context = Self::get_block_context();
         let mut state = BlockifierStateAdapter::<T>::default();
 
-        let tx_execution_result = Self::execute_message(&message, &mut state, &block_context).map_err(|e| {
+        Self::execute_message(&message, &mut state, &block_context).map_err(|e| {
             log::error!("Transaction execution failed during simulation: {e}");
             SimulationError::from(e)
-        });
-
-        tx_execution_result
+        })
     }
 
     pub fn estimate_message_fee(

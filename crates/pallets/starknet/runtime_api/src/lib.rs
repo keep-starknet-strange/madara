@@ -16,7 +16,7 @@ use mp_felt::Felt252Wrapper;
 pub extern crate alloc;
 use alloc::vec::Vec;
 
-use mp_simulations::{SimulationError, SimulationFlags, TransactionSimulationResult, InternalSubstrateError};
+use mp_simulations::{InternalSubstrateError, SimulationError, SimulationFlags, TransactionSimulationResult};
 use sp_api::BlockT;
 use starknet_api::core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::hash::{StarkFelt, StarkHash};
