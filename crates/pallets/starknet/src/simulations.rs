@@ -25,14 +25,17 @@ impl<T: Config> Pallet<T> {
     pub fn estimate_fee(
         transactions: Vec<AccountTransaction>,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Vec<(u128, u128)>, InternalSubstrateError> {
+    ) -> Result<Result<Vec<(u128, u128)>, SimulationError>, InternalSubstrateError> {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::estimate_fee_inner(
                 transactions,
                 simulation_flags,
             )))
         })
-        .map_err(|_| InternalSubstrateError::FailedToCreateATransactionalStorageExecution)?
+        .map_err(|e| {
+            log::error!("Transaction execution failed during estimate_fee: {:?}", e);
+            InternalSubstrateError::FailedToCreateATransactionalStorageExecution
+        })
     }
 
     fn estimate_fee_inner(
@@ -75,16 +78,19 @@ impl<T: Config> Pallet<T> {
     pub fn simulate_transactions(
         transactions: Vec<AccountTransaction>,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, InternalSubstrateError> {
+    ) -> Result<Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, SimulationError>, InternalSubstrateError>
+    {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::simulate_transactions_inner(
                 transactions,
                 simulation_flags,
             )))
         })
-        .map_err(|_| InternalSubstrateError::FailedToCreateATransactionalStorageExecution)?
+        .map_err(|e| {
+            log::error!("Transaction Simulation failed during simulate_transaction: {:?}", e);
+            InternalSubstrateError::FailedToCreateATransactionalStorageExecution
+        })
     }
-nter
     fn simulate_transactions_inner(
         transactions: Vec<AccountTransaction>,
         simulation_flags: &SimulationFlags,
@@ -117,20 +123,23 @@ nter
     pub fn simulate_message(
         message: L1HandlerTransaction,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Result<TransactionExecutionInfo, SimulationError>, SimulationError> {
+    ) -> Result<Result<TransactionExecutionInfo, SimulationError>, InternalSubstrateError> {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::simulate_message_inner(
                 message,
                 simulation_flags,
             )))
         })
-        .map_err(|_| InternalSubstrateError::FailedToCreateATransactionalStorageExecution)?
+        .map_err(|e| {
+            log::error!("Transaction Simulation failed during simulate_message: {:?}", e);
+            InternalSubstrateError::FailedToCreateATransactionalStorageExecution
+        })
     }
 
     fn simulate_message_inner(
         message: L1HandlerTransaction,
         _simulation_flags: &SimulationFlags,
-    ) -> Result<Result<TransactionExecutionInfo, SimulationError>, SimulationError> {
+    ) -> Result<TransactionExecutionInfo, SimulationError> {
         let block_context = Self::get_block_context();
         let mut state = BlockifierStateAdapter::<T>::default();
 
@@ -139,16 +148,21 @@ nter
             SimulationError::from(e)
         });
 
-        Ok(tx_execution_result)
+        tx_execution_result
     }
 
-    pub fn estimate_message_fee(message: L1HandlerTransaction) -> Result<(u128, u128, u128), InternalSubstrateError> {
+    pub fn estimate_message_fee(
+        message: L1HandlerTransaction,
+    ) -> Result<Result<(u128, u128, u128), SimulationError>, InternalSubstrateError> {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::estimate_message_fee_inner(
                 message,
             )))
         })
-        .map_err(|_| InternalSubstrateError::FailedToCreateATransactionalStorageExecution)?
+        .map_err(|e| {
+            log::error!("Transaction Simulation failed during estimate_message_fee: {:?}", e);
+            InternalSubstrateError::FailedToCreateATransactionalStorageExecution
+        })
     }
 
     fn estimate_message_fee_inner(message: L1HandlerTransaction) -> Result<(u128, u128, u128), SimulationError> {

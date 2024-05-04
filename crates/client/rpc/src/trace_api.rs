@@ -101,7 +101,7 @@ where
             })?;
 
         let mut simulated_transactions = vec![];
-        for (tx_type, (state_diff, res)) in tx_types.into_iter().zip(res.into_iter()) {
+        for (tx_type, (state_diff, res)) in tx_types.into_iter().zip(res.into_iter().flatten()) {
             match res {
                 Ok(tx_exec_info) => {
                     let state_diff = blockifier_to_rpc_state_diff_types(state_diff)

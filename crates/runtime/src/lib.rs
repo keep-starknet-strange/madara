@@ -33,7 +33,7 @@ pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
 use mp_felt::Felt252Wrapper;
-use mp_simulations::{SimulationError, SimulationFlags, TransactionSimulationResult};
+use mp_simulations::{InternalSubstrateError, SimulationError, SimulationFlags, TransactionSimulationResult};
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the Starknet pallet.
 pub use pallet_starknet;
@@ -279,23 +279,23 @@ impl_runtime_apis! {
             Starknet::is_transaction_fee_disabled()
         }
 
-        fn estimate_fee(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(u128, u128)>, InternalSubstrateError> {
+        fn estimate_fee(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Result<Vec<(u128, u128)>, SimulationError>, InternalSubstrateError> {
             Starknet::estimate_fee(transactions, &simulation_flags)
         }
 
-        fn re_execute_transactions(transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>, with_state_diff: bool) -> Result<Result<Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>, SimulationError>, SimulationError> {
+        fn re_execute_transactions(transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>, with_state_diff: bool) -> Result<Result<Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>, SimulationError>, InternalSubstrateError> {
             Starknet::re_execute_transactions(transactions_before, transactions_to_trace, with_state_diff)
         }
 
-        fn estimate_message_fee(message: L1HandlerTransaction) -> Result<(u128, u128, u128), SimulationError> {
+        fn estimate_message_fee(message: L1HandlerTransaction) -> Result<Result<(u128, u128, u128), SimulationError>, InternalSubstrateError> {
             Starknet::estimate_message_fee(message)
         }
 
-        fn simulate_transactions(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, InternalSubstrateError> {
+        fn simulate_transactions(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, SimulationError>, InternalSubstrateError> {
             Starknet::simulate_transactions(transactions, &simulation_flags)
         }
 
-        fn simulate_message(message: L1HandlerTransaction, simulation_flags: SimulationFlags) -> Result<Result<TransactionExecutionInfo, SimulationError>, SimulationError> {
+        fn simulate_message(message: L1HandlerTransaction, simulation_flags: SimulationFlags) -> Result<Result<TransactionExecutionInfo, SimulationError>, InternalSubstrateError> {
             Starknet::simulate_message(message, &simulation_flags)
         }
 

@@ -1,5 +1,6 @@
 use blockifier::transaction::errors::TransactionExecutionError;
 use jsonrpsee::types::error::{CallError, ErrorObject};
+use mp_simulations::{InternalSubstrateError, SimulationError};
 use serde::Serialize;
 use thiserror::Error;
 
@@ -104,24 +105,20 @@ impl From<TransactionExecutionError> for StarknetRpcApiError {
     }
 }
 
-impl From<mp_simulations::SimulationError> for StarknetRpcApiError {
-    fn from(value: mp_simulations::SimulationError) -> Self {
+impl From<SimulationError> for StarknetRpcApiError {
+    fn from(value: SimulationError) -> Self {
         match value {
-            mp_simulations::SimulationError::ContractNotFound => StarknetRpcApiError::ContractNotFound,
-            mp_simulations::SimulationError::TransactionExecutionFailed(e) => {
-                StarknetRpcApiError::ContractError(e.into())
-            }
-            mp_simulations::SimulationError::MissingL1GasUsage | mp_simulations::SimulationError::StateDiff => {
-                StarknetRpcApiError::InternalServerError
-            }
+            SimulationError::ContractNotFound => StarknetRpcApiError::ContractNotFound,
+            SimulationError::TransactionExecutionFailed(e) => StarknetRpcApiError::ContractError(e.into()),
+            SimulationError::MissingL1GasUsage | SimulationError::StateDiff => StarknetRpcApiError::InternalServerError,
         }
     }
 }
 
-impl From<InternalSubtrateError> for StarknetRpcApiError {
-    fn from(value: InternalSubtrateError) -> Self {
+impl From<InternalSubstrateError> for StarknetRpcApiError {
+    fn from(value: InternalSubstrateError) -> Self {
         match value {
-            InternalSubtrateError::FailedToCreateATransactionalStorageExecution => {
+            InternalSubstrateError::FailedToCreateATransactionalStorageExecution => {
                 StarknetRpcApiError::InternalServerError
             }
         }

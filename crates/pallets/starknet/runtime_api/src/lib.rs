@@ -16,7 +16,7 @@ use mp_felt::Felt252Wrapper;
 pub extern crate alloc;
 use alloc::vec::Vec;
 
-use mp_simulations::{SimulationError, SimulationFlags, TransactionSimulationResult};
+use mp_simulations::{SimulationError, SimulationFlags, TransactionSimulationResult, InternalSubstrateError};
 use sp_api::BlockT;
 use starknet_api::core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::hash::{StarkFelt, StarkHash};
@@ -46,13 +46,13 @@ sp_api::decl_runtime_apis! {
         /// Returns the fee token address.
         fn fee_token_addresses() -> FeeTokenAddresses;
         /// Returns fee estimate
-        fn estimate_fee(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(u128, u128)>, SimulationError>;
+        fn estimate_fee(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Result<Vec<(u128, u128)>, SimulationError>, InternalSubstrateError>;
         /// Returns message fee estimate
-        fn estimate_message_fee(message: L1HandlerTransaction) -> Result<(u128, u128, u128), SimulationError>;
+        fn estimate_message_fee(message: L1HandlerTransaction) -> Result<Result<(u128, u128, u128), SimulationError>, InternalSubstrateError>;
         /// Simulates single L1 Message and returns its trace
-        fn simulate_message(message: L1HandlerTransaction, simulation_flags: SimulationFlags) -> Result<Result<TransactionExecutionInfo, SimulationError>, SimulationError>;
+        fn simulate_message(message: L1HandlerTransaction, simulation_flags: SimulationFlags) -> Result<Result<TransactionExecutionInfo, SimulationError>, InternalSubstrateError>;
         /// Simulates transactions and returns their trace
-        fn simulate_transactions(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, SimulationError>;
+        fn simulate_transactions(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, SimulationError>, InternalSubstrateError>;
         /// Filters extrinsic transactions to return only Starknet transactions
         ///
         /// To support runtime upgrades, the client must be unaware of the specific extrinsic
@@ -73,7 +73,7 @@ sp_api::decl_runtime_apis! {
         ///
         /// Idealy, the execution traces of all of `transactions_to_trace`.
         /// If any of the transactions (from both arguments) fails, an error is returned.
-        fn re_execute_transactions(transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>, with_state_diff: bool) -> Result<ReExecutionResult, SimulationError>;
+        fn re_execute_transactions(transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>, with_state_diff: bool) -> Result<ReExecutionResult, InternalSubstrateError>;
 
         fn get_index_and_tx_for_tx_hash(xts: Vec<<Block as BlockT>::Extrinsic>, tx_hash: TransactionHash) -> Option<(u32, Transaction)>;
 
