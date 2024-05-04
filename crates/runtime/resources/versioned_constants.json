@@ -10,18 +10,9 @@
   },
   "invoke_tx_max_n_steps": 4000000,
   "l2_resource_gas_costs": {
-    "gas_per_data_felt": [
-      128,
-      1000
-    ],
-    "event_key_factor": [
-      2,
-      1
-    ],
-    "gas_per_code_byte": [
-      875,
-      1000
-    ]
+    "gas_per_data_felt": [128, 1000],
+    "event_key_factor": [2, 1],
+    "gas_per_code_byte": [875, 1000]
   },
   "max_recursion_depth": 50,
   "os_constants": {
@@ -539,41 +530,14 @@
   },
   "validate_max_n_steps": 1000000,
   "vm_resource_fee_cost": {
-    "bitwise_builtin": [
-      16,
-      100
-    ],
-    "ec_op_builtin": [
-      256,
-      100
-    ],
-    "ecdsa_builtin": [
-      512,
-      100
-    ],
-    "keccak_builtin": [
-      512,
-      100
-    ],
-    "n_steps": [
-      25,
-      10000
-    ],
-    "output_builtin": [
-      0,
-      1
-    ],
-    "pedersen_builtin": [
-      8,
-      100
-    ],
-    "poseidon_builtin": [
-      8,
-      100
-    ],
-    "range_check_builtin": [
-      4,
-      100
-    ]
+    "bitwise_builtin": [16, 100],
+    "ec_op_builtin": [256, 100],
+    "ecdsa_builtin": [512, 100],
+    "keccak_builtin": [512, 100],
+    "n_steps": [25, 10000],
+    "output_builtin": [0, 1],
+    "pedersen_builtin": [8, 100],
+    "poseidon_builtin": [8, 100],
+    "range_check_builtin": [4, 100]
   }
 }
