@@ -348,6 +348,14 @@
 <a href="#348" id="348">348</a>
 <a href="#349" id="349">349</a>
 <a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>blockifier::context::BlockContext;
 <span class="kw">use </span>blockifier::state::cached_state::{CachedState, CommitmentStateDiff, GlobalContractCache};
 <span class="kw">use </span>blockifier::state::state_api::State;
@@ -357,7 +365,7 @@
 <span class="kw">use </span>blockifier::transaction::transaction_execution::Transaction;
 <span class="kw">use </span>blockifier::transaction::transactions::{ExecutableTransaction, L1HandlerTransaction};
 <span class="kw">use </span>frame_support::storage;
-<span class="kw">use </span>mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult};
+<span class="kw">use </span>mp_simulations::{InternalSubstrateError, SimulationError, SimulationFlags, TransactionSimulationResult};
 <span class="kw">use </span>mp_transactions::execution::{
     commit_transactional_state, execute_l1_handler_transaction, run_non_revertible_transaction,
     run_revertible_transaction, MutRefState, SetArbitraryNonce,
@@ -369,29 +377,29 @@
 <span class="kw">use </span><span class="kw">crate</span>::blockifier_state_adapter::BlockifierStateAdapter;
 <span class="kw">use crate</span>::{log, Config, Error, Pallet};
 
-<span class="kw">type </span>ReExecutionResult = <span class="prelude-ty">Result</span>&lt;
-    Vec&lt;(TransactionExecutionInfo, <span class="prelude-ty">Option</span>&lt;CommitmentStateDiff&gt;)&gt;,
-    PlaceHolderErrorTypeForFailedStarknetExecution,
-&gt;;
+<span class="kw">type </span>ReExecutionResult = <span class="prelude-ty">Result</span>&lt;Vec&lt;(TransactionExecutionInfo, <span class="prelude-ty">Option</span>&lt;CommitmentStateDiff&gt;)&gt;, SimulationError&gt;;
 
 <span class="kw">impl</span>&lt;T: Config&gt; Pallet&lt;T&gt; {
     <span class="kw">pub fn </span>estimate_fee(
         transactions: Vec&lt;AccountTransaction&gt;,
         simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(u128, u128)&gt;, DispatchError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;(u128, u128)&gt;, SimulationError&gt;, InternalSubstrateError&gt; {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(<span class="prelude-ty">Result</span>::&lt;<span class="kw">_</span>, DispatchError&gt;::Ok(<span class="self">Self</span>::estimate_fee_inner(
                 transactions,
                 simulation_flags,
             )))
         })
-        .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::FailedToCreateATransactionalStorageExecution)<span class="question-mark">?
-    </span>}
+        .map_err(|e| {
+            <span class="macro">log::error!</span>(<span class="string">&quot;Transaction execution failed during estimate_fee: {:?}&quot;</span>, e);
+            InternalSubstrateError::FailedToCreateATransactionalStorageExecution
+        })
+    }
 
     <span class="kw">fn </span>estimate_fee_inner(
         transactions: Vec&lt;AccountTransaction&gt;,
         simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(u128, u128)&gt;, DispatchError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(u128, u128)&gt;, SimulationError&gt; {
         <span class="kw">let </span>transactions_len = transactions.len();
         <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
         <span class="kw">let </span><span class="kw-2">mut </span>state = BlockifierStateAdapter::&lt;T&gt;::default();
@@ -408,12 +416,14 @@
                             <span class="string">&quot;Transaction execution reverted during fee estimation: {:?}&quot;</span>,
                             execution_info.revert_error
                         );
-                        <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed)
+                        <span class="prelude-val">Err</span>(SimulationError::TransactionExecutionFailed(
+                            execution_info.revert_error.unwrap().to_string(),
+                        ))
                     }
                 }
                 <span class="prelude-val">Err</span>(e) =&gt; {
                     <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction execution failed during fee estimation: {:?}&quot;</span>, e);
-                    <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed)
+                    <span class="prelude-val">Err</span>(SimulationError::from(e))
                 }
             })
             .map(|exec_info_res| {
@@ -429,7 +439,8 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>fees = Vec::with_capacity(transactions_len);
         <span class="kw">for </span>fee_res <span class="kw">in </span>fee_res_iterator {
-            fees.push(fee_res<span class="question-mark">??</span>);
+            <span class="kw">let </span>res = fee_res<span class="question-mark">?</span>.map_err(|<span class="kw">_</span>| SimulationError::StateDiff)<span class="question-mark">?</span>;
+            fees.push(res);
         }
 
         <span class="prelude-val">Ok</span>(fees)
@@ -438,20 +449,23 @@
     <span class="kw">pub fn </span>simulate_transactions(
         transactions: Vec&lt;AccountTransaction&gt;,
         simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt;, DispatchError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt;, SimulationError&gt;, InternalSubstrateError&gt;
+    {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(<span class="prelude-ty">Result</span>::&lt;<span class="kw">_</span>, DispatchError&gt;::Ok(<span class="self">Self</span>::simulate_transactions_inner(
                 transactions,
                 simulation_flags,
             )))
         })
-        .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::FailedToCreateATransactionalStorageExecution)<span class="question-mark">?
-    </span>}
-
+        .map_err(|e| {
+            <span class="macro">log::error!</span>(<span class="string">&quot;Transaction Simulation failed during simulate_transaction: {:?}&quot;</span>, e);
+            InternalSubstrateError::FailedToCreateATransactionalStorageExecution
+        })
+    }
     <span class="kw">fn </span>simulate_transactions_inner(
         transactions: Vec&lt;AccountTransaction&gt;,
         simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt;, DispatchError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt;, SimulationError&gt; {
         <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
         <span class="kw">let </span><span class="kw-2">mut </span>state = BlockifierStateAdapter::&lt;T&gt;::default();
 
@@ -466,14 +480,13 @@
                 )<span class="question-mark">?</span>;
 
                 <span class="kw">let </span>result = res.<span class="number">0</span>.map_err(|e| {
-                    <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction execution failed during simulation: {:?}&quot;</span>, e);
-                    PlaceHolderErrorTypeForFailedStarknetExecution
+                    <span class="macro">log::error!</span>(<span class="string">&quot;Transaction execution failed during simulation: {e}&quot;</span>);
+                    SimulationError::from(e)
                 });
 
                 <span class="prelude-val">Ok</span>((res.<span class="number">1</span>, result))
             })
-            .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;&gt;()
-            .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TransactionExecutionFailed)<span class="question-mark">?</span>;
+            .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, SimulationError&gt;&gt;()<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(tx_execution_results)
     }
@@ -481,41 +494,47 @@
     <span class="kw">pub fn </span>simulate_message(
         message: L1HandlerTransaction,
         simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, SimulationError&gt;, InternalSubstrateError&gt; {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(<span class="prelude-ty">Result</span>::&lt;<span class="kw">_</span>, DispatchError&gt;::Ok(<span class="self">Self</span>::simulate_message_inner(
                 message,
                 simulation_flags,
             )))
         })
-        .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::FailedToCreateATransactionalStorageExecution)<span class="question-mark">?
-    </span>}
+        .map_err(|e| {
+            <span class="macro">log::error!</span>(<span class="string">&quot;Transaction Simulation failed during simulate_message: {:?}&quot;</span>, e);
+            InternalSubstrateError::FailedToCreateATransactionalStorageExecution
+        })
+    }
 
     <span class="kw">fn </span>simulate_message_inner(
         message: L1HandlerTransaction,
         _simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, SimulationError&gt; {
         <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
         <span class="kw">let </span><span class="kw-2">mut </span>state = BlockifierStateAdapter::&lt;T&gt;::default();
 
-        <span class="kw">let </span>tx_execution_result = <span class="self">Self</span>::execute_message(<span class="kw-2">&amp;</span>message, <span class="kw-2">&amp;mut </span>state, <span class="kw-2">&amp;</span>block_context).map_err(|e| {
-            <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction execution failed during simulation: {:?}&quot;</span>, e);
-            PlaceHolderErrorTypeForFailedStarknetExecution
-        });
-
-        <span class="prelude-val">Ok</span>(tx_execution_result)
+        <span class="self">Self</span>::execute_message(<span class="kw-2">&amp;</span>message, <span class="kw-2">&amp;mut </span>state, <span class="kw-2">&amp;</span>block_context).map_err(|e| {
+            <span class="macro">log::error!</span>(<span class="string">&quot;Transaction execution failed during simulation: {e}&quot;</span>);
+            SimulationError::from(e)
+        })
     }
 
-    <span class="kw">pub fn </span>estimate_message_fee(message: L1HandlerTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u128, u128, u128), DispatchError&gt; {
+    <span class="kw">pub fn </span>estimate_message_fee(
+        message: L1HandlerTransaction,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;(u128, u128, u128), SimulationError&gt;, InternalSubstrateError&gt; {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(<span class="prelude-ty">Result</span>::&lt;<span class="kw">_</span>, DispatchError&gt;::Ok(<span class="self">Self</span>::estimate_message_fee_inner(
                 message,
             )))
         })
-        .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::FailedToCreateATransactionalStorageExecution)<span class="question-mark">?
-    </span>}
+        .map_err(|e| {
+            <span class="macro">log::error!</span>(<span class="string">&quot;Transaction Simulation failed during estimate_message_fee: {:?}&quot;</span>, e);
+            InternalSubstrateError::FailedToCreateATransactionalStorageExecution
+        })
+    }
 
-    <span class="kw">fn </span>estimate_message_fee_inner(message: L1HandlerTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u128, u128, u128), DispatchError&gt; {
+    <span class="kw">fn </span>estimate_message_fee_inner(message: L1HandlerTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u128, u128, u128), SimulationError&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>cached_state = <span class="self">Self</span>::init_cached_state();
 
         <span class="kw">let </span>tx_execution_infos = <span class="kw">match </span>message.execute(<span class="kw-2">&amp;mut </span>cached_state, <span class="kw-2">&amp;</span><span class="self">Self</span>::get_block_context(), <span class="bool-val">true</span>, <span class="bool-val">true</span>) {
@@ -527,23 +546,23 @@
                     e,
                     std::error::Error::source(<span class="kw-2">&amp;</span>e)
                 );
-                <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed)
+                <span class="prelude-val">Err</span>(SimulationError::from(e))
             }
             <span class="prelude-val">Ok</span>(execution_info) =&gt; {
                 <span class="macro">log!</span>(
                     debug,
                     <span class="string">&quot;Transaction execution reverted during fee estimation: {}&quot;</span>,
                     <span class="comment">// Safe due to the `match` branch order
-                    </span>execution_info.revert_error.unwrap()
+                    </span><span class="kw-2">&amp;</span>execution_info.revert_error.clone().unwrap()
                 );
-                <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed)
+                <span class="prelude-val">Err</span>(SimulationError::TransactionExecutionFailed(execution_info.revert_error.unwrap().to_string()))
             }
         }<span class="question-mark">?</span>;
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(l1_gas_usage) = tx_execution_infos.actual_resources.<span class="number">0</span>.get(<span class="string">&quot;l1_gas_usage&quot;</span>) {
             <span class="prelude-val">Ok</span>((T::L1GasPrices::get().eth_l1_gas_price.into(), tx_execution_infos.actual_fee.<span class="number">0 </span><span class="kw">as </span>u128, <span class="kw-2">*</span>l1_gas_usage))
         } <span class="kw">else </span>{
-            <span class="prelude-val">Err</span>(Error::&lt;T&gt;::MissingL1GasUsage.into())
+            <span class="prelude-val">Err</span>(SimulationError::MissingL1GasUsage)
         }
     }
 
@@ -551,32 +570,31 @@
         transactions_before: Vec&lt;Transaction&gt;,
         transactions_to_trace: Vec&lt;Transaction&gt;,
         with_state_diff: bool,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;ReExecutionResult, DispatchError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;ReExecutionResult, InternalSubstrateError&gt; {
         storage::transactional::with_transaction(|| {
             <span class="kw">let </span>res = <span class="self">Self</span>::re_execute_transactions_inner(transactions_before, transactions_to_trace, with_state_diff);
             storage::TransactionOutcome::Rollback(<span class="prelude-ty">Result</span>::&lt;<span class="kw">_</span>, DispatchError&gt;::Ok(<span class="prelude-val">Ok</span>(res)))
         })
-        .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::FailedToCreateATransactionalStorageExecution)<span class="question-mark">?
+        .map_err(|e| {
+            <span class="macro">log::error!</span>(<span class="string">&quot;Failed to reexecute a tx: {:?}&quot;</span>, e);
+            InternalSubstrateError::FailedToCreateATransactionalStorageExecution
+        })<span class="question-mark">?
     </span>}
 
     <span class="kw">fn </span>re_execute_transactions_inner(
         transactions_before: Vec&lt;Transaction&gt;,
         transactions_to_trace: Vec&lt;Transaction&gt;,
         with_state_diff: bool,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;
-        Vec&lt;(TransactionExecutionInfo, <span class="prelude-ty">Option</span>&lt;CommitmentStateDiff&gt;)&gt;,
-        PlaceHolderErrorTypeForFailedStarknetExecution,
-    &gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(TransactionExecutionInfo, <span class="prelude-ty">Option</span>&lt;CommitmentStateDiff&gt;)&gt;, SimulationError&gt; {
         <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
         <span class="kw">let </span><span class="kw-2">mut </span>state = BlockifierStateAdapter::&lt;T&gt;::default();
 
         transactions_before.iter().try_for_each(|tx| {
             <span class="self">Self</span>::execute_transaction(tx, <span class="kw-2">&amp;mut </span>state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>SimulationFlags::default()).map_err(|e| {
-                <span class="macro">log!</span>(debug, <span class="string">&quot;Failed to reexecute a tx: {}&quot;</span>, e);
-                PlaceHolderErrorTypeForFailedStarknetExecution
+                <span class="macro">log::error!</span>(<span class="string">&quot;Failed to reexecute a tx: {}&quot;</span>, e);
+                SimulationError::from(e)
             })<span class="question-mark">?</span>;
-
-            <span class="prelude-val">Ok</span>(())
+            <span class="prelude-val">Ok</span>::&lt;(), SimulationError&gt;(())
         })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>execution_infos = transactions_to_trace
@@ -591,20 +609,20 @@
                     <span class="kw-2">&amp;</span>SimulationFlags::default(),
                 )
                 .map_err(|e| {
-                    <span class="macro">log!</span>(debug, <span class="string">&quot;Failed to reexecute a tx: {}&quot;</span>, e);
-                    PlaceHolderErrorTypeForFailedStarknetExecution
+                    <span class="macro">log::error!</span>(<span class="string">&quot;Failed to reexecute a tx: {}&quot;</span>, e);
+                    SimulationError::from(e)
                 });
 
                 <span class="kw">let </span>res = res
                     .map(|r| <span class="kw">if </span>with_state_diff { (r, <span class="prelude-val">Some</span>(transactional_state.to_state_diff())) } <span class="kw">else </span>{ (r, <span class="prelude-val">None</span>) });
                 commit_transactional_state(transactional_state).map_err(|e| {
-                    <span class="macro">log!</span>(debug, <span class="string">&quot;Failed to commit state changes: {:?}&quot;</span>, e);
-                    PlaceHolderErrorTypeForFailedStarknetExecution
+                    <span class="macro">log::error!</span>(<span class="string">&quot;Failed to commit state changes: {:?}&quot;</span>, e);
+                    SimulationError::from(e)
                 })<span class="question-mark">?</span>;
 
                 res
             })
-            .collect::&lt;<span class="prelude-ty">Result</span>&lt;<span class="kw">_</span>, PlaceHolderErrorTypeForFailedStarknetExecution&gt;&gt;()<span class="question-mark">?</span>;
+            .collect::&lt;<span class="prelude-ty">Result</span>&lt;<span class="kw">_</span>, SimulationError&gt;&gt;()<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(execution_infos)
     }
@@ -669,10 +687,8 @@
         state: <span class="kw-2">&amp;mut </span>S,
         block_context: <span class="kw-2">&amp;</span>BlockContext,
         simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;
-        (<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, TransactionExecutionError&gt;, CommitmentStateDiff),
-        PlaceHolderErrorTypeForFailedStarknetExecution,
-    &gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, TransactionExecutionError&gt;, CommitmentStateDiff), SimulationError&gt;
+    {
         <span class="comment">// In order to produce a state diff for this specific tx we execute on a transactional state
         </span><span class="kw">let </span><span class="kw-2">mut </span>transactional_state = CachedState::new(MutRefState::new(state), GlobalContractCache::new(<span class="number">1</span>));
 
@@ -683,8 +699,8 @@
         <span class="comment">// Once the state diff of this tx is generated, we apply those changes on the original state
         // so that next txs being simulated are ontop of this one (avoid nonce error)
         </span>commit_transactional_state(transactional_state).map_err(|e| {
-            <span class="macro">log!</span>(error, <span class="string">&quot;Failed to commit state changes: {:?}&quot;</span>, e);
-            PlaceHolderErrorTypeForFailedStarknetExecution
+            <span class="macro">log::error!</span>(<span class="string">&quot;Failed to commit state changes: {:?}&quot;</span>, e);
+            SimulationError::from(e)
         })<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>((result, state_diff))

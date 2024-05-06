@@ -1156,6 +1156,13 @@
 <a href="#1156" id="1156">1156</a>
 <a href="#1157" id="1157">1157</a>
 <a href="#1158" id="1158">1158</a>
+<a href="#1159" id="1159">1159</a>
+<a href="#1160" id="1160">1160</a>
+<a href="#1161" id="1161">1161</a>
+<a href="#1162" id="1162">1162</a>
+<a href="#1163" id="1163">1163</a>
+<a href="#1164" id="1164">1164</a>
+<a href="#1165" id="1165">1165</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -2070,11 +2077,12 @@
         address: ContractAddress,
         function_selector: EntryPointSelector,
         calldata: Calldata,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Felt252Wrapper&gt;, DispatchError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Felt252Wrapper&gt;, mp_simulations::SimulationError&gt; {
         <span class="comment">// Get current block context
         </span><span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
         <span class="comment">// Get class hash
-        </span><span class="kw">let </span>class_hash = ContractClassHashes::&lt;T&gt;::try_get(address).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::ContractNotFound)<span class="question-mark">?</span>;
+        </span><span class="kw">let </span>class_hash = ContractClassHashes::&lt;T&gt;::try_get(address)
+            .map_err(|<span class="kw">_</span>| mp_simulations::SimulationError::ContractNotFound)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>entrypoint = CallEntryPoint {
             class_hash: <span class="prelude-val">Some</span>(ClassHash(class_hash)),
@@ -2096,7 +2104,7 @@
             }),
             <span class="bool-val">false</span>,
         )
-        .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TransactionExecutionFailed)<span class="question-mark">?</span>;
+        .map_err(mp_simulations::SimulationError::from)<span class="question-mark">?</span>;
 
         <span class="kw">match </span>entrypoint.execute(
             <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
@@ -2110,15 +2118,21 @@
             }
             <span class="prelude-val">Err</span>(e) =&gt; {
                 <span class="macro">log!</span>(error, <span class="string">&quot;failed to call smart contract {:?}&quot;</span>, e);
-                <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed.into())
+                <span class="prelude-val">Err</span>(mp_simulations::SimulationError::TransactionExecutionFailed(e.to_string()))
             }
         }
     }
 
     <span class="doccomment">/// Get storage value at
-    </span><span class="kw">pub fn </span>get_storage_at(contract_address: ContractAddress, key: StorageKey) -&gt; <span class="prelude-ty">Result</span>&lt;StarkFelt, DispatchError&gt; {
+    </span><span class="kw">pub fn </span>get_storage_at(
+        contract_address: ContractAddress,
+        key: StorageKey,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;StarkFelt, mp_simulations::SimulationError&gt; {
         <span class="comment">// Get state
-        </span><span class="macro">ensure!</span>(ContractClassHashes::&lt;T&gt;::contains_key(contract_address), Error::&lt;T&gt;::ContractNotFound);
+        </span><span class="macro">ensure!</span>(
+            ContractClassHashes::&lt;T&gt;::contains_key(contract_address),
+            mp_simulations::SimulationError::ContractNotFound
+        );
         <span class="prelude-val">Ok</span>(<span class="self">Self</span>::storage((contract_address, key)))
     }
 

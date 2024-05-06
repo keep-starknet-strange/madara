@@ -442,21 +442,6 @@
 <a href="#442" id="442">442</a>
 <a href="#443" id="443">443</a>
 <a href="#444" id="444">444</a>
-<a href="#445" id="445">445</a>
-<a href="#446" id="446">446</a>
-<a href="#447" id="447">447</a>
-<a href="#448" id="448">448</a>
-<a href="#449" id="449">449</a>
-<a href="#450" id="450">450</a>
-<a href="#451" id="451">451</a>
-<a href="#452" id="452">452</a>
-<a href="#453" id="453">453</a>
-<a href="#454" id="454">454</a>
-<a href="#455" id="455">455</a>
-<a href="#456" id="456">456</a>
-<a href="#457" id="457">457</a>
-<a href="#458" id="458">458</a>
-<a href="#459" id="459">459</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don&#39;t support yet validity proofs and state updates to
@@ -492,14 +477,12 @@
 <span class="kw">pub use </span>frame_support::{construct_runtime, parameter_types, StorageValue};
 <span class="kw">pub use </span>frame_system::Call <span class="kw">as </span>SystemCall;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
-<span class="kw">use </span>mp_simulations::{PlaceHolderErrorTypeForFailedStarknetExecution, SimulationFlags, TransactionSimulationResult};
+<span class="kw">use </span>mp_simulations::{InternalSubstrateError, SimulationError, SimulationFlags, TransactionSimulationResult};
 <span class="kw">use </span>pallet_grandpa::{fg_primitives, AuthorityId <span class="kw">as </span>GrandpaId, AuthorityList <span class="kw">as </span>GrandpaAuthorityList};
 <span class="doccomment">/// Import the Starknet pallet.
 </span><span class="kw">pub use </span>pallet_starknet;
-<span class="kw">use </span>pallet_starknet::pallet::Error <span class="kw">as </span>PalletError;
 <span class="kw">use </span>pallet_starknet::Call::{consume_l1_message, declare, deploy_account, invoke};
 <span class="kw">pub use </span>pallet_starknet::DefaultChainId;
-<span class="kw">use </span>pallet_starknet_runtime_api::StarknetTransactionExecutionError;
 <span class="kw">pub use </span>pallet_timestamp::Call <span class="kw">as </span>TimestampCall;
 <span class="kw">use </span>sp_api::impl_runtime_apis;
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityId <span class="kw">as </span>AuraId;
@@ -509,7 +492,7 @@
 <span class="kw">use </span>sp_runtime::transaction_validity::{TransactionSource, TransactionValidity};
 <span class="attr">#[cfg(any(feature = <span class="string">&quot;std&quot;</span>, test))]
 </span><span class="kw">pub use </span>sp_runtime::BuildStorage;
-<span class="kw">use </span>sp_runtime::{generic, ApplyExtrinsicResult, DispatchError};
+<span class="kw">use </span>sp_runtime::{generic, ApplyExtrinsicResult};
 <span class="kw">pub use </span>sp_runtime::{Perbill, Permill};
 <span class="kw">use </span>sp_std::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>sp_version::RuntimeVersion;
@@ -519,6 +502,8 @@
 <span class="kw">use </span>starknet_api::transaction::{Calldata, Event <span class="kw">as </span>StarknetEvent, MessageToL1, TransactionHash};
 <span class="doccomment">/// Import the types.
 </span><span class="kw">pub use </span>types::<span class="kw-2">*</span>;
+<span class="comment">// For `format!`
+</span><span class="kw">extern crate </span>alloc;
 
 <span class="comment">// Create the runtime by composing the FRAME pallets that were previously configured.
 </span><span class="macro">construct_runtime!</span>(
@@ -585,6 +570,7 @@
             Executive::initialize_block(header)
         }
     }
+
 
     <span class="kw">impl </span>sp_api::Metadata&lt;Block&gt; <span class="kw">for </span>Runtime {
         <span class="kw">fn </span>metadata() -&gt; OpaqueMetadata {
@@ -697,11 +683,11 @@
 
     <span class="kw">impl </span>pallet_starknet_runtime_api::StarknetRuntimeApi&lt;Block&gt; <span class="kw">for </span>Runtime {
 
-        <span class="kw">fn </span>get_storage_at(address: ContractAddress, key: StorageKey) -&gt; <span class="prelude-ty">Result</span>&lt;StarkFelt, DispatchError&gt; {
+        <span class="kw">fn </span>get_storage_at(address: ContractAddress, key: StorageKey) -&gt; <span class="prelude-ty">Result</span>&lt;StarkFelt, SimulationError&gt; {
             Starknet::get_storage_at(address, key)
         }
 
-        <span class="kw">fn </span>call(address: ContractAddress, function_selector: EntryPointSelector, calldata: Calldata) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Felt252Wrapper&gt;, DispatchError&gt; {
+        <span class="kw">fn </span>call(address: ContractAddress, function_selector: EntryPointSelector, calldata: Calldata) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Felt252Wrapper&gt;, SimulationError&gt; {
             Starknet::call_contract(address, function_selector, calldata)
         }
 
@@ -737,23 +723,23 @@
             Starknet::is_transaction_fee_disabled()
         }
 
-        <span class="kw">fn </span>estimate_fee(transactions: Vec&lt;AccountTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(u128, u128)&gt;, DispatchError&gt; {
+        <span class="kw">fn </span>estimate_fee(transactions: Vec&lt;AccountTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;(u128, u128)&gt;, SimulationError&gt;, InternalSubstrateError&gt; {
             Starknet::estimate_fee(transactions, <span class="kw-2">&amp;</span>simulation_flags)
         }
 
-        <span class="kw">fn </span>re_execute_transactions(transactions_before: Vec&lt;Transaction&gt;, transactions_to_trace: Vec&lt;Transaction&gt;, with_state_diff: bool) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;(TransactionExecutionInfo, <span class="prelude-ty">Option</span>&lt;CommitmentStateDiff&gt;)&gt;, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt; {
+        <span class="kw">fn </span>re_execute_transactions(transactions_before: Vec&lt;Transaction&gt;, transactions_to_trace: Vec&lt;Transaction&gt;, with_state_diff: bool) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;(TransactionExecutionInfo, <span class="prelude-ty">Option</span>&lt;CommitmentStateDiff&gt;)&gt;, SimulationError&gt;, InternalSubstrateError&gt; {
             Starknet::re_execute_transactions(transactions_before, transactions_to_trace, with_state_diff)
         }
 
-        <span class="kw">fn </span>estimate_message_fee(message: L1HandlerTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u128, u128, u128), DispatchError&gt; {
+        <span class="kw">fn </span>estimate_message_fee(message: L1HandlerTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;(u128, u128, u128), SimulationError&gt;, InternalSubstrateError&gt; {
             Starknet::estimate_message_fee(message)
         }
 
-        <span class="kw">fn </span>simulate_transactions(transactions: Vec&lt;AccountTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt;, DispatchError&gt; {
+        <span class="kw">fn </span>simulate_transactions(transactions: Vec&lt;AccountTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt;, SimulationError&gt;, InternalSubstrateError&gt; {
             Starknet::simulate_transactions(transactions, <span class="kw-2">&amp;</span>simulation_flags)
         }
 
-        <span class="kw">fn </span>simulate_message(message: L1HandlerTransaction, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution&gt;, DispatchError&gt; {
+        <span class="kw">fn </span>simulate_message(message: L1HandlerTransaction, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, SimulationError&gt;, InternalSubstrateError&gt; {
             Starknet::simulate_message(message, <span class="kw-2">&amp;</span>simulation_flags)
         }
 
@@ -836,22 +822,6 @@
             UncheckedExtrinsic::new_unsigned(call.into())
         }
 
-        <span class="kw">fn </span>convert_error(error: DispatchError) -&gt; StarknetTransactionExecutionError {
-            <span class="kw">if </span>error == PalletError::&lt;Runtime&gt;::ContractNotFound.into() {
-                <span class="kw">return </span>StarknetTransactionExecutionError::ContractNotFound;
-            }
-            <span class="kw">if </span>error == PalletError::&lt;Runtime&gt;::ClassHashAlreadyDeclared.into() {
-                <span class="kw">return </span>StarknetTransactionExecutionError::ClassAlreadyDeclared;
-            }
-            <span class="kw">if </span>error == PalletError::&lt;Runtime&gt;::ContractClassHashUnknown.into() {
-                <span class="kw">return </span>StarknetTransactionExecutionError::ClassHashNotFound;
-            }
-            <span class="kw">if </span>error == PalletError::&lt;Runtime&gt;::InvalidContractClass.into() {
-                <span class="kw">return </span>StarknetTransactionExecutionError::InvalidContractClass;
-            }
-
-            StarknetTransactionExecutionError::ContractError
-        }
     }
 
     <span class="attr">#[cfg(feature = <span class="string">&quot;runtime-benchmarks&quot;</span>)]
