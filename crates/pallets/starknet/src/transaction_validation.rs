@@ -80,7 +80,10 @@ impl<T: Config> Pallet<T> {
                     }
                 }
                 // TODO: have more granular error mapping
-                .map_err(|_| InvalidTransaction::BadProof)
+                .map_err(|e| {
+                    log!(debug, "Error in pre_validate_unsigned_tx: {:?}", e);
+                    InvalidTransaction::BadProof
+                })
             }
             Transaction::L1HandlerTransaction(transaction) => {
                 Self::ensure_l1_message_not_executed(&transaction.tx.nonce)
@@ -141,7 +144,10 @@ impl<T: Config> Pallet<T> {
                 Ok(None)
             }
         }
-        .map_err(|_| InvalidTransaction::BadProof)?;
+        .map_err(|e| {
+            log!(debug, "Error in validate_unsigned_tx: {:?}", e);
+            InvalidTransaction::BadProof
+        })?;
 
         Ok(())
     }

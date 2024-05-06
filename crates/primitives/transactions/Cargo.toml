@@ -32,6 +32,7 @@ serde_json = { workspace = true, optional = true }
 thiserror = { workspace = true, optional = true }
 
 # Other optional
+log = "0.4.20"
 parity-scale-codec = { workspace = true, features = [
   "derive",
 ], optional = true }
