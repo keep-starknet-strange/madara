@@ -12,7 +12,7 @@
 2. Get onchain data hash &amp; size
 3. ABI encode parameters</p>
 <p>NOTE: Field element (252 bit) is encoded as an EVM word (256 bit) and vice versa
-EVM developer should be aware of that and prevent data loss by not using the higest 4 bits</p>
+EVM developer should be aware of that and prevent data loss by not using the highest 4 bits</p>
 </div></details><h2 id="required-methods" class="small-section-header">Required Methods<a href="#required-methods" class="anchor">§</a></h2><div class="methods"><details class="toggle method-toggle" open><summary><section id="tymethod.size_in_felts" class="method"><a class="src rightside" href="../src/mp_snos_output/codec.rs.html#24">source</a><h4 class="code-header">fn <a href="#tymethod.size_in_felts" class="fn">size_in_felts</a>(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a></h4></section></summary><div class="docblock"><p>Return an estimation of the number of field elements required to encode <code>self</code></p>
 <p>This is to be used for allocating the correct amount of memory before encoding.
 It’s for optimization purpose (avoiding reallocation) so it’s implementation should be
