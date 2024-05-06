@@ -5815,6 +5815,8 @@ dependencies = [
  "sc-network-sync",
  "sc-transaction-pool",
  "sc-transaction-pool-api",
+ "serde",
+ "serde_json",
  "sp-api",
  "sp-arithmetic",
  "sp-blockchain",
@@ -6205,6 +6207,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "starknet-core",
+ "starknet_api",
 ]
 
 [[package]]
