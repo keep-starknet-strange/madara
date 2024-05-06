@@ -518,7 +518,10 @@ pub mod pallet {
                 }
                 _ => run_revertible_transaction(&transaction, &mut state, &block_context, true, charge_fee),
             }
-            .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+            .map_err(|e| {
+                log!(error, "Invoke transaction execution failed: {:?}", e);
+                Error::<T>::TransactionExecutionFailed
+            })?;
 
             Self::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash,
@@ -569,7 +572,10 @@ pub mod pallet {
             // Execute
             let tx_execution_infos =
                 run_non_revertible_transaction(&transaction, &mut state, &Self::get_block_context(), true, charge_fee)
-                    .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+                    .map_err(|e| {
+                        log!(error, "Declare transaction execution failed: {:?}", e);
+                        Error::<T>::TransactionExecutionFailed
+                    })?;
 
             Self::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash(),
@@ -616,7 +622,10 @@ pub mod pallet {
             // Execute
             let tx_execution_infos =
                 run_non_revertible_transaction(&transaction, &mut state, &Self::get_block_context(), true, charge_fee)
-                    .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+                    .map_err(|e| {
+                        log!(error, "Deploy account transaction execution failed: {:?}", e);
+                        Error::<T>::TransactionExecutionFailed
+                    })?;
 
             Self::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash,
@@ -666,8 +675,10 @@ pub mod pallet {
 
             // Execute
             let tx_execution_infos =
-                execute_l1_handler_transaction(&transaction, &mut state, &Self::get_block_context())
-                    .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+                execute_l1_handler_transaction(&transaction, &mut state, &Self::get_block_context()).map_err(|e| {
+                    log!(error, "L1 Handler transaction execution failed: {:?}", e);
+                    Error::<T>::TransactionExecutionFailed
+                })?;
 
             Self::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash,

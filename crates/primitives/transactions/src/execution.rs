@@ -408,7 +408,7 @@ impl<
         Self::handle_nonce(state, &tx_context.tx_info, strict_nonce_checking)?;
 
         // Check if user has funds to pay the worst case scenario fees
-        if charge_fee && tx_context.tx_info.enforce_fee()? {
+        if charge_fee {
             self.check_fee_bounds(&tx_context)?;
 
             blockifier::fee::fee_utils::verify_can_pay_committed_bounds(state, &tx_context)?;

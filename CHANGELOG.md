@@ -3,6 +3,7 @@
 ## Next release
 
 - fix: starknet_call errs if contract nonexistent
+- fix: txn hash calculation and refactor
 - chore: remove all da/settlement related code
 - fix: re-execute txs instead of simulating for txn receipts
 - chore: rebase on latest blockifier

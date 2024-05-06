@@ -73,6 +73,9 @@ impl From<Vec<SimulationFlagForEstimateFee>> for SimulationFlags {
             }
         }
 
+        // estimate_fee does not charge fees or do any balance checks
+        flags_out.charge_fee = false;
+
         flags_out
     }
 }
