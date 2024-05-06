@@ -41,7 +41,6 @@ where
         entry_point_selector: EntryPointSelector,
         calldata: Calldata,
     ) -> RpcApiResult<Vec<Felt252Wrapper>> {
-        // simulation error
         Ok(self.client.runtime_api().call(best_block_hash, contract_address, entry_point_selector, calldata).map_err(
             |e| {
                 error!("Request parameters error: {e}");
