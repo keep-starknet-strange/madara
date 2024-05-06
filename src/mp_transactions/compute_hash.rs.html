@@ -384,6 +384,18 @@
 <a href="#384" id="384">384</a>
 <a href="#385" id="385">385</a>
 <a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_hashers::pedersen::PedersenHasher;
 <span class="kw">use </span>mp_hashers::poseidon::PoseidonHasher;
@@ -393,8 +405,8 @@
 <span class="kw">use </span>starknet_api::transaction::{
     Calldata, DeclareTransaction, DeclareTransactionV0V1, DeclareTransactionV2, DeclareTransactionV3,
     DeployAccountTransaction, DeployAccountTransactionV1, DeployAccountTransactionV3, InvokeTransaction,
-    InvokeTransactionV0, InvokeTransactionV1, InvokeTransactionV3, L1HandlerTransaction, Resource,
-    ResourceBoundsMapping, TransactionHash,
+    InvokeTransactionV0, InvokeTransactionV1, InvokeTransactionV3, L1HandlerTransaction, PaymasterData, Resource,
+    ResourceBoundsMapping, Tip, TransactionHash,
 };
 <span class="kw">use </span>starknet_core::crypto::compute_hash_on_elements;
 <span class="kw">use </span>starknet_crypto::FieldElement;
@@ -436,8 +448,8 @@
     fee_data_availability_mode: DataAvailabilityMode,
 ) -&gt; FieldElement {
     <span class="kw">let </span><span class="kw-2">mut </span>buffer = [<span class="number">0u8</span>; <span class="number">32</span>];
-    buffer[<span class="number">8</span>..<span class="number">12</span>].copy_from_slice(<span class="kw-2">&amp;</span>(nonce_data_availability_mode <span class="kw">as </span>u32).to_be_bytes());
-    buffer[<span class="number">12</span>..].copy_from_slice(<span class="kw-2">&amp;</span>(fee_data_availability_mode <span class="kw">as </span>u32).to_be_bytes());
+    buffer[<span class="number">24</span>..<span class="number">28</span>].copy_from_slice(<span class="kw-2">&amp;</span>(nonce_data_availability_mode <span class="kw">as </span>u32).to_be_bytes());
+    buffer[<span class="number">28</span>..].copy_from_slice(<span class="kw-2">&amp;</span>(fee_data_availability_mode <span class="kw">as </span>u32).to_be_bytes());
 
     <span class="comment">// Safe to unwrap because we left most significant bit of the buffer empty
     </span>FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>buffer).unwrap()
@@ -495,39 +507,27 @@
         <span class="kw">let </span>version =
             <span class="kw">if </span>offset_version { SIMULATE_TX_VERSION_OFFSET + FieldElement::THREE } <span class="kw">else </span>{ FieldElement::THREE };
         <span class="kw">let </span>sender_address = Felt252Wrapper::from(<span class="self">self</span>.sender_address).into();
-        <span class="kw">let </span>gas_hash = compute_hash_on_elements(<span class="kw-2">&amp;</span>[
-            FieldElement::from(<span class="self">self</span>.tip.<span class="number">0</span>),
-            prepare_resource_bound_value(<span class="kw-2">&amp;</span><span class="self">self</span>.resource_bounds, Resource::L1Gas),
-            prepare_resource_bound_value(<span class="kw-2">&amp;</span><span class="self">self</span>.resource_bounds, Resource::L2Gas),
-        ]);
-        <span class="kw">let </span>paymaster_hash = compute_hash_on_elements(
-            <span class="kw-2">&amp;</span><span class="self">self</span>.paymaster_data.<span class="number">0</span>.iter().map(|f| Felt252Wrapper::from(<span class="kw-2">*</span>f).into()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
-        );
         <span class="kw">let </span>nonce = Felt252Wrapper::from(<span class="self">self</span>.nonce.<span class="number">0</span>).into();
-        <span class="kw">let </span>data_availability_modes =
-            prepare_data_availability_modes(<span class="self">self</span>.nonce_data_availability_mode, <span class="self">self</span>.fee_data_availability_mode);
-        <span class="kw">let </span>data_hash = {
-            <span class="kw">let </span>account_deployment_data_hash = compute_hash_on_elements(
-                <span class="kw-2">&amp;</span><span class="self">self</span>.account_deployment_data.<span class="number">0</span>.iter().map(|f| Felt252Wrapper::from(<span class="kw-2">*</span>f).into()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
-            );
-            <span class="kw">let </span>calldata_hash = compute_hash_on_elements(
-                <span class="kw-2">&amp;</span><span class="self">self</span>.calldata.<span class="number">0</span>.iter().map(|f| Felt252Wrapper::from(<span class="kw-2">*</span>f).into()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
-            );
-            compute_hash_on_elements(<span class="kw-2">&amp;</span>[account_deployment_data_hash, calldata_hash])
-        };
+        <span class="kw">let </span>account_deployment_data_hash = PoseidonHasher::compute_hash_on_elements(
+            <span class="kw-2">&amp;</span><span class="self">self</span>.account_deployment_data.<span class="number">0</span>.iter().map(|f| Felt252Wrapper::from(<span class="kw-2">*</span>f).into()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
+        );
+        <span class="kw">let </span>calldata_hash = PoseidonHasher::compute_hash_on_elements(
+            <span class="kw-2">&amp;</span><span class="self">self</span>.calldata.<span class="number">0</span>.iter().map(|f| Felt252Wrapper::from(<span class="kw-2">*</span>f).into()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
+        );
 
-        Felt252Wrapper(PoseidonHasher::compute_hash_on_elements(<span class="kw-2">&amp;</span>[
+        compute_transaction_hash_common_v3(
             prefix,
             version,
             sender_address,
-            gas_hash,
-            paymaster_hash,
             chain_id.into(),
             nonce,
-            data_availability_modes,
-            data_hash,
-        ]))
-        .into()
+            <span class="self">self</span>.tip,
+            <span class="kw-2">&amp;</span><span class="self">self</span>.paymaster_data,
+            <span class="self">self</span>.nonce_data_availability_mode,
+            <span class="self">self</span>.fee_data_availability_mode,
+            <span class="kw-2">&amp;</span><span class="self">self</span>.resource_bounds,
+            <span class="macro">vec!</span>[account_deployment_data_hash, calldata_hash],
+        )
     }
 }
 
@@ -609,35 +609,28 @@
         <span class="kw">let </span>version =
             <span class="kw">if </span>offset_version { SIMULATE_TX_VERSION_OFFSET + FieldElement::THREE } <span class="kw">else </span>{ FieldElement::THREE };
         <span class="kw">let </span>sender_address = Felt252Wrapper::from(<span class="self">self</span>.sender_address).into();
-        <span class="kw">let </span>gas_hash = compute_hash_on_elements(<span class="kw-2">&amp;</span>[
-            FieldElement::from(<span class="self">self</span>.tip.<span class="number">0</span>),
-            prepare_resource_bound_value(<span class="kw-2">&amp;</span><span class="self">self</span>.resource_bounds, Resource::L1Gas),
-            prepare_resource_bound_value(<span class="kw-2">&amp;</span><span class="self">self</span>.resource_bounds, Resource::L2Gas),
-        ]);
-        <span class="kw">let </span>paymaster_hash = compute_hash_on_elements(
-            <span class="kw-2">&amp;</span><span class="self">self</span>.paymaster_data.<span class="number">0</span>.iter().map(|f| Felt252Wrapper::from(<span class="kw-2">*</span>f).into()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
-        );
         <span class="kw">let </span>nonce = Felt252Wrapper::from(<span class="self">self</span>.nonce.<span class="number">0</span>).into();
-        <span class="kw">let </span>data_availability_modes =
-            prepare_data_availability_modes(<span class="self">self</span>.nonce_data_availability_mode, <span class="self">self</span>.fee_data_availability_mode);
-        <span class="kw">let </span>account_deployment_data_hash = compute_hash_on_elements(
+        <span class="kw">let </span>account_deployment_data_hash = PoseidonHasher::compute_hash_on_elements(
             <span class="kw-2">&amp;</span><span class="self">self</span>.account_deployment_data.<span class="number">0</span>.iter().map(|f| Felt252Wrapper::from(<span class="kw-2">*</span>f).into()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
         );
 
-        Felt252Wrapper(PoseidonHasher::compute_hash_on_elements(<span class="kw-2">&amp;</span>[
+        compute_transaction_hash_common_v3(
             prefix,
             version,
             sender_address,
-            gas_hash,
-            paymaster_hash,
             chain_id.into(),
             nonce,
-            data_availability_modes,
-            account_deployment_data_hash,
-            Felt252Wrapper::from(<span class="self">self</span>.class_hash).into(),
-            Felt252Wrapper::from(<span class="self">self</span>.compiled_class_hash).into(),
-        ]))
-        .into()
+            <span class="self">self</span>.tip,
+            <span class="kw-2">&amp;</span><span class="self">self</span>.paymaster_data,
+            <span class="self">self</span>.nonce_data_availability_mode,
+            <span class="self">self</span>.fee_data_availability_mode,
+            <span class="kw-2">&amp;</span><span class="self">self</span>.resource_bounds,
+            <span class="macro">vec!</span>[
+                account_deployment_data_hash,
+                Felt252Wrapper::from(<span class="self">self</span>.class_hash).into(),
+                Felt252Wrapper::from(<span class="self">self</span>.compiled_class_hash).into(),
+            ],
+        )
     }
 }
 <span class="kw">impl </span>ComputeTransactionHash <span class="kw">for </span>DeclareTransaction {
@@ -715,33 +708,26 @@
             .unwrap(),
         )
         .into();
-        <span class="kw">let </span>gas_hash = compute_hash_on_elements(<span class="kw-2">&amp;</span>[
-            FieldElement::from(<span class="self">self</span>.tip.<span class="number">0</span>),
-            prepare_resource_bound_value(<span class="kw-2">&amp;</span><span class="self">self</span>.resource_bounds, Resource::L1Gas),
-            prepare_resource_bound_value(<span class="kw-2">&amp;</span><span class="self">self</span>.resource_bounds, Resource::L2Gas),
-        ]);
-        <span class="kw">let </span>paymaster_hash = compute_hash_on_elements(
-            <span class="kw-2">&amp;</span><span class="self">self</span>.paymaster_data.<span class="number">0</span>.iter().map(|f| Felt252Wrapper::from(<span class="kw-2">*</span>f).into()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
-        );
         <span class="kw">let </span>nonce = Felt252Wrapper::from(<span class="self">self</span>.nonce.<span class="number">0</span>).into();
-        <span class="kw">let </span>data_availability_modes =
-            prepare_data_availability_modes(<span class="self">self</span>.nonce_data_availability_mode, <span class="self">self</span>.fee_data_availability_mode);
-        <span class="kw">let </span>constructor_calldata_hash = compute_hash_on_elements(<span class="kw-2">&amp;</span>constructor_calldata);
+        <span class="kw">let </span>constructor_calldata_hash = PoseidonHasher::compute_hash_on_elements(<span class="kw-2">&amp;</span>constructor_calldata);
 
-        Felt252Wrapper(PoseidonHasher::compute_hash_on_elements(<span class="kw-2">&amp;</span>[
+        compute_transaction_hash_common_v3(
             prefix,
             version,
             contract_address,
-            gas_hash,
-            paymaster_hash,
             chain_id.into(),
             nonce,
-            data_availability_modes,
-            constructor_calldata_hash,
-            Felt252Wrapper::from(<span class="self">self</span>.class_hash).into(),
-            Felt252Wrapper::from(<span class="self">self</span>.contract_address_salt).into(),
-        ]))
-        .into()
+            <span class="self">self</span>.tip,
+            <span class="kw-2">&amp;</span><span class="self">self</span>.paymaster_data,
+            <span class="self">self</span>.nonce_data_availability_mode,
+            <span class="self">self</span>.fee_data_availability_mode,
+            <span class="kw-2">&amp;</span><span class="self">self</span>.resource_bounds,
+            <span class="macro">vec!</span>[
+                constructor_calldata_hash,
+                Felt252Wrapper::from(<span class="self">self</span>.class_hash).into(),
+                Felt252Wrapper::from(<span class="self">self</span>.contract_address_salt).into(),
+            ],
+        )
     }
 }
 
@@ -765,6 +751,44 @@
         ]))
         .into()
     }
+}
+
+<span class="attr">#[allow(clippy::too_many_arguments)]
+</span><span class="kw">fn </span>compute_transaction_hash_common_v3(
+    tx_hash_prefix: FieldElement,
+    version: FieldElement,
+    sender_address: FieldElement,
+    chain_id: FieldElement,
+    nonce: FieldElement,
+    tip: Tip,
+    paymaster_data: <span class="kw-2">&amp;</span>PaymasterData,
+    nonce_data_availability_mode: DataAvailabilityMode,
+    fee_data_availability_mode: DataAvailabilityMode,
+    resource_bounds: <span class="kw-2">&amp;</span>ResourceBoundsMapping,
+    additional_data: Vec&lt;FieldElement&gt;,
+) -&gt; TransactionHash {
+    <span class="kw">let </span>gas_hash = PoseidonHasher::compute_hash_on_elements(<span class="kw-2">&amp;</span>[
+        FieldElement::from(tip.<span class="number">0</span>),
+        prepare_resource_bound_value(resource_bounds, Resource::L1Gas),
+        prepare_resource_bound_value(resource_bounds, Resource::L2Gas),
+    ]);
+    <span class="kw">let </span>paymaster_hash = PoseidonHasher::compute_hash_on_elements(
+        <span class="kw-2">&amp;</span>paymaster_data.<span class="number">0</span>.iter().map(|f| Felt252Wrapper::from(<span class="kw-2">*</span>f).into()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
+    );
+    <span class="kw">let </span>data_availability_modes =
+        prepare_data_availability_modes(nonce_data_availability_mode, fee_data_availability_mode);
+    <span class="kw">let </span><span class="kw-2">mut </span>data_to_hash = <span class="macro">vec!</span>[
+        tx_hash_prefix,
+        version,
+        sender_address,
+        gas_hash,
+        paymaster_hash,
+        chain_id,
+        nonce,
+        data_availability_modes,
+    ];
+    data_to_hash.extend(additional_data);
+    Felt252Wrapper(PoseidonHasher::compute_hash_on_elements(data_to_hash.as_slice())).into()
 }
 
 <span class="attr">#[cfg(test)]

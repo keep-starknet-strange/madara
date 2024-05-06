@@ -150,6 +150,12 @@
 <a href="#150" id="150">150</a>
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Transaction validation logic.
 </span><span class="kw">use </span>blockifier::transaction::account_transaction::AccountTransaction;
 <span class="kw">use </span>blockifier::transaction::errors::{TransactionExecutionError, TransactionPreValidationError};
@@ -232,7 +238,10 @@
                     }
                 }
                 <span class="comment">// TODO: have more granular error mapping
-                </span>.map_err(|<span class="kw">_</span>| InvalidTransaction::BadProof)
+                </span>.map_err(|e| {
+                    <span class="macro">log!</span>(debug, <span class="string">&quot;Error in pre_validate_unsigned_tx: {:?}&quot;</span>, e);
+                    InvalidTransaction::BadProof
+                })
             }
             Transaction::L1HandlerTransaction(transaction) =&gt; {
                 <span class="self">Self</span>::ensure_l1_message_not_executed(<span class="kw-2">&amp;</span>transaction.tx.nonce)
@@ -293,7 +302,10 @@
                 <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
             }
         }
-        .map_err(|<span class="kw">_</span>| InvalidTransaction::BadProof)<span class="question-mark">?</span>;
+        .map_err(|e| {
+            <span class="macro">log!</span>(debug, <span class="string">&quot;Error in validate_unsigned_tx: {:?}&quot;</span>, e);
+            InvalidTransaction::BadProof
+        })<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }

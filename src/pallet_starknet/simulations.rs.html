@@ -331,6 +331,23 @@
 <a href="#331" id="331">331</a>
 <a href="#332" id="332">332</a>
 <a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>blockifier::context::BlockContext;
 <span class="kw">use </span>blockifier::state::cached_state::{CachedState, CommitmentStateDiff, GlobalContractCache};
 <span class="kw">use </span>blockifier::state::state_api::State;
@@ -350,7 +367,7 @@
 <span class="kw">use </span>starknet_api::transaction::TransactionVersion;
 
 <span class="kw">use </span><span class="kw">crate</span>::blockifier_state_adapter::BlockifierStateAdapter;
-<span class="kw">use crate</span>::{Config, Error, Pallet};
+<span class="kw">use crate</span>::{log, Config, Error, Pallet};
 
 <span class="kw">type </span>ReExecutionResult = <span class="prelude-ty">Result</span>&lt;
     Vec&lt;(TransactionExecutionInfo, <span class="prelude-ty">Option</span>&lt;CommitmentStateDiff&gt;)&gt;,
@@ -382,8 +399,22 @@
         <span class="kw">let </span>fee_res_iterator = transactions
             .into_iter()
             .map(|tx| <span class="kw">match </span><span class="self">Self</span>::execute_account_transaction(<span class="kw-2">&amp;</span>tx, <span class="kw-2">&amp;mut </span>state, <span class="kw-2">&amp;</span>block_context, simulation_flags) {
-                <span class="prelude-val">Ok</span>(execution_info) <span class="kw">if </span>!execution_info.is_reverted() =&gt; <span class="prelude-val">Ok</span>(execution_info),
-                <span class="prelude-val">Err</span>(<span class="kw">_</span>) | <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed),
+                <span class="prelude-val">Ok</span>(execution_info) =&gt; {
+                    <span class="kw">if </span>!execution_info.is_reverted() {
+                        <span class="prelude-val">Ok</span>(execution_info)
+                    } <span class="kw">else </span>{
+                        <span class="macro">log!</span>(
+                            debug,
+                            <span class="string">&quot;Transaction execution reverted during fee estimation: {:?}&quot;</span>,
+                            execution_info.revert_error
+                        );
+                        <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed)
+                    }
+                }
+                <span class="prelude-val">Err</span>(e) =&gt; {
+                    <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction execution failed during fee estimation: {:?}&quot;</span>, e);
+                    <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed)
+                }
             })
             .map(|exec_info_res| {
                 exec_info_res.map(|exec_info| {
@@ -435,7 +466,7 @@
                 )<span class="question-mark">?</span>;
 
                 <span class="kw">let </span>result = res.<span class="number">0</span>.map_err(|e| {
-                    <span class="macro">log::error!</span>(<span class="string">&quot;Transaction execution failed during simulation: {e}&quot;</span>);
+                    <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction execution failed during simulation: {:?}&quot;</span>, e);
                     PlaceHolderErrorTypeForFailedStarknetExecution
                 });
 
@@ -468,7 +499,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>state = BlockifierStateAdapter::&lt;T&gt;::default();
 
         <span class="kw">let </span>tx_execution_result = <span class="self">Self</span>::execute_message(<span class="kw-2">&amp;</span>message, <span class="kw-2">&amp;mut </span>state, <span class="kw-2">&amp;</span>block_context).map_err(|e| {
-            <span class="macro">log::error!</span>(<span class="string">&quot;Transaction execution failed during simulation: {e}&quot;</span>);
+            <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction execution failed during simulation: {:?}&quot;</span>, e);
             PlaceHolderErrorTypeForFailedStarknetExecution
         });
 
@@ -490,14 +521,17 @@
         <span class="kw">let </span>tx_execution_infos = <span class="kw">match </span>message.execute(<span class="kw-2">&amp;mut </span>cached_state, <span class="kw-2">&amp;</span><span class="self">Self</span>::get_block_context(), <span class="bool-val">true</span>, <span class="bool-val">true</span>) {
             <span class="prelude-val">Ok</span>(execution_info) <span class="kw">if </span>!execution_info.is_reverted() =&gt; <span class="prelude-val">Ok</span>(execution_info),
             <span class="prelude-val">Err</span>(e) =&gt; {
-                <span class="macro">log::error!</span>(
-                    <span class="string">&quot;Transaction execution failed during fee estimation: {e} {:?}&quot;</span>,
+                <span class="macro">log!</span>(
+                    debug,
+                    <span class="string">&quot;Transaction execution failed during fee estimation: {:?} {:?}&quot;</span>,
+                    e,
                     std::error::Error::source(<span class="kw-2">&amp;</span>e)
                 );
                 <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed)
             }
             <span class="prelude-val">Ok</span>(execution_info) =&gt; {
-                <span class="macro">log::error!</span>(
+                <span class="macro">log!</span>(
+                    debug,
                     <span class="string">&quot;Transaction execution reverted during fee estimation: {}&quot;</span>,
                     <span class="comment">// Safe due to the `match` branch order
                     </span>execution_info.revert_error.unwrap()
@@ -538,7 +572,7 @@
 
         transactions_before.iter().try_for_each(|tx| {
             <span class="self">Self</span>::execute_transaction(tx, <span class="kw-2">&amp;mut </span>state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>SimulationFlags::default()).map_err(|e| {
-                <span class="macro">log::error!</span>(<span class="string">&quot;Failed to reexecute a tx: {}&quot;</span>, e);
+                <span class="macro">log!</span>(debug, <span class="string">&quot;Failed to reexecute a tx: {}&quot;</span>, e);
                 PlaceHolderErrorTypeForFailedStarknetExecution
             })<span class="question-mark">?</span>;
 
@@ -557,14 +591,14 @@
                     <span class="kw-2">&amp;</span>SimulationFlags::default(),
                 )
                 .map_err(|e| {
-                    <span class="macro">log::error!</span>(<span class="string">&quot;Failed to reexecute a tx: {}&quot;</span>, e);
+                    <span class="macro">log!</span>(debug, <span class="string">&quot;Failed to reexecute a tx: {}&quot;</span>, e);
                     PlaceHolderErrorTypeForFailedStarknetExecution
                 });
 
                 <span class="kw">let </span>res = res
                     .map(|r| <span class="kw">if </span>with_state_diff { (r, <span class="prelude-val">Some</span>(transactional_state.to_state_diff())) } <span class="kw">else </span>{ (r, <span class="prelude-val">None</span>) });
                 commit_transactional_state(transactional_state).map_err(|e| {
-                    <span class="macro">log::error!</span>(<span class="string">&quot;Failed to commit state changes: {:?}&quot;</span>, e);
+                    <span class="macro">log!</span>(debug, <span class="string">&quot;Failed to commit state changes: {:?}&quot;</span>, e);
                     PlaceHolderErrorTypeForFailedStarknetExecution
                 })<span class="question-mark">?</span>;
 
@@ -649,7 +683,7 @@
         <span class="comment">// Once the state diff of this tx is generated, we apply those changes on the original state
         // so that next txs being simulated are ontop of this one (avoid nonce error)
         </span>commit_transactional_state(transactional_state).map_err(|e| {
-            <span class="macro">log::error!</span>(<span class="string">&quot;Failed to commit state changes: {:?}&quot;</span>, e);
+            <span class="macro">log!</span>(error, <span class="string">&quot;Failed to commit state changes: {:?}&quot;</span>, e);
             PlaceHolderErrorTypeForFailedStarknetExecution
         })<span class="question-mark">?</span>;
 

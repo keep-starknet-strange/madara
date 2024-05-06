@@ -1285,7 +1285,7 @@
         </span><span class="self">Self</span>::handle_nonce(state, <span class="kw-2">&amp;</span>tx_context.tx_info, strict_nonce_checking)<span class="question-mark">?</span>;
 
         <span class="comment">// Check if user has funds to pay the worst case scenario fees
-        </span><span class="kw">if </span>charge_fee &amp;&amp; tx_context.tx_info.enforce_fee()<span class="question-mark">? </span>{
+        </span><span class="kw">if </span>charge_fee {
             <span class="self">self</span>.check_fee_bounds(<span class="kw-2">&amp;</span>tx_context)<span class="question-mark">?</span>;
 
             blockifier::fee::fee_utils::verify_can_pay_committed_bounds(state, <span class="kw-2">&amp;</span>tx_context)<span class="question-mark">?</span>;

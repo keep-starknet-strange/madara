@@ -60,6 +60,9 @@
 <a href="#60" id="60">60</a>
 <a href="#61" id="61">61</a>
 <a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>blockifier::transaction::objects::TransactionExecutionInfo;
 <span class="kw">use </span>starknet_core::types::{SimulationFlag, SimulationFlagForEstimateFee};
 
@@ -112,6 +115,9 @@
                 <span class="kw">break</span>;
             }
         }
+
+        <span class="comment">// estimate_fee does not charge fees or do any balance checks
+        </span>flags_out.charge_fee = <span class="bool-val">false</span>;
 
         flags_out
     }
