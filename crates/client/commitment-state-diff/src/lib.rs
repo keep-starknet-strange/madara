@@ -26,7 +26,6 @@ pub struct BlockDAData {
     pub state_diff: ThinStateDiff,
     pub num_addr_accessed: usize,
     pub block_number: u64,
-    pub config_hash: StarkHash,
     pub new_state_root: StarkHash,
     pub previous_state_root: StarkHash,
 }
@@ -231,14 +230,11 @@ where
         mp_digest_log::find_starknet_block(digest)?
     };
 
-    let config_hash = client.runtime_api().config_hash(storage_notification.block)?;
-
     Ok(BlockDAData {
         block_hash: current_block.header().hash().into(),
         state_diff: commitment_state_diff,
         num_addr_accessed: accessed_addrs.len(),
         block_number: current_block.header().block_number,
-        config_hash,
         // TODO: fix when we implement state root
         new_state_root: backend.temporary_global_state_root_getter(),
         previous_state_root: backend.temporary_global_state_root_getter(),

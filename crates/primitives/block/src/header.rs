@@ -60,7 +60,7 @@ impl Header {
         }
     }
 
-    // Computing the hash using the Pedersen hasher.
+    /// Compute the hash using the Pedersen hasher according to [the Starknet protocol specification](https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/header/#block_hash).  
     pub fn hash(&self) -> Felt252Wrapper {
         let data: &[Felt252Wrapper] = &[
             self.block_number.into(),

@@ -42,6 +42,7 @@
 - feat(runtime): moved StarkEvents from Substrate
 - feat(rpc/trace_api): add `trace_transaction`
 - fix(docker): fix dockerfile for `madara-node`
+- feat: Remove generic hasher from block hash computation
 
 ## v0.7.0
 
@@ -118,7 +119,6 @@
 - refactor: use Zaun crate for Starknet core contract bindings
 - refactor: use Anvil sandbox from Zaun crate
 - feat(rpc) : estimateMessageFee RPC call implementation
-- feat: Remove generic hasher from block hash computation
 
 ## v0.6.0
 
