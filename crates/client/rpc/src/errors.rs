@@ -1,67 +1,126 @@
+use blockifier::transaction::errors::TransactionExecutionError;
 use jsonrpsee::types::error::{CallError, ErrorObject};
-use pallet_starknet_runtime_api::StarknetTransactionExecutionError;
+use mp_simulations::{InternalSubstrateError, SimulationError};
+use serde::Serialize;
+use thiserror::Error;
 
 // Comes from the RPC Spec:
 // https://github.com/starkware-libs/starknet-specs/blob/0e859ff905795f789f1dfd6f7340cdaf5015acc8/api/starknet_write_api.json#L227
-#[derive(thiserror::Error, Clone, Copy, Debug)]
+#[derive(Error, Debug)]
 pub enum StarknetRpcApiError {
     #[error("Failed to write transaction")]
-    FailedToReceiveTxn = 1,
+    FailedToReceiveTxn,
     #[error("Contract not found")]
-    ContractNotFound = 20,
+    ContractNotFound,
     #[error("Block not found")]
-    BlockNotFound = 24,
+    BlockNotFound,
     #[error("Invalid transaction index in a block")]
-    InvalidTxnIndex = 27,
+    InvalidTxnIndex,
     #[error("Class hash not found")]
-    ClassHashNotFound = 28,
+    ClassHashNotFound,
     #[error("Transaction hash not found")]
-    TxnHashNotFound = 29,
+    TxnHashNotFound,
     #[error("Requested page size is too big")]
-    PageSizeTooBig = 31,
+    PageSizeTooBig,
     #[error("There are no blocks")]
-    NoBlocks = 32,
+    NoBlocks,
     #[error("The supplied continuation token is invalid or unknown")]
-    InvalidContinuationToken = 33,
+    InvalidContinuationToken,
     #[error("Too many keys provided in a filter")]
-    TooManyKeysInFilter = 34,
+    TooManyKeysInFilter,
     #[error("Failed to fetch pending transactions")]
-    FailedToFetchPendingTransactions = 38,
-    #[error("Contract error")]
-    ContractError = 40,
+    FailedToFetchPendingTransactions,
+    #[error("Contract Error")]
+    ContractError(#[from] ContractError),
     #[error("Invalid contract class")]
-    InvalidContractClass = 50,
+    InvalidContractClass,
     #[error("Class already declared")]
-    ClassAlreadyDeclared = 51,
+    ClassAlreadyDeclared,
     #[error("Account validation failed")]
-    ValidationFailure = 55,
+    ValidationFailure,
     #[error("The transaction version is not supported")]
-    UnsupportedTxVersion = 61,
+    UnsupportedTxVersion,
     #[error("Internal server error")]
-    InternalServerError = 500,
+    InternalServerError,
     #[error("Unimplemented method")]
-    UnimplementedMethod = 501,
+    UnimplementedMethod,
     #[error("Too many storage keys requested")]
-    ProofLimitExceeded = 10000,
+    ProofLimitExceeded,
 }
 
-impl From<StarknetTransactionExecutionError> for StarknetRpcApiError {
-    fn from(err: StarknetTransactionExecutionError) -> Self {
-        match err {
-            StarknetTransactionExecutionError::ContractNotFound => StarknetRpcApiError::ContractNotFound,
-            StarknetTransactionExecutionError::ClassAlreadyDeclared => StarknetRpcApiError::ClassAlreadyDeclared,
-            StarknetTransactionExecutionError::ClassHashNotFound => StarknetRpcApiError::ClassHashNotFound,
-            StarknetTransactionExecutionError::InvalidContractClass => StarknetRpcApiError::InvalidContractClass,
-            StarknetTransactionExecutionError::ContractError => StarknetRpcApiError::ContractError,
-        }
-    }
+#[derive(Debug, Error, Serialize)]
+#[error("revert error: {revert_error}")]
+pub struct ContractError {
+    revert_error: String,
 }
 
 impl From<StarknetRpcApiError> for jsonrpsee::core::Error {
     fn from(err: StarknetRpcApiError) -> Self {
-        // TODO:
-        // when able to ge rich errors out of runtime,
-        // match and populate the `data` field
-        jsonrpsee::core::Error::Call(CallError::Custom(ErrorObject::owned(err as i32, err.to_string(), None::<()>)))
+        let code = match err {
+            StarknetRpcApiError::FailedToReceiveTxn => 1,
+            StarknetRpcApiError::ContractNotFound => 20,
+            StarknetRpcApiError::BlockNotFound => 24,
+            StarknetRpcApiError::InvalidTxnIndex => 27,
+            StarknetRpcApiError::ClassHashNotFound => 28,
+            StarknetRpcApiError::TxnHashNotFound => 29,
+            StarknetRpcApiError::PageSizeTooBig => 31,
+            StarknetRpcApiError::NoBlocks => 32,
+            StarknetRpcApiError::InvalidContinuationToken => 33,
+            StarknetRpcApiError::TooManyKeysInFilter => 34,
+            StarknetRpcApiError::FailedToFetchPendingTransactions => 38,
+            StarknetRpcApiError::ContractError(_) => 40,
+            StarknetRpcApiError::InvalidContractClass => 50,
+            StarknetRpcApiError::ClassAlreadyDeclared => 51,
+            StarknetRpcApiError::ValidationFailure => 55,
+            StarknetRpcApiError::UnsupportedTxVersion => 61,
+            StarknetRpcApiError::InternalServerError => 500,
+            StarknetRpcApiError::UnimplementedMethod => 501,
+            StarknetRpcApiError::ProofLimitExceeded => 10000,
+        };
+
+        let data = match &err {
+            StarknetRpcApiError::ContractError(ref error) => Some(error),
+            _ => None,
+        };
+
+        jsonrpsee::core::Error::Call(CallError::Custom(ErrorObject::owned(code, err.to_string(), data)))
+    }
+}
+
+impl From<String> for ContractError {
+    fn from(value: String) -> Self {
+        ContractError { revert_error: value }
+    }
+}
+
+impl From<TransactionExecutionError> for ContractError {
+    fn from(e: TransactionExecutionError) -> Self {
+        ContractError { revert_error: e.to_string() }
+    }
+}
+
+impl From<TransactionExecutionError> for StarknetRpcApiError {
+    fn from(e: TransactionExecutionError) -> Self {
+        StarknetRpcApiError::ContractError(e.into())
+    }
+}
+
+impl From<SimulationError> for StarknetRpcApiError {
+    fn from(value: SimulationError) -> Self {
+        match value {
+            SimulationError::ContractNotFound => StarknetRpcApiError::ContractNotFound,
+            SimulationError::TransactionExecutionFailed(e) => StarknetRpcApiError::ContractError(e.into()),
+            SimulationError::MissingL1GasUsage | SimulationError::StateDiff => StarknetRpcApiError::InternalServerError,
+        }
+    }
+}
+
+impl From<InternalSubstrateError> for StarknetRpcApiError {
+    fn from(value: InternalSubstrateError) -> Self {
+        match value {
+            InternalSubstrateError::FailedToCreateATransactionalStorageExecution => {
+                StarknetRpcApiError::InternalServerError
+            }
+        }
     }
 }

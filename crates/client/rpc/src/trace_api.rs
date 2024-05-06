@@ -1,7 +1,6 @@
 use blockifier::execution::call_info::CallInfo;
 use blockifier::state::cached_state::CommitmentStateDiff;
 use blockifier::transaction::account_transaction::AccountTransaction;
-use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
 use blockifier::transaction::transaction_execution::Transaction;
 use jsonrpsee::core::{async_trait, RpcResult};
@@ -11,7 +10,7 @@ use mc_rpc_core::utils::{blockifier_to_rpc_state_diff_types, get_block_by_block_
 use mc_rpc_core::{StarknetReadRpcApiServer, StarknetTraceRpcApiServer};
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
-use mp_simulations::{SimulationFlags, TransactionSimulationResult};
+use mp_simulations::SimulationFlags;
 use mp_transactions::from_broadcasted_transactions::{
     try_declare_tx_from_broadcasted_declare_tx, try_deploy_tx_from_broadcasted_deploy_tx,
     try_invoke_tx_from_broadcasted_invoke_tx,
@@ -31,7 +30,6 @@ use starknet_core::types::{
     SimulatedTransaction, SimulationFlag, StateDiff, TransactionTrace, TransactionTraceWithHash,
 };
 use starknet_ff::FieldElement;
-use thiserror::Error;
 
 use crate::errors::StarknetRpcApiError;
 use crate::Starknet;
@@ -99,11 +97,39 @@ where
             })?
             .map_err(|e| {
                 error!("Failed to call function: {:#?}", e);
-                StarknetRpcApiError::ContractError
+                StarknetRpcApiError::from(e)
             })?;
 
-        let simulated_transactions =
-            tx_execution_infos_to_simulated_transactions(tx_types, res).map_err(StarknetRpcApiError::from)?;
+        let mut simulated_transactions = vec![];
+        for (tx_type, (state_diff, res)) in tx_types.into_iter().zip(res.into_iter().flatten()) {
+            match res {
+                Ok(tx_exec_info) => {
+                    let state_diff = blockifier_to_rpc_state_diff_types(state_diff)
+                        .map_err(|_| StarknetRpcApiError::InternalServerError)?;
+
+                    let transaction_trace = tx_execution_infos_to_tx_trace(tx_type, &tx_exec_info, Some(state_diff))?;
+
+                    let gas_consumed =
+                        tx_exec_info.execute_call_info.as_ref().map(|x| x.execution.gas_consumed).unwrap_or_default();
+                    let overall_fee = tx_exec_info.actual_fee.0 as u64;
+                    // TODO: Shouldn't the gas price be taken from the block header instead?
+                    let gas_price = if gas_consumed > 0 { overall_fee / gas_consumed } else { 0 };
+
+                    simulated_transactions.push(SimulatedTransaction {
+                        transaction_trace,
+                        fee_estimation: FeeEstimate {
+                            gas_consumed: FieldElement::from(gas_consumed),
+                            gas_price: FieldElement::from(gas_price),
+                            overall_fee: FieldElement::from(overall_fee),
+                            unit: PriceUnit::Wei,
+                        },
+                    });
+                }
+                Err(e) => {
+                    return Err(StarknetRpcApiError::from(e).into());
+                }
+            }
+        }
 
         Ok(simulated_transactions)
     }
@@ -170,7 +196,7 @@ where
         })?;
 
         let state_diff = blockifier_to_rpc_state_diff_types(commitment_state_diff.clone())
-            .map_err(|_| StarknetRpcApiError::from(ConvertCallInfoToExecuteInvocationError::ConvertStateDiffFailed))?;
+            .map_err(|_| StarknetRpcApiError::InternalServerError)?;
 
         let trace = tx_execution_infos_to_tx_trace(tx_type, &execution_infos, Some(state_diff))
             .map_err(StarknetRpcApiError::from)?;
@@ -203,8 +229,8 @@ where
             .runtime_api()
             .re_execute_transactions(
                 previous_block_substrate_hash,
-                transactions_before.clone(),
-                transactions_to_trace.clone(),
+                transactions_before,
+                transactions_to_trace,
                 with_state_diff,
             )
             .map_err(|e| {
@@ -233,7 +259,7 @@ where
             .enumerate()
             .map(|(tx_idx, (tx_exec_info, commitment_state_diff))| {
                 let state_diff = blockifier_to_rpc_state_diff_types(commitment_state_diff)
-                    .map_err(|_| ConvertCallInfoToExecuteInvocationError::ConvertStateDiffFailed)?;
+                    .map_err(|_| StarknetRpcApiError::InternalServerError)?;
                 tx_execution_infos_to_tx_trace(
                     // Safe to unwrap coz re_execute returns exactly one ExecutionInfo for each tx
                     TxType::from(block_transactions.get(tx_idx).unwrap()),
@@ -250,30 +276,10 @@ where
     }
 }
 
-#[derive(Error, Debug)]
-pub enum ConvertCallInfoToExecuteInvocationError {
-    #[error("One of the simulated transaction failed")]
-    TransactionExecutionFailed,
-    #[error(transparent)]
-    GetFunctionInvocation(#[from] TryFuntionInvocationFromCallInfoError),
-    #[error("Failed to convert state diff")]
-    ConvertStateDiffFailed,
-}
-
-impl From<ConvertCallInfoToExecuteInvocationError> for StarknetRpcApiError {
-    fn from(err: ConvertCallInfoToExecuteInvocationError) -> Self {
-        match err {
-            ConvertCallInfoToExecuteInvocationError::TransactionExecutionFailed => StarknetRpcApiError::ContractError,
-            ConvertCallInfoToExecuteInvocationError::GetFunctionInvocation(_) => {
-                StarknetRpcApiError::InternalServerError
-            }
-            ConvertCallInfoToExecuteInvocationError::ConvertStateDiffFailed => StarknetRpcApiError::InternalServerError,
-        }
-    }
-}
-
-fn collect_call_info_ordered_messages(call_info: &CallInfo) -> Vec<starknet_core::types::OrderedMessage> {
-    call_info
+fn try_get_function_invocation_from_call_info(
+    call_info: &CallInfo,
+) -> Result<starknet_core::types::FunctionInvocation, StarknetRpcApiError> {
+    let messages = call_info
         .execution
         .l2_to_l1_messages
         .iter()
@@ -284,13 +290,11 @@ fn collect_call_info_ordered_messages(call_info: &CallInfo) -> Vec<starknet_core
                 .unwrap(),
             from_address: Felt252Wrapper::from(call_info.call.storage_address).into(),
         })
-        .collect()
-}
+        .collect();
 
-fn blockifier_to_starknet_rs_ordered_events(
-    ordered_events: &[blockifier::execution::call_info::OrderedEvent],
-) -> Vec<starknet_core::types::OrderedEvent> {
-    ordered_events
+    let events = call_info
+        .execution
+        .events
         .iter()
         .map(|event| starknet_core::types::OrderedEvent {
             order: event.order as u64, // Convert usize to u64
@@ -303,22 +307,7 @@ fn blockifier_to_starknet_rs_ordered_events(
                 .map(|data_item| FieldElement::from_byte_slice_be(data_item.bytes()).unwrap())
                 .collect(),
         })
-        .collect()
-}
-
-#[derive(Error, Debug)]
-pub enum TryFuntionInvocationFromCallInfoError {
-    #[error(transparent)]
-    TransactionExecution(#[from] TransactionExecutionError),
-    #[error("No contract found at the Call contract_address")]
-    ContractNotFound,
-}
-
-fn try_get_function_invocation_from_call_info(
-    call_info: &CallInfo,
-) -> Result<starknet_core::types::FunctionInvocation, TryFuntionInvocationFromCallInfoError> {
-    let messages = collect_call_info_ordered_messages(call_info);
-    let events = blockifier_to_starknet_rs_ordered_events(&call_info.execution.events);
+        .collect();
 
     let inner_calls =
         call_info.inner_calls.iter().map(try_get_function_invocation_from_call_info).collect::<Result<_, _>>()?;
@@ -405,7 +394,7 @@ fn tx_execution_infos_to_tx_trace(
     tx_type: TxType,
     tx_exec_info: &TransactionExecutionInfo,
     state_diff: Option<StateDiff>,
-) -> Result<TransactionTrace, ConvertCallInfoToExecuteInvocationError> {
+) -> Result<TransactionTrace, StarknetRpcApiError> {
     // If simulated with `SimulationFlag::SkipValidate` this will be `None`
     // therefore we cannot unwrap it
     let validate_invocation =
@@ -455,43 +444,6 @@ fn tx_execution_infos_to_tx_trace(
     };
 
     Ok(tx_trace)
-}
-
-fn tx_execution_infos_to_simulated_transactions(
-    tx_types: Vec<TxType>,
-    transaction_execution_results: Vec<(CommitmentStateDiff, TransactionSimulationResult)>,
-) -> Result<Vec<SimulatedTransaction>, ConvertCallInfoToExecuteInvocationError> {
-    let mut results = vec![];
-    for (tx_type, (state_diff, res)) in tx_types.into_iter().zip(transaction_execution_results.into_iter()) {
-        match res {
-            Ok(tx_exec_info) => {
-                let state_diff = blockifier_to_rpc_state_diff_types(state_diff)
-                    .map_err(|_| ConvertCallInfoToExecuteInvocationError::ConvertStateDiffFailed)?;
-
-                let transaction_trace = tx_execution_infos_to_tx_trace(tx_type, &tx_exec_info, Some(state_diff))?;
-                let gas_consumed =
-                    tx_exec_info.execute_call_info.as_ref().map(|x| x.execution.gas_consumed).unwrap_or_default();
-                let overall_fee = tx_exec_info.actual_fee.0 as u64;
-                // TODO: Shouldn't the gas price be taken from the block header instead?
-                let gas_price = if gas_consumed > 0 { overall_fee / gas_consumed } else { 0 };
-
-                results.push(SimulatedTransaction {
-                    transaction_trace,
-                    fee_estimation: FeeEstimate {
-                        gas_consumed: FieldElement::from(gas_consumed),
-                        gas_price: FieldElement::from(gas_price),
-                        overall_fee: FieldElement::from(overall_fee),
-                        unit: PriceUnit::Wei,
-                    },
-                });
-            }
-            Err(_) => {
-                return Err(ConvertCallInfoToExecuteInvocationError::TransactionExecutionFailed);
-            }
-        }
-    }
-
-    Ok(results)
 }
 
 fn get_previous_block_substrate_hash<A, B, BE, G, C, P, H>(

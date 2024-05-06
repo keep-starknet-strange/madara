@@ -13,6 +13,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 blockifier = { workspace = true }
 starknet-core = { workspace = true }
+starknet_api = { workspace = true }
 
 # Optional dependencies
 parity-scale-codec = { workspace = true, optional = true }
