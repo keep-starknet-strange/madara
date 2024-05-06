@@ -58,7 +58,9 @@ impl<T: Config> Pallet<T> {
                             "Transaction execution reverted during fee estimation: {:?}",
                             execution_info.revert_error
                         );
-                        Err(SimulationError::TransactionExecutionFailed(execution_info.revert_error.unwrap().to_string()))
+                        Err(SimulationError::TransactionExecutionFailed(
+                            execution_info.revert_error.unwrap().to_string(),
+                        ))
                     }
                 }
                 Err(e) => {
@@ -72,7 +74,7 @@ impl<T: Config> Pallet<T> {
                         .actual_resources
                         .0
                         .get("l1_gas_usage")
-                        .ok_or_else(|| DispatchError::from(ConfigError::<T>::MissingL1GasUsage))
+                        .ok_or_else(|| DispatchError::from(Error::<T>::MissingL1GasUsage))
                         .map(|l1_gas_usage| (exec_info.actual_fee.0, *l1_gas_usage))
                 })
             });
@@ -120,13 +122,8 @@ impl<T: Config> Pallet<T> {
                 )?;
 
                 let result = res.0.map_err(|e| {
-<<<<<<< HEAD
                     log::error!("Transaction execution failed during simulation: {e}");
                     SimulationError::from(e)
-=======
-                    log!(debug, "Transaction execution failed during simulation: {:?}", e);
-                    PlaceHolderErrorTypeForFailedStarknetExecution
->>>>>>> main
                 });
 
                 Ok((res.1, result))
@@ -159,19 +156,10 @@ impl<T: Config> Pallet<T> {
         let block_context = Self::get_block_context();
         let mut state = BlockifierStateAdapter::<T>::default();
 
-<<<<<<< HEAD
         Self::execute_message(&message, &mut state, &block_context).map_err(|e| {
             log::error!("Transaction execution failed during simulation: {e}");
             SimulationError::from(e)
         })
-=======
-        let tx_execution_result = Self::execute_message(&message, &mut state, &block_context).map_err(|e| {
-            log!(debug, "Transaction execution failed during simulation: {:?}", e);
-            PlaceHolderErrorTypeForFailedStarknetExecution
-        });
-
-        Ok(tx_execution_result)
->>>>>>> main
     }
 
     pub fn estimate_message_fee(
@@ -245,13 +233,8 @@ impl<T: Config> Pallet<T> {
 
         transactions_before.iter().try_for_each(|tx| {
             Self::execute_transaction(tx, &mut state, &block_context, &SimulationFlags::default()).map_err(|e| {
-<<<<<<< HEAD
                 log::error!("Failed to reexecute a tx: {}", e);
                 SimulationError::from(e)
-=======
-                log!(debug, "Failed to reexecute a tx: {}", e);
-                PlaceHolderErrorTypeForFailedStarknetExecution
->>>>>>> main
             })?;
             Ok::<(), SimulationError>(())
         })?;
@@ -268,25 +251,15 @@ impl<T: Config> Pallet<T> {
                     &SimulationFlags::default(),
                 )
                 .map_err(|e| {
-<<<<<<< HEAD
                     log::error!("Failed to reexecute a tx: {}", e);
                     SimulationError::from(e)
-=======
-                    log!(debug, "Failed to reexecute a tx: {}", e);
-                    PlaceHolderErrorTypeForFailedStarknetExecution
->>>>>>> main
                 });
 
                 let res = res
                     .map(|r| if with_state_diff { (r, Some(transactional_state.to_state_diff())) } else { (r, None) });
                 commit_transactional_state(transactional_state).map_err(|e| {
-<<<<<<< HEAD
                     log::error!("Failed to commit state changes: {:?}", e);
                     SimulationError::from(e)
-=======
-                    log!(debug, "Failed to commit state changes: {:?}", e);
-                    PlaceHolderErrorTypeForFailedStarknetExecution
->>>>>>> main
                 })?;
 
                 res
@@ -368,13 +341,8 @@ impl<T: Config> Pallet<T> {
         // Once the state diff of this tx is generated, we apply those changes on the original state
         // so that next txs being simulated are ontop of this one (avoid nonce error)
         commit_transactional_state(transactional_state).map_err(|e| {
-<<<<<<< HEAD
             log::error!("Failed to commit state changes: {:?}", e);
             SimulationError::from(e)
-=======
-            log!(error, "Failed to commit state changes: {:?}", e);
-            PlaceHolderErrorTypeForFailedStarknetExecution
->>>>>>> main
         })?;
 
         Ok((result, state_diff))
