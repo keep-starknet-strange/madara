@@ -10,6 +10,7 @@ use super::mock::new_test_ext;
 use crate::tests::utils::sign_message_hash;
 use crate::tests::{get_invoke_argent_dummy, get_invoke_dummy, get_storage_read_write_dummy};
 use crate::Error;
+use mp_simulations::SimulationFlags;
 
 #[test]
 fn estimates_tx_fee_successfully_no_validate() {

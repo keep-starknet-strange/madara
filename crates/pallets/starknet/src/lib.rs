@@ -51,8 +51,8 @@ pub mod transaction_validation;
 /// The Starknet pallet's runtime custom types.
 pub mod types;
 
-#[cfg(test)]
-mod tests;
+// the feature genesis-loader is required to setup the mock tests
+#[cfg(all(test, feature = "genesis-loader"))]
 
 use std::collections::BTreeSet;
 use std::ops::Deref;
