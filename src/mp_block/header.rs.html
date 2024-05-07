@@ -75,8 +75,10 @@
 <a href="#75" id="75">75</a>
 <a href="#76" id="76">76</a>
 <a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>blockifier::blockifier::block::GasPrices;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
+<span class="kw">use </span>mp_hashers::pedersen::PedersenHasher;
 <span class="kw">use </span>mp_hashers::HasherT;
 <span class="kw">use </span>sp_core::U256;
 <span class="kw">use </span>starknet_api::core::ContractAddress;
@@ -136,8 +138,8 @@
         }
     }
 
-    <span class="doccomment">/// Compute the hash of the header.
-    </span><span class="kw">pub fn </span>hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Felt252Wrapper {
+    <span class="doccomment">/// Compute the hash using the Pedersen hasher according to [the Starknet protocol specification](https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/header/#block_hash).  
+    </span><span class="kw">pub fn </span>hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Felt252Wrapper {
         <span class="kw">let </span>data: <span class="kw-2">&amp;</span>[Felt252Wrapper] = <span class="kw-2">&amp;</span>[
             <span class="self">self</span>.block_number.into(),
             <span class="self">self</span>.sequencer_address.<span class="number">0.0</span>.into(),
@@ -149,7 +151,7 @@
             <span class="self">self</span>.parent_block_hash.into(),
         ];
 
-        H::compute_hash_on_wrappers(data)
+        PedersenHasher::compute_hash_on_wrappers(data)
     }
 }
 </code></pre></div></section></main></body></html>

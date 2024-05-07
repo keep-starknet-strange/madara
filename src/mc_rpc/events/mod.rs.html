@@ -250,7 +250,7 @@
             StarknetRpcApiError::InternalServerError
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>block_hash = starknet_block.header().hash::&lt;H&gt;();
+        <span class="kw">let </span>block_hash = starknet_block.header().hash();
 
         <span class="kw">let </span><span class="kw-2">mut </span>emitted_events: Vec&lt;EmittedEvent&gt; = <span class="macro">vec!</span>[];
         <span class="kw">for </span>tx_hash <span class="kw">in </span>starknet_block.transactions_hashes() {

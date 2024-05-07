@@ -438,10 +438,6 @@
 <a href="#438" id="438">438</a>
 <a href="#439" id="439">439</a>
 <a href="#440" id="440">440</a>
-<a href="#441" id="441">441</a>
-<a href="#442" id="442">442</a>
-<a href="#443" id="443">443</a>
-<a href="#444" id="444">444</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don&#39;t support yet validity proofs and state updates to
@@ -497,7 +493,7 @@
 <span class="kw">use </span>sp_std::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>sp_version::RuntimeVersion;
 <span class="kw">use </span>starknet_api::core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
-<span class="kw">use </span>starknet_api::hash::{StarkFelt, StarkHash};
+<span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_api::state::StorageKey;
 <span class="kw">use </span>starknet_api::transaction::{Calldata, Event <span class="kw">as </span>StarknetEvent, MessageToL1, TransactionHash};
 <span class="doccomment">/// Import the types.
@@ -709,10 +705,6 @@
 
         <span class="kw">fn </span>program_hash() -&gt; Felt252Wrapper {
             Starknet::program_hash()
-        }
-
-        <span class="kw">fn </span>config_hash() -&gt; StarkHash {
-            Starknet::config_hash()
         }
 
         <span class="kw">fn </span>fee_token_addresses() -&gt; FeeTokenAddresses {

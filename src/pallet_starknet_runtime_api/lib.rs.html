@@ -97,8 +97,6 @@
 <a href="#97" id="97">97</a>
 <a href="#98" id="98">98</a>
 <a href="#99" id="99">99</a>
-<a href="#100" id="100">100</a>
-<a href="#101" id="101">101</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Definition of the runtime API for the Starknet pallet.
 
 </span><span class="comment">// Adding allow unused type parameters to avoid clippy errors
@@ -120,7 +118,7 @@
 <span class="kw">use </span>mp_simulations::{InternalSubstrateError, SimulationError, SimulationFlags, TransactionSimulationResult};
 <span class="kw">use </span>sp_api::BlockT;
 <span class="kw">use </span>starknet_api::core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
-<span class="kw">use </span>starknet_api::hash::{StarkFelt, StarkHash};
+<span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_api::state::StorageKey;
 <span class="kw">use </span>starknet_api::transaction::{Calldata, Event <span class="kw">as </span>StarknetEvent, MessageToL1, TransactionHash};
 
@@ -142,8 +140,6 @@
         </span><span class="kw">fn </span>chain_id() -&gt; Felt252Wrapper;
         <span class="doccomment">/// Returns the Starknet OS Cairo program hash.
         </span><span class="kw">fn </span>program_hash() -&gt; Felt252Wrapper;
-        <span class="doccomment">/// Returns the Starknet config hash.
-        </span><span class="kw">fn </span>config_hash() -&gt; StarkHash;
         <span class="doccomment">/// Returns the fee token address.
         </span><span class="kw">fn </span>fee_token_addresses() -&gt; FeeTokenAddresses;
         <span class="doccomment">/// Returns fee estimate

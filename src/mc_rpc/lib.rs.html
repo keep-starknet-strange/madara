@@ -1958,7 +1958,7 @@
             <span class="prelude-val">Ok</span>(block) =&gt; block,
             <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(StarknetRpcApiError::BlockNotFound),
         };
-        <span class="prelude-val">Ok</span>(starknet_block.header().hash::&lt;H&gt;().into())
+        <span class="prelude-val">Ok</span>(starknet_block.header().hash().into())
     }
 
     <span class="doccomment">/// Returns the substrate block hash corresponding to the given Starknet block id
@@ -2536,13 +2536,13 @@
                 <span class="kw">if </span>starting_block.is_ok() &amp;&amp; current_block.is_ok() &amp;&amp; highest_block.is_ok() {
                     <span class="comment">// Convert block numbers and hashes to the respective type required by the `syncing` endpoint.
                     </span><span class="kw">let </span>starting_block_num = UniqueSaturatedInto::&lt;u64&gt;::unique_saturated_into(<span class="self">self</span>.starting_block);
-                    <span class="kw">let </span>starting_block_hash = starting_block<span class="question-mark">?</span>.header().hash::&lt;H&gt;().<span class="number">0</span>;
+                    <span class="kw">let </span>starting_block_hash = starting_block<span class="question-mark">?</span>.header().hash().<span class="number">0</span>;
 
                     <span class="kw">let </span>current_block_num = UniqueSaturatedInto::&lt;u64&gt;::unique_saturated_into(best_number);
-                    <span class="kw">let </span>current_block_hash = current_block<span class="question-mark">?</span>.header().hash::&lt;H&gt;().<span class="number">0</span>;
+                    <span class="kw">let </span>current_block_hash = current_block<span class="question-mark">?</span>.header().hash().<span class="number">0</span>;
 
                     <span class="kw">let </span>highest_block_num = UniqueSaturatedInto::&lt;u64&gt;::unique_saturated_into(highest_number);
-                    <span class="kw">let </span>highest_block_hash = highest_block<span class="question-mark">?</span>.header().hash::&lt;H&gt;().<span class="number">0</span>;
+                    <span class="kw">let </span>highest_block_hash = highest_block<span class="question-mark">?</span>.header().hash().<span class="number">0</span>;
 
                     <span class="comment">// Build the `SyncStatus` struct with the respective syn information
                     </span><span class="prelude-val">Ok</span>(SyncStatusType::Syncing(SyncStatus {
@@ -2629,7 +2629,7 @@
 
         <span class="kw">let </span>starknet_block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)<span class="question-mark">?</span>;
         <span class="kw">let </span>starknet_version = starknet_block.header().protocol_version;
-        <span class="kw">let </span>block_hash = starknet_block.header().hash::&lt;H&gt;();
+        <span class="kw">let </span>block_hash = starknet_block.header().hash();
 
         <span class="kw">let </span>transaction_hashes =
             starknet_block.transactions_hashes().map(|txh| Felt252Wrapper::from(<span class="kw-2">*</span>txh).into()).collect();
@@ -2890,7 +2890,7 @@
 
         <span class="kw">let </span>starknet_block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>block_hash = starknet_block.header().hash::&lt;H&gt;();
+        <span class="kw">let </span>block_hash = starknet_block.header().hash();
         <span class="kw">let </span>starknet_version = starknet_block.header().protocol_version;
         <span class="kw">let </span>transactions = starknet_block.transactions().iter().map(|tx| to_starknet_core_tx(tx.clone())).collect();
 
@@ -2960,7 +2960,7 @@
             FieldElement::default()
         };
 
-        <span class="kw">let </span>starknet_block_hash = BlockHash(starknet_block.header().hash::&lt;H&gt;().into());
+        <span class="kw">let </span>starknet_block_hash = BlockHash(starknet_block.header().hash().into());
 
         <span class="kw">let </span>state_diff = <span class="self">self</span>.get_state_diff(<span class="kw-2">&amp;</span>starknet_block_hash).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;Failed to get state diff. Starknet block hash: {starknet_block_hash}, error: {e}&quot;</span>);
@@ -2968,7 +2968,7 @@
         })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>state_update = StateUpdate {
-            block_hash: starknet_block.header().hash::&lt;H&gt;().into(),
+            block_hash: starknet_block.header().hash().into(),
             new_root: Felt252Wrapper::from(<span class="self">self</span>.backend.temporary_global_state_root_getter()).into(),
             old_root,
             state_diff,
@@ -3173,7 +3173,7 @@
             transactions: transaction_hashes,
             <span class="comment">// TODO: fill real prices
             </span>l1_gas_price: ResourcePrice { price_in_fri: Default::default(), price_in_wei: Default::default() },
-            parent_hash: latest_block_header.hash::&lt;H&gt;().into(),
+            parent_hash: latest_block_header.hash().into(),
             sequencer_address: Felt252Wrapper::from(latest_block_header.sequencer_address).into(),
             starknet_version: latest_block_header.protocol_version.to_string(),
             timestamp: calculate_pending_block_timestamp(),
@@ -3194,7 +3194,7 @@
             transactions,
             <span class="comment">// TODO: fill real prices
             </span>l1_gas_price: ResourcePrice { price_in_fri: Default::default(), price_in_wei: Default::default() },
-            parent_hash: latest_block_header.hash::&lt;H&gt;().into(),
+            parent_hash: latest_block_header.hash().into(),
             sequencer_address: Felt252Wrapper::from(latest_block_header.sequencer_address).into(),
             starknet_version: latest_block_header.protocol_version.to_string(),
             timestamp: calculate_pending_block_timestamp(),
@@ -3226,7 +3226,7 @@
         <span class="kw">let </span>starknet_block: mp_block::Block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
             .map_err(|_e| StarknetRpcApiError::BlockNotFound)<span class="question-mark">?</span>;
         <span class="kw">let </span>block_header = starknet_block.header();
-        <span class="kw">let </span>block_hash = block_header.hash::&lt;H&gt;().into();
+        <span class="kw">let </span>block_hash = block_header.hash().into();
         <span class="kw">let </span>block_number = block_header.block_number;
 
         <span class="kw">let </span>transaction =
