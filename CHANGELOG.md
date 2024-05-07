@@ -3,6 +3,7 @@
 ## Next release
 
 - bug: fix contract serialisation
+- fix: starknet_call errs if contract nonexistent
 - fix: txn hash calculation and refactor
 - chore: remove all da/settlement related code
 - fix: re-execute txs instead of simulating for txn receipts
@@ -43,6 +44,7 @@
 - feat(runtime): moved StarkEvents from Substrate
 - feat(rpc/trace_api): add `trace_transaction`
 - fix(docker): fix dockerfile for `madara-node`
+- feat: Remove generic hasher from block hash computation
 
 ## v0.7.0
 

@@ -44,6 +44,8 @@ mp-felt = { workspace = true }
 mp-hashers = { workspace = true }
 mp-simulations = { workspace = true }
 mp-transactions = { workspace = true, features = ["client"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
 starknet-core = { workspace = true }
 starknet-ff = { workspace = true }
 starknet_api = { workspace = true }

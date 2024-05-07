@@ -1,16 +1,38 @@
+use blockifier::state::errors::StateError;
+use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
 use starknet_core::types::{SimulationFlag, SimulationFlagForEstimateFee};
 
-// TODO: This is a placeholder
-// https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json#L3919
-// The official rpc expect use to return the trace up to the point of failure.
-// Figuring out how to get that is a problem for later
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
-pub struct PlaceHolderErrorTypeForFailedStarknetExecution;
+pub enum SimulationError {
+    ContractNotFound,
+    TransactionExecutionFailed(String),
+    MissingL1GasUsage,
+    StateDiff,
+}
 
-pub type TransactionSimulationResult = Result<TransactionExecutionInfo, PlaceHolderErrorTypeForFailedStarknetExecution>;
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+pub enum InternalSubstrateError {
+    FailedToCreateATransactionalStorageExecution,
+}
+
+impl From<TransactionExecutionError> for SimulationError {
+    fn from(e: TransactionExecutionError) -> SimulationError {
+        SimulationError::TransactionExecutionFailed(e.to_string())
+    }
+}
+
+impl From<StateError> for SimulationError {
+    fn from(_e: StateError) -> SimulationError {
+        SimulationError::StateDiff
+    }
+}
+
+pub type TransactionSimulationResult = Result<TransactionExecutionInfo, SimulationError>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
