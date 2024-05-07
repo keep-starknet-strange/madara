@@ -19,7 +19,7 @@ use alloc::vec::Vec;
 use mp_simulations::{InternalSubstrateError, SimulationError, SimulationFlags, TransactionSimulationResult};
 use sp_api::BlockT;
 use starknet_api::core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
-use starknet_api::hash::{StarkFelt, StarkHash};
+use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Calldata, Event as StarknetEvent, MessageToL1, TransactionHash};
 
@@ -41,8 +41,6 @@ sp_api::decl_runtime_apis! {
         fn chain_id() -> Felt252Wrapper;
         /// Returns the Starknet OS Cairo program hash.
         fn program_hash() -> Felt252Wrapper;
-        /// Returns the Starknet config hash.
-        fn config_hash() -> StarkHash;
         /// Returns the fee token address.
         fn fee_token_addresses() -> FeeTokenAddresses;
         /// Returns fee estimate
