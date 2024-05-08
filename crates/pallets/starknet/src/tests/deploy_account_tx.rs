@@ -148,7 +148,6 @@ fn given_contract_run_deploy_account_tx_fails_wrong_tx_version() {
 
         let none_origin = RuntimeOrigin::none();
         let chain_id = Starknet::chain_id();
-
         let deploy_tx = get_deploy_account_dummy(
             chain_id,
             Nonce(StarkFelt::ZERO),
@@ -228,6 +227,7 @@ fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_
 
         set_signer(deploy_tx.contract_address, AccountType::V0(AccountTypeV0Inner::Openzeppelin));
 
+        // it should not be executable
         assert_err!(Starknet::deploy_account(none_origin, deploy_tx), Error::<MockRuntime>::TransactionExecutionFailed);
     });
 }

@@ -1,65 +1,63 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/node",
-    "crates/runtime",
-    "crates/pallets/starknet/runtime_api/",
-    "crates/pallets/starknet",
-    "crates/primitives/genesis-config/",
-    "crates/primitives/digest-log",
-    "crates/primitives/snos-output",
-    "crates/primitives/transactions",
-    "crates/primitives/felt",
-    "crates/primitives/hashers",
-    "crates/primitives/block",
-    "crates/primitives/starknet-inherent",
-    "crates/primitives/storage",
-    "crates/primitives/chain-id",
-    "crates/primitives/messages",
-    "crates/primitives/program-hash",
-    "crates/client/genesis-data-provider",
-    "crates/client/db",
-    "crates/client/rpc-core",
-    "crates/client/rpc",
-    "crates/client/mapping-sync",
-    "crates/client/storage",
-    "crates/client/commitment-state-diff",
-    "crates/client/settlement",
-    "crates/client/eth-client",
-    "starknet-rpc-test",
-    "da-test",
-    "starknet-e2e-test",
-    "madara-test-runner",
-    "starknet-test-utils",
+  "crates/node",
+  "crates/runtime",
+  "crates/pallets/starknet/runtime_api/",
+  "crates/pallets/starknet",
+  "crates/primitives/genesis-config/",
+  "crates/primitives/digest-log",
+  "crates/primitives/snos-output",
+  "crates/primitives/transactions",
+  "crates/primitives/felt",
+  "crates/primitives/hashers",
+  "crates/primitives/block",
+  "crates/primitives/starknet-inherent",
+  "crates/primitives/storage",
+  "crates/primitives/chain-id",
+  "crates/primitives/messages",
+  "crates/primitives/program-hash",
+  "crates/client/genesis-data-provider",
+  "crates/client/db",
+  "crates/client/rpc-core",
+  "crates/client/rpc",
+  "crates/client/mapping-sync",
+  "crates/client/storage",
+  "crates/client/commitment-state-diff",
+  "crates/client/eth-client",
+  "crates/client/starknet-block-import",
+  "starknet-rpc-test",
+  "madara-test-runner",
+  "starknet-test-utils",
 ]
-# All previous except for `starknet-rpc-test` and `starknet-e2e-test`
+# All previous except for `starknet-rpc-test`
 # We don't want `cargo test` to trigger its tests
 default-members = [
-    "crates/node",
-    "crates/runtime",
-    "crates/pallets/starknet/runtime_api/",
-    "crates/pallets/starknet",
-    "crates/primitives/genesis-config/",
-    "crates/primitives/digest-log",
-    "crates/primitives/transactions",
-    "crates/primitives/felt",
-    "crates/primitives/hashers",
-    "crates/primitives/block",
-    "crates/primitives/starknet-inherent",
-    "crates/primitives/storage",
-    "crates/primitives/chain-id",
-    "crates/primitives/messages",
-    "crates/primitives/program-hash",
-    "crates/client/genesis-data-provider",
-    "crates/client/db",
-    "crates/client/rpc-core",
-    "crates/client/rpc",
-    "crates/client/mapping-sync",
-    "crates/client/storage",
-    "crates/client/commitment-state-diff",
-    "crates/client/settlement",
-    "crates/client/eth-client",
-    "starknet-test-utils",
+  "crates/node",
+  "crates/runtime",
+  "crates/pallets/starknet/runtime_api/",
+  "crates/pallets/starknet",
+  "crates/primitives/genesis-config/",
+  "crates/primitives/digest-log",
+  "crates/primitives/transactions",
+  "crates/primitives/felt",
+  "crates/primitives/hashers",
+  "crates/primitives/block",
+  "crates/primitives/starknet-inherent",
+  "crates/primitives/storage",
+  "crates/primitives/chain-id",
+  "crates/primitives/messages",
+  "crates/primitives/program-hash",
+  "crates/client/genesis-data-provider",
+  "crates/client/db",
+  "crates/client/rpc-core",
+  "crates/client/rpc",
+  "crates/client/mapping-sync",
+  "crates/client/storage",
+  "crates/client/commitment-state-diff",
+  "crates/client/eth-client",
+  "crates/client/starknet-block-import",
+  "starknet-test-utils",
 ]
 
 [profile.release]
@@ -185,12 +183,11 @@ mc-db = { path = "crates/client/db" }
 mc-storage = { path = "crates/client/storage" }
 mc-rpc = { path = "crates/client/rpc" }
 mc-rpc-core = { path = "crates/client/rpc-core" }
-mc-data-availability = { path = "crates/client/data-availability" }
 mc-commitment-state-diff = { path = "crates/client/commitment-state-diff" }
 mc-l1-messages = { path = "crates/client/l1-messages" }
 mc-l1-gas-price = { path = "crates/client/l1-gas-price" }
-mc-settlement = { path = "crates/client/settlement" }
 mc-eth-client = { path = "crates/client/eth-client" }
+mc-starknet-block-import = { path = "crates/client/starknet-block-import" }
 
 # Madara runtime
 madara-runtime = { path = "crates/runtime" }

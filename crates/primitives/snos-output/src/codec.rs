@@ -14,7 +14,7 @@ use crate::StarknetOsOutput;
 ///     3. ABI encode parameters
 ///  
 /// NOTE: Field element (252 bit) is encoded as an EVM word (256 bit) and vice versa
-/// EVM developer should be aware of that and prevent data loss by not using the higest 4 bits
+/// EVM developer should be aware of that and prevent data loss by not using the highest 4 bits
 pub trait SnosCodec: Sized {
     /// Return an estimation of the number of field elements required to encode `self`
     ///

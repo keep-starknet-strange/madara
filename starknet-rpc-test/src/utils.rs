@@ -273,6 +273,7 @@ pub fn is_good_error_code(error: &ProviderError, code: i64) -> bool {
                 _ => panic!("wrong error type"),
             }
         }
+        ProviderError::StarknetError(_) => true,
         e => panic!("wrong error type: {e:?}"),
     }
 }

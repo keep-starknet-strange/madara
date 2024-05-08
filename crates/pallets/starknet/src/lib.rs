@@ -78,7 +78,6 @@ use mp_block::{Block as StarknetBlock, Header as StarknetHeader};
 use mp_chain_id::MADARA_CHAIN_ID;
 use mp_digest_log::MADARA_ENGINE_ID;
 use mp_felt::Felt252Wrapper;
-use mp_hashers::HasherT;
 use mp_starknet_inherent::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, STARKNET_INHERENT_IDENTIFIER};
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_transactions::execution::{
@@ -90,7 +89,7 @@ use sp_runtime::DigestItem;
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::core::{ChainId, ClassHash, CompiledClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::deprecated_contract_class::EntryPointType;
-use starknet_api::hash::{StarkFelt, StarkHash};
+use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{
     Calldata, Event as StarknetEvent, Fee, MessageToL1, TransactionHash, TransactionVersion,
@@ -130,8 +129,6 @@ pub mod pallet {
     /// mechanism and comply with starknet which uses an ER20 as fee token
     #[pallet::config]
     pub trait Config: frame_system::Config {
-        /// The hashing function to use.
-        type SystemHash: HasherT;
         /// The block time
         type TimestampProvider: Time;
         /// A configuration for base priority of unsigned transactions.
@@ -917,11 +914,12 @@ impl<T: Config> Pallet<T> {
         address: ContractAddress,
         function_selector: EntryPointSelector,
         calldata: Calldata,
-    ) -> Result<Vec<Felt252Wrapper>, DispatchError> {
+    ) -> Result<Vec<Felt252Wrapper>, mp_simulations::SimulationError> {
         // Get current block context
         let block_context = Self::get_block_context();
         // Get class hash
-        let class_hash = ContractClassHashes::<T>::try_get(address).map_err(|_| Error::<T>::ContractNotFound)?;
+        let class_hash = ContractClassHashes::<T>::try_get(address)
+            .map_err(|_| mp_simulations::SimulationError::ContractNotFound)?;
 
         let entrypoint = CallEntryPoint {
             class_hash: Some(ClassHash(class_hash)),
@@ -943,7 +941,7 @@ impl<T: Config> Pallet<T> {
             }),
             false,
         )
-        .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
+        .map_err(mp_simulations::SimulationError::from)?;
 
         match entrypoint.execute(
             &mut BlockifierStateAdapter::<T>::default(),
@@ -957,15 +955,21 @@ impl<T: Config> Pallet<T> {
             }
             Err(e) => {
                 log!(error, "failed to call smart contract {:?}", e);
-                Err(Error::<T>::TransactionExecutionFailed.into())
+                Err(mp_simulations::SimulationError::TransactionExecutionFailed(e.to_string()))
             }
         }
     }
 
     /// Get storage value at
-    pub fn get_storage_at(contract_address: ContractAddress, key: StorageKey) -> Result<StarkFelt, DispatchError> {
+    pub fn get_storage_at(
+        contract_address: ContractAddress,
+        key: StorageKey,
+    ) -> Result<StarkFelt, mp_simulations::SimulationError> {
         // Get state
-        ensure!(ContractClassHashes::<T>::contains_key(contract_address), Error::<T>::ContractNotFound);
+        ensure!(
+            ContractClassHashes::<T>::contains_key(contract_address),
+            mp_simulations::SimulationError::ContractNotFound
+        );
         Ok(Self::storage((contract_address, key)))
     }
 
@@ -1012,7 +1016,7 @@ impl<T: Config> Pallet<T> {
         // Safe because it could only failed if `transaction_count` does not match `transactions.len()`
         .unwrap();
         // Save the block number <> hash mapping.
-        let blockhash = block.header().hash::<T::SystemHash>();
+        let blockhash = block.header().hash();
         BlockHash::<T>::insert(block_number, blockhash);
 
         // Kill pending storage.
@@ -1141,15 +1145,6 @@ impl<T: Config> Pallet<T> {
 
     pub fn program_hash() -> Felt252Wrapper {
         T::ProgramHash::get()
-    }
-
-    pub fn config_hash() -> StarkHash {
-        Felt252Wrapper(T::SystemHash::compute_hash_on_elements(&[
-            FieldElement::from_byte_slice_be(SN_OS_CONFIG_HASH_VERSION.as_bytes()).unwrap(),
-            Self::chain_id().into(),
-            Felt252Wrapper::from(Self::fee_token_addresses().eth_fee_token_address.0.0).0,
-        ]))
-        .into()
     }
 
     pub fn is_transaction_fee_disabled() -> bool {

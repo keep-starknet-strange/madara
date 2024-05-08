@@ -1,5 +1,6 @@
 use blockifier::blockifier::block::GasPrices;
 use mp_felt::Felt252Wrapper;
+use mp_hashers::pedersen::PedersenHasher;
 use mp_hashers::HasherT;
 use sp_core::U256;
 use starknet_api::core::ContractAddress;
@@ -59,8 +60,8 @@ impl Header {
         }
     }
 
-    /// Compute the hash of the header.
-    pub fn hash<H: HasherT>(&self) -> Felt252Wrapper {
+    /// Compute the hash using the Pedersen hasher according to [the Starknet protocol specification](https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/header/#block_hash).  
+    pub fn hash(&self) -> Felt252Wrapper {
         let data: &[Felt252Wrapper] = &[
             self.block_number.into(),
             self.sequencer_address.0.0.into(),
@@ -72,6 +73,6 @@ impl Header {
             self.parent_block_hash.into(),
         ];
 
-        H::compute_hash_on_wrappers(data)
+        PedersenHasher::compute_hash_on_wrappers(data)
     }
 }

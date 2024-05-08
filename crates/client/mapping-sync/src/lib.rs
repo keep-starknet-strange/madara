@@ -123,7 +123,7 @@ where
         if fire {
             self.inner_delay = None;
 
-            match sync_blocks::sync_blocks::<_, _, _, H>(
+            match sync_blocks::sync_blocks::<_, _, _>(
                 self.client.as_ref(),
                 self.substrate_backend.as_ref(),
                 self.madara_backend.as_ref(),
