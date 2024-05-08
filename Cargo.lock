@@ -6229,7 +6229,7 @@ dependencies = [
  "blockifier",
  "parity-scale-codec",
  "scale-info",
- "sp-core 21.0.0 (git+https://github.com/massalabs/polkadot-sdk?branch=release-polkadot-v1.3.0-std)",
+ "sp-core",
  "sp-inherents",
  "thiserror",
 ]
