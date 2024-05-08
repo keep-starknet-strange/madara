@@ -348,7 +348,7 @@ pub fn new_full(
     // Channel for the rpc handler to communicate with the authorship task.
     let (command_sink, commands_stream) = match sealing {
         SealingMode::Manual => {
-            let (sender, receiver) = mpsc::chnnel(1000);
+            let (sender, receiver) = mpsc::channel(1000);
             (Some(sender), Some(receiver))
         }
         _ => (None, None),
