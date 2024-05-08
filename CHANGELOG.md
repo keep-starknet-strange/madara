@@ -2,6 +2,7 @@
 
 ## Next release
 
+- feat: support strk as fee token
 - fix: starknet_call errs if contract nonexistent
 - fix: txn hash calculation and refactor
 - chore: remove all da/settlement related code
