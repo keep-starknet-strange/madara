@@ -44,6 +44,7 @@
 - feat(rpc/trace_api): add `trace_transaction`
 - fix(docker): fix dockerfile for `madara-node`
 - feat: Remove generic hasher from block hash computation
+- dev: tx v3 tests
 
 ## v0.7.0
 
