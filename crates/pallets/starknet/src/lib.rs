@@ -513,6 +513,9 @@ pub mod pallet {
                 TransactionVersion::ZERO => {
                     run_non_revertible_transaction(&transaction, &mut state, &block_context, true, charge_fee)
                 }
+                TransactionVersion::THREE => {
+                    run_non_revertible_transaction(&transaction, &mut state, &block_context, true, charge_fee)
+                }
                 _ => run_revertible_transaction(&transaction, &mut state, &block_context, true, charge_fee),
             }
             .map_err(|e| {

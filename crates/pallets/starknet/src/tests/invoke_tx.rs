@@ -617,3 +617,40 @@ fn storage_changes_should_revert_on_transaction_revert() {
         assert_eq!(balance_value, vec![Felt252Wrapper::ZERO])
     })
 }
+
+#[test]
+fn given_hardcoded_contract_run_invoke_tx_v3_fails_sender_not_deployed() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let none_origin = RuntimeOrigin::none();
+
+        // Wrong address (not deployed)
+        let contract_address = ContractAddress(PatriciaKey(
+            StarkFelt::try_from("0x03e437FB56Bb213f5708Fcd6966502070e276c093ec271aA33433b89E21fd32f").unwrap(),
+        ));
+
+        let mut transaction = get_invoke_dummy(Starknet::chain_id(), NONCE_ZERO);
+        if let starknet_api::transaction::InvokeTransaction::V3(tx) = &mut transaction.tx {
+            tx.sender_address = contract_address;
+        };
+
+        assert_err!(Starknet::invoke(none_origin, transaction), Error::<MockRuntime>::AccountNotDeployed);
+    })
+}
+
+#[test]
+fn given_hardcoded_contract_run_invoke_tx_v3_on_argent_account_then_it_works() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+        let none_origin = RuntimeOrigin::none();
+
+        let chain_id = Starknet::chain_id();
+        let mut transaction = get_invoke_argent_dummy(chain_id);
+        if let starknet_api::transaction::InvokeTransaction::V3(tx) = &mut transaction.tx {
+            tx.signature = sign_message_hash(transaction.tx_hash);
+        };
+
+        assert_ok!(Starknet::invoke(none_origin, transaction));
+    });
+}
