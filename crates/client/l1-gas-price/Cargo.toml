@@ -13,3 +13,5 @@ repository = "https://github.com/keep-starknet-strange/madara"
 [dependencies]
 mc-eth-client = { workspace = true }
 ethers = { workspace = true }
+mp-starknet-inherent = { workspace = true }
+futures = { workspace = true }

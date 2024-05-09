@@ -10,6 +10,7 @@ use blockifier::blockifier::block::GasPrices;
 use futures::channel::mpsc;
 use futures::future;
 use futures::future::BoxFuture;
+use futures::lock::Mutex;
 use futures::prelude::*;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi, SealingMode, StarknetHasher};
@@ -318,6 +319,8 @@ pub fn new_full(config: Configuration, sealing: SealingMode) -> Result<TaskManag
         .for_each(|()| future::ready(())),
     );
 
+    let l1_gas_price = Arc::new(Mutex::new(L1GasPrices::default()));
+
     if role.is_authority() {
         // manual-seal authorship
         if !sealing.is_default() {
@@ -349,6 +352,14 @@ pub fn new_full(config: Configuration, sealing: SealingMode) -> Result<TaskManag
         );
 
         let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
+
+        task_manager.spawn_handle().spawn(
+            "l1-gas-prices-worker",
+            Some(MADARA_TASK_GROUP),
+            mc_l1_gas_price::worker::run_worker(l1_gas_price.clone()),
+        );
+
+        let l1_gas_price_ref = l1_gas_price.clone();
 
         let aura = sc_consensus_aura::start_aura::<AuraPair, _, _, _, _, _, _, _, _, _, _>(StartAuraParams {
             slot_duration,
@@ -382,7 +393,7 @@ pub fn new_full(config: Configuration, sealing: SealingMode) -> Result<TaskManag
 
                     let starknet_inherent = StarknetInherentDataProvider::new(StarknetInherentData {
                         sequencer_address,
-                        l1_gas_price: L1GasPrices::default(),
+                        l1_gas_price: l1_gas_price_ref.lock().await.clone(),
                     });
 
                     Ok((slot, timestamp, starknet_inherent))

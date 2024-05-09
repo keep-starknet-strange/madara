@@ -5752,7 +5752,9 @@ name = "mc-l1-gas-price"
 version = "0.1.0"
 dependencies = [
  "ethers",
+ "futures",
  "mc-eth-client",
+ "mp-starknet-inherent",
 ]
 
 [[package]]

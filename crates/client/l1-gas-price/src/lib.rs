@@ -1,3 +1,1 @@
-#![feature(integer_atomics)]
-
-mod worker;
+pub mod worker;
