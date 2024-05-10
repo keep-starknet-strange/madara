@@ -16,7 +16,7 @@ pub const DEFAULT_SEQUENCER_ADDRESS: [u8; 32] =
 /// The storage key for the sequencer address value.
 pub const SEQ_ADDR_STORAGE_KEY: &[u8] = b"starknet::seq_addr";
 
-#[derive(Clone, sp_core::RuntimeDebug)]
+#[derive(Clone, sp_core::RuntimeDebug, PartialEq, Eq)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 pub struct L1GasPrices {
@@ -55,8 +55,9 @@ impl From<L1GasPrices> for GasPrices {
 }
 
 /// Struct to hold all data for the Starknet inherent
-#[derive(Clone, sp_core::RuntimeDebug)]
+#[derive(Clone, sp_core::RuntimeDebug, PartialEq, Eq)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 pub struct StarknetInherentData {
     /// The sequencer address field.
     pub sequencer_address: [u8; 32],

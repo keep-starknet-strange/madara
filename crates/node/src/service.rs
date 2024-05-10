@@ -14,6 +14,7 @@ use futures::lock::Mutex;
 use futures::prelude::*;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi, SealingMode, StarknetHasher};
+use mc_eth_client::config::EthereumClientConfig;
 use mc_genesis_data_provider::OnDiskGenesisConfig;
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
@@ -38,6 +39,7 @@ use sp_api::ConstructRuntimeApi;
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_offchain::STORAGE_PREFIX;
 
+use crate::commands::SettlementLayer;
 use crate::genesis_block::MadaraGenesisBlockBuilder;
 use crate::import_queue::{
     build_aura_queue_grandpa_pipeline, build_manual_seal_queue_pipeline, BlockImportPipeline,
@@ -178,7 +180,11 @@ where
 /// # Arguments
 ///
 /// - `cache`: whether more information should be cached when storing the block in the database.
-pub fn new_full(config: Configuration, sealing: SealingMode) -> Result<TaskManager, ServiceError> {
+pub fn new_full(
+    config: Configuration,
+    sealing: SealingMode,
+    settlement_config: Option<(SettlementLayer, PathBuf)>,
+) -> Result<TaskManager, ServiceError> {
     let sc_service::PartialComponents {
         client,
         backend,
@@ -319,9 +325,27 @@ pub fn new_full(config: Configuration, sealing: SealingMode) -> Result<TaskManag
         .for_each(|()| future::ready(())),
     );
 
-    let l1_gas_price = Arc::new(Mutex::new(L1GasPrices::default()));
-
     if role.is_authority() {
+        // initialize settlement workers
+        if let Some((layer_kind, config_path)) = settlement_config {
+            // TODO: make L1 message handling part of the SettlementProvider, support multiple layer options
+            if layer_kind == SettlementLayer::Ethereum {
+                let ethereum_conf = EthereumClientConfig::from_json_file(&config_path)
+                    .map_err(|e| ServiceError::Other(e.to_string()))?;
+
+                task_manager.spawn_handle().spawn(
+                    "settlement-worker-sync-l1-messages",
+                    Some(MADARA_TASK_GROUP),
+                    mc_l1_messages::worker::run_worker(
+                        ethereum_conf,
+                        client.clone(),
+                        transaction_pool.clone(),
+                        madara_backend.clone(),
+                    ),
+                );
+            }
+        }
+
         // manual-seal authorship
         if !sealing.is_default() {
             log::info!("{} sealing enabled.", sealing);
@@ -353,13 +377,13 @@ pub fn new_full(config: Configuration, sealing: SealingMode) -> Result<TaskManag
 
         let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
 
-        task_manager.spawn_handle().spawn(
-            "l1-gas-prices-worker",
-            Some(MADARA_TASK_GROUP),
-            mc_l1_gas_price::worker::run_worker(l1_gas_price.clone()),
-        );
+        let l1_gas_price = Arc::new(Mutex::new(L1GasPrices::default()));
 
-        let l1_gas_price_ref = l1_gas_price.clone();
+        // task_manager.spawn_handle().spawn(
+        //     "l1-gas-prices-worker",
+        //     Some(MADARA_TASK_GROUP),
+        //     mc_l1_gas_price::worker::run_worker(l1_gas_price.clone()),
+        // );
 
         let aura = sc_consensus_aura::start_aura::<AuraPair, _, _, _, _, _, _, _, _, _, _>(StartAuraParams {
             slot_duration,
@@ -369,6 +393,7 @@ pub fn new_full(config: Configuration, sealing: SealingMode) -> Result<TaskManag
             proposer_factory,
             create_inherent_data_providers: move |_, ()| {
                 let offchain_storage = backend.offchain_storage();
+                let l1_gas_price = l1_gas_price.clone();
                 async move {
                     let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 
@@ -393,7 +418,7 @@ pub fn new_full(config: Configuration, sealing: SealingMode) -> Result<TaskManag
 
                     let starknet_inherent = StarknetInherentDataProvider::new(StarknetInherentData {
                         sequencer_address,
-                        l1_gas_price: l1_gas_price_ref.lock().await.clone(),
+                        l1_gas_price: l1_gas_price.lock().await.clone(),
                     });
 
                     Ok((slot, timestamp, starknet_inherent))

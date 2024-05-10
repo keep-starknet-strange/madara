@@ -15,3 +15,7 @@ mc-eth-client = { workspace = true }
 ethers = { workspace = true }
 mp-starknet-inherent = { workspace = true }
 futures = { workspace = true }
+log = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+reqwest = { workspace = true }

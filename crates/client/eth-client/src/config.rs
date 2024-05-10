@@ -100,6 +100,14 @@ impl Default for EthereumProviderConfig {
     }
 }
 
+impl EthereumProviderConfig {
+    pub fn rpc_endpoint(&self) -> &String {
+        match self {
+            Self::Http(config) => &config.rpc_endpoint,
+        }
+    }
+}
+
 impl Default for LocalWalletConfig {
     fn default() -> Self {
         Self { chain_id: default_chain_id(), private_key: default_private_key() }

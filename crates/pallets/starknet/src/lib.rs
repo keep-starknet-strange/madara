@@ -464,7 +464,7 @@ pub mod pallet {
         /// The dispatch origin for this call must be `Inherent`.
         #[pallet::call_index(0)]
         #[pallet::weight((0, DispatchClass::Mandatory))]
-        pub fn set_starknet_inherent_data(origin: OriginFor<T>, addr: [u8; 32]) -> DispatchResult {
+        pub fn set_starknet_inherent_data(origin: OriginFor<T>, data: InherentType) -> DispatchResult {
             ensure_none(origin)?;
             // The `SeqAddrUpdate` storage item is initialized to `true` in the genesis build. In
             // block 1 we skip the storage update check, and the `on_finalize` hook
@@ -474,9 +474,10 @@ pub mod pallet {
                 assert!(!InherentUpdate::<T>::exists(), "Inherent data can be updated only once in the block");
             }
 
-            let addr = StarkFelt::new(addr).map_err(|_| Error::<T>::SequencerAddressNotValid)?;
+            let addr = StarkFelt::new(data.sequencer_address).map_err(|_| Error::<T>::SequencerAddressNotValid)?;
             let addr = ContractAddress(addr.try_into().map_err(|_| Error::<T>::SequencerAddressNotValid)?);
             SequencerAddress::<T>::put(addr);
+            CurrentL1GasPrice::<T>::put(data.l1_gas_price);
 
             InherentUpdate::<T>::put(true);
             Ok(())
@@ -708,7 +709,7 @@ pub mod pallet {
                 .get_data::<InherentType>(&STARKNET_INHERENT_IDENTIFIER)
                 .expect("Starknet inherent data not correctly encoded")
                 .expect("Starknet inherent data must not be None");
-            Some(Call::set_starknet_inherent_data { addr: inherent_data.sequencer_address })
+            Some(Call::set_starknet_inherent_data { data: inherent_data })
         }
 
         fn is_inherent(call: &Self::Call) -> bool {

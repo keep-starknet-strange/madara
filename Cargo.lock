@@ -5753,8 +5753,12 @@ version = "0.1.0"
 dependencies = [
  "ethers",
  "futures",
+ "log",
  "mc-eth-client",
  "mp-starknet-inherent",
+ "reqwest",
+ "serde",
+ "tokio",
 ]
 
 [[package]]
