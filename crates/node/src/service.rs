@@ -326,22 +326,39 @@ pub fn new_full(
     );
 
     if role.is_authority() {
+        let l1_gas_price = Arc::new(Mutex::new(L1GasPrices::default()));
+
         // initialize settlement workers
         if let Some((layer_kind, config_path)) = settlement_config {
             // TODO: make L1 message handling part of the SettlementProvider, support multiple layer options
             if layer_kind == SettlementLayer::Ethereum {
-                let ethereum_conf = EthereumClientConfig::from_json_file(&config_path)
-                    .map_err(|e| ServiceError::Other(e.to_string()))?;
+                let ethereum_conf = Arc::new(
+                    EthereumClientConfig::from_json_file(&config_path)
+                        .map_err(|e| ServiceError::Other(e.to_string()))?,
+                );
 
                 task_manager.spawn_handle().spawn(
                     "settlement-worker-sync-l1-messages",
                     Some(MADARA_TASK_GROUP),
                     mc_l1_messages::worker::run_worker(
-                        ethereum_conf,
+                        ethereum_conf.clone(),
                         client.clone(),
                         transaction_pool.clone(),
                         madara_backend.clone(),
                     ),
+                );
+
+                // Ensuring we've fetched the latest price before we start the node
+                futures::executor::block_on(mc_l1_gas_price::worker::run_worker(
+                    ethereum_conf.clone(),
+                    l1_gas_price.clone(),
+                    false,
+                ));
+
+                task_manager.spawn_handle().spawn(
+                    "l1-gas-prices-worker",
+                    Some(MADARA_TASK_GROUP),
+                    mc_l1_gas_price::worker::run_worker(ethereum_conf.clone(), l1_gas_price.clone(), true),
                 );
             }
         }
@@ -376,14 +393,6 @@ pub fn new_full(
         );
 
         let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
-
-        let l1_gas_price = Arc::new(Mutex::new(L1GasPrices::default()));
-
-        // task_manager.spawn_handle().spawn(
-        //     "l1-gas-prices-worker",
-        //     Some(MADARA_TASK_GROUP),
-        //     mc_l1_gas_price::worker::run_worker(l1_gas_price.clone()),
-        // );
 
         let aura = sc_consensus_aura::start_aura::<AuraPair, _, _, _, _, _, _, _, _, _, _>(StartAuraParams {
             slot_duration,

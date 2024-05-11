@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-// Took this code from alloy-rs. This type can be removed once we've
+// Took this code from alloy-rs and did some modifications. This type can be removed once we've
 // migrated to alloy-rs from ethers-rs.
 // FIXME: 1528
 
@@ -17,7 +17,7 @@ pub struct FeeHistory {
     ///
     /// Empty list is skipped only for compatibility with Erigon and Geth.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub base_fee_per_gas: Vec<u128>,
+    pub base_fee_per_gas: Vec<String>,
     /// An array of block gas used ratios. These are calculated as the ratio
     /// of `gasUsed` and `gasLimit`.
     ///
@@ -35,9 +35,16 @@ pub struct FeeHistory {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub blob_gas_used_ratio: Vec<f64>,
     /// Lowest number block of the returned range.
-    pub oldest_block: u64,
+    pub oldest_block: String,
     /// An (optional) array of effective priority fee per gas data points from a single
     /// block. All zeroes are returned if the block is empty.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reward: Option<Vec<Vec<u128>>>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct EthRpcResponse<T> {
+    pub jsonrpc: String,
+    pub id: u64,
+    pub result: T,
 }

@@ -1,63 +1,63 @@
 [workspace]
 resolver = "2"
 members = [
-  "crates/node",
-  "crates/runtime",
-  "crates/pallets/starknet/runtime_api/",
-  "crates/pallets/starknet",
-  "crates/primitives/genesis-config/",
-  "crates/primitives/digest-log",
-  "crates/primitives/snos-output",
-  "crates/primitives/transactions",
-  "crates/primitives/felt",
-  "crates/primitives/hashers",
-  "crates/primitives/block",
-  "crates/primitives/starknet-inherent",
-  "crates/primitives/storage",
-  "crates/primitives/chain-id",
-  "crates/primitives/messages",
-  "crates/primitives/program-hash",
-  "crates/client/genesis-data-provider",
-  "crates/client/db",
-  "crates/client/rpc-core",
-  "crates/client/rpc",
-  "crates/client/mapping-sync",
-  "crates/client/storage",
-  "crates/client/commitment-state-diff",
-  "crates/client/eth-client",
-  "crates/client/starknet-block-import",
-  "starknet-rpc-test",
-  "madara-test-runner",
-  "starknet-test-utils",
+    "crates/node",
+    "crates/runtime",
+    "crates/pallets/starknet/runtime_api/",
+    "crates/pallets/starknet",
+    "crates/primitives/genesis-config/",
+    "crates/primitives/digest-log",
+    "crates/primitives/snos-output",
+    "crates/primitives/transactions",
+    "crates/primitives/felt",
+    "crates/primitives/hashers",
+    "crates/primitives/block",
+    "crates/primitives/starknet-inherent",
+    "crates/primitives/storage",
+    "crates/primitives/chain-id",
+    "crates/primitives/messages",
+    "crates/primitives/program-hash",
+    "crates/client/genesis-data-provider",
+    "crates/client/db",
+    "crates/client/rpc-core",
+    "crates/client/rpc",
+    "crates/client/mapping-sync",
+    "crates/client/storage",
+    "crates/client/commitment-state-diff",
+    "crates/client/eth-client",
+    "crates/client/starknet-block-import",
+    "starknet-rpc-test",
+    "madara-test-runner",
+    "starknet-test-utils",
 ]
 # All previous except for `starknet-rpc-test`
 # We don't want `cargo test` to trigger its tests
 default-members = [
-  "crates/node",
-  "crates/runtime",
-  "crates/pallets/starknet/runtime_api/",
-  "crates/pallets/starknet",
-  "crates/primitives/genesis-config/",
-  "crates/primitives/digest-log",
-  "crates/primitives/transactions",
-  "crates/primitives/felt",
-  "crates/primitives/hashers",
-  "crates/primitives/block",
-  "crates/primitives/starknet-inherent",
-  "crates/primitives/storage",
-  "crates/primitives/chain-id",
-  "crates/primitives/messages",
-  "crates/primitives/program-hash",
-  "crates/client/genesis-data-provider",
-  "crates/client/db",
-  "crates/client/rpc-core",
-  "crates/client/rpc",
-  "crates/client/mapping-sync",
-  "crates/client/storage",
-  "crates/client/commitment-state-diff",
-  "crates/client/eth-client",
-  "crates/client/starknet-block-import",
-  "starknet-test-utils",
+    "crates/node",
+    "crates/runtime",
+    "crates/pallets/starknet/runtime_api/",
+    "crates/pallets/starknet",
+    "crates/primitives/genesis-config/",
+    "crates/primitives/digest-log",
+    "crates/primitives/transactions",
+    "crates/primitives/felt",
+    "crates/primitives/hashers",
+    "crates/primitives/block",
+    "crates/primitives/starknet-inherent",
+    "crates/primitives/storage",
+    "crates/primitives/chain-id",
+    "crates/primitives/messages",
+    "crates/primitives/program-hash",
+    "crates/client/genesis-data-provider",
+    "crates/client/db",
+    "crates/client/rpc-core",
+    "crates/client/rpc",
+    "crates/client/mapping-sync",
+    "crates/client/storage",
+    "crates/client/commitment-state-diff",
+    "crates/client/eth-client",
+    "crates/client/starknet-block-import",
+    "starknet-test-utils",
 ]
 
 [profile.release]
@@ -226,15 +226,7 @@ ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "f0e5b194f09c533f
 ethers-solc = { git = "https://github.com/gakonst/ethers-rs", rev = "f0e5b194f09c533feb10d1a686ddb9e5946ec107" }
 
 # Zaun
-ethereum-instance = { git = "https://github.com/keep-starknet-strange/zaun", package = "ethereum-instance", branch = "main" }
-starkgate-manager-client = { git = "https://github.com/keep-starknet-strange/zaun", package = "starkgate-manager-client", branch = "main" }
-starkgate-registry-client = { git = "https://github.com/keep-starknet-strange/zaun", package = "starkgate-registry-client", branch = "main" }
 starknet-core-contract-client = { git = "https://github.com/keep-starknet-strange/zaun", package = "starknet-core-contract-client", branch = "main" }
-starknet-erc20-client = { git = "https://github.com/keep-starknet-strange/zaun", package = "starknet-erc20-client", branch = "main" }
-starknet-eth-bridge-client = { git = "https://github.com/keep-starknet-strange/zaun", package = "starknet-eth-bridge-client", branch = "main" }
-starknet-proxy-client = { git = "https://github.com/keep-starknet-strange/zaun", package = "starknet-proxy-client", branch = "main" }
-starknet-token-bridge-client = { git = "https://github.com/keep-starknet-strange/zaun", package = "starknet-token-bridge-client", branch = "main" }
-zaun-utils = { git = "https://github.com/keep-starknet-strange/zaun", package = "utils", branch = "main" }
 
 
 # Other third party dependencies
