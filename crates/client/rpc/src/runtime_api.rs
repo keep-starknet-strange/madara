@@ -1,5 +1,5 @@
 use blockifier::transaction::account_transaction::AccountTransaction;
-use blockifier::transaction::objects::{FeeType, TransactionExecutionInfo};
+use blockifier::transaction::objects::TransactionExecutionInfo;
 use blockifier::transaction::transaction_execution::Transaction;
 use blockifier::transaction::transactions::L1HandlerTransaction;
 use log::error;
@@ -19,7 +19,7 @@ use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
 use starknet_api::core::{ContractAddress, EntryPointSelector};
 use starknet_api::transaction::{Calldata, Event, TransactionHash};
-use starknet_core::types::{FeeEstimate, PriceUnit};
+use starknet_core::types::FeeEstimate;
 
 use crate::{Starknet, StarknetRpcApiError};
 

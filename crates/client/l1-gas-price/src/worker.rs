@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+
 use std::num::NonZeroU128;
-use std::ops::{DerefMut, Mul};
+
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -8,7 +8,7 @@ use anyhow::{format_err, Error, Result};
 use ethers::prelude::{Http, Middleware, Provider};
 use ethers::utils::__serde_json::json;
 use futures::lock::Mutex;
-use futures::stream::iter;
+
 use mc_eth_client::config::EthereumClientConfig;
 use mp_starknet_inherent::L1GasPrices;
 use tokio::time::sleep;

@@ -18,8 +18,6 @@ macro_rules! mock_runtime {
             use mp_felt::Felt252Wrapper;
 			use starknet_api::core::{PatriciaKey, ContractAddress};
 			use starknet_api::hash::StarkFelt;
-			use blockifier::blockifier::block::GasPrices;
-			use core::num::NonZeroU128;
 
 
 			type Block = frame_system::mocking::MockBlock<MockRuntime>;

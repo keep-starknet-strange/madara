@@ -1,12 +1,10 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 use std::cell::RefCell;
-use std::num::NonZeroU128;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
-use blockifier::blockifier::block::GasPrices;
 use futures::channel::mpsc;
 use futures::future;
 use futures::future::BoxFuture;

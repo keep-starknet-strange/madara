@@ -14,7 +14,7 @@ use super::mock::default_mock::*;
 use super::mock::*;
 use crate::tests::constants::FEE_TOKEN_ADDRESS;
 use crate::tests::get_invoke_dummy;
-use crate::{Config, InherentUpdate, SequencerAddress};
+use crate::{InherentUpdate, SequencerAddress};
 
 #[test]
 fn store_block_no_pending_transactions_works() {

@@ -57,7 +57,7 @@ mod tests;
 use std::collections::BTreeSet;
 use std::str::from_utf8_unchecked;
 
-use blockifier::blockifier::block::{BlockInfo, GasPrices};
+use blockifier::blockifier::block::BlockInfo;
 use blockifier::context::{BlockContext, ChainInfo, FeeTokenAddresses, TransactionContext};
 use blockifier::execution::call_info::CallInfo;
 use blockifier::execution::contract_class::ContractClass;
@@ -78,7 +78,7 @@ use mp_block::{Block as StarknetBlock, Header as StarknetHeader};
 use mp_chain_id::MADARA_CHAIN_ID;
 use mp_digest_log::MADARA_ENGINE_ID;
 use mp_felt::Felt252Wrapper;
-use mp_starknet_inherent::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, STARKNET_INHERENT_IDENTIFIER};
+use mp_starknet_inherent::{InherentError, InherentType, STARKNET_INHERENT_IDENTIFIER};
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_transactions::execution::{
     execute_l1_handler_transaction, run_non_revertible_transaction, run_revertible_transaction,
@@ -117,7 +117,7 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
-    use mp_starknet_inherent::{L1GasPrices, StarknetInherentData};
+    use mp_starknet_inherent::L1GasPrices;
 
     use super::*;
 
@@ -708,7 +708,12 @@ pub mod pallet {
             let inherent_data = data
                 .get_data::<InherentType>(&STARKNET_INHERENT_IDENTIFIER)
                 .expect("Starknet inherent data not correctly encoded")
-                .expect("Starknet inherent data must not be None");
+                // if we run in manual sealing, then it goes into the default case
+                // it's usually used in test cases.
+                .unwrap_or(InherentType::default());
+
+            // TODO: should we have a safety check here that the L1 gas price isn't
+            // very old? We've this check in the l1-gas-prices worker already.
             Some(Call::set_starknet_inherent_data { data: inherent_data })
         }
 

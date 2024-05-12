@@ -2,7 +2,6 @@
 use std::num::NonZeroU128;
 
 use blockifier::blockifier::block::GasPrices;
-use parity_scale_codec::{Decode, Encode};
 use sp_inherents::{InherentData, InherentIdentifier, IsFatalError};
 use thiserror::Error;
 
@@ -30,10 +29,10 @@ pub struct L1GasPrices {
 impl Default for L1GasPrices {
     fn default() -> Self {
         L1GasPrices {
-            eth_l1_gas_price: NonZeroU128::new(1).unwrap(),
-            strk_l1_gas_price: NonZeroU128::new(1).unwrap(),
-            eth_l1_data_gas_price: NonZeroU128::new(1).unwrap(),
-            strk_l1_data_gas_price: NonZeroU128::new(1).unwrap(),
+            eth_l1_gas_price: NonZeroU128::new(10).unwrap(),
+            strk_l1_gas_price: NonZeroU128::new(10).unwrap(),
+            eth_l1_data_gas_price: NonZeroU128::new(10).unwrap(),
+            strk_l1_data_gas_price: NonZeroU128::new(10).unwrap(),
             last_update_timestamp: Default::default(),
         }
     }
@@ -67,6 +66,12 @@ pub struct StarknetInherentData {
     pub l1_gas_price: L1GasPrices,
 }
 
+impl Default for StarknetInherentData {
+    fn default() -> Self {
+        StarknetInherentData { sequencer_address: DEFAULT_SEQUENCER_ADDRESS, l1_gas_price: Default::default() }
+    }
+}
+
 /// The inherent type for the sequencer address.
 pub type InherentType = StarknetInherentData;
 
@@ -89,7 +94,7 @@ impl IsFatalError for InherentError {
 
 #[cfg(feature = "client")]
 mod reexport_for_client_only {
-    use std::array::TryFromSliceError;
+
     use std::boxed::Box;
 
     use parity_scale_codec::{Decode, Encode};

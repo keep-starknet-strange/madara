@@ -15,13 +15,11 @@ use mp_transactions::execution::{
     commit_transactional_state, execute_l1_handler_transaction, run_non_revertible_transaction,
     run_revertible_transaction, CheckFeeBounds, MutRefState, SetArbitraryNonce,
 };
-use sp_core::Get;
 use sp_runtime::DispatchError;
 use starknet_api::transaction::TransactionVersion;
-use starknet_core::types::PriceUnit;
 
 use crate::blockifier_state_adapter::BlockifierStateAdapter;
-use crate::{log, Config, Error, Pallet};
+use crate::{log, Config, Pallet};
 
 type ReExecutionResult = Result<Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>, SimulationError>;
 
@@ -215,13 +213,13 @@ impl<T: Config> Pallet<T> {
         }?;
 
         let current_l1_gas_price: GasPrices = Self::current_l1_gas_prices().into();
-        Ok(Self::from_tx_info_and_gas_price(
+        Self::from_tx_info_and_gas_price(
             &mut tx_execution_info,
             &current_l1_gas_price,
             fee_type,
             None,
             &Self::get_block_context(),
-        )?)
+        )
     }
 
     pub fn re_execute_transactions(
@@ -255,7 +253,8 @@ impl<T: Config> Pallet<T> {
             Ok::<(), SimulationError>(())
         })?;
 
-        let simulation_flags = SimulationFlags { charge_fee: !Self::is_transaction_fee_disabled(), ..Default::default() };
+        let simulation_flags =
+            SimulationFlags { charge_fee: !Self::is_transaction_fee_disabled(), ..Default::default() };
         let execution_infos = transactions_to_trace
             .iter()
             .map(|tx| {
@@ -415,13 +414,6 @@ impl<T: Config> Pallet<T> {
         let overall_fee =
             gas_consumed.saturating_mul(gas_price).saturating_add(data_gas_consumed.saturating_mul(data_gas_price));
 
-        Ok(FeeEstimate {
-            gas_consumed: gas_consumed.into(),
-            gas_price: gas_price.into(),
-            data_gas_consumed: data_gas_consumed.into(),
-            data_gas_price: data_gas_price.into(),
-            overall_fee: overall_fee.into(),
-            fee_type,
-        })
+        Ok(FeeEstimate { gas_consumed, gas_price, data_gas_consumed, data_gas_price, overall_fee, fee_type })
     }
 }
