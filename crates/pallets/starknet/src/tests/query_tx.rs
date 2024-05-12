@@ -26,13 +26,13 @@ fn estimates_tx_fee_successfully_no_validate() {
 
         let fees = Starknet::estimate_fee(txs, &Default::default()).expect("estimate should not fail").unwrap();
 
-        let (actual, l1_gas_usage) = fees[0];
-        assert!(actual > 0, "actual fee is missing");
-        assert!(l1_gas_usage == 0, "using blobstream we shouldn't pay l1 fee");
+        let fee_estimate = fees.get(0).unwrap();
+        assert!(fee_estimate.overall_fee > 0, "actual fee is missing");
+        assert!(fee_estimate.gas_price == 10, "gas price is the default value");
 
-        let (actual, l1_gas_usage) = fees[1];
-        assert!(actual > 0, "actual fee is missing");
-        assert!(l1_gas_usage == 0, "using blobstream we shouldn't pay l1 fee");
+        let fee_estimate = fees.get(1).unwrap();
+        assert!(fee_estimate.overall_fee > 0, "actual fee is missing");
+        assert!(fee_estimate.gas_price == 10, "gas price is the default value");
     });
 }
 

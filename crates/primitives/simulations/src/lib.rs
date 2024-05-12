@@ -94,6 +94,7 @@ impl core::default::Default for SimulationFlags {
 }
 
 // We can use `FeeEstimate` from starknet-rs once we upgrade to 0.13.1
+#[derive(Debug)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
 pub struct FeeEstimate {

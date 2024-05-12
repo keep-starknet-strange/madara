@@ -2,6 +2,7 @@
 
 ## Next release
 
+- feat: actual estimate_fee added, brought back l1 messages
 - fix: starknet_call errs if contract nonexistent
 - fix: txn hash calculation and refactor
 - chore: remove all da/settlement related code

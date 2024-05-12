@@ -883,7 +883,7 @@ dependencies = [
 [[package]]
 name = "blockifier"
 version = "0.5.0-rc.3"
-source = "git+https://github.com/apoorvsadana/blockifier?branch=scale_code_fee_type#89608b81e0224245166f046fd37b00cf94f31eab"
+source = "git+https://github.com/apoorvsadana/blockifier?branch=scale_code_fee_type#49c7657014d15a34f950c2290f3868b04b8e3212"
 dependencies = [
  "anyhow",
  "ark-ec",
@@ -11927,7 +11927,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.7",
- "rand 0.8.5",
+ "rand 0.7.3",
  "static_assertions",
 ]
 

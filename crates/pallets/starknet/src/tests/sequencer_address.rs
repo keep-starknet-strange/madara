@@ -1,6 +1,6 @@
 use frame_support::assert_ok;
 use frame_support::traits::Hooks;
-use mp_starknet_inherent::{DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY};
+use mp_starknet_inherent::{L1GasPrices, StarknetInherentData, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY};
 use starknet_api::core::{ContractAddress, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 
@@ -59,7 +59,7 @@ fn sequencer_address_is_set_only_once_per_block() {
     let mut ext = new_test_ext::<MockRuntime>();
     ext.execute_with(|| {
         basic_test_setup(0);
-        assert!(!Starknet::seq_addr_update());
+        assert!(!Starknet::inherent_update());
         sp_io::offchain_index::set(SEQ_ADDR_STORAGE_KEY, &GOOD_SEQUENCER_ADDRESS);
         assert_eq!(
             Starknet::sequencer_address(),
@@ -87,7 +87,7 @@ fn sequencer_address_has_not_been_updated() {
             ContractAddress(PatriciaKey(StarkFelt::new(GOOD_SEQUENCER_ADDRESS).unwrap())),
         );
         run_to_block(1);
-        assert!(!Starknet::seq_addr_update());
+        assert!(!Starknet::inherent_update());
     });
 }
 
@@ -96,9 +96,9 @@ fn on_finalize_hook_takes_storage_update() {
     let mut ext = new_test_ext::<MockRuntime>();
     ext.execute_with(|| {
         System::set_block_number(1);
-        assert!(Starknet::seq_addr_update());
+        assert!(Starknet::inherent_update());
         Starknet::on_finalize(1);
-        assert!(!Starknet::seq_addr_update());
+        assert!(!Starknet::inherent_update());
     });
 }
 
@@ -109,12 +109,15 @@ fn inherent_updates_storage() {
         let none_origin = RuntimeOrigin::none();
 
         System::set_block_number(0);
-        assert!(Starknet::seq_addr_update());
+        assert!(Starknet::inherent_update());
         Starknet::on_finalize(0);
-        assert!(!Starknet::seq_addr_update());
+        assert!(!Starknet::inherent_update());
 
         System::set_block_number(1);
-        assert_ok!(Starknet::set_starknet_inherent_data(none_origin, DEFAULT_SEQUENCER_ADDRESS));
-        assert!(Starknet::seq_addr_update());
+        assert_ok!(Starknet::set_starknet_inherent_data(
+            none_origin,
+            StarknetInherentData { sequencer_address: GOOD_SEQUENCER_ADDRESS, l1_gas_price: L1GasPrices::default() }
+        ));
+        assert!(Starknet::inherent_update());
     });
 }

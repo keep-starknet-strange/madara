@@ -304,7 +304,7 @@ pub mod pallet {
     /// Ensure the sequencer address was updated for this block.
     #[pallet::storage]
     #[pallet::unbounded]
-    #[pallet::getter(fn seq_addr_update)]
+    #[pallet::getter(fn inherent_update)]
     pub type InherentUpdate<T: Config> = StorageValue<_, bool, ValueQuery>;
 
     /// Information about processed L1 Messages
