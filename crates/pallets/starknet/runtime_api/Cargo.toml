@@ -9,10 +9,13 @@ edition = "2021"
 # Madara primitives
 mp-felt = { workspace = true, features = ["parity-scale-codec", "serde"] }
 mp-simulations = { workspace = true, features = [
-    "parity-scale-codec",
-    "scale-info",
+  "parity-scale-codec",
+  "scale-info",
 ] }
-mp-starknet-inherent = { workspace = true, features = ["parity-scale-codec", "scale-info"] }
+mp-starknet-inherent = { workspace = true, features = [
+  "parity-scale-codec",
+  "scale-info",
+] }
 
 # Starknet
 blockifier = { workspace = true }

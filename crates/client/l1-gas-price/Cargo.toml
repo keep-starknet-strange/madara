@@ -11,12 +11,12 @@ repository = "https://github.com/keep-starknet-strange/madara"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-mc-eth-client = { workspace = true }
+anyhow = { workspace = true }
 ethers = { workspace = true }
-mp-starknet-inherent = { workspace = true }
 futures = { workspace = true }
 log = { workspace = true }
-tokio = { workspace = true }
-serde = { workspace = true }
+mc-eth-client = { workspace = true }
+mp-starknet-inherent = { workspace = true }
 reqwest = { workspace = true }
-anyhow = { workspace = true }
+serde = { workspace = true }
+tokio = { workspace = true }
