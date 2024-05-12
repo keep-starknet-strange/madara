@@ -1,7 +1,7 @@
 use blockifier::state::errors::StateError;
-use blockifier::transaction::errors::TransactionExecutionError;
-use blockifier::transaction::objects::TransactionExecutionInfo;
-use starknet_core::types::{SimulationFlag, SimulationFlagForEstimateFee};
+use blockifier::transaction::errors::{TransactionExecutionError, TransactionFeeError};
+use blockifier::transaction::objects::{FeeType, TransactionExecutionInfo};
+use starknet_core::types::{PriceUnit, SimulationFlag, SimulationFlagForEstimateFee};
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
@@ -11,6 +11,7 @@ pub enum SimulationError {
     TransactionExecutionFailed(String),
     MissingL1GasUsage,
     StateDiff,
+    EstimateFeeFailed(String),
 }
 
 #[derive(Debug, Clone)]
@@ -23,6 +24,12 @@ pub enum InternalSubstrateError {
 impl From<TransactionExecutionError> for SimulationError {
     fn from(e: TransactionExecutionError) -> SimulationError {
         SimulationError::TransactionExecutionFailed(e.to_string())
+    }
+}
+
+impl From<TransactionFeeError> for SimulationError {
+    fn from(e: TransactionFeeError) -> SimulationError {
+        SimulationError::EstimateFeeFailed(e.to_string())
     }
 }
 
@@ -83,5 +90,33 @@ impl From<Vec<SimulationFlagForEstimateFee>> for SimulationFlags {
 impl core::default::Default for SimulationFlags {
     fn default() -> Self {
         Self { validate: true, charge_fee: true }
+    }
+}
+
+// We can use `FeeEstimate` from starknet-rs once we upgrade to 0.13.1
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+pub struct FeeEstimate {
+    pub gas_consumed: u128,
+    pub gas_price: u128,
+    pub data_gas_consumed: u128,
+    pub data_gas_price: u128,
+    pub overall_fee: u128,
+    pub fee_type: FeeType,
+}
+
+impl From<&FeeEstimate> for starknet_core::types::FeeEstimate {
+    fn from(fee_estimate: &FeeEstimate) -> Self {
+        Self {
+            gas_price: fee_estimate.gas_price.into(),
+            // this is a rough estimate because in reality the gas is split into data gas
+            // and execution gas. however, since we're not on 0.13.1 yet, we're using this
+            gas_consumed: fee_estimate.overall_fee.saturating_div(fee_estimate.gas_price).into(),
+            overall_fee: fee_estimate.overall_fee.into(),
+            unit: match fee_estimate.fee_type {
+                FeeType::Strk => PriceUnit::Fri,
+                FeeType::Eth => PriceUnit::Wei,
+            },
+        }
     }
 }

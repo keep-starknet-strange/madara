@@ -19,3 +19,4 @@ log = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }
 reqwest = { workspace = true }
+anyhow = { workspace = true }

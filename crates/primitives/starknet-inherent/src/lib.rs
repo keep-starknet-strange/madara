@@ -24,6 +24,7 @@ pub struct L1GasPrices {
     pub strk_l1_gas_price: NonZeroU128,      // In fri.
     pub eth_l1_data_gas_price: NonZeroU128,  // In wei.
     pub strk_l1_data_gas_price: NonZeroU128, // In fri.
+    pub last_update_timestamp: u128,
 }
 
 impl Default for L1GasPrices {
@@ -33,6 +34,7 @@ impl Default for L1GasPrices {
             strk_l1_gas_price: NonZeroU128::new(1).unwrap(),
             eth_l1_data_gas_price: NonZeroU128::new(1).unwrap(),
             strk_l1_data_gas_price: NonZeroU128::new(1).unwrap(),
+            last_update_timestamp: Default::default(),
         }
     }
 }

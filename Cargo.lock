@@ -883,7 +883,7 @@ dependencies = [
 [[package]]
 name = "blockifier"
 version = "0.5.0-rc.3"
-source = "git+https://github.com/bidzyyys/blockifier?branch=feature/scale-codec#59950ded347f60bfcbbc31300ff713e5423448e2"
+source = "git+https://github.com/apoorvsadana/blockifier?branch=scale_code_fee_type#89608b81e0224245166f046fd37b00cf94f31eab"
 dependencies = [
  "anyhow",
  "ark-ec",
@@ -5607,6 +5607,7 @@ dependencies = [
  "mp-hashers",
  "mp-program-hash",
  "mp-simulations",
+ "mp-starknet-inherent",
  "pallet-aura",
  "pallet-grandpa",
  "pallet-starknet",
@@ -5751,6 +5752,7 @@ dependencies = [
 name = "mc-l1-gas-price"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "ethers",
  "futures",
  "log",
@@ -6933,6 +6935,7 @@ dependencies = [
  "blockifier",
  "mp-felt",
  "mp-simulations",
+ "mp-starknet-inherent",
  "parity-scale-codec",
  "scale-info",
  "sp-api",
@@ -11924,7 +11927,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.7",
- "rand 0.7.3",
+ "rand 0.8.5",
  "static_assertions",
 ]
 

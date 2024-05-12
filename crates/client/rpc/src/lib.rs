@@ -222,6 +222,18 @@ where
 
         Ok(rpc_state_diff)
     }
+
+    fn get_current_resource_price(&self) -> Result<ResourcePrice, StarknetRpcApiError> {
+        let current_prices =
+            self.client.runtime_api().current_l1_gas_prices(self.client.info().best_hash).map_err(|e| {
+                log::error!("Failed to get current L1 gas prices: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?;
+        Ok(ResourcePrice {
+            price_in_wei: current_prices.eth_l1_gas_price.get().into(),
+            price_in_fri: current_prices.strk_l1_gas_price.get().into(),
+        })
+    }
 }
 
 /// Taken from https://github.com/paritytech/substrate/blob/master/client/rpc/src/author/mod.rs#L78
@@ -859,8 +871,7 @@ where
             new_root: Felt252Wrapper::from(self.backend.temporary_global_state_root_getter()).into(),
             timestamp: starknet_block.header().block_timestamp,
             sequencer_address: Felt252Wrapper::from(starknet_block.header().sequencer_address).into(),
-            // TODO: real value
-            l1_gas_price: ResourcePrice { price_in_fri: Default::default(), price_in_wei: Default::default() },
+            l1_gas_price: self.get_current_resource_price()?,
             starknet_version: starknet_version.to_string(),
         };
 
@@ -958,18 +969,7 @@ where
         let fee_estimates =
             self.estimate_fee(substrate_block_hash, transactions, SimulationFlags::from(simulation_flags))?;
 
-        let estimates = fee_estimates
-            .into_iter()
-			// FIXME: https://github.com/keep-starknet-strange/madara/issues/329
-            .map(|x| FeeEstimate {
-                gas_price: FieldElement::from(10u128),
-                gas_consumed: FieldElement::from(x.1),
-                overall_fee: FieldElement::from(x.0),
-                unit: PriceUnit::Wei,
-            })
-            .collect();
-
-        Ok(estimates)
+        Ok(fee_estimates)
     }
 
     /// Estimate the L2 fee of a message sent on L1
@@ -1016,14 +1016,7 @@ where
 
         let fee_estimate = self.do_estimate_message_fee(substrate_block_hash, transaction)?;
 
-        let estimate = FeeEstimate {
-            gas_price: fee_estimate.0.try_into().map_err(|_| StarknetRpcApiError::InternalServerError)?,
-            gas_consumed: FieldElement::from(fee_estimate.2),
-            overall_fee: FieldElement::from(fee_estimate.1),
-            unit: PriceUnit::Wei,
-        };
-
-        Ok(estimate)
+        Ok(fee_estimate)
     }
 
     /// Get the details of a transaction by a given block id and index.
@@ -1106,8 +1099,7 @@ where
             timestamp: starknet_block.header().block_timestamp,
             sequencer_address: Felt252Wrapper::from(starknet_block.header().sequencer_address).into(),
             transactions,
-            // TODO: fill real prices
-            l1_gas_price: ResourcePrice { price_in_fri: Default::default(), price_in_wei: Default::default() },
+            l1_gas_price: self.get_current_resource_price()?,
             starknet_version: starknet_version.to_string(),
         };
 
@@ -1373,8 +1365,7 @@ where
 
         let pending_block = PendingBlockWithTxHashes {
             transactions: transaction_hashes,
-            // TODO: fill real prices
-            l1_gas_price: ResourcePrice { price_in_fri: Default::default(), price_in_wei: Default::default() },
+            l1_gas_price: self.get_current_resource_price()?,
             parent_hash: latest_block_header.hash().into(),
             sequencer_address: Felt252Wrapper::from(latest_block_header.sequencer_address).into(),
             starknet_version: latest_block_header.protocol_version.to_string(),
@@ -1394,8 +1385,7 @@ where
 
         let pending_block = PendingBlockWithTxs {
             transactions,
-            // TODO: fill real prices
-            l1_gas_price: ResourcePrice { price_in_fri: Default::default(), price_in_wei: Default::default() },
+            l1_gas_price: self.get_current_resource_price()?,
             parent_hash: latest_block_header.hash().into(),
             sequencer_address: Felt252Wrapper::from(latest_block_header.sequencer_address).into(),
             starknet_version: latest_block_header.protocol_version.to_string(),

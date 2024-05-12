@@ -1,5 +1,5 @@
 use blockifier::transaction::account_transaction::AccountTransaction;
-use blockifier::transaction::objects::TransactionExecutionInfo;
+use blockifier::transaction::objects::{FeeType, TransactionExecutionInfo};
 use blockifier::transaction::transaction_execution::Transaction;
 use blockifier::transaction::transactions::L1HandlerTransaction;
 use log::error;
@@ -19,6 +19,7 @@ use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
 use starknet_api::core::{ContractAddress, EntryPointSelector};
 use starknet_api::transaction::{Calldata, Event, TransactionHash};
+use starknet_core::types::{FeeEstimate, PriceUnit};
 
 use crate::{Starknet, StarknetRpcApiError};
 
@@ -53,11 +54,12 @@ where
         &self,
         block_hash: B::Hash,
         message: L1HandlerTransaction,
-    ) -> RpcApiResult<(u128, u128, u128)> {
-        Ok(self.client.runtime_api().estimate_message_fee(block_hash, message).map_err(|e| {
+    ) -> RpcApiResult<FeeEstimate> {
+        Ok((&self.client.runtime_api().estimate_message_fee(block_hash, message).map_err(|e| {
             error!("Runtime Api error: {e}");
             StarknetRpcApiError::InternalServerError
         })???)
+            .into())
     }
 
     pub fn do_get_tx_execution_outcome(
@@ -104,13 +106,19 @@ where
         block_hash: B::Hash,
         transactions: Vec<AccountTransaction>,
         simulation_flags: SimulationFlags,
-    ) -> RpcApiResult<Vec<(u128, u128)>> {
-        Ok(self.client.runtime_api().estimate_fee(block_hash, transactions, simulation_flags).map_err(
-            |e: ApiError| {
+    ) -> RpcApiResult<Vec<FeeEstimate>> {
+        let fee_estimates = self
+            .client
+            .runtime_api()
+            .estimate_fee(block_hash, transactions, simulation_flags)
+            .map_err(|e: ApiError| {
                 error!("Request parameters error: {e}");
                 StarknetRpcApiError::InternalServerError
-            },
-        )???)
+            })???
+            .iter()
+            .map(|esimtate| esimtate.into())
+            .collect();
+        Ok(fee_estimates)
     }
 
     pub fn get_best_block_hash(&self) -> B::Hash {
