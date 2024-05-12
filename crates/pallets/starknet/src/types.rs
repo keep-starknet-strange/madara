@@ -10,7 +10,6 @@ use starknet_api::hash::StarkHash;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Event, Fee, MessageToL1, TransactionHash};
 
-
 /// Contract Storage Key
 pub type ContractStorageKey = (ContractAddress, StorageKey);
 
