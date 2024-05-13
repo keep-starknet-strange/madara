@@ -29,9 +29,9 @@ pub struct L1GasPrices {
 impl Default for L1GasPrices {
     fn default() -> Self {
         L1GasPrices {
-            eth_l1_gas_price: NonZeroU128::new(210422740358).unwrap(),
+            eth_l1_gas_price: NonZeroU128::new(10).unwrap(),
             strk_l1_gas_price: NonZeroU128::new(10).unwrap(),
-            eth_l1_data_gas_price: NonZeroU128::new(100000).unwrap(),
+            eth_l1_data_gas_price: NonZeroU128::new(10).unwrap(),
             strk_l1_data_gas_price: NonZeroU128::new(10).unwrap(),
             last_update_timestamp: Default::default(),
         }
