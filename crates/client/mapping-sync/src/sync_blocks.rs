@@ -44,6 +44,11 @@ where
                         ))
                     } else {
                         // Success, we write the Starknet to Substate hashes mapping to db
+                        log::info!(
+                            "✨ Imported StarknetBlock #{} (0x{:x})",
+                            digest_starknet_block.header().block_number,
+                            digest_starknet_block_hash.0
+                        );
                         let mapping_commitment = mc_db::MappingCommitment {
                             block_hash: substrate_block_hash,
                             starknet_block_hash: digest_starknet_block_hash.into(),
