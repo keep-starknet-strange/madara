@@ -2,6 +2,7 @@
 
 ## Next release
 
+- bug: fix contract serialisation
 - fix: starknet_call errs if contract nonexistent
 - fix: txn hash calculation and refactor
 - chore: remove all da/settlement related code

@@ -3,7 +3,7 @@ use std::io::Read;
 use assert_matches::assert_matches;
 use flate2::read::GzDecoder;
 use rstest::rstest;
-use starknet_core::types::contract::legacy::{LegacyContractClass, LegacyProgram};
+use starknet_core::types::contract::legacy::LegacyContractClass;
 use starknet_core::types::contract::SierraClass;
 use starknet_core::types::{BlockId, ContractClass, FlattenedSierraClass, StarknetError};
 use starknet_ff::FieldElement;
@@ -11,6 +11,7 @@ use starknet_providers::Provider;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
 use starknet_rpc_test::constants::{CAIRO_1_ACCOUNT_CONTRACT_ADDRESS, TEST_CONTRACT_ADDRESS};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_rpc_test::LegacyProgramWrapper;
 
 #[rstest]
 #[tokio::test]
@@ -44,7 +45,7 @@ async fn fail_non_existing_contract(madara: &ThreadSafeMadaraClient) -> Result<(
 
 #[rstest]
 #[tokio::test]
-#[ignore = "Waiting for issue #1469 to be solved"]
+#[ignore = "Waiting for issue #1585 to be solved"]
 async fn work_ok_retrieving_class_for_contract_version_0(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
@@ -64,7 +65,8 @@ async fn work_ok_retrieving_class_for_contract_version_0(madara: &ThreadSafeMada
             let mut d = GzDecoder::new(&c.program[..]);
             let mut data = String::new();
             d.read_to_string(&mut data).unwrap();
-            let program: LegacyProgram = serde_json::from_str(data.as_str())?;
+            let legacy_program_wrapper: LegacyProgramWrapper = serde_json::from_str(data.as_str())?;
+            let program = legacy_program_wrapper.legacy_program;
             assert_eq!(
                 program.data,
                 test_contract_class.program.data,
