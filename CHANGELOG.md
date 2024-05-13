@@ -45,6 +45,7 @@
 - feat(rpc/trace_api): add `trace_transaction`
 - fix(docker): fix dockerfile for `madara-node`
 - feat: Remove generic hasher from block hash computation
+- refacto: git submodules removed
 
 ## v0.7.0
 
