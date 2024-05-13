@@ -24,7 +24,7 @@ fn estimates_tx_fee_successfully_no_validate() {
 
         let txs = vec![tx_1, tx_2];
 
-        let fees = Starknet::estimate_fee(txs, &Default::default()).expect("estimate should not fail");
+        let fees = Starknet::estimate_fee(txs, &Default::default()).expect("estimate should not fail").unwrap();
 
         let (actual, l1_gas_usage) = fees[0];
         assert!(actual > 0, "actual fee is missing");

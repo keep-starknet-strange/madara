@@ -111,7 +111,6 @@ fn fail_if_no_fee_paid() {
     // Execute `test_l1_handler_store_under_caller_address()`
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
-
         let transaction = create_handle_l1_message_transaction(Starknet::chain_id(), Nonce(StarkFelt::ONE), Fee(0));
 
         // Validate fails

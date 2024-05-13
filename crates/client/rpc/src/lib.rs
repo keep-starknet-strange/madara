@@ -52,7 +52,6 @@ use sp_blockchain::HeaderBackend;
 use sp_core::H256;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use sp_runtime::transaction_validity::InvalidTransaction;
-use sp_runtime::DispatchError;
 use starknet_api::block::BlockHash;
 use starknet_api::core::Nonce;
 use starknet_api::hash::StarkFelt;
@@ -142,7 +141,7 @@ where
     C: HeaderBackend<B> + 'static,
 {
     pub fn current_spec_version(&self) -> RpcResult<String> {
-        Ok("0.4.0".to_string())
+        Ok("0.7.0".to_string())
     }
 }
 
@@ -161,7 +160,7 @@ where
             Ok(block) => block,
             Err(_) => return Err(StarknetRpcApiError::BlockNotFound),
         };
-        Ok(starknet_block.header().hash::<H>().into())
+        Ok(starknet_block.header().hash().into())
     }
 
     /// Returns the substrate block hash corresponding to the given Starknet block id
@@ -618,15 +617,12 @@ where
         })?;
 
         let calldata = Calldata(Arc::new(request.calldata.iter().map(|x| Felt252Wrapper::from(*x).into()).collect()));
-
         let result = self.do_call(
             substrate_block_hash,
             Felt252Wrapper(request.contract_address).into(),
             Felt252Wrapper(request.entry_point_selector).into(),
             calldata,
         )?;
-
-        let result = self.convert_error(substrate_block_hash, result)?;
 
         Ok(result.iter().map(|x| format!("{:#x}", x.0)).collect())
     }
@@ -742,13 +738,13 @@ where
                 if starting_block.is_ok() && current_block.is_ok() && highest_block.is_ok() {
                     // Convert block numbers and hashes to the respective type required by the `syncing` endpoint.
                     let starting_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(self.starting_block);
-                    let starting_block_hash = starting_block?.header().hash::<H>().0;
+                    let starting_block_hash = starting_block?.header().hash().0;
 
                     let current_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(best_number);
-                    let current_block_hash = current_block?.header().hash::<H>().0;
+                    let current_block_hash = current_block?.header().hash().0;
 
                     let highest_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(highest_number);
-                    let highest_block_hash = highest_block?.header().hash::<H>().0;
+                    let highest_block_hash = highest_block?.header().hash().0;
 
                     // Build the `SyncStatus` struct with the respective syn information
                     Ok(SyncStatusType::Syncing(SyncStatus {
@@ -835,7 +831,7 @@ where
 
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)?;
         let starknet_version = starknet_block.header().protocol_version;
-        let block_hash = starknet_block.header().hash::<H>();
+        let block_hash = starknet_block.header().hash();
 
         let transaction_hashes =
             starknet_block.transactions_hashes().map(|txh| Felt252Wrapper::from(*txh).into()).collect();
@@ -1096,7 +1092,7 @@ where
 
         let starknet_block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)?;
 
-        let block_hash = starknet_block.header().hash::<H>();
+        let block_hash = starknet_block.header().hash();
         let starknet_version = starknet_block.header().protocol_version;
         let transactions = starknet_block.transactions().iter().map(|tx| to_starknet_core_tx(tx.clone())).collect();
 
@@ -1166,7 +1162,7 @@ where
             FieldElement::default()
         };
 
-        let starknet_block_hash = BlockHash(starknet_block.header().hash::<H>().into());
+        let starknet_block_hash = BlockHash(starknet_block.header().hash().into());
 
         let state_diff = self.get_state_diff(&starknet_block_hash).map_err(|e| {
             error!("Failed to get state diff. Starknet block hash: {starknet_block_hash}, error: {e}");
@@ -1174,7 +1170,7 @@ where
         })?;
 
         let state_update = StateUpdate {
-            block_hash: starknet_block.header().hash::<H>().into(),
+            block_hash: starknet_block.header().hash().into(),
             new_root: Felt252Wrapper::from(self.backend.temporary_global_state_root_getter()).into(),
             old_root,
             state_diff,
@@ -1379,7 +1375,7 @@ where
             transactions: transaction_hashes,
             // TODO: fill real prices
             l1_gas_price: ResourcePrice { price_in_fri: Default::default(), price_in_wei: Default::default() },
-            parent_hash: latest_block_header.hash::<H>().into(),
+            parent_hash: latest_block_header.hash().into(),
             sequencer_address: Felt252Wrapper::from(latest_block_header.sequencer_address).into(),
             starknet_version: latest_block_header.protocol_version.to_string(),
             timestamp: calculate_pending_block_timestamp(),
@@ -1400,7 +1396,7 @@ where
             transactions,
             // TODO: fill real prices
             l1_gas_price: ResourcePrice { price_in_fri: Default::default(), price_in_wei: Default::default() },
-            parent_hash: latest_block_header.hash::<H>().into(),
+            parent_hash: latest_block_header.hash().into(),
             sequencer_address: Felt252Wrapper::from(latest_block_header.sequencer_address).into(),
             starknet_version: latest_block_header.protocol_version.to_string(),
             timestamp: calculate_pending_block_timestamp(),
@@ -1432,7 +1428,7 @@ where
         let starknet_block: mp_block::Block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)
             .map_err(|_e| StarknetRpcApiError::BlockNotFound)?;
         let block_header = starknet_block.header();
-        let block_hash = block_header.hash::<H>().into();
+        let block_hash = block_header.hash().into();
         let block_number = block_header.block_number;
 
         let transaction =
@@ -1708,20 +1704,6 @@ where
         };
 
         Ok(MaybePendingTransactionReceipt::PendingReceipt(receipt))
-    }
-
-    fn convert_error<T>(
-        &self,
-        best_block_hash: <B as BlockT>::Hash,
-        call_result: Result<T, DispatchError>,
-    ) -> Result<T, StarknetRpcApiError> {
-        match call_result {
-            Ok(val) => Ok(val),
-            Err(e) => {
-                let starknet_error = self.convert_dispatch_error(best_block_hash, e)?;
-                Err(starknet_error.into())
-            }
-        }
     }
 }
 

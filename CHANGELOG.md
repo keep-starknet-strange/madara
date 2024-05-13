@@ -3,6 +3,9 @@
 ## Next release
 
 - feat: add versioned constants to pallet constants
+- bug: fix contract serialisation
+- fix: starknet_call errs if contract nonexistent
+- fix: txn hash calculation and refactor
 - chore: remove all da/settlement related code
 - fix: re-execute txs instead of simulating for txn receipts
 - chore: rebase on latest blockifier
@@ -42,6 +45,8 @@
 - feat(runtime): moved StarkEvents from Substrate
 - feat(rpc/trace_api): add `trace_transaction`
 - fix(docker): fix dockerfile for `madara-node`
+- feat: Remove generic hasher from block hash computation
+- refacto: git submodules removed
 
 ## v0.7.0
 

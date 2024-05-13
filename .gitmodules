@@ -1,9 +1,0 @@
-[submodule "madara-infra"]
-	path = madara-infra
-	url = https://github.com/keep-starknet-strange/madara-infra
-[submodule "madara-docs"]
-	path = madara-docs
-	url = https://github.com/keep-starknet-strange/madara-docs
-[submodule "madara-tsukuyomi"]
-	path = madara-tsukuyomi
-	url = https://github.com/keep-starknet-strange/madara-tsukuyomi

@@ -5817,6 +5817,8 @@ dependencies = [
  "sc-network-sync",
  "sc-transaction-pool",
  "sc-transaction-pool-api",
+ "serde",
+ "serde_json",
  "sp-api",
  "sp-arithmetic",
  "sp-blockchain",
@@ -6207,6 +6209,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "starknet-core",
+ "starknet_api",
 ]
 
 [[package]]
@@ -6243,6 +6246,7 @@ dependencies = [
  "cairo-vm",
  "flate2",
  "indexmap 2.2.5",
+ "log",
  "mp-felt",
  "mp-hashers",
  "num-bigint",
@@ -10929,6 +10933,7 @@ dependencies = [
  "flate2",
  "reqwest",
  "rstest 0.18.2",
+ "serde",
  "serde_json",
  "starknet-accounts",
  "starknet-contract",

@@ -57,7 +57,7 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let block_hash = starknet_block.header().hash::<H>();
+        let block_hash = starknet_block.header().hash();
 
         let mut emitted_events: Vec<EmittedEvent> = vec![];
         for tx_hash in starknet_block.transactions_hashes() {
