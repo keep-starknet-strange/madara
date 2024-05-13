@@ -116,7 +116,7 @@ where
                 StarknetRpcApiError::InternalServerError
             })???
             .iter()
-            .map(|esimtate| esimtate.into())
+            .map(|estimate| estimate.into())
             .collect();
         Ok(fee_estimates)
     }

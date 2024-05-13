@@ -104,6 +104,13 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
     let invoke_transaction_2 =
         BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction::V1(BroadcastedInvokeTransactionV1 {
             nonce: FieldElement::ONE,
+            calldata: vec![
+                FieldElement::from_hex_be(MULTIPLY_TEST_CONTRACT_ADDRESS).unwrap(),
+                get_selector_from_name("multiply").unwrap(),
+                FieldElement::TWO,
+                FieldElement::from_hex_be("3").unwrap(),
+                FieldElement::from_hex_be("5").unwrap(),
+            ],
             ..tx
         }));
 
@@ -114,11 +121,12 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
     // TODO: instead execute the tx and check that the actual fee are the same as the estimated ones
     assert_eq!(estimates.len(), 2);
     // TODO: use correct values when we implement estimate fee correctly
-    assert_eq!(estimates[0].overall_fee, FieldElement::from(48080u128));
-    assert_eq!(estimates[1].overall_fee, FieldElement::from(48080u128));
+    assert_eq!(estimates[0].overall_fee, FieldElement::from(2060u128));
+    // less gas as the second transaction doesn't cause a storage change
+    assert_eq!(estimates[1].overall_fee, FieldElement::from(2060u128));
     // https://starkscan.co/block/5
-    assert_eq!(estimates[0].gas_consumed, FieldElement::ZERO);
-    assert_eq!(estimates[1].gas_consumed, FieldElement::ZERO);
+    assert_eq!(estimates[0].gas_consumed, FieldElement::from_hex_be("0xce").unwrap());
+    assert_eq!(estimates[1].gas_consumed, FieldElement::from_hex_be("0xce").unwrap());
 
     Ok(())
 }
