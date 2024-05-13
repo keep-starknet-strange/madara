@@ -30,8 +30,8 @@ use super::utils::{get_contract_class, sign_message_hash};
 use crate::tests::constants::{UDC_ADDRESS, UDC_SELECTOR};
 use crate::tests::{
     get_invoke_argent_dummy, get_invoke_braavos_dummy, get_invoke_dummy, get_invoke_emit_event_dummy,
-    get_invoke_nonce_dummy, get_invoke_openzeppelin_dummy, get_storage_read_write_dummy, set_infinite_tokens,
-    set_nonce,
+    get_invoke_nonce_dummy, get_invoke_openzeppelin_dummy, get_invoke_v3_dummy, get_storage_read_write_dummy,
+    set_infinite_tokens, set_nonce,
 };
 use crate::{Call, Error, StorageView};
 
@@ -630,7 +630,7 @@ fn given_hardcoded_contract_run_invoke_tx_v3_fails_sender_not_deployed() {
             StarkFelt::try_from("0x03e437FB56Bb213f5708Fcd6966502070e276c093ec271aA33433b89E21fd32f").unwrap(),
         ));
 
-        let mut transaction = get_invoke_dummy(Starknet::chain_id(), NONCE_ZERO);
+        let mut transaction = get_invoke_v3_dummy(Starknet::chain_id(), NONCE_ZERO);
         if let starknet_api::transaction::InvokeTransaction::V3(tx) = &mut transaction.tx {
             tx.sender_address = contract_address;
         };

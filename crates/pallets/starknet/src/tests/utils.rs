@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -27,6 +28,19 @@ pub fn get_contract_class(resource_path: &str, version: u8) -> ContractClass {
     let full_path: PathBuf = [full_path].iter().collect();
     let raw_contract_class = fs::read_to_string(full_path).unwrap();
     read_contract_class_from_json(&raw_contract_class, version)
+}
+
+pub fn create_resource_bounds() -> starknet_api::transaction::ResourceBoundsMapping {
+    let mut map = BTreeMap::new();
+    map.insert(
+        starknet_api::transaction::Resource::L1Gas,
+        starknet_api::transaction::ResourceBounds { max_amount: 10000, max_price_per_unit: 12000 },
+    );
+    map.insert(
+        starknet_api::transaction::Resource::L1Gas,
+        starknet_api::transaction::ResourceBounds { max_amount: 50000, max_price_per_unit: 31000 },
+    );
+    starknet_api::transaction::ResourceBoundsMapping(map)
 }
 
 pub fn sign_message_hash_braavos(
