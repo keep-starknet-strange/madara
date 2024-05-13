@@ -3,7 +3,6 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::{format_err, Result};
-
 use ethers::utils::__serde_json::json;
 use futures::lock::Mutex;
 use mc_eth_client::config::EthereumClientConfig;

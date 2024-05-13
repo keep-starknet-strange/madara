@@ -883,7 +883,7 @@ dependencies = [
 [[package]]
 name = "blockifier"
 version = "0.5.0-rc.3"
-source = "git+https://github.com/apoorvsadana/blockifier?branch=fix_fee_calc#7bbac808eaaeb4461e522856dda9ac803a017f70"
+source = "git+https://github.com/apoorvsadana/blockifier?branch=blockifier_cherry_pick#b69ca770d69baaf37089100dccf2f732d35be231"
 dependencies = [
  "anyhow",
  "ark-ec",
