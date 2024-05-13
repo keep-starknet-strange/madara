@@ -10951,6 +10951,7 @@ dependencies = [
  "flate2",
  "reqwest",
  "rstest 0.18.2",
+ "serde",
  "serde_json",
  "starknet-accounts",
  "starknet-contract",

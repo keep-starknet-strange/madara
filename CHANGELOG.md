@@ -3,6 +3,7 @@
 ## Next release
 
 - feat: actual estimate_fee added, brought back l1 messages
+- bug: fix contract serialisation
 - fix: starknet_call errs if contract nonexistent
 - fix: txn hash calculation and refactor
 - chore: remove all da/settlement related code
@@ -45,6 +46,7 @@
 - feat(rpc/trace_api): add `trace_transaction`
 - fix(docker): fix dockerfile for `madara-node`
 - feat: Remove generic hasher from block hash computation
+- refacto: git submodules removed
 
 ## v0.7.0
 
