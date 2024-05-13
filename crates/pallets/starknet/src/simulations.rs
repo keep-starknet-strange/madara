@@ -7,7 +7,10 @@ use blockifier::transaction::objects::TransactionExecutionInfo;
 use blockifier::transaction::transaction_execution::Transaction;
 use blockifier::transaction::transactions::{ExecutableTransaction, L1HandlerTransaction};
 use frame_support::storage;
-use mp_simulations::{InternalSubstrateError, SimulationError, SimulationFlags, TransactionSimulationResult};
+use mp_simulations::{
+    InternalSubstrateError, ReExecutionInfo, ReExecutionResult, SimulationError, SimulationFlags,
+    TransactionSimulationResult,
+};
 use mp_transactions::execution::{
     commit_transactional_state, execute_l1_handler_transaction, run_non_revertible_transaction,
     run_revertible_transaction, MutRefState, SetArbitraryNonce,
@@ -18,8 +21,6 @@ use starknet_api::transaction::TransactionVersion;
 
 use crate::blockifier_state_adapter::BlockifierStateAdapter;
 use crate::{log, Config, Error, Pallet};
-
-type ReExecutionResult = Result<Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>, SimulationError>;
 
 impl<T: Config> Pallet<T> {
     pub fn estimate_fee(
@@ -211,23 +212,102 @@ impl<T: Config> Pallet<T> {
     pub fn re_execute_transactions(
         transactions_before: Vec<Transaction>,
         transactions_to_trace: Vec<Transaction>,
-        with_state_diff: bool,
+        with_state_diff_for_each: bool,
+        with_accumulated_state_diff: bool,
     ) -> Result<ReExecutionResult, InternalSubstrateError> {
-        storage::transactional::with_transaction(|| {
-            let res = Self::re_execute_transactions_inner(transactions_before, transactions_to_trace, with_state_diff);
-            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Ok(res)))
+        let mut accumulated_state_diff = None;
+        if with_accumulated_state_diff {
+            let res = storage::transactional::with_transaction(|| {
+                let res = Self::re_execute_transactions_inner_with_accumulated_state_diff(
+                    &transactions_before,
+                    &transactions_to_trace,
+                );
+                storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(res))
+            })
+            .map_err(|e| {
+                log::error!("Failed to reexecute a tx: {:?}", e);
+                InternalSubstrateError::FailedToCreateATransactionalStorageExecution
+            })?;
+
+            match res {
+                Err(e) => return Ok(ReExecutionResult::Err(e)), // return early if nested error
+                Ok(res) => {
+                    if !with_state_diff_for_each {
+                        return Ok(Ok(res));
+                    } else {
+                        accumulated_state_diff = res.accumulated_state_diff;
+                    }
+                }
+            };
+        }
+        // re-execute  again if separate state diff needed for each transaction
+        let res = storage::transactional::with_transaction(|| {
+            let res = Self::re_execute_transactions_inner_with_state_diff_for_each(
+                &transactions_before,
+                &transactions_to_trace,
+            );
+            storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(res))
         })
         .map_err(|e| {
             log::error!("Failed to reexecute a tx: {:?}", e);
             InternalSubstrateError::FailedToCreateATransactionalStorageExecution
-        })?
+        })?;
+        let execution_infos = match res {
+            Err(e) => return Ok(ReExecutionResult::Err(e)),
+            Ok(res) => res.execution_infos,
+        };
+
+        Ok(Ok(ReExecutionInfo { execution_infos, accumulated_state_diff }))
     }
 
-    fn re_execute_transactions_inner(
-        transactions_before: Vec<Transaction>,
-        transactions_to_trace: Vec<Transaction>,
-        with_state_diff: bool,
-    ) -> Result<Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>, SimulationError> {
+    fn re_execute_transactions_inner_with_accumulated_state_diff(
+        transactions_before: &[Transaction],
+        transactions_to_trace: &[Transaction],
+    ) -> Result<ReExecutionInfo, SimulationError> {
+        let block_context = Self::get_block_context();
+        let mut state = BlockifierStateAdapter::<T>::default();
+
+        transactions_before.iter().try_for_each(|tx| {
+            Self::execute_transaction(tx, &mut state, &block_context, &SimulationFlags::default()).map_err(|e| {
+                log::error!("Failed to reexecute a tx: {}", e);
+                SimulationError::from(e)
+            })?;
+            Ok::<(), SimulationError>(())
+        })?;
+
+        let mut transactional_state = CachedState::new(MutRefState::new(&mut state), GlobalContractCache::new(1));
+
+        let execution_infos = transactions_to_trace
+            .iter()
+            .map(|tx| {
+                let res = Self::execute_transaction(
+                    tx,
+                    &mut transactional_state,
+                    &block_context,
+                    &SimulationFlags::default(),
+                )
+                .map_err(|e| {
+                    log::error!("Failed to reexecute a tx: {}", e);
+                    SimulationError::from(e)
+                });
+
+                res.map(|r| (r, None))
+            })
+            .collect::<Result<_, SimulationError>>()?;
+
+        let accumulated_state_diff = Some(transactional_state.to_state_diff());
+        commit_transactional_state(transactional_state).map_err(|e| {
+            log::error!("Failed to commit state changes: {:?}", e);
+            SimulationError::from(e)
+        })?;
+
+        Ok(ReExecutionInfo { execution_infos, accumulated_state_diff })
+    }
+
+    fn re_execute_transactions_inner_with_state_diff_for_each(
+        transactions_before: &[Transaction],
+        transactions_to_trace: &[Transaction],
+    ) -> Result<ReExecutionInfo, SimulationError> {
         let block_context = Self::get_block_context();
         let mut state = BlockifierStateAdapter::<T>::default();
 
@@ -244,6 +324,7 @@ impl<T: Config> Pallet<T> {
             .map(|tx| {
                 let mut transactional_state =
                     CachedState::new(MutRefState::new(&mut state), GlobalContractCache::new(1));
+
                 let res = Self::execute_transaction(
                     tx,
                     &mut transactional_state,
@@ -254,9 +335,8 @@ impl<T: Config> Pallet<T> {
                     log::error!("Failed to reexecute a tx: {}", e);
                     SimulationError::from(e)
                 });
+                let res = res.map(|r| (r, Some(transactional_state.to_state_diff())));
 
-                let res = res
-                    .map(|r| if with_state_diff { (r, Some(transactional_state.to_state_diff())) } else { (r, None) });
                 commit_transactional_state(transactional_state).map_err(|e| {
                     log::error!("Failed to commit state changes: {:?}", e);
                     SimulationError::from(e)
@@ -266,7 +346,7 @@ impl<T: Config> Pallet<T> {
             })
             .collect::<Result<_, SimulationError>>()?;
 
-        Ok(execution_infos)
+        Ok(ReExecutionInfo { execution_infos, accumulated_state_diff: None })
     }
 
     fn execute_transaction<S: State + SetArbitraryNonce>(

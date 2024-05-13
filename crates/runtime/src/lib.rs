@@ -33,7 +33,10 @@ pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
 use mp_felt::Felt252Wrapper;
-use mp_simulations::{InternalSubstrateError, SimulationError, SimulationFlags, TransactionSimulationResult};
+use mp_simulations::{
+    InternalSubstrateError, ReExecutionResult, SimulationError, SimulationFlags,
+    TransactionSimulationResult,
+};
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the Starknet pallet.
 pub use pallet_starknet;
@@ -279,8 +282,8 @@ impl_runtime_apis! {
             Starknet::estimate_fee(transactions, &simulation_flags)
         }
 
-        fn re_execute_transactions(transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>, with_state_diff: bool) -> Result<Result<Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>, SimulationError>, InternalSubstrateError> {
-            Starknet::re_execute_transactions(transactions_before, transactions_to_trace, with_state_diff)
+        fn re_execute_transactions(transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>, with_state_diff: bool, with_accumulated_state_diff: bool) -> Result<ReExecutionResult, InternalSubstrateError> {
+            Starknet::re_execute_transactions(transactions_before, transactions_to_trace, with_state_diff, with_accumulated_state_diff)
         }
 
         fn estimate_message_fee(message: L1HandlerTransaction) -> Result<Result<(u128, u128, u128), SimulationError>, InternalSubstrateError> {

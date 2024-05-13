@@ -16,14 +16,14 @@ use mp_felt::Felt252Wrapper;
 pub extern crate alloc;
 use alloc::vec::Vec;
 
-use mp_simulations::{InternalSubstrateError, SimulationError, SimulationFlags, TransactionSimulationResult};
+use mp_simulations::{
+    InternalSubstrateError, ReExecutionResult, SimulationError, SimulationFlags, TransactionSimulationResult,
+};
 use sp_api::BlockT;
 use starknet_api::core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{Calldata, Event as StarknetEvent, MessageToL1, TransactionHash};
-
-type ReExecutionResult = Result<Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>, SimulationError>;
 
 sp_api::decl_runtime_apis! {
     pub trait StarknetRuntimeApi {
@@ -71,7 +71,7 @@ sp_api::decl_runtime_apis! {
         ///
         /// Idealy, the execution traces of all of `transactions_to_trace`.
         /// If any of the transactions (from both arguments) fails, an error is returned.
-        fn re_execute_transactions(transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>, with_state_diff: bool) -> Result<ReExecutionResult, InternalSubstrateError>;
+        fn re_execute_transactions(transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>, with_state_diff: bool, with_accumulated_state_diff: bool) -> Result<ReExecutionResult, InternalSubstrateError>;
 
         fn get_index_and_tx_for_tx_hash(xts: Vec<<Block as BlockT>::Extrinsic>, tx_hash: TransactionHash) -> Option<(u32, Transaction)>;
 
