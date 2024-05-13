@@ -710,7 +710,7 @@ pub mod pallet {
                 .expect("Starknet inherent data not correctly encoded")
                 // if we run in manual sealing, then it goes into the default case
                 // it's usually used in test cases.
-                .unwrap_or(InherentType::default());
+                .unwrap_or_default();
 
             // TODO: should we have a safety check here that the L1 gas price isn't
             // very old? We've this check in the l1-gas-prices worker already.

@@ -1,8 +1,8 @@
 use std::num::NonZeroU128;
 
 use frame_support::traits::Hooks;
-use frame_support::{assert_err, assert_ok};
-use mp_starknet_inherent::{L1GasPrices, StarknetInherentData, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY};
+use frame_support::{assert_ok};
+use mp_starknet_inherent::{L1GasPrices, StarknetInherentData, DEFAULT_SEQUENCER_ADDRESS};
 use starknet_api::core::{ContractAddress, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 
@@ -11,9 +11,6 @@ use super::mock::*;
 
 pub const GOOD_SEQUENCER_ADDRESS: [u8; 32] =
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 222, 175];
-
-pub const BAD_SEQUENCER_ADDRESS: [u8; 24] =
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 222, 173];
 
 fn get_dummy_l1_gas_price() -> L1GasPrices {
     unsafe {
