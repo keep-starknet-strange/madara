@@ -95,6 +95,8 @@ impl<T: Config> Pallet<T> {
             fees.push(res);
         }
 
+        log::info!("these are the fee estimates {:#?}", fees);
+
         Ok(fees)
     }
 
@@ -402,6 +404,9 @@ impl<T: Config> Pallet<T> {
                     }
                 };
         }
+        log::info!("this is the actual fee {:?}", tx_info.actual_fee.0);
+        log::info!("this is the da gas {:?}", tx_info.da_gas);
+        log::info!("this is the exe resource {:#?}", tx_info);
         let data_gas_consumed = tx_info.da_gas.l1_data_gas;
         let data_gas_fee = data_gas_consumed.saturating_mul(data_gas_price);
         let gas_consumed = tx_info.actual_fee.0.saturating_sub(data_gas_fee) / gas_price.max(1);

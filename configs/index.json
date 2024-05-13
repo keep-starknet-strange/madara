@@ -15,7 +15,7 @@
     },
     {
       "name": "genesis.json",
-      "sha3_256": "ec869153b70b838f5c58d602948145552bf9e8fcc1e22f28bd9250d3cf321993"
+      "sha3_256": "7fd26f97b8ed50110c69af2235b7a257692c5415dcb63c3e786ec8219b3d2f51"
     },
     {
       "name": "NoValidateAccount.casm.json",
@@ -52,6 +52,14 @@
     {
       "name": "OpenZeppelinAccountCairoOne.sierra.json",
       "sha3_256": "145fdf2668cf6c36deb295ceea57c6005e43dd7b36be26d020928d1cc3462b5e"
+    },
+    {
+      "name": "MultiplyNumsContract.sierra.json",
+      "sha3_256": "88830cfbad634684d6f18f22b1ade94c9340cffdabd5f3d74bb10ed212389064"
+    },
+    {
+      "name": "MultiplyNumsContract.casm.json",
+      "sha3_256": "113105426f708ab01988f19aa020120c87b82682a94f06b40340ff05c4044f89"
     }
   ]
 }

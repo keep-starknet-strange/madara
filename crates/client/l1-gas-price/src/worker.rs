@@ -2,8 +2,8 @@ use std::num::NonZeroU128;
 use std::sync::Arc;
 use std::time::Duration;
 
-use anyhow::{format_err, Error, Result};
-use ethers::prelude::{Http, Middleware, Provider};
+use anyhow::{format_err, Result};
+use ethers::prelude::Provider;
 use ethers::utils::__serde_json::json;
 use futures::lock::Mutex;
 use mc_eth_client::config::EthereumClientConfig;
@@ -16,13 +16,11 @@ const DEFAULT_GAS_PRICE_POLL_MS: u64 = 10_000;
 
 pub async fn run_worker(config: Arc<EthereumClientConfig>, gas_price: Arc<Mutex<L1GasPrices>>, infinite_loop: bool) {
     let rpc_endpoint = config.provider.rpc_endpoint().clone();
-    let provider: Provider<Http> =
-        config.provider.clone().try_into().expect("Failed to get provider to fetch l1 gas price");
     let client = reqwest::Client::new();
     let poll_time = config.provider.gas_price_poll_ms().unwrap_or(DEFAULT_GAS_PRICE_POLL_MS);
 
     loop {
-        match update_gas_price(rpc_endpoint.clone(), &provider, &client, gas_price.clone()).await {
+        match update_gas_price(rpc_endpoint.clone(), &client, gas_price.clone()).await {
             Ok(_) => log::trace!("Updated gas prices"),
             Err(e) => log::error!("Failed to update gas prices: {:?}", e),
         }
@@ -53,12 +51,9 @@ pub async fn run_worker(config: Arc<EthereumClientConfig>, gas_price: Arc<Mutex<
 
 async fn update_gas_price(
     rpc_endpoint: String,
-    provider: &Provider<Http>,
     client: &reqwest::Client,
     gas_price: Arc<Mutex<L1GasPrices>>,
 ) -> Result<()> {
-    let eth_gas_price = provider.get_gas_price().await?.try_into().map_err(Error::msg)?;
-
     let fee_history: EthRpcResponse<FeeHistory> = client
         .post(rpc_endpoint.clone())
         .json(&json!({
@@ -79,6 +74,16 @@ async fn update_gas_price(
         fee_history.result.base_fee_per_blob_gas.split_at(fee_history.result.base_fee_per_blob_gas.len() - 300);
 
     let avg_blob_base_fee = blob_fee_history_one_hour.iter().sum::<u128>() / blob_fee_history_one_hour.len() as u128;
+
+    let eth_gas_price = u128::from_str_radix(
+        fee_history
+            .result
+            .base_fee_per_gas
+            .last()
+            .ok_or(format_err!("Failed to get last element of `base_fee_per_gas`"))?
+            .trim_start_matches("0x"),
+        16,
+    )?;
 
     // TODO: fetch this from the oracle
     let eth_strk_price = 2425;

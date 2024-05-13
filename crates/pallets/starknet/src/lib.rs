@@ -466,7 +466,7 @@ pub mod pallet {
         #[pallet::weight((0, DispatchClass::Mandatory))]
         pub fn set_starknet_inherent_data(origin: OriginFor<T>, data: InherentType) -> DispatchResult {
             ensure_none(origin)?;
-            // The `SeqAddrUpdate` storage item is initialized to `true` in the genesis build. In
+            // The `InherentUpdate` storage item is initialized to `true` in the genesis build. In
             // block 1 we skip the storage update check, and the `on_finalize` hook
             // updates the storage item to `false`. Initializing the storage item with
             // `false` causes the `on_finalize` hook to panic.
