@@ -152,23 +152,20 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
     let receipt_1 = get_transaction_receipt(&rpc, executed_tx_1.transaction_hash).await?;
     let receipt_2 = get_transaction_receipt(&rpc, executed_tx_2.transaction_hash).await?;
 
-    let match_estimate_and_receipt =
-        |estimate: FeeEstimate, receipt: MaybePendingTransactionReceipt| -> Result<(), anyhow::Error> {
-            match receipt {
-                MaybePendingTransactionReceipt::PendingReceipt(_) => {
-                    Err(Error::msg("Transaction should not be pending"))
+    let match_estimate_and_receipt = |estimate: FeeEstimate,
+                                      receipt: MaybePendingTransactionReceipt|
+     -> Result<(), anyhow::Error> {
+        match receipt {
+            MaybePendingTransactionReceipt::PendingReceipt(_) => Err(Error::msg("Transaction should not be pending")),
+            MaybePendingTransactionReceipt::Receipt(receipt) => match receipt {
+                TransactionReceipt::Invoke(receipt) => {
+                    assert_eq!(estimate.overall_fee, receipt.actual_fee.amount);
+                    Ok(())
                 }
-                MaybePendingTransactionReceipt::Receipt(receipt) => match receipt {
-                    TransactionReceipt::Invoke(receipt) => {
-                        assert_eq!(estimate.overall_fee, receipt.actual_fee.amount);
-                        Ok(())
-                    }
-                    _ => {
-                        Err(Error::msg("Transaction should be an invoke transaction"))
-                    }
-                },
-            }
-        };
+                _ => Err(Error::msg("Transaction should be an invoke transaction")),
+            },
+        }
+    };
 
     match_estimate_and_receipt(estimates[0].clone(), receipt_1)?;
     match_estimate_and_receipt(estimates[1].clone(), receipt_2)?;
