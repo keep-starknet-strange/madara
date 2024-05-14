@@ -6,11 +6,11 @@ fn main() {
     // Check if the feature flag is enabled
     let feature_enabled = env::var("CARGO_FEATURE_DEV").is_ok();
     // Check if we are in release mode
-    let release_mode = env::var("PROFILE").map(|p| p == "release").unwrap_or(false);
+    let debug_mode = env::var("PROFILE").map(|p| p == "debug").unwrap_or(false);
 
-    if feature_enabled && release_mode {
+    if feature_enabled && !debug_mode {
         // Emit a compile error if the feature is enabled in release mode
-        panic!("The feature 'dev' is enabled in release mode, which is not allowed.");
+        panic!("The feature 'dev' can only be enabled in debug mode.");
     }
 
     generate_cargo_keys();
