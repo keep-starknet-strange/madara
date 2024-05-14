@@ -1,11 +1,11 @@
 //! Configuration of the pallets used in the runtime.
 //! The pallets used in the runtime are configured here.
 //! This file is used to generate the `construct_runtime!` macro.
-#[cfg(feature = "dev")]
+#[cfg(all(debug_assertions, feature = "dev"))]
 use std::env::VarError;
 use std::num::NonZeroU128;
 use std::ops::Deref;
-#[cfg(feature = "dev")]
+#[cfg(all(debug_assertions, feature = "dev"))]
 use std::path::Path;
 use std::sync::Arc;
 
@@ -42,12 +42,12 @@ use crate::*;
 // --------------------------------------
 const EXECUTION_CONSTANTS_STR: &str = include_str!("../resources/versioned_constants.json");
 
-#[cfg(not(feature = "dev"))]
+#[cfg(all(not(debug_assertions), not(feature = "dev")))]
 lazy_static! {
     static ref EXECUTION_CONSTANTS: Arc<VersionedConstants> = serde_json::from_str(EXECUTION_CONSTANTS_STR).unwrap();
 }
 
-#[cfg(feature = "dev")]
+#[cfg(all(debug_assertions, feature = "dev"))]
 lazy_static! {
     static ref EXECUTION_CONSTANTS: Arc<VersionedConstants> = Arc::new(
         std::env::var("EXECUTION_CONSTANTS_PATH")
