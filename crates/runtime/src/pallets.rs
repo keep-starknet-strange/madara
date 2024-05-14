@@ -42,7 +42,7 @@ use crate::*;
 // --------------------------------------
 const EXECUTION_CONSTANTS_STR: &str = include_str!("../resources/versioned_constants.json");
 
-#[cfg(all(not(debug_assertions), not(feature = "dev")))]
+#[cfg(not(all(debug_assertions, feature = "dev")))]
 lazy_static! {
     static ref EXECUTION_CONSTANTS: Arc<VersionedConstants> = serde_json::from_str(EXECUTION_CONSTANTS_STR).unwrap();
 }
