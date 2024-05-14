@@ -354,7 +354,7 @@ impl<T: Config> Pallet<T> {
             &current_l1_gas_price,
             transaction.fee_type(),
             Some(gas_vector),
-            &block_context,
+            block_context,
         )
     }
 

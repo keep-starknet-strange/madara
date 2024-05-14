@@ -156,7 +156,7 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
         |estimate: FeeEstimate, receipt: MaybePendingTransactionReceipt| -> Result<(), anyhow::Error> {
             match receipt {
                 MaybePendingTransactionReceipt::PendingReceipt(_) => {
-                    return Err(Error::msg("Transaction should not be pending"));
+                    Err(Error::msg("Transaction should not be pending"))
                 }
                 MaybePendingTransactionReceipt::Receipt(receipt) => match receipt {
                     TransactionReceipt::Invoke(receipt) => {
@@ -164,7 +164,7 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
                         Ok(())
                     }
                     _ => {
-                        return Err(Error::msg("Transaction should be an invoke transaction"));
+                        Err(Error::msg("Transaction should be an invoke transaction"))
                     }
                 },
             }
