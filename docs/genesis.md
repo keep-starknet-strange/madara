@@ -7,11 +7,11 @@ following:
 
 - contract_classes: list of tuples containing the class hash and the class. The
   class can be provided in two formats:
-  - An object containing a field "path" with the path to the compiled class from
-    the root of the repository and a field "version" to indicate which cairo
-    version this class belongs to (0 or 1). Example:
-    `{ "path": "cairo-contracts/NoValidateAccount.json", "version": 0 }`
-  - The whole serialized class
+    - An object containing a field "path" with the path to the compiled class from
+      the root of the repository and a field "version" to indicate which cairo
+      version this class belongs to (0 or 1). Example:
+      `{ "path": "cairo-contracts/NoValidateAccount.json", "version": 0 }`
+    - The whole serialized class
 - contracts: list of tuples containing the contract address and the associated
   class hash.
 - storage: list of tuples containing the storage key and the storage value.
@@ -28,7 +28,7 @@ The below defines all hardcoded values set in the geneses:
 <!-- markdownlint-disable MD013 -->
 
 | Class hash                                                         | Definition                                     |
-| :----------------------------------------------------------------- | :--------------------------------------------- |
+|:-------------------------------------------------------------------|:-----------------------------------------------|
 | 0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f | No validation account class hash               |
 | 0x02f99bf9799ada84cd5ac0d0fe36b9d8f65efcb377cd2e8cf8309ad2daf15e4b | No validation account class hash cairo 1       |
 | 0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d | Argent account class hash                      |
@@ -44,6 +44,7 @@ The below defines all hardcoded values set in the geneses:
 | 0x04569ffd48c2a3d455437c16dc843801fb896b1af845bc8bc7ba83ebc4358b7f | Universal deployer class hash                  |
 | 0x01a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003 | Argent Cairo 1 Account                         |
 | 0x04c6d6cf894f8bc96bb9c525e6853e5483177841f7388f74a46cfda6f028c755 | OpenZepplin Cairo 1 Account                    |
+| 0x015b7c90a4fab33812dc9e2ef525a329e22e591327f006f826b71271099637cd | Multiply 2 numbers test contract               |
 
 <!-- markdownlint-disable MD013 -->
 
@@ -52,7 +53,7 @@ The below defines all hardcoded values set in the geneses:
 <!-- markdownlint-disable MD013 -->
 
 | Contract address | Class hash                                                         | Name                            | Optional private key |
-| :--------------- | :----------------------------------------------------------------- | :------------------------------ | :------------------- |
+|:-----------------|:-------------------------------------------------------------------|:--------------------------------|:---------------------|
 | 0x1              | 0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f | No Validation Account           | null                 |
 | 0x2              | 0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d | Argent Account                  | `pk`                 |
 | 0x3              | 0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd | Openzeppelin Account            | `pk`                 |
@@ -61,7 +62,7 @@ The below defines all hardcoded values set in the geneses:
 where `pk` is the following vector of `u8`:
 
 ```rust
-[48,120,48,48,99,49,99,102,49,52,57,48,100,101,49,51,53,50,56,54,53,51,48,49,98,98,56,55,48,53,49,52,51,102,51,101,102,57,51,56,102,57,55,102,100,102,56,57,50,102,49,48,57,48,100,99,98,53,97,99,55,98,99,100,49,100]
+[48, 120, 48, 48, 99,49, 99, 102, 49, 52,57, 48, 100, 101, 49,51, 53, 50, 56, 54,53, 51, 48, 49, 98,98, 56, 55, 48, 53,49, 52, 51, 102, 51,101, 102, 57, 51, 56,102, 57, 55, 102, 100,102, 56, 57, 50, 102,49, 48, 57, 48, 100,99, 98, 53, 97, 99,55, 98, 99, 100, 49,100]
 ```
 
 <!-- markdownlint-disable MD013 -->
@@ -71,7 +72,7 @@ where `pk` is the following vector of `u8`:
 <!-- markdownlint-disable MD013 -->
 
 | Contract address                                                   | Class hash                                                         |
-| :----------------------------------------------------------------- | :----------------------------------------------------------------- |
+|:-------------------------------------------------------------------|:-------------------------------------------------------------------|
 | 0x1                                                                | 0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f |
 | 0x2                                                                | 0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d |
 | 0x3                                                                | 0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd |
@@ -81,6 +82,7 @@ where `pk` is the following vector of `u8`:
 | 0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d02 | 0x077cc28ed3c661419fda16bf120fb81f1f8f28617f5543b05a86d63b0926bbf4 |
 | 0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7  | 0x0372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4 |
 | 0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf | 0x07b3e05f48f0c69e4a65ce5e076a66271a527aff2c34ce1083ec6e1526997a69 |
+| 0x123                                                              | 0x015b7c90a4fab33812dc9e2ef525a329e22e591327f006f826b71271099637cd |
 
 <!-- markdownlint-disable MD013 -->
 
@@ -105,7 +107,7 @@ deployed as a ERC721 contract (given the class hash of 0x80000).
 <!-- markdownlint-disable MD013 -->
 
 | Contract address                                                   | Storage key                                                                                  | Storage value                                                                         |
-| :----------------------------------------------------------------- | :------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+|:-------------------------------------------------------------------|:---------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
 | 0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7  | 0x341c1bdfd89f69748aa00b5742b03adbffd79b8e80cab5c50d91cd8c2a79be1 (ERC20_name)               | 0x4574686572                                                                          |
 | 0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7  | 0x0b6ce5410fca59d078ee9b2a4371a9d684c530d697c64fbef0ae6d5e8f0ac72 (ERC20_symbol)             | 0x455448                                                                              |
 | 0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7  | 0x1f0d4aa99431d246bac9b8e48c33e888245b15e9678f64f9bdfc8823dc8f979 (ERC20_decimals)           | 0x12                                                                                  |
@@ -132,7 +134,7 @@ deployed as a ERC721 contract (given the class hash of 0x80000).
 <!-- markdownlint-disable MD013 -->
 
 | Class hash                                                         | Definition                                 |
-| :----------------------------------------------------------------- | :----------------------------------------- |
+|:-------------------------------------------------------------------|:-------------------------------------------|
 | 0x03bcec8de953ba8e305e2ce2db52c91504aefa7c56c91211873b4d6ba36e8c32 | No validation account class hash           |
 | 0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f | No validation account class hash           |
 | 0x02f99bf9799ada84cd5ac0d0fe36b9d8f65efcb377cd2e8cf8309ad2daf15e4b | No validation account class hash cairo 1   |
@@ -154,7 +156,7 @@ deployed as a ERC721 contract (given the class hash of 0x80000).
 <!-- markdownlint-disable MD013 -->
 
 | Contract address                                                   | Class hash                                                         |
-| :----------------------------------------------------------------- | :----------------------------------------------------------------- |
+|:-------------------------------------------------------------------|:-------------------------------------------------------------------|
 | 0x1                                                                | 0x01cb5d0b5b5146e1aab92eb9fc9883a32a33a604858bb0275ac0ee65d885bba8 |
 | 0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7 | 0x00000000000000000000000000000000000000000000000000000000DEADBEEF |
 | 0x02356b628d108863baf8644c945d97bad70190af5957031f4852d00d0f690a77 | 0x03bcec8de953ba8e305e2ce2db52c91504aefa7c56c91211873b4d6ba36e8c32 |
@@ -176,7 +178,7 @@ deployed as a ERC721 contract (given the class hash of 0x80000).
 <!-- markdownlint-disable MD013 -->
 
 | Contract address                                                   | Storage key                                                                                                                                                 | Storage value                                                                         |
-| :----------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+|:-------------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
 | 0x00000000000000000000000000000000000000000000000000000000000000AA | 0x341c1bdfd89f69748aa00b5742b03adbffd79b8e80cab5c50d91cd8c2a79be1 (ERC20_name)                                                                              | 0x4574686572                                                                          |
 | 0x00000000000000000000000000000000000000000000000000000000000000AA | 0x0b6ce5410fca59d078ee9b2a4371a9d684c530d697c64fbef0ae6d5e8f0ac72 (ERC20_symbol)                                                                            | 0x455448                                                                              |
 | 0x00000000000000000000000000000000000000000000000000000000000000AA | 0x1f0d4aa99431d246bac9b8e48c33e888245b15e9678f64f9bdfc8823dc8f979 (ERC20_decimals)                                                                          | 0x12                                                                                  |

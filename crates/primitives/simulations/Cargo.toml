@@ -21,4 +21,4 @@ scale-info = { workspace = true, optional = true }
 
 [features]
 parity-scale-codec = ["dep:parity-scale-codec"]
-scale-info = ["dep:scale-info"]
+scale-info = ["dep:scale-info", "blockifier/scale-info"]
