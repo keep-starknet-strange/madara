@@ -12,6 +12,7 @@ use sp_runtime::transaction_validity::{
     InvalidTransaction, TransactionSource, TransactionValidityError, ValidTransaction,
 };
 use starknet_api::core::{ClassHash, CompiledClassHash, ContractAddress, Nonce, PatriciaKey};
+use starknet_api::data_availability::DataAvailabilityMode;
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{
@@ -28,10 +29,12 @@ use super::mock::default_mock::*;
 use super::mock::*;
 use super::utils::{get_contract_class, sign_message_hash};
 use crate::tests::constants::{UDC_ADDRESS, UDC_SELECTOR};
+use crate::tests::utils::create_resource_bounds;
 use crate::tests::{
     get_invoke_argent_dummy, get_invoke_braavos_dummy, get_invoke_dummy, get_invoke_emit_event_dummy,
-    get_invoke_nonce_dummy, get_invoke_openzeppelin_dummy, get_invoke_v3_dummy, get_storage_read_write_dummy,
-    set_infinite_tokens, set_nonce,
+    get_invoke_nonce_dummy, get_invoke_openzeppelin_dummy, get_invoke_v3_argent_dummy, get_invoke_v3_braavos_dummy,
+    get_invoke_v3_dummy, get_invoke_v3_openzeppelin_dummy, get_storage_read_write_dummy, set_infinite_tokens,
+    set_nonce,
 };
 use crate::{Call, Error, StorageView};
 
@@ -322,7 +325,7 @@ fn given_hardcoded_contract_run_invoke_on_argent_account_with_incorrect_signatur
         assert_err!(Starknet::invoke(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
     });
 }
-
+// Down
 #[test]
 fn given_hardcoded_contract_run_invoke_on_braavos_account_then_it_works() {
     new_test_ext::<MockRuntime>().execute_with(|| {
@@ -338,7 +341,7 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_then_it_works() {
     });
 }
 
-#[test]
+#[test] //--------------
 fn given_hardcoded_contract_run_invoke_on_braavos_account_with_incorrect_signature_then_it_fails() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
@@ -359,7 +362,7 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_with_incorrect_signatu
     });
 }
 
-#[test]
+#[test] // --------------
 fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
@@ -387,7 +390,7 @@ fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails
     });
 }
 
-#[test]
+#[test] // ------------
 fn given_account_not_deployed_invoke_tx_validate_works_for_nonce_one() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
@@ -411,7 +414,7 @@ fn given_account_not_deployed_invoke_tx_validate_works_for_nonce_one() {
     })
 }
 
-#[test]
+#[test] //---------------
 fn given_account_not_deployed_invoke_tx_fails_for_nonce_not_one() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
@@ -644,13 +647,169 @@ fn given_hardcoded_contract_run_invoke_tx_v3_on_argent_account_then_it_works() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
-
+        // NOT WORKING
         let chain_id = Starknet::chain_id();
-        let mut transaction = get_invoke_argent_dummy(chain_id);
+        let mut transaction = get_invoke_v3_argent_dummy(chain_id);
         if let starknet_api::transaction::InvokeTransaction::V3(tx) = &mut transaction.tx {
             tx.signature = sign_message_hash(transaction.tx_hash);
         };
 
         assert_ok!(Starknet::invoke(none_origin, transaction));
     });
+}
+
+#[test]
+fn given_hardcoded_contract_run_invoke_tx_v3_on_openzeppelin_account_then_it_works() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+        let none_origin = RuntimeOrigin::none();
+        // NOT WORKING
+        let transaction = get_invoke_v3_openzeppelin_dummy(Starknet::chain_id());
+
+        assert_ok!(Starknet::invoke(none_origin, transaction));
+    });
+}
+
+#[test]
+fn given_hardcoded_contract_run_invoke_tx_v3_on_argent_account_with_incorrect_signature_then_it_fails() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+        let none_origin = RuntimeOrigin::none();
+
+        let mut transaction = get_invoke_v3_argent_dummy(Starknet::chain_id());
+        if let starknet_api::transaction::InvokeTransaction::V3(tx) = &mut transaction.tx {
+            tx.signature = TransactionSignature(vec![StarkFelt::ONE, StarkFelt::ONE]);
+        };
+
+        let validate_result = Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::invoke { transaction: transaction.clone() },
+        );
+        assert!(matches!(validate_result.unwrap_err(), TransactionValidityError::Invalid(_)));
+
+        assert_err!(Starknet::invoke(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
+    });
+}
+
+#[test]
+fn given_hardcoded_contract_run_invoke_tx_v3_on_braavos_account_then_it_works() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+        let none_origin = RuntimeOrigin::none();
+        // NOT WORKING
+        let mut transaction = get_invoke_v3_braavos_dummy(Starknet::chain_id());
+        if let starknet_api::transaction::InvokeTransaction::V3(tx) = &mut transaction.tx {
+            tx.signature = sign_message_hash(transaction.tx_hash);
+        };
+
+        assert_ok!(Starknet::invoke(none_origin, transaction));
+    });
+}
+
+#[test]
+fn given_hardcoded_contract_run_invoke_tx_v3_on_braavos_account_with_incorrect_signature_then_it_fails() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+        let none_origin = RuntimeOrigin::none();
+
+        let mut transaction = get_invoke_v3_braavos_dummy(Starknet::chain_id());
+        if let starknet_api::transaction::InvokeTransaction::V3(tx) = &mut transaction.tx {
+            tx.signature = TransactionSignature(vec![StarkFelt::ONE, StarkFelt::ONE]);
+        };
+
+        let validate_result = Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::invoke { transaction: transaction.clone() },
+        );
+        assert!(matches!(validate_result.unwrap_err(), TransactionValidityError::Invalid(_)));
+
+        assert_err!(Starknet::invoke(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
+    });
+}
+
+#[test]
+fn given_hardcoded_contract_run_invoke_tx_v3_with_inner_call_in_validate_then_it_fails() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+        let none_origin = RuntimeOrigin::none();
+
+        let sender_address = get_account_address(None, AccountType::V0(AccountTypeV0Inner::InnerCall));
+        let mut transaction = get_invoke_v3_dummy(Starknet::chain_id(), NONCE_ZERO);
+        if let starknet_api::transaction::InvokeTransaction::V3(tx) = &mut transaction.tx {
+            tx.signature = TransactionSignature(vec![StarkFelt::ONE, StarkFelt::ONE]);
+            tx.sender_address = sender_address;
+        };
+
+        let storage_key = get_storage_var_address("destination", &[]);
+        let destination = StarkFelt::try_from(TEST_CONTRACT_ADDRESS).unwrap();
+        StorageView::<MockRuntime>::insert((sender_address, storage_key), destination);
+
+        let storage_key = get_storage_var_address("function_selector", &[]);
+        let selector = get_selector_from_name("without_arg").unwrap();
+        StorageView::<MockRuntime>::insert(
+            (sender_address, storage_key),
+            StarkFelt::from(Felt252Wrapper::from(selector)),
+        );
+
+        assert_err!(Starknet::invoke(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
+    });
+}
+
+#[test]
+fn given_account_not_deployed_invoke_tx_v3_validate_works_for_nonce_one() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+        // Wrong address (not deployed)
+        let contract_address = ContractAddress(PatriciaKey(StarkFelt::try_from("0x13123131").unwrap()));
+        // NOT WORKING
+        let transaction = starknet_api::transaction::InvokeTransactionV3 {
+            resource_bounds: create_resource_bounds(),
+            tip: starknet_api::transaction::Tip::default(),
+            calldata: Calldata::default(),
+            sender_address: contract_address,
+            nonce: Nonce(StarkFelt::ZERO),
+            signature: TransactionSignature::default(),
+            nonce_data_availability_mode: DataAvailabilityMode::L1,
+            fee_data_availability_mode: DataAvailabilityMode::L1,
+            paymaster_data: starknet_api::transaction::PaymasterData(vec![StarkFelt::ZERO]),
+            account_deployment_data: starknet_api::transaction::AccountDeploymentData(vec![StarkFelt::ZERO]),
+        };
+
+        set_infinite_tokens::<MockRuntime>(&contract_address);
+        assert_ok!(Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::invoke { transaction: transaction.into() }
+        ));
+    })
+}
+
+#[test]
+fn given_account_not_deployed_invoke_tx_v3_fails_for_nonce_not_one() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        // Wrong address (not deployed)
+        let contract_address = ContractAddress(PatriciaKey(StarkFelt::try_from("0x13123131").unwrap()));
+
+        let transaction = starknet_api::transaction::InvokeTransactionV3 {
+            resource_bounds: create_resource_bounds(),
+            tip: starknet_api::transaction::Tip::default(),
+            calldata: Calldata::default(),
+            sender_address: contract_address,
+            nonce: Nonce(StarkFelt::ZERO),
+            signature: TransactionSignature::default(),
+            nonce_data_availability_mode: DataAvailabilityMode::L1,
+            fee_data_availability_mode: DataAvailabilityMode::L1,
+            paymaster_data: starknet_api::transaction::PaymasterData(vec![StarkFelt::ZERO]),
+            account_deployment_data: starknet_api::transaction::AccountDeploymentData(vec![StarkFelt::ZERO]),
+        };
+
+        assert_eq!(
+            Starknet::validate_unsigned(
+                TransactionSource::InBlock,
+                &crate::Call::invoke { transaction: transaction.into() }
+            ),
+            Err(TransactionValidityError::Invalid(InvalidTransaction::BadProof))
+        );
+    })
 }
