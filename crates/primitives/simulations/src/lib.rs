@@ -33,14 +33,7 @@ impl From<StateError> for SimulationError {
     }
 }
 
-#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
-#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
-pub struct ReExecutionInfo {
-    pub execution_infos: Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>,
-    pub accumulated_state_diff: Option<CommitmentStateDiff>,
-}
-
-pub type ReExecutionResult = Result<ReExecutionInfo, SimulationError>;
+pub type ReExecutionResult = Result<Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>, SimulationError>;
 pub type TransactionSimulationResult = Result<TransactionExecutionInfo, SimulationError>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

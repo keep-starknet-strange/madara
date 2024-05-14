@@ -30,10 +30,7 @@ fn re_execute_tx_ok() {
                 .into();
 
         // Call the function we want to test
-        let res = Starknet::re_execute_transactions(txs_to_ignore, txs.clone(), false, false)
-            .unwrap()
-            .unwrap()
-            .execution_infos;
+        let res = Starknet::re_execute_transactions(txs_to_ignore, txs.clone(), false).unwrap().unwrap();
 
         // Storage changes have been reverted
         assert_eq!(Starknet::nonce(invoke_sender_address), Nonce(Felt252Wrapper::ZERO.into()));
@@ -62,10 +59,7 @@ fn re_execute_tx_with_a_transfer_ok() {
         )));
 
         // Call the function we want to test
-        let res = Starknet::re_execute_transactions(txs.clone(), vec![transfer_tx.clone()], false, false)
-            .unwrap()
-            .unwrap()
-            .execution_infos;
+        let res = Starknet::re_execute_transactions(txs.clone(), vec![transfer_tx.clone()], false).unwrap().unwrap();
 
         // Storage changes have been reverted
         assert_eq!(Starknet::nonce(invoke_sender_address), Nonce(Felt252Wrapper::ZERO.into()));

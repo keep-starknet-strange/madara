@@ -33,7 +33,6 @@ use starknet_ff::FieldElement;
 
 use crate::errors::StarknetRpcApiError;
 use crate::Starknet;
-type ReExecutionInfo = (Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>, Option<StateDiff>);
 
 #[async_trait]
 impl<A, B, BE, G, C, P, H> StarknetTraceRpcApiServer for Starknet<A, B, BE, G, C, P, H>
@@ -151,8 +150,7 @@ where
         let previous_block_substrate_hash = get_previous_block_substrate_hash(self, substrate_block_hash)?;
 
         let execution_infos = self
-            .re_execute_transactions(previous_block_substrate_hash, vec![], block_transactions.clone(), true, false)?
-            .0
+            .re_execute_transactions(previous_block_substrate_hash, vec![], block_transactions.clone(), true)?
             .into_iter()
             .map(|(e, c)| match c {
                 Some(c) => Ok((e, c)),
@@ -187,8 +185,7 @@ where
         let previous_block_substrate_hash = get_previous_block_substrate_hash(self, substrate_block_hash)?;
 
         let (execution_infos, commitment_state_diff) = self
-            .re_execute_transactions(previous_block_substrate_hash, txs_before, tx_to_trace, true, false)?
-            .0
+            .re_execute_transactions(previous_block_substrate_hash, txs_before, tx_to_trace, true)?
             .into_iter()
             .next()
             .unwrap();
@@ -226,9 +223,8 @@ where
         transactions_before: Vec<Transaction>,
         transactions_to_trace: Vec<Transaction>,
         with_state_diff: bool,
-        with_accumulated_state_diff: bool,
-    ) -> RpcResult<ReExecutionInfo> {
-        let info = self
+    ) -> RpcResult<Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>> {
+        Ok(self
             .client
             .runtime_api()
             .re_execute_transactions(
@@ -236,7 +232,37 @@ where
                 transactions_before,
                 transactions_to_trace,
                 with_state_diff,
-                with_accumulated_state_diff,
+            )
+            .map_err(|e| {
+                error!("Failed to execute runtime API call: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?
+            .map_err(|e| {
+                error!("Failed to reexecute the block transactions: {e:?}");
+                StarknetRpcApiError::InternalServerError
+            })?
+            .map_err(|_| {
+                error!(
+                    "One of the transaction failed during it's reexecution. This should not happen, as the block has \
+                     already been executed successfully in the past. There is a bug somewhere."
+                );
+                StarknetRpcApiError::InternalServerError
+            })?)
+    }
+
+    pub fn get_transaction_re_execution_state_diff(
+        &self,
+        previous_block_substrate_hash: B::Hash,
+        transactions_before: Vec<Transaction>,
+        transactions_to_trace: Vec<Transaction>,
+    ) -> RpcResult<StateDiff> {
+        let commitment_state_diff = self
+            .client
+            .runtime_api()
+            .get_transaction_re_execution_state_diff(
+                previous_block_substrate_hash,
+                transactions_before,
+                transactions_to_trace,
             )
             .map_err(|e| {
                 error!("Failed to execute runtime API call: {e}");
@@ -254,17 +280,10 @@ where
                 StarknetRpcApiError::InternalServerError
             })?;
 
-        let state_diff = info
-            .accumulated_state_diff
-            .map(|x| {
-                blockifier_to_rpc_state_diff_types(x).map_err(|e| {
-                    error!("Failed to get state diff from reexecution info, error: {e}");
-                    StarknetRpcApiError::InternalServerError
-                })
-            })
-            .transpose()?;
-
-        Ok((info.execution_infos, state_diff))
+        Ok(blockifier_to_rpc_state_diff_types(commitment_state_diff).map_err(|e| {
+            error!("Failed to get state diff from reexecution info, error: {e}");
+            StarknetRpcApiError::InternalServerError
+        })?)
     }
 
     fn execution_info_to_transaction_trace(

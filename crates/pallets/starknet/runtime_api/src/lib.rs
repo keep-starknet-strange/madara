@@ -71,7 +71,9 @@ sp_api::decl_runtime_apis! {
         ///
         /// Idealy, the execution traces of all of `transactions_to_trace`.
         /// If any of the transactions (from both arguments) fails, an error is returned.
-        fn re_execute_transactions(transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>, with_state_diff: bool, with_accumulated_state_diff: bool) -> Result<ReExecutionResult, InternalSubstrateError>;
+        fn re_execute_transactions(transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>, with_state_diff: bool) -> Result<ReExecutionResult, InternalSubstrateError>;
+
+        fn get_transaction_re_execution_state_diff(transactions_before: Vec<Transaction>, transactions: Vec<Transaction>) -> Result<Result<CommitmentStateDiff, SimulationError>, InternalSubstrateError>;
 
         fn get_index_and_tx_for_tx_hash(xts: Vec<<Block as BlockT>::Extrinsic>, tx_hash: TransactionHash) -> Option<(u32, Transaction)>;
 

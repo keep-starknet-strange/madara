@@ -1150,10 +1150,11 @@ where
 
         let previous_block_substrate_hash = get_previous_block_substrate_hash(self, substrate_block_hash)?;
 
-        let state_diff = self
-            .re_execute_transactions(previous_block_substrate_hash, vec![], block_transactions.clone(), false, true)?
-            .1
-            .unwrap();
+        let state_diff = self.get_transaction_re_execution_state_diff(
+            previous_block_substrate_hash,
+            vec![],
+            block_transactions.clone(),
+        )?;
 
         let state_update = StateUpdate {
             block_hash: starknet_block.header().hash().into(),
@@ -1569,18 +1570,11 @@ where
         }
 
         let mut trace = self
-            .re_execute_transactions(
-                parent_substrate_block_hash,
-                transactions_before,
-                transaction_to_trace,
-                false,
-                false,
-            )
+            .re_execute_transactions(parent_substrate_block_hash, transactions_before, transaction_to_trace, false)
             .map_err(|e| {
                 log::error!("Failed to re-execute transactions: {e}");
                 StarknetRpcApiError::InternalServerError
-            })?
-            .0;
+            })?;
 
         let execution_info = trace.remove(0);
 

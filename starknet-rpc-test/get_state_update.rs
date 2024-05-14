@@ -87,7 +87,7 @@ async fn returns_correct_state_diff_declare(madara: &ThreadSafeMadaraClient) -> 
         assert!(txs[0].is_ok());
 
         // sleep for a bit to make sure state diff is published
-        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+        // tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
         let state_update = match rpc.get_state_update(BlockId::Tag(BlockTag::Latest)).await.unwrap() {
             MaybePendingStateUpdate::Update(update) => update,

@@ -281,8 +281,12 @@ impl_runtime_apis! {
             Starknet::estimate_fee(transactions, &simulation_flags)
         }
 
-        fn re_execute_transactions(transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>, with_state_diff: bool, with_accumulated_state_diff: bool) -> Result<ReExecutionResult, InternalSubstrateError> {
-            Starknet::re_execute_transactions(transactions_before, transactions_to_trace, with_state_diff, with_accumulated_state_diff)
+        fn re_execute_transactions(transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>, with_state_diff: bool) -> Result<ReExecutionResult, InternalSubstrateError> {
+            Starknet::re_execute_transactions(transactions_before, transactions_to_trace, with_state_diff)
+        }
+
+        fn get_transaction_re_execution_state_diff( transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>) -> Result<Result<CommitmentStateDiff, SimulationError>, InternalSubstrateError> {
+            Starknet::get_transaction_re_execution_state_diff(transactions_before, transactions_to_trace)
         }
 
         fn estimate_message_fee(message: L1HandlerTransaction) -> Result<Result<(u128, u128, u128), SimulationError>, InternalSubstrateError> {
