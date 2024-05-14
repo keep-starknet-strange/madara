@@ -20,6 +20,7 @@ anyhow = { workspace = true }
 blockifier = { workspace = true }
 cairo-lang-starknet-classes = { workspace = true }
 cairo-lang-utils = { workspace = true }
+cairo-vm = { workspace = true }
 flate2 = { workspace = true }
 indexmap = { workspace = true }
 jsonrpsee = { workspace = true, features = ["server", "macros"] }
@@ -30,7 +31,7 @@ mp-transactions = { workspace = true, features = ["serde"] }
 num-bigint = { workspace = true }
 pallet-starknet = { workspace = true, features = ["genesis-loader"] }
 serde = { workspace = true }
-serde_json = { workspace = true }
+serde_json = { workspace = true, features = ["raw_value"] }
 serde_with = { workspace = true }
 sp-api = { workspace = true }
 sp-blockchain = { workspace = true }

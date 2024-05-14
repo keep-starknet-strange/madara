@@ -28,9 +28,12 @@ thiserror = { workspace = true }
 tokio = { version = "1.36.0", features = ["rt", "macros", "parking_lot"] }
 url = "2.4.1"
 
-# [[test]]
-# name = "starknet_spec_version"
-# path = "spec_version.rs"
+[dev-dependencies]
+starknet-types-core = "0.1.3"
+
+[[test]]
+name = "starknet_spec_version"
+path = "spec_version.rs"
 
 [[test]]
 name = "starknet_get_block_number"
@@ -53,12 +56,8 @@ name = "starknet_get_storage_at"
 path = "get_storage_at.rs"
 
 [[test]]
-name = "starknet_get_class"
+name = "starknet_get_class_and_get_class_at"
 path = "get_class.rs"
-
-[[test]]
-name = "starknet_get_class_at"
-path = "get_class_at.rs"
 
 [[test]]
 name = "starknet_get_class_hash_at"

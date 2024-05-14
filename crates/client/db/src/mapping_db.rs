@@ -32,11 +32,8 @@ impl<B: BlockT> MappingDb<B> {
     }
 
     /// Check if the given block hash has already been processed
-    pub fn is_synced(&self, block_hash: &B::Hash) -> Result<bool, DbError> {
-        match self.db.get(crate::columns::SYNCED_MAPPING, &block_hash.encode()) {
-            Some(raw) => Ok(bool::decode(&mut &raw[..])?),
-            None => Ok(false),
-        }
+    pub fn is_synced(&self, block_hash: &B::Hash) -> bool {
+        self.db.get(crate::columns::SYNCED_MAPPING, &block_hash.encode()).is_some()
     }
 
     /// Return the hash of the Substrate block wrapping the Starknet block with given hash
@@ -56,7 +53,7 @@ impl<B: BlockT> MappingDb<B> {
 
         let mut transaction = sp_database::Transaction::new();
 
-        transaction.set(crate::columns::SYNCED_MAPPING, &block_hash.encode(), &true.encode());
+        transaction.set(crate::columns::SYNCED_MAPPING, &block_hash.encode(), &[]);
 
         self.db.commit(transaction)?;
 
@@ -89,7 +86,7 @@ impl<B: BlockT> MappingDb<B> {
             &substrate_hashes.encode(),
         );
 
-        transaction.set(crate::columns::SYNCED_MAPPING, &commitment.block_hash.encode(), &true.encode());
+        transaction.set(crate::columns::SYNCED_MAPPING, &commitment.block_hash.encode(), &[]);
 
         for transaction_hash in commitment.starknet_transaction_hashes.iter() {
             transaction.set(
@@ -120,5 +117,10 @@ impl<B: BlockT> MappingDb<B> {
             Some(raw) => Ok(Some(<B::Hash>::decode(&mut &raw[..])?)),
             None => Ok(None),
         }
+    }
+
+    /// Was the Starknet transaction with this hash mapped to a Substrate block?
+    pub fn transaction_is_mapped(&self, transaction_hash: TransactionHash) -> bool {
+        self.db.get(crate::columns::TRANSACTION_MAPPING, &transaction_hash.encode()).is_some()
     }
 }

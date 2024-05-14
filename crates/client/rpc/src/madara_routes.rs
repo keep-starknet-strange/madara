@@ -7,7 +7,7 @@ pub use mc_rpc_core::{
 };
 use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
-use mp_transactions::from_broadcasted_transactions::try_declare_tx_from_broadcasted_declare_tx_v0;
+use mp_transactions::from_broadcasted_transactions::split_broadcasted_declare_tx_v0_into_declare_tx_and_additional_data;
 use mp_transactions::BroadcastedDeclareTransactionV0;
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::Backend;
@@ -70,13 +70,14 @@ where
     ) -> RpcResult<DeclareTransactionResult> {
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
-        let transaction =
-            try_declare_tx_from_broadcasted_declare_tx_v0(declare_transaction, chain_id).map_err(|e| {
-                error!("Failed to convert BroadcastedDeclareTransactionV0 to DeclareTransaction, error: {e}");
-                StarknetRpcApiError::InternalServerError
-            })?;
+        let (transaction, contract_class_data) =
+            split_broadcasted_declare_tx_v0_into_declare_tx_and_additional_data(declare_transaction, chain_id)
+                .map_err(|e| {
+                    error!("Failed to convert BroadcastedDeclareTransactionV0 to DeclareTransaction, error: {e}");
+                    StarknetRpcApiError::InternalServerError
+                })?;
 
-        let (tx_hash, class_hash) = self.declare_tx_common(transaction).await?;
+        let (tx_hash, class_hash) = self.declare_tx_common(transaction, contract_class_data).await?;
 
         Ok(DeclareTransactionResult {
             transaction_hash: Felt252Wrapper::from(tx_hash).into(),

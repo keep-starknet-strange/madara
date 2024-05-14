@@ -1,6 +1,7 @@
 //! Starknet transaction related functionality.
 
 #![feature(trait_upcasting)]
+#![feature(arc_unwrap_or_clone)]
 
 pub mod compute_hash;
 pub mod execution;
@@ -9,15 +10,21 @@ pub mod from_broadcasted_transactions;
 #[cfg(feature = "client")]
 pub mod to_starknet_core_transaction;
 
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::transaction_execution::Transaction;
+use serde::{Deserialize, Serialize};
 use sp_core::H256;
 use starknet_api::core::{ContractAddress, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::TransactionHash;
-use starknet_core::types::{CompressedLegacyContractClass, TransactionExecutionStatus, TransactionFinalityStatus};
+use starknet_core::types::contract::legacy::LegacyReference;
+use starknet_core::types::{
+    CompressedLegacyContractClass, FlattenedSierraClass, LegacyContractAbiEntry, TransactionExecutionStatus,
+    TransactionFinalityStatus,
+};
 use starknet_ff::FieldElement;
 
 const SIMULATE_TX_VERSION_OFFSET: FieldElement =
@@ -156,4 +163,39 @@ pub struct BroadcastedDeclareTransactionV0 {
     pub contract_class: Arc<CompressedLegacyContractClass>,
     /// If set to `true`, uses a query-only transaction version that's invalid for execution
     pub is_query: bool,
+}
+
+#[derive(Debug)]
+pub enum ContractClassData {
+    V0(V0ContractClassData),
+    V1(V1ContractClassData),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct V0ContractClassData {
+    pub abi: Option<Vec<LegacyContractAbiEntry>>,
+    pub accessible_scopes: Option<Vec<Vec<String>>>,
+    pub compiler_version: Option<String>,
+    pub identifiers_data: HashMap<String, IdentifierData>,
+    pub main_scope: String,
+    pub references_data: Vec<ReferenceData>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct IdentifierData {
+    pub decorators: Option<Vec<String>>,
+    pub destination: Option<String>,
+    pub references: Option<Vec<LegacyReference>>,
+    pub size: Option<u64>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ReferenceData {
+    pub value: String,
+    pub pc: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct V1ContractClassData {
+    pub sierra_program: FlattenedSierraClass,
 }

@@ -26,5 +26,5 @@ The artifacts are used for testing the declare class operation.
 
 ```sh
 cd starknet-rpc-test/contracts
-./generate_declare_contracts.sh 10
+./generate_declare_contracts.sh 11
 ```

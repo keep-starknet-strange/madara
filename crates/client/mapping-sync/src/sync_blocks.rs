@@ -211,7 +211,7 @@ fn fetch_header<B: BlockT, BE>(
 where
     BE: HeaderBackend<B>,
 {
-    if madara_backend.mapping().is_synced(&checking_tip)? {
+    if madara_backend.mapping().is_synced(&checking_tip) {
         return Ok(None);
     }
 

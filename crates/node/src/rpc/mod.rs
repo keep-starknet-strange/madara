@@ -25,7 +25,7 @@ use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 pub use starknet::StarknetDeps;
 
 /// Full client dependencies.
-pub struct FullDeps<A: ChainApi, C, G: GenesisProvider, P> {
+pub struct FullDeps<A: ChainApi, C, G: GenesisProvider, P: TransactionPool<Block = Block>> {
     /// The client instance to use.
     pub client: Arc<C>,
     /// Transaction pool instance.
@@ -37,7 +37,7 @@ pub struct FullDeps<A: ChainApi, C, G: GenesisProvider, P> {
     /// Manual seal command sink
     pub command_sink: Option<mpsc::Sender<EngineCommand<Hash>>>,
     /// Starknet dependencies
-    pub starknet: StarknetDeps<C, G, Block>,
+    pub starknet: StarknetDeps<C, G, Block, P>,
 }
 
 /// Instantiate all full RPC extensions.
@@ -82,6 +82,7 @@ where
             starknet_params.sync_service,
             starknet_params.starting_block,
             starknet_params.genesis_provider,
+            starknet_params.contract_class_data_tx,
         )));
 
     module.merge(MadaraRpcApiServer::into_rpc(rpc_instance.clone()))?;

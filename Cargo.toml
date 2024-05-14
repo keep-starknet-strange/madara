@@ -26,6 +26,7 @@ members = [
   "crates/client/commitment-state-diff",
   "crates/client/eth-client",
   "crates/client/starknet-block-import",
+  "crates/client/contract-class-data",
   "starknet-rpc-test",
   "madara-test-runner",
   "starknet-test-utils",
@@ -57,6 +58,7 @@ default-members = [
   "crates/client/commitment-state-diff",
   "crates/client/eth-client",
   "crates/client/starknet-block-import",
+  "crates/client/contract-class-data",
   "starknet-test-utils",
 ]
 
@@ -188,6 +190,7 @@ mc-l1-messages = { path = "crates/client/l1-messages" }
 mc-l1-gas-price = { path = "crates/client/l1-gas-price" }
 mc-eth-client = { path = "crates/client/eth-client" }
 mc-starknet-block-import = { path = "crates/client/starknet-block-import" }
+mc-contract-class-data = { path = "crates/client/contract-class-data" }
 
 # Madara runtime
 madara-runtime = { path = "crates/runtime" }

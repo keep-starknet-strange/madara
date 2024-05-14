@@ -28,9 +28,13 @@ use starknet_core::types::{
 use crate::Starknet;
 
 // Newtype Wrapper to escape Arc orphan rules
-pub struct StarknetRpcWrapper<A: ChainApi, B: BlockT, BE, G, C, P, H>(pub Arc<Starknet<A, B, BE, G, C, P, H>>);
+pub struct StarknetRpcWrapper<A: ChainApi, B: BlockT, BE, G, C, P: TransactionPool<Block = B>, H>(
+    pub Arc<Starknet<A, B, BE, G, C, P, H>>,
+);
 
-impl<A: ChainApi, B: BlockT, BE, G, C, P, H> Clone for StarknetRpcWrapper<A, B, BE, G, C, P, H> {
+impl<A: ChainApi, B: BlockT, BE, G, C, P: TransactionPool<Block = B>, H> Clone
+    for StarknetRpcWrapper<A, B, BE, G, C, P, H>
+{
     fn clone(&self) -> Self {
         StarknetRpcWrapper(self.0.clone())
     }

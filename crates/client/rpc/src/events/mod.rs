@@ -13,6 +13,7 @@ use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeA
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::BlockBackend;
 use sc_transaction_pool::ChainApi;
+use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
@@ -32,6 +33,7 @@ where
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     BE: Backend<B>,
     H: HasherT + Send + Sync + 'static,
+    P: TransactionPool<Block = B>,
 {
     /// Helper function to get Starknet block details
     ///

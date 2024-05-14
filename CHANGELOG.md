@@ -2,6 +2,10 @@
 
 ## Next release
 
+- feat(rpc): store data about contract classes which is not needed for the
+  execution in the client to return it later in read RPCs
+- test(rpc): merge `get_class` and `get_class_at` tests together
+- build: upgrade toolchain to `nightly-2023-09-18` and remove wasm target
 - feat(runtime): remove custom checks before tx execution
 - test: Adding txv3 tests
 - feat: L1 gas price/fix

@@ -142,7 +142,6 @@ impl ConfigSource {
 
 impl SetupCmd {
     pub fn run(&self) -> Result<()> {
-        log::info!("setup cmd: {:?}", self);
         let dest_config_dir_path = {
             let chain_id = self.chain_id();
             let base_path = self.base_path().unwrap_or_else(|| BasePath::from_project("", "", &Cli::executable_name()));
