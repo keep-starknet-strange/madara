@@ -209,7 +209,7 @@ starknet-signers = { git = "https://github.com/xJonathanLEI/starknet-rs.git", re
 starknet-accounts = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
 starknet-contract = { git = "https://github.com/xJonathanLEI/starknet-rs.git", rev = "2d59636911628260fa460179010bbd00e89de06e" }
 
-blockifier = { git = "https://github.com/apoorvsadana/blockifier", branch = "blockifier_rebase_two" }
+blockifier = { git = "https://github.com/bidzyyys/blockifier", branch = "feature/scale-codec" }
 starknet_api = { git = "https://github.com/bidzyyys/starknet-api", branch = "feature/scale-codec", features = [
     "testing",
     "parity-scale-codec",

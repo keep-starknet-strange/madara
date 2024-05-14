@@ -1,3 +1,4 @@
+use blockifier::state::cached_state::CommitmentStateDiff;
 use blockifier::state::errors::StateError;
 use blockifier::transaction::errors::{TransactionExecutionError, TransactionFeeError};
 use blockifier::transaction::objects::{FeeType, TransactionExecutionInfo};
@@ -39,7 +40,16 @@ impl From<StateError> for SimulationError {
     }
 }
 
-pub type TransactionSimulationResult = Result<TransactionExecutionInfo, SimulationError>;
+#[derive(Debug)]
+#[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
+#[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
+pub struct TransactionSimulation {
+    pub execution_info: TransactionExecutionInfo,
+    pub state_diff: CommitmentStateDiff,
+    pub fee_estimate: FeeEstimate,
+}
+
+pub type TransactionSimulationResult = Result<TransactionSimulation, SimulationError>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
@@ -119,5 +129,11 @@ impl From<&FeeEstimate> for starknet_core::types::FeeEstimate {
                 FeeType::Eth => PriceUnit::Wei,
             },
         }
+    }
+}
+
+impl From<FeeEstimate> for starknet_core::types::FeeEstimate {
+    fn from(fee_estimate: FeeEstimate) -> Self {
+        Self::from(&fee_estimate)
     }
 }

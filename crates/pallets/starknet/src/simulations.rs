@@ -9,7 +9,8 @@ use blockifier::transaction::transaction_execution::Transaction;
 use blockifier::transaction::transactions::{ExecutableTransaction, L1HandlerTransaction};
 use frame_support::storage;
 use mp_simulations::{
-    FeeEstimate, InternalSubstrateError, SimulationError, SimulationFlags, TransactionSimulationResult,
+    FeeEstimate, InternalSubstrateError, SimulationError, SimulationFlags, TransactionSimulation,
+    TransactionSimulationResult,
 };
 use mp_transactions::execution::{
     commit_transactional_state, execute_l1_handler_transaction, run_non_revertible_transaction,
@@ -47,20 +48,12 @@ impl<T: Config> Pallet<T> {
         let transactions_len = transactions.len();
         let block_context = Self::get_block_context();
         let mut state = BlockifierStateAdapter::<T>::default();
-        let current_l1_gas_price: GasPrices = Self::current_l1_gas_prices().into();
 
-        let fee_res_iterator = transactions
-            .into_iter()
-            .map(|tx| match Self::execute_account_transaction(&tx, &mut state, &block_context, simulation_flags) {
-                Ok(execution_info) => {
+        let fee_res_iterator = transactions.into_iter().map(|tx| {
+            match Self::execute_account_transaction(&tx, &mut state, &block_context, simulation_flags) {
+                Ok(mut execution_info) => {
                     if !execution_info.is_reverted() {
-                        let tx_context = block_context.to_tx_context(&tx);
-                        let gas_vector = match tx.clone() {
-                            AccountTransaction::Declare(tx) => tx.estimate_minimal_gas_vector(&tx_context)?,
-                            AccountTransaction::DeployAccount(tx) => tx.estimate_minimal_gas_vector(&tx_context)?,
-                            AccountTransaction::Invoke(tx) => tx.estimate_minimal_gas_vector(&tx_context)?,
-                        };
-                        Ok((execution_info, gas_vector, tx.fee_type()))
+                        Self::execution_info_to_fee_estimate(&tx, &mut execution_info, &block_context)
                     } else {
                         log!(
                             debug,
@@ -76,26 +69,14 @@ impl<T: Config> Pallet<T> {
                     log!(debug, "Transaction execution failed during fee estimation: {:?}", e);
                     Err(SimulationError::from(e))
                 }
-            })
-            .map(|exec_info_res| {
-                exec_info_res.map(|(mut exec_info, gas_vector, fee_type)| {
-                    Self::from_tx_info_and_gas_price(
-                        &mut exec_info,
-                        &current_l1_gas_price,
-                        fee_type,
-                        Some(gas_vector),
-                        &block_context,
-                    )
-                })
-            });
+            }
+        });
 
         let mut fees = Vec::with_capacity(transactions_len);
         for fee_res in fee_res_iterator {
-            let res = fee_res?.map_err(|_| SimulationError::StateDiff)?;
+            let res = fee_res?;
             fees.push(res);
         }
-
-        log::info!("these are the fee estimates {:#?}", fees);
 
         Ok(fees)
     }
@@ -103,8 +84,7 @@ impl<T: Config> Pallet<T> {
     pub fn simulate_transactions(
         transactions: Vec<AccountTransaction>,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, SimulationError>, InternalSubstrateError>
-    {
+    ) -> Result<Vec<TransactionSimulationResult>, InternalSubstrateError> {
         storage::transactional::with_transaction(|| {
             storage::TransactionOutcome::Rollback(Result::<_, DispatchError>::Ok(Self::simulate_transactions_inner(
                 transactions,
@@ -116,33 +96,53 @@ impl<T: Config> Pallet<T> {
             InternalSubstrateError::FailedToCreateATransactionalStorageExecution
         })
     }
+
     fn simulate_transactions_inner(
         transactions: Vec<AccountTransaction>,
         simulation_flags: &SimulationFlags,
-    ) -> Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, SimulationError> {
+    ) -> Vec<TransactionSimulationResult> {
         let block_context = Self::get_block_context();
         let mut state = BlockifierStateAdapter::<T>::default();
 
-        let tx_execution_results: Vec<(CommitmentStateDiff, TransactionSimulationResult)> = transactions
+        let tx_execution_results = transactions
             .into_iter()
             .map(|tx| {
-                let res = Self::execute_account_transaction_with_state_diff(
-                    &tx,
-                    &mut state,
-                    &block_context,
-                    simulation_flags,
-                )?;
+                // In order to produce a state diff for this specific tx we execute on a transactional state
+                let mut transactional_state =
+                    CachedState::new(MutRefState::new(&mut state), GlobalContractCache::new(1));
 
-                let result = res.0.map_err(|e| {
-                    log::error!("Transaction execution failed during simulation: {e}");
-                    SimulationError::from(e)
-                });
+                let exec_info =
+                    Self::execute_account_transaction(&tx, &mut transactional_state, &block_context, simulation_flags)
+                        .map_err(|e| {
+                            log!(debug, "Failed to execute transaction: {:?}", e);
+                            SimulationError::from(e)
+                        });
 
-                Ok((res.1, result))
+                let mut exec_info = match exec_info {
+                    Ok(exec_info) => exec_info,
+                    Err(e) => return Err(e),
+                };
+
+                let state_diff = transactional_state.to_state_diff();
+                // Once the state diff of this tx is generated, we apply those changes on the original state
+                // so that next txs being simulated are ontop of this one (avoid nonce error)
+                match commit_transactional_state(transactional_state) {
+                    Ok(_) => (),
+                    Err(e) => {
+                        log::error!("Failed to commit state changes: {:?}", e);
+                        return Err(SimulationError::from(e));
+                    }
+                };
+
+                let fee_estimate = match Self::execution_info_to_fee_estimate(&tx, &mut exec_info, &block_context) {
+                    Ok(fee_estimate) => fee_estimate,
+                    Err(e) => return Err(e),
+                };
+                Ok(TransactionSimulation { fee_estimate, execution_info: exec_info, state_diff })
             })
-            .collect::<Result<Vec<_>, SimulationError>>()?;
+            .collect();
 
-        Ok(tx_execution_results)
+        tx_execution_results
     }
 
     pub fn simulate_message(
@@ -337,28 +337,25 @@ impl<T: Config> Pallet<T> {
         }
     }
 
-    fn execute_account_transaction_with_state_diff<S: State + SetArbitraryNonce>(
+    fn execution_info_to_fee_estimate(
         transaction: &AccountTransaction,
-        state: &mut S,
+        execution_info: &mut TransactionExecutionInfo,
         block_context: &BlockContext,
-        simulation_flags: &SimulationFlags,
-    ) -> Result<(Result<TransactionExecutionInfo, TransactionExecutionError>, CommitmentStateDiff), SimulationError>
-    {
-        // In order to produce a state diff for this specific tx we execute on a transactional state
-        let mut transactional_state = CachedState::new(MutRefState::new(state), GlobalContractCache::new(1));
-
-        let result =
-            Self::execute_account_transaction(transaction, &mut transactional_state, block_context, simulation_flags);
-
-        let state_diff = transactional_state.to_state_diff();
-        // Once the state diff of this tx is generated, we apply those changes on the original state
-        // so that next txs being simulated are ontop of this one (avoid nonce error)
-        commit_transactional_state(transactional_state).map_err(|e| {
-            log::error!("Failed to commit state changes: {:?}", e);
-            SimulationError::from(e)
-        })?;
-
-        Ok((result, state_diff))
+    ) -> Result<FeeEstimate, SimulationError> {
+        let tx_context = block_context.to_tx_context(transaction);
+        let gas_vector = match transaction.clone() {
+            AccountTransaction::Declare(tx) => tx.estimate_minimal_gas_vector(&tx_context)?,
+            AccountTransaction::DeployAccount(tx) => tx.estimate_minimal_gas_vector(&tx_context)?,
+            AccountTransaction::Invoke(tx) => tx.estimate_minimal_gas_vector(&tx_context)?,
+        };
+        let current_l1_gas_price: GasPrices = Self::current_l1_gas_prices().into();
+        Self::from_tx_info_and_gas_price(
+            execution_info,
+            &current_l1_gas_price,
+            transaction.fee_type(),
+            Some(gas_vector),
+            &block_context,
+        )
     }
 
     fn execute_message<S: State>(

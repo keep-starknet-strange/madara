@@ -181,7 +181,8 @@ where
     ) -> RpcApiResult<TransactionExecutionInfo> {
         // Simulate a single User Transaction
         // So the result should have single element in vector (index 0)
-        self.client
+        let simulation = self
+            .client
             .runtime_api()
             .simulate_transactions(block_hash, vec![tx], simulations_flags)
             .map_err(|e| {
@@ -191,13 +192,13 @@ where
             .map_err(|e| {
                 error!("Failed to call function: {:#?}", e);
                 StarknetRpcApiError::from(e)
-            })??
+            })?
             .swap_remove(0)
-            .1
             .map_err(|e| {
                 error!("Failed to simulate User Transaction: {:?}", e);
                 StarknetRpcApiError::InternalServerError
-            })
+            })?;
+        Ok(simulation.execution_info)
     }
 
     fn simulate_l1_tx(
