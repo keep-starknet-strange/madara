@@ -124,16 +124,10 @@ pub fn create_resource_bounds() -> starknet_api::transaction::ResourceBoundsMapp
         starknet_api::transaction::ResourceBounds { max_amount: 10000, max_price_per_unit: 12000 },
     );
     map.insert(
-        starknet_api::transaction::Resource::L1Gas,
-        starknet_api::transaction::ResourceBounds { max_amount: 50000, max_price_per_unit: 31000 },
+        starknet_api::transaction::Resource::L2Gas,
+        starknet_api::transaction::ResourceBounds { max_amount: 10000, max_price_per_unit: 12000 },
     );
     starknet_api::transaction::ResourceBoundsMapping(map)
-}
-
-fn stark_felt_to_field_element(felt: &StarkFelt) -> FieldElement {
-    // Can only fail if the 32 byte number is not smaller than the field's modulus,
-    // but StarkFelt already enforces that
-    FieldElement::from_bytes_be(&felt.0).unwrap()
 }
 
 pub fn get_balance_contract_call(
@@ -144,30 +138,26 @@ pub fn get_balance_contract_call(
     Starknet::call_contract(contract_address, call_args.0, call_args.1).unwrap()
 }
 
-pub fn set_sender_erc20_balance_to_zero(sender_address: ContractAddress, erc20_contract_address: ContractAddress) {
+pub fn set_account_erc20_balance_to_zero(account_address: ContractAddress, erc20_contract_address: ContractAddress) {
+	// ContractAddress to FieldElement
+    let field_contract_address = FieldElement::from_bytes_be(&account_address.key().0.into()).unwrap();
+
     // Get balance variable key
     let balance_low_storage_key = get_storage_key(
         &erc20_contract_address,
         "ERC20_balances",
-        &[stark_felt_to_field_element(&sender_address.0.0)],
+        &[field_contract_address],
         0,
     );
 
     let balance_high_storage_key = get_storage_key(
         &erc20_contract_address,
         "ERC20_balances",
-        &[stark_felt_to_field_element(&sender_address.0.0)],
+        &[field_contract_address],
         1,
     );
 
     // Set balance storage value to zero
     StorageView::<MockRuntime>::insert(balance_low_storage_key, StarkFelt::try_from("0").unwrap());
     StorageView::<MockRuntime>::insert(balance_high_storage_key, StarkFelt::try_from("0").unwrap());
-
-    // Ensure that balance is truely set to zero
-
-    pretty_assertions::assert_eq!(
-        get_balance_contract_call(sender_address, erc20_contract_address),
-        vec![Felt252Wrapper::from_hex_be("0x0").unwrap(), Felt252Wrapper::from_hex_be("0x0").unwrap()]
-    );
 }

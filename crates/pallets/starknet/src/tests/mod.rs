@@ -105,8 +105,8 @@ pub fn get_invoke_v3_dummy(
         signature,
         nonce_data_availability_mode: DataAvailabilityMode::L1,
         fee_data_availability_mode: DataAvailabilityMode::L1,
-        paymaster_data: starknet_api::transaction::PaymasterData(vec![StarkFelt::ZERO]),
-        account_deployment_data: starknet_api::transaction::AccountDeploymentData(vec![StarkFelt::ZERO]),
+        paymaster_data: starknet_api::transaction::PaymasterData(vec![]),
+        account_deployment_data: starknet_api::transaction::AccountDeploymentData(vec![]),
     });
 
     let tx_hash = tx.compute_hash(chain_id, false);
