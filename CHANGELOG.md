@@ -2,6 +2,7 @@
 
 ## Next release
 
+- feat: add versioned constants to pallet constants
 - bug: fix contract serialisation
 - fix: starknet_call errs if contract nonexistent
 - fix: txn hash calculation and refactor
