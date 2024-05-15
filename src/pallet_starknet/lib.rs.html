@@ -1151,6 +1151,9 @@
 <a href="#1151" id="1151">1151</a>
 <a href="#1152" id="1152">1152</a>
 <a href="#1153" id="1153">1153</a>
+<a href="#1154" id="1154">1154</a>
+<a href="#1155" id="1155">1155</a>
+<a href="#1156" id="1156">1156</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1208,6 +1211,7 @@
 </span><span class="kw">mod </span>tests;
 
 <span class="kw">use </span>std::collections::BTreeSet;
+<span class="kw">use </span>std::ops::Deref;
 <span class="kw">use </span>std::str::from_utf8_unchecked;
 
 <span class="kw">use </span>blockifier::blockifier::block::{BlockInfo, GasPrices};
@@ -1307,6 +1311,8 @@
         </span><span class="kw">type </span>ProtocolVersion: Get&lt;u8&gt;;
         <span class="attr">#[pallet::constant]
         </span><span class="kw">type </span>ProgramHash: Get&lt;Felt252Wrapper&gt;;
+        <span class="attr">#[pallet::constant]
+        </span><span class="kw">type </span>ExecutionConstants: Get&lt;Arc&lt;VersionedConstants&gt;&gt;;
     }
 
     <span class="doccomment">/// The Starknet pallet hooks.
@@ -2010,7 +2016,7 @@
                 use_kzg_da: <span class="bool-val">true</span>,
             },
             <span class="kw-2">&amp;</span>ChainInfo { chain_id, fee_token_addresses },
-            VersionedConstants::latest_constants(),
+            T::ExecutionConstants::get().deref(),
         )
     }
 
@@ -2078,7 +2084,7 @@
             storage_address: address,
             caller_address: ContractAddress::default(),
             call_type: CallType::Call,
-            initial_gas: VersionedConstants::latest_constants().tx_initial_gas(),
+            initial_gas: T::ExecutionConstants::get().tx_initial_gas(),
         };
 
         <span class="kw">let </span><span class="kw-2">mut </span>resources = cairo_vm::vm::runners::cairo_runner::ExecutionResources::default();

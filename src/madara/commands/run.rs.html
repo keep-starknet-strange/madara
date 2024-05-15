@@ -79,6 +79,9 @@
 <a href="#79" id="79">79</a>
 <a href="#80" id="80">80</a>
 <a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>madara_runtime::SealingMode;
 <span class="kw">use </span>sc_cli::{<span class="prelude-ty">Result</span>, RpcMethods, RunCmd, SubstrateCli};
 <span class="kw">use </span>sc_service::BasePath;
@@ -153,7 +156,10 @@
 
     cmd.base.force_authoring = <span class="bool-val">true</span>;
     cmd.base.alice = <span class="bool-val">true</span>;
-    cmd.base.tmp = <span class="bool-val">true</span>;
+
+    <span class="kw">if </span>cmd.base.shared_params.base_path.is_none() {
+        cmd.base.tmp = <span class="bool-val">true</span>;
+    }
 
     <span class="comment">// we can&#39;t set `--rpc-cors=all`, so it needs to be set manually if we want to connect with external
     // hosts

@@ -170,12 +170,56 @@
 <a href="#170" id="170">170</a>
 <a href="#171" id="171">171</a>
 <a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Configuration of the pallets used in the runtime.
 //! The pallets used in the runtime are configured here.
 //! This file is used to generate the `construct_runtime!` macro.
-</span><span class="kw">use </span>std::num::NonZeroU128;
+</span><span class="attr">#[cfg(all(debug_assertions, feature = <span class="string">&quot;dev&quot;</span>))]
+</span><span class="kw">use </span>std::env::VarError;
+<span class="kw">use </span>std::num::NonZeroU128;
+<span class="kw">use </span>std::ops::Deref;
+<span class="attr">#[cfg(all(debug_assertions, feature = <span class="string">&quot;dev&quot;</span>))]
+</span><span class="kw">use </span>std::path::Path;
+<span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>blockifier::blockifier::block::GasPrices;
+<span class="kw">use </span>blockifier::versioned_constants::VersionedConstants;
 <span class="kw">pub use </span>frame_support::traits::{
     ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, OnTimestampSet, Randomness, StorageInfo,
 };
@@ -185,6 +229,7 @@
 <span class="kw">pub use </span>frame_support::weights::{IdentityFee, Weight};
 <span class="kw">pub use </span>frame_support::{construct_runtime, parameter_types, StorageValue};
 <span class="kw">pub use </span>frame_system::Call <span class="kw">as </span>SystemCall;
+<span class="kw">use </span>lazy_static::lazy_static;
 <span class="kw">pub use </span>mp_chain_id::SN_GOERLI_CHAIN_ID;
 <span class="kw">pub use </span>mp_program_hash::SN_OS_PROGRAM_HASH;
 <span class="doccomment">/// Import the StarkNet pallet.
@@ -204,8 +249,31 @@
 // --------------------------------------
 // CUSTOM PALLETS
 // --------------------------------------
+</span><span class="kw">const </span>EXECUTION_CONSTANTS_STR: <span class="kw-2">&amp;</span>str = <span class="macro">include_str!</span>(<span class="string">&quot;../resources/versioned_constants.json&quot;</span>);
 
-</span><span class="doccomment">/// Configure the Starknet pallet in pallets/starknet.
+<span class="attr">#[cfg(not(all(debug_assertions, feature = <span class="string">&quot;dev&quot;</span>)))]
+</span><span class="macro">lazy_static! </span>{
+    <span class="kw">static </span><span class="kw-2">ref </span>EXECUTION_CONSTANTS: Arc&lt;VersionedConstants&gt; = serde_json::from_str(EXECUTION_CONSTANTS_STR).unwrap();
+}
+
+<span class="attr">#[cfg(all(debug_assertions, feature = <span class="string">&quot;dev&quot;</span>))]
+</span><span class="macro">lazy_static! </span>{
+    <span class="kw">static </span><span class="kw-2">ref </span>EXECUTION_CONSTANTS: Arc&lt;VersionedConstants&gt; = Arc::new(
+        std::env::var(<span class="string">&quot;EXECUTION_CONSTANTS_PATH&quot;</span>)
+            .map(|path| {
+                VersionedConstants::try_from(Path::new(path.as_str()))
+                    .expect(<span class="string">&quot;Failed to load execution constants from path&quot;</span>)
+            })
+            .unwrap_or_else(|e| {
+                <span class="kw">match </span>e {
+                    VarError::NotPresent =&gt; serde_json::from_str(EXECUTION_CONSTANTS_STR).unwrap(),
+                    VarError::NotUnicode(<span class="kw">_</span>) =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Failed to load execution constants variable&quot;</span>),
+                }
+            })
+    );
+}
+
+<span class="doccomment">/// Configure the Starknet pallet in pallets/starknet.
 </span><span class="kw">impl </span>pallet_starknet::Config <span class="kw">for </span>Runtime {
     <span class="kw">type </span>TimestampProvider = Timestamp;
     <span class="kw">type </span>UnsignedPriority = UnsignedPriority;
@@ -218,6 +286,7 @@
     <span class="kw">type </span>ProtocolVersion = ProtocolVersion;
     <span class="kw">type </span>ProgramHash = ProgramHash;
     <span class="kw">type </span>L1GasPrices = L1GasPrices;
+    <span class="kw">type </span>ExecutionConstants = ExecutionConstants;
 }
 
 <span class="doccomment">/// --------------------------------------
@@ -323,12 +392,17 @@
     <span class="kw">type </span>WeightInfo = ();
 }
 
+<span class="kw">fn </span>get_execution_constants() -&gt; Arc&lt;VersionedConstants&gt; {
+    EXECUTION_CONSTANTS.deref().clone()
+}
+
 <span class="macro">parameter_types! </span>{
     <span class="kw">pub const </span>UnsignedPriority: u64 = <span class="number">1 </span>&lt;&lt; <span class="number">20</span>;
     <span class="kw">pub const </span>TransactionLongevity: u64 = u64::MAX;
     <span class="kw">pub const </span>ProtocolVersion: u8 = <span class="number">0</span>;
     <span class="kw">pub const </span>ProgramHash: Felt252Wrapper = SN_OS_PROGRAM_HASH;
     <span class="kw">pub const </span>L1GasPrices: GasPrices = GasPrices { eth_l1_gas_price: <span class="kw">unsafe </span>{ NonZeroU128::new_unchecked(<span class="number">10</span>) }, strk_l1_gas_price: <span class="kw">unsafe </span>{ NonZeroU128::new_unchecked(<span class="number">10</span>) }, eth_l1_data_gas_price: <span class="kw">unsafe </span>{ NonZeroU128::new_unchecked(<span class="number">10</span>) }, strk_l1_data_gas_price: <span class="kw">unsafe </span>{ NonZeroU128::new_unchecked(<span class="number">10</span>) } };
+    <span class="kw">pub </span>ExecutionConstants: Arc&lt;VersionedConstants&gt; = get_execution_constants();
 }
 
 <span class="doccomment">/// Implement the OnTimestampSet trait to override the default Aura.
