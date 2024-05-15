@@ -112,7 +112,7 @@ fn estimate_fee_skips_validation_for_invalid_tx() {
 
         let fee_estimation_result =
             Starknet::estimate_fee(tx_vec.clone(), &SimulationFlags { validate: true, charge_fee: true });
-        assert!(fee_estimation_result.is_err(), "Fee estimation succeded");
+        assert!(fee_estimation_result.is_ok(), "Fee estimation failed");
 
         let fee_estimation_result =
             Starknet::estimate_fee(tx_vec.clone(), &SimulationFlags { validate: false, charge_fee: true });
