@@ -1,5 +1,6 @@
 use blockifier::transaction::account_transaction::AccountTransaction;
 use frame_support::{assert_err, assert_ok};
+use mp_simulations::SimulationFlags;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use starknet_api::core::Nonce;
 use starknet_api::hash::StarkFelt;
@@ -95,5 +96,26 @@ fn query_tx_should_not_be_executable() {
             Starknet::invoke(RuntimeOrigin::none(), transaction.clone()),
             Error::<MockRuntime>::QueryTransactionCannotBeExecuted
         );
+    });
+}
+
+#[test]
+fn estimate_fee_skips_validation_for_invalid_tx() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        // // Invalid nonce (actual: 42, expected: 0)
+        let invalid_transaction = get_invoke_dummy(Starknet::chain_id(), Nonce(StarkFelt::from(42u64)));
+        let tx = AccountTransaction::Invoke(invalid_transaction.clone());
+
+        let tx_vec = vec![tx.clone()];
+
+        let fee_estimation_result =
+            Starknet::estimate_fee(tx_vec.clone(), &SimulationFlags { validate: true, charge_fee: true });
+        assert!(fee_estimation_result.unwrap().is_err(), "Fee estimation succeded");
+
+        let fee_estimation_result =
+            Starknet::estimate_fee(tx_vec.clone(), &SimulationFlags { validate: false, charge_fee: true });
+        assert!(fee_estimation_result.is_ok(), "Fee estimation failed unexpectedly");
     });
 }
