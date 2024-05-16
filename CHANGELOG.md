@@ -2,6 +2,7 @@
 
 ## Next release
 
+- dev: pallet test for estimate_fee that skip validation
 - feat: add versioned constants to pallet constants
 - bug: fix contract serialisation
 - fix: starknet_call errs if contract nonexistent
