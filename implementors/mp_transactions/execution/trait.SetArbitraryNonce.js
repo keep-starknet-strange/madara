@@ -1,4 +1,4 @@
 (function() {var implementors = {
 "mp_transactions":[],
-"pallet_starknet":[["impl&lt;T: <a class=\"trait\" href=\"pallet_starknet/pallet/trait.Config.html\" title=\"trait pallet_starknet::pallet::Config\">Config</a>&gt; <a class=\"trait\" href=\"mp_transactions/execution/trait.SetArbitraryNonce.html\" title=\"trait mp_transactions::execution::SetArbitraryNonce\">SetArbitraryNonce</a> for <a class=\"struct\" href=\"pallet_starknet/blockifier_state_adapter/struct.BlockifierStateAdapter.html\" title=\"struct pallet_starknet::blockifier_state_adapter::BlockifierStateAdapter\">BlockifierStateAdapter</a>&lt;T&gt;"]]
+"pallet_starknet":[["impl&lt;T: <a class=\"trait\" href=\"pallet_starknet/pallet/trait.Config.html\" title=\"trait pallet_starknet::pallet::Config\">Config</a>&gt; SetArbitraryNonce for <a class=\"struct\" href=\"pallet_starknet/blockifier_state_adapter/struct.BlockifierStateAdapter.html\" title=\"struct pallet_starknet::blockifier_state_adapter::BlockifierStateAdapter\">BlockifierStateAdapter</a>&lt;T&gt;"]]
 };if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
