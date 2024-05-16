@@ -139,23 +139,15 @@ pub fn get_balance_contract_call(
 }
 
 pub fn set_account_erc20_balance_to_zero(account_address: ContractAddress, erc20_contract_address: ContractAddress) {
-	// ContractAddress to FieldElement
-    let field_contract_address = FieldElement::from_bytes_be(&account_address.key().0.into()).unwrap();
+    // ContractAddress to FieldElement
+    let field_contract_address = FieldElement::from_bytes_be(&account_address.key().0).unwrap();
 
     // Get balance variable key
-    let balance_low_storage_key = get_storage_key(
-        &erc20_contract_address,
-        "ERC20_balances",
-        &[field_contract_address],
-        0,
-    );
+    let balance_low_storage_key =
+        get_storage_key(&erc20_contract_address, "ERC20_balances", &[field_contract_address], 0);
 
-    let balance_high_storage_key = get_storage_key(
-        &erc20_contract_address,
-        "ERC20_balances",
-        &[field_contract_address],
-        1,
-    );
+    let balance_high_storage_key =
+        get_storage_key(&erc20_contract_address, "ERC20_balances", &[field_contract_address], 1);
 
     // Set balance storage value to zero
     StorageView::<MockRuntime>::insert(balance_low_storage_key, StarkFelt::try_from("0").unwrap());

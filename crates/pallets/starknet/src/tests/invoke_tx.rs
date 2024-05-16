@@ -882,8 +882,7 @@ fn given_hardcoded_contract_set_erc20_balance_to_zero() {
         let account_address = get_account_address(None, AccountType::V0(AccountTypeV0Inner::NoValidate));
 
         // ERC20 contract address (ETH in this case)
-        let erc20_contract_address =
-            ContractAddress(PatriciaKey(StarkFelt::try_from(ETH_FEE_TOKEN_ADDRESS).unwrap()));
+        let erc20_contract_address = ContractAddress(PatriciaKey(StarkFelt::try_from(ETH_FEE_TOKEN_ADDRESS).unwrap()));
 
         let erc20_initial_balance_vec = get_balance_contract_call(account_address, erc20_contract_address);
 
@@ -895,13 +894,13 @@ fn given_hardcoded_contract_set_erc20_balance_to_zero() {
             ]
         );
 
-		set_account_erc20_balance_to_zero(account_address, erc20_contract_address);
+        set_account_erc20_balance_to_zero(account_address, erc20_contract_address);
         let erc20_final_balance_vec = get_balance_contract_call(account_address, erc20_contract_address);
 
         // Ensure ERC20 balance of account is zero
-        assert_eq!(erc20_final_balance_vec, vec![
-				   Felt252Wrapper::from_hex_be("0x0").unwrap(),
-				   Felt252Wrapper::from_hex_be("0x0").unwrap()
-		]);
+        assert_eq!(
+            erc20_final_balance_vec,
+            vec![Felt252Wrapper::from_hex_be("0x0").unwrap(), Felt252Wrapper::from_hex_be("0x0").unwrap()]
+        );
     });
 }
