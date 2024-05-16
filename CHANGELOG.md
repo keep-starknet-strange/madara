@@ -47,6 +47,7 @@
 - fix(docker): fix dockerfile for `madara-node`
 - feat: Remove generic hasher from block hash computation
 - refacto: git submodules removed
+- feat: Add pallet test for transaction declare V0
 
 ## v0.7.0
 
