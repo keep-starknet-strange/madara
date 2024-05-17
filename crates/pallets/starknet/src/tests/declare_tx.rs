@@ -58,7 +58,6 @@ fn create_declare_erc20_v0_transaction(
     account_type: AccountType,
     sender_address: Option<ContractAddress>,
     signature: Option<TransactionSignature>,
-    nonce: Option<Nonce>,
 ) -> BlockifierDeclareTransaction {
     let sender_address = sender_address.unwrap_or_else(|| get_account_address(None, account_type));
 
@@ -69,7 +68,7 @@ fn create_declare_erc20_v0_transaction(
     let mut tx = StarknetApiDeclareTransaction::V0(DeclareTransactionV0V1 {
         max_fee: Fee(u128::MAX),
         signature: Default::default(),
-        nonce: nonce.unwrap_or_default(),
+        nonce: Default::default(),
         class_hash: erc20_class_hash,
         sender_address,
     });
@@ -389,7 +388,6 @@ fn test_declare_using_transaction_v0() {
         let transaction = create_declare_erc20_v0_transaction(
             Starknet::chain_id(),
             AccountType::V0(AccountTypeV0Inner::NoValidate),
-            None,
             None,
             None,
         );
