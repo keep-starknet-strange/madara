@@ -3,15 +3,17 @@ use std::collections::HashMap;
 use anyhow::anyhow;
 use assert_matches::assert_matches;
 use rstest::rstest;
-use starknet_accounts::Account;
+use starknet_accounts::{Account, ConnectedAccount};
 use starknet_core::types::{BlockId, BlockTag, DeclaredClassItem, MaybePendingStateUpdate, StarknetError};
 use starknet_core::utils::get_storage_var_address;
 use starknet_ff::FieldElement;
 use starknet_providers::Provider;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
-use starknet_rpc_test::constants::{ACCOUNT_CONTRACT_ADDRESS, ARGENT_CONTRACT_ADDRESS, CAIRO_1_ACCOUNT_CONTRACT_ADDRESS, OZ_CONTRACT_ADDRESS, SEQUENCER_CONTRACT_ADDRESS, SIGNER_PRIVATE};
+use starknet_rpc_test::constants::{
+    ACCOUNT_CONTRACT_ADDRESS, ARGENT_CONTRACT_ADDRESS, OZ_CONTRACT_ADDRESS, SEQUENCER_CONTRACT_ADDRESS, SIGNER_PRIVATE,
+};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{build_single_owner_account, read_erc20_balance, AccountActions};
+use starknet_rpc_test::utils::{build_single_owner_account, read_erc20_balance, AccountActions, U256};
 use starknet_rpc_test::Transaction;
 use starknet_test_utils::constants::ETH_FEE_TOKEN_ADDRESS;
 
@@ -37,15 +39,17 @@ async fn returns_correct_state_diff_transfer(madara: &ThreadSafeMadaraClient) ->
     let fee_token_address = FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap();
     let account_alice = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let account_bob = build_single_owner_account(&rpc, SIGNER_PRIVATE, OZ_CONTRACT_ADDRESS, true);
+
+    let nonce = account_alice.get_nonce().await?.try_into()?;
     {
         let mut madara_write_lock = madara.write().await;
         let txs = madara_write_lock
             .create_block_with_txs(vec![
-                Transaction::Execution(account_alice.transfer_tokens(recipient, FieldElement::ONE, None)),
+                Transaction::Execution(account_alice.transfer_tokens(recipient, FieldElement::ONE, Some(nonce))),
                 Transaction::Execution(account_bob.transfer_tokens(recipient, FieldElement::ONE, None)),
             ])
             .await?;
-        txs.iter().for_each(|tx| {dbg!(tx); assert!(tx.is_ok())});
+        txs.iter().for_each(|tx| assert!(tx.is_ok()));
     }
 
     let state_update = match rpc.get_state_update(BlockId::Tag(BlockTag::Latest)).await.unwrap() {
