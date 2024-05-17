@@ -86,7 +86,6 @@ macro_rules! mock_runtime {
                 type DisableNonceValidation = DisableNonceValidation;
 				type ProtocolVersion = ProtocolVersion;
 				type ProgramHash = ProgramHash;
-				type L1GasPrices = L1GasPrices;
 				type ExecutionConstants = ExecutionConstants;
 			}
 
