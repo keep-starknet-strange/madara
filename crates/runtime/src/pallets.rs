@@ -1,6 +1,16 @@
 //! Configuration of the pallets used in the runtime.
 //! The pallets used in the runtime are configured here.
 //! This file is used to generate the `construct_runtime!` macro.
+#[cfg(all(debug_assertions, feature = "dev"))]
+use std::env::VarError;
+use std::num::NonZeroU128;
+use std::ops::Deref;
+#[cfg(all(debug_assertions, feature = "dev"))]
+use std::path::Path;
+use std::sync::Arc;
+
+use blockifier::blockifier::block::GasPrices;
+use blockifier::versioned_constants::VersionedConstants;
 pub use frame_support::traits::{
     ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, OnTimestampSet, Randomness, StorageInfo,
 };
@@ -10,6 +20,7 @@ pub use frame_support::weights::constants::{
 pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
+use lazy_static::lazy_static;
 pub use mp_chain_id::SN_GOERLI_CHAIN_ID;
 pub use mp_program_hash::SN_OS_PROGRAM_HASH;
 /// Import the StarkNet pallet.
@@ -29,6 +40,29 @@ use crate::*;
 // --------------------------------------
 // CUSTOM PALLETS
 // --------------------------------------
+const EXECUTION_CONSTANTS_STR: &str = include_str!("../resources/versioned_constants.json");
+
+#[cfg(not(all(debug_assertions, feature = "dev")))]
+lazy_static! {
+    static ref EXECUTION_CONSTANTS: Arc<VersionedConstants> = serde_json::from_str(EXECUTION_CONSTANTS_STR).unwrap();
+}
+
+#[cfg(all(debug_assertions, feature = "dev"))]
+lazy_static! {
+    static ref EXECUTION_CONSTANTS: Arc<VersionedConstants> = Arc::new(
+        std::env::var("EXECUTION_CONSTANTS_PATH")
+            .map(|path| {
+                VersionedConstants::try_from(Path::new(path.as_str()))
+                    .expect("Failed to load execution constants from path")
+            })
+            .unwrap_or_else(|e| {
+                match e {
+                    VarError::NotPresent => serde_json::from_str(EXECUTION_CONSTANTS_STR).unwrap(),
+                    VarError::NotUnicode(_) => panic!("Failed to load execution constants variable"),
+                }
+            })
+    );
+}
 
 /// Configure the Starknet pallet in pallets/starknet.
 impl pallet_starknet::Config for Runtime {
@@ -42,6 +76,8 @@ impl pallet_starknet::Config for Runtime {
     type DisableNonceValidation = ConstBool<false>;
     type ProtocolVersion = ProtocolVersion;
     type ProgramHash = ProgramHash;
+    type L1GasPrices = L1GasPrices;
+    type ExecutionConstants = ExecutionConstants;
 }
 
 /// --------------------------------------
@@ -147,11 +183,17 @@ impl pallet_timestamp::Config for Runtime {
     type WeightInfo = ();
 }
 
+fn get_execution_constants() -> Arc<VersionedConstants> {
+    EXECUTION_CONSTANTS.deref().clone()
+}
+
 parameter_types! {
     pub const UnsignedPriority: u64 = 1 << 20;
     pub const TransactionLongevity: u64 = u64::MAX;
     pub const ProtocolVersion: u8 = 0;
     pub const ProgramHash: Felt252Wrapper = SN_OS_PROGRAM_HASH;
+    pub const L1GasPrices: GasPrices = GasPrices { eth_l1_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, strk_l1_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, eth_l1_data_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, strk_l1_data_gas_price: unsafe { NonZeroU128::new_unchecked(10) } };
+    pub ExecutionConstants: Arc<VersionedConstants> = get_execution_constants();
 }
 
 /// Implement the OnTimestampSet trait to override the default Aura.

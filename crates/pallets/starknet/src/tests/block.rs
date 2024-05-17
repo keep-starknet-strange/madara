@@ -12,7 +12,7 @@ use starknet_api::hash::StarkFelt;
 
 use super::mock::default_mock::*;
 use super::mock::*;
-use crate::tests::constants::FEE_TOKEN_ADDRESS;
+use crate::tests::constants::ETH_FEE_TOKEN_ADDRESS;
 use crate::tests::get_invoke_dummy;
 use crate::{InherentUpdate, SequencerAddress};
 
@@ -108,7 +108,7 @@ fn get_block_context_works() {
         assert_eq!(default_addr, block_context.block_info().sequencer_address);
         // correct fee_token_address
         assert_eq!(
-            ContractAddress::try_from(StarkFelt::try_from(FEE_TOKEN_ADDRESS).unwrap()).unwrap(),
+            ContractAddress::try_from(StarkFelt::try_from(ETH_FEE_TOKEN_ADDRESS).unwrap()).unwrap(),
             block_context.chain_info().fee_token_address(&FeeType::Eth)
         );
         // correct gas_price,

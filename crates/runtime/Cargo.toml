@@ -19,9 +19,11 @@ targets = ["x86_64-unknown-linux-gnu"]
 ignored = ["scale-info"] # Used in the macros
 
 [dependencies]
+lazy_static = { workspace = true }
 parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }
 
 sp-api = { workspace = true }
 sp-block-builder = { workspace = true }
@@ -91,3 +93,4 @@ runtime-benchmarks = [
   # Madara pallets
   "pallet-starknet/runtime-benchmarks",
 ]
+dev = []

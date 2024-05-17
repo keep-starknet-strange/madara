@@ -55,6 +55,7 @@ pub mod types;
 mod tests;
 
 use std::collections::BTreeSet;
+use std::ops::Deref;
 use std::str::from_utf8_unchecked;
 
 use blockifier::blockifier::block::BlockInfo;
@@ -152,6 +153,8 @@ pub mod pallet {
         type ProtocolVersion: Get<u8>;
         #[pallet::constant]
         type ProgramHash: Get<Felt252Wrapper>;
+        #[pallet::constant]
+        type ExecutionConstants: Get<Arc<VersionedConstants>>;
     }
 
     /// The Starknet pallet hooks.
@@ -868,7 +871,7 @@ impl<T: Config> Pallet<T> {
                 use_kzg_da: true,
             },
             &ChainInfo { chain_id, fee_token_addresses },
-            VersionedConstants::latest_constants(),
+            T::ExecutionConstants::get().deref(),
         )
     }
 
@@ -936,7 +939,7 @@ impl<T: Config> Pallet<T> {
             storage_address: address,
             caller_address: ContractAddress::default(),
             call_type: CallType::Call,
-            initial_gas: VersionedConstants::latest_constants().tx_initial_gas(),
+            initial_gas: T::ExecutionConstants::get().tx_initial_gas(),
         };
 
         let mut resources = cairo_vm::vm::runners::cairo_runner::ExecutionResources::default();

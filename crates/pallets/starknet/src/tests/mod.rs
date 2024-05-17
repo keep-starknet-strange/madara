@@ -9,6 +9,7 @@ use mp_transactions::compute_hash::ComputeTransactionHash;
 use starknet_api::core::{
     calculate_contract_address, ClassHash, ContractAddress, EntryPointSelector, Nonce, PatriciaKey,
 };
+use starknet_api::data_availability::DataAvailabilityMode;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{
     Calldata, ContractAddressSalt, DeclareTransactionV0V1, DeployAccountTransactionV1, Fee, TransactionSignature,
@@ -17,7 +18,7 @@ use starknet_api::transaction::{
 
 use self::mock::default_mock::Starknet;
 use self::mock::{get_account_address, AccountType};
-use self::utils::get_contract_class;
+use self::utils::{create_resource_bounds, get_contract_class};
 use crate::blockifier_state_adapter::BlockifierStateAdapter;
 use crate::tests::mock::account_helper;
 use crate::tests::utils::sign_message_hash;
@@ -71,6 +72,41 @@ pub fn get_invoke_dummy(
         nonce,
         sender_address,
         calldata,
+    });
+
+    let tx_hash = tx.compute_hash(chain_id, false);
+
+    blockifier::transaction::transactions::InvokeTransaction { tx, tx_hash, only_query: false }
+}
+
+pub fn get_invoke_v3_dummy(
+    chain_id: Felt252Wrapper,
+    nonce: Nonce,
+) -> blockifier::transaction::transactions::InvokeTransaction {
+    let signature = TransactionSignature(vec![
+        StarkFelt::try_from("0x00f513fe663ffefb9ad30058bb2d2f7477022b149a0c02fb63072468d3406168").unwrap(),
+        StarkFelt::try_from("0x02e29e92544d31c03e89ecb2005941c88c28b4803a3647a7834afda12c77f096").unwrap(),
+    ]);
+    let sender_address =
+        ContractAddress(PatriciaKey(StarkFelt::try_from(constants::BLOCKIFIER_ACCOUNT_ADDRESS).unwrap()));
+    let calldata = Calldata(Arc::new(vec![
+        StarkFelt::try_from("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(), /* contract_address */
+        StarkFelt::try_from("0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc").unwrap(), /* selector for the `with_arg` external */
+        StarkFelt::try_from("0x1").unwrap(),  // calldata_len
+        StarkFelt::try_from("0x19").unwrap(), // calldata[0]
+    ]));
+
+    let tx = starknet_api::transaction::InvokeTransaction::V3(starknet_api::transaction::InvokeTransactionV3 {
+        resource_bounds: create_resource_bounds(),
+        tip: starknet_api::transaction::Tip::default(),
+        calldata,
+        sender_address,
+        nonce,
+        signature,
+        nonce_data_availability_mode: DataAvailabilityMode::L1,
+        fee_data_availability_mode: DataAvailabilityMode::L1,
+        paymaster_data: starknet_api::transaction::PaymasterData(vec![]),
+        account_deployment_data: starknet_api::transaction::AccountDeploymentData(vec![]),
     });
 
     let tx_hash = tx.compute_hash(chain_id, false);
@@ -355,6 +391,12 @@ pub fn set_infinite_tokens<T: Config>(contract_address: &ContractAddress) {
         .unwrap();
     state_adapter
         .set_storage_at(fee_token_addresses.eth_fee_token_address, balance_key_high, StarkFelt::from(u64::MAX as u128))
+        .unwrap();
+    state_adapter
+        .set_storage_at(fee_token_addresses.strk_fee_token_address, balance_key_low, StarkFelt::from(u64::MAX as u128))
+        .unwrap();
+    state_adapter
+        .set_storage_at(fee_token_addresses.strk_fee_token_address, balance_key_high, StarkFelt::from(u64::MAX as u128))
         .unwrap();
 }
 
