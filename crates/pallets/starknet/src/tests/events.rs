@@ -8,7 +8,7 @@ use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, Fee, InvokeTransactionV1, TransactionSignature};
 use starknet_core::utils::get_selector_from_name;
 
-use super::constants::{FEE_TOKEN_ADDRESS, MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS};
+use super::constants::{ETH_FEE_TOKEN_ADDRESS, MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS};
 use super::mock::default_mock::*;
 use super::mock::*;
 
@@ -25,7 +25,7 @@ fn internal_and_external_events_are_emitted_in_the_right_order() {
             ContractAddress(PatriciaKey(StarkFelt::try_from(MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS).unwrap()));
         let inner_contract_address =
             ContractAddress(PatriciaKey(StarkFelt::try_from(INNER_EVENT_EMITTING_CONTRACT_ADDRESS).unwrap()));
-        let fee_token_address = ContractAddress(PatriciaKey(StarkFelt::try_from(FEE_TOKEN_ADDRESS).unwrap()));
+        let fee_token_address = ContractAddress(PatriciaKey(StarkFelt::try_from(ETH_FEE_TOKEN_ADDRESS).unwrap()));
 
         let sender_account = get_account_address(None, AccountType::V0(AccountTypeV0Inner::NoValidate));
         let emit_selector: StarkFelt = Felt252Wrapper::from(get_selector_from_name("emit_sandwich").unwrap()).into();

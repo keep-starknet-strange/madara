@@ -2,6 +2,7 @@
 
 ## Next release
 
+- feat: support strk as fee token
 - dev: pallet test for estimate_fee that skip validation
 - feat: add versioned constants to pallet constants
 - bug: fix contract serialisation
