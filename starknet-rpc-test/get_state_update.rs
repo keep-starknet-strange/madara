@@ -13,7 +13,7 @@ use starknet_rpc_test::constants::{
     ACCOUNT_CONTRACT_ADDRESS, ARGENT_CONTRACT_ADDRESS, OZ_CONTRACT_ADDRESS, SEQUENCER_CONTRACT_ADDRESS, SIGNER_PRIVATE,
 };
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{build_single_owner_account, read_erc20_balance, AccountActions, U256};
+use starknet_rpc_test::utils::{build_single_owner_account, read_erc20_balance, AccountActions};
 use starknet_rpc_test::Transaction;
 use starknet_test_utils::constants::ETH_FEE_TOKEN_ADDRESS;
 
