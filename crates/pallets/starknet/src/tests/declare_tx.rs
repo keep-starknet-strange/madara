@@ -53,6 +53,36 @@ fn create_declare_erc20_v1_transaction(
     BlockifierDeclareTransaction::new(tx, tx_hash, ClassInfo::new(&erc20_class, 0, 1).unwrap()).unwrap()
 }
 
+fn create_declare_erc20_v0_transaction(
+    chain_id: Felt252Wrapper,
+    account_type: AccountType,
+    sender_address: Option<ContractAddress>,
+    signature: Option<TransactionSignature>,
+) -> BlockifierDeclareTransaction {
+    let sender_address = sender_address.unwrap_or_else(|| get_account_address(None, account_type));
+
+    let erc20_class = get_contract_class("ERC20.json", 0);
+    let erc20_class_hash =
+        ClassHash(StarkFelt::try_from("0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap());
+
+    let mut tx = StarknetApiDeclareTransaction::V0(DeclareTransactionV0V1 {
+        max_fee: Fee(u128::MAX),
+        signature: Default::default(),
+        nonce: Default::default(),
+        class_hash: erc20_class_hash,
+        sender_address,
+    });
+
+    let tx_hash = tx.compute_hash(chain_id, false);
+    // Force to do that because ComputeTransactionHash cannot be implemented on DeclareTransactionV0V1
+    // directly...
+    if let StarknetApiDeclareTransaction::V0(tx) = &mut tx {
+        tx.signature = signature.unwrap_or_else(|| sign_message_hash(tx_hash));
+    }
+
+    BlockifierDeclareTransaction::new(tx, tx_hash, ClassInfo::new(&erc20_class, 0, 1).unwrap()).unwrap()
+}
+
 #[test]
 fn given_contract_declare_tx_works_once_not_twice() {
     new_test_ext::<MockRuntime>().execute_with(|| {
@@ -347,5 +377,21 @@ fn test_verify_nonce_in_unsigned_tx() {
             Starknet::validate_unsigned(tx_source, &call),
             Err(TransactionValidityError::Invalid(InvalidTransaction::BadProof))
         );
+    });
+}
+
+#[test]
+fn test_declare_using_transaction_v0() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let transaction = create_declare_erc20_v0_transaction(
+            Starknet::chain_id(),
+            AccountType::V0(AccountTypeV0Inner::NoValidate),
+            None,
+            None,
+        );
+
+        assert!(Starknet::validate_unsigned(TransactionSource::InBlock, &crate::Call::declare { transaction }).is_ok());
     });
 }
