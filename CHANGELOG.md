@@ -2,7 +2,7 @@
 
 ## Next release
 
-- dev: impl get_state_updates using re_execute_transactions
+- dev: impl get_state_updates using get_transaction_re_execution_state_diff
 - feat: support strk as fee token
 - dev: pallet test for estimate_fee that skip validation
 - feat: add versioned constants to pallet constants
