@@ -1783,19 +1783,6 @@
 <a href="#1783" id="1783">1783</a>
 <a href="#1784" id="1784">1784</a>
 <a href="#1785" id="1785">1785</a>
-<a href="#1786" id="1786">1786</a>
-<a href="#1787" id="1787">1787</a>
-<a href="#1788" id="1788">1788</a>
-<a href="#1789" id="1789">1789</a>
-<a href="#1790" id="1790">1790</a>
-<a href="#1791" id="1791">1791</a>
-<a href="#1792" id="1792">1792</a>
-<a href="#1793" id="1793">1793</a>
-<a href="#1794" id="1794">1794</a>
-<a href="#1795" id="1795">1795</a>
-<a href="#1796" id="1796">1796</a>
-<a href="#1797" id="1797">1797</a>
-<a href="#1798" id="1798">1798</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1850,7 +1837,6 @@
 <span class="kw">use </span>sp_core::H256;
 <span class="kw">use </span>sp_runtime::traits::{Block <span class="kw">as </span>BlockT, Header <span class="kw">as </span>HeaderT};
 <span class="kw">use </span>sp_runtime::transaction_validity::InvalidTransaction;
-<span class="kw">use </span>starknet_api::block::BlockHash;
 <span class="kw">use </span>starknet_api::core::Nonce;
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_api::transaction::{Calldata, Fee, TransactionHash, TransactionVersion};
@@ -1868,6 +1854,7 @@
     TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
 };
 <span class="kw">use </span>starknet_core::utils::get_selector_from_name;
+<span class="kw">use </span>trace_api::get_previous_block_substrate_hash;
 
 <span class="kw">use </span><span class="kw">crate</span>::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
 <span class="kw">use </span><span class="kw">crate</span>::types::RpcEventFilter;
@@ -2003,22 +1990,6 @@
         };
 
         <span class="prelude-val">Ok</span>(starknet_block.header().block_number)
-    }
-
-    <span class="doccomment">/// Returns the state diff for the given block.
-    ///
-    /// # Arguments
-    ///
-    /// * `starknet_block_hash` - The hash of the block containing the state diff (starknet block).
-    </span><span class="kw">fn </span>get_state_diff(<span class="kw-2">&amp;</span><span class="self">self</span>, starknet_block_hash: <span class="kw-2">&amp;</span>BlockHash) -&gt; <span class="prelude-ty">Result</span>&lt;StateDiff, StarknetRpcApiError&gt; {
-        <span class="kw">let </span>state_diff = <span class="self">self</span>.backend.da().state_diff(starknet_block_hash).map_err(|e| {
-            <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve state diff from cache for block with hash {}: {e}&quot;</span>, starknet_block_hash);
-            StarknetRpcApiError::InternalServerError
-        })<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>rpc_state_diff = to_rpc_state_diff(state_diff);
-
-        <span class="prelude-val">Ok</span>(rpc_state_diff)
     }
 }
 
@@ -2960,12 +2931,15 @@
             FieldElement::default()
         };
 
-        <span class="kw">let </span>starknet_block_hash = BlockHash(starknet_block.header().hash().into());
+        <span class="kw">let </span>block_transactions = starknet_block.transactions();
 
-        <span class="kw">let </span>state_diff = <span class="self">self</span>.get_state_diff(<span class="kw-2">&amp;</span>starknet_block_hash).map_err(|e| {
-            <span class="macro">error!</span>(<span class="string">&quot;Failed to get state diff. Starknet block hash: {starknet_block_hash}, error: {e}&quot;</span>);
-            StarknetRpcApiError::InternalServerError
-        })<span class="question-mark">?</span>;
+        <span class="kw">let </span>previous_block_substrate_hash = get_previous_block_substrate_hash(<span class="self">self</span>, substrate_block_hash)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>state_diff = <span class="self">self</span>.get_transaction_re_execution_state_diff(
+            previous_block_substrate_hash,
+            <span class="macro">vec!</span>[],
+            block_transactions.clone(),
+        )<span class="question-mark">?</span>;
 
         <span class="kw">let </span>state_update = StateUpdate {
             block_hash: starknet_block.header().hash().into(),

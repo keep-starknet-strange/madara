@@ -97,6 +97,8 @@
 <a href="#97" id="97">97</a>
 <a href="#98" id="98">98</a>
 <a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Definition of the runtime API for the Starknet pallet.
 
 </span><span class="comment">// Adding allow unused type parameters to avoid clippy errors
@@ -115,14 +117,14 @@
 <span class="kw">pub extern crate </span>alloc;
 <span class="kw">use </span>alloc::vec::Vec;
 
-<span class="kw">use </span>mp_simulations::{InternalSubstrateError, SimulationError, SimulationFlags, TransactionSimulationResult};
+<span class="kw">use </span>mp_simulations::{
+    InternalSubstrateError, ReExecutionResult, SimulationError, SimulationFlags, TransactionSimulationResult,
+};
 <span class="kw">use </span>sp_api::BlockT;
 <span class="kw">use </span>starknet_api::core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_api::state::StorageKey;
 <span class="kw">use </span>starknet_api::transaction::{Calldata, Event <span class="kw">as </span>StarknetEvent, MessageToL1, TransactionHash};
-
-<span class="kw">type </span>ReExecutionResult = <span class="prelude-ty">Result</span>&lt;Vec&lt;(TransactionExecutionInfo, <span class="prelude-ty">Option</span>&lt;CommitmentStateDiff&gt;)&gt;, SimulationError&gt;;
 
 <span class="macro">sp_api::decl_runtime_apis! </span>{
     <span class="kw">pub trait </span>StarknetRuntimeApi {
@@ -171,6 +173,8 @@
         /// Idealy, the execution traces of all of `transactions_to_trace`.
         /// If any of the transactions (from both arguments) fails, an error is returned.
         </span><span class="kw">fn </span>re_execute_transactions(transactions_before: Vec&lt;Transaction&gt;, transactions_to_trace: Vec&lt;Transaction&gt;, with_state_diff: bool) -&gt; <span class="prelude-ty">Result</span>&lt;ReExecutionResult, InternalSubstrateError&gt;;
+
+        <span class="kw">fn </span>get_transaction_re_execution_state_diff(transactions_before: Vec&lt;Transaction&gt;, transactions: Vec&lt;Transaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;CommitmentStateDiff, SimulationError&gt;, InternalSubstrateError&gt;;
 
         <span class="kw">fn </span>get_index_and_tx_for_tx_hash(xts: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;, tx_hash: TransactionHash) -&gt; <span class="prelude-ty">Option</span>&lt;(u32, Transaction)&gt;;
 

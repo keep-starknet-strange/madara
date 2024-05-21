@@ -85,7 +85,10 @@
 <a href="#85" id="85">85</a>
 <a href="#86" id="86">86</a>
 <a href="#87" id="87">87</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>blockifier::state::errors::StateError;
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>blockifier::state::cached_state::CommitmentStateDiff;
+<span class="kw">use </span>blockifier::state::errors::StateError;
 <span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>blockifier::transaction::objects::TransactionExecutionInfo;
 <span class="kw">use </span>starknet_core::types::{SimulationFlag, SimulationFlagForEstimateFee};
@@ -119,6 +122,7 @@
     }
 }
 
+<span class="kw">pub type </span>ReExecutionResult = <span class="prelude-ty">Result</span>&lt;Vec&lt;(TransactionExecutionInfo, <span class="prelude-ty">Option</span>&lt;CommitmentStateDiff&gt;)&gt;, SimulationError&gt;;
 <span class="kw">pub type </span>TransactionSimulationResult = <span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, SimulationError&gt;;
 
 <span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
