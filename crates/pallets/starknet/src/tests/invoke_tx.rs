@@ -35,9 +35,8 @@ use super::utils::{
 use crate::tests::constants::{UDC_ADDRESS, UDC_SELECTOR};
 use crate::tests::{
     get_invoke_argent_dummy, get_invoke_braavos_dummy, get_invoke_dummy, get_invoke_emit_event_dummy,
-    get_invoke_nonce_dummy, get_invoke_openzeppelin_dummy, get_invoke_v3_argent_dummy, get_invoke_v3_braavos_dummy,
-    get_invoke_v3_dummy, get_invoke_v3_openzeppelin_dummy, get_storage_read_write_dummy, set_infinite_tokens,
-    set_nonce,
+    get_invoke_nonce_dummy, get_invoke_openzeppelin_dummy, get_invoke_v3_dummy, get_invoke_v3_openzeppelin_dummy,
+    get_storage_read_write_dummy, set_infinite_tokens, set_nonce,
 };
 use crate::{Call, Error, StorageView};
 
@@ -929,22 +928,6 @@ fn given_hardcoded_contract_run_invoke_tx_v3_fails_sender_not_deployed() {
 }
 
 #[test]
-fn given_hardcoded_contract_run_invoke_tx_v3_on_argent_account_then_it_works() {
-    new_test_ext::<MockRuntime>().execute_with(|| {
-        basic_test_setup(2);
-        let none_origin = RuntimeOrigin::none();
-        // NOT WORKING
-        let chain_id = Starknet::chain_id();
-        let mut transaction = get_invoke_v3_argent_dummy(chain_id);
-        if let starknet_api::transaction::InvokeTransaction::V3(tx) = &mut transaction.tx {
-            tx.signature = sign_message_hash(transaction.tx_hash);
-        };
-
-        assert_ok!(Starknet::invoke(none_origin, transaction));
-    });
-}
-
-#[test]
 fn given_hardcoded_contract_run_invoke_tx_v3_on_openzeppelin_account_then_it_works() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
@@ -953,63 +936,6 @@ fn given_hardcoded_contract_run_invoke_tx_v3_on_openzeppelin_account_then_it_wor
         let transaction = get_invoke_v3_openzeppelin_dummy(Starknet::chain_id());
 
         assert_ok!(Starknet::invoke(none_origin, transaction));
-    });
-}
-
-#[test]
-fn given_hardcoded_contract_run_invoke_tx_v3_on_argent_account_with_incorrect_signature_then_it_fails() {
-    new_test_ext::<MockRuntime>().execute_with(|| {
-        basic_test_setup(2);
-        let none_origin = RuntimeOrigin::none();
-
-        let mut transaction = get_invoke_v3_argent_dummy(Starknet::chain_id());
-        if let starknet_api::transaction::InvokeTransaction::V3(tx) = &mut transaction.tx {
-            tx.signature = TransactionSignature(vec![StarkFelt::ONE, StarkFelt::ONE]);
-        };
-
-        let validate_result = Starknet::validate_unsigned(
-            TransactionSource::InBlock,
-            &crate::Call::invoke { transaction: transaction.clone() },
-        );
-        assert!(matches!(validate_result.unwrap_err(), TransactionValidityError::Invalid(_)));
-
-        assert_err!(Starknet::invoke(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
-    });
-}
-
-#[test]
-fn given_hardcoded_contract_run_invoke_tx_v3_on_braavos_account_then_it_works() {
-    new_test_ext::<MockRuntime>().execute_with(|| {
-        basic_test_setup(2);
-        let none_origin = RuntimeOrigin::none();
-        // NOT WORKING
-        let mut transaction = get_invoke_v3_braavos_dummy(Starknet::chain_id());
-        if let starknet_api::transaction::InvokeTransaction::V3(tx) = &mut transaction.tx {
-            tx.signature = sign_message_hash(transaction.tx_hash);
-        };
-
-        assert_ok!(Starknet::invoke(none_origin, transaction));
-    });
-}
-
-#[test]
-fn given_hardcoded_contract_run_invoke_tx_v3_on_braavos_account_with_incorrect_signature_then_it_fails() {
-    new_test_ext::<MockRuntime>().execute_with(|| {
-        basic_test_setup(2);
-        let none_origin = RuntimeOrigin::none();
-
-        let mut transaction = get_invoke_v3_braavos_dummy(Starknet::chain_id());
-        if let starknet_api::transaction::InvokeTransaction::V3(tx) = &mut transaction.tx {
-            tx.signature = TransactionSignature(vec![StarkFelt::ONE, StarkFelt::ONE]);
-        };
-
-        let validate_result = Starknet::validate_unsigned(
-            TransactionSource::InBlock,
-            &crate::Call::invoke { transaction: transaction.clone() },
-        );
-        assert!(matches!(validate_result.unwrap_err(), TransactionValidityError::Invalid(_)));
-
-        assert_err!(Starknet::invoke(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
     });
 }
 

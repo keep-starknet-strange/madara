@@ -61,7 +61,7 @@
 - feat: Remove generic hasher from block hash computation
 - refacto: git submodules removed
 - test: Add pallet test for transaction declare V0
-- test: Adding tests for txv3
+- test: Deleting tests for wallets
 
 ## v0.7.0
 

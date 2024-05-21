@@ -144,40 +144,6 @@ fn get_invoke_argent_dummy(chain_id: Felt252Wrapper) -> blockifier::transaction:
     blockifier::transaction::transactions::InvokeTransaction { tx, tx_hash, only_query: false }
 }
 
-fn get_invoke_v3_argent_dummy(chain_id: Felt252Wrapper) -> blockifier::transaction::transactions::InvokeTransaction {
-    let sender_address = ContractAddress(PatriciaKey(
-        StarkFelt::try_from("0x02e63de215f650e9d7e2313c6e9ed26b4f920606fb08576b1663c21a7c4a28c5").unwrap(),
-    ));
-    let nonce = Nonce(StarkFelt::ZERO);
-    let signature = TransactionSignature::default();
-    let calldata = Calldata(Arc::new(vec![
-        StarkFelt::try_from("0x1").unwrap(), // call_array_len
-        StarkFelt::try_from("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(), // to
-        StarkFelt::try_from("0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc").unwrap(), // selector
-        StarkFelt::try_from("0x0").unwrap(), // data_offset
-        StarkFelt::try_from("0x1").unwrap(), // data_len
-        StarkFelt::try_from("0x1").unwrap(), // calldata_len
-        StarkFelt::try_from("0x19").unwrap(), // calldata[0]
-    ]));
-
-    let tx = starknet_api::transaction::InvokeTransaction::V3(starknet_api::transaction::InvokeTransactionV3 {
-        resource_bounds: create_resource_bounds(),
-        tip: starknet_api::transaction::Tip::default(),
-        calldata,
-        sender_address,
-        nonce,
-        signature,
-        nonce_data_availability_mode: DataAvailabilityMode::L1,
-        fee_data_availability_mode: DataAvailabilityMode::L1,
-        paymaster_data: starknet_api::transaction::PaymasterData(vec![]),
-        account_deployment_data: starknet_api::transaction::AccountDeploymentData(vec![]),
-    });
-
-    let tx_hash = tx.compute_hash(chain_id, false);
-
-    blockifier::transaction::transactions::InvokeTransaction { tx, tx_hash, only_query: false }
-}
-
 // ref: https://github.com/myBraavos/braavos-account-cairo/blob/develop/src/account/Account.cairo
 fn get_invoke_braavos_dummy(chain_id: Felt252Wrapper) -> blockifier::transaction::transactions::InvokeTransaction {
     let signature = TransactionSignature(vec![
@@ -204,43 +170,6 @@ fn get_invoke_braavos_dummy(chain_id: Felt252Wrapper) -> blockifier::transaction
         nonce,
         sender_address,
         calldata,
-    });
-
-    let tx_hash = tx.compute_hash(chain_id, false);
-
-    blockifier::transaction::transactions::InvokeTransaction { tx, tx_hash, only_query: false }
-}
-
-fn get_invoke_v3_braavos_dummy(chain_id: Felt252Wrapper) -> blockifier::transaction::transactions::InvokeTransaction {
-    let signature = TransactionSignature(vec![
-        StarkFelt::try_from("0x00f513fe663ffefb9ad30058bb2d2f7477022b149a0c02fb63072468d3406168").unwrap(),
-        StarkFelt::try_from("0x02e29e92544d31c03e89ecb2005941c88c28b4803a3647a7834afda12c77f096").unwrap(),
-    ]);
-    let sender_address = ContractAddress(PatriciaKey(
-        StarkFelt::try_from("0x05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122").unwrap(),
-    ));
-    let nonce = Nonce(StarkFelt::ZERO);
-    let calldata = Calldata(Arc::new(vec![
-        StarkFelt::try_from("0x1").unwrap(), // call_array_len
-        StarkFelt::try_from("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(), // to
-        StarkFelt::try_from("0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc").unwrap(), // selector
-        StarkFelt::try_from("0x0").unwrap(), // data_offset
-        StarkFelt::try_from("0x1").unwrap(), // data_len
-        StarkFelt::try_from("0x1").unwrap(), // calldata_len
-        StarkFelt::try_from("0x19").unwrap(), // calldata[0]
-    ]));
-
-    let tx = starknet_api::transaction::InvokeTransaction::V3(starknet_api::transaction::InvokeTransactionV3 {
-        resource_bounds: create_resource_bounds(),
-        tip: starknet_api::transaction::Tip::default(),
-        calldata,
-        sender_address,
-        nonce,
-        signature,
-        nonce_data_availability_mode: DataAvailabilityMode::L1,
-        fee_data_availability_mode: DataAvailabilityMode::L1,
-        paymaster_data: starknet_api::transaction::PaymasterData(vec![]),
-        account_deployment_data: starknet_api::transaction::AccountDeploymentData(vec![]),
     });
 
     let tx_hash = tx.compute_hash(chain_id, false);
