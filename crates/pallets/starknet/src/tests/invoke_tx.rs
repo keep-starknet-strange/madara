@@ -91,8 +91,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         let events: Vec<StarknetEvent> = Starknet::tx_events(tx_hash);
         println!("events: {:?}", events);
 
-        assert!(events.into_iter().any(|e| e 
-            == StarknetEvent {
+        assert!(events.into_iter().any(|e| e == StarknetEvent {
             from_address: Starknet::fee_token_addresses().eth_fee_token_address,
             content: EventContent {
                 keys: vec![EventKey(
