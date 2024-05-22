@@ -66,7 +66,15 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
-        let mut transaction = get_invoke_dummy_v0(Starknet::chain_id(), NONCE_ZERO);
+        let mut transaction = get_invoke_dummy_v0_v0(Starknet::chain_id(), NONCE_ZERO);
+        if let starknet_api::transaction::InvokeTransaction::V0(tx) = &mut transaction.tx {
+            tx.contract_address = ContractAddress(PatriciaKey(
+                StarkFelt::try_from("0x03e437FB56Bb213f5708Fcd6966502070e276c093ec271aA33433b89E21fd31f").unwrap(),
+            ));
+            tx.calldata = Calldata(Arc::new(vec![])); // Empty calldata for simplicity
+            tx.value = Fee(0);
+            tx.gas_limit = 1000;
+        };
         
         if let starknet_api::transaction::InvokeTransaction::V0(tx) = &mut transaction.tx {
             tx.contract_address = ContractAddress(PatriciaKey(
@@ -107,7 +115,6 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         }));
     });
 }
-
 
 fn get_invoke_dummy_v0(chain_id: u64, nonce: Nonce) -> InvokeTransaction {
     let contract_address = ContractAddress(PatriciaKey(
