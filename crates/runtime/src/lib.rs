@@ -34,7 +34,7 @@ pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
 use mp_felt::Felt252Wrapper;
 use mp_simulations::{
-    FeeEstimate, InternalSubstrateError, SimulationError, SimulationFlags, TransactionSimulationResult,
+    FeeEstimate, InternalSubstrateError, SimulationError, SimulationFlags, TransactionSimulationResult, ReExecutionResult
 };
 use mp_starknet_inherent::L1GasPrices;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
@@ -282,12 +282,16 @@ impl_runtime_apis! {
             Starknet::estimate_fee(transactions, &simulation_flags)
         }
 
-        fn re_execute_transactions(transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>, with_state_diff: bool) -> Result<Result<Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>, SimulationError>, InternalSubstrateError> {
+        fn re_execute_transactions(transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>, with_state_diff: bool) -> Result<ReExecutionResult, InternalSubstrateError> {
             Starknet::re_execute_transactions(transactions_before, transactions_to_trace, with_state_diff)
         }
 
         fn estimate_message_fee(message: L1HandlerTransaction) -> Result<Result<FeeEstimate, SimulationError>, InternalSubstrateError> {
             Starknet::estimate_message_fee(message)
+        }
+
+        fn get_transaction_re_execution_state_diff( transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>) -> Result<Result<CommitmentStateDiff, SimulationError>, InternalSubstrateError> {
+            Starknet::get_transaction_re_execution_state_diff(transactions_before, transactions_to_trace)
         }
 
         fn simulate_transactions(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<TransactionSimulationResult>, InternalSubstrateError> {

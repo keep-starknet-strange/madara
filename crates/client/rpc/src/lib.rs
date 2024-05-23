@@ -52,7 +52,6 @@ use sp_blockchain::HeaderBackend;
 use sp_core::H256;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use sp_runtime::transaction_validity::InvalidTransaction;
-use starknet_api::block::BlockHash;
 use starknet_api::core::Nonce;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, Fee, TransactionHash, TransactionVersion};
@@ -70,6 +69,7 @@ use starknet_core::types::{
     TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
 };
 use starknet_core::utils::get_selector_from_name;
+use trace_api::get_previous_block_substrate_hash;
 
 use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
 use crate::types::RpcEventFilter;
@@ -1154,12 +1154,15 @@ where
             FieldElement::default()
         };
 
-        let starknet_block_hash = BlockHash(starknet_block.header().hash().into());
+        let block_transactions = starknet_block.transactions();
 
-        let state_diff = self.get_state_diff(&starknet_block_hash).map_err(|e| {
-            error!("Failed to get state diff. Starknet block hash: {starknet_block_hash}, error: {e}");
-            StarknetRpcApiError::InternalServerError
-        })?;
+        let previous_block_substrate_hash = get_previous_block_substrate_hash(self, substrate_block_hash)?;
+
+        let state_diff = self.get_transaction_re_execution_state_diff(
+            previous_block_substrate_hash,
+            vec![],
+            block_transactions.clone(),
+        )?;
 
         let state_update = StateUpdate {
             block_hash: starknet_block.header().hash().into(),

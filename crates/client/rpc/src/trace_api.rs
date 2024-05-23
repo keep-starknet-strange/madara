@@ -240,6 +240,42 @@ where
             })?)
     }
 
+    pub fn get_transaction_re_execution_state_diff(
+        &self,
+        previous_block_substrate_hash: B::Hash,
+        transactions_before: Vec<Transaction>,
+        transactions_to_trace: Vec<Transaction>,
+    ) -> RpcResult<StateDiff> {
+        let commitment_state_diff = self
+            .client
+            .runtime_api()
+            .get_transaction_re_execution_state_diff(
+                previous_block_substrate_hash,
+                transactions_before,
+                transactions_to_trace,
+            )
+            .map_err(|e| {
+                error!("Failed to execute runtime API call: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?
+            .map_err(|e| {
+                error!("Failed to reexecute the block transactions: {e:?}");
+                StarknetRpcApiError::InternalServerError
+            })?
+            .map_err(|_| {
+                error!(
+                    "One of the transaction failed during it's reexecution. This should not happen, as the block has \
+                     already been executed successfully in the past. There is a bug somewhere."
+                );
+                StarknetRpcApiError::InternalServerError
+            })?;
+
+        Ok(blockifier_to_rpc_state_diff_types(commitment_state_diff).map_err(|e| {
+            error!("Failed to get state diff from reexecution info, error: {e}");
+            StarknetRpcApiError::InternalServerError
+        })?)
+    }
+
     fn execution_info_to_transaction_trace(
         execution_infos: Vec<(TransactionExecutionInfo, CommitmentStateDiff)>,
         block_transactions: &[Transaction],
@@ -436,7 +472,7 @@ fn tx_execution_infos_to_tx_trace(
     Ok(tx_trace)
 }
 
-fn get_previous_block_substrate_hash<A, B, BE, G, C, P, H>(
+pub fn get_previous_block_substrate_hash<A, B, BE, G, C, P, H>(
     starknet: &Starknet<A, B, BE, G, C, P, H>,
     substrate_block_hash: B::Hash,
 ) -> Result<B::Hash, StarknetRpcApiError>

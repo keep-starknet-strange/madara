@@ -50,6 +50,7 @@ pub struct TransactionSimulation {
 }
 
 pub type TransactionSimulationResult = Result<TransactionSimulation, SimulationError>;
+pub type ReExecutionResult = Result<Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>, SimulationError>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
