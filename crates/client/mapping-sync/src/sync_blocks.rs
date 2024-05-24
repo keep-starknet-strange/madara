@@ -35,7 +35,7 @@ where
             match opt_storage_starknet_block {
                 Ok(storage_starknet_block) => {
                     log::info!(
-                        "🙌 Starting starknet consensus session on top of parent : 0x{:#}",
+                        "🙌 Starting Starknet consensus session on top of parent : 0x{:#}",
                         digest_starknet_block.header().parent_block_hash
                     );
                     let digest_starknet_block_hash = digest_starknet_block.header().hash();
@@ -63,9 +63,9 @@ where
                             .join(", ");
 
                         log::info!(
-                            "🎁 Prepared starknet block for proposing at {} [hash: {:?}; parent_hash: {}; {:?}",
+                            "🎁 Prepared Starknet block for proposing at {} [hash: 0x{:x}; parent_hash: {}; tx: [{}]",
                             digest_starknet_block.header().block_number,
-                            digest_starknet_block_hash,
+                            digest_starknet_block_hash.0,
                             digest_starknet_block.header().parent_block_hash,
                             tx_hashes
                         );
