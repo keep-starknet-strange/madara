@@ -34,7 +34,8 @@ pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
 use mp_felt::Felt252Wrapper;
 use mp_simulations::{
-    FeeEstimate, InternalSubstrateError, SimulationError, SimulationFlags, TransactionSimulationResult, ReExecutionResult
+    FeeEstimate, InternalSubstrateError, ReExecutionResult, SimulationError, SimulationFlags,
+    TransactionSimulationResult,
 };
 use mp_starknet_inherent::L1GasPrices;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};

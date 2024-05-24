@@ -17,7 +17,8 @@ pub extern crate alloc;
 use alloc::vec::Vec;
 
 use mp_simulations::{
-    FeeEstimate, InternalSubstrateError, SimulationError, SimulationFlags, TransactionSimulationResult, ReExecutionResult
+    FeeEstimate, InternalSubstrateError, ReExecutionResult, SimulationError, SimulationFlags,
+    TransactionSimulationResult,
 };
 use mp_starknet_inherent::L1GasPrices;
 use sp_api::BlockT;
