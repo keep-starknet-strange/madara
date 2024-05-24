@@ -207,22 +207,6 @@ where
         Ok(starknet_block.header().block_number)
     }
 
-    /// Returns the state diff for the given block.
-    ///
-    /// # Arguments
-    ///
-    /// * `starknet_block_hash` - The hash of the block containing the state diff (starknet block).
-    fn get_state_diff(&self, starknet_block_hash: &BlockHash) -> Result<StateDiff, StarknetRpcApiError> {
-        let state_diff = self.backend.da().state_diff(starknet_block_hash).map_err(|e| {
-            error!("Failed to retrieve state diff from cache for block with hash {}: {e}", starknet_block_hash);
-            StarknetRpcApiError::InternalServerError
-        })?;
-
-        let rpc_state_diff = to_rpc_state_diff(state_diff);
-
-        Ok(rpc_state_diff)
-    }
-
     fn get_current_resource_price(&self) -> Result<ResourcePrice, StarknetRpcApiError> {
         let current_prices =
             self.client.runtime_api().current_l1_gas_prices(self.client.info().best_hash).map_err(|e| {
