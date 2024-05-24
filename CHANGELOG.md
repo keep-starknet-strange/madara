@@ -332,6 +332,7 @@
 - branding: use new logo in the README
 - dev: Get the block status from the actual block in get_block_with_tx_hashes
 - fix: l1-l2 messaging
-- dev : clean contracts and compiled files
+- dev: clean contracts and compiled files
 - fix: add from_address in calldata of l1 message
 - test: add starkgate related testcase
+- feat: Display Madara logs instead of Substrate logs
