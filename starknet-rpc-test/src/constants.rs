@@ -9,7 +9,7 @@ pub const MIN_AMOUNT: &str = "0x1";
 pub const DEPLOY_ACCOUNT_COST: &str = "0xffffffff";
 pub const MAX_U256: &str = "0xffffffffffffffffffffffffffffffff";
 
-// Usefull class hashes
+// Useful class hashes
 pub const TEST_CONTRACT_CLASS_HASH: &str = "0x04c5efa8dc6f0554da51f125d04e379ac41153a8b837391083a8dc3771a33388";
 pub const TOKEN_CLASS_HASH: &str = "0x10000";
 pub const ACCOUNT_CONTRACT_CLASS_HASH: &str = "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f";
@@ -19,7 +19,7 @@ pub const ARGENT_ACCOUNT_CLASS_HASH_CAIRO_0: &str =
 pub const CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH: &str =
     "0x035ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276";
 
-// Usefull contract address
+// Useful contract address
 pub const SEQUENCER_CONTRACT_ADDRESS: &str = "0xdead";
 pub const ACCOUNT_CONTRACT_ADDRESS: &str = "0x1";
 pub const ARGENT_CONTRACT_ADDRESS: &str = "0x2";

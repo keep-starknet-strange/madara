@@ -2,6 +2,7 @@
 
 ## Next release
 
+- dev: Implement tests for new rpc method starknet_getTransactionStatus
 - dev: impl get_state_updates using get_transaction_re_execution_state_diff
 - feat: support strk as fee token
 - dev: pallet test for estimate_fee that skip validation
