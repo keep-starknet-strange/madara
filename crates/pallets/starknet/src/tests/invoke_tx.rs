@@ -105,14 +105,14 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
     });
 }
 
-fn get_invoke_dummy_v0(chain_id: u64) -> InvokeTransaction {
-
+fn get_invoke_dummy_v0(chain_id: Felt252Wrapper) -> InvokeTransaction {
     let contract_address = ContractAddress(PatriciaKey(
         StarkFelt::try_from("0x03e437FB56Bb213f5708Fcd6966502070e276c093ec271aA33433b89E21fd31f").unwrap(),
     ));
     let invoke_tx_v0 = starknet_api::transaction::InvokeTransactionV0 {
         max_fee: Fee(0),
         signature: TransactionSignature(vec![]),
+        contract_address,
         entry_point_selector: Default::default(),
         calldata: Calldata(Arc::new(vec![])), 
     };
