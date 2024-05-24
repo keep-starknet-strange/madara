@@ -1,3 +1,4 @@
+use blockifier::state::cached_state::CommitmentStateDiff;
 use blockifier::state::errors::StateError;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::TransactionExecutionInfo;
@@ -32,6 +33,7 @@ impl From<StateError> for SimulationError {
     }
 }
 
+pub type ReExecutionResult = Result<Vec<(TransactionExecutionInfo, Option<CommitmentStateDiff>)>, SimulationError>;
 pub type TransactionSimulationResult = Result<TransactionExecutionInfo, SimulationError>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

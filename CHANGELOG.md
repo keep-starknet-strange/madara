@@ -2,6 +2,11 @@
 
 ## Next release
 
+- dev: impl get_state_updates using get_transaction_re_execution_state_diff
+- feat: support strk as fee token
+- dev: pallet test for estimate_fee that skip validation
+- feat: add versioned constants to pallet constants
+- bug: fix contract serialisation
 - fix: starknet_call errs if contract nonexistent
 - fix: txn hash calculation and refactor
 - chore: remove all da/settlement related code
@@ -44,6 +49,8 @@
 - feat(rpc/trace_api): add `trace_transaction`
 - fix(docker): fix dockerfile for `madara-node`
 - feat: Remove generic hasher from block hash computation
+- refacto: git submodules removed
+- test: Add pallet test for transaction declare V0
 
 ## v0.7.0
 

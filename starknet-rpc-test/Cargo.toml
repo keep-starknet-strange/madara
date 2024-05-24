@@ -14,6 +14,7 @@ env_logger = "0.9"
 flate2 = { workspace = true }
 reqwest = "0.11.18"
 rstest = "0.18.1"
+serde = "1.0.192"
 serde_json = "1.0.108"
 starknet-accounts = { workspace = true }
 starknet-contract = { workspace = true }
@@ -117,6 +118,10 @@ path = "estimate_message_fee.rs"
 [[test]]
 name = "starknet_simulate_transaction"
 path = "simulate_transaction.rs"
+
+[[test]]
+name = "starknet_get_state_update"
+path = "get_state_update.rs"
 
 [[test]]
 name = "starknet_trace_block_transactions"

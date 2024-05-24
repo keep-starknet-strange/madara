@@ -19,7 +19,9 @@ macro_rules! mock_runtime {
 			use starknet_api::core::{PatriciaKey, ContractAddress};
 			use starknet_api::hash::StarkFelt;
 			use blockifier::blockifier::block::GasPrices;
+			use blockifier::versioned_constants::VersionedConstants;
 			use core::num::NonZeroU128;
+			use std::sync::Arc;
 
 
 			type Block = frame_system::mocking::MockBlock<MockRuntime>;
@@ -73,6 +75,7 @@ macro_rules! mock_runtime {
 				pub const ProtocolVersion: u8 = 0;
 				pub const ProgramHash: Felt252Wrapper = mp_program_hash::SN_OS_PROGRAM_HASH;
 				pub const L1GasPrices: GasPrices = GasPrices { eth_l1_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, strk_l1_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, eth_l1_data_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, strk_l1_data_gas_price: unsafe { NonZeroU128::new_unchecked(10) } };
+				pub ExecutionConstants: Arc<VersionedConstants> = Arc::new(VersionedConstants::latest_constants().clone());
             }
 
 			impl pallet_starknet::Config for MockRuntime {
@@ -84,6 +87,7 @@ macro_rules! mock_runtime {
 				type ProtocolVersion = ProtocolVersion;
 				type ProgramHash = ProgramHash;
 				type L1GasPrices = L1GasPrices;
+				type ExecutionConstants = ExecutionConstants;
 			}
 
 			/// Run to block n.

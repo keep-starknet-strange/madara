@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -14,7 +15,10 @@ use starknet_api::transaction::{Calldata, Fee, TransactionHash, TransactionSigna
 use starknet_crypto::{sign, FieldElement};
 
 use super::constants::{ACCOUNT_PRIVATE_KEY, K};
+use super::mock::default_mock::*;
 use crate::genesis_loader::read_contract_class_from_json;
+use crate::tests::mock::get_storage_key;
+use crate::StorageView;
 
 pub fn get_contract_class(resource_path: &str, version: u8) -> ContractClass {
     let cargo_dir = String::from(env!("CARGO_MANIFEST_DIR"));
@@ -111,4 +115,41 @@ pub fn build_get_balance_contract_call(account_address: StarkFelt) -> (EntryPoin
     ]));
 
     (balance_of_selector, calldata)
+}
+
+pub fn create_resource_bounds() -> starknet_api::transaction::ResourceBoundsMapping {
+    let mut map = BTreeMap::new();
+    map.insert(
+        starknet_api::transaction::Resource::L1Gas,
+        starknet_api::transaction::ResourceBounds { max_amount: 10000, max_price_per_unit: 12000 },
+    );
+    map.insert(
+        starknet_api::transaction::Resource::L2Gas,
+        starknet_api::transaction::ResourceBounds { max_amount: 10000, max_price_per_unit: 12000 },
+    );
+    starknet_api::transaction::ResourceBoundsMapping(map)
+}
+
+pub fn get_balance_contract_call(
+    sender_address: ContractAddress,
+    contract_address: ContractAddress,
+) -> Vec<Felt252Wrapper> {
+    let call_args = build_get_balance_contract_call(sender_address.0.0);
+    Starknet::call_contract(contract_address, call_args.0, call_args.1).unwrap()
+}
+
+pub fn set_account_erc20_balance_to_zero(account_address: ContractAddress, erc20_contract_address: ContractAddress) {
+    // ContractAddress to FieldElement
+    let field_contract_address = FieldElement::from_bytes_be(&account_address.key().0).unwrap();
+
+    // Get balance variable key
+    let balance_low_storage_key =
+        get_storage_key(&erc20_contract_address, "ERC20_balances", &[field_contract_address], 0);
+
+    let balance_high_storage_key =
+        get_storage_key(&erc20_contract_address, "ERC20_balances", &[field_contract_address], 1);
+
+    // Set balance storage value to zero
+    StorageView::<MockRuntime>::insert(balance_low_storage_key, StarkFelt::try_from("0").unwrap());
+    StorageView::<MockRuntime>::insert(balance_high_storage_key, StarkFelt::try_from("0").unwrap());
 }

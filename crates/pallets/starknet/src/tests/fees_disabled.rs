@@ -4,7 +4,7 @@ use starknet_api::core::{ContractAddress, EntryPointSelector, Nonce, PatriciaKey
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::Calldata;
 
-use super::constants::FEE_TOKEN_ADDRESS;
+use super::constants::ETH_FEE_TOKEN_ADDRESS;
 use super::mock::*;
 use super::utils::{
     build_get_balance_contract_call, build_transfer_invoke_transaction, BuildTransferInvokeTransaction,
@@ -59,7 +59,7 @@ fn build_invoke_transaction(
         chain_id,
         BuildTransferInvokeTransaction {
             sender_address: address,
-            token_address: ContractAddress(PatriciaKey(StarkFelt::try_from(FEE_TOKEN_ADDRESS).unwrap())),
+            token_address: ContractAddress(PatriciaKey(StarkFelt::try_from(ETH_FEE_TOKEN_ADDRESS).unwrap())),
             recipient: address,
             amount_low: StarkFelt::ZERO,
             amount_high: StarkFelt::ZERO,
@@ -71,7 +71,7 @@ fn build_invoke_transaction(
 fn get_balance_default_mock(account_address: ContractAddress) -> (Felt252Wrapper, Felt252Wrapper) {
     let (selector, calldata) = build_get_balance_call(account_address);
     let result = default_mock::Starknet::call_contract(
-        ContractAddress(PatriciaKey(StarkFelt::try_from(FEE_TOKEN_ADDRESS).unwrap())),
+        ContractAddress(PatriciaKey(StarkFelt::try_from(ETH_FEE_TOKEN_ADDRESS).unwrap())),
         selector,
         calldata,
     )
@@ -82,7 +82,7 @@ fn get_balance_default_mock(account_address: ContractAddress) -> (Felt252Wrapper
 fn get_balance_fees_disabled_mock(account_address: ContractAddress) -> (Felt252Wrapper, Felt252Wrapper) {
     let (selector, calldata) = build_get_balance_call(account_address);
     let result = fees_disabled_mock::Starknet::call_contract(
-        ContractAddress(PatriciaKey(StarkFelt::try_from(FEE_TOKEN_ADDRESS).unwrap())),
+        ContractAddress(PatriciaKey(StarkFelt::try_from(ETH_FEE_TOKEN_ADDRESS).unwrap())),
         selector,
         calldata,
     )
