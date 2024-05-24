@@ -35,7 +35,7 @@ where
             match opt_storage_starknet_block {
                 Ok(storage_starknet_block) => {
                     log::info!(
-                        "🙌 Starting Starknet consensus session on top of parent : 0x{:#}",
+                        "🙌 Starting Starknet consensus session on top of parent : {:#}",
                         digest_starknet_block.header().parent_block_hash
                     );
                     let digest_starknet_block_hash = digest_starknet_block.header().hash();
@@ -50,7 +50,7 @@ where
                     } else {
                         // Success, we write the Starknet to Substate hashes mapping to db
                         log::info!(
-                            "✨ Imported StarknetBlock #{} (0x{:x})",
+                            "✨ Imported StarknetBlock #{} ({:#x})",
                             digest_starknet_block.header().block_number,
                             digest_starknet_block_hash.0
                         );
@@ -58,12 +58,15 @@ where
                             .transactions()
                             .iter()
                             .map(get_transaction_hash)
-                            .map(|hash| hash.to_string())
+                            .map(|hash| {
+                                let hash_str = hash.to_string();
+                                format!("{}...{}", &hash_str[..6], &hash_str[hash_str.len() - 4..])
+                            })
                             .collect::<Vec<String>>()
                             .join(", ");
 
                         log::info!(
-                            "🎁 Prepared Starknet block for proposing at {} [hash: 0x{:x}; parent_hash: {}; tx: [{}]",
+                            "🎁 Prepared Starknet block for proposing at {} [hash: {:#x}; parent_hash: {}; tx: [{}]]",
                             digest_starknet_block.header().block_number,
                             digest_starknet_block_hash.0,
                             digest_starknet_block.header().parent_block_hash,
@@ -111,6 +114,12 @@ where
                             );
                         }
 
+                        log::info!(
+                            "🔖 Pre-sealed Starknet block for proposal at {}. Hash now {:#x}, previously {}.\n",
+                            digest_starknet_block.header().block_number,
+                            digest_starknet_block_hash.0,
+                            digest_starknet_block.header().parent_block_hash
+                        );
                         backend.mapping().write_hashes(mapping_commitment).map_err(|e| anyhow::anyhow!(e))
                     }
                 }
