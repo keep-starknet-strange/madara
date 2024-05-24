@@ -34,8 +34,13 @@ where
             let opt_storage_starknet_block = get_block_by_block_hash(client, substrate_block_hash);
             match opt_storage_starknet_block {
                 Ok(storage_starknet_block) => {
+                    log::info!(
+                        "🙌 Starting starknet consensus session on top of parent : 0x{:#}",
+                        digest_starknet_block.header().parent_block_hash
+                    );
                     let digest_starknet_block_hash = digest_starknet_block.header().hash();
                     let storage_starknet_block_hash = storage_starknet_block.header().hash();
+
                     // Ensure the two blocks sources (chain storage and block digest) agree on the block content
                     if digest_starknet_block_hash != storage_starknet_block_hash {
                         Err(anyhow::anyhow!(
@@ -49,6 +54,22 @@ where
                             digest_starknet_block.header().block_number,
                             digest_starknet_block_hash.0
                         );
+                        let tx_hashes = digest_starknet_block
+                            .transactions()
+                            .iter()
+                            .map(get_transaction_hash)
+                            .map(|hash| hash.to_string())
+                            .collect::<Vec<String>>()
+                            .join(", ");
+
+                        log::info!(
+                            "🎁 Prepared starknet block for proposing at {} [hash: {:?}; parent_hash: {}; {:?}",
+                            digest_starknet_block.header().block_number,
+                            digest_starknet_block_hash,
+                            digest_starknet_block.header().parent_block_hash,
+                            tx_hashes
+                        );
+
                         let mapping_commitment = mc_db::MappingCommitment {
                             block_hash: substrate_block_hash,
                             starknet_block_hash: digest_starknet_block_hash.into(),
