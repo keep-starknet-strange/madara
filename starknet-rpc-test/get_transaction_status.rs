@@ -1,5 +1,3 @@
-use std::panic;
-
 use assert_matches::assert_matches;
 use rstest::rstest;
 use starknet_core::types::{StarknetError, TransactionExecutionStatus, TransactionStatus};
@@ -38,10 +36,7 @@ async fn work_with_valid_transaction_hash(madara: &ThreadSafeMadaraClient) -> Re
     assert_poll(
         || async {
             let result = rpc.get_transaction_status(rpc_response.transaction_hash).await;
-            match result {
-                Ok(TransactionStatus::AcceptedOnL2(TransactionExecutionStatus::Succeeded)) => true,
-                _ => false,
-            }
+            matches!(result, Ok(TransactionStatus::AcceptedOnL2(TransactionExecutionStatus::Succeeded)))
         },
         1000,
         20,
