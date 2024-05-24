@@ -46,8 +46,8 @@ async fn returns_correct_state_diff_transfer(madara: &ThreadSafeMadaraClient) ->
         let mut madara_write_lock = madara.write().await;
         let txs = madara_write_lock
             .create_block_with_txs(vec![
-                Transaction::Execution(account_alice.transfer_tokens(recipient, receiver.clone(), Some(nonce))),
-                Transaction::Execution(account_bob.transfer_tokens(recipient, receiver.clone(), None)),
+                Transaction::Execution(account_alice.transfer_tokens(recipient, receiver, Some(nonce))),
+                Transaction::Execution(account_bob.transfer_tokens(recipient, receiver, None)),
             ])
             .await?;
         txs.iter().for_each(|tx| assert!(tx.is_ok()));
