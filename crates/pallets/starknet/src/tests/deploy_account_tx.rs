@@ -90,7 +90,7 @@ fn given_contract_run_deploy_account_tx_works() {
                 data: EventData(vec![
                     contract_address.0.0,                   // From
                     StarkFelt::try_from("0xdead").unwrap(), // To
-                    StarkFelt::try_from("0xa17c").unwrap(), // Amount low
+                    StarkFelt::try_from("0x2ee").unwrap(),  // Amount low
                     StarkFelt::from(0u128),                 // Amount high
                 ]),
             },
@@ -98,7 +98,7 @@ fn given_contract_run_deploy_account_tx_works() {
         };
 
         let events = Starknet::tx_events(tx_hash);
-        assert_eq!(expected_fee_transfer_event, events.last().unwrap().clone());
+        pretty_assertions::assert_eq!(expected_fee_transfer_event, events.last().unwrap().clone());
     });
 }
 

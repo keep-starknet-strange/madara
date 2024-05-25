@@ -111,6 +111,7 @@ impl From<SimulationError> for StarknetRpcApiError {
             SimulationError::ContractNotFound => StarknetRpcApiError::ContractNotFound,
             SimulationError::TransactionExecutionFailed(e) => StarknetRpcApiError::ContractError(e.into()),
             SimulationError::MissingL1GasUsage | SimulationError::StateDiff => StarknetRpcApiError::InternalServerError,
+            SimulationError::EstimateFeeFailed(_) => StarknetRpcApiError::InternalServerError,
         }
     }
 }

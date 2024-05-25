@@ -31,7 +31,7 @@ pub const OZ_CONTRACT_ADDRESS: &str = "0x3";
 pub const L1_CONTRACT_ADDRESS: &str = "0xae0ee0a63a2ce6baeeffe56e7714fb4efe48d419";
 
 pub const MAX_U256: &str = "0xffffffffffffffffffffffffffffffff";
-pub const MAX_FEE_OVERRIDE: &str = "0x1000000";
+pub const MAX_FEE_OVERRIDE: &str = "0xfffffffffffff";
 
 // Need to use `from_mont` because this needs to be a constant function call
 pub const MADARA_CHAIN_ID: FieldElement =

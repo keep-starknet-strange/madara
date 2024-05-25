@@ -92,7 +92,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                     data: EventData(vec![
                         StarkFelt::try_from(BLOCKIFIER_ACCOUNT_ADDRESS).unwrap(),
                         StarkFelt::try_from("0xdead").unwrap(),
-                        StarkFelt::try_from("0xb932").unwrap(),
+                        StarkFelt::try_from("0x2f8").unwrap(),
                         StarkFelt::from(0u128),
                     ]),
                 },
@@ -132,7 +132,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
                 data: EventData(vec![
                     StarkFelt::try_from("0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0").unwrap(), // From
                     StarkFelt::try_from("0xdead").unwrap(), // To
-                    StarkFelt::try_from("0xbc84").unwrap(),  // Amount low
+                    StarkFelt::try_from("0x2f8").unwrap(),  // Amount low
                     StarkFelt::from(0u128),                 // Amount high
                 ]),
             },
