@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["InternalSubstrateError","SimulationError"],"struct":["SimulationFlags"],"type":["ReExecutionResult","TransactionSimulationResult"]};
+window.SIDEBAR_ITEMS = {"enum":["InternalSubstrateError","SimulationError"],"struct":["FeeEstimate","SimulationFlags","TransactionSimulation"],"type":["ReExecutionResult","TransactionSimulationResult"]};

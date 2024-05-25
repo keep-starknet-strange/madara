@@ -1773,16 +1773,6 @@
 <a href="#1773" id="1773">1773</a>
 <a href="#1774" id="1774">1774</a>
 <a href="#1775" id="1775">1775</a>
-<a href="#1776" id="1776">1776</a>
-<a href="#1777" id="1777">1777</a>
-<a href="#1778" id="1778">1778</a>
-<a href="#1779" id="1779">1779</a>
-<a href="#1780" id="1780">1780</a>
-<a href="#1781" id="1781">1781</a>
-<a href="#1782" id="1782">1782</a>
-<a href="#1783" id="1783">1783</a>
-<a href="#1784" id="1784">1784</a>
-<a href="#1785" id="1785">1785</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1990,6 +1980,18 @@
         };
 
         <span class="prelude-val">Ok</span>(starknet_block.header().block_number)
+    }
+
+    <span class="kw">fn </span>get_current_resource_price(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;ResourcePrice, StarknetRpcApiError&gt; {
+        <span class="kw">let </span>current_prices =
+            <span class="self">self</span>.client.runtime_api().current_l1_gas_prices(<span class="self">self</span>.client.info().best_hash).map_err(|e| {
+                <span class="macro">log::error!</span>(<span class="string">&quot;Failed to get current L1 gas prices: {e}&quot;</span>);
+                StarknetRpcApiError::InternalServerError
+            })<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(ResourcePrice {
+            price_in_wei: current_prices.eth_l1_gas_price.get().into(),
+            price_in_fri: current_prices.strk_l1_gas_price.get().into(),
+        })
     }
 }
 
@@ -2628,8 +2630,7 @@
             new_root: Felt252Wrapper::from(<span class="self">self</span>.backend.temporary_global_state_root_getter()).into(),
             timestamp: starknet_block.header().block_timestamp,
             sequencer_address: Felt252Wrapper::from(starknet_block.header().sequencer_address).into(),
-            <span class="comment">// TODO: real value
-            </span>l1_gas_price: ResourcePrice { price_in_fri: Default::default(), price_in_wei: Default::default() },
+            l1_gas_price: <span class="self">self</span>.get_current_resource_price()<span class="question-mark">?</span>,
             starknet_version: starknet_version.to_string(),
         };
 
@@ -2727,18 +2728,7 @@
         <span class="kw">let </span>fee_estimates =
             <span class="self">self</span>.estimate_fee(substrate_block_hash, transactions, SimulationFlags::from(simulation_flags))<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>estimates = fee_estimates
-            .into_iter()
-			<span class="comment">// FIXME: https://github.com/keep-starknet-strange/madara/issues/329
-            </span>.map(|x| FeeEstimate {
-                gas_price: FieldElement::from(<span class="number">10u128</span>),
-                gas_consumed: FieldElement::from(x.<span class="number">1</span>),
-                overall_fee: FieldElement::from(x.<span class="number">0</span>),
-                unit: PriceUnit::Wei,
-            })
-            .collect();
-
-        <span class="prelude-val">Ok</span>(estimates)
+        <span class="prelude-val">Ok</span>(fee_estimates)
     }
 
     <span class="doccomment">/// Estimate the L2 fee of a message sent on L1
@@ -2785,14 +2775,7 @@
 
         <span class="kw">let </span>fee_estimate = <span class="self">self</span>.do_estimate_message_fee(substrate_block_hash, transaction)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>estimate = FeeEstimate {
-            gas_price: fee_estimate.<span class="number">0</span>.try_into().map_err(|<span class="kw">_</span>| StarknetRpcApiError::InternalServerError)<span class="question-mark">?</span>,
-            gas_consumed: FieldElement::from(fee_estimate.<span class="number">2</span>),
-            overall_fee: FieldElement::from(fee_estimate.<span class="number">1</span>),
-            unit: PriceUnit::Wei,
-        };
-
-        <span class="prelude-val">Ok</span>(estimate)
+        <span class="prelude-val">Ok</span>(fee_estimate)
     }
 
     <span class="doccomment">/// Get the details of a transaction by a given block id and index.
@@ -2875,8 +2858,7 @@
             timestamp: starknet_block.header().block_timestamp,
             sequencer_address: Felt252Wrapper::from(starknet_block.header().sequencer_address).into(),
             transactions,
-            <span class="comment">// TODO: fill real prices
-            </span>l1_gas_price: ResourcePrice { price_in_fri: Default::default(), price_in_wei: Default::default() },
+            l1_gas_price: <span class="self">self</span>.get_current_resource_price()<span class="question-mark">?</span>,
             starknet_version: starknet_version.to_string(),
         };
 
@@ -3145,8 +3127,7 @@
 
         <span class="kw">let </span>pending_block = PendingBlockWithTxHashes {
             transactions: transaction_hashes,
-            <span class="comment">// TODO: fill real prices
-            </span>l1_gas_price: ResourcePrice { price_in_fri: Default::default(), price_in_wei: Default::default() },
+            l1_gas_price: <span class="self">self</span>.get_current_resource_price()<span class="question-mark">?</span>,
             parent_hash: latest_block_header.hash().into(),
             sequencer_address: Felt252Wrapper::from(latest_block_header.sequencer_address).into(),
             starknet_version: latest_block_header.protocol_version.to_string(),
@@ -3166,8 +3147,7 @@
 
         <span class="kw">let </span>pending_block = PendingBlockWithTxs {
             transactions,
-            <span class="comment">// TODO: fill real prices
-            </span>l1_gas_price: ResourcePrice { price_in_fri: Default::default(), price_in_wei: Default::default() },
+            l1_gas_price: <span class="self">self</span>.get_current_resource_price()<span class="question-mark">?</span>,
             parent_hash: latest_block_header.hash().into(),
             sequencer_address: Felt252Wrapper::from(latest_block_header.sequencer_address).into(),
             starknet_version: latest_block_header.protocol_version.to_string(),

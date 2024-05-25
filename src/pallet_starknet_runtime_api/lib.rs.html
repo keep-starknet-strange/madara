@@ -99,6 +99,10 @@
 <a href="#99" id="99">99</a>
 <a href="#100" id="100">100</a>
 <a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Definition of the runtime API for the Starknet pallet.
 
 </span><span class="comment">// Adding allow unused type parameters to avoid clippy errors
@@ -118,8 +122,10 @@
 <span class="kw">use </span>alloc::vec::Vec;
 
 <span class="kw">use </span>mp_simulations::{
-    InternalSubstrateError, ReExecutionResult, SimulationError, SimulationFlags, TransactionSimulationResult,
+    FeeEstimate, InternalSubstrateError, ReExecutionResult, SimulationError, SimulationFlags,
+    TransactionSimulationResult,
 };
+<span class="kw">use </span>mp_starknet_inherent::L1GasPrices;
 <span class="kw">use </span>sp_api::BlockT;
 <span class="kw">use </span>starknet_api::core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
@@ -145,13 +151,13 @@
         <span class="doccomment">/// Returns the fee token address.
         </span><span class="kw">fn </span>fee_token_addresses() -&gt; FeeTokenAddresses;
         <span class="doccomment">/// Returns fee estimate
-        </span><span class="kw">fn </span>estimate_fee(transactions: Vec&lt;AccountTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;(u128, u128)&gt;, SimulationError&gt;, InternalSubstrateError&gt;;
+        </span><span class="kw">fn </span>estimate_fee(transactions: Vec&lt;AccountTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;FeeEstimate&gt;, SimulationError&gt;, InternalSubstrateError&gt;;
         <span class="doccomment">/// Returns message fee estimate
-        </span><span class="kw">fn </span>estimate_message_fee(message: L1HandlerTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;(u128, u128, u128), SimulationError&gt;, InternalSubstrateError&gt;;
+        </span><span class="kw">fn </span>estimate_message_fee(message: L1HandlerTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;FeeEstimate, SimulationError&gt;, InternalSubstrateError&gt;;
         <span class="doccomment">/// Simulates single L1 Message and returns its trace
         </span><span class="kw">fn </span>simulate_message(message: L1HandlerTransaction, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, SimulationError&gt;, InternalSubstrateError&gt;;
         <span class="doccomment">/// Simulates transactions and returns their trace
-        </span><span class="kw">fn </span>simulate_transactions(transactions: Vec&lt;AccountTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt;, SimulationError&gt;, InternalSubstrateError&gt;;
+        </span><span class="kw">fn </span>simulate_transactions(transactions: Vec&lt;AccountTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;TransactionSimulationResult&gt;, InternalSubstrateError&gt;;
         <span class="doccomment">/// Filters extrinsic transactions to return only Starknet transactions
         ///
         /// To support runtime upgrades, the client must be unaware of the specific extrinsic
@@ -189,6 +195,8 @@
         </span><span class="kw">fn </span>get_tx_messages_to_l1(tx_hash: TransactionHash) -&gt; Vec&lt;MessageToL1&gt;;
         <span class="doccomment">/// Check if L1 Message Nonce has not been used
         </span><span class="kw">fn </span>l1_nonce_unused(nonce: Nonce) -&gt; bool;
+        <span class="doccomment">/// Get current L1 gas prices
+        </span><span class="kw">fn </span>current_l1_gas_prices() -&gt; L1GasPrices;
     }
 
     <span class="kw">pub trait </span>ConvertTransactionRuntimeApi {

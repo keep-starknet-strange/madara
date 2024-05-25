@@ -1154,6 +1154,17 @@
 <a href="#1154" id="1154">1154</a>
 <a href="#1155" id="1155">1155</a>
 <a href="#1156" id="1156">1156</a>
+<a href="#1157" id="1157">1157</a>
+<a href="#1158" id="1158">1158</a>
+<a href="#1159" id="1159">1159</a>
+<a href="#1160" id="1160">1160</a>
+<a href="#1161" id="1161">1161</a>
+<a href="#1162" id="1162">1162</a>
+<a href="#1163" id="1163">1163</a>
+<a href="#1164" id="1164">1164</a>
+<a href="#1165" id="1165">1165</a>
+<a href="#1166" id="1166">1166</a>
+<a href="#1167" id="1167">1167</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1214,7 +1225,7 @@
 <span class="kw">use </span>std::ops::Deref;
 <span class="kw">use </span>std::str::from_utf8_unchecked;
 
-<span class="kw">use </span>blockifier::blockifier::block::{BlockInfo, GasPrices};
+<span class="kw">use </span>blockifier::blockifier::block::BlockInfo;
 <span class="kw">use </span>blockifier::context::{BlockContext, ChainInfo, FeeTokenAddresses, TransactionContext};
 <span class="kw">use </span>blockifier::execution::call_info::CallInfo;
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
@@ -1235,7 +1246,7 @@
 <span class="kw">use </span>mp_chain_id::MADARA_CHAIN_ID;
 <span class="kw">use </span>mp_digest_log::MADARA_ENGINE_ID;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
-<span class="kw">use </span>mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
+<span class="kw">use </span>mp_starknet_inherent::{InherentError, InherentType, STARKNET_INHERENT_IDENTIFIER};
 <span class="kw">use </span>mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 <span class="kw">use </span>mp_transactions::execution::{
     execute_l1_handler_transaction, run_non_revertible_transaction, run_revertible_transaction,
@@ -1274,6 +1285,7 @@
 
 <span class="attr">#[frame_support::pallet]
 </span><span class="kw">pub mod </span>pallet {
+    <span class="kw">use </span>mp_starknet_inherent::L1GasPrices;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
@@ -1287,9 +1299,6 @@
     </span><span class="kw">pub trait </span>Config: frame_system::Config {
         <span class="doccomment">/// The block time
         </span><span class="kw">type </span>TimestampProvider: Time;
-        <span class="doccomment">/// The gas price
-        </span><span class="attr">#[pallet::constant]
-        </span><span class="kw">type </span>L1GasPrices: Get&lt;GasPrices&gt;;
         <span class="doccomment">/// A configuration for base priority of unsigned transactions.
         ///
         /// This is exposed so that it can be tuned for particular runtime, when
@@ -1323,7 +1332,7 @@
     </span><span class="kw">impl</span>&lt;T: Config&gt; Hooks&lt;BlockNumberFor&lt;T&gt;&gt; <span class="kw">for </span>Pallet&lt;T&gt; {
         <span class="doccomment">/// The block is being finalized.
         </span><span class="kw">fn </span>on_finalize(_n: BlockNumberFor&lt;T&gt;) {
-            <span class="macro">assert!</span>(SeqAddrUpdate::&lt;T&gt;::take(), <span class="string">&quot;Sequencer address must be set for the block&quot;</span>);
+            <span class="macro">assert!</span>(InherentUpdate::&lt;T&gt;::take(), <span class="string">&quot;Sequencer address must be set for the block&quot;</span>);
 
             <span class="comment">// Create a new Starknet block and store it.
             </span>&lt;Pallet&lt;T&gt;&gt;::store_block(UniqueSaturatedInto::&lt;u64&gt;::unique_saturated_into(
@@ -1456,11 +1465,17 @@
     #[pallet::getter(<span class="kw">fn </span>sequencer_address)]
     </span><span class="kw">pub type </span>SequencerAddress&lt;T: Config&gt; = StorageValue&lt;<span class="kw">_</span>, ContractAddress, ValueQuery&gt;;
 
+    <span class="doccomment">/// Current sequencer address.
+    </span><span class="attr">#[pallet::storage]
+    #[pallet::unbounded]
+    #[pallet::getter(<span class="kw">fn </span>current_l1_gas_prices)]
+    </span><span class="kw">pub type </span>CurrentL1GasPrice&lt;T: Config&gt; = StorageValue&lt;<span class="kw">_</span>, L1GasPrices, ValueQuery&gt;;
+
     <span class="doccomment">/// Ensure the sequencer address was updated for this block.
     </span><span class="attr">#[pallet::storage]
     #[pallet::unbounded]
-    #[pallet::getter(<span class="kw">fn </span>seq_addr_update)]
-    </span><span class="kw">pub type </span>SeqAddrUpdate&lt;T: Config&gt; = StorageValue&lt;<span class="kw">_</span>, bool, ValueQuery&gt;;
+    #[pallet::getter(<span class="kw">fn </span>inherent_update)]
+    </span><span class="kw">pub type </span>InherentUpdate&lt;T: Config&gt; = StorageValue&lt;<span class="kw">_</span>, bool, ValueQuery&gt;;
 
     <span class="doccomment">/// Information about processed L1 Messages
     /// Based on Nonce value.
@@ -1569,7 +1584,7 @@
                 strk_fee_token_address: <span class="self">self</span>.strk_fee_token_address,
                 eth_fee_token_address: <span class="self">self</span>.eth_fee_token_address,
             });
-            SeqAddrUpdate::&lt;T&gt;::put(<span class="bool-val">true</span>);
+            InherentUpdate::&lt;T&gt;::put(<span class="bool-val">true</span>);
 
             ChainIdStorage::&lt;T&gt;::put(<span class="self">self</span>.chain_id)
         }
@@ -1619,20 +1634,22 @@
         /// The dispatch origin for this call must be `Inherent`.
         </span><span class="attr">#[pallet::call_index(<span class="number">0</span>)]
         #[pallet::weight((<span class="number">0</span>, DispatchClass::Mandatory))]
-        </span><span class="kw">pub fn </span>set_sequencer_address(origin: OriginFor&lt;T&gt;, addr: [u8; <span class="number">32</span>]) -&gt; DispatchResult {
+        </span><span class="kw">pub fn </span>set_starknet_inherent_data(origin: OriginFor&lt;T&gt;, data: InherentType) -&gt; DispatchResult {
             ensure_none(origin)<span class="question-mark">?</span>;
-            <span class="comment">// The `SeqAddrUpdate` storage item is initialized to `true` in the genesis build. In
+            <span class="comment">// The `InherentUpdate` storage item is initialized to `true` in the genesis build. In
             // block 1 we skip the storage update check, and the `on_finalize` hook
             // updates the storage item to `false`. Initializing the storage item with
             // `false` causes the `on_finalize` hook to panic.
             </span><span class="kw">if </span>UniqueSaturatedInto::&lt;u64&gt;::unique_saturated_into(frame_system::Pallet::&lt;T&gt;::block_number()) &gt; <span class="number">1 </span>{
-                <span class="macro">assert!</span>(!SeqAddrUpdate::&lt;T&gt;::exists(), <span class="string">&quot;Sequencer address can be updated only once in the block&quot;</span>);
+                <span class="macro">assert!</span>(!InherentUpdate::&lt;T&gt;::exists(), <span class="string">&quot;Inherent data can be updated only once in the block&quot;</span>);
             }
 
-            <span class="kw">let </span>addr = StarkFelt::new(addr).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::SequencerAddressNotValid)<span class="question-mark">?</span>;
+            <span class="kw">let </span>addr = StarkFelt::new(data.sequencer_address).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::SequencerAddressNotValid)<span class="question-mark">?</span>;
             <span class="kw">let </span>addr = ContractAddress(addr.try_into().map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::SequencerAddressNotValid)<span class="question-mark">?</span>);
             SequencerAddress::&lt;T&gt;::put(addr);
-            SeqAddrUpdate::&lt;T&gt;::put(<span class="bool-val">true</span>);
+            CurrentL1GasPrice::&lt;T&gt;::put(data.l1_gas_price);
+
+            InherentUpdate::&lt;T&gt;::put(<span class="bool-val">true</span>);
             <span class="prelude-val">Ok</span>(())
         }
 
@@ -1855,18 +1872,23 @@
     </span><span class="kw">impl</span>&lt;T: Config&gt; ProvideInherent <span class="kw">for </span>Pallet&lt;T&gt; {
         <span class="kw">type </span>Call = Call&lt;T&gt;;
         <span class="kw">type </span>Error = InherentError;
-        <span class="kw">const </span>INHERENT_IDENTIFIER: InherentIdentifier = INHERENT_IDENTIFIER;
+        <span class="kw">const </span>INHERENT_IDENTIFIER: InherentIdentifier = STARKNET_INHERENT_IDENTIFIER;
 
         <span class="kw">fn </span>create_inherent(data: <span class="kw-2">&amp;</span>InherentData) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Call&gt; {
             <span class="kw">let </span>inherent_data = data
-                .get_data::&lt;InherentType&gt;(<span class="kw-2">&amp;</span>INHERENT_IDENTIFIER)
-                .expect(<span class="string">&quot;Sequencer address inherent data not correctly encoded&quot;</span>)
-                .unwrap_or(DEFAULT_SEQUENCER_ADDRESS);
-            <span class="prelude-val">Some</span>(Call::set_sequencer_address { addr: inherent_data })
+                .get_data::&lt;InherentType&gt;(<span class="kw-2">&amp;</span>STARKNET_INHERENT_IDENTIFIER)
+                .expect(<span class="string">&quot;Starknet inherent data not correctly encoded&quot;</span>)
+                <span class="comment">// if we run in manual sealing, then it goes into the default case
+                // it&#39;s usually used in test cases.
+                </span>.unwrap_or_default();
+
+            <span class="comment">// TODO: should we have a safety check here that the L1 gas price isn&#39;t
+            // very old? We&#39;ve this check in the l1-gas-prices worker already.
+            </span><span class="prelude-val">Some</span>(Call::set_starknet_inherent_data { data: inherent_data })
         }
 
         <span class="kw">fn </span>is_inherent(call: <span class="kw-2">&amp;</span><span class="self">Self</span>::Call) -&gt; bool {
-            <span class="macro">matches!</span>(call, Call::set_sequencer_address { .. })
+            <span class="macro">matches!</span>(call, Call::set_starknet_inherent_data { .. })
         }
     }
 
@@ -2005,7 +2027,7 @@
         <span class="kw">let </span>sequencer_address = <span class="self">Self</span>::sequencer_address();
 
         <span class="kw">let </span>chain_id = ChainId(<span class="self">Self</span>::chain_id_str());
-        <span class="kw">let </span>gas_prices = T::L1GasPrices::get();
+        <span class="kw">let </span>gas_prices = <span class="self">Self</span>::current_l1_gas_prices().into();
 
         BlockContext::new_unchecked(
             <span class="kw-2">&amp;</span>BlockInfo {
@@ -2151,7 +2173,7 @@
         <span class="kw">let </span>protocol_version = T::ProtocolVersion::get();
         <span class="kw">let </span>extra_data = <span class="prelude-val">None</span>;
 
-        <span class="kw">let </span>l1_gas_price = T::L1GasPrices::get();
+        <span class="kw">let </span>l1_gas_price = <span class="self">Self</span>::current_l1_gas_prices().into();
 
         <span class="kw">let </span>block = StarknetBlock::try_new(
             StarknetHeader::new(

@@ -33,7 +33,6 @@
 <a href="#33" id="33">33</a>
 <a href="#34" id="34">34</a>
 <a href="#35" id="35">35</a>
-<a href="#36" id="36">36</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>starknet_ff::FieldElement;
 
 <span class="comment">// https://github.com/keep-starknet-strange/madara/blob/main/crates/node/src/chain_spec.rs#L185-L186
@@ -62,12 +61,11 @@
 <span class="kw">pub const </span>OZ_CONTRACT_ADDRESS: <span class="kw-2">&amp;</span>str = <span class="string">&quot;0x3&quot;</span>;
 <span class="kw">pub const </span>CAIRO_1_ACCOUNT_CONTRACT_ADDRESS: <span class="kw-2">&amp;</span>str = <span class="string">&quot;0x4&quot;</span>;
 <span class="kw">pub const </span>TEST_CONTRACT_ADDRESS: <span class="kw-2">&amp;</span>str = <span class="string">&quot;0x1111&quot;</span>;
+<span class="kw">pub const </span>MULTIPLY_TEST_CONTRACT_ADDRESS: <span class="kw-2">&amp;</span>str = <span class="string">&quot;0x123&quot;</span>;
 <span class="kw">pub const </span>L1_CONTRACT_ADDRESS: <span class="kw-2">&amp;</span>str = <span class="string">&quot;0xae0ee0a63a2ce6baeeffe56e7714fb4efe48d419&quot;</span>;
 <span class="kw">pub const </span>UDC_CONTRACT_ADDRESS: <span class="kw-2">&amp;</span>str = <span class="string">&quot;0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf&quot;</span>;
 
 <span class="comment">// Need to use `from_mont` because this needs to be a constant function call
 </span><span class="kw">pub const </span>MADARA_CHAIN_ID: FieldElement =
     FieldElement::from_mont([<span class="number">18444025906882525153</span>, <span class="number">18446744073709551615</span>, <span class="number">18446744073709551615</span>, <span class="number">530251916243973616</span>]);
-
-<span class="kw">pub const </span>SPEC_VERSION: <span class="kw-2">&amp;</span>str = <span class="string">&quot;0.4.0&quot;</span>;
 </code></pre></div></section></main></body></html>

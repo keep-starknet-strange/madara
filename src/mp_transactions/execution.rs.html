@@ -875,6 +875,8 @@
 <a href="#875" id="875">875</a>
 <a href="#876" id="876">876</a>
 <a href="#877" id="877">877</a>
+<a href="#878" id="878">878</a>
+<a href="#879" id="879">879</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::HashSet;
 <span class="kw">use </span>std::sync::Arc;
 
@@ -1074,28 +1076,7 @@
     <span class="kw">fn </span>state_changes() -&gt; StateChangesCount;
 
     <span class="kw">fn </span>check_fee_bounds(<span class="kw-2">&amp;</span><span class="self">self</span>, tx_context: <span class="kw-2">&amp;</span>TransactionContext) -&gt; TransactionExecutionResult&lt;()&gt; {
-        <span class="kw">let </span>minimal_l1_gas_amount_vector = {
-            <span class="kw">let </span>block_info = tx_context.block_context.block_info();
-            <span class="kw">let </span>versioned_constants = tx_context.block_context.versioned_constants();
-
-            <span class="kw">let </span>state_changes = <span class="self">Self</span>::state_changes();
-
-            <span class="kw">let </span>GasVector { l1_gas: gas_cost, l1_data_gas: blob_gas_cost } =
-                blockifier::fee::gas_usage::get_da_gas_cost(<span class="kw-2">&amp;</span>state_changes, block_info.use_kzg_da);
-
-            <span class="kw">let </span>data_segment_length = blockifier::fee::gas_usage::get_onchain_data_segment_length(<span class="kw-2">&amp;</span>state_changes);
-            <span class="kw">let </span>os_steps_for_type =
-                versioned_constants.os_resources_for_tx_type(<span class="kw-2">&amp;</span><span class="self">Self</span>::tx_type(), <span class="self">self</span>.get_calldata_len()).n_steps
-                    + versioned_constants.os_kzg_da_resources(data_segment_length).n_steps;
-
-            <span class="kw">let </span>resources = ResourcesMapping(IndexMap::from([
-                (blockifier::abi::constants::L1_GAS_USAGE.to_string(), gas_cost),
-                (blockifier::abi::constants::BLOB_GAS_USAGE.to_string(), blob_gas_cost),
-                (blockifier::abi::constants::N_STEPS_RESOURCE.to_string(), os_steps_for_type <span class="kw">as </span>u128),
-            ]));
-
-            blockifier::fee::fee_utils::calculate_tx_gas_vector(<span class="kw-2">&amp;</span>resources, versioned_constants)<span class="question-mark">?
-        </span>};
+        <span class="kw">let </span>minimal_l1_gas_amount_vector = <span class="self">self</span>.estimate_minimal_gas_vector(tx_context)<span class="question-mark">?</span>;
 
         <span class="comment">// TODO(Aner, 30/01/24): modify once data gas limit is enforced.
         </span><span class="kw">let </span>minimal_l1_gas_amount = blockifier::fee::gas_usage::compute_discounted_gas_from_gas_vector(
@@ -1146,6 +1127,29 @@
         };
 
         <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">fn </span>estimate_minimal_gas_vector(<span class="kw-2">&amp;</span><span class="self">self</span>, tx_context: <span class="kw-2">&amp;</span>TransactionContext) -&gt; TransactionExecutionResult&lt;GasVector&gt; {
+        <span class="kw">let </span>block_info = tx_context.block_context.block_info();
+        <span class="kw">let </span>versioned_constants = tx_context.block_context.versioned_constants();
+
+        <span class="kw">let </span>state_changes = <span class="self">Self</span>::state_changes();
+
+        <span class="kw">let </span>GasVector { l1_gas: gas_cost, l1_data_gas: blob_gas_cost } =
+            blockifier::fee::gas_usage::get_da_gas_cost(<span class="kw-2">&amp;</span>state_changes, block_info.use_kzg_da);
+
+        <span class="kw">let </span>data_segment_length = blockifier::fee::gas_usage::get_onchain_data_segment_length(<span class="kw-2">&amp;</span>state_changes);
+        <span class="kw">let </span>os_steps_for_type =
+            versioned_constants.os_resources_for_tx_type(<span class="kw-2">&amp;</span><span class="self">Self</span>::tx_type(), <span class="self">self</span>.get_calldata_len()).n_steps
+                + versioned_constants.os_kzg_da_resources(data_segment_length).n_steps;
+
+        <span class="kw">let </span>resources = ResourcesMapping(IndexMap::from([
+            (blockifier::abi::constants::L1_GAS_USAGE.to_string(), gas_cost),
+            (blockifier::abi::constants::BLOB_GAS_USAGE.to_string(), blob_gas_cost),
+            (blockifier::abi::constants::N_STEPS_RESOURCE.to_string(), os_steps_for_type <span class="kw">as </span>u128),
+        ]));
+
+        <span class="prelude-val">Ok</span>(blockifier::fee::fee_utils::calculate_tx_gas_vector(<span class="kw-2">&amp;</span>resources, versioned_constants)<span class="question-mark">?</span>)
     }
 }
 

@@ -216,6 +216,15 @@
 <a href="#216" id="216">216</a>
 <a href="#217" id="217">217</a>
 <a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>blockifier::transaction::account_transaction::AccountTransaction;
 <span class="kw">use </span>blockifier::transaction::objects::TransactionExecutionInfo;
 <span class="kw">use </span>blockifier::transaction::transaction_execution::Transaction;
@@ -237,6 +246,7 @@
 <span class="kw">use </span>sp_runtime::traits::Block <span class="kw">as </span>BlockT;
 <span class="kw">use </span>starknet_api::core::{ContractAddress, EntryPointSelector};
 <span class="kw">use </span>starknet_api::transaction::{Calldata, Event, TransactionHash};
+<span class="kw">use </span>starknet_core::types::FeeEstimate;
 
 <span class="kw">use crate</span>::{Starknet, StarknetRpcApiError};
 
@@ -271,11 +281,12 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         block_hash: B::Hash,
         message: L1HandlerTransaction,
-    ) -&gt; RpcApiResult&lt;(u128, u128, u128)&gt; {
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.client.runtime_api().estimate_message_fee(block_hash, message).map_err(|e| {
+    ) -&gt; RpcApiResult&lt;FeeEstimate&gt; {
+        <span class="prelude-val">Ok</span>((<span class="kw-2">&amp;</span><span class="self">self</span>.client.runtime_api().estimate_message_fee(block_hash, message).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;Runtime Api error: {e}&quot;</span>);
             StarknetRpcApiError::InternalServerError
         })<span class="question-mark">???</span>)
+            .into())
     }
 
     <span class="kw">pub fn </span>do_get_tx_execution_outcome(
@@ -322,13 +333,19 @@
         block_hash: B::Hash,
         transactions: Vec&lt;AccountTransaction&gt;,
         simulation_flags: SimulationFlags,
-    ) -&gt; RpcApiResult&lt;Vec&lt;(u128, u128)&gt;&gt; {
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.client.runtime_api().estimate_fee(block_hash, transactions, simulation_flags).map_err(
-            |e: ApiError| {
+    ) -&gt; RpcApiResult&lt;Vec&lt;FeeEstimate&gt;&gt; {
+        <span class="kw">let </span>fee_estimates = <span class="self">self
+            </span>.client
+            .runtime_api()
+            .estimate_fee(block_hash, transactions, simulation_flags)
+            .map_err(|e: ApiError| {
                 <span class="macro">error!</span>(<span class="string">&quot;Request parameters error: {e}&quot;</span>);
                 StarknetRpcApiError::InternalServerError
-            },
-        )<span class="question-mark">???</span>)
+            })<span class="question-mark">???
+            </span>.iter()
+            .map(|estimate| estimate.into())
+            .collect();
+        <span class="prelude-val">Ok</span>(fee_estimates)
     }
 
     <span class="kw">pub fn </span>get_best_block_hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; B::Hash {
@@ -391,7 +408,8 @@
     ) -&gt; RpcApiResult&lt;TransactionExecutionInfo&gt; {
         <span class="comment">// Simulate a single User Transaction
         // So the result should have single element in vector (index 0)
-        </span><span class="self">self</span>.client
+        </span><span class="kw">let </span>simulation = <span class="self">self
+            </span>.client
             .runtime_api()
             .simulate_transactions(block_hash, <span class="macro">vec!</span>[tx], simulations_flags)
             .map_err(|e| {
@@ -401,13 +419,13 @@
             </span>.map_err(|e| {
                 <span class="macro">error!</span>(<span class="string">&quot;Failed to call function: {:#?}&quot;</span>, e);
                 StarknetRpcApiError::from(e)
-            })<span class="question-mark">??
+            })<span class="question-mark">?
             </span>.swap_remove(<span class="number">0</span>)
-            .<span class="number">1
-            </span>.map_err(|e| {
+            .map_err(|e| {
                 <span class="macro">error!</span>(<span class="string">&quot;Failed to simulate User Transaction: {:?}&quot;</span>, e);
                 StarknetRpcApiError::InternalServerError
-            })
+            })<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(simulation.execution_info)
     }
 
     <span class="kw">fn </span>simulate_l1_tx(

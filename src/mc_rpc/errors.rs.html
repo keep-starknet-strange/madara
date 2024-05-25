@@ -124,6 +124,7 @@
 <a href="#124" id="124">124</a>
 <a href="#125" id="125">125</a>
 <a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>jsonrpsee::types::error::{CallError, ErrorObject};
 <span class="kw">use </span>mp_simulations::{InternalSubstrateError, SimulationError};
@@ -237,6 +238,7 @@
             SimulationError::ContractNotFound =&gt; StarknetRpcApiError::ContractNotFound,
             SimulationError::TransactionExecutionFailed(e) =&gt; StarknetRpcApiError::ContractError(e.into()),
             SimulationError::MissingL1GasUsage | SimulationError::StateDiff =&gt; StarknetRpcApiError::InternalServerError,
+            SimulationError::EstimateFeeFailed(<span class="kw">_</span>) =&gt; StarknetRpcApiError::InternalServerError,
         }
     }
 }

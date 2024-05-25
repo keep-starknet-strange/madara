@@ -6,6 +6,7 @@ var srcIndex = JSON.parse('{\
 "mc_db":["",[["db_opening_utils",[],["mod.rs","parity_db_adapter.rs"]]],["da_db.rs","error.rs","l1_handler_tx_fee.rs","lib.rs","mapping_db.rs","messaging_db.rs","meta_db.rs","sierra_classes_db.rs"]],\
 "mc_eth_client":["",[],["config.rs","error.rs","lib.rs"]],\
 "mc_genesis_data_provider":["",[],["constants.rs","lib.rs"]],\
+"mc_l1_gas_price":["",[],["lib.rs","types.rs","worker.rs"]],\
 "mc_l1_messages":["",[],["contract.rs","error.rs","lib.rs","worker.rs"]],\
 "mc_mapping_sync":["",[],["block_metrics.rs","lib.rs","sync_blocks.rs"]],\
 "mc_rpc":["",[["events",[],["mod.rs"]]],["constants.rs","errors.rs","lib.rs","madara_backend_client.rs","runtime_api.rs","starknetrpcwrapper.rs","trace_api.rs","types.rs"]],\
@@ -20,9 +21,9 @@ var srcIndex = JSON.parse('{\
 "mp_hashers":["",[],["lib.rs","pedersen.rs","poseidon.rs"]],\
 "mp_messages":["",[],["conversions.rs","lib.rs"]],\
 "mp_program_hash":["",[],["lib.rs"]],\
-"mp_sequencer_address":["",[],["lib.rs"]],\
 "mp_simulations":["",[],["lib.rs"]],\
 "mp_snos_output":["",[],["codec.rs","felt_reader.rs","lib.rs"]],\
+"mp_starknet_inherent":["",[],["lib.rs"]],\
 "mp_storage":["",[],["lib.rs"]],\
 "mp_transactions":["",[],["compute_hash.rs","execution.rs","from_broadcasted_transactions.rs","lib.rs","to_starknet_core_transaction.rs"]],\
 "pallet_starknet":["",[],["blockifier_state_adapter.rs","genesis_loader.rs","lib.rs","simulations.rs","transaction_validation.rs","types.rs"]],\

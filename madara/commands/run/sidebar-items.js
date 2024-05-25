@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Sealing"],"fn":["override_dev_environment","run_node"],"struct":["ExtendedRunCmd"]};
+window.SIDEBAR_ITEMS = {"enum":["Sealing","SettlementLayer"],"fn":["override_dev_environment","run_node"],"struct":["ExtendedRunCmd"]};

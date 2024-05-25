@@ -142,6 +142,22 @@
 <a href="#142" id="142">142</a>
 <a href="#143" id="143">143</a>
 <a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Base Ethereum client configuration.
 //!
 //! Use it as is or reuse top-level fields in your config (&quot;inherit&quot;)
@@ -210,6 +226,8 @@
     </span><span class="kw">pub </span>rpc_endpoint: String,
     <span class="attr">#[serde(default, skip_serializing_if = <span class="string">&quot;Option::is_none&quot;</span>)]
     </span><span class="kw">pub </span>tx_poll_interval_ms: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">&quot;Option::is_none&quot;</span>)]
+    </span><span class="kw">pub </span>gas_price_poll_ms: <span class="prelude-ty">Option</span>&lt;u64&gt;,
 }
 
 <span class="attr">#[derive(Debug, Clone, Serialize, Deserialize)]
@@ -234,13 +252,27 @@
 
 <span class="kw">impl </span>Default <span class="kw">for </span>HttpProviderConfig {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ rpc_endpoint: default_rpc_endpoint(), tx_poll_interval_ms: <span class="prelude-val">None </span>}
+        <span class="self">Self </span>{ rpc_endpoint: default_rpc_endpoint(), tx_poll_interval_ms: <span class="prelude-val">None</span>, gas_price_poll_ms: <span class="prelude-val">None </span>}
     }
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>EthereumProviderConfig {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>::Http(HttpProviderConfig::default())
+    }
+}
+
+<span class="kw">impl </span>EthereumProviderConfig {
+    <span class="kw">pub fn </span>rpc_endpoint(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>String {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::Http(config) =&gt; <span class="kw-2">&amp;</span>config.rpc_endpoint,
+        }
+    }
+
+    <span class="kw">pub fn </span>gas_price_poll_ms(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;u64&gt; {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::Http(config) =&gt; config.gas_price_poll_ms,
+        }
     }
 }
 

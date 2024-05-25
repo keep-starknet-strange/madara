@@ -191,15 +191,15 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::L1MessagesWorkerError;
 
 <span class="kw">fn </span>create_event_listener(
-    config: EthereumClientConfig,
+    config: Arc&lt;EthereumClientConfig&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;StarknetMessagingEvents&lt;Provider&lt;Http&gt;&gt;, mc_eth_client::error::Error&gt; {
     <span class="kw">let </span>address = config.contracts.core_contract()<span class="question-mark">?</span>;
-    <span class="kw">let </span>provider: Provider&lt;Http&gt; = config.provider.try_into()<span class="question-mark">?</span>;
+    <span class="kw">let </span>provider: Provider&lt;Http&gt; = config.provider.clone().try_into()<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(StarknetMessagingEvents::new(address, Arc::new(provider)))
 }
 
 <span class="kw">pub async fn </span>run_worker&lt;C, P, B&gt;(
-    config: EthereumClientConfig,
+    config: Arc&lt;EthereumClientConfig&gt;,
     client: Arc&lt;C&gt;,
     pool: Arc&lt;P&gt;,
     backend: Arc&lt;mc_db::Backend&lt;B&gt;&gt;,

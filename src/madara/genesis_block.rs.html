@@ -96,6 +96,8 @@
 <a href="#96" id="96">96</a>
 <a href="#97" id="97">97</a>
 <a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::num::NonZeroU128;
 <span class="kw">use </span>std::sync::Arc;
@@ -158,8 +160,10 @@
 
     <span class="kw">let </span><span class="kw-2">mut </span>digest = <span class="macro">vec!</span>[];
     <span class="kw">let </span>block = StarknetBlock::try_new(
-        <span class="comment">// TODO: Decide what values to put here
-        // This is just filler values for now
+        <span class="comment">// The genesis block values don&#39;t really matter because when you start a node,
+        // you need to disable fees completely to do the setup process. So we need some blocks
+        // of txs without any fees. And the 1st block will set the correct L1 gas prices through
+        // inherents.
         </span>Header {
             l1_gas_price: <span class="kw">unsafe </span>{
                 GasPrices {

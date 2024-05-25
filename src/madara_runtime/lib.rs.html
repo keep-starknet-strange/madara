@@ -444,6 +444,12 @@
 <a href="#444" id="444">444</a>
 <a href="#445" id="445">445</a>
 <a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don&#39;t support yet validity proofs and state updates to
@@ -480,8 +486,10 @@
 <span class="kw">pub use </span>frame_system::Call <span class="kw">as </span>SystemCall;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
 <span class="kw">use </span>mp_simulations::{
-    InternalSubstrateError, ReExecutionResult, SimulationError, SimulationFlags, TransactionSimulationResult,
+    FeeEstimate, InternalSubstrateError, ReExecutionResult, SimulationError, SimulationFlags,
+    TransactionSimulationResult,
 };
+<span class="kw">use </span>mp_starknet_inherent::L1GasPrices;
 <span class="kw">use </span>pallet_grandpa::{fg_primitives, AuthorityId <span class="kw">as </span>GrandpaId, AuthorityList <span class="kw">as </span>GrandpaAuthorityList};
 <span class="doccomment">/// Import the Starknet pallet.
 </span><span class="kw">pub use </span>pallet_starknet;
@@ -723,7 +731,7 @@
             Starknet::is_transaction_fee_disabled()
         }
 
-        <span class="kw">fn </span>estimate_fee(transactions: Vec&lt;AccountTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;(u128, u128)&gt;, SimulationError&gt;, InternalSubstrateError&gt; {
+        <span class="kw">fn </span>estimate_fee(transactions: Vec&lt;AccountTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;FeeEstimate&gt;, SimulationError&gt;, InternalSubstrateError&gt; {
             Starknet::estimate_fee(transactions, <span class="kw-2">&amp;</span>simulation_flags)
         }
 
@@ -731,15 +739,15 @@
             Starknet::re_execute_transactions(transactions_before, transactions_to_trace, with_state_diff)
         }
 
+        <span class="kw">fn </span>estimate_message_fee(message: L1HandlerTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;FeeEstimate, SimulationError&gt;, InternalSubstrateError&gt; {
+            Starknet::estimate_message_fee(message)
+        }
+
         <span class="kw">fn </span>get_transaction_re_execution_state_diff( transactions_before: Vec&lt;Transaction&gt;, transactions_to_trace: Vec&lt;Transaction&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;CommitmentStateDiff, SimulationError&gt;, InternalSubstrateError&gt; {
             Starknet::get_transaction_re_execution_state_diff(transactions_before, transactions_to_trace)
         }
 
-        <span class="kw">fn </span>estimate_message_fee(message: L1HandlerTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;(u128, u128, u128), SimulationError&gt;, InternalSubstrateError&gt; {
-            Starknet::estimate_message_fee(message)
-        }
-
-        <span class="kw">fn </span>simulate_transactions(transactions: Vec&lt;AccountTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;(CommitmentStateDiff, TransactionSimulationResult)&gt;, SimulationError&gt;, InternalSubstrateError&gt; {
+        <span class="kw">fn </span>simulate_transactions(transactions: Vec&lt;AccountTransaction&gt;, simulation_flags: SimulationFlags) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;TransactionSimulationResult&gt;, InternalSubstrateError&gt; {
             Starknet::simulate_transactions(transactions, <span class="kw-2">&amp;</span>simulation_flags)
         }
 
@@ -800,6 +808,10 @@
 
         <span class="kw">fn </span>l1_nonce_unused(nonce: Nonce) -&gt; bool {
             Starknet::ensure_l1_message_not_executed(<span class="kw-2">&amp;</span>nonce).is_ok()
+        }
+
+        <span class="kw">fn </span>current_l1_gas_prices() -&gt; L1GasPrices {
+            Starknet::current_l1_gas_prices()
         }
     }
 
