@@ -7,24 +7,21 @@
 #[cfg(test)]
 mod tests;
 
+use blockifier::execution::contract_class::ContractClassV0Inner;
+use blockifier::transaction::transactions::DeclareTransaction;
 use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
+use starknet_api::core::ClassHash;
+use starknet_api::transaction::DeclareTransactionV0V1;
 
 pub mod utils;
 
 use mp_transactions::TransactionStatus;
 use pallet_starknet::genesis_loader::PredeployedAccount;
 use starknet_core::serde::unsigned_field_element::UfeHex;
-use starknet_core::types::{
-    BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
-    BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
-    DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall,
-    InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingStateUpdate,
-    MaybePendingTransactionReceipt, MsgFromL1, SimulatedTransaction, SimulationFlag, SimulationFlagForEstimateFee,
-    SyncStatusType, Transaction, TransactionTrace, TransactionTraceWithHash,
-};
+use starknet_core::types::{BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, CompressedLegacyContractClass, ContractClass, DeclareTransactionResult, DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingStateUpdate, MaybePendingTransactionReceipt, MsgFromL1, SimulatedTransaction, SimulationFlag, SimulationFlagForEstimateFee, SyncStatusType, Transaction, TransactionTrace, TransactionTraceWithHash};
 
 #[serde_as]
 #[derive(Serialize, Deserialize)]
@@ -36,11 +33,19 @@ pub struct PredeployedAccountWithBalance {
     pub balance: FieldElement,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct DeclareV0Result {
+    pub class_hash: ClassHash
+}
+
 /// Madara rpc interface for additional features.
 #[rpc(server, namespace = "madara")]
 pub trait MadaraRpcApi: StarknetReadRpcApi {
     #[method(name = "predeployedAccounts")]
     fn predeployed_accounts(&self) -> RpcResult<Vec<PredeployedAccountWithBalance>>;
+
+    #[method(name = "declarev0")]
+    fn declare_v0_contract(&self, declare_transaction: DeclareTransactionV0V1, class_info: ContractClassV0Inner, abi_length: usize) -> RpcResult<DeclareV0Result>;
 }
 
 /// Starknet write rpc interface.
