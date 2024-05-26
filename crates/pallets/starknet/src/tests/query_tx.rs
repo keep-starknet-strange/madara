@@ -1,6 +1,7 @@
 use blockifier::transaction::account_transaction::AccountTransaction;
 use frame_support::{assert_err, assert_ok};
 use mp_simulations::SimulationFlags;
+use mp_starknet_inherent::L1GasPrices;
 use mp_transactions::compute_hash::ComputeTransactionHash;
 use starknet_api::core::Nonce;
 use starknet_api::hash::StarkFelt;
@@ -26,14 +27,22 @@ fn estimates_tx_fee_successfully_no_validate() {
         let txs = vec![tx_1, tx_2];
 
         let fees = Starknet::estimate_fee(txs, &Default::default()).expect("estimate should not fail").unwrap();
+        let default_l1_gas_price = L1GasPrices::default();
 
-        let (actual, l1_gas_usage) = fees[0];
-        assert!(actual > 0, "actual fee is missing");
-        assert!(l1_gas_usage == 0, "using blobstream we shouldn't pay l1 fee");
+        let fee_estimate = fees.get(0).unwrap();
+        // fee calculations checks are done in the blockifier
+        assert!(fee_estimate.overall_fee > 0, "actual fee is missing");
+        assert!(
+            fee_estimate.gas_price == default_l1_gas_price.eth_l1_gas_price.get(),
+            "gas price is the default value"
+        );
 
-        let (actual, l1_gas_usage) = fees[1];
-        assert!(actual > 0, "actual fee is missing");
-        assert!(l1_gas_usage == 0, "using blobstream we shouldn't pay l1 fee");
+        let fee_estimate = fees.get(1).unwrap();
+        assert!(fee_estimate.overall_fee > 0, "actual fee is missing");
+        assert!(
+            fee_estimate.gas_price == default_l1_gas_price.eth_l1_gas_price.get(),
+            "gas price is the default value"
+        );
     });
 }
 

@@ -26,8 +26,8 @@ use sp_runtime::traits::Block as BlockT;
 use starknet_api::transaction::TransactionHash;
 use starknet_core::types::{
     BlockId, BroadcastedTransaction, DeclareTransactionTrace, DeployAccountTransactionTrace, ExecuteInvocation,
-    FeeEstimate, InvokeTransactionTrace, L1HandlerTransactionTrace, PriceUnit, RevertedInvocation,
-    SimulatedTransaction, SimulationFlag, StateDiff, TransactionTrace, TransactionTraceWithHash,
+    InvokeTransactionTrace, L1HandlerTransactionTrace, RevertedInvocation, SimulatedTransaction, SimulationFlag,
+    StateDiff, TransactionTrace, TransactionTraceWithHash,
 };
 use starknet_ff::FieldElement;
 
@@ -101,28 +101,18 @@ where
             })?;
 
         let mut simulated_transactions = vec![];
-        for (tx_type, (state_diff, res)) in tx_types.into_iter().zip(res.into_iter().flatten()) {
-            match res {
-                Ok(tx_exec_info) => {
-                    let state_diff = blockifier_to_rpc_state_diff_types(state_diff)
+        for (tx_type, simulation_result) in tx_types.into_iter().zip(res.into_iter()) {
+            match simulation_result {
+                Ok(simulation) => {
+                    let state_diff = blockifier_to_rpc_state_diff_types(simulation.state_diff)
                         .map_err(|_| StarknetRpcApiError::InternalServerError)?;
 
-                    let transaction_trace = tx_execution_infos_to_tx_trace(tx_type, &tx_exec_info, Some(state_diff))?;
-
-                    let gas_consumed =
-                        tx_exec_info.execute_call_info.as_ref().map(|x| x.execution.gas_consumed).unwrap_or_default();
-                    let overall_fee = tx_exec_info.actual_fee.0 as u64;
-                    // TODO: Shouldn't the gas price be taken from the block header instead?
-                    let gas_price = if gas_consumed > 0 { overall_fee / gas_consumed } else { 0 };
+                    let transaction_trace =
+                        tx_execution_infos_to_tx_trace(tx_type, &simulation.execution_info, Some(state_diff))?;
 
                     simulated_transactions.push(SimulatedTransaction {
                         transaction_trace,
-                        fee_estimation: FeeEstimate {
-                            gas_consumed: FieldElement::from(gas_consumed),
-                            gas_price: FieldElement::from(gas_price),
-                            overall_fee: FieldElement::from(overall_fee),
-                            unit: PriceUnit::Wei,
-                        },
+                        fee_estimation: simulation.fee_estimate.into(),
                     });
                 }
                 Err(e) => {

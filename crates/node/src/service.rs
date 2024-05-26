@@ -8,14 +8,17 @@ use std::time::Duration;
 use futures::channel::mpsc;
 use futures::future;
 use futures::future::BoxFuture;
+use futures::lock::Mutex;
 use futures::prelude::*;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi, SealingMode, StarknetHasher};
+use mc_eth_client::config::EthereumClientConfig;
 use mc_genesis_data_provider::OnDiskGenesisConfig;
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
-use mp_sequencer_address::{
-    InherentDataProvider as SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
+use mp_starknet_inherent::{
+    InherentDataProvider as StarknetInherentDataProvider, InherentError as StarknetInherentError, L1GasPrices,
+    StarknetInherentData, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
 };
 use prometheus_endpoint::Registry;
 use sc_basic_authorship::ProposerFactory;
@@ -34,6 +37,7 @@ use sp_api::ConstructRuntimeApi;
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_offchain::STORAGE_PREFIX;
 
+use crate::commands::SettlementLayer;
 use crate::genesis_block::MadaraGenesisBlockBuilder;
 use crate::import_queue::{
     build_aura_queue_grandpa_pipeline, build_manual_seal_queue_pipeline, BlockImportPipeline,
@@ -174,7 +178,11 @@ where
 /// # Arguments
 ///
 /// - `cache`: whether more information should be cached when storing the block in the database.
-pub fn new_full(config: Configuration, sealing: SealingMode) -> Result<TaskManager, ServiceError> {
+pub fn new_full(
+    config: Configuration,
+    sealing: SealingMode,
+    settlement_config: Option<(SettlementLayer, PathBuf)>,
+) -> Result<TaskManager, ServiceError> {
     let sc_service::PartialComponents {
         client,
         backend,
@@ -316,6 +324,43 @@ pub fn new_full(config: Configuration, sealing: SealingMode) -> Result<TaskManag
     );
 
     if role.is_authority() {
+        let l1_gas_price = Arc::new(Mutex::new(L1GasPrices::default()));
+
+        // initialize settlement workers
+        if let Some((layer_kind, config_path)) = settlement_config {
+            // TODO: make L1 message handling part of the SettlementProvider, support multiple layer options
+            if layer_kind == SettlementLayer::Ethereum {
+                let ethereum_conf = Arc::new(
+                    EthereumClientConfig::from_json_file(&config_path)
+                        .map_err(|e| ServiceError::Other(e.to_string()))?,
+                );
+
+                task_manager.spawn_handle().spawn(
+                    "settlement-worker-sync-l1-messages",
+                    Some(MADARA_TASK_GROUP),
+                    mc_l1_messages::worker::run_worker(
+                        ethereum_conf.clone(),
+                        client.clone(),
+                        transaction_pool.clone(),
+                        madara_backend.clone(),
+                    ),
+                );
+
+                // Ensuring we've fetched the latest price before we start the node
+                futures::executor::block_on(mc_l1_gas_price::worker::run_worker(
+                    ethereum_conf.clone(),
+                    l1_gas_price.clone(),
+                    false,
+                ));
+
+                task_manager.spawn_handle().spawn(
+                    "l1-gas-prices-worker",
+                    Some(MADARA_TASK_GROUP),
+                    mc_l1_gas_price::worker::run_worker(ethereum_conf.clone(), l1_gas_price.clone(), true),
+                );
+            }
+        }
+
         // manual-seal authorship
         if !sealing.is_default() {
             log::info!("{} sealing enabled.", sealing);
@@ -355,6 +400,7 @@ pub fn new_full(config: Configuration, sealing: SealingMode) -> Result<TaskManag
             proposer_factory,
             create_inherent_data_providers: move |_, ()| {
                 let offchain_storage = backend.offchain_storage();
+                let l1_gas_price = l1_gas_price.clone();
                 async move {
                     let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 
@@ -367,16 +413,22 @@ pub fn new_full(config: Configuration, sealing: SealingMode) -> Result<TaskManag
                     let prefix = &STORAGE_PREFIX;
                     let key = SEQ_ADDR_STORAGE_KEY;
 
-                    let sequencer_address = if let Some(storage) = ocw_storage {
-                        SeqAddrInherentDataProvider::try_from(
-                            storage.get(prefix, key).unwrap_or(DEFAULT_SEQUENCER_ADDRESS.to_vec()),
-                        )
-                        .unwrap_or_default()
+                    let sequencer_address: [u8; 32] = if let Some(storage) = ocw_storage {
+                        storage
+                            .get(prefix, key)
+                            .unwrap_or(DEFAULT_SEQUENCER_ADDRESS.to_vec())
+                            .try_into()
+                            .map_err(|_| StarknetInherentError::WrongAddressFormat)?
                     } else {
-                        SeqAddrInherentDataProvider::default()
+                        DEFAULT_SEQUENCER_ADDRESS
                     };
 
-                    Ok((slot, timestamp, sequencer_address))
+                    let starknet_inherent = StarknetInherentDataProvider::new(StarknetInherentData {
+                        sequencer_address,
+                        l1_gas_price: l1_gas_price.lock().await.clone(),
+                    });
+
+                    Ok((slot, timestamp, starknet_inherent))
                 }
             },
             force_authoring,

@@ -12,7 +12,7 @@ members = [
   "crates/primitives/felt",
   "crates/primitives/hashers",
   "crates/primitives/block",
-  "crates/primitives/sequencer-address",
+  "crates/primitives/starknet-inherent",
   "crates/primitives/storage",
   "crates/primitives/chain-id",
   "crates/primitives/messages",
@@ -43,7 +43,7 @@ default-members = [
   "crates/primitives/felt",
   "crates/primitives/hashers",
   "crates/primitives/block",
-  "crates/primitives/sequencer-address",
+  "crates/primitives/starknet-inherent",
   "crates/primitives/storage",
   "crates/primitives/chain-id",
   "crates/primitives/messages",
@@ -164,7 +164,7 @@ mp-block = { path = "crates/primitives/block" }
 mp-fee = { path = "crates/primitives/fee" }
 mp-felt = { path = "crates/primitives/felt" }
 mp-hashers = { path = "crates/primitives/hashers" }
-mp-sequencer-address = { path = "crates/primitives/sequencer-address" }
+mp-starknet-inherent = { path = "crates/primitives/starknet-inherent" }
 mp-snos-output = { path = "crates/primitives/snos-output" }
 mp-storage = { path = "crates/primitives/storage" }
 mp-transactions = { path = "crates/primitives/transactions" }
@@ -185,6 +185,7 @@ mc-rpc = { path = "crates/client/rpc" }
 mc-rpc-core = { path = "crates/client/rpc-core" }
 mc-commitment-state-diff = { path = "crates/client/commitment-state-diff" }
 mc-l1-messages = { path = "crates/client/l1-messages" }
+mc-l1-gas-price = { path = "crates/client/l1-gas-price" }
 mc-eth-client = { path = "crates/client/eth-client" }
 mc-starknet-block-import = { path = "crates/client/starknet-block-import" }
 
@@ -225,15 +226,7 @@ ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "f0e5b194f09c533f
 ethers-solc = { git = "https://github.com/gakonst/ethers-rs", rev = "f0e5b194f09c533feb10d1a686ddb9e5946ec107" }
 
 # Zaun
-ethereum-instance = { git = "https://github.com/keep-starknet-strange/zaun", package = "ethereum-instance", branch = "main" }
-starkgate-manager-client = { git = "https://github.com/keep-starknet-strange/zaun", package = "starkgate-manager-client", branch = "main" }
-starkgate-registry-client = { git = "https://github.com/keep-starknet-strange/zaun", package = "starkgate-registry-client", branch = "main" }
 starknet-core-contract-client = { git = "https://github.com/keep-starknet-strange/zaun", package = "starknet-core-contract-client", branch = "main" }
-starknet-erc20-client = { git = "https://github.com/keep-starknet-strange/zaun", package = "starknet-erc20-client", branch = "main" }
-starknet-eth-bridge-client = { git = "https://github.com/keep-starknet-strange/zaun", package = "starknet-eth-bridge-client", branch = "main" }
-starknet-proxy-client = { git = "https://github.com/keep-starknet-strange/zaun", package = "starknet-proxy-client", branch = "main" }
-starknet-token-bridge-client = { git = "https://github.com/keep-starknet-strange/zaun", package = "starknet-token-bridge-client", branch = "main" }
-zaun-utils = { git = "https://github.com/keep-starknet-strange/zaun", package = "utils", branch = "main" }
 
 
 # Other third party dependencies

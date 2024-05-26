@@ -883,7 +883,7 @@ dependencies = [
 [[package]]
 name = "blockifier"
 version = "0.5.0-rc.3"
-source = "git+https://github.com/bidzyyys/blockifier?branch=feature/scale-codec#59950ded347f60bfcbbc31300ff713e5423448e2"
+source = "git+https://github.com/bidzyyys/blockifier?branch=feature/scale-codec#3b2682b949cc691150a682bf26debe6f6e264361"
 dependencies = [
  "anyhow",
  "ark-ec",
@@ -5535,6 +5535,7 @@ dependencies = [
  "mc-db",
  "mc-eth-client",
  "mc-genesis-data-provider",
+ "mc-l1-gas-price",
  "mc-l1-messages",
  "mc-mapping-sync",
  "mc-rpc",
@@ -5543,7 +5544,7 @@ dependencies = [
  "mp-block",
  "mp-digest-log",
  "mp-felt",
- "mp-sequencer-address",
+ "mp-starknet-inherent",
  "num-bigint",
  "pallet-starknet",
  "pallet-starknet-runtime-api",
@@ -5607,6 +5608,7 @@ dependencies = [
  "mp-hashers",
  "mp-program-hash",
  "mp-simulations",
+ "mp-starknet-inherent",
  "pallet-aura",
  "pallet-grandpa",
  "pallet-starknet",
@@ -5746,6 +5748,21 @@ dependencies = [
  "mp-genesis-config",
  "serde_json",
  "thiserror",
+]
+
+[[package]]
+name = "mc-l1-gas-price"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "ethers",
+ "futures",
+ "log",
+ "mc-eth-client",
+ "mp-starknet-inherent",
+ "reqwest",
+ "serde",
+ "tokio",
 ]
 
 [[package]]
@@ -6191,17 +6208,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mp-sequencer-address"
-version = "0.7.0"
-dependencies = [
- "async-trait",
- "parity-scale-codec",
- "sp-core",
- "sp-inherents",
- "thiserror",
-]
-
-[[package]]
 name = "mp-simulations"
 version = "0.7.0"
 dependencies = [
@@ -6223,6 +6229,19 @@ dependencies = [
  "pretty_assertions",
  "scale-info",
  "starknet_api",
+]
+
+[[package]]
+name = "mp-starknet-inherent"
+version = "0.7.0"
+dependencies = [
+ "async-trait",
+ "blockifier",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-inherents",
+ "thiserror",
 ]
 
 [[package]]
@@ -6889,8 +6908,8 @@ dependencies = [
  "mp-genesis-config",
  "mp-hashers",
  "mp-program-hash",
- "mp-sequencer-address",
  "mp-simulations",
+ "mp-starknet-inherent",
  "mp-storage",
  "mp-transactions",
  "pallet-timestamp",
@@ -6918,6 +6937,7 @@ dependencies = [
  "blockifier",
  "mp-felt",
  "mp-simulations",
+ "mp-starknet-inherent",
  "parity-scale-codec",
  "scale-info",
  "sp-api",
