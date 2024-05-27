@@ -1,9 +1,10 @@
 use std::sync::Arc;
+
 use blockifier::execution::contract_class::ContractClassV0Inner;
 use blockifier::transaction::transactions::DeclareTransaction;
-
 use jsonrpsee::core::{async_trait, RpcResult};
 use mc_genesis_data_provider::GenesisProvider;
+use mc_rpc_core::DeclareV0Result;
 pub use mc_rpc_core::{
     Felt, MadaraRpcApiServer, PredeployedAccountWithBalance, StarknetReadRpcApiServer, StarknetTraceRpcApiServer,
     StarknetWriteRpcApiServer,
@@ -19,8 +20,14 @@ use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
 use starknet_api::transaction::DeclareTransactionV0V1;
-use starknet_core::types::{BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, CompressedLegacyContractClass, ContractClass, DeclareTransactionResult, DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingStateUpdate, MaybePendingTransactionReceipt, MsgFromL1, SimulatedTransaction, SimulationFlag, SimulationFlagForEstimateFee, SyncStatusType, Transaction, TransactionTrace, TransactionTraceWithHash};
-use mc_rpc_core::DeclareV0Result;
+use starknet_core::types::{
+    BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
+    BroadcastedInvokeTransaction, BroadcastedTransaction, CompressedLegacyContractClass, ContractClass,
+    DeclareTransactionResult, DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate,
+    FieldElement, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
+    MaybePendingStateUpdate, MaybePendingTransactionReceipt, MsgFromL1, SimulatedTransaction, SimulationFlag,
+    SimulationFlagForEstimateFee, SyncStatusType, Transaction, TransactionTrace, TransactionTraceWithHash,
+};
 
 use crate::Starknet;
 
@@ -49,7 +56,12 @@ where
         self.0.predeployed_accounts()
     }
 
-    fn declare_v0_contract(&self, declare_transaction: DeclareTransactionV0V1, class_info: ContractClassV0Inner, abi_length: usize) -> RpcResult<DeclareV0Result> {
+    fn declare_v0_contract(
+        &self,
+        declare_transaction: DeclareTransactionV0V1,
+        class_info: ContractClassV0Inner,
+        abi_length: usize,
+    ) -> RpcResult<DeclareV0Result> {
         self.0.declare_v0_contract(declare_transaction, class_info, abi_length)
     }
 }

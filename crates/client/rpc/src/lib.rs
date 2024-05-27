@@ -14,8 +14,8 @@ mod types;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
-use blockifier::execution::contract_class::{ClassInfo, ContractClassV0, ContractClassV0Inner};
 
+use blockifier::execution::contract_class::{ClassInfo, ContractClassV0, ContractClassV0Inner};
 use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::objects::{ResourcesMapping, TransactionExecutionInfo};
 use blockifier::transaction::transactions::{DeclareTransaction, L1HandlerTransaction};
@@ -25,6 +25,7 @@ use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 use mc_genesis_data_provider::GenesisProvider;
 pub use mc_rpc_core::utils::*;
+use mc_rpc_core::{DeclareTransactionCommonInput, DeclareV0Result, StarknetRpcApiCommonFuncs};
 pub use mc_rpc_core::{
     Felt, MadaraRpcApiServer, PredeployedAccountWithBalance, StarknetReadRpcApiServer, StarknetTraceRpcApiServer,
     StarknetWriteRpcApiServer,
@@ -57,9 +58,21 @@ use sp_runtime::transaction_validity::InvalidTransaction;
 use starknet_api::core::{ClassHash, Nonce};
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{Calldata, DeclareTransactionV0V1, Fee, TransactionHash, TransactionVersion};
-use starknet_core::types::{BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, CompressedLegacyContractClass, ContractClass, DeclareTransactionReceipt, DeclareTransactionResult, DeployAccountTransactionReceipt, DeployAccountTransactionResult, EventFilterWithPage, EventsPage, ExecutionResources, ExecutionResult, FeeEstimate, FeePayment, FieldElement, FunctionCall, Hash256, InvokeTransactionReceipt, InvokeTransactionResult, L1HandlerTransactionReceipt, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingStateUpdate, MaybePendingTransactionReceipt, MsgFromL1, PendingBlockWithTxHashes, PendingBlockWithTxs, PendingDeclareTransactionReceipt, PendingDeployAccountTransactionReceipt, PendingInvokeTransactionReceipt, PendingL1HandlerTransactionReceipt, PendingStateUpdate, PendingTransactionReceipt, PriceUnit, ResourcePrice, SimulationFlagForEstimateFee, StateDiff, StateUpdate, SyncStatus, SyncStatusType, Transaction, TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt};
+use starknet_core::types::{
+    BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
+    BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction,
+    CompressedLegacyContractClass, ContractClass, DeclareTransactionReceipt, DeclareTransactionResult,
+    DeployAccountTransactionReceipt, DeployAccountTransactionResult, EventFilterWithPage, EventsPage,
+    ExecutionResources, ExecutionResult, FeeEstimate, FeePayment, FieldElement, FunctionCall, Hash256,
+    InvokeTransactionReceipt, InvokeTransactionResult, L1HandlerTransactionReceipt, MaybePendingBlockWithTxHashes,
+    MaybePendingBlockWithTxs, MaybePendingStateUpdate, MaybePendingTransactionReceipt, MsgFromL1,
+    PendingBlockWithTxHashes, PendingBlockWithTxs, PendingDeclareTransactionReceipt,
+    PendingDeployAccountTransactionReceipt, PendingInvokeTransactionReceipt, PendingL1HandlerTransactionReceipt,
+    PendingStateUpdate, PendingTransactionReceipt, PriceUnit, ResourcePrice, SimulationFlagForEstimateFee, StateDiff,
+    StateUpdate, SyncStatus, SyncStatusType, Transaction, TransactionExecutionStatus, TransactionFinalityStatus,
+    TransactionReceipt,
+};
 use starknet_core::utils::get_selector_from_name;
-use mc_rpc_core::DeclareV0Result;
 use trace_api::get_previous_block_substrate_hash;
 
 use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
@@ -136,11 +149,6 @@ where
     }
 }
 
-pub enum DeclareTransactionCommonInput {
-    V0(DeclareTransactionV0V1, ContractClassV0Inner, usize),
-    V1(DeclareTransaction)
-}
-
 impl<A: ChainApi, B, BE, G, C, P, H> Starknet<A, B, BE, G, C, P, H>
 where
     B: BlockT,
@@ -149,73 +157,6 @@ where
     C::Api: StarknetRuntimeApi<B>,
     H: HasherT + Send + Sync + 'static,
 {
-    pub async fn declare_txn_common(&self, transaction_inputs: DeclareTransactionCommonInput) -> Result<(TransactionHash, ClassHash), StarknetRpcApiError> {
-        let best_block_hash = self.get_best_block_hash();
-
-        match transaction_inputs {
-            DeclareTransactionCommonInput::V1(transaction) => {
-                let (class_hash, tx_hash) = (transaction.class_hash(), transaction.tx_hash());
-
-                let current_block_hash = self.get_best_block_hash();
-                let contract_class = self
-                    .overrides
-                    .for_block_hash(self.client.as_ref(), current_block_hash)
-                    .contract_class_by_class_hash(current_block_hash, class_hash);
-
-                if let Some(contract_class) = contract_class {
-                    error!("Contract class already exists: {:?}", contract_class);
-                    return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
-                }
-
-                let extrinsic = self.convert_tx_to_extrinsic(best_block_hash, AccountTransaction::Declare(transaction))?;
-
-                submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
-
-                Ok((tx_hash, class_hash))
-            }
-            DeclareTransactionCommonInput::V0(declare_txn, class_info, abi_length) => {
-
-                let txn_hash: TransactionHash = TransactionHash(StarkHash { 0: FieldElement::ZERO.to_bytes_be() });
-
-                let class_info = ClassInfo::new(
-                    &blockifier::execution::contract_class::ContractClass::V0(
-                        ContractClassV0(Arc::from(ContractClassV0Inner {
-                            program: class_info.program,
-                            entry_points_by_type: class_info.entry_points_by_type,
-                        }))
-                    ),
-                    0,
-                    abi_length
-                ).unwrap();
-                
-                let declare_transaction = DeclareTransaction::new(
-                    starknet_api::transaction::DeclareTransaction::V0(declare_txn),
-                    txn_hash,
-                    class_info
-                ).unwrap();
-
-                let current_block_hash = self.get_best_block_hash();
-                let contract_class = self
-                    .overrides
-                    .for_block_hash(self.client.as_ref(), current_block_hash)
-                    .contract_class_by_class_hash(current_block_hash, declare_transaction.class_hash());
-
-                if let Some(contract_class) = contract_class {
-                    error!("Contract class already exists: {:?}", contract_class);
-                    return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
-                }
-
-                let extrinsic = self.convert_tx_to_extrinsic(best_block_hash, AccountTransaction::Declare(declare_transaction.clone()))?;
-
-                submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
-
-                Ok((declare_transaction.tx_hash, declare_transaction.class_hash()))
-            }
-        }
-
-
-    }
-
     pub fn current_block_hash(&self) -> Result<H256, StarknetRpcApiError> {
         let substrate_block_hash = self.client.info().best_hash;
 
@@ -283,6 +224,92 @@ where
     }
 }
 
+#[async_trait]
+impl<A, B, BE, G, C, P, H> StarknetRpcApiCommonFuncs for Starknet<A, B, BE, G, C, P, H>
+where
+    A: ChainApi<Block = B> + 'static,
+    B: BlockT,
+    P: TransactionPool<Block = B> + 'static,
+    BE: Backend<B> + 'static,
+    C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
+    C: ProvideRuntimeApi<B>,
+    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
+    G: GenesisProvider + Send + Sync + 'static,
+    H: HasherT + Send + Sync + 'static,
+{
+    async fn declare_txn_common(
+        &self,
+        transaction_inputs: DeclareTransactionCommonInput,
+    ) -> Option<(TransactionHash, ClassHash)> {
+        let best_block_hash = self.get_best_block_hash();
+
+        match transaction_inputs {
+            DeclareTransactionCommonInput::V1(transaction) => {
+                let (class_hash, tx_hash) = (transaction.class_hash(), transaction.tx_hash());
+
+                let current_block_hash = self.get_best_block_hash();
+                let contract_class = self
+                    .overrides
+                    .for_block_hash(self.client.as_ref(), current_block_hash)
+                    .contract_class_by_class_hash(current_block_hash, class_hash);
+
+                if let Some(contract_class) = contract_class {
+                    error!("Contract class already exists: {:?}", contract_class);
+                    // return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
+                }
+
+                let extrinsic =
+                    self.convert_tx_to_extrinsic(best_block_hash, AccountTransaction::Declare(transaction)).unwrap();
+
+                submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await.ok()?;
+
+                Some((tx_hash, class_hash))
+            }
+            DeclareTransactionCommonInput::V0(declare_txn, class_info, abi_length) => {
+                let txn_hash: TransactionHash = TransactionHash(StarkHash { 0: FieldElement::ZERO.to_bytes_be() });
+
+                let class_info = ClassInfo::new(
+                    &blockifier::execution::contract_class::ContractClass::V0(ContractClassV0(Arc::from(
+                        ContractClassV0Inner {
+                            program: class_info.program,
+                            entry_points_by_type: class_info.entry_points_by_type,
+                        },
+                    ))),
+                    0,
+                    abi_length,
+                )
+                .unwrap();
+
+                let declare_transaction = DeclareTransaction::new(
+                    starknet_api::transaction::DeclareTransaction::V0(declare_txn),
+                    txn_hash,
+                    class_info,
+                )
+                .unwrap();
+
+                let current_block_hash = self.get_best_block_hash();
+                let contract_class = self
+                    .overrides
+                    .for_block_hash(self.client.as_ref(), current_block_hash)
+                    .contract_class_by_class_hash(current_block_hash, declare_transaction.class_hash());
+
+                if let Some(contract_class) = contract_class {
+                    error!("Contract class already exists: {:?}", contract_class);
+                    // return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
+                }
+
+                let extrinsic = self
+                    .convert_tx_to_extrinsic(best_block_hash, AccountTransaction::Declare(declare_transaction.clone()))
+                    .unwrap();
+
+                submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await.ok()?;
+
+                Some((declare_transaction.tx_hash, declare_transaction.class_hash()))
+            }
+        }
+    }
+}
+
 /// Taken from https://github.com/paritytech/substrate/blob/master/client/rpc/src/author/mod.rs#L78
 const TX_SOURCE: TransactionSource = TransactionSource::External;
 
@@ -327,13 +354,17 @@ where
             .collect::<Vec<_>>())
     }
 
-    async fn declare_v0_contract(&self, declare_transaction: DeclareTransactionV0V1, class_info: ContractClassV0Inner, abi_length: usize) -> RpcResult<DeclareV0Result> {
-        let (class_hash, _tx_hash) = (declare_transaction.class_hash(), declare_transaction.tx_hash());
-        self.declare_txn_common(DeclareTransactionCommonInput::V0(declare_transaction, class_info, abi_length)).await?;
+    async fn declare_v0_contract(
+        &self,
+        declare_transaction: DeclareTransactionV0V1,
+        class_info: ContractClassV0Inner,
+        abi_length: usize,
+    ) -> RpcResult<DeclareV0Result> {
+        let (_txn_hash, class_hash) = self.declare_txn_common(DeclareTransactionCommonInput::V0(declare_transaction, class_info, abi_length))
+            .await
+            .ok_or("Error in declaring the v0 using the given transaction !!!").expect("ERROR : Error in declaring the v0 using the given transaction !!!");
 
-        Ok(DeclareV0Result {
-            class_hash
-        })
+        Ok(DeclareV0Result { class_hash })
     }
 }
 
@@ -363,7 +394,6 @@ where
         &self,
         declare_transaction: BroadcastedDeclareTransaction,
     ) -> RpcResult<DeclareTransactionResult> {
-
         let opt_sierra_contract_class = if let BroadcastedDeclareTransaction::V2(ref tx) = declare_transaction {
             Some(flattened_sierra_to_sierra_contract_class(tx.contract_class.clone()))
         } else {
@@ -377,7 +407,8 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let (tx_hash, class_hash) = self.declare_txn_common(DeclareTransactionCommonInput::V1(transaction)).await.unwrap();
+        let (tx_hash, class_hash) =
+            self.declare_txn_common(DeclareTransactionCommonInput::V1(transaction)).await.unwrap();
 
         if let Some(sierra_contract_class) = opt_sierra_contract_class {
             if let Some(e) = self.backend.sierra_classes().store_sierra_class(class_hash, sierra_contract_class).err() {

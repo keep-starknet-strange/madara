@@ -7,21 +7,34 @@
 #[cfg(test)]
 mod tests;
 
-use blockifier::execution::contract_class::ContractClassV0Inner;
+use std::sync::Arc;
+
+use blockifier::execution::contract_class::{ClassInfo, ContractClassV0, ContractClassV0Inner};
+use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::transactions::DeclareTransaction;
-use jsonrpsee::core::RpcResult;
+use jsonrpsee::core::{async_trait, RpcResult};
 use jsonrpsee::proc_macros::rpc;
+use jsonrpsee::tracing::log::error;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use starknet_api::core::ClassHash;
-use starknet_api::transaction::DeclareTransactionV0V1;
+use starknet_api::hash::StarkHash;
+use starknet_api::transaction::{DeclareTransactionV0V1, TransactionHash};
+use starknet_api::StarknetApiError;
 
 pub mod utils;
 
 use mp_transactions::TransactionStatus;
 use pallet_starknet::genesis_loader::PredeployedAccount;
 use starknet_core::serde::unsigned_field_element::UfeHex;
-use starknet_core::types::{BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, CompressedLegacyContractClass, ContractClass, DeclareTransactionResult, DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingStateUpdate, MaybePendingTransactionReceipt, MsgFromL1, SimulatedTransaction, SimulationFlag, SimulationFlagForEstimateFee, SyncStatusType, Transaction, TransactionTrace, TransactionTraceWithHash};
+use starknet_core::types::{
+    BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
+    BroadcastedInvokeTransaction, BroadcastedTransaction, CompressedLegacyContractClass, ContractClass,
+    DeclareTransactionResult, DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate,
+    FieldElement, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
+    MaybePendingStateUpdate, MaybePendingTransactionReceipt, MsgFromL1, SimulatedTransaction, SimulationFlag,
+    SimulationFlagForEstimateFee, SyncStatusType, Transaction, TransactionTrace, TransactionTraceWithHash,
+};
 
 #[serde_as]
 #[derive(Serialize, Deserialize)]
@@ -35,7 +48,7 @@ pub struct PredeployedAccountWithBalance {
 
 #[derive(Serialize, Deserialize)]
 pub struct DeclareV0Result {
-    pub class_hash: ClassHash
+    pub class_hash: ClassHash,
 }
 
 /// Madara rpc interface for additional features.
@@ -45,7 +58,12 @@ pub trait MadaraRpcApi: StarknetReadRpcApi {
     fn predeployed_accounts(&self) -> RpcResult<Vec<PredeployedAccountWithBalance>>;
 
     #[method(name = "declarev0")]
-    fn declare_v0_contract(&self, declare_transaction: DeclareTransactionV0V1, class_info: ContractClassV0Inner, abi_length: usize) -> RpcResult<DeclareV0Result>;
+    fn declare_v0_contract(
+        &self,
+        declare_transaction: DeclareTransactionV0V1,
+        class_info: ContractClassV0Inner,
+        abi_length: usize,
+    ) -> RpcResult<DeclareV0Result>;
 }
 
 /// Starknet write rpc interface.
@@ -193,4 +211,17 @@ pub trait StarknetTraceRpcApi {
     #[method(name = "traceTransaction")]
     /// Returns the execution trace of a transaction
     async fn trace_transaction(&self, transaction_hash: FieldElement) -> RpcResult<TransactionTrace>;
+}
+
+pub enum DeclareTransactionCommonInput {
+    V0(DeclareTransactionV0V1, ContractClassV0Inner, usize),
+    V1(DeclareTransaction),
+}
+
+#[async_trait]
+pub trait StarknetRpcApiCommonFuncs {
+    async fn declare_txn_common(
+        &self,
+        transaction_inputs: DeclareTransactionCommonInput,
+    ) -> Option<(TransactionHash, ClassHash)>;
 }
