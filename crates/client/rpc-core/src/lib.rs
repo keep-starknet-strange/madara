@@ -58,7 +58,7 @@ pub trait MadaraRpcApi: StarknetReadRpcApi {
     fn predeployed_accounts(&self) -> RpcResult<Vec<PredeployedAccountWithBalance>>;
 
     #[method(name = "declarev0")]
-    fn declare_v0_contract(
+    async fn declare_v0_contract(
         &self,
         declare_transaction: DeclareTransactionV0V1,
         class_info: ContractClassV0Inner,

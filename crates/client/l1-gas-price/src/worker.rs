@@ -66,6 +66,8 @@ async fn update_gas_price(
         .json()
         .await?;
 
+    log::info!(">>>>>> gas_prices : {:?}", fee_history);
+
     // The RPC responds with 301 elements for some reason. It's also just safer to manually
     // take the last 300. We choose 300 to get average gas caprice for last one hour (300 * 12 sec block
     // time).

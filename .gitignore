@@ -44,3 +44,5 @@ cairo_venv
 
 # solidity cache
 tmp/
+
+setup_and_launch.sh

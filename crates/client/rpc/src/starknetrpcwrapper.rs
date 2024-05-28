@@ -40,6 +40,7 @@ impl<A: ChainApi, B: BlockT, BE, G, C, P, H> Clone for StarknetRpcWrapper<A, B, 
     }
 }
 
+#[async_trait]
 impl<A, B, BE, G, C, P, H> MadaraRpcApiServer for StarknetRpcWrapper<A, B, BE, G, C, P, H>
 where
     A: ChainApi<Block = B> + 'static,
@@ -56,13 +57,13 @@ where
         self.0.predeployed_accounts()
     }
 
-    fn declare_v0_contract(
+    async fn declare_v0_contract(
         &self,
         declare_transaction: DeclareTransactionV0V1,
         class_info: ContractClassV0Inner,
         abi_length: usize,
     ) -> RpcResult<DeclareV0Result> {
-        self.0.declare_v0_contract(declare_transaction, class_info, abi_length)
+        self.0.declare_v0_contract(declare_transaction, class_info, abi_length).await
     }
 }
 
