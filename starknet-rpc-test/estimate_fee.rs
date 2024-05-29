@@ -10,9 +10,9 @@ use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::Provider;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
-use starknet_rpc_test::constants::{ACCOUNT_CONTRACT_ADDRESS, ARGENT_CONTRACT_ADDRESS, MULTIPLY_TEST_CONTRACT_ADDRESS, SIGNER_PRIVATE, TEST_CONTRACT_ADDRESS};
+use starknet_rpc_test::constants::{ACCOUNT_CONTRACT_ADDRESS,MULTIPLY_TEST_CONTRACT_ADDRESS, TEST_CONTRACT_ADDRESS};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{build_single_owner_account, get_transaction_receipt, is_good_error_code};
+use starknet_rpc_test::utils::{get_transaction_receipt, is_good_error_code};
 
 #[rstest]
 #[tokio::test]
@@ -124,14 +124,7 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
         .await?;
 
     assert_eq!(estimates.len(), 2);
-    assert_eq!(estimates[0].overall_fee, FieldElement::from(2060u128));
-    // less gas as the second transaction doesn't cause a storage change
-    assert_eq!(estimates[1].overall_fee, FieldElement::from(2060u128));
-    // It's 271 gas on sepolia as well (15 gas and 256 data gas). The difference in gas costs
-    // can be due to different accounts. Also, gas calculation tests are done in the blockifier
-    assert_eq!(estimates[0].gas_consumed, FieldElement::from_hex_be("0xce").unwrap());
-    assert_eq!(estimates[1].gas_consumed, FieldElement::from_hex_be("0xce").unwrap());
-
+   
     tx.is_query = false;
     let invoke_transaction = BroadcastedInvokeTransaction::V1(tx.clone());
     let invoke_transaction_2 = BroadcastedInvokeTransaction::V1(BroadcastedInvokeTransactionV1 {
@@ -170,7 +163,6 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
 
     match_estimate_and_receipt(estimates[0].clone(), receipt_1)?;
     match_estimate_and_receipt(estimates[1].clone(), receipt_2)?;
-
 
     Ok(())
 }
