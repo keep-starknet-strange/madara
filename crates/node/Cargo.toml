@@ -20,15 +20,15 @@ targets = ["x86_64-unknown-linux-gnu"]
 name = "madara"
 
 [dependencies]
-# Ethereum
-ethers = { workspace = true, features = ["openssl"] }
 
 async-trait = "0.1"
 clap = { workspace = true, features = ["derive"] }
 futures = { workspace = true, features = ["thread-pool"] }
 log = { workspace = true }
+num-bigint = { workspace = true }
 serde = { workspace = true }
 sha3 = { workspace = true }
+thiserror = { workspace = true }
 
 frame-system = { workspace = true }
 sc-basic-authorship = { workspace = true }
@@ -39,7 +39,6 @@ sc-consensus-aura = { workspace = true }
 sc-consensus-grandpa = { workspace = true }
 sc-consensus-manual-seal = { workspace = true }
 sc-executor = { workspace = true }
-sc-keystore = { workspace = true }
 sc-network = { workspace = true }
 sc-network-sync = { workspace = true }
 sc-offchain = { workspace = true }
@@ -47,6 +46,7 @@ sc-service = { workspace = true }
 sc-telemetry = { workspace = true }
 sc-transaction-pool = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
+sp-consensus = { workspace = true }
 sp-consensus-aura = { workspace = true }
 sp-consensus-grandpa = { workspace = true }
 sp-core = { workspace = true }
@@ -57,7 +57,6 @@ sp-runtime = { workspace = true }
 sp-state-machine = { workspace = true }
 sp-statement-store = { workspace = true }
 sp-timestamp = { workspace = true }
-sp-trie = { workspace = true, features = ["default"] }
 
 # These dependencies are used for the node template's RPCs
 jsonrpsee = { workspace = true, features = ["server"] }
@@ -77,27 +76,18 @@ substrate-frame-rpc-system = { workspace = true }
 # These dependencies are used for runtime benchmarking
 frame-benchmarking = { workspace = true }
 frame-benchmarking-cli = { workspace = true }
-
-# Starknet
-blockifier = { workspace = true }
-hex = { workspace = true }
-madara-runtime = { workspace = true }
+madara-runtime = { workspace = true, features = ["std"] }
 mc-commitment-state-diff = { workspace = true }
-mc-data-availability = { workspace = true, features = ["clap"] }
 mc-db = { workspace = true }
 mc-eth-client = { workspace = true }
+mc-l1-gas-price = { workspace = true }
 mc-l1-messages = { workspace = true }
 mc-mapping-sync = { workspace = true }
 mc-rpc = { workspace = true }
-mc-settlement = { workspace = true, features = ["clap"] }
+mc-starknet-block-import = { workspace = true, optional = true }
 mc-storage = { workspace = true }
-pallet-starknet = { workspace = true }
+pallet-starknet = { workspace = true, features = ["genesis-loader"] }
 pallet-starknet-runtime-api = { workspace = true }
-starknet-core = { workspace = true }
-starknet_api = { workspace = true, features = [
-  "scale-info",
-  "parity-scale-codec",
-] }
 
 # Madara utils
 mc-genesis-data-provider = { workspace = true }
@@ -106,23 +96,22 @@ mc-genesis-data-provider = { workspace = true }
 mp-block = { workspace = true }
 mp-digest-log = { workspace = true }
 mp-felt = { workspace = true }
-mp-sequencer-address = { workspace = true, features = ["client"] }
-mp-transactions = { workspace = true, features = ["scale-info"] }
+mp-starknet-inherent = { workspace = true, features = ["client"] }
+
+# Starknet
+blockifier = { workspace = true }
 
 
 # CLI-specific dependencies
-try-runtime-cli = { optional = true, git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-
-parity-scale-codec = { workspace = true, features = ["derive"] }
-reqwest = { workspace = true }
+reqwest = { workspace = true, features = ["blocking"] }
 serde_json = { workspace = true }
+try-runtime-cli = { optional = true, git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
 url = { workspace = true }
 
 [build-dependencies]
 substrate-build-script-utils = { workspace = true }
 
 [features]
-default = []
 # Dependencies that are only required if runtime benchmarking should be build.
 runtime-benchmarks = [
   "madara-runtime/runtime-benchmarks",
@@ -136,5 +125,9 @@ disable-transaction-fee = ["madara-runtime/disable-transaction-fee"]
 # Load sharingan chain-specs during the compilation
 # This is the way to run a sharingan chain
 sharingan = []
-avail = ["mc-data-availability/avail"]
-celestia = ["mc-data-availability/celestia"]
+# Enables Sierra class verification for foreign blocks only + disabled in manual sealing mode
+sn-block-import = ["dep:mc-starknet-block-import"]
+# Enables Sierra class verification for both own and foreign blocks only + enabled for manual sealing mode
+sn-block-import-testing = ["sn-block-import"]
+# Enables dev features to improve DevX
+dev = ["madara-runtime/dev"]

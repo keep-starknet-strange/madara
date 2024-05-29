@@ -6,9 +6,9 @@ use rstest::rstest;
 use starknet_accounts::Account;
 use starknet_core::types::{BlockId, BlockTag, StarknetError};
 use starknet_ff::FieldElement;
-use starknet_providers::{MaybeUnknownErrorCode, Provider, ProviderError, StarknetErrorWithMessage};
-use starknet_test_utils::constants::{
-    ARGENT_CONTRACT_ADDRESS, CONTRACT_ADDRESS, MINT_AMOUNT, SIGNER_PRIVATE, TEST_CONTRACT_ADDRESS,
+use starknet_providers::{Provider, ProviderError};
+use starknet_rpc_test::constants::{
+    ACCOUNT_CONTRACT_ADDRESS, ARGENT_CONTRACT_ADDRESS, MIN_AMOUNT, SIGNER_PRIVATE, TEST_CONTRACT_ADDRESS,
 };
 use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_test_utils::utils::{build_single_owner_account, AccountActions};
@@ -20,13 +20,12 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
     let rpc = madara.get_starknet_client().await;
 
     assert_matches!(
-        rpc
-        .get_nonce(
+        rpc.get_nonce(
             BlockId::Hash(FieldElement::ZERO),
-            FieldElement::from_hex_be(CONTRACT_ADDRESS).expect("Invalid Contract Address"),
+            FieldElement::from_hex_be(ACCOUNT_CONTRACT_ADDRESS).expect("Invalid Contract Address"),
         )
         .await,
-        Err(ProviderError::StarknetError(StarknetErrorWithMessage { code: MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::BlockNotFound
+        Err(ProviderError::StarknetError(StarknetError::BlockNotFound))
     );
 
     Ok(())
@@ -38,13 +37,12 @@ async fn fail_non_existing_contract(madara: &ThreadSafeMadaraClient) -> Result<(
     let rpc = madara.get_starknet_client().await;
 
     assert_matches!(
-        rpc
-        .get_nonce(
+        rpc.get_nonce(
             BlockId::Tag(BlockTag::Latest),
             FieldElement::from_hex_be("0x51e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00").unwrap(),
         )
         .await,
-        Err(ProviderError::StarknetError(StarknetErrorWithMessage { code: MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::ContractNotFound
+        Err(ProviderError::StarknetError(StarknetError::ContractNotFound))
     );
 
     Ok(())
@@ -80,7 +78,7 @@ async fn work_ok_account_with_tx(madara: &ThreadSafeMadaraClient) -> Result<(), 
     madara_write_lock
         .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(
             account.address(),
-            FieldElement::from_hex_be(MINT_AMOUNT).expect("Invalid Mint Amount"),
+            FieldElement::from_hex_be(MIN_AMOUNT).expect("Invalid Mint Amount"),
             None,
         ))])
         .await?;

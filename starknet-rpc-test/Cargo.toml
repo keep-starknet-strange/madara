@@ -12,15 +12,13 @@ async-lock = "3.1.0"
 async-trait = { workspace = true }
 env_logger = "0.9"
 flate2 = { workspace = true }
-log = "0.4"
 reqwest = "0.11.18"
 rstest = "0.18.1"
-serde = { version = "1.0.192", features = ["derive"] }
+serde = "1.0.192"
 serde_json = "1.0.108"
 starknet-accounts = { workspace = true }
 starknet-contract = { workspace = true }
 starknet-core = { workspace = true }
-starknet-crypto = { workspace = true }
 starknet-ff = { workspace = true }
 starknet-providers = { workspace = true }
 starknet-signers = { workspace = true }

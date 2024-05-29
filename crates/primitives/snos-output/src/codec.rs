@@ -1,8 +1,6 @@
-use alloc::vec::Vec;
-
 use mp_messages::conversions::eth_address_to_felt;
 use mp_messages::{MessageL1ToL2, MessageL2ToL1};
-use starknet_api::api_core::{ContractAddress, EthAddress, Nonce, PatriciaKey};
+use starknet_api::core::{ContractAddress, EntryPointSelector, EthAddress, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 
 use crate::felt_reader::{FeltReader, FeltReaderError};
@@ -16,7 +14,7 @@ use crate::StarknetOsOutput;
 ///     3. ABI encode parameters
 ///  
 /// NOTE: Field element (252 bit) is encoded as an EVM word (256 bit) and vice versa
-/// EVM developer should be aware of that and prevent data loss by not using the higest 4 bits
+/// EVM developer should be aware of that and prevent data loss by not using the highest 4 bits
 pub trait SnosCodec: Sized {
     /// Return an estimation of the number of field elements required to encode `self`
     ///
@@ -89,6 +87,20 @@ impl SnosCodec for Nonce {
 
     fn decode(input: &mut FeltReader) -> Result<Self, FeltReaderError> {
         Ok(Nonce(StarkFelt::decode(input)?))
+    }
+}
+
+impl SnosCodec for EntryPointSelector {
+    fn size_in_felts(&self) -> usize {
+        1
+    }
+
+    fn encode_to(self, output: &mut Vec<StarkFelt>) {
+        output.push(self.0);
+    }
+
+    fn decode(input: &mut FeltReader) -> Result<Self, FeltReaderError> {
+        Ok(EntryPointSelector(StarkFelt::decode(input)?))
     }
 }
 
@@ -167,7 +179,7 @@ impl SnosCodec for MessageL1ToL2 {
             from_address: ContractAddress::decode(input)?,
             to_address: ContractAddress::decode(input)?,
             nonce: Nonce::decode(input)?,
-            selector: StarkFelt::decode(input)?,
+            selector: EntryPointSelector::decode(input)?,
             payload: Vec::<StarkFelt>::decode(input)?,
         })
     }

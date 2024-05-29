@@ -1,16 +1,12 @@
-use alloc::sync::Arc;
-
-use blockifier::block_context::BlockContext;
-use mp_fee::ResourcePrice;
+use blockifier::blockifier::block::GasPrices;
 use mp_felt::Felt252Wrapper;
+use mp_hashers::pedersen::PedersenHasher;
 use mp_hashers::HasherT;
 use sp_core::U256;
-use starknet_api::api_core::{ChainId, ContractAddress};
-use starknet_api::block::{BlockNumber, BlockTimestamp};
+use starknet_api::core::ContractAddress;
 use starknet_api::hash::StarkHash;
-use starknet_api::stdlib::collections::HashMap;
 
-#[derive(Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "parity-scale-codec", derive(parity_scale_codec::Encode, parity_scale_codec::Decode))]
 // #[cfg_attr(feature = "scale-info", derive(scale_info::TypeInfo))]
@@ -30,8 +26,8 @@ pub struct Header {
     pub event_count: u128,
     /// The version of the Starknet protocol used when creating this block
     pub protocol_version: u8,
-    /// l1 gas price for this block
-    pub l1_gas_price: ResourcePrice,
+    /// Gas prices for this block
+    pub l1_gas_price: GasPrices,
     /// Extraneous data that might be useful for running transactions
     pub extra_data: Option<U256>,
 }
@@ -48,7 +44,7 @@ impl Header {
         transaction_count: u128,
         event_count: u128,
         protocol_version: u8,
-        l1_gas_price: ResourcePrice,
+        gas_prices: GasPrices,
         extra_data: Option<U256>,
     ) -> Self {
         Self {
@@ -59,30 +55,13 @@ impl Header {
             transaction_count,
             event_count,
             protocol_version,
-            l1_gas_price,
+            l1_gas_price: gas_prices,
             extra_data,
         }
     }
 
-    /// Converts to a blockifier BlockContext
-    pub fn into_block_context(self, fee_token_address: ContractAddress, chain_id: ChainId) -> BlockContext {
-        BlockContext {
-            chain_id,
-            block_number: BlockNumber(self.block_number),
-            block_timestamp: BlockTimestamp(self.block_timestamp),
-            sequencer_address: self.sequencer_address,
-            vm_resource_fee_cost: Arc::new(HashMap::default()),
-            fee_token_address,
-            invoke_tx_max_n_steps: 1000000,
-            validate_max_n_steps: 1000000,
-            // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
-            gas_price: 10,
-            max_recursion_depth: 50,
-        }
-    }
-
-    /// Compute the hash of the header.
-    pub fn hash<H: HasherT>(&self) -> Felt252Wrapper {
+    /// Compute the hash using the Pedersen hasher according to [the Starknet protocol specification](https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/header/#block_hash).  
+    pub fn hash(&self) -> Felt252Wrapper {
         let data: &[Felt252Wrapper] = &[
             self.block_number.into(),
             self.sequencer_address.0.0.into(),
@@ -94,6 +73,6 @@ impl Header {
             self.parent_block_hash.into(),
         ];
 
-        H::compute_hash_on_wrappers(data)
+        PedersenHasher::compute_hash_on_wrappers(data)
     }
 }

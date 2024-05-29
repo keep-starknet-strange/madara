@@ -1,5 +1,5 @@
 use mp_messages::conversions::eth_address_to_felt;
-use starknet_api::api_core::EthAddress;
+use starknet_api::core::EthAddress;
 use starknet_api::hash::StarkFelt;
 
 use crate::codec::SnosCodec;
@@ -54,7 +54,7 @@ fn test_snos_output_codec() {
 
 #[test]
 fn test_eth_address_cast() {
-    let felt = StarkFelt::try_from("0x000000000000000000000000ae0ee0a63a2ce6baeeffe56e7714fb4efe48d419").unwrap();
+    let felt = StarkFelt::try_from("0xae0ee0a63a2ce6baeeffe56e7714fb4efe48d419").unwrap();
     let eth_address = EthAddress::try_from(felt).unwrap();
     let actual = eth_address_to_felt(&eth_address);
     assert_eq!(felt, actual);

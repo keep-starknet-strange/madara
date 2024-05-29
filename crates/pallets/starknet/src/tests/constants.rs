@@ -1,5 +1,6 @@
 use lazy_static::lazy_static;
-use mp_felt::Felt252Wrapper;
+use starknet_api::hash::StarkFelt;
+use starknet_api::transaction::ContractAddressSalt;
 
 pub const ACCOUNT_PRIVATE_KEY: &str = "0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d";
 pub const ACCOUNT_PUBLIC_KEY: &str = "0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2";
@@ -9,7 +10,8 @@ pub const BLOCKIFIER_ACCOUNT_ADDRESS: &str = "0x02356b628d108863baf8644c945d97ba
 pub const BRAAVOS_ACCOUNT_CLASS_HASH_CAIRO_0: &str =
     "0x0244ca3d9fe8b47dd565a6f4270d979ba31a7d6ff2c3bf8776198161505e8b52";
 pub const BRAAVOS_PROXY_CLASS_HASH_CAIRO_0: &str = "0x06a89ae7bd72c96202c040341c1ee422474b562e1d73c6848f08cae429c33262";
-pub const FEE_TOKEN_ADDRESS: &str = "0x00000000000000000000000000000000000000000000000000000000000000AA";
+pub const ETH_FEE_TOKEN_ADDRESS: &str = "0x00000000000000000000000000000000000000000000000000000000000000AA";
+pub const STRK_FEE_TOKEN_ADDRESS: &str = "0x00000000000000000000000000000000000000000000000000000000000000BB";
 pub const K: &str = "0x0000000000000000000000000000000000000000000000000000000000000001";
 pub const OPENZEPPELIN_ACCOUNT_CLASS_HASH_CAIRO_0: &str =
     "0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd";
@@ -28,8 +30,12 @@ pub const UDC_SELECTOR: &str = "0x1987cbd17808b9a23693d4de7e246a443cfe37e6e7fbae
 
 // salts for address calculation
 lazy_static! {
-    pub static ref SALT: Felt252Wrapper =
-        Felt252Wrapper::from_hex_be("0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463").unwrap();
-    pub static ref TEST_ACCOUNT_SALT: Felt252Wrapper =
-        Felt252Wrapper::from_hex_be("0x0780f72e33c1508df24d8f00a96ecc6e08a850ecb09f7e6dff6a81624c0ef46a").unwrap();
+    pub static ref SALT: ContractAddressSalt = ContractAddressSalt(
+        StarkFelt::try_from("0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463").unwrap()
+    );
+    pub static ref TEST_ACCOUNT_SALT: ContractAddressSalt = ContractAddressSalt(
+        StarkFelt::try_from("0x0780f72e33c1508df24d8f00a96ecc6e08a850ecb09f7e6dff6a81624c0ef46a").unwrap()
+    );
 }
+
+pub const TRANSFER_SELECTOR_NAME: &str = "Transfer";

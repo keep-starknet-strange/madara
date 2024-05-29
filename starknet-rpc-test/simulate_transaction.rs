@@ -2,41 +2,44 @@ use assert_matches::assert_matches;
 use rstest::rstest;
 use starknet_accounts::{Call, ConnectedAccount};
 use starknet_core::types::{
-    BlockId, BlockTag, BroadcastedInvokeTransaction, BroadcastedTransaction, SimulationFlag, StarknetError,
+    BlockId, BlockTag, BroadcastedInvokeTransaction, BroadcastedInvokeTransactionV1, BroadcastedTransaction,
+    SimulationFlag, StarknetError,
 };
 use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
-use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
-use starknet_providers::{MaybeUnknownErrorCode, Provider, StarknetErrorWithMessage};
-use starknet_test_utils::constants::{
-    ACCOUNT_CONTRACT, ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE, TEST_CONTRACT_ADDRESS,
+use starknet_providers::{Provider, ProviderError};
+use starknet_rpc_test::constants::{
+    ACCOUNT_CONTRACT_ADDRESS, ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE, TEST_CONTRACT_ADDRESS,
 };
-use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_test_utils::utils::{build_single_owner_account, AccountActions};
+use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_rpc_test::utils::{build_single_owner_account, is_good_error_code, AccountActions};
 
 #[rstest]
 #[tokio::test]
 async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-    let ok_invoke_transaction = BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction {
-        max_fee: FieldElement::ZERO,
-        signature: vec![],
-        nonce: FieldElement::ZERO,
-        sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap(),
-        calldata: vec![
-            FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
-            get_selector_from_name("sqrt").unwrap(),
-            FieldElement::from_hex_be("1").unwrap(),
-            FieldElement::from(81u8),
-        ],
-        is_query: false,
-    });
+    let sender_address = FieldElement::from_hex_be(ACCOUNT_CONTRACT_ADDRESS).unwrap();
+    let nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), sender_address).await.unwrap();
 
-    assert_matches!(
-        rpc.simulate_transactions(BlockId::Hash(FieldElement::ZERO),&[ok_invoke_transaction], []).await,
-        Err(StarknetProviderError(StarknetErrorWithMessage { code: MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::BlockNotFound
-    );
+    let ok_invoke_transaction =
+        BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction::V1(BroadcastedInvokeTransactionV1 {
+            max_fee: FieldElement::ZERO,
+            signature: vec![],
+            nonce,
+            sender_address,
+            calldata: vec![
+                FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
+                get_selector_from_name("sqrt").unwrap(),
+                FieldElement::from_hex_be("1").unwrap(),
+                FieldElement::from(81u8),
+            ],
+            is_query: false,
+        }));
+
+    let simulate_transaction_error =
+        rpc.simulate_transactions(BlockId::Hash(FieldElement::ZERO), &[ok_invoke_transaction], []).await.unwrap_err();
+    assert_matches!(simulate_transaction_error, ProviderError::StarknetError(StarknetError::BlockNotFound));
 
     Ok(())
 }
@@ -46,24 +49,27 @@ async fn fail_non_existing_block(madara: &ThreadSafeMadaraClient) -> Result<(), 
 async fn fail_max_fee_too_big(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-    let ok_invoke_transaction = BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction {
-        max_fee: FieldElement::from_hex_be("0x100000000000000000000000000000000").unwrap(), // u128::MAX + 1
-        signature: vec![],
-        nonce: FieldElement::ZERO,
-        sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap(),
-        calldata: vec![
-            FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
-            get_selector_from_name("sqrt").unwrap(),
-            FieldElement::from_hex_be("1").unwrap(),
-            FieldElement::from(81u8),
-        ],
-        is_query: false,
-    });
+    let sender_address = FieldElement::from_hex_be(ACCOUNT_CONTRACT_ADDRESS).unwrap();
+    let nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), sender_address).await.unwrap();
 
-    assert_matches!(
-        rpc.simulate_transactions(BlockId::Tag(BlockTag::Latest), &[ok_invoke_transaction], []).await,
-        Err(StarknetProviderError(StarknetErrorWithMessage { code: MaybeUnknownErrorCode::Unknown(500), message })) if message == "Internal server error"
-    );
+    let ok_invoke_transaction =
+        BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction::V1(BroadcastedInvokeTransactionV1 {
+            max_fee: FieldElement::from_hex_be("0x100000000000000000000000000000000").unwrap(), // u128::MAX + 1
+            signature: vec![],
+            nonce,
+            sender_address,
+            calldata: vec![
+                FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
+                get_selector_from_name("sqrt").unwrap(),
+                FieldElement::from_hex_be("1").unwrap(),
+                FieldElement::from(81u8),
+            ],
+            is_query: false,
+        }));
+
+    let simulate_transaction_error =
+        rpc.simulate_transactions(BlockId::Tag(BlockTag::Latest), &[ok_invoke_transaction], []).await.unwrap_err();
+    assert!(is_good_error_code(&simulate_transaction_error, 500));
 
     Ok(())
 }
@@ -73,51 +79,55 @@ async fn fail_max_fee_too_big(madara: &ThreadSafeMadaraClient) -> Result<(), any
 async fn fail_if_one_txn_cannot_be_executed(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-    let bad_invoke_transaction = BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction {
-        max_fee: FieldElement::default(),
-        nonce: FieldElement::ZERO,
-        sender_address: FieldElement::default(),
-        signature: vec![],
-        calldata: vec![FieldElement::from_hex_be("0x0").unwrap()],
-        is_query: false,
-    });
+    let bad_invoke_transaction =
+        BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction::V1(BroadcastedInvokeTransactionV1 {
+            max_fee: FieldElement::default(),
+            nonce: FieldElement::ZERO,
+            sender_address: FieldElement::default(),
+            signature: vec![],
+            calldata: vec![FieldElement::from_hex_be("0x0").unwrap()],
+            is_query: false,
+        }));
 
-    let ok_invoke_transaction = BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction {
-        max_fee: FieldElement::ZERO,
-        signature: vec![],
-        nonce: FieldElement::ZERO,
-        sender_address: FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap(),
-        calldata: vec![
-            FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
-            get_selector_from_name("sqrt").unwrap(),
-            FieldElement::from_hex_be("1").unwrap(),
-            FieldElement::from(81u8),
-        ],
-        is_query: false,
-    });
+    let sender_address = FieldElement::from_hex_be(ACCOUNT_CONTRACT_ADDRESS).unwrap();
+    let nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), sender_address).await.unwrap();
 
-    assert_matches!(
-        rpc.simulate_transactions(BlockId::Tag(BlockTag::Latest),&[
-            bad_invoke_transaction,
-            ok_invoke_transaction,
-        ],[] ).await,
-        Err(StarknetProviderError(StarknetErrorWithMessage { code: MaybeUnknownErrorCode::Known(code), .. })) if code == StarknetError::ContractError
-    );
+    let ok_invoke_transaction =
+        BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction::V1(BroadcastedInvokeTransactionV1 {
+            max_fee: FieldElement::ZERO,
+            signature: vec![],
+            nonce,
+            sender_address,
+            calldata: vec![
+                FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
+                get_selector_from_name("sqrt").unwrap(),
+                FieldElement::from_hex_be("1").unwrap(),
+                FieldElement::from(81u8),
+            ],
+            is_query: false,
+        }));
+
+    let simulate_transaction_error = rpc
+        .simulate_transactions(BlockId::Tag(BlockTag::Latest), &[bad_invoke_transaction, ok_invoke_transaction], [])
+        .await
+        .unwrap_err();
+    assert!(is_good_error_code(&simulate_transaction_error, 40));
 
     Ok(())
 }
 
 #[rstest]
 #[tokio::test]
-async fn works_ok_on_no_validate(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+async fn works_ok_on_no_validate(madara: &ThreadSafeMadaraClient) {
     let rpc = madara.get_starknet_client().await;
 
-    let sender_address = FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap();
+    let sender_address = FieldElement::from_hex_be(ACCOUNT_CONTRACT_ADDRESS).unwrap();
+    let nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), sender_address).await.unwrap();
 
     let mut madara_write_lock = madara.write().await;
     let _ = madara_write_lock.create_empty_block().await;
 
-    let tx = BroadcastedInvokeTransaction {
+    let tx = BroadcastedInvokeTransactionV1 {
         sender_address,
         calldata: vec![
             FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
@@ -125,27 +135,30 @@ async fn works_ok_on_no_validate(madara: &ThreadSafeMadaraClient) -> Result<(), 
             FieldElement::from_hex_be("1").unwrap(),
             FieldElement::from(81u8),
         ],
-        max_fee: FieldElement::from(210u16),
+        max_fee: FieldElement::from(100_000u128),
         signature: vec![],
-        nonce: FieldElement::ZERO,
+        nonce,
         is_query: false,
     };
 
-    let invoke_transaction = BroadcastedTransaction::Invoke(tx.clone());
+    let invoke_transaction = BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction::V1(tx.clone()));
 
     let invoke_transaction_2 =
-        BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction { nonce: FieldElement::ONE, ..tx });
+        BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction::V1(BroadcastedInvokeTransactionV1 {
+            nonce: nonce + FieldElement::ONE,
+            ..tx
+        }));
 
     let simulations = rpc
         .simulate_transactions(BlockId::Tag(BlockTag::Latest), &[invoke_transaction, invoke_transaction_2], [])
-        .await?;
+        .await
+        .unwrap();
 
     assert_eq!(simulations.len(), 2);
-    assert_eq!(simulations[0].fee_estimation.gas_consumed, 0);
-    assert_eq!(simulations[0].fee_estimation.overall_fee, 210);
-    assert_eq!(simulations[0].fee_estimation.gas_price, 0);
-
-    Ok(())
+    // TODO: check again when implemented correctly
+    assert_eq!(simulations[0].fee_estimation.gas_consumed, FieldElement::from_hex_be("0x8c").unwrap());
+    assert_eq!(simulations[0].fee_estimation.overall_fee, FieldElement::from(1400u128));
+    assert_eq!(simulations[0].fee_estimation.gas_price, FieldElement::from_hex_be("0xa").unwrap());
 }
 
 #[rstest]
@@ -154,7 +167,7 @@ async fn works_ok_on_validate_with_signature(madara: &ThreadSafeMadaraClient) ->
     let rpc = madara.get_starknet_client().await;
     let funding_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let nonce = funding_account.get_nonce().await?;
-    let max_fee = FieldElement::from(1000u16);
+    let max_fee = FieldElement::from(100_000u128);
 
     let calls = vec![Call {
         to: FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
@@ -168,9 +181,10 @@ async fn works_ok_on_validate_with_signature(madara: &ThreadSafeMadaraClient) ->
     let simulations = rpc.simulate_transactions(BlockId::Tag(BlockTag::Latest), &[invoke_transaction], []).await?;
 
     assert_eq!(simulations.len(), 1);
-    assert_eq!(simulations[0].fee_estimation.gas_consumed, 0);
-    assert_eq!(simulations[0].fee_estimation.overall_fee, 240);
-    assert_eq!(simulations[0].fee_estimation.gas_price, 0);
+    // TODO: check again when implemented correctly
+    assert_eq!(simulations[0].fee_estimation.gas_consumed, FieldElement::from_hex_be("0x8f").unwrap());
+    assert_eq!(simulations[0].fee_estimation.overall_fee, FieldElement::from(1430u128));
+    assert_eq!(simulations[0].fee_estimation.gas_price, FieldElement::from_hex_be("0xa").unwrap());
 
     Ok(())
 }
@@ -183,7 +197,7 @@ async fn works_ok_on_validate_without_signature_with_skip_validate(
     let rpc = madara.get_starknet_client().await;
     let funding_account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let nonce = funding_account.get_nonce().await?;
-    let max_fee = FieldElement::from(1000u16);
+    let max_fee = FieldElement::from(100_000u128);
 
     let calls = vec![Call {
         to: FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
@@ -199,9 +213,10 @@ async fn works_ok_on_validate_without_signature_with_skip_validate(
         .await?;
 
     assert_eq!(simulations.len(), 1);
-    assert_eq!(simulations[0].fee_estimation.gas_consumed, 0);
-    assert_eq!(simulations[0].fee_estimation.overall_fee, 220);
-    assert_eq!(simulations[0].fee_estimation.gas_price, 0);
+    // TODO: check again when implemented correctly
+    assert_eq!(simulations[0].fee_estimation.gas_consumed, FieldElement::from_hex_be("0x8e").unwrap());
+    assert_eq!(simulations[0].fee_estimation.overall_fee, FieldElement::from(1420u128));
+    assert_eq!(simulations[0].fee_estimation.gas_price, FieldElement::from_hex_be("0xa").unwrap());
 
     Ok(())
 }
@@ -211,12 +226,13 @@ async fn works_ok_on_validate_without_signature_with_skip_validate(
 async fn works_ok_without_max_fee_with_skip_fee_charge(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
 
-    let sender_address = FieldElement::from_hex_be(ACCOUNT_CONTRACT).unwrap();
+    let sender_address = FieldElement::from_hex_be(ACCOUNT_CONTRACT_ADDRESS).unwrap();
+    let nonce = rpc.get_nonce(BlockId::Tag(BlockTag::Latest), sender_address).await.unwrap();
 
-    let tx = BroadcastedInvokeTransaction {
+    let tx = BroadcastedInvokeTransactionV1 {
         max_fee: FieldElement::from(0u8),
         signature: vec![],
-        nonce: FieldElement::ZERO,
+        nonce,
         sender_address,
         calldata: vec![
             FieldElement::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
@@ -227,10 +243,13 @@ async fn works_ok_without_max_fee_with_skip_fee_charge(madara: &ThreadSafeMadara
         is_query: false,
     };
 
-    let invoke_transaction = BroadcastedTransaction::Invoke(tx.clone());
+    let invoke_transaction = BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction::V1(tx.clone()));
 
     let invoke_transaction_2 =
-        BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction { nonce: FieldElement::ONE, ..tx });
+        BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction::V1(BroadcastedInvokeTransactionV1 {
+            nonce: nonce + FieldElement::ONE,
+            ..tx
+        }));
 
     let simulations = rpc
         .simulate_transactions(
@@ -241,9 +260,10 @@ async fn works_ok_without_max_fee_with_skip_fee_charge(madara: &ThreadSafeMadara
         .await?;
 
     assert_eq!(simulations.len(), 2);
-    assert_eq!(simulations[0].fee_estimation.gas_consumed, 0);
-    assert_eq!(simulations[0].fee_estimation.overall_fee, 210);
-    assert_eq!(simulations[0].fee_estimation.gas_price, 0);
+    // TODO: check again when implemented correctly
+    assert_eq!(simulations[0].fee_estimation.gas_consumed, FieldElement::from_hex_be("0x8c").unwrap());
+    assert_eq!(simulations[0].fee_estimation.overall_fee, FieldElement::from(1400u128));
+    assert_eq!(simulations[0].fee_estimation.gas_price, FieldElement::from_hex_be("0xa").unwrap());
 
     Ok(())
 }

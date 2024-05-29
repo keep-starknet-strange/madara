@@ -11,6 +11,7 @@ mod commands;
 mod configs;
 mod constants;
 mod genesis_block;
+mod import_queue;
 mod rpc;
 mod starknet;
 

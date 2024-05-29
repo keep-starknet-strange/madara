@@ -6,11 +6,13 @@ use std::fmt::Debug;
 use anyhow::anyhow;
 use reqwest::header::CONTENT_TYPE;
 use reqwest::{Client, Response};
+use serde::{de, Deserialize, Deserializer};
 use serde_json::json;
 use starknet_accounts::{
     Account, AccountDeployment, AccountError, AccountFactoryError, Declaration, Execution, LegacyDeclaration,
     OpenZeppelinAccountFactory, SingleOwnerAccount,
 };
+use starknet_core::types::contract::legacy::LegacyProgram;
 use starknet_core::types::{DeclareTransactionResult, DeployAccountTransactionResult, InvokeTransactionResult};
 use starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
 use starknet_providers::Provider;
@@ -153,7 +155,7 @@ impl MadaraClient {
     }
 
     pub async fn create_block_with_pending_txs(&mut self) -> anyhow::Result<()> {
-        self.do_create_block(false, true).await
+        self.do_create_block(true, true).await
     }
 
     async fn do_create_block(&mut self, empty: bool, finalize: bool) -> anyhow::Result<()> {
@@ -177,7 +179,7 @@ impl MadaraClient {
             results.push(result);
         }
 
-        self.do_create_block(false, false).await?;
+        self.do_create_block(true, false).await?;
         Ok(results)
     }
 
@@ -212,5 +214,31 @@ impl MadaraClient {
         let response = self.call_rpc(body).await?;
 
         Ok(response.status().is_success())
+    }
+}
+
+pub struct LegacyProgramWrapper {
+    pub legacy_program: LegacyProgram,
+}
+
+impl<'de> Deserialize<'de> for LegacyProgramWrapper {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = serde_json::Value::deserialize(deserializer)?;
+
+        // Ensure the required fields are present in the JSON data
+        let mut json_obj = value.as_object().ok_or_else(|| de::Error::custom("Expected JSON object"))?.clone();
+
+        // If 'main_scope' field is missing, set it to the default value
+        if !json_obj.contains_key("main_scope") {
+            json_obj.insert("main_scope".to_string(), serde_json::Value::String("__main__".to_string()));
+        }
+
+        // Deserialize the modified JSON data into LegacyProgram
+        let legacy_program = serde_json::from_value(serde_json::Value::Object(json_obj)).map_err(de::Error::custom)?;
+
+        Ok(LegacyProgramWrapper { legacy_program })
     }
 }

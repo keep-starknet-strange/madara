@@ -7,10 +7,10 @@ use starknet_accounts::Account;
 use starknet_core::types::{BlockId, BlockTag};
 use starknet_ff::FieldElement;
 use starknet_providers::{Provider, ProviderError};
-use starknet_test_utils::constants::{ARGENT_CONTRACT_ADDRESS, MINT_AMOUNT, SIGNER_PRIVATE};
-use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_test_utils::utils::{build_single_owner_account, AccountActions};
-use starknet_test_utils::Transaction;
+use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, MIN_AMOUNT, SIGNER_PRIVATE};
+use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_rpc_test::utils::{build_single_owner_account, AccountActions};
+use starknet_rpc_test::Transaction;
 
 #[rstest]
 #[tokio::test]
@@ -46,7 +46,7 @@ async fn work_ok_with_block_one_tx(madara: &ThreadSafeMadaraClient) -> Result<()
     let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
     let token_transfer_tx = account.transfer_tokens(
         account.address(),
-        FieldElement::from_hex_be(MINT_AMOUNT).expect("Invalid Mint Amount"),
+        FieldElement::from_hex_be(MIN_AMOUNT).expect("Invalid Mint Amount"),
         None,
     );
 

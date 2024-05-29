@@ -12,47 +12,17 @@ mp-simulations = { workspace = true, features = [
   "parity-scale-codec",
   "scale-info",
 ] }
-mp-snos-output = { workspace = true, features = [
-  "parity-scale-codec",
-  "scale-info",
-] }
-mp-transactions = { workspace = true, features = [
+mp-starknet-inherent = { workspace = true, features = [
   "parity-scale-codec",
   "scale-info",
 ] }
 
 # Starknet
-blockifier = { workspace = true, features = [
-  "parity-scale-codec",
-  "scale-info",
-] }
-hashbrown = { workspace = true }
-starknet-core = { workspace = true }
-starknet_api = { workspace = true, features = [
-  "scale-info",
-  "parity-scale-codec",
-] }
+blockifier = { workspace = true }
+starknet_api = { workspace = true }
 
 # Substrate
 parity-scale-codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive"] }
 sp-api = { workspace = true }
-sp-arithmetic = { workspace = true }
 sp-runtime = { workspace = true }
-
-
-[features]
-default = ["std"]
-std = [
-  "mp-felt/std",
-  "mp-transactions/std",
-  "blockifier/std",
-  "starknet_api/std",
-  "sp-api/std",
-  "sp-runtime/std",
-  "sp-arithmetic/std",
-  "parity-scale-codec/std",
-  "scale-info/std",
-  "starknet-core/std",
-  "mp-simulations/std",
-]

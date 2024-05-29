@@ -1,7 +1,9 @@
 use std::marker::PhantomData;
+use std::num::NonZeroU128;
 use std::sync::Arc;
 
-use mp_block::Block as StarknetBlock;
+use blockifier::blockifier::block::GasPrices;
+use mp_block::{Block as StarknetBlock, Header};
 use mp_digest_log::{Log, MADARA_ENGINE_ID};
 use sc_client_api::backend::Backend;
 use sc_client_api::BlockImportOperation;
@@ -57,7 +59,32 @@ fn construct_genesis_block<Block: BlockT>(state_root: Block::Hash, state_version
         <<<Block as BlockT>::Header as HeaderT>::Hashing as HashT>::trie_root(Vec::new(), state_version);
 
     let mut digest = vec![];
-    let block = StarknetBlock::default();
+    let block = StarknetBlock::try_new(
+        // The genesis block values don't really matter because when you start a node,
+        // you need to disable fees completely to do the setup process. So we need some blocks
+        // of txs without any fees. And the 1st block will set the correct L1 gas prices through
+        // inherents.
+        Header {
+            l1_gas_price: unsafe {
+                GasPrices {
+                    eth_l1_gas_price: NonZeroU128::new_unchecked(10),
+                    strk_l1_gas_price: NonZeroU128::new_unchecked(10),
+                    eth_l1_data_gas_price: NonZeroU128::new_unchecked(10),
+                    strk_l1_data_gas_price: NonZeroU128::new_unchecked(10),
+                }
+            },
+            parent_block_hash: Default::default(),
+            block_number: Default::default(),
+            sequencer_address: Default::default(),
+            block_timestamp: Default::default(),
+            transaction_count: Default::default(),
+            event_count: Default::default(),
+            protocol_version: Default::default(),
+            extra_data: Default::default(),
+        },
+        Default::default(),
+    )
+    .unwrap();
     digest.push(DigestItem::Consensus(MADARA_ENGINE_ID, Log::Block(block).encode()));
 
     Block::new(

@@ -3,6 +3,18 @@
 ## Next release
 
 - dev: better estimate fee test
+- feat: actual estimate_fee added, brought back l1 messages and refactored
+  simulate tx
+- dev: impl get_state_updates using get_transaction_re_execution_state_diff
+- feat: support strk as fee token
+- dev: pallet test for estimate_fee that skip validation
+- feat: add versioned constants to pallet constants
+- bug: fix contract serialisation
+- fix: starknet_call errs if contract nonexistent
+- fix: txn hash calculation and refactor
+- chore: remove all da/settlement related code
+- fix: re-execute txs instead of simulating for txn receipts
+- chore: rebase on latest blockifier
 - refactoring : Removed Redundant logs in madara
 - fix: transaction receipt fails for txs in the middle of a block
 - chore: add makefile for developer experience improvements and cleanup
@@ -33,9 +45,15 @@
 - chore(db): changed the way hashes are encoded
 - refacto: reusable Eth client config for settlement/DA/other tasks
 - ci: add gomu gomu no gatling perfomrance test
+- feat(runtime): moved StarkEvents from Substrate events to runtime storage
+- feat(node): validate declare txs against local Sierra class in block import
+  queue
 - feat(runtime): moved StarkEvents from Substrate
 - feat(rpc/trace_api): add `trace_transaction`
 - fix(docker): fix dockerfile for `madara-node`
+- feat: Remove generic hasher from block hash computation
+- refacto: git submodules removed
+- test: Add pallet test for transaction declare V0
 
 ## v0.7.0
 

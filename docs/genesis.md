@@ -44,6 +44,7 @@ The below defines all hardcoded values set in the geneses:
 | 0x04569ffd48c2a3d455437c16dc843801fb896b1af845bc8bc7ba83ebc4358b7f | Universal deployer class hash                  |
 | 0x01a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003 | Argent Cairo 1 Account                         |
 | 0x04c6d6cf894f8bc96bb9c525e6853e5483177841f7388f74a46cfda6f028c755 | OpenZepplin Cairo 1 Account                    |
+| 0x015b7c90a4fab33812dc9e2ef525a329e22e591327f006f826b71271099637cd | Multiply 2 numbers test contract               |
 
 <!-- markdownlint-disable MD013 -->
 
@@ -61,7 +62,7 @@ The below defines all hardcoded values set in the geneses:
 where `pk` is the following vector of `u8`:
 
 ```rust
-[48,120,48,48,99,49,99,102,49,52,57,48,100,101,49,51,53,50,56,54,53,51,48,49,98,98,56,55,48,53,49,52,51,102,51,101,102,57,51,56,102,57,55,102,100,102,56,57,50,102,49,48,57,48,100,99,98,53,97,99,55,98,99,100,49,100]
+[48, 120, 48, 48, 99,49, 99, 102, 49, 52,57, 48, 100, 101, 49,51, 53, 50, 56, 54,53, 51, 48, 49, 98,98, 56, 55, 48, 53,49, 52, 51, 102, 51,101, 102, 57, 51, 56,102, 57, 55, 102, 100,102, 56, 57, 50, 102,49, 48, 57, 48, 100,99, 98, 53, 97, 99,55, 98, 99, 100, 49,100]
 ```
 
 <!-- markdownlint-disable MD013 -->
@@ -80,7 +81,9 @@ where `pk` is the following vector of `u8`:
 | 0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00 | 0x0372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4 |
 | 0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d02 | 0x077cc28ed3c661419fda16bf120fb81f1f8f28617f5543b05a86d63b0926bbf4 |
 | 0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7  | 0x0372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4 |
+| 0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d  | 0x0372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4 |
 | 0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf | 0x07b3e05f48f0c69e4a65ce5e076a66271a527aff2c34ce1083ec6e1526997a69 |
+| 0x123                                                              | 0x015b7c90a4fab33812dc9e2ef525a329e22e591327f006f826b71271099637cd |
 
 <!-- markdownlint-disable MD013 -->
 
@@ -117,6 +120,17 @@ deployed as a ERC721 contract (given the class hash of 0x80000).
 | 0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7  | 0x262e096a838c0d8f34f641ff917d47d7dcb345c69efe61d9ab6b675e7340fc7 (ERC20_balances(0x3).high) | 0xffffffffffffffffffffffffffffffff (U128::MAX)                                        |
 | 0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7  | 0x45abe05a3e7fb0c2ae1fa912be22a7dbc4832915e00562e2783dee710b9e4bc (ERC20_balances(0x4).low)  | 0xffffffffffffffffffffffffffffffff (U128::MAX)                                        |
 | 0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7  | 0x45abe05a3e7fb0c2ae1fa912be22a7dbc4832915e00562e2783dee710b9e4bd (ERC20_balances(0x4).high) | 0xffffffffffffffffffffffffffffffff (U128::MAX)                                        |
+| 0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d  | 0x341c1bdfd89f69748aa00b5742b03adbffd79b8e80cab5c50d91cd8c2a79be1 (ERC20_name)               | 0x20202020537461726b6e657420546f6b656e                                                |
+| 0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d  | 0x0b6ce5410fca59d078ee9b2a4371a9d684c530d697c64fbef0ae6d5e8f0ac72 (ERC20_symbol)             | 0x5354524b                                                                            |
+| 0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d  | 0x1f0d4aa99431d246bac9b8e48c33e888245b15e9678f64f9bdfc8823dc8f979 (ERC20_decimals)           | 0x12                                                                                  |
+| 0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d  | 0x7b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09 (ERC20_balances(0x1).low)  | 0xffffffffffffffffffffffffffffffff (U128::MAX)                                        |
+| 0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d  | 0x7b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0a (ERC20_balances(0x1).high) | 0xffffffffffffffffffffffffffffffff (U128::MAX)                                        |
+| 0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d  | 0x1d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f2146f (ERC20_balances(0x2).low)  | 0xffffffffffffffffffffffffffffffff (U128::MAX)                                        |
+| 0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d  | 0x1d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f21470 (ERC20_balances(0x2).high) | 0xffffffffffffffffffffffffffffffff (U128::MAX)                                        |
+| 0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d  | 0x262e096a838c0d8f34f641ff917d47d7dcb345c69efe61d9ab6b675e7340fc6 (ERC20_balances(0x3).low)  | 0xffffffffffffffffffffffffffffffff (U128::MAX)                                        |
+| 0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d  | 0x262e096a838c0d8f34f641ff917d47d7dcb345c69efe61d9ab6b675e7340fc7 (ERC20_balances(0x3).high) | 0xffffffffffffffffffffffffffffffff (U128::MAX)                                        |
+| 0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d  | 0x45abe05a3e7fb0c2ae1fa912be22a7dbc4832915e00562e2783dee710b9e4bc (ERC20_balances(0x4).low)  | 0xffffffffffffffffffffffffffffffff (U128::MAX)                                        |
+| 0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d  | 0x45abe05a3e7fb0c2ae1fa912be22a7dbc4832915e00562e2783dee710b9e4bd (ERC20_balances(0x4).high) | 0xffffffffffffffffffffffffffffffff (U128::MAX)                                        |
 | 0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00 | 0x7b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09 (ERC20_balances(0x1).low)  | 0xffffffffffffffffffffffffffffffff (U128::MAX)                                        |
 | 0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00 | 0x7b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0a (ERC20_balances(0x1).high) | 0xffffffffffffffffffffffffffffffff (U128::MAX)                                        |
 | 0x2                                                                | 0x1ccc09c8a19948e048de7add6929589945e25f22059c7345aaf7837188d8d05 (\_signer)                 | 0x3603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2 (Signer public key) |
@@ -166,6 +180,7 @@ deployed as a ERC721 contract (given the class hash of 0x80000).
 | 0x0642a8b9e2c6cc3a9ddb84575123f262a21415f78db453b0625d889e1e06ac32 | 0x02f99bf9799ada84cd5ac0d0fe36b9d8f65efcb377cd2e8cf8309ad2daf15e4b |
 | 0x0764d66462958b670b4dbd46e00eb3d60100f329dc0365d9b059e0549a4c6f58 | 0x071aaf68d30c3e52e1c4b7d1209b0e09525939c31bb0275919dffd4cd53f57c4 |
 | 0x00000000000000000000000000000000000000000000000000000000000000AA | 0x06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922 |
+| 0x00000000000000000000000000000000000000000000000000000000000000BB | 0x06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922 |
 | 0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02cf | 0x91000                                                            |
 | 0x051a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02cf | 0x92000                                                            |
 
@@ -192,6 +207,21 @@ deployed as a ERC721 contract (given the class hash of 0x80000).
 | 0x00000000000000000000000000000000000000000000000000000000000000AA | 0x60b6ac06a42730e54bfd5d389ca51256c926bc9317adb44f7c1029711f8bf8f (ERC20_balances(0x02e63de215f650e9d7e2313c6e9ed26b4f920606fb08576b1663c21a7c4a28c5).high) | 0xffffffffffffffffffffffffffffffff                                                    |
 | 0x00000000000000000000000000000000000000000000000000000000000000AA | 0x78f9a7bb317327b7ad49232784f8e6acfa88269879253bbf780c5bc7a18149a (ERC20_balances(0x05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122).high) | 0xffffffffffffffffffffffffffffffff                                                    |
 | 0x00000000000000000000000000000000000000000000000000000000000000AA | 0x78f9a7bb317327b7ad49232784f8e6acfa88269879253bbf780c5bc7a18149b (ERC20_balances(0x05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122).high) | 0xffffffffffffffffffffffffffffffff                                                    |
+| 0x00000000000000000000000000000000000000000000000000000000000000BB | 0x341c1bdfd89f69748aa00b5742b03adbffd79b8e80cab5c50d91cd8c2a79be1 (ERC20_name)                                                                              | 0x20202020537461726b6e657420546f6b656e                                                |
+| 0x00000000000000000000000000000000000000000000000000000000000000BB | 0x0b6ce5410fca59d078ee9b2a4371a9d684c530d697c64fbef0ae6d5e8f0ac72 (ERC20_symbol)                                                                            | 0x5354524b                                                                            |
+| 0x00000000000000000000000000000000000000000000000000000000000000BB | 0x1f0d4aa99431d246bac9b8e48c33e888245b15e9678f64f9bdfc8823dc8f979 (ERC20_decimals)                                                                          | 0x12                                                                                  |
+| 0x00000000000000000000000000000000000000000000000000000000000000BB | 0x3701645da930cd7f63318f7f118a9134e72d64ab73c72ece81cae2bd5fb403f (ERC20_balances(0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0).low)  | 0xffffffffffffffffffffffffffffffff                                                    |
+| 0x00000000000000000000000000000000000000000000000000000000000000BB | 0x3701645da930cd7f63318f7f118a9134e72d64ab73c72ece81cae2bd5fb4040 (ERC20_balances(0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0).high) | 0xffffffffffffffffffffffffffffffff                                                    |
+| 0x00000000000000000000000000000000000000000000000000000000000000BB | 0x25aa869465e1c3ac7ed6e933ef1af43f4d9126339b8f453f692d631c4a40d24 (ERC20_balances(0x0642a8b9e2c6cc3a9ddb84575123f262a21415f78db453b0625d889e1e06ac32).low)  | 0xffffffffffffffffffffffffffffffff                                                    |
+| 0x00000000000000000000000000000000000000000000000000000000000000BB | 0x25aa869465e1c3ac7ed6e933ef1af43f4d9126339b8f453f692d631c4a40d25 (ERC20_balances(0x0642a8b9e2c6cc3a9ddb84575123f262a21415f78db453b0625d889e1e06ac32).high) | 0xffffffffffffffffffffffffffffffff                                                    |
+| 0x00000000000000000000000000000000000000000000000000000000000000BB | 0x6afaa15cba5e9ea552a55fec494d2d859b4b73506794bf5afbb3d73c1fb00aa (ERC20_balances(0x02356b628d108863baf8644c945d97bad70190af5957031f4852d00d0f690a77).low)  | 0xffffffffffffffffffffffffffffffff                                                    |
+| 0x00000000000000000000000000000000000000000000000000000000000000BB | 0x6afaa15cba5e9ea552a55fec494d2d859b4b73506794bf5afbb3d73c1fb00ab (ERC20_balances(0x02356b628d108863baf8644c945d97bad70190af5957031f4852d00d0f690a77).high) | 0xffffffffffffffffffffffffffffffff                                                    |
+| 0x00000000000000000000000000000000000000000000000000000000000000BB | 0x2231fbd06f0277a2cbcd41f94a6d6cf930a586168e7faa4d62281f554934236 (ERC20_balances(0x06e2616a2dceff4355997369246c25a78e95093df7a49e5ca6a06ce1544ffd50).low)  | 0xffffffffffffffffffffffffffffffff                                                    |
+| 0x00000000000000000000000000000000000000000000000000000000000000BB | 0x2231fbd06f0277a2cbcd41f94a6d6cf930a586168e7faa4d62281f554934237 (ERC20_balances(0x06e2616a2dceff4355997369246c25a78e95093df7a49e5ca6a06ce1544ffd50).high) | 0xffffffffffffffffffffffffffffffff                                                    |
+| 0x00000000000000000000000000000000000000000000000000000000000000BB | 0x60b6ac06a42730e54bfd5d389ca51256c926bc9317adb44f7c1029711f8bf8e (ERC20_balances(0x02e63de215f650e9d7e2313c6e9ed26b4f920606fb08576b1663c21a7c4a28c5).high) | 0xffffffffffffffffffffffffffffffff                                                    |
+| 0x00000000000000000000000000000000000000000000000000000000000000BB | 0x60b6ac06a42730e54bfd5d389ca51256c926bc9317adb44f7c1029711f8bf8f (ERC20_balances(0x02e63de215f650e9d7e2313c6e9ed26b4f920606fb08576b1663c21a7c4a28c5).high) | 0xffffffffffffffffffffffffffffffff                                                    |
+| 0x00000000000000000000000000000000000000000000000000000000000000BB | 0x78f9a7bb317327b7ad49232784f8e6acfa88269879253bbf780c5bc7a18149a (ERC20_balances(0x05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122).high) | 0xffffffffffffffffffffffffffffffff                                                    |
+| 0x00000000000000000000000000000000000000000000000000000000000000BB | 0x78f9a7bb317327b7ad49232784f8e6acfa88269879253bbf780c5bc7a18149b (ERC20_balances(0x05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122).high) | 0xffffffffffffffffffffffffffffffff                                                    |
 | 0x06e2616a2dceff4355997369246c25a78e95093df7a49e5ca6a06ce1544ffd50 | 0x1379ac0624b939ceb9dede92211d7db5ee174fe28be72245b0a1a2abd81c98f (Account_public_key)                                                                      | 0x3603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2 (Signer public key) |
 | 0x02e63de215f650e9d7e2313c6e9ed26b4f920606fb08576b1663c21a7c4a28c5 | 0x1ccc09c8a19948e048de7add6929589945e25f22059c7345aaf7837188d8d05 (\_signer)                                                                                | 0x3603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2 (Signer public key) |
 | 0x05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122 | 0x1f23302c120008f28b62f70efc67ccd75cfe0b9631d77df231d78b0538dcd8f (Account_signers(0x0))                                                                    | 0x3603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2 (Signer public key) |
