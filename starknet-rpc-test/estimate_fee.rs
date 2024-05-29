@@ -124,7 +124,7 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
         .await?;
 
     assert_eq!(estimates.len(), 2);
-   
+
     tx.is_query = false;
     let invoke_transaction = BroadcastedInvokeTransaction::V1(tx.clone());
     let invoke_transaction_2 = BroadcastedInvokeTransaction::V1(BroadcastedInvokeTransactionV1 {
