@@ -10,7 +10,7 @@ use starknet_core::utils::get_selector_from_name;
 use starknet_ff::FieldElement;
 use starknet_providers::Provider;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
-use starknet_rpc_test::constants::{ACCOUNT_CONTRACT_ADDRESS,MULTIPLY_TEST_CONTRACT_ADDRESS, TEST_CONTRACT_ADDRESS};
+use starknet_rpc_test::constants::{ACCOUNT_CONTRACT_ADDRESS, MULTIPLY_TEST_CONTRACT_ADDRESS, TEST_CONTRACT_ADDRESS};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
 use starknet_rpc_test::utils::{get_transaction_receipt, is_good_error_code};
 
