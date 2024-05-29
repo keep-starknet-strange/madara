@@ -58,7 +58,7 @@ use std::collections::BTreeSet;
 use std::ops::Deref;
 use std::str::from_utf8_unchecked;
 
-use blockifier::blockifier::block::{BlockInfo, GasPrices};
+use blockifier::blockifier::block::BlockInfo;
 use blockifier::context::{BlockContext, ChainInfo, FeeTokenAddresses, TransactionContext};
 use blockifier::execution::call_info::CallInfo;
 use blockifier::execution::contract_class::ContractClass;
@@ -79,7 +79,7 @@ use mp_block::{Block as StarknetBlock, Header as StarknetHeader};
 use mp_chain_id::MADARA_CHAIN_ID;
 use mp_digest_log::MADARA_ENGINE_ID;
 use mp_felt::Felt252Wrapper;
-use mp_sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
+use mp_starknet_inherent::{InherentError, InherentType, STARKNET_INHERENT_IDENTIFIER};
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_transactions::execution::{
     execute_l1_handler_transaction, run_non_revertible_transaction, run_revertible_transaction,
@@ -118,6 +118,7 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
+    use mp_starknet_inherent::L1GasPrices;
 
     use super::*;
 
@@ -131,9 +132,6 @@ pub mod pallet {
     pub trait Config: frame_system::Config {
         /// The block time
         type TimestampProvider: Time;
-        /// The gas price
-        #[pallet::constant]
-        type L1GasPrices: Get<GasPrices>;
         /// A configuration for base priority of unsigned transactions.
         ///
         /// This is exposed so that it can be tuned for particular runtime, when
@@ -167,7 +165,7 @@ pub mod pallet {
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         /// The block is being finalized.
         fn on_finalize(_n: BlockNumberFor<T>) {
-            assert!(SeqAddrUpdate::<T>::take(), "Sequencer address must be set for the block");
+            assert!(InherentUpdate::<T>::take(), "Sequencer address must be set for the block");
 
             // Create a new Starknet block and store it.
             <Pallet<T>>::store_block(UniqueSaturatedInto::<u64>::unique_saturated_into(
@@ -300,11 +298,17 @@ pub mod pallet {
     #[pallet::getter(fn sequencer_address)]
     pub type SequencerAddress<T: Config> = StorageValue<_, ContractAddress, ValueQuery>;
 
+    /// Current sequencer address.
+    #[pallet::storage]
+    #[pallet::unbounded]
+    #[pallet::getter(fn current_l1_gas_prices)]
+    pub type CurrentL1GasPrice<T: Config> = StorageValue<_, L1GasPrices, ValueQuery>;
+
     /// Ensure the sequencer address was updated for this block.
     #[pallet::storage]
     #[pallet::unbounded]
-    #[pallet::getter(fn seq_addr_update)]
-    pub type SeqAddrUpdate<T: Config> = StorageValue<_, bool, ValueQuery>;
+    #[pallet::getter(fn inherent_update)]
+    pub type InherentUpdate<T: Config> = StorageValue<_, bool, ValueQuery>;
 
     /// Information about processed L1 Messages
     /// Based on Nonce value.
@@ -413,7 +417,7 @@ pub mod pallet {
                 strk_fee_token_address: self.strk_fee_token_address,
                 eth_fee_token_address: self.eth_fee_token_address,
             });
-            SeqAddrUpdate::<T>::put(true);
+            InherentUpdate::<T>::put(true);
 
             ChainIdStorage::<T>::put(self.chain_id)
         }
@@ -463,20 +467,22 @@ pub mod pallet {
         /// The dispatch origin for this call must be `Inherent`.
         #[pallet::call_index(0)]
         #[pallet::weight((0, DispatchClass::Mandatory))]
-        pub fn set_sequencer_address(origin: OriginFor<T>, addr: [u8; 32]) -> DispatchResult {
+        pub fn set_starknet_inherent_data(origin: OriginFor<T>, data: InherentType) -> DispatchResult {
             ensure_none(origin)?;
-            // The `SeqAddrUpdate` storage item is initialized to `true` in the genesis build. In
+            // The `InherentUpdate` storage item is initialized to `true` in the genesis build. In
             // block 1 we skip the storage update check, and the `on_finalize` hook
             // updates the storage item to `false`. Initializing the storage item with
             // `false` causes the `on_finalize` hook to panic.
             if UniqueSaturatedInto::<u64>::unique_saturated_into(frame_system::Pallet::<T>::block_number()) > 1 {
-                assert!(!SeqAddrUpdate::<T>::exists(), "Sequencer address can be updated only once in the block");
+                assert!(!InherentUpdate::<T>::exists(), "Inherent data can be updated only once in the block");
             }
 
-            let addr = StarkFelt::new(addr).map_err(|_| Error::<T>::SequencerAddressNotValid)?;
+            let addr = StarkFelt::new(data.sequencer_address).map_err(|_| Error::<T>::SequencerAddressNotValid)?;
             let addr = ContractAddress(addr.try_into().map_err(|_| Error::<T>::SequencerAddressNotValid)?);
             SequencerAddress::<T>::put(addr);
-            SeqAddrUpdate::<T>::put(true);
+            CurrentL1GasPrice::<T>::put(data.l1_gas_price);
+
+            InherentUpdate::<T>::put(true);
             Ok(())
         }
 
@@ -699,18 +705,23 @@ pub mod pallet {
     impl<T: Config> ProvideInherent for Pallet<T> {
         type Call = Call<T>;
         type Error = InherentError;
-        const INHERENT_IDENTIFIER: InherentIdentifier = INHERENT_IDENTIFIER;
+        const INHERENT_IDENTIFIER: InherentIdentifier = STARKNET_INHERENT_IDENTIFIER;
 
         fn create_inherent(data: &InherentData) -> Option<Self::Call> {
             let inherent_data = data
-                .get_data::<InherentType>(&INHERENT_IDENTIFIER)
-                .expect("Sequencer address inherent data not correctly encoded")
-                .unwrap_or(DEFAULT_SEQUENCER_ADDRESS);
-            Some(Call::set_sequencer_address { addr: inherent_data })
+                .get_data::<InherentType>(&STARKNET_INHERENT_IDENTIFIER)
+                .expect("Starknet inherent data not correctly encoded")
+                // if we run in manual sealing, then it goes into the default case
+                // it's usually used in test cases.
+                .unwrap_or_default();
+
+            // TODO: should we have a safety check here that the L1 gas price isn't
+            // very old? We've this check in the l1-gas-prices worker already.
+            Some(Call::set_starknet_inherent_data { data: inherent_data })
         }
 
         fn is_inherent(call: &Self::Call) -> bool {
-            matches!(call, Call::set_sequencer_address { .. })
+            matches!(call, Call::set_starknet_inherent_data { .. })
         }
     }
 
@@ -849,7 +860,7 @@ impl<T: Config> Pallet<T> {
         let sequencer_address = Self::sequencer_address();
 
         let chain_id = ChainId(Self::chain_id_str());
-        let gas_prices = T::L1GasPrices::get();
+        let gas_prices = Self::current_l1_gas_prices().into();
 
         BlockContext::new_unchecked(
             &BlockInfo {
@@ -995,7 +1006,7 @@ impl<T: Config> Pallet<T> {
         let protocol_version = T::ProtocolVersion::get();
         let extra_data = None;
 
-        let l1_gas_price = T::L1GasPrices::get();
+        let l1_gas_price = Self::current_l1_gas_prices().into();
 
         let block = StarknetBlock::try_new(
             StarknetHeader::new(

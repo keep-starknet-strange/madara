@@ -5,7 +5,7 @@ use blockifier::blockifier::block::GasPrices;
 use blockifier::transaction::objects::FeeType;
 use frame_support::assert_ok;
 use mp_digest_log::{ensure_log, find_starknet_block};
-use mp_sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
+use mp_starknet_inherent::DEFAULT_SEQUENCER_ADDRESS;
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::core::{ChainId, ContractAddress, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
@@ -14,7 +14,7 @@ use super::mock::default_mock::*;
 use super::mock::*;
 use crate::tests::constants::ETH_FEE_TOKEN_ADDRESS;
 use crate::tests::get_invoke_dummy;
-use crate::{SeqAddrUpdate, SequencerAddress};
+use crate::{InherentUpdate, SequencerAddress};
 
 #[test]
 fn store_block_no_pending_transactions_works() {
@@ -52,7 +52,7 @@ fn store_block_with_pending_transactions_works() {
         const BLOCK_NUMBER: u64 = 1;
         System::initialize(&BLOCK_NUMBER, &header.hash(), &Default::default());
 
-        SeqAddrUpdate::<MockRuntime>::put(true);
+        InherentUpdate::<MockRuntime>::put(true);
         let default_addr = ContractAddress(PatriciaKey(StarkFelt::new(DEFAULT_SEQUENCER_ADDRESS).unwrap()));
         SequencerAddress::<MockRuntime>::put(default_addr);
 
@@ -93,7 +93,7 @@ fn get_block_context_works() {
         const BLOCK_NUMBER: u64 = 1;
         System::initialize(&BLOCK_NUMBER, &header.hash(), &Default::default());
 
-        SeqAddrUpdate::<MockRuntime>::put(true);
+        InherentUpdate::<MockRuntime>::put(true);
         let default_addr = ContractAddress(PatriciaKey(StarkFelt::new(DEFAULT_SEQUENCER_ADDRESS).unwrap()));
         SequencerAddress::<MockRuntime>::put(default_addr);
 

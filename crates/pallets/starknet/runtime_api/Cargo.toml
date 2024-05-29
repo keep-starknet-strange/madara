@@ -12,6 +12,10 @@ mp-simulations = { workspace = true, features = [
   "parity-scale-codec",
   "scale-info",
 ] }
+mp-starknet-inherent = { workspace = true, features = [
+  "parity-scale-codec",
+  "scale-info",
+] }
 
 # Starknet
 blockifier = { workspace = true }

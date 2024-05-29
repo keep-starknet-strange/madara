@@ -80,6 +80,7 @@ madara-runtime = { workspace = true, features = ["std"] }
 mc-commitment-state-diff = { workspace = true }
 mc-db = { workspace = true }
 mc-eth-client = { workspace = true }
+mc-l1-gas-price = { workspace = true }
 mc-l1-messages = { workspace = true }
 mc-mapping-sync = { workspace = true }
 mc-rpc = { workspace = true }
@@ -95,7 +96,7 @@ mc-genesis-data-provider = { workspace = true }
 mp-block = { workspace = true }
 mp-digest-log = { workspace = true }
 mp-felt = { workspace = true }
-mp-sequencer-address = { workspace = true, features = ["client"] }
+mp-starknet-inherent = { workspace = true, features = ["client"] }
 
 # Starknet
 blockifier = { workspace = true }

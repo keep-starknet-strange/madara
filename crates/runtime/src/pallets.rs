@@ -3,13 +3,11 @@
 //! This file is used to generate the `construct_runtime!` macro.
 #[cfg(all(debug_assertions, feature = "dev"))]
 use std::env::VarError;
-use std::num::NonZeroU128;
 use std::ops::Deref;
 #[cfg(all(debug_assertions, feature = "dev"))]
 use std::path::Path;
 use std::sync::Arc;
 
-use blockifier::blockifier::block::GasPrices;
 use blockifier::versioned_constants::VersionedConstants;
 pub use frame_support::traits::{
     ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, OnTimestampSet, Randomness, StorageInfo,
@@ -76,7 +74,6 @@ impl pallet_starknet::Config for Runtime {
     type DisableNonceValidation = ConstBool<false>;
     type ProtocolVersion = ProtocolVersion;
     type ProgramHash = ProgramHash;
-    type L1GasPrices = L1GasPrices;
     type ExecutionConstants = ExecutionConstants;
 }
 
@@ -192,7 +189,6 @@ parameter_types! {
     pub const TransactionLongevity: u64 = u64::MAX;
     pub const ProtocolVersion: u8 = 0;
     pub const ProgramHash: Felt252Wrapper = SN_OS_PROGRAM_HASH;
-    pub const L1GasPrices: GasPrices = GasPrices { eth_l1_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, strk_l1_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, eth_l1_data_gas_price: unsafe { NonZeroU128::new_unchecked(10) }, strk_l1_data_gas_price: unsafe { NonZeroU128::new_unchecked(10) } };
     pub ExecutionConstants: Arc<VersionedConstants> = get_execution_constants();
 }
 

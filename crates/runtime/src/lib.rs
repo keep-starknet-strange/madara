@@ -34,8 +34,10 @@ pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
 use mp_felt::Felt252Wrapper;
 use mp_simulations::{
-    InternalSubstrateError, ReExecutionResult, SimulationError, SimulationFlags, TransactionSimulationResult,
+    FeeEstimate, InternalSubstrateError, ReExecutionResult, SimulationError, SimulationFlags,
+    TransactionSimulationResult,
 };
+use mp_starknet_inherent::L1GasPrices;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the Starknet pallet.
 pub use pallet_starknet;
@@ -277,7 +279,7 @@ impl_runtime_apis! {
             Starknet::is_transaction_fee_disabled()
         }
 
-        fn estimate_fee(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Result<Vec<(u128, u128)>, SimulationError>, InternalSubstrateError> {
+        fn estimate_fee(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Result<Vec<FeeEstimate>, SimulationError>, InternalSubstrateError> {
             Starknet::estimate_fee(transactions, &simulation_flags)
         }
 
@@ -285,15 +287,15 @@ impl_runtime_apis! {
             Starknet::re_execute_transactions(transactions_before, transactions_to_trace, with_state_diff)
         }
 
+        fn estimate_message_fee(message: L1HandlerTransaction) -> Result<Result<FeeEstimate, SimulationError>, InternalSubstrateError> {
+            Starknet::estimate_message_fee(message)
+        }
+
         fn get_transaction_re_execution_state_diff( transactions_before: Vec<Transaction>, transactions_to_trace: Vec<Transaction>) -> Result<Result<CommitmentStateDiff, SimulationError>, InternalSubstrateError> {
             Starknet::get_transaction_re_execution_state_diff(transactions_before, transactions_to_trace)
         }
 
-        fn estimate_message_fee(message: L1HandlerTransaction) -> Result<Result<(u128, u128, u128), SimulationError>, InternalSubstrateError> {
-            Starknet::estimate_message_fee(message)
-        }
-
-        fn simulate_transactions(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, SimulationError>, InternalSubstrateError> {
+        fn simulate_transactions(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<TransactionSimulationResult>, InternalSubstrateError> {
             Starknet::simulate_transactions(transactions, &simulation_flags)
         }
 
@@ -354,6 +356,10 @@ impl_runtime_apis! {
 
         fn l1_nonce_unused(nonce: Nonce) -> bool {
             Starknet::ensure_l1_message_not_executed(&nonce).is_ok()
+        }
+
+        fn current_l1_gas_prices() -> L1GasPrices {
+            Starknet::current_l1_gas_prices()
         }
     }
 

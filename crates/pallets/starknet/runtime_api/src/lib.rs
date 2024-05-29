@@ -17,8 +17,10 @@ pub extern crate alloc;
 use alloc::vec::Vec;
 
 use mp_simulations::{
-    InternalSubstrateError, ReExecutionResult, SimulationError, SimulationFlags, TransactionSimulationResult,
+    FeeEstimate, InternalSubstrateError, ReExecutionResult, SimulationError, SimulationFlags,
+    TransactionSimulationResult,
 };
+use mp_starknet_inherent::L1GasPrices;
 use sp_api::BlockT;
 use starknet_api::core::{ClassHash, ContractAddress, EntryPointSelector, Nonce};
 use starknet_api::hash::StarkFelt;
@@ -44,13 +46,13 @@ sp_api::decl_runtime_apis! {
         /// Returns the fee token address.
         fn fee_token_addresses() -> FeeTokenAddresses;
         /// Returns fee estimate
-        fn estimate_fee(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Result<Vec<(u128, u128)>, SimulationError>, InternalSubstrateError>;
+        fn estimate_fee(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Result<Vec<FeeEstimate>, SimulationError>, InternalSubstrateError>;
         /// Returns message fee estimate
-        fn estimate_message_fee(message: L1HandlerTransaction) -> Result<Result<(u128, u128, u128), SimulationError>, InternalSubstrateError>;
+        fn estimate_message_fee(message: L1HandlerTransaction) -> Result<Result<FeeEstimate, SimulationError>, InternalSubstrateError>;
         /// Simulates single L1 Message and returns its trace
         fn simulate_message(message: L1HandlerTransaction, simulation_flags: SimulationFlags) -> Result<Result<TransactionExecutionInfo, SimulationError>, InternalSubstrateError>;
         /// Simulates transactions and returns their trace
-        fn simulate_transactions(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Result<Vec<(CommitmentStateDiff, TransactionSimulationResult)>, SimulationError>, InternalSubstrateError>;
+        fn simulate_transactions(transactions: Vec<AccountTransaction>, simulation_flags: SimulationFlags) -> Result<Vec<TransactionSimulationResult>, InternalSubstrateError>;
         /// Filters extrinsic transactions to return only Starknet transactions
         ///
         /// To support runtime upgrades, the client must be unaware of the specific extrinsic
@@ -88,6 +90,8 @@ sp_api::decl_runtime_apis! {
         fn get_tx_messages_to_l1(tx_hash: TransactionHash) -> Vec<MessageToL1>;
         /// Check if L1 Message Nonce has not been used
         fn l1_nonce_unused(nonce: Nonce) -> bool;
+        /// Get current L1 gas prices
+        fn current_l1_gas_prices() -> L1GasPrices;
     }
 
     pub trait ConvertTransactionRuntimeApi {
