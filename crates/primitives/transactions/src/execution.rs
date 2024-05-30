@@ -197,28 +197,7 @@ pub trait CheckFeeBounds: GetCalldataLen + GetTxType {
     fn state_changes() -> StateChangesCount;
 
     fn check_fee_bounds(&self, tx_context: &TransactionContext) -> TransactionExecutionResult<()> {
-        let minimal_l1_gas_amount_vector = {
-            let block_info = tx_context.block_context.block_info();
-            let versioned_constants = tx_context.block_context.versioned_constants();
-
-            let state_changes = Self::state_changes();
-
-            let GasVector { l1_gas: gas_cost, l1_data_gas: blob_gas_cost } =
-                blockifier::fee::gas_usage::get_da_gas_cost(&state_changes, block_info.use_kzg_da);
-
-            let data_segment_length = blockifier::fee::gas_usage::get_onchain_data_segment_length(&state_changes);
-            let os_steps_for_type =
-                versioned_constants.os_resources_for_tx_type(&Self::tx_type(), self.get_calldata_len()).n_steps
-                    + versioned_constants.os_kzg_da_resources(data_segment_length).n_steps;
-
-            let resources = ResourcesMapping(IndexMap::from([
-                (blockifier::abi::constants::L1_GAS_USAGE.to_string(), gas_cost),
-                (blockifier::abi::constants::BLOB_GAS_USAGE.to_string(), blob_gas_cost),
-                (blockifier::abi::constants::N_STEPS_RESOURCE.to_string(), os_steps_for_type as u128),
-            ]));
-
-            blockifier::fee::fee_utils::calculate_tx_gas_vector(&resources, versioned_constants)?
-        };
+        let minimal_l1_gas_amount_vector = self.estimate_minimal_gas_vector(tx_context)?;
 
         // TODO(Aner, 30/01/24): modify once data gas limit is enforced.
         let minimal_l1_gas_amount = blockifier::fee::gas_usage::compute_discounted_gas_from_gas_vector(
@@ -269,6 +248,29 @@ pub trait CheckFeeBounds: GetCalldataLen + GetTxType {
         };
 
         Ok(())
+    }
+
+    fn estimate_minimal_gas_vector(&self, tx_context: &TransactionContext) -> TransactionExecutionResult<GasVector> {
+        let block_info = tx_context.block_context.block_info();
+        let versioned_constants = tx_context.block_context.versioned_constants();
+
+        let state_changes = Self::state_changes();
+
+        let GasVector { l1_gas: gas_cost, l1_data_gas: blob_gas_cost } =
+            blockifier::fee::gas_usage::get_da_gas_cost(&state_changes, block_info.use_kzg_da);
+
+        let data_segment_length = blockifier::fee::gas_usage::get_onchain_data_segment_length(&state_changes);
+        let os_steps_for_type =
+            versioned_constants.os_resources_for_tx_type(&Self::tx_type(), self.get_calldata_len()).n_steps
+                + versioned_constants.os_kzg_da_resources(data_segment_length).n_steps;
+
+        let resources = ResourcesMapping(IndexMap::from([
+            (blockifier::abi::constants::L1_GAS_USAGE.to_string(), gas_cost),
+            (blockifier::abi::constants::BLOB_GAS_USAGE.to_string(), blob_gas_cost),
+            (blockifier::abi::constants::N_STEPS_RESOURCE.to_string(), os_steps_for_type as u128),
+        ]));
+
+        Ok(blockifier::fee::fee_utils::calculate_tx_gas_vector(&resources, versioned_constants)?)
     }
 }
 

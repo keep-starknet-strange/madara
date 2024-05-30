@@ -53,7 +53,7 @@ async fn work_with_invoke_transaction(madara: &ThreadSafeMadaraClient) -> Result
     };
 
     let invoke_tx_receipt = get_transaction_receipt(&rpc, rpc_response.transaction_hash).await;
-    let expected_fee = FeePayment { amount: FieldElement::from_hex_be("0x1219c").unwrap(), unit: PriceUnit::Wei };
+    let expected_fee = FeePayment { amount: FieldElement::from_hex_be("0x5c8").unwrap(), unit: PriceUnit::Wei };
 
     match invoke_tx_receipt {
         Ok(MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(receipt))) => {
@@ -191,7 +191,7 @@ async fn work_with_declare_transaction(madara: &ThreadSafeMadaraClient) -> Resul
     };
 
     let fee_token_address = FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap();
-    let expected_fee = FeePayment { amount: FieldElement::from_hex_be("0x40a2e").unwrap(), unit: PriceUnit::Wei };
+    let expected_fee = FeePayment { amount: FieldElement::from_hex_be("0x38216").unwrap(), unit: PriceUnit::Wei };
     let expected_events = vec![Event {
         from_address: fee_token_address,
         keys: vec![get_selector_from_name("Transfer").unwrap()],
@@ -298,7 +298,7 @@ async fn work_with_deploy_account_transaction(madara: &ThreadSafeMadaraClient) -
 
     let account_deployment_tx_receipt = get_transaction_receipt(&rpc, rpc_response.transaction_hash).await;
     let fee_token_address = FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap();
-    let expected_fee = FeePayment { amount: FieldElement::from_hex_be("0xac76").unwrap(), unit: PriceUnit::Wei };
+    let expected_fee = FeePayment { amount: FieldElement::from_hex_be("0x2ee").unwrap(), unit: PriceUnit::Wei };
 
     match account_deployment_tx_receipt {
         Ok(MaybePendingTransactionReceipt::Receipt(TransactionReceipt::DeployAccount(receipt))) => {
@@ -408,7 +408,7 @@ async fn ensure_transfer_fee_event_not_messed_up_with_similar_transfer(
     };
     let tx_receipt = get_transaction_receipt(&rpc, rpc_response.transaction_hash).await;
     let fee_token_address = FieldElement::from_hex_be(ETH_FEE_TOKEN_ADDRESS).unwrap();
-    let expected_fee = FeePayment { amount: FieldElement::from_hex_be("0x12188").unwrap(), unit: PriceUnit::Wei };
+    let expected_fee = FeePayment { amount: FieldElement::from_hex_be("0x5c8").unwrap(), unit: PriceUnit::Wei };
 
     match tx_receipt {
         Ok(MaybePendingTransactionReceipt::Receipt(TransactionReceipt::Invoke(mut receipt))) => {

@@ -88,44 +88,23 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         assert_eq!(pending_hashes[0], tx_hash);
         let events: Vec<StarknetEvent> = Starknet::tx_events(tx_hash);
 
-        assert!(events.into_iter().any(|e| e == StarknetEvent {
-            from_address: Starknet::fee_token_addresses().eth_fee_token_address,
-            content: EventContent {
-                keys: vec![EventKey(
-                    Felt252Wrapper::from(get_selector_from_name(TRANSFER_SELECTOR_NAME).unwrap()).into()
-                )],
-                data: EventData(vec![
-                    StarkFelt::try_from(BLOCKIFIER_ACCOUNT_ADDRESS).unwrap(),
-                    StarkFelt::try_from("0xdead").unwrap(),
-                    StarkFelt::try_from("0xb932").unwrap(),
-                    StarkFelt::from(0u128),
-                ]),
-            },
-        }));
+        assert!(events.into_iter().any(|e| e
+            == StarknetEvent {
+                from_address: Starknet::fee_token_addresses().eth_fee_token_address,
+                content: EventContent {
+                    keys: vec![EventKey(
+                        Felt252Wrapper::from(get_selector_from_name(TRANSFER_SELECTOR_NAME).unwrap()).into(),
+                    )],
+                    data: EventData(vec![
+                        StarkFelt::try_from(BLOCKIFIER_ACCOUNT_ADDRESS).unwrap(),
+                        StarkFelt::try_from("0xdead").unwrap(),
+                        StarkFelt::try_from("0x2f8").unwrap(),
+                        StarkFelt::from(0u128),
+                    ]),
+                },
+            },));
     });
 }
-
-fn get_invoke_dummy_v0(chain_id: Felt252Wrapper) -> InvokeTransaction {
-    let contract_address = ContractAddress(PatriciaKey(
-        StarkFelt::try_from("0x03e437FB56Bb213f5708Fcd6966502070e276c093ec271aA33433b89E21fd31f").unwrap(),
-    ));
-    let invoke_tx_v0 = starknet_api::transaction::InvokeTransactionV0 {
-        max_fee: Fee(0),
-        signature: TransactionSignature(vec![]),
-        contract_address,
-        entry_point_selector: Default::default(),
-        calldata: Calldata(Arc::new(vec![])), 
-    };
-
-    let tx_hash = invoke_tx_v0.compute_hash(chain_id.into(), false);
-
-    InvokeTransaction {
-        tx: invoke_tx_v0.into(),
-        tx_hash,
-        only_query: false,
-    }
-}
-
 
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
@@ -159,7 +138,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
                 data: EventData(vec![
                     StarkFelt::try_from("0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0").unwrap(), // From
                     StarkFelt::try_from("0xdead").unwrap(), // To
-                    StarkFelt::try_from("0xbc84").unwrap(),  // Amount low
+                    StarkFelt::try_from("0x2f8").unwrap(),  // Amount low
                     StarkFelt::from(0u128),                 // Amount high
                 ]),
             },

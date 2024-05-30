@@ -111,7 +111,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 data: EventData(vec![
                     sender_address.0 .0, // From
                     StarkFelt::try_from("0xdead").unwrap(), // Sequencer address
-                    StarkFelt::try_from("0x18ab0").unwrap(), // Amount low
+                    StarkFelt::try_from("0x18ba").unwrap(), // Amount low
                     StarkFelt::from(0u128), // Amount high
                 ]),
             },
@@ -207,7 +207,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 data: EventData(vec![
                     sender_address.0 .0,                    // From
                     StarkFelt::try_from("0xdead").unwrap(), // Sequencer address
-                    StarkFelt::try_from("0x11652").unwrap(), // Amount low
+                    StarkFelt::try_from("0xab4").unwrap(), // Amount low
                     StarkFelt::from(0u128),                 // Amount high
                 ]),
             },

@@ -17,15 +17,15 @@ use crate::contract::parse_handle_l1_message_transaction;
 use crate::error::L1MessagesWorkerError;
 
 fn create_event_listener(
-    config: EthereumClientConfig,
+    config: Arc<EthereumClientConfig>,
 ) -> Result<StarknetMessagingEvents<Provider<Http>>, mc_eth_client::error::Error> {
     let address = config.contracts.core_contract()?;
-    let provider: Provider<Http> = config.provider.try_into()?;
+    let provider: Provider<Http> = config.provider.clone().try_into()?;
     Ok(StarknetMessagingEvents::new(address, Arc::new(provider)))
 }
 
 pub async fn run_worker<C, P, B>(
-    config: EthereumClientConfig,
+    config: Arc<EthereumClientConfig>,
     client: Arc<C>,
     pool: Arc<P>,
     backend: Arc<mc_db::Backend<B>>,

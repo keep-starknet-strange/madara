@@ -60,8 +60,10 @@ fn construct_genesis_block<Block: BlockT>(state_root: Block::Hash, state_version
 
     let mut digest = vec![];
     let block = StarknetBlock::try_new(
-        // TODO: Decide what values to put here
-        // This is just filler values for now
+        // The genesis block values don't really matter because when you start a node,
+        // you need to disable fees completely to do the setup process. So we need some blocks
+        // of txs without any fees. And the 1st block will set the correct L1 gas prices through
+        // inherents.
         Header {
             l1_gas_price: unsafe {
                 GasPrices {

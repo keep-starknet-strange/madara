@@ -26,11 +26,10 @@ pub const ARGENT_CONTRACT_ADDRESS: &str = "0x2";
 pub const OZ_CONTRACT_ADDRESS: &str = "0x3";
 pub const CAIRO_1_ACCOUNT_CONTRACT_ADDRESS: &str = "0x4";
 pub const TEST_CONTRACT_ADDRESS: &str = "0x1111";
+pub const MULTIPLY_TEST_CONTRACT_ADDRESS: &str = "0x123";
 pub const L1_CONTRACT_ADDRESS: &str = "0xae0ee0a63a2ce6baeeffe56e7714fb4efe48d419";
 pub const UDC_CONTRACT_ADDRESS: &str = "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf";
 
 // Need to use `from_mont` because this needs to be a constant function call
 pub const MADARA_CHAIN_ID: FieldElement =
     FieldElement::from_mont([18444025906882525153, 18446744073709551615, 18446744073709551615, 530251916243973616]);
-
-pub const SPEC_VERSION: &str = "0.4.0";

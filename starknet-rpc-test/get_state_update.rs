@@ -41,12 +41,13 @@ async fn returns_correct_state_diff_transfer(madara: &ThreadSafeMadaraClient) ->
     let account_bob = build_single_owner_account(&rpc, SIGNER_PRIVATE, OZ_CONTRACT_ADDRESS, true);
 
     let nonce = account_alice.get_nonce().await?.try_into()?;
+    let receiver = FieldElement::ONE;
     {
         let mut madara_write_lock = madara.write().await;
         let txs = madara_write_lock
             .create_block_with_txs(vec![
-                Transaction::Execution(account_alice.transfer_tokens(recipient, FieldElement::ONE, Some(nonce))),
-                Transaction::Execution(account_bob.transfer_tokens(recipient, FieldElement::ONE, None)),
+                Transaction::Execution(account_alice.transfer_tokens(recipient, receiver, Some(nonce))),
+                Transaction::Execution(account_bob.transfer_tokens(recipient, receiver, None)),
             ])
             .await?;
         txs.iter().for_each(|tx| assert!(tx.is_ok()));
@@ -72,13 +73,17 @@ async fn returns_correct_state_diff_transfer(madara: &ThreadSafeMadaraClient) ->
             .map(|item| (&item.key, &item.value))
             .collect::<Vec<(&FieldElement, &FieldElement)>>(),
     );
-    for account_address in
-        [account_alice.address(), account_bob.address(), FieldElement::from_hex_be(SEQUENCER_CONTRACT_ADDRESS).unwrap()]
-    {
+    for account_address in [
+        account_alice.address(),
+        account_bob.address(),
+        FieldElement::from_hex_be(SEQUENCER_CONTRACT_ADDRESS).unwrap(),
+        receiver,
+    ] {
         let balance = read_erc20_balance(&rpc, fee_token_address, account_address).await[0]; // omit the second part since it probably won't change
         let key = get_storage_var_address("ERC20_balances", &[account_address]).unwrap();
         assert_eq!(storage_diff_map.remove(&key).unwrap(), &balance);
     }
+    println!("this is storage_diff_map {:#?}", storage_diff_map);
     assert!(storage_diff_map.is_empty());
     assert_eq!(state_update.state_diff.nonces.len(), 2);
     let mut nonce_map: HashMap<&FieldElement, &FieldElement> = HashMap::from_iter(

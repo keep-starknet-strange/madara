@@ -1,5 +1,5 @@
 [package]
-name = "mp-sequencer-address"
+name = "mp-starknet-inherent"
 version.workspace = true
 edition.workspace = true
 license = "MIT"
@@ -11,6 +11,7 @@ repository = { workspace = true }
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+blockifier = { workspace = true }
 sp-core = { workspace = true }
 sp-inherents = { workspace = true }
 thiserror = { workspace = true }
@@ -20,7 +21,9 @@ async-trait = { workspace = true, optional = true }
 parity-scale-codec = { workspace = true, features = [
   "derive",
 ], optional = true }
+scale-info = { workspace = true, optional = true }
 
 [features]
 parity-scale-codec = ["dep:parity-scale-codec"]
+scale-info = ["dep:scale-info"]
 client = ["parity-scale-codec", "dep:async-trait"]

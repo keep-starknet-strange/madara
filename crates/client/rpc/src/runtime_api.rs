@@ -19,6 +19,7 @@ use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
 use starknet_api::core::{ContractAddress, EntryPointSelector};
 use starknet_api::transaction::{Calldata, Event, TransactionHash};
+use starknet_core::types::FeeEstimate;
 
 use crate::{Starknet, StarknetRpcApiError};
 
@@ -53,11 +54,12 @@ where
         &self,
         block_hash: B::Hash,
         message: L1HandlerTransaction,
-    ) -> RpcApiResult<(u128, u128, u128)> {
-        Ok(self.client.runtime_api().estimate_message_fee(block_hash, message).map_err(|e| {
+    ) -> RpcApiResult<FeeEstimate> {
+        Ok((&self.client.runtime_api().estimate_message_fee(block_hash, message).map_err(|e| {
             error!("Runtime Api error: {e}");
             StarknetRpcApiError::InternalServerError
         })???)
+            .into())
     }
 
     pub fn do_get_tx_execution_outcome(
@@ -104,13 +106,19 @@ where
         block_hash: B::Hash,
         transactions: Vec<AccountTransaction>,
         simulation_flags: SimulationFlags,
-    ) -> RpcApiResult<Vec<(u128, u128)>> {
-        Ok(self.client.runtime_api().estimate_fee(block_hash, transactions, simulation_flags).map_err(
-            |e: ApiError| {
+    ) -> RpcApiResult<Vec<FeeEstimate>> {
+        let fee_estimates = self
+            .client
+            .runtime_api()
+            .estimate_fee(block_hash, transactions, simulation_flags)
+            .map_err(|e: ApiError| {
                 error!("Request parameters error: {e}");
                 StarknetRpcApiError::InternalServerError
-            },
-        )???)
+            })???
+            .iter()
+            .map(|estimate| estimate.into())
+            .collect();
+        Ok(fee_estimates)
     }
 
     pub fn get_best_block_hash(&self) -> B::Hash {
@@ -173,7 +181,8 @@ where
     ) -> RpcApiResult<TransactionExecutionInfo> {
         // Simulate a single User Transaction
         // So the result should have single element in vector (index 0)
-        self.client
+        let simulation = self
+            .client
             .runtime_api()
             .simulate_transactions(block_hash, vec![tx], simulations_flags)
             .map_err(|e| {
@@ -183,13 +192,13 @@ where
             .map_err(|e| {
                 error!("Failed to call function: {:#?}", e);
                 StarknetRpcApiError::from(e)
-            })??
+            })?
             .swap_remove(0)
-            .1
             .map_err(|e| {
                 error!("Failed to simulate User Transaction: {:?}", e);
                 StarknetRpcApiError::InternalServerError
-            })
+            })?;
+        Ok(simulation.execution_info)
     }
 
     fn simulate_l1_tx(

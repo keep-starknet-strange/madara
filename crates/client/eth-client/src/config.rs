@@ -66,6 +66,8 @@ pub struct HttpProviderConfig {
     pub rpc_endpoint: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tx_poll_interval_ms: Option<u64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub gas_price_poll_ms: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -90,13 +92,27 @@ fn default_private_key() -> String {
 
 impl Default for HttpProviderConfig {
     fn default() -> Self {
-        Self { rpc_endpoint: default_rpc_endpoint(), tx_poll_interval_ms: None }
+        Self { rpc_endpoint: default_rpc_endpoint(), tx_poll_interval_ms: None, gas_price_poll_ms: None }
     }
 }
 
 impl Default for EthereumProviderConfig {
     fn default() -> Self {
         Self::Http(HttpProviderConfig::default())
+    }
+}
+
+impl EthereumProviderConfig {
+    pub fn rpc_endpoint(&self) -> &String {
+        match self {
+            Self::Http(config) => &config.rpc_endpoint,
+        }
+    }
+
+    pub fn gas_price_poll_ms(&self) -> Option<u64> {
+        match self {
+            Self::Http(config) => config.gas_price_poll_ms,
+        }
     }
 }
 
