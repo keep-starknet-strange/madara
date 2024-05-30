@@ -105,14 +105,13 @@ fn given_hardcoded_contract_run_invoke_tx_v0_then_it_works() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
-        // Declare the transaction as mutable
         let mut transaction = get_invoke_dummy(Starknet::chain_id(), NONCE_ZERO);
         if let starknet_api::transaction::InvokeTransaction::V0(tx) = &mut transaction.tx {
             tx.contract_address = ContractAddress(PatriciaKey(
                 StarkFelt::try_from("0x03e437FB56Bb213f5708Fcd6966502070e276c093ec271aA33433b89E21fd31f").unwrap(),
             ));
-            tx.calldata = Calldata(Arc::new(vec![])); // Empty calldata for simplicity
-            tx.max_fee = Fee(0); // Adjusted field name
+            tx.calldata = Calldata(Arc::new(vec![]));
+            tx.max_fee = Fee(0);
         };
 
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), transaction));
