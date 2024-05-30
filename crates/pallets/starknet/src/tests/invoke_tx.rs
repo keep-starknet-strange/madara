@@ -146,7 +146,6 @@ fn given_hardcoded_contract_run_invoke_tx_v0_then_it_works() {
     });
 }
 
-
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
     new_test_ext::<MockRuntime>().execute_with(|| {
