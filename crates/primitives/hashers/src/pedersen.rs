@@ -52,11 +52,14 @@ impl HasherT for PedersenHasher {
     /// # Returns
     ///
     /// The hash of the data.
-    fn compute_hash_on_wrappers(data: &[Felt252Wrapper]) -> Felt252Wrapper {
-        let hash = compute_hash_on_elements(&data.iter().map(|x| x.0).collect::<Vec<FieldElement>>());
+    fn compute_hash_on_wrappers<I>(data: I) -> Felt252Wrapper
+    where
+        I: IntoIterator<Item = Felt252Wrapper>,
+    {
+        let hash = compute_hash_on_elements(&data.into_iter().map(|x| x.0).collect::<Vec<FieldElement>>());
         Felt252Wrapper(hash)
     }
-
+    
     #[inline(always)]
     fn hash_elements(a: FieldElement, b: FieldElement) -> FieldElement {
         pedersen_hash(&a, &b)
