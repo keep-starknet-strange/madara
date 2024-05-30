@@ -93,6 +93,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                         StarkFelt::try_from(BLOCKIFIER_ACCOUNT_ADDRESS).unwrap(),
                         StarkFelt::try_from("0xdead").unwrap(),
                         StarkFelt::try_from("0x2f8").unwrap(),
+feat/add-pallet-test-for-invoke-v0
                         StarkFelt::from(0u128),
                     ]),
                 },
@@ -139,6 +140,7 @@ fn given_hardcoded_contract_run_invoke_tx_v0_then_it_works() {
                         StarkFelt::try_from(BLOCKIFIER_ACCOUNT_ADDRESS).unwrap(),
                         StarkFelt::try_from("0xdead").unwrap(),
                         StarkFelt::try_from("0x2f8").unwrap(),
+ main
                         StarkFelt::from(0u128),
                     ]),
                 },
