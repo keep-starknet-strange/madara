@@ -12,22 +12,23 @@ use starknet_rpc_test::{Transaction, TransactionResult};
 #[tokio::test]
 async fn work_with_valid_transaction_hash(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
     let rpc = madara.get_starknet_client().await;
-
-    let mut madara_write_lock = madara.write().await;
     let account = build_single_owner_account(&rpc, SIGNER_PRIVATE, ARGENT_CONTRACT_ADDRESS, true);
 
-    let mut txs = madara_write_lock
-        .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(
-            FieldElement::from_hex_be("0x123").unwrap(),
-            FieldElement::ONE,
-            None,
-        ))])
-        .await?;
+    let txs = {
+        let mut madara_write_lock = madara.write().await;
+        madara_write_lock
+            .create_block_with_txs(vec![Transaction::Execution(account.transfer_tokens(
+                FieldElement::from_hex_be("0x123").unwrap(),
+                FieldElement::ONE,
+                None,
+            ))])
+            .await?
+    };
 
     assert_eq!(txs.len(), 1);
 
-    let rpc_response = match txs.remove(0).unwrap() {
-        TransactionResult::Execution(rpc_response) => rpc_response,
+    let rpc_response = match &txs[0] {
+        Ok(TransactionResult::Execution(rpc_response)) => rpc_response,
         _ => panic!("expected execution result"),
     };
 
