@@ -92,6 +92,9 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn validate_unsigned_tx(transaction: &Transaction) -> Result<(), InvalidTransaction> {
+
+        log::info!(">>>>> validate_unsigned_txn : {:?}", transaction);
+
         let _call_info = match transaction {
             Transaction::AccountTransaction(transaction) => {
                 let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();
@@ -123,6 +126,7 @@ impl<T: Config> Pallet<T> {
                         AccountTransaction::DeployAccount(tx) => tx.contract_address,
                         AccountTransaction::Invoke(tx) => tx.tx.sender_address(),
                     };
+
                     if address == sender_address
                         && account_nonce == Nonce(StarkFelt::ZERO)
                         && incoming_tx_nonce == Nonce(StarkFelt::ONE)

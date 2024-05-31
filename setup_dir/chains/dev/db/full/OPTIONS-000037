@@ -95,7 +95,7 @@
   compression_opts={max_dict_buffer_bytes=0;enabled=false;max_dict_bytes=0;parallel_threads=1;zstd_max_train_bytes=0;level=32767;use_zstd_dict_trainer=true;strategy=0;window_bits=-14;}
   memtable_protection_bytes_per_key=0
   target_file_size_multiplier=1
-  report_bg_io_stats=false
+  report_bg_io_stats=true
   write_buffer_size=67108864
   memtable_huge_page_size=0
   max_successive_merges=0
@@ -202,7 +202,7 @@
   memtable_protection_bytes_per_key=0
   target_file_size_multiplier=1
   report_bg_io_stats=false
-  write_buffer_size=33554432
+  write_buffer_size=2097152
   memtable_huge_page_size=0
   max_successive_merges=0
   max_write_buffer_number=6
@@ -216,7 +216,7 @@
   inplace_update_num_locks=10000
   blob_compaction_readahead_size=0
   ignore_max_compaction_bytes_for_input=true
-  arena_block_size=1048576
+  arena_block_size=262144
   level0_stop_writes_trigger=36
   blob_compression_type=kNoCompression
   level0_slowdown_writes_trigger=20
@@ -229,7 +229,7 @@
   check_flush_compaction_key_order=true
   min_blob_size=0
   memtable_whole_key_filtering=false
-  max_bytes_for_level_base=134217728
+  max_bytes_for_level_base=8388608
   last_level_temperature=kUnknown
   compaction_options_fifo={allow_compaction=false;age_for_warm=0;max_table_files_size=1073741824;}
   max_bytes_for_level_multiplier=10.000000
@@ -308,7 +308,7 @@
   memtable_protection_bytes_per_key=0
   target_file_size_multiplier=1
   report_bg_io_stats=false
-  write_buffer_size=33554432
+  write_buffer_size=241434624
   memtable_huge_page_size=0
   max_successive_merges=0
   max_write_buffer_number=6
@@ -335,7 +335,7 @@
   check_flush_compaction_key_order=true
   min_blob_size=0
   memtable_whole_key_filtering=false
-  max_bytes_for_level_base=134217728
+  max_bytes_for_level_base=965738496
   last_level_temperature=kUnknown
   compaction_options_fifo={allow_compaction=false;age_for_warm=0;max_table_files_size=1073741824;}
   max_bytes_for_level_multiplier=10.000000
@@ -414,7 +414,7 @@
   memtable_protection_bytes_per_key=0
   target_file_size_multiplier=1
   report_bg_io_stats=false
-  write_buffer_size=33554432
+  write_buffer_size=2097152
   memtable_huge_page_size=0
   max_successive_merges=0
   max_write_buffer_number=6
@@ -428,7 +428,7 @@
   inplace_update_num_locks=10000
   blob_compaction_readahead_size=0
   ignore_max_compaction_bytes_for_input=true
-  arena_block_size=1048576
+  arena_block_size=262144
   level0_stop_writes_trigger=36
   blob_compression_type=kNoCompression
   level0_slowdown_writes_trigger=20
@@ -441,7 +441,7 @@
   check_flush_compaction_key_order=true
   min_blob_size=0
   memtable_whole_key_filtering=false
-  max_bytes_for_level_base=134217728
+  max_bytes_for_level_base=8388608
   last_level_temperature=kUnknown
   compaction_options_fifo={allow_compaction=false;age_for_warm=0;max_table_files_size=1073741824;}
   max_bytes_for_level_multiplier=10.000000
@@ -520,7 +520,7 @@
   memtable_protection_bytes_per_key=0
   target_file_size_multiplier=1
   report_bg_io_stats=false
-  write_buffer_size=33554432
+  write_buffer_size=2097152
   memtable_huge_page_size=0
   max_successive_merges=0
   max_write_buffer_number=6
@@ -534,7 +534,7 @@
   inplace_update_num_locks=10000
   blob_compaction_readahead_size=0
   ignore_max_compaction_bytes_for_input=true
-  arena_block_size=1048576
+  arena_block_size=262144
   level0_stop_writes_trigger=36
   blob_compression_type=kNoCompression
   level0_slowdown_writes_trigger=20
@@ -547,7 +547,7 @@
   check_flush_compaction_key_order=true
   min_blob_size=0
   memtable_whole_key_filtering=false
-  max_bytes_for_level_base=134217728
+  max_bytes_for_level_base=8388608
   last_level_temperature=kUnknown
   compaction_options_fifo={allow_compaction=false;age_for_warm=0;max_table_files_size=1073741824;}
   max_bytes_for_level_multiplier=10.000000
@@ -626,7 +626,7 @@
   memtable_protection_bytes_per_key=0
   target_file_size_multiplier=1
   report_bg_io_stats=false
-  write_buffer_size=33554432
+  write_buffer_size=2097152
   memtable_huge_page_size=0
   max_successive_merges=0
   max_write_buffer_number=6
@@ -640,7 +640,7 @@
   inplace_update_num_locks=10000
   blob_compaction_readahead_size=0
   ignore_max_compaction_bytes_for_input=true
-  arena_block_size=1048576
+  arena_block_size=262144
   level0_stop_writes_trigger=36
   blob_compression_type=kNoCompression
   level0_slowdown_writes_trigger=20
@@ -653,7 +653,7 @@
   check_flush_compaction_key_order=true
   min_blob_size=0
   memtable_whole_key_filtering=false
-  max_bytes_for_level_base=134217728
+  max_bytes_for_level_base=8388608
   last_level_temperature=kUnknown
   compaction_options_fifo={allow_compaction=false;age_for_warm=0;max_table_files_size=1073741824;}
   max_bytes_for_level_multiplier=10.000000
@@ -732,7 +732,7 @@
   memtable_protection_bytes_per_key=0
   target_file_size_multiplier=1
   report_bg_io_stats=false
-  write_buffer_size=33554432
+  write_buffer_size=2097152
   memtable_huge_page_size=0
   max_successive_merges=0
   max_write_buffer_number=6
@@ -746,7 +746,7 @@
   inplace_update_num_locks=10000
   blob_compaction_readahead_size=0
   ignore_max_compaction_bytes_for_input=true
-  arena_block_size=1048576
+  arena_block_size=262144
   level0_stop_writes_trigger=36
   blob_compression_type=kNoCompression
   level0_slowdown_writes_trigger=20
@@ -759,7 +759,7 @@
   check_flush_compaction_key_order=true
   min_blob_size=0
   memtable_whole_key_filtering=false
-  max_bytes_for_level_base=134217728
+  max_bytes_for_level_base=8388608
   last_level_temperature=kUnknown
   compaction_options_fifo={allow_compaction=false;age_for_warm=0;max_table_files_size=1073741824;}
   max_bytes_for_level_multiplier=10.000000
@@ -838,7 +838,7 @@
   memtable_protection_bytes_per_key=0
   target_file_size_multiplier=1
   report_bg_io_stats=false
-  write_buffer_size=33554432
+  write_buffer_size=2097152
   memtable_huge_page_size=0
   max_successive_merges=0
   max_write_buffer_number=6
@@ -852,7 +852,7 @@
   inplace_update_num_locks=10000
   blob_compaction_readahead_size=0
   ignore_max_compaction_bytes_for_input=true
-  arena_block_size=1048576
+  arena_block_size=262144
   level0_stop_writes_trigger=36
   blob_compression_type=kNoCompression
   level0_slowdown_writes_trigger=20
@@ -865,7 +865,7 @@
   check_flush_compaction_key_order=true
   min_blob_size=0
   memtable_whole_key_filtering=false
-  max_bytes_for_level_base=134217728
+  max_bytes_for_level_base=8388608
   last_level_temperature=kUnknown
   compaction_options_fifo={allow_compaction=false;age_for_warm=0;max_table_files_size=1073741824;}
   max_bytes_for_level_multiplier=10.000000
@@ -944,7 +944,7 @@
   memtable_protection_bytes_per_key=0
   target_file_size_multiplier=1
   report_bg_io_stats=false
-  write_buffer_size=33554432
+  write_buffer_size=2097152
   memtable_huge_page_size=0
   max_successive_merges=0
   max_write_buffer_number=6
@@ -958,7 +958,7 @@
   inplace_update_num_locks=10000
   blob_compaction_readahead_size=0
   ignore_max_compaction_bytes_for_input=true
-  arena_block_size=1048576
+  arena_block_size=262144
   level0_stop_writes_trigger=36
   blob_compression_type=kNoCompression
   level0_slowdown_writes_trigger=20
@@ -971,7 +971,7 @@
   check_flush_compaction_key_order=true
   min_blob_size=0
   memtable_whole_key_filtering=false
-  max_bytes_for_level_base=134217728
+  max_bytes_for_level_base=8388608
   last_level_temperature=kUnknown
   compaction_options_fifo={allow_compaction=false;age_for_warm=0;max_table_files_size=1073741824;}
   max_bytes_for_level_multiplier=10.000000
@@ -1012,6 +1012,536 @@
   compaction_pri=kMinOverlappingRatio
   
 [TableOptions/BlockBasedTable "col7"]
+  initial_auto_readahead_size=8192
+  pin_top_level_index_and_filter=true
+  block_align=false
+  block_size_deviation=10
+  checksum=kXXH3
+  index_shortening=kShortenSeparators
+  num_file_reads_for_auto_readahead=2
+  whole_key_filtering=true
+  data_block_index_type=kDataBlockBinarySearch
+  index_type=kBinarySearch
+  no_block_cache=false
+  index_block_restart_interval=1
+  data_block_hash_table_util_ratio=0.750000
+  prepopulate_block_cache=kDisable
+  pin_l0_filter_and_index_blocks_in_cache=true
+  filter_policy=bloomfilter
+  cache_index_and_filter_blocks_with_high_priority=true
+  verify_compression=false
+  block_restart_interval=16
+  max_auto_readahead_size=262144
+  flush_block_policy_factory=FlushBlockBySizePolicyFactory
+  partition_filters=false
+  cache_index_and_filter_blocks=true
+  block_size=16384
+  metadata_block_size=4096
+  optimize_filters_for_memory=false
+  detect_filter_construct_corruption=false
+  format_version=5
+  metadata_cache_options={unpartitioned_pinning=kFallback;partition_pinning=kFallback;top_level_index_pinning=kFallback;}
+  read_amp_bytes_per_bit=0
+  enable_index_compression=true
+  
+
+[CFOptions "col8"]
+  compression_opts={max_dict_buffer_bytes=0;enabled=false;max_dict_bytes=0;parallel_threads=1;zstd_max_train_bytes=0;level=32767;use_zstd_dict_trainer=true;strategy=0;window_bits=-14;}
+  memtable_protection_bytes_per_key=0
+  target_file_size_multiplier=1
+  report_bg_io_stats=false
+  write_buffer_size=2097152
+  memtable_huge_page_size=0
+  max_successive_merges=0
+  max_write_buffer_number=6
+  prefix_extractor=nullptr
+  bottommost_compression_opts={max_dict_buffer_bytes=0;enabled=false;max_dict_bytes=0;parallel_threads=1;zstd_max_train_bytes=0;level=32767;use_zstd_dict_trainer=true;strategy=0;window_bits=-14;}
+  paranoid_file_checks=false
+  blob_garbage_collection_force_threshold=1.000000
+  enable_blob_files=false
+  blob_file_starting_level=0
+  memtable_prefix_bloom_size_ratio=0.000000
+  inplace_update_num_locks=10000
+  blob_compaction_readahead_size=0
+  ignore_max_compaction_bytes_for_input=true
+  arena_block_size=262144
+  level0_stop_writes_trigger=36
+  blob_compression_type=kNoCompression
+  level0_slowdown_writes_trigger=20
+  hard_pending_compaction_bytes_limit=274877906944
+  soft_pending_compaction_bytes_limit=68719476736
+  target_file_size_base=67108864
+  level0_file_num_compaction_trigger=2
+  max_compaction_bytes=1677721600
+  disable_auto_compactions=false
+  check_flush_compaction_key_order=true
+  min_blob_size=0
+  memtable_whole_key_filtering=false
+  max_bytes_for_level_base=8388608
+  last_level_temperature=kUnknown
+  compaction_options_fifo={allow_compaction=false;age_for_warm=0;max_table_files_size=1073741824;}
+  max_bytes_for_level_multiplier=10.000000
+  max_bytes_for_level_multiplier_additional=1:1:1:1:1:1:1
+  max_sequential_skip_in_iterations=8
+  prepopulate_blob_cache=kDisable
+  compression=kSnappyCompression
+  compaction_options_universal={incremental=false;compression_size_percent=-1;allow_trivial_move=false;max_size_amplification_percent=200;max_merge_width=4294967295;stop_style=kCompactionStopStyleTotalSize;min_merge_width=2;size_ratio=1;}
+  blob_garbage_collection_age_cutoff=0.250000
+  ttl=2592000
+  periodic_compaction_seconds=0
+  sample_for_compression=0
+  blob_file_size=268435456
+  enable_blob_garbage_collection=false
+  experimental_mempurge_threshold=0.000000
+  bottommost_compression=kDisableCompressionOption
+  min_write_buffer_number_to_merge=2
+  preserve_internal_time_seconds=0
+  preclude_last_level_data_seconds=0
+  sst_partitioner_factory=nullptr
+  num_levels=7
+  force_consistency_checks=true
+  memtable_insert_with_hint_prefix_extractor=nullptr
+  memtable_factory=SkipListFactory
+  level_compaction_dynamic_file_size=true
+  max_write_buffer_number_to_maintain=0
+  optimize_filters_for_hits=false
+  level_compaction_dynamic_level_bytes=true
+  compaction_style=kCompactionStyleLevel
+  compaction_filter=nullptr
+  inplace_update_support=false
+  merge_operator=nullptr
+  table_factory=BlockBasedTable
+  bloom_locality=0
+  comparator=leveldb.BytewiseComparator
+  compaction_filter_factory=nullptr
+  max_write_buffer_size_to_maintain=0
+  compaction_pri=kMinOverlappingRatio
+  
+[TableOptions/BlockBasedTable "col8"]
+  initial_auto_readahead_size=8192
+  pin_top_level_index_and_filter=true
+  block_align=false
+  block_size_deviation=10
+  checksum=kXXH3
+  index_shortening=kShortenSeparators
+  num_file_reads_for_auto_readahead=2
+  whole_key_filtering=true
+  data_block_index_type=kDataBlockBinarySearch
+  index_type=kBinarySearch
+  no_block_cache=false
+  index_block_restart_interval=1
+  data_block_hash_table_util_ratio=0.750000
+  prepopulate_block_cache=kDisable
+  pin_l0_filter_and_index_blocks_in_cache=true
+  filter_policy=bloomfilter
+  cache_index_and_filter_blocks_with_high_priority=true
+  verify_compression=false
+  block_restart_interval=16
+  max_auto_readahead_size=262144
+  flush_block_policy_factory=FlushBlockBySizePolicyFactory
+  partition_filters=false
+  cache_index_and_filter_blocks=true
+  block_size=16384
+  metadata_block_size=4096
+  optimize_filters_for_memory=false
+  detect_filter_construct_corruption=false
+  format_version=5
+  metadata_cache_options={unpartitioned_pinning=kFallback;partition_pinning=kFallback;top_level_index_pinning=kFallback;}
+  read_amp_bytes_per_bit=0
+  enable_index_compression=true
+  
+
+[CFOptions "col9"]
+  compression_opts={max_dict_buffer_bytes=0;enabled=false;max_dict_bytes=0;parallel_threads=1;zstd_max_train_bytes=0;level=32767;use_zstd_dict_trainer=true;strategy=0;window_bits=-14;}
+  memtable_protection_bytes_per_key=0
+  target_file_size_multiplier=1
+  report_bg_io_stats=false
+  write_buffer_size=2097152
+  memtable_huge_page_size=0
+  max_successive_merges=0
+  max_write_buffer_number=6
+  prefix_extractor=nullptr
+  bottommost_compression_opts={max_dict_buffer_bytes=0;enabled=false;max_dict_bytes=0;parallel_threads=1;zstd_max_train_bytes=0;level=32767;use_zstd_dict_trainer=true;strategy=0;window_bits=-14;}
+  paranoid_file_checks=false
+  blob_garbage_collection_force_threshold=1.000000
+  enable_blob_files=false
+  blob_file_starting_level=0
+  memtable_prefix_bloom_size_ratio=0.000000
+  inplace_update_num_locks=10000
+  blob_compaction_readahead_size=0
+  ignore_max_compaction_bytes_for_input=true
+  arena_block_size=262144
+  level0_stop_writes_trigger=36
+  blob_compression_type=kNoCompression
+  level0_slowdown_writes_trigger=20
+  hard_pending_compaction_bytes_limit=274877906944
+  soft_pending_compaction_bytes_limit=68719476736
+  target_file_size_base=67108864
+  level0_file_num_compaction_trigger=2
+  max_compaction_bytes=1677721600
+  disable_auto_compactions=false
+  check_flush_compaction_key_order=true
+  min_blob_size=0
+  memtable_whole_key_filtering=false
+  max_bytes_for_level_base=8388608
+  last_level_temperature=kUnknown
+  compaction_options_fifo={allow_compaction=false;age_for_warm=0;max_table_files_size=1073741824;}
+  max_bytes_for_level_multiplier=10.000000
+  max_bytes_for_level_multiplier_additional=1:1:1:1:1:1:1
+  max_sequential_skip_in_iterations=8
+  prepopulate_blob_cache=kDisable
+  compression=kSnappyCompression
+  compaction_options_universal={incremental=false;compression_size_percent=-1;allow_trivial_move=false;max_size_amplification_percent=200;max_merge_width=4294967295;stop_style=kCompactionStopStyleTotalSize;min_merge_width=2;size_ratio=1;}
+  blob_garbage_collection_age_cutoff=0.250000
+  ttl=2592000
+  periodic_compaction_seconds=0
+  sample_for_compression=0
+  blob_file_size=268435456
+  enable_blob_garbage_collection=false
+  experimental_mempurge_threshold=0.000000
+  bottommost_compression=kDisableCompressionOption
+  min_write_buffer_number_to_merge=2
+  preserve_internal_time_seconds=0
+  preclude_last_level_data_seconds=0
+  sst_partitioner_factory=nullptr
+  num_levels=7
+  force_consistency_checks=true
+  memtable_insert_with_hint_prefix_extractor=nullptr
+  memtable_factory=SkipListFactory
+  level_compaction_dynamic_file_size=true
+  max_write_buffer_number_to_maintain=0
+  optimize_filters_for_hits=false
+  level_compaction_dynamic_level_bytes=true
+  compaction_style=kCompactionStyleLevel
+  compaction_filter=nullptr
+  inplace_update_support=false
+  merge_operator=nullptr
+  table_factory=BlockBasedTable
+  bloom_locality=0
+  comparator=leveldb.BytewiseComparator
+  compaction_filter_factory=nullptr
+  max_write_buffer_size_to_maintain=0
+  compaction_pri=kMinOverlappingRatio
+  
+[TableOptions/BlockBasedTable "col9"]
+  initial_auto_readahead_size=8192
+  pin_top_level_index_and_filter=true
+  block_align=false
+  block_size_deviation=10
+  checksum=kXXH3
+  index_shortening=kShortenSeparators
+  num_file_reads_for_auto_readahead=2
+  whole_key_filtering=true
+  data_block_index_type=kDataBlockBinarySearch
+  index_type=kBinarySearch
+  no_block_cache=false
+  index_block_restart_interval=1
+  data_block_hash_table_util_ratio=0.750000
+  prepopulate_block_cache=kDisable
+  pin_l0_filter_and_index_blocks_in_cache=true
+  filter_policy=bloomfilter
+  cache_index_and_filter_blocks_with_high_priority=true
+  verify_compression=false
+  block_restart_interval=16
+  max_auto_readahead_size=262144
+  flush_block_policy_factory=FlushBlockBySizePolicyFactory
+  partition_filters=false
+  cache_index_and_filter_blocks=true
+  block_size=16384
+  metadata_block_size=4096
+  optimize_filters_for_memory=false
+  detect_filter_construct_corruption=false
+  format_version=5
+  metadata_cache_options={unpartitioned_pinning=kFallback;partition_pinning=kFallback;top_level_index_pinning=kFallback;}
+  read_amp_bytes_per_bit=0
+  enable_index_compression=true
+  
+
+[CFOptions "col10"]
+  compression_opts={max_dict_buffer_bytes=0;enabled=false;max_dict_bytes=0;parallel_threads=1;zstd_max_train_bytes=0;level=32767;use_zstd_dict_trainer=true;strategy=0;window_bits=-14;}
+  memtable_protection_bytes_per_key=0
+  target_file_size_multiplier=1
+  report_bg_io_stats=false
+  write_buffer_size=2097152
+  memtable_huge_page_size=0
+  max_successive_merges=0
+  max_write_buffer_number=6
+  prefix_extractor=nullptr
+  bottommost_compression_opts={max_dict_buffer_bytes=0;enabled=false;max_dict_bytes=0;parallel_threads=1;zstd_max_train_bytes=0;level=32767;use_zstd_dict_trainer=true;strategy=0;window_bits=-14;}
+  paranoid_file_checks=false
+  blob_garbage_collection_force_threshold=1.000000
+  enable_blob_files=false
+  blob_file_starting_level=0
+  memtable_prefix_bloom_size_ratio=0.000000
+  inplace_update_num_locks=10000
+  blob_compaction_readahead_size=0
+  ignore_max_compaction_bytes_for_input=true
+  arena_block_size=262144
+  level0_stop_writes_trigger=36
+  blob_compression_type=kNoCompression
+  level0_slowdown_writes_trigger=20
+  hard_pending_compaction_bytes_limit=274877906944
+  soft_pending_compaction_bytes_limit=68719476736
+  target_file_size_base=67108864
+  level0_file_num_compaction_trigger=2
+  max_compaction_bytes=1677721600
+  disable_auto_compactions=false
+  check_flush_compaction_key_order=true
+  min_blob_size=0
+  memtable_whole_key_filtering=false
+  max_bytes_for_level_base=8388608
+  last_level_temperature=kUnknown
+  compaction_options_fifo={allow_compaction=false;age_for_warm=0;max_table_files_size=1073741824;}
+  max_bytes_for_level_multiplier=10.000000
+  max_bytes_for_level_multiplier_additional=1:1:1:1:1:1:1
+  max_sequential_skip_in_iterations=8
+  prepopulate_blob_cache=kDisable
+  compression=kSnappyCompression
+  compaction_options_universal={incremental=false;compression_size_percent=-1;allow_trivial_move=false;max_size_amplification_percent=200;max_merge_width=4294967295;stop_style=kCompactionStopStyleTotalSize;min_merge_width=2;size_ratio=1;}
+  blob_garbage_collection_age_cutoff=0.250000
+  ttl=2592000
+  periodic_compaction_seconds=0
+  sample_for_compression=0
+  blob_file_size=268435456
+  enable_blob_garbage_collection=false
+  experimental_mempurge_threshold=0.000000
+  bottommost_compression=kDisableCompressionOption
+  min_write_buffer_number_to_merge=2
+  preserve_internal_time_seconds=0
+  preclude_last_level_data_seconds=0
+  sst_partitioner_factory=nullptr
+  num_levels=7
+  force_consistency_checks=true
+  memtable_insert_with_hint_prefix_extractor=nullptr
+  memtable_factory=SkipListFactory
+  level_compaction_dynamic_file_size=true
+  max_write_buffer_number_to_maintain=0
+  optimize_filters_for_hits=false
+  level_compaction_dynamic_level_bytes=true
+  compaction_style=kCompactionStyleLevel
+  compaction_filter=nullptr
+  inplace_update_support=false
+  merge_operator=nullptr
+  table_factory=BlockBasedTable
+  bloom_locality=0
+  comparator=leveldb.BytewiseComparator
+  compaction_filter_factory=nullptr
+  max_write_buffer_size_to_maintain=0
+  compaction_pri=kMinOverlappingRatio
+  
+[TableOptions/BlockBasedTable "col10"]
+  initial_auto_readahead_size=8192
+  pin_top_level_index_and_filter=true
+  block_align=false
+  block_size_deviation=10
+  checksum=kXXH3
+  index_shortening=kShortenSeparators
+  num_file_reads_for_auto_readahead=2
+  whole_key_filtering=true
+  data_block_index_type=kDataBlockBinarySearch
+  index_type=kBinarySearch
+  no_block_cache=false
+  index_block_restart_interval=1
+  data_block_hash_table_util_ratio=0.750000
+  prepopulate_block_cache=kDisable
+  pin_l0_filter_and_index_blocks_in_cache=true
+  filter_policy=bloomfilter
+  cache_index_and_filter_blocks_with_high_priority=true
+  verify_compression=false
+  block_restart_interval=16
+  max_auto_readahead_size=262144
+  flush_block_policy_factory=FlushBlockBySizePolicyFactory
+  partition_filters=false
+  cache_index_and_filter_blocks=true
+  block_size=16384
+  metadata_block_size=4096
+  optimize_filters_for_memory=false
+  detect_filter_construct_corruption=false
+  format_version=5
+  metadata_cache_options={unpartitioned_pinning=kFallback;partition_pinning=kFallback;top_level_index_pinning=kFallback;}
+  read_amp_bytes_per_bit=0
+  enable_index_compression=true
+  
+
+[CFOptions "col11"]
+  compression_opts={max_dict_buffer_bytes=0;enabled=false;max_dict_bytes=0;parallel_threads=1;zstd_max_train_bytes=0;level=32767;use_zstd_dict_trainer=true;strategy=0;window_bits=-14;}
+  memtable_protection_bytes_per_key=0
+  target_file_size_multiplier=1
+  report_bg_io_stats=false
+  write_buffer_size=2097152
+  memtable_huge_page_size=0
+  max_successive_merges=0
+  max_write_buffer_number=6
+  prefix_extractor=nullptr
+  bottommost_compression_opts={max_dict_buffer_bytes=0;enabled=false;max_dict_bytes=0;parallel_threads=1;zstd_max_train_bytes=0;level=32767;use_zstd_dict_trainer=true;strategy=0;window_bits=-14;}
+  paranoid_file_checks=false
+  blob_garbage_collection_force_threshold=1.000000
+  enable_blob_files=false
+  blob_file_starting_level=0
+  memtable_prefix_bloom_size_ratio=0.000000
+  inplace_update_num_locks=10000
+  blob_compaction_readahead_size=0
+  ignore_max_compaction_bytes_for_input=true
+  arena_block_size=262144
+  level0_stop_writes_trigger=36
+  blob_compression_type=kNoCompression
+  level0_slowdown_writes_trigger=20
+  hard_pending_compaction_bytes_limit=274877906944
+  soft_pending_compaction_bytes_limit=68719476736
+  target_file_size_base=67108864
+  level0_file_num_compaction_trigger=2
+  max_compaction_bytes=1677721600
+  disable_auto_compactions=false
+  check_flush_compaction_key_order=true
+  min_blob_size=0
+  memtable_whole_key_filtering=false
+  max_bytes_for_level_base=8388608
+  last_level_temperature=kUnknown
+  compaction_options_fifo={allow_compaction=false;age_for_warm=0;max_table_files_size=1073741824;}
+  max_bytes_for_level_multiplier=10.000000
+  max_bytes_for_level_multiplier_additional=1:1:1:1:1:1:1
+  max_sequential_skip_in_iterations=8
+  prepopulate_blob_cache=kDisable
+  compression=kSnappyCompression
+  compaction_options_universal={incremental=false;compression_size_percent=-1;allow_trivial_move=false;max_size_amplification_percent=200;max_merge_width=4294967295;stop_style=kCompactionStopStyleTotalSize;min_merge_width=2;size_ratio=1;}
+  blob_garbage_collection_age_cutoff=0.250000
+  ttl=2592000
+  periodic_compaction_seconds=0
+  sample_for_compression=0
+  blob_file_size=268435456
+  enable_blob_garbage_collection=false
+  experimental_mempurge_threshold=0.000000
+  bottommost_compression=kDisableCompressionOption
+  min_write_buffer_number_to_merge=2
+  preserve_internal_time_seconds=0
+  preclude_last_level_data_seconds=0
+  sst_partitioner_factory=nullptr
+  num_levels=7
+  force_consistency_checks=true
+  memtable_insert_with_hint_prefix_extractor=nullptr
+  memtable_factory=SkipListFactory
+  level_compaction_dynamic_file_size=true
+  max_write_buffer_number_to_maintain=0
+  optimize_filters_for_hits=false
+  level_compaction_dynamic_level_bytes=true
+  compaction_style=kCompactionStyleLevel
+  compaction_filter=nullptr
+  inplace_update_support=false
+  merge_operator=nullptr
+  table_factory=BlockBasedTable
+  bloom_locality=0
+  comparator=leveldb.BytewiseComparator
+  compaction_filter_factory=nullptr
+  max_write_buffer_size_to_maintain=0
+  compaction_pri=kMinOverlappingRatio
+  
+[TableOptions/BlockBasedTable "col11"]
+  initial_auto_readahead_size=8192
+  pin_top_level_index_and_filter=true
+  block_align=false
+  block_size_deviation=10
+  checksum=kXXH3
+  index_shortening=kShortenSeparators
+  num_file_reads_for_auto_readahead=2
+  whole_key_filtering=true
+  data_block_index_type=kDataBlockBinarySearch
+  index_type=kBinarySearch
+  no_block_cache=false
+  index_block_restart_interval=1
+  data_block_hash_table_util_ratio=0.750000
+  prepopulate_block_cache=kDisable
+  pin_l0_filter_and_index_blocks_in_cache=true
+  filter_policy=bloomfilter
+  cache_index_and_filter_blocks_with_high_priority=true
+  verify_compression=false
+  block_restart_interval=16
+  max_auto_readahead_size=262144
+  flush_block_policy_factory=FlushBlockBySizePolicyFactory
+  partition_filters=false
+  cache_index_and_filter_blocks=true
+  block_size=16384
+  metadata_block_size=4096
+  optimize_filters_for_memory=false
+  detect_filter_construct_corruption=false
+  format_version=5
+  metadata_cache_options={unpartitioned_pinning=kFallback;partition_pinning=kFallback;top_level_index_pinning=kFallback;}
+  read_amp_bytes_per_bit=0
+  enable_index_compression=true
+  
+
+[CFOptions "col12"]
+  compression_opts={max_dict_buffer_bytes=0;enabled=false;max_dict_bytes=0;parallel_threads=1;zstd_max_train_bytes=0;level=32767;use_zstd_dict_trainer=true;strategy=0;window_bits=-14;}
+  memtable_protection_bytes_per_key=0
+  target_file_size_multiplier=1
+  report_bg_io_stats=false
+  write_buffer_size=2097152
+  memtable_huge_page_size=0
+  max_successive_merges=0
+  max_write_buffer_number=6
+  prefix_extractor=nullptr
+  bottommost_compression_opts={max_dict_buffer_bytes=0;enabled=false;max_dict_bytes=0;parallel_threads=1;zstd_max_train_bytes=0;level=32767;use_zstd_dict_trainer=true;strategy=0;window_bits=-14;}
+  paranoid_file_checks=false
+  blob_garbage_collection_force_threshold=1.000000
+  enable_blob_files=false
+  blob_file_starting_level=0
+  memtable_prefix_bloom_size_ratio=0.000000
+  inplace_update_num_locks=10000
+  blob_compaction_readahead_size=0
+  ignore_max_compaction_bytes_for_input=true
+  arena_block_size=262144
+  level0_stop_writes_trigger=36
+  blob_compression_type=kNoCompression
+  level0_slowdown_writes_trigger=20
+  hard_pending_compaction_bytes_limit=274877906944
+  soft_pending_compaction_bytes_limit=68719476736
+  target_file_size_base=67108864
+  level0_file_num_compaction_trigger=2
+  max_compaction_bytes=1677721600
+  disable_auto_compactions=false
+  check_flush_compaction_key_order=true
+  min_blob_size=0
+  memtable_whole_key_filtering=false
+  max_bytes_for_level_base=8388608
+  last_level_temperature=kUnknown
+  compaction_options_fifo={allow_compaction=false;age_for_warm=0;max_table_files_size=1073741824;}
+  max_bytes_for_level_multiplier=10.000000
+  max_bytes_for_level_multiplier_additional=1:1:1:1:1:1:1
+  max_sequential_skip_in_iterations=8
+  prepopulate_blob_cache=kDisable
+  compression=kSnappyCompression
+  compaction_options_universal={incremental=false;compression_size_percent=-1;allow_trivial_move=false;max_size_amplification_percent=200;max_merge_width=4294967295;stop_style=kCompactionStopStyleTotalSize;min_merge_width=2;size_ratio=1;}
+  blob_garbage_collection_age_cutoff=0.250000
+  ttl=2592000
+  periodic_compaction_seconds=0
+  sample_for_compression=0
+  blob_file_size=268435456
+  enable_blob_garbage_collection=false
+  experimental_mempurge_threshold=0.000000
+  bottommost_compression=kDisableCompressionOption
+  min_write_buffer_number_to_merge=2
+  preserve_internal_time_seconds=0
+  preclude_last_level_data_seconds=0
+  sst_partitioner_factory=nullptr
+  num_levels=7
+  force_consistency_checks=true
+  memtable_insert_with_hint_prefix_extractor=nullptr
+  memtable_factory=SkipListFactory
+  level_compaction_dynamic_file_size=true
+  max_write_buffer_number_to_maintain=0
+  optimize_filters_for_hits=false
+  level_compaction_dynamic_level_bytes=true
+  compaction_style=kCompactionStyleLevel
+  compaction_filter=nullptr
+  inplace_update_support=false
+  merge_operator=nullptr
+  table_factory=BlockBasedTable
+  bloom_locality=0
+  comparator=leveldb.BytewiseComparator
+  compaction_filter_factory=nullptr
+  max_write_buffer_size_to_maintain=0
+  compaction_pri=kMinOverlappingRatio
+  
+[TableOptions/BlockBasedTable "col12"]
   initial_auto_readahead_size=8192
   pin_top_level_index_and_filter=true
   block_align=false

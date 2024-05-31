@@ -566,11 +566,17 @@ pub mod pallet {
                 !ContractClasses::<T>::contains_key(transaction.tx().class_hash().0),
                 Error::<T>::ClassHashAlreadyDeclared
             );
-            // Check if contract is deployed
-            ensure!(
-                ContractClassHashes::<T>::contains_key(transaction.tx().sender_address()),
-                Error::<T>::AccountNotDeployed
-            );
+
+            let tx_version = transaction.tx().version();
+
+            // Checking if transaction version is zero. Because it was causing issues with contract declaration.
+            if(tx_version != TransactionVersion::ZERO) {
+                // Check if contract is deployed
+                ensure!(
+                    ContractClassHashes::<T>::contains_key(transaction.tx().sender_address()),
+                    Error::<T>::AccountNotDeployed
+                );
+            }
 
             let mut state = BlockifierStateAdapter::<T>::default();
             let charge_fee = !<T as Config>::DisableTransactionFee::get();

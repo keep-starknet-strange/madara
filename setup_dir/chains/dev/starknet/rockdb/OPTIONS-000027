@@ -95,7 +95,7 @@
   compression_opts={max_dict_buffer_bytes=0;enabled=false;max_dict_bytes=0;parallel_threads=1;zstd_max_train_bytes=0;level=32767;use_zstd_dict_trainer=true;strategy=0;window_bits=-14;}
   memtable_protection_bytes_per_key=0
   target_file_size_multiplier=1
-  report_bg_io_stats=false
+  report_bg_io_stats=true
   write_buffer_size=67108864
   memtable_huge_page_size=0
   max_successive_merges=0

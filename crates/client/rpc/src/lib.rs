@@ -20,6 +20,7 @@ use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::objects::{ResourcesMapping, TransactionExecutionInfo};
 use blockifier::transaction::transactions::{DeclareTransaction, L1HandlerTransaction};
 use cairo_vm::types::program::Program;
+use indexmap::IndexMap;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
@@ -53,9 +54,11 @@ use sp_api::ProvideRuntimeApi;
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
 use sp_core::H256;
+use sp_runtime::codec::{Decode, DecodeAll};
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use sp_runtime::transaction_validity::InvalidTransaction;
 use starknet_api::core::{ClassHash, Nonce};
+use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{Calldata, DeclareTransactionV0V1, Fee, TransactionHash, TransactionVersion};
 use starknet_core::types::{
@@ -265,14 +268,16 @@ where
 
                 Some((tx_hash, class_hash))
             }
-            DeclareTransactionCommonInput::V0(declare_txn, class_info, abi_length) => {
-                let txn_hash: TransactionHash = TransactionHash(StarkHash { 0: FieldElement::ZERO.to_bytes_be() });
+            DeclareTransactionCommonInput::V0(declare_txn, program_vec, entrypoints, abi_length) => {
+                let txn_hash: TransactionHash = TransactionHash(StarkHash { 0: FieldElement::ONE.to_bytes_be() });
+
+                let program_decoded = Program::decode_all(&mut &*program_vec).unwrap();
 
                 let class_info = ClassInfo::new(
                     &blockifier::execution::contract_class::ContractClass::V0(ContractClassV0(Arc::from(
                         ContractClassV0Inner {
-                            program: class_info.program,
-                            entry_points_by_type: class_info.entry_points_by_type,
+                            program: program_decoded,
+                            entry_points_by_type: entrypoints,
                         },
                     ))),
                     0,
@@ -302,7 +307,10 @@ where
                     .convert_tx_to_extrinsic(best_block_hash, AccountTransaction::Declare(declare_transaction.clone()))
                     .unwrap();
 
-                submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await.ok()?;
+                let res = submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await.unwrap();
+
+                log::info!(">>>>> extrinsic res : {:?}", res);
+                log::info!(">>>>> class hash declared: {:?} ✅ | txn hash : {:?}", declare_transaction.class_hash(), declare_transaction.tx_hash);
 
                 Some((declare_transaction.tx_hash, declare_transaction.class_hash()))
             }
@@ -357,10 +365,11 @@ where
     async fn declare_v0_contract(
         &self,
         declare_transaction: DeclareTransactionV0V1,
-        class_info: ContractClassV0Inner,
-        abi_length: usize,
+        program_vec: Vec<u8>,
+        entrypoints: IndexMap<EntryPointType, Vec<EntryPoint>>,
+        abi_length: usize
     ) -> RpcResult<DeclareV0Result> {
-        let (_txn_hash, class_hash) = self.declare_txn_common(DeclareTransactionCommonInput::V0(declare_transaction, class_info, abi_length))
+        let (_txn_hash, class_hash) = self.declare_txn_common(DeclareTransactionCommonInput::V0(declare_transaction, program_vec, entrypoints, abi_length))
             .await
             .ok_or("Error in declaring the v0 using the given transaction !!!").expect("ERROR : Error in declaring the v0 using the given transaction !!!");
 
@@ -1786,7 +1795,9 @@ where
     pool.submit_one(best_block_hash, TX_SOURCE, extrinsic).await.map_err(|e| {
         error!("Failed to submit extrinsic: {:?}", e);
         match e.into_pool_error() {
-            Ok(PoolError::InvalidTransaction(InvalidTransaction::BadProof)) => StarknetRpcApiError::ValidationFailure,
+            Ok(PoolError::InvalidTransaction(InvalidTransaction::BadProof)) => {
+                StarknetRpcApiError::ValidationFailure
+            },
             _ => StarknetRpcApiError::InternalServerError,
         }
     })

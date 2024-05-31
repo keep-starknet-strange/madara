@@ -5816,6 +5816,7 @@ version = "0.7.0"
 dependencies = [
  "blockifier",
  "cairo-vm",
+ "indexmap 2.2.5",
  "jsonrpsee",
  "log",
  "mc-db",

@@ -12,12 +12,14 @@ use std::sync::Arc;
 use blockifier::execution::contract_class::{ClassInfo, ContractClassV0, ContractClassV0Inner};
 use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::transactions::DeclareTransaction;
+use indexmap::IndexMap;
 use jsonrpsee::core::{async_trait, RpcResult};
 use jsonrpsee::proc_macros::rpc;
 use jsonrpsee::tracing::log::error;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use starknet_api::core::ClassHash;
+use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 use starknet_api::hash::StarkHash;
 use starknet_api::transaction::{DeclareTransactionV0V1, TransactionHash};
 use starknet_api::StarknetApiError;
@@ -61,7 +63,8 @@ pub trait MadaraRpcApi: StarknetReadRpcApi {
     async fn declare_v0_contract(
         &self,
         declare_transaction: DeclareTransactionV0V1,
-        class_info: ContractClassV0Inner,
+        program_vec: Vec<u8>,
+        entrypoints: IndexMap<EntryPointType, Vec<EntryPoint>>,
         abi_length: usize,
     ) -> RpcResult<DeclareV0Result>;
 }
@@ -214,7 +217,7 @@ pub trait StarknetTraceRpcApi {
 }
 
 pub enum DeclareTransactionCommonInput {
-    V0(DeclareTransactionV0V1, ContractClassV0Inner, usize),
+    V0(DeclareTransactionV0V1, Vec<u8>, IndexMap<EntryPointType, Vec<EntryPoint>>, usize),
     V1(DeclareTransaction),
 }
 

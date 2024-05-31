@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use blockifier::execution::contract_class::ContractClassV0Inner;
 use blockifier::transaction::transactions::DeclareTransaction;
+use indexmap::IndexMap;
 use jsonrpsee::core::{async_trait, RpcResult};
 use mc_genesis_data_provider::GenesisProvider;
 use mc_rpc_core::DeclareV0Result;
@@ -19,6 +20,7 @@ use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
+use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 use starknet_api::transaction::DeclareTransactionV0V1;
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
@@ -60,10 +62,11 @@ where
     async fn declare_v0_contract(
         &self,
         declare_transaction: DeclareTransactionV0V1,
-        class_info: ContractClassV0Inner,
+        program_vec: Vec<u8>,
+        entrypoints: IndexMap<EntryPointType, Vec<EntryPoint>>,
         abi_length: usize,
     ) -> RpcResult<DeclareV0Result> {
-        self.0.declare_v0_contract(declare_transaction, class_info, abi_length).await
+        self.0.declare_v0_contract(declare_transaction, program_vec, entrypoints, abi_length).await
     }
 }
 
