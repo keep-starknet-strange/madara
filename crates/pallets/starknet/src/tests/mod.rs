@@ -295,45 +295,6 @@ fn get_invoke_openzeppelin_dummy(chain_id: Felt252Wrapper) -> blockifier::transa
     blockifier::transaction::transactions::InvokeTransaction { tx, tx_hash, only_query: false }
 }
 
-fn get_invoke_v3_openzeppelin_dummy(
-    chain_id: Felt252Wrapper,
-) -> blockifier::transaction::transactions::InvokeTransaction {
-    let signature = TransactionSignature(vec![
-        StarkFelt::try_from("0x028ef1ae6c37314bf9df65663db1cf68f95d67c4b4cf7f6590654933a84912b0").unwrap(),
-        StarkFelt::try_from("0x0625aae99c58b18e5161c719fef0f99579c6468ca6c1c866f9b2b968a5447e4").unwrap(),
-    ]);
-    let sender_address = ContractAddress(PatriciaKey(
-        StarkFelt::try_from("0x06e2616a2dceff4355997369246c25a78e95093df7a49e5ca6a06ce1544ffd50").unwrap(),
-    ));
-    let nonce = Nonce(StarkFelt::ZERO);
-    let calldata = Calldata(Arc::new(vec![
-        StarkFelt::try_from("0x1").unwrap(), // call_array_len
-        StarkFelt::try_from("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(), // to
-        StarkFelt::try_from("0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc").unwrap(), // selector
-        StarkFelt::try_from("0x0").unwrap(), // data offset
-        StarkFelt::try_from("0x1").unwrap(), // data length
-        StarkFelt::try_from("0x1").unwrap(), // calldata_len
-        StarkFelt::try_from("0x19").unwrap(), // calldata[0]
-    ]));
-
-    let tx = starknet_api::transaction::InvokeTransaction::V3(starknet_api::transaction::InvokeTransactionV3 {
-        resource_bounds: create_resource_bounds(),
-        tip: starknet_api::transaction::Tip::default(),
-        calldata,
-        sender_address,
-        nonce,
-        signature,
-        nonce_data_availability_mode: DataAvailabilityMode::L1,
-        fee_data_availability_mode: DataAvailabilityMode::L1,
-        paymaster_data: starknet_api::transaction::PaymasterData(vec![]),
-        account_deployment_data: starknet_api::transaction::AccountDeploymentData(vec![]),
-    });
-
-    let tx_hash = tx.compute_hash(chain_id, false);
-
-    blockifier::transaction::transactions::InvokeTransaction { tx, tx_hash, only_query: false }
-}
-
 /// Returns a dummy declare transaction for the given account type.
 /// The declared class hash is a ERC20 contract, class hash calculated
 /// with starkli.

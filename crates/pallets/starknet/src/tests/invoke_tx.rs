@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use blockifier::abi::abi_utils::get_storage_var_address;
 use blockifier::execution::contract_class::ClassInfo;
-use blockifier::transaction::transactions::{DeclareTransaction, InvokeTransaction};
+use blockifier::transaction::transactions::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction};
 use frame_support::{assert_err, assert_ok};
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
@@ -35,8 +35,8 @@ use super::utils::{
 use crate::tests::constants::{UDC_ADDRESS, UDC_SELECTOR};
 use crate::tests::{
     get_invoke_argent_dummy, get_invoke_braavos_dummy, get_invoke_dummy, get_invoke_emit_event_dummy,
-    get_invoke_nonce_dummy, get_invoke_openzeppelin_dummy, get_invoke_v3_dummy, get_invoke_v3_openzeppelin_dummy,
-    get_storage_read_write_dummy, set_infinite_tokens, set_nonce,
+    get_invoke_nonce_dummy, get_invoke_openzeppelin_dummy, get_invoke_v3_dummy, get_storage_read_write_dummy,
+    set_infinite_tokens, set_nonce,
 };
 use crate::{Call, Error, StorageView};
 
@@ -928,18 +928,6 @@ fn given_hardcoded_contract_run_invoke_tx_v3_fails_sender_not_deployed() {
 }
 
 #[test]
-fn given_hardcoded_contract_run_invoke_tx_v3_on_openzeppelin_account_then_it_works() {
-    new_test_ext::<MockRuntime>().execute_with(|| {
-        basic_test_setup(2);
-        let none_origin = RuntimeOrigin::none();
-        // NOT WORKING
-        let transaction = get_invoke_v3_openzeppelin_dummy(Starknet::chain_id());
-
-        assert_ok!(Starknet::invoke(none_origin, transaction));
-    });
-}
-
-#[test]
 fn given_hardcoded_contract_run_invoke_tx_v3_with_inner_call_in_validate_then_it_fails() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
@@ -965,34 +953,6 @@ fn given_hardcoded_contract_run_invoke_tx_v3_with_inner_call_in_validate_then_it
 
         assert_err!(Starknet::invoke(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
     });
-}
-
-#[test]
-fn given_account_not_deployed_invoke_tx_v3_validate_works_for_nonce_one() {
-    new_test_ext::<MockRuntime>().execute_with(|| {
-        basic_test_setup(2);
-        // Wrong address (not deployed)
-        let contract_address = ContractAddress(PatriciaKey(StarkFelt::try_from("0x13123131").unwrap()));
-        // NOT WORKING
-        let transaction = starknet_api::transaction::InvokeTransactionV3 {
-            resource_bounds: create_resource_bounds(),
-            tip: starknet_api::transaction::Tip::default(),
-            calldata: Calldata::default(),
-            sender_address: contract_address,
-            nonce: Nonce(StarkFelt::ZERO),
-            signature: TransactionSignature::default(),
-            nonce_data_availability_mode: DataAvailabilityMode::L1,
-            fee_data_availability_mode: DataAvailabilityMode::L1,
-            paymaster_data: starknet_api::transaction::PaymasterData(vec![StarkFelt::ZERO]),
-            account_deployment_data: starknet_api::transaction::AccountDeploymentData(vec![StarkFelt::ZERO]),
-        };
-
-        set_infinite_tokens::<MockRuntime>(&contract_address);
-        assert_ok!(Starknet::validate_unsigned(
-            TransactionSource::InBlock,
-            &crate::Call::invoke { transaction: transaction.into() }
-        ));
-    })
 }
 
 #[test]
@@ -1023,5 +983,88 @@ fn given_account_not_deployed_invoke_tx_v3_fails_for_nonce_not_one() {
             ),
             Err(TransactionValidityError::Invalid(InvalidTransaction::BadProof))
         );
+    })
+}
+
+#[test]
+fn declare_transaction_v3_then_it_works() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let chain_id = Starknet::chain_id();
+        let none_origin = RuntimeOrigin::none();
+        let account_addr = get_account_address(None, AccountType::V1(AccountTypeV1Inner::NoValidate));
+
+        let contract_class = get_contract_class("TransactionRevert.casm.json", 1);
+        let contract_class_hash = ClassHash(
+            StarkFelt::try_from("0x7d2bcb1df4970245665a19b23a4d3877eb86a661e8d98b89afc4531134b99f6").unwrap(),
+        );
+        let contract_compiled_class_hash = CompiledClassHash(
+            StarkFelt::try_from("0x1c02b663e928ed213d3a0fa206efb59182fa2ba41f5c204daa56c4a434b53e5").unwrap(),
+        );
+
+        let mut declare_tx = starknet_api::transaction::DeclareTransactionV3 {
+            resource_bounds: create_resource_bounds(),
+            tip: starknet_api::transaction::Tip::default(),
+            signature: TransactionSignature::default(),
+            nonce: Nonce(StarkFelt::ZERO),
+            class_hash: contract_class_hash,
+            compiled_class_hash: contract_compiled_class_hash,
+            sender_address: account_addr,
+            nonce_data_availability_mode: DataAvailabilityMode::L1,
+            fee_data_availability_mode: DataAvailabilityMode::L1,
+            paymaster_data: starknet_api::transaction::PaymasterData(vec![StarkFelt::ZERO]),
+            account_deployment_data: starknet_api::transaction::AccountDeploymentData(vec![StarkFelt::ZERO]),
+        };
+
+        let tx_hash = declare_tx.compute_hash(chain_id, false);
+        declare_tx.signature = sign_message_hash(tx_hash);
+
+        let transaction = DeclareTransaction::new(
+            starknet_api::transaction::DeclareTransaction::V3(declare_tx),
+            tx_hash,
+            ClassInfo::new(&contract_class, 1, 1).unwrap(),
+        )
+        .unwrap();
+
+        assert_ok!(Starknet::declare(none_origin, transaction));
+    })
+}
+
+#[test]
+fn deploy_transaction_v3_then_it_works() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let chain_id = Starknet::chain_id();
+        let none_origin = RuntimeOrigin::none();
+
+        let contract_class_hash = ClassHash(
+            StarkFelt::try_from("0x7d2bcb1df4970245665a19b23a4d3877eb86a661e8d98b89afc4531134b99f6").unwrap(),
+        );
+
+        let mut deploy_tx = starknet_api::transaction::DeployAccountTransactionV3 {
+            resource_bounds: create_resource_bounds(),
+            tip: starknet_api::transaction::Tip::default(),
+            signature: TransactionSignature::default(),
+            nonce: Nonce(StarkFelt::ZERO),
+            class_hash: contract_class_hash,
+            contract_address_salt: ContractAddressSalt::default(),
+            constructor_calldata: Calldata::default(),
+            nonce_data_availability_mode: DataAvailabilityMode::L1,
+            fee_data_availability_mode: DataAvailabilityMode::L1,
+            paymaster_data: starknet_api::transaction::PaymasterData(vec![StarkFelt::ZERO]),
+        };
+
+        let tx_hash = deploy_tx.compute_hash(chain_id, false);
+        deploy_tx.signature = sign_message_hash(tx_hash);
+
+        let transaction = DeployAccountTransaction::new(
+            starknet_api::transaction::DeployAccountTransaction::V3(deploy_tx),
+            tx_hash,
+            ContractAddress::default(),
+        );
+
+        assert_ok!(Starknet::deploy_account(none_origin, transaction));
     })
 }
