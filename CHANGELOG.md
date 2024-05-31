@@ -2,6 +2,7 @@
 
 ## Next release
 
+- dev: make HasherT methods accept iterator rather than &[Felt] as argument
 - feat: actual estimate_fee added, brought back l1 messages and refactored
   simulate tx
 - dev: impl get_state_updates using get_transaction_re_execution_state_diff
