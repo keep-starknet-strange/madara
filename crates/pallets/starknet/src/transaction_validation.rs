@@ -70,13 +70,13 @@ impl<T: Config> Pallet<T> {
 
                 match transaction {
                     AccountTransaction::Declare(transaction) => {
-                        Validate::perform_pre_validation_stage(transaction, &mut state, tx_context, string_nonce_checking, charge_fee)
+                        Validate::perform_pre_validation_stage::<T::DeclareTransactionFilter>(transaction, &mut state, tx_context, string_nonce_checking, charge_fee)
                     }
                     AccountTransaction::DeployAccount(transaction) => {
-                        Validate::perform_pre_validation_stage(transaction, &mut state, tx_context, string_nonce_checking, charge_fee)
+                        Validate::perform_pre_validation_stage::<T::DeployAccountTransactionFilter>(transaction, &mut state, tx_context, string_nonce_checking, charge_fee)
                     }
                     AccountTransaction::Invoke(transaction) => {
-                        Validate::perform_pre_validation_stage(transaction, &mut state, tx_context, string_nonce_checking, charge_fee)
+                        Validate::perform_pre_validation_stage::<T::InvokeTransactionFilter>(transaction, &mut state, tx_context, string_nonce_checking, charge_fee)
                     }
                 }
                 // TODO: have more granular error mapping

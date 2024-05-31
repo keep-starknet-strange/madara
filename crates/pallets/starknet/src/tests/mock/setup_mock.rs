@@ -87,6 +87,9 @@ macro_rules! mock_runtime {
 				type ProtocolVersion = ProtocolVersion;
 				type ProgramHash = ProgramHash;
 				type ExecutionConstants = ExecutionConstants;
+				type InvokeTransactionFilter = ();
+				type DeclareTransactionFilter = ();
+				type DeployAccountTransactionFilter = ();
 			}
 
 			/// Run to block n.
