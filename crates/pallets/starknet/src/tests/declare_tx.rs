@@ -9,18 +9,59 @@ use sp_runtime::transaction_validity::{
     InvalidTransaction, TransactionSource, TransactionValidityError, ValidTransaction,
 };
 use starknet_api::core::{ClassHash, CompiledClassHash, ContractAddress, Nonce, PatriciaKey};
+use starknet_api::data_availability::DataAvailabilityMode;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{
-    DeclareTransaction as StarknetApiDeclareTransaction, DeclareTransactionV0V1, DeclareTransactionV2, Fee,
-    TransactionSignature,
+    DeclareTransaction as StarknetApiDeclareTransaction, DeclareTransactionV0V1, DeclareTransactionV2,
+    DeclareTransactionV3, Fee, TransactionSignature,
 };
 use starknet_crypto::FieldElement;
 
 use super::mock::default_mock::*;
 use super::mock::*;
-use super::utils::{get_contract_class, sign_message_hash};
+use super::utils::{create_resource_bounds, get_contract_class, sign_message_hash};
 use crate::tests::{set_infinite_tokens, set_nonce};
 use crate::Error;
+
+fn create_declare_erc20_v3_transaction(
+    chain_id: Felt252Wrapper,
+    account_type: AccountType,
+    sender_address: Option<ContractAddress>,
+    signature: Option<TransactionSignature>,
+    nonce: Option<Nonce>,
+) -> BlockifierDeclareTransaction {
+    let sender_address = sender_address.unwrap_or_else(|| get_account_address(None, account_type));
+    let erc20_class = get_contract_class("ERC20.json", 0);
+    let erc20_class_hash =
+        ClassHash(StarkFelt::try_from("0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap());
+
+    let compiled_erc20_class_hash = CompiledClassHash(
+        StarkFelt::try_from("0x00df4d3042eec107abe704619f13d92bbe01a58029311b7a1886b23dcbb4ea87").unwrap(),
+    );
+
+    let mut tx = StarknetApiDeclareTransaction::V3(DeclareTransactionV3 {
+        resource_bounds: create_resource_bounds(),
+        tip: starknet_api::transaction::Tip::default(),
+        signature: TransactionSignature::default(),
+        nonce: nonce.unwrap_or_default(),
+        class_hash: erc20_class_hash,
+        compiled_class_hash: compiled_erc20_class_hash,
+        sender_address,
+        nonce_data_availability_mode: DataAvailabilityMode::L1,
+        fee_data_availability_mode: DataAvailabilityMode::L1,
+        paymaster_data: starknet_api::transaction::PaymasterData(vec![StarkFelt::ZERO]),
+        account_deployment_data: starknet_api::transaction::AccountDeploymentData(vec![StarkFelt::ZERO]),
+    });
+
+    let tx_hash = tx.compute_hash(chain_id, false);
+    // Force to do that because ComputeTransactionHash cannot be implemented on DeclareTransactionV0V1
+    // directly...
+    if let StarknetApiDeclareTransaction::V3(tx) = &mut tx {
+        tx.signature = signature.unwrap_or_else(|| sign_message_hash(tx_hash));
+    }
+
+    BlockifierDeclareTransaction::new(tx, tx_hash, ClassInfo::new(&erc20_class, 0, 1).unwrap()).unwrap()
+}
 
 fn create_declare_erc20_v1_transaction(
     chain_id: Felt252Wrapper,
@@ -393,5 +434,28 @@ fn test_declare_using_transaction_v0() {
         );
 
         assert!(Starknet::validate_unsigned(TransactionSource::InBlock, &crate::Call::declare { transaction }).is_ok());
+    });
+}
+
+#[test]
+fn given_contract_declare_tx3_than_works() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let none_origin = RuntimeOrigin::none();
+        let chain_id = Starknet::chain_id();
+
+        let transaction = create_declare_erc20_v3_transaction(
+            chain_id,
+            AccountType::V0(AccountTypeV0Inner::NoValidate),
+            None,
+            None,
+            None,
+        );
+        let class_hash = transaction.class_hash();
+        let contract_class = transaction.contract_class();
+
+        assert_ok!(Starknet::declare(none_origin.clone(), transaction.clone()));
+        assert_eq!(Starknet::contract_class_by_class_hash(class_hash.0).unwrap(), contract_class);
     });
 }

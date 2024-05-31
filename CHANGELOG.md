@@ -1,6 +1,8 @@
 # Madara Changelog
 
 ## Next release
+- test: Deleting tests for wallets
+- test: Adding txv3 tests
 
 - feat: L1 gas price/fix
 
@@ -61,7 +63,7 @@
 - feat: Remove generic hasher from block hash computation
 - refacto: git submodules removed
 - test: Add pallet test for transaction declare V0
-- test: Deleting tests for wallets
+
 
 ## v0.7.0
 
