@@ -2,6 +2,8 @@
 
 ## Next release
 
+## v0.8.0
+
 - feat: add `TransactionFilter<TxType>` to pallet-starknet `Config`
 - chore: remove `ignore` from
   `storage_changes_should_revert_on_transaction_revert` test
