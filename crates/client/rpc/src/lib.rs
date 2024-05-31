@@ -20,8 +20,8 @@ use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::objects::{ResourcesMapping, TransactionExecutionInfo};
 use blockifier::transaction::transactions::{DeclareTransaction, L1HandlerTransaction};
 use cairo_vm::types::program::Program;
-use indexmap::IndexMap;
 use errors::StarknetRpcApiError;
+use indexmap::IndexMap;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 use mc_genesis_data_provider::GenesisProvider;
@@ -54,7 +54,7 @@ use sp_api::ProvideRuntimeApi;
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
 use sp_core::H256;
-use sp_runtime::codec::{DecodeAll};
+use sp_runtime::codec::DecodeAll;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use sp_runtime::transaction_validity::InvalidTransaction;
 use starknet_api::core::{ClassHash, Nonce};
@@ -63,16 +63,16 @@ use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{Calldata, DeclareTransactionV0V1, Fee, TransactionHash, TransactionVersion};
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
-    BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionReceipt, DeclareTransactionResult,
-    DeployAccountTransactionReceipt, DeployAccountTransactionResult, EventFilterWithPage, EventsPage,
-    ExecutionResources, ExecutionResult, FeeEstimate, FeePayment, FieldElement, FunctionCall, Hash256,
-    InvokeTransactionReceipt, InvokeTransactionResult, L1HandlerTransactionReceipt, MaybePendingBlockWithTxHashes,
-    MaybePendingBlockWithTxs, MaybePendingStateUpdate, MaybePendingTransactionReceipt, MsgFromL1,
-    PendingBlockWithTxHashes, PendingBlockWithTxs, PendingDeclareTransactionReceipt,
-    PendingDeployAccountTransactionReceipt, PendingInvokeTransactionReceipt, PendingL1HandlerTransactionReceipt,
-    PendingStateUpdate, PendingTransactionReceipt, PriceUnit, ResourcePrice, SimulationFlagForEstimateFee, StateDiff,
-    StateUpdate, SyncStatus, SyncStatusType, Transaction, TransactionExecutionStatus, TransactionFinalityStatus,
-    TransactionReceipt,
+    BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
+    DeclareTransactionReceipt, DeclareTransactionResult, DeployAccountTransactionReceipt,
+    DeployAccountTransactionResult, EventFilterWithPage, EventsPage, ExecutionResources, ExecutionResult, FeeEstimate,
+    FeePayment, FieldElement, FunctionCall, Hash256, InvokeTransactionReceipt, InvokeTransactionResult,
+    L1HandlerTransactionReceipt, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingStateUpdate,
+    MaybePendingTransactionReceipt, MsgFromL1, PendingBlockWithTxHashes, PendingBlockWithTxs,
+    PendingDeclareTransactionReceipt, PendingDeployAccountTransactionReceipt, PendingInvokeTransactionReceipt,
+    PendingL1HandlerTransactionReceipt, PendingStateUpdate, PendingTransactionReceipt, PriceUnit, ResourcePrice,
+    SimulationFlagForEstimateFee, StateDiff, StateUpdate, SyncStatus, SyncStatusType, Transaction,
+    TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
 };
 use starknet_core::utils::get_selector_from_name;
 use trace_api::get_previous_block_substrate_hash;
@@ -274,10 +274,7 @@ where
 
                 let class_info = ClassInfo::new(
                     &blockifier::execution::contract_class::ContractClass::V0(ContractClassV0(Arc::from(
-                        ContractClassV0Inner {
-                            program: program_decoded,
-                            entry_points_by_type: entrypoints,
-                        },
+                        ContractClassV0Inner { program: program_decoded, entry_points_by_type: entrypoints },
                     ))),
                     0,
                     abi_length,
@@ -309,7 +306,11 @@ where
                 let res = submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await.unwrap();
 
                 log::info!(">>>>> extrinsic res : {:?}", res);
-                log::info!(">>>>> class hash declared: {:?} ✅ | txn hash : {:?}", declare_transaction.class_hash(), declare_transaction.tx_hash);
+                log::info!(
+                    ">>>>> class hash declared: {:?} ✅ | txn hash : {:?}",
+                    declare_transaction.class_hash(),
+                    declare_transaction.tx_hash
+                );
 
                 Some((declare_transaction.tx_hash, declare_transaction.class_hash()))
             }
@@ -366,11 +367,18 @@ where
         declare_transaction: DeclareTransactionV0V1,
         program_vec: Vec<u8>,
         entrypoints: IndexMap<EntryPointType, Vec<EntryPoint>>,
-        abi_length: usize
+        abi_length: usize,
     ) -> RpcResult<DeclareV0Result> {
-        let (_txn_hash, class_hash) = self.declare_txn_common(DeclareTransactionCommonInput::V0(declare_transaction, program_vec, entrypoints, abi_length))
+        let (_txn_hash, class_hash) = self
+            .declare_txn_common(DeclareTransactionCommonInput::V0(
+                declare_transaction,
+                program_vec,
+                entrypoints,
+                abi_length,
+            ))
             .await
-            .ok_or("Error in declaring the v0 using the given transaction !!!").expect("ERROR : Error in declaring the v0 using the given transaction !!!");
+            .ok_or("Error in declaring the v0 using the given transaction !!!")
+            .expect("ERROR : Error in declaring the v0 using the given transaction !!!");
 
         Ok(DeclareV0Result { class_hash })
     }
@@ -1794,9 +1802,7 @@ where
     pool.submit_one(best_block_hash, TX_SOURCE, extrinsic).await.map_err(|e| {
         error!("Failed to submit extrinsic: {:?}", e);
         match e.into_pool_error() {
-            Ok(PoolError::InvalidTransaction(InvalidTransaction::BadProof)) => {
-                StarknetRpcApiError::ValidationFailure
-            },
+            Ok(PoolError::InvalidTransaction(InvalidTransaction::BadProof)) => StarknetRpcApiError::ValidationFailure,
             _ => StarknetRpcApiError::InternalServerError,
         }
     })

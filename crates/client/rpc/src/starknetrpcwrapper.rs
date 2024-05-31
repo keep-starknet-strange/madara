@@ -22,11 +22,11 @@ use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 use starknet_api::transaction::DeclareTransactionV0V1;
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
-    BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
-    DeclareTransactionResult, DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate,
-    FieldElement, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
-    MaybePendingStateUpdate, MaybePendingTransactionReceipt, MsgFromL1, SimulatedTransaction, SimulationFlag,
-    SimulationFlagForEstimateFee, SyncStatusType, Transaction, TransactionTrace, TransactionTraceWithHash,
+    BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
+    DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall,
+    InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingStateUpdate,
+    MaybePendingTransactionReceipt, MsgFromL1, SimulatedTransaction, SimulationFlag, SimulationFlagForEstimateFee,
+    SyncStatusType, Transaction, TransactionTrace, TransactionTraceWithHash,
 };
 
 use crate::Starknet;

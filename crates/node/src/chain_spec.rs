@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use madara_runtime::{AuraConfig, GrandpaConfig, RuntimeGenesisConfig, SealingMode, SystemConfig, WASM_BINARY};
+use mp_felt::Felt252Wrapper;
 use pallet_starknet::genesis_loader::{GenesisData, GenesisLoader, HexFelt};
 use sc_service::{BasePath, ChainType};
 use serde::{Deserialize, Serialize};
@@ -9,7 +10,6 @@ use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::storage::Storage;
 use sp_core::{Pair, Public};
 use sp_state_machine::BasicExternalities;
-use mp_felt::Felt252Wrapper;
 
 use crate::constants::DEV_CHAIN_ID;
 

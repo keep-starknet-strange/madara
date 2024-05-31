@@ -46,11 +46,10 @@ impl<T: Config> Pallet<T> {
         let transactions_len = transactions.len();
         let block_context = Self::get_block_context();
         let mut state = BlockifierStateAdapter::<T>::default();
-        
+
         let fee_res_iterator = transactions.into_iter().map(|tx| {
             match Self::execute_account_transaction(&tx, &mut state, &block_context, simulation_flags) {
                 Ok(mut execution_info) => {
-                    
                     if !execution_info.is_reverted() {
                         Self::execution_info_to_fee_estimate(&tx, &mut execution_info, &block_context)
                     } else {

@@ -559,7 +559,7 @@ where
     let mut resources = ExecutionResources::default();
     let mut remaining_gas = block_context.versioned_constants().tx_initial_gas();
     let tx_context = Arc::new(block_context.to_tx_context(transaction));
-    
+
     let validate_call_info: Option<CallInfo>;
     let execute_call_info: Option<CallInfo>;
     let strinct_nonce_checking = true;
@@ -610,14 +610,14 @@ where
             bouncer_resources,
         )),
     }?;
-    
+
     let fee_transfer_call_info = AccountTransaction::handle_fee(
         state,
         tx_context,
         validate_execute_call_info.final_cost.actual_fee,
         charge_fee,
     )?;
-    
+
     let tx_execution_info = TransactionExecutionInfo {
         validate_call_info: validate_execute_call_info.validate_call_info,
         execute_call_info: validate_execute_call_info.execute_call_info,
@@ -628,7 +628,7 @@ where
         revert_error: validate_execute_call_info.revert_error,
         bouncer_resources: validate_execute_call_info.bouncer_resources,
     };
-    
+
     Ok(tx_execution_info)
 }
 
