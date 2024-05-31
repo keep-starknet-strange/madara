@@ -46,7 +46,7 @@ impl HasherT for PoseidonHasher {
 
     fn compute_hash_on_elements<I>(elements: I) -> FieldElement
     where
-        I: IntoIterator<Item = FieldElement> 
+        I: IntoIterator<Item = FieldElement>,
     {
         let elements_vec: Vec<FieldElement> = elements.into_iter().collect();
         poseidon_hash_many(&elements_vec)

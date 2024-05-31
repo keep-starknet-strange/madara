@@ -42,7 +42,7 @@ impl HasherT for PedersenHasher {
 
         Felt252Wrapper(hash_value)
     }
-    
+
     #[inline(always)]
     fn hash_elements(a: FieldElement, b: FieldElement) -> FieldElement {
         pedersen_hash(&a, &b)
@@ -60,12 +60,11 @@ impl HasherT for PedersenHasher {
     #[inline]
     fn compute_hash_on_elements<I>(elements: I) -> FieldElement
     where
-        I: IntoIterator<Item = FieldElement> 
+        I: IntoIterator<Item = FieldElement>,
     {
         let elements_vec: Vec<FieldElement> = elements.into_iter().collect();
         compute_hash_on_elements(&elements_vec)
     }
-
 }
 
 #[test]

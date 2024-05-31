@@ -26,7 +26,7 @@ pub trait HasherT {
         // Default implementation
         let hash = Self::compute_hash_on_elements(
             data.into_iter() // Convert the data into an iterator
-                .map(|x| x.0) // Map each Felt252Wrapper to its inner FieldElement
+                .map(|x| x.0), // Map each Felt252Wrapper to its inner FieldElement
         );
 
         // Wrap the computed hash in a Felt252Wrapper and return it
