@@ -26,7 +26,7 @@ use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 use mc_genesis_data_provider::GenesisProvider;
 pub use mc_rpc_core::utils::*;
-use mc_rpc_core::{DeclareTransactionCommonInput, DeclareV0Result, StarknetRpcApiCommonFuncs};
+use mc_rpc_core::DeclareV0Result;
 pub use mc_rpc_core::{
     Felt, MadaraRpcApiServer, PredeployedAccountWithBalance, StarknetReadRpcApiServer, StarknetTraceRpcApiServer,
     StarknetWriteRpcApiServer,
@@ -78,7 +78,7 @@ use starknet_core::utils::get_selector_from_name;
 use trace_api::get_previous_block_substrate_hash;
 
 use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
-use crate::types::RpcEventFilter;
+use crate::types::{RpcEventFilter};
 
 /// A Starknet RPC server for Madara
 pub struct Starknet<A: ChainApi, B: BlockT, BE, G, C, P, H> {
@@ -226,8 +226,7 @@ where
     }
 }
 
-#[async_trait]
-impl<A, B, BE, G, C, P, H> StarknetRpcApiCommonFuncs for Starknet<A, B, BE, G, C, P, H>
+impl<A, B, BE, G, C, P, H> Starknet<A, B, BE, G, C, P, H>
 where
     A: ChainApi<Block = B> + 'static,
     B: BlockT,
@@ -241,12 +240,12 @@ where
 {
     async fn declare_txn_common(
         &self,
-        transaction_inputs: DeclareTransactionCommonInput,
-    ) -> Option<(TransactionHash, ClassHash)> {
+        transaction_inputs: mc_rpc_core::DeclareV0Transaction,
+    ) -> Result<(TransactionHash, ClassHash), StarknetRpcApiError> {
         let best_block_hash = self.get_best_block_hash();
 
         match transaction_inputs {
-            DeclareTransactionCommonInput::V1(transaction) => {
+            mc_rpc_core::DeclareV0Transaction::V1(transaction) => {
                 let (class_hash, tx_hash) = (transaction.class_hash(), transaction.tx_hash());
 
                 let current_block_hash = self.get_best_block_hash();
@@ -257,36 +256,54 @@ where
 
                 if let Some(contract_class) = contract_class {
                     error!("Contract class already exists: {:?}", contract_class);
-                    // return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
+                    return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
                 }
 
                 let extrinsic =
                     self.convert_tx_to_extrinsic(best_block_hash, AccountTransaction::Declare(transaction)).unwrap();
 
-                submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await.ok()?;
+                let try_submit_extrinsic = submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await;
 
-                Some((tx_hash, class_hash))
+                match try_submit_extrinsic {
+                    Ok(_val) => Ok((tx_hash, class_hash)),
+                    Err(e) => return Err(e),
+                }
             }
-            DeclareTransactionCommonInput::V0(declare_txn, program_vec, entrypoints, abi_length) => {
+            mc_rpc_core::DeclareV0Transaction::V0(declare_txn, program_vec, entrypoints, abi_length) => {
                 let txn_hash: TransactionHash = TransactionHash(StarkHash { 0: FieldElement::ONE.to_bytes_be() });
 
                 let program_decoded = Program::decode_all(&mut &*program_vec).unwrap();
 
-                let class_info = ClassInfo::new(
+                let class_info;
+                let declare_transaction;
+
+                let try_class_info = ClassInfo::new(
                     &blockifier::execution::contract_class::ContractClass::V0(ContractClassV0(Arc::from(
                         ContractClassV0Inner { program: program_decoded, entry_points_by_type: entrypoints },
                     ))),
                     0,
                     abi_length,
-                )
-                .unwrap();
+                );
 
-                let declare_transaction = DeclareTransaction::new(
+                match try_class_info {
+                    Ok(val) => {
+                        class_info = val;
+                    }
+                    Err(_e) => return Err(StarknetRpcApiError::InternalServerError),
+                }
+
+                let try_declare_transaction = DeclareTransaction::new(
                     starknet_api::transaction::DeclareTransaction::V0(declare_txn),
                     txn_hash,
                     class_info,
-                )
-                .unwrap();
+                );
+
+                match try_declare_transaction {
+                    Ok(val) => {
+                        declare_transaction = val;
+                    }
+                    Err(e) => return Err(StarknetRpcApiError::from(e)),
+                }
 
                 let current_block_hash = self.get_best_block_hash();
                 let contract_class = self
@@ -296,23 +313,19 @@ where
 
                 if let Some(contract_class) = contract_class {
                     error!("Contract class already exists: {:?}", contract_class);
-                    // return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
+                    return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
                 }
 
                 let extrinsic = self
                     .convert_tx_to_extrinsic(best_block_hash, AccountTransaction::Declare(declare_transaction.clone()))
                     .unwrap();
 
-                let res = submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await.unwrap();
+                let res = submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await;
 
-                log::info!(">>>>> extrinsic res : {:?}", res);
-                log::info!(
-                    ">>>>> class hash declared: {:?} ✅ | txn hash : {:?}",
-                    declare_transaction.class_hash(),
-                    declare_transaction.tx_hash
-                );
-
-                Some((declare_transaction.tx_hash, declare_transaction.class_hash()))
+                match res {
+                    Ok(_val) => Ok((declare_transaction.tx_hash, declare_transaction.class_hash())),
+                    Err(e) => return Err(e),
+                }
             }
         }
     }
@@ -369,18 +382,19 @@ where
         entrypoints: IndexMap<EntryPointType, Vec<EntryPoint>>,
         abi_length: usize,
     ) -> RpcResult<DeclareV0Result> {
-        let (_txn_hash, class_hash) = self
-            .declare_txn_common(DeclareTransactionCommonInput::V0(
+        let try_declare = self
+            .declare_txn_common(mc_rpc_core::DeclareV0Transaction::V0(
                 declare_transaction,
                 program_vec,
                 entrypoints,
                 abi_length,
             ))
-            .await
-            .ok_or("Error in declaring the v0 using the given transaction !!!")
-            .expect("ERROR : Error in declaring the v0 using the given transaction !!!");
+            .await;
 
-        Ok(DeclareV0Result { class_hash })
+        match try_declare {
+            Ok((txn_hash, class_hash)) => Ok(DeclareV0Result { class_hash, txn_hash }),
+            Err(e) => Err(e.into()),
+        }
     }
 }
 
@@ -419,12 +433,12 @@ where
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
         let transaction = try_declare_tx_from_broadcasted_declare_tx(declare_transaction, chain_id).map_err(|e| {
-            error!("Failed to convert BroadcastedDeclareTransaction to DeclareTransaction, error: {e}");
+            error!("Failed to convert Broadcasted DeclareTransaction to DeclareTransaction, error: {e}");
             StarknetRpcApiError::InternalServerError
         })?;
 
         let (tx_hash, class_hash) =
-            self.declare_txn_common(DeclareTransactionCommonInput::V1(transaction)).await.unwrap();
+            self.declare_txn_common(mc_rpc_core::DeclareV0Transaction::V1(transaction)).await.unwrap();
 
         if let Some(sierra_contract_class) = opt_sierra_contract_class {
             if let Some(e) = self.backend.sierra_classes().store_sierra_class(class_hash, sierra_contract_class).err() {

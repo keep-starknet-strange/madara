@@ -9,7 +9,7 @@ mod tests;
 
 use blockifier::transaction::transactions::DeclareTransaction;
 use indexmap::IndexMap;
-use jsonrpsee::core::{async_trait, RpcResult};
+use jsonrpsee::core::{RpcResult};
 use jsonrpsee::proc_macros::rpc;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
@@ -41,9 +41,17 @@ pub struct PredeployedAccountWithBalance {
     pub balance: FieldElement,
 }
 
-#[derive(Serialize, Deserialize)]
+#[serde_as]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DeclareV0Result {
+    pub txn_hash: TransactionHash,
     pub class_hash: ClassHash,
+}
+
+#[derive(PartialEq, Eq, Debug)]
+pub enum DeclareV0Transaction {
+    V0(DeclareTransactionV0V1, Vec<u8>, IndexMap<EntryPointType, Vec<EntryPoint>>, usize),
+    V1(DeclareTransaction),
 }
 
 /// Madara rpc interface for additional features.
@@ -52,7 +60,10 @@ pub trait MadaraRpcApi: StarknetReadRpcApi {
     #[method(name = "predeployedAccounts")]
     fn predeployed_accounts(&self) -> RpcResult<Vec<PredeployedAccountWithBalance>>;
 
-    #[method(name = "declarev0")]
+    // There is an issue in deserialisation when we try to send the class info directly
+    // That's why we are sending the components saperately here and then building the
+    // transaction here in madara and executing the function in the pallet.
+    #[method(name = "declareV0")]
     async fn declare_v0_contract(
         &self,
         declare_transaction: DeclareTransactionV0V1,
@@ -207,17 +218,4 @@ pub trait StarknetTraceRpcApi {
     #[method(name = "traceTransaction")]
     /// Returns the execution trace of a transaction
     async fn trace_transaction(&self, transaction_hash: FieldElement) -> RpcResult<TransactionTrace>;
-}
-
-pub enum DeclareTransactionCommonInput {
-    V0(DeclareTransactionV0V1, Vec<u8>, IndexMap<EntryPointType, Vec<EntryPoint>>, usize),
-    V1(DeclareTransaction),
-}
-
-#[async_trait]
-pub trait StarknetRpcApiCommonFuncs {
-    async fn declare_txn_common(
-        &self,
-        transaction_inputs: DeclareTransactionCommonInput,
-    ) -> Option<(TransactionHash, ClassHash)>;
 }

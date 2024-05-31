@@ -1,6 +1,5 @@
 use std::num::ParseIntError;
 use std::{fmt, u64};
-
 use mp_felt::Felt252Wrapper;
 use starknet_ff::FieldElement;
 

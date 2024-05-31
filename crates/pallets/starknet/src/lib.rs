@@ -569,7 +569,7 @@ pub mod pallet {
 
             let tx_version = transaction.tx().version();
 
-            // Checking if transaction version is zero. Because it was causing issues with contract declaration.
+            // Avoiding account checks for V0 declares as they don't need to originate from an existing account
             if tx_version != TransactionVersion::ZERO {
                 // Check if contract is deployed
                 ensure!(
