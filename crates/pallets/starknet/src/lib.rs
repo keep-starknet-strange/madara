@@ -801,7 +801,7 @@ pub mod pallet {
                                 )),
                             ));
                         }
-                        // Happy path, were the the nonce is the current one,
+                        // Happy path, were the nonce is the current one,
                         // we validate the tx
                         _ => {
                             Self::validate_unsigned_tx(&transaction)?;
