@@ -54,7 +54,7 @@ use sp_api::ProvideRuntimeApi;
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
 use sp_core::H256;
-use sp_runtime::codec::{Decode, DecodeAll};
+use sp_runtime::codec::{DecodeAll};
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use sp_runtime::transaction_validity::InvalidTransaction;
 use starknet_api::core::{ClassHash, Nonce};
@@ -63,8 +63,7 @@ use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{Calldata, DeclareTransactionV0V1, Fee, TransactionHash, TransactionVersion};
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
-    BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction,
-    CompressedLegacyContractClass, ContractClass, DeclareTransactionReceipt, DeclareTransactionResult,
+    BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionReceipt, DeclareTransactionResult,
     DeployAccountTransactionReceipt, DeployAccountTransactionResult, EventFilterWithPage, EventsPage,
     ExecutionResources, ExecutionResult, FeeEstimate, FeePayment, FieldElement, FunctionCall, Hash256,
     InvokeTransactionReceipt, InvokeTransactionResult, L1HandlerTransactionReceipt, MaybePendingBlockWithTxHashes,

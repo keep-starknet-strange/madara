@@ -92,9 +92,7 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn validate_unsigned_tx(transaction: &Transaction) -> Result<(), InvalidTransaction> {
-
-        log::info!(">>>>> validate_unsigned_txn : {:?}", transaction);
-
+        
         let _call_info = match transaction {
             Transaction::AccountTransaction(transaction) => {
                 let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();

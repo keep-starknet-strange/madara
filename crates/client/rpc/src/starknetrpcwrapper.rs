@@ -1,7 +1,5 @@
 use std::sync::Arc;
 
-use blockifier::execution::contract_class::ContractClassV0Inner;
-use blockifier::transaction::transactions::DeclareTransaction;
 use indexmap::IndexMap;
 use jsonrpsee::core::{async_trait, RpcResult};
 use mc_genesis_data_provider::GenesisProvider;
@@ -24,7 +22,7 @@ use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 use starknet_api::transaction::DeclareTransactionV0V1;
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
-    BroadcastedInvokeTransaction, BroadcastedTransaction, CompressedLegacyContractClass, ContractClass,
+    BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
     DeclareTransactionResult, DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate,
     FieldElement, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
     MaybePendingStateUpdate, MaybePendingTransactionReceipt, MsgFromL1, SimulatedTransaction, SimulationFlag,

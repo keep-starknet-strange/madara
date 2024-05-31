@@ -570,7 +570,7 @@ pub mod pallet {
             let tx_version = transaction.tx().version();
 
             // Checking if transaction version is zero. Because it was causing issues with contract declaration.
-            if(tx_version != TransactionVersion::ZERO) {
+            if tx_version != TransactionVersion::ZERO {
                 // Check if contract is deployed
                 ensure!(
                     ContractClassHashes::<T>::contains_key(transaction.tx().sender_address()),

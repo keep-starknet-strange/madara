@@ -7,22 +7,15 @@
 #[cfg(test)]
 mod tests;
 
-use std::sync::Arc;
-
-use blockifier::execution::contract_class::{ClassInfo, ContractClassV0, ContractClassV0Inner};
-use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::transactions::DeclareTransaction;
 use indexmap::IndexMap;
 use jsonrpsee::core::{async_trait, RpcResult};
 use jsonrpsee::proc_macros::rpc;
-use jsonrpsee::tracing::log::error;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use starknet_api::core::ClassHash;
 use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
-use starknet_api::hash::StarkHash;
 use starknet_api::transaction::{DeclareTransactionV0V1, TransactionHash};
-use starknet_api::StarknetApiError;
 
 pub mod utils;
 
@@ -31,7 +24,7 @@ use pallet_starknet::genesis_loader::PredeployedAccount;
 use starknet_core::serde::unsigned_field_element::UfeHex;
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
-    BroadcastedInvokeTransaction, BroadcastedTransaction, CompressedLegacyContractClass, ContractClass,
+    BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
     DeclareTransactionResult, DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate,
     FieldElement, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
     MaybePendingStateUpdate, MaybePendingTransactionReceipt, MsgFromL1, SimulatedTransaction, SimulationFlag,
