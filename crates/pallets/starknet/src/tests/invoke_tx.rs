@@ -11,12 +11,12 @@ use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{
     InvalidTransaction, TransactionSource, TransactionValidityError, ValidTransaction,
 };
-use starknet_api::core::{ClassHash, CompiledClassHash, ContractAddress, Nonce, PatriciaKey};
+use starknet_api::core::{ClassHash, CompiledClassHash, ContractAddress, EntryPointSelector, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{
-    Calldata, ContractAddressSalt, Event as StarknetEvent, EventContent, EventData, EventKey, Fee, TransactionHash,
-    TransactionSignature,
+    Calldata, ContractAddressSalt, Event as StarknetEvent, EventContent, EventData, EventKey, Fee, InvokeTransactionV0,
+    TransactionHash, TransactionSignature,
 };
 use starknet_core::utils::{get_selector_from_name, get_udc_deployed_address, UdcUniqueSettings, UdcUniqueness};
 use starknet_crypto::FieldElement;
@@ -64,7 +64,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
     new_test_ext::<MockRuntime>().execute_with(|| {
-        basic_test_setup(2);
+        basic_test_setup(1);
 
         let transaction = get_invoke_dummy(Starknet::chain_id(), NONCE_ZERO);
 
@@ -103,16 +103,14 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_v0_then_it_works() {
     new_test_ext::<MockRuntime>().execute_with(|| {
-        basic_test_setup(2);
+        basic_test_setup(1);
 
-        let mut transaction = get_invoke_dummy(Starknet::chain_id(), NONCE_ZERO);
-        if let starknet_api::transaction::InvokeTransaction::V0(tx) = &mut transaction.tx {
-            tx.contract_address = ContractAddress(PatriciaKey(
-                StarkFelt::try_from("0x03e437FB56Bb213f5708Fcd6966502070e276c093ec271aA33433b89E21fd31f").unwrap(),
-            ));
-            tx.calldata = Calldata(Arc::new(vec![]));
-            tx.max_fee = Fee(0);
-        };
+        let transaction = create_invoke_dummy_v0_transaction(
+            Starknet::chain_id().into(),
+            AccountType::V0(AccountTypeV0Inner::NoValidate),
+            Some(NONCE_ZERO),
+            None,
+        );
 
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), transaction));
 
@@ -133,7 +131,7 @@ fn given_hardcoded_contract_run_invoke_tx_v0_then_it_works() {
                 from_address: Starknet::fee_token_addresses().eth_fee_token_address,
                 content: EventContent {
                     keys: vec![EventKey(
-                        Felt252Wrapper::from(get_selector_from_name(TRANSFER_SELECTOR_NAME).unwrap()).into(),
+                        Felt252Wrapper::from(get_selector_from_name(TRANSFER_SELECTOR_NAME).unwrap()).into()
                     )],
                     data: EventData(vec![
                         StarkFelt::try_from(BLOCKIFIER_ACCOUNT_ADDRESS).unwrap(),
@@ -142,8 +140,28 @@ fn given_hardcoded_contract_run_invoke_tx_v0_then_it_works() {
                         StarkFelt::from(0u128),
                     ]),
                 },
-            },));
+            }));
     });
+}
+
+pub fn create_invoke_dummy_v0_transaction(
+    chain_id: Felt252Wrapper,
+    account_type: AccountType,
+    nonce: Option<Nonce>,
+    calldata: Option<Vec<StarkFelt>>,
+) -> InvokeTransaction {
+    let contract_address = ContractAddress(PatriciaKey(
+        StarkFelt::try_from("0x03e437FB56Bb213f5708Fcd6966502070e276c093ec271aA33433b89E21fd31f").unwrap(),
+    ));
+
+    let calldata = Calldata(Arc::new(calldata.unwrap_or_default()));
+
+    let max_fee = Fee(0);
+    let signature = TransactionSignature::default();
+    let entry_point_selector = EntryPointSelector::default();
+    let nonce = nonce.unwrap_or(Nonce::default());
+
+    InvokeTransaction::V0(InvokeTransactionV0 { max_fee, signature, contract_address, entry_point_selector, calldata })
 }
 
 #[test]
@@ -177,20 +195,18 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
                 )],
                 data: EventData(vec![
                     StarkFelt::try_from("0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0").unwrap(), // From
-                    StarkFelt::try_from("0xdead").unwrap(), // To
-                    StarkFelt::try_from("0x2f8").unwrap(),  // Amount low
-                    StarkFelt::from(0u128),                 // Amount high
+                    StarkFelt::try_from("0xdead").unwrap(),
+                    StarkFelt::try_from("0x2f8").unwrap(),
+                    StarkFelt::from(0u128),
                 ]),
             },
         };
         let events: Vec<StarknetEvent> = Starknet::tx_events(tx_hash);
 
-        // Actual event.
         pretty_assertions::assert_eq!(
             emitted_event.clone(),
             events[events.len() - 2]
         );
-        // Fee transfer event.
         pretty_assertions::assert_eq!(
             expected_fee_transfer_event.clone(),
             events.last().unwrap().clone()
