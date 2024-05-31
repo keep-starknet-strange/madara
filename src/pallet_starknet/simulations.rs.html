@@ -463,6 +463,8 @@
 <a href="#463" id="463">463</a>
 <a href="#464" id="464">464</a>
 <a href="#465" id="465">465</a>
+<a href="#466" id="466">466</a>
+<a href="#467" id="467">467</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>blockifier::blockifier::block::GasPrices;
 <span class="kw">use </span>blockifier::context::BlockContext;
 <span class="kw">use </span>blockifier::state::cached_state::{CachedState, CommitmentStateDiff, GlobalContractCache};
@@ -816,22 +818,15 @@
         simulation_flags: <span class="kw-2">&amp;</span>SimulationFlags,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;TransactionExecutionInfo, TransactionExecutionError&gt; {
         <span class="kw">match </span>transaction {
-            AccountTransaction::Declare(tx) =&gt; run_non_revertible_transaction(
+            AccountTransaction::Declare(tx) =&gt; run_non_revertible_transaction::&lt;<span class="kw">_</span>, <span class="kw">_</span>, T::DeclareTransactionFilter&gt;(
                 tx,
                 state,
                 block_context,
                 simulation_flags.validate,
                 simulation_flags.charge_fee,
             ),
-            AccountTransaction::DeployAccount(tx) =&gt; run_non_revertible_transaction(
-                tx,
-                state,
-                block_context,
-                simulation_flags.validate,
-                simulation_flags.charge_fee,
-            ),
-            AccountTransaction::Invoke(tx) <span class="kw">if </span>tx.tx.version() == TransactionVersion::ZERO =&gt; {
-                run_non_revertible_transaction(
+            AccountTransaction::DeployAccount(tx) =&gt; {
+                run_non_revertible_transaction::&lt;<span class="kw">_</span>, <span class="kw">_</span>, T::DeployAccountTransactionFilter&gt;(
                     tx,
                     state,
                     block_context,
@@ -839,7 +834,16 @@
                     simulation_flags.charge_fee,
                 )
             }
-            AccountTransaction::Invoke(tx) =&gt; run_revertible_transaction(
+            AccountTransaction::Invoke(tx) <span class="kw">if </span>tx.tx.version() == TransactionVersion::ZERO =&gt; {
+                run_non_revertible_transaction::&lt;<span class="kw">_</span>, <span class="kw">_</span>, T::InvokeTransactionFilter&gt;(
+                    tx,
+                    state,
+                    block_context,
+                    simulation_flags.validate,
+                    simulation_flags.charge_fee,
+                )
+            }
+            AccountTransaction::Invoke(tx) =&gt; run_revertible_transaction::&lt;<span class="kw">_</span>, <span class="kw">_</span>, T::InvokeTransactionFilter&gt;(
                 tx,
                 state,
                 block_context,

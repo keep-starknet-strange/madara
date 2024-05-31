@@ -228,13 +228,13 @@
 
                 <span class="kw">match </span>transaction {
                     AccountTransaction::Declare(transaction) =&gt; {
-                        Validate::perform_pre_validation_stage(transaction, <span class="kw-2">&amp;mut </span>state, tx_context, string_nonce_checking, charge_fee)
+                        Validate::perform_pre_validation_stage::&lt;T::DeclareTransactionFilter&gt;(transaction, <span class="kw-2">&amp;mut </span>state, tx_context, string_nonce_checking, charge_fee)
                     }
                     AccountTransaction::DeployAccount(transaction) =&gt; {
-                        Validate::perform_pre_validation_stage(transaction, <span class="kw-2">&amp;mut </span>state, tx_context, string_nonce_checking, charge_fee)
+                        Validate::perform_pre_validation_stage::&lt;T::DeployAccountTransactionFilter&gt;(transaction, <span class="kw-2">&amp;mut </span>state, tx_context, string_nonce_checking, charge_fee)
                     }
                     AccountTransaction::Invoke(transaction) =&gt; {
-                        Validate::perform_pre_validation_stage(transaction, <span class="kw-2">&amp;mut </span>state, tx_context, string_nonce_checking, charge_fee)
+                        Validate::perform_pre_validation_stage::&lt;T::InvokeTransactionFilter&gt;(transaction, <span class="kw-2">&amp;mut </span>state, tx_context, string_nonce_checking, charge_fee)
                     }
                 }
                 <span class="comment">// TODO: have more granular error mapping

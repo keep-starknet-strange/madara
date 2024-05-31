@@ -1165,6 +1165,25 @@
 <a href="#1165" id="1165">1165</a>
 <a href="#1166" id="1166">1166</a>
 <a href="#1167" id="1167">1167</a>
+<a href="#1168" id="1168">1168</a>
+<a href="#1169" id="1169">1169</a>
+<a href="#1170" id="1170">1170</a>
+<a href="#1171" id="1171">1171</a>
+<a href="#1172" id="1172">1172</a>
+<a href="#1173" id="1173">1173</a>
+<a href="#1174" id="1174">1174</a>
+<a href="#1175" id="1175">1175</a>
+<a href="#1176" id="1176">1176</a>
+<a href="#1177" id="1177">1177</a>
+<a href="#1178" id="1178">1178</a>
+<a href="#1179" id="1179">1179</a>
+<a href="#1180" id="1180">1180</a>
+<a href="#1181" id="1181">1181</a>
+<a href="#1182" id="1182">1182</a>
+<a href="#1183" id="1183">1183</a>
+<a href="#1184" id="1184">1184</a>
+<a href="#1185" id="1185">1185</a>
+<a href="#1186" id="1186">1186</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1246,10 +1265,10 @@
 <span class="kw">use </span>mp_chain_id::MADARA_CHAIN_ID;
 <span class="kw">use </span>mp_digest_log::MADARA_ENGINE_ID;
 <span class="kw">use </span>mp_felt::Felt252Wrapper;
-<span class="kw">use </span>mp_starknet_inherent::{InherentError, InherentType, STARKNET_INHERENT_IDENTIFIER};
+<span class="kw">use </span>mp_starknet_inherent::{InherentError, InherentType, L1GasPrices, STARKNET_INHERENT_IDENTIFIER};
 <span class="kw">use </span>mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 <span class="kw">use </span>mp_transactions::execution::{
-    execute_l1_handler_transaction, run_non_revertible_transaction, run_revertible_transaction,
+    execute_l1_handler_transaction, run_non_revertible_transaction, run_revertible_transaction, TransactionFilter,
 };
 <span class="kw">use </span>mp_transactions::{get_transaction_nonce, get_transaction_sender_address};
 <span class="kw">use </span>sp_runtime::traits::UniqueSaturatedInto;
@@ -1285,7 +1304,6 @@
 
 <span class="attr">#[frame_support::pallet]
 </span><span class="kw">pub mod </span>pallet {
-    <span class="kw">use </span>mp_starknet_inherent::L1GasPrices;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
@@ -1299,6 +1317,12 @@
     </span><span class="kw">pub trait </span>Config: frame_system::Config {
         <span class="doccomment">/// The block time
         </span><span class="kw">type </span>TimestampProvider: Time;
+        <span class="doccomment">/// Custom transaction filter for Invoke txs
+        </span><span class="kw">type </span>InvokeTransactionFilter: TransactionFilter&lt;InvokeTransaction&gt;;
+        <span class="doccomment">/// Custom transaction filter for Declare txs
+        </span><span class="kw">type </span>DeclareTransactionFilter: TransactionFilter&lt;DeclareTransaction&gt;;
+        <span class="doccomment">/// Custom transaction filter for DeployAccount txs
+        </span><span class="kw">type </span>DeployAccountTransactionFilter: TransactionFilter&lt;DeployAccountTransaction&gt;;
         <span class="doccomment">/// A configuration for base priority of unsigned transactions.
         ///
         /// This is exposed so that it can be tuned for particular runtime, when
@@ -1686,10 +1710,20 @@
 
             <span class="comment">// Execute
             </span><span class="kw">let </span>tx_execution_infos = <span class="kw">match </span>transaction.tx.version() {
-                TransactionVersion::ZERO =&gt; {
-                    run_non_revertible_transaction(<span class="kw-2">&amp;</span>transaction, <span class="kw-2">&amp;mut </span>state, <span class="kw-2">&amp;</span>block_context, <span class="bool-val">true</span>, charge_fee)
-                }
-                <span class="kw">_ </span>=&gt; run_revertible_transaction(<span class="kw-2">&amp;</span>transaction, <span class="kw-2">&amp;mut </span>state, <span class="kw-2">&amp;</span>block_context, <span class="bool-val">true</span>, charge_fee),
+                TransactionVersion::ZERO =&gt; run_non_revertible_transaction::&lt;<span class="kw">_</span>, <span class="kw">_</span>, T::InvokeTransactionFilter&gt;(
+                    <span class="kw-2">&amp;</span>transaction,
+                    <span class="kw-2">&amp;mut </span>state,
+                    <span class="kw-2">&amp;</span>block_context,
+                    <span class="bool-val">true</span>,
+                    charge_fee,
+                ),
+                <span class="kw">_ </span>=&gt; run_revertible_transaction::&lt;<span class="kw">_</span>, <span class="kw">_</span>, T::InvokeTransactionFilter&gt;(
+                    <span class="kw-2">&amp;</span>transaction,
+                    <span class="kw-2">&amp;mut </span>state,
+                    <span class="kw-2">&amp;</span>block_context,
+                    <span class="bool-val">true</span>,
+                    charge_fee,
+                ),
             }
             .map_err(|e| {
                 <span class="macro">log!</span>(error, <span class="string">&quot;Invoke transaction execution failed: {:?}&quot;</span>, e);
@@ -1743,12 +1777,14 @@
             <span class="kw">let </span>charge_fee = !&lt;T <span class="kw">as </span>Config&gt;::DisableTransactionFee::get();
 
             <span class="comment">// Execute
-            </span><span class="kw">let </span>tx_execution_infos =
-                run_non_revertible_transaction(<span class="kw-2">&amp;</span>transaction, <span class="kw-2">&amp;mut </span>state, <span class="kw-2">&amp;</span><span class="self">Self</span>::get_block_context(), <span class="bool-val">true</span>, charge_fee)
-                    .map_err(|e| {
-                        <span class="macro">log!</span>(error, <span class="string">&quot;Declare transaction execution failed: {:?}&quot;</span>, e);
-                        Error::&lt;T&gt;::TransactionExecutionFailed
-                    })<span class="question-mark">?</span>;
+            </span><span class="kw">let </span>tx_execution_infos = run_non_revertible_transaction::&lt;<span class="kw">_</span>, <span class="kw">_</span>, T::DeclareTransactionFilter&gt;(
+                <span class="kw-2">&amp;</span>transaction,
+                <span class="kw-2">&amp;mut </span>state,
+                <span class="kw-2">&amp;</span><span class="self">Self</span>::get_block_context(),
+                <span class="bool-val">true</span>,
+                charge_fee,
+            )
+            .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TransactionExecutionFailed)<span class="question-mark">?</span>;
 
             <span class="self">Self</span>::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash(),
@@ -1793,12 +1829,14 @@
             <span class="kw">let </span>charge_fee = !&lt;T <span class="kw">as </span>Config&gt;::DisableTransactionFee::get();
 
             <span class="comment">// Execute
-            </span><span class="kw">let </span>tx_execution_infos =
-                run_non_revertible_transaction(<span class="kw-2">&amp;</span>transaction, <span class="kw-2">&amp;mut </span>state, <span class="kw-2">&amp;</span><span class="self">Self</span>::get_block_context(), <span class="bool-val">true</span>, charge_fee)
-                    .map_err(|e| {
-                        <span class="macro">log!</span>(error, <span class="string">&quot;Deploy account transaction execution failed: {:?}&quot;</span>, e);
-                        Error::&lt;T&gt;::TransactionExecutionFailed
-                    })<span class="question-mark">?</span>;
+            </span><span class="kw">let </span>tx_execution_infos = run_non_revertible_transaction::&lt;<span class="kw">_</span>, <span class="kw">_</span>, T::DeployAccountTransactionFilter&gt;(
+                <span class="kw-2">&amp;</span>transaction,
+                <span class="kw-2">&amp;mut </span>state,
+                <span class="kw-2">&amp;</span><span class="self">Self</span>::get_block_context(),
+                <span class="bool-val">true</span>,
+                charge_fee,
+            )
+            .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TransactionExecutionFailed)<span class="question-mark">?</span>;
 
             <span class="self">Self</span>::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash,
