@@ -73,6 +73,6 @@ impl Header {
             self.parent_block_hash.into(),
         ];
 
-        PedersenHasher::compute_hash_on_wrappers(data.into_iter())
+        PedersenHasher::compute_hash_on_wrappers(data)
     }
 }
