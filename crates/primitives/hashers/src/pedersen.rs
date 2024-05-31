@@ -42,23 +42,6 @@ impl HasherT for PedersenHasher {
 
         Felt252Wrapper(hash_value)
     }
-
-    /// Hashes a slice of field elements using the Pedersen hash function.
-    ///
-    /// # Arguments
-    ///
-    /// * `data` - The data to hash.
-    ///
-    /// # Returns
-    ///
-    /// The hash of the data.
-    fn compute_hash_on_wrappers<I>(data: I) -> Felt252Wrapper
-    where
-        I: IntoIterator<Item = Felt252Wrapper>,
-    {
-        let hash = compute_hash_on_elements(&data.into_iter().map(|x| x.0).collect::<Vec<FieldElement>>());
-        Felt252Wrapper(hash)
-    }
     
     #[inline(always)]
     fn hash_elements(a: FieldElement, b: FieldElement) -> FieldElement {
@@ -75,9 +58,14 @@ impl HasherT for PedersenHasher {
     ///
     /// h(h(h(h(0, data\[0\]), data\[1\]), ...), data\[n-1\]), n).
     #[inline]
-    fn compute_hash_on_elements(elements: &[FieldElement]) -> FieldElement {
-        compute_hash_on_elements(elements)
+    fn compute_hash_on_elements<I>(elements: I) -> FieldElement
+    where
+        I: IntoIterator<Item = FieldElement> 
+    {
+        let elements_vec: Vec<FieldElement> = elements.into_iter().collect();
+        compute_hash_on_elements(&elements_vec)
     }
+
 }
 
 #[test]

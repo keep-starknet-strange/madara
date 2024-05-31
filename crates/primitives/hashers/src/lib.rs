@@ -14,7 +14,7 @@ pub trait HasherT {
     /// The hash of the data.
     fn hash_bytes(data: &[u8]) -> Felt252Wrapper;
 
-    // Hashes the given data.
+    /// Hashes the given data, including the default implementation
     /// # Arguments
     /// * `data` - The data to hash.
     /// # Returns
@@ -53,7 +53,7 @@ pub trait HasherT {
     ///
     /// # Arguments
     ///
-    /// * `elements` - The array to hash.
+    /// * `elements` - A generic type that implements the Iterator trait.
     ///
     /// # Returns
     ///

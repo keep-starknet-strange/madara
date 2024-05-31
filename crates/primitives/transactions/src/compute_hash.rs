@@ -66,7 +66,7 @@ impl ComputeTransactionHash for InvokeTransactionV0 {
         let calldata_hash = compute_hash_on_elements(&convert_calldata(self.calldata.clone()));
         let max_fee = FieldElement::from(self.max_fee.0);
 
-        Felt252Wrapper(PedersenHasher::compute_hash_on_elements(&[
+        Felt252Wrapper(PedersenHasher::compute_hash_on_elements([
             prefix,
             version,
             contract_address,
@@ -74,7 +74,7 @@ impl ComputeTransactionHash for InvokeTransactionV0 {
             calldata_hash,
             max_fee,
             chain_id.into(),
-        ]))
+        ].into_iter()))
         .into()
     }
 }
@@ -89,7 +89,7 @@ impl ComputeTransactionHash for InvokeTransactionV1 {
         let max_fee = FieldElement::from(self.max_fee.0);
         let nonce = Felt252Wrapper::from(self.nonce.0).into();
 
-        Felt252Wrapper(PedersenHasher::compute_hash_on_elements(&[
+        Felt252Wrapper(PedersenHasher::compute_hash_on_elements([
             prefix,
             version,
             sender_address,
@@ -98,7 +98,7 @@ impl ComputeTransactionHash for InvokeTransactionV1 {
             max_fee,
             chain_id.into(),
             nonce,
-        ]))
+        ].into_iter()))
         .into()
     }
 }
@@ -111,10 +111,10 @@ impl ComputeTransactionHash for InvokeTransactionV3 {
         let sender_address = Felt252Wrapper::from(self.sender_address).into();
         let nonce = Felt252Wrapper::from(self.nonce.0).into();
         let account_deployment_data_hash = PoseidonHasher::compute_hash_on_elements(
-            &self.account_deployment_data.0.iter().map(|f| Felt252Wrapper::from(*f).into()).collect::<Vec<_>>(),
+            self.account_deployment_data.0.iter().map(|f| Felt252Wrapper::from(*f).into()),
         );
         let calldata_hash = PoseidonHasher::compute_hash_on_elements(
-            &self.calldata.0.iter().map(|f| Felt252Wrapper::from(*f).into()).collect::<Vec<_>>(),
+            self.calldata.0.iter().map(|f| Felt252Wrapper::from(*f).into()),
         );
 
         compute_transaction_hash_common_v3(
@@ -166,7 +166,7 @@ fn compute_hash_declare_v0_or_v1(
         FieldElement::from(version)
     };
 
-    Felt252Wrapper(PedersenHasher::compute_hash_on_elements(&[
+    Felt252Wrapper(PedersenHasher::compute_hash_on_elements([
         prefix,
         version,
         sender_address,
@@ -175,7 +175,7 @@ fn compute_hash_declare_v0_or_v1(
         max_fee,
         chain_id.into(),
         nonce_or_class_hash,
-    ]))
+    ].into_iter()))
     .into()
 }
 
@@ -190,7 +190,7 @@ impl ComputeTransactionHash for DeclareTransactionV2 {
         let nonce = Felt252Wrapper::from(self.nonce).into();
         let compiled_class_hash = Felt252Wrapper::from(self.compiled_class_hash).into();
 
-        Felt252Wrapper(PedersenHasher::compute_hash_on_elements(&[
+        Felt252Wrapper(PedersenHasher::compute_hash_on_elements([
             prefix,
             version,
             sender_address,
@@ -200,7 +200,7 @@ impl ComputeTransactionHash for DeclareTransactionV2 {
             chain_id.into(),
             nonce,
             compiled_class_hash,
-        ]))
+        ].into_iter()))
         .into()
     }
 }
@@ -213,7 +213,7 @@ impl ComputeTransactionHash for DeclareTransactionV3 {
         let sender_address = Felt252Wrapper::from(self.sender_address).into();
         let nonce = Felt252Wrapper::from(self.nonce.0).into();
         let account_deployment_data_hash = PoseidonHasher::compute_hash_on_elements(
-            &self.account_deployment_data.0.iter().map(|f| Felt252Wrapper::from(*f).into()).collect::<Vec<_>>(),
+            self.account_deployment_data.0.iter().map(|f| Felt252Wrapper::from(*f).into()),
         );
 
         compute_transaction_hash_common_v3(
@@ -280,7 +280,7 @@ impl ComputeTransactionHash for DeployAccountTransactionV1 {
         let max_fee = FieldElement::from(self.max_fee.0);
         let nonce = Felt252Wrapper::from(self.nonce).into();
 
-        Felt252Wrapper(PedersenHasher::compute_hash_on_elements(&[
+        Felt252Wrapper(PedersenHasher::compute_hash_on_elements([
             prefix,
             version,
             contract_address,
@@ -289,7 +289,7 @@ impl ComputeTransactionHash for DeployAccountTransactionV1 {
             max_fee,
             chain_id.into(),
             nonce,
-        ]))
+        ].into_iter()))
         .into()
     }
 }
@@ -311,7 +311,7 @@ impl ComputeTransactionHash for DeployAccountTransactionV3 {
         )
         .into();
         let nonce = Felt252Wrapper::from(self.nonce.0).into();
-        let constructor_calldata_hash = PoseidonHasher::compute_hash_on_elements(&constructor_calldata);
+        let constructor_calldata_hash = PoseidonHasher::compute_hash_on_elements(constructor_calldata.into_iter());
 
         compute_transaction_hash_common_v3(
             prefix,
@@ -342,7 +342,7 @@ impl ComputeTransactionHash for L1HandlerTransaction {
         let calldata_hash = compute_hash_on_elements(&convert_calldata(self.calldata.clone()));
         let nonce = Felt252Wrapper::from(self.nonce).into();
 
-        Felt252Wrapper(PedersenHasher::compute_hash_on_elements(&[
+        Felt252Wrapper(PedersenHasher::compute_hash_on_elements([
             prefix,
             version,
             contract_address,
@@ -350,7 +350,7 @@ impl ComputeTransactionHash for L1HandlerTransaction {
             calldata_hash,
             chain_id.into(),
             nonce,
-        ]))
+        ].into_iter()))
         .into()
     }
 }
@@ -369,13 +369,13 @@ fn compute_transaction_hash_common_v3(
     resource_bounds: &ResourceBoundsMapping,
     additional_data: Vec<FieldElement>,
 ) -> TransactionHash {
-    let gas_hash = PoseidonHasher::compute_hash_on_elements(&[
+    let gas_hash = PoseidonHasher::compute_hash_on_elements([
         FieldElement::from(tip.0),
         prepare_resource_bound_value(resource_bounds, Resource::L1Gas),
         prepare_resource_bound_value(resource_bounds, Resource::L2Gas),
-    ]);
+    ].into_iter());
     let paymaster_hash = PoseidonHasher::compute_hash_on_elements(
-        &paymaster_data.0.iter().map(|f| Felt252Wrapper::from(*f).into()).collect::<Vec<_>>(),
+        paymaster_data.0.iter().map(|f| Felt252Wrapper::from(*f).into()),
     );
     let data_availability_modes =
         prepare_data_availability_modes(nonce_data_availability_mode, fee_data_availability_mode);
@@ -390,7 +390,7 @@ fn compute_transaction_hash_common_v3(
         data_availability_modes,
     ];
     data_to_hash.extend(additional_data);
-    Felt252Wrapper(PoseidonHasher::compute_hash_on_elements(data_to_hash.as_slice())).into()
+    Felt252Wrapper(PoseidonHasher::compute_hash_on_elements(data_to_hash.into_iter())).into()
 }
 
 #[cfg(test)]

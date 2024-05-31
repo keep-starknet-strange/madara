@@ -40,25 +40,16 @@ impl HasherT for PoseidonHasher {
         Felt252Wrapper(poseidon_hash_many(&field_element_vector))
     }
 
-    /// Hashes a slice of field elements using the Poseidon hash function.
-    ///
-    /// # Arguments
-    ///
-    /// * `data` - The data to hash.
-    ///
-    /// # Returns
-    ///
-    /// The hash of the data.
-    fn compute_hash_on_wrappers(data: &[Felt252Wrapper]) -> Felt252Wrapper {
-        let data = data.iter().map(|x| x.0).collect::<Vec<_>>();
-        Felt252Wrapper(poseidon_hash_many(&data))
-    }
-
     fn hash_elements(a: FieldElement, b: FieldElement) -> FieldElement {
         poseidon_hash(a, b)
     }
-    fn compute_hash_on_elements(elements: &[FieldElement]) -> FieldElement {
-        poseidon_hash_many(elements)
+
+    fn compute_hash_on_elements<I>(elements: I) -> FieldElement
+    where
+        I: IntoIterator<Item = FieldElement> 
+    {
+        let elements_vec: Vec<FieldElement> = elements.into_iter().collect();
+        poseidon_hash_many(&elements_vec)
     }
 }
 

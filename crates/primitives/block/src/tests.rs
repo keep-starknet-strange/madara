@@ -24,7 +24,7 @@ fn generate_dummy_header() -> Vec<Felt252Wrapper> {
 
 #[test]
 fn test_header_hash() {
-    let hash = <PedersenHasher as HasherT>::compute_hash_on_wrappers(&generate_dummy_header());
+    let hash = <PedersenHasher as HasherT>::compute_hash_on_wrappers(generate_dummy_header().into_iter());
 
     let expected_hash =
         Felt252Wrapper::from_hex_be("0x001bef5f78bfd9122370a6bf9e3365b96362bef2bfd2b44b67707d8fbbf27bdc").unwrap();
@@ -52,7 +52,7 @@ fn test_real_header_hash() {
         StarkFelt::try_from("0x2043ba1ef46882ce1dbb17b501fffa4b71f87f618e8f394e9605959d92efdf6").unwrap();
     let protocol_version = 0u32;
 
-    let header: &[Felt252Wrapper] = &[
+    let header = [
         block_number.into(),
         global_state_root.into(),
         sequencer_address.into(),
@@ -68,7 +68,7 @@ fn test_real_header_hash() {
 
     let expected_hash =
         Felt252Wrapper::from_hex_be("0x001d126ca058c7e546d59cf4e10728e4b023ca0fb368e8abcabf0b5335f4487a").unwrap();
-    let hash = <PedersenHasher as HasherT>::compute_hash_on_wrappers(header);
+    let hash = <PedersenHasher as HasherT>::compute_hash_on_wrappers(header.into_iter());
 
     assert_eq!(hash, expected_hash);
 }
