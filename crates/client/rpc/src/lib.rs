@@ -26,7 +26,7 @@ use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 use mc_genesis_data_provider::GenesisProvider;
 pub use mc_rpc_core::utils::*;
-use mc_rpc_core::DeclareV0Result;
+use mc_rpc_core::{DeclareV0Result, DeclareTransactionWithV0};
 pub use mc_rpc_core::{
     Felt, MadaraRpcApiServer, PredeployedAccountWithBalance, StarknetReadRpcApiServer, StarknetTraceRpcApiServer,
     StarknetWriteRpcApiServer,
@@ -240,36 +240,13 @@ where
 {
     async fn declare_txn_common(
         &self,
-        transaction_inputs: mc_rpc_core::DeclareV0Transaction,
+        transaction_inputs: DeclareTransactionWithV0,
     ) -> Result<(TransactionHash, ClassHash), StarknetRpcApiError> {
-        let best_block_hash = self.get_best_block_hash();
-
         match transaction_inputs {
-            mc_rpc_core::DeclareV0Transaction::V1(transaction) => {
-                let (class_hash, tx_hash) = (transaction.class_hash(), transaction.tx_hash());
-
-                let current_block_hash = self.get_best_block_hash();
-                let contract_class = self
-                    .overrides
-                    .for_block_hash(self.client.as_ref(), current_block_hash)
-                    .contract_class_by_class_hash(current_block_hash, class_hash);
-
-                if let Some(contract_class) = contract_class {
-                    error!("Contract class already exists: {:?}", contract_class);
-                    return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
-                }
-
-                let extrinsic =
-                    self.convert_tx_to_extrinsic(best_block_hash, AccountTransaction::Declare(transaction)).unwrap();
-
-                let try_submit_extrinsic = submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await;
-
-                match try_submit_extrinsic {
-                    Ok(_val) => Ok((tx_hash, class_hash)),
-                    Err(e) => return Err(e),
-                }
+            DeclareTransactionWithV0::V1(transaction) => {
+                self._declare_tx(transaction).await
             }
-            mc_rpc_core::DeclareV0Transaction::V0(declare_txn, program_vec, entrypoints, abi_length) => {
+            DeclareTransactionWithV0::V0(declare_txn, program_vec, entrypoints, abi_length) => {
                 let txn_hash: TransactionHash = TransactionHash(StarkHash { 0: FieldElement::ONE.to_bytes_be() });
 
                 let program_decoded = Program::decode_all(&mut &*program_vec).unwrap();
@@ -305,28 +282,33 @@ where
                     Err(e) => return Err(StarknetRpcApiError::from(e)),
                 }
 
-                let current_block_hash = self.get_best_block_hash();
-                let contract_class = self
-                    .overrides
-                    .for_block_hash(self.client.as_ref(), current_block_hash)
-                    .contract_class_by_class_hash(current_block_hash, declare_transaction.class_hash());
-
-                if let Some(contract_class) = contract_class {
-                    error!("Contract class already exists: {:?}", contract_class);
-                    return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
-                }
-
-                let extrinsic = self
-                    .convert_tx_to_extrinsic(best_block_hash, AccountTransaction::Declare(declare_transaction.clone()))
-                    .unwrap();
-
-                let res = submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await;
-
-                match res {
-                    Ok(_val) => Ok((declare_transaction.tx_hash, declare_transaction.class_hash())),
-                    Err(e) => return Err(e),
-                }
+                self._declare_tx(declare_transaction).await
             }
+        }
+    }
+
+    async fn _declare_tx(&self ,txn: DeclareTransaction) -> Result<(TransactionHash, ClassHash), StarknetRpcApiError> {
+        let best_block_hash = self.get_best_block_hash();
+        let current_block_hash = self.get_best_block_hash();
+        let contract_class = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), current_block_hash)
+            .contract_class_by_class_hash(current_block_hash, txn.class_hash());
+
+        if let Some(contract_class) = contract_class {
+            error!("Contract class already exists: {:?}", contract_class);
+            return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
+        }
+
+        let extrinsic = self
+            .convert_tx_to_extrinsic(best_block_hash, AccountTransaction::Declare(txn.clone()))
+            .unwrap();
+
+        let res = submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await;
+
+        match res {
+            Ok(_val) => Ok((txn.tx.compute_hash(Felt252Wrapper::from(self.chain_id().unwrap().0), false), txn.class_hash())),
+            Err(e) => return Err(e),
         }
     }
 }
@@ -377,17 +359,14 @@ where
 
     async fn declare_v0_contract(
         &self,
-        declare_transaction: DeclareTransactionV0V1,
-        program_vec: Vec<u8>,
-        entrypoints: IndexMap<EntryPointType, Vec<EntryPoint>>,
-        abi_length: usize,
+        params: mc_rpc_core::CustomDeclareV0Transaction
     ) -> RpcResult<DeclareV0Result> {
         let try_declare = self
-            .declare_txn_common(mc_rpc_core::DeclareV0Transaction::V0(
-                declare_transaction,
-                program_vec,
-                entrypoints,
-                abi_length,
+            .declare_txn_common(DeclareTransactionWithV0::V0(
+                params.declare_transaction,
+                params.program_vec,
+                params.entrypoints,
+                params.abi_length,
             ))
             .await;
 
@@ -438,7 +417,7 @@ where
         })?;
 
         let (tx_hash, class_hash) =
-            self.declare_txn_common(mc_rpc_core::DeclareV0Transaction::V1(transaction)).await.unwrap();
+            self.declare_txn_common(mc_rpc_core::DeclareTransactionWithV0::V1(transaction)).await.unwrap();
 
         if let Some(sierra_contract_class) = opt_sierra_contract_class {
             if let Some(e) = self.backend.sierra_classes().store_sierra_class(class_hash, sierra_contract_class).err() {

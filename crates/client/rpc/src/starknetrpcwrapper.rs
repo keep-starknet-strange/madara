@@ -59,12 +59,9 @@ where
 
     async fn declare_v0_contract(
         &self,
-        declare_transaction: DeclareTransactionV0V1,
-        program_vec: Vec<u8>,
-        entrypoints: IndexMap<EntryPointType, Vec<EntryPoint>>,
-        abi_length: usize,
+        params: mc_rpc_core::CustomDeclareV0Transaction
     ) -> RpcResult<DeclareV0Result> {
-        self.0.declare_v0_contract(declare_transaction, program_vec, entrypoints, abi_length).await
+        self.0.declare_v0_contract(params).await
     }
 }
 

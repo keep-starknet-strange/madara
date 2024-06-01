@@ -48,8 +48,16 @@ pub struct DeclareV0Result {
     pub class_hash: ClassHash,
 }
 
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
+pub struct CustomDeclareV0Transaction {
+    pub declare_transaction: DeclareTransactionV0V1,
+    pub program_vec: Vec<u8>,
+    pub entrypoints: IndexMap<EntryPointType, Vec<EntryPoint>>,
+    pub abi_length: usize
+}
+
 #[derive(PartialEq, Eq, Debug)]
-pub enum DeclareV0Transaction {
+pub enum DeclareTransactionWithV0 {
     V0(DeclareTransactionV0V1, Vec<u8>, IndexMap<EntryPointType, Vec<EntryPoint>>, usize),
     V1(DeclareTransaction),
 }
@@ -66,10 +74,7 @@ pub trait MadaraRpcApi: StarknetReadRpcApi {
     #[method(name = "declareV0")]
     async fn declare_v0_contract(
         &self,
-        declare_transaction: DeclareTransactionV0V1,
-        program_vec: Vec<u8>,
-        entrypoints: IndexMap<EntryPointType, Vec<EntryPoint>>,
-        abi_length: usize,
+        params: CustomDeclareV0Transaction
     ) -> RpcResult<DeclareV0Result>;
 }
 
