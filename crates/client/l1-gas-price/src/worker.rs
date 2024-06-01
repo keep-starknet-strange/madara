@@ -69,10 +69,14 @@ async fn update_gas_price(
     // The RPC responds with 301 elements for some reason. It's also just safer to manually
     // take the last 300. We choose 300 to get average gas caprice for last one hour (300 * 12 sec block
     // time).
-    let (_, blob_fee_history_one_hour) =
-        fee_history.result.base_fee_per_blob_gas.split_at(fee_history.result.base_fee_per_blob_gas.len() - 300);
+    let (_, blob_fee_history_one_hour) = fee_history
+        .result
+        .base_fee_per_blob_gas
+        .split_at(fee_history.result.base_fee_per_blob_gas.len().max(300) - 300);
 
-    let avg_blob_base_fee = blob_fee_history_one_hour.iter().sum::<u128>() / blob_fee_history_one_hour.len() as u128;
+    let avg_blob_base_fee =
+        blob_fee_history_one_hour.iter().map(|hex_str| u128::from_str_radix(&hex_str[2..], 16).unwrap()).sum::<u128>()
+            / blob_fee_history_one_hour.len() as u128;
 
     let eth_gas_price = u128::from_str_radix(
         fee_history
@@ -84,17 +88,20 @@ async fn update_gas_price(
         16,
     )?;
 
+    log::info!("avg_blob_base_fee : {:?}", avg_blob_base_fee);
+    log::info!("eth_gas_price : {:?}", eth_gas_price);
+
     // TODO: fetch this from the oracle
     let eth_strk_price = 2425;
 
     let mut gas_price = gas_price.lock().await;
     gas_price.eth_l1_gas_price =
         NonZeroU128::new(eth_gas_price).ok_or(format_err!("Failed to convert `eth_gas_price` to NonZeroU128"))?;
-    gas_price.eth_l1_data_gas_price = NonZeroU128::new(avg_blob_base_fee)
+    gas_price.eth_l1_data_gas_price = NonZeroU128::new(avg_blob_base_fee + 1)
         .ok_or(format_err!("Failed to convert `eth_l1_data_gas_price` to NonZeroU128"))?;
     gas_price.strk_l1_gas_price = NonZeroU128::new(eth_gas_price.saturating_mul(eth_strk_price))
         .ok_or(format_err!("Failed to convert `strk_l1_gas_price` to NonZeroU128"))?;
-    gas_price.strk_l1_data_gas_price = NonZeroU128::new(avg_blob_base_fee.saturating_mul(eth_strk_price))
+    gas_price.strk_l1_data_gas_price = NonZeroU128::new((avg_blob_base_fee + 1).saturating_mul(eth_strk_price))
         .ok_or(format_err!("Failed to convert `strk_l1_data_gas_price` to NonZeroU128"))?;
     gas_price.last_update_timestamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis();
     // explicitly dropping gas price here to avoid long waits when fetching the value
@@ -103,3 +110,6 @@ async fn update_gas_price(
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_l1_gas_price() {}

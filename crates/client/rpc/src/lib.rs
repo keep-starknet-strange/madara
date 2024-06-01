@@ -21,12 +21,11 @@ use blockifier::transaction::objects::{ResourcesMapping, TransactionExecutionInf
 use blockifier::transaction::transactions::{DeclareTransaction, L1HandlerTransaction};
 use cairo_vm::types::program::Program;
 use errors::StarknetRpcApiError;
-use indexmap::IndexMap;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 use mc_genesis_data_provider::GenesisProvider;
 pub use mc_rpc_core::utils::*;
-use mc_rpc_core::{DeclareV0Result, DeclareTransactionWithV0};
+use mc_rpc_core::{DeclareTransactionWithV0, DeclareV0Result};
 pub use mc_rpc_core::{
     Felt, MadaraRpcApiServer, PredeployedAccountWithBalance, StarknetReadRpcApiServer, StarknetTraceRpcApiServer,
     StarknetWriteRpcApiServer,
@@ -58,9 +57,8 @@ use sp_runtime::codec::DecodeAll;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use sp_runtime::transaction_validity::InvalidTransaction;
 use starknet_api::core::{ClassHash, Nonce};
-use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 use starknet_api::hash::{StarkFelt, StarkHash};
-use starknet_api::transaction::{Calldata, DeclareTransactionV0V1, Fee, TransactionHash, TransactionVersion};
+use starknet_api::transaction::{Calldata, Fee, TransactionHash, TransactionVersion};
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
@@ -78,7 +76,7 @@ use starknet_core::utils::get_selector_from_name;
 use trace_api::get_previous_block_substrate_hash;
 
 use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
-use crate::types::{RpcEventFilter};
+use crate::types::RpcEventFilter;
 
 /// A Starknet RPC server for Madara
 pub struct Starknet<A: ChainApi, B: BlockT, BE, G, C, P, H> {
@@ -243,9 +241,7 @@ where
         transaction_inputs: DeclareTransactionWithV0,
     ) -> Result<(TransactionHash, ClassHash), StarknetRpcApiError> {
         match transaction_inputs {
-            DeclareTransactionWithV0::V1(transaction) => {
-                self._declare_tx(transaction).await
-            }
+            DeclareTransactionWithV0::V1(transaction) => self._declare_tx(transaction).await,
             DeclareTransactionWithV0::V0(declare_txn, program_vec, entrypoints, abi_length) => {
                 let txn_hash: TransactionHash = TransactionHash(StarkHash { 0: FieldElement::ONE.to_bytes_be() });
 
@@ -270,7 +266,7 @@ where
                 }
 
                 let try_declare_transaction = DeclareTransaction::new(
-                    starknet_api::transaction::DeclareTransaction::V0(declare_txn),
+                    starknet_api::transaction::DeclareTransaction::V0(*declare_txn),
                     txn_hash,
                     class_info,
                 );
@@ -287,7 +283,7 @@ where
         }
     }
 
-    async fn _declare_tx(&self ,txn: DeclareTransaction) -> Result<(TransactionHash, ClassHash), StarknetRpcApiError> {
+    async fn _declare_tx(&self, txn: DeclareTransaction) -> Result<(TransactionHash, ClassHash), StarknetRpcApiError> {
         let best_block_hash = self.get_best_block_hash();
         let current_block_hash = self.get_best_block_hash();
         let contract_class = self
@@ -297,18 +293,19 @@ where
 
         if let Some(contract_class) = contract_class {
             error!("Contract class already exists: {:?}", contract_class);
-            return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
+            return Err(StarknetRpcApiError::ClassAlreadyDeclared);
         }
 
-        let extrinsic = self
-            .convert_tx_to_extrinsic(best_block_hash, AccountTransaction::Declare(txn.clone()))
-            .unwrap();
+        let extrinsic =
+            self.convert_tx_to_extrinsic(best_block_hash, AccountTransaction::Declare(txn.clone())).unwrap();
 
         let res = submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await;
 
         match res {
-            Ok(_val) => Ok((txn.tx.compute_hash(Felt252Wrapper::from(self.chain_id().unwrap().0), false), txn.class_hash())),
-            Err(e) => return Err(e),
+            Ok(_val) => {
+                Ok((txn.tx.compute_hash(Felt252Wrapper::from(self.chain_id().unwrap().0), false), txn.class_hash()))
+            }
+            Err(e) => Err(e),
         }
     }
 }
@@ -357,13 +354,10 @@ where
             .collect::<Vec<_>>())
     }
 
-    async fn declare_v0_contract(
-        &self,
-        params: mc_rpc_core::CustomDeclareV0Transaction
-    ) -> RpcResult<DeclareV0Result> {
+    async fn declare_v0_contract(&self, params: mc_rpc_core::CustomDeclareV0Transaction) -> RpcResult<DeclareV0Result> {
         let try_declare = self
             .declare_txn_common(DeclareTransactionWithV0::V0(
-                params.declare_transaction,
+                Box::from(params.declare_transaction),
                 params.program_vec,
                 params.entrypoints,
                 params.abi_length,

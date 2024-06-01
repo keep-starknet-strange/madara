@@ -29,7 +29,7 @@ pub struct FeeHistory {
     /// of  the returned range, because this value can be derived from the newest block. Zeroes
     /// are returned for pre-EIP-4844 blocks.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub base_fee_per_blob_gas: Vec<u128>,
+    pub base_fee_per_blob_gas: Vec<String>,
     /// An array of block blob gas used ratios. These are calculated as the ratio of gasUsed and
     /// gasLimit.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
