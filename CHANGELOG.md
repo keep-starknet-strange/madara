@@ -4,6 +4,7 @@
 
 ## v0.8.0
 
+- feat: L1 gas price/fix
 - feat: Declare V0 RPC call
 - feat: add `TransactionFilter<TxType>` to pallet-starknet `Config`
 - chore: remove `ignore` from
