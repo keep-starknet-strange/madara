@@ -351,22 +351,15 @@ impl<T: Config> Pallet<T> {
         simulation_flags: &SimulationFlags,
     ) -> Result<TransactionExecutionInfo, TransactionExecutionError> {
         match transaction {
-            AccountTransaction::Declare(tx) => run_non_revertible_transaction(
+            AccountTransaction::Declare(tx) => run_non_revertible_transaction::<_, _, T::DeclareTransactionFilter>(
                 tx,
                 state,
                 block_context,
                 simulation_flags.validate,
                 simulation_flags.charge_fee,
             ),
-            AccountTransaction::DeployAccount(tx) => run_non_revertible_transaction(
-                tx,
-                state,
-                block_context,
-                simulation_flags.validate,
-                simulation_flags.charge_fee,
-            ),
-            AccountTransaction::Invoke(tx) if tx.tx.version() == TransactionVersion::ZERO => {
-                run_non_revertible_transaction(
+            AccountTransaction::DeployAccount(tx) => {
+                run_non_revertible_transaction::<_, _, T::DeployAccountTransactionFilter>(
                     tx,
                     state,
                     block_context,
@@ -374,7 +367,16 @@ impl<T: Config> Pallet<T> {
                     simulation_flags.charge_fee,
                 )
             }
-            AccountTransaction::Invoke(tx) => run_revertible_transaction(
+            AccountTransaction::Invoke(tx) if tx.tx.version() == TransactionVersion::ZERO => {
+                run_non_revertible_transaction::<_, _, T::InvokeTransactionFilter>(
+                    tx,
+                    state,
+                    block_context,
+                    simulation_flags.validate,
+                    simulation_flags.charge_fee,
+                )
+            }
+            AccountTransaction::Invoke(tx) => run_revertible_transaction::<_, _, T::InvokeTransactionFilter>(
                 tx,
                 state,
                 block_context,

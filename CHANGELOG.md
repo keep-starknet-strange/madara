@@ -2,7 +2,13 @@
 
 ## Next release
 
+## v0.8.0
+
 - feat: Declare V0 RPC call
+- feat: add `TransactionFilter<TxType>` to pallet-starknet `Config`
+- chore: remove `ignore` from
+  `storage_changes_should_revert_on_transaction_revert` test
+- dev: Implement tests for new rpc method starknet_getTransactionStatus
 - feat: actual estimate_fee added, brought back l1 messages and refactored
   simulate tx
 - dev: impl get_state_updates using get_transaction_re_execution_state_diff

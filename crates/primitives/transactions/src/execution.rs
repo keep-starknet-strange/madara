@@ -32,6 +32,32 @@ use starknet_api::transaction::{Calldata, Fee, ResourceBounds, TransactionVersio
 
 use super::SIMULATE_TX_VERSION_OFFSET;
 
+pub trait TransactionFilter<T> {
+    fn is_valid(transaction: &T) -> bool;
+}
+
+impl<T> TransactionFilter<T> for () {
+    fn is_valid(_transaction: &T) -> bool {
+        true
+    }
+}
+
+pub struct BanInvokeV0TransactionRule;
+
+impl TransactionFilter<InvokeTransaction> for BanInvokeV0TransactionRule {
+    fn is_valid(transaction: &InvokeTransaction) -> bool {
+        !matches!(transaction.tx, starknet_api::transaction::InvokeTransaction::V0(_))
+    }
+}
+
+pub struct BanDeclareV0TransactionRule;
+
+impl TransactionFilter<DeclareTransaction> for BanDeclareV0TransactionRule {
+    fn is_valid(transaction: &DeclareTransaction) -> bool {
+        !matches!(transaction.tx, starknet_api::transaction::DeclareTransaction::V0(_))
+    }
+}
+
 /// Contains the execution configuration regarding transaction fee
 /// activation, transaction fee charging, nonce validation, transaction
 /// validation and the execution mode (query or not).
@@ -332,13 +358,8 @@ impl GetValidateEntryPointSelector for L1HandlerTransaction {
 }
 
 #[allow(clippy::too_many_arguments)]
-pub trait Validate: GetValidateEntryPointSelector {
-    // Implement this to blacklist some transaction versions
-    fn validate_tx_version(&self) -> TransactionExecutionResult<()> {
-        Ok(())
-    }
-
-    fn validate(
+pub trait Validate: Sized + GetValidateEntryPointSelector {
+    fn validate<F: TransactionFilter<Self>>(
         &self,
         state: &mut dyn State,
         tx_context: Arc<TransactionContext>,
@@ -349,7 +370,7 @@ pub trait Validate: GetValidateEntryPointSelector {
         strict_nonce_checking: bool,
     ) -> TransactionExecutionResult<Option<CallInfo>>;
 
-    fn perform_pre_validation_stage(
+    fn perform_pre_validation_stage<F: TransactionFilter<Self>>(
         &self,
         state: &mut dyn State,
         tx_context: Arc<TransactionContext>,
@@ -375,7 +396,7 @@ impl<
         + TransactionInfoCreator,
 > Validate for T
 {
-    fn validate(
+    fn validate<F: TransactionFilter<T>>(
         &self,
         state: &mut dyn State,
         tx_context: Arc<TransactionContext>,
@@ -386,7 +407,7 @@ impl<
         strict_nonce_checking: bool,
     ) -> TransactionExecutionResult<Option<CallInfo>> {
         // Check tx version, nonce and fee
-        self.perform_pre_validation_stage(state, tx_context.clone(), strict_nonce_checking, charge_fee)?;
+        self.perform_pre_validation_stage::<F>(state, tx_context.clone(), strict_nonce_checking, charge_fee)?;
 
         // Run the actual `validate` entrypoint
         if validate_tx {
@@ -396,15 +417,14 @@ impl<
         }
     }
 
-    fn perform_pre_validation_stage(
+    fn perform_pre_validation_stage<F: TransactionFilter<T>>(
         &self,
         state: &mut dyn State,
         tx_context: Arc<TransactionContext>,
         strict_nonce_checking: bool,
         charge_fee: bool,
     ) -> TransactionExecutionResult<()> {
-        // Check that version of the Tx is supported by the network
-        self.validate_tx_version()?;
+        assert!(F::is_valid(self), "custom chain provided tx filter failed");
 
         // Check if nonce has a correct value
         Self::handle_nonce(state, &tx_context.tx_info, strict_nonce_checking)?;
@@ -545,7 +565,7 @@ impl<S: State + SetArbitraryNonce> SetArbitraryNonce for CachedState<S> {
     }
 }
 
-pub fn run_non_revertible_transaction<T, S>(
+pub fn run_non_revertible_transaction<T, S, F>(
     transaction: &T,
     state: &mut S,
     block_context: &BlockContext,
@@ -554,7 +574,8 @@ pub fn run_non_revertible_transaction<T, S>(
 ) -> TransactionExecutionResult<TransactionExecutionInfo>
 where
     S: State,
-    T: GetTxType + Executable<S> + Validate + GetActualCostBuilder + TransactionInfoCreator + std::fmt::Debug,
+    F: TransactionFilter<T>,
+    T: GetTxType + Executable<S> + Validate + GetActualCostBuilder + TransactionInfoCreator,
 {
     let mut resources = ExecutionResources::default();
     let mut remaining_gas = block_context.versioned_constants().tx_initial_gas();
@@ -570,7 +591,7 @@ where
         let mut execution_context = EntryPointExecutionContext::new_validate(tx_context.clone(), charge_fee)?;
         execute_call_info =
             transaction.run_execute(state, &mut resources, &mut execution_context, &mut remaining_gas)?;
-        validate_call_info = transaction.validate(
+        validate_call_info = transaction.validate::<F>(
             state,
             tx_context.clone(),
             &mut resources,
@@ -581,7 +602,7 @@ where
         )?;
     } else {
         let mut execution_context = EntryPointExecutionContext::new_invoke(tx_context.clone(), charge_fee)?;
-        validate_call_info = transaction.validate(
+        validate_call_info = transaction.validate::<F>(
             state,
             tx_context.clone(),
             &mut resources,
@@ -632,7 +653,7 @@ where
     Ok(tx_execution_info)
 }
 
-pub fn run_revertible_transaction<T, S>(
+pub fn run_revertible_transaction<T, S, F>(
     transaction: &T,
     state: &mut S,
     block_context: &BlockContext,
@@ -647,12 +668,13 @@ where
         + GetCalldataLen
         + TransactionInfoCreator,
     S: State + SetArbitraryNonce,
+    F: TransactionFilter<T>,
 {
     let mut resources = ExecutionResources::default();
     let mut remaining_gas = block_context.versioned_constants().tx_initial_gas();
     let tx_context = Arc::new(block_context.to_tx_context(transaction));
 
-    let validate_call_info = transaction.validate(
+    let validate_call_info = transaction.validate::<F>(
         state,
         tx_context.clone(),
         &mut resources,

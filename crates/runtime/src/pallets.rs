@@ -75,6 +75,9 @@ impl pallet_starknet::Config for Runtime {
     type ProtocolVersion = ProtocolVersion;
     type ProgramHash = ProgramHash;
     type ExecutionConstants = ExecutionConstants;
+    type InvokeTransactionFilter = ();
+    type DeclareTransactionFilter = ();
+    type DeployAccountTransactionFilter = ();
 }
 
 /// --------------------------------------
