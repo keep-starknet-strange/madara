@@ -34,8 +34,7 @@
 足<!--
 -->其应用的需求，例如选择不同的哈希函数或自定义共识算法。最棒的是，由于应用链建
 立在<!--
--->L1 或 L2 区块链之上，可以继承其强大的安全性，为开发人员提供了两全其美的解决方案
-。
+-->L1 或 L2 区块链之上，可以继承其强大的安全性，为开发人员提供了两全其美的解决方案。
 
 介绍下 Madara，这是一个将灵活性和极速性能相结合的划时代的排序器。排序器这一组件
 负<!--
@@ -43,8 +42,8 @@
 为在<!--
 -->Starknet 生态系统中进行前所未有的实验开辟了广阔的可能性。
 
-在我们深入探讨 Madara 如何为 Starknet 应用链带来强大的能力前，有必要解决一个问题
-：为<!--
+在我们深入探讨 Madara 如何为 Starknet 应用链带来强大的能力前，有必要解决一个问
+题：为<!--
 -->什么开发人员会选择在 Starknet 上构建应用链，而不是直接使<!--
 -->用[Starknet 有效性 Rollups](https://starkware.co/resource/scaling-ethereum-navigating-the-blockchain-trilemma/#:~:text=top%20of%20them.-,Validity%20Rollups,-Validity%20rollups%2C%20also)。
 有人可能会想，Starknet 是否已经足以应对大多数情况。
@@ -98,9 +97,9 @@ Madara 是由 StarkWare 探索团队，也称<!--
    -->[starknet_in_rust](https://github.com/lambdaclass/starknet_in_rust)）之间切
    换的灵活性。无论选择了哪个执行工具包，底层框架都使用 Cairo VM。Cairo 语言有助于
    创建可证明的程序，这样就能证明计算被正确执行。
-2. **结算:** 作为有效性 Rollup，Madara 应用链的状态可以仅通过检查其结算层来重建
-   。通过在 Starknet L2 上更频繁的结算，L3 应用链可以实现更快的硬最终性，而去中
-   心化的<!--
+2. **结算:** 作为有效性 Rollup，Madara 应用链的状态可以仅通过检查其结算层来重
+   建。通过在 Starknet L2 上更频繁的结算，L3 应用链可以实现更快的硬最终性，而去
+   中心化的<!--
    -->排序层实现更强大的软最终性，因此，在这两方面(硬和软终结性)，结算都得到了增<!--
    -->强。
 3. **排序:** Madara 负责排序过程，可以根据应用的需求进行调整，无论是简单的 FCFS
@@ -113,8 +112,8 @@ Madara 是由 StarkWare 探索团队，也称<!--
    -->使 Madara 发生故障的情况下，他们也能证明自己拥有资产的所有权。Madara 将为开
    发者<!--
    -->提供多种可供选择的数据可用性方案。
-5. **治理:** 每个 Madara 应用链可以选择其治理模型
-   。[Snapshot X](https://twitter.com/SnapshotLabs)提供了一个依赖于存储证明
+5. **治理:** 每个 Madara 应用链可以选择其治理模
+   型。[Snapshot X](https://twitter.com/SnapshotLabs)提供了一个依赖于存储证明
    并<!--
    -->完全基于链上的治理系统。其他治理机制也在探索中，譬如原生的 Substrate 治理面
    板。链上治理是 Madara 的核心价值所在。
@@ -127,8 +126,8 @@ Madara 是由 StarkWare 探索团队，也称<!--
 Starknet 智能合<!--
 -->约，从而增强了 Cairo VM。Substrate 是一个开源 Rust 框架，以其灵活性而闻名，并用
 于构<!--
--->建可定制的区块链。与此同时，Cairo VM 专门设计用于高效生成程序执行的有效性证明
-。通<!--
+-->建可定制的区块链。与此同时，Cairo VM 专门设计用于高效生成程序执行的有效性证
+明。通<!--
 -->过在 L2 上使用状态跟踪和智能合约来验证这些证明，应用链确保集成了 Starknet 的安
 全性。这样，Madara 利用 Cairo 的强大功能实现了程序执行的可证明性。
 
