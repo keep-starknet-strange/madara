@@ -598,6 +598,14 @@
 <a href="#598" id="598">598</a>
 <a href="#599" id="599">599</a>
 <a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
@@ -620,6 +628,7 @@
     InherentDataProvider <span class="kw">as </span>StarknetInherentDataProvider, InherentError <span class="kw">as </span>StarknetInherentError, L1GasPrices,
     StarknetInherentData, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
 };
+<span class="kw">use </span>pallet_starknet_runtime_api::StarknetRuntimeApi;
 <span class="kw">use </span>prometheus_endpoint::Registry;
 <span class="kw">use </span>sc_basic_authorship::ProposerFactory;
 <span class="kw">use </span>sc_client_api::{Backend, BlockBackend, BlockchainEvents, HeaderBackend};
@@ -633,7 +642,7 @@
 <span class="kw">use </span>sc_transaction_pool::FullPool;
 <span class="kw">use </span>sc_transaction_pool_api::OffchainTransactionPoolFactory;
 <span class="kw">use </span>sp_api::offchain::OffchainStorage;
-<span class="kw">use </span>sp_api::ConstructRuntimeApi;
+<span class="kw">use </span>sp_api::{ConstructRuntimeApi, ProvideRuntimeApi};
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityPair <span class="kw">as </span>AuraPair;
 <span class="kw">use </span>sp_offchain::STORAGE_PREFIX;
 
@@ -946,18 +955,25 @@
                     ),
                 );
 
-                <span class="comment">// Ensuring we&#39;ve fetched the latest price before we start the node
-                </span>futures::executor::block_on(mc_l1_gas_price::worker::run_worker(
-                    ethereum_conf.clone(),
-                    l1_gas_price.clone(),
-                    <span class="bool-val">false</span>,
-                ));
+                <span class="kw">let </span>fees_disabled = client
+                    .runtime_api()
+                    .is_transaction_fee_disabled(client.chain_info().best_hash)
+                    .expect(<span class="string">&quot;Failed to get fee status&quot;</span>);
 
-                task_manager.spawn_handle().spawn(
-                    <span class="string">&quot;l1-gas-prices-worker&quot;</span>,
-                    <span class="prelude-val">Some</span>(MADARA_TASK_GROUP),
-                    mc_l1_gas_price::worker::run_worker(ethereum_conf.clone(), l1_gas_price.clone(), <span class="bool-val">true</span>),
-                );
+                <span class="kw">if </span>!fees_disabled {
+                    <span class="comment">// Ensuring we&#39;ve fetched the latest price before we start the node
+                    </span>futures::executor::block_on(mc_l1_gas_price::worker::run_worker(
+                        ethereum_conf.clone(),
+                        l1_gas_price.clone(),
+                        <span class="bool-val">false</span>,
+                    ));
+
+                    task_manager.spawn_handle().spawn(
+                        <span class="string">&quot;l1-gas-prices-worker&quot;</span>,
+                        <span class="prelude-val">Some</span>(MADARA_TASK_GROUP),
+                        mc_l1_gas_price::worker::run_worker(ethereum_conf.clone(), l1_gas_price.clone(), <span class="bool-val">true</span>),
+                    );
+                }
             }
         }
 

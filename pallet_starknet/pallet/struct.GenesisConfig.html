@@ -3,7 +3,7 @@
     pub sierra_to_casm_class_hash: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;(ClassHash, CompiledClassHash)&gt;,
     pub contract_classes: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;(ClassHash, ContractClass)&gt;,
     pub storage: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;(<a class="type" href="../types/type.ContractStorageKey.html" title="type pallet_starknet::types::ContractStorageKey">ContractStorageKey</a>, StarkFelt)&gt;,
-    pub chain_id: Felt252Wrapper,
+    pub chain_id: <a class="struct" href="../../mp_felt/struct.Felt252Wrapper.html" title="struct mp_felt::Felt252Wrapper">Felt252Wrapper</a>,
     pub strk_fee_token_address: ContractAddress,
     pub eth_fee_token_address: ContractAddress,
     pub _phantom: <a class="struct" href="https://doc.rust-lang.org/nightly/core/marker/struct.PhantomData.html" title="struct core::marker::PhantomData">PhantomData</a>&lt;T&gt;,
@@ -18,7 +18,7 @@ This is a vector of tuples, where the first element is the contract class hash a
 second element is the contract class definition.
 Same as <code>contracts</code>, this can be used to start the chain with a set of pre-deployed
 contracts classes.</p>
-</div><span id="structfield.storage" class="structfield small-section-header"><a href="#structfield.storage" class="anchor field">§</a><code>storage: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;(<a class="type" href="../types/type.ContractStorageKey.html" title="type pallet_starknet::types::ContractStorageKey">ContractStorageKey</a>, StarkFelt)&gt;</code></span><span id="structfield.chain_id" class="structfield small-section-header"><a href="#structfield.chain_id" class="anchor field">§</a><code>chain_id: Felt252Wrapper</code></span><div class="docblock"><p>The address of the fee token.
+</div><span id="structfield.storage" class="structfield small-section-header"><a href="#structfield.storage" class="anchor field">§</a><code>storage: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;(<a class="type" href="../types/type.ContractStorageKey.html" title="type pallet_starknet::types::ContractStorageKey">ContractStorageKey</a>, StarkFelt)&gt;</code></span><span id="structfield.chain_id" class="structfield small-section-header"><a href="#structfield.chain_id" class="anchor field">§</a><code>chain_id: <a class="struct" href="../../mp_felt/struct.Felt252Wrapper.html" title="struct mp_felt::Felt252Wrapper">Felt252Wrapper</a></code></span><div class="docblock"><p>The address of the fee token.
 Chain Id, this must be set in the genesis file
 The default value will be MADARA custom chain id</p>
 </div><span id="structfield.strk_fee_token_address" class="structfield small-section-header"><a href="#structfield.strk_fee_token_address" class="anchor field">§</a><code>strk_fee_token_address: ContractAddress</code></span><div class="docblock"><p>Must be set to the address of a fee token ERC20 contract.</p>

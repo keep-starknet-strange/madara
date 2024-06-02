@@ -79,7 +79,7 @@
     /// of  the returned range, because this value can be derived from the newest block. Zeroes
     /// are returned for pre-EIP-4844 blocks.
     </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">&quot;Vec::is_empty&quot;</span>)]
-    </span><span class="kw">pub </span>base_fee_per_blob_gas: Vec&lt;u128&gt;,
+    </span><span class="kw">pub </span>base_fee_per_blob_gas: Vec&lt;String&gt;,
     <span class="doccomment">/// An array of block blob gas used ratios. These are calculated as the ratio of gasUsed and
     /// gasLimit.
     </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">&quot;Vec::is_empty&quot;</span>)]

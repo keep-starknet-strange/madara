@@ -103,6 +103,10 @@
 <a href="#103" id="103">103</a>
 <a href="#104" id="104">104</a>
 <a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::num::NonZeroU128;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::time::Duration;
@@ -174,10 +178,14 @@
     <span class="comment">// The RPC responds with 301 elements for some reason. It&#39;s also just safer to manually
     // take the last 300. We choose 300 to get average gas caprice for last one hour (300 * 12 sec block
     // time).
-    </span><span class="kw">let </span>(<span class="kw">_</span>, blob_fee_history_one_hour) =
-        fee_history.result.base_fee_per_blob_gas.split_at(fee_history.result.base_fee_per_blob_gas.len() - <span class="number">300</span>);
+    </span><span class="kw">let </span>(<span class="kw">_</span>, blob_fee_history_one_hour) = fee_history
+        .result
+        .base_fee_per_blob_gas
+        .split_at(fee_history.result.base_fee_per_blob_gas.len().max(<span class="number">300</span>) - <span class="number">300</span>);
 
-    <span class="kw">let </span>avg_blob_base_fee = blob_fee_history_one_hour.iter().sum::&lt;u128&gt;() / blob_fee_history_one_hour.len() <span class="kw">as </span>u128;
+    <span class="kw">let </span>avg_blob_base_fee =
+        blob_fee_history_one_hour.iter().map(|hex_str| u128::from_str_radix(<span class="kw-2">&amp;</span>hex_str[<span class="number">2</span>..], <span class="number">16</span>).unwrap()).sum::&lt;u128&gt;()
+            / blob_fee_history_one_hour.len() <span class="kw">as </span>u128;
 
     <span class="kw">let </span>eth_gas_price = u128::from_str_radix(
         fee_history
