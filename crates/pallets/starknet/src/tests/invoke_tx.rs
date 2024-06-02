@@ -15,8 +15,8 @@ use starknet_api::core::{ClassHash, CompiledClassHash, ContractAddress, EntryPoi
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{
-    Calldata, ContractAddressSalt, Event as StarknetEvent, EventContent, EventData, EventKey, Fee, InvokeTransactionV0,
-    TransactionHash, TransactionSignature, InvokeTransaction as StarknetInvokeTransaction
+    Calldata, ContractAddressSalt, Event as StarknetEvent, EventContent, EventData, EventKey, Fee,
+    InvokeTransaction as StarknetInvokeTransaction, InvokeTransactionV0, TransactionHash, TransactionSignature,
 };
 use starknet_core::utils::{get_selector_from_name, get_udc_deployed_address, UdcUniqueSettings, UdcUniqueness};
 use starknet_crypto::FieldElement;
@@ -161,7 +161,13 @@ pub fn create_invoke_dummy_v0_transaction(
     let entry_point_selector = EntryPointSelector::default();
     let nonce = nonce.unwrap_or(Nonce::default());
 
-    StarknetInvokeTransaction::V0(InvokeTransactionV0 { max_fee, signature, contract_address, entry_point_selector, calldata })
+    StarknetInvokeTransaction::V0(InvokeTransactionV0 {
+        max_fee,
+        signature,
+        contract_address,
+        entry_point_selector,
+        calldata,
+    })
 }
 
 #[test]
