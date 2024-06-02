@@ -2,6 +2,8 @@
 
 ## Next release
 
+- feat: L1 gas price/fix
+
 ## v0.8.0
 
 - feat: add `TransactionFilter<TxType>` to pallet-starknet `Config`
