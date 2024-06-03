@@ -10,8 +10,11 @@ anyhow = "1.0.80"
 assert_matches = "1.5.0"
 async-lock = "3.1.0"
 async-trait = { workspace = true }
+blockifier = { workspace = true }
 env_logger = "0.9"
 flate2 = { workspace = true }
+indexmap = { workspace = true }
+parity-scale-codec = { workspace = true }
 reqwest = "0.11.18"
 rstest = "0.18.1"
 serde = "1.0.192"
@@ -23,13 +26,10 @@ starknet-ff = { workspace = true }
 starknet-providers = { workspace = true }
 starknet-signers = { workspace = true }
 starknet-test-utils = { workspace = true }
+starknet_api = { workspace = true }
 thiserror = { workspace = true }
 tokio = { version = "1.36.0", features = ["rt", "macros", "parking_lot"] }
 url = "2.4.1"
-blockifier = { workspace = true }
-starknet_api = { workspace = true }
-indexmap = { workspace = true }
-parity-scale-codec = { workspace = true }
 
 # [[test]]
 # name = "starknet_spec_version"

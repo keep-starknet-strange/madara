@@ -7,7 +7,6 @@
 #[cfg(test)]
 mod tests;
 
-use blockifier::transaction::transactions::DeclareTransaction;
 use indexmap::IndexMap;
 use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
@@ -54,12 +53,6 @@ pub struct CustomDeclareV0Transaction {
     pub program_vec: Vec<u8>,
     pub entrypoints: IndexMap<EntryPointType, Vec<EntryPoint>>,
     pub abi_length: usize,
-}
-
-#[derive(PartialEq, Eq, Debug)]
-pub enum DeclareTransactionWithV0 {
-    V0(Box<CustomDeclareV0Transaction>),
-    V1(DeclareTransaction),
 }
 
 /// Madara rpc interface for additional features.
