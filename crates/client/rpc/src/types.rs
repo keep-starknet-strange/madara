@@ -1,12 +1,12 @@
 use std::num::ParseIntError;
 use std::{fmt, u64};
+
 use indexmap::IndexMap;
+use mp_felt::Felt252Wrapper;
 use serde::{Deserialize, Serialize};
 use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 use starknet_api::transaction::DeclareTransactionV0V1;
-use mp_felt::Felt252Wrapper;
 use starknet_ff::FieldElement;
-use mc_db::MappingCommitment;
 
 pub struct RpcEventFilter {
     pub from_block: u64,
@@ -34,7 +34,7 @@ pub struct CustomDeclareV0Transaction {
     pub declare_transaction: DeclareTransactionV0V1,
     pub program_vec: Vec<u8>,
     pub entrypoints: IndexMap<EntryPointType, Vec<EntryPoint>>,
-    pub abi_length: usize
+    pub abi_length: usize,
 }
 
 impl fmt::Display for ContinuationToken {

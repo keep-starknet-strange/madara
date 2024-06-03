@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use indexmap::IndexMap;
 use jsonrpsee::core::{async_trait, RpcResult};
 use mc_genesis_data_provider::GenesisProvider;
 use mc_rpc_core::DeclareV0Result;
@@ -18,8 +17,6 @@ use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
-use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
-use starknet_api::transaction::DeclareTransactionV0V1;
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
     BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
@@ -57,10 +54,7 @@ where
         self.0.predeployed_accounts()
     }
 
-    async fn declare_v0_contract(
-        &self,
-        params: mc_rpc_core::CustomDeclareV0Transaction
-    ) -> RpcResult<DeclareV0Result> {
+    async fn declare_v0_contract(&self, params: mc_rpc_core::CustomDeclareV0Transaction) -> RpcResult<DeclareV0Result> {
         self.0.declare_v0_contract(params).await
     }
 }

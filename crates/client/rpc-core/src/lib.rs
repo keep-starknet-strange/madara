@@ -9,7 +9,7 @@ mod tests;
 
 use blockifier::transaction::transactions::DeclareTransaction;
 use indexmap::IndexMap;
-use jsonrpsee::core::{RpcResult};
+use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
@@ -53,12 +53,12 @@ pub struct CustomDeclareV0Transaction {
     pub declare_transaction: DeclareTransactionV0V1,
     pub program_vec: Vec<u8>,
     pub entrypoints: IndexMap<EntryPointType, Vec<EntryPoint>>,
-    pub abi_length: usize
+    pub abi_length: usize,
 }
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum DeclareTransactionWithV0 {
-    V0(DeclareTransactionV0V1, Vec<u8>, IndexMap<EntryPointType, Vec<EntryPoint>>, usize),
+    V0(Box<CustomDeclareV0Transaction>),
     V1(DeclareTransaction),
 }
 
@@ -72,10 +72,7 @@ pub trait MadaraRpcApi: StarknetReadRpcApi {
     // That's why we are sending the components saperately here and then building the
     // transaction here in madara and executing the function in the pallet.
     #[method(name = "declareV0")]
-    async fn declare_v0_contract(
-        &self,
-        params: CustomDeclareV0Transaction
-    ) -> RpcResult<DeclareV0Result>;
+    async fn declare_v0_contract(&self, params: CustomDeclareV0Transaction) -> RpcResult<DeclareV0Result>;
 }
 
 /// Starknet write rpc interface.
