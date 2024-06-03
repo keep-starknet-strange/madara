@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
 use madara_runtime::{AuraConfig, GrandpaConfig, RuntimeGenesisConfig, SealingMode, SystemConfig, WASM_BINARY};
-use pallet_starknet::genesis_loader::{GenesisData, GenesisLoader};
+use mp_felt::Felt252Wrapper;
+use pallet_starknet::genesis_loader::{GenesisData, GenesisLoader, HexFelt};
 use sc_service::{BasePath, ChainType};
 use serde::{Deserialize, Serialize};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -100,20 +101,21 @@ pub fn development_config(sealing: SealingMode, base_path: BasePath) -> Result<D
 // accounts with addresses 0x2 and 0x3 have the same PK
 pub fn print_development_accounts(genesis_loader: &GenesisLoader) {
     // TODO: this is only true by luck. It's not enforced by anything
-    // let no_validate_account_address = genesis_loader.data().contracts[0].0.0;
-    // let argent_account_address = genesis_loader.data().contracts[1].0.0;
-    // let oz_account_address = genesis_loader.data().contracts[2].0.0;
-    // let cairo_1_no_validate_account_address = genesis_loader.data().contracts[3].0.0;
-    //
-    // let argent_pk: HexFelt =
-    //     Felt252Wrapper::from_hex_be("
-    // 0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d")         .unwrap()
-    //         .into();
-    // log::info!("🧪 Using the following development accounts:");
-    // log::info!("🧪 NO VALIDATE with address: {no_validate_account_address:#x} and no pk");
-    // log::info!("🧪 ARGENT with address: {argent_account_address:#x} and pk: {argent_pk:#x}");
-    // log::info!("🧪 OZ with address: {oz_account_address:#x} and pk: {argent_pk:#x}");
-    // log::info!("🧪 CAIRO 1 with address: {cairo_1_no_validate_account_address:#x} and no pk");
+    let no_validate_account_address = genesis_loader.data().contracts[0].0.0;
+    let argent_account_address = genesis_loader.data().contracts[1].0.0;
+    let oz_account_address = genesis_loader.data().contracts[2].0.0;
+    let cairo_1_no_validate_account_address = genesis_loader.data().contracts[3].0.0;
+
+    let argent_pk: HexFelt = Felt252Wrapper::from_hex_be(
+        "0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d",
+    )
+    .unwrap()
+    .into();
+    log::info!("🧪 Using the following development accounts:");
+    log::info!("🧪 NO VALIDATE with address: {no_validate_account_address:#x} and no pk");
+    log::info!("🧪 ARGENT with address: {argent_account_address:#x} and pk: {argent_pk:#x}");
+    log::info!("🧪 OZ with address: {oz_account_address:#x} and pk: {argent_pk:#x}");
+    log::info!("🧪 CAIRO 1 with address: {cairo_1_no_validate_account_address:#x} and no pk");
 }
 
 pub fn local_testnet_config(base_path: BasePath, chain_id: &str) -> Result<ChainSpec, String> {

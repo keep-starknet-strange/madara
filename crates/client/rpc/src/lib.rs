@@ -254,7 +254,7 @@ where
 
         if let Some(contract_class) = contract_class {
             error!("Contract class already exists: {:?}", contract_class);
-            return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
+            return Err(StarknetRpcApiError::ClassAlreadyDeclared);
         }
 
         let extrinsic =
@@ -264,7 +264,7 @@ where
 
         match res {
             Ok(_val) => Ok((txn.tx_hash, txn.class_hash())),
-            Err(e) => return Err(e),
+            Err(e) => Err(e),
         }
     }
 }
