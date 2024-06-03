@@ -253,7 +253,7 @@ where
             .contract_class_by_class_hash(current_block_hash, txn.class_hash());
 
         if let Some(contract_class) = contract_class {
-            error!("Contract class already exists: {:?}", contract_class);
+            log::error!("Contract class already exists: {:?}", contract_class);
             return Err(StarknetRpcApiError::ClassAlreadyDeclared);
         }
 

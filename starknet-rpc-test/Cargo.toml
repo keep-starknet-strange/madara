@@ -26,6 +26,10 @@ starknet-test-utils = { workspace = true }
 thiserror = { workspace = true }
 tokio = { version = "1.36.0", features = ["rt", "macros", "parking_lot"] }
 url = "2.4.1"
+blockifier = { workspace = true }
+starknet_api = { workspace = true }
+indexmap = { workspace = true }
+parity-scale-codec = { workspace = true }
 
 # [[test]]
 # name = "starknet_spec_version"
@@ -134,3 +138,7 @@ path = "trace_block.rs"
 [[test]]
 name = "starknet_trace_transaction"
 path = "trace_transaction.rs"
+
+[[test]]
+name = "madara_declareV0"
+path = "declareV0.rs"

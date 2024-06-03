@@ -106,11 +106,10 @@ pub fn print_development_accounts(genesis_loader: &GenesisLoader) {
     let oz_account_address = genesis_loader.data().contracts[2].0.0;
     let cairo_1_no_validate_account_address = genesis_loader.data().contracts[3].0.0;
 
-    let argent_pk: HexFelt = Felt252Wrapper::from_hex_be(
-        "0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d",
-    )
-    .unwrap()
-    .into();
+    let argent_pk: HexFelt =
+        Felt252Wrapper::from_hex_be("0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d")
+            .unwrap()
+            .into();
     log::info!("🧪 Using the following development accounts:");
     log::info!("🧪 NO VALIDATE with address: {no_validate_account_address:#x} and no pk");
     log::info!("🧪 ARGENT with address: {argent_account_address:#x} and pk: {argent_pk:#x}");
