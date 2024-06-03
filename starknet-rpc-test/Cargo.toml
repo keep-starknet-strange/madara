@@ -15,6 +15,7 @@ env_logger = "0.9"
 flate2 = { workspace = true }
 indexmap = { workspace = true }
 parity-scale-codec = { workspace = true }
+reqwest = { version = "0.11.22", features = ["json"] }
 rstest = "0.18.1"
 serde = "1.0.192"
 serde_json = "1.0.108"
@@ -29,7 +30,6 @@ starknet_api = { workspace = true }
 thiserror = { workspace = true }
 tokio = { version = "1.36.0", features = ["rt", "macros", "parking_lot"] }
 url = "2.4.1"
-reqwest = { version = "0.11.22", features = ["json"] }
 
 # [[test]]
 # name = "starknet_spec_version"
