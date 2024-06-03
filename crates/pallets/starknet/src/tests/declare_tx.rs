@@ -31,7 +31,7 @@ fn create_declare_erc20_v3_transaction(
     nonce: Option<Nonce>,
 ) -> BlockifierDeclareTransaction {
     let sender_address = sender_address.unwrap_or_else(|| get_account_address(None, account_type));
-    let erc20_class = get_contract_class("ERC20.json", 0);
+    let erc20_class = get_contract_class("erc20.casm.json", 1);
     let erc20_class_hash =
         ClassHash(StarkFelt::try_from("0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap());
 
@@ -60,7 +60,7 @@ fn create_declare_erc20_v3_transaction(
         tx.signature = signature.unwrap_or_else(|| sign_message_hash(tx_hash));
     }
 
-    BlockifierDeclareTransaction::new(tx, tx_hash, ClassInfo::new(&erc20_class, 0, 1).unwrap()).unwrap()
+    BlockifierDeclareTransaction::new(tx, tx_hash, ClassInfo::new(&erc20_class, 1, 1).unwrap()).unwrap()
 }
 
 fn create_declare_erc20_v1_transaction(
@@ -447,7 +447,7 @@ fn given_contract_declare_tx3_than_works() {
 
         let transaction = create_declare_erc20_v3_transaction(
             chain_id,
-            AccountType::V0(AccountTypeV0Inner::NoValidate),
+            AccountType::V1(AccountTypeV1Inner::NoValidate),
             None,
             None,
             None,
