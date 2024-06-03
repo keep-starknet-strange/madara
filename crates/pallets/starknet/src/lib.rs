@@ -788,7 +788,7 @@ pub mod pallet {
                                 valid_transaction_builder.and_requires((sender_address, Nonce(StarkFelt::ZERO)));
                         }
                         // Future transaction, we validate the entrypoint in order to avoid having the mempool flooded
-                        // There is a possiblility of false negative, where a previous tx execution you make the future
+                        // There is a possibility of false negative, where a previous tx execution you make the future
                         // one possible, atm we are ok with this, the user will just wait for the
                         // first one to be executed and then send the next one
                         // May be removed in the future tho
