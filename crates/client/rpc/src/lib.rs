@@ -253,7 +253,7 @@ where
             .contract_class_by_class_hash(current_block_hash, txn.class_hash());
 
         if let Some(contract_class) = contract_class {
-            log::error!("Contract class already exists: {:?}", contract_class);
+            log::debug!("Contract class already exists: {:?}", contract_class);
             return Err(StarknetRpcApiError::ClassAlreadyDeclared);
         }
 
@@ -343,8 +343,8 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let (txn_hash, class_hash) = self.declare_tx_common(declare_transaction).await.unwrap();
-
+        let (txn_hash, class_hash) = self.declare_tx_common(declare_transaction).await?;
+        
         Ok(DeclareV0Result { txn_hash, class_hash })
     }
 }

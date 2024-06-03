@@ -9,7 +9,7 @@ use serde_json::json;
 use starknet_api::core::{ClassHash, ContractAddress, Nonce, PatriciaKey};
 use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 use starknet_api::hash::{StarkFelt, StarkHash};
-use starknet_api::transaction::{DeclareTransactionV0V1, Fee, TransactionSignature};
+use starknet_api::transaction::{DeclareTransactionV0V1, Fee, TransactionHash, TransactionSignature};
 use starknet_core::types::contract::legacy::LegacyContractClass;
 use starknet_core::types::{BlockId, StarknetError};
 use starknet_ff::FieldElement;
@@ -23,6 +23,12 @@ pub struct CustomDeclareV0Transaction {
     pub program_vec: Vec<u8>,
     pub entrypoints: IndexMap<EntryPointType, Vec<EntryPoint>>,
     pub abi_length: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DeclareV0Result {
+    pub txn_hash: TransactionHash,
+    pub class_hash: ClassHash,
 }
 
 #[rstest]
@@ -88,7 +94,7 @@ async fn declare_v0_contract(madara: &ThreadSafeMadaraClient) -> Result<(), anyh
 
     match raw_txn_rpc {
         Ok(val) => {
-            let res = val.json().await.unwrap();
+            let res = val.json::<DeclareV0Result>().await;
             println!("Txn Sent Successfully : {:?}", res);
             println!("Declare Success : {:?}", contract_abi_artifact.class_hash().unwrap());
         }
