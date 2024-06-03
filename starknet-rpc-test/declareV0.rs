@@ -24,6 +24,12 @@ pub struct CustomDeclareV0Transaction {
     pub entrypoints: IndexMap<EntryPointType, Vec<EntryPoint>>,
     pub abi_length: usize,
 }
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
+pub struct RpcResult<T> {
+    jsonrpc: String,
+    result: T,
+    id: u64,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DeclareV0Result {
@@ -94,7 +100,7 @@ async fn declare_v0_contract() -> Result<(), anyhow::Error> {
 
     match raw_txn_rpc {
         Ok(val) => {
-            let res = val.json::<DeclareV0Result>().await;
+            let res = val.json::<RpcResult<DeclareV0Result>>().await;
             println!("Txn Sent Successfully : {:?}", res);
             println!("Declare Success : {:?}", contract_abi_artifact.class_hash().unwrap());
         }

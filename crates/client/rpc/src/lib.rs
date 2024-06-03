@@ -388,7 +388,7 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let (tx_hash, class_hash) = self.declare_tx_common(transaction).await.unwrap();
+        let (tx_hash, class_hash) = self.declare_tx_common(transaction).await?;
 
         if let Some(sierra_contract_class) = opt_sierra_contract_class {
             if let Some(e) = self.backend.sierra_classes().store_sierra_class(class_hash, sierra_contract_class).err() {
