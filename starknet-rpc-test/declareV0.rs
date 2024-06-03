@@ -48,7 +48,7 @@ async fn fail_non_existing_contract(madara: &ThreadSafeMadaraClient) -> Result<(
 
 #[rstest]
 #[tokio::test]
-async fn declare_v0_contract(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> {
+async fn declare_v0_contract() -> Result<(), anyhow::Error> {
     let path_to_abi = "../starknet-rpc-test/contracts/proxy.json";
 
     let contract_artifact: ContractClassV0Inner =
@@ -71,7 +71,7 @@ async fn declare_v0_contract(madara: &ThreadSafeMadaraClient) -> Result<(), anyh
         signature: TransactionSignature(empty_vector_stark_hash),
         nonce: Nonce(StarkFelt(empty_array)),
         class_hash: ClassHash(StarkHash { 0: contract_abi_artifact.class_hash().unwrap().to_bytes_be() }),
-        sender_address: ContractAddress(PatriciaKey { 0: StarkHash { 0: FieldElement::ONE.to_bytes_be() } }),
+        sender_address: ContractAddress(PatriciaKey(StarkHash { 0: FieldElement::ONE.to_bytes_be() })),
     };
     let abi_length = contract_abi_artifact.abi.len();
 

@@ -344,7 +344,7 @@ where
         })?;
 
         let (txn_hash, class_hash) = self.declare_tx_common(declare_transaction).await?;
-        
+
         Ok(DeclareV0Result { txn_hash, class_hash })
     }
 }
