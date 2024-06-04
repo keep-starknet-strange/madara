@@ -97,7 +97,7 @@ fn helper_create_deploy_account_tx3(
         constructor_calldata: calldata,
         nonce_data_availability_mode: DataAvailabilityMode::L1,
         fee_data_availability_mode: DataAvailabilityMode::L1,
-        paymaster_data: starknet_api::transaction::PaymasterData(vec![StarkFelt::ZERO]),
+        paymaster_data: starknet_api::transaction::PaymasterData(vec![]),
     };
 
     deploy_v3_to_blockifier_deploy(tx, chain_id)

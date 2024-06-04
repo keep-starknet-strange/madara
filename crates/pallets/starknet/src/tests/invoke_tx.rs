@@ -951,7 +951,7 @@ fn given_account_not_deployed_invoke_tx_v3_fails_for_nonce_not_one() {
             signature: TransactionSignature::default(),
             nonce_data_availability_mode: DataAvailabilityMode::L1,
             fee_data_availability_mode: DataAvailabilityMode::L1,
-            paymaster_data: starknet_api::transaction::PaymasterData(vec![StarkFelt::ZERO]),
+            paymaster_data: starknet_api::transaction::PaymasterData(vec![]),
             account_deployment_data: starknet_api::transaction::AccountDeploymentData(vec![StarkFelt::ZERO]),
         };
 
@@ -963,4 +963,15 @@ fn given_account_not_deployed_invoke_tx_v3_fails_for_nonce_not_one() {
             Err(TransactionValidityError::Invalid(InvalidTransaction::BadProof))
         );
     })
+}
+
+#[test]
+fn given_hardcoded_contract_run_invoke_tx3_then_it_works() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let transaction = get_invoke_v3_dummy(Starknet::chain_id(), NONCE_ZERO);
+
+        assert_ok!(Starknet::invoke(RuntimeOrigin::none(), transaction));
+    });
 }
