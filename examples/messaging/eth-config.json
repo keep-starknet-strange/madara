@@ -1,6 +1,6 @@
 {
   "provider": {
-    "rpc_endpoint": "https://eth.merkle.io",
+    "rpc_endpoint": "http://127.0.0.1:8545",
     "gas_price_poll_ms": 10000
   },
   "contracts": {

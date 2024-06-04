@@ -69,10 +69,14 @@ async fn update_gas_price(
     // The RPC responds with 301 elements for some reason. It's also just safer to manually
     // take the last 300. We choose 300 to get average gas caprice for last one hour (300 * 12 sec block
     // time).
-    let (_, blob_fee_history_one_hour) =
-        fee_history.result.base_fee_per_blob_gas.split_at(fee_history.result.base_fee_per_blob_gas.len() - 300);
+    let (_, blob_fee_history_one_hour) = fee_history
+        .result
+        .base_fee_per_blob_gas
+        .split_at(fee_history.result.base_fee_per_blob_gas.len().max(300) - 300);
 
-    let avg_blob_base_fee = blob_fee_history_one_hour.iter().sum::<u128>() / blob_fee_history_one_hour.len() as u128;
+    let avg_blob_base_fee =
+        blob_fee_history_one_hour.iter().map(|hex_str| u128::from_str_radix(&hex_str[2..], 16).unwrap()).sum::<u128>()
+            / blob_fee_history_one_hour.len() as u128;
 
     let eth_gas_price = u128::from_str_radix(
         fee_history

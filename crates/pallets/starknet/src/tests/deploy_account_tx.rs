@@ -7,17 +7,18 @@ use mp_transactions::compute_hash::ComputeTransactionHash;
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidityError};
 use starknet_api::core::{calculate_contract_address, ClassHash, ContractAddress, Nonce};
+use starknet_api::data_availability::DataAvailabilityMode;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{
-    Calldata, ContractAddressSalt, DeployAccountTransactionV1, Event as StarknetEvent, EventContent, EventData,
-    EventKey, Fee, TransactionSignature,
+    Calldata, ContractAddressSalt, DeployAccountTransactionV1, DeployAccountTransactionV3, Event as StarknetEvent,
+    EventContent, EventData, EventKey, Fee, TransactionSignature,
 };
 use starknet_core::utils::get_selector_from_name;
 use starknet_crypto::FieldElement;
 
 use super::mock::default_mock::*;
 use super::mock::*;
-use super::utils::{sign_message_hash, sign_message_hash_braavos};
+use super::utils::{create_resource_bounds, sign_message_hash, sign_message_hash_braavos};
 use crate::tests::constants::{ACCOUNT_PUBLIC_KEY, SALT, TRANSFER_SELECTOR_NAME};
 use crate::tests::{get_deploy_account_dummy, set_infinite_tokens, set_nonce};
 use crate::{Error, StorageView};
@@ -42,6 +43,26 @@ fn deploy_v1_to_blockifier_deploy(
     )
 }
 
+fn deploy_v3_to_blockifier_deploy(
+    tx: DeployAccountTransactionV3,
+    chain_id: Felt252Wrapper,
+) -> DeployAccountTransaction {
+    let tx_hash = tx.compute_hash(chain_id, false);
+    let contract_address = calculate_contract_address(
+        tx.contract_address_salt,
+        tx.class_hash,
+        &tx.constructor_calldata,
+        Default::default(),
+    )
+    .unwrap();
+
+    DeployAccountTransaction::new(
+        starknet_api::transaction::DeployAccountTransaction::V3(tx),
+        tx_hash,
+        contract_address,
+    )
+}
+
 fn helper_create_deploy_account_tx(
     chain_id: Felt252Wrapper,
     salt: ContractAddressSalt,
@@ -58,6 +79,28 @@ fn helper_create_deploy_account_tx(
     };
 
     deploy_v1_to_blockifier_deploy(tx, chain_id)
+}
+
+fn helper_create_deploy_account_tx3(
+    chain_id: Felt252Wrapper,
+    salt: ContractAddressSalt,
+    calldata: Calldata,
+    account_class_hash: ClassHash,
+) -> DeployAccountTransaction {
+    let tx = DeployAccountTransactionV3 {
+        resource_bounds: create_resource_bounds(),
+        tip: starknet_api::transaction::Tip::default(),
+        signature: TransactionSignature::default(),
+        nonce: Nonce(StarkFelt::ZERO),
+        class_hash: account_class_hash,
+        contract_address_salt: salt,
+        constructor_calldata: calldata,
+        nonce_data_availability_mode: DataAvailabilityMode::L1,
+        fee_data_availability_mode: DataAvailabilityMode::L1,
+        paymaster_data: starknet_api::transaction::PaymasterData(vec![]),
+    };
+
+    deploy_v3_to_blockifier_deploy(tx, chain_id)
 }
 
 #[test]
@@ -507,5 +550,28 @@ fn test_verify_nonce_in_unsigned_tx() {
             Starknet::validate_unsigned(tx_source, &call),
             Err(TransactionValidityError::Invalid(InvalidTransaction::BadProof))
         );
+    });
+}
+
+#[test]
+fn given_contract_run_deploy_account_tx3_works() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+        let none_origin = RuntimeOrigin::none();
+        let chain_id = Starknet::chain_id();
+        // TEST ACCOUNT CONTRACT
+        // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
+        let salt = ContractAddressSalt(
+            StarkFelt::try_from("0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463").unwrap(),
+        );
+        let (account_class_hash, calldata) = account_helper(AccountType::V0(AccountTypeV0Inner::NoValidate));
+
+        let deploy_tx = helper_create_deploy_account_tx3(chain_id, salt, calldata, account_class_hash);
+        let contract_address = deploy_tx.contract_address;
+
+        set_infinite_tokens::<MockRuntime>(&contract_address);
+
+        assert_ok!(Starknet::deploy_account(none_origin, deploy_tx));
+        assert_eq!(Starknet::contract_class_hash_by_address(contract_address), account_class_hash.0);
     });
 }
