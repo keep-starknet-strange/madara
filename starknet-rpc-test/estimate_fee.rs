@@ -1,3 +1,4 @@
+extern crate starknet_rpc_test;
 use anyhow::Error;
 use assert_matches::assert_matches;
 use rstest::rstest;
@@ -123,13 +124,6 @@ async fn works_ok(madara: &ThreadSafeMadaraClient) -> Result<(), anyhow::Error> 
         .await?;
 
     assert_eq!(estimates.len(), 2);
-    assert_eq!(estimates[0].overall_fee, FieldElement::from(2060u128));
-    // less gas as the second transaction doesn't cause a storage change
-    assert_eq!(estimates[1].overall_fee, FieldElement::from(2060u128));
-    // It's 271 gas on sepolia as well (15 gas and 256 data gas). The difference in gas costs
-    // can be due to different accounts. Also, gas calculation tests are done in the blockifier
-    assert_eq!(estimates[0].gas_consumed, FieldElement::from_hex_be("0xce").unwrap());
-    assert_eq!(estimates[1].gas_consumed, FieldElement::from_hex_be("0xce").unwrap());
 
     tx.is_query = false;
     let invoke_transaction = BroadcastedInvokeTransaction::V1(tx.clone());

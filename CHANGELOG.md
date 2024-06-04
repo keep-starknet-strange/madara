@@ -2,6 +2,7 @@
 
 ## Next release
 
+- dev: better estimate fee test
 - test: Adding txv3 tests
 - feat: L1 gas price/fix
 
