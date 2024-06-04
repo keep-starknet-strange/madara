@@ -41,25 +41,26 @@ are some key aspects of the mindset that can help you navigate your contribution
 journey:
 
 - _Openness to Learning_\
-  Embrace a mindset of continuous learning and be open to acquiring new knowledge
-  and skills. Starknet is a recent ecosystem and does have its own unique concepts
-  and principles. Stay curious, ask questions (there are no dumb questions), and
-  be willing to explore and understand new concepts.
+  Embrace a mindset of continuous learning and be open to acquiring new
+  knowledge and skills. Starknet is a recent ecosystem and does have its own
+  unique concepts and principles. Stay curious, ask questions (there are no dumb
+  questions), and be willing to explore and understand new concepts.
 
 - _Patience and Perseverance_\
-  Contributing to a complex or quickly evolving project takes time and effort. Be
-  patient with yourself and the learning process. Expect challenges along the way,
-  but persevere through them. Building expertise and making meaningful contributions
-  often requires persistence and determination.
+  Contributing to a complex or quickly evolving project takes time and effort.
+  Be patient with yourself and the learning process. Expect challenges along the
+  way, but persevere through them. Building expertise and making meaningful
+  contributions often requires persistence and determination.
 
 - _Collaboration and Communication_\
-  Engage with the community, ask for guidance when needed, and seek feedback on your
-  contributions. Actively participate in GitHub discussions, issues or chat channels.
-  Be respectful and constructive with other builders.
+  Engage with the community, ask for guidance when needed, and seek feedback on
+  your contributions. Actively participate in GitHub discussions, issues or chat
+  channels. Be respectful and constructive with other builders.
 
 - _Respect for Existing Contributors_\
-  Recognize and respect the work of existing contributors and maintainers. Appreciate
-  the efforts of others and collaborate with them in a respectful and inclusive manner.
+  Recognize and respect the work of existing contributors and maintainers.
+  Appreciate the efforts of others and collaborate with them in a respectful and
+  inclusive manner.
 
 With this mindset, you'll participate to Madara and Starknet projects in a
 collaborative and productive atmosphere. It's not everything about code but also
@@ -82,7 +83,8 @@ some valuable and helpful resources.
 
 [The Rust Programming Language Book](https://doc.rust-lang.org/book/): read this
 first\
-[Rust by Example](https://doc.rust-lang.org/rust-by-example/): practical approach\
+[Rust by Example](https://doc.rust-lang.org/rust-by-example/): practical
+approach\
 [Rustlings](https://github.com/rust-lang/rustlings): Educative and interactive
 learning
 
@@ -146,17 +148,19 @@ build.
 Some key features of Substrate are:
 
 - _Modular Framework_\
-  Substrate provides a modular framework that allows developers to easily customize
-  and configure various components of a blockchain network.
+  Substrate provides a modular framework that allows developers to easily
+  customize and configure various components of a blockchain network.
 
 - _Efficiency and Scalability_\
-  Substrate leverages advanced techniques such as in its transaction queue management
-  to ensure high performance and the ability to handle a large number of transactions.
+  Substrate leverages advanced techniques such as in its transaction queue
+  management to ensure high performance and the ability to handle a large number
+  of transactions.
 
 - _Runtime Upgradability_\
-  Substrate allows for seamless runtime upgrades, enabling the introduction of new
-  features or bug fixes in a live blockchain network without requiring a hard fork.
-  This feature enhances the upgradability and maintainability of the blockchain system.
+  Substrate allows for seamless runtime upgrades, enabling the introduction of
+  new features or bug fixes in a live blockchain network without requiring a
+  hard fork. This feature enhances the upgradability and maintainability of the
+  blockchain system.
 
 Substrate achieves its modularity through three key components: the **client**,
 the **runtime**, and the **primitives**. Those are key concepts of Substrate
@@ -283,7 +287,8 @@ organized and executed in a secure and deterministic manner.
 
 You can find Madara documentation (work in progress)
 [here](https://docs.madara.wtf/).\
-You can contribute to this documentation [here](https://github.com/keep-starknet-strange/madara-docs).
+You can contribute to this documentation
+[here](https://github.com/keep-starknet-strange/madara-docs).
 
 How to contribute?
 
@@ -310,8 +315,8 @@ future of Ethereum scaling!
 guide](https://docs.github.com/en/get-started/quickstart/hello-world)\
 [Madara GitHub repository](https://github.com/keep-starknet-strange/madara)\
 [Madara Telegram](https://t.me/MadaraStarknet)\
-[Starknet Discord](https://discord.gg/qypnmzkhbc) (Or search for Starknet in discord's
-servers browser)
+[Starknet Discord](https://discord.gg/qypnmzkhbc) (Or search for Starknet in
+discord's servers browser)
 
 ## Contribution rewards on OnlyDust <a name="onlydust"/>
 

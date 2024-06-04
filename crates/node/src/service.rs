@@ -20,6 +20,7 @@ use mp_starknet_inherent::{
     InherentDataProvider as StarknetInherentDataProvider, InherentError as StarknetInherentError, L1GasPrices,
     StarknetInherentData, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
 };
+use pallet_starknet_runtime_api::StarknetRuntimeApi;
 use prometheus_endpoint::Registry;
 use sc_basic_authorship::ProposerFactory;
 use sc_client_api::{Backend, BlockBackend, BlockchainEvents, HeaderBackend};
@@ -33,7 +34,7 @@ use sc_telemetry::{Telemetry, TelemetryWorker};
 use sc_transaction_pool::FullPool;
 use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 use sp_api::offchain::OffchainStorage;
-use sp_api::ConstructRuntimeApi;
+use sp_api::{ConstructRuntimeApi, ProvideRuntimeApi};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_offchain::STORAGE_PREFIX;
 
@@ -346,18 +347,25 @@ pub fn new_full(
                     ),
                 );
 
-                // Ensuring we've fetched the latest price before we start the node
-                futures::executor::block_on(mc_l1_gas_price::worker::run_worker(
-                    ethereum_conf.clone(),
-                    l1_gas_price.clone(),
-                    false,
-                ));
+                let fees_disabled = client
+                    .runtime_api()
+                    .is_transaction_fee_disabled(client.chain_info().best_hash)
+                    .expect("Failed to get fee status");
 
-                task_manager.spawn_handle().spawn(
-                    "l1-gas-prices-worker",
-                    Some(MADARA_TASK_GROUP),
-                    mc_l1_gas_price::worker::run_worker(ethereum_conf.clone(), l1_gas_price.clone(), true),
-                );
+                if !fees_disabled {
+                    // Ensuring we've fetched the latest price before we start the node
+                    futures::executor::block_on(mc_l1_gas_price::worker::run_worker(
+                        ethereum_conf.clone(),
+                        l1_gas_price.clone(),
+                        false,
+                    ));
+
+                    task_manager.spawn_handle().spawn(
+                        "l1-gas-prices-worker",
+                        Some(MADARA_TASK_GROUP),
+                        mc_l1_gas_price::worker::run_worker(ethereum_conf.clone(), l1_gas_price.clone(), true),
+                    );
+                }
             }
         }
 
