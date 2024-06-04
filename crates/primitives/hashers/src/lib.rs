@@ -14,11 +14,12 @@ pub trait HasherT {
     /// The hash of the data.
     fn hash_bytes(data: &[u8]) -> Felt252Wrapper;
 
-    /// Hashes the given data, including the default implementation
+    /// Hashes the given data
     /// # Arguments
     /// * `data` - The data to hash.
     /// # Returns
     /// The hash of the data.
+    // Default implematation
     fn compute_hash_on_wrappers<I>(data: I) -> Felt252Wrapper
     where
         I: IntoIterator<Item = Felt252Wrapper>,
