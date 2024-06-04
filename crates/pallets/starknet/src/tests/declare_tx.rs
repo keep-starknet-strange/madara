@@ -50,7 +50,7 @@ fn create_declare_erc20_v3_transaction(
         nonce_data_availability_mode: DataAvailabilityMode::L1,
         fee_data_availability_mode: DataAvailabilityMode::L1,
         paymaster_data: starknet_api::transaction::PaymasterData(vec![]),
-        account_deployment_data: starknet_api::transaction::AccountDeploymentData(vec![StarkFelt::ZERO]),
+        account_deployment_data: starknet_api::transaction::AccountDeploymentData(vec![]),
     });
 
     let tx_hash = tx.compute_hash(chain_id, false);
