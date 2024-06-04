@@ -4,7 +4,6 @@
 
 - test: Deleting tests for wallets
 - test: Adding txv3 tests
-
 - feat: L1 gas price/fix
 
 ## v0.8.0
