@@ -12,6 +12,7 @@ use sp_runtime::transaction_validity::{
     InvalidTransaction, TransactionSource, TransactionValidityError, ValidTransaction,
 };
 use starknet_api::core::{ClassHash, CompiledClassHash, ContractAddress, Nonce, PatriciaKey};
+use starknet_api::data_availability::DataAvailabilityMode;
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{
@@ -28,7 +29,8 @@ use super::constants::{
 use super::mock::default_mock::*;
 use super::mock::*;
 use super::utils::{
-    get_balance_contract_call, get_contract_class, set_account_erc20_balance_to_zero, sign_message_hash,
+    create_resource_bounds, get_balance_contract_call, get_contract_class, set_account_erc20_balance_to_zero,
+    sign_message_hash,
 };
 use crate::tests::constants::{UDC_ADDRESS, UDC_SELECTOR};
 use crate::tests::{
@@ -901,5 +903,75 @@ fn given_hardcoded_contract_set_erc20_balance_to_zero() {
             erc20_final_balance_vec,
             vec![Felt252Wrapper::from_hex_be("0x0").unwrap(), Felt252Wrapper::from_hex_be("0x0").unwrap()]
         );
+    });
+}
+
+#[test]
+fn given_hardcoded_contract_run_invoke_tx_v3_with_inner_call_in_validate_then_it_fails() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+        let none_origin = RuntimeOrigin::none();
+
+        let sender_address = get_account_address(None, AccountType::V0(AccountTypeV0Inner::InnerCall));
+        let mut transaction = get_invoke_v3_dummy(Starknet::chain_id(), NONCE_ZERO);
+        if let starknet_api::transaction::InvokeTransaction::V3(tx) = &mut transaction.tx {
+            tx.signature = TransactionSignature(vec![StarkFelt::ONE, StarkFelt::ONE]);
+            tx.sender_address = sender_address;
+        };
+
+        let storage_key = get_storage_var_address("destination", &[]);
+        let destination = StarkFelt::try_from(TEST_CONTRACT_ADDRESS).unwrap();
+        StorageView::<MockRuntime>::insert((sender_address, storage_key), destination);
+
+        let storage_key = get_storage_var_address("function_selector", &[]);
+        let selector = get_selector_from_name("without_arg").unwrap();
+        StorageView::<MockRuntime>::insert(
+            (sender_address, storage_key),
+            StarkFelt::from(Felt252Wrapper::from(selector)),
+        );
+
+        assert_err!(Starknet::invoke(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
+    });
+}
+
+#[test]
+fn given_account_not_deployed_invoke_tx_v3_fails_for_nonce_not_one() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        // Wrong address (not deployed)
+        let contract_address = ContractAddress(PatriciaKey(StarkFelt::try_from("0x13123131").unwrap()));
+
+        let transaction = starknet_api::transaction::InvokeTransactionV3 {
+            resource_bounds: create_resource_bounds(),
+            tip: starknet_api::transaction::Tip::default(),
+            calldata: Calldata::default(),
+            sender_address: contract_address,
+            nonce: Nonce(StarkFelt::ZERO),
+            signature: TransactionSignature::default(),
+            nonce_data_availability_mode: DataAvailabilityMode::L1,
+            fee_data_availability_mode: DataAvailabilityMode::L1,
+            paymaster_data: starknet_api::transaction::PaymasterData(vec![]),
+            account_deployment_data: starknet_api::transaction::AccountDeploymentData(vec![StarkFelt::ZERO]),
+        };
+
+        assert_eq!(
+            Starknet::validate_unsigned(
+                TransactionSource::InBlock,
+                &crate::Call::invoke { transaction: transaction.into() }
+            ),
+            Err(TransactionValidityError::Invalid(InvalidTransaction::BadProof))
+        );
+    })
+}
+
+#[test]
+fn given_hardcoded_contract_run_invoke_tx3_then_it_works() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let transaction = get_invoke_v3_dummy(Starknet::chain_id(), NONCE_ZERO);
+
+        assert_ok!(Starknet::invoke(RuntimeOrigin::none(), transaction));
     });
 }
