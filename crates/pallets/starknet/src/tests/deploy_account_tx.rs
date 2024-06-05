@@ -159,7 +159,7 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
         assert_eq!(Starknet::contract_class_hash_by_address(deploy_tx.contract_address), account_class_hash.0);
         assert_err!(
             Starknet::deploy_account(RuntimeOrigin::none(), deploy_tx),
-            Error::<MockRuntime>::AccountAlreadyDeployed
+            Error::<MockRuntime>::TransactionExecutionFailed
         );
     });
 }

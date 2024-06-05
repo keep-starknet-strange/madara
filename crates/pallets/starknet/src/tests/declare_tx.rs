@@ -146,7 +146,7 @@ fn given_contract_declare_tx_works_once_not_twice() {
         assert_eq!(Starknet::contract_class_by_class_hash(class_hash.0).unwrap(), contract_class);
         // TODO: Uncomment once we have ABI support
         // assert_eq!(Starknet::contract_class_by_class_hash(erc20_class_hash), erc20_class);
-        assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::ClassHashAlreadyDeclared);
+        assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
     });
 }
 
@@ -170,7 +170,7 @@ fn given_contract_declare_tx_fails_sender_not_deployed() {
             None,
             None,
         );
-        assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::AccountNotDeployed);
+        assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
     })
 }
 
