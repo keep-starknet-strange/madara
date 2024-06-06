@@ -49,9 +49,13 @@ pub fn sign_message_hash_braavos(
     // }
     let mut elements: Vec<FieldElement> =
         vec![Felt252Wrapper::from(tx_hash).into(), Felt252Wrapper::from(actual_impl_hash).into()];
-    elements.extend_from_slice(
-        &signer_model.iter().map(|e| Felt252Wrapper::from(*e).into()),
-    );
+
+    elements.extend(signer_model.iter().map(|e| {
+        let wrapper: Felt252Wrapper = Felt252Wrapper::from(*e);
+        let field_element: FieldElement = wrapper.into();
+        field_element
+    }));
+    
     let braavos_hash = PedersenHasher::compute_hash_on_elements(elements);
 
     let mut signatures = sign_message_hash(Felt252Wrapper(braavos_hash).into());
