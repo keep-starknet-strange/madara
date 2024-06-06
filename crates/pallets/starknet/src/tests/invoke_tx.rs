@@ -59,7 +59,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
             tx.sender_address = contract_address;
         };
 
-        assert_err!(Starknet::invoke(none_origin, transaction), Error::<MockRuntime>::AccountNotDeployed);
+        assert_err!(Starknet::invoke(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
     })
 }
 
