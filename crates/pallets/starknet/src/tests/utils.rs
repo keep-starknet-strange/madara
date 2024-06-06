@@ -125,7 +125,7 @@ pub fn create_resource_bounds() -> starknet_api::transaction::ResourceBoundsMapp
     let mut map = BTreeMap::new();
     map.insert(
         starknet_api::transaction::Resource::L1Gas,
-        starknet_api::transaction::ResourceBounds { max_amount: 10000, max_price_per_unit: 12000 },
+        starknet_api::transaction::ResourceBounds { max_amount: 150000, max_price_per_unit: 12000 },
     );
     map.insert(
         starknet_api::transaction::Resource::L2Gas,

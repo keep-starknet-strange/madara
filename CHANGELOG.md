@@ -3,6 +3,8 @@
 ## Next release
 
 - dev: make HasherT methods accept iterator rather than &[Felt] as argument
+- test: Adding txv3 tests
+- feat: L1 gas price/fix
 
 ## v0.8.0
 
