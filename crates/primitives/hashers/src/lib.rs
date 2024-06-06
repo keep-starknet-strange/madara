@@ -14,12 +14,25 @@ pub trait HasherT {
     /// The hash of the data.
     fn hash_bytes(data: &[u8]) -> Felt252Wrapper;
 
-    // Hashes the given data.
+    /// Hashes the given data
     /// # Arguments
     /// * `data` - The data to hash.
     /// # Returns
     /// The hash of the data.
-    fn compute_hash_on_wrappers(data: &[Felt252Wrapper]) -> Felt252Wrapper;
+    // Default implematation
+    fn compute_hash_on_wrappers<I>(data: I) -> Felt252Wrapper
+    where
+        I: IntoIterator<Item = Felt252Wrapper>,
+    {
+        // Default implementation
+        let hash = Self::compute_hash_on_elements(
+            data.into_iter() // Convert the data into an iterator
+                .map(|x| x.0), // Map each Felt252Wrapper to its inner FieldElement
+        );
+
+        // Wrap the computed hash in a Felt252Wrapper and return it
+        Felt252Wrapper(hash)
+    }
 
     /// Hashes the 2 felts sent.
     ///
@@ -41,10 +54,12 @@ pub trait HasherT {
     ///
     /// # Arguments
     ///
-    /// * `elements` - The array to hash.
+    /// * `elements` - A generic type that implements the Iterator trait.
     ///
     /// # Returns
     ///
     /// The hash of the array.
-    fn compute_hash_on_elements(elements: &[FieldElement]) -> FieldElement;
+    fn compute_hash_on_elements<I>(elements: I) -> FieldElement
+    where
+        I: IntoIterator<Item = FieldElement>;
 }
