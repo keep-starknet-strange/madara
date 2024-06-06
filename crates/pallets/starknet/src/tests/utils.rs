@@ -55,7 +55,7 @@ pub fn sign_message_hash_braavos(
         let field_element: FieldElement = wrapper.into();
         field_element
     }));
-    
+
     let braavos_hash = PedersenHasher::compute_hash_on_elements(elements);
 
     let mut signatures = sign_message_hash(Felt252Wrapper(braavos_hash).into());
