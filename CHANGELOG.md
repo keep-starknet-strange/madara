@@ -2,6 +2,8 @@
 
 ## Next release
 
+- feat(runtime): remove custom checks before tx execution
+- test: Adding txv3 tests
 - feat: L1 gas price/fix
 
 ## v0.8.0

@@ -509,14 +509,6 @@ pub mod pallet {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
-            let sender_address = match &transaction.tx {
-                starknet_api::transaction::InvokeTransaction::V0(tx) => tx.contract_address,
-                starknet_api::transaction::InvokeTransaction::V1(tx) => tx.sender_address,
-                starknet_api::transaction::InvokeTransaction::V3(tx) => tx.sender_address,
-            };
-            // Check if contract is deployed
-            ensure!(ContractClassHashes::<T>::contains_key(sender_address), Error::<T>::AccountNotDeployed);
-
             // Init caches
             let mut state = BlockifierStateAdapter::<T>::default();
             let block_context = Self::get_block_context();
@@ -576,17 +568,6 @@ pub mod pallet {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
-            // Check class hash is not already declared
-            ensure!(
-                !ContractClasses::<T>::contains_key(transaction.tx().class_hash().0),
-                Error::<T>::ClassHashAlreadyDeclared
-            );
-            // Check if contract is deployed
-            ensure!(
-                ContractClassHashes::<T>::contains_key(transaction.tx().sender_address()),
-                Error::<T>::AccountNotDeployed
-            );
-
             let mut state = BlockifierStateAdapter::<T>::default();
             let charge_fee = !<T as Config>::DisableTransactionFee::get();
 
@@ -632,12 +613,6 @@ pub mod pallet {
             ensure!(!transaction.only_query, Error::<T>::QueryTransactionCannotBeExecuted);
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
-
-            // Check if contract is deployed
-            ensure!(
-                !ContractClassHashes::<T>::contains_key(transaction.contract_address),
-                Error::<T>::AccountAlreadyDeployed
-            );
 
             let mut state = BlockifierStateAdapter::<T>::default();
             let charge_fee = !<T as Config>::DisableTransactionFee::get();
