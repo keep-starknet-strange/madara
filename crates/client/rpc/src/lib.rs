@@ -236,7 +236,7 @@ where
     G: GenesisProvider + Send + Sync + 'static,
     H: HasherT + Send + Sync + 'static,
 {
-    fn _get_txn_hash(&self, transaction: DeclareTransactionV0V1) -> TransactionHash {
+    fn get_txn_hash(&self, transaction: DeclareTransactionV0V1) -> TransactionHash {
         let txn = starknet_api::transaction::DeclareTransaction::V0(transaction);
         txn.compute_hash(Felt252Wrapper::from(self.chain_id().unwrap().0), false)
     }
@@ -314,7 +314,7 @@ where
     }
 
     async fn declare_v0_contract(&self, params: mc_rpc_core::CustomDeclareV0Transaction) -> RpcResult<DeclareV0Result> {
-        let txn_hash: TransactionHash = self._get_txn_hash(params.declare_transaction.clone());
+        let txn_hash: TransactionHash = self.get_txn_hash(params.declare_transaction.clone());
 
         let program_decoded = Program::decode_all(&mut params.program_vec.as_slice()).map_err(|e| {
             log::debug!("error: {:?}", e);

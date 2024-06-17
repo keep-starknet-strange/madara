@@ -29,6 +29,16 @@ pub enum ParseTokenError {
     ParseFailed(ParseIntError),
 }
 
+/// CustomDeclareV0Transaction
+/// This will be given as an input to the rpc body
+///
+/// **declare_transaction** : DeclareTransactionV0V1 struct constructed before calling.
+///
+/// **program_vec** : Program vector is program from `ClassInfo` struct converted into Vector.
+///
+/// **entrypoints** : Entrypoints are taken from `ClassInfo` struct.
+///
+/// **abi_length** : ABI length calculated from abi in `LegacyContractClass`.
 #[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub struct CustomDeclareV0Transaction {
     pub declare_transaction: DeclareTransactionV0V1,
