@@ -79,10 +79,10 @@ use mp_block::{Block as StarknetBlock, Header as StarknetHeader};
 use mp_chain_id::MADARA_CHAIN_ID;
 use mp_digest_log::MADARA_ENGINE_ID;
 use mp_felt::Felt252Wrapper;
-use mp_starknet_inherent::{InherentError, InherentType, STARKNET_INHERENT_IDENTIFIER};
+use mp_starknet_inherent::{InherentError, InherentType, L1GasPrices, STARKNET_INHERENT_IDENTIFIER};
 use mp_storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_transactions::execution::{
-    execute_l1_handler_transaction, run_non_revertible_transaction, run_revertible_transaction,
+    execute_l1_handler_transaction, run_non_revertible_transaction, run_revertible_transaction, TransactionFilter,
 };
 use mp_transactions::{get_transaction_nonce, get_transaction_sender_address};
 use sp_runtime::traits::UniqueSaturatedInto;
@@ -118,7 +118,6 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
-    use mp_starknet_inherent::L1GasPrices;
 
     use super::*;
 
@@ -132,6 +131,12 @@ pub mod pallet {
     pub trait Config: frame_system::Config {
         /// The block time
         type TimestampProvider: Time;
+        /// Custom transaction filter for Invoke txs
+        type InvokeTransactionFilter: TransactionFilter<InvokeTransaction>;
+        /// Custom transaction filter for Declare txs
+        type DeclareTransactionFilter: TransactionFilter<DeclareTransaction>;
+        /// Custom transaction filter for DeployAccount txs
+        type DeployAccountTransactionFilter: TransactionFilter<DeployAccountTransaction>;
         /// A configuration for base priority of unsigned transactions.
         ///
         /// This is exposed so that it can be tuned for particular runtime, when
@@ -504,14 +509,6 @@ pub mod pallet {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
-            let sender_address = match &transaction.tx {
-                starknet_api::transaction::InvokeTransaction::V0(tx) => tx.contract_address,
-                starknet_api::transaction::InvokeTransaction::V1(tx) => tx.sender_address,
-                starknet_api::transaction::InvokeTransaction::V3(tx) => tx.sender_address,
-            };
-            // Check if contract is deployed
-            ensure!(ContractClassHashes::<T>::contains_key(sender_address), Error::<T>::AccountNotDeployed);
-
             // Init caches
             let mut state = BlockifierStateAdapter::<T>::default();
             let block_context = Self::get_block_context();
@@ -519,10 +516,20 @@ pub mod pallet {
 
             // Execute
             let tx_execution_infos = match transaction.tx.version() {
-                TransactionVersion::ZERO => {
-                    run_non_revertible_transaction(&transaction, &mut state, &block_context, true, charge_fee)
-                }
-                _ => run_revertible_transaction(&transaction, &mut state, &block_context, true, charge_fee),
+                TransactionVersion::ZERO => run_non_revertible_transaction::<_, _, T::InvokeTransactionFilter>(
+                    &transaction,
+                    &mut state,
+                    &block_context,
+                    true,
+                    charge_fee,
+                ),
+                _ => run_revertible_transaction::<_, _, T::InvokeTransactionFilter>(
+                    &transaction,
+                    &mut state,
+                    &block_context,
+                    true,
+                    charge_fee,
+                ),
             }
             .map_err(|e| {
                 log!(error, "Invoke transaction execution failed: {:?}", e);
@@ -561,27 +568,18 @@ pub mod pallet {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
-            // Check class hash is not already declared
-            ensure!(
-                !ContractClasses::<T>::contains_key(transaction.tx().class_hash().0),
-                Error::<T>::ClassHashAlreadyDeclared
-            );
-            // Check if contract is deployed
-            ensure!(
-                ContractClassHashes::<T>::contains_key(transaction.tx().sender_address()),
-                Error::<T>::AccountNotDeployed
-            );
-
             let mut state = BlockifierStateAdapter::<T>::default();
             let charge_fee = !<T as Config>::DisableTransactionFee::get();
 
             // Execute
-            let tx_execution_infos =
-                run_non_revertible_transaction(&transaction, &mut state, &Self::get_block_context(), true, charge_fee)
-                    .map_err(|e| {
-                        log!(error, "Declare transaction execution failed: {:?}", e);
-                        Error::<T>::TransactionExecutionFailed
-                    })?;
+            let tx_execution_infos = run_non_revertible_transaction::<_, _, T::DeclareTransactionFilter>(
+                &transaction,
+                &mut state,
+                &Self::get_block_context(),
+                true,
+                charge_fee,
+            )
+            .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
             Self::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash(),
@@ -616,22 +614,18 @@ pub mod pallet {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
-            // Check if contract is deployed
-            ensure!(
-                !ContractClassHashes::<T>::contains_key(transaction.contract_address),
-                Error::<T>::AccountAlreadyDeployed
-            );
-
             let mut state = BlockifierStateAdapter::<T>::default();
             let charge_fee = !<T as Config>::DisableTransactionFee::get();
 
             // Execute
-            let tx_execution_infos =
-                run_non_revertible_transaction(&transaction, &mut state, &Self::get_block_context(), true, charge_fee)
-                    .map_err(|e| {
-                        log!(error, "Deploy account transaction execution failed: {:?}", e);
-                        Error::<T>::TransactionExecutionFailed
-                    })?;
+            let tx_execution_infos = run_non_revertible_transaction::<_, _, T::DeployAccountTransactionFilter>(
+                &transaction,
+                &mut state,
+                &Self::get_block_context(),
+                true,
+                charge_fee,
+            )
+            .map_err(|_| Error::<T>::TransactionExecutionFailed)?;
 
             Self::emit_and_store_tx_and_fees_events(
                 transaction.tx_hash,
@@ -782,7 +776,7 @@ pub mod pallet {
                                 )),
                             ));
                         }
-                        // Happy path, were the the nonce is the current one,
+                        // Happy path, were the nonce is the current one,
                         // we validate the tx
                         _ => {
                             Self::validate_unsigned_tx(&transaction)?;
