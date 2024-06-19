@@ -52,15 +52,15 @@ pub struct DeclareV0Result {
 ///
 /// **declare_transaction** : DeclareTransactionV0V1 struct constructed before calling.
 ///
-/// **program_vec** : Program vector is program from `ClassInfo` struct converted into Vector.
+/// **program_bytes** : Program bytes is program from `ClassInfo` struct converted into Vector.
 ///
 /// **entrypoints** : Entrypoints are taken from `ClassInfo` struct.
 ///
 /// **abi_length** : ABI length calculated from abi in `LegacyContractClass`.
-#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CustomDeclareV0Transaction {
     pub declare_transaction: DeclareTransactionV0V1,
-    pub program_vec: Vec<u8>,
+    pub program_bytes: Vec<u8>,
     pub entrypoints: IndexMap<EntryPointType, Vec<EntryPoint>>,
     pub abi_length: usize,
 }

@@ -316,7 +316,7 @@ where
     async fn declare_v0_contract(&self, params: mc_rpc_core::CustomDeclareV0Transaction) -> RpcResult<DeclareV0Result> {
         let txn_hash: TransactionHash = self.get_txn_hash(params.declare_transaction.clone());
 
-        let program_decoded = Program::decode_all(&mut params.program_vec.as_slice()).map_err(|e| {
+        let program_decoded = Program::decode_all(&mut params.program_bytes.as_slice()).map_err(|e| {
             log::debug!("error: {:?}", e);
             StarknetRpcApiError::InternalServerError
         })?;

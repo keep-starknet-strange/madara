@@ -1,11 +1,7 @@
 use std::num::ParseIntError;
 use std::{fmt, u64};
 
-use indexmap::IndexMap;
 use mp_felt::Felt252Wrapper;
-use serde::{Deserialize, Serialize};
-use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
-use starknet_api::transaction::DeclareTransactionV0V1;
 use starknet_ff::FieldElement;
 
 pub struct RpcEventFilter {
@@ -27,24 +23,6 @@ pub struct ContinuationToken {
 pub enum ParseTokenError {
     WrongToken,
     ParseFailed(ParseIntError),
-}
-
-/// CustomDeclareV0Transaction
-/// This will be given as an input to the rpc body
-///
-/// **declare_transaction** : DeclareTransactionV0V1 struct constructed before calling.
-///
-/// **program_vec** : Program vector is program from `ClassInfo` struct converted into Vector.
-///
-/// **entrypoints** : Entrypoints are taken from `ClassInfo` struct.
-///
-/// **abi_length** : ABI length calculated from abi in `LegacyContractClass`.
-#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
-pub struct CustomDeclareV0Transaction {
-    pub declare_transaction: DeclareTransactionV0V1,
-    pub program_vec: Vec<u8>,
-    pub entrypoints: IndexMap<EntryPointType, Vec<EntryPoint>>,
-    pub abi_length: usize,
 }
 
 impl fmt::Display for ContinuationToken {
