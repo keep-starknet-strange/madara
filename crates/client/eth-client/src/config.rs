@@ -29,6 +29,8 @@ pub const DEFAULT_CHAIN_ID: u64 = 31337;
 /// PRE_PRIVATE=$(jq -r '.private_keys[0]' $BUILD_DIR/anvil.json)
 pub const DEFAULT_PRIVATE_KEY: &str = "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 
+pub const DEFAULT_API_URL: &str = "https://api.dev.pragma.build/node/v1/data/";
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct EthereumClientConfig {
     #[serde(default)]
@@ -37,6 +39,8 @@ pub struct EthereumClientConfig {
     pub wallet: Option<EthereumWalletConfig>,
     #[serde(default)]
     pub contracts: StarknetContracts,
+    #[serde(default)]
+    pub oracle: OracleConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -71,6 +75,82 @@ pub struct HttpProviderConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum OracleConfig {
+    Pragma(PragmaOracle),
+}
+
+impl OracleConfig {
+    pub fn get_fetch_url(&self, base: String, quote: String) -> String {
+        match self {
+            OracleConfig::Pragma(pragma_oracle) => pragma_oracle.get_fetch_url(base, quote),
+        }
+    }
+
+    pub fn get_api_key(&self) -> &String {
+        match self {
+            OracleConfig::Pragma(oracle) => &oracle.api_key,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PragmaOracle {
+    #[serde(default = "default_api_url")]
+    pub api_url: String,
+    #[serde(default)]
+    pub api_key: String,
+    #[serde(default)]
+    pub aggregation_method: AggregationMethod,
+    #[serde(default)]
+    pub interval: Interval,
+}
+
+impl PragmaOracle {
+    fn get_fetch_url(&self, base: String, quote: String) -> String {
+        format!(
+            "{}{}/{}?interval={:?}&aggregation={:?}",
+            self.api_url, base, quote, self.interval, self.aggregation_method
+        )
+    }
+}
+
+#[derive(Default, Debug, Serialize, Deserialize, Clone, Copy)]
+pub enum AggregationMethod {
+    #[serde(rename = "median")]
+    #[default]
+    Median,
+    #[serde(rename = "mean")]
+    Mean,
+    #[serde(rename = "twap")]
+    Twap,
+}
+
+// impl fmt::Display for AggregationMethod {
+//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//         match self {
+//             AggregationMethod::Median => write!(f, "median"),
+//             AggregationMethod::Mean => write!(f, "mean"),
+//             AggregationMethod::Twap => write!(f, "twap"),
+//         }
+//     }
+// }
+
+// Supported Aggregation Intervals
+#[derive(Default, Debug, Serialize, Deserialize, Clone, Copy)]
+pub enum Interval {
+    #[serde(rename = "1min")]
+    #[default]
+    OneMinute,
+    #[serde(rename = "15min")]
+    FifteenMinutes,
+    #[serde(rename = "1h")]
+    OneHour,
+    #[serde(rename = "2h")]
+    TwoHours,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LocalWalletConfig {
     #[serde(default = "default_chain_id")]
     pub chain_id: u64,
@@ -82,12 +162,33 @@ fn default_rpc_endpoint() -> String {
     DEFAULT_RPC_ENDPOINT.into()
 }
 
+fn default_api_url() -> String {
+    DEFAULT_API_URL.into()
+}
+
 fn default_chain_id() -> u64 {
     DEFAULT_CHAIN_ID
 }
 
 fn default_private_key() -> String {
     DEFAULT_PRIVATE_KEY.to_string()
+}
+
+impl Default for PragmaOracle {
+    fn default() -> Self {
+        Self {
+            api_url: default_api_url(),
+            api_key: String::from(""),
+            aggregation_method: AggregationMethod::Median,
+            interval: Interval::OneMinute,
+        }
+    }
+}
+
+impl Default for OracleConfig {
+    fn default() -> Self {
+        Self::Pragma(PragmaOracle::default())
+    }
 }
 
 impl Default for HttpProviderConfig {

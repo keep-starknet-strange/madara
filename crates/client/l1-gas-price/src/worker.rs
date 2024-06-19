@@ -6,7 +6,7 @@ use anyhow::{format_err, Result};
 use ethers::types::U256;
 use ethers::utils::__serde_json::json;
 use futures::lock::Mutex;
-use mc_eth_client::config::EthereumClientConfig;
+use mc_eth_client::config::{EthereumClientConfig, OracleConfig};
 use mp_starknet_inherent::L1GasPrices;
 use serde::Deserialize;
 use tokio::time::sleep;
@@ -27,7 +27,7 @@ pub async fn run_worker(config: Arc<EthereumClientConfig>, gas_price: Arc<Mutex<
     let poll_time = config.provider.gas_price_poll_ms().unwrap_or(DEFAULT_GAS_PRICE_POLL_MS);
 
     loop {
-        match update_gas_price(rpc_endpoint.clone(), &client, gas_price.clone()).await {
+        match update_gas_price(rpc_endpoint.clone(), &client, gas_price.clone(), config.oracle.clone()).await {
             Ok(_) => log::trace!("Updated gas prices"),
             Err(e) => log::error!("Failed to update gas prices: {:?}", e),
         }
@@ -60,6 +60,7 @@ async fn update_gas_price(
     rpc_endpoint: String,
     client: &reqwest::Client,
     gas_price: Arc<Mutex<L1GasPrices>>,
+    oracle: OracleConfig,
 ) -> Result<()> {
     let fee_history: EthRpcResponse<FeeHistory> = client
         .post(rpc_endpoint.clone())
@@ -96,37 +97,40 @@ async fn update_gas_price(
         16,
     )?;
 
-    // TODO: fetch this from the oracle
-    let url = "https://api.dev.pragma.build/node/v1/data/eth/strk?interval=1min&aggregation=median";
-    let api_key = "";
+    let response = reqwest::Client::new()
+        .get(oracle.get_fetch_url(String::from("eth"), String::from("strk")))
+        .header("x-api-key", oracle.get_api_key())
+        .send()
+        .await?;
 
-    let response = reqwest::Client::new().get(url).header("x-api-key", api_key).send().await?;
+    let res_json = response.json::<ApiResponse>().await;
 
-    let (price, decimal) = match response.json::<ApiResponse>().await {
+    let mut gas_price = gas_price.lock().await;
+
+    match res_json {
         Ok(api_response) => {
-            log::trace!("Retrieved ETH/STRK price from Pragma API");
-            (api_response.price, api_response.decimals)
+            log::trace!("Retrieved ETH/STRK price from Oracle");
+            let eth_strk_price = u128::from_str_radix(api_response.price.trim_start_matches("0x"), 16)?;
+            let stark_gas =
+                ((U256::from(eth_gas_price) * U256::from(eth_strk_price)) / 10u64.pow(api_response.decimals)).as_u128();
+            let stark_data_gas = ((U256::from(avg_blob_base_fee) * U256::from(eth_strk_price))
+                / 10u64.pow(api_response.decimals))
+            .as_u128();
+            gas_price.strk_l1_gas_price = NonZeroU128::new(stark_gas)
+                .ok_or(format_err!("Failed to convert `strk_l1_gas_price` to NonZeroU128"))?;
+            gas_price.strk_l1_data_gas_price = NonZeroU128::new(stark_data_gas)
+                .ok_or(format_err!("Failed to convert `strk_l1_data_gas_price` to NonZeroU128"))?;
         }
         Err(e) => {
             log::error!("Failed to retrieve ETH/STRK price: {:?}", e);
-            (String::from(""), 0)
         }
     };
 
-    let eth_strk_price = u128::from_str_radix(price.trim_start_matches("0x"), 16).expect("Invalid hex string");
-
-    let stark_gas = ((U256::from(eth_gas_price) * U256::from(eth_strk_price)) / 10u64.pow(decimal)).as_u128();
-    let stark_data_gas = ((U256::from(avg_blob_base_fee) * U256::from(eth_strk_price)) / 10u64.pow(decimal)).as_u128();
-
-    let mut gas_price = gas_price.lock().await;
     gas_price.eth_l1_gas_price =
         NonZeroU128::new(eth_gas_price).ok_or(format_err!("Failed to convert `eth_gas_price` to NonZeroU128"))?;
     gas_price.eth_l1_data_gas_price = NonZeroU128::new(avg_blob_base_fee)
         .ok_or(format_err!("Failed to convert `eth_l1_data_gas_price` to NonZeroU128"))?;
-    gas_price.strk_l1_gas_price =
-        NonZeroU128::new(stark_gas).ok_or(format_err!("Failed to convert `strk_l1_gas_price` to NonZeroU128"))?;
-    gas_price.strk_l1_data_gas_price = NonZeroU128::new(stark_data_gas)
-        .ok_or(format_err!("Failed to convert `strk_l1_data_gas_price` to NonZeroU128"))?;
+
     gas_price.last_update_timestamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis();
     // explicitly dropping gas price here to avoid long waits when fetching the value
     // on the inherent side which would increase block time
