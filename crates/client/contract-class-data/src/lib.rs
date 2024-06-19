@@ -1,6 +1,6 @@
 //! A worker to manage additional contact class data
 //!
-//! When receiving an `add_decalre_transaction` we convert the contract class we receive into a
+//! When receiving an `add_declare_transaction` we convert the contract class we receive into a
 //! struct that is executable by the blockifier.
 //! During this process there is a loss of data, but we need to store this data somewhere in order
 //! to rebuild the original struct and answer the `get_class_at` rpc.
@@ -17,10 +17,10 @@
 //!
 //! The present worker does the following inside an infinite loop:
 //! - Poll the channel for new declare transactions and add them to a queue
-//! - Iterate over this queue and poll each individual tx watcher of update in the tx status.
+//! - Iterate over this queue and poll each individual tx watcher for update on the tx status.
 //!  * If the Substrate tx failed in anyway, remove the contact class data.
 //!  * Else if it has been finalize check if the Substrate block has been synced in our backend.
-//!   + If it is not sync yet, moved it to another buffer, that will be checked again on each
+//!   + If it is not sync yet, move it to another buffer, that will be checked again on each
 //!     iteration of the loop.
 //!   + Else, check if the Starknet transaction was successfully included in the Starknet block.
 //!     > If yes, move the pending contract class data to the final storage.
@@ -81,7 +81,7 @@ where
     }
 }
 
-// When calling `poll_next`, if new values have been pushed to the channel, stores up to limit of
+// When calling `poll_next`, if new values have been pushed to the channel, stores up to `limit` of
 // them in the buffer, and returns the exact amount.
 //
 // This whole struct only makes sense if limit > 0.
@@ -122,23 +122,19 @@ pub async fn run_worker<B, P>(
     // Totally arbitrary limit.
     // The job_recv being unbounded, there is not risk of it being full.
     // Could be increased up to at most the max amount of declare tx possible to have in a single block.
-    // More that this would be useless as the "poll receiver" task is woke up at least one (but most
-    // likely multiple times) during the span of one blocktime.
+    // More that this would be useless as the "poll receiver" task is woke up at least once once but
+    // most likely multiple times) during the span of one blocktime.
     let streams_buffer_limit = unsafe { NonZeroUsize::new_unchecked(10) };
     let mut jobs_receiver = DeclareTransactionJobReceiverFuture::<B, P>::new(job_recv, streams_buffer_limit);
 
     loop {
         // Deal with new DeclareTx in the channel
-        {
-            // Check if new DeclareTx were created
-            let opt_amount = match poll!(jobs_receiver.next()) {
-                Poll::Pending => None,
-                Poll::Ready(None) => panic!("the ContractClassData sender has been droped"),
-                Poll::Ready(opt_amount) => opt_amount,
-            };
-            // If yes, add them to the queue
-            if let Some(amount) = opt_amount {
-                // Empty the buffer into `unfinalized_declare_transaction`
+        // Check if new DeclareTx were created
+        match poll!(jobs_receiver.next()) {
+            Poll::Pending => {}
+            Poll::Ready(None) => panic!("the ContractClassData sender has been dropped"),
+            Poll::Ready(Some(amount)) => {
+                // Empty the buffer into `unfinalized_declare_transactions`
                 jobs_receiver.buffer_as_mut_ref().drain(..amount).collect_into(&mut unfinalized_declare_transactions);
             }
         }
@@ -164,7 +160,7 @@ pub async fn run_worker<B, P>(
             !is_synced
         });
 
-        // We did a bunch of blocking operations at this point,
+        // We did a bunch of sync operations at this point,
         // let's yield the thread to the tokio runtime.
         tokio::task::yield_now().await;
 
@@ -228,7 +224,7 @@ pub async fn run_worker<B, P>(
 }
 
 // To avoid false negative, this method should only be called after you made sure the Substrate
-// block containing the Starknet transaction with hash `transaction_hash` has been synced int
+// block containing the Starknet transaction with hash `transaction_hash` has been synced in
 // the Madara backend.
 fn persist_or_remove_pending_contract_class_data<B: BlockT>(
     contract_class_db: &Arc<ContractClassDataDb>,
