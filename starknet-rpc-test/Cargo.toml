@@ -14,6 +14,7 @@ blockifier = { workspace = true }
 env_logger = "0.9"
 flate2 = { workspace = true }
 indexmap = { workspace = true }
+mp-transactions = { workspace = true, features = ["serde"] }
 parity-scale-codec = { workspace = true }
 reqwest = { version = "0.11.22", features = ["json"] }
 rstest = "0.18.1"
@@ -30,7 +31,6 @@ starknet_api = { workspace = true }
 thiserror = { workspace = true }
 tokio = { version = "1.36.0", features = ["rt", "macros", "parking_lot"] }
 url = "2.4.1"
-mp-transactions = { workspace = true, features = ["serde"] }
 
 # [[test]]
 # name = "starknet_spec_version"
