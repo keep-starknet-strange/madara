@@ -736,6 +736,23 @@ pub mod pallet {
 
             let transaction = Self::convert_runtime_calls_to_starknet_transaction(call.clone())
                 .map_err(|_| InvalidTransaction::Call)?;
+
+            match transaction {
+                Transaction::AccountTransaction(AccountTransaction::Declare(DeclareTransaction { tx, .. }))
+                    if tx.version() == TransactionVersion::ZERO =>
+                {
+                    let sender_address: ContractAddress = Felt252Wrapper::from(tx.sender_address()).into();
+                    let nonce: Nonce = Felt252Wrapper::from(tx.nonce()).into();
+
+                    return ValidTransaction::with_tag_prefix("starknet")
+                        .priority(u64::MAX)
+                        .longevity(T::TransactionLongevity::get())
+                        .propagate(true)
+                        .and_provides((sender_address, nonce))
+                        .build();
+                }
+                _ => {}
+            }
             // Important to store the nonce before the call to prevalidate, because the `handle_nonce`
             // function will increment it
             let transaction_nonce = get_transaction_nonce(&transaction);

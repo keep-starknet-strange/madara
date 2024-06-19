@@ -9,13 +9,15 @@ pub mod from_broadcasted_transactions;
 #[cfg(feature = "client")]
 pub mod to_starknet_core_transaction;
 
+use std::sync::Arc;
+
 use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::transaction_execution::Transaction;
 use sp_core::H256;
 use starknet_api::core::{ContractAddress, Nonce, PatriciaKey};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::TransactionHash;
-use starknet_core::types::{TransactionExecutionStatus, TransactionFinalityStatus};
+use starknet_core::types::{CompressedLegacyContractClass, TransactionExecutionStatus, TransactionFinalityStatus};
 use starknet_ff::FieldElement;
 
 const SIMULATE_TX_VERSION_OFFSET: FieldElement =
@@ -138,4 +140,20 @@ impl From<&Transaction> for TxType {
             Transaction::L1HandlerTransaction(_) => TxType::L1Handler,
         }
     }
+}
+
+/// Broadcasted declare contract transaction v0.
+#[derive(Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct BroadcastedDeclareTransactionV0 {
+    /// The address of the account contract sending the declaration transaction
+    pub sender_address: FieldElement,
+    /// The maximal fee that can be charged for including the transaction
+    pub max_fee: FieldElement,
+    /// Signature
+    pub signature: Vec<FieldElement>,
+    /// The class to be declared
+    pub contract_class: Arc<CompressedLegacyContractClass>,
+    /// If set to `true`, uses a query-only transaction version that's invalid for execution
+    pub is_query: bool,
 }

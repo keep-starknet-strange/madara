@@ -2,13 +2,12 @@ use std::sync::Arc;
 
 use jsonrpsee::core::{async_trait, RpcResult};
 use mc_genesis_data_provider::GenesisProvider;
-use mc_rpc_core::DeclareV0Result;
 pub use mc_rpc_core::{
     Felt, MadaraRpcApiServer, PredeployedAccountWithBalance, StarknetReadRpcApiServer, StarknetTraceRpcApiServer,
     StarknetWriteRpcApiServer,
 };
 use mp_hashers::HasherT;
-use mp_transactions::TransactionStatus;
+use mp_transactions::{BroadcastedDeclareTransactionV0, TransactionStatus};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::BlockBackend;
@@ -54,8 +53,11 @@ where
         self.0.predeployed_accounts()
     }
 
-    async fn declare_v0_contract(&self, params: mc_rpc_core::CustomDeclareV0Transaction) -> RpcResult<DeclareV0Result> {
-        self.0.declare_v0_contract(params).await
+    async fn add_declare_transaction_v0(
+        &self,
+        params: BroadcastedDeclareTransactionV0,
+    ) -> RpcResult<DeclareTransactionResult> {
+        self.0.add_declare_transaction_v0(params).await
     }
 }
 

@@ -7,14 +7,11 @@
 #[cfg(test)]
 mod tests;
 
-use indexmap::IndexMap;
 use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
+use mp_transactions::BroadcastedDeclareTransactionV0;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
-use starknet_api::core::ClassHash;
-use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
-use starknet_api::transaction::{DeclareTransactionV0V1, TransactionHash};
 
 pub mod utils;
 
@@ -40,42 +37,17 @@ pub struct PredeployedAccountWithBalance {
     pub balance: FieldElement,
 }
 
-#[serde_as]
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct DeclareV0Result {
-    pub txn_hash: TransactionHash,
-    pub class_hash: ClassHash,
-}
-
-/// CustomDeclareV0Transaction
-/// This will be given as an input to the rpc body
-///
-/// **declare_transaction** : DeclareTransactionV0V1 struct constructed before calling.
-///
-/// **program_bytes** : Program bytes is program from `ClassInfo` struct converted into Vector.
-///
-/// **entrypoints** : Entrypoints are taken from `ClassInfo` struct.
-///
-/// **abi_length** : ABI length calculated from abi in `LegacyContractClass`.
-#[derive(Serialize, Deserialize, Debug)]
-pub struct CustomDeclareV0Transaction {
-    pub declare_transaction: DeclareTransactionV0V1,
-    pub program_bytes: Vec<u8>,
-    pub entrypoints: IndexMap<EntryPointType, Vec<EntryPoint>>,
-    pub abi_length: usize,
-}
-
 /// Madara rpc interface for additional features.
 #[rpc(server, namespace = "madara")]
 pub trait MadaraRpcApi: StarknetReadRpcApi {
     #[method(name = "predeployedAccounts")]
     fn predeployed_accounts(&self) -> RpcResult<Vec<PredeployedAccountWithBalance>>;
 
-    // There is an issue in deserialisation when we try to send the class info directly
-    // That's why we are sending the components saperately here and then building the
-    // transaction here in madara and executing the function in the pallet.
-    #[method(name = "declareV0")]
-    async fn declare_v0_contract(&self, params: CustomDeclareV0Transaction) -> RpcResult<DeclareV0Result>;
+    #[method(name = "addDeclareTransactionV0")]
+    async fn add_declare_transaction_v0(
+        &self,
+        params: BroadcastedDeclareTransactionV0,
+    ) -> RpcResult<DeclareTransactionResult>;
 }
 
 /// Starknet write rpc interface.

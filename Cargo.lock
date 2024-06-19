@@ -10954,6 +10954,7 @@ dependencies = [
  "env_logger 0.9.3",
  "flate2",
  "indexmap 2.2.5",
+ "mp-transactions",
  "parity-scale-codec",
  "reqwest",
  "rstest 0.18.2",

@@ -40,6 +40,7 @@ use starknet_core::types::{
 use starknet_crypto::FieldElement;
 use thiserror::Error;
 
+use super::BroadcastedDeclareTransactionV0;
 use crate::compute_hash::ComputeTransactionHash;
 
 #[derive(Debug, Error)]
@@ -85,59 +86,93 @@ pub fn try_account_tx_from_broadcasted_tx(
     }
 }
 
+fn try_new_declare_transaction(
+    tx: starknet_api::transaction::DeclareTransaction,
+    tx_hash: TransactionHash,
+    class_info: ClassInfo,
+    is_query: bool,
+) -> Result<DeclareTransaction, BroadcastedTransactionConversionError> {
+    if is_query {
+        DeclareTransaction::new_for_query(tx, tx_hash, class_info)
+    } else {
+        DeclareTransaction::new(tx, tx_hash, class_info)
+    }
+    .map_err(|_| BroadcastedTransactionConversionError::InvalidTransactionVersion)
+}
+
+fn decompress_and_extract_data(
+    compressed_contract_class: &CompressedLegacyContractClass,
+) -> Result<(Vec<u8>, FieldElement, usize), BroadcastedTransactionConversionError> {
+    // Create a GzipDecoder to decompress the bytes
+    let mut gz = GzDecoder::new(&compressed_contract_class.program[..]);
+
+    // Read the decompressed bytes into a Vec<u8>
+    let mut decompressed_bytes = Vec::new();
+    std::io::Read::read_to_end(&mut gz, &mut decompressed_bytes)
+        .map_err(|_| BroadcastedTransactionConversionError::ProgramDecompressionFailed)?;
+
+    let class_hash = {
+        let legacy_contract_class = LegacyContractClass {
+            program: serde_json::from_slice(decompressed_bytes.as_slice())
+                .map_err(|_| BroadcastedTransactionConversionError::ProgramDeserializationFailed)?,
+            abi: match compressed_contract_class.abi.as_ref() {
+                Some(abi) => abi.iter().cloned().map(|entry| entry.into()).collect::<Vec<_>>(),
+                None => vec![],
+            },
+            entry_points_by_type: to_raw_legacy_entry_points(compressed_contract_class.entry_points_by_type.clone()),
+        };
+
+        legacy_contract_class
+            .class_hash()
+            .map_err(|_| BroadcastedTransactionConversionError::ClassHashComputationFailed)?
+    };
+    let abi_length = compressed_contract_class.abi.as_ref().map(|abi| abi.len()).unwrap_or_default();
+
+    Ok((decompressed_bytes, class_hash, abi_length))
+}
+
+pub fn try_declare_tx_from_broadcasted_declare_tx_v0(
+    value: BroadcastedDeclareTransactionV0,
+    chain_id: Felt252Wrapper,
+) -> Result<DeclareTransaction, BroadcastedTransactionConversionError> {
+    let BroadcastedDeclareTransactionV0 {
+        sender_address,
+        max_fee,
+        signature,
+        contract_class: compressed_contract_class,
+        is_query,
+    } = value;
+
+    let (decompressed_bytes, class_hash, abi_length) = decompress_and_extract_data(compressed_contract_class.as_ref())?;
+    let tx = starknet_api::transaction::DeclareTransaction::V0(starknet_api::transaction::DeclareTransactionV0V1 {
+        max_fee: Fee(max_fee.try_into().map_err(|_| BroadcastedTransactionConversionError::MaxFeeTooBig)?),
+        signature: TransactionSignature(signature.into_iter().map(|v| Felt252Wrapper::from(v).into()).collect()),
+        nonce: Default::default(),
+        class_hash: Felt252Wrapper::from(class_hash).into(),
+        sender_address: Felt252Wrapper::from(sender_address).into(),
+    });
+
+    let contract_class = instantiate_blockifier_contract_class(compressed_contract_class, decompressed_bytes)?;
+    let tx_hash = tx.compute_hash(chain_id, is_query);
+
+    try_new_declare_transaction(tx, tx_hash, ClassInfo::new(&contract_class, 0, abi_length)?, is_query)
+}
+
 pub fn try_declare_tx_from_broadcasted_declare_tx(
     value: BroadcastedDeclareTransaction,
     chain_id: Felt252Wrapper,
 ) -> Result<DeclareTransaction, BroadcastedTransactionConversionError> {
-    fn try_new_declare_transaction(
-        tx: starknet_api::transaction::DeclareTransaction,
-        tx_hash: TransactionHash,
-        class_info: ClassInfo,
-        is_query: bool,
-    ) -> Result<DeclareTransaction, BroadcastedTransactionConversionError> {
-        if is_query {
-            DeclareTransaction::new_for_query(tx, tx_hash, class_info)
-        } else {
-            DeclareTransaction::new(tx, tx_hash, class_info)
-        }
-        .map_err(|_| BroadcastedTransactionConversionError::InvalidTransactionVersion)
-    }
-
     let user_tx = match value {
         BroadcastedDeclareTransaction::V1(BroadcastedDeclareTransactionV1 {
             max_fee,
             signature,
             nonce,
-            contract_class: compresed_contract_class,
+            contract_class: compressed_contract_class,
             sender_address,
             is_query,
         }) => {
-            // Create a GzipDecoder to decompress the bytes
-            let mut gz = GzDecoder::new(&compresed_contract_class.program[..]);
-
-            // Read the decompressed bytes into a Vec<u8>
-            let mut decompressed_bytes = Vec::new();
-            std::io::Read::read_to_end(&mut gz, &mut decompressed_bytes)
-                .map_err(|_| BroadcastedTransactionConversionError::ProgramDecompressionFailed)?;
-
-            let class_hash = {
-                let legacy_contract_class = LegacyContractClass {
-                    program: serde_json::from_slice(decompressed_bytes.as_slice())
-                        .map_err(|_| BroadcastedTransactionConversionError::ProgramDeserializationFailed)?,
-                    abi: match compresed_contract_class.abi.as_ref() {
-                        Some(abi) => abi.iter().cloned().map(|entry| entry.into()).collect::<Vec<_>>(),
-                        None => vec![],
-                    },
-                    entry_points_by_type: to_raw_legacy_entry_points(
-                        compresed_contract_class.entry_points_by_type.clone(),
-                    ),
-                };
-
-                legacy_contract_class
-                    .class_hash()
-                    .map_err(|_| BroadcastedTransactionConversionError::ClassHashComputationFailed)?
-            };
-            let abi_length = compresed_contract_class.abi.as_ref().map(|abi| abi.len()).unwrap_or_default();
+            let (decompressed_bytes, class_hash, abi_length) =
+                decompress_and_extract_data(compressed_contract_class.as_ref())?;
             let tx =
                 starknet_api::transaction::DeclareTransaction::V1(starknet_api::transaction::DeclareTransactionV0V1 {
                     max_fee: Fee(max_fee
@@ -151,7 +186,7 @@ pub fn try_declare_tx_from_broadcasted_declare_tx(
                     sender_address: Felt252Wrapper::from(sender_address).into(),
                 });
 
-            let contract_class = instantiate_blockifier_contract_class(compresed_contract_class, decompressed_bytes)?;
+            let contract_class = instantiate_blockifier_contract_class(compressed_contract_class, decompressed_bytes)?;
             let tx_hash = tx.compute_hash(chain_id, is_query);
 
             try_new_declare_transaction(tx, tx_hash, ClassInfo::new(&contract_class, 0, abi_length)?, is_query)?
