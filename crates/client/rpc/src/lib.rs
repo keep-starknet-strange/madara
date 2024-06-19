@@ -6,6 +6,7 @@ mod constants;
 mod errors;
 mod events;
 mod madara_backend_client;
+mod madara_routes;
 mod runtime_api;
 pub mod starknetrpcwrapper;
 mod trace_api;
@@ -15,17 +16,14 @@ use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-use blockifier::execution::contract_class::{ClassInfo, ContractClassV0, ContractClassV0Inner};
 use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::objects::{ResourcesMapping, TransactionExecutionInfo};
 use blockifier::transaction::transactions::{DeclareTransaction, L1HandlerTransaction};
-use cairo_vm::types::program::Program;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 use mc_genesis_data_provider::GenesisProvider;
 pub use mc_rpc_core::utils::*;
-use mc_rpc_core::DeclareV0Result;
 pub use mc_rpc_core::{
     Felt, MadaraRpcApiServer, PredeployedAccountWithBalance, StarknetReadRpcApiServer, StarknetTraceRpcApiServer,
     StarknetWriteRpcApiServer,
@@ -53,12 +51,11 @@ use sp_api::ProvideRuntimeApi;
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
 use sp_core::H256;
-use sp_runtime::codec::DecodeAll;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use sp_runtime::transaction_validity::InvalidTransaction;
 use starknet_api::core::{ClassHash, Nonce};
 use starknet_api::hash::StarkFelt;
-use starknet_api::transaction::{Calldata, DeclareTransactionV0V1, Fee, TransactionHash, TransactionVersion};
+use starknet_api::transaction::{Calldata, Fee, TransactionHash, TransactionVersion};
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
@@ -72,7 +69,6 @@ use starknet_core::types::{
     SimulationFlagForEstimateFee, StateDiff, StateUpdate, SyncStatus, SyncStatusType, Transaction,
     TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
 };
-use starknet_core::utils::get_selector_from_name;
 use trace_api::get_previous_block_substrate_hash;
 
 use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
@@ -236,11 +232,6 @@ where
     G: GenesisProvider + Send + Sync + 'static,
     H: HasherT + Send + Sync + 'static,
 {
-    fn get_txn_hash(&self, transaction: DeclareTransactionV0V1) -> TransactionHash {
-        let txn = starknet_api::transaction::DeclareTransaction::V0(transaction);
-        txn.compute_hash(Felt252Wrapper::from(self.chain_id().unwrap().0), false)
-    }
-
     async fn declare_tx_common(
         &self,
         txn: DeclareTransaction,
@@ -271,83 +262,6 @@ where
 
 /// Taken from https://github.com/paritytech/substrate/blob/master/client/rpc/src/author/mod.rs#L78
 const TX_SOURCE: TransactionSource = TransactionSource::External;
-
-#[async_trait]
-impl<A, B, BE, G, C, P, H> MadaraRpcApiServer for Starknet<A, B, BE, G, C, P, H>
-where
-    A: ChainApi<Block = B> + 'static,
-    B: BlockT,
-    BE: Backend<B> + 'static,
-    C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
-    C: ProvideRuntimeApi<B>,
-    G: GenesisProvider + Send + Sync + 'static,
-    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
-    P: TransactionPool<Block = B> + 'static,
-    H: HasherT + Send + Sync + 'static,
-{
-    fn predeployed_accounts(&self) -> RpcResult<Vec<PredeployedAccountWithBalance>> {
-        let genesis_data = self.genesis_provider.load_genesis_data()?;
-        let block_id = BlockId::Tag(BlockTag::Latest);
-        let fee_token_address: FieldElement = genesis_data.eth_fee_token_address.0;
-
-        Ok(genesis_data
-            .predeployed_accounts
-            .into_iter()
-            .map(|account| {
-                let contract_address: FieldElement = account.contract_address.into();
-                let balance_string = &self
-                    .call(
-                        FunctionCall {
-                            contract_address: fee_token_address,
-                            entry_point_selector: get_selector_from_name("balanceOf")
-                                .expect("the provided method name should be a valid ASCII string."),
-                            calldata: vec![contract_address],
-                        },
-                        block_id,
-                    )
-                    .expect("FunctionCall attributes should be correct.")[0];
-                let balance =
-                    Felt252Wrapper::from_hex_be(balance_string).expect("`balanceOf` should return a Felt").into();
-                PredeployedAccountWithBalance { account, balance }
-            })
-            .collect::<Vec<_>>())
-    }
-
-    async fn declare_v0_contract(&self, params: mc_rpc_core::CustomDeclareV0Transaction) -> RpcResult<DeclareV0Result> {
-        let txn_hash: TransactionHash = self.get_txn_hash(params.declare_transaction.clone());
-
-        let program_decoded = Program::decode_all(&mut params.program_bytes.as_slice()).map_err(|e| {
-            log::debug!("error: {:?}", e);
-            StarknetRpcApiError::InternalServerError
-        })?;
-
-        let class_info = ClassInfo::new(
-            &blockifier::execution::contract_class::ContractClass::V0(ContractClassV0(Arc::from(
-                ContractClassV0Inner { program: program_decoded, entry_points_by_type: params.entrypoints },
-            ))),
-            0,
-            params.abi_length,
-        )
-        .map_err(|e| {
-            log::debug!("error: {:?}", e);
-            StarknetRpcApiError::InternalServerError
-        })?;
-
-        let declare_transaction = DeclareTransaction::new(
-            starknet_api::transaction::DeclareTransaction::V0(params.declare_transaction),
-            txn_hash,
-            class_info,
-        )
-        .map_err(|e| {
-            log::debug!("error: {:?}", e);
-            StarknetRpcApiError::InternalServerError
-        })?;
-
-        let (txn_hash, class_hash) = self.declare_tx_common(declare_transaction).await?;
-
-        Ok(DeclareV0Result { txn_hash, class_hash })
-    }
-}
 
 #[async_trait]
 impl<A, B, BE, G, C, P, H> StarknetWriteRpcApiServer for Starknet<A, B, BE, G, C, P, H>
@@ -384,7 +298,7 @@ where
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
         let transaction = try_declare_tx_from_broadcasted_declare_tx(declare_transaction, chain_id).map_err(|e| {
-            error!("Failed to convert Broadcasted DeclareTransaction to DeclareTransaction, error: {e}");
+            error!("Failed to convert BroadcastedDeclareTransaction to DeclareTransaction, error: {e}");
             StarknetRpcApiError::InternalServerError
         })?;
 

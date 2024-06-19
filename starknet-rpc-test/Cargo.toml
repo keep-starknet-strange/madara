@@ -30,6 +30,7 @@ starknet_api = { workspace = true }
 thiserror = { workspace = true }
 tokio = { version = "1.36.0", features = ["rt", "macros", "parking_lot"] }
 url = "2.4.1"
+mp-transactions = { workspace = true, features = ["serde"] }
 
 # [[test]]
 # name = "starknet_spec_version"
@@ -140,5 +141,5 @@ name = "starknet_trace_transaction"
 path = "trace_transaction.rs"
 
 [[test]]
-name = "madara_declare_v0"
+name = "madara_add_declare_transaction_v0"
 path = "declareV0.rs"
