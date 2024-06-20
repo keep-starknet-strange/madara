@@ -75,7 +75,7 @@ pub struct HttpProviderConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
+#[serde(tag = "oracle_name", content = "config")]
 pub enum OracleConfig {
     Pragma(PragmaOracle),
 }
@@ -92,6 +92,18 @@ impl OracleConfig {
             OracleConfig::Pragma(oracle) => &oracle.api_key,
         }
     }
+
+    pub fn is_in_bounds(&self, price: u128) -> bool {
+        match self {
+            OracleConfig::Pragma(oracle) => oracle.price_bounds.low <= price && price <= oracle.price_bounds.high,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct PriceBounds {
+    pub low: u128,
+    pub high: u128,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -105,14 +117,18 @@ pub struct PragmaOracle {
     #[serde(default)]
     pub interval: Interval,
     #[serde(default)]
-    pub bounds: (u128, u128),
+    pub price_bounds: PriceBounds,
 }
 
 impl PragmaOracle {
     fn get_fetch_url(&self, base: String, quote: String) -> String {
         format!(
-            "{}{}/{}?interval={:?}&aggregation={:?}",
-            self.api_url, base, quote, self.interval, self.aggregation_method
+            "{}{}/{}?interval={}&aggregation={}",
+            self.api_url,
+            base,
+            quote,
+            self.interval.as_str(),
+            self.aggregation_method.as_str()
         )
     }
 }
@@ -128,6 +144,16 @@ pub enum AggregationMethod {
     Twap,
 }
 
+impl AggregationMethod {
+    pub fn as_str(&self) -> &str {
+        match self {
+            AggregationMethod::Median => "median",
+            AggregationMethod::Mean => "mean",
+            AggregationMethod::Twap => "twap",
+        }
+    }
+}
+
 // Supported Aggregation Intervals
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub enum Interval {
@@ -140,6 +166,17 @@ pub enum Interval {
     #[serde(rename = "2h")]
     #[default]
     TwoHours,
+}
+
+impl Interval {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Interval::OneMinute => "1min",
+            Interval::FifteenMinutes => "15min",
+            Interval::OneHour => "1h",
+            Interval::TwoHours => "2h",
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -173,7 +210,7 @@ impl Default for PragmaOracle {
             api_key: String::default(),
             aggregation_method: AggregationMethod::Median,
             interval: Interval::OneMinute,
-            bounds: (0, u128::MAX),
+            price_bounds: Default::default(),
         }
     }
 }

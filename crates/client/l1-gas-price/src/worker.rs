@@ -111,17 +111,23 @@ async fn update_gas_price(
         Ok(api_response) => {
             log::trace!("Retrieved ETH/STRK price from Oracle");
             let eth_strk_price = u128::from_str_radix(api_response.price.trim_start_matches("0x"), 16)?;
-            let stark_gas =
-                ((U256::from(eth_gas_price) * U256::from(eth_strk_price)) / 10u64.pow(api_response.decimals)).as_u128();
-            let stark_data_gas = ((U256::from(avg_blob_base_fee) * U256::from(eth_strk_price))
-                / 10u64.pow(api_response.decimals))
-            .as_u128();
-            gas_price.strk_l1_gas_price = NonZeroU128::new(stark_gas)
-                .ok_or(format_err!("Failed to convert `strk_l1_gas_price` to NonZeroU128"))?;
-            gas_price.strk_l1_data_gas_price = NonZeroU128::new(stark_data_gas)
-                .ok_or(format_err!("Failed to convert `strk_l1_data_gas_price` to NonZeroU128"))?;
+            if oracle.is_in_bounds(eth_strk_price) {
+                let stark_gas = ((U256::from(eth_gas_price) * U256::from(eth_strk_price))
+                    / 10u64.pow(api_response.decimals))
+                .as_u128();
+                let stark_data_gas = ((U256::from(avg_blob_base_fee) * U256::from(eth_strk_price))
+                    / 10u64.pow(api_response.decimals))
+                .as_u128();
+                gas_price.strk_l1_gas_price = NonZeroU128::new(stark_gas)
+                    .ok_or(format_err!("Failed to convert `strk_l1_gas_price` to NonZeroU128"))?;
+                gas_price.strk_l1_data_gas_price = NonZeroU128::new(stark_data_gas)
+                    .ok_or(format_err!("Failed to convert `strk_l1_data_gas_price` to NonZeroU128"))?;
+            } else {
+                log::error!("⚠️  Retrieved price is outside of bounds");
+            }
         }
         Err(e) => {
+            println!("ERROR : {:?}", e);
             log::error!("Failed to retrieve ETH/STRK price: {:?}", e);
         }
     };
@@ -134,6 +140,7 @@ async fn update_gas_price(
     gas_price.last_update_timestamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis();
     // explicitly dropping gas price here to avoid long waits when fetching the value
     // on the inherent side which would increase block time
+    println!("gas_price : {:#?}", gas_price);
     drop(gas_price);
 
     Ok(())
