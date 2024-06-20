@@ -1,3 +1,5 @@
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
 
 pub const DEFAULT_API_URL: &str = "https://api.dev.pragma.build/node/v1/data/";
@@ -62,14 +64,7 @@ impl Default for PragmaOracle {
 
 impl PragmaOracle {
     fn get_fetch_url(&self, base: String, quote: String) -> String {
-        format!(
-            "{}{}/{}?interval={}&aggregation={}",
-            self.api_url,
-            base,
-            quote,
-            self.interval.as_str(),
-            self.aggregation_method.as_str()
-        )
+        format!("{}{}/{}?interval={}&aggregation={}", self.api_url, base, quote, self.interval, self.aggregation_method)
     }
 }
 
@@ -85,13 +80,14 @@ pub enum AggregationMethod {
     Twap,
 }
 
-impl AggregationMethod {
-    pub fn as_str(&self) -> &str {
-        match self {
+impl fmt::Display for AggregationMethod {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let name = match self {
             AggregationMethod::Median => "median",
             AggregationMethod::Mean => "mean",
             AggregationMethod::Twap => "twap",
-        }
+        };
+        write!(f, "{}", name)
     }
 }
 
@@ -109,14 +105,15 @@ pub enum Interval {
     TwoHours,
 }
 
-impl Interval {
-    pub fn as_str(&self) -> &str {
-        match self {
+impl fmt::Display for Interval {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let name = match self {
             Interval::OneMinute => "1min",
             Interval::FifteenMinutes => "15min",
             Interval::OneHour => "1h",
             Interval::TwoHours => "2h",
-        }
+        };
+        write!(f, "{}", name)
     }
 }
 
