@@ -102,7 +102,7 @@ blockifier = { workspace = true }
 # CLI-specific dependencies
 reqwest = { workspace = true, features = ["blocking"] }
 serde_json = { workspace = true }
-try-runtime-cli = { optional = true, git = "https://github.com/massalabs/polkadot-sdk", rev = "a06318619a31bb7ff1a74fcba021a584c84c579b" }
+try-runtime-cli = { optional = true, git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
 url = { workspace = true }
 
 [build-dependencies]
