@@ -22,7 +22,4 @@ blockifier = { workspace = true }
 starknet_api = { workspace = true }
 
 # Substrate
-parity-scale-codec = { workspace = true, features = ["derive"] }
-scale-info = { workspace = true, features = ["derive"] }
 sp-api = { workspace = true }
-sp-runtime = { workspace = true }
