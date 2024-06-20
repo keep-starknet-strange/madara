@@ -4088,12 +4088,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
-name = "hexlit"
-version = "0.5.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b6e75c860d4216ac53f9ac88b25c99eaedba075b3a7b2ed31f2adc51a74fffd"
-
-[[package]]
 name = "hkdf"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5531,7 +5525,6 @@ dependencies = [
  "jsonrpsee",
  "log",
  "madara-runtime",
- "mc-commitment-state-diff",
  "mc-db",
  "mc-eth-client",
  "mc-genesis-data-provider",
@@ -5545,7 +5538,6 @@ dependencies = [
  "mp-digest-log",
  "mp-felt",
  "mp-starknet-inherent",
- "num-bigint",
  "pallet-starknet",
  "pallet-starknet-runtime-api",
  "reqwest",
@@ -5571,7 +5563,6 @@ dependencies = [
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
- "sp-consensus",
  "sp-consensus-aura",
  "sp-consensus-grandpa",
  "sp-core",
@@ -5585,7 +5576,6 @@ dependencies = [
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
- "thiserror",
  "try-runtime-cli",
  "url",
 ]
@@ -5835,7 +5825,6 @@ dependencies = [
  "sc-transaction-pool",
  "sc-transaction-pool-api",
  "serde",
- "serde_json",
  "sp-api",
  "sp-arithmetic",
  "sp-blockchain",
@@ -5881,11 +5870,9 @@ version = "0.8.0"
 dependencies = [
  "async-trait",
  "blockifier",
- "cairo-lang-starknet",
  "cairo-lang-starknet-classes",
  "cairo-lang-utils",
  "cairo-vm",
- "hex",
  "log",
  "madara-runtime",
  "mc-db",
@@ -5893,10 +5880,8 @@ dependencies = [
  "mp-felt",
  "mp-transactions",
  "num-bigint",
- "pallet-starknet",
  "pallet-starknet-runtime-api",
  "sc-consensus",
- "sc-rpc-api",
  "serde_json",
  "sp-api",
  "sp-consensus",
@@ -6215,14 +6200,12 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "starknet-core",
- "starknet_api",
 ]
 
 [[package]]
 name = "mp-snos-output"
 version = "0.8.0"
 dependencies = [
- "assert_matches",
  "hex",
  "mp-messages",
  "parity-scale-codec",
@@ -6898,7 +6881,6 @@ dependencies = [
  "cairo-vm",
  "frame-support",
  "frame-system",
- "hexlit",
  "lazy_static",
  "log",
  "mp-block",
@@ -6925,9 +6907,7 @@ dependencies = [
  "sp-std",
  "starknet-core",
  "starknet-crypto 0.6.2",
- "starknet-ff 0.3.7",
  "starknet_api",
- "test-case",
 ]
 
 [[package]]
@@ -6938,10 +6918,7 @@ dependencies = [
  "mp-felt",
  "mp-simulations",
  "mp-starknet-inherent",
- "parity-scale-codec",
- "scale-info",
  "sp-api",
- "sp-runtime",
  "starknet_api",
 ]
 
@@ -10951,6 +10928,7 @@ dependencies = [
  "async-trait",
  "env_logger 0.9.3",
  "flate2",
+ "mp-transactions",
  "reqwest",
  "rstest 0.18.2",
  "serde",
@@ -11320,39 +11298,6 @@ name = "termtree"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
-
-[[package]]
-name = "test-case"
-version = "3.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb2550dd13afcd286853192af8601920d959b14c401fcece38071d53bf0768a8"
-dependencies = [
- "test-case-macros",
-]
-
-[[package]]
-name = "test-case-core"
-version = "3.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "adcb7fd841cd518e279be3d5a3eb0636409487998a4aff22f3de87b81e88384f"
-dependencies = [
- "cfg-if",
- "proc-macro2",
- "quote",
- "syn 2.0.39",
-]
-
-[[package]]
-name = "test-case-macros"
-version = "3.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c89e72a01ed4c579669add59014b9a524d609c0c88c6a585ce37485879f6ffb"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.39",
- "test-case-core",
-]
 
 [[package]]
 name = "thiserror"

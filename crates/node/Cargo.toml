@@ -25,10 +25,8 @@ async-trait = "0.1"
 clap = { workspace = true, features = ["derive"] }
 futures = { workspace = true, features = ["thread-pool"] }
 log = { workspace = true }
-num-bigint = { workspace = true }
 serde = { workspace = true }
 sha3 = { workspace = true }
-thiserror = { workspace = true }
 
 frame-system = { workspace = true }
 sc-basic-authorship = { workspace = true }
@@ -46,7 +44,6 @@ sc-service = { workspace = true }
 sc-telemetry = { workspace = true }
 sc-transaction-pool = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
-sp-consensus = { workspace = true }
 sp-consensus-aura = { workspace = true }
 sp-consensus-grandpa = { workspace = true }
 sp-core = { workspace = true }
@@ -77,7 +74,6 @@ substrate-frame-rpc-system = { workspace = true }
 frame-benchmarking = { workspace = true }
 frame-benchmarking-cli = { workspace = true }
 madara-runtime = { workspace = true, features = ["std"] }
-mc-commitment-state-diff = { workspace = true }
 mc-db = { workspace = true }
 mc-eth-client = { workspace = true }
 mc-l1-gas-price = { workspace = true }

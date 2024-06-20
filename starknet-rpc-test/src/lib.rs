@@ -125,7 +125,7 @@ impl MadaraClient {
         Ok(())
     }
 
-    async fn call_rpc(&self, mut body: serde_json::Value) -> reqwest::Result<Response> {
+    pub async fn call_rpc(&self, mut body: serde_json::Value) -> reqwest::Result<Response> {
         let body = body.as_object_mut().expect("the body should be an object");
         body.insert("id".to_string(), self.rpc_request_count.get().into());
         body.insert("jsonrpc".to_string(), "2.0".into());

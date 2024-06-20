@@ -123,6 +123,7 @@ impl<T: Config> Pallet<T> {
                         AccountTransaction::DeployAccount(tx) => tx.contract_address,
                         AccountTransaction::Invoke(tx) => tx.tx.sender_address(),
                     };
+
                     if address == sender_address
                         && account_nonce == Nonce(StarkFelt::ZERO)
                         && incoming_tx_nonce == Nonce(StarkFelt::ONE)
