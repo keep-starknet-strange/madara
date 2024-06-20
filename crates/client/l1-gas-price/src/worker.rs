@@ -6,7 +6,8 @@ use anyhow::{format_err, Result};
 use ethers::types::U256;
 use ethers::utils::__serde_json::json;
 use futures::lock::Mutex;
-use mc_eth_client::config::{EthereumClientConfig, OracleConfig};
+use mc_eth_client::config::EthereumClientConfig;
+use mc_eth_client::oracle::OracleConfig;
 use mp_starknet_inherent::L1GasPrices;
 use serde::Deserialize;
 use tokio::time::sleep;
@@ -16,7 +17,7 @@ use crate::types::{EthRpcResponse, FeeHistory};
 const DEFAULT_GAS_PRICE_POLL_MS: u64 = 10_000;
 
 #[derive(Deserialize, Debug)]
-struct ApiResponse {
+struct OracleApiResponse {
     price: String,
     decimals: u32,
 }
@@ -103,11 +104,11 @@ async fn update_gas_price(
         .send()
         .await?;
 
-    let res_json = response.json::<ApiResponse>().await;
+    let oracle_api_response = response.json::<OracleApiResponse>().await;
 
     let mut gas_price = gas_price.lock().await;
 
-    match res_json {
+    match oracle_api_response {
         Ok(api_response) => {
             log::trace!("Retrieved ETH/STRK price from Oracle");
             let eth_strk_price = u128::from_str_radix(api_response.price.trim_start_matches("0x"), 16)?;

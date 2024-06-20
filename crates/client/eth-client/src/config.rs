@@ -19,6 +19,7 @@ use ethers::types::{Address, H160};
 use serde::{Deserialize, Serialize};
 
 use crate::error::Error;
+use crate::oracle::OracleConfig;
 
 /// Default Anvil local endpoint
 pub const DEFAULT_RPC_ENDPOINT: &str = "http://127.0.0.1:8545";
@@ -28,8 +29,6 @@ pub const DEFAULT_CHAIN_ID: u64 = 31337;
 /// anvil -b 5 --config-out $BUILD_DIR/anvil.json
 /// PRE_PRIVATE=$(jq -r '.private_keys[0]' $BUILD_DIR/anvil.json)
 pub const DEFAULT_PRIVATE_KEY: &str = "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
-
-pub const DEFAULT_API_URL: &str = "https://api.dev.pragma.build/node/v1/data/";
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct EthereumClientConfig {
@@ -75,111 +74,6 @@ pub struct HttpProviderConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "oracle_name", content = "config")]
-pub enum OracleConfig {
-    Pragma(PragmaOracle),
-}
-
-impl OracleConfig {
-    pub fn get_fetch_url(&self, base: String, quote: String) -> String {
-        match self {
-            OracleConfig::Pragma(pragma_oracle) => pragma_oracle.get_fetch_url(base, quote),
-        }
-    }
-
-    pub fn get_api_key(&self) -> &String {
-        match self {
-            OracleConfig::Pragma(oracle) => &oracle.api_key,
-        }
-    }
-
-    pub fn is_in_bounds(&self, price: u128) -> bool {
-        match self {
-            OracleConfig::Pragma(oracle) => oracle.price_bounds.low <= price && price <= oracle.price_bounds.high,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct PriceBounds {
-    pub low: u128,
-    pub high: u128,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PragmaOracle {
-    #[serde(default = "default_api_url")]
-    pub api_url: String,
-    #[serde(default)]
-    pub api_key: String,
-    #[serde(default)]
-    pub aggregation_method: AggregationMethod,
-    #[serde(default)]
-    pub interval: Interval,
-    #[serde(default)]
-    pub price_bounds: PriceBounds,
-}
-
-impl PragmaOracle {
-    fn get_fetch_url(&self, base: String, quote: String) -> String {
-        format!(
-            "{}{}/{}?interval={}&aggregation={}",
-            self.api_url,
-            base,
-            quote,
-            self.interval.as_str(),
-            self.aggregation_method.as_str()
-        )
-    }
-}
-
-#[derive(Default, Debug, Serialize, Deserialize, Clone)]
-pub enum AggregationMethod {
-    #[serde(rename = "median")]
-    Median,
-    #[serde(rename = "mean")]
-    Mean,
-    #[serde(rename = "twap")]
-    #[default]
-    Twap,
-}
-
-impl AggregationMethod {
-    pub fn as_str(&self) -> &str {
-        match self {
-            AggregationMethod::Median => "median",
-            AggregationMethod::Mean => "mean",
-            AggregationMethod::Twap => "twap",
-        }
-    }
-}
-
-// Supported Aggregation Intervals
-#[derive(Default, Debug, Serialize, Deserialize, Clone)]
-pub enum Interval {
-    #[serde(rename = "1min")]
-    OneMinute,
-    #[serde(rename = "15min")]
-    FifteenMinutes,
-    #[serde(rename = "1h")]
-    OneHour,
-    #[serde(rename = "2h")]
-    #[default]
-    TwoHours,
-}
-
-impl Interval {
-    pub fn as_str(&self) -> &str {
-        match self {
-            Interval::OneMinute => "1min",
-            Interval::FifteenMinutes => "15min",
-            Interval::OneHour => "1h",
-            Interval::TwoHours => "2h",
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LocalWalletConfig {
     #[serde(default = "default_chain_id")]
     pub chain_id: u64,
@@ -191,34 +85,12 @@ fn default_rpc_endpoint() -> String {
     DEFAULT_RPC_ENDPOINT.into()
 }
 
-fn default_api_url() -> String {
-    DEFAULT_API_URL.into()
-}
-
 fn default_chain_id() -> u64 {
     DEFAULT_CHAIN_ID
 }
 
 fn default_private_key() -> String {
     DEFAULT_PRIVATE_KEY.to_string()
-}
-
-impl Default for PragmaOracle {
-    fn default() -> Self {
-        Self {
-            api_url: default_api_url(),
-            api_key: String::default(),
-            aggregation_method: AggregationMethod::Median,
-            interval: Interval::OneMinute,
-            price_bounds: Default::default(),
-        }
-    }
-}
-
-impl Default for OracleConfig {
-    fn default() -> Self {
-        Self::Pragma(PragmaOracle::default())
-    }
 }
 
 impl Default for HttpProviderConfig {
