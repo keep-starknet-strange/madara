@@ -14,7 +14,7 @@
       "aggregation_method": "twap",
       "interval": "2h",
       "price_bounds": {
-        "low": 5000000000000000000000,
+        "low": 3000000000000000000000,
         "high": 6000000000000000000000
       }
     }
