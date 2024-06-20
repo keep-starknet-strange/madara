@@ -74,6 +74,7 @@ impl PragmaOracle {
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
+/// Supported Aggregation Methods
 pub enum AggregationMethod {
     #[serde(rename = "median")]
     Median,
@@ -94,7 +95,7 @@ impl AggregationMethod {
     }
 }
 
-// Supported Aggregation Intervals
+/// Supported Aggregation Intervals
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub enum Interval {
     #[serde(rename = "1min")]
