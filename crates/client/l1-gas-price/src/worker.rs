@@ -16,7 +16,7 @@ use crate::types::{EthRpcResponse, FeeHistory};
 const DEFAULT_GAS_PRICE_POLL_MS: u64 = 10_000;
 
 #[derive(Deserialize, Debug)]
-struct ApiResponse {
+struct OracleApiResponse {
     price: String,
     decimals: u32,
 }
@@ -103,10 +103,14 @@ async fn update_gas_price(
         .send()
         .await?;
 
-    let res_json = response.json::<ApiResponse>().await;
+    let res_json = response.json::<OracleApiResponse>().await;
 
     let mut gas_price = gas_price.lock().await;
 
+    // We query the Oracle API for the ETH/STRK price feed
+    // If the api response is successful AND the price is within the bounds
+    // Then we update the strk_l1_gas_price and strk_l1_data_gas_price fields
+    // Otherwise we log an error and we keep the previous values
     match res_json {
         Ok(api_response) => {
             log::trace!("Retrieved ETH/STRK price from Oracle");

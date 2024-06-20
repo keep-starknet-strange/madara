@@ -100,6 +100,9 @@ impl OracleConfig {
     }
 }
 
+/// Price bounds for the oracle
+/// If the price is outside of these bounds, it will not be used
+/// The bounds are denominated in the quote currency so in FRI here.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PriceBounds {
     pub low: u128,
@@ -123,16 +126,13 @@ pub struct PragmaOracle {
 impl PragmaOracle {
     fn get_fetch_url(&self, base: String, quote: String) -> String {
         format!(
-            "{}{}/{}?interval={}&aggregation={}",
-            self.api_url,
-            base,
-            quote,
-            self.interval.as_str(),
-            self.aggregation_method.as_str()
+            "{}{}/{}?interval={:?}&aggregation={:?}",
+            self.api_url, base, quote, self.interval, self.aggregation_method
         )
     }
 }
 
+/// Supported Aggregation Methods
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub enum AggregationMethod {
     #[serde(rename = "median")]
@@ -144,17 +144,7 @@ pub enum AggregationMethod {
     Twap,
 }
 
-impl AggregationMethod {
-    pub fn as_str(&self) -> &str {
-        match self {
-            AggregationMethod::Median => "median",
-            AggregationMethod::Mean => "mean",
-            AggregationMethod::Twap => "twap",
-        }
-    }
-}
-
-// Supported Aggregation Intervals
+/// Supported Aggregation Intervals
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub enum Interval {
     #[serde(rename = "1min")]
@@ -166,17 +156,6 @@ pub enum Interval {
     #[serde(rename = "2h")]
     #[default]
     TwoHours,
-}
-
-impl Interval {
-    pub fn as_str(&self) -> &str {
-        match self {
-            Interval::OneMinute => "1min",
-            Interval::FifteenMinutes => "15min",
-            Interval::OneHour => "1h",
-            Interval::TwoHours => "2h",
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
