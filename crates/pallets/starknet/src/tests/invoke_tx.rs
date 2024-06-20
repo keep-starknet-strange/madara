@@ -3,6 +3,7 @@ use std::sync::Arc;
 use blockifier::abi::abi_utils::get_storage_var_address;
 use blockifier::execution::contract_class::ClassInfo;
 use blockifier::transaction::transactions::{DeclareTransaction, InvokeTransaction};
+use blockifier::transaction::types::InvokeTransactionV0;
 use frame_support::{assert_err, assert_ok};
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
@@ -83,6 +84,59 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         assert_eq!(pending_hashes[0], tx_hash);
         let events: Vec<StarknetEvent> = Starknet::tx_events(tx_hash);
         println!("evens: {events:?}");
+
+        assert!(events.into_iter().any(|e| e
+            == StarknetEvent {
+                from_address: Starknet::fee_token_addresses().eth_fee_token_address,
+                content: EventContent {
+                    keys: vec![EventKey(
+                        Felt252Wrapper::from(get_selector_from_name(TRANSFER_SELECTOR_NAME).unwrap()).into(),
+                    )],
+                    data: EventData(vec![
+                        StarkFelt::try_from(BLOCKIFIER_ACCOUNT_ADDRESS).unwrap(),
+                        StarkFelt::try_from("0xdead").unwrap(),
+                        StarkFelt::try_from("0x2f8").unwrap(),
+                        StarkFelt::from(0u128),
+                    ]),
+                },
+            },));
+    });
+}
+
+#[test]
+fn given_hardcoded_contract_run_invoke_tx_v0_then_it_works() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let transaction = InvokeTransactionV0 {
+            sender_address: ContractAddress(PatriciaKey(
+                StarkFelt::try_from("0x03e437FB56Bb213f5708Fcd6966502070e276c093ec271aA33433b89E21fd31f").unwrap(),
+            )),
+            calldata: Calldata(Arc::new(vec![
+                StarkFelt::try_from("0x1").unwrap(),
+                StarkFelt::try_from("0x2").unwrap(),
+            ])),
+            signature: vec![TransactionSignature::default()],
+            max_fee: Fee::default(),
+            nonce: NONCE_ZERO,
+        };
+
+        let transaction = starknet_api::transaction::InvokeTransaction::V0(transaction);
+        let transaction = starknet_api::transaction::Transaction { tx: transaction };
+
+        assert_ok!(Starknet::invoke(RuntimeOrigin::none(), transaction));
+
+        let pending_txs = Starknet::pending();
+        pretty_assertions::assert_eq!(pending_txs.len(), 1);
+        let pending_hashes = Starknet::pending_hashes();
+        pretty_assertions::assert_eq!(pending_hashes.len(), 1);
+        let tx_hash = TransactionHash(
+            StarkFelt::try_from("0x02dfd0ded452658d67535279591c1ed9898431e1eafad7896239f0bfa68493d6").unwrap(),
+        );
+
+        assert_eq!(pending_hashes[0], tx_hash);
+        let events: Vec<StarknetEvent> = Starknet::tx_events(tx_hash);
+        println!("events: {events:?}");
 
         assert!(events.into_iter().any(|e| e
             == StarknetEvent {
