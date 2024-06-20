@@ -347,3 +347,4 @@
 - dev : clean contracts and compiled files
 - fix: add from_address in calldata of l1 message
 - test: add starkgate related testcase
+- feat: add pragam api to compute fees
