@@ -58,11 +58,8 @@ cairo-lang-starknet-classes = { workspace = true, optional = true }
 [dev-dependencies]
 pallet-timestamp = { workspace = true }
 pretty_assertions = { workspace = true }
-test-case = "3.1.0"
 lazy_static = "1.4.0"
-hexlit = "0.5.5"
 assert_matches = "1.5.0"
-starknet-ff = { workspace = true }
 project-root = "0.2.2"
 
 [features]

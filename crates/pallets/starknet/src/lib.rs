@@ -737,6 +737,7 @@ pub mod pallet {
             let transaction = Self::convert_runtime_calls_to_starknet_transaction(call.clone())
                 .map_err(|_| InvalidTransaction::Call)?;
 
+            // Version 0 transaction does not have any nonce or validation rules.
             match transaction {
                 Transaction::AccountTransaction(AccountTransaction::Declare(DeclareTransaction { tx, .. }))
                     if tx.version() == TransactionVersion::ZERO =>
