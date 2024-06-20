@@ -9,7 +9,7 @@ var srcIndex = JSON.parse('{\
 "mc_l1_gas_price":["",[],["lib.rs","types.rs","worker.rs"]],\
 "mc_l1_messages":["",[],["contract.rs","error.rs","lib.rs","worker.rs"]],\
 "mc_mapping_sync":["",[],["block_metrics.rs","lib.rs","sync_blocks.rs"]],\
-"mc_rpc":["",[["events",[],["mod.rs"]]],["constants.rs","errors.rs","lib.rs","madara_backend_client.rs","runtime_api.rs","starknetrpcwrapper.rs","trace_api.rs","types.rs"]],\
+"mc_rpc":["",[["events",[],["mod.rs"]]],["constants.rs","errors.rs","lib.rs","madara_backend_client.rs","madara_routes.rs","runtime_api.rs","starknetrpcwrapper.rs","trace_api.rs","types.rs"]],\
 "mc_rpc_core":["",[],["lib.rs","utils.rs"]],\
 "mc_starknet_block_import":["",[],["compilation.rs","lib.rs","validation.rs"]],\
 "mc_storage":["",[["overrides",[],["mod.rs","schema_v1_override.rs"]]],["lib.rs"]],\

@@ -189,6 +189,14 @@
 <a href="#189" id="189">189</a>
 <a href="#190" id="190">190</a>
 <a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet RPC API trait and types
 //!
 //! Starkware maintains [a description of the Starknet API](https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json)
@@ -200,6 +208,7 @@
 
 <span class="kw">use </span>jsonrpsee::core::RpcResult;
 <span class="kw">use </span>jsonrpsee::proc_macros::rpc;
+<span class="kw">use </span>mp_transactions::BroadcastedDeclareTransactionV0;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>serde_with::serde_as;
 
@@ -232,6 +241,13 @@
 </span><span class="kw">pub trait </span>MadaraRpcApi: StarknetReadRpcApi {
     <span class="attr">#[method(name = <span class="string">&quot;predeployedAccounts&quot;</span>)]
     </span><span class="kw">fn </span>predeployed_accounts(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;Vec&lt;PredeployedAccountWithBalance&gt;&gt;;
+
+    <span class="doccomment">/// Submit a declare transaction for cairo 0 contract to be initialised with given address.
+    </span><span class="attr">#[method(name = <span class="string">&quot;addDeclareTransactionV0&quot;</span>)]
+    </span><span class="kw">async fn </span>add_declare_transaction_v0(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        params: BroadcastedDeclareTransactionV0,
+    ) -&gt; RpcResult&lt;DeclareTransactionResult&gt;;
 }
 
 <span class="doccomment">/// Starknet write rpc interface.

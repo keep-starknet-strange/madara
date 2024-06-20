@@ -139,6 +139,24 @@
 <a href="#139" id="139">139</a>
 <a href="#140" id="140">140</a>
 <a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 
 </span><span class="attr">#![feature(trait_upcasting)]
@@ -150,13 +168,15 @@
 <span class="attr">#[cfg(feature = <span class="string">&quot;client&quot;</span>)]
 </span><span class="kw">pub mod </span>to_starknet_core_transaction;
 
+<span class="kw">use </span>std::sync::Arc;
+
 <span class="kw">use </span>blockifier::transaction::account_transaction::AccountTransaction;
 <span class="kw">use </span>blockifier::transaction::transaction_execution::Transaction;
 <span class="kw">use </span>sp_core::H256;
 <span class="kw">use </span>starknet_api::core::{ContractAddress, Nonce, PatriciaKey};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_api::transaction::TransactionHash;
-<span class="kw">use </span>starknet_core::types::{TransactionExecutionStatus, TransactionFinalityStatus};
+<span class="kw">use </span>starknet_core::types::{CompressedLegacyContractClass, TransactionExecutionStatus, TransactionFinalityStatus};
 <span class="kw">use </span>starknet_ff::FieldElement;
 
 <span class="kw">const </span>SIMULATE_TX_VERSION_OFFSET: FieldElement =
@@ -279,5 +299,21 @@
             Transaction::L1HandlerTransaction(<span class="kw">_</span>) =&gt; TxType::L1Handler,
         }
     }
+}
+
+<span class="doccomment">/// Broadcasted declare contract transaction v0.
+</span><span class="attr">#[derive(Debug, Eq, PartialEq)]
+#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
+</span><span class="kw">pub struct </span>BroadcastedDeclareTransactionV0 {
+    <span class="doccomment">/// The address of the account contract sending the declaration transaction
+    </span><span class="kw">pub </span>sender_address: FieldElement,
+    <span class="doccomment">/// The maximal fee that can be charged for including the transaction
+    </span><span class="kw">pub </span>max_fee: FieldElement,
+    <span class="doccomment">/// Signature
+    </span><span class="kw">pub </span>signature: Vec&lt;FieldElement&gt;,
+    <span class="doccomment">/// The class to be declared
+    </span><span class="kw">pub </span>contract_class: Arc&lt;CompressedLegacyContractClass&gt;,
+    <span class="doccomment">/// If set to `true`, uses a query-only transaction version that&#39;s invalid for execution
+    </span><span class="kw">pub </span>is_query: bool,
 }
 </code></pre></div></section></main></body></html>

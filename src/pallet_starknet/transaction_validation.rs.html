@@ -156,6 +156,7 @@
 <a href="#156" id="156">156</a>
 <a href="#157" id="157">157</a>
 <a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Transaction validation logic.
 </span><span class="kw">use </span>blockifier::transaction::account_transaction::AccountTransaction;
 <span class="kw">use </span>blockifier::transaction::errors::{TransactionExecutionError, TransactionPreValidationError};
@@ -281,6 +282,7 @@
                         AccountTransaction::DeployAccount(tx) =&gt; tx.contract_address,
                         AccountTransaction::Invoke(tx) =&gt; tx.tx.sender_address(),
                     };
+
                     <span class="kw">if </span>address == sender_address
                         &amp;&amp; account_nonce == Nonce(StarkFelt::ZERO)
                         &amp;&amp; incoming_tx_nonce == Nonce(StarkFelt::ONE)

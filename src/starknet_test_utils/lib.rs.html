@@ -337,7 +337,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">async fn </span>call_rpc(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>body: serde_json::Value) -&gt; reqwest::Result&lt;Response&gt; {
+    <span class="kw">pub async fn </span>call_rpc(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>body: serde_json::Value) -&gt; reqwest::Result&lt;Response&gt; {
         <span class="kw">let </span>body = body.as_object_mut().expect(<span class="string">&quot;the body should be an object&quot;</span>);
         body.insert(<span class="string">&quot;id&quot;</span>.to_string(), <span class="self">self</span>.rpc_request_count.get().into());
         body.insert(<span class="string">&quot;jsonrpc&quot;</span>.to_string(), <span class="string">&quot;2.0&quot;</span>.into());
