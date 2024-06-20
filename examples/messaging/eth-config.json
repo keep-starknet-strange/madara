@@ -9,7 +9,11 @@
   "oracle": {
     "api_url": "https://api.dev.pragma.build/node/v1/data/eth/strk?interval=1min&aggregation=median",
     "api_key": "",
-    "aggregation_method": "median",
-    "interval": "1min"
+    "aggregation_method": "twap",
+    "interval": "2h",
+    "bounds": [
+      0.5,
+      1
+    ]
   }
 }
