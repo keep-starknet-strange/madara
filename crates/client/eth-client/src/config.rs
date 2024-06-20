@@ -104,6 +104,8 @@ pub struct PragmaOracle {
     pub aggregation_method: AggregationMethod,
     #[serde(default)]
     pub interval: Interval,
+    #[serde(default)]
+    pub bounds: (u128, u128),
 }
 
 impl PragmaOracle {
@@ -181,6 +183,7 @@ impl Default for PragmaOracle {
             api_key: String::from(""),
             aggregation_method: AggregationMethod::Median,
             interval: Interval::OneMinute,
+            bounds: (0, u128::MAX),
         }
     }
 }
