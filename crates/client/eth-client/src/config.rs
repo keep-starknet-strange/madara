@@ -117,38 +117,28 @@ impl PragmaOracle {
     }
 }
 
-#[derive(Default, Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub enum AggregationMethod {
     #[serde(rename = "median")]
-    #[default]
     Median,
     #[serde(rename = "mean")]
     Mean,
     #[serde(rename = "twap")]
+    #[default]
     Twap,
 }
 
-// impl fmt::Display for AggregationMethod {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         match self {
-//             AggregationMethod::Median => write!(f, "median"),
-//             AggregationMethod::Mean => write!(f, "mean"),
-//             AggregationMethod::Twap => write!(f, "twap"),
-//         }
-//     }
-// }
-
 // Supported Aggregation Intervals
-#[derive(Default, Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub enum Interval {
     #[serde(rename = "1min")]
-    #[default]
     OneMinute,
     #[serde(rename = "15min")]
     FifteenMinutes,
     #[serde(rename = "1h")]
     OneHour,
     #[serde(rename = "2h")]
+    #[default]
     TwoHours,
 }
 
@@ -180,7 +170,7 @@ impl Default for PragmaOracle {
     fn default() -> Self {
         Self {
             api_url: default_api_url(),
-            api_key: String::from(""),
+            api_key: String::default(),
             aggregation_method: AggregationMethod::Median,
             interval: Interval::OneMinute,
             bounds: (0, u128::MAX),
