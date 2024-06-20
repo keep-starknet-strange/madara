@@ -5829,6 +5829,7 @@ name = "mc-mapping-sync"
 version = "0.8.0"
 dependencies = [
  "anyhow",
+ "blockifier",
  "futures",
  "futures-timer",
  "log",

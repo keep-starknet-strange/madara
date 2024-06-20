@@ -28,7 +28,8 @@ impl ContractClassDataDb {
 
             data_as_json_vec
         };
-        transaction.set(crate::columns::PENDING_CONTRACT_CLASS_DATA, &class_hash.encode(), &data_as_json_vec);
+        transaction.set(crate::columns::CONTRACT_CLASS_DATA, &class_hash.encode(), &data_as_json_vec);
+        transaction.set(crate::columns::PENDING_CONTRACT_CLASS_DATA, &class_hash.encode(), &[]);
 
         self.db.commit(transaction)?;
 
@@ -50,7 +51,8 @@ impl ContractClassDataDb {
             data_as_json_vec
         };
 
-        transaction.set(crate::columns::PENDING_CONTRACT_CLASS_DATA, &class_hash.encode(), &data_as_json_vec);
+        transaction.set(crate::columns::CONTRACT_CLASS_DATA, &class_hash.encode(), &data_as_json_vec);
+        transaction.set(crate::columns::PENDING_CONTRACT_CLASS_DATA, &class_hash.encode(), &[]);
 
         self.db.commit(transaction)?;
 
@@ -58,7 +60,13 @@ impl ContractClassDataDb {
     }
 
     pub fn read_contract_class_data(&self, class_hash: ClassHash) -> Result<Option<ContractClassData>, DbError> {
-        let raw_data = match self.db.get(crate::columns::CONTRACT_CLASS_DATA, &class_hash.encode()) {
+        let encoded_class_hash = class_hash.encode();
+
+        if self.db.contains(crate::columns::PENDING_CONTRACT_CLASS_DATA, &encoded_class_hash) {
+            return Ok(None);
+        }
+
+        let raw_data = match self.db.get(crate::columns::CONTRACT_CLASS_DATA, &encoded_class_hash) {
             Some(raw) => raw,
             None => return Ok(None),
         };
@@ -78,6 +86,7 @@ impl ContractClassDataDb {
     pub fn remove_pending_contract_class_data(&self, class_hash: ClassHash) -> Result<(), DbError> {
         let mut transaction = sp_database::Transaction::new();
 
+        transaction.remove(crate::columns::CONTRACT_CLASS_DATA, &class_hash.encode());
         transaction.remove(crate::columns::PENDING_CONTRACT_CLASS_DATA, &class_hash.encode());
 
         self.db.commit(transaction)?;
@@ -88,15 +97,9 @@ impl ContractClassDataDb {
     pub fn persist_pending_contract_class_data(&self, class_hash: ClassHash) -> Result<(), DbError> {
         let encoded_class_hash = class_hash.encode();
 
-        let encoded_class_hash_data =
-            self.db.get(crate::columns::PENDING_CONTRACT_CLASS_DATA, &encoded_class_hash).ok_or_else(|| {
-                DbError::ValueNotInitialized(crate::columns::PENDING_CONTRACT_CLASS_DATA, class_hash.to_string())
-            })?;
-
         let mut transaction = sp_database::Transaction::new();
 
         transaction.remove(crate::columns::PENDING_CONTRACT_CLASS_DATA, &encoded_class_hash);
-        transaction.set(crate::columns::CONTRACT_CLASS_DATA, &encoded_class_hash, &encoded_class_hash_data);
 
         self.db.commit(transaction)?;
 

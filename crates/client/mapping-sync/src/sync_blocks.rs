@@ -1,6 +1,7 @@
+use blockifier::transaction::account_transaction::AccountTransaction;
+use blockifier::transaction::transaction_execution::Transaction;
 use mc_rpc_core::utils::get_block_by_block_hash;
 use mp_digest_log::{find_starknet_block, FindLogError};
-use mp_transactions::get_transaction_hash;
 use num_traits::FromPrimitive;
 use pallet_starknet_runtime_api::StarknetRuntimeApi;
 use prometheus_endpoint::prometheus::core::Number;
@@ -50,7 +51,28 @@ where
                             starknet_transaction_hashes: digest_starknet_block
                                 .transactions()
                                 .iter()
-                                .map(get_transaction_hash)
+                                .map(|tx| {
+                                    // Return tx_hash but aslo persist pending pending declare contract class data
+                                    match tx {
+                                        Transaction::AccountTransaction(tx) => match tx {
+                                            AccountTransaction::Invoke(tx) => &tx.tx_hash,
+                                            AccountTransaction::Declare(tx) => {
+                                                let class_hash = tx.tx.class_hash();
+                                                if let Err(e) = backend
+                                                    .contract_class_data()
+                                                    .persist_pending_contract_class_data(class_hash)
+                                                {
+                                                    log::error!(
+                                                        "Failed to persist contract class {class_hash:?} data: {e}"
+                                                    );
+                                                }
+                                                &tx.tx_hash
+                                            }
+                                            AccountTransaction::DeployAccount(tx) => &tx.tx_hash,
+                                        },
+                                        Transaction::L1HandlerTransaction(tx) => &tx.tx_hash,
+                                    }
+                                })
                                 .cloned()
                                 .collect(),
                         };

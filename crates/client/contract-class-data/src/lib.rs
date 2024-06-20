@@ -5,15 +5,17 @@
 //! During this process there is a loss of data, but we need to store this data somewhere in order
 //! to rebuild the original struct and answer the `get_class_at` rpc.
 //!
-//! To make sure no data is missing, we store the extra data in some temporary storage before
+//! To make sure no data is missing, we store the extra data in a storage before
 //! pushing the tx into the TransactionPool, while creating a watcher to this Substrate extrinsinc.
 //! Then we wait for the tx to be executed, and it's block to be finalized. Once it's done, we check
-//! that the Starknet tx was successful. If yes, we move it to a more perenial storage, if not we
-//! remove it altogether from the temporary storage.
+//! that the Starknet tx was successful. If yes, we remove the db entry that flaged it as pending,
+//! if not we remove it altogether from the temporary storage.
 //! The logic described above is splited beetween:
 //! - mc_rpc::add_declare_transaction
 //! - mc_db::ContractClassDataDb
 //! - mc_contract_class_data::run_worker (the present crate)
+//! Also, for better UX we remove the flag as soon as the block is sync, in
+//! `mapping_sync::sync_block`.
 //!
 //! The present worker does the following inside an infinite loop:
 //! - Poll the channel for new declare transactions and add them to a queue
@@ -120,7 +122,7 @@ pub async fn run_worker<B, P>(
     // Stores all the txs that were not yet mapped into our db when they finalized for later processing.
     let mut finalized_but_not_mapped_yet = HashMap::<B::Hash, Vec<(TransactionHash, ClassHash)>>::new();
     // Totally arbitrary limit.
-    // The job_recv being unbounded, there is not risk of it being full.
+    // The job_recv being unbounded, there is no risk of it being full.
     // Could be increased up to at most the max amount of declare tx possible to have in a single block.
     // More that this would be useless as the "poll receiver" task is woke up at least once once but
     // most likely multiple times) during the span of one blocktime.
@@ -156,7 +158,7 @@ pub async fn run_worker<B, P>(
                 }
             }
 
-            // Don't retain the synced enties
+            // Don't retain the synced entries
             !is_synced
         });
 

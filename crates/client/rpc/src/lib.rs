@@ -283,9 +283,9 @@ where
         let transaction_status_watcher_stream: Pin<Box<TransactionStatusStreamFor<P>>> =
             submit_and_watch_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
 
-        self.contract_class_data_tx
-            .send((tx_hash, class_hash, transaction_status_watcher_stream))
-            .expect("this should work");
+        if let Err(e) = self.contract_class_data_tx.send((tx_hash, class_hash, transaction_status_watcher_stream)) {
+            log::error!("Failed to send contract class watcher of tx `{tx_hash:?}` to contract_class_data worker: {e}");
+        }
 
         Ok((tx_hash, class_hash))
     }
@@ -320,8 +320,6 @@ where
         &self,
         declare_transaction: BroadcastedDeclareTransaction,
     ) -> RpcResult<DeclareTransactionResult> {
-        let best_block_hash = self.get_best_block_hash();
-
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
         let (transaction, contract_class_data) =

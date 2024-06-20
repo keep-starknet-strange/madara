@@ -5,7 +5,6 @@
 // The declaration have to go through the RPC for it to work.
 
 use std::io::Read;
-use std::time::Duration;
 
 use assert_matches::assert_matches;
 use flate2::read::GzDecoder;
@@ -20,12 +19,13 @@ use starknet_providers::Provider;
 use starknet_providers::ProviderError::StarknetError as StarknetProviderError;
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE, TEST_CONTRACT_CLASS_HASH};
 use starknet_rpc_test::fixtures::{madara, ThreadSafeMadaraClient};
-use starknet_rpc_test::utils::{build_single_owner_account, get_contract_address_from_deploy_tx};
-use starknet_rpc_test::Transaction;
+use starknet_rpc_test::utils::{
+    build_single_owner_account, get_contract_address_from_deploy_tx, get_transaction_receipt,
+};
+use starknet_rpc_test::{Transaction, TransactionResult};
 use starknet_test_utils::constants::MAX_FEE_OVERRIDE;
 use starknet_test_utils::utils::AccountActions;
 use starknet_types_core::felt::Felt;
-use tokio::time::sleep;
 
 #[rstest]
 #[tokio::test]
@@ -147,12 +147,16 @@ async fn work_ok_retrieving_class_for_contract_version_0(madara: &ThreadSafeMada
         let block_number = rpc.block_number().await.unwrap();
         (txs, block_number)
     };
-    assert!(txs[0].is_ok(), "declare tx failed");
+    assert!(txs[0].is_ok(), "add declare tx failed");
 
-    // Wait a bit to let the client sync the block
-    sleep(Duration::from_secs(3)).await;
+    // Wait for the tx to be synced
+    let tx_hash = match &txs[0] {
+        Ok(TransactionResult::Declaration(rpc_response)) => rpc_response.transaction_hash,
+        _ => panic!("expected declaration result"),
+    };
+    let _ = get_transaction_receipt(&rpc, tx_hash).await.unwrap();
 
-    // Check if get_class workded
+    // Check that get_class works
     let received_contract_class = rpc.get_class(BlockId::Number(block_number), expected_class_hash).await.unwrap();
     assert_eq_contract_class(received_contract_class, contract_class.clone());
 
@@ -205,8 +209,13 @@ async fn work_ok_retrieving_class_for_contract_version_1(madara: &ThreadSafeMada
     let test_contract_class: SierraClass = serde_json::from_slice(test_contract_class_bytes).unwrap();
     let flattened_test_contract_class: FlattenedSierraClass = test_contract_class.flatten().unwrap();
 
-    sleep(Duration::from_secs(3)).await;
-
+    // Wait for the tx to be synced
+    let tx_hash = match &txs[0] {
+        Ok(TransactionResult::Declaration(rpc_response)) => rpc_response.transaction_hash,
+        _ => panic!("expected declaration result"),
+    };
+    let _ = get_transaction_receipt(&rpc, tx_hash).await.unwrap();
+    // Check get class works
     assert_matches!(
         rpc
         .get_class(

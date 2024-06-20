@@ -29,11 +29,11 @@ pub fn casm_contract_class_to_compressed_legacy_contract_class(
                 .zip(accessible_scopes)
                 .map(|(attribute, accessible_scopes)| LegacyAttribute {
                     accessible_scopes,
-                    end_pc: attribute.end_pc.try_into().expect("the value shoud have fit"),
+                    end_pc: attribute.end_pc.try_into().expect("the value should have fit"),
                     flow_tracking_data: attribute.flow_tracking_data.map(|ftd| LegacyFlowTrackingData {
                         ap_tracking: LegacyApTrackingData {
-                            group: ftd.ap_tracking.group.try_into().expect("the value shoud have fit"),
-                            offset: ftd.ap_tracking.offset.try_into().expect("the value shoud have fit"),
+                            group: ftd.ap_tracking.group.try_into().expect("the value should have fit"),
+                            offset: ftd.ap_tracking.offset.try_into().expect("the value should have fit"),
                         },
                         reference_ids: ftd
                             .reference_ids
