@@ -14,6 +14,7 @@ use madara_runtime::opaque::Block;
 use madara_runtime::{AccountId, Hash, Index, StarknetHasher};
 use mc_genesis_data_provider::GenesisProvider;
 use mc_rpc::starknetrpcwrapper::StarknetRpcWrapper;
+use sc_block_builder::GetPendingBlockExtrinsics;
 use sc_client_api::{Backend, BlockBackend, StorageProvider};
 use sc_consensus_manual_seal::rpc::EngineCommand;
 pub use sc_rpc_api::DenyUnsafe;
@@ -51,6 +52,7 @@ where
         + BlockBackend<Block>
         + HeaderMetadata<Block, Error = BlockChainError>
         + StorageProvider<Block, BE>
+        + GetPendingBlockExtrinsics<Block>
         + 'static,
     C: Send + Sync + 'static,
     C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,

@@ -22,6 +22,7 @@ mc-genesis-data-provider = { workspace = true }
 mc-rpc-core = { workspace = true }
 mc-storage = { workspace = true }
 pallet-starknet-runtime-api = { workspace = true }
+sc-block-builder = { workspace = true }
 sc-transaction-pool = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
 sp-api = { workspace = true }

@@ -12,6 +12,7 @@ use mp_felt::Felt252Wrapper;
 use mp_hashers::HasherT;
 use mp_simulations::SimulationFlags;
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
+use sc_block_builder::GetPendingBlockExtrinsics;
 use sc_client_api::backend::Backend;
 use sc_transaction_pool::ChainApi;
 use sp_api::{ApiError, ProvideRuntimeApi};
@@ -32,6 +33,7 @@ where
     BE: Backend<B>,
     C: HeaderBackend<B> + 'static,
     C: ProvideRuntimeApi<B>,
+    C: GetPendingBlockExtrinsics<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     H: HasherT + Send + Sync + 'static,
 {
