@@ -127,7 +127,6 @@ async fn update_gas_price(
             }
         }
         Err(e) => {
-            println!("ERROR : {:?}", e);
             log::error!("Failed to retrieve ETH/STRK price: {:?}", e);
         }
     };
@@ -140,7 +139,6 @@ async fn update_gas_price(
     gas_price.last_update_timestamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis();
     // explicitly dropping gas price here to avoid long waits when fetching the value
     // on the inherent side which would increase block time
-    println!("gas_price : {:#?}", gas_price);
     drop(gas_price);
 
     Ok(())
