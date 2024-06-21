@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["config","error"]};
+window.SIDEBAR_ITEMS = {"mod":["config","error","oracle"]};

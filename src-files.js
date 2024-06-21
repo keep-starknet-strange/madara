@@ -4,7 +4,7 @@ var srcIndex = JSON.parse('{\
 "madara_test_runner":["",[],["client.rs","lib.rs","node.rs"]],\
 "mc_commitment_state_diff":["",[],["lib.rs"]],\
 "mc_db":["",[["db_opening_utils",[],["mod.rs","parity_db_adapter.rs"]]],["da_db.rs","error.rs","l1_handler_tx_fee.rs","lib.rs","mapping_db.rs","messaging_db.rs","meta_db.rs","sierra_classes_db.rs"]],\
-"mc_eth_client":["",[],["config.rs","error.rs","lib.rs"]],\
+"mc_eth_client":["",[],["config.rs","error.rs","lib.rs","oracle.rs"]],\
 "mc_genesis_data_provider":["",[],["constants.rs","lib.rs"]],\
 "mc_l1_gas_price":["",[],["lib.rs","types.rs","worker.rs"]],\
 "mc_l1_messages":["",[],["contract.rs","error.rs","lib.rs","worker.rs"]],\

@@ -7,7 +7,7 @@
 <span class="item-spacer"></span>    fn <a href="#tymethod.get_transaction_status" class="fn">get_transaction_status</a>(
         &amp;self,
         transaction_hash: FieldElement
-    ) -&gt; RpcResult&lt;<a class="struct" href="../mp_transactions/struct.TransactionStatus.html" title="struct mp_transactions::TransactionStatus">TransactionStatus</a>&gt;;
+    ) -&gt; RpcResult&lt;TransactionStatus&gt;;
 <span class="item-spacer"></span>    fn <a href="#tymethod.get_storage_at" class="fn">get_storage_at</a>(
         &amp;self,
         contract_address: FieldElement,
@@ -104,7 +104,7 @@
 </div></details><details class="toggle method-toggle" open><summary><section id="tymethod.get_transaction_status" class="method"><a class="src rightside" href="../src/mc_rpc_core/lib.rs.html#100">source</a><h4 class="code-header">fn <a href="#tymethod.get_transaction_status" class="fn">get_transaction_status</a>(
     &amp;self,
     transaction_hash: FieldElement
-) -&gt; RpcResult&lt;<a class="struct" href="../mp_transactions/struct.TransactionStatus.html" title="struct mp_transactions::TransactionStatus">TransactionStatus</a>&gt;</h4></section></summary><div class="docblock"><p>Gets the Transaction Status, Including Mempool Status and Execution Details</p>
+) -&gt; RpcResult&lt;TransactionStatus&gt;</h4></section></summary><div class="docblock"><p>Gets the Transaction Status, Including Mempool Status and Execution Details</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="tymethod.get_storage_at" class="method"><a class="src rightside" href="../src/mc_rpc_core/lib.rs.html#104">source</a><h4 class="code-header">fn <a href="#tymethod.get_storage_at" class="fn">get_storage_at</a>(
     &amp;self,
     contract_address: FieldElement,
