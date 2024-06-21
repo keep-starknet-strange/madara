@@ -19,6 +19,7 @@ use ethers::types::{Address, H160};
 use serde::{Deserialize, Serialize};
 
 use crate::error::Error;
+use crate::oracle::OracleConfig;
 
 /// Default Anvil local endpoint
 pub const DEFAULT_RPC_ENDPOINT: &str = "http://127.0.0.1:8545";
@@ -37,6 +38,8 @@ pub struct EthereumClientConfig {
     pub wallet: Option<EthereumWalletConfig>,
     #[serde(default)]
     pub contracts: StarknetContracts,
+    #[serde(default)]
+    pub oracle: OracleConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
