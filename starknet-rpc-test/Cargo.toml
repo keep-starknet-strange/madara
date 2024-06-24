@@ -137,4 +137,4 @@ path = "trace_transaction.rs"
 
 [[test]]
 name = "madara_add_declare_transaction_v0"
-path = "declareV0.rs"
+path = "add_declare_transaction_v0.rs"

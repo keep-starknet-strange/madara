@@ -1,7 +1,6 @@
 extern crate starknet_rpc_test;
 
 use core::panic;
-use std::time::Duration;
 use std::vec;
 
 use assert_matches::assert_matches;
@@ -18,7 +17,6 @@ use starknet_rpc_test::utils::{
 use starknet_rpc_test::{SendTransactionError, Transaction, TransactionResult};
 use starknet_test_utils::constants::ETH_FEE_TOKEN_ADDRESS;
 use starknet_test_utils::utils::get_transaction_receipt;
-use tokio::time::sleep;
 
 #[rstest]
 #[tokio::test]
@@ -42,7 +40,7 @@ async fn fail_validation_step(madara: &ThreadSafeMadaraClient) -> Result<(), any
     let declare_tx_err = txs[0].as_ref().unwrap_err();
     match declare_tx_err {
         SendTransactionError::AccountError(starknet_accounts::AccountError::Provider(provider_error)) => {
-            assert!(is_good_error_code(provider_error, 55));
+            assert!(is_good_error_code(&provider_error, 55));
         }
 
         _ => {

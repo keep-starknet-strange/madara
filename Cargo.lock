@@ -11022,6 +11022,7 @@ dependencies = [
  "assert_matches",
  "async-lock 3.2.0",
  "async-trait",
+ "futures",
  "reqwest",
  "rstest 0.18.2",
  "serde_json",

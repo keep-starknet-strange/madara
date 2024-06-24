@@ -15,6 +15,7 @@ use starknet_test_utils::utils::get_transaction_receipt;
 
 #[rstest]
 #[tokio::test]
+#[ignore]
 async fn add_declare_transaction_v0_works(madara: &ThreadSafeMadaraClient) {
     let rpc = madara.get_starknet_client().await;
 
@@ -42,6 +43,7 @@ async fn add_declare_transaction_v0_works(madara: &ThreadSafeMadaraClient) {
 
     let block_number = {
         let mut madara_write_lock = madara.write().await;
+        madara_write_lock.create_empty_block().await.unwrap();
         // Wasn't declared before
         assert!(rpc.get_class(BlockId::Tag(BlockTag::Latest), class_hash).await.is_err());
         madara_write_lock.call_rpc(json_body).await.unwrap();

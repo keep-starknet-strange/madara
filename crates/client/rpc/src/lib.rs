@@ -259,8 +259,7 @@ where
             .contract_class_by_class_hash(best_block_hash, class_hash)
             .is_some()
         {
-            error!("Contract class with class hash {:?} already exists", class_hash);
-            return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
+            return Err(StarknetRpcApiError::ClassAlreadyDeclared);
         }
 
         let extrinsic = self.convert_tx_to_extrinsic(best_block_hash, AccountTransaction::Declare(transaction))?;
