@@ -1,8 +1,6 @@
-use std::io::Write;
 use std::sync::Arc;
 
-use anyhow::{anyhow, Result};
-use blockifier::execution::contract_class::ContractClass as BlockifierContractClass;
+use anyhow::Result;
 use blockifier::state::cached_state::CommitmentStateDiff;
 use cairo_lang_starknet_classes::casm_contract_class::{
     CasmContractClass, CasmContractEntryPoint, CasmContractEntryPoints, StarknetSierraCompilationError,
@@ -18,36 +16,12 @@ use mp_felt::Felt252Wrapper;
 use num_bigint::{BigInt, BigUint, Sign};
 use sp_api::{BlockT, HeaderT};
 use sp_blockchain::HeaderBackend;
-use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 use starknet_api::state::ThinStateDiff;
 use starknet_core::types::contract::{CompiledClass, CompiledClassEntrypoint, CompiledClassEntrypointList};
 use starknet_core::types::{
-    CompressedLegacyContractClass, ContractClass, ContractStorageDiffItem, DeclaredClassItem, DeployedContractItem,
-    EntryPointsByType, FieldElement, FlattenedSierraClass, FromByteArrayError, LegacyContractEntryPoint,
-    LegacyEntryPointsByType, NonceUpdate, ReplacedClassItem, SierraEntryPoint, StateDiff, StorageEntry,
+    ContractStorageDiffItem, DeclaredClassItem, DeployedContractItem, EntryPointsByType, FieldElement,
+    FlattenedSierraClass, NonceUpdate, ReplacedClassItem, SierraEntryPoint, StateDiff, StorageEntry,
 };
-
-/// Returns a [`ContractClass`] from a [`BlockifierContractClass`]
-pub fn blockifier_to_rpc_contract_class_types(contract_class: BlockifierContractClass) -> Result<ContractClass> {
-    match contract_class {
-        BlockifierContractClass::V0(contract_class) => {
-            let entry_points_by_type = to_legacy_entry_points_by_type(&contract_class.entry_points_by_type)?;
-            let compressed_program = compress(&contract_class.program.serialize()?)?;
-            Ok(ContractClass::Legacy(CompressedLegacyContractClass {
-                program: compressed_program,
-                entry_points_by_type,
-                // FIXME 723
-                abi: None,
-            }))
-        }
-        BlockifierContractClass::V1(_contract_class) => Ok(ContractClass::Sierra(FlattenedSierraClass {
-            sierra_program: vec![], // FIXME: https://github.com/keep-starknet-strange/madara/issues/775
-            contract_class_version: option_env!("COMPILER_VERSION").unwrap_or("0.11.2").into(),
-            entry_points_by_type: EntryPointsByType { constructor: vec![], external: vec![], l1_handler: vec![] }, /* TODO: add entry_points_by_type */
-            abi: String::from("{}"), // FIXME: https://github.com/keep-starknet-strange/madara/issues/790
-        })),
-    }
-}
 
 /// Returns a [`StateDiff`] from a [`CommitmentStateDiff`]
 pub fn blockifier_to_rpc_state_diff_types(commitment_state_diff: CommitmentStateDiff) -> Result<StateDiff> {
@@ -170,48 +144,6 @@ pub fn to_rpc_state_diff(thin_state_diff: ThinStateDiff) -> StateDiff {
         deployed_contracts,
         replaced_classes,
     }
-}
-
-/// Returns a compressed vector of bytes
-pub(crate) fn compress(data: &[u8]) -> Result<Vec<u8>> {
-    let mut gzip_encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
-    // 2023-08-22: JSON serialization is already done in Blockifier
-    // https://github.com/keep-starknet-strange/blockifier/blob/no_std-support-7578442/crates/blockifier/src/execution/contract_class.rs#L129
-    // https://github.com/keep-starknet-strange/blockifier/blob/no_std-support-7578442/crates/blockifier/src/execution/contract_class.rs#L389
-    // serde_json::to_writer(&mut gzip_encoder, data)?;
-    gzip_encoder.write_all(data)?;
-    Ok(gzip_encoder.finish()?)
-}
-
-/// Returns a [Result<LegacyEntryPointsByType>] (starknet-rs type) from a [HashMap<EntryPointType,
-/// Vec<EntryPoint>>]
-fn to_legacy_entry_points_by_type(
-    entries: &IndexMap<EntryPointType, Vec<EntryPoint>>,
-) -> Result<LegacyEntryPointsByType> {
-    fn collect_entry_points(
-        entries: &IndexMap<EntryPointType, Vec<EntryPoint>>,
-        entry_point_type: EntryPointType,
-    ) -> Result<Vec<LegacyContractEntryPoint>> {
-        Ok(entries
-            .get(&entry_point_type)
-            .ok_or(anyhow!("Missing {:?} entry point", entry_point_type))?
-            .iter()
-            .map(|e| to_legacy_entry_point(e.clone()))
-            .collect::<Result<Vec<LegacyContractEntryPoint>, FromByteArrayError>>()?)
-    }
-
-    let constructor = collect_entry_points(entries, EntryPointType::Constructor)?;
-    let external = collect_entry_points(entries, EntryPointType::External)?;
-    let l1_handler = collect_entry_points(entries, EntryPointType::L1Handler)?;
-
-    Ok(LegacyEntryPointsByType { constructor, external, l1_handler })
-}
-
-/// Returns a [LegacyContractEntryPoint] (starknet-rs) from a [EntryPoint] (starknet-api)
-fn to_legacy_entry_point(entry_point: EntryPoint) -> Result<LegacyContractEntryPoint, FromByteArrayError> {
-    let selector = FieldElement::from_bytes_be(&entry_point.selector.0.0)?;
-    let offset = entry_point.offset.0;
-    Ok(LegacyContractEntryPoint { selector, offset })
 }
 
 /// Returns the current Starknet block from the block header's digest

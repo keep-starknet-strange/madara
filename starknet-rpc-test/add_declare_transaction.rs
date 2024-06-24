@@ -16,6 +16,7 @@ use starknet_rpc_test::utils::{
 };
 use starknet_rpc_test::{SendTransactionError, Transaction, TransactionResult};
 use starknet_test_utils::constants::ETH_FEE_TOKEN_ADDRESS;
+use starknet_test_utils::utils::get_transaction_receipt;
 
 #[rstest]
 #[tokio::test]
@@ -39,7 +40,7 @@ async fn fail_validation_step(madara: &ThreadSafeMadaraClient) -> Result<(), any
     let declare_tx_err = txs[0].as_ref().unwrap_err();
     match declare_tx_err {
         SendTransactionError::AccountError(starknet_accounts::AccountError::Provider(provider_error)) => {
-            assert!(is_good_error_code(provider_error, 55));
+            assert!(is_good_error_code(&provider_error, 55));
         }
 
         _ => {
@@ -139,18 +140,20 @@ async fn works_with_storage_change(madara: &ThreadSafeMadaraClient) -> Result<()
 
     assert_eq!(txs.len(), 1);
     let declare_tx_result = txs.remove(0);
-    match declare_tx_result {
-        Ok(TransactionResult::Declaration(DeclareTransactionResult { transaction_hash: _, class_hash })) => {
+    let declare_tx_hash = match declare_tx_result {
+        Ok(TransactionResult::Declaration(DeclareTransactionResult { transaction_hash, class_hash })) => {
             assert_eq!(class_hash, expected_class_hash);
+            transaction_hash
         }
         _ => panic!("Expected declare transaction result"),
-    }
-
-    assert!(rpc.get_class(BlockId::Number(block_number), expected_class_hash).await.is_ok());
-
+    };
     // included in block
     let included_txs = rpc.get_block_transaction_count(BlockId::Number(block_number)).await?;
     assert_eq!(included_txs, 1);
+
+    // Wait for receipt to be available
+    get_transaction_receipt(&rpc, declare_tx_hash).await?;
+    assert!(rpc.get_class(BlockId::Number(block_number), expected_class_hash).await.is_ok());
 
     Ok(())
 }

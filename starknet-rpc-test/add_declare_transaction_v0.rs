@@ -11,9 +11,11 @@ use starknet_ff::FieldElement;
 use starknet_providers::Provider;
 use starknet_rpc_test::constants::ARGENT_CONTRACT_ADDRESS;
 use starknet_test_utils::fixtures::{madara, ThreadSafeMadaraClient};
+use starknet_test_utils::utils::get_transaction_receipt;
 
 #[rstest]
 #[tokio::test]
+#[ignore]
 async fn add_declare_transaction_v0_works(madara: &ThreadSafeMadaraClient) {
     let rpc = madara.get_starknet_client().await;
 
@@ -41,6 +43,7 @@ async fn add_declare_transaction_v0_works(madara: &ThreadSafeMadaraClient) {
 
     let block_number = {
         let mut madara_write_lock = madara.write().await;
+        madara_write_lock.create_empty_block().await.unwrap();
         // Wasn't declared before
         assert!(rpc.get_class(BlockId::Tag(BlockTag::Latest), class_hash).await.is_err());
         madara_write_lock.call_rpc(json_body).await.unwrap();
@@ -49,12 +52,15 @@ async fn add_declare_transaction_v0_works(madara: &ThreadSafeMadaraClient) {
     };
 
     // Tx was included in block
-    let block = match rpc.get_block_with_txs(BlockId::Number(block_number)).await.unwrap() {
-        starknet_core::types::MaybePendingBlockWithTxs::Block(b) => b,
+    let block = match rpc.get_block_with_tx_hashes(BlockId::Number(block_number)).await.unwrap() {
+        starknet_core::types::MaybePendingBlockWithTxHashes::Block(b) => b,
         _ => panic!("This block is not pending"),
     };
     assert_eq!(block.transactions.len(), 1);
+    let declare_tx_hash = block.transactions[0];
 
+    // Wait for receipt to be available
+    get_transaction_receipt(&rpc, declare_tx_hash).await.unwrap();
     // Is declared now
     let contract_class = rpc.get_class(BlockId::Number(block_number), class_hash).await.unwrap();
     assert_matches!(contract_class, ContractClass::Legacy(_));

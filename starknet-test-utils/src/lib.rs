@@ -176,7 +176,7 @@ impl MadaraClient {
             results.push(result);
         }
 
-        self.do_create_block(true, false).await?;
+        self.do_create_block(true, true).await?;
         Ok(results)
     }
 

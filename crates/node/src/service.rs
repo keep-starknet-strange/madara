@@ -263,6 +263,7 @@ pub fn new_full(
         _ => (None, None),
     };
 
+    let (contract_class_data_tx, contract_class_data_rx) = tokio::sync::mpsc::unbounded_channel();
     let overrides = overrides_handle(client.clone());
     let config_dir: PathBuf = config.data_path.clone();
     let genesis_data = OnDiskGenesisConfig(config_dir);
@@ -273,6 +274,7 @@ pub fn new_full(
         sync_service: sync_service.clone(),
         starting_block,
         genesis_provider: genesis_data.into(),
+        contract_class_data_tx,
     };
 
     let rpc_extensions_builder = {
@@ -368,6 +370,16 @@ pub fn new_full(
                 }
             }
         }
+
+        task_manager.spawn_essential_handle().spawn(
+            "mc-contract-class-data-worker",
+            Some(MADARA_TASK_GROUP),
+            mc_contract_class_data::run_worker::<Block, sc_transaction_pool::FullPool<Block, FullClient>>(
+                madara_backend.contract_class_data().clone(),
+                madara_backend.mapping().clone(),
+                contract_class_data_rx,
+            ),
+        );
 
         // manual-seal authorship
         if !sealing.is_default() {

@@ -12,10 +12,11 @@
 //! flags. Support for custom databases is possible but not supported yet.
 
 mod error;
+use contract_class_data_db::ContractClassDataDb;
 pub use error::DbError;
 
 mod mapping_db;
-pub use mapping_db::MappingCommitment;
+pub use mapping_db::{MappingCommitment, MappingDb};
 use sierra_classes_db::SierraClassesDb;
 use starknet_api::hash::StarkHash;
 mod da_db;
@@ -23,6 +24,7 @@ mod db_opening_utils;
 mod messaging_db;
 pub mod sierra_classes_db;
 pub use messaging_db::LastSyncedEventBlock;
+pub mod contract_class_data_db;
 mod l1_handler_tx_fee;
 mod meta_db;
 
@@ -32,7 +34,6 @@ use std::sync::Arc;
 
 use da_db::DaDb;
 use l1_handler_tx_fee::L1HandlerTxFeeDb;
-use mapping_db::MappingDb;
 use messaging_db::MessagingDb;
 use meta_db::MetaDb;
 use sc_client_db::DatabaseSource;
@@ -53,7 +54,7 @@ pub(crate) mod columns {
     // ===== /!\ ===================================================================================
     // MUST BE INCREMENTED WHEN A NEW COLUMN IN ADDED
     // ===== /!\ ===================================================================================
-    pub const NUM_COLUMNS: u32 = 8;
+    pub const NUM_COLUMNS: u32 = 10;
 
     pub const META: u32 = 0;
     pub const BLOCK_MAPPING: u32 = 1;
@@ -69,6 +70,12 @@ pub(crate) mod columns {
 
     /// This column stores the fee paid on l1 for L1Handler transactions
     pub const L1_HANDLER_PAID_FEE: u32 = 7;
+
+    /// This column stores the additional data about contract classes we need to serve the RPCs
+    pub const CONTRACT_CLASS_DATA: u32 = 8;
+    /// This column stores data about classes that have been received by the node but are not yet
+    /// included in the chain
+    pub const PENDING_CONTRACT_CLASS_DATA: u32 = 9;
 }
 
 pub mod static_keys {
@@ -89,6 +96,7 @@ pub struct Backend<B: BlockT> {
     messaging: Arc<MessagingDb>,
     sierra_classes: Arc<SierraClassesDb>,
     l1_handler_paid_fee: Arc<L1HandlerTxFeeDb>,
+    contract_class_data: Arc<ContractClassDataDb>,
 }
 
 /// Returns the Starknet database directory.
@@ -129,6 +137,7 @@ impl<B: BlockT> Backend<B> {
             messaging: Arc::new(MessagingDb { db: db.clone() }),
             sierra_classes: Arc::new(SierraClassesDb { db: db.clone() }),
             l1_handler_paid_fee: Arc::new(L1HandlerTxFeeDb { db: db.clone() }),
+            contract_class_data: Arc::new(ContractClassDataDb { db: db.clone() }),
         })
     }
 
@@ -162,6 +171,10 @@ impl<B: BlockT> Backend<B> {
         &self.l1_handler_paid_fee
     }
 
+    /// Return contract class data database manager
+    pub fn contract_class_data(&self) -> &Arc<ContractClassDataDb> {
+        &self.contract_class_data
+    }
     /// In the future, we will compute the block global state root asynchronously in the client,
     /// using the Starknet-Bonzai-trie.
     /// That what replaces it for now :)

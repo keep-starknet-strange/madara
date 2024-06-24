@@ -484,6 +484,7 @@ where
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     H: HasherT + Send + Sync + 'static,
     BE: Backend<B> + 'static,
+    P: TransactionPool<Block = B>,
 {
     let starknet_block = get_block_by_block_hash(starknet.client.as_ref(), substrate_block_hash).map_err(|e| {
         error!("Failed to get block for block hash {substrate_block_hash}: '{e}'");

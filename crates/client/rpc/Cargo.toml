@@ -16,12 +16,20 @@ repository = "https://github.com/keep-starknet-strange/madara"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-# Madara utils
+# Madara
 mc-db = { workspace = true }
 mc-genesis-data-provider = { workspace = true }
 mc-rpc-core = { workspace = true }
 mc-storage = { workspace = true }
+mp-block = { workspace = true }
+mp-felt = { workspace = true }
+mp-hashers = { workspace = true }
+mp-simulations = { workspace = true }
+mp-transactions = { workspace = true, features = ["client"] }
 pallet-starknet-runtime-api = { workspace = true }
+# Substrate
+sc-client-api = { workspace = true }
+sc-network-sync = { workspace = true }
 sc-transaction-pool = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
 sp-api = { workspace = true }
@@ -30,25 +38,23 @@ sp-blockchain = { workspace = true }
 sp-core = { workspace = true }
 sp-runtime = { workspace = true }
 sp-timestamp = { workspace = true }
-
-# Substrate client
-sc-client-api = { workspace = true }
-sc-network-sync = { workspace = true }
 # Starknet
 blockifier = { workspace = true }
 cairo-vm = { workspace = true }
-jsonrpsee = { workspace = true, features = ["server", "macros"] }
-log = { workspace = true }
-mp-block = { workspace = true }
-mp-felt = { workspace = true }
-mp-hashers = { workspace = true }
-mp-simulations = { workspace = true }
-mp-transactions = { workspace = true, features = ["client"] }
-serde = { workspace = true }
 starknet-core = { workspace = true }
 starknet-ff = { workspace = true }
 starknet_api = { workspace = true }
+# Others
+anyhow = { workspace = true }
+futures = { workspace = true }
+indexmap = { workspace = true }
+jsonrpsee = { workspace = true, features = ["server", "macros"] }
+log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 thiserror = { workspace = true }
+tokio = { workspace = true, features = ["sync"] }
+
 
 [dev-dependencies]
 rstest = { workspace = true }

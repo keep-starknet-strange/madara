@@ -24,16 +24,16 @@ impl L1HandlerTxFeeDb {
     }
 
     /// Return the stored fee paid on l1 for a specific L1Handler transaction
-    pub fn get_fee_paid_for_l1_handler_tx(&self, tx_hash: StarkFelt) -> Result<Fee, DbError> {
-        if let Some(bytes) = self.db.get(crate::columns::L1_HANDLER_PAID_FEE, &tx_hash.encode()) {
+    pub fn get_fee_paid_for_l1_handler_tx(&self, tx_hash: StarkFelt) -> Result<Option<Fee>, DbError> {
+        let opt_fee = self.db.get(crate::columns::L1_HANDLER_PAID_FEE, &tx_hash.encode()).map(|raw| {
             let mut buff = [0u8; 16];
 
-            buff.copy_from_slice(&bytes);
+            buff.copy_from_slice(&raw);
             let fee = u128::from_le_bytes(buff);
 
-            Ok(Fee(fee))
-        } else {
-            Err(DbError::ValueNotInitialized(crate::columns::L1_HANDLER_PAID_FEE, tx_hash.to_string()))
-        }
+            Fee(fee)
+        });
+
+        Ok(opt_fee)
     }
 }

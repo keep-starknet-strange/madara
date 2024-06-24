@@ -184,7 +184,7 @@ fn testnet_genesis(
             authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect(),
             _config: Default::default(),
         },
-        /// Starknet Genesis configuration.
+        // Starknet Genesis configuration.
         starknet: starknet_genesis_config,
     }
 }

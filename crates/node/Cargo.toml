@@ -27,6 +27,8 @@ futures = { workspace = true, features = ["thread-pool"] }
 log = { workspace = true }
 serde = { workspace = true }
 sha3 = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["sync"] }
 
 frame-system = { workspace = true }
 sc-basic-authorship = { workspace = true }
@@ -74,6 +76,8 @@ substrate-frame-rpc-system = { workspace = true }
 frame-benchmarking = { workspace = true }
 frame-benchmarking-cli = { workspace = true }
 madara-runtime = { workspace = true, features = ["std"] }
+mc-commitment-state-diff = { workspace = true }
+mc-contract-class-data = { workspace = true }
 mc-db = { workspace = true }
 mc-eth-client = { workspace = true }
 mc-l1-gas-price = { workspace = true }
@@ -96,6 +100,7 @@ mp-starknet-inherent = { workspace = true, features = ["client"] }
 
 # Starknet
 blockifier = { workspace = true }
+starknet_api = { workspace = true }
 
 
 # CLI-specific dependencies

@@ -82,7 +82,6 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
 
         assert_eq!(pending_hashes[0], tx_hash);
         let events: Vec<StarknetEvent> = Starknet::tx_events(tx_hash);
-        println!("evens: {events:?}");
 
         assert!(events.into_iter().any(|e| e
             == StarknetEvent {
