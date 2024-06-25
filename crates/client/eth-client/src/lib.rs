@@ -9,6 +9,7 @@
 
 pub mod config;
 pub mod error;
+pub mod oracle;
 
 use std::time::Duration;
 

@@ -6,6 +6,7 @@ mod constants;
 mod errors;
 mod events;
 mod madara_backend_client;
+mod madara_routes;
 mod runtime_api;
 pub mod starknetrpcwrapper;
 mod trace_api;
@@ -17,7 +18,7 @@ use std::sync::Arc;
 
 use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::objects::{ResourcesMapping, TransactionExecutionInfo};
-use blockifier::transaction::transactions::L1HandlerTransaction;
+use blockifier::transaction::transactions::{DeclareTransaction, L1HandlerTransaction};
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
@@ -52,7 +53,7 @@ use sp_blockchain::HeaderBackend;
 use sp_core::H256;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use sp_runtime::transaction_validity::InvalidTransaction;
-use starknet_api::core::Nonce;
+use starknet_api::core::{ClassHash, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, Fee, TransactionHash, TransactionVersion};
 use starknet_core::types::{
@@ -68,7 +69,6 @@ use starknet_core::types::{
     SimulationFlagForEstimateFee, StateDiff, StateUpdate, SyncStatus, SyncStatusType, Transaction,
     TransactionExecutionStatus, TransactionFinalityStatus, TransactionReceipt,
 };
-use starknet_core::utils::get_selector_from_name;
 use trace_api::get_previous_block_substrate_hash;
 
 use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
@@ -220,49 +220,48 @@ where
     }
 }
 
-/// Taken from https://github.com/paritytech/substrate/blob/master/client/rpc/src/author/mod.rs#L78
-const TX_SOURCE: TransactionSource = TransactionSource::External;
-
-impl<A, B, BE, G, C, P, H> MadaraRpcApiServer for Starknet<A, B, BE, G, C, P, H>
+impl<A, B, BE, G, C, P, H> Starknet<A, B, BE, G, C, P, H>
 where
     A: ChainApi<Block = B> + 'static,
     B: BlockT,
+    P: TransactionPool<Block = B> + 'static,
     BE: Backend<B> + 'static,
     C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
-    G: GenesisProvider + Send + Sync + 'static,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
-    P: TransactionPool<Block = B> + 'static,
+    G: GenesisProvider + Send + Sync + 'static,
     H: HasherT + Send + Sync + 'static,
 {
-    fn predeployed_accounts(&self) -> RpcResult<Vec<PredeployedAccountWithBalance>> {
-        let genesis_data = self.genesis_provider.load_genesis_data()?;
-        let block_id = BlockId::Tag(BlockTag::Latest);
-        let fee_token_address: FieldElement = genesis_data.eth_fee_token_address.0;
+    async fn declare_tx_common(
+        &self,
+        txn: DeclareTransaction,
+    ) -> Result<(TransactionHash, ClassHash), StarknetRpcApiError> {
+        let best_block_hash = self.get_best_block_hash();
+        let current_block_hash = self.get_best_block_hash();
+        let contract_class = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), current_block_hash)
+            .contract_class_by_class_hash(current_block_hash, txn.class_hash());
 
-        Ok(genesis_data
-            .predeployed_accounts
-            .into_iter()
-            .map(|account| {
-                let contract_address: FieldElement = account.contract_address.into();
-                let balance_string = &self
-                    .call(
-                        FunctionCall {
-                            contract_address: fee_token_address,
-                            entry_point_selector: get_selector_from_name("balanceOf")
-                                .expect("the provided method name should be a valid ASCII string."),
-                            calldata: vec![contract_address],
-                        },
-                        block_id,
-                    )
-                    .expect("FunctionCall attributes should be correct.")[0];
-                let balance =
-                    Felt252Wrapper::from_hex_be(balance_string).expect("`balanceOf` should return a Felt").into();
-                PredeployedAccountWithBalance { account, balance }
-            })
-            .collect::<Vec<_>>())
+        if let Some(contract_class) = contract_class {
+            log::debug!("Contract class already exists: {:?}", contract_class);
+            return Err(StarknetRpcApiError::ClassAlreadyDeclared);
+        }
+
+        let extrinsic =
+            self.convert_tx_to_extrinsic(best_block_hash, AccountTransaction::Declare(txn.clone())).unwrap();
+
+        let res = submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await;
+
+        match res {
+            Ok(_val) => Ok((txn.tx_hash, txn.class_hash())),
+            Err(e) => Err(e),
+        }
     }
 }
+
+/// Taken from https://github.com/paritytech/substrate/blob/master/client/rpc/src/author/mod.rs#L78
+const TX_SOURCE: TransactionSource = TransactionSource::External;
 
 #[async_trait]
 impl<A, B, BE, G, C, P, H> StarknetWriteRpcApiServer for Starknet<A, B, BE, G, C, P, H>
@@ -290,8 +289,6 @@ where
         &self,
         declare_transaction: BroadcastedDeclareTransaction,
     ) -> RpcResult<DeclareTransactionResult> {
-        let best_block_hash = self.get_best_block_hash();
-
         let opt_sierra_contract_class = if let BroadcastedDeclareTransaction::V2(ref tx) = declare_transaction {
             Some(flattened_sierra_to_sierra_contract_class(tx.contract_class.clone()))
         } else {
@@ -304,22 +301,8 @@ where
             error!("Failed to convert BroadcastedDeclareTransaction to DeclareTransaction, error: {e}");
             StarknetRpcApiError::InternalServerError
         })?;
-        let (class_hash, tx_hash) = (transaction.class_hash(), transaction.tx_hash());
 
-        let current_block_hash = self.get_best_block_hash();
-        let contract_class = self
-            .overrides
-            .for_block_hash(self.client.as_ref(), current_block_hash)
-            .contract_class_by_class_hash(current_block_hash, class_hash);
-
-        if let Some(contract_class) = contract_class {
-            error!("Contract class already exists: {:?}", contract_class);
-            return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
-        }
-
-        let extrinsic = self.convert_tx_to_extrinsic(best_block_hash, AccountTransaction::Declare(transaction))?;
-
-        submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
+        let (tx_hash, class_hash) = self.declare_tx_common(transaction).await?;
 
         if let Some(sierra_contract_class) = opt_sierra_contract_class {
             if let Some(e) = self.backend.sierra_classes().store_sierra_class(class_hash, sierra_contract_class).err() {

@@ -7,7 +7,7 @@ pub use mc_rpc_core::{
     StarknetWriteRpcApiServer,
 };
 use mp_hashers::HasherT;
-use mp_transactions::TransactionStatus;
+use mp_transactions::{BroadcastedDeclareTransactionV0, TransactionStatus};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::BlockBackend;
@@ -36,6 +36,7 @@ impl<A: ChainApi, B: BlockT, BE, G, C, P, H> Clone for StarknetRpcWrapper<A, B, 
     }
 }
 
+#[async_trait]
 impl<A, B, BE, G, C, P, H> MadaraRpcApiServer for StarknetRpcWrapper<A, B, BE, G, C, P, H>
 where
     A: ChainApi<Block = B> + 'static,
@@ -50,6 +51,13 @@ where
 {
     fn predeployed_accounts(&self) -> RpcResult<Vec<PredeployedAccountWithBalance>> {
         self.0.predeployed_accounts()
+    }
+
+    async fn add_declare_transaction_v0(
+        &self,
+        params: BroadcastedDeclareTransactionV0,
+    ) -> RpcResult<DeclareTransactionResult> {
+        self.0.add_declare_transaction_v0(params).await
     }
 }
 

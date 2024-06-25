@@ -9,6 +9,7 @@ mod tests;
 
 use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
+use mp_transactions::BroadcastedDeclareTransactionV0;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 
@@ -41,6 +42,13 @@ pub struct PredeployedAccountWithBalance {
 pub trait MadaraRpcApi: StarknetReadRpcApi {
     #[method(name = "predeployedAccounts")]
     fn predeployed_accounts(&self) -> RpcResult<Vec<PredeployedAccountWithBalance>>;
+
+    /// Submit a declare transaction for cairo 0 contract to be initialised with given address.
+    #[method(name = "addDeclareTransactionV0")]
+    async fn add_declare_transaction_v0(
+        &self,
+        params: BroadcastedDeclareTransactionV0,
+    ) -> RpcResult<DeclareTransactionResult>;
 }
 
 /// Starknet write rpc interface.

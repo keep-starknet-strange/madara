@@ -3,15 +3,24 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::{format_err, Result};
+use ethers::types::U256;
 use ethers::utils::__serde_json::json;
 use futures::lock::Mutex;
 use mc_eth_client::config::EthereumClientConfig;
+use mc_eth_client::oracle::OracleConfig;
 use mp_starknet_inherent::L1GasPrices;
+use serde::Deserialize;
 use tokio::time::sleep;
 
 use crate::types::{EthRpcResponse, FeeHistory};
 
 const DEFAULT_GAS_PRICE_POLL_MS: u64 = 10_000;
+
+#[derive(Deserialize, Debug)]
+struct OracleApiResponse {
+    price: String,
+    decimals: u32,
+}
 
 pub async fn run_worker(config: Arc<EthereumClientConfig>, gas_price: Arc<Mutex<L1GasPrices>>, infinite_loop: bool) {
     let rpc_endpoint = config.provider.rpc_endpoint().clone();
@@ -19,7 +28,7 @@ pub async fn run_worker(config: Arc<EthereumClientConfig>, gas_price: Arc<Mutex<
     let poll_time = config.provider.gas_price_poll_ms().unwrap_or(DEFAULT_GAS_PRICE_POLL_MS);
 
     loop {
-        match update_gas_price(rpc_endpoint.clone(), &client, gas_price.clone()).await {
+        match update_gas_price(rpc_endpoint.clone(), &client, gas_price.clone(), config.oracle.clone()).await {
             Ok(_) => log::trace!("Updated gas prices"),
             Err(e) => log::error!("Failed to update gas prices: {:?}", e),
         }
@@ -52,6 +61,7 @@ async fn update_gas_price(
     rpc_endpoint: String,
     client: &reqwest::Client,
     gas_price: Arc<Mutex<L1GasPrices>>,
+    oracle: OracleConfig,
 ) -> Result<()> {
     let fee_history: EthRpcResponse<FeeHistory> = client
         .post(rpc_endpoint.clone())
@@ -88,18 +98,45 @@ async fn update_gas_price(
         16,
     )?;
 
-    // TODO: fetch this from the oracle
-    let eth_strk_price = 2425;
+    let response = reqwest::Client::new()
+        .get(oracle.get_fetch_url(String::from("eth"), String::from("strk")))
+        .header("x-api-key", oracle.get_api_key())
+        .send()
+        .await?;
+
+    let oracle_api_response = response.json::<OracleApiResponse>().await;
 
     let mut gas_price = gas_price.lock().await;
+
+    match oracle_api_response {
+        Ok(api_response) => {
+            log::trace!("Retrieved ETH/STRK price from Oracle");
+            let eth_strk_price = u128::from_str_radix(api_response.price.trim_start_matches("0x"), 16)?;
+            if oracle.is_in_bounds(eth_strk_price) {
+                let stark_gas = ((U256::from(eth_gas_price) * U256::from(eth_strk_price))
+                    / 10u64.pow(api_response.decimals))
+                .as_u128();
+                let stark_data_gas = ((U256::from(avg_blob_base_fee) * U256::from(eth_strk_price))
+                    / 10u64.pow(api_response.decimals))
+                .as_u128();
+                gas_price.strk_l1_gas_price = NonZeroU128::new(stark_gas)
+                    .ok_or(format_err!("Failed to convert `strk_l1_gas_price` to NonZeroU128"))?;
+                gas_price.strk_l1_data_gas_price = NonZeroU128::new(stark_data_gas)
+                    .ok_or(format_err!("Failed to convert `strk_l1_data_gas_price` to NonZeroU128"))?;
+            } else {
+                log::error!("⚠️  Retrieved price is outside of bounds");
+            }
+        }
+        Err(e) => {
+            log::error!("Failed to retrieve ETH/STRK price: {:?}", e);
+        }
+    };
+
     gas_price.eth_l1_gas_price =
         NonZeroU128::new(eth_gas_price).ok_or(format_err!("Failed to convert `eth_gas_price` to NonZeroU128"))?;
     gas_price.eth_l1_data_gas_price = NonZeroU128::new(avg_blob_base_fee)
         .ok_or(format_err!("Failed to convert `eth_l1_data_gas_price` to NonZeroU128"))?;
-    gas_price.strk_l1_gas_price = NonZeroU128::new(eth_gas_price.saturating_mul(eth_strk_price))
-        .ok_or(format_err!("Failed to convert `strk_l1_gas_price` to NonZeroU128"))?;
-    gas_price.strk_l1_data_gas_price = NonZeroU128::new(avg_blob_base_fee.saturating_mul(eth_strk_price))
-        .ok_or(format_err!("Failed to convert `strk_l1_data_gas_price` to NonZeroU128"))?;
+
     gas_price.last_update_timestamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis();
     // explicitly dropping gas price here to avoid long waits when fetching the value
     // on the inherent side which would increase block time

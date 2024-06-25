@@ -12,7 +12,8 @@ async-lock = "3.1.0"
 async-trait = { workspace = true }
 env_logger = "0.9"
 flate2 = { workspace = true }
-reqwest = "0.11.18"
+mp-transactions = { workspace = true, features = ["serde"] }
+reqwest = { version = "0.11.22", features = ["json"] }
 rstest = "0.18.1"
 serde = "1.0.192"
 serde_json = "1.0.108"
@@ -134,3 +135,7 @@ path = "trace_block.rs"
 [[test]]
 name = "starknet_trace_transaction"
 path = "trace_transaction.rs"
+
+[[test]]
+name = "madara_add_declare_transaction_v0"
+path = "declareV0.rs"

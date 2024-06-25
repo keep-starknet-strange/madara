@@ -8,6 +8,7 @@
 
 ## v0.8.0
 
+- feat: Declare V0 RPC call
 - feat: add `TransactionFilter<TxType>` to pallet-starknet `Config`
 - chore: remove `ignore` from
   `storage_changes_should_revert_on_transaction_revert` test
@@ -348,3 +349,4 @@
 - dev : clean contracts and compiled files
 - fix: add from_address in calldata of l1 message
 - test: add starkgate related testcase
+- feat: add pragma api to compute fees

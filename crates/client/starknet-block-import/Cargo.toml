@@ -24,19 +24,15 @@ sp-runtime = { workspace = true }
 
 # Substrate client dependencies
 sc-consensus = { workspace = true }
-sc-rpc-api = { workspace = true }
 
 # Starknet
 blockifier = { workspace = true }
-cairo-lang-starknet = { workspace = true }
 cairo-lang-starknet-classes = { workspace = true }
 cairo-lang-utils = { workspace = true }
 cairo-vm = { workspace = true }
-hex = { workspace = true }
 madara-runtime = { workspace = true }
 mc-db = { workspace = true }
 mc-rpc = { workspace = true }
-pallet-starknet = { workspace = true }
 pallet-starknet-runtime-api = { workspace = true }
 starknet-core = { workspace = true }
 starknet_api = { workspace = true, features = [
