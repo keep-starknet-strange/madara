@@ -17,6 +17,7 @@ use mp_transactions::from_broadcasted_transactions::{
 };
 use mp_transactions::{get_transaction_hash, TxType};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
+use sc_block_builder::GetPendingBlockExtrinsics;
 use sc_client_api::{Backend, BlockBackend, StorageProvider};
 use sc_transaction_pool::ChainApi;
 use sc_transaction_pool_api::TransactionPool;
@@ -43,6 +44,7 @@ where
     G: GenesisProvider + Send + Sync + 'static,
     C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
+    C: GetPendingBlockExtrinsics<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     P: TransactionPool<Block = B> + 'static,
     H: HasherT + Send + Sync + 'static,

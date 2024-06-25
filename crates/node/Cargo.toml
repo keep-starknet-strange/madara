@@ -30,6 +30,7 @@ sha3 = { workspace = true }
 
 frame-system = { workspace = true }
 sc-basic-authorship = { workspace = true }
+sc-block-builder = { workspace = true }
 sc-cli = { workspace = true }
 sc-client-api = { workspace = true }
 sc-consensus = { workspace = true }
@@ -101,7 +102,7 @@ blockifier = { workspace = true }
 # CLI-specific dependencies
 reqwest = { workspace = true, features = ["blocking"] }
 serde_json = { workspace = true }
-try-runtime-cli = { optional = true, git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
+try-runtime-cli = { optional = true, git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
 url = { workspace = true }
 
 [build-dependencies]

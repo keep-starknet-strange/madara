@@ -1,5 +1,6 @@
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
+use sc_block_builder::GetPendingBlockExtrinsics;
 use mc_genesis_data_provider::GenesisProvider;
 pub use mc_rpc_core::{
     Felt, MadaraRpcApiServer, PredeployedAccountWithBalance, StarknetReadRpcApiServer, StarknetTraceRpcApiServer,
@@ -31,6 +32,7 @@ where
     BE: Backend<B> + 'static,
     C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
+    C: GetPendingBlockExtrinsics<B>,
     G: GenesisProvider + Send + Sync + 'static,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     P: TransactionPool<Block = B> + 'static,

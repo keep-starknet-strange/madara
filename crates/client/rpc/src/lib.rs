@@ -41,12 +41,13 @@ use mp_transactions::from_broadcasted_transactions::{
 use mp_transactions::to_starknet_core_transaction::to_starknet_core_tx;
 use mp_transactions::{compute_message_hash, get_transaction_hash, TransactionStatus};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
+use sc_block_builder::GetPendingBlockExtrinsics;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::BlockBackend;
 use sc_network_sync::SyncingService;
 use sc_transaction_pool::{ChainApi, Pool};
 use sc_transaction_pool_api::error::{Error as PoolError, IntoPoolError};
-use sc_transaction_pool_api::{InPoolTransaction, TransactionPool, TransactionSource};
+use sc_transaction_pool_api::{TransactionPool, TransactionSource};
 use sp_api::ProvideRuntimeApi;
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
@@ -228,6 +229,7 @@ where
     BE: Backend<B> + 'static,
     C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
+    C: GetPendingBlockExtrinsics<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     G: GenesisProvider + Send + Sync + 'static,
     H: HasherT + Send + Sync + 'static,
@@ -272,6 +274,7 @@ where
     BE: Backend<B> + 'static,
     C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
+    C: GetPendingBlockExtrinsics<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     G: GenesisProvider + Send + Sync + 'static,
     H: HasherT + Send + Sync + 'static,
@@ -391,6 +394,7 @@ where
     BE: Backend<B> + 'static,
     C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
+    C: GetPendingBlockExtrinsics<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     G: GenesisProvider + Send + Sync + 'static,
     H: HasherT + Send + Sync + 'static,
@@ -1318,6 +1322,7 @@ where
     BE: Backend<B> + 'static,
     C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
+    C: GetPendingBlockExtrinsics<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     G: GenesisProvider + Send + Sync + 'static,
     H: HasherT + Send + Sync + 'static,
@@ -1368,11 +1373,7 @@ where
         &self,
         latest_block: B::Hash,
     ) -> Result<Vec<blockifier::transaction::transaction_execution::Transaction>, StarknetRpcApiError> {
-        // Fetch all Pending Txs from Transaction Pool
-        // Operates as RPC Call `author_pendingExtrinsics`
-        // See https://github.com/paritytech/polkadot-sdk/blob/release-polkadot-v1.6.0/substrate/client/rpc/src/author/mod.rs#L153-L155
-        // But fetches pending transactions as Vec<B::Extrinsic>
-        let pending_transactions: Vec<B::Extrinsic> = self.pool.ready().map(|tx| tx.data().clone()).collect();
+        let pending_transactions: Vec<B::Extrinsic> = self.client.get_pending_extrinsics();
 
         // Use Runtime API to filter all Pending Txs
         // And get only Starknet Txs (Pallet Starknet calls) as

@@ -9,6 +9,7 @@ pub use mc_rpc_core::{
 use mp_hashers::HasherT;
 use mp_transactions::{BroadcastedDeclareTransactionV0, TransactionStatus};
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
+use sc_block_builder::GetPendingBlockExtrinsics;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::BlockBackend;
 use sc_transaction_pool::ChainApi;
@@ -44,6 +45,7 @@ where
     BE: Backend<B> + 'static,
     C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
+    C: GetPendingBlockExtrinsics<B>,
     G: GenesisProvider + Send + Sync + 'static,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     P: TransactionPool<Block = B> + 'static,
@@ -70,6 +72,7 @@ where
     BE: Backend<B> + 'static,
     C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
+    C: GetPendingBlockExtrinsics<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     G: GenesisProvider + Send + Sync + 'static,
     H: HasherT + Send + Sync + 'static,
@@ -547,6 +550,7 @@ where
     BE: Backend<B> + 'static,
     C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
+    C: GetPendingBlockExtrinsics<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     G: GenesisProvider + Send + Sync + 'static,
     H: HasherT + Send + Sync + 'static,
@@ -610,6 +614,7 @@ where
     BE: Backend<B> + 'static,
     C: HeaderBackend<B> + BlockBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
+    C: GetPendingBlockExtrinsics<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     G: GenesisProvider + Send + Sync + 'static,
     H: HasherT + Send + Sync + 'static,

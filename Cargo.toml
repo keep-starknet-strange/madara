@@ -81,78 +81,78 @@ version = "0.8.0"
 
 [workspace.dependencies]
 # Substrate frame dependencies
-frame-executive = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-frame-support = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-frame-benchmarking = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-frame-benchmarking-cli = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-frame-system = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-frame-system-benchmarking = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-frame-system-rpc-runtime-api = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-frame-try-runtime = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-substrate-frame-rpc-system = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
+frame-executive = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters"  }
+frame-support = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+frame-benchmarking = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+frame-benchmarking-cli = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+frame-system = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+frame-system-benchmarking = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+frame-system-rpc-runtime-api = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+frame-try-runtime = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+substrate-frame-rpc-system = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
 
 # Substrate primitives dependencies
-sp-core = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-std = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-io = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-runtime = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-consensus-aura = { git = "http://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-consensus = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-consensus-grandpa = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-timestamp = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-inherents = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-keyring = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-api = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-blockchain = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-block-builder = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-offchain = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-session = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-transaction-pool = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-version = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-database = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-arithmetic = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-storage = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-state-machine = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-statement-store = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-trie = { version = "22.0.0", git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sp-tracing = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
+sp-core = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-std = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-io = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-runtime = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-consensus-aura = { git = "http://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-consensus = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-consensus-grandpa = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-timestamp = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-inherents = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-keyring = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-api = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-blockchain = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-block-builder = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-offchain = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-session = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-transaction-pool = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-version = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-database = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-arithmetic = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-storage = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-state-machine = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-statement-store = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-trie = { version = "22.0.0", git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sp-tracing = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
 
 # Substrate client dependencies
-sc-client-db = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sc-network = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sc-network-common = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sc-network-sync = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sc-consensus = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
+sc-client-db = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sc-network = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sc-network-common = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sc-network-sync = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sc-consensus = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
 # For integration tests in order to create blocks on demand
-sc-consensus-manual-seal = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sc-consensus-grandpa = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sc-rpc = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sc-rpc-api = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sc-basic-authorship = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sc-client-api = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sc-cli = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sc-executor = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sc-service = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sc-telemetry = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sc-keystore = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sc-transaction-pool = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sc-transaction-pool-api = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sc-offchain = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sc-consensus-aura = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sc-block-builder = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sc-proposer-metrics = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-sc-utils = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-substrate-test-runtime-client = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
+sc-consensus-manual-seal = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sc-consensus-grandpa = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sc-rpc = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sc-rpc-api = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sc-basic-authorship = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sc-client-api = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sc-cli = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sc-executor = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sc-service = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sc-telemetry = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sc-keystore = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sc-transaction-pool = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sc-transaction-pool-api = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sc-offchain = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sc-consensus-aura = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sc-block-builder = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sc-proposer-metrics = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+sc-utils = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+substrate-test-runtime-client = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
 
 
 # Substrate build & tools dependencies
-substrate-build-script-utils = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-prometheus-endpoint = { package = "substrate-prometheus-endpoint", version = "0.10.0-dev", git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
+substrate-build-script-utils = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", version = "0.10.0-dev", git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
 
 # Substrate Frame pallet
-pallet-aura = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-pallet-grandpa = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
-pallet-timestamp = { git = "https://github.com/massalabs/polkadot-sdk", branch = "release-polkadot-v1.3.0-std" }
+pallet-aura = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+pallet-grandpa = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
+pallet-timestamp = { git = "https://github.com/massalabs/polkadot-sdk", branch = "features/add_block_builder_extrinsic_getters" }
 
 # Madara pallets
 pallet-starknet = { path = "crates/pallets/starknet" }
