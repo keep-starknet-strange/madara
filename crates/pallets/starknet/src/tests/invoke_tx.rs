@@ -3,7 +3,7 @@ use std::sync::Arc;
 use blockifier::abi::abi_utils::get_storage_var_address;
 use blockifier::execution::contract_class::ClassInfo;
 use blockifier::transaction::transactions::{DeclareTransaction, InvokeTransaction};
-use blockifier::transaction::types::InvokeTransactionV0;
+use blockifier::transaction::invoke::InvokeTransactionV0;
 use frame_support::{assert_err, assert_ok};
 use mp_felt::Felt252Wrapper;
 use mp_transactions::compute_hash::ComputeTransactionHash;
