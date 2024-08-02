@@ -1,3 +1,11 @@
+# DEPRECATED
+
+This repository is no longer supported, please consider using [madara](https://github.com/madara-alliance/madara) instead.
+
+This is due to our choice to shift to a non-substrate-based implementation.
+
+A huge thanks to everyone who contributed to this repository!
+
 <!-- markdownlint-disable -->
 <div align="center">
   <img src="docs/images/logo/PNGs/Madara logo - Red - Duotone.png" height="128">
